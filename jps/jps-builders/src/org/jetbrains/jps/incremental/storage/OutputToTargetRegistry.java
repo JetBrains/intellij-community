@@ -21,7 +21,6 @@ import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.IntInlineKeyDescriptor;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntProcedure;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
@@ -65,7 +64,7 @@ public class OutputToTargetRegistry extends AbstractStateStorage<Integer, TIntHa
     }
   };
   
-  OutputToTargetRegistry(@NonNls File storePath) throws IOException {
+  OutputToTargetRegistry(File storePath) throws IOException {
     super(storePath, new IntInlineKeyDescriptor(), DATA_EXTERNALIZER);
   }
   
