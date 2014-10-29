@@ -19,7 +19,7 @@ import com.intellij.openapi.components.*;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 
 /**
- * We don't use roaming type PER_PLATFORM — path macros is enough ($USER_HOME$/Dropbox for example)
+ * We don't use roaming type PER_PLATFORM - path macros is enough ($USER_HOME$/Dropbox for example)
  */
 @State(
   name = "VcsApplicationSettings",

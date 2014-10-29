@@ -16,6 +16,7 @@
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.ui.popup.IconButton;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.InplaceButton;
@@ -48,6 +49,7 @@ public class PresentationModeProgressPanel {
     myText.setIcon(EmptyIcon.create(1, 16));
     myText2.setIcon(EmptyIcon.create(1, 16));
   }
+
   public void update() {
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
@@ -57,7 +59,15 @@ public class PresentationModeProgressPanel {
     });
   }
 
+  @NotNull
+  public Color getTextForeground() {
+    return EditorColorsManager.getInstance().getGlobalScheme().getDefaultForeground();
+  }
+
   private void updateImpl() {
+    myText.setForeground(getTextForeground());
+    myText2.setForeground(getTextForeground());
+
     if (!StringUtil.equals(myText.getText(), myProgress.getText())) {
       myText.setText(myProgress.getText());
     }
@@ -74,7 +84,8 @@ public class PresentationModeProgressPanel {
     }
   }
 
-  public JPanel getRootPanel() {
+  @NotNull
+  public JComponent getProgressPanel() {
     return myRootPanel;
   }
 

@@ -16,7 +16,7 @@ freemarker.jar
 httpmime-4.3.2.jar
 ecj-4.4.jar
 groovy-all-2.2.1.jar
-gson-2.2.4.jar
+gson-2.3.jar
 guava-17.0.jar
 hamcrest-core-1.3.jar
 hamcrest-library-1.3.jar

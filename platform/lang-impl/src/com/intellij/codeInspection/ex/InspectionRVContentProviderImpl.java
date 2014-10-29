@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,23 +55,21 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
     final SearchScope searchScope = context.getCurrentScope().toSearchScope();
     if (searchScope instanceof LocalSearchScope) {
       final Map<String, Set<RefEntity>> contents = presentation.getContent();
-      if (contents != null) {
-        final Map<RefEntity, CommonProblemDescriptor[]> problemElements = presentation.getProblemElements();
-        for (Set<RefEntity> entities : contents.values()) {
-          for (Iterator<RefEntity> iterator = entities.iterator(); iterator.hasNext(); ) {
-            RefEntity entity = iterator.next();
-            if (entity instanceof RefElement) {
-              final PsiElement element = ((RefElement)entity).getElement();
-              if (element != null) {
-                final TextRange range = element.getTextRange();
-                if (range != null && ((LocalSearchScope)searchScope).containsRange(element.getContainingFile(), range)) {
-                  continue;
-                }
+      final Map<RefEntity, CommonProblemDescriptor[]> problemElements = presentation.getProblemElements();
+      for (Set<RefEntity> entities : contents.values()) {
+        for (Iterator<RefEntity> iterator = entities.iterator(); iterator.hasNext(); ) {
+          RefEntity entity = iterator.next();
+          if (entity instanceof RefElement) {
+            final PsiElement element = ((RefElement)entity).getElement();
+            if (element != null) {
+              final TextRange range = element.getTextRange();
+              if (range != null && ((LocalSearchScope)searchScope).containsRange(element.getContainingFile(), range)) {
+                continue;
               }
             }
-            problemElements.remove(entity);
-            iterator.remove();
           }
+          problemElements.remove(entity);
+          iterator.remove();
         }
       }
     }
@@ -106,7 +104,7 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
     };
     InspectionToolPresentation presentation = context.getPresentation(toolWrapper);
     final Set<RefModule> moduleProblems = presentation.getModuleProblems();
-    if (moduleProblems != null && !moduleProblems.isEmpty()) {
+    if (!moduleProblems.isEmpty()) {
       Set<RefEntity> entities = contents.get("");
       if (entities == null) {
         entities = new HashSet<RefEntity>();

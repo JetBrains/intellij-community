@@ -131,8 +131,8 @@ public class SideEffectWarningDialog extends DialogWrapper {
                       "There are possible side effects found in expressions assigned to the variable ''{0}''<br>\n" +
                       "You can:\n" +
                       "<br>\n" +
-                      "—&nbsp;<b>Remove</b> variable usages along with all expressions involved, or<br>\n" +
-                      "—&nbsp;<b>Transform</b> expressions assigned to variable into the statements on their own.<br>\n" +
+                      "-&nbsp;<b>Remove</b> variable usages along with all expressions involved, or<br>\n" +
+                      "-&nbsp;<b>Transform</b> expressions assigned to variable into the statements on their own.<br>\n" +
                       "<div style=\"padding-left: 0.6cm;\">\n" +
                       "  That is,<br>\n" +
                       "  <table border=\"0\">\n" +

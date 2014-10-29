@@ -405,6 +405,16 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @Override
+  public long checkHighlighting(final boolean checkWarnings, final boolean checkInfos, final boolean checkWeakWarnings, boolean ignoreExtraHighlighting) {
+    try {
+      return collectAndCheckHighlighting(checkWarnings, checkInfos, checkWeakWarnings);
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  @Override
   public long checkHighlighting() {
     return checkHighlighting(true, false, true);
   }
@@ -1485,7 +1495,14 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   private long collectAndCheckHighlighting(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings) throws Exception {
-    ExpectedHighlightingData data = new ExpectedHighlightingData(myEditor.getDocument(), checkWarnings, checkWeakWarnings, checkInfos, getHostFile());
+    return collectAndCheckHighlighting(checkWarnings, checkInfos, checkWeakWarnings, false);
+  }
+  
+  private long collectAndCheckHighlighting(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings, 
+                                           boolean ignoreExtraHighlighting) throws Exception {
+    ExpectedHighlightingData data = new ExpectedHighlightingData(myEditor.getDocument(), 
+                                                                 checkWarnings, checkWeakWarnings, ignoreExtraHighlighting, 
+                                                                 checkInfos, getHostFile());
     data.init();
     return collectAndCheckHighlighting(data);
   }
