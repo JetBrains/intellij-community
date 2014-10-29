@@ -33,7 +33,7 @@ public abstract class PagingTableModel extends AbstractTableModel {
   public static final String EMPTY_CELL_VALUE = "...";
 
   private HashMap<String, Object[][]> myCachedData = new HashMap<String, Object[][]>();
-  private SortedSet<ComparableArrayChunk> myPendingSet = new TreeSet<ComparableArrayChunk>();
+  private SortedSet<ArrayChunk> myPendingSet = new TreeSet<ArrayChunk>();
   private Queue<String> cachedChunkKeys = new Queue<String>(DEFAULT_MAX_CACHED_SIZE + 1);
 
   private LinkedList<Thread> myThreadList = new LinkedList<Thread>();
@@ -43,10 +43,10 @@ public abstract class PagingTableModel extends AbstractTableModel {
   private int myRows = 0;
   private int myColumns = 0;
   private NumpyArrayValueProvider myProvider;
-  private ComparableArrayChunk myFullChunk;
+  private ArrayChunk myFullChunk;
 
 
-  public PagingTableModel(int rows, int columns, boolean rendered, NumpyArrayValueProvider provider, ComparableArrayChunk fullChunk) {
+  public PagingTableModel(int rows, int columns, boolean rendered, NumpyArrayValueProvider provider, ArrayChunk fullChunk) {
     myRows = rows;
     myColumns = columns;
     myRendered = rendered;
@@ -113,22 +113,22 @@ public abstract class PagingTableModel extends AbstractTableModel {
     if (sz == 0) return false;
     if (sz == 1) {
       // special case (for speed)
-      ComparableArrayChunk seg = myPendingSet.first();
+      ArrayChunk seg = myPendingSet.first();
       return seg.contains(rOffset, cOffset);
     }
 
-    ComparableArrayChunk lo = createChunk(0, 0, getPageRowStart(rOffset), getPageColStart(cOffset));
-    ComparableArrayChunk hi = createChunk(0, 0, getPageRowStart(rOffset + CHUNK_ROW_SIZE), getPageColStart(cOffset + CHUNK_COL_SIZE));
+    ArrayChunk lo = createChunk(0, 0, getPageRowStart(rOffset), getPageColStart(cOffset));
+    ArrayChunk hi = createChunk(0, 0, getPageRowStart(rOffset + CHUNK_ROW_SIZE), getPageColStart(cOffset + CHUNK_COL_SIZE));
 
-    for (ComparableArrayChunk seg : myPendingSet.subSet(lo, hi)) {
+    for (ArrayChunk seg : myPendingSet.subSet(lo, hi)) {
       if (seg.contains(rOffset, cOffset)) return true;
     }
     return false;
   }
 
-  protected abstract ComparableArrayChunk createChunk(int rows, int columns, int rOffset, int cOffset);
+  protected abstract ArrayChunk createChunk(int rows, int columns, int rOffset, int cOffset);
 
-  protected abstract Runnable getDataEvaluator(final ComparableArrayChunk chunk);
+  protected abstract Runnable getDataEvaluator(final ArrayChunk chunk);
 
   public void runNextThread() {
     if (evaluatedThread != null) {
@@ -147,7 +147,7 @@ public abstract class PagingTableModel extends AbstractTableModel {
   }
 
   private void scheduleLoadData(final int rOffset, final int rLength, final int cOffset, final int cLength) {
-    final ComparableArrayChunk segment = createChunk(rLength, cLength, rOffset, cOffset);
+    final ArrayChunk segment = createChunk(rLength, cLength, rOffset, cOffset);
     myPendingSet.add(segment);
 
     Runnable evaluator = getDataEvaluator(segment);
@@ -187,13 +187,13 @@ public abstract class PagingTableModel extends AbstractTableModel {
     return myRows;
   }
 
-  public SortedSet<ComparableArrayChunk> getPendingSet() {
+  public SortedSet<ArrayChunk> getPendingSet() {
     return myPendingSet;
   }
 
   public void clearCached() {
     myCachedData = new HashMap<String, Object[][]>();
-    myPendingSet = new TreeSet<ComparableArrayChunk>();
+    myPendingSet = new TreeSet<ArrayChunk>();
     cachedChunkKeys = new Queue<String>(DEFAULT_MAX_CACHED_SIZE + 1);
     if (evaluatedThread != null) {
       evaluatedThread.interrupt();
@@ -234,7 +234,7 @@ public abstract class PagingTableModel extends AbstractTableModel {
     }
   }
 
-  public ComparableArrayChunk getFullChunk() {
+  public ArrayChunk getFullChunk() {
     return myFullChunk;
   }
 }

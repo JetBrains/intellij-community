@@ -41,6 +41,8 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author amarch
@@ -63,6 +65,8 @@ public class NumpyArrayValueProvider extends ArrayValueProvider {
 
   private final static int COLUMNS_IN_DEFAULT_VIEW = 1000;
   private final static int ROWS_IN_DEFAULT_VIEW = 1000;
+
+  private static final Pattern PY_COMPLEX_NUMBER = Pattern.compile("([+-]?[.\\d^j]*)([+-]?[e.\\d]*j)?");
 
   private final static int HUGE_ARRAY_SIZE = 1000 * 1000;
   private final static String LOAD_SMALLER_SLICE = "Full slice too large and would slow down debugger, shrunk to smaller slice.";
@@ -90,7 +94,7 @@ public class NumpyArrayValueProvider extends ArrayValueProvider {
     return new PagingTableModel(rows, columns, rendered, this, mainSlice) {
 
       private final String myFormat = mainSlice.getFormat();
-      private final String myBaseSlice = mainSlice.baseSlice;
+      private final String myBaseSlice = mainSlice.getBaseSlice();
 
       @Override
       protected NumpyArraySlice createChunk(int rows, int columns, int rOffset, int cOffset) {
@@ -98,9 +102,10 @@ public class NumpyArrayValueProvider extends ArrayValueProvider {
       }
 
       @Override
-      protected Runnable getDataEvaluator(final ComparableArrayChunk chunk) {
-        final NumpyArraySlice arraySlice = new NumpyArraySlice(chunk.baseSlice, chunk.rows, chunk.columns, chunk.rOffset, chunk.cOffset,
-                                                               myFormat, getInstance());
+      protected Runnable getDataEvaluator(final ArrayChunk chunk) {
+        final NumpyArraySlice arraySlice =
+          new NumpyArraySlice(chunk.getBaseSlice(), chunk.getRows(), chunk.getColumns(), chunk.getRowOffset(), chunk.getColOffset(),
+                              myFormat, getInstance());
 
         if (arraySlice.getFormat().isEmpty()) {
           arraySlice.setFormat(getDefaultFormat());
@@ -113,7 +118,7 @@ public class NumpyArrayValueProvider extends ArrayValueProvider {
                 @Override
                 public void run() {
                   //check that we still running on the right model
-                  if (!myBaseSlice.equals(getModelFullChunk().baseSlice) || !myFormat.equals(getModelFullChunk().getFormat())) {
+                  if (!myBaseSlice.equals(getModelFullChunk().getBaseSlice()) || !myFormat.equals(getModelFullChunk().getFormat())) {
                     return;
                   }
 
@@ -121,10 +126,10 @@ public class NumpyArrayValueProvider extends ArrayValueProvider {
                   lastFinished = true;
                   getPendingSet().remove(chunk);
                   notifyNextThread();
-                  fireTableCellUpdated(chunk.rOffset, chunk.cOffset);
+                  fireTableCellUpdated(chunk.getRowOffset(), chunk.getColOffset());
                   DebuggerUIUtil.invokeLater(new Runnable() {
                     public void run() {
-                      addDataInCache(arraySlice.rOffset, arraySlice.cOffset, arraySlice.getData());
+                      addDataInCache(arraySlice.getRowOffset(), arraySlice.getColOffset(), arraySlice.getData());
 
                       myTable.setDefaultEditor(myTable.getColumnClass(0), getArrayTableCellEditor());
                       myTable.setDefaultRenderer(myTable.getColumnClass(0), myTableCellRenderer);
@@ -472,7 +477,7 @@ public class NumpyArrayValueProvider extends ArrayValueProvider {
 
   private void startFillTable(final NumpyArraySlice arraySlice, boolean rendered, final boolean inPlace) {
     if (myLastPresentation != null &&
-        arraySlice.baseSlice.equals(myLastPresentation.baseSlice) &&
+        arraySlice.getBaseSlice().equals(myLastPresentation.getBaseSlice()) &&
         arraySlice.getFormat().equals(myLastPresentation.getFormat()) && lastFinished) {
       return;
     }
@@ -486,7 +491,7 @@ public class NumpyArrayValueProvider extends ArrayValueProvider {
         myTable.setModel(myPagingModel);
         if (!inPlace) {
           myComponent.getScrollPane().getViewport().setViewPosition(new Point(0, 0));
-          RowHeaderTable rowTable = ((ArrayTableForm.JBTableWithRows)myTable).getRowHeaderTable();
+          JBTableWithRowHeaders.RowHeaderTable rowTable = ((JBTableWithRowHeaders)myTable).getRowHeaderTable();
           rowTable.setRowShift(0);
         }
         ((PagingTableModel)myTable.getModel()).fireTableDataChanged();
@@ -516,11 +521,11 @@ public class NumpyArrayValueProvider extends ArrayValueProvider {
       }
 
       private String changeValExpression() {
-        if (myEditor.getEditor() == null) {
+        if (getEditor().getEditor() == null) {
           throw new IllegalStateException("Null editor in table cell.");
         }
 
-        return getCellSlice() + " = " + myEditor.getEditor().getDocument().getText();
+        return getCellSlice() + " = " + getEditor().getEditor().getDocument().getText();
       }
 
 
@@ -533,7 +538,7 @@ public class NumpyArrayValueProvider extends ArrayValueProvider {
       @Override
       public void doOKAction(final int row, final int col) {
 
-        if (myEditor.getEditor() == null) {
+        if (getEditor().getEditor() == null) {
           return;
         }
 
@@ -571,14 +576,14 @@ public class NumpyArrayValueProvider extends ArrayValueProvider {
 
                 new WriteCommandAction(null) {
                   protected void run(@NotNull Result result) throws Throwable {
-                    if (myEditor.getEditor() != null) {
-                      myEditor.getEditor().getDocument().setText(corrected);
+                    if (getEditor().getEditor() != null) {
+                      getEditor().getEditor().getDocument().setText(corrected);
                       ((PagingTableModel)myTable.getModel()).forcedChange(row, col, corrected);
                       cancelEditing();
                     }
                   }
                 }.execute();
-                lastValue = corrected;
+                setLastValue(corrected);
               }
 
               @Override
@@ -630,7 +635,7 @@ public class NumpyArrayValueProvider extends ArrayValueProvider {
 
   public void showError(String message, NumpyArraySlice chunk) {
     if (!chunk.getFormat().equals(getModelFullChunk().getFormat()) ||
-        !chunk.baseSlice.equals(getModelFullChunk().baseSlice)) {
+        !chunk.getBaseSlice().equals(getModelFullChunk().getBaseSlice())) {
       //ignore error message from previous task
       return;
     }
@@ -782,5 +787,56 @@ public class NumpyArrayValueProvider extends ArrayValueProvider {
 
   private NumpyArraySlice getModelFullChunk() {
     return (NumpyArraySlice)myPagingModel.getFullChunk();
+  }
+
+  /**
+   * @return double presentation from [0:1] range
+   */
+  public static double getRangedValue(String value, String type, double min, double max, String complexMax, String complexMin) {
+    if ("iuf".contains(type)) {
+      return (Double.parseDouble(value) - min) / (max - min);
+    }
+    else if ("b".equals(type)) {
+      return value.equals("True") ? 1 : 0;
+    }
+    else if ("c".equals(type)) {
+      return getComplexRangedValue(value, complexMax, complexMin);
+    }
+    return 0;
+  }
+
+  /**
+   * type complex128 in numpy is compared by next rule:
+   * A + Bj > C +Dj if A > C or A == C and B > D
+   */
+  private static double getComplexRangedValue(String value, String complexMax, String complexMin) {
+    Pair<Double, Double> med = parsePyComplex(value);
+    Pair<Double, Double> max = parsePyComplex(complexMax);
+    Pair<Double, Double> min = parsePyComplex(complexMin);
+    double range = (med.first - min.first) / (max.first - min.first);
+    if (max.first.equals(min.first)) {
+      range = (med.second - min.second) / (max.second - min.second);
+    }
+    return range;
+  }
+
+  private static Pair<Double, Double> parsePyComplex(@NotNull String pyComplexValue) {
+    if (pyComplexValue.startsWith("(") && pyComplexValue.endsWith(")")) {
+      pyComplexValue = pyComplexValue.substring(1, pyComplexValue.length() - 1);
+    }
+    Matcher matcher = PY_COMPLEX_NUMBER.matcher(pyComplexValue);
+    if (matcher.matches()) {
+      String real = matcher.group(1);
+      String imag = matcher.group(2);
+      if (real.contains("j") && imag == null) {
+        return new Pair(new Double(0.0), Double.parseDouble(real.substring(0, real.length() - 1)));
+      }
+      else {
+        return new Pair(Double.parseDouble(real), Double.parseDouble(imag.substring(0, imag.length() - 1)));
+      }
+    }
+    else {
+      throw new IllegalArgumentException("Not a valid python complex value: " + pyComplexValue);
+    }
   }
 }

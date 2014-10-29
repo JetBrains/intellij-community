@@ -15,36 +15,50 @@
  */
 package com.jetbrains.python.debugger.array;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author amarch
  */
-public abstract class ArrayChunk {
-  protected String baseSlice;
-  protected int columns;
-  protected int rows;
-  protected int cOffset;
-  protected int rOffset;
-  protected Object[][] data;
+public abstract class ArrayChunk implements Comparable<ArrayChunk> {
+  private final String myBaseSlice;
+  private final int myColumns;
+  private final int myRows;
+  private final int myColOffset;
+  private final int myRowOffset;
+  private Object[][] myData;
 
   public ArrayChunk(String baseSlice, int rows, int columns, int rOffset, int cOffset) {
-    this.baseSlice = baseSlice;
-    this.columns = columns;
-    this.rows = rows;
-    this.rOffset = rOffset;
-    this.cOffset = cOffset;
-    data = new Object[rows][columns];
+    myBaseSlice = baseSlice;
+    myColumns = columns;
+    myRows = rows;
+    myRowOffset = rOffset;
+    myColOffset = cOffset;
+    myData = new Object[rows][columns];
   }
 
   public int getRows() {
-    return rows;
+    return myRows;
   }
 
-  public int getColumns(){
-    return columns;
+  public int getColumns() {
+    return myColumns;
+  }
+
+  public int getColOffset() {
+    return myColOffset;
+  }
+
+  public int getRowOffset() {
+    return myRowOffset;
   }
 
   public Object[][] getData() {
-    return data;
+    return myData;
+  }
+
+  public String getBaseSlice() {
+    return myBaseSlice;
   }
 
   public String getPresentation() {
@@ -54,15 +68,30 @@ public abstract class ArrayChunk {
   abstract void fillData(Runnable callback);
 
   public boolean contains(int row, int col) {
-    return rOffset <= row && row < rOffset + rows && cOffset <= col && col < cOffset + columns;
+    return myRowOffset <= row && row < myRowOffset + myRows && myColOffset <= col && col < myColOffset + myColumns;
   }
 
   public boolean equals(Object o) {
     return o instanceof ArrayChunk &&
-           baseSlice == ((ArrayChunk)o).baseSlice &&
-           columns == ((ArrayChunk)o).columns &&
-           rows == ((ArrayChunk)o).rows &&
-           cOffset == ((ArrayChunk)o).cOffset &&
-           rOffset == ((ArrayChunk)o).rOffset;
+           myBaseSlice == ((ArrayChunk)o).myBaseSlice &&
+           myColumns == ((ArrayChunk)o).myColumns &&
+           myRows == ((ArrayChunk)o).myRows &&
+           myColOffset == ((ArrayChunk)o).myColOffset &&
+           myRowOffset == ((ArrayChunk)o).myRowOffset;
+  }
+
+  @Override
+  public int compareTo(@NotNull ArrayChunk other) {
+    int compRow = myRowOffset - other.myRowOffset;
+    int compCol = myColOffset - other.myColOffset;
+    return compRow != 0 ? compRow : compCol;
+  }
+
+  public boolean isOneRow() {
+    return getRows() == 1;
+  }
+
+  public boolean isOneColumn() {
+    return getColumns() == 1;
   }
 }

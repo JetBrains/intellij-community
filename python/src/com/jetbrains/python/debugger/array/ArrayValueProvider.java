@@ -18,14 +18,16 @@ package com.jetbrains.python.debugger.array;
 import com.intellij.xdebugger.frame.XValueNode;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import org.jetbrains.annotations.NotNull;
 
 /**
-* @author amarch
-*/
+ * @author amarch
+ */
 abstract class ArrayValueProvider {
-  XValueNode myBaseNode;
 
-  public ArrayValueProvider(XValueNode node){
+  @NotNull protected final XValueNode myBaseNode;
+
+  public ArrayValueProvider(@NotNull XValueNode node) {
     myBaseNode = node;
   }
 
