@@ -25,10 +25,14 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.api.CmdVersionClient;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Created with IntelliJ IDEA.
@@ -42,6 +46,9 @@ public class SvnExecutableChecker extends ExecutableValidator {
 
   public static final String SVN_EXECUTABLE_LOCALE_REGISTRY_KEY = "svn.executable.locale";
   private static final String SVN_VERSION_ENGLISH_OUTPUT = "The following repository access (RA) modules are available";
+  private static final Pattern INVALID_LOCALE_WARNING_PATTERN = Pattern.compile(
+    "^.*cannot set .* locale.*please check that your locale name is correct$",
+    Pattern.CASE_INSENSITIVE | Pattern.MULTILINE | Pattern.DOTALL);
 
   @NotNull private final SvnVcs myVcs;
 
@@ -102,7 +109,7 @@ public class SvnExecutableChecker extends ExecutableValidator {
         result = validateVersion(version);
 
         if (result == null) {
-          result = validateEnglishOutput();
+          result = validateLocale();
         }
       }
       catch (Throwable e) {
@@ -120,11 +127,17 @@ public class SvnExecutableChecker extends ExecutableValidator {
   }
 
   @Nullable
-  private Notification validateEnglishOutput() throws SvnBindException {
+  private Notification validateLocale() throws SvnBindException {
     ProcessOutput versionOutput = getVersionClient().runCommand(false);
     Notification result = null;
 
-    if (!isEnglishOutput(versionOutput.getStdout())) {
+    Matcher matcher = INVALID_LOCALE_WARNING_PATTERN.matcher(versionOutput.getStderr());
+    if (matcher.find()) {
+      LOG.info(matcher.group());
+
+      result = new ExecutableNotValidNotification(prepareDescription(UIUtil.getHtmlBody(matcher.group()), false), NotificationType.WARNING);
+    }
+    else if (!isEnglishOutput(versionOutput.getStdout())) {
       LOG.info("\"svn --version\" command contains non-English output " + versionOutput.getStdout());
 
       result = new ExecutableNotValidNotification(prepareDescription(SvnBundle.message("non.english.locale.detected.warning"), false),

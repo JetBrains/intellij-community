@@ -36,9 +36,9 @@ public class CmdVersionClient extends BaseSvnClient implements VersionClient {
 
   @NotNull
   private static Version parseVersion(@NotNull ProcessOutput output) throws SvnBindException {
-    if (output.isTimeout() || (output.getExitCode() != 0) || !output.getStderr().isEmpty()) {
-      throw new SvnBindException(
-        String.format("Exit code: %d, Error: %s, Timeout: %b", output.getExitCode(), output.getStderr(), output.isTimeout()));
+    // TODO: This or similar check should likely go to CommandRuntime - to be applied for all commands
+    if (output.isTimeout()) {
+      throw new SvnBindException(String.format("Exit code: %d, Error: %s", output.getExitCode(), output.getStderr()));
     }
 
     return parseVersion(output.getStdout());
