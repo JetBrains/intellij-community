@@ -27,8 +27,8 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 
 public abstract class PagingTableModel extends AbstractTableModel {
-  private static final int CHUNK_COL_SIZE = 10;
-  private static final int CHUNK_ROW_SIZE = 10;
+  private static final int CHUNK_COL_SIZE = 50;
+  private static final int CHUNK_ROW_SIZE = 50;
   private static final int DEFAULT_MAX_CACHED_SIZE = 100;
   public static final String EMPTY_CELL_VALUE = "...";
 
@@ -79,11 +79,10 @@ public abstract class PagingTableModel extends AbstractTableModel {
       return EMPTY_CELL_VALUE;
     }
 
-    Object rowObject = myCachedData.get(key)[row % CHUNK_ROW_SIZE][col % CHUNK_COL_SIZE];
-    return rowObject;
+    return myCachedData.get(key)[row % CHUNK_ROW_SIZE][col % CHUNK_COL_SIZE];
   }
 
-  private String formMapKey(int row, int col) {
+  private static String formMapKey(int row, int col) {
     return "[" + getPageRowStart(row) + "," + getPageColStart(col) + "]";
   }
 
