@@ -345,6 +345,10 @@ public class UIUtil {
     return (T)component.getClientProperty(key);
   }
 
+  public static <T> void putClientProperty(@NotNull JComponent component, @NotNull Key<T> key, T value) {
+    component.putClientProperty(key, value);
+  }
+
   public static String getHtmlBody(String text) {
     int htmlIndex = 6 + text.indexOf("<html>");
     if (htmlIndex < 6) {
