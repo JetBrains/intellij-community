@@ -96,7 +96,24 @@ public final class ImmutableText extends ImmutableCharSequence implements CharAr
   }
 
   private static LeafNode createLeafNode(@NotNull char[] chars) {
-    return new LeafNode(chars);
+    if (chars.length == 0) {
+      return EMPTY_NODE;
+    }
+
+    byte[] packed = new byte[chars.length];
+    boolean success = true;
+    for (int i=0; i<chars.length;i++) {
+      char c = chars[i];
+      if (c >= 256) {
+        success = false;
+        break;
+      }
+      packed[i] = (byte)c;
+    }
+    if (success) {
+      return new Leaf8BitNode(packed);
+    }
+    return new WideLeafNode(chars);
   }
 
   /**
@@ -138,7 +155,7 @@ public final class ImmutableText extends ImmutableCharSequence implements CharAr
 
   private static final ImmutableText FALSE = valueOf("false");
 
-  private static final LeafNode EMPTY_NODE = new LeafNode(new char[0]);
+  private static final LeafNode EMPTY_NODE = new Leaf8BitNode(new byte[0]);
   private static final ImmutableText EMPTY = new ImmutableText(EMPTY_NODE);
 
   /**
@@ -361,6 +378,9 @@ public final class ImmutableText extends ImmutableCharSequence implements CharAr
       return StringFactory.createShared(data);
     }
   }
+  private abstract static class LeafNode extends Node {
+    public abstract char charAt(int index);
+  }
 
   @NotNull
   private static Node concatNodes(@NotNull Node node1, @NotNull Node node2) {
@@ -399,10 +419,10 @@ public final class ImmutableText extends ImmutableCharSequence implements CharAr
     }
   }
 
-  private static class LeafNode extends Node {
+  private static class WideLeafNode extends LeafNode {
     private final char[] _data;
 
-    LeafNode(@NotNull char[] _data) {
+    WideLeafNode(@NotNull char[] _data) {
       this._data = _data;
     }
 
@@ -435,8 +455,48 @@ public final class ImmutableText extends ImmutableCharSequence implements CharAr
       return StringFactory.createShared(_data);
     }
 
+    @Override
     public char charAt(int index) {
       return _data[index];
+    }
+  }
+
+  private static class Leaf8BitNode extends LeafNode {
+    private final byte[] data;
+    Leaf8BitNode(@NotNull byte[] data) {
+      this.data = data;
+    }
+
+    @Override
+    int nodeLength() {
+      return data.length;
+    }
+
+    @Override
+    void getChars(int start, int end, @NotNull char[] dest, int destPos) {
+      if ((start < 0) || (end > nodeLength()) || (start > end)) {
+        throw new IndexOutOfBoundsException();
+      }
+      for (int i=start;i<end;i++) {
+        byte b = data[i];
+        dest[destPos++] = (char)b;
+      }
+    }
+
+    @Override
+    Node subNode(int start, int end) {
+      if (start == 0 && end == nodeLength()) {
+        return this;
+      }
+      int length = end - start;
+      byte[] chars = new byte[length];
+      System.arraycopy(data, start, chars, 0, length);
+      return new Leaf8BitNode(chars);
+    }
+
+    @Override
+    public char charAt(int index) {
+      return (char)data[index];
     }
   }
 
