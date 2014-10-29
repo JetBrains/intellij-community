@@ -30,11 +30,11 @@ import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 10/11/12
+ * @since 11.10.2012
  */
 public class OneToManyPathsMapping extends AbstractStateStorage<String, Collection<String>> {
   public OneToManyPathsMapping(File storePath) throws IOException {
-    super(storePath, new PathStringDescriptor(), new PathCollectionExternalizer());
+    super(storePath, PathStringDescriptor.INSTANCE, new PathCollectionExternalizer());
   }
 
   @Override
