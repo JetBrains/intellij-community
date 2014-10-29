@@ -35,7 +35,7 @@ import java.util.List;
  */
 public class ArtifactOutputToSourceMapping extends AbstractStateStorage<String, List<ArtifactOutputToSourceMapping.SourcePathAndRootIndex>> {
   public ArtifactOutputToSourceMapping(File storePath) throws IOException {
-    super(storePath, new PathStringDescriptor(), new SourcePathListExternalizer());
+    super(storePath, PathStringDescriptor.INSTANCE, new SourcePathListExternalizer());
   }
 
   @Override
