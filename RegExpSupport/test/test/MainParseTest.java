@@ -16,6 +16,8 @@
 package test;
 
 import org.intellij.lang.regexp.RegExpFileType;
+import org.intellij.lang.regexp.RegExpLanguageHost;
+import org.intellij.lang.regexp.RegExpLanguageHosts;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.input.SAXBuilder;
@@ -41,12 +43,14 @@ public class MainParseTest extends BaseParseTestcase {
     boolean showWarnings = true;
     boolean showInfo = false;
     Result expectedResult;
+    String regExpHost = null;
 
-    Test(String pattern, Result result, boolean warn, boolean info) {
+    Test(String pattern, Result result, boolean warn, boolean info, String host) {
       this.pattern = pattern;
       expectedResult = result;
       showWarnings = warn;
       showInfo = info;
+      regExpHost = host;
     }
   }
 
@@ -72,10 +76,11 @@ public class MainParseTest extends BaseParseTestcase {
       final Result result = Result.valueOf((String)XPath.selectSingleNode(element, "string(expected)"));
       final boolean warn = !"false".equals(element.getAttributeValue("warning"));
       final boolean info = "true".equals(element.getAttributeValue("info"));
+      final String host = element.getAttributeValue("host");
 
       final String pattern = (String)XPath.selectSingleNode(element, "string(pattern)");
-      myMap.put(name, new Test(pattern, result, warn, info));
-      if (!"false".equals(element.getAttributeValue("verify"))) {
+      myMap.put(name, new Test(pattern, result, warn, info, host));
+      if (!"false".equals(element.getAttributeValue("verify")) && host == null) {
         try {
           Pattern.compile(pattern);
           if (result == Result.ERR) {
@@ -172,8 +177,14 @@ public class MainParseTest extends BaseParseTestcase {
 
       final MainParseTest.Test test = myMap.get(name);
       try {
+        if (test.regExpHost != null) {
+          final Class<RegExpLanguageHost> aClass = (Class<RegExpLanguageHost>)Class.forName(test.regExpHost);
+          final RegExpLanguageHost host = aClass.newInstance();
+          RegExpLanguageHosts.setRegExpHost(host);
+        }
         myFixture.configureByText(RegExpFileType.INSTANCE, test.pattern);
         myFixture.testHighlighting(test.showWarnings, true, test.showInfo);
+        RegExpLanguageHosts.setRegExpHost(null);
 
         if (test.expectedResult == Result.ERR) {
           System.out.println("  FAILED. Expression incorrectly parsed OK: " + test.pattern);
@@ -188,7 +199,7 @@ public class MainParseTest extends BaseParseTestcase {
           System.out.println("  OK");
         }
         else {
-          e.printStackTrace();
+          e.printStackTrace(System.out);
           System.out.println("  FAILED. Expression = " + test.pattern);
           if (myOut.size() > 0) {
             String line;
