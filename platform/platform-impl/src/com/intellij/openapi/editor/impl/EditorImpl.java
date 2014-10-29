@@ -303,7 +303,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private final TIntFunction myLineNumberAreaWidthFunction = new TIntFunction() {
     @Override
     public int execute(int lineNumber) {
-      return getFontMetrics(Font.PLAIN).stringWidth(Integer.toString(lineNumber + 1)) + 6;
+      return getFontMetrics(Font.PLAIN).stringWidth(Integer.toString(lineNumber + 1)) + 5;
     }
   };
 
@@ -6771,10 +6771,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           g.setColor(ButtonlessScrollBarUI.getTrackBackground());
           g.fillRect(0, 0, width, height);
 
-          int shortner = 0;
-          if (myGutterComponent.isFoldingOutlineShown()) {
-            shortner = myGutterComponent.getFoldingAreaWidth() / 2;
-          }
+          int shortner = myGutterComponent.getFoldingAreaWidth() / 2;
 
           g.setColor(myGutterComponent.getBackground());
           g.fillRect(0, 0, width - shortner, height);
