@@ -41,7 +41,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -50,11 +53,15 @@ import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.impl.artifacts.ArtifactBySourceFileFinder;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.xmlb.Accessor;
+import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
+import com.intellij.util.xmlb.XmlSerializer;
 import org.apache.oro.text.regex.*;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.compiler.JavaCompilers;
 import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
 import org.jetbrains.jps.model.java.impl.compiler.ProcessorConfigProfileImpl;
 import org.jetbrains.jps.model.serialization.java.compiler.AnnotationProcessorProfileSerializer;
@@ -74,8 +81,8 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.CompilerConfiguration");
   @NonNls public static final String TESTS_EXTERNAL_COMPILER_HOME_PROPERTY_NAME = "tests.external.compiler.home";
 
-  @SuppressWarnings({"WeakerAccess"}) public String DEFAULT_COMPILER;
-  @NotNull private BackendCompiler myDefaultJavaCompiler;
+  private BackendCompiler myDefaultJavaCompiler;
+  private State myState = new State();
 
   // extensions of the files considered as resource files
   private final List<Pattern> myRegexpResourcePatterns = new ArrayList<Pattern>();
@@ -124,16 +131,24 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     });
   }
 
+  private static class State {
+    public String DEFAULT_COMPILER = JavaCompilers.JAVAC_ID;
+
+    private boolean compilerWasSpecified;
+  }
+
   @Override
   public Element getState() {
     Element state = new Element("state");
-    try {
-      DefaultJDOMExternalizer.writeExternal(this, state);
-    }
-    catch (WriteExternalException e) {
-      LOG.error(e);
-      return null;
-    }
+    XmlSerializer.serializeInto(myState, state, new SkipDefaultValuesSerializationFilters() {
+      @Override
+      protected boolean accepts(@NotNull Accessor accessor, @NotNull Object bean, @Nullable Object beanValue) {
+        if (myState.compilerWasSpecified && "DEFAULT_COMPILER".equals(accessor.getName())) {
+          return true;
+        }
+        return super.accepts(accessor, bean, beanValue);
+      }
+    });
 
     if (!myAddNotNullAssertions) {
       addChild(state, JpsJavaCompilerConfigurationSerializer.ADD_NOTNULL_ASSERTIONS).setAttribute(
@@ -185,12 +200,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
 
   @Override
   public void loadState(Element state) {
-    try {
-      readExternal(state);
-    }
-    catch (InvalidDataException e) {
-      LOG.error(e);
-    }
+    readExternal(state);
   }
 
   public void setProjectBytecodeTarget(@Nullable String level) {
@@ -326,15 +336,15 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     for (FileType type : types) {
       compilerManager.addCompilableFileType(type);
     }
-    
+
     myDefaultJavaCompiler = JAVAC_EXTERNAL_BACKEND;
     for (BackendCompiler compiler : myRegisteredCompilers) {
-      if (compiler.getId().equals(DEFAULT_COMPILER)) {
+      if (compiler.getId().equals(myState.DEFAULT_COMPILER)) {
         myDefaultJavaCompiler = compiler;
         break;
       }
     }
-    DEFAULT_COMPILER = myDefaultJavaCompiler.getId();
+    myState.DEFAULT_COMPILER = myDefaultJavaCompiler.getId();
   }
 
   public Collection<BackendCompiler> getRegisteredJavaCompilers() {
@@ -630,8 +640,12 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   }
 
 
-  public void readExternal(Element parentNode) throws InvalidDataException {
-    DefaultJDOMExternalizer.readExternal(this, parentNode);
+  public void readExternal(Element parentNode)  {
+    myState = XmlSerializer.deserialize(parentNode, State.class);
+    Element option = parentNode.getChild("option");
+    if (!myProject.isDefault()) {
+      myState.compilerWasSpecified = option != null && "DEFAULT_COMPILER".equals(option.getAttributeValue("name"));
+    }
 
     final Element notNullAssertions = parentNode.getChild(JpsJavaCompilerConfigurationSerializer.ADD_NOTNULL_ASSERTIONS);
     if (notNullAssertions != null) {
@@ -670,7 +684,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
       }
     }
     catch (MalformedPatternException e) {
-      throw new InvalidDataException(e);
+      LOG.error(e);
     }
 
 
@@ -822,7 +836,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
    */
   public void setDefaultCompiler(BackendCompiler defaultCompiler) {
     myDefaultJavaCompiler = defaultCompiler;
-    DEFAULT_COMPILER = defaultCompiler.getId();
+    myState.DEFAULT_COMPILER = defaultCompiler.getId();
   }
 
   public void convertPatterns() {
@@ -834,7 +848,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
       try {
         ok = doConvertPatterns();
       }
-      catch (MalformedPatternException e) {
+      catch (MalformedPatternException ignored) {
         ok = false;
       }
       if (!ok) {
