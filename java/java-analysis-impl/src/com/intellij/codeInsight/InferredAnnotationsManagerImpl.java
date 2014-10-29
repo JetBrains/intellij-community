@@ -76,7 +76,7 @@ public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
       return true;
     }
     if (AnnotationUtil.NOT_NULL.equals(annotationFQN) && owner instanceof PsiParameter && owner.getParent() != null) {
-      if (AnnotationUtil.isAnnotated(owner, NullableNotNullManager.getInstance(owner.getProject()).getNullables())) {
+      if (AnnotationUtil.isAnnotated(owner, NullableNotNullManager.getInstance(owner.getProject()).getNullables(), false, false)) {
         return true;
       }
       if (hasHardcodedContracts(owner.getParent().getParent())) {
