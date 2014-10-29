@@ -26,7 +26,10 @@ import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
@@ -105,12 +108,20 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
     myApplication = application;
     myProjectFileIndex = projectFileIndex;
     if (ENABLED) {
-      File indexFile = new File(getStorageDirectory(), "index");
       File dataFile = new File(getStorageDirectory(), "data");
       fileIsResolved = ConcurrentBitSet.readFrom(new File(getStorageDirectory(), "bitSet"));
 
-      final boolean initial = !indexFile.exists() || !dataFile.exists();
-      storage = new PersistentIntList(indexFile, dataFile, initial);
+      int maxId = FSRecords.getMaxId();
+      PersistentIntList list = new PersistentIntList(dataFile, dataFile.exists() ? 0 : maxId);
+      if (list.getSize() == maxId) {
+        storage = list;
+      }
+      else {
+        // just to be safe, re-resolve all if VFS files count changes since last restart
+        list.dispose();
+        storage = new PersistentIntList(dataFile, maxId);
+        fileIsResolved.clear();
+      }
       Disposer.register(this, storage);
       if (!application.isUnitTestMode()) {
         startupManager.runWhenProjectIsInitialized(new Runnable() {
@@ -716,10 +727,8 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
     if (myProject.isDisposed()) throw new ProcessCanceledException();
     if (fileCount.incrementAndGet() % 100 == 0) {
       PsiManager.getInstance(myProject).dropResolveCaches();
-      synchronized (storage) {
-        storage.flush();
-      }
       try {
+        storage.flush();
         log.flush();
       }
       catch (IOException e) {
