@@ -1,6 +1,5 @@
 
 import sys
-from import_hook import import_hook_manager
 
 backends = {'tk': 'TkAgg',
             'gtk': 'GTKAgg',
@@ -87,10 +86,6 @@ def activate_matplotlib(interpreter):
     return activate_matplotlib_inner
 
 
-def init_matplotlib(interpreter):
-    import_hook_manager.add_module_name("matplotlib", activate_matplotlib(interpreter))
-
-
 def flag_calls(func):
     """Wrap a function to detect and flag when it gets called.
 
@@ -127,17 +122,9 @@ def activate_pylab():
     pylab.draw_if_interactive = flag_calls(pylab.draw_if_interactive)
 
 
-def init_pylab():
-    import_hook_manager.add_module_name("pylab", activate_pylab)
-
-
 def activate_pyplot():
     pyplot = sys.modules['matplotlib.pyplot']
     pyplot.show._needmain = False
     # We need to detect at runtime whether show() is called by the user.
     # For this, we wrap it into a decorator which adds a 'called' flag.
     pyplot.draw_if_interactive = flag_calls(pyplot.draw_if_interactive)
-
-
-def init_pyplot():
-    import_hook_manager.add_module_name("pyplot", activate_pyplot)
