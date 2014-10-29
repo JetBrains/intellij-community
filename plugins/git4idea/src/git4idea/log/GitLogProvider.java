@@ -15,6 +15,7 @@
  */
 package git4idea.log;
 
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -26,8 +27,11 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.OpenTHashSet;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogSorter;
-import com.intellij.vcs.log.impl.LogDataImpl;
+import com.intellij.vcs.log.graph.GraphColorManager;
+import com.intellij.vcs.log.graph.GraphCommit;
+import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl;
 import com.intellij.vcs.log.impl.HashImpl;
+import com.intellij.vcs.log.impl.LogDataImpl;
 import git4idea.*;
 import git4idea.branch.GitBranchUtil;
 import git4idea.config.GitVersionSpecialty;
@@ -50,7 +54,7 @@ public class GitLogProvider implements VcsLogProvider {
       return ref.getType() == GitRefManager.TAG ? ref.getName() : null;
     }
   };
-  private static final TObjectHashingStrategy<VcsRef> REF_ONLY_NAME_STRATEGY = new TObjectHashingStrategy<VcsRef>() {
+  public static final TObjectHashingStrategy<VcsRef> REF_ONLY_NAME_STRATEGY = new TObjectHashingStrategy<VcsRef>() {
     @Override
     public int computeHashCode(@NotNull VcsRef ref) {
       return ref.getName().hashCode();
@@ -96,13 +100,16 @@ public class GitLogProvider implements VcsLogProvider {
 
     boolean refresh = requirements instanceof VcsLogProviderRequirementsEx && ((VcsLogProviderRequirementsEx)requirements).isRefresh();
 
-    DetailedLogData data = GitHistoryUtils.loadMetadata(myProject, root, refresh, params);
+    DetailedLogData data = GitHistoryUtils.loadMetadata(myProject, root, true, params);
 
     Set<VcsRef> safeRefs = data.getRefs();
     Set<VcsRef> allRefs = new OpenTHashSet<VcsRef>(safeRefs, REF_ONLY_NAME_STRATEGY);
-    addNewElements(allRefs, readBranches(repository));
+    Set<VcsRef> branches = readBranches(repository);
+    addNewElements(allRefs, branches);
 
     Collection<VcsCommitMetadata> allDetails;
+    Set<String> currentTagNames = null;
+    DetailedLogData commitsFromTags = null;
     if (!refresh) {
       allDetails = data.getCommits();
     }
@@ -111,17 +118,17 @@ public class GitLogProvider implements VcsLogProvider {
       // on init: just ignore such tagged-only branches. The price for speed-up.
       VcsLogProviderRequirementsEx rex = (VcsLogProviderRequirementsEx)requirements;
 
-      Set<String> currentTags = readCurrentTagNames(root);
-      addOldStillExistingTags(allRefs, currentTags, rex.getPreviousRefs());
+      currentTagNames = readCurrentTagNames(root);
+      addOldStillExistingTags(allRefs, currentTagNames, rex.getPreviousRefs());
 
       allDetails = ContainerUtil.newHashSet(data.getCommits());
 
       Set<String> previousTags = new HashSet<String>(ContainerUtil.mapNotNull(rex.getPreviousRefs(), GET_TAG_NAME));
       Set<String> safeTags = new HashSet<String>(ContainerUtil.mapNotNull(safeRefs, GET_TAG_NAME));
-      Set<String> newUnmatchedTags = remove(currentTags, previousTags, safeTags);
+      Set<String> newUnmatchedTags = remove(currentTagNames, previousTags, safeTags);
 
       if (!newUnmatchedTags.isEmpty()) {
-        DetailedLogData commitsFromTags = loadSomeCommitsOnTaggedBranches(root, commitCount, newUnmatchedTags);
+        commitsFromTags = loadSomeCommitsOnTaggedBranches(root, commitCount, newUnmatchedTags);
         addNewElements(allDetails, commitsFromTags.getCommits());
         addNewElements(allRefs, commitsFromTags.getRefs());
       }
@@ -130,7 +137,118 @@ public class GitLogProvider implements VcsLogProvider {
     List<VcsCommitMetadata> sortedCommits = VcsLogSorter.sortByDateTopoOrder(allDetails);
     sortedCommits = sortedCommits.subList(0, Math.min(sortedCommits.size(), requirements.getCommitCount()));
 
+    if (LOG.isDebugEnabled()) {
+      validateDataAndReportError(root, allRefs, sortedCommits, data, branches, currentTagNames, commitsFromTags);
+    }
+
     return new LogDataImpl(allRefs, sortedCommits);
+  }
+
+  private static void validateDataAndReportError(final VirtualFile root,
+                                                 final Set<VcsRef> allRefs,
+                                                 final List<VcsCommitMetadata> sortedCommits,
+                                                 final DetailedLogData firstBlockSyncData,
+                                                 final Set<VcsRef> manuallyReadBranches,
+                                                 @Nullable final Set<String> currentTagNames,
+                                                 @Nullable final DetailedLogData commitsFromTags) {
+    final Set<Hash> refs = ContainerUtil.map2Set(allRefs, new Function<VcsRef, Hash>() {
+      @Override
+      public Hash fun(VcsRef ref) {
+        return ref.getCommitHash();
+      }
+    });
+
+    PermanentGraphImpl.newInstance(sortedCommits, new GraphColorManager<Hash>() {
+      @Override
+      public int getColorOfBranch(Hash headCommit) {
+        return 0;
+      }
+
+      @Override
+      public int getColorOfFragment(Hash headCommit, int magicIndex) {
+        return 0;
+      }
+
+      @Override
+      public int compareHeads(Hash head1, Hash head2) {
+        if (!refs.contains(head1) || !refs.contains(head2)) {
+          LOG.error("GitLogProvider returned inconsistent data",
+                    new Attachment("error-details.txt", printErrorDetails(root, allRefs, sortedCommits,
+                                                                          firstBlockSyncData, manuallyReadBranches,
+                                                                          currentTagNames, commitsFromTags)));
+        }
+        return 0;
+      }
+    }, refs);
+  }
+
+  @SuppressWarnings("StringConcatenationInsideStringBufferAppend")
+  private static String printErrorDetails(VirtualFile root,
+                                          final Set<VcsRef> allRefs,
+                                          final List<VcsCommitMetadata> sortedCommits,
+                                          final DetailedLogData firstBlockSyncData,
+                                          final Set<VcsRef> manuallyReadBranches,
+                                          @Nullable final Set<String> currentTagNames,
+                                          @Nullable final DetailedLogData commitsFromTags) {
+
+    StringBuilder sb = new StringBuilder();
+    sb.append("[" + root.getName() + "]\n");
+    sb.append("First block data from Git:\n");
+    sb.append(printLogData(firstBlockSyncData));
+    sb.append("\n\nManually read refs:\n");
+    sb.append(printRefs(manuallyReadBranches));
+    sb.append("\n\nCurrent tag names:\n");
+    if (currentTagNames != null) {
+      sb.append(StringUtil.join(currentTagNames, ", "));
+      if (commitsFromTags != null) {
+        sb.append(printLogData(commitsFromTags));
+      }
+      else {
+        sb.append("\n\nCommits from new tags were not read.\n");
+      }
+    }
+    else {
+      sb.append("\n\nCurrent tags were not read\n");
+    }
+
+    sb.append("\n\nResult:\n");
+    sb.append("\nCommits (last 100): \n");
+    sb.append(printCommits(sortedCommits));
+    sb.append("\nAll refs:\n");
+    sb.append(printRefs(allRefs));
+    return sb.toString();
+  }
+
+  private static String printLogData(DetailedLogData firstBlockSyncData) {
+    StringBuilder sb = new StringBuilder();
+    sb.append("Last 100 commits:\n");
+    sb.append(printCommits(firstBlockSyncData.getCommits()));
+    sb.append("\nRefs:\n");
+    sb.append(printRefs(firstBlockSyncData.getRefs()));
+    return sb.toString();
+  }
+
+  private static String printCommits(List<VcsCommitMetadata> commits) {
+    StringBuilder sb = new StringBuilder();
+    for (int i = 0; i < Math.min(commits.size(), 100); i++) {
+      GraphCommit<Hash> commit = commits.get(i);
+      sb.append(String.format("%s -> %s\n", commit.getId().toShortString(), StringUtil.join(commit.getParents(), new Function<Hash, String>() {
+                 @Override
+                 public String fun(Hash hash) {
+                   return hash.toShortString();
+                 }
+               }, ", ")));
+    }
+    return sb.toString();
+  }
+
+  private static String printRefs(Set<VcsRef> refs) {
+    return StringUtil.join(refs, new Function<VcsRef, String>() {
+      @Override
+      public String fun(VcsRef ref) {
+        return ref.getCommitHash().toShortString() + " : " + ref.getName();
+      }
+    }, "\n");
   }
 
   private static void addOldStillExistingTags(@NotNull Set<VcsRef> allRefs,
@@ -344,6 +462,15 @@ public class GitLogProvider implements VcsLogProvider {
   @Override
   public Collection<String> getContainingBranches(@NotNull VirtualFile root, @NotNull Hash commitHash) throws VcsException {
     return GitBranchUtil.getBranches(myProject, root, true, true, commitHash.asString());
+  }
+
+  @Nullable
+  @Override
+  public <T> T getPropertyValue(VcsLogProperties.VcsLogProperty<T> property) {
+    if (property == VcsLogProperties.LIGHTWEIGHT_BRANCHES) {
+      return (T)Boolean.TRUE;
+    }
+    return null;
   }
 
   private static String prepareParameter(String paramName, String value) {

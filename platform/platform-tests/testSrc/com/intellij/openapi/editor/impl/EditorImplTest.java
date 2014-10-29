@@ -18,6 +18,7 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.testFramework.EditorTestUtil;
@@ -101,6 +102,14 @@ public class EditorImplTest extends AbstractEditorTest {
       document.setInBulkUpdate(false);
     }
     checkResultByText("something\telse");
+  }
+
+  public void testPositionCalculationForOneCharacterFolds() throws Exception {
+    init("something");
+    addCollapsedFoldRegion(1, 2, "...");
+    addCollapsedFoldRegion(3, 4, "...");
+
+    assertEquals(new VisualPosition(0, 5), myEditor.logicalToVisualPosition(new LogicalPosition(0, 3)));
   }
 
   private void init(String text) throws IOException {

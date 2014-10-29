@@ -30,4 +30,5 @@ public class BytecodeToSourceMappingTest extends SingleClassesTestBase {
   }
 
   @Test public void testSimpleBytecodeMapping() { doTest("pkg/TestClassSimpleBytecodeMapping"); }
+  @Test public void testSynchronizedMapping() { doTest("pkg/TestSynchronizedMapping"); }
 }

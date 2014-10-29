@@ -3,11 +3,9 @@ from __future__ import nested_scopes
 import fnmatch
 import os.path
 from pydev_runfiles_coverage import StartCoverageSupport
-import pydev_runfiles_unittest
 from pydevd_constants import * #@UnusedWildImport
 import re
 import time
-import unittest
 
 
 #=======================================================================================================================
@@ -558,6 +556,7 @@ class PydevTestRunner(object):
 
 
     def _decorate_test_suite(self, suite, pyfile, module_name):
+        import unittest
         if isinstance(suite, unittest.TestSuite):
             add = False
             suite.__pydev_pyfile__ = pyfile
@@ -582,6 +581,8 @@ class PydevTestRunner(object):
     def find_tests_from_modules(self, file_and_modules_and_module_name):
         """ returns the unittests given a list of modules """
         #Use our own suite!
+        import pydev_runfiles_unittest
+        import unittest
         unittest.TestLoader.suiteClass = pydev_runfiles_unittest.PydevTestSuite
         loader = unittest.TestLoader()
 
@@ -628,6 +629,7 @@ class PydevTestRunner(object):
     def filter_tests(self, test_objs, internal_call=False):
         """ based on a filter name, only return those tests that have
             the test case names that match """
+        import unittest
         if not internal_call:
             if not self.configuration.include_tests and not self.tests and not self.configuration.exclude_tests:
                 #No need to filter if we have nothing to filter!
@@ -692,6 +694,7 @@ class PydevTestRunner(object):
 
     def iter_tests(self, test_objs):
         #Note: not using yield because of Jython 2.1.
+        import unittest
         tests = []
         for test_obj in test_objs:
             if isinstance(test_obj, unittest.TestSuite):
@@ -762,6 +765,7 @@ class PydevTestRunner(object):
         all_tests = self.find_tests_from_modules(file_and_modules_and_module_name)
         all_tests = self.filter_tests(all_tests)
 
+        import pydev_runfiles_unittest
         test_suite = pydev_runfiles_unittest.PydevTestSuite(all_tests)
         import pydev_runfiles_xml_rpc
         pydev_runfiles_xml_rpc.notifyTestsCollected(test_suite.countTestCases())

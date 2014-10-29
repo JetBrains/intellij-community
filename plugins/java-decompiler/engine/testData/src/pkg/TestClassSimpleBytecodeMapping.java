@@ -18,6 +18,8 @@ public class TestClassSimpleBytecodeMapping {
       }
     });
 
+    test2("1");
+
     if(Math.random() > 0) {
       System.out.println("0");
       return 0;
@@ -27,7 +29,29 @@ public class TestClassSimpleBytecodeMapping {
     }
   }
 
+  public void test2(String a) {
+    try {
+      Integer.parseInt(a);
+    } catch (Exception e) {
+      System.out.println(e);
+    } finally {
+      System.out.println("Finally");
+    }
+  }
+
+  public class InnerClass {
+    public void print() {
+      System.out.println("Inner");
+    }
+  }
+
   void run(Runnable r) {
     r.run();
+  }
+
+  public class InnerClass2 {
+    public void print() {
+      System.out.println("Inner2");
+    }
   }
 }

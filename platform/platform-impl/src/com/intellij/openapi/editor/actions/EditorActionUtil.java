@@ -603,23 +603,35 @@ public class EditorActionUtil {
                                           : caretModel.getLogicalPosition();
 
     int offset = caretModel.getOffset();
-    CharSequence text = document.getCharsSequence();
     if (offset == document.getTextLength()) {
       return;
     }
-    int newOffset = offset + 1;
-    int lineNumber = caretModel.getLogicalPosition().line;
-    if (lineNumber >= document.getLineCount()) return;
-    int maxOffset = document.getLineEndOffset(lineNumber);
-    if (newOffset > maxOffset) {
-      if (lineNumber + 1 >= document.getLineCount()) {
-        return;
-      }
-      maxOffset = document.getLineEndOffset(lineNumber + 1);
+
+    int newOffset;
+
+    FoldRegion currentFoldRegion = editor.getFoldingModel().getCollapsedRegionAtOffset(offset);
+    if (currentFoldRegion != null) {
+      newOffset = currentFoldRegion.getEndOffset();
     }
-    for (; newOffset < maxOffset; newOffset++) {
-      if (isWordOrLexemeStart(editor, newOffset, camel)) {
-        break;
+    else {
+      newOffset = offset + 1;
+      int lineNumber = caretModel.getLogicalPosition().line;
+      if (lineNumber >= document.getLineCount()) return;
+      int maxOffset = document.getLineEndOffset(lineNumber);
+      if (newOffset > maxOffset) {
+        if (lineNumber + 1 >= document.getLineCount()) {
+          return;
+        }
+        maxOffset = document.getLineEndOffset(lineNumber + 1);
+      }
+      for (; newOffset < maxOffset; newOffset++) {
+        if (isWordOrLexemeStart(editor, newOffset, camel)) {
+          break;
+        }
+      }
+      FoldRegion foldRegion = editor.getFoldingModel().getCollapsedRegionAtOffset(newOffset);
+      if (foldRegion != null) {
+        newOffset = foldRegion.getStartOffset();
       }
     }
     caretModel.moveToOffset(newOffset);
@@ -687,13 +699,25 @@ public class EditorActionUtil {
     int offset = editor.getCaretModel().getOffset();
     if (offset == 0) return;
 
-    int lineNumber = editor.getCaretModel().getLogicalPosition().line;
-    CharSequence text = document.getCharsSequence();
-    int newOffset = offset - 1;
-    int minOffset = lineNumber > 0 ? document.getLineEndOffset(lineNumber - 1) : 0;
-    for (; newOffset > minOffset; newOffset--) {
-      if (isWordOrLexemeStart(editor, newOffset, camel)) break;
+    int newOffset;
+
+    FoldRegion currentFoldRegion = editor.getFoldingModel().getCollapsedRegionAtOffset(offset - 1);
+    if (currentFoldRegion != null) {
+      newOffset = currentFoldRegion.getStartOffset();
     }
+    else {
+      int lineNumber = editor.getCaretModel().getLogicalPosition().line;
+      newOffset = offset - 1;
+      int minOffset = lineNumber > 0 ? document.getLineEndOffset(lineNumber - 1) : 0;
+      for (; newOffset > minOffset; newOffset--) {
+        if (isWordOrLexemeStart(editor, newOffset, camel)) break;
+      }
+      FoldRegion foldRegion = editor.getFoldingModel().getCollapsedRegionAtOffset(newOffset);
+      if (foldRegion != null && newOffset > foldRegion.getStartOffset()) {
+        newOffset = foldRegion.getEndOffset();
+      }
+    }
+
     editor.getCaretModel().moveToOffset(newOffset);
     EditorModificationUtil.scrollToCaret(editor);
 

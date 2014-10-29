@@ -97,7 +97,7 @@ public class EditorOptionsTopHitProvider extends OptionsTopHitProvider {
     return new DaemonCodeAnalyzerOptionDescription(field, option, "editor.preferences.appearance");
   }
   
-  public static class Ex extends OptionsTopHitProvider implements OptionsTopHitProvider.Optional {
+  public static class Ex extends OptionsTopHitProvider implements CoveredByToggleActions {
     private static final Collection<BooleanOptionDescription> ourOptions = ContainerUtil.immutableList(
       editorApp("Appearance: " + messageApp("checkbox.show.line.numbers"), "ARE_LINE_NUMBERS_SHOWN")
     );

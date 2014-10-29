@@ -43,7 +43,7 @@ abstract class FoldRegionsTree {
 
   //sorted using RangeMarker.BY_START_OFFSET comparator
   //i.e., first by start offset, then, if start offsets are equal, by end offset
-  private ArrayList<FoldRegion> myRegions = ContainerUtil.newArrayList();
+  private List<FoldRegion> myRegions = ContainerUtil.newArrayList();
 
   private static final Comparator<FoldRegion> BY_END_OFFSET = new Comparator<FoldRegion>() {
     @Override
@@ -58,11 +58,7 @@ abstract class FoldRegionsTree {
   private static final Comparator<? super FoldRegion> BY_END_OFFSET_REVERSE = Collections.reverseOrder(BY_END_OFFSET);
 
   void clear() {
-    myCachedVisible = null;
-    myCachedTopLevelRegions = null;
-    myCachedEndOffsets = null;
-    myCachedStartOffsets = null;
-    myCachedFoldedLines = null;
+    clearCachedValues();
 
     if (myRegions != null) {
       for (FoldRegion region : myRegions) {
@@ -71,6 +67,14 @@ abstract class FoldRegionsTree {
     }
 
     myRegions = new ArrayList<FoldRegion>();
+  }
+
+  void clearCachedValues() {
+    myCachedVisible = null;
+    myCachedTopLevelRegions = null;
+    myCachedEndOffsets = null;
+    myCachedStartOffsets = null;
+    myCachedFoldedLines = null;
   }
 
   private boolean isFoldingEnabledAndUpToDate() {
@@ -82,9 +86,9 @@ abstract class FoldRegionsTree {
   protected abstract boolean isBatchFoldingProcessing();
 
   void rebuild() {
-    ArrayList<FoldRegion> topLevels = new ArrayList<FoldRegion>(myRegions.size() / 2);
-    ArrayList<FoldRegion> visible = new ArrayList<FoldRegion>(myRegions.size());
-    ArrayList<FoldRegion> allValid = new ArrayList<FoldRegion>(myRegions.size());
+    List<FoldRegion> topLevels = new ArrayList<FoldRegion>(myRegions.size() / 2);
+    List<FoldRegion> visible = new ArrayList<FoldRegion>(myRegions.size());
+    List<FoldRegion> allValid = new ArrayList<FoldRegion>(myRegions.size());
     FoldRegion[] regions = toFoldArray(myRegions);
     FoldRegion currentCollapsed = null;
     for (FoldRegion region : regions) {
@@ -178,7 +182,7 @@ abstract class FoldRegionsTree {
     }
   }
 
-  boolean addRegion(FoldRegion range) {
+  boolean addRegion(@NotNull FoldRegion range) {
     // During batchProcessing elements are inserted in ascending order,
     // binary search find acceptable insertion place first time
     boolean canUseCachedValue = false;
@@ -317,7 +321,7 @@ abstract class FoldRegionsTree {
     return toFoldArray(myRegions);
   }
 
-  void removeRegion(FoldRegion range) {
+  void removeRegion(@NotNull FoldRegion range) {
     myRegions.remove(range);
   }
 
@@ -331,6 +335,7 @@ abstract class FoldRegionsTree {
     int[] endOffsets = myCachedEndOffsets;
     if (!isFoldingEnabledAndUpToDate() || endOffsets == null) return -1;
 
+    offset--; // end offsets are decremented in cache
     int start = 0;
     int end = endOffsets.length - 1;
 

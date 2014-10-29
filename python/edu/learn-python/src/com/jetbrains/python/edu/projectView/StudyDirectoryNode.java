@@ -68,11 +68,11 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
       setStudyAttributes(lesson, data, lesson.getName());
     }
 
-    if (valueName.contains(Course.PLAYGROUND_DIR)) {
+    if (valueName.contains(Course.SANDBOX_DIR)) {
       if (myValue.getParent() != null) {
-        if (!myValue.getParent().getName().contains(Course.PLAYGROUND_DIR)) {
-          data.setPresentableText(Course.PLAYGROUND_DIR);
-          data.setIcon(StudyIcons.Playground);
+        if (!myValue.getParent().getName().contains(Course.SANDBOX_DIR)) {
+          data.setPresentableText(Course.SANDBOX_DIR);
+          data.setIcon(StudyIcons.Sandbox);
           return;
         }
       }
@@ -87,7 +87,7 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
       String logicalName = name.contains(Lesson.LESSON_DIR) ? Lesson.LESSON_DIR : Task.TASK_DIR;
       return StudyUtils.getIndex(name, logicalName) + 1;
     }
-    return name.contains(Course.PLAYGROUND_DIR) ? 0 : 3;
+    return name.contains(Course.SANDBOX_DIR) ? 0 : 3;
   }
 
   private static void setStudyAttributes(Stateful stateful, PresentationData data, String additionalName) {

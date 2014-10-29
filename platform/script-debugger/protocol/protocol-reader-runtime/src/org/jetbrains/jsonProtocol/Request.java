@@ -6,6 +6,7 @@ public interface Request {
   @NotNull
   CharSequence toJson();
 
+  @NotNull
   String getMethodName();
 
   void finalize(int id);

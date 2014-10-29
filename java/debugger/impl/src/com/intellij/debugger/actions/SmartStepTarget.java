@@ -27,7 +27,7 @@ public abstract class SmartStepTarget {
   private final PsiElement myHighlightElement;
   private final String myLabel;
   private final boolean myNeedBreakpointRequest;
-  private final Range<Integer> myExpressionLines;
+  private Range<Integer> myExpressionLines;
 
   protected SmartStepTarget(@Nullable String label, @Nullable PsiElement highlightElement, boolean needBreakpointRequest, Range<Integer> expressionLines) {
     myHighlightElement = highlightElement;
@@ -52,5 +52,9 @@ public abstract class SmartStepTarget {
 
   public Range<Integer> getCallingExpressionLines() {
     return myExpressionLines;
+  }
+
+  public void setCallingExpressionLines(Range<Integer> expressionLines) {
+    myExpressionLines = expressionLines;
   }
 }

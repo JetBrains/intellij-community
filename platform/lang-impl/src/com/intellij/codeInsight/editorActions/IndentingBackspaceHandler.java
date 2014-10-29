@@ -111,7 +111,7 @@ public class IndentingBackspaceHandler extends BackspaceHandlerDelegate {
 
     PsiDocumentManager.getInstance(project).commitDocument(document);
     CodeStyleFacade codeStyleFacade = CodeStyleFacade.getInstance(project);
-    String indent = codeStyleFacade.getLineIndent(document, offset);
+    String indent = codeStyleFacade.getLineIndent(document, lineStartOffset);
     if (indent == null) {
       return false;
     }

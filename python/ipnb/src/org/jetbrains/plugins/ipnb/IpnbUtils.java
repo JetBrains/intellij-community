@@ -11,7 +11,6 @@ import net.sourceforge.jeuclid.context.LayoutContextImpl;
 import net.sourceforge.jeuclid.context.Parameter;
 import net.sourceforge.jeuclid.converter.Converter;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.ipnb.editor.panels.IpnbFilePanel;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbTexPackageDefinitions;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
@@ -26,8 +25,6 @@ import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
 import javax.xml.parsers.ParserConfigurationException;
 import java.awt.*;
-import java.awt.event.HierarchyBoundsAdapter;
-import java.awt.event.HierarchyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
@@ -72,7 +69,7 @@ public class IpnbUtils {
     return ourMarkdownProcessor.markdown(StringUtil.join(lines, "\n"));
   }
 
-  public static void addLatexToPanel(@NotNull final String source, @NotNull final JPanel panel) {
+  public static JEditorPane createLatexPane(@NotNull final String source) {
     final JEditorPane editorPane = new JEditorPane();
     editorPane.setContentType(new HTMLEditorKit().getContentType());
     editorPane.setEditorKit(new HTMLEditorKit());
@@ -87,43 +84,20 @@ public class IpnbUtils {
     editorPane.setEditable(false);
 
     final String html = convertToHtml(source, editorPane);
-
     editorPane.setText("<html><body>" + html + "</body></html>");
 
     editorPane.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent e) {
-        final MouseEvent parentEvent = SwingUtilities.convertMouseEvent(editorPane, e, panel);
-        panel.dispatchEvent(parentEvent);
+        final Container parent = editorPane.getParent();
+        final MouseEvent parentEvent = SwingUtilities.convertMouseEvent(editorPane, e, parent);
+        parent.dispatchEvent(parentEvent);
       }
     });
     editorPane.addHyperlinkListener(new BrowserHyperlinkListener());
     //TODO: jump to the section (see User Interface#Utilities)
 
-    editorPane.addHierarchyBoundsListener(new IpnbHierarchyBoundsAdapter(editorPane));
-
-    panel.add(editorPane);
-  }
-
-  public static class IpnbHierarchyBoundsAdapter extends HierarchyBoundsAdapter {
-    private final JComponent myComponent;
-
-    public IpnbHierarchyBoundsAdapter(@NotNull final JComponent component) {
-      myComponent = component;
-    }
-
-    @Override
-    public void ancestorResized(HierarchyEvent e) {
-      final Component component = e.getChanged();
-      if (component instanceof IpnbFilePanel) {
-        final int width = component.getWidth();
-        if (width > 0) {
-          myComponent.setPreferredSize(new Dimension(width - 300, myComponent.getPreferredSize().height));
-          myComponent.revalidate();
-          myComponent.repaint();
-        }
-      }
-    }
+    return editorPane;
   }
 
   private static String convertToHtml(@NotNull final String source, @NotNull final JEditorPane editorPane) {

@@ -37,17 +37,17 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
   public NewRecentProjectPanel(WelcomeScreen screen) {
     super(screen);
     setBorder(null);
-    setBackground(FlatWelcomeFrame.getProjectsBackGround());
+    setBackground(FlatWelcomeFrame.getProjectsBackground());
     JScrollPane scrollPane = UIUtil.findComponentOfType(this, JScrollPane.class);
     if (scrollPane != null) {
-      scrollPane.setBackground(FlatWelcomeFrame.getProjectsBackGround());
+      scrollPane.setBackground(FlatWelcomeFrame.getProjectsBackground());
       scrollPane.setSize(245, 460);
       scrollPane.setMinimumSize(new Dimension(245, 460));
       scrollPane.setPreferredSize(new Dimension(245, 460));
     }
     ListWithFilter panel = UIUtil.findComponentOfType(this, ListWithFilter.class);
     if (panel != null) {
-      panel.setBackground(FlatWelcomeFrame.getProjectsBackGround());
+      panel.setBackground(FlatWelcomeFrame.getProjectsBackground());
     }
   }
 
@@ -58,7 +58,7 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
   @Override
   protected JBList createList(AnAction[] recentProjectActions, Dimension size) {
     final JBList list = super.createList(recentProjectActions, size);
-    list.setBackground(FlatWelcomeFrame.getProjectsBackGround());
+    list.setBackground(FlatWelcomeFrame.getProjectsBackground());
     list.addKeyListener(new KeyAdapter() {
       @Override
       public void keyPressed(KeyEvent e) {
@@ -87,12 +87,21 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
       }
       @Override
       protected Color getListBackground(boolean isSelected, boolean hasFocus) {
-        return isSelected ? new Color(0x2484fd) : FlatWelcomeFrame.getProjectsBackGround();
+        return isSelected ? FlatWelcomeFrame.getListSelectionColor(hasFocus) : FlatWelcomeFrame.getProjectsBackground();
       }
 
       @Override
       protected Color getListForeground(boolean isSelected, boolean hasFocus) {
-        return UIUtil.getListForeground(isSelected);
+        return UIUtil.getListForeground(isSelected && hasFocus);
+      }
+
+      @Override
+      protected void layoutComponents() {
+        setLayout(new BorderLayout());
+        myName.setBorder(new EmptyBorder(6, 0, 1, 5));
+        myPath.setBorder(new EmptyBorder(1, 0, 6, 5));
+        add(myName, BorderLayout.NORTH);
+        add(myPath, BorderLayout.SOUTH);
       }
     };
   }

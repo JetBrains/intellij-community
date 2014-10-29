@@ -23,6 +23,11 @@ public class UpdateAction extends BaseUpdateAction {
   }
 
   @Override
+  protected boolean isModified(File toFile) throws IOException {
+    return myChecksum != Digester.digestRegularFile(toFile);
+  }
+
+  @Override
   protected void doApply(ZipFile patchFile, File toFile) throws IOException {
     InputStream in = Utils.findEntryInputStream(patchFile, myPath);
     boolean executable = readExecutableFlag(in);

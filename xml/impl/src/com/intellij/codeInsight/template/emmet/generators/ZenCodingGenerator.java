@@ -30,8 +30,6 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 
@@ -39,7 +37,7 @@ import java.util.List;
  * @author Eugene.Kudelevsky
  */
 public abstract class ZenCodingGenerator {
-  private static final ExtensionPointName<ZenCodingGenerator> EP_NAME = new ExtensionPointName<ZenCodingGenerator>("com.intellij.xml.zenCodingGenerator");
+  public static final ExtensionPointName<ZenCodingGenerator> EP_NAME = new ExtensionPointName<ZenCodingGenerator>("com.intellij.xml.zenCodingGenerator");
 
   public abstract TemplateImpl generateTemplate(@NotNull TemplateToken token, boolean hasChildren, @NotNull PsiElement context);
 
@@ -59,11 +57,8 @@ public abstract class ZenCodingGenerator {
   
   public abstract boolean isEnabled();
 
-  public static List<ZenCodingGenerator> getInstances() {
-    List<ZenCodingGenerator> generators = new ArrayList<ZenCodingGenerator>();
-    generators.add(XmlZenCodingGeneratorImpl.INSTANCE);
-    Collections.addAll(generators, EP_NAME.getExtensions());
-    return generators;
+  public static ZenCodingGenerator[] getInstances() {
+    return EP_NAME.getExtensions();
   }
 
   @Nullable

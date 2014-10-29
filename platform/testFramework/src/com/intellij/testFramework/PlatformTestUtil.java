@@ -121,12 +121,23 @@ public class PlatformTestUtil {
   }
 
   public static String print(JTree tree, boolean withSelection) {
-    return print(tree, withSelection, null);
+    return print(tree, tree.getModel().getRoot(), withSelection, null, null);
+  }
+
+  public static String print(JTree tree, Object root, @Nullable Queryable.PrintInfo printInfo, boolean withSelection) {
+    return print(tree, root,  withSelection, printInfo, null);
   }
 
   public static String print(JTree tree, boolean withSelection, @Nullable Condition<String> nodePrintCondition) {
+    return print(tree, tree.getModel().getRoot(), withSelection, null, nodePrintCondition);
+  }
+  
+  public static String print(JTree tree, Object root, 
+                             boolean withSelection,
+                             @Nullable Queryable.PrintInfo printInfo,
+                             @Nullable Condition<String> nodePrintCondition) {
     StringBuilder buffer = new StringBuilder();
-    final Collection<String> strings = printAsList(tree, withSelection, nodePrintCondition);
+    final Collection<String> strings = printAsList(tree, root, withSelection, printInfo, nodePrintCondition);
     for (String string : strings) {
       buffer.append(string).append("\n");
     }
@@ -134,9 +145,15 @@ public class PlatformTestUtil {
   }
 
   public static Collection<String> printAsList(JTree tree, boolean withSelection, @Nullable Condition<String> nodePrintCondition) {
+    return printAsList(tree, tree.getModel().getRoot(), withSelection, null, nodePrintCondition);
+  }
+
+  private static Collection<String> printAsList(JTree tree, Object root, 
+                                                boolean withSelection,
+                                                @Nullable Queryable.PrintInfo printInfo,
+                                                Condition<String> nodePrintCondition) {
     Collection<String> strings = new ArrayList<String>();
-    Object root = tree.getModel().getRoot();
-    printImpl(tree, root, strings, 0, withSelection, nodePrintCondition);
+    printImpl(tree, root, strings, 0, withSelection, printInfo, nodePrintCondition);
     return strings;
   }
 
@@ -145,13 +162,14 @@ public class PlatformTestUtil {
                                 Collection<String> strings,
                                 int level,
                                 boolean withSelection,
+                                @Nullable Queryable.PrintInfo printInfo,
                                 @Nullable Condition<String> nodePrintCondition) {
     DefaultMutableTreeNode defaultMutableTreeNode = (DefaultMutableTreeNode)root;
 
     final Object userObject = defaultMutableTreeNode.getUserObject();
     String nodeText;
     if (userObject != null) {
-      nodeText = toString(userObject, null);
+      nodeText = toString(userObject, printInfo);
     }
     else {
       nodeText = "null";
@@ -183,7 +201,7 @@ public class PlatformTestUtil {
     int childCount = tree.getModel().getChildCount(root);
     if (expanded) {
       for (int i = 0; i < childCount; i++) {
-        printImpl(tree, tree.getModel().getChild(root, i), strings, level + 1, withSelection, nodePrintCondition);
+        printImpl(tree, tree.getModel().getChild(root, i), strings, level + 1, withSelection, printInfo, nodePrintCondition);
       }
     }
   }

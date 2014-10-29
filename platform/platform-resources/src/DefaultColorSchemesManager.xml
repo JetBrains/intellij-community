@@ -18,15 +18,15 @@
       <option name="ANNOTATIONS_COLOR" value="000080" />
       <option name="ANNOTATIONS_MERGED_COLOR" value="008080" />
       <option name="CARET_COLOR" value="0"/>
-      <option name="RIGHT_MARGIN_COLOR" value="c0c0c0"/>
+      <option name="RIGHT_MARGIN_COLOR" value="E0E0E0"/>
       <option name="SOFT_WRAP_SIGN_COLOR" value="c0c0c0"/>
-      <option name="TEARLINE_COLOR" value="808080"/>
-      <option name="SELECTED_TEARLINE_COLOR" value="000000"/>
+      <option name="TEARLINE_COLOR" value="D0D0D0"/>
+      <option name="SELECTED_TEARLINE_COLOR" value="9C9C9C"/>
       <option name="READONLY_FRAGMENT_BACKGROUND" value="cfe7ff"/>
 
-      <option name="ADDED_LINES_COLOR" value="edfced"/>
-      <option name="MODIFIED_LINES_COLOR" value="e0f0ff"/>
-      <option name="DELETED_LINES_COLOR" value="cbcbcb"/>
+      <option name="ADDED_LINES_COLOR" value="CBE3CA"/>
+      <option name="MODIFIED_LINES_COLOR" value="C7D5E2"/>
+      <option name="DELETED_LINES_COLOR" value="9F9F9F"/>
       <option name="WHITESPACES_MODIFIED_LINES_COLOR" value="ffffff"/>
       <option name="CONSOLE_BACKGROUND_KEY" value="ffffff" />
     </colors>

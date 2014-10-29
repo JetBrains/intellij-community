@@ -48,7 +48,7 @@ public class CCEditorFactoryListener implements EditorFactoryListener {
     editor.getDocument().addDocumentListener(listener);
     EditorActionManager.getInstance()
       .setReadonlyFragmentModificationHandler(editor.getDocument(), new TaskWindowDeleteHandler(editor));
-    CCProjectService.drawTaskWindows(virtualFile, editor, course);
+    CCProjectService.getInstance(project).drawTaskWindows(virtualFile, editor, course);
     editor.getColorsScheme().setColor(EditorColors.READONLY_FRAGMENT_BACKGROUND_COLOR, null);
     taskFile.createGuardedBlocks(editor);
   }
@@ -70,12 +70,6 @@ public class CCEditorFactoryListener implements EditorFactoryListener {
 
     public TaskFileModificationListener(TaskFile taskFile) {
       super(taskFile);
-    }
-
-    @Override
-    protected void updateTaskWindowLength(CharSequence fragment, TaskWindow taskWindow, int change) {
-        int newLength = taskWindow.getReplacementLength() + change;
-        taskWindow.setReplacementLength(newLength <= 0 ? 0 : newLength);
     }
 
     @Override

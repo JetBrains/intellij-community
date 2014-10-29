@@ -16,8 +16,10 @@
 package com.intellij.openapi.components.impl;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.BaseComponent;
+import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.components.ServiceDescriptor;
 import com.intellij.openapi.components.ex.ComponentManagerEx;
@@ -89,17 +91,17 @@ public class ServiceManagerImpl implements BaseComponent {
     return Arrays.asList(extensions);
   }
 
-  public static void processAllImplementationClasses(@NotNull ComponentManager componentManager, @NotNull PairProcessor<Class<?>, PluginDescriptor> processor) {
+  public static void processAllImplementationClasses(@NotNull ComponentManagerImpl componentManager, @NotNull PairProcessor<Class<?>, PluginDescriptor> processor) {
     Collection adapters = componentManager.getPicoContainer().getComponentAdapters();
     if (adapters.isEmpty()) {
       return;
     }
 
     for (Object o : adapters) {
+      Class aClass;
       if (o instanceof MyComponentAdapter) {
         MyComponentAdapter adapter = (MyComponentAdapter)o;
         PluginDescriptor pluginDescriptor = adapter.myPluginDescriptor;
-        Class aClass;
         try {
           ComponentAdapter delegate = adapter.myDelegate;
           // avoid delegation creation & class initialization
@@ -118,6 +120,20 @@ public class ServiceManagerImpl implements BaseComponent {
 
         if (!processor.process(aClass, pluginDescriptor)) {
           break;
+        }
+      }
+      else if (o instanceof ComponentAdapter) {
+        try {
+          aClass = ((ComponentAdapter)o).getComponentImplementation();
+        }
+        catch (Throwable e) {
+          LOG.error(e);
+          continue;
+        }
+
+        ComponentConfig config = componentManager.getConfig(aClass);
+        if (config != null) {
+          processor.process(aClass, config.pluginDescriptor);
         }
       }
     }
@@ -184,7 +200,7 @@ public class ServiceManagerImpl implements BaseComponent {
         @Override
         public Object compute() {
           // prevent storages from flushing and blocking FS
-          HeavyProcessLatch.INSTANCE.processStarted("Creating component '" + myDescriptor.getImplementation()+"'");
+          AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("Creating component '" + myDescriptor.getImplementation() + "'");
           try {
             synchronized (MyComponentAdapter.this) {
               Object instance = myInitializedComponentInstance;
@@ -194,7 +210,7 @@ public class ServiceManagerImpl implements BaseComponent {
             }
           }
           finally {
-            HeavyProcessLatch.INSTANCE.processFinished();
+            token.finish();
           }
         }
       });

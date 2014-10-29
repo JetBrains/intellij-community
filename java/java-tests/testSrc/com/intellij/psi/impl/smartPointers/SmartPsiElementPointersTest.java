@@ -18,6 +18,7 @@ package com.intellij.psi.impl.smartPointers;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.CodeInsightTestCase;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -25,6 +26,7 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.event.EditorEventMulticaster;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -37,12 +39,14 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.FileContentUtil;
 import gnu.trove.THashSet;
 import org.junit.Assert;
 
 import java.io.IOException;
+import java.lang.ref.SoftReference;
 import java.util.Collections;
 import java.util.Set;
 
@@ -433,5 +437,36 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
         System.out.println("already loaded file = " + file);
       }
     }
+  }
+
+  public void testSmartPointersSurvivePsiFileUnload() throws IOException {
+    final VirtualFile vfile = myRoot.createChildData(this, "X.txt");
+    String xxx = "xxx";
+    String text = xxx + " " + xxx + " " + xxx;
+    VfsUtil.saveText(vfile, text);
+    PsiFile psiFile = PsiManager.getInstance(getProject()).findFile(vfile);
+    assertTrue(String.valueOf(psiFile), psiFile instanceof PsiPlainTextFile);
+    SmartPointerManagerImpl manager = (SmartPointerManagerImpl)SmartPointerManager.getInstance(myProject);
+    TextRange range1 = TextRange.from(text.indexOf(xxx), xxx.length());
+    SmartPsiFileRange pointer1 = manager.createSmartPsiFileRangePointer(psiFile, range1);
+    TextRange range2 = TextRange.from(text.lastIndexOf(xxx), xxx.length());
+    SmartPsiFileRange pointer2 = manager.createSmartPsiFileRangePointer(psiFile, range2);
+    assertNotNull(FileDocumentManager.getInstance().getCachedDocument(vfile));
+
+    SoftReference<PsiFile> ref = new SoftReference<PsiFile>(psiFile);
+    psiFile = null;
+    while (ref.get() != null) {
+      PlatformTestUtil.tryGcSoftlyReachableObjects();
+    }
+    assertNull(FileDocumentManager.getInstance().getCachedDocument(vfile));
+    assertEquals(pointer1.getRange(), range1);
+    WriteCommandAction.runWriteCommandAction(getProject(), new Runnable() {
+      @Override
+      public void run() {
+        FileDocumentManager.getInstance().getDocument(vfile).insertString(0, " ");
+      }
+    });
+    assertEquals(range1.shiftRight(1), pointer1.getRange());
+    assertEquals(range2.shiftRight(1), pointer2.getRange());
   }
 }

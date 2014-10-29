@@ -15,14 +15,6 @@
  */
 package org.jetbrains.java.decompiler.modules.decompiler;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.code.Instruction;
 import org.jetbrains.java.decompiler.code.InstructionSequence;
@@ -30,28 +22,12 @@ import org.jetbrains.java.decompiler.code.cfg.BasicBlock;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.TextBuffer;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
-import org.jetbrains.java.decompiler.modules.decompiler.exps.ArrayExprent;
-import org.jetbrains.java.decompiler.modules.decompiler.exps.AssignmentExprent;
-import org.jetbrains.java.decompiler.modules.decompiler.exps.ConstExprent;
-import org.jetbrains.java.decompiler.modules.decompiler.exps.ExitExprent;
-import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
-import org.jetbrains.java.decompiler.modules.decompiler.exps.FieldExprent;
-import org.jetbrains.java.decompiler.modules.decompiler.exps.FunctionExprent;
-import org.jetbrains.java.decompiler.modules.decompiler.exps.IfExprent;
-import org.jetbrains.java.decompiler.modules.decompiler.exps.InvocationExprent;
-import org.jetbrains.java.decompiler.modules.decompiler.exps.MonitorExprent;
-import org.jetbrains.java.decompiler.modules.decompiler.exps.NewExprent;
-import org.jetbrains.java.decompiler.modules.decompiler.exps.SwitchExprent;
-import org.jetbrains.java.decompiler.modules.decompiler.exps.VarExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.*;
 import org.jetbrains.java.decompiler.modules.decompiler.sforms.DirectGraph;
 import org.jetbrains.java.decompiler.modules.decompiler.sforms.DirectNode;
 import org.jetbrains.java.decompiler.modules.decompiler.sforms.FlattenStatementsHelper;
 import org.jetbrains.java.decompiler.modules.decompiler.sforms.FlattenStatementsHelper.FinallyPathWrapper;
-import org.jetbrains.java.decompiler.modules.decompiler.stats.BasicBlockStatement;
-import org.jetbrains.java.decompiler.modules.decompiler.stats.CatchAllStatement;
-import org.jetbrains.java.decompiler.modules.decompiler.stats.CatchStatement;
-import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
-import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.*;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
 import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.attr.StructBootstrapMethodsAttribute;
@@ -62,7 +38,8 @@ import org.jetbrains.java.decompiler.struct.consts.PooledConstant;
 import org.jetbrains.java.decompiler.struct.consts.PrimitiveConstant;
 import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
-import org.jetbrains.java.decompiler.util.InterpreterUtil;
+
+import java.util.*;
 
 public class ExprProcessor implements CodeConstants {
 
@@ -784,13 +761,11 @@ public class ExprProcessor implements CodeConstants {
   public static TextBuffer jmpWrapper(Statement stat, int indent, boolean semicolon, BytecodeMappingTracer tracer) {
     TextBuffer buf = stat.toJava(indent, tracer);
 
-    String new_line_separator = DecompilerContext.getNewLineSeparator();
-
     List<StatEdge> lstSuccs = stat.getSuccessorEdges(Statement.STATEDGE_DIRECT_ALL);
     if (lstSuccs.size() == 1) {
       StatEdge edge = lstSuccs.get(0);
       if (edge.getType() != StatEdge.TYPE_REGULAR && edge.explicit && edge.getDestination().type != Statement.TYPE_DUMMYEXIT) {
-        buf.append(InterpreterUtil.getIndentString(indent));
+        buf.appendIndent(indent);
 
         switch (edge.getType()) {
           case StatEdge.TYPE_BREAK:
@@ -803,13 +778,13 @@ public class ExprProcessor implements CodeConstants {
         if (edge.labeled) {
           buf.append(" label").append(edge.closure.id.toString());
         }
-        buf.append(";").append(new_line_separator);
+        buf.append(";").appendLineSeparator();
         tracer.incrementCurrentSourceLine();
       }
     }
 
     if (buf.length() == 0 && semicolon) {
-      buf.append(InterpreterUtil.getIndentString(indent)).append(";").append(new_line_separator);
+      buf.appendIndent(indent).append(";").appendLineSeparator();
       tracer.incrementCurrentSourceLine();
     }
 
@@ -835,16 +810,13 @@ public class ExprProcessor implements CodeConstants {
       return new TextBuffer();
     }
 
-    String indstr = InterpreterUtil.getIndentString(indent);
-    String new_line_separator = DecompilerContext.getNewLineSeparator();
-
     TextBuffer buf = new TextBuffer();
 
     for (Exprent expr : lst) {
       TextBuffer content = expr.toJava(indent, tracer);
       if (content.length() > 0) {
         if (expr.type != Exprent.EXPRENT_VAR || !((VarExprent)expr).isClassdef()) {
-          buf.append(indstr);
+          buf.appendIndent(indent);
         }
         buf.append(content);
         if (expr.type == Exprent.EXPRENT_MONITOR && ((MonitorExprent)expr).getMontype() == MonitorExprent.MONITOR_ENTER) {
@@ -853,7 +825,7 @@ public class ExprProcessor implements CodeConstants {
         if (endsWithSemikolon(expr)) {
           buf.append(";");
         }
-        buf.append(new_line_separator);
+        buf.appendLineSeparator();
         tracer.incrementCurrentSourceLine();
       }
     }
@@ -883,8 +855,12 @@ public class ExprProcessor implements CodeConstants {
     return defaultval;
   }
 
-  public static boolean getCastedExprent(Exprent exprent, VarType leftType, TextBuffer buffer, int indent,
-                                                               boolean castNull, BytecodeMappingTracer tracer) {
+  public static boolean getCastedExprent(Exprent exprent,
+                                         VarType leftType,
+                                         TextBuffer buffer,
+                                         int indent,
+                                         boolean castNull,
+                                         BytecodeMappingTracer tracer) {
     return getCastedExprent(exprent, leftType, buffer, indent, castNull, false, tracer);
   }
 
@@ -893,24 +869,18 @@ public class ExprProcessor implements CodeConstants {
                                          TextBuffer buffer,
                                          int indent,
                                          boolean castNull,
-                                         boolean castAlways, BytecodeMappingTracer tracer) {
+                                         boolean castAlways,
+                                         BytecodeMappingTracer tracer) {
 
-    boolean ret = false;
     VarType rightType = exprent.getExprType();
 
     TextBuffer res = exprent.toJava(indent, tracer);
 
     boolean cast =
-      !leftType.isSuperset(rightType) && (rightType.equals(VarType.VARTYPE_OBJECT) || leftType.type != CodeConstants.TYPE_OBJECT);
-    cast |= castAlways;
-
-    if (!cast && castNull && rightType.type == CodeConstants.TYPE_NULL) {
-      // check for a nameless anonymous class
-      cast = !UNDEFINED_TYPE_STRING.equals(getTypeName(leftType));
-    }
-    if (!cast) {
-      cast = isIntConstant(exprent) && VarType.VARTYPE_INT.isStrictSuperset(leftType);
-    }
+      castAlways ||
+      (!leftType.isSuperset(rightType) && (rightType.equals(VarType.VARTYPE_OBJECT) || leftType.type != CodeConstants.TYPE_OBJECT)) ||
+      (castNull && rightType.type == CodeConstants.TYPE_NULL && !UNDEFINED_TYPE_STRING.equals(getTypeName(leftType))) ||
+      (isIntConstant(exprent) && VarType.VARTYPE_INT.isStrictSuperset(leftType));
 
     if (cast) {
       if (exprent.getPrecedence() >= FunctionExprent.getPrecedence(FunctionExprent.FUNCTION_CAST)) {
@@ -918,12 +888,11 @@ public class ExprProcessor implements CodeConstants {
       }
 
       res.prepend("(" + getCastTypeName(leftType) + ")");
-      ret = true;
     }
 
     buffer.append(res);
 
-    return ret;
+    return cast;
   }
 
   private static boolean isIntConstant(Exprent exprent) {

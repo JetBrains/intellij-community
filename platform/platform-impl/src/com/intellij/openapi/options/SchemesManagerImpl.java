@@ -75,7 +75,6 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
   private final File myBaseDir;
   private VirtualFile myVFSBaseDir;
   private static final String DESCRIPTION = "description";
-  private static final boolean EXPORT_IS_AVAILABLE = false;
   private static final String USER = "user";
 
   private boolean myListenerAdded = false;
@@ -498,7 +497,6 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
       String schemePath = rootElement.getAttributeValue(ORIGINAL_SCHEME_PATH);
 
       Document sharedDocument = loadGlobalScheme(schemePath);
-
       if (sharedDocument != null) {
         E result = readScheme(sharedDocument);
         if (result != null) {
@@ -530,7 +528,6 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
     else {
       return myProcessor.readScheme(subDocument);
     }
-
   }
 
   @Nullable
@@ -554,7 +551,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
   }
 
   @Nullable
-  private org.jdom.Parent writeSchemeToDocument(@NotNull E scheme) throws WriteExternalException {
+  private Parent writeSchemeToDocument(@NotNull E scheme) throws WriteExternalException {
     if (isShared(scheme)) {
       String originalPath = scheme.getExternalInfo().getOriginalPath();
       if (originalPath != null) {
@@ -729,7 +726,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
 
   @Override
   public boolean isExportAvailable() {
-    return EXPORT_IS_AVAILABLE;
+    return false;
   }
 
   @Override
@@ -739,7 +736,6 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
 
   @Override
   public void save() throws WriteExternalException {
-
     if (myRefreshAlarm != null) {
       myRefreshAlarm.cancelAllRequests();
       myRefreshAlarm = null;

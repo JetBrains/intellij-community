@@ -15,19 +15,25 @@
  */
 package com.intellij.index;
 
+import com.intellij.codeInsight.CodeInsightTestCase;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.command.impl.CurrentEditorProvider;
+import com.intellij.openapi.command.impl.UndoManagerImpl;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
-import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.SkipSlowTestLocally;
@@ -47,7 +53,7 @@ import java.util.*;
  *         Date: Dec 12, 2007
  */
 @SkipSlowTestLocally
-public class IndexTest extends IdeaTestCase {
+public class IndexTest extends CodeInsightTestCase {
 
   public void testUpdate() throws StorageException, IOException {
     final File storageFile = FileUtil.createTempFile("indextest", "storage");
@@ -208,8 +214,7 @@ public class IndexTest extends IdeaTestCase {
     VfsUtil.saveText(vFile, "class Foo {}");
 
     final GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
-    final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
-    assertNotNull(facade.findClass("Foo", scope));
+    assertNotNull(myJavaFacade.findClass("Foo", scope));
     WriteCommandAction.runWriteCommandAction(null, new Runnable() {
       @Override
       public void run() {
@@ -218,20 +223,20 @@ public class IndexTest extends IdeaTestCase {
 
         Document document = FileDocumentManager.getInstance().getDocument(vFile);
         document.deleteString(0, document.getTextLength());
-        assertNotNull(facade.findClass("Foo", scope));
+        assertNotNull(myJavaFacade.findClass("Foo", scope));
 
         psiFile = null;
         PlatformTestUtil.tryGcSoftlyReachableObjects();
         assertNull(((PsiManagerEx)PsiManager.getInstance(getProject())).getFileManager().getCachedPsiFile(vFile));
 
-        PsiClass foo = facade.findClass("Foo", scope);
+        PsiClass foo = myJavaFacade.findClass("Foo", scope);
         assertNotNull(foo);
         assertTrue(foo.isValid());
         assertEquals("class Foo {}", foo.getText());
         assertTrue(foo.isValid());
 
         PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-        assertNull(facade.findClass("Foo", scope));
+        assertNull(myJavaFacade.findClass("Foo", scope));
       }
     });
   }
@@ -244,8 +249,7 @@ public class IndexTest extends IdeaTestCase {
     VfsUtil.saveText(vFile, "");
 
     final GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
-    final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
-    assertNull(facade.findClass("Foo", scope));
+    assertNull(myJavaFacade.findClass("Foo", scope));
     WriteCommandAction.runWriteCommandAction(null, new Runnable() {
       @Override
       public void run() {
@@ -259,11 +263,11 @@ public class IndexTest extends IdeaTestCase {
         FileDocumentManager.getInstance().saveDocument(document);
 
         assertTrue(count == PsiManager.getInstance(myProject).getModificationTracker().getModificationCount());
-        assertNull(facade.findClass("Foo", scope));
+        assertNull(myJavaFacade.findClass("Foo", scope));
 
         PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-        assertNotNull(facade.findClass("Foo", scope));
-        assertNotNull(facade.findClass("Foo", scope).getText());
+        assertNotNull(myJavaFacade.findClass("Foo", scope));
+        assertNotNull(myJavaFacade.findClass("Foo", scope).getText());
         // if Foo exists now, mod count should be different
         assertTrue(count != PsiManager.getInstance(myProject).getModificationTracker().getModificationCount());
       }
@@ -303,9 +307,45 @@ public class IndexTest extends IdeaTestCase {
         PsiDocumentManager.getInstance(myProject).commitAllDocuments();
         assertEquals(" Foo", file.getText());
         assertOneElement(PsiSearchHelper.SERVICE.getInstance(myProject).findFilesWithPlainTextWords("Foo"));
-
       }
     });
   }
 
+  public void testUndoToFileContentForUnsavedCommittedDocument() throws IOException {
+    VirtualFile dir = getVirtualFile(createTempDirectory());
+    PsiTestUtil.addSourceContentToRoots(myModule, dir);
+
+    final VirtualFile vFile = createChildData(dir, "Foo.java");
+    VfsUtil.saveText(vFile, "class Foo {}");
+    ((VirtualFileSystemEntry)vFile).setModificationStamp(0); // as unchanged file
+
+    final Document document = FileDocumentManager.getInstance().getDocument(vFile);
+    assertTrue(document != null && document.getModificationStamp() == 0);
+    final GlobalSearchScope scope = GlobalSearchScope.projectScope(myProject);
+    assertNotNull(myJavaFacade.findClass("Foo", scope));
+
+    WriteCommandAction.runWriteCommandAction(myProject, new Runnable() {
+      @Override
+      public void run() {
+        document.insertString(0, "import Bar;\n");
+        PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+        assertNotNull(myJavaFacade.findClass("Foo", scope));
+      }
+    });
+
+    final UndoManager undoManager = UndoManager.getInstance(getProject());
+    final FileEditor selectedEditor = FileEditorManager.getInstance(myProject).openFile(vFile, false)[0];
+    ((UndoManagerImpl)undoManager).setEditorProvider(new CurrentEditorProvider() {
+      @Override
+      public FileEditor getCurrentEditor() {
+        return selectedEditor;
+      }
+    });
+
+    assertTrue(undoManager.isUndoAvailable(selectedEditor));
+    FileDocumentManager.getInstance().saveDocument(document);
+    undoManager.undo(selectedEditor);
+
+    assertNotNull(myJavaFacade.findClass("Foo", scope));
+  }
 }

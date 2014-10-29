@@ -21,6 +21,7 @@ import com.intellij.ui.components.JBTextField;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -47,7 +48,7 @@ public class FixedComboBoxEditor implements ComboBoxEditor {
   public static final Border EDITOR_BORDER = new MacComboBoxEditorBorder(false);
   public static final Border DISABLED_EDITOR_BORDER = new MacComboBoxEditorBorder(true);
 
-  private JBTextField myField;
+  @NotNull private final JBTextField myField;
   private Object oldValue;
 
   public FixedComboBoxEditor() {
@@ -60,7 +61,8 @@ public class FixedComboBoxEditor implements ComboBoxEditor {
     }
   }
 
-  protected JTextField getField() {
+  @NotNull
+  public JBTextField getField() {
     return myField;
   }
 

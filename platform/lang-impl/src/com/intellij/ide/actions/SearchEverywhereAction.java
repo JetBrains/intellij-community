@@ -464,7 +464,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
               ActionToolbarImpl.updateAllToolbarsImmediately();
             }
           });
-        } finally {
+        }
+        finally {
           result.setDone();
         }
       }
@@ -715,7 +716,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     topPanel.add(title, BorderLayout.WEST);
     final JPanel controls = new JPanel(new BorderLayout());
     controls.setOpaque(false);
-    final JLabel settings = new JLabel(AllIcons.General.WebSettings);
+    final JLabel settings = new JLabel(AllIcons.General.SearchEverywhereGear);
     new ClickListener(){
       @Override
       public boolean onClick(@NotNull MouseEvent event, int clickCount) {
@@ -790,7 +791,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   private void showSettings() {
     myPopupField.setText("");
     final SearchListModel model = new SearchListModel();
-    model.addElement(new SEOption("Show current file structure elements", "search.everywhere.structure"));
+    //model.addElement(new SEOption("Show current file structure elements", "search.everywhere.structure"));
     model.addElement(new SEOption("Show files", "search.everywhere.files"));
     model.addElement(new SEOption("Show symbols", "search.everywhere.symbols"));
     model.addElement(new SEOption("Show tool windows", "search.everywhere.toolwindows"));

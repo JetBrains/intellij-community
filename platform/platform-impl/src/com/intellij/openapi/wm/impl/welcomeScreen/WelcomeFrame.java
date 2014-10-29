@@ -102,8 +102,7 @@ public class WelcomeFrame extends JFrame implements IdeFrame {
 
     Disposer.dispose(myScreen);
 
-    //noinspection AssignmentToStaticFieldFromInstanceMethod
-    ourInstance = null;
+    resetInstance();
   }
 
   private static void saveLocation(Rectangle location) {

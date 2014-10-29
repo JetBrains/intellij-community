@@ -15,13 +15,20 @@
  */
 package org.jetbrains.idea.maven.project;
 
+import com.intellij.CommonBundle;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.concurrency.Semaphore;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.execution.SoutMavenConsole;
+import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.utils.*;
 
+import javax.swing.event.HyperlinkEvent;
 import java.util.LinkedList;
 import java.util.Queue;
 
@@ -135,6 +142,11 @@ public class MavenProjectsProcessor {
         }
         catch (Throwable e) {
           MavenLog.LOG.error(e);
+          new Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP,
+                           "Unable to import maven project",
+                           "See logs for details",
+                           NotificationType.ERROR
+                           ).notify(myProject);
         }
 
         synchronized (myQueue) {

@@ -76,7 +76,7 @@ class MultilinePopupBuilder {
     ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, myTextField)
       .setCancelOnClickOutside(true)
       .setAdText(KeymapUtil.getShortcutsText(CommonShortcuts.CTRL_ENTER.getShortcuts()) + " to finish")
-      .setMovable(true)
+      .setMayBeParent(true)
       .setRequestFocus(true)
       .setResizable(true)
       .setMayBeParent(true);

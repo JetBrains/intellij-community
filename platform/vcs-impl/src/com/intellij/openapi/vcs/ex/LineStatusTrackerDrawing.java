@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,6 @@ import com.intellij.ui.HintListener;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -73,48 +72,32 @@ public class LineStatusTrackerDrawing {
     final EditorGutterComponentEx gutter = ((EditorEx)editor).getGutterComponentEx();
     Color stripeColor = getDiffGutterColor(range);
 
-    if (range.getInnerRanges() == null) { // legacy painter
+    int triangle = 4;
+    if (range.getInnerRanges() == null) { // actual painter
       g.setColor(stripeColor);
 
       final int endX = gutter.getWhitespaceSeparatorOffset();
-      final int x = r.x + r.width - 5;
+      final int x = r.x + r.width - 3;
       final int width = endX - x;
       if (r.height > 0) {
         g.fillRect(x, r.y, width, r.height);
-        g.setColor(gutter.getOutlineColor(false));
-        UIUtil.drawLine(g, x, r.y, x + width, r.y);
-        UIUtil.drawLine(g, x, r.y, x, r.y + r.height - 1);
-        UIUtil.drawLine(g, x, r.y + r.height - 1, x + width, r.y + r.height - 1);
       }
       else {
-        final int[] xPoints = new int[]{x,
-          x,
-          x + width - 1};
-        final int[] yPoints = new int[]{r.y - 4,
-          r.y + 4,
-          r.y};
+        final int[] xPoints = new int[]{x, x, endX};
+        final int[] yPoints = new int[]{r.y - triangle, r.y + triangle, r.y};
         g.fillPolygon(xPoints, yPoints, 3);
-
-        g.setColor(gutter.getOutlineColor(false));
-        g.drawPolygon(xPoints, yPoints, 3);
       }
     }
-    else {
-      final int x = gutter.getLineMarkerAreaOffset() + gutter.getIconsAreaWidth();
+    else { // registry: diff.status.tracker.smart
+      final int x = gutter.getLineMarkerAreaOffset() + gutter.getIconsAreaWidth() + 1;
       final int endX = gutter.getWhitespaceSeparatorOffset();
       final int width = endX - x;
 
       if (range.getType() == Range.DELETED) {
         final int y = lineToY(editor, range.getLine1());
 
-        final int[] xPoints = new int[]{
-          x,
-          x,
-          endX - 1};
-        final int[] yPoints = new int[]{
-          y - 4,
-          y + 4,
-          y};
+        final int[] xPoints = new int[]{x, x, endX + 1};
+        final int[] yPoints = new int[]{y - triangle, y + triangle, y};
 
         g.setColor(stripeColor);
         g.fillPolygon(xPoints, yPoints, 3);
@@ -127,8 +110,7 @@ public class LineStatusTrackerDrawing {
         int endY = lineToY(editor, range.getLine2());
 
         List<Range.InnerRange> innerRanges = range.getInnerRanges();
-        for (int i = 0; i < innerRanges.size(); i++) {
-          Range.InnerRange innerRange = innerRanges.get(i);
+        for (Range.InnerRange innerRange : innerRanges) {
           if (innerRange.getType() == Range.DELETED) continue;
 
           int start = lineToY(editor, innerRange.getLine1());
@@ -177,28 +159,6 @@ public class LineStatusTrackerDrawing {
       return y + editor.getLineHeight() * (line - document.getLineCount() + 1);
     }
     return editor.logicalPositionToXY(editor.offsetToLogicalPosition(document.getLineStartOffset(line))).y;
-  }
-
-  @Nullable
-  private static Color brighter(final Color color) {
-    if (color == null) {
-      return null;
-    }
-
-    final float[] hsbStripeColor = Color.RGBtoHSB(color.getRed(), color.getGreen(), color.getBlue(), null);
-
-    if (hsbStripeColor[1] < 0.02f) {
-      // color is grey
-      hsbStripeColor[2] = Math.min(1.0f, hsbStripeColor[2] * 1.3f);
-    }
-    else {
-      // let's decrease color saturation
-      hsbStripeColor[1] *= 0.3;
-
-      // max brightness
-      hsbStripeColor[2] = 1.0f;
-    }
-    return Color.getHSBColor(hsbStripeColor[0], hsbStripeColor[1], hsbStripeColor[2]);
   }
 
   public static LineMarkerRenderer createRenderer(final Range range, final LineStatusTracker tracker) {
@@ -254,7 +214,7 @@ public class LineStatusTrackerDrawing {
     toolbar.setBackground(background);
 
     toolbar
-      .setBorder(new ColoredSideBorder(foreground, foreground, (range.getType() != Range.INSERTED) ? null : foreground, foreground, 1));
+      .setBorder(new ColoredSideBorder(foreground, foreground, range.getType() != Range.INSERTED ? null : foreground, foreground, 1));
 
     final JPanel component = new JPanel(new BorderLayout());
     component.setOpaque(false);

@@ -41,6 +41,8 @@ public class StudyCheckAction extends DumbAwareAction {
 
   private static final Logger LOG = Logger.getInstance(StudyCheckAction.class.getName());
   private static final String ANSWERS_POSTFIX = "_answers.py";
+  public static final  String ACTION_ID = "CheckAction";
+  public static final String SHORTCUT = "ctrl alt pressed ENTER";
 
 
   private static void flushWindows(@NotNull final Task task, @NotNull final VirtualFile taskDir) {

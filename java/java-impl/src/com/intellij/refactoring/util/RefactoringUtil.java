@@ -870,16 +870,22 @@ public class RefactoringUtil {
       JavaCodeStyleManager.getInstance(declaration.getProject()).shortenClassReferences(declaration);
       if (loopBodyCopy != null) codeBlock.add(loopBodyCopy);
     } else if (container instanceof PsiLambdaExpression) {
-      final PsiLambdaExpression lambdaExpression = (PsiLambdaExpression)container;
-      final PsiElement lambdaExpressionBody = lambdaExpression.getBody();
-      LOG.assertTrue(lambdaExpressionBody != null);
+      PsiLambdaExpression lambdaExpression = (PsiLambdaExpression)container;
+      final PsiElement invalidBody = lambdaExpression.getBody();
+      if (invalidBody == null) return declaration;
 
       final PsiLambdaExpression expressionFromText = (PsiLambdaExpression)elementFactory
-        .createExpressionFromText(lambdaExpression.getParameterList().getText() + " -> {}", lambdaExpression);
+        .createExpressionFromText(lambdaExpression.getParameterList().getText() + " -> {}", lambdaExpression.getParent());
       PsiCodeBlock newBody = (PsiCodeBlock)expressionFromText.getBody();
       LOG.assertTrue(newBody != null);
       newBody.add(declaration);
 
+      lambdaExpression =
+        (PsiLambdaExpression)lambdaExpression.replace(elementFactory.createExpressionFromText(
+          lambdaExpression.getParameterList().getText() + " -> " + invalidBody.getText(), lambdaExpression));
+
+      final PsiElement lambdaExpressionBody = lambdaExpression.getBody();
+      LOG.assertTrue(lambdaExpressionBody != null);
       final PsiStatement lastBodyStatement;
       if (LambdaUtil.getFunctionalInterfaceReturnType(lambdaExpression) == PsiType.VOID) {
         lastBodyStatement = elementFactory.createStatementFromText("a;", lambdaExpression);

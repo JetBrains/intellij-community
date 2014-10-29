@@ -241,9 +241,8 @@ public class SingleInspectionProfilePanel extends JPanel {
     } else {
       for (ScopeToolState candidate : mySelectedProfile
         .getNonDefaultTools(descriptor.getKey().toString(), myProjectProfileManager.getProject())) {
-        final NamedScope scope = descriptor.getScope();
-        LOG.assertTrue(scope != null);
-        if (Comparing.equal(candidate.getScopeName(), scope.getName())) {
+        final String scope = descriptor.getScopeName();
+        if (Comparing.equal(candidate.getScopeName(), scope)) {
           state = candidate;
           break;
         }

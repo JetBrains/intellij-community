@@ -258,7 +258,6 @@ public class ClassesProcessor {
       TextBuffer classBuffer = new TextBuffer(AVERAGE_CLASS_SIZE);
       new ClassWriter().classToJava(root, classBuffer, 0, null);
 
-      String lineSeparator = DecompilerContext.getNewLineSeparator();
       int total_offset_lines = 0;
 
       int index = cl.qualifiedName.lastIndexOf("/");
@@ -269,24 +268,28 @@ public class ClassesProcessor {
         buffer.append("package ");
         buffer.append(packageName);
         buffer.append(";");
-        buffer.append(lineSeparator);
-        buffer.append(lineSeparator);
+        buffer.appendLineSeparator();
+        buffer.appendLineSeparator();
       }
 
       int import_lines_written = importCollector.writeImports(buffer);
       if (import_lines_written > 0) {
-        buffer.append(lineSeparator);
+        buffer.appendLineSeparator();
         total_offset_lines += import_lines_written + 1;
       }
       //buffer.append(lineSeparator);
 
+      total_offset_lines = buffer.countLines();
       buffer.append(classBuffer);
 
       if (DecompilerContext.getOption(IFernflowerPreferences.BYTECODE_SOURCE_MAPPING)) {
         BytecodeSourceMapper mapper = DecompilerContext.getBytecodeSourceMapper();
         mapper.addTotalOffset(total_offset_lines);
+        if (DecompilerContext.getOption(IFernflowerPreferences.DUMP_ORIGINAL_LINES)) {
+          buffer.dumpOriginalLineNumbers(mapper.getOriginalLinesMapping());
+        }
         if (DecompilerContext.getOption(IFernflowerPreferences.UNIT_TEST_MODE)) {
-          buffer.append(lineSeparator);
+          buffer.appendLineSeparator();
           mapper.dumpMapping(buffer, true);
         }
       }

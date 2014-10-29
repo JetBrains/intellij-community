@@ -8,6 +8,7 @@ public class TestClassSimpleBytecodeMapping {
             System.out.println("Runnable");
          }
       });
+      this.test2("1");
       if(Math.random() > 0.0D) {
          System.out.println("0");
          return 0;
@@ -17,8 +18,31 @@ public class TestClassSimpleBytecodeMapping {
       }
    }
 
+   public void test2(String var1) {
+      try {
+         Integer.parseInt(var1);
+      } catch (Exception var6) {
+         System.out.println(var6);
+      } finally {
+         System.out.println("Finally");
+      }
+
+   }
+
    void run(Runnable var1) {
       var1.run();
+   }
+
+   public class InnerClass2 {
+      public void print() {
+         System.out.println("Inner2");
+      }
+   }
+
+   public class InnerClass {
+      public void print() {
+         System.out.println("Inner");
+      }
    }
 }
 
@@ -36,34 +60,60 @@ class 'pkg/TestClassSimpleBytecodeMapping' {
       3      4
       5      4
       11      5
-      14      10
+      15      10
       17      10
-      18      10
-      19      10
-      1c      11
+      1a      11
+      1d      11
+      1e      11
       1f      11
-      21      11
-      24      12
+      22      12
       25      12
-      26      14
-      29      14
-      2b      14
-      2e      15
+      27      12
+      2a      13
+      2b      13
+      2c      15
       2f      15
+      31      15
+      34      16
+      35      16
+   }
+
+   method 'test2 (Ljava/lang/String;)V' {
+      1      22
    }
 
    method 'run (Ljava/lang/Runnable;)V' {
-      1      20
+      1      32
+   }
+}
+
+class 'pkg/TestClassSimpleBytecodeMapping$InnerClass2' {
+   method 'print ()V' {
+      0      37
+      3      37
+      5      37
+   }
+}
+
+class 'pkg/TestClassSimpleBytecodeMapping$InnerClass' {
+   method 'print ()V' {
+      0      43
+      3      43
+      5      43
    }
 }
 
 Lines mapping:
-12 <-> 2
-14 <-> 3
-17 <-> 5
-21 <-> 8
-22 <-> 9
-23 <-> 10
-25 <-> 12
-26 <-> 13
-31 <-> 18
+12 <-> 5
+14 <-> 6
+17 <-> 8
+21 <-> 11
+23 <-> 12
+24 <-> 13
+25 <-> 14
+27 <-> 16
+28 <-> 17
+34 <-> 23
+44 <-> 44
+49 <-> 33
+54 <-> 38

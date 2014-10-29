@@ -219,7 +219,6 @@ public class XmlElementDescriptorImpl extends XsdEnumerationDescriptor<XmlTag>
 
     if (type instanceof ComplexTypeDescriptor) {
       final ComplexTypeDescriptor descriptor = (ComplexTypeDescriptor)type;
-      String contextNs;
       PsiFile containingFile = context != null ? context.getContainingFile():null;
 
       if (context != null && !containingFile.isPhysical()) {
@@ -227,10 +226,11 @@ public class XmlElementDescriptorImpl extends XsdEnumerationDescriptor<XmlTag>
         //context = context.getParentTag();
       }
 
+      String contextNs;
       if (context != null &&
-          ( descriptor.canContainTag(context.getLocalName(), contextNs = context.getNamespace(), context ) &&
-            (!contextNs.equals(getNamespace()) || descriptor.hasAnyInContentModel())
-          ) ) {
+          descriptor.canContainTag(context.getLocalName(), contextNs = context.getNamespace(), context) &&
+          (!contextNs.equals(getNamespace()) || descriptor.hasAnyInContentModel()) &&
+          containingFile instanceof XmlFile) { // JSXmlLiteralExpressionImpl is crazy
         final XmlNSDescriptor nsDescriptor = getNSDescriptor();
 
         if (nsDescriptor != null) {

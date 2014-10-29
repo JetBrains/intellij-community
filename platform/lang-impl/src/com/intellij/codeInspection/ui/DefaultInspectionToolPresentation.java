@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jdom.IllegalDataException;
 import org.jetbrains.annotations.NonNls;
@@ -63,13 +64,13 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
   protected InspectionNode myToolNode;
 
   private static final Object lock = new Object();
-  private Map<RefEntity, CommonProblemDescriptor[]> myProblemElements;
-  private Map<String, Set<RefEntity>> myContents = null;
-  private Set<RefModule> myModulesProblems = null;
-  private Map<CommonProblemDescriptor, RefEntity> myProblemToElements;
+  private final Map<RefEntity, CommonProblemDescriptor[]> myProblemElements = Collections.synchronizedMap(new THashMap<RefEntity, CommonProblemDescriptor[]>());
+  private final Map<String, Set<RefEntity>> myContents = Collections.synchronizedMap(new com.intellij.util.containers.HashMap<String, Set<RefEntity>>()); // keys can be null
+  private final Set<RefModule> myModulesProblems = Collections.synchronizedSet(new THashSet<RefModule>());
+  private final Map<CommonProblemDescriptor, RefEntity> myProblemToElements = Collections.synchronizedMap(new THashMap<CommonProblemDescriptor, RefEntity>());
   private DescriptorComposer myComposer;
-  private Map<RefEntity, Set<QuickFix>> myQuickFixActions;
-  private Map<RefEntity, CommonProblemDescriptor[]> myIgnoredElements;
+  private final Map<RefEntity, Set<QuickFix>> myQuickFixActions = Collections.synchronizedMap(new com.intellij.util.containers.HashMap<RefEntity, Set<QuickFix>>());
+  private final Map<RefEntity, CommonProblemDescriptor[]> myIgnoredElements = Collections.synchronizedMap(new com.intellij.util.containers.HashMap<RefEntity, CommonProblemDescriptor[]>());
 
   private Map<RefEntity, CommonProblemDescriptor[]> myOldProblemElements = null;
   protected static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.DescriptorProviderInspection");
@@ -223,13 +224,16 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
       if (view == null || !(refElement instanceof RefElement)) {
         return;
       }
-      InspectionNode toolNode = myToolNode;
-      if (toolNode == null) {
+      final InspectionNode toolNode;
+      if (myToolNode == null) {
         final HighlightSeverity currentSeverity = getSeverity((RefElement)refElement);
-        view.addTool(myToolWrapper, HighlightDisplayLevel.find(currentSeverity), context.getUIOptions().GROUP_BY_SEVERITY);
+        toolNode = view.addTool(myToolWrapper, HighlightDisplayLevel.find(currentSeverity), context.getUIOptions().GROUP_BY_SEVERITY);
       }
-      else if (toolNode.isTooBigForOnlineRefresh()) {
-        return;
+      else {
+        toolNode = myToolNode;
+        if (toolNode.isTooBigForOnlineRefresh()) {
+          return;
+        }
       }
       final Map<RefEntity, CommonProblemDescriptor[]> problems = new HashMap<RefEntity, CommonProblemDescriptor[]>();
       problems.put(refElement, descriptors);
@@ -246,8 +250,8 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
         @Override
         public void run() {
           if (!isDisposed()) {
-            view.getProvider().appendToolNodeContent(context, myToolNode,
-                                                     (InspectionTreeNode)myToolNode.getParent(), context.getUIOptions().SHOW_STRUCTURE,
+            view.getProvider().appendToolNodeContent(context, toolNode,
+                                                     (InspectionTreeNode)toolNode.getParent(), context.getUIOptions().SHOW_STRUCTURE,
                                                      contents, problems, (DefaultTreeModel)view.getTree().getModel());
             context.addView(view);
           }
@@ -275,7 +279,7 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
       final File file = new File(fileName);
       final CharArrayWriter writer = new CharArrayWriter();
       if (!file.exists()) {
-        writer.append("<").append(InspectionsBundle.message("inspection.problems")).append(" " + GlobalInspectionContextImpl.LOCAL_TOOL_ATTRIBUTE + "=\"")
+        writer.append("<").append(InspectionsBundle.message("inspection.problems")).append(" " + GlobalInspectionContextBase.LOCAL_TOOL_ATTRIBUTE + "=\"")
           .append(Boolean.toString(myToolWrapper instanceof LocalInspectionToolWrapper)).append("\">\n");
       }
       for (Object o : list) {
@@ -393,14 +397,14 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
     myOldProblemElements = null;
 
     synchronized (lock) {
-      myProblemElements = null;
-      myProblemToElements = null;
-      myQuickFixActions = null;
-      myIgnoredElements = null;
+      myProblemElements.clear();
+      myProblemToElements.clear();
+      myQuickFixActions.clear();
+      myIgnoredElements.clear();
+      myContents.clear();
+      myModulesProblems.clear();
     }
 
-    myContents = null;
-    myModulesProblems = null;
     isDisposed = true;
   }
 
@@ -525,8 +529,8 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
 
   @Override
   public void updateContent() {
-    myContents = new com.intellij.util.containers.HashMap<String, Set<RefEntity>>();
-    myModulesProblems = new HashSet<RefModule>();
+    myContents.clear();
+    myModulesProblems.clear();
     final Set<RefEntity> elements = getProblemElements().keySet();
     for (RefEntity element : elements) {
       if (getContext().getUIOptions().FILTER_RESOLVED_ITEMS && getIgnoredElements().containsKey(element)) continue;
@@ -545,6 +549,7 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
     }
   }
 
+  @NotNull
   @Override
   public Map<String, Set<RefEntity>> getContent() {
     return myContents;
@@ -553,8 +558,7 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
   @Override
   public Map<String, Set<RefEntity>> getOldContent() {
     if (myOldProblemElements == null) return null;
-    final com.intellij.util.containers.HashMap<String, Set<RefEntity>>
-      oldContents = new com.intellij.util.containers.HashMap<String, Set<RefEntity>>();
+    final Map<String, Set<RefEntity>> oldContents = new com.intellij.util.containers.HashMap<String, Set<RefEntity>>();
     final Set<RefEntity> elements = myOldProblemElements.keySet();
     for (RefEntity element : elements) {
       String groupName = element instanceof RefElement ? element.getRefManager().getGroupName((RefElement)element) : element.getName();
@@ -573,6 +577,7 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
     return oldContents;
   }
 
+  @NotNull
   @Override
   public Set<RefModule> getModuleProblems() {
     return myModulesProblems;
@@ -719,12 +724,7 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
   @Override
   @NotNull
   public Map<RefEntity, CommonProblemDescriptor[]> getProblemElements() {
-    synchronized (lock) {
-      if (myProblemElements == null) {
-        myProblemElements = Collections.synchronizedMap(new THashMap<RefEntity, CommonProblemDescriptor[]>());
-      }
-      return myProblemElements;
-    }
+    return myProblemElements;
   }
 
   @Override
@@ -735,32 +735,17 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
 
   @NotNull
   private Map<CommonProblemDescriptor, RefEntity> getProblemToElements() {
-    synchronized (lock) {
-      if (myProblemToElements == null) {
-        myProblemToElements = Collections.synchronizedMap(new THashMap<CommonProblemDescriptor, RefEntity>());
-      }
-      return myProblemToElements;
-    }
+    return myProblemToElements;
   }
 
   @NotNull
   private Map<RefEntity, Set<QuickFix>> getQuickFixActions() {
-    synchronized (lock) {
-      if (myQuickFixActions == null) {
-        myQuickFixActions = Collections.synchronizedMap(new com.intellij.util.containers.HashMap<RefEntity, Set<QuickFix>>());
-      }
-      return myQuickFixActions;
-    }
+    return myQuickFixActions;
   }
 
   @NotNull
   private Map<RefEntity, CommonProblemDescriptor[]> getIgnoredElements() {
-    synchronized (lock) {
-      if (myIgnoredElements == null) {
-        myIgnoredElements = Collections.synchronizedMap(new com.intellij.util.containers.HashMap<RefEntity, CommonProblemDescriptor[]>());
-      }
-      return myIgnoredElements;
-    }
+    return myIgnoredElements;
   }
 
   @NotNull

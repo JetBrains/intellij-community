@@ -35,8 +35,8 @@ public class TerminalExecutor extends CommandExecutor {
 
   private final List<InteractiveCommandListener> myInteractiveListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  public TerminalExecutor(@NotNull @NonNls String exePath, @NotNull Command command) {
-    super(exePath, command);
+  public TerminalExecutor(@NotNull @NonNls String exePath, @NotNull String locale, @NotNull Command command) {
+    super(exePath, locale, command);
   }
 
   public void addInteractiveListener(@NotNull InteractiveCommandListener listener) {

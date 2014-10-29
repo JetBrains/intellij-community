@@ -32,6 +32,7 @@ import com.intellij.openapi.wm.WelcomeScreen;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -145,6 +146,10 @@ public class NewWelcomeScreen extends JPanel implements WelcomeScreen {
 
   @Override
   public void dispose() {
+  }
+  
+  public static boolean isNewWelcomeScreen(@NotNull AnActionEvent e) {
+    return e.getPlace() == ActionPlaces.WELCOME_SCREEN && FlatWelcomeFrameProvider.isAvailable();
   }
 
   private static class WelcomeScreenGroup extends DefaultActionGroup {

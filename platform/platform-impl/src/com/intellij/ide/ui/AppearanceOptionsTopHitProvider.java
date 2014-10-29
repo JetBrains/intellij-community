@@ -84,12 +84,12 @@ public class AppearanceOptionsTopHitProvider extends OptionsTopHitProvider {
     return new PublicFieldBasedOptionDescription(option, "reference.settings.ide.settings.notifications", field) {
       @Override
       public Object getInstance() {
-        return NotificationsConfigurationImpl.getNotificationsConfigurationImpl();
+        return NotificationsConfigurationImpl.getInstanceImpl();
       }
     };
   }
 
-  public static class Ex extends OptionsTopHitProvider implements OptionsTopHitProvider.Optional {
+  public static class Ex extends OptionsTopHitProvider implements CoveredByToggleActions {
     private static final Collection<BooleanOptionDescription> ourOptions = ContainerUtil.immutableList(
       appearance("Window: " + "Hide Tool Window Bars", "HIDE_TOOL_STRIPES"),
       appearance("View: Show Main Toolbar", "SHOW_MAIN_TOOLBAR"),

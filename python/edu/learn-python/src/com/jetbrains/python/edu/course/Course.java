@@ -15,7 +15,7 @@ import java.util.List;
 public class Course {
 
   private static final Logger LOG = Logger.getInstance(Course.class.getName());
-  public static final String PLAYGROUND_DIR = "Playground";
+  public static final String SANDBOX_DIR = "Sandbox";
   public List<Lesson> lessons = new ArrayList<Lesson>();
   public String description;
   public String name;
@@ -62,7 +62,7 @@ public class Course {
                   lesson.setIndex(i);
                   lesson.create(baseDir, resourceRoot);
                 }
-                baseDir.createChildDirectory(this, PLAYGROUND_DIR);
+                baseDir.createChildDirectory(this, SANDBOX_DIR);
                 File[] files = resourceRoot.listFiles(new FilenameFilter() {
                   @Override
                   public boolean accept(File dir, String name) {

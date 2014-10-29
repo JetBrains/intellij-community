@@ -23,6 +23,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
 import org.jetbrains.plugins.ipnb.editor.actions.IpnbRunCellAction;
+import org.jetbrains.plugins.ipnb.editor.actions.IpnbRunCellInplaceAction;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbEditorPanel;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbFilePanel;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbPanel;
@@ -82,10 +83,13 @@ public class IpnbCodeSourcePanel extends IpnbPanel<JComponent, IpnbCodeCell> imp
         final int keyCode = e.getKeyCode();
         final Container parent = myParent.getParent();
 
-        final int height = myEditor.getLineHeight() * Math.max(myEditor.getDocument().getLineCount(), 1) + 5;
+        final int height = myEditor.getLineHeight() * Math.max(myEditor.getDocument().getLineCount(), 1) + 10;
         contentComponent.setPreferredSize(new Dimension(parent.getWidth() - 300, height));
+        panel.setPreferredSize(new Dimension(parent.getWidth() - 300, height));
         myParent.revalidate();
         myParent.repaint();
+        panel.revalidate();
+        panel.repaint();
 
         if (parent instanceof IpnbFilePanel) {
           IpnbFilePanel ipnbFilePanel = (IpnbFilePanel)parent;
@@ -96,8 +100,12 @@ public class IpnbCodeSourcePanel extends IpnbPanel<JComponent, IpnbCodeCell> imp
             UIUtil.requestFocus(getIpnbCodePanel().getFileEditor().getIpnbFilePanel());
           }
           else if (keyCode == KeyEvent.VK_ENTER && InputEvent.CTRL_DOWN_MASK == e.getModifiersEx()) {
-            final IpnbRunCellAction action = (IpnbRunCellAction)ActionManager.getInstance().getAction("IpnbRunCellAction");
+            final IpnbRunCellInplaceAction action = (IpnbRunCellInplaceAction)ActionManager.getInstance().getAction("IpnbRunCellInplaceAction");
             action.runCell(ipnbFilePanel, false);
+          }
+          else if (keyCode == KeyEvent.VK_ENTER && InputEvent.SHIFT_DOWN_MASK == e.getModifiersEx()) {
+            final IpnbRunCellAction action = (IpnbRunCellAction)ActionManager.getInstance().getAction("IpnbRunCellAction");
+            action.runCell(ipnbFilePanel, true);
           }
         }
 
@@ -118,7 +126,32 @@ public class IpnbCodeSourcePanel extends IpnbPanel<JComponent, IpnbCodeCell> imp
     });
 
     panel.add(component);
-
+    contentComponent.addHierarchyListener(new HierarchyListener() {
+      @Override
+      public void hierarchyChanged(HierarchyEvent e) {
+        final Container parent = myParent.getParent();
+        if (parent != null) {
+          final int height = myEditor.getLineHeight() * Math.max(myEditor.getDocument().getLineCount(), 1) + 10;
+          contentComponent.setPreferredSize(new Dimension(parent.getWidth() - 300, height));
+          panel.setPreferredSize(new Dimension(parent.getWidth() - 300, height));
+        }
+      }
+    });
+    contentComponent.addHierarchyBoundsListener(new HierarchyBoundsAdapter() {
+      @Override
+      public void ancestorResized(HierarchyEvent e) {
+        final Container parent = myParent.getParent();
+        final Component component = e.getChanged();
+        if (parent != null && component instanceof IpnbFilePanel) {
+          final int height = myEditor.getLineHeight() * Math.max(myEditor.getDocument().getLineCount(), 1) + 10;
+          contentComponent.setPreferredSize(new Dimension(parent.getWidth() - 300, height));
+          panel.setPreferredSize(new Dimension(parent.getWidth() - 300, height));
+          panel.revalidate();
+          panel.repaint();
+          parent.repaint();
+        }
+      }
+    });
     return panel;
   }
 }

@@ -17,7 +17,7 @@ package com.intellij.lang.xml;
 
 import com.intellij.codeInsight.generation.EscapingCommenter;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,7 +27,9 @@ import org.jetbrains.annotations.NotNull;
 public class XmlCommenter implements EscapingCommenter {
 
   private static final String DOUBLE_DASH = "--";
-  private static final String ESCAPED = "&#45;&#45;";
+  private static final String ESCAPED_DOUBLE_DASH = "&#45;&#45;";
+  private static final String GT = ">";
+  private static final String ESCAPED_GT = "&gt;";
 
   @Override
   public String getLineCommentPrefix() {
@@ -57,23 +59,48 @@ public class XmlCommenter implements EscapingCommenter {
   }
 
   @Override
-  public void escape(Document document, TextRange range) {
-    for (int i = range.getEndOffset() - getBlockCommentSuffix().length() - DOUBLE_DASH.length();
-         i >= range.getStartOffset() + getBlockCommentPrefix().length();
-         i--) {
+  public void escape(Document document, RangeMarker range) {
+    String prefix = getBlockCommentPrefix();
+    String suffix = getBlockCommentSuffix();
+
+    int start = range.getStartOffset();
+    if (CharArrayUtil.regionMatches(document.getCharsSequence(), start, prefix)) {
+      start += prefix.length();
+    }
+    int end = range.getEndOffset();
+    if (CharArrayUtil.regionMatches(document.getCharsSequence(), end - suffix.length(), suffix)) {
+      end -= suffix.length();
+    }
+    if (start >= end) return;
+
+    for (int i = end - DOUBLE_DASH.length(); i >= start; i--) {
       if (CharArrayUtil.regionMatches(document.getCharsSequence(), i, DOUBLE_DASH) &&
-          !CharArrayUtil.regionMatches(document.getCharsSequence(), i, getBlockCommentSuffix())) {
-        document.replaceString(i, i + DOUBLE_DASH.length(), ESCAPED);
+          !CharArrayUtil.regionMatches(document.getCharsSequence(), i, suffix) &&
+          !CharArrayUtil.regionMatches(document.getCharsSequence(), i - 2, prefix)) {
+        document.replaceString(i, i + DOUBLE_DASH.length(), ESCAPED_DOUBLE_DASH);
       }
+    }
+    if (CharArrayUtil.regionMatches(document.getCharsSequence(), start, GT)) {
+      document.replaceString(start, start + GT.length(), ESCAPED_GT);
+    }
+    if (CharArrayUtil.regionMatches(document.getCharsSequence(), range.getStartOffset(), prefix + "-")) {
+      document.insertString(start, " ");
+    }
+    if (CharArrayUtil.regionMatches(document.getCharsSequence(), range.getEndOffset() - suffix.length() - 1, "-" + suffix)) {
+      document.insertString(range.getEndOffset() - suffix.length(), " ");
     }
   }
 
   @Override
-  public void unescape(Document document, TextRange range) {
-    for (int i = range.getEndOffset(); i >= range.getStartOffset(); i--) {
-      if (CharArrayUtil.regionMatches(document.getCharsSequence(), i, ESCAPED)) {
-        document.replaceString(i, i + ESCAPED.length(), DOUBLE_DASH);
+  public void unescape(Document document, RangeMarker range) {
+    final int start = range.getStartOffset();
+    for (int i = range.getEndOffset(); i >= start; i--) {
+      if (CharArrayUtil.regionMatches(document.getCharsSequence(), i, ESCAPED_DOUBLE_DASH)) {
+        document.replaceString(i, i + ESCAPED_DOUBLE_DASH.length(), DOUBLE_DASH);
       }
+    }
+    if (CharArrayUtil.regionMatches(document.getCharsSequence(), start, ESCAPED_GT)) {
+      document.replaceString(start, start + ESCAPED_GT.length(), GT);
     }
   }
 }

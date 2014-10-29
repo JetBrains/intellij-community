@@ -16,6 +16,7 @@
 package git4idea.validators;
 
 import com.intellij.openapi.ui.InputValidator;
+import com.intellij.openapi.util.text.StringUtil;
 
 import java.util.regex.Pattern;
 
@@ -58,7 +59,7 @@ public final class GitRefNameValidator implements InputValidator {
 
   @Override
   public boolean checkInput(String inputString) {
-    return !ILLEGAL.matcher(inputString).find();
+    return !StringUtil.isEmptyOrSpaces(inputString) && !ILLEGAL.matcher(inputString).find();
   }
 
   @Override

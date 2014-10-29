@@ -34,8 +34,7 @@ public class JsonStructureViewModel extends StructureViewModelBase implements St
 
   @Override
   public boolean isAutoExpand(@NotNull StructureViewTreeElement element) {
-    final Object value = element.getValue();
-    return value instanceof PsiFile || value instanceof JsonProperty || value instanceof JsonObject;
+    return true;
   }
 
   @Override

@@ -295,8 +295,8 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
   }
 
   @NotNull
-  protected <T> Storage[] getComponentStorageSpecs(@NotNull PersistentStateComponent<T> persistentStateComponent,
-                                                   @NotNull StateStorageOperation operation) {
+  private <T> Storage[] getComponentStorageSpecs(@NotNull PersistentStateComponent<T> persistentStateComponent,
+                                                 @NotNull StateStorageOperation operation) {
     final State stateSpec = getStateSpec(persistentStateComponent);
     final Storage[] storages = stateSpec.storages();
     if (storages.length == 1) {

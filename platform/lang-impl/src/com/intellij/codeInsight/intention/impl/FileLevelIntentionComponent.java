@@ -16,6 +16,7 @@
 
 package com.intellij.codeInsight.intention.impl;
 
+import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass;
@@ -49,6 +50,7 @@ public class FileLevelIntentionComponent extends EditorNotificationPanel {
 
   public FileLevelIntentionComponent(final String description,
                                      final HighlightSeverity severity,
+                                     final GutterMark gutterMark,
                                      final List<Pair<HighlightInfo.IntentionActionDescriptor, TextRange>> intentions,
                                      final Project project, final PsiFile psiFile, final Editor editor) {
     myProject = project;
@@ -75,6 +77,9 @@ public class FileLevelIntentionComponent extends EditorNotificationPanel {
     }
 
     myLabel.setText(description);
+    if (gutterMark != null) {
+      myLabel.setIcon(gutterMark.getIcon());
+    }
     myGearLabel.setIcon(AllIcons.General.Gear);
 
     new ClickListener() {

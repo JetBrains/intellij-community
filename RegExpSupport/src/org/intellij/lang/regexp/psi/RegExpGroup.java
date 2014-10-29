@@ -29,6 +29,8 @@ public interface RegExpGroup extends RegExpAtom {
 
   boolean isRubyNamedGroup();
 
+  boolean isNamedGroup();
+
   @Nullable
   String getGroupName();
 }

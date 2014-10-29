@@ -15,9 +15,12 @@
  */
 package com.intellij.ide;
 
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.OptionTag;
+import com.intellij.util.xmlb.annotations.Transient;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -38,7 +41,6 @@ public class GeneralSettings implements PersistentStateComponent<GeneralSettings
 
   private String myBrowserPath = BrowserUtil.getDefaultAlternativeBrowserPath();
   private boolean myShowTipsOnStartup = true;
-  private int myLastTip = 0;
   private boolean myReopenLastProject = true;
   private boolean mySyncOnFrameActivation = true;
   private boolean mySaveOnFrameDeactivation = true;
@@ -107,12 +109,13 @@ public class GeneralSettings implements PersistentStateComponent<GeneralSettings
     myShowTipsOnStartup = b;
   }
 
+  @Transient
   public int getLastTip() {
-    return myLastTip;
+    return StringUtil.parseInt(PropertiesComponent.getInstance().getValue("lastTip"), 0);
   }
 
   public void setLastTip(int i) {
-    myLastTip = i;
+    PropertiesComponent.getInstance().setValue("lastTip", Integer.toString(i), "0");
   }
 
   public boolean isReopenLastProject() {

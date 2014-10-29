@@ -29,7 +29,10 @@ import com.intellij.openapi.fileTypes.FileTypeListener;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ModuleRootEvent;
+import com.intellij.openapi.roots.ModuleRootListener;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -333,9 +336,7 @@ public class PsiVFSListener extends VirtualFileAdapter {
       if (!fire) return; // do not fire event if parent directory was never accessed via PSI
     }
 
-    if (oldPsiFile != null && oldPsiFile.isPhysical()) {
-      ((SmartPointerManagerImpl)SmartPointerManager.getInstance(myManager.getProject())).fastenBelts(oldPsiFile, 0, null);
-    }
+    ((SmartPointerManagerImpl)SmartPointerManager.getInstance(myManager.getProject())).fastenBelts(vFile, 0, null);
     ApplicationManager.getApplication().runWriteAction(
       new ExternalChangeAction() {
         @Override

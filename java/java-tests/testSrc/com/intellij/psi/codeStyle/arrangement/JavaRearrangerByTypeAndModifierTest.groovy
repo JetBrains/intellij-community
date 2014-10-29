@@ -83,9 +83,10 @@ class Test {
       expected: '''\
 class Test {
   public int j;
-  { j = 1; }
   protected int k;
   private int i;
+
+  { j = 1; }
 }''',
       rules: [rule(FIELD, PUBLIC), rule(FIELD, PROTECTED), rule(FIELD, PRIVATE)])
   }
@@ -101,10 +102,11 @@ class Test {
 }''',
       expected: '''\
 class Test {
-  { j = 1; }
   public int j;
   protected int k;
   private int i;
+
+  { j = 1; }
 }''',
       rules: [rule(FIELD, PUBLIC), rule(FIELD, PROTECTED), rule(FIELD, PRIVATE)])
   }

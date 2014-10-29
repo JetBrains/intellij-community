@@ -260,7 +260,6 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     );
   }
 
-  @Bombed(user = "Roman Shevchenko", year = 2014, month = Calendar.MARCH, day = 14)
   public void testWrapMethodAnnotationBeforeParams() {
     // Inspired by IDEA-59536
     getSettings().RIGHT_MARGIN = 90;

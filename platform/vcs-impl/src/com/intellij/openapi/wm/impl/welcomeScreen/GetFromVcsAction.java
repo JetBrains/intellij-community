@@ -16,11 +16,9 @@
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vcs.checkout.CheckoutAction;
 import com.intellij.ui.UIBundle;
@@ -38,7 +36,7 @@ public class GetFromVcsAction extends WelcomePopupAction{
   }
 
   protected String getCaption() {
-    return UIBundle.message("welcome.screen.get.from.vcs.action.checkout.from.list.popup.title");
+    return null;
   }
 
   protected String getTextForEmpty() {
@@ -53,7 +51,7 @@ public class GetFromVcsAction extends WelcomePopupAction{
   @Override
   public void update(AnActionEvent e) {
     e.getPresentation().setEnabled(Extensions.getExtensions(CheckoutProvider.EXTENSION_POINT_NAME).length > 0);
-    if (e.getPlace() == ActionPlaces.WELCOME_SCREEN && Registry.is("ide.new.welcome.screen")) {
+    if (NewWelcomeScreen.isNewWelcomeScreen(e)) {
       e.getPresentation().setIcon(AllIcons.Welcome.FromVCS);
     }
   }

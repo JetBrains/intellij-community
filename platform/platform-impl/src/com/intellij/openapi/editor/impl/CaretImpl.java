@@ -116,13 +116,15 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
     myVisualLineEnd = doc.getLineCount() > 1 ? doc.getLineStartOffset(1) : doc.getLineCount() == 0 ? 0 : doc.getLineEndOffset(0);
   }
 
-  void onBulkDocumentUpdateStarted(@NotNull Document doc) {
-    if (doc != myEditor.getDocument() || myOffset > doc.getTextLength() || savedBeforeBulkCaretMarker != null) return;
+  void onBulkDocumentUpdateStarted() {
+    Document doc = myEditor.getDocument();
+    if (myOffset > doc.getTextLength() || savedBeforeBulkCaretMarker != null) return;
     savedBeforeBulkCaretMarker = doc.createRangeMarker(myOffset, myOffset);
   }
 
-  void onBulkDocumentUpdateFinished(@NotNull Document doc) {
-    if (doc != myEditor.getDocument() || myEditor.getCaretModel().myIsInUpdate) return;
+  void onBulkDocumentUpdateFinished() {
+    Document doc = myEditor.getDocument();
+    if (myEditor.getCaretModel().myIsInUpdate) return;
     LOG.assertTrue(!myReportCaretMoves);
 
     if (savedBeforeBulkCaretMarker != null) {
@@ -198,15 +200,14 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
           final DocumentEx document = myEditor.getDocument();
           int textEnd = Math.min(document.getTextLength() - 1, Math.max(offset, myOffset) + 1);
           CharSequence text = document.getCharsSequence().subSequence(textStart, textEnd);
-          StringBuilder positionToOffsetTrace = new StringBuilder();
-          int inverseOffset = myEditor.logicalPositionToOffset(logicalPosition, positionToOffsetTrace);
+          int inverseOffset = myEditor.logicalPositionToOffset(logicalPosition);
           LogMessageEx.error(
             LOG, "caret moved to wrong offset. Please submit a dedicated ticket and attach current editor's text to it.",
             String.format(
               "Requested: offset=%d, logical position='%s' but actual: offset=%d, logical position='%s' (%s). %s%n"
-              + "interested text [%d;%d): '%s'%n debug trace: %s%nLogical position -> offset ('%s'->'%d') trace: %s",
+              + "interested text [%d;%d): '%s'%n debug trace: %s%nLogical position -> offset ('%s'->'%d')",
               offset, logicalPosition, myOffset, myLogicalCaret, positionByOffsetAfterMove, myEditor.dumpState(),
-              textStart, textEnd, text, debugBuffer, logicalPosition, inverseOffset, positionToOffsetTrace
+              textStart, textEnd, text, debugBuffer, logicalPosition, inverseOffset
             )
           );
         }

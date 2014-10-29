@@ -1,0 +1,30 @@
+package pkg;
+
+public class TestSynchronizedMapping {
+   public int test(int var1) {
+      synchronized(this) {
+         return var1++;
+      }
+   }
+
+   public void test2(String var1) {
+      System.out.println(var1);
+   }
+}
+
+class 'pkg/TestSynchronizedMapping' {
+   method 'test (I)I' {
+      3      4
+      5      5
+   }
+
+   method 'test2 (Ljava/lang/String;)V' {
+      0      10
+      4      10
+   }
+}
+
+Lines mapping:
+8 <-> 5
+9 <-> 6
+14 <-> 11

@@ -313,7 +313,7 @@ public class XmlEmmetParser extends EmmetParser {
     }
 
     if (token == ZenCodingTokens.DOT || token == ZenCodingTokens.SHARP) {
-      final String name = token == ZenCodingTokens.DOT ? CLASS : ID;
+      final String name = getAttributeName(token);
       advance();
       token = getToken();
       final String value = getAttributeValueByToken(token);
@@ -324,6 +324,10 @@ public class XmlEmmetParser extends EmmetParser {
     }
 
     return null;
+  }
+
+  protected String getAttributeName(ZenCodingToken delimiterToken) {
+    return delimiterToken == ZenCodingTokens.DOT ? CLASS : ID;
   }
 
   @Nullable

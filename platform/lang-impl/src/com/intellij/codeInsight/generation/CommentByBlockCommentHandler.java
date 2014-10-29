@@ -22,6 +22,7 @@ import com.intellij.codeInsight.actions.MultiCaretCodeInsightActionHandler;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.highlighter.custom.CustomFileTypeLexer;
 import com.intellij.lang.Commenter;
+import com.intellij.lang.CustomUncommenter;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageCommenters;
 import com.intellij.lexer.Lexer;
@@ -259,6 +260,9 @@ public class CommentByBlockCommentHandler extends MultiCaretCodeInsightActionHan
 
     final String prefix;
     final String suffix;
+    if (commenter instanceof CustomUncommenter) {
+      return ((CustomUncommenter)commenter).findMaximumCommentedRange(text);
+    }
 
     if (commenter instanceof SelfManagingCommenter) {
       SelfManagingCommenter selfManagingCommenter = (SelfManagingCommenter)commenter;
@@ -523,18 +527,23 @@ public class CommentByBlockCommentHandler extends MultiCaretCodeInsightActionHan
       shift += commentPrefix.length();
     }
 
-    TextRange range = new TextRange(startOffset, endOffset + shift);
-    return processDocument(range, commenter, true);
+    RangeMarker marker = myDocument.createRangeMarker(startOffset, endOffset + shift);
+    try {
+      return processDocument(myDocument, marker, commenter, true);
+    }
+    finally {
+      marker.dispose();
+    }
   }
 
-  private TextRange processDocument(TextRange range, Commenter commenter, boolean escape) {
-    if (!(commenter instanceof EscapingCommenter)) return range;
-    RangeMarker marker = myDocument.createRangeMarker(range);
-    if (escape) {
-      ((EscapingCommenter)commenter).escape(myDocument, range);
-    }
-    else {
-      ((EscapingCommenter)commenter).unescape(myDocument, range);
+  static TextRange processDocument(Document document, RangeMarker marker, Commenter commenter, boolean escape) {
+    if (commenter instanceof EscapingCommenter) {
+      if (escape) {
+        ((EscapingCommenter)commenter).escape(document, marker);
+      }
+      else {
+        ((EscapingCommenter)commenter).unescape(document, marker);
+      }
     }
     return TextRange.create(marker.getStartOffset(), marker.getEndOffset());
   }
@@ -654,37 +663,58 @@ public class CommentByBlockCommentHandler extends MultiCaretCodeInsightActionHan
       return;
     }
 
-    RangeMarker marker = myDocument.createRangeMarker(range);
     String text = myDocument.getCharsSequence().subSequence(range.getStartOffset(), range.getEndOffset()).toString();
     int startOffset = range.getStartOffset();
     //boolean endsProperly = CharArrayUtil.regionMatches(chars, range.getEndOffset() - commentSuffix.length(), commentSuffix);
     List<Couple<TextRange>> ranges = new ArrayList<Couple<TextRange>>();
 
-    int position = 0;
-    while (true) {
-      int start = getNearest(text, commentPrefix, position);
-      if (start == text.length()) {
-        break;
-      }
-      position = start;
-      int end = getNearest(text, commentSuffix, position + commentPrefix.length()) + commentSuffix.length();
-      position = end;
-      Couple<TextRange> pair =
-        findCommentBlock(new TextRange(start + startOffset, end + startOffset), commentPrefix, commentSuffix);
-      ranges.add(pair);
-    }
 
-    for (int i = ranges.size() - 1; i >= 0; i--) {
-      Couple<TextRange> toDelete = ranges.get(i);
-      myDocument.deleteString(toDelete.first.getStartOffset(), toDelete.first.getEndOffset());
-      int shift = toDelete.first.getEndOffset() - toDelete.first.getStartOffset();
-      myDocument.deleteString(toDelete.second.getStartOffset() - shift, toDelete.second.getEndOffset() - shift);
-      if (commenter.getCommentedBlockCommentPrefix() != null) {
-        commentNestedComments(myDocument, new TextRange(toDelete.first.getEndOffset() - shift, toDelete.second.getStartOffset() - shift),
-                              commenter);
+    if (commenter instanceof CustomUncommenter) {
+      /**
+       * In case of custom uncommenter, we need to ask it for list of [commentOpen-start,commentOpen-end], [commentClose-start,commentClose-end]
+       * and shift if according to current offset
+       */
+      CustomUncommenter customUncommenter = (CustomUncommenter)commenter;
+      for (Couple<TextRange> coupleFromCommenter : customUncommenter.getCommentRangesToDelete(text)) {
+        TextRange openComment = coupleFromCommenter.first.shiftRight(startOffset);
+        TextRange closeComment = coupleFromCommenter.second.shiftRight(startOffset);
+        ranges.add(Couple.of(openComment, closeComment));
       }
     }
+    else {
+      // If commenter is not custom, we need to get this list by our selves
+      int position = 0;
+      while (true) {
+        int start = getNearest(text, commentPrefix, position);
+        if (start == text.length()) {
+          break;
+        }
+        position = start;
+        int end = getNearest(text, commentSuffix, position + commentPrefix.length()) + commentSuffix.length();
+        position = end;
+        Couple<TextRange> pair =
+          findCommentBlock(new TextRange(start + startOffset, end + startOffset), commentPrefix, commentSuffix);
+        ranges.add(pair);
+      }
+    }
 
-    processDocument(TextRange.create(marker.getStartOffset(), marker.getEndOffset()), commenter, false);
+    RangeMarker marker = myDocument.createRangeMarker(range);
+    try {
+      for (int i = ranges.size() - 1; i >= 0; i--) {
+        Couple<TextRange> toDelete = ranges.get(i);
+        myDocument.deleteString(toDelete.first.getStartOffset(), toDelete.first.getEndOffset());
+        int shift = toDelete.first.getEndOffset() - toDelete.first.getStartOffset();
+        myDocument.deleteString(toDelete.second.getStartOffset() - shift, toDelete.second.getEndOffset() - shift);
+        if (commenter.getCommentedBlockCommentPrefix() != null) {
+          commentNestedComments(myDocument, new TextRange(toDelete.first.getEndOffset() - shift, toDelete.second.getStartOffset() - shift),
+                                commenter);
+        }
+      }
+
+      processDocument(myDocument, marker, commenter, false);
+    }
+    finally {
+      marker.dispose();
+    }
   }
 }

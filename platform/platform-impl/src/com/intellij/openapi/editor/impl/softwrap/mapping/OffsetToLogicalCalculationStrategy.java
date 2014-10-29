@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor.impl.softwrap.mapping;
 
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapsStorage;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +32,7 @@ class OffsetToLogicalCalculationStrategy extends AbstractMappingStrategy<Logical
 
   private int myTargetOffset;
 
-  OffsetToLogicalCalculationStrategy(@NotNull Editor editor, @NotNull SoftWrapsStorage storage, @NotNull List<CacheEntry> cache)
+  OffsetToLogicalCalculationStrategy(@NotNull EditorEx editor, @NotNull SoftWrapsStorage storage, @NotNull List<CacheEntry> cache)
   {
     super(editor, storage, cache);
   }
@@ -157,13 +158,13 @@ class OffsetToLogicalCalculationStrategy extends AbstractMappingStrategy<Logical
     if (targetLogicalLine == position.logicalLine) {
       // Target offset is located on the same logical line as folding start.
       position.logicalColumn += SoftWrapModelImpl.getEditorTextRepresentationHelper(myEditor).toVisualColumnSymbolsNumber(
-        document.getCharsSequence(), foldRegion.getStartOffset(), myTargetOffset, position.x
+        foldRegion.getStartOffset(), myTargetOffset, position.x
       );
     }
     else {
       // Target offset is located on a different line with folding start.
       position.logicalColumn = SoftWrapModelImpl.getEditorTextRepresentationHelper(myEditor).toVisualColumnSymbolsNumber(
-        document.getCharsSequence(), foldRegion.getStartOffset(), myTargetOffset, 0
+        foldRegion.getStartOffset(), myTargetOffset, 0
       );
       position.softWrapColumnDiff = 0;
       int linesDiff = document.getLineNumber(myTargetOffset) - document.getLineNumber(foldRegion.getStartOffset());

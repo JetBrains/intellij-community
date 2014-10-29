@@ -104,6 +104,13 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
           registerFix(a, new RemoveRedundantEscapeAction(ch));
         }
       }
+      if (ch.getType() == RegExpChar.Type.HEX) {
+        if (text.charAt(text.length() - 1) == '}') {
+          if (!myLanguageHosts.supportsExtendedHexCharacter(ch)) {
+            myHolder.createErrorAnnotation(ch, "This hex character syntax is not supported");
+          }
+        }
+      }
     }
   }
 
@@ -124,14 +131,14 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
   public void visitRegExpBackref(final RegExpBackref backref) {
     final RegExpGroup group = backref.resolve();
     if (group == null) {
-      final Annotation a = myHolder.createErrorAnnotation(backref, "Unresolved backreference");
+      final Annotation a = myHolder.createErrorAnnotation(backref, "Unresolved back reference");
       if (a != null) {
         // IDEA-9381
         a.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
       }
     }
     else if (PsiTreeUtil.isAncestor(group, backref, true)) {
-      myHolder.createWarningAnnotation(backref, "Backreference is nested into the capturing group it refers to");
+      myHolder.createWarningAnnotation(backref, "Back reference is nested into the capturing group it refers to");
     }
   }
 
@@ -173,7 +180,7 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
     */
     final RegExpGroup group = groupRef.resolve();
     if (group == null) {
-      final Annotation a = myHolder.createErrorAnnotation(groupRef, "Unresolved backreference");
+      final Annotation a = myHolder.createErrorAnnotation(groupRef, "Unresolved back reference");
       if (a != null) {
         // IDEA-9381
         a.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);

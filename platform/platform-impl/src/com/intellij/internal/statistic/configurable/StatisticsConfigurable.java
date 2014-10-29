@@ -16,6 +16,7 @@
 package com.intellij.internal.statistic.configurable;
 
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
+import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import org.jetbrains.annotations.Nls;
@@ -25,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class StatisticsConfigurable implements SearchableConfigurable {
+public class StatisticsConfigurable implements SearchableConfigurable, Configurable.NoScroll {
 
     private boolean modifiedByDefault;
 

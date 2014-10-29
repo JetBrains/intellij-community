@@ -164,7 +164,7 @@ public class RepositoryHelper {
   }
 
   private synchronized static List<IdeaPluginDescriptor> readPluginsStream(@NotNull URLConnection connection,
-                                                                           ProgressIndicator indicator,
+                                                                           @Nullable ProgressIndicator indicator,
                                                                            @NotNull String file) throws Exception {
     File localFile;
     InputStream input = getConnectionInputStream(connection);

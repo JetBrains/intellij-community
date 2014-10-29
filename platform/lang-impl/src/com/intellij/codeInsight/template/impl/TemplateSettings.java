@@ -21,7 +21,6 @@ import com.intellij.openapi.application.ex.DecodeDefaultsUtil;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.BaseSchemeProcessor;
-import com.intellij.openapi.options.SchemeProcessor;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.options.SchemesManagerFactory;
 import com.intellij.openapi.util.Comparing;
@@ -49,12 +48,11 @@ import java.util.*;
     @Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml"),
     @Storage(file = StoragePathMacros.APP_CONFIG + "/templates.xml")
   },
-  storageChooser = LastStorageChooserForWrite.class
+  storageChooser = LastStorageChooserForWrite.class,
+  additionalExportFile = TemplateSettings.TEMPLATES_DIR_PATH
 )
 public class TemplateSettings implements PersistentStateComponent<TemplateSettings.State> {
   private static final Logger LOG = Logger.getInstance(TemplateSettings.class);
-
-  private static final String FILE_SPEC = StoragePathMacros.ROOT_CONFIG + "/templates";
 
   @NonNls public static final String USER_GROUP_NAME = "user";
   @NonNls private static final String TEMPLATE_SET = "templateSet";
@@ -92,6 +90,8 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
   @NonNls private static final String RESOURCE_BUNDLE = "resource-bundle";
   @NonNls private static final String KEY = "key";
   @NonNls private static final String ID = "id";
+
+  static final String TEMPLATES_DIR_PATH = StoragePathMacros.ROOT_CONFIG + "/templates";
 
   private final MultiMap<String, TemplateImpl> myTemplates = MultiMap.createLinked();
 
@@ -186,7 +186,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
   private TemplateKey myLastSelectedTemplate;
 
   public TemplateSettings(SchemesManagerFactory schemesManagerFactory) {
-    SchemeProcessor<TemplateGroup> processor = new BaseSchemeProcessor<TemplateGroup>() {
+    mySchemesManager = schemesManagerFactory.createSchemesManager(TEMPLATES_DIR_PATH, new BaseSchemeProcessor<TemplateGroup>() {
       @Override
       @Nullable
       public TemplateGroup readScheme(@NotNull final Document schemeContent) throws InvalidDataException {
@@ -221,9 +221,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
 
       @Override
       public void initScheme(@NotNull final TemplateGroup scheme) {
-        Collection<TemplateImpl> templates = scheme.getElements();
-
-        for (TemplateImpl template : templates) {
+        for (TemplateImpl template : scheme.getElements()) {
           addTemplateImpl(template);
         }
       }
@@ -241,11 +239,15 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
           removeTemplate(template);
         }
       }
-    };
+    }, RoamingType.PER_USER);
 
-    mySchemesManager = schemesManagerFactory.createSchemesManager(FILE_SPEC, processor, RoamingType.PER_USER);
+    for (TemplateGroup group : mySchemesManager.loadSchemes()) {
+      for (TemplateImpl template : group.getElements()) {
+        addTemplateImpl(template);
+      }
+    }
 
-    loadTemplates();
+    loadDefaultLiveTemplates();
   }
 
   public static TemplateSettings getInstance() {
@@ -426,16 +428,6 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
       myDefaultTemplates.put(TemplateKey.keyOf(template), template);
     }
     return template;
-  }
-
-  private void loadTemplates() {
-    for (TemplateGroup group : mySchemesManager.loadSchemes()) {
-      for (TemplateImpl template : group.getElements()) {
-        addTemplateImpl(template);
-      }
-    }
-
-    loadDefaultLiveTemplates();
   }
 
   private void loadDefaultLiveTemplates() {

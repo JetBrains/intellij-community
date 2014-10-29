@@ -211,7 +211,7 @@ public class GitCompareWithBranchAction extends DumbAwareAction {
       VcsFileRevision compareRevision = new GitFileRevision(project, filePath,
                                                             new GitRevisionNumber(branchToCompare, compareRevisionNumber.getTimestamp()));
       CurrentRevision currentRevision = new CurrentRevision(file, new GitRevisionNumber(head, currentRevisionNumber.getTimestamp()));
-      new GitDiffFromHistoryHandler(project).showDiffForTwo(new FilePathImpl(file), compareRevision, currentRevision);
+      new GitDiffFromHistoryHandler(project).showDiffForTwo(project, new FilePathImpl(file), compareRevision, currentRevision);
     }
 
     private static void fileDoesntExistInBranchError(@NotNull Project project, @NotNull VirtualFile file, @NotNull String branchToCompare) {

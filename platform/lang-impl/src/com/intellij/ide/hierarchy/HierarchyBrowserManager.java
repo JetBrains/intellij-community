@@ -18,12 +18,15 @@ package com.intellij.ide.hierarchy;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.impl.ContentManagerWatcher;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.ui.content.ContentManager;
 
 @State(
@@ -46,11 +49,15 @@ public final class HierarchyBrowserManager implements PersistentStateComponent<H
   private final ContentManager myContentManager;
 
   public HierarchyBrowserManager(final Project project) {
-    final ToolWindowManager toolWindowManager=ToolWindowManager.getInstance(project);
-    final ToolWindow toolWindow = toolWindowManager.registerToolWindow(ToolWindowId.HIERARCHY, true, ToolWindowAnchor.RIGHT, project);
+    ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
+    ToolWindow toolWindow = toolWindowManager.registerToolWindow(ToolWindowId.HIERARCHY, true, ToolWindowAnchor.RIGHT, project);
+    DefaultActionGroup gearActions = new DefaultActionGroup();
+    gearActions.addAction(SimpleToolWindowPanel.createToggleToolbarAction(project, toolWindow)).setAsSecondary(true);
+    ((ToolWindowEx)toolWindow).setAdditionalGearActions(gearActions);
+
     myContentManager = toolWindow.getContentManager();
     toolWindow.setIcon(AllIcons.Toolwindows.ToolWindowHierarchy);
-    new ContentManagerWatcher(toolWindow,myContentManager);
+    new ContentManagerWatcher(toolWindow, myContentManager);
   }
 
   public final ContentManager getContentManager() {

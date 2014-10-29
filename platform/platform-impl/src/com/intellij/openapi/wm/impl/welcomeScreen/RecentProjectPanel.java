@@ -28,6 +28,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.UniqueNameBuilder;
 import com.intellij.openapi.util.text.StringUtil;
@@ -239,12 +240,16 @@ public class RecentProjectPanel extends JPanel {
     protected RecentProjectItemRenderer(UniqueNameBuilder<ReopenProjectAction> pathShortener) {
       super(new VerticalFlowLayout());
       myShortener = pathShortener;
+      myPath.setFont(myPath.getFont().deriveFont(SystemInfo.isMac ? 10f : 11f));
       setFocusable(true);
-      myPath.setFont(myPath.getFont().deriveFont((float)10));
+      layoutComponents();
+    }
+
+    protected void layoutComponents() {
       add(myName);
       add(myPath);
     }
-    
+
     protected Color getListBackground(boolean isSelected, boolean hasFocus) {
       return UIUtil.getListBackground(isSelected);
     }
@@ -257,8 +262,8 @@ public class RecentProjectPanel extends JPanel {
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
       ReopenProjectAction item = (ReopenProjectAction)value;
 
-      Color fore = getListForeground(isSelected, cellHasFocus);
-      Color back = getListBackground(isSelected, cellHasFocus);
+      Color fore = getListForeground(isSelected, list.hasFocus());
+      Color back = getListBackground(isSelected, list.hasFocus());
 
       myName.setForeground(fore);
       myPath.setForeground(isSelected ? fore : UIUtil.getInactiveTextColor());

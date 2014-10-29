@@ -143,14 +143,10 @@
     <applicationService serviceInterface="com.intellij.execution.runners.ProcessProxyFactory"
                         serviceImplementation="com.intellij.execution.runners.ProcessProxyFactoryImpl"/>
 
-    <applicationService serviceInterface="com.intellij.debugger.settings.NodeRendererSettings"
-                        serviceImplementation="com.intellij.debugger.settings.NodeRendererSettings"/>
-    <applicationService serviceInterface="com.intellij.debugger.settings.ViewsGeneralSettings"
-                        serviceImplementation="com.intellij.debugger.settings.ViewsGeneralSettings"/>
-    <applicationService serviceInterface="com.intellij.debugger.settings.DebuggerSettings"
-                        serviceImplementation="com.intellij.debugger.settings.DebuggerSettings"/>
-    <applicationService serviceInterface="com.intellij.debugger.settings.ThreadsViewSettings"
-                        serviceImplementation="com.intellij.debugger.settings.ThreadsViewSettings"/>
+    <applicationService serviceImplementation="com.intellij.debugger.settings.NodeRendererSettings"/>
+    <applicationService serviceImplementation="com.intellij.debugger.settings.ViewsGeneralSettings"/>
+    <applicationService serviceImplementation="com.intellij.debugger.settings.DebuggerSettings"/>
+    <applicationService serviceImplementation="com.intellij.debugger.settings.ThreadsViewSettings"/>
 
     <applicationService serviceInterface="com.intellij.packaging.elements.PackagingElementFactory"
                         serviceImplementation="com.intellij.packaging.impl.elements.PackagingElementFactoryImpl"/>

@@ -19,6 +19,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.ResolvingHint;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,57 +35,7 @@ import java.util.Set;
  *
  * @author peter
  */
-public abstract class ResolvingConverter<T> extends Converter<T> {
-  @Deprecated
-  public static final ResolvingConverter EMPTY_CONVERTER = new ResolvingConverter() {
-    @Override
-    @NotNull
-    public Collection getVariants(final ConvertContext context) {
-      return Collections.emptyList();
-    }
-
-    @Override
-    public Object fromString(final String s, final ConvertContext context) {
-      return s;
-    }
-
-    @Override
-    public String toString(final Object t, final ConvertContext context) {
-      return String.valueOf(t);
-    }
-  };
-
-  /** @see com.intellij.util.xml.converters.values.BooleanValueConverter */
-  @Deprecated
-  public static final Converter<Boolean> BOOLEAN_CONVERTER = new ResolvingConverter<Boolean>() {
-    @Override
-    public Boolean fromString(final String s, final ConvertContext context) {
-      if ("true".equalsIgnoreCase(s)) {
-        return Boolean.TRUE;
-      }
-      if ("false".equalsIgnoreCase(s)) {
-        return Boolean.FALSE;
-      }
-      return null;
-    }
-
-    @Override
-    public String toString(final Boolean t, final ConvertContext context) {
-      return t == null? null:t.toString();
-    }
-
-    @Override
-    @NotNull
-    public Collection<? extends Boolean> getVariants(final ConvertContext context) {
-      final DomElement element = context.getInvocationElement();
-      if (element instanceof GenericDomValue) {
-        final SubTag annotation = element.getAnnotation(SubTag.class);
-        if (annotation != null && annotation.indicator()) return Collections.emptyList();
-      }
-
-      return Arrays.asList(Boolean.FALSE, Boolean.TRUE);
-    }
-  };
+public abstract class ResolvingConverter<T> extends Converter<T> implements ResolvingHint {
 
   @Override
   public String getErrorMessage(@Nullable String s, final ConvertContext context) {
@@ -170,6 +121,11 @@ public abstract class ResolvingConverter<T> extends Converter<T> {
     return resolveResult != null && element.getManager().areElementsEquivalent(element, getPsiElement(resolveResult));
   }
 
+  @Override
+  public boolean canResolveTo(Class<? extends PsiElement> elementClass) {
+    return true;
+  }
+
   /**
    * Delegate from {@link com.intellij.psi.PsiReference#resolve()}
    * @param o {@link #fromString(String, ConvertContext)} result
@@ -242,4 +198,55 @@ public abstract class ResolvingConverter<T> extends Converter<T> {
       return myWrappedConverter.toString(t, context);
     }
   }
+
+  @Deprecated
+  public static final ResolvingConverter EMPTY_CONVERTER = new ResolvingConverter() {
+    @Override
+    @NotNull
+    public Collection getVariants(final ConvertContext context) {
+      return Collections.emptyList();
+    }
+
+    @Override
+    public Object fromString(final String s, final ConvertContext context) {
+      return s;
+    }
+
+    @Override
+    public String toString(final Object t, final ConvertContext context) {
+      return String.valueOf(t);
+    }
+  };
+
+  /** @see com.intellij.util.xml.converters.values.BooleanValueConverter */
+  @Deprecated
+  public static final Converter<Boolean> BOOLEAN_CONVERTER = new ResolvingConverter<Boolean>() {
+    @Override
+    public Boolean fromString(final String s, final ConvertContext context) {
+      if ("true".equalsIgnoreCase(s)) {
+        return Boolean.TRUE;
+      }
+      if ("false".equalsIgnoreCase(s)) {
+        return Boolean.FALSE;
+      }
+      return null;
+    }
+
+    @Override
+    public String toString(final Boolean t, final ConvertContext context) {
+      return t == null? null:t.toString();
+    }
+
+    @Override
+    @NotNull
+    public Collection<? extends Boolean> getVariants(final ConvertContext context) {
+      final DomElement element = context.getInvocationElement();
+      if (element instanceof GenericDomValue) {
+        final SubTag annotation = element.getAnnotation(SubTag.class);
+        if (annotation != null && annotation.indicator()) return Collections.emptyList();
+      }
+
+      return Arrays.asList(Boolean.FALSE, Boolean.TRUE);
+    }
+  };
 }

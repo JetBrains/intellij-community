@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.openapi.editor.impl.softwrap;
 
 import com.intellij.openapi.editor.impl.EditorTextRepresentationHelper;
-import org.jetbrains.annotations.NotNull;
 
 /**
 * @author Denis Zhdanov
@@ -24,23 +23,26 @@ import org.jetbrains.annotations.NotNull;
 */
 public class MockEditorTextRepresentationHelper implements EditorTextRepresentationHelper {
 
+  private final CharSequence myText;
   private final int mySpaceSizeInPixels;
   private final int myTabSizeInColumns;
 
-  public MockEditorTextRepresentationHelper(int spaceSizeInPixels, int tabSizeInColumns) {
+  public MockEditorTextRepresentationHelper(CharSequence text, int spaceSizeInPixels, int tabSizeInColumns) {
+    myText = text;
     mySpaceSizeInPixels = spaceSizeInPixels;
     myTabSizeInColumns = tabSizeInColumns;
   }
 
   public int toVisualColumnSymbolsNumber(char c, int x) {
-    return toVisualColumnSymbolsNumber(new String(new char[] {c}), 0, 1, x);
+    return new MockEditorTextRepresentationHelper(new String(new char[] {c}), mySpaceSizeInPixels, myTabSizeInColumns)
+      .toVisualColumnSymbolsNumber(0, 1, x);
   }
 
   @Override
-  public int toVisualColumnSymbolsNumber(@NotNull CharSequence text, int start, int end, int x) {
+  public int toVisualColumnSymbolsNumber(int start, int end, int x) {
     int result = 0;
     for (int i = start; i < end; i++) {
-      char c = text.charAt(i);
+      char c = myText.charAt(i);
       if (c == '\n') {
         result = 0;
         x = 0;
@@ -57,10 +59,10 @@ public class MockEditorTextRepresentationHelper implements EditorTextRepresentat
   }
 
   @Override
-  public int textWidth(@NotNull CharSequence text, int start, int end, int fontType, int x) {
+  public int textWidth(int start, int end, int fontType, int x) {
     int result = 0;
     for (int i = start; i < end; i++) {
-      char c = text.charAt(i);
+      char c = myText.charAt(i);
       switch (c) {
         case '\n': result = 0; break;
         default: result += charWidth(c, result);
@@ -78,5 +80,24 @@ public class MockEditorTextRepresentationHelper implements EditorTextRepresentat
     else {
       return mySpaceSizeInPixels;
     }
+  }
+
+  @Override
+  public int calcSoftWrapUnawareOffset(int startOffset, int endOffset, int startColumn, int targetColumn, int startX) {
+    int x = startX;
+    int column = startColumn;
+    for (int i = startOffset; i < endOffset; i++) {
+      if (column == targetColumn) {
+        return i;
+      }
+      char c = myText.charAt(i);
+      int width = charWidth(c, x);
+      column += width / mySpaceSizeInPixels;
+      if (width % mySpaceSizeInPixels > 0) {
+        column++;
+      }
+      x += width;
+    }
+    return -1;
   }
 }

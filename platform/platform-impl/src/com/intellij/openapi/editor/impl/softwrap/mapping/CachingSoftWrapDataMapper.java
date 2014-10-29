@@ -67,6 +67,7 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
   private final CacheState                     myBeforeChangeState                   = new CacheState();
   private final CacheState                     myAfterChangeState                    = new CacheState();
 
+  private final LogicalToOffsetCalculationStrategy myLogicalToOffsetStrategy;
   private final OffsetToLogicalCalculationStrategy myOffsetToLogicalStrategy;
   private final VisualToLogicalCalculationStrategy myVisualToLogicalStrategy;
   private final EditorEx                           myEditor;
@@ -79,6 +80,7 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
     myStorage = storage;
     mySearchKey = new CacheEntry(0, editor);
 
+    myLogicalToOffsetStrategy = new LogicalToOffsetCalculationStrategy(editor, storage, myCache);
     myOffsetToLogicalStrategy = new OffsetToLogicalCalculationStrategy(editor, storage, myCache);
     myVisualToLogicalStrategy = new VisualToLogicalCalculationStrategy(editor, storage, myCache);
   }
@@ -99,6 +101,12 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
   public LogicalPosition offsetToLogicalPosition(int offset) {
     myOffsetToLogicalStrategy.init(offset, myCache);
     return calculate(myOffsetToLogicalStrategy);
+  }
+
+  @Override
+  public int logicalPositionToOffset(@NotNull LogicalPosition logical) throws IllegalStateException {
+    myLogicalToOffsetStrategy.init(logical);
+    return calculate(myLogicalToOffsetStrategy);
   }
 
   @Override
@@ -144,7 +152,7 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
       // Count soft wrap column offset only if it's located at the same line as the target offset.
       if (column < 0 && softWrap.getStart() >= targetLogicalLineStartOffset) {
         column = softWrap.getIndentInColumns() + SoftWrapModelImpl.getEditorTextRepresentationHelper(myEditor).toVisualColumnSymbolsNumber(
-          myEditor.getDocument().getCharsSequence(), softWrap.getStart(), maxOffset, softWrap.getIndentInPixels()
+          softWrap.getStart(), maxOffset, softWrap.getIndentInPixels()
         );
 
         // Count lines introduced by the current soft wrap. We assume that every soft wrap has a single line feed.

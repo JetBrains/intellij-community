@@ -84,6 +84,9 @@ public interface JVMElementFactory {
   @NotNull
   PsiMethod createMethod(@NotNull @NonNls String name, PsiType returnType) throws IncorrectOperationException;
 
+  @NotNull
+  PsiMethod createMethod(@NotNull @NonNls String name, PsiType returnType, PsiElement context) throws IncorrectOperationException;
+
   /**
    * Creates an empty constructor.
    *

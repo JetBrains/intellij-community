@@ -254,6 +254,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private boolean mySoftWrapsChanged;
 
+  // transient fields used during painting
+  private VisualPosition mySelectionStartPosition;
+  private VisualPosition mySelectionEndPosition;
+
   private Color myLastBackgroundColor    = null;
   private Point myLastBackgroundPosition = null;
   private int myLastBackgroundWidth;
@@ -299,7 +303,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private final TIntFunction myLineNumberAreaWidthFunction = new TIntFunction() {
     @Override
     public int execute(int lineNumber) {
-      return getFontMetrics(Font.PLAIN).stringWidth(Integer.toString(lineNumber + 1)) + 6;
+      return getFontMetrics(Font.PLAIN).stringWidth(Integer.toString(lineNumber + 1)) + 5;
     }
   };
 
@@ -1336,7 +1340,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (softWrapAware) {
       return mySoftWrapModel.offsetToLogicalPosition(offset);
     }
-    int line = offsetToLogicalLine(offset, false);
+    int line = offsetToLogicalLine(offset);
     int column = calcColumnNumber(offset, line, false, myDocument.getImmutableCharSequence());
     return new LogicalPosition(line, column);
   }
@@ -1687,9 +1691,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private void bulkUpdateStarted() {
+    myFoldingModel.onBulkDocumentUpdateStarted();
+    myCaretModel.onBulkDocumentUpdateStarted();
+    mySoftWrapModel.onBulkDocumentUpdateStarted();
   }
 
   private void bulkUpdateFinished() {
+    myFoldingModel.onBulkDocumentUpdateFinished();
+    myCaretModel.onBulkDocumentUpdateFinished();
+    mySoftWrapModel.onBulkDocumentUpdateFinished();
 
     clearTextWidthCache();
 
@@ -1958,7 +1968,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     LogicalPosition clipEndPosition = xyToLogicalPosition(new Point(0, clip.y + clip.height + getLineHeight()));
     int clipEndOffset = logicalPositionToOffset(clipEndPosition);
     paintBackgrounds(g, clip, clipStartPosition, clipStartVisualPos, clipStartOffset, clipEndOffset);
-    if (paintPlaceholderText(g, clip)) return;
+    if (paintPlaceholderText(g, clip)) {
+      paintCaretCursor(g);
+      return;
+    }
 
     paintRectangularSelection(g);
     paintRightMargin(g, clip);
@@ -2241,6 +2254,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     myLastBackgroundPosition = null;
     myLastBackgroundColor = null;
+    mySelectionStartPosition = null;
+    mySelectionEndPosition = null;
 
     int start = clipStartOffset;
 
@@ -2546,6 +2561,23 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     position.x = width;
   }
 
+
+  private VisualPosition getSelectionStartPositionForPaint() {
+    if (mySelectionStartPosition == null) {
+      // We cache the value to avoid repeated invocations of Editor.logicalPositionToOffset which is currently slow for long lines
+      mySelectionStartPosition = getSelectionModel().getSelectionStartPosition();
+    }
+    return mySelectionStartPosition;
+  }
+
+  private VisualPosition getSelectionEndPositionForPaint() {
+    if (mySelectionEndPosition == null) {
+      // We cache the value to avoid repeated invocations of Editor.logicalPositionToOffset which is currently slow for long lines
+      mySelectionEndPosition = getSelectionModel().getSelectionEndPosition();
+    }
+    return mySelectionEndPosition;
+  }
+
   /**
    * End user is allowed to perform selection by visual coordinates (e.g. by dragging mouse with left button hold). There is a possible
    * case that such a move intersects with soft wrap introduced virtual space. We want to draw corresponding selection background
@@ -2567,8 +2599,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                                                             @JdkConstants.FontStyle int fontType) {
     // There is a possible case that the user performed selection at soft wrap virtual space. We need to paint corresponding background
     // there then.
-    VisualPosition selectionStartPosition = getSelectionModel().getSelectionStartPosition();
-    VisualPosition selectionEndPosition = getSelectionModel().getSelectionEndPosition();
+    VisualPosition selectionStartPosition = getSelectionStartPositionForPaint();
+    VisualPosition selectionEndPosition = getSelectionEndPositionForPaint();
     if (selectionStartPosition.equals(selectionEndPosition)) {
       return;
     }
@@ -2628,8 +2660,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                                                              @NotNull SoftWrap softWrap) {
     // There is a possible case that the user performed selection at soft wrap virtual space. We need to paint corresponding background
     // there then.
-    VisualPosition selectionStartPosition = getSelectionModel().getSelectionStartPosition();
-    VisualPosition selectionEndPosition = getSelectionModel().getSelectionEndPosition();
+    VisualPosition selectionStartPosition = getSelectionStartPositionForPaint();
+    VisualPosition selectionEndPosition = getSelectionEndPositionForPaint();
     if (selectionStartPosition.equals(selectionEndPosition)) {
       return;
     }
@@ -2870,7 +2902,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return false;
     }
 
-    if (KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner() == myEditorComponent) {
+    if (KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner() == myEditorComponent &&
+      !Boolean.TRUE.equals(SHOW_PLACEHOLDER_WHEN_FOCUSED.get(this))) {
       // There is a possible case that placeholder text was painted and the editor gets focus now. We want to over-paint previously
       // used placeholder text then.
       myLastBackgroundColor = getBackgroundColor();
@@ -2880,6 +2913,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return false;
     }
     else {
+      hintText = SwingUtilities.layoutCompoundLabel(g.getFontMetrics(), hintText.toString(), null, 0, 0, 0, 0,
+                                                    myEditorComponent.getBounds(), new Rectangle(), new Rectangle(), 0);
       myLastPaintedPlaceholderWidth = drawString(
         g, hintText, 0, hintText.length(), new Point(0, 0), clip, null, null, Font.PLAIN,
         myFoldingModel.getPlaceholderAttributes().getForegroundColor(), PAINT_NO_WHITESPACE
@@ -3621,11 +3656,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public int logicalPositionToOffset(@NotNull LogicalPosition pos) {
-    return logicalPositionToOffset(pos, null);
+    return logicalPositionToOffset(pos, true);
   }
 
-
-  public int logicalPositionToOffset(@NotNull LogicalPosition pos, @Nullable StringBuilder debugBuffer) {
+  @Override
+  public int logicalPositionToOffset(@NotNull LogicalPosition pos, boolean softWrapAware) {
+    if (softWrapAware) {
+      return mySoftWrapModel.logicalPositionToOffset(pos);
+    }
     assertReadAccess();
     if (myDocument.getLineCount() == 0) return 0;
 
@@ -3640,9 +3678,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (pos.column == 0) return start;
     int end = myDocument.getLineEndOffset(pos.line);
 
-    CharSequence text = myDocument.getImmutableCharSequence();
+    int x = getDocument().getLineNumber(start) == 0 ? getPrefixTextWidthInPixels() : 0;
 
-    return EditorUtil.calcOffset(this, text, start, end, pos.column, EditorUtil.getTabSize(this), debugBuffer);
+    int result = EditorUtil.calcSoftWrapUnawareOffset(this, myDocument.getImmutableCharSequence(), start, end, pos.column,
+                                                      EditorUtil.getTabSize(this), x, new int[]{0}, null);
+    if (result >= 0) {
+      return result;
+    }
+
+    return end;
   }
 
   @Override
@@ -3729,7 +3773,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     FoldRegion[] topLevel = myFoldingModel.fetchTopLevel();
     LogicalPosition anchorFoldingPosition = logicalPos;
-    for (int idx = myFoldingModel.getLastTopLevelIndexBefore(offset); idx >= 0 && topLevel != null; idx--) {
+    for (int idx = myFoldingModel.getLastCollapsedRegionBefore(offset); idx >= 0 && topLevel != null; idx--) {
       FoldRegion region = topLevel[idx];
       if (region.isValid()) {
         if (region.getDocument().getLineNumber(region.getEndOffset()) == anchorFoldingPosition.line && region.getEndOffset() <= offset) {
@@ -3837,7 +3881,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     FoldRegion lastCollapsedBefore = getLastCollapsedBeforePosition(visiblePos);
 
     if (lastCollapsedBefore != null) {
-      int logFoldEndLine = offsetToLogicalLine(lastCollapsedBefore.getEndOffset(), false);
+      int logFoldEndLine = offsetToLogicalLine(lastCollapsedBefore.getEndOffset());
       int visFoldEndLine = logicalToVisualLine(logFoldEndLine);
 
       line = logFoldEndLine + visiblePos.line - visFoldEndLine;
@@ -3859,10 +3903,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   int offsetToLogicalLine(int offset) {
-    return offsetToLogicalLine(offset, true);
-  }
-
-  private int offsetToLogicalLine(int offset, boolean softWrapAware) {
     int textLength = myDocument.getTextLength();
     if (textLength == 0) return 0;
 
@@ -3873,13 +3913,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     int lineIndex = myDocument.getLineNumber(offset);
     LOG.assertTrue(lineIndex >= 0 && lineIndex < myDocument.getLineCount());
 
-    if (softWrapAware && getSoftWrapModel().isSoftWrappingEnabled()) {
-      int column = calcColumnNumber(offset, lineIndex, false, myDocument.getImmutableCharSequence());
-      return mySoftWrapModel.adjustLogicalPosition(new LogicalPosition(lineIndex, column), offset).line;
-    }
-    else {
-      return lineIndex;
-    }
+    return lineIndex;
   }
 
   @Override
@@ -3895,7 +3929,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     int column = EditorUtil.calcColumnNumber(this, documentCharSequence, lineStartOffset, offset);
 
     if (softWrapAware) {
-      int line = offsetToLogicalLine(offset, false);
+      int line = offsetToLogicalLine(offset);
       return mySoftWrapModel.adjustLogicalPosition(new LogicalPosition(line, column), offset).column;
     }
     else {
@@ -6737,10 +6771,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           g.setColor(ButtonlessScrollBarUI.getTrackBackground());
           g.fillRect(0, 0, width, height);
 
-          int shortner = 0;
-          if (myGutterComponent.isFoldingOutlineShown()) {
-            shortner = myGutterComponent.getFoldingAreaWidth() / 2;
-          }
+          int shortner = myGutterComponent.getFoldingAreaWidth() / 2;
 
           g.setColor(myGutterComponent.getBackground());
           g.fillRect(0, 0, width - shortner, height);
