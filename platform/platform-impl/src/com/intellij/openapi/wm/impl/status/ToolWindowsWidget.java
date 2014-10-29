@@ -59,7 +59,7 @@ class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusB
   private JBPopup popup;
   private boolean wasExited = false;
 
-  ToolWindowsWidget(Disposable parent) {
+  ToolWindowsWidget(@NotNull Disposable parent) {
     new BaseButtonBehavior(this, TimedDeadzone.NULL) {
       @Override
       protected void execute(MouseEvent e) {
