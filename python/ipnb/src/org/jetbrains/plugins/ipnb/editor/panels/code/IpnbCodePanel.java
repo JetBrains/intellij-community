@@ -50,20 +50,10 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
 
   public void addPromptPanel(@NotNull final JComponent parent, Integer promptNumber,
                              @NotNull final IpnbEditorUtil.PromptType promptType,
-                             @NotNull final IpnbPanel component, @NotNull final GridBagConstraints c) {
-    c.gridx = 0;
-    c.weightx = 0;
-    c.anchor = GridBagConstraints.NORTHWEST;
-    final JComponent promptComponent = IpnbEditorUtil.createPromptComponent(promptNumber, promptType);
-    c.insets = new Insets(2,2,2,5);
-    parent.add(promptComponent, c);
-
-    c.gridx = 1;
-    c.weightx = 1;
-    c.insets = new Insets(2,2,2,2);
-    c.anchor = GridBagConstraints.CENTER;
-    parent.add(component, c);
-    myOutputPanels.add(component);
+                             @NotNull final JComponent component, @NotNull final GridBagConstraints c) {
+    super.addPromptPanel(parent, promptNumber, promptType, component, c);
+    if (component instanceof IpnbPanel)
+      myOutputPanels.add((IpnbPanel)component);
   }
 
   @Override
