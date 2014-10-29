@@ -42,7 +42,7 @@ import java.util.*;
  * <p/>
  * <p>Here is an example that merges the lists returned by two separate database calls, transforms
  * it by invoking {@code toString()} on each element, and returns the first 10 elements as an
- * {@code ImmutableList}: <pre>   {@code
+ * {@code List}: <pre>   {@code
  *   FluentIterable
  *       .from(database.getClientList())
  *       .filter(activeInLastMonth())
@@ -221,12 +221,11 @@ public abstract class FluentIterable<E> implements Iterable<E> {
       return ContainerUtil.getLastItem((List<E>)myIterable);
     }
     Iterator<E> iterator = myIterable.iterator();
-    E prev = null, cur = null;
+    E cur = null;
     while (iterator.hasNext()) {
-      prev = cur;
       cur = iterator.next();
     }
-    return prev;
+    return cur;
   }
 
   /**
@@ -237,7 +236,7 @@ public abstract class FluentIterable<E> implements Iterable<E> {
   }
 
   /**
-   * Returns an {@code ImmutableList} containing all of the elements from this fluent iterable in
+   * Returns an {@code List} containing all of the elements from this fluent iterable in
    * proper sequence.
    */
   public final List<E> toList() {
@@ -245,7 +244,7 @@ public abstract class FluentIterable<E> implements Iterable<E> {
   }
 
   /**
-   * Returns an {@code ImmutableSet} containing all of the elements from this fluent iterable with
+   * Returns an {@code Set} containing all of the elements from this fluent iterable with
    * duplicates removed.
    */
   public final Set<E> toSet() {
@@ -253,13 +252,13 @@ public abstract class FluentIterable<E> implements Iterable<E> {
   }
 
   /**
-   * Returns an immutable map for which the elements of this {@code FluentIterable} are the keys in
+   * Returns an {@code Map} for which the elements of this {@code FluentIterable} are the keys in
    * the same order, mapped to values by the given function. If this iterable contains duplicate
    * elements, the returned map will contain each distinct element once in the order it first
    * appears.
    */
   public final <V> Map<E, V> toMap(Convertor<E, V> valueFunction) {
-    return ContainerUtil.newMapFromKeys(iterator(), valueFunction);
+    return Collections.unmodifiableMap(ContainerUtil.newMapFromKeys(iterator(), valueFunction));
   }
 
   /**
