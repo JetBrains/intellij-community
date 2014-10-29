@@ -74,7 +74,6 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.JBScrollPane;
-import com.intellij.ui.components.OrphanGuardian;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -491,16 +490,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myVerticalScrollBar = (MyScrollBar)myScrollPane.getVerticalScrollBar();
     myPanel = new JPanel();
 
-    myPanel.putClientProperty(OrphanGuardian.CLIENT_PROPERTY_KEY, new OrphanGuardian() {
-
-      @Override
-      public void iterateOrphans(Consumer<JComponent> consumer) {
-        JComponent component = getPermanentHeaderComponent();
-        if (component != null && !component.isValid()) {
-          consumer.consume(component);
+    UIUtil.putClientProperty(
+      myPanel, JBSwingUtilities.NOT_IN_HIERARCHY_COMPONENTS, new Iterable<JComponent>() {
+        @Override
+        public Iterator<JComponent> iterator() {
+          JComponent component = getPermanentHeaderComponent();
+          if (component != null && !component.isValid()) {
+            return Collections.singleton(component).iterator();
+          }
+          return ContainerUtil.emptyIterator();
         }
-      }
-    });
+      });
 
     myHeaderPanel = new MyHeaderPanel();
     myGutterComponent = new EditorGutterComponentImpl(this);
