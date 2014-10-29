@@ -169,7 +169,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
             @Override
             @NotNull
             public XDebugProcess start(@NotNull XDebugSession session) {
-              return new JavaDebugProcess(session, myDebuggerSession);
+              return JavaDebugProcess.create(session, myDebuggerSession);
             }
           });
         }
@@ -471,7 +471,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
       @Override
       @NotNull
       public XDebugProcess start(@NotNull XDebugSession session) {
-        return new JavaDebugProcess(session, debuggerSession);
+        return JavaDebugProcess.create(session, debuggerSession);
       }
     });
     return debuggerSession;

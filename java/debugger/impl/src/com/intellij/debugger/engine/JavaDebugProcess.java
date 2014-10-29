@@ -72,7 +72,13 @@ public class JavaDebugProcess extends XDebugProcess {
   private final XBreakpointHandler<?>[] myBreakpointHandlers;
   private final NodeManagerImpl myNodeManager;
 
-  public JavaDebugProcess(@NotNull final XDebugSession session, final DebuggerSession javaSession) {
+  public static JavaDebugProcess create(@NotNull final XDebugSession session, final DebuggerSession javaSession) {
+    JavaDebugProcess res = new JavaDebugProcess(session, javaSession);
+    javaSession.getProcess().setXDebugProcess(res);
+    return res;
+  }
+
+  private JavaDebugProcess(@NotNull final XDebugSession session, final DebuggerSession javaSession) {
     super(session);
     myJavaSession = javaSession;
     myEditorsProvider = new JavaDebuggerEditorsProvider();

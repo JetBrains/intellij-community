@@ -6,10 +6,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Version;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.tasks.LocalTask;
-import com.intellij.tasks.Task;
-import com.intellij.tasks.TaskRepositoryType;
-import com.intellij.tasks.TaskState;
+import com.intellij.tasks.*;
 import com.intellij.tasks.impl.BaseRepository;
 import com.intellij.tasks.impl.BaseRepositoryImpl;
 import com.intellij.tasks.impl.RequestFailedException;
@@ -17,10 +14,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.xmlb.annotations.Tag;
-import org.apache.xmlrpc.CommonsXmlRpcTransport;
-import org.apache.xmlrpc.XmlRpcClient;
-import org.apache.xmlrpc.XmlRpcException;
-import org.apache.xmlrpc.XmlRpcRequest;
+import org.apache.xmlrpc.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -137,6 +131,9 @@ public class BugzillaRepository extends BaseRepositoryImpl {
   private void ensureVersionDiscovered() throws Exception {
     if (myVersion == null) {
       Hashtable<String, Object> result = new BugzillaXmlRpcRequest("Bugzilla.version").execute();
+      if (result == null) {
+        throw new RequestFailedException(TaskBundle.message("bugzilla.failure.no.version"));
+      }
       String version = (String)result.get("version");
       String[] parts = version.split("\\.", 3);
       myVersion = new Version(Integer.parseInt(parts[0]), Integer.parseInt(parts[1]), Integer.parseInt(parts[2]));
@@ -345,7 +342,15 @@ public class BugzillaRepository extends BaseRepositoryImpl {
       }
       Vector<Hashtable<String, Object>> parameters = new Vector<Hashtable<String, Object>>();
       parameters.add(new Hashtable<String, Object>(myParameters));
-      return (T)new XmlRpcClient(getUrl()).execute(new XmlRpcRequest(myMethodName, parameters), myTransport);
+      try {
+        return  (T)new XmlRpcClient(getUrl()).execute(new XmlRpcRequest(myMethodName, parameters), myTransport);
+      }
+      catch (XmlRpcClientException e) {
+        if (e.getMessage().contains("Error decoding XML-RPC response")) {
+          throw new RequestFailedException(TaskBundle.message("bugzilla.failure.malformed.response"), e);
+        }
+        throw e;
+      }
     }
   }
 
