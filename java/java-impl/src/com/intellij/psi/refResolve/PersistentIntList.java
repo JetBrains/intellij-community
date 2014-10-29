@@ -35,8 +35,8 @@ import java.util.Arrays;
  * <p>(to edit the diagram go to www.draw.io, "Import from", this PersistentIntList.png)</p>
  */
 class PersistentIntList implements Disposable {
-  public static final int MAX_DATA_BYTES = 500000000;
-  public static final int MAX_LIST_LENGTH = 10000000;
+  public static final int MAX_DATA_BYTES =  500*1000*1000;
+  public static final int MAX_LIST_LENGTH = 100*1000*1000;
   private final FileChannel data;
   public int gap; // bytes lost due to fragmentation
   private IntArray pointers;
