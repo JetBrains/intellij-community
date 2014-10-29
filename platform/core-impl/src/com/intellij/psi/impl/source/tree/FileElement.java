@@ -26,6 +26,7 @@ import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.ILightStubFileElementType;
+import com.intellij.reference.SoftReference;
 import com.intellij.util.CharTable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,7 +51,7 @@ public class FileElement extends LazyParseableElement implements FileASTNode, Ge
     return myCharTable;
   }
 
-  private static final Key<LighterAST> ourTreeKey = Key.create("lighter.key");
+  private static final Key<SoftReference<LighterAST>> ourTreeKey = Key.create("lighter.key");
 
   @Nullable
   @Override
@@ -60,11 +61,11 @@ public class FileElement extends LazyParseableElement implements FileASTNode, Ge
 
     LighterAST tree;
     if (!isParsed()) {
-      tree = getUserData(ourTreeKey);
+      tree = SoftReference.dereference(getUserData(ourTreeKey));
       if (tree == null) {
         final ILightStubFileElementType<?> type = (ILightStubFileElementType)contentType;
         tree = new FCTSBackedLighterAST(getCharTable(), type.parseContentsLight(this));
-        putUserData(ourTreeKey, tree);
+        putUserData(ourTreeKey, new SoftReference<LighterAST>(tree));
       }
     }
     else {
