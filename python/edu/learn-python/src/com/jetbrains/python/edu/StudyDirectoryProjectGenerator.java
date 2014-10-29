@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.wm.ex.ToolWindowManagerAdapter;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
@@ -188,7 +189,6 @@ public class StudyDirectoryProjectGenerator extends PythonProjectGenerator imple
               final VirtualFile taskDir = firstTask.getTaskDir(myProject);
               if (taskDir == null) return;
               final Map<String, TaskFile> taskFiles = firstTask.getTaskFiles();
-
               VirtualFile activeVirtualFile = null;
               for (Map.Entry<String, TaskFile> entry : taskFiles.entrySet()) {
                 final String name = entry.getKey();
@@ -204,8 +204,16 @@ public class StudyDirectoryProjectGenerator extends PythonProjectGenerator imple
               if (activeVirtualFile != null) {
                 final PsiFile file = PsiManager.getInstance(myProject).findFile(activeVirtualFile);
                 ProjectView.getInstance(project).select(file, activeVirtualFile, true);
-                initialized[0] = true;
+              } else {
+                String first = StudyUtils.getFirst(taskFiles.keySet());
+                if (first != null) {
+                  NewVirtualFile firstFile = ((VirtualDirectoryImpl)taskDir).refreshAndFindChild(first);
+                  if (firstFile != null) {
+                    FileEditorManager.getInstance(project).openFile(firstFile, true);
+                  }
+                }
               }
+              initialized[0] = true;
             }
           }, ModalityState.current(), new Condition() {
             @Override
