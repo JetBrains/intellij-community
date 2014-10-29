@@ -3,6 +3,7 @@ package org.jetbrains.plugins.coursecreator.ui;
 import com.intellij.facet.ui.FacetValidatorsManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -24,7 +25,8 @@ public class CCNewProjectPanel {
     myName.getDocument().addDocumentListener(new MyValidator());
     myDescription.getDocument().addDocumentListener(new MyValidator());
     myAuthorField.getDocument().addDocumentListener(new MyValidator());
-    myDescription.setLineWrap(true);
+
+    myDescription.setBorder(BorderFactory.createLineBorder(JBColor.border()));
   }
 
   public CCNewProjectPanel(String name, String author, String description) {

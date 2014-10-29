@@ -81,10 +81,10 @@ public class CCProjectGenerator extends PythonProjectGenerator implements Direct
   @Override
   public ValidationResult validate(@NotNull String s) {
     String message = "";
-    message = mySettingsPanel.getDescription().equals("") ? "Enter description" : message;
-    message = mySettingsPanel.getAuthor().equals("") ? "Enter author name" : message;
-    message = mySettingsPanel.getName().equals("") ? "Enter course name" : message;
-    return message.equals("") ? ValidationResult.OK : new ValidationResult(message);
+    message = mySettingsPanel.getDescription().isEmpty() ? "Enter description" : message;
+    message = mySettingsPanel.getAuthor().isEmpty() ? "Enter author name" : message;
+    message = mySettingsPanel.getName().isEmpty() ? "Enter course name" : message;
+    return message.isEmpty() ? ValidationResult.OK : new ValidationResult(message);
   }
 
   @Nullable
