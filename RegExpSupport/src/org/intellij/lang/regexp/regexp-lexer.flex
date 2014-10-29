@@ -274,12 +274,12 @@ HEX_CHAR=[0-9a-fA-F]
   "(?<="      { return RegExpTT.POS_LOOKBEHIND;  }
   "(?<!"      { return RegExpTT.NEG_LOOKBEHIND;  }
   "(?#" [^)]+ ")" { return RegExpTT.COMMENT;    }
-  "(?P<" { yybegin(NAMED_GROUP); return RegExpTT.PYTHON_NAMED_GROUP; }
+  "(?P<" { yybegin(NAMED_GROUP); capturingGroupCount++; return RegExpTT.PYTHON_NAMED_GROUP; }
   "(?P=" { yybegin(PY_NAMED_GROUP_REF); return RegExpTT.PYTHON_NAMED_GROUP_REF; }
   "(?("  { yybegin(PY_COND_REF); return RegExpTT.PYTHON_COND_REF; }
 
-  "(?<" { yybegin(NAMED_GROUP); return RegExpTT.RUBY_NAMED_GROUP; }
-  "(?'" { yybegin(QUOTED_NAMED_GROUP); return RegExpTT.RUBY_QUOTED_NAMED_GROUP; }
+  "(?<" { yybegin(NAMED_GROUP); capturingGroupCount++; return RegExpTT.RUBY_NAMED_GROUP; }
+  "(?'" { yybegin(QUOTED_NAMED_GROUP); capturingGroupCount++; return RegExpTT.RUBY_QUOTED_NAMED_GROUP; }
 
   "(?"        { yybegin(OPTIONS); return RegExpTT.SET_OPTIONS; }
 }
