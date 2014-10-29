@@ -45,7 +45,7 @@ import java.util.List;
 /**
  * @author amarch
  */
-class NumpyArrayValueProvider extends ArrayValueProvider {
+public class NumpyArrayValueProvider extends ArrayValueProvider {
   private PyViewArrayAction.MyDialog myDialog;
   private ArrayTableForm myComponent;
   private JBTable myTable;
@@ -69,12 +69,14 @@ class NumpyArrayValueProvider extends ArrayValueProvider {
   private final static String DISABLE_COLOR_FOR_HUGE_ARRAY =
     "Disable color because array too big and calculating min and max would slow down debugging.";
 
-  public NumpyArrayValueProvider(@NotNull XValueNode node, @NotNull PyViewArrayAction.MyDialog dialog, @NotNull Project project) {
+  public NumpyArrayValueProvider(@NotNull XValueNode node, PyViewArrayAction.MyDialog dialog, @NotNull Project project) {
     super(node);
     myDialog = dialog;
-    myComponent = dialog.getComponent();
+    if (dialog != null) {
+      myComponent = dialog.getComponent();
+      myTable = myComponent.getTable();
+    }
     myProject = project;
-    myTable = myComponent.getTable();
     myEvaluator = new PyDebuggerEvaluator(project, getValueContainer().getFrameAccessor());
   }
 
@@ -120,12 +122,13 @@ class NumpyArrayValueProvider extends ArrayValueProvider {
                   getPendingSet().remove(chunk);
                   notifyNextThread();
                   fireTableCellUpdated(chunk.rOffset, chunk.cOffset);
-                  SwingUtilities.invokeLater(new Runnable() {
+                  DebuggerUIUtil.invokeLater(new Runnable() {
                     public void run() {
                       addDataInCache(arraySlice.rOffset, arraySlice.cOffset, arraySlice.getData());
 
                       myTable.setDefaultEditor(myTable.getColumnClass(0), getArrayTableCellEditor());
                       myTable.setDefaultRenderer(myTable.getColumnClass(0), myTableCellRenderer);
+                      myDialog.setTitle(getTitlePresentation(getSliceText()));
                     }
                   });
                 }
@@ -272,11 +275,16 @@ class NumpyArrayValueProvider extends ArrayValueProvider {
       public void run() {
         myComponent.getSliceTextField().setText(getDefaultPresentation());
         myComponent.getFormatTextField().setText(getDefaultFormat());
+        myDialog.setTitle(getTitlePresentation(getDefaultPresentation()));
       }
     });
     startFillTable(new NumpyArraySlice(getDefaultPresentation(), Math.min(getMaxRow(myShape), ROWS_IN_DEFAULT_VIEW),
                                        Math.min(getMaxColumn(myShape), COLUMNS_IN_DEFAULT_VIEW), 0, 0, getDefaultFormat(), getInstance()),
                    false, false);
+  }
+
+  private static String getTitlePresentation(String slice) {
+    return "Array View: " + slice;
   }
 
   private void fillColorRange(@NotNull final Runnable returnToMain) {
@@ -630,7 +638,7 @@ class NumpyArrayValueProvider extends ArrayValueProvider {
   }
 
   public void showInfoHint(final String message) {
-    SwingUtilities.invokeLater(new Runnable() {
+    DebuggerUIUtil.invokeLater(new Runnable() {
       @Override
       public void run() {
         if (myComponent.getSliceTextField().getEditor() != null) {
@@ -701,7 +709,7 @@ class NumpyArrayValueProvider extends ArrayValueProvider {
     startRefillTable(false);
   }
 
-  private String getEvalShapeCommand(@NotNull String slice) {
+  private static String getEvalShapeCommand(@NotNull String slice) {
     //add information about memory, see #parseShape comments
     return "str(" + slice + ".shape)+'#'+str(" + slice + ".flags['C_CONTIGUOUS'])";
   }
@@ -764,7 +772,7 @@ class NumpyArrayValueProvider extends ArrayValueProvider {
   }
 
   public void setBusy(final boolean busy) {
-    SwingUtilities.invokeLater(new Runnable() {
+    DebuggerUIUtil.invokeLater(new Runnable() {
       @Override
       public void run() {
         myComponent.setBusy(busy);
