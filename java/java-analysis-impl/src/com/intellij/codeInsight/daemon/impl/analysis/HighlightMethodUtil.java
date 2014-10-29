@@ -915,7 +915,8 @@ public class HighlightMethodUtil {
     PsiType paramType = i < parameters.length && parameters[i] != null
                         ? substitutor.substitute(parameters[i].getType())
                         : null;
-    return paramType != null && TypeConversionUtil.areTypesAssignmentCompatible(paramType, expression);
+    PsiType expressionType = expression.getType();
+    return paramType != null && expressionType != null && TypeConversionUtil.isAssignable(paramType, expressionType);
   }
 
 
