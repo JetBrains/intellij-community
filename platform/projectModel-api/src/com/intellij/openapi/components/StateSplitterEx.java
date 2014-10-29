@@ -17,14 +17,18 @@ package com.intellij.openapi.components;
 
 import com.intellij.openapi.util.Pair;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @deprecated Use {@link StateSplitterEx}
- */
-public interface StateSplitter {
-  List<Pair<Element, String>> splitState(Element e);
+public abstract class StateSplitterEx implements StateSplitter {
+  @Override
+  public abstract List<Pair<Element, String>> splitState(@NotNull Element state);
 
-  void mergeStatesInto(Element target, Element[] elements);
+  public abstract void mergeStateInto(@NotNull Element target, @NotNull Element subState);
+
+  @Override
+  public final void mergeStatesInto(Element target, Element[] elements) {
+    throw new IllegalStateException();
+  }
 }
