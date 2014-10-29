@@ -89,13 +89,13 @@ public class EmmetPreviewHint extends LightweightHint implements Disposable {
     JRootPane pane = myParentEditor.getComponent().getRootPane();
     JComponent layeredPane = pane != null ? pane.getLayeredPane() : myParentEditor.getComponent();
     HintHint hintHint = new HintHint(layeredPane, position.first)
-        .setAwtTooltip(true)
-        .setContentActive(true)
-        .setExplicitClose(true)
-        .setShowImmediately(true)
-        .setPreferredPosition(position.second == HintManager.ABOVE ? Balloon.Position.above : Balloon.Position.below)
-        .setTextBg(myParentEditor.getColorsScheme().getDefaultBackground())
-        .setBorderInsets(new Insets(1, 1, 1, 1));
+      .setAwtTooltip(true)
+      .setContentActive(true)
+      .setExplicitClose(true)
+      .setShowImmediately(true)
+      .setPreferredPosition(position.second == HintManager.ABOVE ? Balloon.Position.above : Balloon.Position.below)
+      .setTextBg(myParentEditor.getColorsScheme().getDefaultBackground())
+      .setBorderInsets(new Insets(1, 1, 1, 1));
 
     int hintFlags = HintManager.HIDE_BY_OTHER_HINT | HintManager.HIDE_BY_ESCAPE | HintManager.UPDATE_BY_SCROLLING;
     HintManagerImpl.getInstanceImpl().showEditorHint(this, myParentEditor, position.first, hintFlags, 0, false, hintHint);
@@ -123,7 +123,7 @@ public class EmmetPreviewHint extends LightweightHint implements Disposable {
       }
     }, 100);
   }
-  
+
   @TestOnly
   @NotNull
   public String getContent() {
@@ -143,7 +143,9 @@ public class EmmetPreviewHint extends LightweightHint implements Disposable {
   }
 
   @NotNull
-  public static EmmetPreviewHint createHint(@NotNull final EditorEx parentEditor, @NotNull String templateText, @NotNull FileType fileType) {
+  public static EmmetPreviewHint createHint(@NotNull final EditorEx parentEditor,
+                                            @NotNull String templateText,
+                                            @NotNull FileType fileType) {
     EditorFactory editorFactory = EditorFactory.getInstance();
     Document document = editorFactory.createDocument(templateText);
     final EditorEx previewEditor = (EditorEx)editorFactory.createEditor(document, parentEditor.getProject(), fileType, true);
@@ -172,9 +174,9 @@ public class EmmetPreviewHint extends LightweightHint implements Disposable {
         Dimension parentEditorSize = parentEditor.getScrollPane().getSize();
         int maxWidth = (int)parentEditorSize.getWidth() / 3;
         int maxHeight = (int)parentEditorSize.getHeight() / 2;
-        Dimension contentSize = previewEditor.getContentSize();
-        return new Dimension(maxWidth > contentSize.getWidth() && !settings.isUseSoftWraps() ? (int)size.getWidth() : maxWidth,
-                             maxHeight > contentSize.getHeight() ? (int)size.getHeight() : maxHeight);
+        final int width = settings.isUseSoftWraps() ? maxWidth : Math.min((int)size.getWidth(), maxWidth);
+        final int height = Math.min((int)size.getHeight(), maxHeight);
+        return new Dimension(width, height);
       }
 
       @NotNull
