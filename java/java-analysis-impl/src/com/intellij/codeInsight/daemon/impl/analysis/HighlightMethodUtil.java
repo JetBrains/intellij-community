@@ -1332,7 +1332,7 @@ public class HighlightMethodUtil {
   }
 
 
-  static HighlightInfo checkRecursiveConstructorInvocation(PsiMethod method) {
+  static HighlightInfo checkRecursiveConstructorInvocation(@NotNull PsiMethod method) {
     if (HighlightControlFlowUtil.isRecursivelyCalledConstructor(method)) {
       TextRange textRange = HighlightNamesUtil.getMethodDeclarationTextRange(method);
       String description = JavaErrorMessages.message("recursive.constructor.invocation");

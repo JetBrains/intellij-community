@@ -847,7 +847,7 @@ public class ControlFlowUtil {
   }
 
 
-  public static boolean isVariableDefinitelyAssigned(final PsiVariable variable, final ControlFlow flow) {
+  public static boolean isVariableDefinitelyAssigned(@NotNull final PsiVariable variable, @NotNull final ControlFlow flow) {
     class MyVisitor extends InstructionClientVisitor<Boolean> {
       // true if from this point below there may be branch with no variable assignment
       final boolean[] maybeUnassigned = new boolean[flow.getSize() + 1];
@@ -1477,7 +1477,7 @@ public class ControlFlowUtil {
     return visitor.getResult().booleanValue();
   }
 
-  public static boolean isVariableAssignedInLoop(PsiReferenceExpression expression, PsiElement resolved) {
+  public static boolean isVariableAssignedInLoop(@NotNull PsiReferenceExpression expression, PsiElement resolved) {
     if (!(expression.getParent() instanceof PsiAssignmentExpression)
         || ((PsiAssignmentExpression)expression.getParent()).getLExpression() != expression) {
       return false;

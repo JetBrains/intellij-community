@@ -92,7 +92,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
                                                PsiBreakStatement.class, PsiReturnStatement.class, PsiThrowStatement.class);
                 if (exitPoints.isEmpty()) {
   
-                  final boolean[] effectivelyFinal = new boolean[] {true};
+                  final boolean[] effectivelyFinal = {true};
                   body.accept(new JavaRecursiveElementWalkingVisitor() {
                     @Override
                     public void visitElement(PsiElement element) {
@@ -264,8 +264,6 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
         PsiStatement body = foreachStatement.getBody();
         final PsiExpression iteratedValue = foreachStatement.getIteratedValue();
         if (body != null && iteratedValue != null) {
-          final Collection<PsiComment> comments = PsiTreeUtil.findChildrenOfType(body, PsiComment.class);
-
           final PsiElement parent = foreachStatement.getParent();
           for (PsiElement comment : PsiTreeUtil.findChildrenOfType(body, PsiComment.class)) {
             parent.addBefore(comment, foreachStatement);
@@ -312,7 +310,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
 
           if (expressions[0] instanceof PsiLambdaExpression && ((PsiLambdaExpression)expressions[0]).getFunctionalInterfaceType() == null ||
               expressions[0] instanceof PsiMethodReferenceExpression && ((PsiMethodReferenceExpression)expressions[0]).getFunctionalInterfaceType() == null) {
-            callStatement = (PsiExpressionStatement)callStatement.replace(JavaPsiFacade.getElementFactory(project).createStatementFromText(iterated + ".forEach((" + parameter.getText() + ") -> " + foreEachText + ");", callStatement));
+            callStatement.replace(JavaPsiFacade.getElementFactory(project).createStatementFromText(iterated + ".forEach((" + parameter.getText() + ") -> " + foreEachText + ");", callStatement));
           }
         }
       }
@@ -429,7 +427,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
           }
 
           if (result != null) {
-            result = JavaCodeStyleManager.getInstance(project).shortenClassReferences(result);
+            JavaCodeStyleManager.getInstance(project).shortenClassReferences(result);
           }
         }
       }
