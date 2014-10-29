@@ -16,6 +16,7 @@
 package com.jetbrains.python.psi.search;
 
 import com.intellij.injected.editor.VirtualFileWindow;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -184,6 +185,10 @@ public class PyProjectScopeBuilder extends ProjectScopeBuilderImpl {
       }
       if ((file.findChild("__future__.py") != null || file.findChild("__future__.pyc") != null) &&
           file.findChild("xml") != null && file.findChild("email") != null) {
+        return file;
+      }
+      // Mock SDK does not have aforementioned modules
+      if (ApplicationManager.getApplication().isUnitTestMode() && file.getName().equals("Lib")) {
         return file;
       }
     }

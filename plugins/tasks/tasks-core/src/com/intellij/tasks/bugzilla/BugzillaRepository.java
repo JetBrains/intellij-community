@@ -346,7 +346,8 @@ public class BugzillaRepository extends BaseRepositoryImpl {
         return  (T)new XmlRpcClient(getUrl()).execute(new XmlRpcRequest(myMethodName, parameters), myTransport);
       }
       catch (XmlRpcClientException e) {
-        if (e.getMessage().contains("Error decoding XML-RPC response")) {
+        // Unfortunately there is no standard error code to identify this kind of error in portable way
+        if (e.getMessage().equals("Error decoding XML-RPC response")) {
           throw new RequestFailedException(TaskBundle.message("bugzilla.failure.malformed.response"), e);
         }
         throw e;
