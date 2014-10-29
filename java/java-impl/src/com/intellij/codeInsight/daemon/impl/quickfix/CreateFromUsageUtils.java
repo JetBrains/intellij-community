@@ -79,6 +79,7 @@ public class CreateFromUsageUtils {
   private static final Logger LOG = Logger.getInstance(
     "#com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils");
   private static final int MAX_GUESSED_MEMBERS_COUNT = 10;
+  private static final int MAX_RAW_GUESSED_MEMBERS_COUNT = 2 * MAX_GUESSED_MEMBERS_COUNT;
 
   public static boolean isValidReference(PsiReference reference, boolean unresolvedOnly) {
     if (!(reference instanceof PsiJavaReference)) return false;
@@ -671,12 +672,12 @@ public class CreateFromUsageUtils {
       final PsiShortNamesCache cache = PsiShortNamesCache.getInstance(expression.getProject());
       PsiElementFactory factory = facade.getElementFactory();
       for (String fieldName : expectedFieldNames) {
-        PsiField[] fields = cache.getFieldsByName(fieldName, resolveScope);
+        PsiField[] fields = cache.getFieldsByNameIfNotMoreThan(fieldName, resolveScope, MAX_RAW_GUESSED_MEMBERS_COUNT);
         addMemberInfo(fields, expression, typesList, factory);
       }
 
       for (String methodName : expectedMethodNames) {
-        PsiMethod[] methods = cache.getMethodsByName(methodName, resolveScope);
+        PsiMethod[] methods = cache.getMethodsByNameIfNotMoreThan(methodName, resolveScope, MAX_RAW_GUESSED_MEMBERS_COUNT);
         addMemberInfo(methods, expression, typesList, factory);
       }
     }
@@ -723,12 +724,12 @@ public class CreateFromUsageUtils {
       final PsiShortNamesCache cache = PsiShortNamesCache.getInstance(expression.getProject());
       PsiElementFactory factory = facade.getElementFactory();
       for (String fieldName : expectedFieldNames) {
-        PsiField[] fields = cache.getFieldsByName(fieldName, resolveScope);
+        PsiField[] fields = cache.getFieldsByNameIfNotMoreThan(fieldName, resolveScope, MAX_RAW_GUESSED_MEMBERS_COUNT);
         addMemberInfo(fields, expression, typesList, factory);
       }
 
       for (String methodName : expectedMethodNames) {
-        PsiMethod[] methods = cache.getMethodsByName(methodName, resolveScope);
+        PsiMethod[] methods = cache.getMethodsByNameIfNotMoreThan(methodName, resolveScope, MAX_RAW_GUESSED_MEMBERS_COUNT);
         addMemberInfo(methods, expression, typesList, factory);
       }
     }
