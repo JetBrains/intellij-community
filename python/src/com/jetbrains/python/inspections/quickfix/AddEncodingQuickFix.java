@@ -25,9 +25,9 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiComment;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiWhiteSpace;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.inspections.PyEncodingUtil;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -71,20 +71,20 @@ public class AddEncodingQuickFix implements LocalQuickFix {
     if (firstLine instanceof PsiComment && firstLine.getText().startsWith("#!")) {
       firstLine = firstLine.getNextSibling();
     }
+    final LanguageLevel languageLevel = LanguageLevel.forElement(file);
     final String commentText = String.format(PyEncodingUtil.ENCODING_FORMAT_PATTERN[myEncodingFormatIndex], myDefaultEncoding);
     final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
-    PsiComment encodingComment = elementGenerator.createFromText(LanguageLevel.forElement(file), PsiComment.class, commentText);
+    PsiComment encodingComment = elementGenerator.createFromText(languageLevel, PsiComment.class, commentText);
     encodingComment = (PsiComment)file.addBefore(encodingComment, firstLine);
 
     final FileEditor fileEditor = FileEditorManager.getInstance(project).getSelectedEditor(element.getContainingFile().getVirtualFile());
     if (fileEditor instanceof TextEditor) {
+      if (encodingComment.getNextSibling() == null || !encodingComment.getNextSibling().textContains('\n')) {
+        file.addAfter(elementGenerator.createFromText(languageLevel, PsiWhiteSpace.class, "\n"), encodingComment);
+      }
       final Editor editor = ((TextEditor)fileEditor).getEditor();
       final Document document = editor.getDocument();
       final int insertedLineNumber = document.getLineNumber(encodingComment.getTextOffset());
-      if (insertedLineNumber == document.getLineCount() - 1) {
-        PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
-        document.insertString(document.getLineEndOffset(insertedLineNumber), "\n");
-      }
       editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(insertedLineNumber + 1, 0));
     }
   }
