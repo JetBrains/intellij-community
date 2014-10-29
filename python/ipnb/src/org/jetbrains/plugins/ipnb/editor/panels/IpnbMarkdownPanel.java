@@ -1,15 +1,12 @@
 package org.jetbrains.plugins.ipnb.editor.panels;
 
-import com.intellij.openapi.ui.VerticalFlowLayout;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.IpnbUtils;
-import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
 import org.jetbrains.plugins.ipnb.format.cells.IpnbMarkdownCell;
 
 import javax.swing.*;
-import java.awt.*;
 
-public class IpnbMarkdownPanel extends IpnbEditablePanel<JPanel, IpnbMarkdownCell> {
+public class IpnbMarkdownPanel extends IpnbEditablePanel<JEditorPane, IpnbMarkdownCell> {
 
   public IpnbMarkdownPanel(@NotNull final IpnbMarkdownCell cell) {
     super(cell);
@@ -22,23 +19,13 @@ public class IpnbMarkdownPanel extends IpnbEditablePanel<JPanel, IpnbMarkdownCel
   }
 
   @Override
-  protected JPanel createViewPanel() {
-    final JPanel panel = new JPanel(new VerticalFlowLayout(FlowLayout.LEFT, false, true));
-    updatePanel(panel);
-    panel.setBackground(IpnbEditorUtil.getBackground());
-    panel.setOpaque(true);
-    return panel;
+  protected JEditorPane createViewPanel() {
+    return IpnbUtils.createLatexPane(myCell.getSourceAsString());
   }
-
-  private void updatePanel(@NotNull final JPanel panel) {
-    panel.removeAll();
-    IpnbUtils.addLatexToPanel(myCell.getSourceAsString(), panel);
-  }
-
 
   @Override
   public void updateCellView() {
-    updatePanel(myViewPanel);
+    myViewPanel = IpnbUtils.createLatexPane(myCell.getSourceAsString());
   }
 
   @SuppressWarnings("CloneDoesntCallSuperClone")

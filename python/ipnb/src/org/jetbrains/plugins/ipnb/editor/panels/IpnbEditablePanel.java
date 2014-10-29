@@ -6,14 +6,17 @@ import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.ipnb.IpnbUtils;
+import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
 import org.jetbrains.plugins.ipnb.format.cells.IpnbEditableCell;
 
 import javax.swing.*;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Utilities;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEditableCell> extends IpnbPanel<T, K> {
   private static final Logger LOG = Logger.getInstance(IpnbEditablePanel.class);
@@ -32,6 +35,28 @@ public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEdit
 
 
   protected void initPanel() {
+    addViewPanel();
+    addEditablePanel();
+
+  }
+
+  private void addEditablePanel() {
+    myEditablePanel = createEditablePanel();
+    final JPanel panel = new JPanel(new GridBagLayout());
+    final GridBagConstraints c = new GridBagConstraints();
+    c.fill = GridBagConstraints.HORIZONTAL;
+    c.gridx = 0;
+    c.gridy = 0;
+    c.gridwidth = 1;
+
+    panel.setName(EDITABLE_PANEL);
+    panel.setBackground(IpnbEditorUtil.getBackground());
+    addPromptPanel(panel, null, IpnbEditorUtil.PromptType.None, myEditablePanel, c);
+
+    add(panel, EDITABLE_PANEL);
+  }
+
+  private void addViewPanel() {
     myViewPanel = createViewPanel();
     myViewPanel.addMouseListener(new MouseAdapter() {
       @Override
@@ -45,11 +70,35 @@ public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEdit
       }
     });
     myViewPanel.setName(VIEW_PANEL);
-    add(myViewPanel, VIEW_PANEL);
-    myEditablePanel = createEditablePanel();
-    myEditablePanel.setName(EDITABLE_PANEL);
-    add(myEditablePanel, EDITABLE_PANEL);
+
+    final JPanel panel = new JPanel(new GridBagLayout());
+    final GridBagConstraints c = new GridBagConstraints();
+    c.fill = GridBagConstraints.HORIZONTAL;
+    c.gridx = 0;
+    c.gridy = 0;
+    c.gridwidth = 1;
+    addPromptPanel(panel, null, IpnbEditorUtil.PromptType.None, myViewPanel, c);
+    panel.setBackground(IpnbEditorUtil.getBackground());
+    add(panel, VIEW_PANEL);
   }
+
+  public void addPromptPanel(@NotNull final JComponent parent, Integer promptNumber,
+                             @NotNull final IpnbEditorUtil.PromptType promptType,
+                             @NotNull final JComponent component, @NotNull final GridBagConstraints c) {
+    c.gridx = 0;
+    c.weightx = 0;
+    c.anchor = GridBagConstraints.NORTHWEST;
+    final JComponent promptComponent = IpnbEditorUtil.createPromptComponent(promptNumber, promptType);
+    c.insets = new Insets(2,2,2,5);
+    parent.add(promptComponent, c);
+
+    c.gridx = 1;
+    c.weightx = 1;
+    c.insets = new Insets(2,2,2,2);
+    c.anchor = GridBagConstraints.CENTER;
+    parent.add(component, c);
+  }
+
 
   public void switchToEditing() {
     setEditing(true);
@@ -84,24 +133,6 @@ public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEdit
 
   private JTextArea createEditablePanel() {
     final JTextArea textArea = new JTextArea(getRawCellText());
-    addHierarchyBoundsListener(new IpnbUtils.IpnbHierarchyBoundsAdapter(this));
-    textArea.addHierarchyBoundsListener(new IpnbUtils.IpnbHierarchyBoundsAdapter(textArea));
-
-    addComponentListener(new ComponentAdapter() {
-      @Override
-      public void componentResized(ComponentEvent e) {
-        final int height = Math.max(textArea.getFontMetrics(getFont()).getHeight() * getLineCount(textArea),
-                                    myViewPanel.getPreferredSize().height);
-        setPreferredSize(new Dimension(textArea.getWidth(), height));
-        final Container parent = getParent();
-        if (parent instanceof IpnbFilePanel) {
-          IpnbFilePanel filePanel = (IpnbFilePanel)parent;
-          filePanel.revalidate();
-          filePanel.repaint();
-        }
-      }
-    });
-
     textArea.setLineWrap(true);
     textArea.setEditable(true);
     textArea.setBorder(BorderFactory.createLineBorder(JBColor.lightGray));
@@ -123,16 +154,6 @@ public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEdit
     textArea.addKeyListener(new KeyAdapter() {
       @Override
       public void keyReleased(KeyEvent e) {
-        final int height = textArea.getFontMetrics(getFont()).getHeight() * getLineCount(textArea);
-        final Dimension preferredSize = myViewPanel.getPreferredSize();
-        setPreferredSize(new Dimension(preferredSize.width, Math.max(height, preferredSize.height)));
-        textArea.setPreferredSize(new Dimension(textArea.getWidth(), height));
-        textArea.revalidate();
-        textArea.repaint();
-
-        revalidate();
-        repaint();
-
         if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
           setEditing(false);
           final Container parent = getParent();
