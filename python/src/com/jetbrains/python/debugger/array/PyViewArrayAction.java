@@ -22,6 +22,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import com.jetbrains.python.console.PydevConsoleCommunication;
 import com.jetbrains.python.debugger.PyDebugValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,7 +60,13 @@ public class PyViewArrayAction extends XDebuggerTreeActionBase {
 
       XValueNodeImpl node  = getSelectedNode(e.getDataContext());
       if (node != null && node.getValueContainer() instanceof PyDebugValue && node.isComputed()) {
-        String nodeType = ((PyDebugValue) node.getValueContainer()).getType();
+        PyDebugValue debugValue = (PyDebugValue) node.getValueContainer();
+        if (debugValue.getFrameAccessor() instanceof PydevConsoleCommunication) {
+          e.getPresentation().setVisible(false);
+          return;
+        }
+
+        String nodeType = debugValue.getType();
         if ("ndarray".equals(nodeType)) {
           e.getPresentation().setVisible(true);
           return;
