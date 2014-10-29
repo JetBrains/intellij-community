@@ -171,10 +171,11 @@ def process_exec_queue(interpreter):
 
     set_return_control_callback(return_control)
 
-    from pydev_ipython.matplotlibtools import init_matplotlib, init_pylab, init_pyplot
-    init_matplotlib(interpreter)
-    init_pylab()
-    init_pyplot()
+    from pydev_import_hook import import_hook_manager
+    from pydev_ipython.matplotlibtools import activate_matplotlib, activate_pylab, activate_pyplot
+    import_hook_manager.add_module_name("matplotlib", activate_matplotlib(interpreter))
+    import_hook_manager.add_module_name("pylab", activate_pylab)
+    import_hook_manager.add_module_name("pyplot", activate_pyplot)
 
     while 1:
         # Running the request may have changed the inputhook in use
