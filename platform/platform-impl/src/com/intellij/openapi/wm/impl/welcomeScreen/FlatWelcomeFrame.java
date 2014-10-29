@@ -18,6 +18,7 @@ package com.intellij.openapi.wm.impl.welcomeScreen;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.RecentProjectsManagerBase;
+import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
@@ -296,6 +297,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
           final PopupFactoryImpl.ActionGroupPopup popup = (PopupFactoryImpl.ActionGroupPopup)JBPopupFactory.getInstance()
             .createActionGroupPopup(null, new IconsFreeActionGroup(configureGroup), e.getDataContext(), JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false, ActionPlaces.WELCOME_SCREEN);
           popup.showUnderneathOfLabel(ref.get());
+          UsageTrigger.trigger("welcome.screen." + groupId);
         }
       };
       ref.set(new ActionLink(text, icon, action));
@@ -334,7 +336,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
           if (icon.getIconHeight() != 16 || icon.getIconWidth() != 16) {
             icon = EmptyIcon.ICON_16;
           }
-          ActionLink link = new ActionLink(text, icon, action);
+          ActionLink link = new ActionLink(text, icon, action, createUsageTracker(action));
           link.setPaintUnderline(false);
           link.setNormalColor(getLinkNormalColor());
           button.add(link);
@@ -541,6 +543,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
             child.actionPerformed(e);
+            UsageTrigger.trigger("welcome.screen." + e.getActionManager().getId(child));
           }
 
           @Override
@@ -556,6 +559,15 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
         };
       }
     }
+  }
+
+  private static Runnable createUsageTracker(final AnAction action) {
+    return new Runnable() {
+      @Override
+      public void run() {
+        UsageTrigger.trigger("welcome.screen." + ActionManager.getInstance().getId(action));
+      }
+    };
   }
 
   private static JLabel createArrow(final ActionLink link) {
