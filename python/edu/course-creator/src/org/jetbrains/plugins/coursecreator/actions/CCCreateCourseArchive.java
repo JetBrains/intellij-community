@@ -204,7 +204,7 @@ public class CCCreateCourseArchive extends DumbAwareAction {
           @Override
           public boolean accept(File pathname) {
             String name = pathname.getName();
-            return !name.contains(".answer") && !name.contains("__pycache__") && !name.contains("_windows");
+            return !name.contains(".answer") && !name.contains("__pycache__") && !name.contains("_windows") && !name.contains(".pyc");
           }
         }, null);
       }
