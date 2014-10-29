@@ -217,14 +217,14 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
                   }
                 });
               }
-              addShortcut(StudyNextWindowAction.SHORTCUT, StudyNextWindowAction.ACTION_ID);
-              addShortcut(StudyPrevWindowAction.SHORTCUT, StudyPrevWindowAction.ACTION_ID);
-              addShortcut(StudyShowHintAction.SHORTCUT, StudyShowHintAction.ACTION_ID);
-              addShortcut(StudyNextWindowAction.SHORTCUT2, StudyNextWindowAction.ACTION_ID);
-              addShortcut(StudyCheckAction.SHORTCUT, StudyCheckAction.ACTION_ID);
-              addShortcut(StudyNextStudyTaskAction.SHORTCUT, StudyNextStudyTaskAction.ACTION_ID);
-              addShortcut(StudyPreviousStudyTaskAction.SHORTCUT, StudyPreviousStudyTaskAction.ACTION_ID);
-              addShortcut(StudyRefreshTaskFileAction.SHORTCUT, StudyRefreshTaskFileAction.ACTION_ID);
+              addShortcut(StudyNextWindowAction.SHORTCUT, StudyNextWindowAction.ACTION_ID, false);
+              addShortcut(StudyPrevWindowAction.SHORTCUT, StudyPrevWindowAction.ACTION_ID, false);
+              addShortcut(StudyShowHintAction.SHORTCUT, StudyShowHintAction.ACTION_ID, false);
+              addShortcut(StudyNextWindowAction.SHORTCUT2, StudyNextWindowAction.ACTION_ID, true);
+              addShortcut(StudyCheckAction.SHORTCUT, StudyCheckAction.ACTION_ID, false);
+              addShortcut(StudyNextStudyTaskAction.SHORTCUT, StudyNextStudyTaskAction.ACTION_ID, false);
+              addShortcut(StudyPreviousStudyTaskAction.SHORTCUT, StudyPreviousStudyTaskAction.ACTION_ID, false);
+              addShortcut(StudyRefreshTaskFileAction.SHORTCUT, StudyRefreshTaskFileAction.ACTION_ID, false);
             }
           }
         });
@@ -233,10 +233,10 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
   }
 
 
-  private static void addShortcut(@NotNull final String shortcutString, @NotNull final String actionIdString) {
+  private static void addShortcut(@NotNull final String shortcutString, @NotNull final String actionIdString, boolean isAdditional) {
     Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
     Shortcut[] shortcuts = keymap.getShortcuts(actionIdString);
-    if (shortcuts.length > 0) {
+    if (shortcuts.length > 0 && !isAdditional) {
       return;
     }
     Shortcut studyActionShortcut = new KeyboardShortcut(KeyStroke.getKeyStroke(shortcutString), null);
