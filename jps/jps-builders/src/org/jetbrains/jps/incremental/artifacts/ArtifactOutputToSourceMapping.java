@@ -19,7 +19,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.IOUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.incremental.storage.AbstractStateStorage;
@@ -35,7 +34,7 @@ import java.util.List;
  * @author nik
  */
 public class ArtifactOutputToSourceMapping extends AbstractStateStorage<String, List<ArtifactOutputToSourceMapping.SourcePathAndRootIndex>> {
-  public ArtifactOutputToSourceMapping(@NonNls File storePath) throws IOException {
+  public ArtifactOutputToSourceMapping(File storePath) throws IOException {
     super(storePath, new PathStringDescriptor(), new SourcePathListExternalizer());
   }
 
