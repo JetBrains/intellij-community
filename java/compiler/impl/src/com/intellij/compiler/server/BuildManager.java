@@ -17,6 +17,7 @@ package com.intellij.compiler.server;
 
 import com.intellij.ProjectTopics;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
+import com.intellij.compiler.impl.CompilerUtil;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration;
 import com.intellij.compiler.server.impl.BuildProcessClasspathManager;
 import com.intellij.execution.ExecutionAdapter;
@@ -1266,26 +1267,39 @@ public class BuildManager implements ApplicationComponent{
             roots = ArrayUtil.toStringArray(myRootsToRefresh);
             myRootsToRefresh.clear();
           }
-          ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-            @Override
-            public void run() {
-              if (project.isDisposed()) {
-                return;
-              }
-              final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-              final LocalFileSystem lfs = LocalFileSystem.getInstance();
-              final Set<VirtualFile> filesToRefresh = new HashSet<VirtualFile>();
-              for (String root : roots) {
-                final VirtualFile rootFile = lfs.refreshAndFindFileByPath(root);
-                if (rootFile != null && fileIndex.isInSourceContent(rootFile)) {
-                  filesToRefresh.add(rootFile);
+          if (roots.length != 0) {
+            ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+              @Override
+              public void run() {
+                if (project.isDisposed()) {
+                  return;
                 }
+                final List<File> rootFiles = new ArrayList<File>(roots.length);
+                for (String root : roots) {
+                  rootFiles.add(new File(root));
+                }
+                // this will ensure that we'll be able to obtain VirtualFile for existing roots
+                CompilerUtil.refreshOutputDirectories(rootFiles, false);
+
+                final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+                final LocalFileSystem lfs = LocalFileSystem.getInstance();
+                final Set<VirtualFile> filesToRefresh = new HashSet<VirtualFile>();
+                ApplicationManager.getApplication().runReadAction(new Runnable() {
+                  public void run() {
+                    for (File root : rootFiles) {
+                      final VirtualFile rootFile = lfs.findFileByIoFile(root);
+                      if (rootFile != null && fileIndex.isInSourceContent(rootFile)) {
+                        filesToRefresh.add(rootFile);
+                      }
+                    }
+                    if (!filesToRefresh.isEmpty()) {
+                      lfs.refreshFiles(filesToRefresh, true, true, null);
+                    }
+                  }
+                });
               }
-              if (!filesToRefresh.isEmpty()) {
-                lfs.refreshFiles(filesToRefresh, true, true, null);
-              }
-            }
-          });
+            });
+          }
         }
 
         @Override
