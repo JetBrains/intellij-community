@@ -33,7 +33,7 @@ import java.util.Set;
 /**
  * @author Eugene.Kudelevsky
  */
-class XmlTagTreeHighlightingUtil {
+public class XmlTagTreeHighlightingUtil {
   private XmlTagTreeHighlightingUtil() {
   }
 
@@ -76,7 +76,7 @@ class XmlTagTreeHighlightingUtil {
     return false;
   }
 
-  static Color makeTransparent(@NotNull Color color, @NotNull Color backgroundColor, double transparency) {
+  public static Color makeTransparent(@NotNull Color color, @NotNull Color backgroundColor, double transparency) {
     int r = makeTransparent(transparency, color.getRed(), backgroundColor.getRed());
     int g = makeTransparent(transparency, color.getGreen(), backgroundColor.getGreen());
     int b = makeTransparent(transparency, color.getBlue(), backgroundColor.getBlue());

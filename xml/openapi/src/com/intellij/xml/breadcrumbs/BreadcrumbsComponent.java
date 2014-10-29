@@ -121,6 +121,9 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
     }
 
     myHovered = crumb;
+    for (BreadcrumbsItemListener listener : myListeners) {
+      listener.itemHovered(myHovered != null ? myHovered.myItem : null);
+    }
     repaint();
   }
 
