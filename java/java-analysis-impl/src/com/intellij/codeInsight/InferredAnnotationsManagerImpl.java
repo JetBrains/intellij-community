@@ -65,12 +65,13 @@ public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
     return null;
   }
 
+  @Nullable
   private PsiAnnotation getHardcodedContractAnnotation(PsiMethod method) {
     List<MethodContract> contracts = HardcodedContracts.getHardcodedContracts(method, null);
     return contracts.isEmpty() ? null : createContractAnnotation(contracts, HardcodedContracts.isHardcodedPure(method));
   }
 
-  private static boolean ignoreBytecodeInference(PsiModifierListOwner owner, String annotationFQN) {
+  private static boolean ignoreBytecodeInference(PsiModifierListOwner owner, @Nullable String annotationFQN) {
     if (ORG_JETBRAINS_ANNOTATIONS_CONTRACT.equals(annotationFQN) && hasHardcodedContracts(owner)) {
       return true;
     }
