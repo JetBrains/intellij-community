@@ -46,9 +46,9 @@ def check_importable_path(path):
     try:
         import_file(path)
     except:
-        failed("File contains syntax errors", test_file_importable.__name__)
+        failed("File contains syntax errors", test_file_importable.func_name)
         return
-    passed(test_file_importable.__name__)
+    passed(test_file_importable.func_name)
 
 
 def import_file(path):
@@ -126,11 +126,11 @@ def test_text_equals(text, error_text):
         failed(error_text)
 
 
-def test_window_text_deleted(error_text="Don't just delete task text"):
+def test_answer_placeholders_text_deleted(error_text="Don't just delete task text"):
     """
-        Checks that task windows are not empty
+        Checks that all answer placeholders are not empty
     """
-    windows = get_task_windows()
+    windows = get_answer_placeholders()
 
     for window in windows:
         if len(window) == 0:
@@ -153,9 +153,9 @@ def passed(name=None):
     print("#educational_plugin " + name + " test OK")
 
 
-def get_task_windows(file_name=None):
+def get_answer_placeholders(file_name=None):
     """
-        Returns all task windows
+        Returns all answer placeholders text
     """
     prefix = "#educational_plugin_window = "
     import os
@@ -198,4 +198,4 @@ def run_common_tests(error_text="Please, reload file and try again"):
     test_file_importable()
     test_is_not_empty()
     test_is_initial_text(error_text)
-    test_window_text_deleted(error_text)
+    test_answer_placeholders_text_deleted(error_text)
