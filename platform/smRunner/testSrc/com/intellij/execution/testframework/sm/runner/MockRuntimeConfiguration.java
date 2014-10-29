@@ -19,6 +19,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
@@ -31,9 +32,9 @@ import javax.swing.*;
 /**
  * @author Roman Chernyatchik
  */
-public class MockRuntimeConfiguration extends RuntimeConfiguration {
+public class MockRuntimeConfiguration extends LocatableConfigurationBase implements Cloneable, ModuleRunConfiguration {
   public MockRuntimeConfiguration(final Project project) {
-    super("", project, new MockConfigurationFactory());
+    super(project, new MockConfigurationFactory(), "");
   }
 
   @Override
@@ -55,6 +56,12 @@ public class MockRuntimeConfiguration extends RuntimeConfiguration {
   @Override
   public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) throws ExecutionException {
     return null;
+  }
+
+  @NotNull
+  @Override
+  public Module[] getModules() {
+    return Module.EMPTY_ARRAY;
   }
 
   private static class MockConfigurationFactory extends ConfigurationFactory {
