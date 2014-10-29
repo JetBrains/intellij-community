@@ -74,6 +74,8 @@ public class ExpectedHighlightingData {
   private final PsiFile myFile;
   @NonNls private static final String ANY_TEXT = "*";
   private final String myText;
+  
+  private boolean myIgnoreExtraHighlighting; 
 
   public static class ExpectedHighlightingSet {
     private final HighlightSeverity severity;
@@ -149,7 +151,17 @@ public class ExpectedHighlightingData {
                                   final boolean checkWeakWarnings,
                                   final boolean checkInfos,
                                   @Nullable final PsiFile file) {
+    this(document, checkWarnings, checkWeakWarnings, checkInfos, false, file);
+  }
+
+  public ExpectedHighlightingData(@NotNull final Document document,
+                                  final boolean checkWarnings,
+                                  final boolean checkWeakWarnings,
+                                  final boolean checkInfos,
+                                  final boolean ignoreExtraHighlighting,
+                                  @Nullable final PsiFile file) {
     this(document, file);
+    myIgnoreExtraHighlighting = ignoreExtraHighlighting;
     if (checkWarnings) checkWarnings();
     if (checkWeakWarnings) checkWeakWarnings();
     if (checkInfos) checkInfos();
@@ -423,7 +435,7 @@ public class ExpectedHighlightingData {
     String failMessage = "";
 
     for (HighlightInfo info : reverseCollection(infos)) {
-      if (!expectedInfosContainsInfo(info)) {
+      if (!expectedInfosContainsInfo(info) && !myIgnoreExtraHighlighting) {
         final int startOffset = info.startOffset;
         final int endOffset = info.endOffset;
         String s = text.substring(startOffset, endOffset);
