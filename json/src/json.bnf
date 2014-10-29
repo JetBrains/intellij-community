@@ -100,7 +100,6 @@ private array_element ::= value (','|&']') {
 
 string_literal ::= SINGLE_QUOTED_STRING | DOUBLE_QUOTED_STRING {
   methods=[
-    isQuotedString
     getTextFragments
   ]
   mixin="com.intellij.json.psi.impl.JsonStringLiteralMixin"

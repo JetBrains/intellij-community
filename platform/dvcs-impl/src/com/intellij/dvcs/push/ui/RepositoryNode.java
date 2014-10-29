@@ -155,6 +155,7 @@ public class RepositoryNode extends CheckedTreeNode implements EditableTreeNode,
 
   public void stopLoading() {
     myLoading.set(false);
+    myLoadingIcon.setImageObserver(null);
   }
 
   public boolean isLoading() {

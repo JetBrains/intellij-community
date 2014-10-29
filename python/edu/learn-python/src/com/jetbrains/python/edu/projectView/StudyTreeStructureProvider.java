@@ -52,7 +52,7 @@ public class StudyTreeStructureProvider implements TreeStructureProvider, DumbAw
               }
               String parentName = parent.getName();
               if (parentName != null) {
-                if (parentName.equals(Course.PLAYGROUND_DIR)) {
+                if (parentName.equals(Course.SANDBOX_DIR)) {
                   nodes.add(node);
                 }
               }

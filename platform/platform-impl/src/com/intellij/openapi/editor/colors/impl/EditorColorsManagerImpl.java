@@ -19,6 +19,7 @@
  */
 package com.intellij.openapi.editor.colors.impl;
 
+import com.intellij.ide.WelcomeWizardUtil;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -89,7 +90,14 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
 
     loadAdditionalTextAttributes();
 
-    setGlobalSchemeInner(myDefaultColorSchemesManager.getAllSchemes()[0]);
+    String wizardEditorScheme = WelcomeWizardUtil.getWizardEditorScheme();
+    EditorColorsScheme scheme = null;
+    if (wizardEditorScheme != null) {
+      scheme = getScheme(wizardEditorScheme);
+      LOG.assertTrue(scheme != null, "Wizard scheme " + wizardEditorScheme + " not found");
+    }
+    if (scheme == null) scheme = myDefaultColorSchemesManager.getAllSchemes()[0]; 
+    setGlobalSchemeInner(scheme);
   }
 
   private static boolean isUnitTestOrHeadlessMode() {

@@ -94,6 +94,15 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
       protected Color getListForeground(boolean isSelected, boolean hasFocus) {
         return UIUtil.getListForeground(isSelected && hasFocus);
       }
+
+      @Override
+      protected void layoutComponents() {
+        setLayout(new BorderLayout());
+        myName.setBorder(new EmptyBorder(6, 0, 1, 5));
+        myPath.setBorder(new EmptyBorder(1, 0, 6, 5));
+        add(myName, BorderLayout.NORTH);
+        add(myPath, BorderLayout.SOUTH);
+      }
     };
   }
   

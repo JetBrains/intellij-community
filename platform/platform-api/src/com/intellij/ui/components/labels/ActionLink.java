@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -41,7 +42,12 @@ public class ActionLink extends LinkLabel implements DataProvider {
   public ActionLink(String text, @NotNull AnAction action) {
     this(text, ICON, action);
   }
+
   public ActionLink(String text, Icon icon, @NotNull AnAction action) {
+    this(text, icon, action, null);
+  }
+
+  public ActionLink(String text, Icon icon, @NotNull AnAction action, @Nullable final Runnable onDone) {
     super(text, icon);
     setListener(new LinkListener() {
       @Override
@@ -56,6 +62,9 @@ public class ActionLink extends LinkLabel implements DataProvider {
         myAction.update(event);
         if (event.getPresentation().isEnabled() && event.getPresentation().isVisible()) {
           myAction.actionPerformed(event);
+          if (onDone != null) {
+            onDone.run();
+          }
         }
       }
     }, null);

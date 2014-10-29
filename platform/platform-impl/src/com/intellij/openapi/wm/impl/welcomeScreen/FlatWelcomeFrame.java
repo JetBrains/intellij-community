@@ -18,6 +18,7 @@ package com.intellij.openapi.wm.impl.welcomeScreen;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.RecentProjectsManagerBase;
+import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
@@ -283,7 +284,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
       panel.add(toolbar, BorderLayout.EAST);
       
 
-      panel.setBorder(new EmptyBorder(0,0,8,21));
+      panel.setBorder(new EmptyBorder(0,0,8,11));
       return panel;
     }
     
@@ -294,16 +295,16 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
         public void actionPerformed(@NotNull AnActionEvent e) {
           ActionGroup configureGroup = (ActionGroup)ActionManager.getInstance().getAction(groupId);
           final PopupFactoryImpl.ActionGroupPopup popup = (PopupFactoryImpl.ActionGroupPopup)JBPopupFactory.getInstance()
-            .createActionGroupPopup(null, new IconsFreeActionGroup(configureGroup), e.getDataContext(), false, false, false, null,
-                                    10, null);
+            .createActionGroupPopup(null, new IconsFreeActionGroup(configureGroup), e.getDataContext(), JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false, ActionPlaces.WELCOME_SCREEN);
           popup.showUnderneathOfLabel(ref.get());
+          UsageTrigger.trigger("welcome.screen." + groupId);
         }
       };
       ref.set(new ActionLink(text, icon, action));
       ref.get().setPaintUnderline(false);
       ref.get().setNormalColor(getLinkNormalColor());
       NonOpaquePanel panel = new NonOpaquePanel(new BorderLayout());
-      panel.setBorder(new EmptyBorder(4, 10, 4, 10));
+      panel.setBorder(new EmptyBorder(4, 6, 4, 6));
       panel.add(ref.get());
       panel.add(createArrow(ref.get()), BorderLayout.EAST);
       installFocusable(panel, action, KeyEvent.VK_UP, KeyEvent.VK_DOWN, focusListOnLeft);
@@ -312,6 +313,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
 
     private JComponent createActionPanel() {
       JPanel actions = new NonOpaquePanel();
+      actions.setBorder(new EmptyBorder(0, 10, 0, 0));
       actions.setLayout(new BoxLayout(actions, BoxLayout.Y_AXIS));
       ActionManager actionManager = ActionManager.getInstance();
       ActionGroup quickStart = (ActionGroup)actionManager.getAction(IdeActions.GROUP_WELCOME_SCREEN_QUICKSTART);
@@ -334,7 +336,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
           if (icon.getIconHeight() != 16 || icon.getIconWidth() != 16) {
             icon = EmptyIcon.ICON_16;
           }
-          ActionLink link = new ActionLink(text, icon, action);
+          ActionLink link = new ActionLink(text, icon, action, createUsageTracker(action));
           link.setPaintUnderline(false);
           link.setNormalColor(getLinkNormalColor());
           button.add(link);
@@ -346,7 +348,6 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
         }
       }
 
-      actions.setBorder(new EmptyBorder(0, 0, 0, 0));
       WelcomeScreenActionsPanel panel = new WelcomeScreenActionsPanel();
       panel.actions.add(actions);
       return panel.root;
@@ -366,6 +367,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
       NonOpaquePanel panel = new NonOpaquePanel(new BorderLayout());
       ApplicationInfoEx app = ApplicationInfoEx.getInstanceEx();
       JLabel logo = new JLabel(IconLoader.getIcon(app.getWelcomeScreenLogoUrl()));
+      logo.setBorder(new EmptyBorder(30,0,10,0));
       logo.setHorizontalAlignment(SwingConstants.CENTER);
       panel.add(logo, BorderLayout.NORTH);
       JLabel appName = new JLabel(ApplicationNamesInfo.getInstance().getFullProductName());
@@ -380,13 +382,13 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
       }
       
       JLabel version = new JLabel(appVersion);
-      version.setFont(font.deriveFont(16f).deriveFont(Font.PLAIN));
+      version.setFont(getProductFont().deriveFont(16f));
       version.setHorizontalAlignment(SwingConstants.CENTER);
       version.setForeground(Gray._128);
       
       panel.add(appName);
       panel.add(version, BorderLayout.SOUTH);
-      panel.setBorder(new EmptyBorder(20, 10, 30, 10));
+      panel.setBorder(new EmptyBorder(0, 0, 20, 0));
       return panel;
     }
 
@@ -509,7 +511,13 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
       private final ActionGroup myGroup;
 
       public IconsFreeActionGroup(ActionGroup group) {
+        super(group.getTemplatePresentation().getText(), group.getTemplatePresentation().getDescription(), null);
         myGroup = group;
+      }
+
+      @Override
+      public boolean isPopup() {
+        return myGroup.isPopup();
       }
 
       @NotNull
@@ -535,6 +543,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
             child.actionPerformed(e);
+            UsageTrigger.trigger("welcome.screen." + e.getActionManager().getId(child));
           }
 
           @Override
@@ -550,6 +559,15 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
         };
       }
     }
+  }
+
+  private static Runnable createUsageTracker(final AnAction action) {
+    return new Runnable() {
+      @Override
+      public void run() {
+        UsageTrigger.trigger("welcome.screen." + ActionManager.getInstance().getId(action));
+      }
+    };
   }
 
   private static JLabel createArrow(final ActionLink link) {

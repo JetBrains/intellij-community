@@ -5,7 +5,7 @@ import com.jetbrains.python.PythonDialectsTokenSetContributorBase;
 import org.jetbrains.annotations.NotNull;
 
 public class IpnbPyTokenSetContributor extends PythonDialectsTokenSetContributorBase {
-  public static final TokenSet IPNB_REFERENCE_EXPRESSIONS = TokenSet.create(IpnbPyTokenTypes.IPNB_REFERENCE);
+  public static final TokenSet IPNB_REFERENCE_EXPRESSIONS = TokenSet.create(IpnbPyTokenTypes.IPNB_REFERENCE, IpnbPyTokenTypes.IPNB_TARGET);
 
   @NotNull
   @Override

@@ -316,25 +316,8 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       myInputMessageFilter = compositeInputFilter;
       for (ConsoleInputFilterProvider eachProvider : inputFilters) {
         InputFilter[] filters = eachProvider.getDefaultFilters(project);
-        for (final InputFilter filter : filters) {
-          compositeInputFilter.addFilter(new InputFilter() {
-            boolean isBroken;
-
-            @Nullable
-            @Override
-            public List<Pair<String, ConsoleViewContentType>> applyFilter(String text, ConsoleViewContentType contentType) {
-              if (!isBroken) {
-                try {
-                  return filter.applyFilter(text, contentType);
-                }
-                catch (Throwable e) {
-                  isBroken = true;
-                  LOG.error(e);
-                }
-              }
-              return null;
-            }
-          });
+        for (InputFilter filter : filters) {
+          compositeInputFilter.addFilter(filter);
         }
       }
     }

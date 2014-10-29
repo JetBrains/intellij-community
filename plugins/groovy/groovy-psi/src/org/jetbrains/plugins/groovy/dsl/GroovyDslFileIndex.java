@@ -307,6 +307,15 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
     final AtomicReference<List<Pair<File, GroovyDslExecutor>>> ref = new AtomicReference<List<Pair<File, GroovyDslExecutor>>>();
+
+    if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
+      // If this method is called with write lock acquired, then the background computation shouldn't acquire read lock.
+      // Otherwise, we'll get a deadlock: this method will wait for the result of the background computation holding the write lock
+      // and the background computation won't finish because of waiting for the read lock.
+      // Dirty workaround: currently the background computation acquires read lock to only initialize GroovyDslExecutor,
+      //                   so, preventive GroovyDslExecutor initialization should help
+      GroovyDslExecutor.getIdeaVersion();
+    }
     ourPool.execute(new Runnable() {
       @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
       @Override

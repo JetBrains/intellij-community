@@ -26,6 +26,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.BuildNumber;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -34,7 +35,6 @@ import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.util.PathUtil;
 import com.intellij.util.io.UrlConnectionUtil;
 import com.intellij.util.io.ZipUtil;
-import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.net.NetUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -42,7 +42,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.net.HttpURLConnection;
-import java.net.URL;
 import java.net.URLConnection;
 import java.util.List;
 
@@ -99,7 +98,7 @@ public class PluginDownloader {
     return prepareToInstall(pi, myBuildNumber);
   }
 
-  public boolean prepareToInstall(@Nullable ProgressIndicator pi, @Nullable BuildNumber forBuildNumber) throws IOException {
+  public boolean prepareToInstall(@Nullable ProgressIndicator progressIndicator, @Nullable BuildNumber forBuildNumber) throws IOException {
     if (myFile != null) {
       return true;
     }
@@ -119,7 +118,7 @@ public class PluginDownloader {
     // download plugin
     String errorMessage = IdeBundle.message("unknown.error");
     try {
-      myFile = downloadPlugin(pi);
+      myFile = downloadPlugin(progressIndicator);
     }
     catch (IOException ex) {
       myFile = null;
@@ -237,15 +236,15 @@ public class PluginDownloader {
     }
   }
 
-  private File downloadPlugin(@Nullable final ProgressIndicator pi) throws IOException {
+  private File downloadPlugin(@Nullable final ProgressIndicator progressIndicator) throws IOException {
     final File pluginsTemp = new File(PathManager.getPluginTempPath());
     if (!pluginsTemp.exists() && !pluginsTemp.mkdirs()) {
       throw new IOException(IdeBundle.message("error.cannot.create.temp.dir", pluginsTemp));
     }
     final File file = FileUtil.createTempFile(pluginsTemp, "plugin_", "_download", true, false);
 
-    if (pi != null) {
-      pi.setText(IdeBundle.message("progress.connecting"));
+    if (progressIndicator != null) {
+      progressIndicator.setText(IdeBundle.message("progress.connecting"));
     }
 
     URLConnection connection = null;
@@ -253,24 +252,19 @@ public class PluginDownloader {
       connection = openConnection(myPluginUrl);
 
       final InputStream is = (ApplicationManager.getApplication() != null)
-                              ? UrlConnectionUtil.getConnectionInputStream(connection, pi)
+                              ? UrlConnectionUtil.getConnectionInputStream(connection, progressIndicator)
                               : connection.getInputStream();
       if (is == null) {
         throw new IOException("Failed to open connection");
       }
 
-      if (ApplicationManager.getApplication() != null && pi != null) {
-        pi.setText(IdeBundle.message("progress.downloading.plugin", getPluginName()));
+      if (progressIndicator != null && ApplicationManager.getApplication() != null) {
+        progressIndicator.setText(IdeBundle.message("progress.downloading.plugin", getPluginName()));
       }
-      final int contentLength = connection.getContentLength();
-      if (pi != null) {
-        pi.setIndeterminate(contentLength == -1);
-      }
-
       try {
         final OutputStream fos = new BufferedOutputStream(new FileOutputStream(file, false));
         try {
-          NetUtils.copyStreamContent(pi, is, fos, contentLength);
+          NetUtils.copyStreamContent(progressIndicator, is, fos, connection.getContentLength());
         }
         finally {
           fos.close();
@@ -295,34 +289,12 @@ public class PluginDownloader {
     }
   }
 
-  private URLConnection openConnection(final String url) throws IOException {
-    final URLConnection connection;
-    if (ApplicationManager.getApplication() != null) {
-      connection = HttpConfigurable.getInstance().openConnection(url);
+  private URLConnection openConnection(@NotNull String url) throws IOException {
+    Pair<URLConnection, String> result = RepositoryHelper.openConnection(url, false);
+    if (result.second != null) {
+      myPluginUrl = result.second;
     }
-    else {
-      connection = new URL(url).openConnection();
-      connection.setConnectTimeout(HttpConfigurable.CONNECTION_TIMEOUT);
-      connection.setReadTimeout(HttpConfigurable.CONNECTION_TIMEOUT);
-    }
-    if (connection instanceof HttpURLConnection) {
-      final int responseCode = ((HttpURLConnection)connection).getResponseCode();
-      if (responseCode != HttpURLConnection.HTTP_OK) {
-        String location = null;
-        if (responseCode == HttpURLConnection.HTTP_MOVED_PERM || responseCode == HttpURLConnection.HTTP_MOVED_TEMP) {
-          location = connection.getHeaderField("Location");
-        }
-        if (location == null) {
-          throw new IOException(IdeBundle.message("error.connection.failed.with.http.code.N", responseCode));
-        }
-        else {
-          myPluginUrl = location;
-          ((HttpURLConnection)connection).disconnect();
-          return openConnection(location);
-        }
-      }
-    }
-    return connection;
+    return result.first;
   }
 
   @NotNull

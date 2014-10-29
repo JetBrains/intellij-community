@@ -8,5 +8,8 @@
       <!--<keyboard-shortcut first-keystroke="control shift K" keymap="$default"/>-->
     <!--</action>-->
   </actions>
+  <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceImplementation="com.intellij.dvcs.push.PushSettings"/>
+  </extensions>
 </idea-plugin>
 

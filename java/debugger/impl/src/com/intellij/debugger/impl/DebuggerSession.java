@@ -57,9 +57,7 @@ import com.intellij.unscramble.ThreadState;
 import com.intellij.util.Alarm;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.xdebugger.AbstractDebuggerSession;
-import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugSession;
-import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueLookupManager;
 import com.sun.jdi.ObjectCollectedException;
@@ -690,12 +688,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
 
   @Nullable
   public XDebugSession getXDebugSession() {
-    for (XDebugSession xDebugSession : XDebuggerManager.getInstance(getProject()).getDebugSessions()) {
-      XDebugProcess process = xDebugSession.getDebugProcess();
-      if (process instanceof JavaDebugProcess && ((JavaDebugProcess)process).getDebuggerSession() == this) {
-        return xDebugSession;
-      }
-    }
-    return null;
+    JavaDebugProcess process = myDebugProcess.getXdebugProcess();
+    return process != null ? process.getSession() : null;
   }
 }

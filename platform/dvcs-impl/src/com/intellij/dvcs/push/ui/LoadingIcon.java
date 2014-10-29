@@ -69,6 +69,7 @@ class LoadingIcon extends JBImageIcon {
     }
 
     public boolean imageUpdate(Image img, int flags, int x, int y, int w, int h) {
+      if (myNode instanceof RepositoryNode && !((RepositoryNode)myNode).isLoading()) return false;
       if ((flags & (FRAMEBITS | ALLBITS)) != 0) {
         TreeNode[] pathToRoot = myModel.getPathToRoot(myNode);
         if (pathToRoot != null) {

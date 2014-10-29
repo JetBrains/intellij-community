@@ -28,6 +28,8 @@ import java.io.*;
 
 public class StudyRefreshTaskFileAction extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance(StudyRefreshTaskFileAction.class.getName());
+  public static final String ACTION_ID = "RefreshTaskAction";
+  public static final String SHORTCUT = "ctrl shift pressed X";
 
   public static void refresh(final Project project) {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -125,10 +127,12 @@ public class StudyRefreshTaskFileAction extends DumbAwareAction {
         patternText.append("\n");
       }
       int patternLength = patternText.length();
-      if (patternText.charAt(patternLength - 1) == '\n') {
-        patternText.delete(patternLength - 1, patternLength);
+      if (patternLength != 0) {
+        if (patternText.charAt(patternLength - 1) == '\n') {
+          patternText.delete(patternLength - 1, patternLength);
+        }
+        document.setText(patternText);
       }
-      document.setText(patternText);
     }
     catch (FileNotFoundException e) {
       LOG.error(e);

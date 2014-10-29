@@ -15,13 +15,11 @@
  */
 package com.intellij.dvcs.push.ui;
 
-import com.intellij.dvcs.push.PushTargetPanel;
 import com.intellij.openapi.vcs.changes.issueLinks.LinkMouseListenerBase;
 import com.intellij.ui.CheckboxTree;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
 import java.awt.event.MouseEvent;
 
 public class VcsBranchEditorListener extends LinkMouseListenerBase {
@@ -29,18 +27,6 @@ public class VcsBranchEditorListener extends LinkMouseListenerBase {
 
   public VcsBranchEditorListener(final CheckboxTree.CheckboxTreeCellRenderer renderer) {
     myRenderer = renderer;
-  }
-
-  @Override
-  public void mouseMoved(MouseEvent e) {
-    Component component = (Component)e.getSource();
-    Object tag = getTagAt(e);
-    if (tag instanceof PushTargetPanel || tag instanceof TextWithLinkNode || tag instanceof ExtraEditControl) {
-      component.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-    }
-    else {
-      component.setCursor(Cursor.getDefaultCursor());
-    }
   }
 
   @Nullable

@@ -6,6 +6,7 @@ import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
@@ -101,6 +102,16 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
     myScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 
     myEditorPanel.add(myScrollPane, BorderLayout.CENTER);
+    registerHeadingActions();
+  }
+
+  private void registerHeadingActions() {
+    new IpnbHeading1CellAction().registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke("ctrl shift 1")), myIpnbFilePanel);
+    new IpnbHeading2CellAction().registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke("ctrl shift 2")), myIpnbFilePanel);
+    new IpnbHeading3CellAction().registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke("ctrl shift 3")), myIpnbFilePanel);
+    new IpnbHeading4CellAction().registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke("ctrl shift 4")), myIpnbFilePanel);
+    new IpnbHeading5CellAction().registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke("ctrl shift 5")), myIpnbFilePanel);
+    new IpnbHeading6CellAction().registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke("ctrl shift 6")), myIpnbFilePanel);
   }
 
   public JScrollPane getScrollPane() {
@@ -226,7 +237,7 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
     addButton(controlPanel, new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        final IpnbAddCellAction action = (IpnbAddCellAction)ActionManager.getInstance().getAction("IpnbAddCellAction");
+        final IpnbAddCellBelowAction action = (IpnbAddCellBelowAction)ActionManager.getInstance().getAction("IpnbAddCellAction");
         action.addCell(myIpnbFilePanel);
       }
     }, AllIcons.General.Add, "Insert Cell Below");

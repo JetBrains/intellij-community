@@ -12,7 +12,7 @@ import org.jetbrains.plugins.ipnb.editor.panels.IpnbFilePanel;
 
 public class IpnbCopyCellAction extends AnAction {
   public IpnbCopyCellAction() {
-    super(AllIcons.General.Run);
+    super(AllIcons.Actions.Copy);
   }
 
   @Override

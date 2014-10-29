@@ -691,6 +691,26 @@ private String submapToXml(Map properties, List keys) {
   return buff.toString()
 }
 
+private List<File> getChildren(File file) {
+  if (!file.isDirectory()) return []
+  return file.listFiles().sort { File f -> f.name.toLowerCase() }
+}
+
+binding.setVariable("getCustomJDK", { File customJdkDir ->
+  getChildren(customJdkDir).each {
+    if (it.getName().endsWith(".tar.gz")) {
+      def customJdkFileName = it.getAbsolutePath().substring(0, it.getAbsolutePath().length() - 3)
+      if (new File(customJdkFileName).exists()){ ant.delete(file: customJdkFileName) }
+      if (new File("${home}/build/jdk/custom_jdk_${buildNumber}.tar").exists()){
+        ant.delete(file: "${home}/build/jdk/custom_jdk_${buildNumber}.tar")
+      }
+      ant.gunzip(src: it.getAbsolutePath())
+      projectBuilder.info("customJdkFileName: " + customJdkFileName)
+      ant.copy(file: customJdkFileName, tofile: "${home}/build/jdk/custom_jdk_${buildNumber}.tar")
+    }
+  }
+})
+
 binding.setVariable("buildWinZip", { String zipPath, List paths ->
   projectBuilder.stage(".win.zip")
 

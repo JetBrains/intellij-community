@@ -17,6 +17,7 @@
 
 package org.jetbrains.idea.svn;
 
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandAdapter;
 import com.intellij.openapi.command.CommandEvent;
@@ -731,25 +732,43 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
     }
   }
 
-  private void processAddedFiles(Project project) {
-    SvnVcs vcs = SvnVcs.getInstance(project);
-    List<VirtualFile> addedVFiles = new ArrayList<VirtualFile>();
-    Map<VirtualFile, File> copyFromMap = new HashMap<VirtualFile, File>();
+  private void processAddedFiles(final Project project) {
+    final SvnVcs vcs = SvnVcs.getInstance(project);
+    final List<VirtualFile> addedVFiles = new ArrayList<VirtualFile>();
+    final Map<VirtualFile, File> copyFromMap = new HashMap<VirtualFile, File>();
     final Set<VirtualFile> recursiveItems = new HashSet<VirtualFile>();
     fillAddedFiles(project, vcs, addedVFiles, copyFromMap, recursiveItems);
     if (addedVFiles.isEmpty()) return;
     final VcsShowConfirmationOption.Value value = vcs.getAddConfirmation().getValue();
     if (value != VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY) {
-      final AbstractVcsHelper vcsHelper = AbstractVcsHelper.getInstance(project);
-      final Collection<VirtualFile> filesToProcess = promptAboutAddition(vcs, addedVFiles, value, vcsHelper);
-      if (filesToProcess != null && !filesToProcess.isEmpty()) {
-        final List<VcsException> exceptions = new ArrayList<VcsException>();
-        runInBackground(project, "Adding files to Subversion",
-                        createAdditionRunnable(project, vcs, copyFromMap, filesToProcess, exceptions));
-        if (!exceptions.isEmpty()) {
-          vcsHelper.showErrors(exceptions, SvnBundle.message("add.files.errors.title"));
+      // Current method could be invoked under write action (for instance, during project import). So we explicitly use
+      // Application.invokeLater() in such cases to prevent deadlocks (while accessing vcs root mappings) and also not to show dialog under
+      // write action.
+      runNotUnderWriteAction(project, new Runnable() {
+        @Override
+        public void run() {
+          final AbstractVcsHelper vcsHelper = AbstractVcsHelper.getInstance(project);
+          final Collection<VirtualFile> filesToProcess = promptAboutAddition(vcs, addedVFiles, value, vcsHelper);
+          if (filesToProcess != null && !filesToProcess.isEmpty()) {
+            final List<VcsException> exceptions = new ArrayList<VcsException>();
+            runInBackground(project, "Adding files to Subversion",
+                            createAdditionRunnable(project, vcs, copyFromMap, filesToProcess, exceptions));
+            if (!exceptions.isEmpty()) {
+              vcsHelper.showErrors(exceptions, SvnBundle.message("add.files.errors.title"));
+            }
+          }
         }
-      }
+      });
+    }
+  }
+
+  private static void runNotUnderWriteAction(@NotNull Project project, @NotNull Runnable runnable) {
+    Application application = ApplicationManager.getApplication();
+    if (application.isWriteAccessAllowed()) {
+      application.invokeLater(runnable, project.getDisposed());
+    }
+    else {
+      runnable.run();
     }
   }
 
