@@ -396,12 +396,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Override
   public long checkHighlighting(final boolean checkWarnings, final boolean checkInfos, final boolean checkWeakWarnings) {
-    try {
-      return collectAndCheckHighlighting(checkWarnings, checkInfos, checkWeakWarnings);
-    }
-    catch (Exception e) {
-      throw new RuntimeException(e);
-    }
+    return checkHighlighting(checkWarnings, checkInfos, checkWeakWarnings, false);
   }
 
   @Override
