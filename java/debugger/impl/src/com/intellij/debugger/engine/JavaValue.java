@@ -70,7 +70,6 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
   private final EvaluationContextImpl myEvaluationContext;
   private final NodeManagerImpl myNodeManager;
   private final boolean myContextSet;
-  private final DebuggerManagerThreadImpl myDebuggerManagerThread;
 
   protected JavaValue(JavaValue parent,
                     @NotNull ValueDescriptorImpl valueDescriptor,
@@ -83,7 +82,6 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
     myEvaluationContext = evaluationContext;
     myNodeManager = nodeManager;
     myContextSet = contextSet;
-    myDebuggerManagerThread = evaluationContext.getDebugProcess().getManagerThread();
   }
 
   static JavaValue create(JavaValue parent,
@@ -355,11 +353,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
   }
 
   boolean scheduleCommand(SuspendContextCommandImpl command) {
-    if (myEvaluationContext.getSuspendContext().isResumed()) {
-      return false;
-    }
-    myDebuggerManagerThread.schedule(command);
-    return true;
+    return scheduleCommand(myEvaluationContext, null, command);
   }
 
   protected static boolean scheduleCommand(EvaluationContextImpl evaluationContext,
@@ -496,7 +490,6 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
   @Nullable
   @Override
   public XReferrersProvider getReferrersProvider() {
-    if (myEvaluationContext.getSuspendContext().isResumed()) return null;
     return new XReferrersProvider() {
       @Override
       public XValue getReferringObjectsValue() {
@@ -508,15 +501,16 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
   @Nullable
   @Override
   public XInstanceEvaluator getInstanceEvaluator() {
+    final DebugProcessImpl process = myEvaluationContext.getDebugProcess();
     return new XInstanceEvaluator() {
       @Override
       public void evaluate(@NotNull final XDebuggerEvaluator.XEvaluationCallback callback, @NotNull final XStackFrame frame) {
-        myDebuggerManagerThread.schedule(new DebuggerCommandImpl() {
+        process.getManagerThread().schedule(new DebuggerCommandImpl() {
           @Override
           protected void action() throws Exception {
             ValueDescriptorImpl inspectDescriptor = myValueDescriptor;
             if (myValueDescriptor instanceof WatchItemDescriptor) {
-              inspectDescriptor = (ValueDescriptorImpl)((WatchItemDescriptor)myValueDescriptor).getModifier().getInspectItem(getProject());
+              inspectDescriptor = (ValueDescriptorImpl) ((WatchItemDescriptor) myValueDescriptor).getModifier().getInspectItem(getProject());
             }
             EvaluationContextImpl evaluationContext = ((JavaStackFrame)frame).getFrameDebuggerContext().createEvaluationContext();
             if (evaluationContext != null) {
