@@ -172,7 +172,9 @@ public class SSBasedInspectionOptions {
         public void run(AnActionButton button) {
           performMoveUpDown(true);
         }
-      }).createPanel()
+      })
+        .setPreferredSize(new Dimension(-1, 100))
+        .createPanel()
     );
     new DoubleClickListener() {
       @Override
