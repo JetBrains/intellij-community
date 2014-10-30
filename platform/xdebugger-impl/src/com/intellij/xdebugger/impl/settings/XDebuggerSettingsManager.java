@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.xdebugger.impl.settings;
 
 import com.intellij.openapi.components.*;
+import com.intellij.util.SmartList;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
@@ -23,8 +24,8 @@ import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.xdebugger.settings.XDebuggerSettings;
+import gnu.trove.THashMap;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -35,15 +36,14 @@ import java.util.*;
  */
 @SuppressWarnings("ClassNameSameAsAncestorName")
 @State(
-    name = XDebuggerSettingsManager.COMPONENT_NAME,
-    storages = {
-      @Storage(
-          file = StoragePathMacros.APP_CONFIG + "/other.xml"
-      )
-    }
+  name = "XDebuggerSettings",
+  storages = {
+    @Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml"),
+    @Storage(file = StoragePathMacros.APP_CONFIG + "/debugger.xml")
+  },
+  storageChooser = LastStorageChooserForWrite.class
 )
 public class XDebuggerSettingsManager extends com.intellij.xdebugger.settings.XDebuggerSettingsManager implements PersistentStateComponent<XDebuggerSettingsManager.SettingsState> {
-  @NonNls public static final String COMPONENT_NAME = "XDebuggerSettings";
   private Map<String, XDebuggerSettings<?>> mySettingsById;
   private Map<Class<? extends XDebuggerSettings>, XDebuggerSettings<?>> mySettingsByClass;
   private XDebuggerDataViewSettings myDataViewSettings = new XDebuggerDataViewSettings();
@@ -58,13 +58,18 @@ public class XDebuggerSettingsManager extends com.intellij.xdebugger.settings.XD
     SettingsState settingsState = new SettingsState();
     settingsState.setDataViewSettings(myDataViewSettings);
     settingsState.setGeneralSettings(myGeneralSettings);
-    for (XDebuggerSettings<?> settings : getSettingsList()) {
-      Object subState = settings.getState();
-      if (subState != null) {
-        SpecificSettingsState state = new SpecificSettingsState();
-        state.setId(settings.getId());
-        state.setSettingsElement(XmlSerializer.serialize(subState, new SkipDefaultValuesSerializationFilters()));
-        settingsState.getSpecificStates().add(state);
+
+    initSettings();
+    if (!mySettingsById.isEmpty()) {
+      SkipDefaultValuesSerializationFilters filter = new SkipDefaultValuesSerializationFilters();
+      for (XDebuggerSettings<?> settings : mySettingsById.values()) {
+        Object subState = settings.getState();
+        if (subState != null) {
+          SpecificSettingsState state = new SpecificSettingsState();
+          state.setId(settings.getId());
+          state.setSettingsElement(XmlSerializer.serialize(subState, filter));
+          settingsState.specificStates.add(state);
+        }
       }
     }
     return settingsState;
@@ -89,7 +94,7 @@ public class XDebuggerSettingsManager extends com.intellij.xdebugger.settings.XD
   public void loadState(final SettingsState state) {
     myDataViewSettings = state.getDataViewSettings();
     myGeneralSettings = state.getGeneralSettings();
-    for (SpecificSettingsState settingsState : state.getSpecificStates()) {
+    for (SpecificSettingsState settingsState : state.specificStates) {
       XDebuggerSettings<?> settings = findSettings(settingsState.getId());
       if (settings != null) {
         ComponentSerializationUtil.loadComponentState(settings, settingsState.getSettingsElement());
@@ -105,8 +110,8 @@ public class XDebuggerSettingsManager extends com.intellij.xdebugger.settings.XD
   private void initSettings() {
     if (mySettingsById == null) {
       XDebuggerSettings[] extensions = XDebuggerSettings.EXTENSION_POINT.getExtensions();
-      mySettingsById = new LinkedHashMap<String, XDebuggerSettings<?>>(extensions.length);
-      mySettingsByClass = new LinkedHashMap<Class<? extends XDebuggerSettings>, XDebuggerSettings<?>>(extensions.length);
+      mySettingsById = new TreeMap<String, XDebuggerSettings<?>>();
+      mySettingsByClass = new THashMap<Class<? extends XDebuggerSettings>, XDebuggerSettings<?>>(extensions.length);
       for (XDebuggerSettings settings : extensions) {
         mySettingsById.put(settings.getId(), settings);
         mySettingsByClass.put(settings.getClass(), settings);
@@ -121,19 +126,11 @@ public class XDebuggerSettingsManager extends com.intellij.xdebugger.settings.XD
   }
 
   public static class SettingsState {
-    private List<SpecificSettingsState> mySpecificStates = new ArrayList<SpecificSettingsState>();
-    private XDebuggerDataViewSettings myDataViewSettings = new XDebuggerDataViewSettings();
-    private XDebuggerGeneralSettings myGeneralSettings = new XDebuggerGeneralSettings();
-
     @Tag("debuggers")
     @AbstractCollection(surroundWithTag = false)
-    public List<SpecificSettingsState> getSpecificStates() {
-      return mySpecificStates;
-    }
-
-    public void setSpecificStates(final List<SpecificSettingsState> specificStates) {
-      mySpecificStates = specificStates;
-    }
+    public List<SpecificSettingsState> specificStates = new SmartList<SpecificSettingsState>();
+    private XDebuggerDataViewSettings myDataViewSettings = new XDebuggerDataViewSettings();
+    private XDebuggerGeneralSettings myGeneralSettings = new XDebuggerGeneralSettings();
 
     @Property(surroundWithTag = false)
     public XDebuggerDataViewSettings getDataViewSettings() {
@@ -159,7 +156,6 @@ public class XDebuggerSettingsManager extends com.intellij.xdebugger.settings.XD
     private String myId;
     private Element mySettingsElement;
 
-
     @Attribute("id")
     public String getId() {
       return myId;
@@ -177,7 +173,5 @@ public class XDebuggerSettingsManager extends com.intellij.xdebugger.settings.XD
     public void setId(final String id) {
       myId = id;
     }
-
-
   }
 }
