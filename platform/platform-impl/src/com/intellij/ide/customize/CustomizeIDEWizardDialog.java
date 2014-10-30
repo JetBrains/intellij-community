@@ -95,6 +95,9 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
     if (SystemInfo.isMac) {
       mySteps.add(new CustomizeKeyboardSchemeStepPanel());
     }
+    if (CustomizeDesktopEntryStep.isAvailable()) {
+      mySteps.add(new CustomizeDesktopEntryStep("/UbuntuDesktopEntry.png"));
+    }
 
     PluginGroups pluginGroups = new PluginGroups();
     mySteps.add(new CustomizePluginsStepPanel(pluginGroups));
