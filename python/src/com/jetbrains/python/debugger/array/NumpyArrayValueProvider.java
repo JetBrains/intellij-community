@@ -58,7 +58,7 @@ public class NumpyArrayValueProvider extends ArrayValueProvider {
   private int[] myShape;
   private ArrayTableCellRenderer myTableCellRenderer;
   private PagingTableModel myPagingModel;
-  private boolean lastFinished = false;
+  private boolean lastSuccessful = false;
 
   private final static int COLUMNS_IN_DEFAULT_SLICE = 40;
   private final static int ROWS_IN_DEFAULT_SLICE = 40;
@@ -123,21 +123,7 @@ public class NumpyArrayValueProvider extends ArrayValueProvider {
                   if (!myBaseSlice.equals(getModelFullChunk().getBaseSlice()) || !myFormat.equals(getModelFullChunk().getFormat())) {
                     return;
                   }
-
-                  myLastPresentation = arraySlice;
-                  lastFinished = true;
-                  getPendingSet().remove(chunk);
-                  notifyNextThread();
-                  fireTableCellUpdated(chunk.getRowOffset(), chunk.getColOffset());
-                  DebuggerUIUtil.invokeLater(new Runnable() {
-                    public void run() {
-                      addDataInCache(arraySlice.getRowOffset(), arraySlice.getColOffset(), arraySlice.getData());
-
-                      myTable.setDefaultEditor(myTable.getColumnClass(0), getArrayTableCellEditor());
-                      myTable.setDefaultRenderer(myTable.getColumnClass(0), myTableCellRenderer);
-                      myDialog.setTitle(getTitlePresentation(getSliceText()));
-                    }
-                  });
+                  notifyChunkLoaded(arraySlice);
                 }
               });
             }
@@ -291,6 +277,9 @@ public class NumpyArrayValueProvider extends ArrayValueProvider {
         myComponent.getSliceTextField().setText(getDefaultPresentation());
         myComponent.getFormatTextField().setText(getDefaultFormat());
         myDialog.setTitle(getTitlePresentation(getDefaultPresentation()));
+        if (myTable.getColumnCount() > 0) {
+          myTable.setDefaultEditor(myTable.getColumnClass(0), getArrayTableCellEditor());
+        }
       }
     });
     startFillTable(new NumpyArraySlice(getDefaultPresentation(), Math.min(getMaxRow(myShape), ROWS_IN_DEFAULT_VIEW),
@@ -488,11 +477,11 @@ public class NumpyArrayValueProvider extends ArrayValueProvider {
   private void startFillTable(final NumpyArraySlice arraySlice, boolean rendered, final boolean inPlace) {
     if (myLastPresentation != null &&
         arraySlice.getBaseSlice().equals(myLastPresentation.getBaseSlice()) &&
-        arraySlice.getFormat().equals(myLastPresentation.getFormat()) && lastFinished) {
+        arraySlice.getFormat().equals(myLastPresentation.getFormat()) && lastSuccessful) {
       return;
     }
 
-    lastFinished = false;
+    lastSuccessful = false;
     myPagingModel = getPagingModel(myShape, rendered, arraySlice);
 
     DebuggerUIUtil.invokeLater(new Runnable() {
@@ -782,8 +771,22 @@ public class NumpyArrayValueProvider extends ArrayValueProvider {
     return 0;
   }
 
-  public void notifyNextThread() {
-    myPagingModel.runNextThread();
+  public void notifyChunkLoaded(final NumpyArraySlice arraySlice) {
+    myLastPresentation = arraySlice;
+    lastSuccessful = true;
+    myPagingModel.addDataInCache(arraySlice.getRowOffset(), arraySlice.getColOffset(), arraySlice.getData());
+    myPagingModel.runNextLoadingTask();
+    DebuggerUIUtil.invokeLater(new Runnable() {
+      public void run() {
+        myTable.setDefaultRenderer(myTable.getColumnClass(0), myTableCellRenderer);
+        myDialog.setTitle(getTitlePresentation(getSliceText()));
+        for (int r = 0; r < arraySlice.getRows(); r++) {
+          for (int c = 0; c < arraySlice.getColumns(); c++) {
+            myPagingModel.fireTableCellUpdated(r + arraySlice.getRowOffset(), c + arraySlice.getColOffset());
+          }
+        }
+      }
+    });
   }
 
   public void setBusy(final boolean busy) {

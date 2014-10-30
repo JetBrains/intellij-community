@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.debugger.array;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBViewport;
 import com.intellij.util.containers.HashMap;
@@ -22,7 +23,6 @@ import com.intellij.util.containers.Queue;
 
 import javax.swing.table.AbstractTableModel;
 import java.awt.*;
-import java.util.LinkedList;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
@@ -36,8 +36,7 @@ public abstract class PagingTableModel extends AbstractTableModel {
   private SortedSet<ArrayChunk> myPendingSet = new TreeSet<ArrayChunk>();
   private Queue<String> cachedChunkKeys = new Queue<String>(DEFAULT_MAX_CACHED_SIZE + 1);
 
-  private LinkedList<Thread> myThreadList = new LinkedList<Thread>();
-  private Thread evaluatedThread;
+  private ArrayChunk evaluatedChunk;
 
   private boolean myRendered;
   private int myRows = 0;
@@ -130,15 +129,15 @@ public abstract class PagingTableModel extends AbstractTableModel {
 
   protected abstract Runnable getDataEvaluator(final ArrayChunk chunk);
 
-  public void runNextThread() {
-    if (evaluatedThread != null) {
-      myThreadList.remove(evaluatedThread);
-      evaluatedThread = null;
+  public void runNextLoadingTask() {
+    if (evaluatedChunk != null) {
+      myPendingSet.remove(evaluatedChunk);
+      evaluatedChunk = null;
     }
 
-    if (myThreadList.size() > 0) {
-      evaluatedThread = myThreadList.get(0);
-      evaluatedThread.start();
+    if (myPendingSet.size() > 0) {
+      evaluatedChunk = myPendingSet.first();
+      ApplicationManager.getApplication().executeOnPooledThread(getDataEvaluator(evaluatedChunk));
       myProvider.setBusy(true);
     }
     else {
@@ -150,11 +149,8 @@ public abstract class PagingTableModel extends AbstractTableModel {
     final ArrayChunk segment = createChunk(rLength, cLength, rOffset, cOffset);
     myPendingSet.add(segment);
 
-    Runnable evaluator = getDataEvaluator(segment);
-    final Thread evalThread = new Thread(evaluator);
-    myThreadList.add(evalThread);
-    if (evaluatedThread == null) {
-      runNextThread();
+    if (evaluatedChunk == null) {
+      runNextLoadingTask();
     }
   }
 
@@ -166,12 +162,6 @@ public abstract class PagingTableModel extends AbstractTableModel {
     if (myCachedData.size() == DEFAULT_MAX_CACHED_SIZE) {
       String old = cachedChunkKeys.pullFirst();
       myCachedData.remove(old);
-    }
-
-    for (int r = 0; r < newData.length; r++) {
-      for (int c = 0; c < newData[0].length; c++) {
-        fireTableCellUpdated(r + rOffset, c + cOffset);
-      }
     }
   }
 
@@ -187,19 +177,11 @@ public abstract class PagingTableModel extends AbstractTableModel {
     return myRows;
   }
 
-  public SortedSet<ArrayChunk> getPendingSet() {
-    return myPendingSet;
-  }
-
   public void clearCached() {
     myCachedData = new HashMap<String, Object[][]>();
     myPendingSet = new TreeSet<ArrayChunk>();
     cachedChunkKeys = new Queue<String>(DEFAULT_MAX_CACHED_SIZE + 1);
-    if (evaluatedThread != null) {
-      evaluatedThread.interrupt();
-    }
-    evaluatedThread = null;
-    myThreadList = new LinkedList<Thread>();
+    evaluatedChunk = null;
   }
 
   public static class LazyViewport extends JBViewport {
