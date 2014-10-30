@@ -80,7 +80,7 @@ public class HighlightControlFlowUtil {
 
   public static ControlFlow getControlFlowNoConstantEvaluate(PsiElement body) throws AnalysisCanceledException {
     LocalsOrMyInstanceFieldsControlFlowPolicy policy = LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance();
-    return ControlFlowFactory.getInstance(body.getProject()).getControlFlow(body, policy, false);
+    return ControlFlowFactory.getInstance(body.getProject()).getControlFlow(body, policy, false, false);
   }
 
   private static ControlFlow getControlFlow(PsiElement context) throws AnalysisCanceledException {
