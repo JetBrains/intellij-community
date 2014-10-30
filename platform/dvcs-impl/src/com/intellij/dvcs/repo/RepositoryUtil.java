@@ -16,10 +16,13 @@
 package com.intellij.dvcs.repo;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
@@ -30,10 +33,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.Callable;
 
 public class RepositoryUtil {
@@ -95,10 +95,10 @@ public class RepositoryUtil {
     throw new RepoStateException("Couldn't load file " + fileToLoad, cause);
   }
 
-  public static void visitVcsDirVfs(@NotNull VirtualFile gitDir, @NotNull Collection<String> subDirs) {
-    gitDir.getChildren();
+  public static void visitVcsDirVfs(@NotNull VirtualFile vcsDir, @NotNull Collection<String> subDirs) {
+    vcsDir.getChildren();
     for (String subdir : subDirs) {
-      VirtualFile dir = gitDir.findFileByRelativePath(subdir);
+      VirtualFile dir = vcsDir.findFileByRelativePath(subdir);
       // process recursively, because we need to visit all branches under refs/heads and refs/remotes
       ensureAllChildrenInVfs(dir);
     }
@@ -135,5 +135,63 @@ public class RepositoryUtil {
     });
     Collections.sort(repos, REPOSITORY_COMPARATOR);
     return repos;
+  }
+
+  @Nullable
+  private static VirtualFile getVcsRootForLibraryFile(@NotNull Project project, @NotNull VirtualFile file) {
+    ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
+    // for a file inside .jar/.zip consider the .jar/.zip file itself
+    VirtualFile root = vcsManager.getVcsRootFor(VfsUtilCore.getVirtualFileForJar(file));
+    if (root != null) {
+      LOGGER.debug("Found root for zip/jar file: " + root);
+      return root;
+    }
+
+    // for other libs which don't have jars inside the project dir (such as JDK) take the owner module of the lib
+    List<OrderEntry> entries = ProjectRootManager.getInstance(project).getFileIndex().getOrderEntriesForFile(file);
+    Set<VirtualFile> libraryRoots = new HashSet<VirtualFile>();
+    for (OrderEntry entry : entries) {
+      if (entry instanceof LibraryOrderEntry || entry instanceof JdkOrderEntry) {
+        VirtualFile moduleRoot = vcsManager.getVcsRootFor(entry.getOwnerModule().getModuleFile());
+        if (moduleRoot != null) {
+          libraryRoots.add(moduleRoot);
+        }
+      }
+    }
+
+    if (libraryRoots.size() == 0) {
+      LOGGER.debug("No library roots");
+      return null;
+    }
+
+    // if the lib is used in several modules, take the top module
+    // (for modules of the same level we can't guess anything => take the first one)
+    Iterator<VirtualFile> libIterator = libraryRoots.iterator();
+    VirtualFile topLibraryRoot = libIterator.next();
+    while (libIterator.hasNext()) {
+      VirtualFile libRoot = libIterator.next();
+      if (VfsUtilCore.isAncestor(libRoot, topLibraryRoot, true)) {
+        topLibraryRoot = libRoot;
+      }
+    }
+    LOGGER.debug("Several library roots, returning " + topLibraryRoot);
+    return topLibraryRoot;
+  }
+
+  @Nullable
+  public static VirtualFile getVcsRoot(@NotNull Project project, @Nullable VirtualFile file) {
+    VirtualFile root = null;
+    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+    if (file != null) {
+      if (fileIndex.isInLibrarySource(file) || fileIndex.isInLibraryClasses(file)) {
+        LOGGER.debug("File is in library sources " + file);
+        root = getVcsRootForLibraryFile(project, file);
+      }
+      else {
+        LOGGER.debug("File is not in library sources " + file);
+        root = ProjectLevelVcsManager.getInstance(project).getVcsRootFor(file);
+      }
+    }
+    return root;
   }
 }
