@@ -19,6 +19,7 @@ import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.LightVirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,7 +33,7 @@ public class DocumentReferenceByVirtualFile implements DocumentReference {
   @Override
   @Nullable
   public Document getDocument() {
-    assert myFile.isValid() : "should not be called on references to deleted file: " + myFile;
+    assert myFile.isValid() || myFile instanceof LightVirtualFile : "should not be called on references to deleted file: " + myFile;
     return FileDocumentManager.getInstance().getDocument(myFile);
   }
 
