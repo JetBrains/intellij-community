@@ -30,6 +30,7 @@ import org.intellij.lang.regexp.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.math.BigInteger;
+import java.util.HashSet;
 
 public final class RegExpAnnotator extends RegExpElementVisitor implements Annotator {
   private AnnotationHolder myHolder;
@@ -72,6 +73,21 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
     }
     else if (from.getText().equals(to.getText())) {
       myHolder.createWarningAnnotation(range, "Redundant character range");
+    }
+  }
+
+  @Override
+  public void visitRegExpClass(RegExpClass regExpClass) {
+    final HashSet<Character> seen = new HashSet<Character>();
+    for (RegExpClassElement element : regExpClass.getElements()) {
+      if (!(element instanceof RegExpChar)) {
+        continue;
+      }
+      final RegExpChar regExpChar = (RegExpChar)element;
+      final Character value = regExpChar.getValue();
+      if (value != null && !seen.add(value)) {
+        myHolder.createWarningAnnotation(regExpChar, "Duplicate character '" + regExpChar.getText() + "' in character class");
+      }
     }
   }
 
@@ -223,7 +239,7 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
       String min = count.getMin();
       String max = count.getMax();
       if (max.equals(min)) {
-        if ("1".equals(max)) { // TODO: is this safe when reluctant or possesive modifier is present?
+        if ("1".equals(max)) { // TODO: is this safe when reluctant or possessive modifier is present?
           final Annotation a = myHolder.createWeakWarningAnnotation(quantifier, "Single repetition");
           registerFix(a, new SimplifyQuantifierAction(quantifier, null));
         }

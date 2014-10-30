@@ -620,7 +620,7 @@
       <expected>OK</expected>
     </test>
     <test>
-      <pattern>[\Qabc?*+.))]][]\E]</pattern>
+      <pattern><![CDATA[[\Qabc?*+.)<warning descr="Duplicate character ')' in character class">)</warning>]<warning descr="Duplicate character ']' in character class">]</warning>[<warning descr="Duplicate character ']' in character class">]</warning>\E]]]></pattern>
       <expected>OK</expected>
     </test>
     <test>
@@ -713,7 +713,7 @@
       <expected>OK</expected>
     </test>
     <test>
-      <pattern>[:xdigit:]+</pattern>
+      <pattern><![CDATA[[:xdig<warning descr="Duplicate character 'i' in character class">i</warning>t<warning descr="Duplicate character ':' in character class">:</warning>]+]]></pattern>
       <expected>OK</expected>
     </test>
     <test>
