@@ -31,8 +31,10 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.DependencyValidationManager;
@@ -41,19 +43,20 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.util.containers.HashMap;
-import com.intellij.util.text.UniqueNameGenerator;
 import com.maddyhome.idea.copyright.actions.UpdateCopyrightProcessor;
 import com.maddyhome.idea.copyright.options.LanguageOptions;
 import com.maddyhome.idea.copyright.options.Options;
 import com.maddyhome.idea.copyright.util.FileTypeUtil;
 import com.maddyhome.idea.copyright.util.NewFileTracker;
-import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 @State(name = "CopyrightManager",
        storages = {@Storage(file = StoragePathMacros.PROJECT_FILE),
@@ -292,53 +295,28 @@ public class CopyrightManager extends AbstractProjectComponent implements Persis
     addCopyright(copyrightProfile);
   }
 
-  public static class CopyrightStateSplitter implements StateSplitter {
+  static final class CopyrightStateSplitter extends MainConfigurationStateSplitter {
+    @NotNull
     @Override
-    public List<Pair<Element, String>> splitState(Element e) {
-      final UniqueNameGenerator generator = new UniqueNameGenerator();
-      final List<Pair<Element, String>> result = new ArrayList<Pair<Element, String>>();
-
-      final Element[] elements = JDOMUtil.getElements(e);
-      for (Element element : elements) {
-        if (element.getName().equals("copyright")) {
-          element.detach();
-
-          String profileName = null;
-          final Element[] options = JDOMUtil.getElements(element);
-          for (Element option : options) {
-            if (option.getName().equals("option") && option.getAttributeValue("name").equals("myName")) {
-              profileName = option.getAttributeValue("value");
-            }
-          }
-
-          assert profileName != null;
-
-          final String name = generator.generateUniqueName(FileUtil.sanitizeFileName(profileName)) + ".xml";
-          result.add(Pair.create(element, name));
+    protected String getSubStateFileName(@NotNull Element element) {
+      for (Element option : element.getChildren("option")) {
+        if (option.getAttributeValue("name").equals("myName")) {
+          return option.getAttributeValue("value");
         }
       }
-      result.add(Pair.create(e, generator.generateUniqueName("profiles_settings") + ".xml"));
-      return result;
+      throw new IllegalStateException();
     }
 
+    @NotNull
     @Override
-    public void mergeStatesInto(Element target, Element[] elements) {
-      for (Element element : elements) {
-        if (element.getName().equals("copyright")) {
-          element.detach();
-          target.addContent(element);
-        }
-        else {
-          final Element[] states = JDOMUtil.getElements(element);
-          for (Element state : states) {
-            state.detach();
-            target.addContent(state);
-          }
-          for (Object attr : element.getAttributes()) {
-            target.setAttribute(((Attribute)attr).clone());
-          }
-        }
-      }
+    protected String getComponentStateFileName() {
+      return "profiles_settings";
+    }
+
+    @NotNull
+    @Override
+    protected String getSubStateTagName() {
+      return "copyright";
     }
   }
 }

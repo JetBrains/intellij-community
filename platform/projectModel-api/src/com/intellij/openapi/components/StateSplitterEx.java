@@ -16,19 +16,65 @@
 package com.intellij.openapi.components;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.SmartList;
+import com.intellij.util.text.UniqueNameGenerator;
+import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Iterator;
 import java.util.List;
 
+@SuppressWarnings("deprecation")
 public abstract class StateSplitterEx implements StateSplitter {
   @Override
   public abstract List<Pair<Element, String>> splitState(@NotNull Element state);
 
-  public abstract void mergeStateInto(@NotNull Element target, @NotNull Element subState);
+  public void mergeStateInto(@NotNull Element target, @NotNull Element subState) {
+    target.addContent(subState);
+  }
 
   @Override
   public final void mergeStatesInto(Element target, Element[] elements) {
     throw new IllegalStateException();
+  }
+
+  @NotNull
+  protected static List<Pair<Element, String>> splitState(@NotNull Element state, @NotNull String attributeName) {
+    UniqueNameGenerator generator = new UniqueNameGenerator();
+    List<Pair<Element, String>> result = new SmartList<Pair<Element, String>>();
+    for (Element subState : state.getChildren()) {
+      result.add(createItem(generator, subState, attributeName));
+    }
+    return result;
+  }
+
+  @NotNull
+  protected static Pair<Element, String> createItem(@NotNull UniqueNameGenerator generator, @NotNull Element element, @NotNull String attributeName) {
+    return createItem(element.getAttributeValue(attributeName), generator, element);
+  }
+
+  @NotNull
+  protected static Pair<Element, String> createItem(@NotNull String fileName, @NotNull UniqueNameGenerator generator, @NotNull Element element) {
+    return Pair.create(element, generator.generateUniqueName(FileUtil.sanitizeFileName(fileName)) + ".xml");
+  }
+
+  protected static void mergeStateInto(@NotNull Element target, @NotNull Element subState, @NotNull String subStateName) {
+    if (subState.getName().equals(subStateName)) {
+      target.addContent(subState);
+    }
+    else {
+      for (Iterator<Element> iterator = subState.getChildren().iterator(); iterator.hasNext(); ) {
+        Element configuration = iterator.next();
+        iterator.remove();
+        target.addContent(configuration);
+      }
+      for (Iterator<Attribute> iterator = subState.getAttributes().iterator(); iterator.hasNext(); ) {
+        Attribute attribute = iterator.next();
+        iterator.remove();
+        target.setAttribute(attribute);
+      }
+    }
   }
 }

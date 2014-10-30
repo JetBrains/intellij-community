@@ -22,23 +22,22 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.scope.packageSet.*;
 import com.intellij.ui.LayeredIcon;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.text.UniqueNameGenerator;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
-import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 @State(
   name = "DependencyValidationManager",
@@ -312,41 +311,23 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
     return new DependencyRule(fromNamedScope, toNamedScope, Boolean.valueOf(denyRule).booleanValue());
   }
 
-  static class ScopesStateSplitter extends StateSplitterEx {
+  static final class ScopesStateSplitter extends MainConfigurationStateSplitter {
+    @NotNull
     @Override
-    public List<Pair<Element, String>> splitState(@NotNull Element state) {
-      UniqueNameGenerator generator = new UniqueNameGenerator();
-      List<Pair<Element, String>> result = new SmartList<Pair<Element, String>>();
-      for (Iterator<Element> iterator = state.getChildren("scope").iterator(); iterator.hasNext(); ) {
-        Element element = iterator.next();
-        iterator.remove();
-        String scopeName = element.getAttributeValue("name");
-        assert scopeName != null;
-        result.add(Pair.create(element, generator.generateUniqueName(FileUtil.sanitizeFileName(scopeName)) + ".xml"));
-      }
-      if (!state.getChildren().isEmpty()) {
-        result.add(Pair.create(state, generator.generateUniqueName("scope_settings") + ".xml"));
-      }
-      return result;
+    protected String getSubStateFileName(@NotNull Element element) {
+      return element.getAttributeValue("name");
     }
 
+    @NotNull
     @Override
-    public void mergeStateInto(@NotNull Element target, @NotNull Element subState) {
-      if (subState.getName().equals("scope")) {
-        target.addContent(subState);
-      }
-      else {
-        for (Iterator<Element> iterator = subState.getChildren().iterator(); iterator.hasNext(); ) {
-          Element configuration = iterator.next();
-          iterator.remove();
-          target.addContent(configuration);
-        }
-        for (Iterator<Attribute> iterator = subState.getAttributes().iterator(); iterator.hasNext(); ) {
-          Attribute attribute = iterator.next();
-          iterator.remove();
-          target.setAttribute(attribute);
-        }
-      }
+    protected String getComponentStateFileName() {
+      return "scope_settings";
+    }
+
+    @NotNull
+    @Override
+    protected String getSubStateTagName() {
+      return "scope";
     }
   }
 

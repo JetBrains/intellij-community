@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,6 @@ import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.profile.DefaultProjectProfileManager;
 import com.intellij.profile.Profile;
@@ -47,29 +45,6 @@ public abstract class InspectionProjectProfileManager extends DefaultProjectProf
   @Override
   public String getProfileName() {
     return getInspectionProfile().getName();
-  }
-
-  @Override
-  public Element getState() {
-    try {
-      final Element e = new Element("settings");
-      writeExternal(e);
-      return e;
-    }
-    catch (WriteExternalException e1) {
-      LOG.error(e1);
-      return null;
-    }
-  }
-
-  @Override
-  public void loadState(Element state) {
-    try {
-      readExternal(state);
-    }
-    catch (InvalidDataException e) {
-      LOG.error(e);
-    }
   }
 
   @NotNull
