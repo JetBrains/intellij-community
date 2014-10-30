@@ -142,7 +142,7 @@ public abstract class XDebuggerEditorBase {
 
   public abstract JComponent getComponent();
 
-  protected abstract void doSetText(XExpression text);
+  protected abstract void setEditorText(XExpression text);
 
   public void setExpression(@Nullable XExpression text) {
     if (text == null) {
@@ -174,7 +174,7 @@ public abstract class XDebuggerEditorBase {
       myChooseFactory.setDisabledIcon(IconLoader.getDisabledIcon(icon));
     }
 
-    doSetText(text);
+    setEditorText(text);
   }
 
   @Nullable
@@ -240,7 +240,7 @@ public abstract class XDebuggerEditorBase {
     final List<XExpression> expressions = getRecentExpressions();
     if (myHistoryIndex < expressions.size() - 1) {
       myHistoryIndex++;
-      doSetText(expressions.get(myHistoryIndex));
+      setEditorText(expressions.get(myHistoryIndex));
     }
   }
 
@@ -248,7 +248,7 @@ public abstract class XDebuggerEditorBase {
     final List<XExpression> expressions = getRecentExpressions();
     if (myHistoryIndex > 0) {
       myHistoryIndex--;
-      doSetText(expressions.get(myHistoryIndex));
+      setEditorText(expressions.get(myHistoryIndex));
     }
   }
 }
