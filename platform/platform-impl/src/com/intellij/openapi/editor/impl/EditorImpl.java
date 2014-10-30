@@ -6872,15 +6872,20 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   // Strategy, controlled by current editor settings. Usable only for the current line.
   private class LineWhitespacePaintingStrategy implements WhitespacePaintingStrategy {
+    private final boolean myWhitespaceShown = mySettings.isWhitespacesShown();
+    private final boolean myLeadingWhitespaceShown = mySettings.isLeadingWhitespaceShown();
+    private final boolean myInnerWhitespaceShown = mySettings.isInnerWhitespaceShown();
+    private final boolean myTrailingWhitespaceShown = mySettings.isTrailingWhitespaceShown();
+
     // Offsets on current line where leading whitespace ends and trailing whitespace starts correspondingly.
     private int currentLeadingEdge;
     private int currentTrailingEdge;
 
     // Updates the state, to be used for the line, iterator is currently at.
     private void update(CharSequence chars, LineIterator iterator) {
-      if (mySettings.isWhitespacesShown()
-          && (mySettings.isLeadingWhitespaceShown() || mySettings.isInnerWhitespaceShown() || mySettings.isTrailingWhitespaceShown())
-          && !(mySettings.isLeadingWhitespaceShown() && mySettings.isInnerWhitespaceShown() && mySettings.isTrailingWhitespaceShown())) {
+      if (myWhitespaceShown
+          && (myLeadingWhitespaceShown || myInnerWhitespaceShown || myTrailingWhitespaceShown)
+          && !(myLeadingWhitespaceShown && myInnerWhitespaceShown && myTrailingWhitespaceShown)) {
         int lineStart = iterator.getStart();
         int lineEnd = iterator.getEnd() - iterator.getSeparatorLength();
         currentTrailingEdge = CharArrayUtil.shiftBackward(chars, lineStart, lineEnd - 1, WHITESPACE_CHARS) + 1;
@@ -6890,10 +6895,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     @Override
     public boolean showWhitespaceAtOffset(int offset) {
-      return mySettings.isWhitespacesShown()
-             && (offset < currentLeadingEdge ? mySettings.isLeadingWhitespaceShown() :
-                 offset >= currentTrailingEdge ? mySettings.isTrailingWhitespaceShown() :
-                 mySettings.isInnerWhitespaceShown());
+      return myWhitespaceShown
+             && (offset < currentLeadingEdge ? myLeadingWhitespaceShown :
+                 offset >= currentTrailingEdge ? myTrailingWhitespaceShown :
+                 myInnerWhitespaceShown);
     }
   }
 }
