@@ -34,7 +34,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.components.NamedComponent;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -54,7 +57,9 @@ import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.RefreshQueueImpl;
@@ -85,7 +90,11 @@ import java.util.*;
 /**
  * This class also controls the auto-reparse and auto-hints.
  */
-public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements JDOMExternalizable, NamedComponent, Disposable {
+@State(
+  name = "DaemonCodeAnalyzer",
+  storages = @Storage(file = StoragePathMacros.WORKSPACE_FILE)
+)
+public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements PersistentStateComponent<Element>, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl");
 
   private static final Key<List<LineMarkerInfo>> MARKERS_IN_EDITOR_DOCUMENT_KEY = Key.create("MARKERS_IN_EDITOR_DOCUMENT");
@@ -375,12 +384,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements JDOM
 
   void waitForTermination() {
     myPassExecutorService.cancelAll(true);
-  }
-
-  @Override
-  @NotNull
-  public String getComponentName() {
-    return "DaemonCodeAnalyzer";
   }
 
   @Override
@@ -676,35 +679,40 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements JDOM
     return myLastIntentionHint;
   }
 
+  @Nullable
   @Override
-  public void writeExternal(@NotNull Element parentNode) throws WriteExternalException {
-    Element disableHintsElement = new Element(DISABLE_HINTS_TAG);
-    parentNode.addContent(disableHintsElement);
+  public Element getState() {
+    Element state = new Element("state");
+    if (myDisabledHintsFiles.isEmpty()) {
+      return state;
+    }
 
-    List<String> array = new ArrayList<String>();
+    List<String> array = new SmartList<String>();
     for (VirtualFile file : myDisabledHintsFiles) {
       if (file.isValid()) {
         array.add(file.getUrl());
       }
     }
-    Collections.sort(array);
 
-    for (String url : array) {
-      Element fileElement = new Element(FILE_TAG);
-      fileElement.setAttribute(URL_ATT, url);
-      disableHintsElement.addContent(fileElement);
+    if (!array.isEmpty()) {
+      Collections.sort(array);
+
+      Element disableHintsElement = new Element(DISABLE_HINTS_TAG);
+      state.addContent(disableHintsElement);
+      for (String url : array) {
+        disableHintsElement.addContent(new Element(FILE_TAG).setAttribute(URL_ATT, url));
+      }
     }
+    return state;
   }
 
   @Override
-  public void readExternal(@NotNull Element parentNode) throws InvalidDataException {
+  public void loadState(Element state) {
     myDisabledHintsFiles.clear();
 
-    Element element = parentNode.getChild(DISABLE_HINTS_TAG);
+    Element element = state.getChild(DISABLE_HINTS_TAG);
     if (element != null) {
-      for (Object o : element.getChildren(FILE_TAG)) {
-        Element e = (Element)o;
-
+      for (Element e : element.getChildren(FILE_TAG)) {
         String url = e.getAttributeValue(URL_ATT);
         if (url != null) {
           VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);

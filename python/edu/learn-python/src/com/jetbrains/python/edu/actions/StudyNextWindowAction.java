@@ -16,7 +16,7 @@ public class StudyNextWindowAction extends StudyWindowNavigationAction {
   public static final String SHORTCUT2 = "ctrl pressed ENTER";
 
   public StudyNextWindowAction() {
-    super("NextWindowAction", "Select next window", AllIcons.Actions.Forward);
+    super("Navigate to the Next Answer Placeholder", "Navigate to the next answer placeholder", AllIcons.Actions.Forward);
   }
 
   @Override

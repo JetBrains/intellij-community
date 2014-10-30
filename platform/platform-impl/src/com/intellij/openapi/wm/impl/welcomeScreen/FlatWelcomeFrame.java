@@ -17,7 +17,8 @@ package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.RecentProjectsManager;
+import com.intellij.ide.RecentProjectsManagerBase;
+import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
@@ -88,7 +89,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
     setTitle("Welcome to " + ApplicationNamesInfo.getInstance().getFullProductName());
     AppUIUtil.updateWindowIcon(this);
     //Rectangle bounds = ScreenUtil.getMainScreenBounds();
-    if (RecentProjectsManager.getInstance().getRecentProjectsActions(false).length > 0) {
+    if (RecentProjectsManagerBase.getInstance().getRecentProjectsActions(false).length > 0) {
       setSize(666, 460);
     } else {
       setSize(555, 460);
@@ -166,23 +167,23 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
   public StatusBar getStatusBar() {
     return null;
   }
-  
+
   public static Color getMainBackground() {
     return new JBColor(0xf7f7f7, 0x45474a);
   }
-  
+
   public static Color getProjectsBackground() {
     return new JBColor(Gray.xFF, Gray.x39);
   }
-  
+
   public static Color getLinkNormalColor() {
     return new JBColor(Gray._0, Gray.xBB);
   }
-  
+
   public static Color getListSelectionColor(boolean hasFocus) {
     return hasFocus ? new JBColor(0x3875d6, 0x4b6eaf) : new JBColor(Gray.xDD, Gray.x45);
   }
-  
+
   public static Color getActionLinkSelectionColor() {
     return new JBColor(0xdbe5f5, 0x485875);
   }
@@ -195,14 +196,14 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
     public FlatWelcomeScreen() {
       super(new BorderLayout());
       setBackground(getMainBackground());
-      if (RecentProjectsManager.getInstance().getRecentProjectsActions(false).length > 0) {
+      if (RecentProjectsManagerBase.getInstance().getRecentProjectsActions(false).length > 0) {
         final JComponent recentProjects = createRecentProjects();
         add(recentProjects, BorderLayout.WEST);
         final JList projectsList = UIUtil.findComponentOfType(recentProjects, JList.class);
         if (projectsList != null) {
           projectsList.getModel().addListDataListener(new ListDataListener() {
             @Override
-            public void intervalAdded(ListDataEvent e) {             
+            public void intervalAdded(ListDataEvent e) {
             }
 
             @Override
@@ -211,7 +212,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
             }
 
             private void removeIfNeeded() {
-              if (RecentProjectsManager.getInstance().getRecentProjectsActions(false).length == 0) {
+              if (RecentProjectsManagerBase.getInstance().getRecentProjectsActions(false).length == 0) {
                 FlatWelcomeScreen.this.remove(recentProjects);
                 FlatWelcomeScreen.this.revalidate();
                 FlatWelcomeScreen.this.repaint();
@@ -260,7 +261,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
       if (register != null) {
         Presentation presentation = register.getTemplatePresentation();
         register.update(new AnActionEvent(null, DataManager.getInstance().getDataContext(this),
-                                        ActionPlaces.WELCOME_SCREEN, presentation, ActionManager.getInstance(), 0));
+                                          ActionPlaces.WELCOME_SCREEN, presentation, ActionManager.getInstance(), 0));
         if (presentation.isEnabled()) {
           ActionLink registerLink = new ActionLink("Register", register);
           registerLink.setNormalColor(getLinkNormalColor());
@@ -279,14 +280,14 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
       toolbar.setLayout(new BoxLayout(toolbar, BoxLayout.X_AXIS));
       toolbar.add(createActionLink("Configure", IdeActions.GROUP_WELCOME_SCREEN_CONFIGURE, AllIcons.General.GearPlain, !registeredVisible));
       toolbar.add(createActionLink("Get Help", IdeActions.GROUP_WELCOME_SCREEN_DOC, null, false));
-      
+
       panel.add(toolbar, BorderLayout.EAST);
-      
+
 
       panel.setBorder(new EmptyBorder(0,0,8,11));
       return panel;
     }
-    
+
     private JComponent createActionLink(final String text, final String groupId, Icon icon, boolean focusListOnLeft) {
       final Ref<ActionLink> ref = new Ref<ActionLink>(null);
       AnAction action = new AnAction() {
@@ -294,8 +295,10 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
         public void actionPerformed(@NotNull AnActionEvent e) {
           ActionGroup configureGroup = (ActionGroup)ActionManager.getInstance().getAction(groupId);
           final PopupFactoryImpl.ActionGroupPopup popup = (PopupFactoryImpl.ActionGroupPopup)JBPopupFactory.getInstance()
-            .createActionGroupPopup(null, new IconsFreeActionGroup(configureGroup), e.getDataContext(), JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false, ActionPlaces.WELCOME_SCREEN);
+            .createActionGroupPopup(null, new IconsFreeActionGroup(configureGroup), e.getDataContext(), JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false,
+                                    ActionPlaces.WELCOME_SCREEN);
           popup.showUnderneathOfLabel(ref.get());
+          UsageTrigger.trigger("welcome.screen." + groupId);
         }
       };
       ref.set(new ActionLink(text, icon, action));
@@ -334,7 +337,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
           if (icon.getIconHeight() != 16 || icon.getIconWidth() != 16) {
             icon = EmptyIcon.ICON_16;
           }
-          ActionLink link = new ActionLink(text, icon, action);
+          ActionLink link = new ActionLink(text, icon, action, createUsageTracker(action));
           link.setPaintUnderline(false);
           link.setNormalColor(getLinkNormalColor());
           button.add(link);
@@ -374,16 +377,16 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
       appName.setFont(font.deriveFont(36f).deriveFont(Font.PLAIN));
       appName.setHorizontalAlignment(SwingConstants.CENTER);
       String appVersion = "Version " + app.getFullVersion();
-      
+
       if (app.isEAP() && app.getBuild().getBuildNumber() < Integer.MAX_VALUE) {
         appVersion += " (" + app.getBuild().asString() + ")";
       }
-      
+
       JLabel version = new JLabel(appVersion);
       version.setFont(getProductFont().deriveFont(16f));
       version.setHorizontalAlignment(SwingConstants.CENTER);
       version.setForeground(Gray._128);
-      
+
       panel.add(appName);
       panel.add(version, BorderLayout.SOUTH);
       panel.setBorder(new EmptyBorder(0, 0, 20, 0));
@@ -393,9 +396,9 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
     private Font getProductFont() {
       String name = "/fonts/Roboto-Light.ttf";
       URL url = AppUIUtil.class.getResource(name);
-        if (url == null) {
-          Logger.getInstance(AppUIUtil.class).warn("Resource missing: " + name);
-        } else {
+      if (url == null) {
+        Logger.getInstance(AppUIUtil.class).warn("Resource missing: " + name);
+      } else {
 
         try {
           InputStream is = url.openStream();
@@ -450,7 +453,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
             if (focusListOnLeft) {
               if (list != null) {
                 list.requestFocus();
-              }  
+              }
             } else {
               focusPrev(comp);
             }
@@ -533,14 +536,15 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
         if (child instanceof ActionGroup) {
           return new IconsFreeActionGroup((ActionGroup)child);
         }
-        
-          Presentation presentation = child.getTemplatePresentation();
+
+        Presentation presentation = child.getTemplatePresentation();
         return new AnAction(presentation.getText(),
                             presentation.getDescription(),
                             null) {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
             child.actionPerformed(e);
+            UsageTrigger.trigger("welcome.screen." + e.getActionManager().getId(child));
           }
 
           @Override
@@ -556,6 +560,15 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
         };
       }
     }
+  }
+
+  private static Runnable createUsageTracker(final AnAction action) {
+    return new Runnable() {
+      @Override
+      public void run() {
+        UsageTrigger.trigger("welcome.screen." + ActionManager.getInstance().getId(action));
+      }
+    };
   }
 
   private static JLabel createArrow(final ActionLink link) {
@@ -613,7 +626,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
   public static void notifyFrameClosed(JFrame frame) {
     saveLocation(frame.getBounds());
   }
-  
+
   public static class WelcomeScreenActionsPanel {
     private JPanel root;
     private JPanel actions;

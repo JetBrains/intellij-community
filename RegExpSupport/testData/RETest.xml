@@ -545,6 +545,10 @@
       <pattern>(?i:*)</pattern>
       <expected>ERR</expected>
     </test>
+    <test host="com.intellij.psi.impl.JavaRegExpHost">
+      <pattern>(?&lt;asdf&gt;[a-c])\1</pattern>
+      <expected>OK</expected>
+    </test>
   </groups>
   <escapes>
     <test>
@@ -587,11 +591,11 @@
       <pattern>\x4a</pattern>
       <expected>OK</expected>
     </test>
-    <test verify="false">
+    <test host="com.intellij.psi.impl.JavaRegExpHost">
       <pattern>\x{0}</pattern>
       <expected>OK</expected>
     </test>
-    <test verify="false">
+    <test host="com.intellij.psi.impl.JavaRegExpHost">
       <pattern>\x{2011F}</pattern>
       <expected>OK</expected>
     </test>
@@ -616,7 +620,7 @@
       <expected>OK</expected>
     </test>
     <test>
-      <pattern>[\Qabc?*+.))]][]\E]</pattern>
+      <pattern><![CDATA[[\Qabc?*+.)<warning descr="Duplicate character ')' in character class">)</warning>]<warning descr="Duplicate character ']' in character class">]</warning>[<warning descr="Duplicate character ']' in character class">]</warning>\E]]]></pattern>
       <expected>OK</expected>
     </test>
     <test>
@@ -709,7 +713,7 @@
       <expected>OK</expected>
     </test>
     <test>
-      <pattern>[:xdigit:]+</pattern>
+      <pattern><![CDATA[[:xdig<warning descr="Duplicate character 'i' in character class">i</warning>t<warning descr="Duplicate character ':' in character class">:</warning>]+]]></pattern>
       <expected>OK</expected>
     </test>
     <test>

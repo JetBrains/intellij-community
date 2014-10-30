@@ -294,13 +294,13 @@ public final class ImmutableText extends ImmutableCharSequence implements CharAr
         return new InnerLeaf((LeafNode)node, offset);
       }
       CompositeNode composite = (CompositeNode)node;
-      if (index < composite._head.nodeLength()) {
-        node = composite._head;
+      if (index < composite.head.nodeLength()) {
+        node = composite.head;
       }
       else {
-        offset += composite._head.nodeLength();
-        index -= composite._head.nodeLength();
-        node = composite._tail;
+        offset += composite.head.nodeLength();
+        index -= composite.head.nodeLength();
+        node = composite.tail;
       }
     }
   }
@@ -399,36 +399,36 @@ public final class ImmutableText extends ImmutableCharSequence implements CharAr
 
       if (((head.nodeLength() << 1) < tail.nodeLength()) && tail instanceof CompositeNode) {
         // head too small, returns (head + tail/2) + (tail/2)
-        if (((CompositeNode)tail)._head.nodeLength() > ((CompositeNode)tail)._tail.nodeLength()) {
+        if (((CompositeNode)tail).head.nodeLength() > ((CompositeNode)tail).tail.nodeLength()) {
           // Rotates to concatenate with smaller part.
           tail = ((CompositeNode)tail).rightRotation();
         }
-        head = concatNodes(head, ((CompositeNode)tail)._head);
-        tail = ((CompositeNode)tail)._tail;
+        head = concatNodes(head, ((CompositeNode)tail).head);
+        tail = ((CompositeNode)tail).tail;
       }
       else if (((tail.nodeLength() << 1) < head.nodeLength()) && head instanceof CompositeNode) {
         // tail too small, returns (head/2) + (head/2 concat tail)
-        if (((CompositeNode)head)._tail.nodeLength() > ((CompositeNode)head)._head.nodeLength()) {
+        if (((CompositeNode)head).tail.nodeLength() > ((CompositeNode)head).head.nodeLength()) {
           // Rotates to concatenate with smaller part.
           head = ((CompositeNode)head).leftRotation();
         }
-        tail = concatNodes(((CompositeNode)head)._tail, tail);
-        head = ((CompositeNode)head)._head;
+        tail = concatNodes(((CompositeNode)head).tail, tail);
+        head = ((CompositeNode)head).head;
       }
       return new CompositeNode(head, tail);
     }
   }
 
   private static class WideLeafNode extends LeafNode {
-    private final char[] _data;
+    private final char[] data;
 
-    WideLeafNode(@NotNull char[] _data) {
-      this._data = _data;
+    WideLeafNode(@NotNull char[] data) {
+      this.data = data;
     }
 
     @Override
     int nodeLength() {
-      return _data.length;
+      return data.length;
     }
 
     @Override
@@ -436,7 +436,7 @@ public final class ImmutableText extends ImmutableCharSequence implements CharAr
       if ((start < 0) || (end > nodeLength()) || (start > end)) {
         throw new IndexOutOfBoundsException();
       }
-      System.arraycopy(_data, start, dest, destPos, end - start);
+      System.arraycopy(data, start, dest, destPos, end - start);
     }
 
     @Override
@@ -446,18 +446,18 @@ public final class ImmutableText extends ImmutableCharSequence implements CharAr
       }
       int length = end - start;
       char[] chars = new char[length];
-      System.arraycopy(_data, start, chars, 0, length);
+      System.arraycopy(data, start, chars, 0, length);
       return createLeafNode(chars);
     }
 
     @Override
     public String toString() {
-      return StringFactory.createShared(_data);
+      return StringFactory.createShared(data);
     }
 
     @Override
     public char charAt(int index) {
-      return _data[index];
+      return data[index];
     }
   }
 
@@ -478,8 +478,7 @@ public final class ImmutableText extends ImmutableCharSequence implements CharAr
         throw new IndexOutOfBoundsException();
       }
       for (int i=start;i<end;i++) {
-        byte b = data[i];
-        dest[destPos++] = (char)b;
+        dest[destPos++] = byteToChar(data[i]);
       }
     }
 
@@ -496,79 +495,83 @@ public final class ImmutableText extends ImmutableCharSequence implements CharAr
 
     @Override
     public char charAt(int index) {
-      return (char)data[index];
+      return byteToChar(data[index]);
+    }
+
+    private static char byteToChar(byte b) {
+      return (char)(b & 0xff);
     }
   }
 
   private static class CompositeNode extends Node {
-    final int _count;
-    final Node _head;
-    final Node _tail;
+    final int count;
+    final Node head;
+    final Node tail;
 
-    CompositeNode(Node _head, Node _tail) {
-      _count = _head.nodeLength() + _tail.nodeLength();
-      this._head = _head;
-      this._tail = _tail;
+    CompositeNode(Node head, Node tail) {
+      count = head.nodeLength() + tail.nodeLength();
+      this.head = head;
+      this.tail = tail;
     }
 
     @Override
     int nodeLength() {
-      return _count;
+      return count;
     }
 
     Node rightRotation() {
       // See: http://en.wikipedia.org/wiki/Tree_rotation
-      Node P = this._head;
+      Node P = this.head;
       if (!(P instanceof CompositeNode)) {
         return this; // Head not a composite, cannot rotate.
       }
-      Node A = ((CompositeNode)P)._head;
-      Node B = ((CompositeNode)P)._tail;
-      Node C = this._tail;
+      Node A = ((CompositeNode)P).head;
+      Node B = ((CompositeNode)P).tail;
+      Node C = this.tail;
       return new CompositeNode(A, new CompositeNode(B, C));
     }
 
     Node leftRotation() {
       // See: http://en.wikipedia.org/wiki/Tree_rotation
-      Node Q = this._tail;
+      Node Q = this.tail;
       if (!(Q instanceof CompositeNode)) {
         return this; // Tail not a composite, cannot rotate.
       }
-      Node B = ((CompositeNode)Q)._head;
-      Node C = ((CompositeNode)Q)._tail;
-      Node A = this._head;
+      Node B = ((CompositeNode)Q).head;
+      Node C = ((CompositeNode)Q).tail;
+      Node A = this.head;
       return new CompositeNode(new CompositeNode(A, B), C);
     }
 
     @Override
     void getChars(int start, int end, @NotNull char[] dest, int destPos) {
-      final int cesure = _head.nodeLength();
+      final int cesure = head.nodeLength();
       if (end <= cesure) {
-        _head.getChars(start, end, dest, destPos);
+        head.getChars(start, end, dest, destPos);
       }
       else if (start >= cesure) {
-        _tail.getChars(start - cesure, end - cesure, dest, destPos);
+        tail.getChars(start - cesure, end - cesure, dest, destPos);
       }
       else { // Overlaps head and tail.
-        _head.getChars(start, cesure, dest, destPos);
-        _tail.getChars(0, end - cesure, dest, destPos + cesure - start);
+        head.getChars(start, cesure, dest, destPos);
+        tail.getChars(0, end - cesure, dest, destPos + cesure - start);
       }
     }
 
     @Override
     Node subNode(int start, int end) {
-      final int cesure = _head.nodeLength();
+      final int cesure = head.nodeLength();
       if (end <= cesure) {
-        return _head.subNode(start, end);
+        return head.subNode(start, end);
       }
       if (start >= cesure) {
-        return _tail.subNode(start - cesure, end - cesure);
+        return tail.subNode(start - cesure, end - cesure);
       }
-      if ((start == 0) && (end == _count)) {
+      if ((start == 0) && (end == count)) {
         return this;
       }
       // Overlaps head and tail.
-      return concatNodes(_head.subNode(start, cesure), _tail.subNode(0, end - cesure));
+      return concatNodes(head.subNode(start, cesure), tail.subNode(0, end - cesure));
     }
   }
 }

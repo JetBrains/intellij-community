@@ -146,6 +146,7 @@ public class MatcherImpl {
       visitor.matchContext(matchedNodes);
     } finally {
       matchedNodes.reset();
+      matchContext.getOptions().setScope(null);
     }
   }
 
@@ -440,6 +441,8 @@ public class MatcherImpl {
       MalformedPatternException exception = new MalformedPatternException();
       exception.initCause(e);
       throw exception;
+    } finally {
+      options.setScope(null);
     }
 
     return sink.getMatches();

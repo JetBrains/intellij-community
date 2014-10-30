@@ -148,8 +148,10 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
 
     myModificationTracker.incModificationCount();
 
-    myOldUTFGuessing = element.getAttributeValue("useUTFGuessing");
-    myNative2AsciiForPropertiesFilesWasSpecified = native2AsciiForPropertiesFiles != null;
+    if (!myProject.isDefault()) {
+      myOldUTFGuessing = element.getAttributeValue("useUTFGuessing");
+      myNative2AsciiForPropertiesFilesWasSpecified = native2AsciiForPropertiesFiles != null;
+    }
   }
 
   @Override

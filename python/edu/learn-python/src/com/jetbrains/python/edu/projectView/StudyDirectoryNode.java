@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Set;
+import java.util.Map;
 
 public class StudyDirectoryNode extends PsiDirectoryNode {
   private final PsiDirectory myValue;
@@ -144,15 +144,24 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
           FileEditorManager.getInstance(myProject).closeFile(openFile);
         }
         VirtualFile child = null;
-        Set<String> fileNames = task.getTaskFiles().keySet();
-        for (String name : fileNames) {
-           child = taskDir.findChild(name);
-          if (child != null) {
-            FileEditorManager.getInstance(myProject).openFile(child, true);
+        Map<String, TaskFile> taskFiles = task.getTaskFiles();
+        for (Map.Entry<String, TaskFile> entry: taskFiles.entrySet()) {
+          VirtualFile file = taskDir.findChild(entry.getKey());
+          if (file != null) {
+            FileEditorManager.getInstance(myProject).openFile(file, true);
+          }
+          if (!entry.getValue().getTaskWindows().isEmpty()) {
+            child = file;
           }
         }
         if (child != null) {
           ProjectView.getInstance(myProject).select(child, child, false);
+          FileEditorManager.getInstance(myProject).openFile(child, true);
+        } else {
+          VirtualFile[] children = taskDir.getChildren();
+          if (children.length > 0) {
+            ProjectView.getInstance(myProject).select(children[0], children[0], false);
+          }
         }
       }
     }

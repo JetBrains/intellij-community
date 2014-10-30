@@ -74,7 +74,6 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.JBScrollPane;
-import com.intellij.ui.components.OrphanGuardian;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -491,16 +490,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myVerticalScrollBar = (MyScrollBar)myScrollPane.getVerticalScrollBar();
     myPanel = new JPanel();
 
-    myPanel.putClientProperty(OrphanGuardian.CLIENT_PROPERTY_KEY, new OrphanGuardian() {
-
-      @Override
-      public void iterateOrphans(Consumer<JComponent> consumer) {
-        JComponent component = getPermanentHeaderComponent();
-        if (component != null && !component.isValid()) {
-          consumer.consume(component);
+    UIUtil.putClientProperty(
+      myPanel, JBSwingUtilities.NOT_IN_HIERARCHY_COMPONENTS, new Iterable<JComponent>() {
+        @Override
+        public Iterator<JComponent> iterator() {
+          JComponent component = getPermanentHeaderComponent();
+          if (component != null && !component.isValid()) {
+            return Collections.singleton(component).iterator();
+          }
+          return ContainerUtil.emptyIterator();
         }
-      }
-    });
+      });
 
     myHeaderPanel = new MyHeaderPanel();
     myGutterComponent = new EditorGutterComponentImpl(this);
@@ -6880,15 +6880,20 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   // Strategy, controlled by current editor settings. Usable only for the current line.
   private class LineWhitespacePaintingStrategy implements WhitespacePaintingStrategy {
+    private final boolean myWhitespaceShown = mySettings.isWhitespacesShown();
+    private final boolean myLeadingWhitespaceShown = mySettings.isLeadingWhitespaceShown();
+    private final boolean myInnerWhitespaceShown = mySettings.isInnerWhitespaceShown();
+    private final boolean myTrailingWhitespaceShown = mySettings.isTrailingWhitespaceShown();
+
     // Offsets on current line where leading whitespace ends and trailing whitespace starts correspondingly.
     private int currentLeadingEdge;
     private int currentTrailingEdge;
 
     // Updates the state, to be used for the line, iterator is currently at.
     private void update(CharSequence chars, LineIterator iterator) {
-      if (mySettings.isWhitespacesShown()
-          && (mySettings.isLeadingWhitespaceShown() || mySettings.isInnerWhitespaceShown() || mySettings.isTrailingWhitespaceShown())
-          && !(mySettings.isLeadingWhitespaceShown() && mySettings.isInnerWhitespaceShown() && mySettings.isTrailingWhitespaceShown())) {
+      if (myWhitespaceShown
+          && (myLeadingWhitespaceShown || myInnerWhitespaceShown || myTrailingWhitespaceShown)
+          && !(myLeadingWhitespaceShown && myInnerWhitespaceShown && myTrailingWhitespaceShown)) {
         int lineStart = iterator.getStart();
         int lineEnd = iterator.getEnd() - iterator.getSeparatorLength();
         currentTrailingEdge = CharArrayUtil.shiftBackward(chars, lineStart, lineEnd - 1, WHITESPACE_CHARS) + 1;
@@ -6898,10 +6903,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     @Override
     public boolean showWhitespaceAtOffset(int offset) {
-      return mySettings.isWhitespacesShown()
-             && (offset < currentLeadingEdge ? mySettings.isLeadingWhitespaceShown() :
-                 offset >= currentTrailingEdge ? mySettings.isTrailingWhitespaceShown() :
-                 mySettings.isInnerWhitespaceShown());
+      return myWhitespaceShown
+             && (offset < currentLeadingEdge ? myLeadingWhitespaceShown :
+                 offset >= currentTrailingEdge ? myTrailingWhitespaceShown :
+                 myInnerWhitespaceShown);
     }
   }
 }

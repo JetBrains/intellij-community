@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.projectRoots.JavaSdk;
@@ -28,8 +29,6 @@ import org.intellij.lang.regexp.psi.RegExpChar;
 import org.intellij.lang.regexp.psi.RegExpGroup;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.regex.Pattern;
 
 /**
  * @author yole
@@ -79,6 +78,9 @@ public class JavaRegExpHost implements RegExpLanguageHost {
 
   @Nullable
   private static JavaSdkVersion getJavaVersion(PsiElement element) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return JavaSdkVersion.JDK_1_9;
+    }
     final Module module = ModuleUtilCore.findModuleForPsiElement(element);
     if (module != null) {
       final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();

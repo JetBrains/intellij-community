@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.impl;
+package com.intellij.psi.refResolve;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.util.ArrayUtil;
@@ -34,9 +34,9 @@ import java.util.Arrays;
  * <img src="PersistentIntList.png"/>
  * <p>(to edit the diagram go to www.draw.io, "Import from", this PersistentIntList.png)</p>
  */
-public class PersistentIntList implements Disposable {
-  public static final int MAX_DATA_BYTES = 500000000;
-  public static final int MAX_LIST_LENGTH = 10000000;
+class PersistentIntList implements Disposable {
+  public static final int MAX_DATA_BYTES =  500*1000*1000;
+  public static final int MAX_LIST_LENGTH = 100*1000*1000;
   private final FileChannel data;
   public int gap; // bytes lost due to fragmentation
   private IntArray pointers;

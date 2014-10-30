@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.keymap.impl.ui;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.application.ApplicationManager;
@@ -24,6 +25,7 @@ import com.intellij.openapi.keymap.impl.ActionShortcutRestrictions;
 import com.intellij.openapi.keymap.impl.KeymapImpl;
 import com.intellij.openapi.keymap.impl.KeymapManagerImpl;
 import com.intellij.openapi.keymap.impl.ShortcutRestrictions;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import com.intellij.testFramework.PlatformTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -197,11 +199,46 @@ public class ActionsTreeTest extends LightPlatformCodeInsightTestCase {
              ACTION_EDITOR_DELETE_WITH_SHORTCUT), // this action is shown, since the keymap redefines the shortcut of $Delete
            Arrays.asList(
              NON_EXISTENT_ACTION,
-             ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION,  
+             ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION,
              ACTION_EDITOR_CUT_WITHOUT_SHORTCUT, // this one is not shown since bound to $cut
              ACTION_WITH_FIXED_SHORTCUTS
            )
     );
+  }
+
+  public void testPresentation() {
+    ActionManager manager = ActionManager.getInstance();
+    for (String id : manager.getActionIds("")) {
+      if (!ACTION_WITHOUT_TEXT_AND_DESCRIPTION.equals(id)) {
+        try {
+          AnAction stub = manager.getActionOrStub(id);
+          AnAction action = manager.getAction(id);
+          String message = id + " (" + action.getClass().getName() + ")";
+          if (stub != action) {
+            Presentation before = stub.getTemplatePresentation();
+            Presentation after = action.getTemplatePresentation();
+            checkPresentationProperty("icon", message, before.getIcon(), after.getIcon());
+            checkPresentationProperty("text", message, before.getText(), after.getText());
+            checkPresentationProperty("description", message, before.getDescription(), after.getDescription());
+          }
+          if (action instanceof ActionGroup) {
+            System.out.println("ignored action group: " + message);
+          }
+          else {
+            assertFalse("no text: " + message, StringUtil.isEmpty(action.getTemplatePresentation().getText()));
+          }
+        }
+        catch (PluginException exception) {
+          System.out.println(id + " ignored because " + exception.getMessage());
+        }
+      }
+    }
+  }
+
+  private static void checkPresentationProperty(String name, String message, Object expected, Object actual) {
+    if (!(expected == null ? actual == null : expected.equals(actual))) {
+      System.out.println(name + " updated: "+ message + "; old:" + expected + "; new:" + actual);
+    }
   }
 
   public void testFiltering() {
