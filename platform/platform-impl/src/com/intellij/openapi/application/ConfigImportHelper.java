@@ -206,7 +206,9 @@ public class ConfigImportHelper {
   }
 
   private static boolean loadOldPlugins(File plugins, File dest) throws IOException {
+    boolean result = false;
     if (plugins.exists()) {
+      result = true;
       final ArrayList<IdeaPluginDescriptorImpl> descriptors = new ArrayList<IdeaPluginDescriptorImpl>();
       PluginManager.loadDescriptors(plugins.getPath(), descriptors, null, 0);
       final ArrayList<String> oldPlugins = new ArrayList<String>();
@@ -222,9 +224,8 @@ public class ConfigImportHelper {
     File pluginsSettings = new File(new File(dest, "options"), "plugin_ui.xml");
     if (pluginsSettings.exists()) {
       FileUtil.delete(pluginsSettings);
-      return true;
     }
-    return false;
+    return result;
   }
 
   @Nullable
