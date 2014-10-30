@@ -673,7 +673,7 @@
     <editorActionHandler action="EditorLineEndWithSelection"
                          implementationClass="com.intellij.codeInsight.template.impl.editorActions.LineEndWithSelectionHandler"/>
     <editorActionHandler action="$SelectAll" implementationClass="com.intellij.codeInsight.template.impl.editorActions.SelectAllHandler"/>
-    <editorTypedHandler implementationClass="com.intellij.codeInsight.template.impl.editorActions.SpaceHandler"/>
+    <typedHandler implementation="com.intellij.codeInsight.template.impl.editorActions.SpaceHandler"/>
 
     <!-- HighlightManagerActions -->
     <editorActionHandler action="EditorEscape" implementationClass="com.intellij.codeInsight.highlighting.EscapeHandler"
