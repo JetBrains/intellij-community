@@ -5,7 +5,6 @@ import com.intellij.AppTopics;
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.structureView.StructureViewBuilder;
-import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.*;
@@ -172,8 +171,7 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
     myRunCellButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        final IpnbRunCellAction action = (IpnbRunCellAction)ActionManager.getInstance().getAction("IpnbRunCellAction");
-        action.runCell(myIpnbFilePanel, true);
+        IpnbRunCellBaseAction.runCell(myIpnbFilePanel, true);
       }
     });
     myRunCellButton.setToolTipText("Run Cell");
@@ -184,8 +182,7 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
     addButton(controlPanel, new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        final IpnbSaveAction action = (IpnbSaveAction)ActionManager.getInstance().getAction("IpnbSaveAction");
-        action.saveAndCheckpoint(IpnbFileEditor.this);
+        IpnbSaveAction.saveAndCheckpoint(IpnbFileEditor.this);
       }
     }, AllIcons.Actions.Menu_saveall, "Save and Checkpoint");
   }
@@ -194,8 +191,7 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
     addButton(controlPanel, new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        final IpnbCutCellAction action = (IpnbCutCellAction)ActionManager.getInstance().getAction("IpnbCutCellAction");
-        action.cutCell(myIpnbFilePanel);
+        IpnbCutCellAction.cutCell(myIpnbFilePanel);
       }
     }, AllIcons.Actions.Menu_cut, "Cut Cell");
   }
@@ -204,8 +200,7 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
     addButton(controlPanel, new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        final IpnbCopyCellAction action = (IpnbCopyCellAction)ActionManager.getInstance().getAction("IpnbCopyCellAction");
-        action.copyCell(myIpnbFilePanel);
+        IpnbCopyCellAction.copyCell(myIpnbFilePanel);
       }
     }, AllIcons.Actions.Copy, "Copy Cell");
   }
@@ -214,8 +209,7 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
     addButton(controlPanel, new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        final IpnbPasteCellAction action = (IpnbPasteCellAction)ActionManager.getInstance().getAction("IpnbPasteCellAction");
-        action.pasteCell(myIpnbFilePanel);
+        IpnbPasteCellAction.pasteCell(myIpnbFilePanel);
       }
     }, AllIcons.Actions.Menu_paste, "Paste Cell Below");
   }
@@ -237,8 +231,7 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
     addButton(controlPanel, new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        final IpnbAddCellBelowAction action = (IpnbAddCellBelowAction)ActionManager.getInstance().getAction("IpnbAddCellAction");
-        action.addCell(myIpnbFilePanel);
+        IpnbAddCellBelowAction.addCell(myIpnbFilePanel);
       }
     }, AllIcons.General.Add, "Insert Cell Below");
   }
