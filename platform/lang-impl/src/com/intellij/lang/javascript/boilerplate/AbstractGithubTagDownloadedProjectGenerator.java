@@ -7,6 +7,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.templates.github.GeneratorException;
 import com.intellij.platform.templates.github.GithubTagInfo;
@@ -61,7 +62,7 @@ public abstract class AbstractGithubTagDownloadedProjectGenerator extends WebPro
   public void generateProject(@NotNull final Project project, @NotNull final VirtualFile baseDir,
                               @NotNull GithubTagInfo tag, @NotNull Module module) {
     try {
-      unpackToDir(project, new File(baseDir.getPath()), tag);
+      unpackToDir(project, VfsUtilCore.virtualToIoFile(baseDir), tag);
     }
     catch (GeneratorException e) {
       showErrorMessage(project, e.getMessage());
