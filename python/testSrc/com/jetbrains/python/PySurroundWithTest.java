@@ -16,9 +16,14 @@
 package com.jetbrains.python;
 
 import com.intellij.codeInsight.generation.surroundWith.SurroundWithHandler;
+import com.intellij.lang.folding.CustomFoldingSurroundDescriptor;
 import com.intellij.lang.surroundWith.Surrounder;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.editor.SelectionModel;
+import com.intellij.psi.PsiElement;
 import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.refactoring.surround.surrounders.statements.PyWithIfSurrounder;
 import com.jetbrains.python.refactoring.surround.surrounders.statements.PyWithTryExceptSurrounder;
 import com.jetbrains.python.refactoring.surround.surrounders.statements.PyWithWhileSurrounder;
@@ -37,6 +42,29 @@ public class PySurroundWithTest extends PyTestCase {
 
   public void testSurroundWithTryExcept() throws Exception {
     doTest(new PyWithTryExceptSurrounder());
+  }
+
+  // PY-11357
+  public void testSurroundFirstMethodWithCustomFoldingRegion() {
+    checkCustomFoldingRegionRange(PyFunction.class);
+  }
+
+  // PY-11357
+  public void testSurroundLastMethodWithCustomFoldingRegion() {
+    checkCustomFoldingRegionRange(PyFunction.class);
+  }
+
+  private PsiElement[] checkCustomFoldingRegionRange(Class<? extends PyElement>... elementTypes) {
+    myFixture.configureByFile("/surround/" + getTestName(false) + ".py");
+    final SelectionModel selection = myFixture.getEditor().getSelectionModel();
+    final PsiElement[] range = CustomFoldingSurroundDescriptor.INSTANCE.getElementsToSurround(myFixture.getFile(),
+                                                                                              selection.getSelectionStart(),
+                                                                                              selection.getSelectionEnd());
+    assertEquals(elementTypes.length, range.length);
+    for (int i = 0; i < elementTypes.length; i++) {
+      assertInstanceOf(range[i], elementTypes[i]);
+    }
+    return range;
   }
 
   private void doTest(final Surrounder surrounder) throws Exception {
