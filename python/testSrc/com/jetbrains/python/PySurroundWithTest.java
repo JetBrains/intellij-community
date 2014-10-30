@@ -54,6 +54,12 @@ public class PySurroundWithTest extends PyTestCase {
     checkCustomFoldingRegionRange(PyFunction.class);
   }
 
+  // PY-14261
+  public void testSurroundWithCustomFoldingRegion() throws Exception {
+    doTest(CustomFoldingSurroundDescriptor.SURROUNDERS[0]);
+  }
+
+
   private PsiElement[] checkCustomFoldingRegionRange(Class<? extends PyElement>... elementTypes) {
     myFixture.configureByFile("/surround/" + getTestName(false) + ".py");
     final SelectionModel selection = myFixture.getEditor().getSelectionModel();

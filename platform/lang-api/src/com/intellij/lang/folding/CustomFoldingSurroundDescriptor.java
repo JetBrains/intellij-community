@@ -21,6 +21,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguageCommenters;
 import com.intellij.lang.surroundWith.SurroundDescriptor;
 import com.intellij.lang.surroundWith.Surrounder;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -198,6 +199,9 @@ public class CustomFoldingSurroundDescriptor implements SurroundDescriptor {
       if (linePrefix == null) return null;
       int prefixLength = linePrefix.length();
       int startOffset = firstElement.getTextRange().getStartOffset();
+      final Document document = editor.getDocument();
+      final int startLineNumber = document.getLineNumber(startOffset);
+      final String startIndent = document.getText(new TextRange(document.getLineStartOffset(startLineNumber), startOffset));
       int endOffset = lastElement.getTextRange().getEndOffset();
       int delta = 0;
       TextRange rangeToSelect = new TextRange(startOffset, startOffset);
@@ -207,11 +211,11 @@ public class CustomFoldingSurroundDescriptor implements SurroundDescriptor {
         startText = startText.replace("?", DEFAULT_DESC_TEXT);
         rangeToSelect = new TextRange(startOffset + descPos, startOffset + descPos + DEFAULT_DESC_TEXT.length());
       }
-      String startString = linePrefix + startText + "\n";
+      String startString = linePrefix + startText + "\n" + startIndent;
       String endString = "\n" + linePrefix + myProvider.getEndString();
-      editor.getDocument().insertString(endOffset, endString);
+      document.insertString(endOffset, endString);
       delta += endString.length();
-      editor.getDocument().insertString(startOffset, startString);
+      document.insertString(startOffset, startString);
       delta += startString.length();
       rangeToSelect = rangeToSelect.shiftRight(prefixLength);
       PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
