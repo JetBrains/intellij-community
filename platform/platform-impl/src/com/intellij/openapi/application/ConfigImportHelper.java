@@ -189,7 +189,7 @@ public class ConfigImportHelper {
 
     // Delete plugins just imported. They're most probably incompatible with newer idea version.
     File plugins = new File(dest, PLUGINS_PATH);
-    if (!loadOldPlugins(plugins, dest) && SystemInfo.isMac) {
+    if (!loadOldPlugins(plugins, dest, true) && SystemInfo.isMac) {
       File oldPluginsDir = getOldPath(oldInstallationHome, settings, PathManager.PROPERTY_PLUGINS_PATH,
                                       new Function<String, String>() {
                                         @Override
@@ -201,11 +201,11 @@ public class ConfigImportHelper {
         //e.g. installation home referred to config home. Try with default selector, same as config name
         oldPluginsDir = new File(PathManager.getDefaultPluginPathFor(src.getName()));
       }
-      loadOldPlugins(oldPluginsDir, dest);
+      loadOldPlugins(oldPluginsDir, dest, false);
     }
   }
 
-  private static boolean loadOldPlugins(File plugins, File dest) throws IOException {
+  private static boolean loadOldPlugins(File plugins, File dest, boolean deleteOldPlugins) throws IOException {
     boolean result = false;
     if (plugins.exists()) {
       result = true;
@@ -218,12 +218,16 @@ public class ConfigImportHelper {
       if (!oldPlugins.isEmpty()) {
         PluginManager.savePluginsList(oldPlugins, false, new File(dest, PluginManager.INSTALLED_TXT));
       }
-      FileUtil.delete(plugins);
+      if (deleteOldPlugins) {
+        FileUtil.delete(plugins);
+      }
     }
-    
-    File pluginsSettings = new File(new File(dest, "options"), "plugin_ui.xml");
-    if (pluginsSettings.exists()) {
-      FileUtil.delete(pluginsSettings);
+
+    if (deleteOldPlugins) {
+      File pluginsSettings = new File(new File(dest, "options"), "plugin_ui.xml");
+      if (pluginsSettings.exists()) {
+        FileUtil.delete(pluginsSettings);
+      }
     }
     return result;
   }
