@@ -25,6 +25,7 @@ import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.impl.compiled.ClsElementImpl;
 import com.intellij.psi.impl.compiled.ClsFileImpl;
 import com.intellij.psi.impl.compiled.InnerClassSourceStrategy;
 import com.intellij.psi.impl.compiled.StubBuildingVisitor;
@@ -146,7 +147,7 @@ public class ClsMirrorBuildingTest extends LightIdeaTestCase {
     assertNotNull(path, psiFile);
     for (int i = 0; i < psiFile.getTextLength(); i++) {
       PsiElement element = psiFile.findElementAt(i);
-      assertFalse(i + ":" + element, element instanceof PsiFile);
+      assertTrue(i + ":" + element, element == null || element instanceof ClsElementImpl && !(element instanceof PsiFile));
     }
   }
 
