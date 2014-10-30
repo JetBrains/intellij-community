@@ -34,7 +34,6 @@ public abstract class ArrayChunk implements Comparable<ArrayChunk> {
     myRows = rows;
     myRowOffset = rOffset;
     myColOffset = cOffset;
-    myData = new Object[rows][columns];
   }
 
   public int getRows() {

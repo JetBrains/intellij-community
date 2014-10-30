@@ -1,5 +1,6 @@
 package com.jetbrains.python.debugger.array;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
@@ -21,6 +22,8 @@ public class NumpyArraySlice extends ArrayChunk {
   private NumpyArrayValueProvider myValueProvider;
   private DataEvaluator myDataEvaluator;
   private String myFormat;
+
+  private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.debugger.array.NumpyArraySlice");
 
   public NumpyArraySlice(String baseSlice,
                          int rows,
@@ -131,7 +134,8 @@ public class NumpyArraySlice extends ArrayChunk {
           }
 
           if (row > getRows()) {
-            throw new IllegalStateException("Row " + row + " is out of range for " + getPresentation() + ".");
+            LOG.error("Row " + row + " is out of range for " + getPresentation() + ".");
+            return;
           }
 
           if (row != -1 && myData[row][0] == null) {
@@ -180,7 +184,8 @@ public class NumpyArraySlice extends ArrayChunk {
 
     private void startEvalNextRow(XDebuggerEvaluator.XEvaluationCallback callback) {
       if (nextRow >= getRows()) {
-        throw new IllegalStateException("Row " + nextRow + " is out of range for " + getPresentation() + ".");
+        LOG.error("Row " + nextRow + " is out of range for " + getPresentation() + ".");
+        return;
       }
 
       String evalRowCommand = "map(lambda l: " + myValueProvider.evalTypeFunc(myFormat) + ", list(" + getPresentation();

@@ -18,6 +18,7 @@ package com.jetbrains.python.debugger.array;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -35,7 +36,6 @@ import com.jetbrains.python.debugger.PyDebuggerEvaluator;
 import org.jetbrains.annotations.NotNull;
 
 import javax.management.InvalidAttributeValueException;
-import javax.swing.*;
 import javax.swing.table.TableCellEditor;
 import java.awt.*;
 import java.awt.event.*;
@@ -72,6 +72,8 @@ public class NumpyArrayValueProvider extends ArrayValueProvider {
   private final static String LOAD_SMALLER_SLICE = "Full slice too large and would slow down debugger, shrunk to smaller slice.";
   private final static String DISABLE_COLOR_FOR_HUGE_ARRAY =
     "Disable color because array too big and calculating min and max would slow down debugging.";
+
+  private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.debugger.array.NumpyArrayValueProvider");
 
   public NumpyArrayValueProvider(@NotNull XValueNode node, PyViewArrayAction.MyDialog dialog, @NotNull Project project) {
     super(node);
@@ -215,23 +217,31 @@ public class NumpyArrayValueProvider extends ArrayValueProvider {
   }
 
   private void initSliceFieldActions() {
-    myComponent.getSliceTextField().getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
-      .put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "strokeEnter");
-    myComponent.getSliceTextField().getActionMap().put("strokeEnter", new AbstractAction() {
+    if (myComponent.getSliceTextField().getEditor() == null) {
+      LOG.error("Null editor in slice field.");
+      return;
+    }
+    myComponent.getSliceTextField().getEditor().getContentComponent().addKeyListener(new KeyAdapter() {
       @Override
-      public void actionPerformed(ActionEvent e) {
-        doReslice(getSliceText(), null);
+      public void keyPressed(KeyEvent e) {
+        if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+          doReslice(getSliceText(), null);
+        }
       }
     });
   }
 
   private void initFormatFieldActions() {
-    myComponent.getFormatTextField().getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
-      .put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "strokeEnter");
-    myComponent.getFormatTextField().getActionMap().put("strokeEnter", new AbstractAction() {
+    if (myComponent.getFormatTextField().getEditor() == null) {
+      LOG.error("Null editor in format field.");
+      return;
+    }
+    myComponent.getFormatTextField().getEditor().getContentComponent().addKeyListener(new KeyAdapter() {
       @Override
-      public void actionPerformed(ActionEvent e) {
-        doApplyFormat();
+      public void keyPressed(KeyEvent e) {
+        if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+          doApplyFormat();
+        }
       }
     });
   }
@@ -716,7 +726,7 @@ public class NumpyArrayValueProvider extends ArrayValueProvider {
 
   private static String getEvalShapeCommand(@NotNull String slice) {
     //add information about memory, see #parseShape comments
-    return "str(" + slice + ".shape)+'#'+str(" + slice + ".flags['C_CONTIGUOUS'])";
+    return "repr(" + slice + ".shape)+'#'+repr(" + slice + ".flags['C_CONTIGUOUS'])";
   }
 
   private void clearErrorMessage() {

@@ -49,7 +49,7 @@ public class JBTableWithRowHeaders extends JBTable {
 
   public static class RowHeaderTable extends JBTable implements PropertyChangeListener, TableModelListener {
     private JBTable myMainTable;
-    private int rowShift = 0;
+    private int myRowShift = 0;
 
     public RowHeaderTable(JBTable table) {
       myMainTable = table;
@@ -93,11 +93,11 @@ public class JBTableWithRowHeaders extends JBTable {
 
     @Override
     public Object getValueAt(int row, int column) {
-      return Integer.toString(row + rowShift);
+      return Integer.toString(row + myRowShift);
     }
 
     public void setRowShift(int shift) {
-      rowShift = shift;
+      myRowShift = shift;
     }
 
     @Override
