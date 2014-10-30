@@ -16,6 +16,7 @@
 package com.intellij.xdebugger.impl.settings;
 
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
@@ -65,10 +66,13 @@ public class XDebuggerSettingsManager extends com.intellij.xdebugger.settings.XD
       for (XDebuggerSettings<?> settings : mySettingsById.values()) {
         Object subState = settings.getState();
         if (subState != null) {
-          SpecificSettingsState state = new SpecificSettingsState();
-          state.setId(settings.getId());
-          state.setSettingsElement(XmlSerializer.serialize(subState, filter));
-          settingsState.specificStates.add(state);
+          Element serializedState = XmlSerializer.serializeIfNotDefault(subState, filter);
+          if (!JDOMUtil.isEmpty(serializedState)) {
+            SpecificSettingsState state = new SpecificSettingsState();
+            state.id = settings.getId();
+            state.configuration = serializedState;
+            settingsState.specificStates.add(state);
+          }
         }
       }
     }
@@ -95,9 +99,9 @@ public class XDebuggerSettingsManager extends com.intellij.xdebugger.settings.XD
     myDataViewSettings = state.getDataViewSettings();
     myGeneralSettings = state.getGeneralSettings();
     for (SpecificSettingsState settingsState : state.specificStates) {
-      XDebuggerSettings<?> settings = findSettings(settingsState.getId());
+      XDebuggerSettings<?> settings = findSettings(settingsState.id);
       if (settings != null) {
-        ComponentSerializationUtil.loadComponentState(settings, settingsState.getSettingsElement());
+        ComponentSerializationUtil.loadComponentState(settings, settingsState.configuration);
       }
     }
   }
@@ -152,26 +156,10 @@ public class XDebuggerSettingsManager extends com.intellij.xdebugger.settings.XD
   }
 
   @Tag("debugger")
-  public static class SpecificSettingsState {
-    private String myId;
-    private Element mySettingsElement;
-
-    @Attribute("id")
-    public String getId() {
-      return myId;
-    }
-
-    @Tag("configuration")
-    public Element getSettingsElement() {
-      return mySettingsElement;
-    }
-
-    public void setSettingsElement(final Element settingsElement) {
-      mySettingsElement = settingsElement;
-    }
-
-    public void setId(final String id) {
-      myId = id;
-    }
+  static class SpecificSettingsState {
+    @Attribute
+    public String id;
+    @Tag
+    public Element configuration;
   }
 }
