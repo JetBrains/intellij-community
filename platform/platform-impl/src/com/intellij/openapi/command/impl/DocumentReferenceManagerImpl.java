@@ -28,7 +28,6 @@ import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.reference.SoftReference;
-import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.containers.WeakKeyWeakValueHashMap;
 import com.intellij.util.containers.WeakValueHashMap;
 import com.intellij.util.io.fs.FilePath;
@@ -132,7 +131,7 @@ public class DocumentReferenceManagerImpl extends DocumentReferenceManager imple
   @Override
   public DocumentReference create(@NotNull VirtualFile file) {
     assertInDispatchThread();
-    assert file.isValid() || file instanceof LightVirtualFile : "file is invalid: " + file;
+    assert file.isValid() : "file is invalid: " + file;
 
     DocumentReference result = SoftReference.dereference(file.getUserData(FILE_TO_REF_KEY));
     if (result == null) {
