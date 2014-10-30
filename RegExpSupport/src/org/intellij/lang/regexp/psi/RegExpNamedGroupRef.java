@@ -25,4 +25,8 @@ public interface RegExpNamedGroupRef extends RegExpAtom {
   RegExpGroup resolve();
   @Nullable
   String getGroupName();
+
+  boolean isPythonNamedGroupRef();
+  boolean isRubyNamedGroupRef();
+  boolean isNamedGroupRef();
 }

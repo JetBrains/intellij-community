@@ -339,7 +339,7 @@ public class a  {
         final int k;
         if (false) {
             k = 0;
-            k = 1;
+            <error descr="Variable 'k' might already have been assigned to">k</error> = 1;
             System.out.println(k);
         }
     }
@@ -415,4 +415,15 @@ class SwitchTest
                 return "";
         }
     }
+}
+
+class NotDefinitelyUnassigned {
+  final int i;
+
+  NotDefinitelyUnassigned() {
+    if (false) {
+      i = 0;
+    }
+    <error descr="Variable 'i' might already have been assigned to">i</error> = 1;
+  }
 }

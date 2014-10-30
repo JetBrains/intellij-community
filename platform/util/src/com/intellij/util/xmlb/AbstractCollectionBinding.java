@@ -63,7 +63,7 @@ abstract class AbstractCollectionBinding implements Binding {
     }
   }
 
-  protected Binding getElementBinding(Class<?> elementClass) {
+  protected Binding getElementBinding(@NotNull Class<?> elementClass) {
     final Binding binding = getElementBindings().get(elementClass);
     return binding == null ? XmlSerializerImpl.getBinding(elementClass) : binding;
   }
@@ -89,7 +89,7 @@ abstract class AbstractCollectionBinding implements Binding {
     throw new XmlSerializationException("Node " + node + " is not bound");
   }
 
-  private Binding getBinding(final Class type) {
+  private Binding getBinding(@NotNull Class type) {
     Binding binding = XmlSerializerImpl.getBinding(type);
     return binding.getBoundNodeType().isAssignableFrom(Element.class) ? binding : createElementTagWrapper(binding);
   }

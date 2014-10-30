@@ -67,7 +67,7 @@ public class RegExpGroupImpl extends RegExpElementImpl implements RegExpGroup {
   }
 
   public String getGroupName() {
-    if (!isPythonNamedGroup()) {
+    if (!isPythonNamedGroup() && !isRubyNamedGroup()) {
       return null;
     }
     final ASTNode nameNode = getNode().findChildByType(RegExpTT.NAME);

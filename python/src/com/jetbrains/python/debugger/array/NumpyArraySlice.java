@@ -1,5 +1,6 @@
 package com.jetbrains.python.debugger.array;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
@@ -17,10 +18,12 @@ import java.util.List;
  * @author amarch
  */
 
-public class NumpyArraySlice extends ComparableArrayChunk {
+public class NumpyArraySlice extends ArrayChunk {
   private NumpyArrayValueProvider myValueProvider;
   private DataEvaluator myDataEvaluator;
   private String myFormat;
+
+  private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.debugger.array.NumpyArraySlice");
 
   public NumpyArraySlice(String baseSlice,
                          int rows,
@@ -36,21 +39,22 @@ public class NumpyArraySlice extends ComparableArrayChunk {
   }
 
   public String getPresentation() {
-    String onlyChunkSlice = "[" + rOffset + ":" + (rOffset + rows) + ", " + cOffset + ":" + (cOffset + columns) + "]";
+    String onlyChunkSlice =
+      "[" + getRowOffset() + ":" + (getRowOffset() + getRows()) + ", " + getColOffset() + ":" + (getColOffset() + getColumns()) + "]";
     if (isOneColumn() && isOneRow()) {
       onlyChunkSlice = "";
     }
     else if (isOneRow()) {
-      onlyChunkSlice = "[" + cOffset + ":" + (cOffset + columns) + "]";
+      onlyChunkSlice = "[" + getColOffset() + ":" + (getColOffset() + getColumns()) + "]";
     }
     else if (isOneColumn()) {
-      onlyChunkSlice = "[" + rOffset + ":" + (rOffset + rows) + "]";
+      onlyChunkSlice = "[" + getRowOffset() + ":" + (getRowOffset() + getRows()) + "]";
     }
 
-    if (baseSlice.endsWith(onlyChunkSlice)) {
-      return baseSlice;
+    if (getBaseSlice().endsWith(onlyChunkSlice)) {
+      return getBaseSlice();
     }
-    return baseSlice + onlyChunkSlice;
+    return getBaseSlice() + onlyChunkSlice;
   }
 
   @Override
@@ -76,7 +80,7 @@ public class NumpyArraySlice extends ComparableArrayChunk {
     }
 
     public boolean dataFilled() {
-      return rows > 0 && myFilledRows == rows;
+      return getRows() > 0 && myFilledRows == getRows();
     }
 
     public void evaluateData(final Runnable callback) {
@@ -129,8 +133,9 @@ public class NumpyArraySlice extends ComparableArrayChunk {
             }
           }
 
-          if (row > rows) {
-            throw new IllegalStateException("Row " + row + " is out of range for " + getPresentation() + ".");
+          if (row > getRows()) {
+            LOG.error("Row " + row + " is out of range for " + getPresentation() + ".");
+            return;
           }
 
           if (row != -1 && myData[row][0] == null) {
@@ -157,7 +162,7 @@ public class NumpyArraySlice extends ComparableArrayChunk {
               myData[row][0] = rawValue;
             }
             myFilledRows += 1;
-            if (myFilledRows == rows) {
+            if (myFilledRows == getRows()) {
               node.getTree().removeTreeListener(this);
               callback.run();
             }
@@ -170,7 +175,7 @@ public class NumpyArraySlice extends ComparableArrayChunk {
       };
 
       myData =
-        new Object[rows][columns];
+        new Object[getRows()][getColumns()];
       myValueProvider.getTree().addTreeListener(treeListener);
       nextRow = 0;
       myFilledRows = 0;
@@ -178,13 +183,14 @@ public class NumpyArraySlice extends ComparableArrayChunk {
     }
 
     private void startEvalNextRow(XDebuggerEvaluator.XEvaluationCallback callback) {
-      if (nextRow >= rows) {
-        throw new IllegalStateException("Row " + nextRow + " is out of range for " + getPresentation() + ".");
+      if (nextRow >= getRows()) {
+        LOG.error("Row " + nextRow + " is out of range for " + getPresentation() + ".");
+        return;
       }
 
       String evalRowCommand = "map(lambda l: " + myValueProvider.evalTypeFunc(myFormat) + ", list(" + getPresentation();
       if (!isOneRow() && !isOneColumn()) {
-        evalRowCommand += "[" + nextRow + ", 0:" + columns + "]))";
+        evalRowCommand += "[" + nextRow + ", 0:" + getColumns() + "]))";
       }
 
       if (isOneRow() && isOneColumn()) {
@@ -195,18 +201,10 @@ public class NumpyArraySlice extends ComparableArrayChunk {
         evalRowCommand += "[" + nextRow + "]";
       }
       else if (isOneRow()) {
-        evalRowCommand += "[0:" + columns + "]))";
+        evalRowCommand += "[0:" + getColumns() + "]))";
       }
       myValueProvider.getEvaluator().evaluate(evalRowCommand, callback, null);
     }
-  }
-
-  private boolean isOneRow() {
-    return rows == 1;
-  }
-
-  private boolean isOneColumn() {
-    return columns == 1;
   }
 
   public Object[][] getData() {

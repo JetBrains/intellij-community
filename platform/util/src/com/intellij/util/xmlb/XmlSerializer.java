@@ -47,7 +47,12 @@ public class XmlSerializer {
 
   @NotNull
   public static Element serialize(@NotNull Object object, @Nullable SerializationFilter filter) throws XmlSerializationException {
-    return new XmlSerializerImpl(filter == null ? TRUE_FILTER : filter).serialize(object);
+    return XmlSerializerImpl.serialize(object, filter == null ? TRUE_FILTER : filter);
+  }
+
+  @Nullable
+  public static Element serializeIfNotDefault(@NotNull Object object, @Nullable SerializationFilter filter) {
+    return XmlSerializerImpl.serializeIfNotDefault(object, filter == null ? TRUE_FILTER : filter);
   }
 
   @Nullable

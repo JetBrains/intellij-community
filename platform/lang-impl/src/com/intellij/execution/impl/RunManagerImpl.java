@@ -679,9 +679,10 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
   public void loadState(Element parentNode) {
     clear(false);
 
-    List<Element> sortedElements = new SmartList<Element>(parentNode.getChildren(CONFIGURATION));
+    List<Element> children = parentNode.getChildren(CONFIGURATION);
+    Element[] sortedElements = children.toArray(new Element[children.size()]);
     // ensure templates are loaded first
-    Collections.sort(sortedElements, new Comparator<Element>() {
+    Arrays.sort(sortedElements, new Comparator<Element>() {
       @Override
       public int compare(@NotNull Element a, @NotNull Element b) {
         final boolean aDefault = Boolean.valueOf(a.getAttributeValue("default", "false"));
@@ -690,7 +691,10 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
       }
     });
 
-    for (Element element : sortedElements) {
+    // element could be detached, so, we must not use for each
+    //noinspection ForLoopReplaceableByForEach
+    for (int i = 0, length = sortedElements.length; i < length; i++) {
+      Element element = sortedElements[i];
       RunnerAndConfigurationSettings configurationSettings;
       try {
         configurationSettings = loadConfiguration(element, false);
@@ -703,7 +707,7 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
         if (myUnknownElements == null) {
           myUnknownElements = new SmartList<Element>();
         }
-        myUnknownElements.add(element);
+        myUnknownElements.add((Element)element.detach());
       }
     }
 

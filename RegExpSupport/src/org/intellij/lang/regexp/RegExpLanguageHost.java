@@ -17,6 +17,7 @@ package org.intellij.lang.regexp;
 
 import org.intellij.lang.regexp.psi.RegExpChar;
 import org.intellij.lang.regexp.psi.RegExpGroup;
+import org.intellij.lang.regexp.psi.RegExpNamedGroupRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,6 +30,7 @@ public interface RegExpLanguageHost {
   boolean supportsPossessiveQuantifiers();
   boolean supportsPythonConditionalRefs();
   boolean supportsNamedGroupSyntax(RegExpGroup group);
+  boolean supportsNamedGroupRefSyntax(RegExpNamedGroupRef ref);
   boolean supportsExtendedHexCharacter(RegExpChar regExpChar);
 
   boolean isValidCategory(@NotNull String category);

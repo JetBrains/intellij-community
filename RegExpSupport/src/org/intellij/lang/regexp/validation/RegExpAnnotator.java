@@ -188,16 +188,16 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
 
   @Override
   public void visitRegExpNamedGroupRef(RegExpNamedGroupRef groupRef) {
-    /* the named group itself will be highlighted as unsupported; no need to highlight reference as well
-    RegExpLanguageHost host = findRegExpHost(groupRef);
-    if (host == null || !host.supportsPythonNamedGroups()) {
+    if (!myLanguageHosts.supportsNamedGroupRefSyntax(groupRef)) {
       myHolder.createErrorAnnotation(groupRef, "This named group reference syntax is not supported");
       return;
     }
-    */
+    if (groupRef.getGroupName() == null) {
+      return;
+    }
     final RegExpGroup group = groupRef.resolve();
     if (group == null) {
-      final Annotation a = myHolder.createErrorAnnotation(groupRef, "Unresolved back reference");
+      final Annotation a = myHolder.createErrorAnnotation(groupRef, "Unresolved named group reference");
       if (a != null) {
         // IDEA-9381
         a.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);

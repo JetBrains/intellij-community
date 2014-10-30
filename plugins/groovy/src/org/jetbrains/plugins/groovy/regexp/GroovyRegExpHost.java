@@ -21,6 +21,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.JavaRegExpHost;
 import org.intellij.lang.regexp.psi.RegExpChar;
 import org.intellij.lang.regexp.psi.RegExpGroup;
+import org.intellij.lang.regexp.psi.RegExpNamedGroupRef;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 
 /**
@@ -32,6 +33,15 @@ public class GroovyRegExpHost extends JavaRegExpHost {
   public boolean supportsNamedGroupSyntax(RegExpGroup group) {
     if (group.isNamedGroup()) {
       final String version = getGroovyVersion(group);
+      return version != null && version.compareTo(GroovyConfigUtils.GROOVY2_0) >= 0;
+    }
+    return false;
+  }
+
+  @Override
+  public boolean supportsNamedGroupRefSyntax(RegExpNamedGroupRef ref) {
+    if (ref.isNamedGroupRef()) {
+      final String version = getGroovyVersion(ref);
       return version != null && version.compareTo(GroovyConfigUtils.GROOVY2_0) >= 0;
     }
     return false;

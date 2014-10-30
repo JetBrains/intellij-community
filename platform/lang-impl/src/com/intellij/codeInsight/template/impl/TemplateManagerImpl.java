@@ -270,13 +270,14 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
           continue;
         }
         if (isApplicable(customLiveTemplate, editor, file)) {
-          PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+          final Document document = editor.getDocument();
+          PsiDocumentManager.getInstance(myProject).commitDocument(document);
           final CustomTemplateCallback callback = new CustomTemplateCallback(editor, file);
           final String key = customLiveTemplate.computeTemplateKey(callback);
           if (key != null) {
             int caretOffset = editor.getCaretModel().getOffset();
             int offsetBeforeKey = caretOffset - key.length();
-            CharSequence text = editor.getDocument().getCharsSequence();
+            CharSequence text = document.getImmutableCharSequence();
             if (template2argument == null || !containsTemplateStartingBefore(template2argument, offsetBeforeKey, caretOffset, text)) {
               return new Runnable() {
                 @Override
