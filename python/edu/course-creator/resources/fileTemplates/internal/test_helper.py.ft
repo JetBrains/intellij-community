@@ -46,16 +46,15 @@ def check_importable_path(path):
     try:
         import_file(path)
     except:
-        failed("File contains syntax errors", test_file_importable.func_name)
+        failed("File contains syntax errors", test_file_importable.__name__)
         return
-    passed(test_file_importable.func_name)
+    passed(test_file_importable.__name__)
 
 
 def import_file(path):
     """ Returns imported file """
-    if sys.version_info[0] == 2:
+    if sys.version_info[0] == 2 or sys.version_info[1] < 3:
         import imp
-
         return imp.load_source("tmp", path)
     elif sys.version_info[0] == 3:
         import importlib.machinery
