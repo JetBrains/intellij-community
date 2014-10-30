@@ -17,6 +17,7 @@ package com.jetbrains.python.debugger.array;
 
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
@@ -36,7 +37,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.table.TableCellEditor;
 import java.awt.*;
-import java.awt.event.ActionEvent;
+import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 
 /**
@@ -47,6 +48,8 @@ public class ArrayTableCellEditor extends AbstractCellEditor implements TableCel
   private final Project myProject;
   private Object myLastValue;
 
+  private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.debugger.array.ArrayTableCellEditor");
+
   public ArrayTableCellEditor(Project project) {
     myProject = project;
   }
@@ -54,28 +57,10 @@ public class ArrayTableCellEditor extends AbstractCellEditor implements TableCel
   public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected,
                                                final int rowIndex, final int vColIndex) {
     myEditor = new MyTableEditor(myProject, new PyDebuggerEditorsProvider(), "numpy.array.table.view", null,
-                                 new XExpressionImpl(value.toString(), PythonLanguage.getInstance(), "", EvaluationMode.CODE_FRAGMENT));
+                                 new XExpressionImpl(value.toString(), PythonLanguage.getInstance(), "", EvaluationMode.CODE_FRAGMENT),
+                                 getActionsAdapter(rowIndex, vColIndex));
     myLastValue = value;
-    JComponent editorComponent = myEditor.getComponent();
-
-    editorComponent.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
-      .put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "strokeEnter");
-    editorComponent.getActionMap().put("strokeEnter", new AbstractAction() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        doOKAction(rowIndex, vColIndex);
-      }
-    });
-    editorComponent.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
-      .put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "escapeStroke");
-    editorComponent.getActionMap().put("escapeStroke", new AbstractAction() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        cancelEditing();
-      }
-    });
-
-    return editorComponent;
+    return myEditor.getComponent();
   }
 
   @Nullable
@@ -84,6 +69,21 @@ public class ArrayTableCellEditor extends AbstractCellEditor implements TableCel
       return myEditor.getEditor().getDocument().getText();
     }
     return null;
+  }
+
+  @NotNull
+  private KeyAdapter getActionsAdapter(final int rowIndex, final int vColIndex) {
+    return new KeyAdapter() {
+      @Override
+      public void keyPressed(KeyEvent e) {
+        if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+          doOKAction(rowIndex, vColIndex);
+        }
+        else if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
+          cancelEditing();
+        }
+      }
+    };
   }
 
   public void doOKAction(int rowIndex, int vColIndex) {
@@ -116,7 +116,7 @@ public class ArrayTableCellEditor extends AbstractCellEditor implements TableCel
     public MyTableEditor(Project project,
                          XDebuggerEditorsProvider debuggerEditorsProvider,
                          @Nullable @NonNls String historyId,
-                         @Nullable XSourcePosition sourcePosition, @NotNull XExpression text) {
+                         @Nullable XSourcePosition sourcePosition, @NotNull XExpression text, @NotNull final KeyAdapter actionAdapter) {
       super(project, debuggerEditorsProvider, EvaluationMode.CODE_FRAGMENT, historyId, sourcePosition);
       myExpression = XExpressionImpl.changeMode(text, getMode());
       myEditorTextField = new EditorTextField(createDocument(myExpression), project, debuggerEditorsProvider.getFileType()) {
@@ -125,6 +125,7 @@ public class ArrayTableCellEditor extends AbstractCellEditor implements TableCel
           final EditorEx editor = super.createEditor();
           editor.setVerticalScrollbarVisible(false);
           editor.setOneLineMode(true);
+          editor.getContentComponent().addKeyListener(actionAdapter);
           return editor;
         }
 

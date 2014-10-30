@@ -16,6 +16,7 @@
 package com.jetbrains.python.debugger.array;
 
 import com.intellij.ui.JBColor;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.border.LineBorder;
@@ -64,13 +65,13 @@ class ArrayTableCellRenderer extends DefaultTableCellRenderer {
           double rangedValue = NumpyArrayValueProvider.getRangedValue(value.toString(), myType, myMin, myMax, myComplexMax, myComplexMin);
           this.setBackground(
             new JBColor(new Color((int)Math.round(255 * rangedValue), 0, (int)Math.round(255 * (1 - rangedValue)), 130),
-                        new Color(0, 0, 0, 0)));
+                        new Color((int)Math.round(255 * rangedValue), 0, (int)Math.round(255 * (1 - rangedValue)), 130)));
         }
         catch (NumberFormatException ignored) {
         }
       }
       else {
-        this.setBackground(new JBColor(new Color(255, 255, 255, 0), new Color(255, 255, 255, 0)));
+        this.setBackground(new JBColor(UIUtil.getBgFillColor(table), UIUtil.getBgFillColor(table)));
       }
     }
 
