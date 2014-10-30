@@ -789,7 +789,6 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   @Override
   public Color getOutlineColor(boolean isActive) {
-    if (true) return JBColor.RED;
     ColorKey key = isActive ? EditorColors.SELECTED_TEARLINE_COLOR : EditorColors.TEARLINE_COLOR;
     Color color = myEditor.getColorsScheme().getColor(key);
     return color != null ? color : JBColor.black;
