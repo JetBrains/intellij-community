@@ -98,7 +98,7 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
   @Nullable
   @Override
   public synchronized Element getState() {
-    Element state = new Element("state");
+    Element state = new Element("settings");
 
     String[] sortedProfiles = myProfiles.keySet().toArray(new String[myProfiles.size()]);
     Arrays.sort(sortedProfiles);

@@ -268,7 +268,7 @@ public class DirectoryStorageData extends StorageDataBase {
         if (subState == null) {
           return null;
         }
-        subElements.add(state);
+        subElements.add(subState);
       }
 
       if (!subElements.isEmpty()) {
