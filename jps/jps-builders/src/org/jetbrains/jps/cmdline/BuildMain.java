@@ -231,10 +231,14 @@ public class BuildMain {
                 public void run() {
                   //noinspection finally
                   try {
-                    session.run();
+                    try {
+                      session.run();
+                    }
+                    finally {
+                      channel.close();
+                    }
                   }
                   finally {
-                    channel.close();
                     System.exit(0);
                   }
                 }
