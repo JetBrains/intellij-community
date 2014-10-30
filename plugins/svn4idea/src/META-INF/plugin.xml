@@ -22,7 +22,7 @@
     <action id="Subversion.BrowseSVNRepository" class="org.jetbrains.idea.svn.actions.BrowseRepositoryAction">
       <add-to-group group-id="Vcs.Browse"/>
     </action>
-    <action id="Subversion.ShareWholeProject" class="org.jetbrains.idea.svn.actions.ShareWholeProject">
+    <action id="Subversion.ShareWholeProject" text="Share Project (Subversion)..." class="org.jetbrains.idea.svn.actions.ShareWholeProject">
       <add-to-group group-id="Vcs.Import"/>
     </action>
 
