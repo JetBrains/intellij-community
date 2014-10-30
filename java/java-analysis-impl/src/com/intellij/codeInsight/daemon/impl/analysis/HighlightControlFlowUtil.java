@@ -651,10 +651,11 @@ public class HighlightControlFlowUtil {
           return null;
         }
       }
-      if (languageLevel.isAtLeast(LanguageLevel.JDK_1_8) && isEffectivelyFinal(variable, innerClass, context)) {
+      final boolean isToBeEffectivelyFinal = languageLevel.isAtLeast(LanguageLevel.JDK_1_8);
+      if (isToBeEffectivelyFinal && isEffectivelyFinal(variable, innerClass, context)) {
         return null;
       }
-      final String description = JavaErrorMessages.message("variable.must.be.final", context.getText());
+      final String description = JavaErrorMessages.message(isToBeEffectivelyFinal ? "variable.must.be.final.or.effectively.final" : "variable.must.be.final", context.getText());
 
       final HighlightInfo highlightInfo =
         HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(context).descriptionAndTooltip(description).create();

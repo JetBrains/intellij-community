@@ -525,7 +525,7 @@ def run_python_code_mac(pid, python_code, connect_debugger_tracing=False, show_d
 
     cmd.extend([
         "-o 'process attach --pid %d'"%pid,
-        "-o 'command script import \'%s\''" % (lldb_threads_prepare_file,),
+        "-o 'command script import \"%s\"'" % (lldb_threads_prepare_file,),
         "-o 'expr (void*)dlopen(\"%s\", 2);'" % target_dll,
         # "-o 'expr (int)hello();'",
         "-o 'expr (int)DoAttach(%s, \"%s\", %s);'" % (
@@ -536,13 +536,11 @@ def run_python_code_mac(pid, python_code, connect_debugger_tracing=False, show_d
     if connect_debugger_tracing:
         cmd.extend([
             # "-o 'expr (int) SetSysTraceFunc(0, 0);'",
-            "-o 'command script import \'%s\''" % (lldb_threads_settrace_file,),
+            "-o 'command script import \"%s\"'" % (lldb_threads_settrace_file,),
             ])
 
     cmd.extend([
         "-o 'process continue'",
-        "-o 'process detach'",
-        # "-o 'script import os; os._exit(1)'",
     ])
 
     #print ' '.join(cmd)

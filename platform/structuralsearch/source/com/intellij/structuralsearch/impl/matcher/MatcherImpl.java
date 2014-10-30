@@ -441,6 +441,8 @@ public class MatcherImpl {
       MalformedPatternException exception = new MalformedPatternException();
       exception.initCause(e);
       throw exception;
+    } finally {
+      options.setScope(null);
     }
 
     return sink.getMatches();

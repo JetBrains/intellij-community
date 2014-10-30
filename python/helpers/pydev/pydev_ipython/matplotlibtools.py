@@ -1,6 +1,5 @@
 
 import sys
-from import_hook import import_hook_manager
 
 backends = {'tk': 'TkAgg',
             'gtk': 'GTKAgg',
@@ -57,6 +56,16 @@ def patch_use(interpreter):
     setattr(matplotlib, "use", patched_use)
 
 
+def patch_is_interactive():
+    """ Patch matplotlib function 'use' """
+    matplotlib = sys.modules['matplotlib']
+    def patched_is_interactive():
+        return matplotlib.rcParams['interactive']
+
+    setattr(matplotlib, "real_is_interactive", getattr(matplotlib, "is_interactive"))
+    setattr(matplotlib, "is_interactive", patched_is_interactive)
+
+
 def activate_matplotlib(interpreter):
     """Set interactive to True for interactive backends."""
     def activate_matplotlib_inner():
@@ -73,11 +82,8 @@ def activate_matplotlib(interpreter):
                 sys.stdout.write("Backend %s is non-interactive backend. Turning interactive mode off.\n" % backend)
             matplotlib.interactive(False)
         patch_use(interpreter)
+        patch_is_interactive()
     return activate_matplotlib_inner
-
-
-def init_matplotlib(interpreter):
-    import_hook_manager.add_module_name("matplotlib", activate_matplotlib(interpreter))
 
 
 def flag_calls(func):
@@ -116,17 +122,9 @@ def activate_pylab():
     pylab.draw_if_interactive = flag_calls(pylab.draw_if_interactive)
 
 
-def init_pylab():
-    import_hook_manager.add_module_name("pylab", activate_pylab)
-
-
 def activate_pyplot():
     pyplot = sys.modules['matplotlib.pyplot']
     pyplot.show._needmain = False
     # We need to detect at runtime whether show() is called by the user.
     # For this, we wrap it into a decorator which adds a 'called' flag.
     pyplot.draw_if_interactive = flag_calls(pyplot.draw_if_interactive)
-
-
-def init_pyplot():
-    import_hook_manager.add_module_name("pyplot", activate_pyplot)

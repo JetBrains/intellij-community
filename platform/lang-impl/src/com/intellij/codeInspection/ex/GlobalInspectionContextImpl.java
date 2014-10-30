@@ -337,7 +337,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
       @Override
       public void visitFile(final PsiFile file) {
         final VirtualFile virtualFile = file.getVirtualFile();
-        if (virtualFile == null) return;
+        if (virtualFile == null || isBinary(file)) return;
 
         if (myView == null && !headlessEnvironment) {
           throw new ProcessCanceledException();
@@ -354,7 +354,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
 
         final FileViewProvider viewProvider = psiManager.findViewProvider(virtualFile);
         final com.intellij.openapi.editor.Document document = viewProvider == null ? null : viewProvider.getDocument();
-        if (document == null || isBinary(file)) return; //do not inspect binary files
+        if (document == null) return;
         final LocalInspectionsPass pass = new LocalInspectionsPass(file, document, 0,
                                                                    file.getTextLength(), LocalInspectionsPass.EMPTY_PRIORITY_RANGE, true,
                                                                    HighlightInfoProcessor.getEmpty());
