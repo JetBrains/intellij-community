@@ -632,7 +632,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
           if (i > 0) width += GAP_BETWEEN_ICONS;
         }
         if (myIconsAreaWidth < width) {
-          myIconsAreaWidth = width;
+          myIconsAreaWidth = width + 1;
         }
         return true;
       }
