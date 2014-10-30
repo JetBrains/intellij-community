@@ -138,7 +138,7 @@ public class DownloadUtil {
       if (latestInnerException == null) {
         return Outcome.createNormal(dataRef.get());
       }
-      LOG.warn("[attempt#" + attemptNumber + "] Can not '" + actionShortDescription + "'", latestInnerException);
+      LOG.info("[attempt#" + attemptNumber + "] Cannot '" + actionShortDescription + "'");
       boolean onceMore = false;
       if (tryAgainProvider != null) {
         onceMore = Boolean.TRUE.equals(tryAgainProvider.produce());
