@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,21 +29,21 @@ import org.intellij.lang.regexp.RegExpTT;
 import org.intellij.lang.regexp.psi.RegExpElement;
 import org.intellij.lang.regexp.psi.RegExpElementVisitor;
 import org.intellij.lang.regexp.psi.RegExpGroup;
-import org.intellij.lang.regexp.psi.RegExpPyNamedGroupRef;
+import org.intellij.lang.regexp.psi.RegExpNamedGroupRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
  */
-public class RegExpPyNamedGroupRefImpl extends RegExpElementImpl implements RegExpPyNamedGroupRef {
-  public RegExpPyNamedGroupRefImpl(ASTNode node) {
+public class RegExpNamedGroupRefImpl extends RegExpElementImpl implements RegExpNamedGroupRef {
+  public RegExpNamedGroupRefImpl(ASTNode node) {
     super(node);
   }
 
   @Override
   public void accept(RegExpElementVisitor visitor) {
-    visitor.visitRegExpPyNamedGroupRef(this);
+    visitor.visitRegExpNamedGroupRef(this);
   }
 
   @Nullable
@@ -55,7 +55,7 @@ public class RegExpPyNamedGroupRefImpl extends RegExpElementImpl implements RegE
                     return true;
                 }
             }
-            return element == RegExpPyNamedGroupRefImpl.this;
+            return element == RegExpNamedGroupRefImpl.this;
         }
     });
 
@@ -76,7 +76,7 @@ public class RegExpPyNamedGroupRefImpl extends RegExpElementImpl implements RegE
   public PsiReference getReference() {
     return new PsiReference() {
       public PsiElement getElement() {
-        return RegExpPyNamedGroupRefImpl.this;
+        return RegExpNamedGroupRefImpl.this;
       }
 
       public TextRange getRangeInElement() {
@@ -84,7 +84,7 @@ public class RegExpPyNamedGroupRefImpl extends RegExpElementImpl implements RegE
       }
 
       public PsiElement resolve() {
-        return RegExpPyNamedGroupRefImpl.this.resolve();
+        return RegExpNamedGroupRefImpl.this.resolve();
       }
 
       @NotNull

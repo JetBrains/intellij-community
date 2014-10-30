@@ -24,7 +24,8 @@ import com.intellij.lang.annotation.Annotator;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import org.intellij.lang.regexp.*;
+import org.intellij.lang.regexp.RegExpLanguageHosts;
+import org.intellij.lang.regexp.RegExpTT;
 import org.intellij.lang.regexp.psi.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -170,7 +171,7 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
   }
 
   @Override
-  public void visitRegExpPyNamedGroupRef(RegExpPyNamedGroupRef groupRef) {
+  public void visitRegExpNamedGroupRef(RegExpNamedGroupRef groupRef) {
     /* the named group itself will be highlighted as unsupported; no need to highlight reference as well
     RegExpLanguageHost host = findRegExpHost(groupRef);
     if (host == null || !host.supportsPythonNamedGroups()) {
