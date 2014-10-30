@@ -19,6 +19,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.content.Content;
@@ -26,9 +27,8 @@ import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerAdapter;
 import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.ui.switcher.QuickActionProvider;
-import com.intellij.ui.tabs.JBTabs;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AwtVisitor;
+import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -38,7 +38,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ContainerAdapter;
 import java.awt.event.ContainerEvent;
-import java.util.LinkedList;
 import java.util.List;
 
 public class SimpleToolWindowPanel extends JPanel implements QuickActionProvider, DataProvider {
@@ -199,14 +198,6 @@ public class SimpleToolWindowPanel extends JPanel implements QuickActionProvider
             component instanceof DataProvider ? PlatformDataKeys.CONTENT_MANAGER.getData((DataProvider)component) : null;
           if (contentManager != null) contentManager.addContentManagerListener(this);
         }
-
-        @Override
-        public void selectionChanged(ContentManagerEvent event) {
-          Content content = event.getContent();
-          if (content != null) {
-            setContentToolbarVisible(content.getComponent(), getVisibilityValue());
-          }
-        }
       });
     }
 
@@ -233,18 +224,8 @@ public class SimpleToolWindowPanel extends JPanel implements QuickActionProvider
     }
 
     private static void setContentToolbarVisible(@NotNull JComponent root, boolean state) {
-      LinkedList<JComponent> deque = ContainerUtil.newLinkedList(root);
-      while(!deque.isEmpty()) {
-        JComponent component = deque.pollFirst();
-        for (int i = 0, count = component.getComponentCount(); i < count; i++) {
-          Component c = component.getComponent(i);
-          if (c instanceof ActionToolbar) {
-            c.setVisible(state);
-          }
-          else if (c instanceof JPanel || c instanceof JLayeredPane || c instanceof JBTabs) {
-            deque.addLast((JComponent)c);
-          }
-        }
+      for (Component c : JBSwingUtilities.uiTraverser().preOrderTraversal(root).filter(Conditions.instanceOf(ActionToolbar.class))) {
+        c.setVisible(state);
       }
     }
   }

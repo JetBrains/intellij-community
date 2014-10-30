@@ -11,7 +11,7 @@ import org.jetbrains.plugins.coursecreator.ui.CreateTaskWindowDialog;
 public class CCShowTaskWindowDetails extends CCTaskWindowAction {
 
   public CCShowTaskWindowDetails() {
-    super("Show Problem Details", "Show problem details", null);
+    super("Edit Answer Placeholder", "Edit answer placeholder", null);
   }
 
   @Override

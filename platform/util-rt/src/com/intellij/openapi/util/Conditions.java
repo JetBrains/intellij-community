@@ -26,12 +26,14 @@ import java.util.HashMap;
  * @author max
  */
 public class Conditions {
-  private Conditions() {}
+  private Conditions() {
+  }
 
   @NotNull
   public static <T> Condition<T> alwaysTrue() {
     return (Condition<T>)TRUE;
   }
+
   @NotNull
   public static <T> Condition<T> alwaysFalse() {
     return (Condition<T>)FALSE;
@@ -67,12 +69,23 @@ public class Conditions {
   public static <T> Condition<T> not(Condition<T> c) {
     return new Not<T>(c);
   }
+
   public static <T> Condition<T> and(Condition<T> c1, Condition<T> c2) {
     return new And<T>(c1, c2);
   }
+
+  public static <T> Condition<T> and2(Condition<? super T> c1, Condition<? super T> c2) {
+    return new And<T>(c1, c2);
+  }
+
   public static <T> Condition<T> or(Condition<T> c1, Condition<T> c2) {
     return new Or<T>(c1, c2);
   }
+
+  public static <T> Condition<T> or2(Condition<? super T> c1, Condition<? super T> c2) {
+    return new Or<T>(c1, c2);
+  }
+
   public static <T> Condition<T> cached(Condition<T> c) {
     return new SoftRefCache<T>(c);
   }
@@ -89,11 +102,12 @@ public class Conditions {
       return !myCondition.value(value);
     }
   }
-  private static class And<T> implements Condition<T>  {
-    private final Condition<T> t1;
-    private final Condition<T> t2;
 
-    public And(final Condition<T> t1, final Condition<T> t2) {
+  private static class And<T> implements Condition<T> {
+    private final Condition<? super T> t1;
+    private final Condition<? super T> t2;
+
+    public And(Condition<? super T> t1, Condition<? super T> t2) {
       this.t1 = t1;
       this.t2 = t2;
     }
@@ -103,11 +117,12 @@ public class Conditions {
       return t1.value(object) && t2.value(object);
     }
   }
-  private static class Or<T> implements Condition<T>  {
-    private final Condition<T> t1;
-    private final Condition<T> t2;
 
-    public Or(final Condition<T> t1, final Condition<T> t2) {
+  private static class Or<T> implements Condition<T> {
+    private final Condition<? super T> t1;
+    private final Condition<? super T> t2;
+
+    public Or(Condition<? super T> t1, Condition<? super T> t2) {
       this.t1 = t1;
       this.t2 = t2;
     }

@@ -33,10 +33,10 @@ public class StudyInstructionPainter extends EditorEmptyTextPainter {
     UIUtil.TextPainter painter = new UIUtil.TextPainter().withLineSpacing(1.5f);
 
     painter.appendLine("PyCharm Educational Edition").underlined(new JBColor(Gray._150, Gray._180));
-    addAction(painter, "Navigate to the next task window", StudyNextWindowAction.ACTION_ID, StudyNextWindowAction.SHORTCUT2, true);
+    addAction(painter, "Navigate to the next answer placeholder", StudyNextWindowAction.ACTION_ID, StudyNextWindowAction.SHORTCUT2, true);
     String shortcut1 = getShortcutText(StudyPrevWindowAction.ACTION_ID, StudyPrevWindowAction.SHORTCUT, false, false);
     String shortcut2 = getShortcutText(StudyNextWindowAction.ACTION_ID, StudyNextWindowAction.SHORTCUT, false, false);
-    String text = "Navigate between task windows with " + shortcut1 +
+    String text = "Navigate between answer placeholders with " + shortcut1 +
                   " and " + shortcut2;
     painter.appendLine(text).smaller().withBullet();
     shortcut1 = getShortcutText(StudyPreviousStudyTaskAction.ACTION_ID, StudyPreviousStudyTaskAction.SHORTCUT, false, false);
@@ -44,7 +44,7 @@ public class StudyInstructionPainter extends EditorEmptyTextPainter {
     painter.appendLine("Navigate between tasks with " + shortcut1 + " and " + shortcut2).smaller().withBullet();
     addAction(painter, "Reset current task file", StudyRefreshTaskFileAction.ACTION_ID, StudyRefreshTaskFileAction.SHORTCUT, false);
     addAction(painter, "Check task", StudyCheckAction.ACTION_ID, StudyCheckAction.SHORTCUT, false);
-    addAction(painter, "Get hint for the task window", StudyShowHintAction.ACTION_ID, StudyShowHintAction.SHORTCUT, false);
+    addAction(painter, "Get hint for the answer placeholder", StudyShowHintAction.ACTION_ID, StudyShowHintAction.SHORTCUT, false);
     painter.appendLine("To see your progress open the 'Course Description' panel").smaller().withBullet();
                        painter.draw(g, new PairFunction<Integer, Integer, Couple<Integer>>() {
                          @Override
