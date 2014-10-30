@@ -32,6 +32,7 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -73,15 +74,33 @@ public class CustomFoldingSurroundDescriptor implements SurroundDescriptor {
       if (startElement != null) {
         endElement = findClosestParentBeforeLineBreak(endElement);
         if (endElement != null) {
-          PsiElement commonParent = startElement.getParent();
+          startElement = adjustStartElementIfEndAbsorbed(startElement, endElement);
+          endElement = adjustEndElementIfStartAbsorbed(startElement, endElement);
+          final PsiElement commonParent = startElement.getParent();
           if (endElement.getParent() == commonParent) {
-            if (startElement == endElement) return new PsiElement[] {startElement};
-            return new PsiElement[] {startElement, endElement};
+            if (startElement == endElement) return new PsiElement[]{startElement};
+            return new PsiElement[]{startElement, endElement};
           }
         }
       }
     }
     return PsiElement.EMPTY_ARRAY;
+  }
+
+  @NotNull
+  private static PsiElement adjustEndElementIfStartAbsorbed(@NotNull PsiElement start, @NotNull PsiElement end) {
+    if (PsiTreeUtil.isAncestor(end, start, false) && start.getTextRange().getEndOffset() == end.getTextRange().getEndOffset()) {
+      return start;
+    }
+    return end;
+  }
+
+  @NotNull
+  private static PsiElement adjustStartElementIfEndAbsorbed(@NotNull PsiElement start, @NotNull PsiElement end) {
+    if (PsiTreeUtil.isAncestor(start, end, false) && start.getTextRange().getStartOffset() == end.getTextRange().getStartOffset()) {
+      return end;
+    }
+    return start;
   }
 
   @Nullable
