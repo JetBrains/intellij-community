@@ -268,8 +268,13 @@ public class BuildMain {
               session.cancel();
             }
             else {
-              LOG.info("Cannot cancel build: no build session is running");
-              channel.close();
+              try {
+                LOG.info("Build canceled, but no build session is running. Exiting.");
+                channel.close();
+              }
+              finally {
+                System.exit(0);
+              }
             }
             return;
           }
