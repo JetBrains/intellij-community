@@ -22,9 +22,11 @@ import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.find.actions.ShowUsagesAction;
 import com.intellij.ide.util.DefaultPsiElementCellRenderer;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.injected.editor.EditorWindow;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.diagnostic.Logger;
@@ -37,11 +39,13 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -78,6 +82,16 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
       FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.goto.declaration");
 
       if (elements.length != 1) {
+        if (elements.length == 0) {
+          PsiElement elementAt = file.findElementAt(TargetElementUtilBase.adjustOffset(file, editor.getDocument(), offset));
+          PsiElement parent = elementAt == null ? null : elementAt.getParent();
+          if (parent instanceof PsiNameIdentifierOwner && ((PsiNameIdentifierOwner)parent).getNameIdentifier() == elementAt) {
+            ShowUsagesAction showUsages = (ShowUsagesAction)ActionManager.getInstance().getAction(ShowUsagesAction.ID);
+            RelativePoint popupPosition = JBPopupFactory.getInstance().guessBestPopupLocation(editor);
+            showUsages.startFindUsages(parent, popupPosition, editor, 100);
+            return;
+          }
+        }
         chooseAmbiguousTarget(editor, offset, elements);
         return;
       }

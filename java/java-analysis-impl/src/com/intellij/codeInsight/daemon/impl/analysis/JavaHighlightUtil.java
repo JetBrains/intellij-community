@@ -147,7 +147,7 @@ public class JavaHighlightUtil {
     return info.visitedConstructors;
   }
 
-  static void visitConstructorChain(PsiMethod constructor, ConstructorVisitorInfo info) {
+  static void visitConstructorChain(PsiMethod constructor, @NotNull ConstructorVisitorInfo info) {
     while (true) {
       if (constructor == null) return;
       final PsiCodeBlock body = constructor.getBody();

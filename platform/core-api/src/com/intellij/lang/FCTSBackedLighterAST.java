@@ -47,6 +47,11 @@ public class FCTSBackedLighterAST extends LighterAST {
   public List<LighterASTNode> getChildren(@NotNull final LighterASTNode parent) {
     final Ref<LighterASTNode[]> into = new Ref<LighterASTNode[]>();
     final int numKids = myTreeStructure.getChildren(myTreeStructure.prepareForGetChildren(parent), into);
-    return numKids > 0 ? ContainerUtil.newArrayList(into.get(), 0, numKids) : ContainerUtil.<LighterASTNode>emptyList();
+    if (numKids == 0) {
+      return ContainerUtil.emptyList();
+    }
+    LighterASTNode[] elements = into.get();
+    assert elements != null : myTreeStructure +" ("+parent+")";
+    return ContainerUtil.newArrayList(elements, 0, numKids);
   }
 }

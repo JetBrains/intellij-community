@@ -1581,7 +1581,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       }
 
       insertLeaves(lexIndex, marker.myDoneMarker.myLexemeIndex, marker.myBuilder);
-      into.set(nodes);
+      into.set(nodes == null ? LighterASTNode.EMPTY_ARRAY : nodes);
       nodes = null;
 
       return count;

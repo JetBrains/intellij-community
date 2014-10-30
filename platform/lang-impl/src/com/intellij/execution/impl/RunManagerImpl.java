@@ -38,6 +38,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.WeakHashMap;
 import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -379,7 +380,7 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
 
   void checkRecentsLimit() {
     trimUsagesListToLimit();
-    List<RunnerAndConfigurationSettings> removed = new ArrayList<RunnerAndConfigurationSettings>();
+    List<RunnerAndConfigurationSettings> removed = new SmartList<RunnerAndConfigurationSettings>();
     while (getTempConfigurationsList().size() > getConfig().getRecentsLimit()) {
       for (Iterator<RunnerAndConfigurationSettings> it = myConfigurations.values().iterator(); it.hasNext(); ) {
         RunnerAndConfigurationSettings configuration = it.next();
@@ -528,10 +529,10 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
     try {
       configuration.checkSettings(executor);
     }
-    catch (RuntimeConfigurationError er) {
+    catch (RuntimeConfigurationError ignored) {
       return false;
     }
-    catch (RuntimeConfigurationException e) {
+    catch (RuntimeConfigurationException ignored) {
       return true;
     }
     return true;
@@ -833,16 +834,21 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
   }
 
   @Nullable
-  public RunnerAndConfigurationSettings loadConfiguration(@NotNull Element element, boolean isShared) throws InvalidDataException {
-    final RunnerAndConfigurationSettingsImpl settings = new RunnerAndConfigurationSettingsImpl(this);
-    settings.readExternal(element);
+  public RunnerAndConfigurationSettings loadConfiguration(@NotNull Element element, boolean isShared) {
+    RunnerAndConfigurationSettingsImpl settings = new RunnerAndConfigurationSettingsImpl(this);
+    try {
+      settings.readExternal(element);
+    }
+    catch (InvalidDataException e) {
+      LOG.error(e);
+    }
+
     ConfigurationFactory factory = settings.getFactory();
     if (factory == null) {
       return null;
     }
 
-    final Element methodsElement = element.getChild(METHOD);
-    final List<BeforeRunTask> tasks = readStepsBeforeRun(methodsElement, settings);
+    final List<BeforeRunTask> tasks = readStepsBeforeRun(element.getChild(METHOD), settings);
     if (settings.isTemplate()) {
       myTemplateConfigurationsMap.put(factory.getType().getId() + "." + factory.getName(), settings);
       setBeforeRunTasks(settings.getConfiguration(), tasks, true);
@@ -1082,7 +1088,7 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
                                                     settings.checkSettings();
                                                     icon = ProgramRunnerUtil.getConfigurationIcon(settings, false);
                                                   }
-                                                  catch (RuntimeConfigurationException e) {
+                                                  catch (RuntimeConfigurationException ignored) {
                                                     icon = ProgramRunnerUtil.getConfigurationIcon(settings, true);
                                                   }
                                                   myIconCalcTime.put(uniqueID, System.currentTimeMillis() - startTime);
@@ -1118,10 +1124,12 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
       tasks = getBeforeRunTasks(settings);
       myConfigurationToBeforeTasksMap.put(settings, tasks);
     }
-    List<T> result = new ArrayList<T>();
+    List<T> result = new SmartList<T>();
     for (BeforeRunTask task : tasks) {
-      if (task.getProviderId() == taskProviderID)
+      if (task.getProviderId() == taskProviderID) {
+        //noinspection unchecked
         result.add((T)task);
+      }
     }
     return result;
   }
@@ -1187,10 +1195,10 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
 
   @Override
   public final void setBeforeRunTasks(final RunConfiguration runConfiguration, @NotNull List<BeforeRunTask> tasks, boolean addEnabledTemplateTasksIfAbsent) {
-    List<BeforeRunTask> result = new ArrayList<BeforeRunTask>(tasks);
+    List<BeforeRunTask> result = new SmartList<BeforeRunTask>(tasks);
     if (addEnabledTemplateTasksIfAbsent) {
       List<BeforeRunTask> templates = getTemplateBeforeRunTasks(runConfiguration);
-      Set<Key<BeforeRunTask>> idsToSet = new HashSet<Key<BeforeRunTask>>();
+      Set<Key<BeforeRunTask>> idsToSet = new THashSet<Key<BeforeRunTask>>();
       for (BeforeRunTask task : tasks) {
         idsToSet.add(task.getProviderId());
       }
@@ -1220,12 +1228,15 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
     return (RunManagerImpl)RunManager.getInstance(project);
   }
 
-  void removeNotExistingSharedConfigurations(final Set<String> existing) {
-    List<RunnerAndConfigurationSettings> removed = new ArrayList<RunnerAndConfigurationSettings>();
+  void removeNotExistingSharedConfigurations(@NotNull Set<String> existing) {
+    List<RunnerAndConfigurationSettings> removed = null;
     for (Iterator<Map.Entry<String, RunnerAndConfigurationSettings>> it = myConfigurations.entrySet().iterator(); it.hasNext(); ) {
       Map.Entry<String, RunnerAndConfigurationSettings> entry = it.next();
       final RunnerAndConfigurationSettings settings = entry.getValue();
       if (!settings.isTemplate() && isConfigurationShared(settings) && !existing.contains(settings.getUniqueID())) {
+        if (removed == null) {
+          removed = new SmartList<RunnerAndConfigurationSettings>();
+        }
         removed.add(settings);
         it.remove();
       }
@@ -1237,10 +1248,12 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
     myDispatcher.getMulticaster().runConfigurationChanged(settings);
   }
 
-  private void fireRunConfigurationsRemoved(@NotNull List<RunnerAndConfigurationSettings> removed) {
-    myRecentlyUsedTemporaries.removeAll(removed);
-    for (RunnerAndConfigurationSettings settings : removed) {
-      myDispatcher.getMulticaster().runConfigurationRemoved(settings);
+  private void fireRunConfigurationsRemoved(@Nullable List<RunnerAndConfigurationSettings> removed) {
+    if (!ContainerUtil.isEmpty(removed)) {
+      myRecentlyUsedTemporaries.removeAll(removed);
+      for (RunnerAndConfigurationSettings settings : removed) {
+        myDispatcher.getMulticaster().runConfigurationRemoved(settings);
+      }
     }
   }
 

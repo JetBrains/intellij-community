@@ -1053,21 +1053,40 @@ public class FileUtil extends FileUtilRt {
    */
   @NotNull
   public static String sanitizeFileName(@NotNull String name) {
-    StringBuilder result = new StringBuilder();
-
-    for (int i = 0; i < name.length(); i++) {
-      final char ch = name.charAt(i);
-
-      if (ch > 0 && ch < 255) {
-        if (Character.isLetterOrDigit(ch)) {
-          result.append(ch);
-        }
-        else {
-          result.append("_");
+    StringBuilder result = null;
+    int last = 0;
+    int length = name.length();
+    for (int i = 0; i < length; i++) {
+      char c = name.charAt(i);
+      boolean appendReplacement = true;
+      if (c > 0 && c < 255) {
+        if (Character.isLetterOrDigit(c) || c == '_') {
+          continue;
         }
       }
+      else {
+        appendReplacement = false;
+      }
+
+      if (result == null) {
+        result = new StringBuilder();
+      }
+      if (last < i) {
+        result.append(name, last, i);
+      }
+      if (appendReplacement) {
+        result.append('_');
+      }
+      last = i + 1;
     }
 
+    if (result == null) {
+      return name;
+    }
+
+    if (last < length) {
+      result.append(name, last, length);
+    }
     return result.toString();
   }
 

@@ -34,7 +34,10 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.psi.PsiLock;
 import com.intellij.ui.SystemNotifications;
-import com.intellij.util.containers.*;
+import com.intellij.util.containers.ConcurrentHashSet;
+import com.intellij.util.containers.ConcurrentLongObjectMap;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.SmartHashSet;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -272,7 +275,9 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable {
 
     try {
       if (indicator instanceof WrappedProgressIndicator) {
-        registerIndicatorAndRun(((WrappedProgressIndicator)indicator).getOriginalProgressIndicator(), currentThread, oldIndicator, process);
+        ProgressIndicator wrappee = ((WrappedProgressIndicator)indicator).getOriginalProgressIndicator();
+        assert wrappee != indicator : indicator + " wraps itself";
+        registerIndicatorAndRun(wrappee, currentThread, oldIndicator, process);
       }
       else {
         process.run();

@@ -253,9 +253,14 @@ public class JavaFindUsagesHelper {
                                            @NotNull final FindUsagesOptions options,
                                            @NotNull final Processor<UsageInfo> processor) {
     for (AliasingPsiTargetMapper aliasingPsiTargetMapper : Extensions.getExtensions(AliasingPsiTargetMapper.EP_NAME)) {
-      for (AliasingPsiTarget psiTarget : aliasingPsiTargetMapper.getTargets(pomTarget)) {
+      for (final AliasingPsiTarget psiTarget : aliasingPsiTargetMapper.getTargets(pomTarget)) {
         boolean success = ReferencesSearch
-          .search(new ReferencesSearch.SearchParameters(PomService.convertToPsi(psiTarget), options.searchScope, false, options.fastTrack))
+          .search(new ReferencesSearch.SearchParameters(ApplicationManager.getApplication().runReadAction(new Computable<PsiElement>() {
+            @Override
+            public PsiElement compute() {
+              return PomService.convertToPsi(psiTarget);
+            }
+          }), options.searchScope, false, options.fastTrack))
           .forEach(new ReadActionProcessor<PsiReference>() {
             @Override
             public boolean processInReadAction(final PsiReference reference) {
