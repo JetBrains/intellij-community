@@ -789,6 +789,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   @Override
   public Color getOutlineColor(boolean isActive) {
+    if (true) return JBColor.RED;
     ColorKey key = isActive ? EditorColors.SELECTED_TEARLINE_COLOR : EditorColors.TEARLINE_COLOR;
     Color color = myEditor.getColorsScheme().getColor(key);
     return color != null ? color : JBColor.black;
@@ -858,7 +859,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   @Override
   public int getWhitespaceSeparatorOffset() {
-    return getFoldingAreaOffset() + getFoldingAnchorWidth() / 2;
+    return isRealEditor() ? getFoldingAreaOffset() + getFoldingAnchorWidth() / 2 : 0;
   }
 
   public void setActiveFoldRegion(FoldRegion activeFoldRegion) {
@@ -975,7 +976,11 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   public int getFoldingAreaWidth() {
-    return getFoldingAnchorWidth() + (isFoldingOutlineShown() ? 2 : 0);
+    return isRealEditor() ? getFoldingAnchorWidth() + (isFoldingOutlineShown() ? 2 : 0) : 0;
+  }
+
+  public boolean isRealEditor() {
+    return EditorUtil.isRealFileEditor(myEditor);
   }
 
   @Override
@@ -996,6 +1001,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   public boolean isFoldingOutlineShown() {
     return myEditor.getSettings().isFoldingOutlineShown() &&
            myEditor.getFoldingModel().isFoldingEnabled() &&
+           isRealEditor() &&
            !myEditor.isInPresentationMode();
   }
 
