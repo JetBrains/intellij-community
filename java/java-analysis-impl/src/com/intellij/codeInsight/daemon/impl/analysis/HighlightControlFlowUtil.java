@@ -321,15 +321,16 @@ public class HighlightControlFlowUtil {
             return null;
           }
           final PsiField anotherField = PsiTreeUtil.getTopmostParentOfType(expression, PsiField.class);
+          int offset = startOffset;
           if (anotherField != null && anotherField.getContainingClass() == aClass && !field.hasModifierProperty(PsiModifier.STATIC)) {
-            startOffset = 0;
+            offset = 0;
           }
           block = null;
           // initializers will be checked later
           final PsiMethod[] constructors = aClass.getConstructors();
           for (PsiMethod constructor : constructors) {
             // variable must be initialized before its usage
-            if (startOffset < constructor.getTextRange().getStartOffset()) continue;
+            if (offset < constructor.getTextRange().getStartOffset()) continue;
             PsiCodeBlock body = constructor.getBody();
             if (body != null && variableDefinitelyAssignedIn(variable, body)) {
               return null;
@@ -339,7 +340,7 @@ public class HighlightControlFlowUtil {
             for (int j = 0; redirectedConstructors != null && j < redirectedConstructors.size(); j++) {
               PsiMethod redirectedConstructor = redirectedConstructors.get(j);
               // variable must be initialized before its usage
-              if (startOffset < redirectedConstructor.getTextRange().getStartOffset()) continue;
+              if (offset < redirectedConstructor.getTextRange().getStartOffset()) continue;
               PsiCodeBlock redirBody = redirectedConstructor.getBody();
               if (redirBody != null
                   && variableDefinitelyAssignedIn(variable, redirBody)) {
