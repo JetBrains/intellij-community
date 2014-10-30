@@ -176,7 +176,7 @@
       </extensionMap>
     </filetype>
 
-    <filetype binary="false" default_extension="css" extensions="css" description="CSS files" name = "CSS files (syntax highlighting only)" icon="AllIcons.FileTypes.Css">
+    <filetype binary="false" default_extension="css" extensions="css" description="CSS files (syntax highlighting only)" name = "CSS" icon="AllIcons.FileTypes.Css">
       <highlighting>
         <options>
           <option name="LINE_COMMENT" value="" />
