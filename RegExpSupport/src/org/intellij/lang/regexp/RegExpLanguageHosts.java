@@ -21,10 +21,7 @@ import com.intellij.openapi.util.ClassExtension;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
-import org.intellij.lang.regexp.psi.RegExpChar;
-import org.intellij.lang.regexp.psi.RegExpGroup;
-import org.intellij.lang.regexp.psi.RegExpPyCondRef;
-import org.intellij.lang.regexp.psi.RegExpQuantifier;
+import org.intellij.lang.regexp.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -97,6 +94,16 @@ public final class RegExpLanguageHosts extends ClassExtension<RegExpLanguageHost
   public boolean supportsNamedGroupSyntax(@Nullable final RegExpGroup group) {
     final RegExpLanguageHost host = findRegExpHost(group);
     return host != null && host.supportsNamedGroupSyntax(group);
+  }
+
+  public boolean supportsNamedGroupRefSyntax(@Nullable final RegExpNamedGroupRef ref) {
+    final RegExpLanguageHost host = findRegExpHost(ref);
+    try {
+      return host != null && host.supportsNamedGroupRefSyntax(ref);
+    } catch (AbstractMethodError e) {
+      // supportsNamedGroupRefSyntax() not present
+      return false;
+    }
   }
 
   public boolean supportsPerl5EmbeddedComments(@Nullable final PsiComment comment) {

@@ -27,6 +27,7 @@ import org.intellij.lang.regexp.DefaultRegExpPropertiesProvider;
 import org.intellij.lang.regexp.RegExpLanguageHost;
 import org.intellij.lang.regexp.psi.RegExpChar;
 import org.intellij.lang.regexp.psi.RegExpGroup;
+import org.intellij.lang.regexp.psi.RegExpNamedGroupRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,6 +66,15 @@ public class JavaRegExpHost implements RegExpLanguageHost {
   public boolean supportsNamedGroupSyntax(RegExpGroup group) {
     if (group.isNamedGroup()) {
       final JavaSdkVersion version = getJavaVersion(group);
+      return version != null && version.isAtLeast(JavaSdkVersion.JDK_1_7);
+    }
+    return false;
+  }
+
+  @Override
+  public boolean supportsNamedGroupRefSyntax(RegExpNamedGroupRef ref) {
+    if (ref.isNamedGroupRef()) {
+      final JavaSdkVersion version = getJavaVersion(ref);
       return version != null && version.isAtLeast(JavaSdkVersion.JDK_1_7);
     }
     return false;

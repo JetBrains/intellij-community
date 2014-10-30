@@ -100,7 +100,7 @@ public class RegExpParserDefinition implements ParserDefinition {
             return new RegExpBoundaryImpl(node);
         } else if (type == RegExpElementTypes.INTERSECTION) {
             return new RegExpIntersectionImpl(node);
-        } else if (type == RegExpElementTypes.PY_NAMED_GROUP_REF) {
+        } else if (type == RegExpElementTypes.NAMED_GROUP_REF) {
             return new RegExpNamedGroupRefImpl(node);
         } else if (type == RegExpElementTypes.PY_COND_REF) {
             return new RegExpPyCondRefImpl(node);

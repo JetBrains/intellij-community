@@ -26,7 +26,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.intellij.lang.regexp.RegExpTT;
-import org.intellij.lang.regexp.psi.RegExpElement;
 import org.intellij.lang.regexp.psi.RegExpElementVisitor;
 import org.intellij.lang.regexp.psi.RegExpGroup;
 import org.intellij.lang.regexp.psi.RegExpNamedGroupRef;
@@ -48,28 +47,42 @@ public class RegExpNamedGroupRefImpl extends RegExpElementImpl implements RegExp
 
   @Nullable
   public RegExpGroup resolve() {
-    final PsiElementProcessor.FindFilteredElement<RegExpElement> processor = new PsiElementProcessor.FindFilteredElement<RegExpElement>(new PsiElementFilter() {
+    final PsiElementProcessor.FindFilteredElement<RegExpGroup> processor = new PsiElementProcessor.FindFilteredElement<RegExpGroup>(
+      new PsiElementFilter() {
         public boolean isAccepted(PsiElement element) {
-            if (element instanceof RegExpGroup) {
-                if (((RegExpGroup)element).isPythonNamedGroup() && Comparing.equal(getGroupName(), ((RegExpGroup)element).getGroupName())) {
-                    return true;
-                }
-            }
-            return element == RegExpNamedGroupRefImpl.this;
+          if (!(element instanceof RegExpGroup)) {
+            return false;
+          }
+          final RegExpGroup regExpGroup = (RegExpGroup)element;
+          return (regExpGroup.isPythonNamedGroup() || regExpGroup.isRubyNamedGroup()) &&
+                 Comparing.equal(getGroupName(), regExpGroup.getGroupName());
         }
-    });
-
+      }
+    );
     PsiTreeUtil.processElements(getContainingFile(), processor);
-    if (processor.getFoundElement() instanceof RegExpGroup) {
-        return (RegExpGroup) processor.getFoundElement();
-    }
-    return null;
+    return processor.getFoundElement();
   }
 
   @Nullable
   public String getGroupName() {
     final ASTNode nameNode = getNode().findChildByType(RegExpTT.NAME);
     return nameNode != null ? nameNode.getText() : null;
+  }
+
+  @Override
+  public boolean isPythonNamedGroupRef() {
+    return getNode().findChildByType(RegExpTT.PYTHON_NAMED_GROUP_REF) != null;
+  }
+
+  @Override
+  public boolean isRubyNamedGroupRef() {
+    return getNode().findChildByType(RegExpTT.RUBY_NAMED_GROUP_REF) != null ||
+           getNode().findChildByType(RegExpTT.RUBY_QUOTED_NAMED_GROUP_REF) != null;
+  }
+
+  @Override
+  public boolean isNamedGroupRef() {
+    return getNode().findChildByType(RegExpTT.RUBY_NAMED_GROUP_REF) != null;
   }
 
   @Override
