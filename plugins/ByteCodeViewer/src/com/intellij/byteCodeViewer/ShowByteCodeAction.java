@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -84,7 +84,7 @@ public class ShowByteCodeAction extends AnAction {
     final RelativePoint bestPopupLocation = JBPopupFactory.getInstance().guessBestPopupLocation(dataContext);
 
     final SmartPsiElementPointer element = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(psiElement);
-    ProgressManager.getInstance().run(new Task.Backgroundable(project, "Searching byte code...") {
+    ProgressManager.getInstance().run(new Task.Backgroundable(project, "Looking for bytecode...") {
       private String myByteCode;
       private String myErrorMessage;
       private String myErrorTitle;
@@ -92,7 +92,7 @@ public class ShowByteCodeAction extends AnAction {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         if (ProjectRootManager.getInstance(project).getFileIndex().isInContent(virtualFile) && isMarkedForCompilation(project, virtualFile)) {
-          myErrorMessage = "Unable to show byte code for '" + psiElementTitle + "'. Class file does not exist or is out-of-date.";
+          myErrorMessage = "Unable to show bytecode for '" + psiElementTitle + "'. Class file does not exist or is out-of-date.";
           myErrorTitle = "Class File Out-Of-Date";
         }
         else {
@@ -122,7 +122,7 @@ public class ShowByteCodeAction extends AnAction {
         }
         else {
           if (myByteCode == null) {
-            Messages.showErrorDialog(project, "Unable to parse class file for '" + psiElementTitle + "'.", "Byte Code not Found");
+            Messages.showErrorDialog(project, "Unable to parse class file for '" + psiElementTitle + "'.", "Bytecode not Found");
             return;
           }
           final ByteCodeViewerComponent component = new ByteCodeViewerComponent(project, null);
