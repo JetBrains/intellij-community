@@ -79,12 +79,13 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testNestedCallsInsideLambdaReturnExpression() { doTest(); }
   public void testIDEA123731() { doTest(); }
   public void testIDEA123869() { doTest(); }
+  @Bombed(day = 30, month = Calendar.NOVEMBER)
   public void testIDEA123848() { doTest(); }
   public void testOnlyLambdaAtTypeParameterPlace() { doTest(); }
   public void testLiftedIntersectionType() { doTest(); }
   public void testInferenceFromReturnStatements() { doTest(); }
   public void testDownUpThroughLambdaReturnStatements() { doTest(); }
-  @Bombed(day = 30, month = Calendar.OCTOBER)
+  @Bombed(day = 30, month = Calendar.NOVEMBER)
   public void testIDEA124547() { doTest(); }
   public void testIDEA118362() { doTest(); }
   public void testIDEA126056() { doTest(); }
@@ -138,7 +139,7 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
-  @Bombed(month = Calendar.OCTOBER, day = 30)
+  @Bombed(month = Calendar.NOVEMBER, day = 30)
   public void testCheckedExceptionsConstraintsSubstitutions() throws Exception {
     doTest();
   }

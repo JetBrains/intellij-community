@@ -19,6 +19,8 @@ import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.DocumentReferenceManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.WeakList;
 import gnu.trove.THashSet;
@@ -41,7 +43,8 @@ class UndoRedoStacksHolder {
 
   @NotNull
   LinkedList<UndoableGroup> getStack(@NotNull DocumentReference r) {
-    return r.getFile() != null ? doGetStackForFile(r) : doGetStackForDocument(r);
+    VirtualFile file = r.getFile();
+    return file != null && !(file instanceof LightVirtualFile) ? doGetStackForFile(r) : doGetStackForDocument(r);
   }
 
   @NotNull
