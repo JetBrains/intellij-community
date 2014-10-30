@@ -6,8 +6,14 @@ def __lldb_init_module(debugger, internal_dict):
     import lldb
 
     try:
-        show_debug_info = 0
+        show_debug_info = 1
         is_debug = 0
+
+        options = lldb.SBExpressionOptions()
+        options.SetFetchDynamicValue()
+        options.SetTryAllThreads(run_others=False)
+        options.SetTimeoutInMicroSeconds(timeout=10000000)
+
         target = debugger.GetSelectedTarget()
         if target:
             process = target.GetProcess()
@@ -16,17 +22,21 @@ def __lldb_init_module(debugger, internal_dict):
                     # Get the first frame
                     # print('Thread %s, suspended %s\n'%(thread, thread.IsStopped()))
 
-                    process.SetSelectedThread(thread)
-
                     if internal_dict.get('_thread_%d' % thread.GetThreadID(), False):
+                        process.SetSelectedThread(thread)
+                        if not thread.IsStopped():
+                            # thread.Suspend()
+                            error = process.Stop()
                         frame = thread.GetSelectedFrame()
                         if frame:
                             print('Will settrace in: %s' % (frame,))
+
                             res = frame.EvaluateExpression("(int) SetSysTraceFunc(%s, %s)" % (
-                                show_debug_info, is_debug), lldb.eDynamicCanRunTarget)
+                                show_debug_info, is_debug), options)
                             error = res.GetError()
                             if error:
                                 print(error)
+
                         thread.Resume()
     except:
         import traceback;traceback.print_exc()
