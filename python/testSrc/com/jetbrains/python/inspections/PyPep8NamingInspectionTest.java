@@ -65,6 +65,11 @@ public class PyPep8NamingInspectionTest extends PyTestCase {
     doTest();
   }
 
+  // PY-13537
+  public void testDescendantOfStandardClass() {
+    doTest();
+  }
+
   public void testTest() {
     doTest();
   }

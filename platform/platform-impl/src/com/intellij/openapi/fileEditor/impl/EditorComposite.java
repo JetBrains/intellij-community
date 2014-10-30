@@ -36,7 +36,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.FocusWatcher;
 import com.intellij.ui.PrevNextActionsDescriptor;
-import com.intellij.ui.SideBorder;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.tabs.UiDecorator;
 import com.intellij.util.SmartList;
@@ -351,7 +350,7 @@ public abstract class EditorComposite implements Disposable {
     if (remove) {
       container.remove(component.getParent());
     } else {
-      container.add(new TopBottomComponentWrapper(component, top));
+      container.add(new TopBottomComponentWrapper(component));
     }
     container.revalidate();
   }
@@ -474,19 +473,10 @@ public abstract class EditorComposite implements Disposable {
   private static class TopBottomComponentWrapper extends JPanel {
     private final JComponent myWrappee;
 
-    public TopBottomComponentWrapper(JComponent component, boolean top) {
+    public TopBottomComponentWrapper(JComponent component) {
       super(new BorderLayout());
       myWrappee = component;
       setOpaque(false);
-
-      setBorder(new SideBorder(null, top ? SideBorder.BOTTOM : SideBorder.TOP, true) {
-        @Override
-        public Color getLineColor() {
-          Color result = EditorColorsManager.getInstance().getGlobalScheme().getColor(EditorColors.TEARLINE_COLOR);
-          return result == null ? Color.black : result;
-        }
-      });
-
       add(component);
     }
 

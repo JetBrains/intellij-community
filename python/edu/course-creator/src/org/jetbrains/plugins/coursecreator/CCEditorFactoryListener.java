@@ -88,7 +88,7 @@ public class CCEditorFactoryListener implements EditorFactoryListener {
 
     @Override
     public void handle(ReadOnlyFragmentModificationException e) {
-      HintManager.getInstance().showErrorHint(myEditor, "Delete task window before editing its borders");
+      HintManager.getInstance().showErrorHint(myEditor, "Delete answer placeholder before editing its borders");
     }
   }
 }

@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.UIUtil;
@@ -29,9 +30,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider {
-
-  public static final int INSET_Y = 10;
-  public static final int INSET_X = 5;
   private IpnbFile myIpnbFile;
 
   private Project myProject;
@@ -48,7 +46,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider {
 
   public IpnbFilePanel(@NotNull final Project project, @NotNull final IpnbFileEditor parent, @NotNull final VirtualFile vFile,
                        @NotNull final IpnbFileEditor.CellSelectionListener listener) {
-    super(new GridBagLayout());
+    super(new VerticalFlowLayout(VerticalFlowLayout.TOP, 100, 5, true, false));
     myProject = project;
     myParent = parent;
     myListener = listener;
@@ -87,24 +85,9 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider {
   }
 
   private void layoutFile() {
-    GridBagConstraints c = new GridBagConstraints();
-    c.fill = GridBagConstraints.HORIZONTAL;
-    c.gridx = 0;
-    c.gridy = 0;
-    c.gridwidth = 2;
-    c.insets = new Insets(INSET_Y, INSET_X, 0, 0);
-
-    c.gridy = 1;
-    c.gridwidth = 1;
-    final JPanel panel = new JPanel();
-    panel.setPreferredSize(IpnbEditorUtil.PROMPT_SIZE);
-    panel.setBackground(getBackground());
-    panel.setOpaque(false);
-    add(panel, c);
-
     final List<IpnbCell> cells = myIpnbFile.getCells();
     for (IpnbCell cell : cells) {
-      c.gridy = addCellToPanel(cell, c);
+      addCellToPanel(cell);
     }
 
     if (myInitialSelection >= 0 && myIpnbPanels.size() > myInitialSelection) {
@@ -112,31 +95,27 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider {
       setSelectedCell(toSelect);
       myParent.getScrollPane().getViewport().setViewPosition(new Point(0, myInitialPosition));
     }
-    c.weighty = 1;
-    add(createEmptyPanel(), c);
+    add(createEmptyPanel());
   }
 
-  private int addCellToPanel(IpnbCell cell, GridBagConstraints c) {
+  private void addCellToPanel(IpnbCell cell) {
     IpnbEditablePanel panel;
     if (cell instanceof IpnbCodeCell) {
       panel = new IpnbCodePanel(myProject, myParent, (IpnbCodeCell)cell);
-      c.gridwidth = 2;
-      c.gridx = 0;
-      add(panel, c);
+      add(panel);
       myIpnbPanels.add(panel);
     }
     else if (cell instanceof IpnbMarkdownCell) {
       panel = new IpnbMarkdownPanel((IpnbMarkdownCell)cell);
-      addComponent(c, panel);
+      addComponent(panel);
     }
     else if (cell instanceof IpnbHeadingCell) {
       panel = new IpnbHeadingPanel((IpnbHeadingCell)cell);
-      addComponent(c, panel);
+      addComponent(panel);
     }
     else {
       throw new UnsupportedOperationException(cell.getClass().toString());
     }
-    return c.gridy + 1;
   }
 
   public void createAndAddCell(boolean below) {
@@ -148,13 +127,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider {
   }
 
   private void addCell(@NotNull final IpnbEditablePanel panel, boolean below) {
-    final GridBagConstraints c = new GridBagConstraints();
-    c.fill = GridBagConstraints.HORIZONTAL;
-    c.gridx = 0;
-    c.gridy = 0;
-    c.gridwidth = 1;
-    c.insets = new Insets(INSET_Y, INSET_X, 0, 0);
-
+    removeAll();
     final IpnbEditablePanel selectedCell = getSelectedCell();
     int index = myIpnbPanels.indexOf(selectedCell);
     if (below) {
@@ -164,28 +137,10 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider {
     myIpnbFile.addCell(cell, index);
     myIpnbPanels.add(index, panel);
 
-    final JPanel promptPanel = new JPanel();
-    promptPanel.setPreferredSize(new Dimension(IpnbEditorUtil.PROMPT_SIZE.width, 1));
-    promptPanel.setBackground(getBackground());
-    promptPanel.setOpaque(false);
-    add(promptPanel, c);
-
-    c.gridy += 1;
     for (IpnbPanel comp : myIpnbPanels) {
-      c.gridwidth = 1;
-      c.gridx = 1;
-      if (comp instanceof IpnbCodePanel) {
-        c.gridwidth = 2;
-        c.gridx = 0;
-        add(comp, c);
-      }
-      else {
-        add(comp, c);
-      }
-      c.gridy += 1;
+      add(comp);
     }
-    c.weighty = 1;
-    add(createEmptyPanel(), c);
+    add(createEmptyPanel());
 
     setSelectedCell(panel);
     requestFocus();
@@ -255,26 +210,17 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider {
   }
 
   public void replaceComponent(@NotNull final IpnbEditablePanel from, @NotNull final IpnbCell cell) {
-    final GridBagConstraints c = ((GridBagLayout)getLayout()).getConstraints(from);
+    removeAll();
     final int index = myIpnbPanels.indexOf(from);
     IpnbEditablePanel panel;
     if (cell instanceof IpnbCodeCell) {
       panel = new IpnbCodePanel(myProject, myParent, (IpnbCodeCell)cell);
-      c.gridwidth = 2;
-      c.gridx = 0;
-      add(panel, c);
     }
     else if (cell instanceof IpnbMarkdownCell) {
       panel = new IpnbMarkdownPanel((IpnbMarkdownCell)cell);
-      c.gridwidth = 1;
-      c.gridx = 1;
-      add(panel, c);
     }
     else if (cell instanceof IpnbHeadingCell) {
       panel = new IpnbHeadingPanel((IpnbHeadingCell)cell);
-      c.gridwidth = 1;
-      c.gridx = 1;
-      add(panel, c);
     }
     else {
       throw new UnsupportedOperationException(cell.getClass().toString());
@@ -283,6 +229,11 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider {
       myIpnbPanels.remove(index);
       myIpnbPanels.add(index, panel);
     }
+    for (IpnbPanel comp : myIpnbPanels) {
+      add(comp);
+    }
+    add(createEmptyPanel());
+
     if (from instanceof IpnbCodePanel) {
       panel.switchToEditing();
     }
@@ -292,11 +243,8 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider {
     repaint();
   }
 
-  private void addComponent(@NotNull final GridBagConstraints c, @NotNull final IpnbEditablePanel comp) {
-    c.gridwidth = 1;
-    c.gridx = 1;
-    add(comp, c);
-
+  private void addComponent(@NotNull final IpnbEditablePanel comp) {
+    add(comp);
     myIpnbPanels.add(comp);
   }
 
@@ -376,14 +324,8 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider {
     super.paintComponent(g);
     if (mySelectedCell != null) {
       g.setColor(mySelectedCell.isEditing() ? JBColor.GREEN : JBColor.GRAY);
-      if (mySelectedCell instanceof IpnbCodePanel) {
-        g.drawRoundRect(mySelectedCell.getX() - 50, mySelectedCell.getTop() - 1,
+      g.drawRoundRect(mySelectedCell.getX() - 50, mySelectedCell.getTop() - 1,
                         mySelectedCell.getWidth() + 145 - IpnbEditorUtil.PROMPT_SIZE.width, mySelectedCell.getHeight() + 2, 5, 5);
-      }
-      else {
-        g.drawRoundRect(mySelectedCell.getX() - IpnbEditorUtil.PROMPT_SIZE.width - 55, mySelectedCell.getTop() - 1,
-                        mySelectedCell.getWidth() + 150, mySelectedCell.getHeight() + 2, 5, 5);
-      }
     }
   }
 

@@ -75,7 +75,7 @@ import java.util.EnumSet;
 %xstate QUOTED
 %xstate EMBRACED
 %xstate CLASS1
-%xstate CLASS1PY
+%xstate NEGATE_CLASS1
 %state CLASS2
 %state PROP
 %xstate OPTIONS
@@ -228,18 +228,11 @@ HEX_CHAR=[0-9a-fA-F]
                           }
 }
 
-{LBRACKET} / {RBRACKET}   { yypushstate(CLASS1);
+{LBRACKET} / {RBRACKET}   { if (allowEmptyCharacterClass) yypushstate(CLASS2); else yypushstate(CLASS1);
                             return RegExpTT.CLASS_BEGIN; }
 
-/* Python understands that, Java doesn't */
-{LBRACKET} / "^" {RBRACKET} { if (allowEmptyCharacterClass) {
-                                yypushstate(CLASS1PY);
-                              }
-                              else {
-                                yypushstate(CLASS2);
-                              }
-                              return RegExpTT.CLASS_BEGIN;
-                            }
+{LBRACKET} / "^" {RBRACKET} { if (allowEmptyCharacterClass) yypushstate(CLASS2); else yypushstate(NEGATE_CLASS1);
+                              return RegExpTT.CLASS_BEGIN; }
 
 {LBRACKET}                { yypushstate(CLASS2);
                             return RegExpTT.CLASS_BEGIN; }
@@ -250,7 +243,7 @@ HEX_CHAR=[0-9a-fA-F]
   .                       { assert false : yytext(); }
 }
 
-<CLASS1PY> {
+<NEGATE_CLASS1> {
   "^"                     { yybegin(CLASS1); return RegExpTT.CARET; }
   .                       { assert false : yytext(); }
 }
@@ -258,7 +251,7 @@ HEX_CHAR=[0-9a-fA-F]
 <CLASS2> {
   {RBRACKET}            { yypopstate(); return RegExpTT.CLASS_END; }
 
-  "&&"                  { return allowNestedCharacterClasses ? RegExpTT.ANDAND : RegExpTT.CHARACTER;    }
+  "&&"                  { if (allowNestedCharacterClasses) return RegExpTT.ANDAND; else yypushback(1); return RegExpTT.CHARACTER; }
   [\n\b\t\r\f]          { return commentMode ? com.intellij.psi.TokenType.WHITE_SPACE : RegExpTT.ESC_CHARACTER; }
   {ANY}                 { return RegExpTT.CHARACTER; }
 }
@@ -281,12 +274,12 @@ HEX_CHAR=[0-9a-fA-F]
   "(?<="      { return RegExpTT.POS_LOOKBEHIND;  }
   "(?<!"      { return RegExpTT.NEG_LOOKBEHIND;  }
   "(?#" [^)]+ ")" { return RegExpTT.COMMENT;    }
-  "(?P<" { yybegin(NAMED_GROUP); return RegExpTT.PYTHON_NAMED_GROUP; }
+  "(?P<" { yybegin(NAMED_GROUP); capturingGroupCount++; return RegExpTT.PYTHON_NAMED_GROUP; }
   "(?P=" { yybegin(PY_NAMED_GROUP_REF); return RegExpTT.PYTHON_NAMED_GROUP_REF; }
   "(?("  { yybegin(PY_COND_REF); return RegExpTT.PYTHON_COND_REF; }
 
-  "(?<" { yybegin(NAMED_GROUP); return RegExpTT.RUBY_NAMED_GROUP; }
-  "(?'" { yybegin(QUOTED_NAMED_GROUP); return RegExpTT.RUBY_QUOTED_NAMED_GROUP; }
+  "(?<" { yybegin(NAMED_GROUP); capturingGroupCount++; return RegExpTT.RUBY_NAMED_GROUP; }
+  "(?'" { yybegin(QUOTED_NAMED_GROUP); capturingGroupCount++; return RegExpTT.RUBY_QUOTED_NAMED_GROUP; }
 
   "(?"        { yybegin(OPTIONS); return RegExpTT.SET_OPTIONS; }
 }

@@ -173,7 +173,7 @@ class ClassfileAnalyzer {
         }
 
         myUsages.add(UsageRepr.createMethodUsage(myContext, methodName, myType.className, methodDescr));
-        myUsages.add(UsageRepr.createMetaMethodUsage(myContext, methodName, myType.className, methodDescr));
+        myUsages.add(UsageRepr.createMetaMethodUsage(myContext, methodName, myType.className));
 
         myUsedArguments.add(methodName);
       }
@@ -183,7 +183,7 @@ class ClassfileAnalyzer {
         final String methodDescr = "()" + desc;
 
         myUsages.add(UsageRepr.createMethodUsage(myContext, methodName, myType.className, methodDescr));
-        myUsages.add(UsageRepr.createMetaMethodUsage(myContext, methodName, myType.className, methodDescr));
+        myUsages.add(UsageRepr.createMetaMethodUsage(myContext, methodName, myType.className));
 
         myUsedArguments.add(methodName);
       }
@@ -526,7 +526,7 @@ class ClassfileAnalyzer {
           final int methodOwner = myContext.get(owner);
 
           myUsages.add(UsageRepr.createMethodUsage(myContext, methodName, methodOwner, desc));
-          myUsages.add(UsageRepr.createMetaMethodUsage(myContext, methodName, methodOwner, desc));
+          myUsages.add(UsageRepr.createMetaMethodUsage(myContext, methodName, methodOwner));
           addClassUsage(TypeRepr.getType(myContext, Type.getReturnType(desc)));
 
           super.visitMethodInsn(opcode, owner, name, desc, itf);

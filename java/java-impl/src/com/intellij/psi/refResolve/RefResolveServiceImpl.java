@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi;
+package com.intellij.psi.refResolve;
 
 import com.intellij.concurrency.JobSchedulerImpl;
 import com.intellij.ide.PowerSaveMode;
@@ -26,7 +26,10 @@ import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
@@ -49,7 +52,7 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
-import com.intellij.psi.impl.PersistentIntList;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
@@ -105,12 +108,20 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
     myApplication = application;
     myProjectFileIndex = projectFileIndex;
     if (ENABLED) {
-      File indexFile = new File(getStorageDirectory(), "index");
       File dataFile = new File(getStorageDirectory(), "data");
       fileIsResolved = ConcurrentBitSet.readFrom(new File(getStorageDirectory(), "bitSet"));
 
-      final boolean initial = !indexFile.exists() || !dataFile.exists();
-      storage = new PersistentIntList(indexFile, dataFile, initial);
+      int maxId = FSRecords.getMaxId();
+      PersistentIntList list = new PersistentIntList(dataFile, dataFile.exists() ? 0 : maxId);
+      if (list.getSize() == maxId) {
+        storage = list;
+      }
+      else {
+        // just to be safe, re-resolve all if VFS files count changes since last restart
+        list.dispose();
+        storage = new PersistentIntList(dataFile, maxId);
+        fileIsResolved.clear();
+      }
       Disposer.register(this, storage);
       if (!application.isUnitTestMode()) {
         startupManager.runWhenProjectIsInitialized(new Runnable() {
@@ -283,7 +294,7 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
     return false;
   }
 
-  static boolean isSupportedFileType(@NotNull VirtualFile virtualFile) {
+  public static boolean isSupportedFileType(@NotNull VirtualFile virtualFile) {
     if (virtualFile.isDirectory()) return true;
     if (virtualFile.getFileType() == StdFileTypes.JAVA) return true;
     if (virtualFile.getFileType() == StdFileTypes.XML && !ProjectCoreUtil.isProjectOrWorkspaceFile(virtualFile)) return true;
@@ -716,10 +727,8 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
     if (myProject.isDisposed()) throw new ProcessCanceledException();
     if (fileCount.incrementAndGet() % 100 == 0) {
       PsiManager.getInstance(myProject).dropResolveCaches();
-      synchronized (storage) {
-        storage.flush();
-      }
       try {
+        storage.flush();
         log.flush();
       }
       catch (IOException e) {

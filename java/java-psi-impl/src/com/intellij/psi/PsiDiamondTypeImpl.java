@@ -206,6 +206,11 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
       protected PsiClass getContainingClass(PsiMethod method) {
         return containingClass;
       }
+
+      @Override
+      protected boolean acceptVarargs() {
+        return true;
+      }
     };
     processor.setArgumentList(argumentList);
 

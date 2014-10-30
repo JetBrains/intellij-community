@@ -8,22 +8,16 @@ import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
 import org.jetbrains.plugins.ipnb.format.cells.output.IpnbLatexOutputCell;
 
 import javax.swing.*;
-import java.awt.*;
 
 public class IpnbLatexPanel extends IpnbCodeOutputPanel<IpnbLatexOutputCell> {
   public IpnbLatexPanel(@NotNull final IpnbLatexOutputCell cell) {
     super(cell);
-    setLayout(new VerticalFlowLayout(FlowLayout.LEFT));
+    setLayout(new VerticalFlowLayout(VerticalFlowLayout.TOP));
+    setBackground(IpnbEditorUtil.getBackground());
   }
 
   @Override
   protected JComponent createViewPanel() {
-    final JPanel panel = new JPanel();
-    IpnbUtils.addLatexToPanel(StringUtil.join(myCell.getLatex()), panel);
-    setBackground(IpnbEditorUtil.getBackground());
-    panel.setBackground(IpnbEditorUtil.getBackground());
-    panel.setOpaque(true);
-    setOpaque(true);
-    return panel;
+    return IpnbUtils.createLatexPane(StringUtil.join(myCell.getLatex()));
   }
 }

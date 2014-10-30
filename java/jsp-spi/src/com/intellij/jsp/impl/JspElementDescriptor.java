@@ -21,4 +21,22 @@ import com.intellij.xml.XmlElementDescriptor;
  * @author Maxim.Mossienko
  */
 public interface JspElementDescriptor extends XmlElementDescriptor {
+
+  /**
+   * The body of the tag contains nested JSP syntax.
+   * @see #getContentType()
+   */
+  int CONTENT_TYPE_JSP = CONTENT_TYPE_MIXED;
+
+  /**
+   * The body accepts only template text, EL Expressions, and JSP action elements.
+   * No scripting elements are allowed.
+   */
+  int CONTENT_TYPE_SCRIPTLESS = 101;
+
+  /**
+   * The body of the tag is interpreted by the tag implementation itself,
+   * and is most likely in a different "language", e.g embedded SQL statements.
+   */
+  int CONTENT_TYPE_TAG_DEPENDENT = 102;
 }

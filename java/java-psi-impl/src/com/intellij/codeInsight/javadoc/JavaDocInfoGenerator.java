@@ -2053,7 +2053,7 @@ public class JavaDocInfoGenerator {
 
     @Override
     public void visitMethodCallExpression(PsiMethodCallExpression expression) {
-      myBuffer.append(expression.getMethodExpression().getText()).append("(");
+      myBuffer.append(StringUtil.escapeXml(expression.getMethodExpression().getText())).append("(");
       expression.getArgumentList().accept(this);
       myBuffer.append(")");
     }

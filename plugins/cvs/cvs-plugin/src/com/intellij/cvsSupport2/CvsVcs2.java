@@ -354,7 +354,8 @@ public class CvsVcs2 extends AbstractVcs<CvsChangeList> implements TransactionPr
   @Override
   public RootsConvertor getCustomConvertor() {
     return new RootsConvertor() {
-      public List<VirtualFile> convertRoots(List<VirtualFile> result) {
+      @NotNull
+      public List<VirtualFile> convertRoots(@NotNull List<VirtualFile> result) {
         return FindAllRootsHelper.findVersionedUnder(result);
       }
     };

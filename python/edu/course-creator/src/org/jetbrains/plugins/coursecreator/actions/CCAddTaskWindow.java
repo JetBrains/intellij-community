@@ -24,7 +24,7 @@ public class CCAddTaskWindow extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance(CCAddTaskWindow.class);
 
   public CCAddTaskWindow() {
-    super("Add Problem to Solve", "Add problem to solve", null);
+    super("Add Answer Placeholder", "Add answer placeholder", null);
   }
 
 

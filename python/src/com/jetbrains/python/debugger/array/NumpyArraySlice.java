@@ -17,7 +17,7 @@ import java.util.List;
  * @author amarch
  */
 
-class NumpyArraySlice extends ComparableArrayChunk {
+public class NumpyArraySlice extends ComparableArrayChunk {
   private NumpyArrayValueProvider myValueProvider;
   private DataEvaluator myDataEvaluator;
   private String myFormat;
@@ -54,7 +54,7 @@ class NumpyArraySlice extends ComparableArrayChunk {
   }
 
   @Override
-  void fillData(Runnable callback) {
+  public void fillData(Runnable callback) {
     myDataEvaluator.evaluateData(callback);
   }
 
@@ -111,11 +111,11 @@ class NumpyArraySlice extends ComparableArrayChunk {
           }
 
           String fullName = ((XValueNodeImpl)node).getName();
-          if (!fullName.contains(getPresentation())) {
+          if (fullName == null || !fullName.contains(getPresentation())) {
             return;
           }
 
-          int row = -1;
+          int row;
           if (isOneRow()) {
             row = 0;
           }
@@ -136,6 +136,9 @@ class NumpyArraySlice extends ComparableArrayChunk {
           if (row != -1 && myData[row][0] == null) {
             for (int i = 0; i < node.getChildCount() - 1; i++) {
               String rawValue = ((XValueNodeImpl)node.getChildAt(i + 1)).getRawValue();
+              if (rawValue == null) {
+                return;
+              }
               if (myValueProvider.isNumeric()) {
                 //remove str quotes in case of numeric
                 rawValue = rawValue.substring(1, rawValue.length() - 1);
@@ -144,6 +147,9 @@ class NumpyArraySlice extends ComparableArrayChunk {
             }
             if (node.getChildCount() == 0) {
               String rawValue = ((XValueNodeImpl)node).getRawValue();
+              if (rawValue == null) {
+                return;
+              }
               if (myValueProvider.isNumeric()) {
                 //remove str quotes in case of numeric
                 rawValue = rawValue.substring(1, rawValue.length() - 1);

@@ -305,7 +305,7 @@ public class DuplocatorUtil {
   }
 
   @NotNull
-  public static ExternalizableDuplocatorState registerAndGetState(Language language) {
+  public static ExternalizableDuplocatorState registerAndGetState(@NotNull Language language) {
     final MultilanguageDuplocatorSettings settings = MultilanguageDuplocatorSettings.getInstance();
     ExternalizableDuplocatorState state = settings.getState(language);
     if (state == null) {

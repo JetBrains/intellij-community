@@ -256,6 +256,13 @@ public class PushController implements Disposable {
   }
 
   private boolean isPushAllowed(@NotNull PushSupport<?, ?, ?> pushSupport) {
+    if (mySingleRepoProject) {
+      MyRepoModel repoModel = ContainerUtil.getFirstItem(myView2Model.values());
+      assert repoModel != null;
+      return hasSomethingToPush(myView2Model.keySet()) ||
+             !repoModel.getLoadedCommits().isEmpty() ||
+             myDialog.getAdditionalOptionValue(pushSupport) != null;
+    }
     Collection<RepositoryNode> nodes = getNodesForSupport(pushSupport);
     if (pushSupport.getRepositoryManager().isSyncEnabled()) {
       return hasSomethingToPush(nodes) || (hasCheckedNode(nodes) && allNodesAreLoaded(nodes));
@@ -330,6 +337,7 @@ public class PushController implements Disposable {
             boolean shouldBeSelected;
             if (!errors.isEmpty()) {
               shouldBeSelected = false;
+              model.setLoadedCommits(outgoing.getCommits());
               myPushLog.setChildren(node, ContainerUtil.map(errors, new Function<VcsError, DefaultMutableTreeNode>() {
                 @Override
                 public DefaultMutableTreeNode fun(final VcsError error) {

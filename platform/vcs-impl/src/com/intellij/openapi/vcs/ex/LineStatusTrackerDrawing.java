@@ -72,19 +72,18 @@ public class LineStatusTrackerDrawing {
     final EditorGutterComponentEx gutter = ((EditorEx)editor).getGutterComponentEx();
     Color stripeColor = getDiffGutterColor(range);
 
-    boolean foldingOutlineShown = ((EditorEx)editor).getGutterComponentEx().isFoldingOutlineShown();
     int triangle = 4;
     if (range.getInnerRanges() == null) { // actual painter
       g.setColor(stripeColor);
 
       final int endX = gutter.getWhitespaceSeparatorOffset();
-      final int x = r.x + r.width - 4;
+      final int x = r.x + r.width - 3;
       final int width = endX - x;
       if (r.height > 0) {
-        g.fillRect(x, r.y, width, r.height); // todo: intersection with dotted gutter outline
+        g.fillRect(x, r.y, width, r.height);
       }
       else {
-        final int[] xPoints = new int[]{x, x, endX - (foldingOutlineShown ? -1 : triangle + 1)};
+        final int[] xPoints = new int[]{x, x, endX};
         final int[] yPoints = new int[]{r.y - triangle, r.y + triangle, r.y};
         g.fillPolygon(xPoints, yPoints, 3);
       }
@@ -97,7 +96,7 @@ public class LineStatusTrackerDrawing {
       if (range.getType() == Range.DELETED) {
         final int y = lineToY(editor, range.getLine1());
 
-        final int[] xPoints = new int[]{x, x, endX - (foldingOutlineShown ? 0 : triangle + 1)};
+        final int[] xPoints = new int[]{x, x, endX + 1};
         final int[] yPoints = new int[]{y - triangle, y + triangle, y};
 
         g.setColor(stripeColor);
@@ -215,7 +214,7 @@ public class LineStatusTrackerDrawing {
     toolbar.setBackground(background);
 
     toolbar
-      .setBorder(new ColoredSideBorder(foreground, foreground, (range.getType() != Range.INSERTED) ? null : foreground, foreground, 1));
+      .setBorder(new ColoredSideBorder(foreground, foreground, range.getType() != Range.INSERTED ? null : foreground, foreground, 1));
 
     final JPanel component = new JPanel(new BorderLayout());
     component.setOpaque(false);

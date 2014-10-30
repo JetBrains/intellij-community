@@ -915,7 +915,8 @@ public class HighlightMethodUtil {
     PsiType paramType = i < parameters.length && parameters[i] != null
                         ? substitutor.substitute(parameters[i].getType())
                         : null;
-    return paramType != null && TypeConversionUtil.areTypesAssignmentCompatible(paramType, expression);
+    PsiType expressionType = expression.getType();
+    return paramType != null && expressionType != null && TypeConversionUtil.isAssignable(paramType, expressionType);
   }
 
 
@@ -1331,7 +1332,7 @@ public class HighlightMethodUtil {
   }
 
 
-  static HighlightInfo checkRecursiveConstructorInvocation(PsiMethod method) {
+  static HighlightInfo checkRecursiveConstructorInvocation(@NotNull PsiMethod method) {
     if (HighlightControlFlowUtil.isRecursivelyCalledConstructor(method)) {
       TextRange textRange = HighlightNamesUtil.getMethodDeclarationTextRange(method);
       String description = JavaErrorMessages.message("recursive.constructor.invocation");

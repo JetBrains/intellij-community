@@ -349,7 +349,7 @@ public class RefactoringUtil {
     }
   }
 
-  public static boolean canBeDeclaredFinal(PsiVariable variable) {
+  public static boolean canBeDeclaredFinal(@NotNull PsiVariable variable) {
     LOG.assertTrue(variable instanceof PsiLocalVariable || variable instanceof PsiParameter);
     final boolean isReassigned = HighlightControlFlowUtil
       .isReassigned(variable, new THashMap<PsiElement, Collection<ControlFlowUtil.VariableInfo>>());

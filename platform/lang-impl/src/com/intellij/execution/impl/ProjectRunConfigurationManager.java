@@ -13,25 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.execution.impl;
 
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.UnknownRunConfiguration;
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.SmartList;
-import com.intellij.util.text.UniqueNameGenerator;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -47,74 +42,48 @@ import java.util.Set;
              stateSplitter = ProjectRunConfigurationManager.RunConfigurationStateSplitter.class)
   }
 )
-public class ProjectRunConfigurationManager implements ProjectComponent, PersistentStateComponent<Element> {
-  private static final Logger LOG = Logger.getInstance(ProjectRunConfigurationManager.class);
-
+public class ProjectRunConfigurationManager implements PersistentStateComponent<Element> {
   private final RunManagerImpl myManager;
   private List<Element> myUnloadedElements;
 
-  public ProjectRunConfigurationManager(final RunManagerImpl manager) {
+  public ProjectRunConfigurationManager(@NotNull RunManagerImpl manager) {
     myManager = manager;
   }
 
   @Override
-  public void projectOpened() {
-  }
-
-  @Override
-  public void projectClosed() {
-  }
-
-  @Override
-  @NotNull
-  @NonNls
-  public String getComponentName() {
-    return "ProjectRunConfigurationManager";
-  }
-
-  @Override
-  public void initComponent() {
-  }
-
-  @Override
-  public void disposeComponent() {
-  }
-
-  @Override
   public Element getState() {
-    Element e = new Element("state");
+    Element state = new Element("state");
     for (RunnerAndConfigurationSettings configuration : myManager.getStableConfigurations(true)) {
-      myManager.addConfigurationElement(e, configuration);
+      myManager.addConfigurationElement(state, configuration);
     }
-    if (myUnloadedElements != null) {
+    if (!ContainerUtil.isEmpty(myUnloadedElements)) {
       for (Element unloadedElement : myUnloadedElements) {
-        e.addContent(unloadedElement.clone());
+        state.addContent(unloadedElement.clone());
       }
     }
-    return e;
+    return state;
   }
 
   @Override
   public void loadState(Element state) {
-    Set<String> existing = new THashSet<String>();
-    try {
-      myUnloadedElements = null;
-      for (Element child : state.getChildren()) {
-        RunnerAndConfigurationSettings configuration = myManager.loadConfiguration(child, true);
-        if (configuration == null && Comparing.strEqual(state.getName(), RunManagerImpl.CONFIGURATION)) {
-          if (myUnloadedElements == null) {
-            myUnloadedElements = new SmartList<Element>();
-          }
-          myUnloadedElements.add(state);
-        }
-
-        if (configuration != null) {
-          existing.add(configuration.getUniqueID());
-        }
-      }
+    if (myUnloadedElements != null) {
+      myUnloadedElements.clear();
     }
-    catch (InvalidDataException e) {
-      LOG.error(e);
+
+    Set<String> existing = new THashSet<String>();
+    for (Iterator<Element> iterator = state.getChildren().iterator(); iterator.hasNext(); ) {
+      Element child = iterator.next();
+      RunnerAndConfigurationSettings configuration = myManager.loadConfiguration(child, true);
+      if (configuration != null) {
+        existing.add(configuration.getUniqueID());
+      }
+      else if (child.getName().equals(RunManagerImpl.CONFIGURATION)) {
+        if (myUnloadedElements == null) {
+          myUnloadedElements = new SmartList<Element>();
+        }
+        iterator.remove();
+        myUnloadedElements.add(child);
+      }
     }
 
     myManager.removeNotExistingSharedConfigurations(existing);
@@ -134,22 +103,10 @@ public class ProjectRunConfigurationManager implements ProjectComponent, Persist
     myManager.getSortedConfigurations();
   }
 
-  public static class RunConfigurationStateSplitter implements StateSplitter {
+  static class RunConfigurationStateSplitter extends StateSplitterEx {
     @Override
-    public List<Pair<Element, String>> splitState(Element e) {
-      UniqueNameGenerator generator = new UniqueNameGenerator();
-      List<Pair<Element, String>> result = new SmartList<Pair<Element, String>>();
-      for (Element state : e.getChildren()) {
-        result.add(Pair.create(state, generator.generateUniqueName(FileUtil.sanitizeFileName(state.getAttributeValue(RunManagerImpl.NAME_ATTR))) + ".xml"));
-      }
-      return result;
-    }
-
-    @Override
-    public void mergeStatesInto(Element target, Element[] elements) {
-      for (Element e : elements) {
-        target.addContent(e);
-      }
+    public List<Pair<Element, String>> splitState(@NotNull Element state) {
+      return splitState(state, RunManagerImpl.NAME_ATTR);
     }
   }
 }
