@@ -269,8 +269,8 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
       }
     }
 
-    if (myUnloadedRunnerSettings != null) {
-      myUnloadedRunnerSettings.clear();
+    if (myUnloadedConfigurationPerRunnerSettings != null) {
+      myUnloadedConfigurationPerRunnerSettings.clear();
     }
     for (Iterator<Element> iterator = element.getChildren(CONFIGURATION_ELEMENT).iterator(); iterator.hasNext(); ) {
       Element configurationElement = iterator.next();
