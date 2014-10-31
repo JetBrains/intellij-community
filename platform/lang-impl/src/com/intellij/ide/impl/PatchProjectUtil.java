@@ -182,8 +182,8 @@ public class PatchProjectUtil {
    * Parses patterns for exclude items.
    *
    * @param propertyKey system property key for pattern
-   * @return A map from ModulePattern -> DirectoryPattern*.
-   *         ModulePattern may be null (meaning that directory pattern is applied to all modules).
+   * @return A map in the form <code>ModulePattern -> DirectoryPattern*</code>.
+   *         ModulePattern may be null (meaning that a directory pattern is applied to all modules).
    */
   public static Map<Pattern, Set<Pattern>> loadPatterns(@NonNls String propertyKey) {
     final Map<Pattern, Set<Pattern>> result = new HashMap<Pattern, Set<Pattern>>();
