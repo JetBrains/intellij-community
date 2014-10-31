@@ -2880,6 +2880,15 @@ public class UIUtil {
     }
   }
 
+  public static void setBackgroundRecursively(@NotNull Component component, @NotNull Color bg) {
+    component.setBackground(bg);
+    if (component instanceof Container) {
+      for (Component c : ((Container)component).getComponents()) {
+        setBackgroundRecursively(c, bg);
+      }
+    }
+  }
+
   public static void addInsets(@NotNull JComponent component, @NotNull Insets insets) {
     if (component.getBorder() != null) {
       component.setBorder(new CompoundBorder(new EmptyBorder(insets), component.getBorder()));
