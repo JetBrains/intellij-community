@@ -244,6 +244,8 @@ keychain
 keychains
 keyframe
 keyframes
+keymap
+keymaps
 kotlin
 labeler
 labelers
@@ -615,6 +617,7 @@ versa
 vertices
 viewlet
 viewport
+viewports
 vtlvariable
 watchlist
 webpack
