@@ -75,19 +75,11 @@ class BuildMessageDispatcher extends SimpleChannelInboundHandlerAdapter<CmdlineR
   }
 
   public void cancelSession(UUID sessionId) {
-    LOG.info("Cancelling session " + sessionId);
     if (myCanceledSessions.add(sessionId)) {
       final Channel channel = getConnectedChannel(sessionId);
       if (channel != null) {
         channel.writeAndFlush(CmdlineProtoUtil.toMessage(sessionId, CmdlineProtoUtil.createCancelCommand()));
-        LOG.info("Cancelling session " + sessionId + "; message sent");
       }
-      else {
-        LOG.info("Cancelling session " + sessionId + "; channel not ready");
-      }
-    }
-    else {
-      LOG.info("Cancelling session " + sessionId + "; already marked as 'cancelled'");
     }
   }
 
