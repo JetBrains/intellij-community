@@ -7,6 +7,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.remoteServer.runtime.log.LoggingHandler;
 import org.jetbrains.annotations.NotNull;
 
@@ -18,6 +19,7 @@ public class LoggingHandlerImpl implements LoggingHandler {
 
   public LoggingHandlerImpl(@NotNull Project project) {
     myConsole = TextConsoleBuilderFactory.getInstance().createBuilder(project).getConsole();
+    Disposer.register(project, myConsole);
   }
 
   @NotNull
