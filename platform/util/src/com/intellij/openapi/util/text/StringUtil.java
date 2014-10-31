@@ -1827,7 +1827,7 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(pure = true)
   public static int indexOf(@NotNull CharSequence sequence, @NotNull CharSequence infix) {
-    for (int i = 0; i < sequence.length() - infix.length(); i++) {
+    for (int i = 0; i <= sequence.length() - infix.length(); i++) {
       if (startsWith(sequence, i, infix)) {
         return i;
       }

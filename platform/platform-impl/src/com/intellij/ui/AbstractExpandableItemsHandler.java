@@ -19,8 +19,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.AbstractPopup;
+import com.intellij.ui.popup.OurHeavyWeightPopup;
 import com.intellij.util.Alarm;
 import com.intellij.util.JBHiDPIScaledImage;
 import com.intellij.util.ui.UIUtil;
@@ -42,7 +42,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
   private final TipComponent myTipComponent;
 
   private boolean myEnabled = Registry.is("ide.expansion.hints.enabled");
-  private Hint myHint;
+  private Popup myPopup;
   private KeyType myKey;
   private Rectangle myKeyItemBounds;
   private BufferedImage myImage;
@@ -293,7 +293,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     if (location == null) {
       hideHint();
     }
-    else if (myHint == null) {
+    else if (myPopup == null) {
       showHint(location);
     }
     else {
@@ -320,34 +320,36 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
 
   private void hideHint() {
     myUpdateAlarm.cancelAllRequests();
-    if (myHint != null) {
-      myHint.hide();
-      myHint = null;
+    if (myPopup != null) {
+      myPopup.hide();
+      myPopup = null;
       repaintKeyItem();
     }
     myKey = null;
   }
 
   public boolean isShowing() {
-    return myHint != null && myHint.isVisible();
+    return myPopup != null;
   }
 
   private void showHint(Point location) {
-    assert myHint == null;
+    assert myPopup == null;
 
     if (!myComponent.isShowing()) {
       return;
     }
 
-    myHint = new ExpansionHint(myTipComponent);
-    myHint.show(myComponent, location.x, location.y, myComponent, new HintHint(myComponent, location));
+    SwingUtilities.convertPointToScreen(location, myComponent);
+    myPopup = new OurHeavyWeightPopup(myComponent, myTipComponent, location.x, location.y);
+    myPopup.show();
 
     repaintKeyItem();
   }
 
   private void repaintHint(Point location) {
-    if (myHint != null && myKey != null && myComponent.isShowing()) {
-      myHint.setLocation(new RelativePoint(myComponent, location));
+    if (myPopup != null && myKey != null && myComponent.isShowing()) {
+      SwingUtilities.convertPointToScreen(location, myComponent);
+      SwingUtilities.getWindowAncestor(myTipComponent).setLocation(location);
       myTipComponent.repaint();
       repaintKeyItem();
     }

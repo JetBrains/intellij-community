@@ -26,6 +26,7 @@ import com.intellij.openapi.options.ExternalInfo;
 import com.intellij.openapi.options.ExternalizableScheme;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.util.*;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.text.StringTokenizer;
 import org.jdom.Element;
 import org.jdom.output.XMLOutputter;
@@ -279,12 +280,12 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
   private static Element writeKeywords(Set<String> keywords, String tagName, Element highlightingElement) {
     if (keywords.size() == 0 && !ELEMENT_KEYWORDS.equals(tagName)) return null;
     Element keywordsElement = new Element(tagName);
-    String[] strings = keywords.toArray(new String[keywords.size()]);
+    String[] strings = ArrayUtil.toStringArray(keywords);
     Arrays.sort(strings);
     StringBuilder keywordsAttribute = new StringBuilder();
 
     for (final String keyword : strings) {
-      if (keyword.indexOf(SEMICOLON) == -1) {
+      if (!keyword.contains(SEMICOLON)) {
         if (keywordsAttribute.length() != 0) keywordsAttribute.append(SEMICOLON);
         keywordsAttribute.append(keyword);
       } else {
