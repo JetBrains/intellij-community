@@ -44,6 +44,18 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
   private static final String CONFIGURATION_ELEMENT = "ConfigurationWrapper";
   @NonNls
   private static final String RUNNER_ID = "RunnerId";
+
+  private static final Comparator<Element> RUNNER_COMPARATOR = new Comparator<Element>() {
+    @Override
+    public int compare(@NotNull Element o1, @NotNull Element o2) {
+      String attributeValue1 = o1.getAttributeValue(RUNNER_ID);
+      if (attributeValue1 == null) {
+        return 1;
+      }
+      return StringUtil.compare(attributeValue1, o2.getAttributeValue(RUNNER_ID), false);
+    }
+  };
+
   @NonNls
   private static final String CONFIGURATION_TYPE_ATTRIBUTE = "type";
   @NonNls
@@ -298,9 +310,8 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
     myConfiguration.writeExternal(element);
 
     if (!(myConfiguration instanceof UnknownRunConfiguration)) {
-      Comparator<Element> runnerComparator = createRunnerComparator();
-      writeRunnerSettings(runnerComparator, element);
-      writeConfigurationPerRunnerSettings(runnerComparator, element);
+      writeRunnerSettings(RUNNER_COMPARATOR, element);
+      writeConfigurationPerRunnerSettings(RUNNER_COMPARATOR, element);
     }
   }
 
@@ -379,24 +390,6 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
       return ((TargetAwareRunProfile)myConfiguration).canRunOn(target);
     }
     return true;
-  }
-
-  private static Comparator<Element> createRunnerComparator() {
-    return new Comparator<Element>() {
-      @Override
-      public int compare(@NotNull Element o1, @NotNull Element o2) {
-        final String attributeValue1 = o1.getAttributeValue(RUNNER_ID);
-        if (attributeValue1 == null) {
-          return 1;
-
-        }
-        final String attributeValue2 = o2.getAttributeValue(RUNNER_ID);
-        if (attributeValue2 == null) {
-          return -1;
-        }
-        return attributeValue1.compareTo(attributeValue2);
-      }
-    };
   }
 
   @Override
