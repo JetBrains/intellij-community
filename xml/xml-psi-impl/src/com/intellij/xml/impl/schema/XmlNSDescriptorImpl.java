@@ -477,10 +477,10 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
   private XmlAttributeDescriptor getAttributeImpl(String localName, String namespace, @Nullable Set<XmlTag> visited) {
     if (myTag == null) return null;
 
-    XmlNSDescriptorImpl nsDescriptor = (XmlNSDescriptorImpl)myTag.getNSDescriptor(namespace, true);
+    XmlNSDescriptor nsDescriptor = myTag.getNSDescriptor(namespace, true);
 
-    if (nsDescriptor != this && nsDescriptor != null) {
-      return nsDescriptor.getAttributeImpl(
+    if (nsDescriptor != this && nsDescriptor instanceof XmlNSDescriptorImpl) {
+      return ((XmlNSDescriptorImpl)nsDescriptor).getAttributeImpl(
         localName,
         namespace,
         visited
