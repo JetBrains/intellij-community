@@ -247,7 +247,8 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
       myUnloadedRunnerSettings.clear();
     }
     myLoadedRunnerSettings.clear();
-    for (Element runnerElement : element.getChildren(RUNNER_ELEMENT)) {
+    for (Iterator<Element> iterator = element.getChildren(RUNNER_ELEMENT).iterator(); iterator.hasNext(); ) {
+      Element runnerElement = iterator.next();
       String id = runnerElement.getAttributeValue(RUNNER_ID);
       ProgramRunner runner = RunnerRegistry.getInstance().findRunnerById(id);
       if (runner != null) {
@@ -262,11 +263,15 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
         if (myUnloadedRunnerSettings == null) {
           myUnloadedRunnerSettings = new SmartList<Element>();
         }
+
+        iterator.remove();
         myUnloadedRunnerSettings.add(runnerElement);
       }
     }
 
-    myUnloadedConfigurationPerRunnerSettings = null;
+    if (myUnloadedRunnerSettings != null) {
+      myUnloadedRunnerSettings.clear();
+    }
     for (Iterator<Element> iterator = element.getChildren(CONFIGURATION_ELEMENT).iterator(); iterator.hasNext(); ) {
       Element configurationElement = iterator.next();
       ProgramRunner runner = RunnerRegistry.getInstance().findRunnerById(configurationElement.getAttributeValue(RUNNER_ID));
