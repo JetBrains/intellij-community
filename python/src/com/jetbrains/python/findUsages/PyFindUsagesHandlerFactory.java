@@ -20,12 +20,10 @@ import com.intellij.find.findUsages.FindUsagesHandlerFactory;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
-import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyUtil;
-import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyImportedModule;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 import org.jetbrains.annotations.NotNull;
@@ -98,7 +96,6 @@ public class PyFindUsagesHandlerFactory extends FindUsagesHandlerFactory {
     if (containingClass == null) {
       return false;
     }
-    return (PyNames.FAKE_OLD_BASE.equals(containingClass.getName()) ||
-            (PyNames.OBJECT.equals(containingClass.getName()) && PyBuiltinCache.getInstance(fun).isBuiltin(containingClass)));
+    return PyUtil.isObjectClass(containingClass);
   }
 }

@@ -192,7 +192,7 @@ public class AddFieldQuickFix implements LocalQuickFix {
     if (ancestorInit == null) functionText += "    pass";
     else {
       final PyClass ancestorClass = ancestorInit.getContainingClass();
-      if (ancestorClass != null && ancestorClass != PyBuiltinCache.getInstance(ancestorInit).getClass("object") && !FAKE_OLD_BASE.equals(ancestorClass.getName())) {
+      if (ancestorClass != null && !PyUtil.isObjectClass(ancestorClass)) {
         StringBuilder sb = new StringBuilder();
         PyParameter[] params = ancestorInit.getParameterList().getParameters();
 
