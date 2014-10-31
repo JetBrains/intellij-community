@@ -680,7 +680,7 @@ public class BuildManager implements ApplicationComponent{
               try {
                 if (project.isDisposed()) {
                   if (usingPreloadedProcess) {
-                    future.cancel(true);
+                    future.cancel(false);
                   }
                   else {
                     return;
@@ -714,24 +714,23 @@ public class BuildManager implements ApplicationComponent{
                   processHandler.startNotify();
                 }
 
-                final boolean terminated = processHandler.waitFor();
-                if (terminated) {
-                  final int exitValue = processHandler.getProcess().exitValue();
-                  if (exitValue != 0) {
-                    final StringBuilder msg = new StringBuilder();
-                    msg.append("Abnormal build process termination: ");
-                    if (errorsOnLaunch.length() > 0) {
-                      msg.append("\n").append(errorsOnLaunch);
-                    }
-                    else {
-                      msg.append("unknown error");
-                    }
-                    handler.handleFailure(sessionId, CmdlineProtoUtil.createFailure(msg.toString(), null));
+                while (!processHandler.waitFor()) {
+                  LOG.info("processHandler.waitFor() returned false for session " + sessionId + ", continue waiting");
+                }
+
+                final int exitValue = processHandler.getProcess().exitValue();
+                if (exitValue != 0) {
+                  final StringBuilder msg = new StringBuilder();
+                  msg.append("Abnormal build process termination: ");
+                  if (errorsOnLaunch.length() > 0) {
+                    msg.append("\n").append(errorsOnLaunch);
                   }
+                  else {
+                    msg.append("unknown error");
+                  }
+                  handler.handleFailure(sessionId, CmdlineProtoUtil.createFailure(msg.toString(), null));
                 }
-                else {
-                  handler.handleFailure(sessionId, CmdlineProtoUtil.createFailure("Disconnected from build process", null));
-                }
+
               }
               catch (Throwable e) {
                 execFailure = e;
