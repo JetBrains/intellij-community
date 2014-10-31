@@ -790,6 +790,6 @@ public class JDOMUtil {
   }
 
   public static boolean isEmpty(@Nullable Element element) {
-    return element != null && element.getAttributes().isEmpty() && element.getContent().isEmpty();
+    return element == null || (element.getAttributes().isEmpty() && element.getContent().isEmpty());
   }
 }
