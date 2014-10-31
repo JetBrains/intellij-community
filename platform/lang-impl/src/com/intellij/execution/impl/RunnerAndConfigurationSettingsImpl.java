@@ -21,12 +21,11 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionException;
-import com.intellij.openapi.util.Factory;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
+import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -87,11 +86,13 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
   private RunConfiguration myConfiguration;
   private boolean myIsTemplate;
 
-  private final Map<ProgramRunner, RunnerSettings> myRunnerSettings = new HashMap<ProgramRunner, RunnerSettings>();
-  private List<Element> myUnloadedRunnerSettings = null;
+  private final Map<ProgramRunner, RunnerSettings> myRunnerSettings = new THashMap<ProgramRunner, RunnerSettings>();
+  private List<Element> myUnloadedRunnerSettings;
+  // to avoid changed files
+  private final Set<String> myLoadedRunnerSettings = new THashSet<String>();
 
-  private final Map<ProgramRunner, ConfigurationPerRunnerSettings> myConfigurationPerRunnerSettings = new HashMap<ProgramRunner, ConfigurationPerRunnerSettings>();
-  private List<Element> myUnloadedConfigurationPerRunnerSettings = null;
+  private final Map<ProgramRunner, ConfigurationPerRunnerSettings> myConfigurationPerRunnerSettings = new THashMap<ProgramRunner, ConfigurationPerRunnerSettings>();
+  private List<Element> myUnloadedConfigurationPerRunnerSettings;
 
   private boolean myTemporary;
   private boolean myEditBeforeRun;
@@ -242,11 +243,15 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
     }
 
     myConfiguration.readExternal(element);
-    myUnloadedRunnerSettings = null;
+    if (myUnloadedRunnerSettings != null) {
+      myUnloadedRunnerSettings.clear();
+    }
+    myLoadedRunnerSettings.clear();
     for (Element runnerElement : element.getChildren(RUNNER_ELEMENT)) {
       String id = runnerElement.getAttributeValue(RUNNER_ID);
       ProgramRunner runner = RunnerRegistry.getInstance().findRunnerById(id);
       if (runner != null) {
+        myLoadedRunnerSettings.add(id);
         RunnerSettings settings = createRunnerSettings(runner);
         if (settings != null) {
           settings.readExternal(runnerElement);
@@ -340,16 +345,23 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
     }
   }
 
-  private void writeRunnerSettings(final Comparator<Element> runnerComparator, final Element element) throws WriteExternalException {
-    final ArrayList<Element> runnerSettings = new ArrayList<Element>();
+  private void writeRunnerSettings(@NotNull Comparator<Element> runnerComparator, @NotNull Element element) throws WriteExternalException {
+    List<Element> runnerSettings = new SmartList<Element>();
     for (ProgramRunner runner : myRunnerSettings.keySet()) {
       RunnerSettings settings = myRunnerSettings.get(runner);
+      boolean wasLoaded = myLoadedRunnerSettings.contains(runner.getRunnerId());
+      if (settings == null && !wasLoaded) {
+        continue;
+      }
+
       Element runnerElement = new Element(RUNNER_ELEMENT);
       if (settings != null) {
         settings.writeExternal(runnerElement);
       }
-      runnerElement.setAttribute(RUNNER_ID, runner.getRunnerId());
-      runnerSettings.add(runnerElement);
+      if (wasLoaded || !JDOMUtil.isEmpty(runnerElement)) {
+        runnerElement.setAttribute(RUNNER_ID, runner.getRunnerId());
+        runnerSettings.add(runnerElement);
+      }
     }
     if (myUnloadedRunnerSettings != null) {
       for (Element unloadedRunnerSetting : myUnloadedRunnerSettings) {
@@ -372,7 +384,7 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
     myConfiguration.checkConfiguration();
     if (myConfiguration instanceof RunConfigurationBase) {
       final RunConfigurationBase runConfigurationBase = (RunConfigurationBase) myConfiguration;
-      Set<ProgramRunner> runners = new HashSet<ProgramRunner>();
+      Set<ProgramRunner> runners = new THashSet<ProgramRunner>();
       runners.addAll(myRunnerSettings.keySet());
       runners.addAll(myConfigurationPerRunnerSettings.keySet());
       for (ProgramRunner runner : runners) {
