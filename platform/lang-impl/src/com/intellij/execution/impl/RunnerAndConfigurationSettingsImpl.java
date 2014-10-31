@@ -21,10 +21,12 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionException;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.StringInterner;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -76,7 +78,6 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
   private static final String EDIT_BEFORE_RUN = "editBeforeRun";
   @NonNls
   public static final String SINGLETON = "singleton";
-
 
   /** for compatibility */
   @NonNls
@@ -242,7 +243,6 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
 
     myConfiguration.readExternal(element);
     myUnloadedRunnerSettings = null;
-    StringInterner interner = new StringInterner();
     for (Element runnerElement : element.getChildren(RUNNER_ELEMENT)) {
       String id = runnerElement.getAttributeValue(RUNNER_ID);
       ProgramRunner runner = RunnerRegistry.getInstance().findRunnerById(id);
@@ -257,7 +257,6 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
         if (myUnloadedRunnerSettings == null) {
           myUnloadedRunnerSettings = new SmartList<Element>();
         }
-        JDOMUtil.internElement(runnerElement, interner);
         myUnloadedRunnerSettings.add(runnerElement);
       }
     }
