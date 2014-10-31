@@ -327,7 +327,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
     });
 
     myMainPanel = new JPanel(new BorderLayout());
-    Splitter splitter = new Splitter();
+    Splitter splitter = new Splitter(false, 0.3f);
     JPanel leftPanel = new JPanel(new BorderLayout());
     leftPanel.add(myToolBar, BorderLayout.NORTH);
     leftPanel.add(myTabbedPane.getComponent(), BorderLayout.CENTER);

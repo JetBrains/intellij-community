@@ -236,10 +236,10 @@ public abstract class RunConfigurationBase extends UserDataHolderBase
       element.addContent(fileOutputPathElement);
     }
     if (myShowConsoleOnStdOut) {//default value shouldn't be written
-      element.setAttribute(SHOW_CONSOLE_ON_STD_OUT, String.valueOf(myShowConsoleOnStdOut));
+      element.setAttribute(SHOW_CONSOLE_ON_STD_OUT, String.valueOf(true));
     }
     if (myShowConsoleOnStdErr) {//default value shouldn't be written
-      element.setAttribute(SHOW_CONSOLE_ON_STD_ERR, String.valueOf(myShowConsoleOnStdErr));
+      element.setAttribute(SHOW_CONSOLE_ON_STD_ERR, String.valueOf(true));
     }
   }
 

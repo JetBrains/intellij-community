@@ -546,9 +546,11 @@ public class BuildManager implements ApplicationComponent{
     runCommand(new Runnable() {
       @Override
       public void run() {
+        LOG.info("Cancelling preloaded process for project " + projectPath);
         Pair<RequestFuture<PreloadedProcessMessageHandler>, OSProcessHandler> pair = takePreloadedProcess(projectPath);
         if (pair != null) {
           final RequestFuture<PreloadedProcessMessageHandler> future = pair.first;
+          LOG.info("Cancelling preloaded process, sessionID=" + future.getRequestID());
           myMessageDispatcher.cancelSession(future.getRequestID());
           // waiting for preloaded process from project's task queue guarantees no build is started for this project
           // until this one gracefully exits and closes all its storages
@@ -558,6 +560,9 @@ public class BuildManager implements ApplicationComponent{
               future.waitFor();
             }
           });
+        }
+        else {
+          LOG.info("takePreloadedProcess() returned null");
         }
       }
     });

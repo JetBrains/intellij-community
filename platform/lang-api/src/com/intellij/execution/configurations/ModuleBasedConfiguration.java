@@ -64,15 +64,6 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
     myModule.setModule(module);
   }
 
-  @Override
-  public void readExternal(Element element) throws InvalidDataException{
-    super.readExternal(element);
-  }
-  @Override
-  public void writeExternal(Element element) throws WriteExternalException{
-    super.writeExternal(element);
-  }
-
   protected void readModule(final Element element) throws InvalidDataException {
     myModule.readExternal(element);
   }
