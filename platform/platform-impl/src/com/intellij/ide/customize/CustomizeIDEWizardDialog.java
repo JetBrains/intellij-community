@@ -22,6 +22,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.JBCardLayout;
 import com.intellij.util.PlatformUtils;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -33,7 +34,8 @@ import java.util.List;
 
 public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionListener {
   private static final String BUTTONS = "BUTTONS";
-  private static final String NOBUTTONS = "NOBUTTONS";
+  private static final String NO_BUTTONS = "NO_BUTTONS";
+
   private final JButton mySkipButton = new JButton("Skip All and Set Defaults");
   private final JButton myBackButton = new JButton("Back");
   private final JButton myNextButton = new JButton("Next");
@@ -68,11 +70,11 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
     final CustomizeIDEWizardStepsProvider provider;
 
     try {
-      Class<CustomizeIDEWizardStepsProvider> providerClass = (Class<CustomizeIDEWizardStepsProvider>)Class.forName(stepsProviderName);
-      provider = providerClass.newInstance();
+      Class<?> providerClass = Class.forName(stepsProviderName);
+      provider = (CustomizeIDEWizardStepsProvider)providerClass.newInstance();
     }
     catch (Throwable e) {
-      Main.showMessage("Start Failed", e);
+      Main.showMessage("Configuration Wizard Failed", e);
       return;
     }
 
@@ -148,17 +150,17 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
     buttonPanel.add(myNextButton, gbc);
     buttonPanel.setBorder(BorderFactory.createEmptyBorder(8, 0, 0, 0));
     myButtonWrapper.add(buttonPanel, BUTTONS);
-    myButtonWrapper.add(new JLabel(), NOBUTTONS);
+    myButtonWrapper.add(new JLabel(), NO_BUTTONS);
     myButtonWrapperLayout.show(myButtonWrapper, BUTTONS);
     return myButtonWrapper;
   }
 
   void setButtonsVisible(boolean visible) {
-    myButtonWrapperLayout.show(myButtonWrapper, visible ? BUTTONS : NOBUTTONS);
+    myButtonWrapperLayout.show(myButtonWrapper, visible ? BUTTONS : NO_BUTTONS);
   }
 
   @Override
-  public void actionPerformed(ActionEvent e) {
+  public void actionPerformed(@NotNull ActionEvent e) {
     if (e.getSource() == mySkipButton) {
       doOKAction();
       return;
