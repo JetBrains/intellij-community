@@ -17,6 +17,7 @@ package com.intellij.vcs.log.statistics;
 
 import com.intellij.internal.statistic.AbstractApplicationUsagesCollector;
 import com.intellij.internal.statistic.CollectUsagesException;
+import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.openapi.project.Project;
@@ -85,7 +86,7 @@ public class VcsLogRepoSizeCollector extends AbstractApplicationUsagesCollector 
   @SuppressWarnings("StringToUpperCaseOrToLowerCaseWithoutLocale")
   private static class RootUsage extends UsageDescriptor {
     RootUsage(VcsKey vcs, int value) {
-      super("vcs.log." + vcs.getName().toLowerCase() + ".root.count", value);
+      super(ConvertUsagesUtil.ensureProperKey("vcs.log." + vcs.getName().toLowerCase() + ".root.count"), value);
     }
   }
 
