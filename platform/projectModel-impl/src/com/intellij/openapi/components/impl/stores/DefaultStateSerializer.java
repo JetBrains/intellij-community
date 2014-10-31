@@ -49,7 +49,7 @@ public class DefaultStateSerializer {
       return element;
     }
     else {
-      return XmlSerializer.serialize(state, new SkipDefaultValuesSerializationFilters() {
+      return XmlSerializer.serializeIfNotDefault(state, new SkipDefaultValuesSerializationFilters() {
         @Override
         protected boolean accepts(@NotNull Accessor accessor, @NotNull Object bean, @Nullable Object beanValue) {
           if (!super.accepts(accessor, bean, beanValue)) {

@@ -171,12 +171,12 @@ public class DirectoryBasedStorage extends StateStorageBase<DirectoryStorageData
         return;
       }
       catch (Throwable e) {
-        LOG.info("Unable to serialize component state", e);
+        LOG.error("Unable to serialize " + componentName + " state", e);
         return;
       }
 
       removedFileNames.addAll(originalStorageData.getFileNames(componentName));
-      if (compositeState == null || JDOMUtil.isEmpty(compositeState)) {
+      if (JDOMUtil.isEmpty(compositeState)) {
         doSetState(componentName, null, null);
       }
       else {

@@ -15,7 +15,10 @@
  */
 package com.intellij.openapi.components.impl.stores;
 
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.RoamingType;
+import com.intellij.openapi.components.StateStorageException;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.components.store.StateStorageBase;
 import com.intellij.openapi.options.CurrentUserHolder;
 import com.intellij.openapi.util.JDOMUtil;
@@ -222,7 +225,7 @@ public abstract class XmlElementStorage extends StateStorageBase<StorageData> {
         return;
       }
       catch (Throwable e) {
-        LOG.info("Unable to serialize component state", e);
+        LOG.error("Unable to serialize " + componentName + " state", e);
         return;
       }
 
