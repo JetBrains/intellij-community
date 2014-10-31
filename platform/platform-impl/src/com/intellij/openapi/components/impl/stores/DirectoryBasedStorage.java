@@ -303,7 +303,7 @@ public class DirectoryBasedStorage extends StateStorageBase<DirectoryStorageData
             LOG.debug("Removing configuration file: " + file.getPresentableUrl());
             file.delete(this);
           }
-          catch (FileNotFoundException e) {
+          catch (FileNotFoundException ignored) {
             throw new ReadOnlyModificationException(file);
           }
           catch (IOException e) {
