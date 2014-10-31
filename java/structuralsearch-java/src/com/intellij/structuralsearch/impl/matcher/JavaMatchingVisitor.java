@@ -835,7 +835,14 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       }
     }
     final String text = stripTypeParameters(el.getText());
-    final boolean equalsIgnorePackage = MatchUtils.compareWithNoDifferenceToPackage(text, stripTypeParameters(el2.getText()));
+    String text2;
+    if (el2 instanceof PsiClass) {
+      text2 = ((PsiClass)el2).getQualifiedName();
+    } else {
+      text2 = el2.getText();
+    }
+
+    final boolean equalsIgnorePackage = MatchUtils.compareWithNoDifferenceToPackage(text, stripTypeParameters(text2));
     if (equalsIgnorePackage || !(el2 instanceof PsiJavaReference)) {
       return equalsIgnorePackage;
     }
@@ -846,7 +853,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
         return text.equals(((PsiClass)element2).getQualifiedName());
       }
       else {
-        return MatchUtils.compareWithNoDifferenceToPackage(text, el2.getText());
+        return MatchUtils.compareWithNoDifferenceToPackage(text, text2);
       }
     }
   }
