@@ -242,6 +242,9 @@ class PersistentIntList implements Disposable {
   public synchronized int[] get(final int id) {
     assertPointer(id);
     try {
+      if (id >= pointers.size) {
+        return ArrayUtil.EMPTY_INT_ARRAY;
+      }
       int arrayBase = pointers.get(id);
       IntArray array = arrayBase == 0 ? EMPTY : new IntArray(data, arrayBase);
       return array.toArray();
