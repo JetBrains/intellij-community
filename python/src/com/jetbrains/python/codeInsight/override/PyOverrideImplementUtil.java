@@ -263,7 +263,7 @@ public class PyOverrideImplementUtil {
     return pyFunctionBuilder;
   }
 
-  private static boolean raisesNotImplementedError(@NotNull PyFunction function) {
+  public static boolean raisesNotImplementedError(@NotNull PyFunction function) {
     for (PyStatement statement : function.getStatementList().getStatements()) {
       if (!(statement instanceof PyRaiseStatement)) {
         continue;
