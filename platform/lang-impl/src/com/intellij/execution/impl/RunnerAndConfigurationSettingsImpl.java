@@ -262,9 +262,9 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
     }
 
     myUnloadedConfigurationPerRunnerSettings = null;
-    for (Element configurationElement : element.getChildren(CONFIGURATION_ELEMENT)) {
-      String id = configurationElement.getAttributeValue(RUNNER_ID);
-      ProgramRunner runner = RunnerRegistry.getInstance().findRunnerById(id);
+    for (Iterator<Element> iterator = element.getChildren(CONFIGURATION_ELEMENT).iterator(); iterator.hasNext(); ) {
+      Element configurationElement = iterator.next();
+      ProgramRunner runner = RunnerRegistry.getInstance().findRunnerById(configurationElement.getAttributeValue(RUNNER_ID));
       if (runner != null) {
         ConfigurationPerRunnerSettings settings = myConfiguration.createRunnerSettings(new InfoProvider(runner));
         if (settings != null) {
@@ -276,15 +276,16 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
         if (myUnloadedConfigurationPerRunnerSettings == null) {
           myUnloadedConfigurationPerRunnerSettings = new SmartList<Element>();
         }
+
+        iterator.remove();
         myUnloadedConfigurationPerRunnerSettings.add(configurationElement);
       }
     }
   }
 
   @Override
-  public void writeExternal(final Element element) throws WriteExternalException {
+  public void writeExternal(Element element) throws WriteExternalException {
     final ConfigurationFactory factory = myConfiguration.getFactory();
-
     if (!(myConfiguration instanceof UnknownRunConfiguration)) {
       element.setAttribute(TEMPLATE_FLAG_ATTRIBUTE, String.valueOf(myIsTemplate));
       if (!myIsTemplate) {
@@ -297,7 +298,9 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
       }
       //element.setAttribute(UNIQUE_ID, getUniqueID());
 
-      if (isEditBeforeRun()) element.setAttribute(EDIT_BEFORE_RUN, String.valueOf(true));
+      if (isEditBeforeRun()) {
+        element.setAttribute(EDIT_BEFORE_RUN, String.valueOf(true));
+      }
       if (myWasSingletonSpecifiedExplicitly || mySingleton != factory.isConfigurationSingletonByDefault()) {
         element.setAttribute(SINGLETON, String.valueOf(mySingleton));
       }

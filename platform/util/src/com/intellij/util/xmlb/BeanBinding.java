@@ -129,10 +129,12 @@ class BeanBinding implements Binding {
     if (element == null) {
       return o;
     }
-    return deserializeInto(XmlSerializerImpl.newInstance(myBeanClass), element);
+    Object instance = XmlSerializerImpl.newInstance(myBeanClass);
+    deserializeInto(instance, element, null);
+    return instance;
   }
 
-  public Object deserializeInto(@NotNull Object result, @NotNull Element element) {
+  public void deserializeInto(@NotNull Object result, @NotNull Element element, @Nullable Set<String> accessorNameTracker) {
     Set<Binding> bindings = myPropertyBindings.keySet();
     MultiMap<Binding, Object> data = MultiMap.createSmartList();
     nextNode:
@@ -155,10 +157,11 @@ class BeanBinding implements Binding {
     }
 
     for (Binding binding : data.keySet()) {
+      if (accessorNameTracker != null) {
+        accessorNameTracker.add(myPropertyBindings.get(binding).getName());
+      }
       binding.deserialize(result, ArrayUtil.toObjectArray(data.get(binding)));
     }
-
-    return result;
   }
 
   @Override
