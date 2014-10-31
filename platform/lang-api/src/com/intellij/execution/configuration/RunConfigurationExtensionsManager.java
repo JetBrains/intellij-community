@@ -11,13 +11,10 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.StringInterner;
-import com.intellij.util.containers.WeakStringInterner;
 import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +34,6 @@ public class RunConfigurationExtensionsManager<U extends RunConfigurationBase, T
   private static final String EXTENSION_ROOT_ATTR = "EXTENSION";
 
   protected final ExtensionPointName<T> myExtensionPointName;
-  private final StringInterner myInterner = new WeakStringInterner();
 
   public RunConfigurationExtensionsManager(ExtensionPointName<T> extensionPointName) {
     myExtensionPointName = extensionPointName;
@@ -65,9 +61,7 @@ public class RunConfigurationExtensionsManager<U extends RunConfigurationBase, T
     if (!found) {
       List<Element> copy = new ArrayList<Element>(children.size());
       for (Element child : children) {
-        Element clone = child.clone();
-        JDOMUtil.internElement(clone, myInterner);
-        copy.add(clone);
+        copy.add(child.clone());
       }
       configuration.putCopyableUserData(RUN_EXTENSIONS, copy);
     }
