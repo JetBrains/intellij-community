@@ -41,6 +41,7 @@ import com.intellij.refactoring.extractMethodObject.ExtractLightMethodObjectHand
 import com.sun.jdi.ObjectCollectedException;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.Value;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author lex
@@ -158,6 +159,7 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl{
     }
   }
 
+  @Nullable
   public Modifier getModifier() {
     return myModifier;
   }

@@ -23,6 +23,7 @@ import com.intellij.debugger.actions.JumpToObjectAction;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
+import com.intellij.debugger.engine.evaluation.expression.Modifier;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
@@ -407,7 +408,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
   }
 
   public Project getProject() {
-    return myEvaluationContext.getProject();
+    return myValueDescriptor.getProject();
   }
 
   @Override
@@ -510,7 +511,13 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
           protected void action() throws Exception {
             ValueDescriptorImpl inspectDescriptor = myValueDescriptor;
             if (myValueDescriptor instanceof WatchItemDescriptor) {
-              inspectDescriptor = (ValueDescriptorImpl) ((WatchItemDescriptor) myValueDescriptor).getModifier().getInspectItem(getProject());
+              Modifier modifier = ((WatchItemDescriptor)myValueDescriptor).getModifier();
+              if (modifier != null) {
+                NodeDescriptor item = modifier.getInspectItem(getProject());
+                if (item != null) {
+                  inspectDescriptor = (ValueDescriptorImpl)item;
+                }
+              }
             }
             EvaluationContextImpl evaluationContext = ((JavaStackFrame)frame).getFrameDebuggerContext().createEvaluationContext();
             if (evaluationContext != null) {
