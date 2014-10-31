@@ -126,11 +126,8 @@ public class PyPep8NamingInspection extends PyInspection {
         public boolean value(PyClass ancestor) {
           final PsiFile ancestorsModule = ancestor.getContainingFile();
           final Sdk sdk = PyBuiltinCache.findSdkForFile(ancestorsModule);
-          if (PythonSdkType.isStdLib(ancestorsModule.getVirtualFile(), sdk)) {
-            final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(cls);
-            if (ancestor != builtinCache.getClass(PyNames.OBJECT) && ancestor != builtinCache.getClass(PyNames.FAKE_OLD_BASE)) {
-              return true;
-            }
+          if (PythonSdkType.isStdLib(ancestorsModule.getVirtualFile(), sdk) && !PyUtil.isObjectClass(cls)) {
+            return true;
           }
           return false;
         }
