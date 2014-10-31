@@ -575,29 +575,26 @@ public class JDOMUtil {
 
   @NotNull
   public static String escapeText(@NotNull String text, boolean escapeApostrophes, boolean escapeSpaces, boolean escapeLineEnds) {
-    StringBuffer buffer = null;
+    StringBuilder buffer = null;
     for (int i = 0; i < text.length(); i++) {
       final char ch = text.charAt(i);
       final String quotation = escapeChar(ch, escapeApostrophes, escapeSpaces, escapeLineEnds);
-
       if (buffer == null) {
         if (quotation != null) {
           // An quotation occurred, so we'll have to use StringBuffer
           // (allocate room for it plus a few more entities).
-          buffer = new StringBuffer(text.length() + 20);
+          buffer = new StringBuilder(text.length() + 20);
           // Copy previous skipped characters and fall through
           // to pickup current character
-          buffer.append(text.substring(0, i));
+          buffer.append(text, 0, i);
           buffer.append(quotation);
         }
       }
+      else if (quotation == null) {
+        buffer.append(ch);
+      }
       else {
-        if (quotation == null) {
-          buffer.append(ch);
-        }
-        else {
-          buffer.append(quotation);
-        }
+        buffer.append(quotation);
       }
     }
     // If there were any entities, return the escaped characters
