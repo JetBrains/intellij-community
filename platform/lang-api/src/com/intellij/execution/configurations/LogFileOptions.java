@@ -18,7 +18,6 @@ package com.intellij.execution.configurations;
 
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.SmartHashSet;
@@ -204,13 +203,13 @@ public class LogFileOptions implements JDOMExternalizable {
     try {
       setCharset(Charset.forName(charsetStr));
     }
-    catch (Exception e) {
+    catch (Exception ignored) {
       setCharset(Charset.defaultCharset());
     }
   }
 
   @Override
-  public void writeExternal(Element element) throws WriteExternalException {
+  public void writeExternal(Element element) {
     element.setAttribute(PATH, FileUtil.toSystemIndependentName(getPathPattern()));
     element.setAttribute(CHECKED, String.valueOf(isEnabled()));
     element.setAttribute(SKIPPED, String.valueOf(isSkipContent()));
