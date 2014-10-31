@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ public class BringVariableIntoScopeFix implements IntentionAction {
   private final PsiReferenceExpression myUnresolvedReference;
   private PsiLocalVariable myOutOfScopeVariable;
 
-  public BringVariableIntoScopeFix(PsiReferenceExpression unresolvedReference) {
+  public BringVariableIntoScopeFix(@NotNull PsiReferenceExpression unresolvedReference) {
     myUnresolvedReference = unresolvedReference;
   }
 
@@ -97,7 +97,7 @@ public class BringVariableIntoScopeFix implements IntentionAction {
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiFile file) throws IncorrectOperationException {
     LOG.assertTrue(myOutOfScopeVariable != null);
     PsiManager manager = file.getManager();
     myOutOfScopeVariable.normalizeDeclaration();
@@ -123,6 +123,7 @@ public class BringVariableIntoScopeFix implements IntentionAction {
     final PsiElement[] declaredElements = added.getDeclaredElements();
     LOG.assertTrue(declaredElements.length > 0, added.getText());
     PsiLocalVariable addedVar = (PsiLocalVariable)declaredElements[0];
+    assert addedVar != null : added;
     CodeStyleManager.getInstance(manager.getProject()).reformat(commonParent);
 
     //Leave initializer assignment

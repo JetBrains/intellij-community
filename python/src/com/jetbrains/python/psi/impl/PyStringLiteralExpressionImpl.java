@@ -38,6 +38,7 @@ import org.intellij.lang.regexp.DefaultRegExpPropertiesProvider;
 import org.intellij.lang.regexp.RegExpLanguageHost;
 import org.intellij.lang.regexp.psi.RegExpChar;
 import org.intellij.lang.regexp.psi.RegExpGroup;
+import org.intellij.lang.regexp.psi.RegExpNamedGroupRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -465,6 +466,11 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
 
   public boolean supportsNamedGroupSyntax(RegExpGroup group) {
     return group.isPythonNamedGroup();
+  }
+
+  @Override
+  public boolean supportsNamedGroupRefSyntax(RegExpNamedGroupRef ref) {
+    return ref.isPythonNamedGroupRef();
   }
 
   @Override

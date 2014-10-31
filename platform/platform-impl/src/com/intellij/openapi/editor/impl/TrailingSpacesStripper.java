@@ -37,7 +37,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -166,8 +165,8 @@ public final class TrailingSpacesStripper extends FileDocumentManagerAdapter {
     boolean markAsNeedsStrippingLater;
 
     if (activeEditor != null && activeEditor.getCaretModel().supportsMultipleCarets()) {
-      List<Caret> carets = activeEditor.getCaretModel().getAllCarets();
-      List<VisualPosition> visualCarets = new ArrayList<VisualPosition>(carets.size());
+      final List<Caret> carets = activeEditor.getCaretModel().getAllCarets();
+      final List<VisualPosition> visualCarets = new ArrayList<VisualPosition>(carets.size());
       int[] caretOffsets = new int[carets.size()];
       for (int i = 0; i < carets.size(); i++) {
         Caret caret = carets.get(i);
@@ -178,12 +177,14 @@ public final class TrailingSpacesStripper extends FileDocumentManagerAdapter {
       markAsNeedsStrippingLater = ((DocumentImpl)document).stripTrailingSpaces(activeEditor.getProject(), inChangedLinesOnly, isVirtualSpaceEnabled, caretOffsets);
 
       if (!ShutDownTracker.isShutdownHookRunning()) {
-        final Iterator<VisualPosition> visualCaretIterator = visualCarets.iterator();
-        activeEditor.getCaretModel().runForEachCaret(new CaretAction() {
+        activeEditor.getCaretModel().runBatchCaretOperation(new Runnable() {
           @Override
-          public void perform(Caret caret) {
-            if (visualCaretIterator.hasNext()) {
-              caret.moveToVisualPosition(visualCaretIterator.next());
+          public void run() {
+            for (int i = 0; i < carets.size(); i++) {
+              Caret caret = carets.get(i);
+              if (caret.isValid()) {
+                caret.moveToVisualPosition(visualCarets.get(i));
+              }
             }
           }
         });

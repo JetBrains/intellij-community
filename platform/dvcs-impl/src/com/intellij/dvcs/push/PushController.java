@@ -18,6 +18,7 @@ package com.intellij.dvcs.push;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.push.ui.*;
 import com.intellij.dvcs.repo.Repository;
+import com.intellij.dvcs.repo.RepositoryUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.Extensions;
@@ -27,11 +28,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -124,21 +127,41 @@ public class PushController implements Disposable {
   }
 
   private void startLoadingCommits() {
-    //todo should be reworked
     Map<RepositoryNode, MyRepoModel> priorityLoading = ContainerUtil.newLinkedHashMap();
     Map<RepositoryNode, MyRepoModel> others = ContainerUtil.newLinkedHashMap();
+    Map.Entry<RepositoryNode, MyRepoModel> repositoryForCurrentEditor = findRepositoryForCurrentEditor();
     for (Map.Entry<RepositoryNode, MyRepoModel> entry : myView2Model.entrySet()) {
       MyRepoModel model = entry.getValue();
       Repository repository = model.getRepository();
       if (preselectByUser(repository)) {
         priorityLoading.put(entry.getKey(), model);
       }
-      else if (model.getSupport().shouldRequestIncomingChangesForNotCheckedRepositories()) {
+      else if (model.getSupport().shouldRequestIncomingChangesForNotCheckedRepositories() && !entry.equals(repositoryForCurrentEditor)) {
         others.put(entry.getKey(), model);
       }
     }
+    if (repositoryForCurrentEditor != null) {
+      //add repo for currently opened editor to the end of priority queue
+      priorityLoading.put(repositoryForCurrentEditor.getKey(), repositoryForCurrentEditor.getValue());
+    }
     loadCommitsFromMap(priorityLoading);
     loadCommitsFromMap(others);
+  }
+
+  @Nullable
+  private Map.Entry<RepositoryNode, MyRepoModel> findRepositoryForCurrentEditor() {
+    //todo should be simplified when there will be one common repository manager and one push action
+    VirtualFile file = DvcsUtil.getSelectedFile(myProject);
+    final VirtualFile currentEditorRoot = RepositoryUtil.getVcsRoot(myProject, file);
+    if (currentEditorRoot == null) return null;
+    final AbstractVcs vcs = VcsUtil.getVcsFor(myProject, currentEditorRoot);
+    return ContainerUtil.find(myView2Model.entrySet(), new Condition<Map.Entry<RepositoryNode, MyRepoModel>>() {
+      @Override
+      public boolean value(Map.Entry<RepositoryNode, MyRepoModel> entry) {
+        MyRepoModel model = entry.getValue();
+        return model.getVcs().equals(vcs) && model.getRepository().getRoot().equals(currentEditorRoot);
+      }
+    });
   }
 
   private void loadCommitsFromMap(@NotNull Map<RepositoryNode, MyRepoModel> items) {

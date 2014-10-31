@@ -21,12 +21,10 @@ import com.intellij.openapi.util.ClassExtension;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
-import org.intellij.lang.regexp.psi.RegExpChar;
-import org.intellij.lang.regexp.psi.RegExpGroup;
-import org.intellij.lang.regexp.psi.RegExpPyCondRef;
-import org.intellij.lang.regexp.psi.RegExpQuantifier;
+import org.intellij.lang.regexp.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 /**
  * @author yole
@@ -34,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 public final class RegExpLanguageHosts extends ClassExtension<RegExpLanguageHost> {
   private static final RegExpLanguageHosts INSTANCE = new RegExpLanguageHosts();
   private final DefaultRegExpPropertiesProvider myDefaultProvider;
+  private static RegExpLanguageHost myHost;
 
   public static RegExpLanguageHosts getInstance() {
     return INSTANCE;
@@ -44,8 +43,16 @@ public final class RegExpLanguageHosts extends ClassExtension<RegExpLanguageHost
     myDefaultProvider = DefaultRegExpPropertiesProvider.getInstance();
   }
 
+  @TestOnly
+  public static void setRegExpHost(@Nullable RegExpLanguageHost host) {
+    myHost = host;
+  }
+
   @Nullable
   private static RegExpLanguageHost findRegExpHost(@Nullable final PsiElement element) {
+    if (ApplicationManager.getApplication().isUnitTestMode() && myHost != null) {
+      return myHost;
+    }
     if (element == null) {
       return null;
     }
@@ -75,9 +82,6 @@ public final class RegExpLanguageHosts extends ClassExtension<RegExpLanguageHost
   }
 
   public boolean supportsExtendedHexCharacter(@Nullable RegExpChar regExpChar) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      return true;
-    }
     final RegExpLanguageHost host = findRegExpHost(regExpChar);
     try {
       return host != null && host.supportsExtendedHexCharacter(regExpChar);
@@ -90,6 +94,16 @@ public final class RegExpLanguageHosts extends ClassExtension<RegExpLanguageHost
   public boolean supportsNamedGroupSyntax(@Nullable final RegExpGroup group) {
     final RegExpLanguageHost host = findRegExpHost(group);
     return host != null && host.supportsNamedGroupSyntax(group);
+  }
+
+  public boolean supportsNamedGroupRefSyntax(@Nullable final RegExpNamedGroupRef ref) {
+    final RegExpLanguageHost host = findRegExpHost(ref);
+    try {
+      return host != null && host.supportsNamedGroupRefSyntax(ref);
+    } catch (AbstractMethodError e) {
+      // supportsNamedGroupRefSyntax() not present
+      return false;
+    }
   }
 
   public boolean supportsPerl5EmbeddedComments(@Nullable final PsiComment comment) {

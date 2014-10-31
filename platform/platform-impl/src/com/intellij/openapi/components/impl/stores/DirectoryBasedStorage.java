@@ -171,12 +171,12 @@ public class DirectoryBasedStorage extends StateStorageBase<DirectoryStorageData
         return;
       }
       catch (Throwable e) {
-        LOG.info("Unable to serialize component state", e);
+        LOG.error("Unable to serialize " + componentName + " state", e);
         return;
       }
 
       removedFileNames.addAll(originalStorageData.getFileNames(componentName));
-      if (compositeState == null || JDOMUtil.isEmpty(compositeState)) {
+      if (JDOMUtil.isEmpty(compositeState)) {
         doSetState(componentName, null, null);
       }
       else {
@@ -303,7 +303,7 @@ public class DirectoryBasedStorage extends StateStorageBase<DirectoryStorageData
             LOG.debug("Removing configuration file: " + file.getPresentableUrl());
             file.delete(this);
           }
-          catch (FileNotFoundException e) {
+          catch (FileNotFoundException ignored) {
             throw new ReadOnlyModificationException(file);
           }
           catch (IOException e) {

@@ -33,22 +33,21 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author mike
  */
 class XmlSerializerImpl {
-  private final SerializationFilter filter;
   private static SoftReference<Map<Pair<Type, Accessor>, Binding>> ourBindings;
 
-  public XmlSerializerImpl(SerializationFilter filter) {
-    this.filter = filter;
-  }
-
   @NotNull
-  Element serialize(@NotNull Object object) throws XmlSerializationException {
+  static Element serialize(@NotNull Object object, @NotNull SerializationFilter filter) throws XmlSerializationException {
     try {
-      Element serialized = (Element)getBinding(object.getClass()).serialize(object, null, filter);
-      if (serialized == null) {
+      Class<?> aClass = object.getClass();
+      Binding binding = _getClassBinding(aClass, aClass, null);
+      if (binding instanceof BeanBinding) {
         // top level expects not null (null indicates error, empty element will be omitted)
-        return new Element("empty");
+        return ((BeanBinding)binding).serialize(object, true, filter);
       }
-      return serialized;
+      else {
+        //noinspection ConstantConditions
+        return (Element)binding.serialize(object, null, filter);
+      }
     }
     catch (XmlSerializationException e) {
       throw e;
@@ -58,43 +57,37 @@ class XmlSerializerImpl {
     }
   }
 
-  static Binding getBinding(Type type) {
+  @Nullable
+  static Element serializeIfNotDefault(@NotNull Object object, @NotNull SerializationFilter filter) {
+    Class<?> aClass = object.getClass();
+    return (Element)_getClassBinding(aClass, aClass, null).serialize(object, null, filter);
+  }
+
+  static Binding getBinding(@NotNull Type type) {
     return getTypeBinding(type, null);
   }
 
-  static Binding getBinding(Accessor accessor) {
+  static Binding getBinding(@NotNull Accessor accessor) {
     return getTypeBinding(accessor.getGenericType(), accessor);
   }
 
-  static Binding getTypeBinding(Type type, @Nullable Accessor accessor) {
-    if (type instanceof Class) {
-      return _getClassBinding((Class<?>)type, type, accessor);
-    }
-    if (type instanceof ParameterizedType) {
-      ParameterizedType parameterizedType = (ParameterizedType)type;
-      Type rawType = parameterizedType.getRawType();
-      assert rawType instanceof Class;
-      return _getClassBinding((Class<?>)rawType, type, accessor);
-    }
-
-    throw new UnsupportedOperationException("Can't get binding for: " + type);
+  static Binding getTypeBinding(@NotNull Type type, @Nullable Accessor accessor) {
+    return _getClassBinding(type instanceof Class ? (Class<?>)type : (Class<?>)((ParameterizedType)type).getRawType(), type, accessor);
   }
 
-  private static synchronized Binding _getClassBinding(Class<?> aClass, Type originalType, @Nullable Accessor accessor) {
-    final Pair<Type, Accessor> p = Pair.create(originalType, accessor);
-
+  private static synchronized Binding _getClassBinding(@NotNull Class<?> aClass, @NotNull Type originalType, @Nullable Accessor accessor) {
+    Pair<Type, Accessor> key = Pair.create(originalType, accessor);
     Map<Pair<Type, Accessor>, Binding> map = getBindingCacheMap();
-
-    Binding binding = map.get(p);
+    Binding binding = map.get(key);
     if (binding == null) {
       binding = _getNonCachedClassBinding(aClass, accessor, originalType);
-      map.put(p, binding);
+      map.put(key, binding);
       binding.init();
     }
-
     return binding;
   }
 
+  @NotNull
   private static Map<Pair<Type, Accessor>, Binding> getBindingCacheMap() {
     Map<Pair<Type, Accessor>, Binding> map = com.intellij.reference.SoftReference.dereference(ourBindings);
     if (map == null) {
@@ -104,7 +97,7 @@ class XmlSerializerImpl {
     return map;
   }
 
-  private static Binding _getNonCachedClassBinding(final Class<?> aClass, @Nullable Accessor accessor, final Type originalType) {
+  private static Binding _getNonCachedClassBinding(@NotNull Class<?> aClass, @Nullable Accessor accessor, @NotNull Type originalType) {
     if (aClass.isPrimitive()) return new PrimitiveValueBinding(aClass);
     if (aClass.isArray()) {
       return Element.class.isAssignableFrom(aClass.getComponentType())

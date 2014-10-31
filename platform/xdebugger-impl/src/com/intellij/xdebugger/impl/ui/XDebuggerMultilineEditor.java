@@ -69,7 +69,7 @@ public class XDebuggerMultilineEditor extends XDebuggerEditorBase {
   }
 
   @Override
-  protected void doSetText(XExpression text) {
+  protected void setEditorText(XExpression text) {
     myExpression = text;
     Language language = text.getLanguage();
     FileType fileType = language != null ? language.getAssociatedFileType() : getEditorsProvider().getFileType();

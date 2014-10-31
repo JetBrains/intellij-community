@@ -575,9 +575,10 @@ public class BraceHighlightingHandler {
     public void paint(Editor editor, Graphics g, Rectangle r) {
       int height = r.height + editor.getLineHeight();
       g.setColor(myColor);
-      g.fillRect(r.x, r.y, THICKNESS, height);
-      g.fillRect(r.x + THICKNESS, r.y, DEEPNESS, THICKNESS);
-      g.fillRect(r.x + THICKNESS, r.y + height - THICKNESS, DEEPNESS, THICKNESS);
+      int x = r.x + 1; // because of THICKNESS = 1
+      g.fillRect(x, r.y, THICKNESS, height);
+      g.fillRect(x + THICKNESS, r.y, DEEPNESS, THICKNESS);
+      g.fillRect(x + THICKNESS, r.y + height - THICKNESS, DEEPNESS, THICKNESS);
     }
   }
 }

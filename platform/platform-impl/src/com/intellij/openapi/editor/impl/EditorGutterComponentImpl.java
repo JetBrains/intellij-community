@@ -632,7 +632,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
           if (i > 0) width += GAP_BETWEEN_ICONS;
         }
         if (myIconsAreaWidth < width) {
-          myIconsAreaWidth = width;
+          myIconsAreaWidth = width + 1;
         }
         return true;
       }
@@ -858,7 +858,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   @Override
   public int getWhitespaceSeparatorOffset() {
-    return getFoldingAreaOffset() + getFoldingAnchorWidth() / 2;
+    return isRealEditor() ? getFoldingAreaOffset() + getFoldingAnchorWidth() / 2 : 0;
   }
 
   public void setActiveFoldRegion(FoldRegion activeFoldRegion) {
@@ -975,7 +975,11 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   public int getFoldingAreaWidth() {
-    return getFoldingAnchorWidth() + (isFoldingOutlineShown() ? 2 : 0);
+    return isRealEditor() ? getFoldingAnchorWidth() + (isFoldingOutlineShown() ? 2 : 0) : 0;
+  }
+
+  public boolean isRealEditor() {
+    return EditorUtil.isRealFileEditor(myEditor);
   }
 
   @Override
@@ -996,6 +1000,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   public boolean isFoldingOutlineShown() {
     return myEditor.getSettings().isFoldingOutlineShown() &&
            myEditor.getFoldingModel().isFoldingEnabled() &&
+           isRealEditor() &&
            !myEditor.isInPresentationMode();
   }
 

@@ -393,10 +393,13 @@ public class RegExpParser implements PsiParser {
       marker.done(RegExpElementTypes.GROUP);
     }
     else if (type == RegExpTT.PYTHON_NAMED_GROUP_REF) {
-      builder.advanceLexer();
-      checkMatches(builder, RegExpTT.NAME, "Group name expected");
-      checkMatches(builder, RegExpTT.GROUP_END, "Unclosed group reference");
-      marker.done(RegExpElementTypes.PY_NAMED_GROUP_REF);
+      parseNamedGroupRef(builder, marker, RegExpTT.GROUP_END);
+    }
+    else if (type == RegExpTT.RUBY_NAMED_GROUP_REF) {
+      parseNamedGroupRef(builder, marker, RegExpTT.GT);
+    }
+    else if (type == RegExpTT.RUBY_QUOTED_NAMED_GROUP_REF) {
+      parseNamedGroupRef(builder, marker, RegExpTT.QUOTE);
     }
     else if (type == RegExpTT.PYTHON_COND_REF) {
       builder.advanceLexer();
@@ -442,6 +445,13 @@ public class RegExpParser implements PsiParser {
       return null;
     }
     return marker;
+  }
+
+  private static void parseNamedGroupRef(PsiBuilder builder, PsiBuilder.Marker marker, IElementType type) {
+    builder.advanceLexer();
+    checkMatches(builder, RegExpTT.NAME, "Group name expected");
+    checkMatches(builder, type, "Unclosed group reference");
+    marker.done(RegExpElementTypes.NAMED_GROUP_REF);
   }
 
   private static void parseProperty(PsiBuilder builder) {

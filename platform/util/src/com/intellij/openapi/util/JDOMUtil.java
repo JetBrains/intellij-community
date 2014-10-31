@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.StringInterner;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.io.fs.IFile;
@@ -575,29 +576,26 @@ public class JDOMUtil {
 
   @NotNull
   public static String escapeText(@NotNull String text, boolean escapeApostrophes, boolean escapeSpaces, boolean escapeLineEnds) {
-    StringBuffer buffer = null;
+    StringBuilder buffer = null;
     for (int i = 0; i < text.length(); i++) {
       final char ch = text.charAt(i);
       final String quotation = escapeChar(ch, escapeApostrophes, escapeSpaces, escapeLineEnds);
-
       if (buffer == null) {
         if (quotation != null) {
           // An quotation occurred, so we'll have to use StringBuffer
           // (allocate room for it plus a few more entities).
-          buffer = new StringBuffer(text.length() + 20);
+          buffer = new StringBuilder(text.length() + 20);
           // Copy previous skipped characters and fall through
           // to pickup current character
-          buffer.append(text.substring(0, i));
+          buffer.append(text, 0, i);
           buffer.append(quotation);
         }
       }
+      else if (quotation == null) {
+        buffer.append(ch);
+      }
       else {
-        if (quotation == null) {
-          buffer.append(ch);
-        }
-        else {
-          buffer.append(quotation);
-        }
+        buffer.append(quotation);
       }
     }
     // If there were any entities, return the escaped characters
@@ -608,10 +606,8 @@ public class JDOMUtil {
 
   @NotNull
   public static List<Element> getChildrenFromAllNamespaces(@NotNull final Element element, @NotNull @NonNls final String name) {
-    final ArrayList<Element> result = new ArrayList<Element>();
-    final List children = element.getChildren();
-    for (final Object aChildren : children) {
-      Element child = (Element)aChildren;
+    List<Element> result = new SmartList<Element>();
+    for (Element child : element.getChildren()) {
       if (name.equals(child.getName())) {
         result.add(child);
       }
@@ -793,7 +789,7 @@ public class JDOMUtil {
     return hasContent ? result : null;
   }
 
-  public static boolean isEmpty(@NotNull Element element) {
-    return element.getAttributes().isEmpty() && element.getContent().isEmpty();
+  public static boolean isEmpty(@Nullable Element element) {
+    return element == null || (element.getAttributes().isEmpty() && element.getContent().isEmpty());
   }
 }

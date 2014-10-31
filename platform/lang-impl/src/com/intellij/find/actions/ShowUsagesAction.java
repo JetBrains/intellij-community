@@ -88,6 +88,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class ShowUsagesAction extends AnAction implements PopupAction {
+  public static final String ID = "ShowUsages";
   private final boolean showSettingsDialogBefore;
   private static final int USAGES_PAGE_SIZE = 100;
 
@@ -194,7 +195,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     HintManager.getInstance().hideHints(HintManager.HIDE_BY_ANY_KEY, false, false);
   }
 
-  private void startFindUsages(@NotNull PsiElement element, @NotNull RelativePoint popupPosition, Editor editor, int maxUsages) {
+  public void startFindUsages(@NotNull PsiElement element, @NotNull RelativePoint popupPosition, Editor editor, int maxUsages) {
     Project project = element.getProject();
     FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager();
     FindUsagesHandler handler = findUsagesManager.getFindUsagesHandler(element, false);
@@ -551,12 +552,13 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     return options.searchScope.getDisplayName();
   }
 
+  @NotNull
   private Runnable prepareTable(final MyTable table,
                                 final Editor editor,
                                 final RelativePoint popupPosition,
                                 final FindUsagesHandler handler,
                                 final int maxUsages,
-                                final @NotNull FindUsagesOptions options,
+                                @NotNull final FindUsagesOptions options,
                                 final boolean previewMode) {
 
     SpeedSearchBase<JTable> speedSearch = new MySpeedSearch(table);
@@ -672,7 +674,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     if (shortcut != null) {
       new DumbAwareAction() {
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           cancel(popup);
           showDialogAndFindUsages(handler, popupPosition, editor, maxUsages);
         }
@@ -682,7 +684,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     if (shortcut != null) {
       new DumbAwareAction() {
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           cancel(popup);
           searchEverywhere(options, handler, editor, popupPosition, maxUsages);
         }
@@ -753,7 +755,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
         }
 
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           hideHints();
           cancel(popup);
           FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(usageView.getProject())).getFindUsagesManager();
@@ -835,7 +837,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
 
   @Nullable
   private static KeyboardShortcut getShowUsagesShortcut() {
-    return ActionManager.getInstance().getKeyboardShortcut("ShowUsages");
+    return ActionManager.getInstance().getKeyboardShortcut(ID);
   }
 
   private static int filtered(@NotNull List<Usage> usages, @NotNull UsageViewImpl usageView) {
@@ -1093,7 +1095,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
   }
 
   @Override
-  public void update(AnActionEvent e){
+  public void update(@NotNull AnActionEvent e){
     FindUsagesInFileAction.updateFindUsagesAction(e);
   }
 

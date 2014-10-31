@@ -154,9 +154,10 @@ public class BuildMain {
               final int version = in.readInt();
               if (version == FSState.VERSION) {
                 final long savedOrdinal = in.readLong();
-                in.readBoolean(); // must skip "has-work-to-do" flag
+                final boolean hasWorkToDo = in.readBoolean();// must skip "has-work-to-do" flag
                 fsState.load(in, pd.getModel(), pd.getBuildRootIndex());
                 data.setFsEventOrdinal(savedOrdinal);
+                data.setHasHasWorkToDo(hasWorkToDo);
               }
             }
             finally {
@@ -231,10 +232,14 @@ public class BuildMain {
                 public void run() {
                   //noinspection finally
                   try {
-                    session.run();
+                    try {
+                      session.run();
+                    }
+                    finally {
+                      channel.close();
+                    }
                   }
                   finally {
-                    channel.close();
                     System.exit(0);
                   }
                 }
@@ -268,8 +273,13 @@ public class BuildMain {
               session.cancel();
             }
             else {
-              LOG.info("Cannot cancel build: no build session is running");
-              channel.close();
+              try {
+                LOG.info("Build canceled, but no build session is running. Exiting.");
+                channel.close();
+              }
+              finally {
+                System.exit(0);
+              }
             }
             return;
           }

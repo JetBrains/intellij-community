@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,44 +26,41 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.intellij.lang.regexp.RegExpTT;
-import org.intellij.lang.regexp.psi.RegExpElement;
 import org.intellij.lang.regexp.psi.RegExpElementVisitor;
 import org.intellij.lang.regexp.psi.RegExpGroup;
-import org.intellij.lang.regexp.psi.RegExpPyNamedGroupRef;
+import org.intellij.lang.regexp.psi.RegExpNamedGroupRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
  */
-public class RegExpPyNamedGroupRefImpl extends RegExpElementImpl implements RegExpPyNamedGroupRef {
-  public RegExpPyNamedGroupRefImpl(ASTNode node) {
+public class RegExpNamedGroupRefImpl extends RegExpElementImpl implements RegExpNamedGroupRef {
+  public RegExpNamedGroupRefImpl(ASTNode node) {
     super(node);
   }
 
   @Override
   public void accept(RegExpElementVisitor visitor) {
-    visitor.visitRegExpPyNamedGroupRef(this);
+    visitor.visitRegExpNamedGroupRef(this);
   }
 
   @Nullable
   public RegExpGroup resolve() {
-    final PsiElementProcessor.FindFilteredElement<RegExpElement> processor = new PsiElementProcessor.FindFilteredElement<RegExpElement>(new PsiElementFilter() {
+    final PsiElementProcessor.FindFilteredElement<RegExpGroup> processor = new PsiElementProcessor.FindFilteredElement<RegExpGroup>(
+      new PsiElementFilter() {
         public boolean isAccepted(PsiElement element) {
-            if (element instanceof RegExpGroup) {
-                if (((RegExpGroup)element).isPythonNamedGroup() && Comparing.equal(getGroupName(), ((RegExpGroup)element).getGroupName())) {
-                    return true;
-                }
-            }
-            return element == RegExpPyNamedGroupRefImpl.this;
+          if (!(element instanceof RegExpGroup)) {
+            return false;
+          }
+          final RegExpGroup regExpGroup = (RegExpGroup)element;
+          return (regExpGroup.isPythonNamedGroup() || regExpGroup.isRubyNamedGroup()) &&
+                 Comparing.equal(getGroupName(), regExpGroup.getGroupName());
         }
-    });
-
+      }
+    );
     PsiTreeUtil.processElements(getContainingFile(), processor);
-    if (processor.getFoundElement() instanceof RegExpGroup) {
-        return (RegExpGroup) processor.getFoundElement();
-    }
-    return null;
+    return processor.getFoundElement();
   }
 
   @Nullable
@@ -73,10 +70,26 @@ public class RegExpPyNamedGroupRefImpl extends RegExpElementImpl implements RegE
   }
 
   @Override
+  public boolean isPythonNamedGroupRef() {
+    return getNode().findChildByType(RegExpTT.PYTHON_NAMED_GROUP_REF) != null;
+  }
+
+  @Override
+  public boolean isRubyNamedGroupRef() {
+    return getNode().findChildByType(RegExpTT.RUBY_NAMED_GROUP_REF) != null ||
+           getNode().findChildByType(RegExpTT.RUBY_QUOTED_NAMED_GROUP_REF) != null;
+  }
+
+  @Override
+  public boolean isNamedGroupRef() {
+    return getNode().findChildByType(RegExpTT.RUBY_NAMED_GROUP_REF) != null;
+  }
+
+  @Override
   public PsiReference getReference() {
     return new PsiReference() {
       public PsiElement getElement() {
-        return RegExpPyNamedGroupRefImpl.this;
+        return RegExpNamedGroupRefImpl.this;
       }
 
       public TextRange getRangeInElement() {
@@ -84,7 +97,7 @@ public class RegExpPyNamedGroupRefImpl extends RegExpElementImpl implements RegE
       }
 
       public PsiElement resolve() {
-        return RegExpPyNamedGroupRefImpl.this.resolve();
+        return RegExpNamedGroupRefImpl.this.resolve();
       }
 
       @NotNull

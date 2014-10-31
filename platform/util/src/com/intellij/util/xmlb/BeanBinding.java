@@ -71,13 +71,16 @@ class BeanBinding implements Binding {
 
   @Override
   @Nullable
-  public Object serialize(@NotNull Object o, @Nullable Object context, SerializationFilter filter) {
-    Element element = new Element(myTagName);
-    serializeInto(o, element, filter);
-    return element;
+  public Object serialize(@NotNull Object o, @Nullable Object context, @NotNull SerializationFilter filter) {
+    return serializeInto(o, context == null ? null : new Element(myTagName), filter);
   }
 
-  public void serializeInto(@NotNull Object o, @NotNull Element element, @NotNull SerializationFilter filter) {
+  public Element serialize(@NotNull Object object, boolean createElementIfEmpty, @NotNull SerializationFilter filter) {
+    return serializeInto(object, createElementIfEmpty ? new Element(myTagName) : null, filter);
+  }
+
+  @Nullable
+  public Element serializeInto(@NotNull Object o, @Nullable Element element, @NotNull SerializationFilter filter) {
     for (Binding binding : myPropertyBindings.keySet()) {
       Accessor accessor = myPropertyBindings.get(binding);
       if (!filter.accepts(accessor, o)) {
@@ -99,6 +102,9 @@ class BeanBinding implements Binding {
 
       Object node = binding.serialize(o, element, filter);
       if (node != null) {
+        if (element == null) {
+          element = new Element(myTagName);
+        }
         if (node instanceof org.jdom.Attribute) {
           element.setAttribute((org.jdom.Attribute)node);
         }
@@ -107,6 +113,7 @@ class BeanBinding implements Binding {
         }
       }
     }
+    return element;
   }
 
   @Override

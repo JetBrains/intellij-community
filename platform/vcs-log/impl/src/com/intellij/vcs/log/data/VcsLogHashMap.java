@@ -72,16 +72,17 @@ public class VcsLogHashMap implements Disposable {
   private static String calcLogId(@NotNull Project project, @NotNull final Map<VirtualFile, VcsLogProvider> logProviders) {
     List<VirtualFile> sortedRoots = ContainerUtil.sorted(logProviders.keySet(), new Comparator<VirtualFile>() {
       @Override
-      public int compare(VirtualFile o1, VirtualFile o2) {
+      public int compare(@NotNull VirtualFile o1, @NotNull VirtualFile o2) {
         return o1.getPath().compareTo(o2.getPath());
       }
     });
-    return project.getName() + "." + StringUtil.join(sortedRoots, new Function<VirtualFile, String>() {
+    String rootsWithVcss = StringUtil.join(sortedRoots, new Function<VirtualFile, String>() {
       @Override
       public String fun(VirtualFile root) {
-        return root.getPath().hashCode() + "." + logProviders.get(root).getSupportedVcs().hashCode();
+        return root.getPath() + "." + logProviders.get(root).getSupportedVcs().getName();
       }
     }, ".");
+    return project.getName() + "." + rootsWithVcss.hashCode();
   }
 
   @Nullable

@@ -61,6 +61,10 @@ public final class EvaluationContextImpl implements EvaluationContext{
     return getSuspendContext().getDebugProcess();
   }
 
+  public DebuggerManagerThreadImpl getManagerThread() {
+    return getSuspendContext().getDebugProcessNoAssert().getManagerThread();
+  }
+
   @Override
   public Project getProject() {
     DebugProcessImpl debugProcess = getDebugProcess();

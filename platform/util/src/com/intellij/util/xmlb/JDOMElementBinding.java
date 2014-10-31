@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.util.xmlb;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -27,11 +27,16 @@ class JDOMElementBinding implements Binding {
   private final Accessor myAccessor;
   private final String myTagName;
 
-  public JDOMElementBinding(final Accessor accessor) {
+  public JDOMElementBinding(@NotNull Accessor accessor) {
     myAccessor = accessor;
     Tag tag = myAccessor.getAnnotation(Tag.class);
     assert tag != null : "jdom.Element property without @Tag annotation: " + accessor;
-    myTagName = tag.value();
+
+    String tagName = tag.value();
+    if (StringUtil.isEmpty(tagName)) {
+      tagName = myAccessor.getName();
+    }
+    myTagName = tagName;
   }
 
   @Override
@@ -50,9 +55,7 @@ class JDOMElementBinding implements Binding {
     if (value instanceof Element[]) {
       ArrayList<Element> result = new ArrayList<Element>();
       for (Element element : ((Element[])value)) {
-        Element target = element.clone().setName(myTagName);
-        result.add(target);
-
+        result.add(element.clone().setName(myTagName));
       }
       return result;
     }
@@ -62,16 +65,14 @@ class JDOMElementBinding implements Binding {
   @Override
   @Nullable
   public Object deserialize(Object context, @NotNull Object... nodes) {
-    Element[] result = new Element[nodes.length];
-
-    System.arraycopy(nodes, 0, result, 0, nodes.length);
-
     if (myAccessor.getValueClass().isArray()) {
+      Element[] result = new Element[nodes.length];
+      System.arraycopy(nodes, 0, result, 0, nodes.length);
       myAccessor.write(context, result);
     }
     else {
-      assert result.length == 1;
-      myAccessor.write(context, result[0]);
+      assert nodes.length == 1;
+      myAccessor.write(context, nodes[0]);
     }
     return context;
   }
