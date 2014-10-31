@@ -437,7 +437,7 @@ public final class ImmutableText extends ImmutableCharSequence implements CharAr
       if (start == 0 && end == length()) {
         return this;
       }
-      return createLeafNode(subSequence(start, end));
+      return createLeafNode(new CharArrayCharSequence(data, start, end));
     }
 
     @NotNull

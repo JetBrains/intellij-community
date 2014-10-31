@@ -166,10 +166,7 @@ public class PsiTypesUtil {
           qualifierType = JavaPsiFacade.getInstance(project).getElementFactory().createType((PsiClass)parent.getPsi());
         }
       }
-      PsiElement parent = call.getParent();
-      boolean captureTopLevelWildcards = parent instanceof PsiReferenceExpression && parent.getParent() instanceof PsiMethodCallExpression ||
-                                         parent instanceof PsiExpressionList;
-      return createJavaLangClassType(methodExpression, qualifierType, captureTopLevelWildcards);
+      return createJavaLangClassType(methodExpression, qualifierType, true);
     }
     return null;
   }
