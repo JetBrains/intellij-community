@@ -154,9 +154,10 @@ public class BuildMain {
               final int version = in.readInt();
               if (version == FSState.VERSION) {
                 final long savedOrdinal = in.readLong();
-                in.readBoolean(); // must skip "has-work-to-do" flag
+                final boolean hasWorkToDo = in.readBoolean();// must skip "has-work-to-do" flag
                 fsState.load(in, pd.getModel(), pd.getBuildRootIndex());
                 data.setFsEventOrdinal(savedOrdinal);
+                data.setHasHasWorkToDo(hasWorkToDo);
               }
             }
             finally {

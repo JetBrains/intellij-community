@@ -106,7 +106,7 @@ final class BuildSession implements Runnable, CanceledStatus {
     }
     myBuildRunner.setFilePaths(filePaths);
     myBuildRunner.setBuilderParams(builderParams);
-    myForceModelLoading = (preloaded != null && preloaded.getProjectDescriptor() != null) || Boolean.parseBoolean(builderParams.get(BuildParametersKeys.FORCE_MODEL_LOADING));
+    myForceModelLoading =  Boolean.parseBoolean(builderParams.get(BuildParametersKeys.FORCE_MODEL_LOADING));
   }
 
   @Override
@@ -200,13 +200,28 @@ final class BuildSession implements Runnable, CanceledStatus {
     final DataInputStream fsStateStream = 
       preloadedProject != null || myInitialFSDelta == null /*this will force FS rescan*/? null : createFSDataStream(dataStorageRoot, myInitialFSDelta.getOrdinal());
 
-    if (fsStateStream != null) {
+    if (fsStateStream != null || myPreloadedData != null) {
       // optimization: check whether we can skip the build
-      final boolean hasWorkToDoWithModules = fsStateStream.readBoolean() || myInitialFSDelta == null;
+      final boolean hasWorkFlag = fsStateStream != null? fsStateStream.readBoolean() : myPreloadedData.hasWorkToDo();
+      final boolean hasWorkToDoWithModules = hasWorkFlag || myInitialFSDelta == null;
       if (!myForceModelLoading && (myBuildType == BuildType.BUILD || myBuildType == BuildType.UP_TO_DATE_CHECK) && !hasWorkToDoWithModules
           && scopeContainsModulesOnlyForIncrementalMake(myScopes) && !containsChanges(myInitialFSDelta)) {
-        updateFsStateOnDisk(dataStorageRoot, fsStateStream, myInitialFSDelta.getOrdinal());
-        return;
+
+        final DataInputStream storedFsData;
+        if (myPreloadedData != null) {
+          storedFsData = createFSDataStream(dataStorageRoot, myInitialFSDelta.getOrdinal());
+          if (storedFsData != null) {
+            storedFsData.readBoolean(); // skip hasWorkToDo flag
+          }
+        }
+        else {
+          storedFsData = fsStateStream;
+        }
+
+        if (storedFsData != null) {
+          updateFsStateOnDisk(dataStorageRoot, storedFsData, myInitialFSDelta.getOrdinal());
+          return;
+        }
       }
     }
 
