@@ -83,12 +83,11 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
 
       if (elements.length != 1) {
         if (elements.length == 0) {
-          PsiElement elementAt = file.findElementAt(TargetElementUtilBase.adjustOffset(file, editor.getDocument(), offset));
-          PsiElement parent = elementAt == null ? null : elementAt.getParent();
-          if (parent instanceof PsiNameIdentifierOwner && ((PsiNameIdentifierOwner)parent).getNameIdentifier() == elementAt) {
+          PsiElement element = findElementToShowUsagesOf(editor, file, editor.getCaretModel().getOffset());
+          if (element != null) {
             ShowUsagesAction showUsages = (ShowUsagesAction)ActionManager.getInstance().getAction(ShowUsagesAction.ID);
             RelativePoint popupPosition = JBPopupFactory.getInstance().guessBestPopupLocation(editor);
-            showUsages.startFindUsages(parent, popupPosition, editor, 100);
+            showUsages.startFindUsages(element, popupPosition, editor, 100);
             return;
           }
         }
@@ -106,6 +105,15 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     catch (IndexNotReadyException e) {
       DumbService.getInstance(project).showDumbModeNotification("Navigation is not available here during index update");
     }
+  }
+
+  public static PsiNameIdentifierOwner findElementToShowUsagesOf(@NotNull Editor editor, @NotNull PsiFile file, int offset) {
+    PsiElement elementAt = file.findElementAt(TargetElementUtilBase.adjustOffset(file, editor.getDocument(), offset));
+    PsiElement parent = elementAt == null ? null : elementAt.getParent();
+    if (parent instanceof PsiNameIdentifierOwner && ((PsiNameIdentifierOwner)parent).getNameIdentifier() == elementAt) {
+      return (PsiNameIdentifierOwner)parent;
+    }
+    return null;
   }
 
   private static void chooseAmbiguousTarget(final Editor editor, int offset, PsiElement[] elements) {

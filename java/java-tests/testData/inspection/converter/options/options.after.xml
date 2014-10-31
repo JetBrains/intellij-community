@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<state>
+<settings>
   <profile version="1.0" is_locked="false">
     <option name="myName" value="Project Default"/>
     <option name="myLocal" value="false"/>
@@ -15,4 +15,4 @@
   <option name="PROJECT_PROFILE" value="p1"/>
   <option name="USE_PROJECT_PROFILE" value="true"/>
   <version value="1.0"/>
-</state>
+</settings>

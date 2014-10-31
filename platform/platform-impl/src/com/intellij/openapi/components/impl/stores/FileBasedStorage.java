@@ -82,7 +82,6 @@ public class FileBasedStorage extends XmlElementStorage {
 
           @Override
           public void contentsChanged(@NotNull final VirtualFileEvent event) {
-            assert listener != null;
             listener.storageFileChanged(event, FileBasedStorage.this);
           }
         }, false, parentDisposable);

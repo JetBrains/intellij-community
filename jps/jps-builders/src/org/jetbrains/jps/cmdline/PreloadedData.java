@@ -34,6 +34,7 @@ public class PreloadedData {
   private final List<BuildMessage> loadMessages = new ArrayList<BuildMessage>();
   
   private long fsEventOrdinal;
+  private boolean hasWorkFlag = true;
 
   @Nullable
   public BuildRunner getRunner() {
@@ -67,5 +68,13 @@ public class PreloadedData {
   
   public void addMessage(BuildMessage msg) {
     loadMessages.add(msg);
+  }
+
+  public boolean hasWorkToDo() {
+    return hasWorkFlag;
+  }
+
+  public void setHasHasWorkToDo(boolean hasWorkFlag) {
+    this.hasWorkFlag = hasWorkFlag;
   }
 }

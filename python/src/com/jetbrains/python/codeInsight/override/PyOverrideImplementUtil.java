@@ -28,6 +28,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
@@ -222,7 +223,7 @@ public class PyOverrideImplementUtil {
       }
     }
 
-    if (PyNames.FAKE_OLD_BASE.equals(baseClass.getName()) || implement) {
+    if (PyNames.FAKE_OLD_BASE.equals(baseClass.getName()) || raisesNotImplementedError(baseFunction) || implement) {
       statementBody.append(PyNames.PASS);
     }
     else {
@@ -261,6 +262,26 @@ public class PyOverrideImplementUtil {
 
     pyFunctionBuilder.statement(statementBody.toString());
     return pyFunctionBuilder;
+  }
+
+  private static boolean raisesNotImplementedError(@NotNull PyFunction function) {
+    for (PyStatement statement : function.getStatementList().getStatements()) {
+      if (!(statement instanceof PyRaiseStatement)) {
+        continue;
+      }
+      final PyRaiseStatement raiseStatement = (PyRaiseStatement)statement;
+      final PyExpression[] expressions = raiseStatement.getExpressions();
+      if (expressions.length > 0) {
+        final PyExpression expression = expressions[0];
+        if (expression instanceof PyCallExpression) {
+          final PyExpression callee = ((PyCallExpression)expression).getCallee();
+          if (callee instanceof PyReferenceExpression && Comparing.equal(callee.getName(), "NotImplementedError")) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
   }
 
   // TODO find a better place for this logic
