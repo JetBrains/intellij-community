@@ -45,12 +45,6 @@ public abstract class PropertyProviderFinder extends AntDomRecursiveVisitor {
     }
   }
 
-  @Nullable
-  protected static <K, V> V getCachedResult(@Nullable final DomElement context, final Key<Map<K, V>> cacheKind, K key) {
-    final Map<K, V> cached = cacheKind.get(context);
-    return cached != null? cached.get(key) : null;
-  }
-
   public enum Stage {
     RESOLVE_MAP_BUILDING_STAGE, TARGETS_WALKUP_STAGE
   }
