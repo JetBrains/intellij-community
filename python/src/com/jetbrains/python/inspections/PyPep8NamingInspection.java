@@ -35,7 +35,6 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 import com.jetbrains.python.sdk.PythonSdkType;
-import com.jetbrains.python.testing.pytest.PyTestUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -122,9 +121,6 @@ public class PyPep8NamingInspection extends PyInspection {
     }
 
     private boolean isStandardClassDescendant(@NotNull final PyClass cls) {
-      if (PyTestUtil.isPyTestClass(cls)) {
-        return true;
-      }
       return ContainerUtil.exists(cls.getAncestorClasses(myTypeEvalContext), new Condition<PyClass>() {
         @Override
         public boolean value(PyClass ancestor) {
