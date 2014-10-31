@@ -100,11 +100,12 @@ class BeanBinding implements Binding {
         }
       }
 
+      if (element == null) {
+        element = new Element(myTagName);
+      }
+
       Object node = binding.serialize(o, element, filter);
       if (node != null) {
-        if (element == null) {
-          element = new Element(myTagName);
-        }
         if (node instanceof org.jdom.Attribute) {
           element.setAttribute((org.jdom.Attribute)node);
         }
