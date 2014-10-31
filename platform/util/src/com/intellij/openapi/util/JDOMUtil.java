@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.StringInterner;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.io.fs.IFile;
@@ -605,10 +606,8 @@ public class JDOMUtil {
 
   @NotNull
   public static List<Element> getChildrenFromAllNamespaces(@NotNull final Element element, @NotNull @NonNls final String name) {
-    final ArrayList<Element> result = new ArrayList<Element>();
-    final List children = element.getChildren();
-    for (final Object aChildren : children) {
-      Element child = (Element)aChildren;
+    List<Element> result = new SmartList<Element>();
+    for (Element child : element.getChildren()) {
       if (name.equals(child.getName())) {
         result.add(child);
       }
