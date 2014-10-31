@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.impl.VcsLogContentProvider;
@@ -47,12 +48,12 @@ public class VcsLogRepoSizeCollector extends AbstractApplicationUsagesCollector 
       VcsLogUiImpl ui = logManager.getLogUi();
       if (ui != null) {
         PermanentGraph<Integer> permanentGraph = ui.getDataPack().getPermanentGraph();
-        Map<VcsKey, Integer> rootCounts = groupRootsByVcs(ui.getDataPack().getLogProviders());
+        MultiMap<VcsKey, VirtualFile> groupedRoots = groupRootsByVcs(ui.getDataPack().getLogProviders());
 
         Set<UsageDescriptor> usages = ContainerUtil.newHashSet();
         usages.add(new UsageDescriptor("vcs.log.commit.count", permanentGraph.getAllCommits().size()));
-        for (Map.Entry<VcsKey, Integer> entry : rootCounts.entrySet()) {
-          usages.add(new RootUsage(entry.getKey(), entry.getValue()));
+        for (VcsKey vcs : groupedRoots.keySet()) {
+          usages.add(new RootUsage(vcs, groupedRoots.get(vcs).size()));
         }
         return usages;
       }
@@ -61,18 +62,12 @@ public class VcsLogRepoSizeCollector extends AbstractApplicationUsagesCollector 
   }
 
   @NotNull
-  private static Map<VcsKey, Integer> groupRootsByVcs(@NotNull Map<VirtualFile, VcsLogProvider> providers) {
-    Map<VcsKey, Integer> result = ContainerUtil.newHashMap();
+  private static MultiMap<VcsKey, VirtualFile> groupRootsByVcs(@NotNull Map<VirtualFile, VcsLogProvider> providers) {
+    MultiMap<VcsKey, VirtualFile> result = MultiMap.create();
     for (Map.Entry<VirtualFile, VcsLogProvider> entry : providers.entrySet()) {
-      VcsLogProvider provider = entry.getValue();
-      VcsKey vcs = provider.getSupportedVcs();
-      Integer count = result.get(vcs);
-      if (count == null) {
-        result.put(vcs, 1);
-      }
-      else {
-        result.put(vcs, count + 1);
-      }
+      VirtualFile root = entry.getKey();
+      VcsKey vcs = entry.getValue().getSupportedVcs();
+      result.putValue(vcs, root);
     }
     return result;
   }
