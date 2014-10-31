@@ -60,8 +60,8 @@ abstract class C {
     try { g(); }
     catch (IE1 | IE2 e) {
       Class<? extends E> clazz1 = e.getClass();
-      <error descr="Incompatible types. Found: 'java.lang.Class<? extends C.E>', required: 'java.lang.Class<? extends C.IE1>'">Class<? extends IE1> clazz2 = e.getClass();</error>
-      <error descr="Incompatible types. Found: 'java.lang.Class<? extends C.E>', required: 'java.lang.Class<? extends C.I>'">Class<? extends I> clazz3 = e.getClass();</error>
+      <error descr="Incompatible types. Found: 'java.lang.Class<capture<? extends C.E>>', required: 'java.lang.Class<? extends C.IE1>'">Class<? extends IE1> clazz2 = e.getClass();</error>
+      <error descr="Incompatible types. Found: 'java.lang.Class<capture<? extends C.E>>', required: 'java.lang.Class<? extends C.I>'">Class<? extends I> clazz3 = e.getClass();</error>
     }
 
     try { f(); }
