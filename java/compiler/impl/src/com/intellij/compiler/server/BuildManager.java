@@ -546,11 +546,9 @@ public class BuildManager implements ApplicationComponent{
     runCommand(new Runnable() {
       @Override
       public void run() {
-        LOG.info("Cancelling preloaded process for project " + projectPath);
         Pair<RequestFuture<PreloadedProcessMessageHandler>, OSProcessHandler> pair = takePreloadedProcess(projectPath);
         if (pair != null) {
           final RequestFuture<PreloadedProcessMessageHandler> future = pair.first;
-          LOG.info("Cancelling preloaded process, sessionID=" + future.getRequestID());
           myMessageDispatcher.cancelSession(future.getRequestID());
           // waiting for preloaded process from project's task queue guarantees no build is started for this project
           // until this one gracefully exits and closes all its storages
@@ -560,9 +558,6 @@ public class BuildManager implements ApplicationComponent{
               future.waitFor();
             }
           });
-        }
-        else {
-          LOG.info("takePreloadedProcess() returned null");
         }
       }
     });
@@ -752,12 +747,14 @@ public class BuildManager implements ApplicationComponent{
                 if (Registry.is("compiler.process.preload") && !project.isDisposed()) {
                   runCommand(new Runnable() {
                     public void run() {
-                      try {
-                        final Future<Pair<RequestFuture<PreloadedProcessMessageHandler>, OSProcessHandler>> preloadResult = launchPreloadedBuildProcess(project, projectTaskQueue);
-                        myPreloadedBuilds.put(projectPath, preloadResult);
-                      }
-                      catch (Exception e) {
-                        LOG.info("Error pre-loading build process for project " + projectPath, e);
+                      if (!myPreloadedBuilds.containsKey(projectPath)) {
+                        try {
+                          final Future<Pair<RequestFuture<PreloadedProcessMessageHandler>, OSProcessHandler>> preloadResult = launchPreloadedBuildProcess(project, projectTaskQueue);
+                          myPreloadedBuilds.put(projectPath, preloadResult);
+                        }
+                        catch (Exception e) {
+                          LOG.info("Error pre-loading build process for project " + projectPath, e);
+                        }
                       }
                     }
                   });
