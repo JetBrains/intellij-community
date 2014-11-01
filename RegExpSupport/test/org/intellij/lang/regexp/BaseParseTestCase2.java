@@ -29,11 +29,11 @@ import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 
 import java.io.File;
 
-public abstract class BaseParseTestCase extends UsefulTestCase{
+public abstract class BaseParseTestCase2 extends UsefulTestCase{
   protected CodeInsightTestFixture myFixture;
 
   @SuppressWarnings({"JUnitTestCaseWithNonTrivialConstructors"})
-  public BaseParseTestCase() {
+  public BaseParseTestCase2() {
     PlatformTestCase.initPlatformLangPrefix();
   }
 

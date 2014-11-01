@@ -15,7 +15,7 @@
  */
 package org.intellij.lang.regexp;
 
-public class ParseTest extends BaseParseTestCase {
+public class ParseTest extends BaseParseTestCase2 {
 
     //public void test0() throws Throwable {
     //    myFixture.testHighlighting("test0.regexp");

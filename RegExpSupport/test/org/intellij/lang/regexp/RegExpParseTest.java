@@ -27,7 +27,7 @@ import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-public class RegExpParseTest extends BaseParseTestCase {
+public class RegExpParseTest extends BaseParseTestCase2 {
 
   private ByteArrayOutputStream myOut;
 
