@@ -222,7 +222,8 @@ public class RegExpParser implements PsiParser {
     if (parseClassIntersection(builder)) {
       while (RegExpTT.CHARACTERS2.contains(builder.getTokenType()) ||
              builder.getTokenType() == RegExpTT.CLASS_BEGIN ||
-             builder.getTokenType() == RegExpTT.PROPERTY) {
+             builder.getTokenType() == RegExpTT.PROPERTY ||
+             builder.getTokenType() == RegExpTT.BRACKET_EXPRESSION_BEGIN) {
         parseClassIntersection(builder);
       }
     }
@@ -255,6 +256,9 @@ public class RegExpParser implements PsiParser {
     if (token == RegExpTT.CLASS_BEGIN) {
       parseClass(builder);
     }
+    else if (token == RegExpTT.BRACKET_EXPRESSION_BEGIN) {
+      parseBracketExpression(builder);
+    }
     else if (RegExpTT.CHARACTERS2.contains(token)) {
       parseSimpleClassdef(builder);
     }
@@ -269,6 +273,14 @@ public class RegExpParser implements PsiParser {
       return false;
     }
     return true;
+  }
+
+  private static void parseBracketExpression(PsiBuilder builder) {
+    final PsiBuilder.Marker marker = builder.mark();
+    builder.advanceLexer();
+    checkMatches(builder, RegExpTT.NAME, "POSIX character class name expected");
+    checkMatches(builder, RegExpTT.BRACKET_EXPRESSION_END, "Unclosed POSIX bracket expression");
+    marker.done(RegExpElementTypes.POSIX_BRACKET_EXPRESSION);
   }
 
   private void parseSimpleClassdef(PsiBuilder builder) {

@@ -13,21 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.intellij.lang.regexp;
+package org.intellij.lang.regexp.psi;
 
 /**
- * @author yole
+ * @author Bas Leijdekkers
  */
-public enum RegExpCapability {
-  XML_SCHEMA_MODE,
-  DANGLING_METACHARACTERS,
-  NESTED_CHARACTER_CLASSES,
-  OCTAL_NO_LEADING_ZERO,
-  OMIT_NUMBERS_IN_QUANTIFIERS,
-  COMMENT_MODE,
-  ALLOW_HEX_DIGIT_CLASS,
-  ALLOW_EMPTY_CHARACTER_CLASS,
-  ALLOW_HORIZONTAL_WHITESPACE_CLASS,
-  UNICODE_CATEGORY_SHORTHAND,
-  POSIX_BRACKET_EXPRESSIONS
+public interface RegExpPosixBracketExpression extends RegExpClassElement {
+
+  String getClassName();
 }

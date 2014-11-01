@@ -36,6 +36,7 @@ import java.util.EnumSet;
     private boolean allowEmptyCharacterClass;
     private boolean allowHorizontalWhitespaceClass;
     private boolean allowCategoryShorthand;
+    private boolean allowPosixBracketExpressions;
 
     _RegExLexer(EnumSet<RegExpCapability> capabilities) {
       this((java.io.Reader)null);
@@ -48,6 +49,7 @@ import java.util.EnumSet;
       this.allowHorizontalWhitespaceClass = capabilities.contains(RegExpCapability.ALLOW_HORIZONTAL_WHITESPACE_CLASS);
       this.allowEmptyCharacterClass = capabilities.contains(RegExpCapability.ALLOW_EMPTY_CHARACTER_CLASS);
       this.allowCategoryShorthand = capabilities.contains(RegExpCapability.UNICODE_CATEGORY_SHORTHAND);
+      this.allowPosixBracketExpressions = capabilities.contains(RegExpCapability.POSIX_BRACKET_EXPRESSIONS);
     }
 
     private void yypushstate(int state) {
@@ -84,6 +86,7 @@ import java.util.EnumSet;
 %xstate QUOTED_NAMED_GROUP
 %xstate PY_NAMED_GROUP_REF
 %xstate PY_COND_REF
+%xstate BRACKET_EXPRESSION
 
 DIGITS=[1-9][0-9]*
 
@@ -252,6 +255,14 @@ HEX_CHAR=[0-9a-fA-F]
 }
 
 <CLASS2> {
+  {LBRACKET} ":"         { if (allowPosixBracketExpressions) {
+                            yybegin(BRACKET_EXPRESSION);
+                            return RegExpTT.BRACKET_EXPRESSION_BEGIN;
+                          } else {
+                            yypushback(1);
+                            return RegExpTT.CHARACTER;
+                          }
+                        }
   {RBRACKET}            { yypopstate(); return RegExpTT.CLASS_END; }
 
   "&&"                  { if (allowNestedCharacterClasses) return RegExpTT.ANDAND; else yypushback(1); return RegExpTT.CHARACTER; }
@@ -259,6 +270,11 @@ HEX_CHAR=[0-9a-fA-F]
   {ANY}                 { return RegExpTT.CHARACTER; }
 }
 
+<BRACKET_EXPRESSION> {
+  {NAME}                                  { return RegExpTT.NAME;   }
+  ":" {RBRACKET}                          { yybegin(CLASS2); return RegExpTT.BRACKET_EXPRESSION_END; }
+  {ANY}                                   { return RegExpTT.BAD_CHARACTER; }
+}
 
 <YYINITIAL> {
   {LPAREN}      { capturingGroupCount++; return RegExpTT.GROUP_BEGIN; }

@@ -35,6 +35,11 @@ public class RegExpLexerTest extends TestCase {
     doTest("[a&&]", lexer, "CLASS_BEGIN([) CHARACTER(a) ANDAND(&&) CLASS_END(])");
   }
 
+  public void testPosixBracketExpression() {
+    final RegExpLexer lexer = new RegExpLexer(EnumSet.of(RegExpCapability.POSIX_BRACKET_EXPRESSIONS));
+    doTest("[[:xdigit:]]", lexer, "CLASS_BEGIN([) BRACKET_EXPRESSION_BEGIN([:) NAME(xdigit) BRACKET_EXPRESSION_END(:]) CLASS_END(])");
+  }
+
   public static void doTest(String text, Lexer lexer, String expectedTokens) {
     lexer.start(text);
     final StringBuilder actualTokens = new StringBuilder();
