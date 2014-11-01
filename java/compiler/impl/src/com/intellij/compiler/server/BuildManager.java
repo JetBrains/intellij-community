@@ -25,7 +25,10 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.RunProfile;
-import com.intellij.execution.process.*;
+import com.intellij.execution.process.OSProcessHandler;
+import com.intellij.execution.process.ProcessAdapter;
+import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.ProcessHandler;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.PowerSaveMode;
 import com.intellij.ide.file.BatchFileChangeListener;
@@ -101,8 +104,7 @@ import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.model.serialization.JpsGlobalLoader;
 
-import javax.tools.JavaCompiler;
-import javax.tools.ToolProvider;
+import javax.tools.*;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -122,6 +124,7 @@ import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage
 public class BuildManager implements ApplicationComponent{
   public static final Key<Boolean> ALLOW_AUTOMAKE = Key.create("_allow_automake_when_process_is_active_");
   private static final Key<String> FORCE_MODEL_LOADING_PARAMETER = Key.create(BuildParametersKeys.FORCE_MODEL_LOADING);
+  private static final Key<CharSequence> STDERR_OUTPUT = Key.create("_process_launch_errors_");
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.server.BuildManager");
   private static final String COMPILER_PROCESS_JDK_PROPERTY = "compiler.process.jdk";
@@ -549,13 +552,25 @@ public class BuildManager implements ApplicationComponent{
         Pair<RequestFuture<PreloadedProcessMessageHandler>, OSProcessHandler> pair = takePreloadedProcess(projectPath);
         if (pair != null) {
           final RequestFuture<PreloadedProcessMessageHandler> future = pair.first;
+          final OSProcessHandler processHandler = pair.second;
           myMessageDispatcher.cancelSession(future.getRequestID());
           // waiting for preloaded process from project's task queue guarantees no build is started for this project
           // until this one gracefully exits and closes all its storages
           getProjectData(projectPath).taskQueue.submit(new Runnable() {
             @Override
             public void run() {
-              future.waitFor();
+              Throwable error = null;
+              try {
+                while (!processHandler.waitFor()) {
+                  LOG.info("processHandler.waitFor() returned false for session " + future.getRequestID() + ", continue waiting");
+                }
+              }
+              catch (Throwable e) {
+                error = e;
+              }
+              finally {
+                notifySessionTerminationIfNeeded(future.getRequestID(), error);
+              }
             }
           });
         }
@@ -683,29 +698,19 @@ public class BuildManager implements ApplicationComponent{
                 }
                 myBuildsInProgress.put(projectPath, future);
                 final OSProcessHandler processHandler;
-                final StringBuilder errorsOnLaunch = new StringBuilder();
+                CharSequence errorsOnLaunch;
                 if (usingPreloadedProcess) {
                   final boolean paramsSent = myMessageDispatcher.sendBuildParameters(future.getRequestID(), params);
                   if (!paramsSent) {
                     myMessageDispatcher.cancelSession(future.getRequestID());
                   }
                   processHandler = preloaded.second;
+                  errorsOnLaunch = STDERR_OUTPUT.get(processHandler);
                 }
                 else {
                   processHandler = launchBuildProcess(project, myListenPort, sessionId, false);
-                  processHandler.addProcessListener(new ProcessAdapter() {
-                    @Override
-                    public void onTextAvailable(ProcessEvent event, Key outputType) {
-                      if (ProcessOutputTypes.STDERR.equals(outputType)) {
-                        if (errorsOnLaunch.length() < 1024) {
-                          final String text = event.getText();
-                          if (!StringUtil.isEmptyOrSpaces(text)) {
-                            errorsOnLaunch.append(text);
-                          }
-                        }
-                      }
-                    }
-                  });
+                  errorsOnLaunch = new StringBuffer();
+                  processHandler.addProcessListener(new StdOutputCollector((StringBuffer)errorsOnLaunch));
                   processHandler.startNotify();
                 }
 
@@ -717,7 +722,7 @@ public class BuildManager implements ApplicationComponent{
                 if (exitValue != 0) {
                   final StringBuilder msg = new StringBuilder();
                   msg.append("Abnormal build process termination: ");
-                  if (errorsOnLaunch.length() > 0) {
+                  if (errorsOnLaunch != null && errorsOnLaunch.length() > 0) {
                     msg.append("\n").append(errorsOnLaunch);
                   }
                   else {
@@ -732,17 +737,7 @@ public class BuildManager implements ApplicationComponent{
               }
               finally {
                 myBuildsInProgress.remove(projectPath);
-                if (myMessageDispatcher.getAssociatedChannel(sessionId) == null) {
-                  // either the connection has never been established (process not started or execution failed), or no messages were sent from the launched process.
-                  // in this case the session cannot be unregistered by the message dispatcher
-                  final BuilderMessageHandler unregistered = myMessageDispatcher.unregisterBuildMessageHandler(sessionId);
-                  if (unregistered != null) {
-                    if (execFailure != null) {
-                      unregistered.handleFailure(sessionId, CmdlineProtoUtil.createFailure(execFailure.getMessage(), execFailure));
-                    }
-                    unregistered.sessionTerminated(sessionId);
-                  }
-                }
+                notifySessionTerminationIfNeeded(sessionId, execFailure);
 
                 if (Registry.is("compiler.process.preload") && !project.isDisposed()) {
                   runCommand(new Runnable() {
@@ -752,7 +747,7 @@ public class BuildManager implements ApplicationComponent{
                           final Future<Pair<RequestFuture<PreloadedProcessMessageHandler>, OSProcessHandler>> preloadResult = launchPreloadedBuildProcess(project, projectTaskQueue);
                           myPreloadedBuilds.put(projectPath, preloadResult);
                         }
-                        catch (Exception e) {
+                        catch (Throwable e) {
                           LOG.info("Error pre-loading build process for project " + projectPath, e);
                         }
                       }
@@ -765,16 +760,34 @@ public class BuildManager implements ApplicationComponent{
           });
         }
         catch (Throwable e) {
-          final BuilderMessageHandler unregistered = myMessageDispatcher.unregisterBuildMessageHandler(sessionId);
-          if (unregistered != null) {
-            unregistered.handleFailure(sessionId, CmdlineProtoUtil.createFailure(e.getMessage(), e));
-            unregistered.sessionTerminated(sessionId);
-          }
+          handleProcessExecutionFailure(sessionId, e);
         }
       }
     });
 
     return _future;
+  }
+
+  private void notifySessionTerminationIfNeeded(UUID sessionId, @Nullable Throwable execFailure) {
+    if (myMessageDispatcher.getAssociatedChannel(sessionId) == null) {
+      // either the connection has never been established (process not started or execution failed), or no messages were sent from the launched process.
+      // in this case the session cannot be unregistered by the message dispatcher
+      final BuilderMessageHandler unregistered = myMessageDispatcher.unregisterBuildMessageHandler(sessionId);
+      if (unregistered != null) {
+        if (execFailure != null) {
+          unregistered.handleFailure(sessionId, CmdlineProtoUtil.createFailure(execFailure.getMessage(), execFailure));
+        }
+        unregistered.sessionTerminated(sessionId);
+      }
+    }
+  }
+
+  private void handleProcessExecutionFailure(UUID sessionId, Throwable e) {
+    final BuilderMessageHandler unregistered = myMessageDispatcher.unregisterBuildMessageHandler(sessionId);
+    if (unregistered != null) {
+      unregistered.handleFailure(sessionId, CmdlineProtoUtil.createFailure(e.getMessage(), e));
+      unregistered.sessionTerminated(sessionId);
+    }
   }
 
   @NotNull
@@ -829,23 +842,15 @@ public class BuildManager implements ApplicationComponent{
         try {
           myMessageDispatcher.registerBuildMessageHandler(future, null);
           final OSProcessHandler processHandler = launchBuildProcess(project, myListenPort, future.getRequestID(), true);
-          processHandler.addProcessListener(new ProcessAdapter() {
-            @Override
-            public void onTextAvailable(ProcessEvent event, Key outputType) {
-              if (ProcessOutputTypes.STDERR.equals(outputType)) {
-                final String text = event.getText();
-                if (!StringUtil.isEmptyOrSpaces(text)) {
-                  LOG.info("PRELOADED_BUILD_PROCESS: " + text);
-                }
-              }
-            }
-          });
+          final StringBuffer errors = new StringBuffer();
+          processHandler.addProcessListener(new StdOutputCollector(errors));
+          STDERR_OUTPUT.set(processHandler, errors);
 
           processHandler.startNotify();
           return Pair.create(future, processHandler);
         }
         catch (ExecutionException e) {
-          myMessageDispatcher.unregisterBuildMessageHandler(future.getRequestID());
+          handleProcessExecutionFailure(future.getRequestID(), e);
           throw e;
         }
       }
@@ -1233,6 +1238,36 @@ public class BuildManager implements ApplicationComponent{
         catch (Throwable e) {
           LOG.error(e);
         }
+      }
+    }
+  }
+
+  private static final class StdOutputCollector extends ProcessAdapter {
+    private final Appendable myOutput;
+    private int myStoredLength = 0;
+    public StdOutputCollector(Appendable outputSink) {
+      myOutput = outputSink;
+    }
+
+    @Override
+    public void onTextAvailable(ProcessEvent event, Key outputType) {
+      String text;
+      
+      synchronized (this) {
+        if (myStoredLength > 2048) {
+          return;
+        }
+        text = event.getText();
+        if (StringUtil.isEmptyOrSpaces(text)) {
+          return;
+        }
+        myStoredLength += text.length();
+      }
+      
+      try {
+        myOutput.append(text);
+      }
+      catch (IOException ignored) {
       }
     }
   }
