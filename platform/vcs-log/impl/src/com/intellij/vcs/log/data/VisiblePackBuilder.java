@@ -91,7 +91,7 @@ class VisiblePackBuilder {
     }
 
     VisibleGraph<Integer> visibleGraph;
-    if (matchingCommits != null && matchingCommits.isEmpty()) {
+    if (((matchingHeads != null) && matchingHeads.isEmpty()) || ((matchingCommits != null) && matchingCommits.isEmpty())) {
       visibleGraph = EmptyVisibleGraph.getInstance();
     }
     else {
