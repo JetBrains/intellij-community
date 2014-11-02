@@ -52,7 +52,7 @@ public final class RegExpCompletionContributor extends CompletionContributor {
       final ElementPattern<PsiElement> propertyNamePattern = psiElement().afterLeaf(psiElement().withText("{").afterLeaf(propertyPattern));
       extend(CompletionType.BASIC, propertyNamePattern, new PropertyNameCompletionProvider());
 
-      final ElementPattern<PsiElement> bracketExpressionPattern = psiElement().inside(RegExpClass.class);
+      final ElementPattern<PsiElement> bracketExpressionPattern = psiElement().afterLeaf(psiElement(RegExpTT.BRACKET_EXPRESSION_BEGIN));
       extend(CompletionType.BASIC, bracketExpressionPattern, new BracketExpressionCompletionProvider());
     }
 
