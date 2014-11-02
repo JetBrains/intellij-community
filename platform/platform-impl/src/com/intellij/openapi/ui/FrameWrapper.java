@@ -271,6 +271,9 @@ public class FrameWrapper implements Disposable, DataProvider {
 
   @Override
   public Object getData(@NonNls String dataId) {
+    if (CommonDataKeys.PROJECT.is(dataId)) {
+      return myProject;
+    }
     return null;
   }
 
