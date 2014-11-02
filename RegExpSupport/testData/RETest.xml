@@ -550,10 +550,6 @@
       <expected>OK</expected>
     </test>
     <test host="com.intellij.psi.impl.JavaRegExpHost">
-      <pattern>(?&lt;asdf&gt;[a-c])\2</pattern>
-      <expected>ERR</expected>
-    </test>
-    <test host="com.intellij.psi.impl.JavaRegExpHost">
       <pattern>(?&lt;asdf&gt;[a-c])\k&lt;asdf&gt;</pattern>
       <expected>OK</expected>
     </test>
