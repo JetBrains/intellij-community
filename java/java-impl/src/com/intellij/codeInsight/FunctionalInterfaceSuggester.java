@@ -17,10 +17,11 @@ package com.intellij.codeInsight;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.AnnotatedMembersSearch;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -37,15 +38,11 @@ public class FunctionalInterfaceSuggester {
       return Collections.emptyList();
     }
     final Set<PsiType> types = new LinkedHashSet<PsiType>();
-    final String uniqueExprName = JavaCodeStyleManager.getInstance(project).suggestUniqueVariableName("l", expression, true);
     AnnotatedMembersSearch.search(functionalInterfaceClass, expression.getResolveScope()).forEach(new Processor<PsiMember>() {
       @Override
       public boolean process(PsiMember member) {
         if (member instanceof PsiClass) {
-          final PsiType type = getAcceptableType((PsiClass)member, expression, uniqueExprName);
-          if (type != null) {
-            types.add(type);
-          }
+          ContainerUtil.addIfNotNull(types, composeAcceptableType((PsiClass)member, expression));
         }
         return true;
       }
@@ -53,26 +50,60 @@ public class FunctionalInterfaceSuggester {
     return types;
   }
 
-  private static PsiType getAcceptableType(PsiClass interface2Consider, PsiFunctionalExpression expression, String uniqueExprName) {
+  private static PsiType composeAcceptableType(@NotNull PsiClass interface2Consider, @NotNull PsiFunctionalExpression expression) {
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(interface2Consider.getProject());
-    //todo try to infer type
-    final PsiDeclarationStatement exprDeclaration = (PsiDeclarationStatement)elementFactory
-      .createStatementFromText(interface2Consider.getQualifiedName() + " " + uniqueExprName + " = " + expression.getText() + ";", expression);
-
-    final PsiLocalVariable var = (PsiLocalVariable)exprDeclaration.getDeclaredElements()[0];
-    final PsiExpression exprAsInitializer = var.getInitializer();
-    if (exprAsInitializer instanceof PsiFunctionalExpression) {
-
-      if (!((PsiFunctionalExpression)exprAsInitializer).isAcceptable(var.getType())) {
-        return null;
-      }
-      final PsiType type = ((PsiFunctionalExpression)exprAsInitializer).getFunctionalInterfaceType();
-      if (type instanceof PsiLambdaExpressionType || type instanceof PsiLambdaParameterType || type instanceof PsiMethodReferenceType) {
-        return null;
-      }
+    final PsiType type = elementFactory.createType(interface2Consider, PsiSubstitutor.EMPTY);
+    if (expression.isAcceptable(type)) {
       return type;
     }
 
+    return composeAcceptableType(interface2Consider, expression, elementFactory);
+  }
+
+  private static PsiType composeAcceptableType(final PsiClass interface2Consider,
+                                               final PsiFunctionalExpression expression,
+                                               final PsiElementFactory elementFactory) {
+
+    if (interface2Consider.hasTypeParameters()) {
+      final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(interface2Consider);
+      if (interfaceMethod != null) {
+        final PsiParameter[] parameters = interfaceMethod.getParameterList().getParameters();
+        final PsiParameter[] functionalExprParameters;
+        if (expression instanceof PsiLambdaExpression && ((PsiLambdaExpression)expression).hasFormalParameterTypes()) {
+          functionalExprParameters = ((PsiLambdaExpression)expression).getParameterList().getParameters();
+        }
+        else if (expression instanceof PsiMethodReferenceExpression && ((PsiMethodReferenceExpression)expression).isExact()) {
+          final PsiElement exactMethod = ((PsiMethodReferenceExpression)expression).resolve();
+          if (!(exactMethod instanceof PsiMethod)) {
+            return null;
+          }
+          functionalExprParameters = ((PsiMethod)exactMethod).getParameterList().getParameters();
+        } else {
+          return null;
+        }
+
+        if (parameters.length != functionalExprParameters.length) {
+          return null;
+        }
+
+        final PsiType[] left = new PsiType[parameters.length];
+        final PsiType[] right = new PsiType[parameters.length];
+
+        for (int i = 0; i < parameters.length; i++) {
+          left[i]  = parameters[i].getType();
+          right[i] = functionalExprParameters[i].getType();
+        }
+
+        final PsiSubstitutor substitutor = PsiResolveHelper.SERVICE.getInstance(interface2Consider.getProject())
+          .inferTypeArguments(interface2Consider.getTypeParameters(), left, right, PsiUtil.getLanguageLevel(expression));
+
+        PsiType type = elementFactory.createType(interface2Consider, substitutor);
+
+        if (expression.isAcceptable(type)) {
+          return type;
+        }
+      }
+    }
     return null;
   }
 }

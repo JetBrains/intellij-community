@@ -437,7 +437,11 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
   }
 
   public void testMethodRefNotInContext() {
-    doTest(new MockIntroduceVariableHandler("l", false, false, false, "java.util.function.IntConsumer"));
+    doTest(new MockIntroduceVariableHandler("l", false, false, false, "java.util.function.IntConsumer", true));
+  }
+
+  public void testMethodRefNotInContextInferred() {
+    doTest(new MockIntroduceVariableHandler("l", false, false, false, "java.util.function.Consumer<java.lang.Integer>", true));
   }
 
   public void testOneLineLambdaVoidCompatible() {
