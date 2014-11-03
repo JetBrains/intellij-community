@@ -41,7 +41,7 @@ public abstract class BreakpointManagerBase<T extends BreakpointBase<?>> impleme
 
   protected abstract T createBreakpoint(@NotNull BreakpointTarget target, int line, int column, @Nullable String condition, int ignoreCount, boolean enabled);
 
-  protected abstract AsyncResult<Breakpoint> doSetBreakpoint(BreakpointTarget target, T breakpoint);
+  protected abstract AsyncResult<Breakpoint> doSetBreakpoint(@NotNull BreakpointTarget target, @NotNull T breakpoint);
 
   @Override
   public Breakpoint setBreakpoint(@NotNull final BreakpointTarget target, int line, int column, @Nullable String condition, int ignoreCount, boolean enabled) {
@@ -106,5 +106,11 @@ public abstract class BreakpointManagerBase<T extends BreakpointBase<?>> impleme
     if (breakpoint.isResolved()) {
       dispatcher.getMulticaster().resolved(breakpoint);
     }
+  }
+
+  @Nullable
+  @Override
+  public FunctionSupport getFunctionSupport() {
+    return null;
   }
 }

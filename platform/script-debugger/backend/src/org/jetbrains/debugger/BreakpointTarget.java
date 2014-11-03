@@ -63,13 +63,17 @@ public abstract class BreakpointTarget {
 
   /**
    * A target that refers to a script by its name. Breakpoint will be set on every matching script currently loaded in VM.
-   * E.g. you can safely set a breakpoint before the script is actually loaded.
    */
   public static final class ScriptName extends BreakpointTarget {
     private final String name;
 
     public ScriptName(@NotNull String name) {
       this.name = name;
+    }
+
+    @NotNull
+    public String getName() {
+      return name;
     }
 
     @Override
