@@ -318,14 +318,19 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
           myEditor.putUserData(INTRODUCE_RESTART, true);
           try {
             final TextRange range = templateState.getCurrentVariableRange();
-            if (range != null && range.isEmpty()) {
-              final String[] names = suggestNames(isReplaceAllOccurrences(), getLocalVariable());
-              ApplicationManager.getApplication().runWriteAction(new Runnable() {
-                @Override
-                public void run() {
-                  myEditor.getDocument().insertString(myEditor.getCaretModel().getOffset(), names[0]);
-                }
-              });
+            if (range != null) {
+              final TextResult inputText = templateState.getVariableValue(PRIMARY_VARIABLE_NAME);
+              final String inputName = inputText != null ? inputText.getText() : null;
+              final V variable = getVariable();
+              if (inputName == null || variable == null || !isIdentifier(inputName, variable.getLanguage())) {
+                final String[] names = suggestNames(isReplaceAllOccurrences(), getLocalVariable());
+                ApplicationManager.getApplication().runWriteAction(new Runnable() {
+                  @Override
+                  public void run() {
+                    myEditor.getDocument().replaceString(range.getStartOffset(), range.getEndOffset(), names[0]);
+                  }
+                });
+              }
             }
             templateState.gotoEnd(true);
             try {
