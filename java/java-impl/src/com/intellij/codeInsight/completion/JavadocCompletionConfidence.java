@@ -15,6 +15,8 @@
  */
 package com.intellij.codeInsight.completion;
 
+import com.intellij.patterns.PlatformPatterns;
+import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
@@ -26,21 +28,16 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author peter
  */
-public class FocusInJavadoc extends CompletionConfidence {
-  @NotNull
-  @Override
-  public ThreeState shouldFocusLookup(@NotNull CompletionParameters parameters) {
-    if (PsiTreeUtil.getParentOfType(parameters.getPosition(), PsiDocTag.class) != null) {
-      return ThreeState.YES;
-    }
-    return ThreeState.UNSURE;
-  }
+public class JavadocCompletionConfidence extends CompletionConfidence {
 
   @NotNull
   @Override
   public ThreeState shouldSkipAutopopup(@NotNull PsiElement contextElement, @NotNull PsiFile psiFile, int offset) {
-    if (PsiTreeUtil.findElementOfClassAtOffset(psiFile, offset - 1, PsiDocTag.class, false) != null && 
+    if (PsiTreeUtil.findElementOfClassAtOffset(psiFile, offset - 1, PsiDocTag.class, false) != null &&
         PsiTreeUtil.findElementOfClassAtOffset(psiFile, offset - 1, PsiJavaCodeReferenceElement.class, false) != null) {
+      return ThreeState.NO;
+    }
+    if (PlatformPatterns.psiElement(JavaDocTokenType.DOC_TAG_NAME).accepts(contextElement)) {
       return ThreeState.NO;
     }
     return super.shouldSkipAutopopup(contextElement, psiFile, offset);
