@@ -185,7 +185,6 @@ public abstract class IntroduceParameterSettingsUI {
           box.setSelected(myCbReplaceAllOccurences.isSelected());
         }
       }
-      getTypeSelectionManager().setAllOccurrences(myCbReplaceAllOccurences.isSelected());
       if (myCbReplaceAllOccurences.isSelected()) {
         if (myCbDeleteLocalVariable != null) {
           myCbDeleteLocalVariable.makeSelectable();
@@ -196,9 +195,6 @@ public abstract class IntroduceParameterSettingsUI {
           myCbDeleteLocalVariable.makeUnselectable(false);
         }
       }
-    }
-    else {
-      getTypeSelectionManager().setAllOccurrences(myIsInvokedOnDeclaration);
     }
   }
 
