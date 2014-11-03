@@ -554,8 +554,8 @@ def run_python_code_mac(pid, python_code, connect_debugger_tracing=False, show_d
         ' '.join(cmd),
         shell=True,
         env=env,
-        stdout=None,
-        stderr=None,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
         )
     print('Running lldb in target process.')
     out, err = p.communicate()
