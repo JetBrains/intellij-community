@@ -234,9 +234,11 @@ public class JavaDocCompletionContributor extends CompletionContributor {
         InspectionProjectProfileManager.getInstance(position.getProject()).getInspectionProfile();
       JavaDocLocalInspection inspection =
         (JavaDocLocalInspection)inspectionProfile.getUnwrappedTool(JavaDocLocalInspection.SHORT_NAME, position);
-      final StringTokenizer tokenizer = new StringTokenizer(inspection.myAdditionalJavadocTags, ", ");
-      while (tokenizer.hasMoreTokens()) {
-        ret.add(tokenizer.nextToken());
+      if (inspection != null) {
+        final StringTokenizer tokenizer = new StringTokenizer(inspection.myAdditionalJavadocTags, ", ");
+        while (tokenizer.hasMoreTokens()) {
+          ret.add(tokenizer.nextToken());
+        }
       }
       for (final String s : ret) {
         if (isInline) {
