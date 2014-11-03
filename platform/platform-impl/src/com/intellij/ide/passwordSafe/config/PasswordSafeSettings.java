@@ -15,10 +15,7 @@
  */
 package com.intellij.ide.passwordSafe.config;
 
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.components.*;
 
 /**
  * The password safe settings
@@ -28,8 +25,8 @@ import com.intellij.openapi.components.StoragePathMacros;
  */
 @State(
   name = "PasswordSafe",
-  storages = {@Storage(
-    file = StoragePathMacros.APP_CONFIG + "/security.xml")})
+  storages = {@Storage(file = StoragePathMacros.APP_CONFIG + "/security.xml", roamingType = RoamingType.DISABLED)}
+)
 public class PasswordSafeSettings implements PersistentStateComponent<PasswordSafeSettings.State> {
   /**
    * The selected provider type

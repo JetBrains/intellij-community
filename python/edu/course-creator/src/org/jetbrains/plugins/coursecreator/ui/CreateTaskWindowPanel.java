@@ -12,12 +12,12 @@ public class CreateTaskWindowPanel extends JPanel {
 
   private final CreateTaskWindowDialog myDialog;
   private JPanel myPanel;
-  private JTextArea myTaskWindowText;
   private JTextField myHintName;
   private JTextArea myHintText;
   private JCheckBox myCreateHintCheckBox;
   private JLabel myHintNameLabel;
   private JLabel myHintTextLabel;
+  private JTextField myTaskWindowText;
   private String myGeneratedHintName = "";
 
   public CreateTaskWindowPanel(CreateTaskWindowDialog dialog) {
@@ -32,7 +32,7 @@ public class CreateTaskWindowPanel extends JPanel {
         // 1 for checked
         enableHint(state == 1);
         if (state == 2) {
-          myDialog.deleteHint();
+          resetHint();
         }
       }
     });

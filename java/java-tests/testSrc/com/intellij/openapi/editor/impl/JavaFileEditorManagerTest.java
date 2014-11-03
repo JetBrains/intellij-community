@@ -15,6 +15,15 @@
  */
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.codeInsight.daemon.impl.CodeFoldingPassFactory;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.FoldRegion;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.FileEditorManagerTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.jdom.JDOMException;
@@ -45,6 +54,29 @@ public class JavaFileEditorManagerTest extends FileEditorManagerTestCase {
               "      </file>\n" +
               "    </leaf>\n" +
               "  </component>");
+  }
+
+  public void testFoldingIsNotBlinkingOnNavigationToSingleLineMethod() {
+    VirtualFile file = getFile("/src/Bar.java");
+    PsiJavaFile psiFile = (PsiJavaFile)getPsiManager().findFile(file);
+    assertNotNull(psiFile);
+    PsiMethod method = psiFile.getClasses()[0].getMethods()[0];
+    method.navigate(true);
+
+    FileEditor[] editors = myManager.getEditors(file);
+    assertEquals(1, editors.length);
+    Editor editor = ((TextEditor)editors[0]).getEditor();
+    FoldRegion[] regions = editor.getFoldingModel().getAllFoldRegions();
+    assertEquals(2, regions.length);
+    assertTrue(regions[0].isExpanded());
+    assertTrue(regions[1].isExpanded());
+
+    EditorTestUtil.runTextEditorHighlightingPass(editor, CodeFoldingPassFactory.class);
+
+    regions = editor.getFoldingModel().getAllFoldRegions();
+    assertEquals(2, regions.length);
+    assertTrue(regions[0].isExpanded());
+    assertTrue(regions[1].isExpanded());
   }
 
   @Override

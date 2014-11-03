@@ -14,10 +14,10 @@ import java.util.List;
  */
 public class StudyPrevWindowAction extends StudyWindowNavigationAction {
   public static final String ACTION_ID = "PrevWindowAction";
-  public static final String SHORTCUT = "ctrl pressed COMMA";
+  public static final String SHORTCUT = "ctrl shift pressed COMMA";
 
   public StudyPrevWindowAction() {
-    super("PrevWindowAction", "Select previous window", StudyIcons.Prev);
+    super("Navigate to the Previous Answer Placeholder", "Navigate to the previous answer placeholder", StudyIcons.Prev);
   }
 
 

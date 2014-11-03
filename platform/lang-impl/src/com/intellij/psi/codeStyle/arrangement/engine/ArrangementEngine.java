@@ -555,7 +555,7 @@ public class ArrangementEngine {
         changer = new DefaultChanger();
       }
       final List<? extends ArrangementMatchRule> rulesByPriority = arrangementSettings.getRulesSortedByPriority();
-      final List<ArrangementSectionRule> sectionRules = arrangementSettings.getSections();
+      final List<ArrangementSectionRule> sectionRules = ArrangementUtil.getExtendedSectionRules(arrangementSettings);
       return new Context<T>(rearranger, wrappers, document, sectionRules, rulesByPriority, codeStyleSettings, changer);
     }
   }

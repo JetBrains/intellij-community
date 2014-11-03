@@ -61,8 +61,13 @@ public class BlockContainingJavaBlock extends AbstractJavaBlock{
 
     buildChildren(result, childAlignment, childWrap);
 
-    return result;
+    for (Block block : result) {
+      if (block instanceof AbstractJavaBlock) {
+        ((AbstractJavaBlock)block).setParentBlock(this);
+      }
+    }
 
+    return result;
   }
 
   private void buildChildren(final ArrayList<Block> result, final Alignment childAlignment, final Wrap childWrap) {

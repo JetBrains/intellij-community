@@ -27,6 +27,7 @@ import com.intellij.openapi.util.JDOMExternalizableStringList;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Set;
 
 /**
  * @author Konstantin Bulenkov
@@ -110,11 +111,7 @@ public class UninstallPluginAction extends AnAction implements DumbAware {
 
     try {
       PluginInstaller.prepareToUninstall(pluginId);
-      final JDOMExternalizableStringList installedPlugins = PluginManagerUISettings.getInstance().getInstalledPlugins();
-      final String pluginIdString = pluginId.getIdString();
-      while (installedPlugins.contains(pluginIdString)) {
-        installedPlugins.remove(pluginIdString);
-      }
+      PluginManagerUISettings.getInstance().getInstalledPlugins().remove(pluginId.getIdString());
       host.setRequireShutdown(descriptor.isEnabled());
     }
     catch (IOException e1) {

@@ -78,9 +78,9 @@ class F<caret>oo {
     Integer a, b
 }
 ''', '''\
-@ToString(excludes = ["a"])
 @EqualsAndHashCode(excludes = ["a"])
 @Immutable
+@ToString(excludes = ["a"])
 ''')
   }
 
@@ -96,8 +96,8 @@ class F<caret>oo {
 @Alias
 class F<caret>oo {}
 ''', '''\
-@Y
 @X
+@Y
 ''')
   }
 

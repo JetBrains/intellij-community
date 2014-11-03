@@ -424,7 +424,7 @@
                            id="groovyNameIdentifier"/>
     <completion.confidence language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionConfidence"
                            id="groovyAdvanced" order="after groovyNameIdentifier"/>
-    <completion.confidence language="Groovy" implementationClass="com.intellij.codeInsight.completion.UnfocusedComments"
+    <completion.confidence language="Groovy" implementationClass="com.intellij.codeInsight.completion.SkipAutopopupInComments"
                            id="groovyComments"/>
     <completion.confidence language="Groovy" implementationClass="com.intellij.codeInsight.completion.AlwaysFocusLookup" id="groovyTrue"
                            order="last"/>
@@ -597,6 +597,9 @@
 
     <copyPastePreProcessor implementation="org.jetbrains.plugins.groovy.editor.GroovyLiteralCopyPasteProcessor"/>
     <copyPastePostProcessor implementation="org.jetbrains.plugins.groovy.editor.GroovyReferenceCopyPasteProcessor"/>
+
+    <regExpLanguageHost forClass="org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl"
+                        implementationClass="org.jetbrains.plugins.groovy.regexp.GroovyRegExpHost"/>
 
     <localInspection shortName="GroovyUnusedDeclaration" displayName="Unused declaration"
                      groupPath="Groovy"
@@ -1071,6 +1074,16 @@
     <localInspection language="Groovy" groupPath="Groovy" shortName="DelegatesTo" displayName="@DelegatesTo inspection"
                      groupName="Annotations verifying" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.DelegatesToInspection"/>
+
+    <localInspection language="Groovy"
+                     shortName="GroovyVariableCanBeFinal"
+                     bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
+                     groupPath="Groovy"
+                     groupKey="groovy.dfa.issues"
+                     key="variable.can.be.final"
+                     enabledByDefault="false"
+                     level="WARNING"
+                     implementationClass="org.jetbrains.plugins.groovy.codeInspection.dataflow.GroovyVariableCanBeFinalInspection"/>
 
     <implicitUsageProvider implementation="org.jetbrains.plugins.groovy.gpp.GppImplicitUsageProvider"/>
     <implicitUsageProvider implementation="org.jetbrains.plugins.groovy.findUsages.GrImplicitUsageProvider"/>

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.PsiFile;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -45,7 +46,8 @@ public abstract class PyInspectionVisitor extends PyElementVisitor {
     synchronized (INSPECTION_TYPE_EVAL_CONTEXT) {
       context = session.getUserData(INSPECTION_TYPE_EVAL_CONTEXT);
       if (context == null) {
-        context = TypeEvalContext.codeAnalysis(session.getFile());
+        PsiFile file = session.getFile();
+        context = TypeEvalContext.codeAnalysis(file.getProject(), file);
         session.putUserData(INSPECTION_TYPE_EVAL_CONTEXT, context);
       }
     }

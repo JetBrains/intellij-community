@@ -83,9 +83,10 @@ class Test {
       expected: '''\
 class Test {
   public int j;
-  { j = 1; }
   protected int k;
   private int i;
+
+  { j = 1; }
 }''',
       rules: [rule(FIELD, PUBLIC), rule(FIELD, PROTECTED), rule(FIELD, PRIVATE)])
   }
@@ -101,11 +102,330 @@ class Test {
 }''',
       expected: '''\
 class Test {
-  { j = 1; }
   public int j;
   protected int k;
   private int i;
+
+  { j = 1; }
 }''',
       rules: [rule(FIELD, PUBLIC), rule(FIELD, PROTECTED), rule(FIELD, PRIVATE)])
+  }
+
+  void "test getter is matched by public method rule"() {
+    doTest(
+      initial: '''\
+class Test {
+  private void test() {}
+
+  private int count;
+
+  private void run() {}
+
+  public int getCount() {
+    return count;
+  }
+
+  private void compose() {}
+}
+''',
+      expected: '''\
+class Test {
+  private int count;
+
+  private void test() {}
+
+  private void run() {}
+
+  private void compose() {}
+
+  public int getCount() {
+    return count;
+  }
+}
+''',
+      rules: [rule(FIELD), rule(PRIVATE, METHOD), rule(PUBLIC, METHOD)]
+    );
+  }
+
+  void "test getter is matched by method rule"() {
+    doTest(
+      initial: '''\
+class Test {
+  public int getCount() {
+    return count;
+  }
+
+  class T {}
+
+  private int count;
+
+  private void compose() {}
+}
+''',
+      expected: '''\
+class Test {
+  private int count;
+
+  public int getCount() {
+    return count;
+  }
+
+  private void compose() {}
+
+  class T {}
+}
+''',
+      rules: [rule(FIELD), rule(METHOD)]
+    );
+  }
+
+  void "test getter is not matched by private method"() {
+    doTest(
+      initial: '''\
+class Test {
+  private int count;
+
+  public int getCount() {
+    return count;
+  }
+
+  private void compose() {}
+}
+''',
+      expected: '''\
+class Test {
+  private void compose() {}
+  private int count;
+
+  public int getCount() {
+    return count;
+  }
+}
+''',
+      rules: [rule(PRIVATE, METHOD), rule(FIELD)]
+    )
+  }
+
+  void "test getter is matched by getter rule"() {
+    doTest(
+      initial: '''\
+class Test {
+  private void test() {}
+
+  private int count;
+
+  private void run() {}
+
+  public int getCount() {
+    return count;
+  }
+
+  public int superRun() {}
+
+  private void compose() {}
+}
+''',
+      expected: '''\
+class Test {
+  private int count;
+
+  public int getCount() {
+    return count;
+  }
+
+  private void test() {}
+
+  private void run() {}
+
+  private void compose() {}
+
+  public int superRun() {}
+}
+''',
+      rules: [rule(FIELD), rule(GETTER), rule(PRIVATE, METHOD), rule(PUBLIC, METHOD)]
+    );
+  }
+
+  void "test setter is matched by public method rule"() {
+    doTest(
+      initial: '''\
+class Test {
+  private void test() {}
+
+  private int count;
+
+  private void run() {}
+
+  public void setCount(int value) {
+    count = value;
+  }
+
+  private void compose() {}
+}
+''',
+      expected: '''\
+class Test {
+  private int count;
+
+  private void test() {}
+
+  private void run() {}
+
+  private void compose() {}
+
+  public void setCount(int value) {
+    count = value;
+  }
+}
+''',
+      rules: [rule(FIELD), rule(PRIVATE, METHOD), rule(PUBLIC, METHOD)]
+    )
+  }
+
+  void "test setter is matched by method rule"() {
+    doTest(
+      initial: '''\
+class Test {
+  public void setCount(int value) {
+    count = value;
+  }
+
+  class T {}
+
+  private int count;
+
+  private void compose() {}
+}
+''',
+      expected: '''\
+class Test {
+  private int count;
+
+  public void setCount(int value) {
+    count = value;
+  }
+
+  private void compose() {}
+
+  class T {}
+}
+''',
+      rules: [rule(FIELD), rule(METHOD)]
+    );
+  }
+
+  void "test setter is not matched by private method"() {
+    doTest(
+      initial: '''\
+class Test {
+  private int count;
+
+  public void setCount(int value) {
+    count = value;
+  }
+
+  private void compose() {}
+}
+''',
+      expected: '''\
+class Test {
+  private void compose() {}
+  private int count;
+
+  public void setCount(int value) {
+    count = value;
+  }
+}
+''',
+      rules: [rule(PRIVATE, METHOD), rule(FIELD)]
+    )
+  }
+
+  void "test setter is matched by setter rule"() {
+    doTest(
+      initial: '''\
+class Test {
+  private void test() {}
+
+  private int count;
+
+  private void run() {}
+
+  public void setCount(int value) {
+    count = value;
+  }
+
+  public int superRun() {}
+
+  private void compose() {}
+}
+''',
+      expected: '''\
+class Test {
+  private int count;
+
+  public void setCount(int value) {
+    count = value;
+  }
+
+  private void test() {}
+
+  private void run() {}
+
+  private void compose() {}
+
+  public int superRun() {}
+}
+''',
+      rules: [rule(FIELD), rule(SETTER), rule(PRIVATE, METHOD), rule(PUBLIC, METHOD)]
+    )
+  }
+
+  void "test setters and getters"() {
+    doTest(
+      initial: '''\
+class Test {
+  private void test() {}
+
+  private void run() {}
+
+  public void setCount(int value) {
+    count = value;
+  }
+
+  private int count;
+
+  public int getCount() {
+    return count;
+  }
+
+  private void compose() {}
+
+  public int superRun() {}
+}
+''',
+      expected: '''\
+class Test {
+  private int count;
+
+  public int getCount() {
+    return count;
+  }
+
+  public void setCount(int value) {
+    count = value;
+  }
+
+  private void test() {}
+
+  private void run() {}
+
+  private void compose() {}
+
+  public int superRun() {}
+}
+''',
+      rules: [rule(FIELD), rule(GETTER), rule(SETTER), rule(METHOD, PRIVATE), rule(METHOD, PUBLIC)]
+    )
   }
 }

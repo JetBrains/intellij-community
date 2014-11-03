@@ -15,17 +15,20 @@
  */
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
+import org.jetbrains.java.decompiler.main.TextBuffer;
+import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.CheckTypesResult;
 import org.jetbrains.java.decompiler.struct.StructField;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
-
-import java.util.ArrayList;
-import java.util.List;
 
 
 public class AssignmentExprent extends Exprent {
@@ -58,9 +61,11 @@ public class AssignmentExprent extends Exprent {
   }
 
 
-  public AssignmentExprent(Exprent left, Exprent right) {
+  public AssignmentExprent(Exprent left, Exprent right, Set<Integer> bytecode_offsets) {
     this.left = left;
     this.right = right;
+
+    addBytecodeOffsets(bytecode_offsets);
   }
 
 
@@ -95,15 +100,17 @@ public class AssignmentExprent extends Exprent {
     return lst;
   }
 
+  @Override
   public Exprent copy() {
-    return new AssignmentExprent(left.copy(), right.copy());
+    return new AssignmentExprent(left.copy(), right.copy(), bytecode);
   }
 
   public int getPrecedence() {
     return 13;
   }
 
-  public String toJava(int indent) {
+  @Override
+  public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
     VarType leftType = left.getExprType();
     VarType rightType = right.getExprType();
 
@@ -125,33 +132,35 @@ public class AssignmentExprent extends Exprent {
     }
 
     if (hiddenField) {
-      return "";
+      return new TextBuffer();
     }
 
-    StringBuilder buffer = new StringBuilder();
+    TextBuffer buffer = new TextBuffer();
 
     if (fieldInClassInit) {
       buffer.append(((FieldExprent)left).getName());
     }
     else {
-      buffer.append(left.toJava(indent));
+      buffer.append(left.toJava(indent, tracer));
     }
 
-    String res = right.toJava(indent);
+    TextBuffer res = right.toJava(indent, tracer);
 
     if (condtype == CONDITION_NONE &&
         !leftType.isSuperset(rightType) &&
         (rightType.equals(VarType.VARTYPE_OBJECT) || leftType.type != CodeConstants.TYPE_OBJECT)) {
       if (right.getPrecedence() >= FunctionExprent.getPrecedence(FunctionExprent.FUNCTION_CAST)) {
-        res = "(" + res + ")";
+        res.enclose("(", ")");
       }
 
-      res = "(" + ExprProcessor.getCastTypeName(leftType) + ")" + res;
+      res.prepend("(" + ExprProcessor.getCastTypeName(leftType) + ")");
     }
 
     buffer.append(condtype == CONDITION_NONE ? " = " : funceq[condtype]).append(res);
 
-    return buffer.toString();
+    tracer.addMapping(bytecode);
+
+    return buffer;
   }
 
   public boolean equals(Object o) {

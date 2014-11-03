@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,19 +21,40 @@ import com.intellij.internal.statistic.connect.StatisticsService;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.util.PlatformIcons;
+import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NotNull;
 
 public class SendStatisticsAction extends AnAction {
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
-    if (project != null) {
-      StatisticsService service = StatisticsUploadAssistant.getStatisticsService();
-      StatisticsResult result = service.send();
-      Messages.showMessageDialog(result.getDescription(), "Result", PlatformIcons.CUSTOM_FILE_ICON);
+    if (project == null) {
+      return;
     }
+
+    ProgressManager.getInstance().run(new Task.Backgroundable(project, "Sending statistics...", false) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        StatisticsService service = StatisticsUploadAssistant.getStatisticsService();
+        final StatisticsResult result = service.send();
+
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            Messages.showMultilineInputDialog(project, "Result: " + result.getCode(), "Statistics Result",
+                                              StringUtil.replace(result.getDescription(), ";", "\n"),
+                                              null, null);
+          }
+        }, ModalityState.NON_MODAL, project.getDisposed());
+      }
+    });
   }
 }

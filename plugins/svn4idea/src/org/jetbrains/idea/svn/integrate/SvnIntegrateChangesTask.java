@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
@@ -98,7 +99,7 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
     myHandler.setProgressIndicator(ProgressManager.getInstance().getProgressIndicator());
     myResolveWorker = new ResolveWorker(myInfo.isUnderProjectRoot(), myProject);
 
-    BlockReloadingUtil.block();
+    ProjectManagerEx.getInstanceEx().blockReloadingProjectOnExternalChanges();
     myProjectLevelVcsManager.startBackgroundVcsOperation();
 
     try {
@@ -174,7 +175,7 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
         afterExecution(wasCancelled);
       }
     } finally {
-      BlockReloadingUtil.unblock();
+      ProjectManagerEx.getInstanceEx().unblockReloadingProjectOnExternalChanges();
     }
   }
 

@@ -128,7 +128,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
   @Override
   public Magnificator getMagnificator() {
     JComponent view = (JComponent)getView();
-    return view != null ? (Magnificator)view.getClientProperty(Magnificator.CLIENT_PROPERTY_KEY) : null;
+    return view != null ? UIUtil.getClientProperty(view, Magnificator.CLIENT_PROPERTY_KEY) : null;
   }
 
   @Override

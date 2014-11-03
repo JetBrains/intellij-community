@@ -18,27 +18,25 @@ package com.intellij.ide.ui;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 
 /**
  * @author Sergey.Malenkov
  */
-public final class AppearanceOptionsTopHitProvider extends OptionsTopHitProvider {
-  private static final Collection<BooleanOptionDescription> ourOptions = Collections.unmodifiableCollection(Arrays.asList(
+public class AppearanceOptionsTopHitProvider extends OptionsTopHitProvider {
+  public static final String ID = "appearance";
+
+  private static final Collection<BooleanOptionDescription> ourOptions = ContainerUtil.immutableList(
     appearance("UI: " + messageIde("checkboox.cyclic.scrolling.in.lists"), "CYCLE_SCROLLING"),
     appearance("UI: " + messageIde("checkbox.show.icons.in.quick.navigation"), "SHOW_ICONS_IN_QUICK_NAVIGATION"),
     appearance("UI: " + messageIde("checkbox.position.cursor.on.default.button"), "MOVE_MOUSE_ON_DEFAULT_BUTTON"),
     appearance("UI: Hide navigation popups on focus loss", "HIDE_NAVIGATION_ON_FOCUS_LOSS"),
     appearance("UI: Drag-n-Drop with ALT pressed only", "DND_WITH_PRESSED_ALT_ONLY"),
     notifications("UI: Display balloon notifications", "SHOW_BALLOONS"),
-    appearance("View: Show Main Toolbar", "SHOW_MAIN_TOOLBAR"),
-    appearance("View: Show Status Bar", "SHOW_STATUS_BAR"),
-    appearance("View: Show Navigation Bar", "SHOW_NAVIGATION_BAR"),
     appearance("Window: " + messageIde("checkbox.animate.windows"), "ANIMATE_WINDOWS"),
     appearance("Window: " + messageIde("checkbox.show.memory.indicator"), "SHOW_MEMORY_INDICATOR"),
     appearance("Window: " + messageKeyMap("disable.mnemonic.in.menu.check.box"), "DISABLE_MNEMONICS"),
@@ -46,13 +44,12 @@ public final class AppearanceOptionsTopHitProvider extends OptionsTopHitProvider
     appearance("Window: " + messageIde("checkbox.show.icons.in.menu.items"), "SHOW_ICONS_IN_MENUS"),
     appearance("Window: " + messageIde("checkbox.left.toolwindow.layout"), "LEFT_HORIZONTAL_SPLIT"),
     appearance("Window: " + messageIde("checkbox.show.editor.preview.popup"), "SHOW_EDITOR_TOOLTIP"),
-    appearance("Window: " + "Hide Tool Window Bars", "HIDE_TOOL_STRIPES"),
     appearance("Window: " + messageIde("checkbox.show.tool.window.numbers"), "SHOW_TOOL_WINDOW_NUMBERS"),
     appearance("Window: Allow merging buttons on dialogs", "ALLOW_MERGE_BUTTONS"),
     appearance("Window: Small labels in editor tabs", "USE_SMALL_LABELS_ON_TABS"),
     appearance("Window: " + messageIde("checkbox.widescreen.tool.window.layout"), "WIDESCREEN_SUPPORT"),
     appearance("Window: " + messageIde("checkbox.right.toolwindow.layout"), "RIGHT_HORIZONTAL_SPLIT"),
-    appearance("Window: " + messageIde("checkbox.use.preview.window"), "NAVIGATE_TO_PREVIEW")));
+    appearance("Window: " + messageIde("checkbox.use.preview.window"), "NAVIGATE_TO_PREVIEW"));
 
   @NotNull
   @Override
@@ -62,7 +59,7 @@ public final class AppearanceOptionsTopHitProvider extends OptionsTopHitProvider
 
   @Override
   public String getId() {
-    return "appearance";
+    return ID;
   }
 
   static BooleanOptionDescription appearance(String option, String field) {
@@ -87,8 +84,28 @@ public final class AppearanceOptionsTopHitProvider extends OptionsTopHitProvider
     return new PublicFieldBasedOptionDescription(option, "reference.settings.ide.settings.notifications", field) {
       @Override
       public Object getInstance() {
-        return NotificationsConfigurationImpl.getNotificationsConfigurationImpl();
+        return NotificationsConfigurationImpl.getInstanceImpl();
       }
     };
+  }
+
+  public static class Ex extends OptionsTopHitProvider implements CoveredByToggleActions {
+    private static final Collection<BooleanOptionDescription> ourOptions = ContainerUtil.immutableList(
+      appearance("Window: " + "Hide Tool Window Bars", "HIDE_TOOL_STRIPES"),
+      appearance("View: Show Main Toolbar", "SHOW_MAIN_TOOLBAR"),
+      appearance("View: Show Status Bar", "SHOW_STATUS_BAR"),
+      appearance("View: Show Navigation Bar", "SHOW_NAVIGATION_BAR")
+    );
+
+    @NotNull
+    @Override
+    public Collection<BooleanOptionDescription> getOptions(@Nullable Project project) {
+      return ourOptions;
+    }
+
+    @Override
+    public String getId() {
+      return ID;
+    }
   }
 }

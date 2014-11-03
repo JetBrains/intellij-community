@@ -271,6 +271,9 @@ public class FrameWrapper implements Disposable, DataProvider {
 
   @Override
   public Object getData(@NonNls String dataId) {
+    if (CommonDataKeys.PROJECT.is(dataId)) {
+      return myProject;
+    }
     return null;
   }
 
@@ -340,7 +343,7 @@ public class FrameWrapper implements Disposable, DataProvider {
     myTitle = title;
   }
 
-  public void addDisposable(Disposable disposable) {
+  public void addDisposable(@NotNull Disposable disposable) {
     Disposer.register(this, disposable);
   }
 

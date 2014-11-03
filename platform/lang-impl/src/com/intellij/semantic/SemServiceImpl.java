@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -303,7 +303,7 @@ public class SemServiceImpl extends SemService{
   }
 
   private static class SemCacheChunk {
-    private final ConcurrentIntObjectMap<List<SemElement>> map = new StripedLockIntObjectConcurrentHashMap<List<SemElement>>();
+    private final ConcurrentIntObjectMap<List<SemElement>> map = ContainerUtil.createConcurrentIntObjectMap();
 
     public List<SemElement> getSemElements(SemKey<?> key) {
       return map.get(key.getUniqueId());

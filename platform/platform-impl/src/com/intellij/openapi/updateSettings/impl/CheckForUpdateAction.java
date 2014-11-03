@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,11 +21,17 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrameProvider;
 
 public class CheckForUpdateAction extends AnAction implements DumbAware {
   @Override
   public void update(AnActionEvent e) {
-    e.getPresentation().setVisible(!SystemInfo.isMacSystemMenu || !ActionPlaces.MAIN_MENU.equals(e.getPlace()));
+    final String place = e.getPlace();
+    if (ActionPlaces.WELCOME_SCREEN.equals(place) && FlatWelcomeFrameProvider.isAvailable()) {
+      e.getPresentation().setEnabledAndVisible(true);
+    } else {
+      e.getPresentation().setVisible(!SystemInfo.isMacSystemMenu || !ActionPlaces.MAIN_MENU.equals(place));
+    }
   }
 
   @Override

@@ -47,10 +47,10 @@ public class NestedClassProcessor {
   public void processClass(ClassNode root, ClassNode node) {
 
     // hide synthetic lambda content methods
-    if (node.type == ClassNode.CLASS_LAMBDA && !node.lambda_information.is_method_reference) {
+    if (node.type == ClassNode.CLASS_LAMBDA && !node.lambdaInformation.is_method_reference) {
       ClassNode node_content = DecompilerContext.getClassProcessor().getMapRootClasses().get(node.classStruct.qualifiedName);
       if (node_content != null && node_content.wrapper != null) {
-        node_content.wrapper.getHiddenMembers().add(node.lambda_information.content_method_key);
+        node_content.wrapper.getHiddenMembers().add(node.lambdaInformation.content_method_key);
       }
     }
 
@@ -75,10 +75,11 @@ public class NestedClassProcessor {
           child.simpleName = "SyntheticClass_" + (++synthetics);
         }
         else {
-          DecompilerContext.getLogger().writeMessage("Nameless local or member class " + cl.qualifiedName + "!",
-                                                     IFernflowerLogger.Severity.WARN);
+          String message = "Nameless local or member class " + cl.qualifiedName + "!";
+          DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.WARN);
           child.simpleName = "NamelessClass_" + (++nameless);
         }
+        child.namelessConstructorStub = !cl.hasModifier(CodeConstants.ACC_STATIC) && cl.getMethods().size() + cl.getFields().size() == 0;
       }
     }
 
@@ -86,13 +87,11 @@ public class NestedClassProcessor {
       if (child.type == ClassNode.CLASS_LAMBDA) {
         setLambdaVars(node, child);
       }
-      else {
-        if (child.type != ClassNode.CLASS_MEMBER || (child.access & CodeConstants.ACC_STATIC) == 0) {
-          insertLocalVars(node, child);
+      else if (child.type != ClassNode.CLASS_MEMBER || (child.access & CodeConstants.ACC_STATIC) == 0) {
+        insertLocalVars(node, child);
 
-          if (child.type == ClassNode.CLASS_LOCAL) {
-            setLocalClassDefinition(node.wrapper.getMethods().getWithKey(child.enclosingMethod), child);
-          }
+        if (child.type == ClassNode.CLASS_LOCAL) {
+          setLocalClassDefinition(node.wrapper.getMethods().getWithKey(child.enclosingMethod), child);
         }
       }
     }
@@ -104,22 +103,22 @@ public class NestedClassProcessor {
 
   private static void setLambdaVars(ClassNode parent, ClassNode child) {
 
-    if (child.lambda_information.is_method_reference) { // method reference, no code and no parameters
+    if (child.lambdaInformation.is_method_reference) { // method reference, no code and no parameters
       return;
     }
 
-    final MethodWrapper meth = parent.wrapper.getMethods().getWithKey(child.lambda_information.content_method_key);
+    final MethodWrapper meth = parent.wrapper.getMethods().getWithKey(child.lambdaInformation.content_method_key);
     final MethodWrapper encmeth = parent.wrapper.getMethods().getWithKey(child.enclosingMethod);
 
-    MethodDescriptor md_lambda = MethodDescriptor.parseDescriptor(child.lambda_information.method_descriptor);
-    final MethodDescriptor md_content = MethodDescriptor.parseDescriptor(child.lambda_information.content_method_descriptor);
+    MethodDescriptor md_lambda = MethodDescriptor.parseDescriptor(child.lambdaInformation.method_descriptor);
+    final MethodDescriptor md_content = MethodDescriptor.parseDescriptor(child.lambdaInformation.content_method_descriptor);
 
     final int vars_count = md_content.params.length - md_lambda.params.length;
     //		if(vars_count < 0) { // should not happen, but just in case...
     //			vars_count = 0;
     //		}
 
-    final boolean is_static_lambda_content = child.lambda_information.is_content_method_static;
+    final boolean is_static_lambda_content = child.lambdaInformation.is_content_method_static;
 
     final String parent_class_name = parent.wrapper.getClassStruct().qualifiedName;
     final String lambda_class_name = child.simpleName;
@@ -221,12 +220,12 @@ public class NestedClassProcessor {
 
         if (!hasEnclosing) {
           if (child.type == ClassNode.CLASS_ANONYMOUS) {
-            DecompilerContext.getLogger()
-              .writeMessage("Unreferenced anonymous class " + child.classStruct.qualifiedName + "!", IFernflowerLogger.Severity.WARN);
+            String message = "Unreferenced anonymous class " + child.classStruct.qualifiedName + "!";
+            DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.WARN);
           }
           else if (child.type == ClassNode.CLASS_LOCAL) {
-            DecompilerContext.getLogger()
-              .writeMessage("Unreferenced local class " + child.classStruct.qualifiedName + "!", IFernflowerLogger.Severity.WARN);
+            String message = "Unreferenced local class " + child.classStruct.qualifiedName + "!";
+            DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.WARN);
           }
         }
       }
@@ -275,8 +274,8 @@ public class NestedClassProcessor {
 
           HashMap<String, List<VarFieldPair>> mask = getMaskLocalVars(nd.wrapper);
           if (mask.isEmpty()) {
-            DecompilerContext.getLogger()
-              .writeMessage("Nested class " + nd.classStruct.qualifiedName + " has no constructor!", IFernflowerLogger.Severity.WARN);
+            String message = "Nested class " + nd.classStruct.qualifiedName + " has no constructor!";
+            DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.WARN);
           }
           else {
             mapVarMasks.put(nd.classStruct.qualifiedName, mask);

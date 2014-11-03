@@ -22,11 +22,13 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.Stack;
+import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Builds custom folding regions. If custom folding is supported for a language, its FoldingBuilder must be inherited from this class.
@@ -37,19 +39,26 @@ public abstract class CustomFoldingBuilder extends FoldingBuilderEx implements P
 
   private CustomFoldingProvider myDefaultProvider;
   private static final int MAX_LOOKUP_DEPTH = 10;
+  private static final ThreadLocal<Set<ASTNode>> ourCustomRegionElements = new ThreadLocal<Set<ASTNode>>();
 
   @NotNull
   @Override
   public final FoldingDescriptor[] buildFoldRegions(@NotNull PsiElement root, @NotNull Document document, boolean quick) {
     List<FoldingDescriptor> descriptors = new ArrayList<FoldingDescriptor>();
-    if (CustomFoldingProvider.getAllProviders().length > 0) {
-      myDefaultProvider = null;
-      ASTNode rootNode = root.getNode();
-      if (rootNode != null) {
-        addCustomFoldingRegionsRecursively(new FoldingStack(rootNode), rootNode, descriptors, 0);
+    ourCustomRegionElements.set(new HashSet<ASTNode>());
+    try {
+      if (CustomFoldingProvider.getAllProviders().length > 0) {
+        myDefaultProvider = null;
+        ASTNode rootNode = root.getNode();
+        if (rootNode != null) {
+          addCustomFoldingRegionsRecursively(new FoldingStack(rootNode), rootNode, descriptors, 0);
+        }
       }
+      buildLanguageFoldRegions(descriptors, root, document, quick);
     }
-    buildLanguageFoldRegions(descriptors, root, document, quick);
+    finally {
+      ourCustomRegionElements.set(null);
+    }
     return descriptors.toArray(new FoldingDescriptor[descriptors.size()]);
   }
 
@@ -88,6 +97,9 @@ public abstract class CustomFoldingBuilder extends FoldingBuilderEx implements P
           int startOffset = startNode.getTextRange().getStartOffset();
           TextRange range = new TextRange(startOffset, child.getTextRange().getEndOffset());
           descriptors.add(new FoldingDescriptor(startNode, range));
+          Set<ASTNode> nodeSet = ourCustomRegionElements.get();
+          nodeSet.add(startNode);
+          nodeSet.add(child);
         }
       }
       else {
@@ -167,6 +179,11 @@ public abstract class CustomFoldingBuilder extends FoldingBuilderEx implements P
       return defaultProvider != null && defaultProvider.isCustomRegionEnd(nodeText);
     }
     return false;
+  }
+
+  protected static boolean isCustomRegionElement(PsiElement element) {
+    Set<ASTNode> set = ourCustomRegionElements.get();
+    return set != null && element != null && set.contains(element.getNode());
   }
 
   @Nullable

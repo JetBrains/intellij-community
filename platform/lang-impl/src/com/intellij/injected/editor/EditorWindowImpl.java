@@ -47,6 +47,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.containers.WeakList;
+import com.intellij.util.ui.ButtonlessScrollBarUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -569,9 +570,15 @@ public class EditorWindowImpl extends UserDataHolderBase implements EditorWindow
 
   @Override
   public int logicalPositionToOffset(@NotNull final LogicalPosition pos) {
+    return logicalPositionToOffset(pos, true);
+  }
+
+  @Override
+  public int logicalPositionToOffset(@NotNull LogicalPosition pos, boolean softWrapAware) {
     int lineStartOffset = myDocumentWindow.getLineStartOffset(pos.line);
     return calcOffset(pos.column, pos.line, lineStartOffset);
   }
+
   private int calcLogicalColumnNumber(int offsetInLine, int lineNumber, int lineStartOffset) {
     if (myDocumentWindow.getTextLength() == 0) return 0;
 
@@ -582,13 +589,25 @@ public class EditorWindowImpl extends UserDataHolderBase implements EditorWindow
     CharSequence text = myDocumentWindow.getCharsSequence();
     return EditorUtil.calcColumnNumber(this, text, lineStartOffset, lineStartOffset +offsetInLine);
   }
+
   private int calcOffset(int col, int lineNumber, int lineStartOffset) {
     if (myDocumentWindow.getTextLength() == 0) return 0;
 
     int end = myDocumentWindow.getLineEndOffset(lineNumber);
 
-    CharSequence text = myDocumentWindow.getCharsSequence();
-    return EditorUtil.calcOffset(this, text, lineStartOffset, end, col, EditorUtil.getTabSize(myDelegate), null);
+    int x = getDocument().getLineNumber(lineStartOffset) == 0 ? getPrefixTextWidthInPixels() : 0;
+
+    // There is a possible case that target column points inside soft wrap-introduced virtual space.
+    if (col <= 0) {
+      return lineStartOffset;
+    }
+
+    int result = EditorUtil.calcSoftWrapUnawareOffset(this, myDocumentWindow.getCharsSequence(), lineStartOffset, end, col,
+                                                      EditorUtil.getTabSize(myDelegate), x, new int[]{0}, null);
+    if (result >= 0) {
+      return result;
+    }
+    return end;
   }
 
   @Override
@@ -825,7 +844,7 @@ public class EditorWindowImpl extends UserDataHolderBase implements EditorWindow
   }
 
   @Override
-  public void registerScrollBarRepaintCallback(@Nullable RepaintCallback callback) {
+  public void registerScrollBarRepaintCallback(@Nullable ButtonlessScrollBarUI.ScrollbarRepaintCallback callback) {
     myDelegate.registerScrollBarRepaintCallback(callback);
   }
 

@@ -48,9 +48,10 @@ public class JavaEEGradleProjectResolverExtension extends AbstractProjectResolve
 
   @Override
   public void populateModuleExtraModels(@NotNull IdeaModule gradleModule, @NotNull DataNode<ModuleData> ideModule) {
+    final List<War> warModels;
     final WebConfiguration webConfiguration = resolverCtx.getExtraProject(gradleModule, WebConfiguration.class);
     if (webConfiguration != null) {
-      List<War> warModels =
+      warModels =
         ContainerUtil.map(webConfiguration.getWarModels(), new Function<WebConfiguration.WarModel, War>() {
           @Override
           public War fun(WebConfiguration.WarModel model) {
@@ -63,10 +64,12 @@ public class JavaEEGradleProjectResolverExtension extends AbstractProjectResolve
             return war;
           }
         });
-
-      ideModule.createChild(WebConfigurationModelData.KEY, new WebConfigurationModelData(GradleConstants.SYSTEM_ID, warModels));
     }
-
+    else {
+      // we need to create WebConfigurationModelData without war artifacts to handle removal outdated web artifacts of the project which can be previously created
+      warModels = ContainerUtil.emptyList();
+    }
+    ideModule.createChild(WebConfigurationModelData.KEY, new WebConfigurationModelData(GradleConstants.SYSTEM_ID, warModels));
     nextResolver.populateModuleExtraModels(gradleModule, ideModule);
   }
 

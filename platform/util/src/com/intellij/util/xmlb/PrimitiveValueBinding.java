@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,7 @@ import org.jetbrains.annotations.Nullable;
 class PrimitiveValueBinding implements Binding {
   private final Class<?> myType;
 
-
-  public PrimitiveValueBinding(Class<?> myType) {
+  public PrimitiveValueBinding(@NotNull Class<?> myType) {
     this.myType = myType;
   }
 
@@ -48,7 +47,6 @@ class PrimitiveValueBinding implements Binding {
       assert nodes[0] != null;
       value = JDOMUtil.getValue(nodes[0]);
     }
-
     return convertString(value);
   }
 

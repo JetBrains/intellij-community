@@ -61,7 +61,7 @@ public class UiInfoUsageCollector extends UsagesCollector {
     add(set, "Tabs Left", tabPlace() == SwingConstants.LEFT ? 1 : 0);
     add(set, "Tabs Right", tabPlace() == SwingConstants.RIGHT ? 1 : 0);
     add(set, "Retina", UIUtil.isRetina() ? 1 : 0);
-    add(set, "Show tips on startup", GeneralSettings.getInstance().showTipsOnStartup() ? 1 : 0);
+    add(set, "Show tips on startup", GeneralSettings.getInstance().isShowTipsOnStartup() ? 1 : 0);
 
     return set;
   }

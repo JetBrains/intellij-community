@@ -172,6 +172,10 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
     doTest();
   }
 
+  public void testSiteSubstitutionInExpressionConstraints() throws Exception {
+    doTest();
+  }
+
   public void testIncorporationWithEqualsBoundsSubstitution() throws Exception {
     doTest();
   }
@@ -241,6 +245,18 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
 
   public void testCallToGenericMethodsOfNonGenericClassInsideRawInheritor() throws Exception {
     doTest();
+  }
+
+  public void testIDEA130549() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA130547() throws Exception {
+    doTest();
+  }
+
+  public void testUncheckedConversionWithRecursiveTypeParams() throws Exception {
+    doTest(false);
   }
 
   private void doTest() throws Exception {

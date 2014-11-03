@@ -39,5 +39,8 @@ public interface ScriptManager {
   Script findScriptByUrl(@NotNull String rawUrl);
 
   @Nullable
+  Script findScriptById(@NotNull String id);
+
+  @Nullable
   ActionCallback getScriptSourceMapLoadCallback(@NotNull Script script);
 }

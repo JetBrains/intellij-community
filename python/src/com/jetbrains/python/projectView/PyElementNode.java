@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +50,7 @@ public class PyElementNode extends BasePsiNode<PyElement> {
       for (PyClass aClass : pyClass.getNestedClasses()) {
         result.add(new PyElementNode(myProject, aClass, getSettings()));
       }
-      for (PyFunction function : pyClass.getMethods()) {
+      for (PyFunction function : pyClass.getMethods(false)) {
         result.add(new PyElementNode(myProject, function, getSettings()));
       }
       return result;

@@ -74,9 +74,8 @@ public class CloneUtils {
     if (!(statement instanceof PsiThrowStatement)) {
       return false;
     }
-    final PsiThrowStatement throwStatement =
-      (PsiThrowStatement)statement;
-    final PsiExpression exception = throwStatement.getException();
+    final PsiThrowStatement throwStatement = (PsiThrowStatement)statement;
+    final PsiExpression exception = ParenthesesUtils.stripParentheses(throwStatement.getException());
     if (!(exception instanceof PsiNewExpression)) {
       return false;
     }

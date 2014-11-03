@@ -21,12 +21,11 @@ import com.intellij.lang.LanguageRefactoringSupport;
 import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.rename.PsiElementRenameHandler;
@@ -36,7 +35,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class VariableInplaceRenameHandler implements RenameHandler {
-  private static final ThreadLocal<Boolean> ourPreventInlineRenameFlag = new ThreadLocal<Boolean>();
+  private static final ThreadLocal<String> ourPreventInlineRenameFlag = new ThreadLocal<String>();
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler");
 
   @Override
@@ -122,14 +121,18 @@ public class VariableInplaceRenameHandler implements RenameHandler {
     boolean startedRename = renamer == null ? false : renamer.performInplaceRename();
 
     if (!startedRename) {
-      performDialogRename(elementToRename, editor, dataContext);
+      performDialogRename(elementToRename, editor, dataContext, renamer != null ? renamer.myInitialName : null);
     }
     return renamer;
   }
 
   protected static void performDialogRename(PsiElement elementToRename, Editor editor, DataContext dataContext) {
+    performDialogRename(elementToRename, editor, dataContext, null);
+  }
+
+  protected static void performDialogRename(PsiElement elementToRename, Editor editor, DataContext dataContext, String initialName) {
     try {
-      ourPreventInlineRenameFlag.set(Boolean.TRUE);
+      ourPreventInlineRenameFlag.set(initialName == null ? "" : initialName);
       RenameHandler handler = RenameHandlerRegistry.getInstance().getRenameHandler(dataContext);
       assert handler != null : elementToRename;
       handler.invoke(
@@ -140,6 +143,12 @@ public class VariableInplaceRenameHandler implements RenameHandler {
     } finally {
       ourPreventInlineRenameFlag.set(null);
     }
+  }
+  
+  @Nullable
+  public static String getInitialName() {
+    final String str = ourPreventInlineRenameFlag.get();
+    return StringUtil.isEmpty(str) ? null : str;
   }
 
   @Nullable

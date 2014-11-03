@@ -55,7 +55,7 @@ public class ClassReference14Processor {
 
     bodyexprent = new ExitExprent(ExitExprent.EXIT_RETURN,
                                   invfor,
-                                  VarType.VARTYPE_CLASS);
+                                  VarType.VARTYPE_CLASS, null);
 
     InvocationExprent constr = new InvocationExprent();
     constr.setName("<init>");
@@ -65,7 +65,7 @@ public class ClassReference14Processor {
     constr.setDescriptor(MethodDescriptor.parseDescriptor("()V"));
 
     NewExprent newexpr =
-      new NewExprent(new VarType(CodeConstants.TYPE_OBJECT, 0, "java/lang/NoClassDefFoundError"), new ArrayList<Exprent>());
+      new NewExprent(new VarType(CodeConstants.TYPE_OBJECT, 0, "java/lang/NoClassDefFoundError"), new ArrayList<Exprent>(), null);
     newexpr.setConstructor(constr);
 
     InvocationExprent invcause = new InvocationExprent();
@@ -79,7 +79,7 @@ public class ClassReference14Processor {
 
     handlerexprent = new ExitExprent(ExitExprent.EXIT_THROW,
                                      invcause,
-                                     null);
+                                     null, null);
   }
 
 
@@ -160,7 +160,7 @@ public class ClassReference14Processor {
 
           String cl = isClass14Invocation(exprent, ent.getKey(), ent.getValue());
           if (cl != null) {
-            initializers.set(i, new ConstExprent(VarType.VARTYPE_CLASS, cl.replace('.', '/')));
+            initializers.set(i, new ConstExprent(VarType.VARTYPE_CLASS, cl.replace('.', '/'), exprent.bytecode));
             setFound.add(ent.getKey());
           }
         }
@@ -225,7 +225,7 @@ public class ClassReference14Processor {
       for (Exprent expr : exprent.getAllExprents()) {
         String cl = isClass14Invocation(expr, wrapper, meth);
         if (cl != null) {
-          exprent.replaceExprent(expr, new ConstExprent(VarType.VARTYPE_CLASS, cl.replace('.', '/')));
+          exprent.replaceExprent(expr, new ConstExprent(VarType.VARTYPE_CLASS, cl.replace('.', '/'), expr.bytecode));
           found = true;
           res = true;
           break;

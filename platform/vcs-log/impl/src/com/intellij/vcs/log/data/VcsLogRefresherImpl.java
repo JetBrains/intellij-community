@@ -15,7 +15,6 @@
  */
 package com.intellij.vcs.log.data;
 
-import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -55,7 +54,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
 
   @NotNull private final SingleTaskController<RefreshRequest, DataPack> mySingleTaskController;
 
-  @NotNull private DataPack myDataPack = EmptyDataPack.getInstance();
+  @NotNull private DataPack myDataPack = DataPack.EMPTY;
 
   public VcsLogRefresherImpl(@NotNull final Project project,
                              @NotNull VcsLogHashMap hashMap,
@@ -106,7 +105,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
     }
     catch (VcsException e) {
       myExceptionHandler.consume(e);
-      return EmptyDataPack.getInstance();
+      return DataPack.EMPTY;
     }
   }
 
@@ -214,7 +213,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
       Collection<VirtualFile> rootsToRefresh = ContainerUtil.newArrayList();
       for (RefreshRequest request : requests) {
         if (request == RefreshRequest.RELOAD_ALL) {
-          myCurrentDataPack = EmptyDataPack.getInstance();
+          myCurrentDataPack = DataPack.EMPTY;
           return myProviders.keySet();
         }
         rootsToRefresh.addAll(request.rootsToRefresh);
@@ -243,15 +242,15 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
             }
           }
           // couldn't join => need to reload everything; if 5000 commits is still not enough, it's worth reporting:
-          LOG.error("Couldn't join " + commitCount + " recent commits to the log (" + permanentGraph.getAllCommits().size() + " commits)",
-                    new Attachment("recent_commits", myLoadedInfo.toLogString(myHashMap.asIndexGetter())));
+          LOG.info("Couldn't join " + commitCount / 5 + " recent commits to the log (" +
+                   permanentGraph.getAllCommits().size() + " commits)");
         }
 
         return loadFullLog();
       }
       catch (Exception e) {
         myExceptionHandler.consume(e);
-        return EmptyDataPack.getInstance();
+        return DataPack.EMPTY;
       }
       finally {
         sw.report();
@@ -398,6 +397,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
     }
   }
 
+  @SuppressWarnings("StringConcatenationInsideStringBufferAppend")
   private static class LogInfo {
     private final Map<VirtualFile, Set<VcsRef>> myRefs = ContainerUtil.newHashMap();
     private final Map<VirtualFile, List<GraphCommit<Integer>>> myCommits = ContainerUtil.newHashMap();
@@ -428,31 +428,5 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
       return myRefs.get(root);
     }
 
-    @SuppressWarnings("StringConcatenationInsideStringBufferAppend")
-    @NotNull
-    public String toLogString(@NotNull final NotNullFunction<Hash, Integer> indexGetter) {
-      StringBuilder sb = new StringBuilder();
-      sb.append(" LOG:\n");
-      for (Map.Entry<VirtualFile, List<GraphCommit<Integer>>> entry : myCommits.entrySet()) {
-        sb.append(entry.getKey().getName() + "\n");
-        sb.append(StringUtil.join(entry.getValue(), new Function<GraphCommit<Integer>, String>() {
-          @Override
-          public String fun(@NotNull GraphCommit<Integer> commit) {
-            return commit.getId() + "<-" + StringUtil.join(commit.getParents(), ",");
-          }
-        }, "\n"));
-      }
-        sb.append("\nREFS:\n");
-      for (Map.Entry<VirtualFile, Set<VcsRef>> entry : myRefs.entrySet()) {
-        sb.append(entry.getKey().getName() + "\n");
-        sb.append(StringUtil.join(entry.getValue(), new Function<VcsRef, String>() {
-          @Override
-          public String fun(@NotNull VcsRef ref) {
-            return ref.getName() + "(" + indexGetter.fun(ref.getCommitHash()) + ")";
-          }
-        }, ","));
-      }
-      return sb.toString();
-    }
   }
 }

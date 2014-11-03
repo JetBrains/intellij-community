@@ -128,7 +128,7 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
   }
 
   @Override
-  protected void doSetText(XExpression text) {
+  protected void setEditorText(XExpression text) {
     if (myComboBox.getItemCount() > 0) {
       myComboBox.setSelectedIndex(0);
     }

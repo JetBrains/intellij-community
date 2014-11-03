@@ -20,7 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
-import com.intellij.util.containers.StripedLockIntObjectConcurrentHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import jsr166e.extra.SequenceLock;
 import org.jetbrains.annotations.NonNls;
@@ -468,7 +468,7 @@ public class PagedFileStorage implements Forceable {
     private static final int FILE_INDEX_MASK = 0xFFFF0000;
     private static final int FILE_INDEX_SHIFT = 16;
     public final StorageLockContext myDefaultStorageLockContext;
-    private final ConcurrentIntObjectMap<PagedFileStorage> myIndex2Storage = new StripedLockIntObjectConcurrentHashMap<PagedFileStorage>();
+    private final ConcurrentIntObjectMap<PagedFileStorage> myIndex2Storage = ContainerUtil.createConcurrentIntObjectMap();
 
     private final LinkedHashMap<Integer, ByteBufferWrapper> mySegments;
     private final SequenceLock mySegmentsAccessLock = new SequenceLock(); // protects map operations of mySegments, needed for LRU order, mySize and myMappingChangeCount

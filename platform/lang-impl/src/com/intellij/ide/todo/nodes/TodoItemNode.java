@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,7 +79,8 @@ public final class TodoItemNode extends BaseToDoNode<SmartTodoItemPointer> imple
   public void update(PresentationData presentation) {
     TodoItem todoItem=getValue().getTodoItem();
     RangeMarker myRangeMarker=getValue().getRangeMarker();
-    if(!todoItem.getFile().isValid()||!myRangeMarker.isValid()){
+    if (!todoItem.getFile().isValid() || !myRangeMarker.isValid() || myRangeMarker.getStartOffset() == myRangeMarker.getEndOffset()) {
+      myRangeMarker.dispose();
       setValue(null);
       return;
     }
@@ -112,7 +113,7 @@ public final class TodoItemNode extends BaseToDoNode<SmartTodoItemPointer> imple
 
     // skip all white space characters
 
-    while(chars.charAt(lineStartOffset) == '\t' || chars.charAt(lineStartOffset)==' '){
+    while(lineStartOffset < document.getTextLength() && (chars.charAt(lineStartOffset) == '\t' || chars.charAt(lineStartOffset)==' ')) {
       lineStartOffset++;
     }
 
@@ -122,7 +123,7 @@ public final class TodoItemNode extends BaseToDoNode<SmartTodoItemPointer> imple
 
     String lineColumnPrefix="("+(lineNumber+1)+", "+(columnNumber+1)+") ";
 
-    String highlightedText = chars.subSequence(lineStartOffset, Math.min(lineEndOffset, chars.length())).toString();;
+    String highlightedText = chars.subSequence(lineStartOffset, Math.min(lineEndOffset, chars.length())).toString();
 
     String newName=lineColumnPrefix+highlightedText;
 

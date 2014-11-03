@@ -18,6 +18,13 @@ import java.util.zip.ZipInputStream;
 public class Runner {
   public static Logger logger = null;
 
+  /**
+   * Treats zip files as regular binary files. When false, zip/jar files are unzipped and diffed file by file.
+   * When true, the entire zip file is diffed as a single file. Set to true if preserving the timestamps of
+   * the files inside the zip is important. This variable can change via a command line option.
+   */
+  public static boolean ZIP_AS_BINARY = false;
+
   private static final String PATCH_FILE_NAME = "patch-file.zip";
   private static final String PATCH_PROPERTIES_ENTRY = "patch.properties";
   private static final String OLD_BUILD_DESCRIPTION = "old.build.description";
@@ -31,6 +38,8 @@ public class Runner {
       String newFolder = args[4];
       String patchFile = args[5];
       initLogger();
+
+      ZIP_AS_BINARY = Arrays.asList(args).contains("--zip_as_binary");
 
       List<String> ignoredFiles = extractFiles(args, "ignored");
       List<String> criticalFiles = extractFiles(args, "critical");
@@ -116,7 +125,7 @@ public class Runner {
     System.err.println("Usage:\n" +
                        "create <old_version_description> <new_version_description> <old_version_folder> <new_version_folder>" +
                        " <patch_file_name> [ignored=file1;file2;...] [critical=file1;file2;...] [optional=file1;file2;...]\n" +
-                       "install <destination_folder> [log_directory]\n");
+                       "install <destination_folder>\n");
   }
 
   private static void create(String oldBuildDesc,
@@ -189,11 +198,13 @@ public class Runner {
   private static void install(final String destFolder) throws Exception {
     InputStream in = Runner.class.getResourceAsStream("/" + PATCH_PROPERTIES_ENTRY);
     Properties props = new Properties();
-    try {
-      props.load(in);
-    }
-    finally {
-      in.close();
+    if (in != null) {
+      try {
+        props.load(in);
+      }
+      finally {
+        in.close();
+      }
     }
 
     // todo[r.sh] to delete in IDEA 14 (after a full circle of platform updates)
@@ -271,6 +282,10 @@ public class Runner {
   }
 
   private static File resolveJarFile() throws IOException {
+    String jar = System.getProperty("JAR_FILE");
+    if (jar != null) {
+      return new File(jar);
+    }
     URL url = Runner.class.getResource("");
     if (url == null) throw new IOException("Cannot resolve JAR file path");
     if (!"jar".equals(url.getProtocol())) throw new IOException("Patch file is not a JAR file");

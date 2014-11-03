@@ -26,8 +26,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class ProjectLibrariesConfigurable extends BaseLibrariesConfigurable {
   public ProjectLibrariesConfigurable(final Project project) {
-    super(project);
-    myLevel = LibraryTablesRegistrar.PROJECT_LEVEL;
+    super(project, LibraryTablesRegistrar.PROJECT_LEVEL);
   }
 
   @Override

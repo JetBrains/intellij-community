@@ -2974,4 +2974,15 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     }
     assertNotNull(ex);
   }
+
+  public void testFindInnerClass() {
+    String source = "class Foo {\n" +
+                    "  static class Bar {}\n" +
+                    "}" +
+                    "class A {{" +
+                    "  new Foo.Bar();" +
+                    "}}";
+    String pattern = "new Foo.Bar();";
+    assertEquals("should find qualified with outer class", 1, findMatchesCount(source, pattern));
+  }
 }

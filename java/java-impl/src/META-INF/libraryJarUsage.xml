@@ -1,0 +1,7 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.libraryJar.LibraryJarUsagesCollector"/>
+    <postStartupActivity implementation="com.intellij.internal.statistic.libraryJar.LibraryJarStatisticsService"/>
+  </extensions>
+</idea-plugin>
+

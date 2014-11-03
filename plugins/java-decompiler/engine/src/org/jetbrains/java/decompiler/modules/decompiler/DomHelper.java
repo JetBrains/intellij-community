@@ -213,6 +213,12 @@ public class DomHelper {
     RootStatement root = graphToStatement(graph);
 
     if (!processStatement(root, new HashMap<Integer, Set<Integer>>())) {
+
+      //			try {
+      //				DotExporter.toDotFile(root.getFirst().getStats().get(13), new File("c:\\Temp\\stat1.dot"));
+      //			} catch (Exception ex) {
+      //				ex.printStackTrace();
+      //			}
       throw new RuntimeException("parsing failure!");
     }
 
@@ -347,8 +353,7 @@ public class DomHelper {
           }
           else {
             if (mapstage == 2 || mapRefreshed) { // last chance lost
-              DecompilerContext.getLogger().writeMessage("Statement cannot be decomposed although reducible!",
-                                                         IFernflowerLogger.Severity.ERROR);
+              DecompilerContext.getLogger().writeMessage("Statement cannot be decomposed although reducible!", IFernflowerLogger.Severity.ERROR);
             }
             break;
           }

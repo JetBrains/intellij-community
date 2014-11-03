@@ -384,7 +384,7 @@ public class TypeConversionUtil {
     return aClass != null &&
            bClass != null &&
            aClass.getManager().areElementsEquivalent(aClass, bClass) &&
-           areSameArgumentTypes(aClass, resolveResult1.getSubstitutor(), resolveResult2.getSubstitutor());
+           areSameArgumentTypes(aClass, resolveResult1.getSubstitutor(), resolveResult2.getSubstitutor(), 1);
   }
 
   private static boolean areSameArgumentTypes(@NotNull PsiClass aClass, @NotNull PsiSubstitutor substitutor1, @NotNull PsiSubstitutor substitutor2) {
@@ -447,7 +447,7 @@ public class TypeConversionUtil {
     return PsiType.VOID.equals(type);
   }
 
-  public static boolean isBooleanType(PsiType type) {
+  public static boolean isBooleanType(@Nullable PsiType type) {
     return PsiType.BOOLEAN.equals(type) || PsiType.BOOLEAN.equals(PsiPrimitiveType.getUnboxedType(type));
   }
 

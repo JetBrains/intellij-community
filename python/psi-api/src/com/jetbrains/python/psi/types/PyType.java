@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,8 +47,8 @@ public interface PyType {
    *         or a list of elements that define the name, a la multiResolve().
    */
   @Nullable
-  List<? extends RatedResolveResult> resolveMember(@NotNull final String name, @Nullable PyExpression location,
-                                                   @NotNull AccessDirection direction, @NotNull PyResolveContext resolveContext);
+  List<? extends RatedResolveResult> resolveMember(@NotNull String name, @Nullable final PyExpression location,
+                                                   @NotNull final AccessDirection direction, @NotNull final PyResolveContext resolveContext);
 
   /**
    * Proposes completion variants from type's attributes.

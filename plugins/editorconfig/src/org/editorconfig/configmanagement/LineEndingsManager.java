@@ -67,11 +67,11 @@ public class LineEndingsManager extends FileDocumentManagerAdapter {
   }
 
   private void applySettings(VirtualFile file) {
-    if (file == null || !file.isInLocalFileSystem()) return;
+    if (file == null) return;
     if (!Utils.isEnabled(CodeStyleSettingsManager.getInstance(myProject).getCurrentSettings())) return;
 
-    final String filePath = file.getCanonicalPath();
-    final List<EditorConfig.OutPair> outPairs = SettingsProviderComponent.getInstance().getOutPairs(filePath);
+    final String filePath = Utils.getFilePath(myProject, file);
+    final List<EditorConfig.OutPair> outPairs = SettingsProviderComponent.getInstance().getOutPairs(myProject, filePath);
     final String lineEndings = Utils.configValueForKey(outPairs, lineEndingsKey);
     if (!lineEndings.isEmpty()) {
       try {

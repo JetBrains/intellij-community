@@ -16,6 +16,7 @@
 package git4idea.push;
 
 import com.intellij.dvcs.push.PushSpec;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
@@ -26,6 +27,7 @@ import git4idea.repo.GitRepository;
 import git4idea.test.GitPlatformTest;
 import git4idea.test.GitTestUtil;
 import git4idea.test.MockVcsHelper;
+import git4idea.test.TestDialogHandler;
 import git4idea.update.GitUpdateResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -136,7 +138,7 @@ abstract class GitPushOperationBaseTest extends GitPlatformTest {
     else {
       newBranch = false;
     }
-    return new PushSpec<GitPushSource, GitPushTarget>(new GitPushSource(source), new GitPushTarget(target, newBranch));
+    return new PushSpec<GitPushSource, GitPushTarget>(GitPushSource.create(source), new GitPushTarget(target, newBranch));
   }
 
   @NotNull
@@ -144,6 +146,15 @@ abstract class GitPushOperationBaseTest extends GitPlatformTest {
     append(file, "some content");
     addCommit("some message");
     return last();
+  }
+
+  protected void agreeToUpdate(final int exitCode) {
+    myDialogManager.registerDialogHandler(GitRejectedPushUpdateDialog.class, new TestDialogHandler() {
+      @Override
+      public int handleDialog(DialogWrapper dialog) {
+        return exitCode;
+      }
+    });
   }
 
   protected void assertResult(@NotNull GitPushRepoResult.Type type, int pushedCommits, @NotNull String from, @NotNull String to,

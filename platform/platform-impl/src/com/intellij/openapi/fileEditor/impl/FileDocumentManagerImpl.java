@@ -79,6 +79,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
 import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.*;
@@ -122,6 +123,16 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
     myMultiCaster = (FileDocumentManagerListener)Proxy.newProxyInstance(loader, new Class[]{FileDocumentManagerListener.class}, handler);
   }
 
+  private static void unwrapAndRethrow(Exception e) {
+    Throwable unwrapped = e;
+    if (e instanceof InvocationTargetException) {
+      unwrapped = e.getCause() == null ? e : e.getCause();
+    }
+    if (unwrapped instanceof Error) throw (Error)unwrapped;
+    if (unwrapped instanceof RuntimeException) throw (RuntimeException)unwrapped;
+    LOG.error(unwrapped);
+  }
+
   @SuppressWarnings("OverlyBroadCatchBlock")
   private void multiCast(@NotNull Method method, Object[] args) {
     try {
@@ -131,7 +142,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
       LOG.error("Arguments: "+ Arrays.toString(args), e);
     }
     catch (Exception e) {
-      LOG.error(e);
+      unwrapAndRethrow(e);
     }
 
     // Allows pre-save document modification
@@ -140,7 +151,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
         method.invoke(listener, args);
       }
       catch (Exception e) {
-        LOG.error(e);
+        unwrapAndRethrow(e);
       }
     }
 
@@ -149,7 +160,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
       method.invoke(myTrailingSpacesStripper, args);
     }
     catch (Exception e) {
-      LOG.error(e);
+      unwrapAndRethrow(e);
     }
   }
 
@@ -632,8 +643,10 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
               documentEx.setReadOnly(false);
               LoadTextUtil.setCharsetWasDetectedFromBytes(file, null);
               file.setBOM(null); // reset BOM in case we had one and the external change stripped it away
-              documentEx.replaceText(LoadTextUtil.loadText(file), file.getModificationStamp());
-              documentEx.setReadOnly(!wasWritable);
+              if (!isBinaryWithoutDecompiler(file)) {
+                documentEx.replaceText(LoadTextUtil.loadText(file), file.getModificationStamp());
+                documentEx.setReadOnly(!wasWritable);
+              }
             }
           }
         );

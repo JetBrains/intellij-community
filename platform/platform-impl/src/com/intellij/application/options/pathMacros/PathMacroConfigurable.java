@@ -36,11 +36,13 @@ public class PathMacroConfigurable implements SearchableConfigurable, Configurab
   public static final String HELP_ID = "preferences.pathVariables";
   private PathMacroListEditor myEditor;
 
+  @Override
   public JComponent createComponent() {
     myEditor = new PathMacroListEditor();
     return myEditor.getPanel();
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     myEditor.commit();
 
@@ -50,31 +52,39 @@ public class PathMacroConfigurable implements SearchableConfigurable, Configurab
     }
   }
 
+  @Override
   public void reset() {
     myEditor.reset();
   }
 
+  @Override
   public void disposeUIResources() {
     myEditor = null;
   }
 
+  @Override
   public String getDisplayName() {
     return ApplicationBundle.message("title.path.variables");
   }
 
+  @Override
+  @NotNull
   public String getHelpTopic() {
     return HELP_ID;
   }
 
+  @Override
   public boolean isModified() {
     return myEditor != null && myEditor.isModified();
   }
 
+  @Override
   @NotNull
   public String getId() {
     return getHelpTopic();
   }
 
+  @Override
   @Nullable
   public Runnable enableSearch(String option) {
     return null;

@@ -48,7 +48,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
+import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -60,9 +62,13 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
+import com.intellij.rt.execution.CommandLineWrapper;
 import com.intellij.rt.execution.junit.IDEAJUnitListener;
 import com.intellij.rt.execution.junit.JUnitStarter;
 import com.intellij.util.Function;
@@ -422,7 +428,29 @@ public abstract class TestObject implements JavaCommandLine {
     final String workingDirectory = myConfiguration.getWorkingDirectory();
     return JUnitConfiguration.TEST_PACKAGE.equals(myConfiguration.getPersistentData().TEST_OBJECT) &&
            myConfiguration.getPersistentData().getScope() != TestSearchScope.SINGLE_MODULE &&
-           ("$" + PathMacroUtil.MODULE_DIR_MACRO_NAME + "$").equals(workingDirectory);
+           ("$" + PathMacroUtil.MODULE_DIR_MACRO_NAME + "$").equals(workingDirectory) &&
+           spansMultipleModules();
+  }
+
+  private boolean spansMultipleModules() {
+    final String qualifiedName = myConfiguration.getPackage();
+    if (qualifiedName != null) {
+      final Project project = myConfiguration.getProject();
+      final PsiPackage aPackage = JavaPsiFacade.getInstance(project).findPackage(qualifiedName);
+      if (aPackage != null) {
+        final TestSearchScope scope = myConfiguration.getPersistentData().getScope();
+        if (scope != null) {
+          final SourceScope sourceScope = scope.getSourceScope(myConfiguration);
+          if (sourceScope != null) {
+            final GlobalSearchScope configurationSearchScope = GlobalSearchScopesCore.projectTestScope(project).intersectWith(
+              sourceScope.getGlobalSearchScope());
+            final PsiDirectory[] directories = aPackage.getDirectories(configurationSearchScope);
+            return directories.length > 1;
+          }
+        }
+      }
+    }
+    return false;
   }
 
   private void appendForkInfo(Executor executor) throws ExecutionException {
@@ -452,12 +480,22 @@ public abstract class TestObject implements JavaCommandLine {
       final File tempFile = FileUtil.createTempFile("command.line", "", true);
       final PrintWriter writer = new PrintWriter(tempFile, CharsetToolkit.UTF8);
       try {
+        if (JdkUtil.useDynamicClasspath(myConfiguration.getProject())) {
+          String classpath = PathUtil.getJarPathForClass(CommandLineWrapper.class);
+          final String utilRtPath = PathUtil.getJarPathForClass(StringUtilRt.class);
+          if (!classpath.equals(utilRtPath)) {
+            classpath += File.pathSeparator + utilRtPath;
+          }
+          writer.println(classpath);
+        }
+        else {
+          writer.println("");
+        }
+
         writer.println(((JavaSdkType)jdk.getSdkType()).getVMExecutablePath(jdk));
         for (String vmParameter : javaParameters.getVMParametersList().getList()) {
           writer.println(vmParameter);
         }
-        writer.println("-classpath");
-        writer.println(javaParameters.getClassPath().getPathsString());
       }
       finally {
         writer.close();
@@ -509,21 +547,24 @@ public abstract class TestObject implements JavaCommandLine {
           testNames.add(name);
         }
       }
+      final JUnitConfiguration.Data data = myConfiguration.getPersistentData();
       if (perModule != null) {
         for (List<String> perModuleClasses : perModule.values()) {
           Collections.sort(perModuleClasses);
           testNames.addAll(perModuleClasses);
         }
       }
-      else {
+      else if (JUnitConfiguration.TEST_PACKAGE.equals(data.TEST_OBJECT)) {
         Collections.sort(testNames); //sort tests in FQN order
       }
 
-      final JUnitConfiguration.Data data = myConfiguration.getPersistentData();
-      final String category = data.TEST_OBJECT == JUnitConfiguration.TEST_CATEGORY ? data.getCategory() : "";
+      final String category = JUnitConfiguration.TEST_CATEGORY.equals(data.TEST_OBJECT) ? data.getCategory() : "";
       JUnitStarter.printClassesList(testNames, packageName, category, myTempFile);
 
       if (perModule != null && perModule.size() > 1) {
+        final String classpath = myConfiguration.getPersistentData().getScope() == TestSearchScope.WHOLE_PROJECT
+                                 ? null : myJavaParameters.getClassPath().getPathsString();
+
         final PrintWriter wWriter = new PrintWriter(myWorkingDirsFile, CharsetToolkit.UTF8);
         try {
           wWriter.println(packageName);
@@ -531,11 +572,16 @@ public abstract class TestObject implements JavaCommandLine {
             final String moduleDir = PathMacroUtil.getModuleDir(module.getModuleFilePath());
             wWriter.println(moduleDir);
 
-            final JavaParameters parameters = new JavaParameters();
-            JavaParametersUtil.configureModule(module, parameters, JavaParameters.JDK_AND_CLASSES_AND_TESTS,
-                                               myConfiguration.isAlternativeJrePathEnabled() ? myConfiguration.getAlternativeJrePath() : null);
-            configureAdditionalClasspath(parameters);
-            wWriter.println(parameters.getClassPath().getPathsString());
+            if (classpath == null) {
+              final JavaParameters parameters = new JavaParameters();
+              configureAdditionalClasspath(parameters);
+              JavaParametersUtil.configureModule(module, parameters, JavaParameters.JDK_AND_CLASSES_AND_TESTS,
+                                                 myConfiguration.isAlternativeJrePathEnabled() ? myConfiguration.getAlternativeJrePath() : null);
+              wWriter.println(parameters.getClassPath().getPathsString());
+            } else {
+              wWriter.println(classpath);
+            }
+
             final List<String> classNames = perModule.get(module);
             wWriter.println(classNames.size());
             for (String className : classNames) {

@@ -2,19 +2,21 @@ package org.jetbrains.plugins.coursecreator.format;
 
 import com.google.gson.annotations.Expose;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.coursecreator.CCProjectService;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class TaskFile {
   @Expose public List<TaskWindow> task_windows = new ArrayList<TaskWindow>();
   public int myIndex;
 
-  public TaskFile() {}
+  public TaskFile() {
+  }
 
   public void addTaskWindow(@NotNull final TaskWindow taskWindow, int index) {
     taskWindow.setIndex(index);
@@ -55,66 +57,53 @@ public class TaskFile {
     return null;
   }
 
-  /**
-   * Updates task window lines
-   *
-   * @param startLine lines greater than this line and including this line will be updated
-   * @param change    change to be added to line numbers
-   */
-  public void incrementLines(int startLine, int change) {
-    for (TaskWindow taskTaskWindow : task_windows) {
-      if (taskTaskWindow.getLine() >= startLine) {
-        taskTaskWindow.setLine(taskTaskWindow.getLine() + change);
-      }
-    }
-  }
-
-  /**
-   * Updates windows in specific line
-   *
-   * @param lineChange         change in line number
-   * @param line               line to be updated
-   * @param newEndOffsetInLine distance from line start to end of inserted fragment
-   * @param oldEndOffsetInLine distance from line start to end of changed fragment
-   */
-  public void updateLine(int lineChange, int line, int newEndOffsetInLine, int oldEndOffsetInLine) {
-    for (TaskWindow w : task_windows) {
-      if ((w.getLine() == line) && (w.getStart() >= oldEndOffsetInLine)) {
-        int distance = w.getStart() - oldEndOffsetInLine;
-        boolean coveredByPrevTW = false;
-        int prevIndex = w.getIndex() - 1;
-        if (CCProjectService.indexIsValid(prevIndex, task_windows)) {
-          TaskWindow prevTW = task_windows.get(prevIndex);
-          if (prevTW.getLine() == line) {
-            int endOffset = prevTW.getStart() + prevTW.getLength();
-            if (endOffset >= newEndOffsetInLine) {
-              coveredByPrevTW = true;
-            }
-          }
-        }
-        if (lineChange != 0 || newEndOffsetInLine <= w.getStart() || coveredByPrevTW) {
-          w.setStart(distance + newEndOffsetInLine);
-          w.setLine(line + lineChange);
-        }
-      }
-    }
-  }
-
   public void copy(@NotNull final TaskFile target) {
     target.setIndex(myIndex);
     for (TaskWindow taskWindow : task_windows) {
       TaskWindow savedWindow = new TaskWindow(taskWindow.getLine(), taskWindow.getStart(),
-                                    taskWindow.getLength(), "");
+                                              taskWindow.getLength(), "");
       target.getTaskWindows().add(savedWindow);
       savedWindow.setIndex(taskWindow.getIndex());
+      savedWindow.setReplacementLength(taskWindow.getReplacementLength());
     }
   }
 
   public void update(@NotNull final TaskFile source) {
     for (TaskWindow taskWindow : source.getTaskWindows()) {
-      TaskWindow taskWindowUpdated = task_windows.get(taskWindow.getIndex() - 1);
+      TaskWindow taskWindowUpdated = getTaskWindow(taskWindow.getIndex());
+      if (taskWindowUpdated == null) {
+        break;
+      }
       taskWindowUpdated.setLine(taskWindow.getLine());
       taskWindowUpdated.setStart(taskWindow.getStart());
+      taskWindowUpdated.setReplacementLength(taskWindow.getReplacementLength());
+      taskWindowUpdated.setLength(taskWindow.getLength());
+    }
+  }
+
+ @Nullable
+ public TaskWindow getTaskWindow(int index) {
+    for (TaskWindow taskWindow : task_windows) {
+      if (taskWindow.getIndex() == index) {
+        return taskWindow;
+      }
+    }
+   return null;
+  }
+
+  /**
+   * Marks symbols adjacent to task windows as read-only fragments
+   */
+  public void createGuardedBlocks(@NotNull final Editor editor) {
+    for (TaskWindow taskWindow : task_windows) {
+      taskWindow.createGuardedBlocks(editor);
+    }
+  }
+
+  public void sortTaskWindows() {
+    Collections.sort(task_windows);
+    for (int i = 0; i < task_windows.size(); i++) {
+      task_windows.get(i).setIndex(i + 1);
     }
   }
 }

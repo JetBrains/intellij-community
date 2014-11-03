@@ -18,13 +18,13 @@ package com.intellij.ide.ui.laf;
 import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.WelcomeWizardUtil;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.laf.darcula.DarculaInstaller;
 import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.ide.ui.laf.darcula.DarculaLookAndFeelInfo;
-import com.intellij.idea.StartupUtil;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
@@ -87,7 +87,11 @@ import java.util.List;
  */
 @State(
   name = "LafManager",
-  storages = {@Storage(file = StoragePathMacros.APP_CONFIG + "/options.xml", roamingType = RoamingType.PER_PLATFORM)}
+  storages = {
+    @Storage(file = StoragePathMacros.APP_CONFIG + "/options.xml"),
+    @Storage(file = StoragePathMacros.APP_CONFIG + "/laf.xml", roamingType = RoamingType.PER_PLATFORM)
+  },
+  storageChooser = LastStorageChooserForWrite.ElementStateLastStorageChooserForWrite.class
 )
 public final class LafManagerImpl extends LafManager implements ApplicationComponent, PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.ui.LafManager");
@@ -217,7 +221,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
       if (laf != null) {
         boolean needUninstall = UIUtil.isUnderDarcula();
         setCurrentLookAndFeel(laf); // setup default LAF or one specified by readExternal.
-        if (StartupUtil.getWizardLAF() != null) {
+        if (WelcomeWizardUtil.getWizardLAF() != null) {
           if (UIUtil.isUnderDarcula()) {
             DarculaInstaller.install();
           }
@@ -239,7 +243,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
             @Override
             public void run() {
               fixGtkPopupStyle();
-              patchOptionPaneIcons(UIManager.getLookAndFeelDefaults());
+              patchGtkDefaults(UIManager.getLookAndFeelDefaults());
             }
           });
         }
@@ -259,14 +263,11 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
   @Override
   public void loadState(final Element element) {
     String className = null;
-    for (final Object o : element.getChildren()) {
-      Element child = (Element)o;
-      if (ELEMENT_LAF.equals(child.getName())) {
-        className = child.getAttributeValue(ATTRIBUTE_CLASS_NAME);
-        if (className != null && ourLafClassesAliases.containsKey(className)) {
-          className = ourLafClassesAliases.get(className);
-        }
-        break;
+    Element lafElement = element.getChild(ELEMENT_LAF);
+    if (lafElement != null) {
+      className = lafElement.getAttributeValue(ATTRIBUTE_CLASS_NAME);
+      if (className != null && ourLafClassesAliases.containsKey(className)) {
+        className = ourLafClassesAliases.get(className);
       }
     }
 
@@ -314,8 +315,8 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
    * RubyMine uses Native L&F for linux as well
    */
   private UIManager.LookAndFeelInfo getDefaultLaf() {
-    if (StartupUtil.getWizardLAF() != null) {
-      UIManager.LookAndFeelInfo laf = findLaf(StartupUtil.getWizardLAF());
+    if (WelcomeWizardUtil.getWizardLAF() != null) {
+      UIManager.LookAndFeelInfo laf = findLaf(WelcomeWizardUtil.getWizardLAF());
       LOG.assertTrue(laf != null);
       return laf;
     }
@@ -336,7 +337,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
       }
     }
     // Default
-    final String defaultLafName = StartupUtil.getDefaultLAF();
+    final String defaultLafName = WelcomeWizardUtil.getDefaultLAF();
     if (defaultLafName != null) {
       UIManager.LookAndFeelInfo defaultLaf = findLaf(defaultLafName);
       if (defaultLaf != null) {
@@ -534,7 +535,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
 
     patchLafFonts(uiDefaults);
 
-    patchOptionPaneIcons(uiDefaults);
+    patchGtkDefaults(uiDefaults);
 
     fixSeparatorColor(uiDefaults);
 
@@ -694,13 +695,12 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     }
   }
 
-  private static void patchOptionPaneIcons(UIDefaults defaults) {
+  private static void patchGtkDefaults(UIDefaults defaults) {
     if (!UIUtil.isUnderGTKLookAndFeel()) return;
 
     Map<String, Icon> map = ContainerUtil.newHashMap(
       Arrays.asList("OptionPane.errorIcon", "OptionPane.informationIcon", "OptionPane.warningIcon", "OptionPane.questionIcon"),
       Arrays.asList(AllIcons.General.ErrorDialog, AllIcons.General.InformationDialog, AllIcons.General.WarningDialog, AllIcons.General.QuestionDialog));
-
     // GTK+ L&F keeps icons hidden in style
     SynthStyle style = SynthLookAndFeel.getStyle(new JOptionPane(""), Region.DESKTOP_ICON);
     for (String key : map.keySet()) {
@@ -708,6 +708,12 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
 
       Object icon = style == null ? null : style.get(null, key);
       defaults.put(key, icon instanceof Icon ? icon : map.get(key));
+    }
+
+    Color fg = defaults.getColor("Label.foreground");
+    Color bg = defaults.getColor("Label.background");
+    if (fg != null && bg != null) {
+      defaults.put("Label.disabledForeground", UIUtil.mix(fg, bg, 0.5));
     }
   }
 

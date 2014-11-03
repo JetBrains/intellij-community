@@ -21,10 +21,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.psi.util.TypesDistinctProver;
+import com.intellij.psi.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
@@ -258,40 +255,54 @@ public class GenericsUtil {
                                                                                 final PsiSubstitutor substitutor,
                                                                                 final PsiElement context,
                                                                                 final boolean allowUncheckedConversion) {
-    nextTypeParam:
     for (PsiTypeParameter typeParameter : typeParams) {
-      PsiType substituted = substitutor.substitute(typeParameter);
-      if (substituted == null) return null;
-      if (context != null) {
-        substituted = PsiUtil.captureToplevelWildcards(substituted, context);
+      PsiType boundError = findTypeParameterBoundError(typeParameter, typeParameter.getExtendsListTypes(),
+                                                       substitutor, context, allowUncheckedConversion);
+      if (boundError != null) {
+        return Pair.create(typeParameter, boundError);
       }
+    }
+    return null;
+  }
 
-      PsiClassType[] extendsTypes = typeParameter.getExtendsListTypes();
-      for (PsiClassType type : extendsTypes) {
-        PsiType extendsType = substitutor.substitute(type);
-        if (substituted instanceof PsiWildcardType) {
-          if (((PsiWildcardType)substituted).isSuper()) {
-            continue;
-          }
-          final PsiType extendsBound = ((PsiWildcardType)substituted).getExtendsBound();
-          if (acceptExtendsBound(extendsType, extendsBound)) {
-            continue nextTypeParam;
-          }
+  public static PsiType findTypeParameterBoundError(PsiTypeParameter typeParameter,
+                                                    PsiType[] extendsTypes,
+                                                    PsiSubstitutor substitutor,
+                                                    PsiElement context,
+                                                    boolean allowUncheckedConversion) {
+    PsiType substituted = substitutor.substitute(typeParameter);
+    if (substituted == null) return null;
+    if (context != null) {
+      substituted = PsiUtil.captureToplevelWildcards(substituted, context);
+    }
+
+    if (substituted instanceof PsiWildcardType) {
+      if (((PsiWildcardType)substituted).isSuper()) {
+        return null;
+      }
+    }
+
+    for (PsiType type : extendsTypes) {
+      PsiType extendsType = substitutor.substitute(type);
+      if (substituted instanceof PsiWildcardType) {
+        final PsiType extendsBound = ((PsiWildcardType)substituted).getExtendsBound();
+        if (acceptExtendsBound(extendsType, extendsBound)) {
+          return null;
         }
-        else if (substituted instanceof PsiIntersectionType) {
-          for (PsiType extendsBound : ((PsiIntersectionType)substituted).getConjuncts()) {
-            if (acceptExtendsBound(extendsType, extendsBound)) continue nextTypeParam;
-          }
+      }
+      else if (substituted instanceof PsiIntersectionType) {
+        for (PsiType extendsBound : ((PsiIntersectionType)substituted).getConjuncts()) {
+          if (acceptExtendsBound(extendsType, extendsBound)) return null;
         }
-        else if (substituted instanceof PsiCapturedWildcardType) {
-          final PsiType extendsBound = ((PsiCapturedWildcardType)substituted).getUpperBound();
-          if (acceptExtendsBound(extendsType, extendsBound)) {
-            continue nextTypeParam;
-          }
+      }
+      else if (substituted instanceof PsiCapturedWildcardType) {
+        final PsiType extendsBound = ((PsiCapturedWildcardType)substituted).getUpperBound();
+        if (acceptExtendsBound(extendsType, extendsBound)) {
+          return null;
         }
-        if (extendsType != null && !TypeConversionUtil.isAssignable(extendsType, substituted, allowUncheckedConversion)) {
-          return Pair.create(typeParameter, extendsType);
-        }
+      }
+      if (extendsType != null && !TypeConversionUtil.isAssignable(extendsType, substituted, allowUncheckedConversion)) {
+        return extendsType;
       }
     }
     return null;
@@ -505,12 +516,12 @@ public class GenericsUtil {
 
   public static boolean checkNotInBounds(PsiType type, PsiType bound, PsiReferenceParameterList referenceParameterList) {
     //allow unchecked conversions in method calls but not in type declaration
-    return checkNotInBounds(type, bound, referenceParameterList.getParent() instanceof PsiReferenceExpression);
+    return checkNotInBounds(type, bound, PsiTreeUtil.getParentOfType(referenceParameterList, PsiCallExpression.class) != null);
   }
 
   public static boolean checkNotInBounds(PsiType type, PsiType bound, boolean uncheckedConversionByDefault) {
     if (type instanceof PsiClassType) {
-      return checkNotAssignable(bound, type, allowUncheckedConversions((PsiClassType)type, uncheckedConversionByDefault));
+      return checkNotAssignable(bound, type, uncheckedConversionByDefault);
     }
     if (type instanceof PsiWildcardType) {
       if (((PsiWildcardType)type).isExtends()) {
@@ -580,19 +591,5 @@ public class GenericsUtil {
     else {
       return !TypeConversionUtil.isAssignable(bound, type, allowUncheckedConversion);
     }
-  }
-
-  private static boolean allowUncheckedConversions(PsiClassType type, boolean uncheckedConversionByDefault) {
-    final PsiClass psiClass = type.resolve();
-    if (psiClass != null) {
-      for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable(psiClass)) {
-        if (parameter.getExtendsListTypes().length != 0) {
-          return false;
-        }
-      }
-      if (psiClass instanceof PsiTypeParameter && psiClass.getExtendsListTypes().length != 0) return false;
-    }
-    if (!type.isRaw()) return true;
-    return uncheckedConversionByDefault;
   }
 }

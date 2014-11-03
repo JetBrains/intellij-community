@@ -35,7 +35,7 @@
         SINGLE_QUOTED_STRING="regexp:'([^\\\'\r\n]|\\[^\r\n])*'?"
 //        STRING='regexp:"([^\\"\r\n]|\\([\\"/bfnrt]|u[a-fA-F0-9]{4}))*"?'
 
-        NUMBER='regexp:-?\d+(\.\d+([eE][+-]?\d+)?)?'
+        NUMBER='regexp:-?(0|[1-9]\d*)(\.\d+)?([eE][+-]?\d*)?'
         TRUE='true'
         FALSE='false'
         NULL='null'
@@ -60,6 +60,7 @@ object ::= '{' object_element* '}' {
   pin=1
   methods=[
     findProperty
+    getPresentation
   ]
 }
 
@@ -77,6 +78,7 @@ property ::= property_name (':' value) {
     getValue
     // suppress getValueList() accessor
     value=""
+    getPresentation
   ]
   mixin="com.intellij.json.psi.impl.JsonPropertyMixin"
   pin(".*")=1
@@ -84,7 +86,12 @@ property ::= property_name (':' value) {
 
 private property_name ::= literal | reference_expression
 
-array ::= '[' array_element* ']' { pin=1 }
+array ::= '[' array_element* ']' {
+  methods=[
+    getPresentation
+  ]
+  pin=1
+}
 
 private array_element ::= value (','|&']') {
   recoverWhile = not_bracket_or_next_value
@@ -93,7 +100,6 @@ private array_element ::= value (','|&']') {
 
 string_literal ::= SINGLE_QUOTED_STRING | DOUBLE_QUOTED_STRING {
   methods=[
-    isQuotedString
     getTextFragments
   ]
   mixin="com.intellij.json.psi.impl.JsonStringLiteralMixin"

@@ -37,6 +37,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -79,6 +80,12 @@ import static com.intellij.reference.SoftReference.dereference;
 public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
                          implements PsiJavaFile, PsiFileWithStubSupport, PsiFileEx, Queryable, PsiClassOwnerEx, PsiCompiledFile {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsFileImpl");
+
+  private static final String BANNER =
+    "\n" +
+    "  // IntelliJ API Decompiler stub source generated from a class file\n" +
+    "  // Implementation of methods is not available\n" +
+    "\n";
 
   private static final Key<Document> CLS_DOCUMENT_LINK_KEY = Key.create("cls.document.link");
 
@@ -271,11 +278,8 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
   }
 
   @Override
-  public void appendMirrorText(final int indentLevel, @NotNull final StringBuilder buffer) {
-    buffer.append("\n");
-    buffer.append("  // IntelliJ API Decompiler stub source generated from a class file\n");
-    buffer.append("  // Implementation of methods is not available\n");
-    buffer.append("\n");
+  public void appendMirrorText(int indentLevel, @NotNull StringBuilder buffer) {
+    buffer.append(BANNER);
 
     appendText(getPackageStatement(), 0, buffer, "\n\n");
 
@@ -332,50 +336,36 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
           PsiClass[] classes = getClasses();
           String fileName = (classes.length > 0 ? classes[0].getName() : file.getNameWithoutExtension()) + JavaFileType.DOT_DEFAULT_EXTENSION;
 
-          if (ClassFileDecompilers.find(file) instanceof ClassFileDecompilers.Light) {
-            mirrorTreeElement = trySetMirror(file, fileName, true);
+          final Document document = FileDocumentManager.getInstance().getDocument(file);
+          assert document != null : file.getUrl();
+
+          CharSequence mirrorText = document.getImmutableCharSequence();
+          boolean internalDecompiler = StringUtil.startsWith(mirrorText, BANNER);
+          PsiFileFactory factory = PsiFileFactory.getInstance(getManager().getProject());
+          PsiFile mirror = factory.createFileFromText(fileName, JavaLanguage.INSTANCE, mirrorText, false, false);
+          mirror.putUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY, getLanguageLevel());
+
+          mirrorTreeElement = SourceTreeToPsiMap.psiToTreeNotNull(mirror);
+          try {
+            final TreeElement finalMirrorTreeElement = mirrorTreeElement;
+            ProgressManager.getInstance().executeNonCancelableSection(new Runnable() {
+              public void run() {
+                setMirror(finalMirrorTreeElement);
+                putUserData(CLS_DOCUMENT_LINK_KEY, document);
+              }
+            });
           }
-          if (mirrorTreeElement == null) {
-            mirrorTreeElement = trySetMirror(file, fileName, false);
+          catch (InvalidMirrorException e) {
+            //noinspection ThrowableResultOfMethodCallIgnored
+            LOG.error(file.getUrl(), internalDecompiler ? e : wrapException(e, file));
           }
 
+          ((PsiFileImpl)mirror).setOriginalFile(this);
           myMirrorFileElement = mirrorTreeElement;
         }
       }
     }
     return mirrorTreeElement.getPsi();
-  }
-
-  private TreeElement trySetMirror(VirtualFile file, String fileName, boolean usePlugin) {
-    final Document document = FileDocumentManager.getInstance().getDocument(file);
-    assert document != null : file.getUrl();
-
-    CharSequence mirrorText = document.getImmutableCharSequence();
-    PsiFileFactory factory = PsiFileFactory.getInstance(getManager().getProject());
-    PsiFile mirror = factory.createFileFromText(fileName, JavaLanguage.INSTANCE, mirrorText, false, false);
-    mirror.putUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY, getLanguageLevel());
-
-    final TreeElement mirrorTreeElement = SourceTreeToPsiMap.psiToTreeNotNull(mirror);
-    try {
-      ProgressManager.getInstance().executeNonCancelableSection(new Runnable() {
-        @Override
-        public void run() {
-          setMirror(mirrorTreeElement);
-          putUserData(CLS_DOCUMENT_LINK_KEY, document);
-        }
-      });
-    }
-    catch (InvalidMirrorException e) {
-      if (usePlugin && !ApplicationManager.getApplication().isUnitTestMode()) {
-        LOG.warn(file.getUrl(), wrapException(e, file));
-        return null;
-      }
-      else {
-        LOG.error(file.getUrl(), e);
-      }
-    }
-
-    return mirrorTreeElement;
   }
 
   private static Exception wrapException(InvalidMirrorException e, VirtualFile file) {
@@ -563,8 +553,14 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
   @NotNull
   public static CharSequence decompile(@NotNull VirtualFile file) {
     PsiManager manager = PsiManager.getInstance(DefaultProjectFactory.getInstance().getDefaultProject());
-    StringBuilder buffer = new StringBuilder();
-    new ClsFileImpl(new ClassFileViewProvider(manager, file), true).appendMirrorText(0, buffer);
+    final ClsFileImpl clsFile = new ClsFileImpl(new ClassFileViewProvider(manager, file), true);
+    final StringBuilder buffer = new StringBuilder();
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      @Override
+      public void run() {
+        clsFile.appendMirrorText(0, buffer);
+      }
+    });
     return buffer;
   }
 

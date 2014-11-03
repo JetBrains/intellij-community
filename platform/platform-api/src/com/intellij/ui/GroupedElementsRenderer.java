@@ -36,9 +36,8 @@ public abstract class GroupedElementsRenderer {
   protected JComponent myComponent;
   protected MyComponent myRendererComponent;
 
-  protected JLabel myTextLabel;
-
-
+  protected ErrorLabel myTextLabel;
+  
   public GroupedElementsRenderer() {
     myRendererComponent = new MyComponent();
 
@@ -63,9 +62,6 @@ public abstract class GroupedElementsRenderer {
 
     myTextLabel.setIcon(icon);
     myTextLabel.setDisabledIcon(disabledIcon);
-    if (myTextLabel instanceof EngravedLabel) {
-      ((EngravedLabel)myTextLabel).setShadowColor(isSelected ? UIUtil.getTreeSelectionBackground() : null);
-    }
 
     if (isSelected) {
       //myComponent.setBorder(getSelectedBorder());
@@ -77,13 +73,13 @@ public abstract class GroupedElementsRenderer {
       setDeselected(myTextLabel);
     }
 
-    adjustOpacity(myTextLabel, isSelected);
-
     myRendererComponent.setPrefereedWidth(preferredForcedWidth);
 
     return myRendererComponent;
   }
 
+  /** @deprecated backgrounds are set uniformly via setSelected() / setDeselected() (to be removed in IDEA 16) */
+  @SuppressWarnings("UnusedDeclaration")
   protected static void adjustOpacity(JComponent component, boolean selected) {
     if (selected) {
       if (UIUtil.isUnderNimbusLookAndFeel()) {
@@ -98,13 +94,12 @@ public abstract class GroupedElementsRenderer {
   }
 
   protected final void setSelected(JComponent aComponent) {
-    aComponent.setBackground(getSelectionBackground());
+    UIUtil.setBackgroundRecursively(aComponent, getSelectionBackground());
     aComponent.setForeground(getSelectionForeground());
   }
 
-
   protected final void setDeselected(JComponent aComponent) {
-    aComponent.setBackground(getBackground());
+    UIUtil.setBackgroundRecursively(aComponent, getBackground());
     aComponent.setForeground(getForeground());
   }
 

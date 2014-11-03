@@ -17,15 +17,16 @@ package com.intellij.codeInsight.daemon;
 
 import com.intellij.ToolExtensionPoints;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.compiler.JavacQuirksInspection;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
+import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.defUse.DefUseInspection;
 import com.intellij.codeInspection.redundantCast.RedundantCastInspection;
 import com.intellij.codeInspection.reference.EntryPoint;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
-import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
@@ -44,8 +45,13 @@ import java.util.List;
  */
 public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
   private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/advHighlighting7";
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    enableInspectionTool(new UnusedDeclarationInspection());
+  }
 
-  private void doTest(boolean checkWarnings, boolean checkInfos, Class<?>... classes) {
+  private void doTest(boolean checkWarnings, boolean checkInfos, InspectionProfileEntry... classes) {
     setLanguageLevel(LanguageLevel.JDK_1_7);
     IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_7, getModule(), myTestRootDisposable);
     enableInspectionTools(classes);
@@ -61,7 +67,6 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{
-      new UnusedSymbolLocalInspection(),
       new UncheckedWarningLocalInspection(),
       new JavacQuirksInspection(),
       new RedundantCastInspection()
@@ -116,7 +121,7 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
       @Override public String[] getIgnoreAnnotations() { return new String[]{"MyAnno"}; }
     };
 
-    UnusedDeclarationInspection deadCodeInspection = new UnusedDeclarationInspection();
+    UnusedDeclarationInspectionBase deadCodeInspection = new UnusedDeclarationInspectionBase(true);
     enableInspectionTool(deadCodeInspection);
 
     doTest(true, false);
@@ -138,7 +143,7 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
   public void testNumericLiterals() { doTest(false, false); }
   public void testMultiCatch() { doTest(false, false); }
   public void testTryWithResources() { doTest(false, false); }
-  public void testTryWithResourcesWarn() { doTest(true, false, DefUseInspection.class); }
+  public void testTryWithResourcesWarn() { doTest(true, false, new DefUseInspection()); }
   public void testSafeVarargsApplicability() { doTest(true, false); }
   public void testUncheckedGenericsArrayCreation() { doTest(true, false); }
   public void testGenericsArrayCreation() { doTest(false, false); }
@@ -146,8 +151,8 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
   public void testImprovedCatchAnalysis() { doTest(true, false); }
   public void testPolymorphicTypeCast() { doTest(true, false); }
   public void testTypeCastInInstanceof() { doTest(true, false); }
-  public void testErasureClashConfusion() { doTest(true, false, UnusedDeclarationInspection.class); }
-  public void testUnused() { doTest(true, false, UnusedDeclarationInspection.class); }
+  public void testErasureClashConfusion() { doTest(true, false, new UnusedDeclarationInspectionBase(true)); }
+  public void testUnused() { doTest(true, false, new UnusedDeclarationInspectionBase(true)); }
   public void testSuperBound() { doTest(false, false); }
   public void testExtendsBound() { doTest(false, false); }
   public void testIDEA84533() { doTest(false, false); }

@@ -42,6 +42,7 @@ import com.intellij.openapi.editor.ex.util.LayeredLexerEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.fileTypes.*;
+import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
@@ -316,8 +317,13 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
       myTemplate.setText(myTemplateEditor.getDocument().getText());
       String name = myNameField.getText();
       String extension = myExtensionField.getText();
-      if (name.length() == 0 || !isValidFilename(name + "." + extension)) {
+      String filename = name + "." + extension;
+      if (name.length() == 0 || !isValidFilename(filename)) {
         throw new ConfigurationException(IdeBundle.message("error.invalid.template.file.name.or.extension"));
+      }
+      FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(filename);
+      if (fileType == UnknownFileType.INSTANCE) {
+        FileTypeChooser.associateFileType(filename);
       }
       myTemplate.setName(name);
       myTemplate.setExtension(extension);

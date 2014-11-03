@@ -20,7 +20,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.PluginNode;
-import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
@@ -56,10 +55,7 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
   public CustomizeFeaturedPluginsStepPanel(PluginGroups pluginGroups) throws OfflineException {
     setLayout(new GridLayout(1, 1));
     JPanel gridPanel = new JPanel(new GridLayout(0, 3));
-    JBScrollPane scrollPane =
-      new JBScrollPane(gridPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-    scrollPane.getVerticalScrollBar().setUnitIncrement(10);
-    scrollPane.setBorder(null);
+    JBScrollPane scrollPane = CustomizePluginsStepPanel.createScrollPane(gridPanel);
 
     Map<String, String> config = pluginGroups.getFeaturedPlugins();
     boolean isEmptyOrOffline = true;
@@ -265,7 +261,6 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
   public String getHTMLFooter() {
     return "New plugins can also be downloaded in "
            + CommonBundle.settingsTitle()
-           + " | " + OptionsBundle.message("configurable.group.appearance.settings.display.name")
            + " | " + "Plugins";
   }
 

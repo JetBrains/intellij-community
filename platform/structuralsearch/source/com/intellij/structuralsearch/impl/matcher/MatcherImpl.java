@@ -15,13 +15,11 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
-import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
-import com.intellij.psi.search.DelegatingGlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -148,6 +146,7 @@ public class MatcherImpl {
       visitor.matchContext(matchedNodes);
     } finally {
       matchedNodes.reset();
+      matchContext.getOptions().setScope(null);
     }
   }
 
@@ -200,21 +199,26 @@ public class MatcherImpl {
   }
 
   public CompiledOptions precompileOptions(List<Configuration> configurations) {
-    List<Pair<MatchContext, Configuration>> contexts = new ArrayList<Pair<MatchContext, Configuration>>();
+    final List<Pair<MatchContext, Configuration>> contexts = new ArrayList<Pair<MatchContext, Configuration>>();
 
-    for (Configuration configuration : configurations) {
-      MatchContext matchContext = new MatchContext();
+    for (final Configuration configuration : configurations) {
+      final MatchContext matchContext = new MatchContext();
       matchContext.setMatcher(visitor);
-      MatchOptions matchOptions = configuration.getMatchOptions();
+      final MatchOptions matchOptions = configuration.getMatchOptions();
       matchContext.setOptions(matchOptions);
 
-      try {
-        CompiledPattern compiledPattern = PatternCompiler.compilePattern(project, matchOptions);
-        matchContext.setPattern(compiledPattern);
-        contexts.add(Pair.create(matchContext, configuration));
-      }
-      catch (UnsupportedPatternException ignored) {}
-      catch (MalformedPatternException ignored) {}
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        @Override
+        public void run() {
+          try {
+            CompiledPattern compiledPattern = PatternCompiler.compilePattern(project, matchOptions);
+            matchContext.setPattern(compiledPattern);
+            contexts.add(Pair.create(matchContext, configuration));
+          }
+          catch (UnsupportedPatternException ignored) {}
+          catch (MalformedPatternException ignored) {}
+        }
+      });
     }
     return new CompiledOptions(contexts);
   }
@@ -285,11 +289,10 @@ public class MatcherImpl {
 
   private boolean findMatches(MatchOptions options, CompiledPattern compiledPattern) {
     LanguageFileType languageFileType = (LanguageFileType)options.getFileType();
-    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByLanguage(languageFileType.getLanguage());
+    final Language patternLanguage = languageFileType.getLanguage();
+    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByLanguage(patternLanguage);
     assert profile != null;
-    PsiElement node = compiledPattern.getNodes().current();
-    final Language ourPatternLanguage = node != null ? profile.getLanguage(node) : ((LanguageFileType)options.getFileType()).getLanguage();
-    final Language ourPatternLanguage2 = ourPatternLanguage == StdLanguages.XML ? StdLanguages.XHTML:null;
+    final Language patternLanguage2 = patternLanguage == StdLanguages.XML ? StdLanguages.XHTML:null;
     SearchScope searchScope = compiledPattern.getScope();
     boolean ourOptimizedScope = searchScope != null;
     if (!ourOptimizedScope) searchScope = options.getScope();
@@ -301,7 +304,7 @@ public class MatcherImpl {
         public boolean processFile(final VirtualFile fileOrDir) {
           if (!fileOrDir.isDirectory() && scope.contains(fileOrDir) && fileOrDir.getFileType() != FileTypes.UNKNOWN) {
             ++totalFilesToScan;
-            scheduler.addOneTask(new MatchOneVirtualFile(fileOrDir, profile, ourPatternLanguage, ourPatternLanguage2));
+            scheduler.addOneTask(new MatchOneVirtualFile(fileOrDir, profile, patternLanguage, patternLanguage2));
           }
           return true;
         }
@@ -327,7 +330,7 @@ public class MatcherImpl {
 
         PsiFile file = psiElement instanceof PsiFile ? (PsiFile)psiElement : psiElement.getContainingFile();
 
-        if (profile.isMyFile(file, language, ourPatternLanguage, ourPatternLanguage2)) {
+        if (profile.isMyFile(file, language, patternLanguage, patternLanguage2)) {
           scheduler.addOneTask(new MatchOnePsiFile(psiElement));
         }
         if (ourOptimizedScope) elementsToScan[i] = null; // to prevent long PsiElement reference
@@ -438,6 +441,8 @@ public class MatcherImpl {
       MalformedPatternException exception = new MalformedPatternException();
       exception.initCause(e);
       throw exception;
+    } finally {
+      options.setScope(null);
     }
 
     return sink.getMatches();

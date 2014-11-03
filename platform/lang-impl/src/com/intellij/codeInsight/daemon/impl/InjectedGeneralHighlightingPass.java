@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import com.intellij.concurrency.JobLauncher;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.HighlighterColors;
@@ -51,7 +51,6 @@ import java.util.*;
 import java.util.List;
 
 public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass implements DumbAware {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.InjectedGeneralHighlightingPass");
   private static final String PRESENTABLE_NAME = "Injected fragments";
 
   InjectedGeneralHighlightingPass(@NotNull Project project,
@@ -145,6 +144,7 @@ public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass imp
   private Set<PsiFile> getInjectedPsiFiles(@NotNull final List<PsiElement> elements1,
                                            @NotNull final List<PsiElement> elements2,
                                            @NotNull final ProgressIndicator progress) {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
     final Set<PsiFile> outInjected = new THashSet<PsiFile>();
 
     List<DocumentWindow> injected = InjectedLanguageUtil.getCachedInjectedDocuments(myFile);
@@ -180,6 +180,7 @@ public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass imp
                                                                    new Processor<PsiElement>() {
                                                                      @Override
                                                                      public boolean process(PsiElement element) {
+                                                                       ApplicationManager.getApplication().assertReadAccessAllowed();
                                                                        progress.checkCanceled();
                                                                        InjectedLanguageUtil.enumerate(element, myFile, false, visitor);
                                                                        return true;

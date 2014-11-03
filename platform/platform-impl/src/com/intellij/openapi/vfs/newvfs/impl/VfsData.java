@@ -18,13 +18,13 @@ package com.intellij.openapi.vfs.newvfs.impl;
 import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
+import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartFMap;
 import com.intellij.util.concurrency.AtomicFieldUpdater;
 import com.intellij.util.containers.ConcurrentBitSet;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.StripedLockIntObjectConcurrentHashMap;
 import com.intellij.util.keyFMap.KeyFMap;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import gnu.trove.THashSet;
@@ -34,6 +34,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicIntegerArray;
@@ -77,7 +78,7 @@ public class VfsData {
   private static final int OFFSET_MASK = SEGMENT_SIZE - 1;
   private static final Object ourDeadMarker = new String("dead file");
 
-  private static final ConcurrentIntObjectMap<Segment> ourSegments = new StripedLockIntObjectConcurrentHashMap<Segment>();
+  private static final ConcurrentIntObjectMap<Segment> ourSegments = ContainerUtil.createConcurrentIntObjectMap();
   private static final ConcurrentBitSet ourInvalidatedIds = new ConcurrentBitSet();
   private static TIntHashSet ourDyingIds = new TIntHashSet();
   private static volatile SmartFMap<VirtualFileSystemEntry, VirtualDirectoryImpl> ourChangedParents = SmartFMap.emptyMap();
@@ -147,8 +148,9 @@ public class VfsData {
 
     segment.setNameId(id, nameId);
 
-    if (segment.myObjectArray.get(offset) != null) {
-      throw new AssertionError("File already created");
+    Object existingData = segment.myObjectArray.get(offset);
+    if (existingData != null) {
+      throw new AssertionError("File already created: " + existingData + "; parentId=" + FSRecords.getParent(id));
     }
     segment.myObjectArray.set(offset, data);
   }
@@ -287,6 +289,15 @@ public class VfsData {
 
     List<String> getAdoptedNames() {
       return myAdoptedNames == null ? Collections.<String>emptyList() : ContainerUtil.newArrayList(myAdoptedNames);
+    }
+
+    @Override
+    public String toString() {
+      return "DirectoryData{" +
+             "myUserMap=" + myUserMap +
+             ", myChildrenIds=" + Arrays.toString(myChildrenIds) +
+             ", myAdoptedNames=" + myAdoptedNames +
+             '}';
     }
   }
 

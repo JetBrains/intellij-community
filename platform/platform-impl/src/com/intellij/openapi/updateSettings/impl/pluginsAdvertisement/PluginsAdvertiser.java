@@ -245,6 +245,7 @@ public class PluginsAdvertiser implements StartupActivity {
     final KnownExtensions extensions = loadExtensions();
     if (extensions != null && unknownFeatures.isEmpty()) return;
     final Runnable runnable = new Runnable() {
+      @Override
       public void run() {
         final Application application = ApplicationManager.getApplication();
         if (application.isUnitTestMode() || application.isHeadlessEnvironment()) return;
@@ -252,9 +253,10 @@ public class PluginsAdvertiser implements StartupActivity {
           private final Set<PluginDownloader> myPlugins = new HashSet<PluginDownloader>();
           private List<IdeaPluginDescriptor> myAllPlugins;
 
-          private Map<Plugin, IdeaPluginDescriptor> myDisabledPlugins = new HashMap<Plugin, IdeaPluginDescriptor>();
+          private final Map<Plugin, IdeaPluginDescriptor> myDisabledPlugins = new HashMap<Plugin, IdeaPluginDescriptor>();
           private List<String> myBundledPlugin;
 
+          @Override
           public void run() {
             try {
               myAllPlugins = RepositoryHelper.loadPluginsFromRepository(null);
@@ -349,6 +351,7 @@ public class PluginsAdvertiser implements StartupActivity {
     @MapAnnotation(surroundWithTag = false, surroundKeyWithTag = false, surroundValueWithTag = false)
     public Map<String, PluginSet> myExtensions = new HashMap<String, PluginSet>();
 
+    @SuppressWarnings("unused")
     public KnownExtensions() {
     }
 
@@ -371,6 +374,7 @@ public class PluginsAdvertiser implements StartupActivity {
   public static class PluginSet {
     public Set<Plugin> myPlugins = new HashSet<Plugin>();
 
+    @SuppressWarnings("unused")
     public PluginSet() {
     }
 

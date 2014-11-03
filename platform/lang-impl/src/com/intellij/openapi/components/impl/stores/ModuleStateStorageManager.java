@@ -17,7 +17,9 @@
 package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.StateStorageOperation;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.module.Module;
 import org.jetbrains.annotations.NonNls;
@@ -41,7 +43,7 @@ class ModuleStateStorageManager extends StateStorageManagerImpl {
   @Nullable
   @Override
   protected String getOldStorageSpec(@NotNull Object component, @NotNull String componentName, @NotNull StateStorageOperation operation) {
-    return ModuleStoreImpl.DEFAULT_STATE_STORAGE;
+    return StoragePathMacros.MODULE_FILE;
   }
 
   @Override
@@ -53,4 +55,9 @@ class ModuleStateStorageManager extends StateStorageManagerImpl {
     return myModule.getName() + Integer.toHexString(myModule.getModuleFilePath().hashCode());    
   }
 
+  @NotNull
+  @Override
+  protected StateStorage.Listener createStorageTopicListener() {
+    return myModule.getProject().getMessageBus().syncPublisher(StateStorage.PROJECT_STORAGE_TOPIC);
+  }
 }

@@ -30,7 +30,7 @@ import org.intellij.lang.regexp.psi.RegExpElementVisitor;
 public class RegExpCharImpl extends RegExpElementImpl implements RegExpChar {
     private static final TokenSet OCT_CHARS = TokenSet.create(RegExpTT.OCT_CHAR, RegExpTT.BAD_OCT_VALUE);
     private static final TokenSet HEX_CHARS = TokenSet.create(RegExpTT.HEX_CHAR, RegExpTT.BAD_HEX_VALUE);
-    private static final TokenSet UNICODE_CHARS = TokenSet.create(RegExpTT.HEX_CHAR, StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN);
+    private static final TokenSet UNICODE_CHARS = TokenSet.create(RegExpTT.UNICODE_CHAR, StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN);
 
     public RegExpCharImpl(ASTNode astNode) {
         super(astNode);
@@ -117,7 +117,12 @@ public class RegExpCharImpl extends RegExpElementImpl implements RegExpChar {
                     case'c':
                         return (char)(ch ^ 64);
                     case'x':
-                        return parseNumber(idx, s, 16, 2, true);
+                      if (s.length() <= idx + 1) return null;
+                      if (s.charAt(idx + 1) == '{') {
+                        final char c = s.charAt(s.length() - 1);
+                        return (c != '}') ? null : parseNumber(idx + 1, s, 16, s.length() - 4, true);
+                      }
+                      return s.length() == 4 ? parseNumber(idx, s, 16, 2, true) : null;
                     case'u':
                         return parseNumber(idx, s, 16, 4, true);
                     case'0':
@@ -145,6 +150,9 @@ public class RegExpCharImpl extends RegExpElementImpl implements RegExpChar {
                 sum += Integer.valueOf(s.substring(i, i + 1), radix);
             }
             if (i-start == 0) return null;
+            if (sum < Character.MIN_CODE_POINT || sum > Character.MAX_CODE_POINT) {
+                return null;
+            }
             return i-start < len && strict ? null : (char)sum;
         } catch (NumberFormatException e1) {
             return null;

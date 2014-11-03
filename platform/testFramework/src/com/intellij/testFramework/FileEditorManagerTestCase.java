@@ -23,18 +23,22 @@ import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.fileEditor.impl.FileEditorProviderManagerImpl;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.ui.docking.DockContainer;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
 import java.io.IOException;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -48,17 +52,26 @@ public abstract class FileEditorManagerTestCase extends LightPlatformCodeInsight
 
   protected FileEditorManagerImpl myManager;
   private FileEditorManager myOldManager;
+  private Set<DockContainer> myOldDockContainers;
 
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    myManager = new FileEditorManagerImpl(getProject(), DockManager.getInstance(getProject()), EditorHistoryManager.getInstance(getProject()));
+    DockManager dockManager = DockManager.getInstance(getProject());
+    myOldDockContainers = dockManager.getContainers();
+    myManager = new FileEditorManagerImpl(getProject(), dockManager, EditorHistoryManager.getInstance(getProject()));
     myOldManager = ((ComponentManagerImpl)getProject()).registerComponentInstance(FileEditorManager.class, myManager);
     ((FileEditorProviderManagerImpl)FileEditorProviderManager.getInstance()).clearSelectedProviders();
   }
 
   @Override
   protected void tearDown() throws Exception {
+    for (DockContainer container : DockManager.getInstance(getProject()).getContainers()) {
+      if (!myOldDockContainers.contains(container)) {
+        Disposer.dispose(container);
+      }
+    }
+    myOldDockContainers = null;
     ((ComponentManagerImpl)getProject()).registerComponentInstance(FileEditorManager.class, myOldManager);
     myManager.closeAllFiles();
     ((FileEditorProviderManagerImpl)FileEditorProviderManager.getInstance()).clearSelectedProviders();
@@ -77,8 +90,8 @@ public abstract class FileEditorManagerTestCase extends LightPlatformCodeInsight
     return file;
   }
 
-  protected void openFiles(String s) throws IOException, JDOMException, InterruptedException, ExecutionException {
-    Document document = JDOMUtil.loadDocument(s);
+  protected void openFiles(@NotNull String femSerialisedText) throws IOException, JDOMException, InterruptedException, ExecutionException {
+    Document document = JDOMUtil.loadDocument(femSerialisedText);
     Element rootElement = document.getRootElement();
     ExpandMacroToPathMap map = new ExpandMacroToPathMap();
     map.addMacroExpand(PathMacroUtil.PROJECT_DIR_MACRO_NAME, getTestDataPath());
@@ -89,12 +102,7 @@ public abstract class FileEditorManagerTestCase extends LightPlatformCodeInsight
     Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       @Override
       public void run() {
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          @Override
-          public void run() {
-            myManager.getMainSplitters().openFiles();
-          }
-        });
+        myManager.getMainSplitters().openFiles();
       }
     });
     while (true) {

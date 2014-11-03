@@ -15,36 +15,31 @@
  */
 package com.intellij.openapi.vcs;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
+import com.google.gson.JsonPrimitive;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectSetProcessor;
-import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.net.URI;
-import java.net.URISyntaxException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Dmitry Avdeev
  */
 public class VcsProjectSetProcessor extends ProjectSetProcessor {
-
-  private static final Logger LOG = Logger.getInstance(VcsProjectSetProcessor.class);
-
-  public static String[] splitUrl(String s) {
-    String[] split = s.split(" ");
-    if (split.length == 2) return split;
-    int i = s.lastIndexOf('/');
-    String url = s.substring(0, i);
-    String path = s.substring(i + 1);
-    return new String[] { url, path };
-  }
 
   @Override
   public String getId() {
@@ -52,48 +47,69 @@ public class VcsProjectSetProcessor extends ProjectSetProcessor {
   }
 
   @Override
-  public void processEntries(@NotNull List<Pair<String, String>> entries, @Nullable Object param, @NotNull final Consumer<Object> onFinish) {
+  public void processEntries(@NotNull final List<Pair<String, String>> entries,
+                             @NotNull final Context context,
+                             @NotNull final Runnable runNext) {
 
-    final VirtualFile directory;
-    if (param instanceof VirtualFile) {
-      directory = (VirtualFile)param;
-    }
-    else {
-      FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, false, false, false);
-      descriptor.setTitle("Select Destination Folder");
-      descriptor.setDescription("");
-      VirtualFile[] files = FileChooser.chooseFiles(descriptor, null, null);
-      if (files.length == 0) return;
-      directory = files[0];
-    }
-    for (Pair<String, String> pair: entries) {
-      if ("url".equals(pair.getFirst())) {
-        try {
-          String url = pair.getSecond();
-          String[] split = splitUrl(url);
-          String protocol = new URI(url).getScheme();
-          VcsCheckoutProcessor processor = VcsCheckoutProcessor.getProcessor(protocol);
+    if (!getDirectory(context)) return;
+    if (!getDirectoryName(context, entries)) return;
+
+    ProgressManager.getInstance().run(new Task.Backgroundable(null, "Hey", true) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        for (Pair<String, String> pair : entries) {
+          String vcs = pair.getFirst();
+          final VcsCheckoutProcessor processor = VcsCheckoutProcessor.getProcessor(vcs);
           if (processor == null) {
-            LOG.error("Checkout processor not found for " + protocol);
+            LOG.error("Checkout processor not found for " + vcs);
+            return;
           }
-          else {
-            processor.checkout(split[0], split[1], directory, new CheckoutProvider.Listener() {
-              @Override
-              public void directoryCheckedOut(File directory, VcsKey vcs) {
 
-              }
+          JsonElement element = new JsonParser().parse(pair.getSecond());
 
-              @Override
-              public void checkoutCompleted() {
-                onFinish.consume(directory);
-              }
-            });
+          HashMap<String, String> parameters = new HashMap<String, String>();
+          for (Map.Entry<String, JsonElement> entry : element.getAsJsonObject().entrySet()) {
+            JsonElement value = entry.getValue();
+            parameters.put(entry.getKey(), value instanceof JsonPrimitive ? value.getAsString() : value.toString());
           }
+          String directoryName = context.directoryName;
+          if (parameters.get("targetDir") != null) {
+            directoryName += "/" + parameters.get("targetDir");
+          }
+          if (!processor.checkout(parameters, context.directory, directoryName)) return;
         }
-        catch (URISyntaxException e) {
-          LOG.error(e);
-        }
+        runNext.run();
       }
+    });
+  }
+
+  private static boolean getDirectoryName(@NotNull Context context, List<Pair<String, String>> entries) {
+
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      context.directoryName = "test";
+      return true;
     }
+    context.directoryName = Messages.showInputDialog((Project)null,
+                                        "Enter directory name for created project. Leave blank to checkout directly into \"" +
+                                        context.directory.getName() + "\".",
+                                        "Project Directory Name", null, context.directoryName, null);
+    return context.directoryName != null;
+  }
+
+  private static boolean getDirectory(@NotNull Context context) {
+    if (context.directory != null) return true;
+    FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, false, false, false);
+    descriptor.setTitle("Select Destination Folder");
+    descriptor.setDescription("");
+    VirtualFile[] files = FileChooser.chooseFiles(descriptor, null, null);
+    context.directory = files.length == 0 ? null : files[0];
+    return context.directory != null;
+  }
+
+  private static final Logger LOG = Logger.getInstance(VcsProjectSetProcessor.class);
+
+  public static String[] splitUrl(String url) {
+    String[] split = url.split(" ");
+    return split.length == 2 ? split : new String[]{url, ""};
   }
 }

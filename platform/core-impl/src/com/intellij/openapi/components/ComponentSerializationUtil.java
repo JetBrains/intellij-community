@@ -35,7 +35,10 @@ public class ComponentSerializationUtil {
   public static <S> void loadComponentState(@NotNull PersistentStateComponent<S> configuration, @Nullable Element element) {
     if (element != null) {
       Class<S> stateClass = getStateClass(configuration.getClass());
-      configuration.loadState(XmlSerializer.deserialize(element, stateClass));
+      S state = XmlSerializer.deserialize(element, stateClass);
+      if (state != null) {
+        configuration.loadState(state);
+      }
     }
   }
 }

@@ -15,13 +15,11 @@
  */
 package com.intellij.dvcs.push.ui;
 
-import com.intellij.dvcs.push.PushTargetPanel;
 import com.intellij.openapi.vcs.changes.issueLinks.LinkMouseListenerBase;
 import com.intellij.ui.CheckboxTree;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
 import java.awt.event.MouseEvent;
 
 public class VcsBranchEditorListener extends LinkMouseListenerBase {
@@ -31,31 +29,22 @@ public class VcsBranchEditorListener extends LinkMouseListenerBase {
     myRenderer = renderer;
   }
 
-  @Override
-  public void mouseMoved(MouseEvent e) {
-    Component component = (Component)e.getSource();
-    Object tag = getTagAt(e);
-    if (tag != null && tag instanceof PushTargetPanel) {
-      component.setCursor(Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR));
-    }
-    else if (tag != null && tag instanceof TextWithLinkNode) {
-      component.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-    }
-    else {
-      component.setCursor(Cursor.getDefaultCursor());
-    }
-  }
-
   @Nullable
   @Override
   protected Object getTagAt(@NotNull final MouseEvent e) {
     return PushLogTreeUtil.getTagAtForRenderer(myRenderer, e);
   }
 
-  protected void handleTagClick(@Nullable Object tag, @NotNull MouseEvent event) {
+  protected void handleTagClick(@Nullable final Object tag, @NotNull MouseEvent event) {
     if (tag instanceof TextWithLinkNode) {
       TextWithLinkNode textWithLink = (TextWithLinkNode)tag;
       textWithLink.fireOnClick(textWithLink);
+    }
+    if (tag instanceof ExtraEditControl) {
+      ((ExtraEditControl)tag).click(event);
+    }
+    if (tag instanceof Runnable) {
+      ((Runnable)tag).run();
     }
   }
 }

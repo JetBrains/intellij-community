@@ -17,6 +17,7 @@ package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsKey;
+import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
@@ -131,7 +132,7 @@ public class TestVcsLogProvider implements VcsLogProvider {
   @NotNull
   @Override
   public VcsKey getSupportedVcs() {
-    throw new UnsupportedOperationException();
+    return MockAbstractVcs.getKey();
   }
 
   @NotNull
@@ -195,6 +196,12 @@ public class TestVcsLogProvider implements VcsLogProvider {
 
   public int getReadFirstBlockCounter() {
     return myReadFirstBlockCounter;
+  }
+
+  @Nullable
+  @Override
+  public <T> T getPropertyValue(VcsLogProperties.VcsLogProperty<T> property) {
+    return null;
   }
 
   private static class MockRefManager implements VcsLogRefManager {

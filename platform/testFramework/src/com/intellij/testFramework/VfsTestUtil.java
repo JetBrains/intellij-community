@@ -89,6 +89,21 @@ public class VfsTestUtil {
     }
   }
 
+  public static void deleteFile(final VirtualFile file) {
+    try {
+      AccessToken token = WriteAction.start();
+      try {
+        file.delete(VfsTestUtil.class);
+      }
+      finally {
+        token.finish();
+      }
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
   public static void clearContent(VirtualFile file) {
     Assert.assertNotNull(file);
     try {

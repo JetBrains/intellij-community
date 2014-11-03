@@ -46,9 +46,9 @@ public class DefaultLineWrapPositionStrategyTest extends AbstractLineWrapPositio
   }
 
   @Test
-  public void preferWrapOnComma() {
+  public void doNotPreferWrapOnComma() {
     String document =
-      "int variable = testMethod(var1 + var2, <WRAP>var3 + va<EDGE>r4);";
+      "int variable = testMethod(var1 + var2, var3 + <WRAP>va<EDGE>r4);";
     doTest(myStrategy, document);
   }
 

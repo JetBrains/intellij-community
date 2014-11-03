@@ -53,22 +53,27 @@ abstract public class PluginTableModel extends AbstractTableModel implements Sor
     myDefaultSortKey = sortKey;
   }
 
+  @Override
   public int getColumnCount() {
     return columns.length;
   }
 
+  @Override
   public ColumnInfo[] getColumnInfos() {
     return columns;
   }
 
+  @Override
   public boolean isSortable() {
     return true;
   }
 
+  @Override
   public void setSortable(boolean aBoolean) {
     // do nothing cause it's always sortable
   }
 
+  @Override
   public String getColumnName(int column) {
     return columns[column].getName();
   }
@@ -87,18 +92,22 @@ abstract public class PluginTableModel extends AbstractTableModel implements Sor
     return myDefaultSortKey;
   }
 
+  @Override
   public int getRowCount() {
     return view.size();
   }
 
+  @Override
   public Object getValueAt(int rowIndex, int columnIndex) {
     return columns[columnIndex].valueOf(getObjectAt(rowIndex));
   }
 
+  @Override
   public boolean isCellEditable(final int rowIndex, final int columnIndex) {
     return columns[columnIndex].isCellEditable(getObjectAt(rowIndex));
   }
 
+  @Override
   public void setValueAt(final Object aValue, final int rowIndex, final int columnIndex) {
     columns[columnIndex].setValue(getObjectAt(rowIndex), aValue);
     fireTableCellUpdated(rowIndex, columnIndex);

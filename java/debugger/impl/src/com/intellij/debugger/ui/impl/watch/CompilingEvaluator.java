@@ -34,6 +34,7 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JdkVersionUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -49,10 +50,7 @@ import org.jetbrains.org.objectweb.asm.Opcodes;
 import javax.tools.*;
 import java.io.ByteArrayOutputStream;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 /**
 * @author egor
@@ -249,9 +247,9 @@ public class CompilingEvaluator implements ExpressionEvaluator {
     StringReference url = proxy.mirrorOf("file:a");
     keep(url, context);
     ObjectReference reference = classType.newInstance(threadReference, classType.concreteMethodByName("<init>", "(Ljava/lang/String;)V"),
-                                                      Arrays.asList(url), ClassType.INVOKE_SINGLE_THREADED);
+                                                      Collections.singletonList(url), ClassType.INVOKE_SINGLE_THREADED);
     keep(reference, context);
-    arrayRef.setValues(Arrays.asList(reference));
+    arrayRef.setValues(Collections.singletonList(reference));
     return arrayRef;
   }
 
@@ -259,6 +257,9 @@ public class CompilingEvaluator implements ExpressionEvaluator {
 
   @NotNull
   private Collection<OutputFileObject> compile(String target) throws EvaluateException {
+    if (!SystemInfo.isJavaVersionAtLeast(target)) {
+      throw new EvaluateException("Unable to compile for target level " + target + ". Need to run IDEA on java version at least " + target + ", currently running on " + SystemInfo.JAVA_RUNTIME_VERSION);
+    }
     JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
     MemoryFileManager manager = new MemoryFileManager(compiler);
     DiagnosticCollector<JavaFileObject> diagnostic = new DiagnosticCollector<JavaFileObject>();
@@ -275,6 +276,8 @@ public class CompilingEvaluator implements ExpressionEvaluator {
       options.add(cp.getPathsString());
     }
     if (!StringUtil.isEmpty(target)) {
+      options.add("-source");
+      options.add(target);
       options.add("-target");
       options.add(target);
     }
@@ -284,7 +287,7 @@ public class CompilingEvaluator implements ExpressionEvaluator {
                             diagnostic,
                             options,
                             null,
-                            Arrays.asList(new SourceFileObject(getMainClassName(), JavaFileObject.Kind.SOURCE, getClassCode()))
+                            Collections.singletonList(new SourceFileObject(getMainClassName(), JavaFileObject.Kind.SOURCE, getClassCode()))
       ).call()) {
         StringBuilder res = new StringBuilder("Compilation failed:\n");
         for (Diagnostic<? extends JavaFileObject> d : diagnostic.getDiagnostics()) {

@@ -34,8 +34,6 @@ import java.lang.ref.SoftReference;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * @author cdr
@@ -71,7 +69,7 @@ abstract class CharArray implements CharSequenceBackedByArray, Dumpable {
   private volatile boolean myHasDeferredChanges;
   // this lock is for mutual exclusion during read action access
   // (some fields are changed in read action too)
-  private final Lock lock = new ReentrantLock();
+  private final Object lock = new String("myOriginalSequence");
 
   // We had a problems with bulk document text processing, hence, debug facilities were introduced. The fields group below work with them.
   // The main idea is to hold all history of bulk processing iteration in order to be able to retrieve it from client and reproduce the
@@ -388,6 +386,7 @@ abstract class CharArray implements CharSequenceBackedByArray, Dumpable {
     return originalSequence == null ? this : originalSequence;
   }
 
+  @Override
   @NotNull
   public String toString() {
     assertConsistency();
@@ -466,16 +465,14 @@ abstract class CharArray implements CharSequenceBackedByArray, Dumpable {
     CharSequence originalSequence = myOriginalSequence;
     if (myHasDeferredChanges || originalSequence != null && array == null) {
       // slow track
-      lock.lock();
-      try {
+      synchronized (lock) {
         flushDeferredChanged();
-        if (myOriginalSequence != null && myArray == null) {
-          myArray = array = CharArrayUtil.fromSequence(myOriginalSequence);
+        array = myArray;
+        originalSequence = myOriginalSequence;
+        if (originalSequence != null && array == null) {
+          myArray = array = CharArrayUtil.fromSequence(originalSequence);
           myStringRef = null;
         }
-      }
-      finally {
-        lock.unlock();
       }
       assertConsistency();
     }
@@ -610,12 +607,11 @@ abstract class CharArray implements CharSequenceBackedByArray, Dumpable {
           myDebugDeferredChanges.clear();
         }
         prepareForModification();
-        myDeferredChangeMode = deferredChangeMode;
       }
       else {
-        myDeferredChangeMode = deferredChangeMode;
         flushDeferredChanged();
       }
+      myDeferredChangeMode = deferredChangeMode;
     }
     assertConsistency();
   }
@@ -626,8 +622,7 @@ abstract class CharArray implements CharSequenceBackedByArray, Dumpable {
       return;
     }
 
-    lock.lock();
-    try {
+    synchronized (lock) {
       char[] beforeMerge = null;
       if (myDebug) {
         beforeMerge = new char[myArray.length];
@@ -661,9 +656,6 @@ abstract class CharArray implements CharSequenceBackedByArray, Dumpable {
           }
         }
       }
-    }
-    finally {
-      lock.unlock();
     }
     assertConsistency();
   }

@@ -61,7 +61,7 @@ class MapBinding implements Binding {
 
     myKeyBinding = XmlSerializerImpl.getBinding(keyType);
     myValueBinding = XmlSerializerImpl.getBinding(valueType);
-    myMapAnnotation = XmlSerializerImpl.findAnnotation(accessor.getAnnotations(), MapAnnotation.class);
+    myMapAnnotation = accessor.getAnnotation(MapAnnotation.class);
   }
 
   @Nullable

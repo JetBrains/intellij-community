@@ -31,7 +31,9 @@ import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.TimeoutUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -351,18 +353,27 @@ public class PsiUtilCore {
 
   @Nullable
   public static VirtualFile getVirtualFile(@Nullable PsiElement element) {
-    if (element == null) {
+    if (element == null || !element.isValid()) {
       return null;
     }
+
     if (element instanceof PsiFileSystemItem) {
-      return element.isValid() ? ((PsiFileSystemItem)element).getVirtualFile() : null;
+      return ((PsiFileSystemItem)element).getVirtualFile();
     }
-    final PsiFile containingFile = element.getContainingFile();
+
+    PsiFile containingFile = element.getContainingFile();
     if (containingFile == null || !containingFile.isValid()) {
       return null;
     }
 
-    return containingFile.getVirtualFile();
+    VirtualFile file = containingFile.getVirtualFile();
+    if (file == null) {
+      PsiFile originalFile = containingFile.getOriginalFile();
+      if (originalFile != containingFile && originalFile.isValid()) {
+        file = originalFile.getVirtualFile();
+      }
+    }
+    return file;
   }
 
   public static int compareElementsByPosition(final PsiElement element1, final PsiElement element2) {
@@ -526,5 +537,15 @@ public class PsiUtilCore {
         return element.getProject();
       }
     });
+  }
+
+  @Contract("null -> null;!null -> !null")
+  public static IElementType getElementType(@Nullable ASTNode node) {
+    return node == null ? null : node.getElementType();
+  }
+
+  @Contract("null -> null;!null -> !null")
+  public static IElementType getElementType(@Nullable PsiElement element) {
+    return element == null ? null : getElementType(element.getNode());
   }
 }

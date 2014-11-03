@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -91,10 +91,27 @@ public class GeneralCommandLine implements UserDataHolder {
     return myWorkDirectory;
   }
 
-  public void setWorkDirectory(@Nullable @NonNls final String path) {
-    setWorkDirectory(path != null ? new File(path) : null);
+  @NotNull
+  public GeneralCommandLine withWorkDirectory(@Nullable final String path) {
+    return withWorkDirectory(path != null ? new File(path) : null);
   }
 
+  @NotNull
+  public GeneralCommandLine withWorkDirectory(@Nullable final File workDirectory) {
+    myWorkDirectory = workDirectory;
+    return this;
+  }
+
+  /**
+   * @deprecated Use {@link #withWorkDirectory(String)} instead.
+   */
+  public void setWorkDirectory(@Nullable @NonNls final String path) {
+    withWorkDirectory(path);
+  }
+
+  /**
+   * @deprecated Use {@link #withWorkDirectory(java.io.File)} instead.
+   */
   public void setWorkDirectory(@Nullable final File workDirectory) {
     myWorkDirectory = workDirectory;
   }
@@ -105,6 +122,14 @@ public class GeneralCommandLine implements UserDataHolder {
   @NotNull
   public Map<String, String> getEnvironment() {
     return myEnvParams;
+  }
+
+  @NotNull
+  public GeneralCommandLine withEnvironment(@Nullable Map<String, String> environment) {
+    if (environment != null) {
+      getEnvironment().putAll(environment);
+    }
+    return this;
   }
 
   /**
@@ -167,6 +192,14 @@ public class GeneralCommandLine implements UserDataHolder {
     return myCharset;
   }
 
+  public GeneralCommandLine withCharset(@NotNull final Charset charset) {
+    myCharset = charset;
+    return this;
+  }
+
+  /**
+   * @deprecated Use {@link #withCharset} instead.
+   */
   public void setCharset(@NotNull final Charset charset) {
     myCharset = charset;
   }
@@ -337,6 +370,17 @@ public class GeneralCommandLine implements UserDataHolder {
   }
 
   private static class MyTHashMap extends THashMap<String, String> {
+    @Override
+    public String put(String key, String value) {
+      if (key == null || value == null) {
+        LOG.error(new Exception("Nulls are not allowed"));
+        return null;
+      }
+      else {
+        return super.put(key, value);
+      }
+    }
+
     @Override
     public void putAll(Map<? extends String, ? extends String> map) {
       if (map != null) {

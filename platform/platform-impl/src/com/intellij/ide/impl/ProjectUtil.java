@@ -18,6 +18,7 @@ package com.intellij.ide.impl;
 import com.intellij.CommonBundle;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -75,7 +76,7 @@ public class ProjectUtil {
       LOG.info(e);
       return;
     }
-    GeneralSettings.getInstance().setLastProjectCreationLocation(path.replace(File.separatorChar, '/'));
+    RecentProjectsManager.getInstance().setLastProjectCreationLocation(path.replace(File.separatorChar, '/'));
   }
 
   /**
@@ -205,7 +206,7 @@ public class ProjectUtil {
    */
   public static int confirmOpenNewProject(boolean isNewProject) {
     final GeneralSettings settings = GeneralSettings.getInstance();
-    int confirmOpenNewProject = settings.getConfirmOpenNewProject();
+    int confirmOpenNewProject = ApplicationManager.getApplication().isUnitTestMode() ? GeneralSettings.OPEN_PROJECT_NEW_WINDOW : settings.getConfirmOpenNewProject();
     if (confirmOpenNewProject == GeneralSettings.OPEN_PROJECT_ASK) {
       if (isNewProject) {
         int exitCode = Messages.showYesNoDialog(IdeBundle.message("prompt.open.project.in.new.frame"),
@@ -275,7 +276,7 @@ public class ProjectUtil {
   }
 
   public static String getBaseDir() {
-    final String lastProjectLocation = GeneralSettings.getInstance().getLastProjectCreationLocation();
+    final String lastProjectLocation = RecentProjectsManager.getInstance().getLastProjectCreationLocation();
     if (lastProjectLocation != null) {
       return lastProjectLocation.replace('/', File.separatorChar);
     }

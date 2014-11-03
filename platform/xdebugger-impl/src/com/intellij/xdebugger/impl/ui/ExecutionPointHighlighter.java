@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -35,6 +36,7 @@ import com.intellij.xdebugger.ui.DebuggerColors;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -164,6 +166,10 @@ public class ExecutionPointHighlighter {
   }
 
   private void removeHighlighter() {
+    if (myEditor != null) {
+      adjustCounter(myEditor, -1);
+    }
+
     if (myUseSelection && myEditor != null) {
       myEditor.getSelectionModel().removeSelection();
     }
@@ -175,6 +181,7 @@ public class ExecutionPointHighlighter {
   }
 
   private void addHighlighter() {
+    adjustCounter(myEditor, 1);
     int line = mySourcePosition.getLine();
     Document document = myEditor.getDocument();
     if (line < 0 || line >= document.getLineCount()) return;
@@ -191,5 +198,20 @@ public class ExecutionPointHighlighter {
                                                                       scheme.getAttributes(DebuggerColors.EXECUTIONPOINT_ATTRIBUTES));
     myRangeHighlighter.putUserData(EXECUTION_POINT_HIGHLIGHTER_KEY, true);
     myRangeHighlighter.setGutterIconRenderer(myGutterIconRenderer);
+  }
+
+  private static void adjustCounter(@NotNull final Editor editor, final int increment) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+
+    // need to always invoke later to maintain order of increment/decrement
+    SwingUtilities.invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        JComponent component = editor.getComponent();
+        Object o = component.getClientProperty(EditorImpl.IGNORE_MOUSE_TRACKING);
+        Integer value = ((o instanceof Integer) ? (Integer)o : 0) + increment;
+        component.putClientProperty(EditorImpl.IGNORE_MOUSE_TRACKING, value > 0 ? value : null);
+      }
+    });
   }
 }

@@ -24,7 +24,7 @@ import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.util.ConcurrencyUtil;
-import com.intellij.util.containers.StripedLockConcurrentHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -34,7 +34,7 @@ import java.awt.*;
 import java.util.concurrent.ConcurrentMap;
 
 public class AttributesFlyweight {
-  private static final ConcurrentMap<FlyweightKey, AttributesFlyweight> entries = new StripedLockConcurrentHashMap<FlyweightKey, AttributesFlyweight>();
+  private static final ConcurrentMap<FlyweightKey, AttributesFlyweight> entries = ContainerUtil.newConcurrentMap();
   private static final ThreadLocal<FlyweightKey> ourKey = new ThreadLocal<FlyweightKey>();
 
   private final int myHashCode;

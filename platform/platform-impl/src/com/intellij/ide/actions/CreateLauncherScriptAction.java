@@ -16,6 +16,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
@@ -42,7 +43,6 @@ import java.util.Map;
 
 import static com.intellij.openapi.util.Pair.pair;
 import static com.intellij.util.containers.ContainerUtil.newHashMap;
-import static java.util.Arrays.asList;
 
 /**
  * @author yole
@@ -120,7 +120,7 @@ public class CreateLauncherScriptAction extends DumbAwareAction {
           "install -g 0 -o 0 \"" + scriptFile.getCanonicalPath() + "\" \"" + pathName + "\"";
         File installationScript = ExecUtil.createTempExecutableScript("launcher_installer", ".sh", installationScriptSrc);
         String prompt = ApplicationBundle.message("launcher.script.sudo.prompt", scriptTargetDirPath);
-        ExecUtil.sudoAndGetOutput(asList(installationScript.getPath()), prompt, null);
+        ExecUtil.sudoAndGetOutput(new GeneralCommandLine(installationScript.getPath()), prompt);
       }
     }
     catch (Exception e) {

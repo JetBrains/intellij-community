@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,7 +66,7 @@ public class KeywordArgumentCompletionUtil {
     visited.add(def);
     boolean needSelf = def.getContainingClass() != null && def.getModifier() != PyFunction.Modifier.STATICMETHOD;
     final KwArgParameterCollector collector = new KwArgParameterCollector(needSelf, ret);
-    final TypeEvalContext context = TypeEvalContext.userInitiated(def.getContainingFile());
+    final TypeEvalContext context = TypeEvalContext.userInitiated(def.getProject(), def.getContainingFile());
     final List<PyParameter> parameters = PyUtil.getParameters(def, context);
     for (PyParameter parameter : parameters) {
       parameter.accept(collector);

@@ -24,6 +24,7 @@ import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
+import com.intellij.ui.NonFocusableCheckBox;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,7 +45,7 @@ public class RearrangeBeforeCheckinHandler extends CheckinHandler implements Che
   @Override
   @Nullable
   public RefreshableOnComponent getBeforeCheckinConfigurationPanel() {
-    final JCheckBox rearrangeBox = new JCheckBox(VcsBundle.message("checkbox.checkin.options.rearrange.code"));
+    final JCheckBox rearrangeBox = new NonFocusableCheckBox(VcsBundle.message("checkbox.checkin.options.rearrange.code"));
     CheckinHandlerUtil.disableWhenDumb(myProject, rearrangeBox, "Impossible until indices are up-to-date");
     return new RefreshableOnComponent() {
       @Override

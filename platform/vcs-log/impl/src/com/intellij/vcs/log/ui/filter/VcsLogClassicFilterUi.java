@@ -29,7 +29,6 @@ import com.intellij.ui.SearchTextFieldWithStoredHistory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.*;
-import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl;
@@ -61,7 +60,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
   @NotNull private final StructureFilterPopupComponent myStructureFilterComponent;
 
   public VcsLogClassicFilterUi(@NotNull VcsLogUiImpl ui, @NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogUiProperties uiProperties,
-                               @NotNull DataPack initialDataPack) {
+                               @NotNull VcsLogDataPack initialDataPack) {
     myUi = ui;
 
     myTextFilter = new SearchTextFieldWithStoredHistory("Vcs.Log.Text.Filter.History") {
@@ -91,7 +90,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
     myActionGroup.add(new FilterActionComponent(myStructureFilterComponent));
   }
 
-  public void updateDataPack(@NotNull DataPack dataPack) {
+  public void updateDataPack(@NotNull VcsLogDataPack dataPack) {
     myBranchFilterComponent.updateDataPack(dataPack);
   }
 

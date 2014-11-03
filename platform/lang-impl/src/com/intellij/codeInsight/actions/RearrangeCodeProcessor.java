@@ -20,14 +20,16 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.arrangement.Rearranger;
 import com.intellij.psi.codeStyle.arrangement.engine.ArrangementEngine;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
+import java.util.Collection;
 import java.util.concurrent.Callable;
 import java.util.concurrent.FutureTask;
 
@@ -37,11 +39,21 @@ public class RearrangeCodeProcessor extends AbstractLayoutCodeProcessor {
   public static final String PROGRESS_TEXT = "Rearranging code...";
 
   @Nullable private Condition<PsiFile> myAcceptCondition;
+  private Collection<TextRange> myRangesForFile = ContainerUtil.newArrayList();
 
   public RearrangeCodeProcessor(@NotNull AbstractLayoutCodeProcessor previousProcessor,
                                 @Nullable Condition<PsiFile> acceptCondition) {
     super(previousProcessor, COMMAND_NAME, PROGRESS_TEXT);
     myAcceptCondition = acceptCondition;
+  }
+  
+  public RearrangeCodeProcessor(@NotNull Project project,
+                                @NotNull PsiFile file,
+                                @Nullable Collection<TextRange> ranges) {
+    super(project, file, PROGRESS_TEXT, COMMAND_NAME, false);
+    if (ranges != null) {
+      myRangesForFile.addAll(ranges);
+    }
   }
 
   public RearrangeCodeProcessor(@NotNull Project project,
@@ -62,17 +74,26 @@ public class RearrangeCodeProcessor extends AbstractLayoutCodeProcessor {
     return new FutureTask<Boolean>(new Callable<Boolean>() {
       @Override
       public Boolean call() throws Exception {
-        if (!shouldRearrangeFile(file)) return true;
-
-        RearrangeCommand rearranger = new RearrangeCommand(myProject, file, COMMAND_NAME);
-        if (rearranger.couldRearrange()) {
-          rearranger.run();
+        try {
+          if (!shouldRearrangeFile(file)) return true;
+        
+          Collection<TextRange> ranges = getRangesToFormat(file);
+          RearrangeCommand rearranger = new RearrangeCommand(myProject, file, COMMAND_NAME, ranges);
+          if (rearranger.couldRearrange()) {
+            rearranger.run();
+          }
+          return true;
         }
-        return true;
+        finally {
+          myRangesForFile.clear();
+        }
       }
     });
   }
 
+  public Collection<TextRange> getRangesToFormat(@NotNull PsiFile file) {
+    return myRangesForFile.isEmpty() ? ContainerUtil.newArrayList(file.getTextRange()) : myRangesForFile;
+  }
 }
 
 
@@ -82,10 +103,12 @@ class RearrangeCommand {
   @NotNull private Project myProject;
   private Document myDocument;
   private Runnable myCommand;
+  private final Collection<TextRange> myRanges;
 
-  RearrangeCommand(@NotNull Project project, @NotNull PsiFile file, @NotNull String commandName) {
+  RearrangeCommand(@NotNull Project project, @NotNull PsiFile file, @NotNull String commandName, @NotNull Collection<TextRange> ranges) {
     myProject = project;
     myFile = file;
+    myRanges = ranges;
     myCommandName = commandName;
     myDocument = PsiDocumentManager.getInstance(project).getDocument(file);
   }
@@ -110,7 +133,7 @@ class RearrangeCommand {
     myCommand = new Runnable() {
       @Override
       public void run() {
-        engine.arrange(myFile, Collections.singleton(myFile.getTextRange()));
+        engine.arrange(myFile, myRanges);
       }
     };
     PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(myDocument);

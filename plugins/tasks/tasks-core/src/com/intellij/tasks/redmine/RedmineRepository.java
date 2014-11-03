@@ -1,7 +1,6 @@
 package com.intellij.tasks.redmine;
 
 import com.google.gson.Gson;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.Task;
@@ -40,7 +39,6 @@ import static com.intellij.tasks.redmine.model.RedmineResponseWrapper.*;
  */
 @Tag("Redmine")
 public class RedmineRepository extends NewBaseRepositoryImpl {
-  private static final Logger LOG = Logger.getInstance(RedmineRepository.class);
   private static final Gson GSON = GsonUtil.createDefaultBuilder().create();
 
   private static final Pattern ID_PATTERN = Pattern.compile("\\d+");
@@ -159,10 +157,6 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
     //if (StringUtil.isNotEmpty(query)) {
     //  builder.addParameter("fields[]", "subject").addParameter("operators[subject]", "~").addParameter("values[subject][]", query);
     //}
-    // If project was not chosen, all available issues still fetched. Such behavior may seems strange to user.
-    //if (myCurrentProject != null && myCurrentProject != UNSPECIFIED_PROJECT) {
-    //  builder.addParameter("project_id", String.valueOf(myCurrentProject.getId()));
-    //}
     HttpClient client = getHttpClient();
     HttpGet method = new HttpGet(getIssuesUrl(offset, limit, withClosed));
     IssuesWrapper wrapper = client.execute(method, new GsonSingleObjectDeserializer<IssuesWrapper>(GSON, IssuesWrapper.class));
@@ -175,6 +169,10 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
       .addParameter("limit", String.valueOf(limit))
       .addParameter("status_id", withClosed ? "*" : "open")
       .addParameter("assigned_to_id", "me");
+    // If project was not chosen, all available issues still fetched. Such behavior may seems strange to user.
+    if (myCurrentProject != null && myCurrentProject != UNSPECIFIED_PROJECT) {
+      builder.addParameter("project_id", String.valueOf(myCurrentProject.getId()));
+    }
     if (isUseApiKeyAuthentication()) {
       builder.addParameter("key", myAPIKey);
     }
@@ -234,7 +232,7 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
   public String getPresentableName() {
     String name = super.getPresentableName();
     if (myCurrentProject != null && myCurrentProject != UNSPECIFIED_PROJECT) {
-      name += "/projects/" + myCurrentProject.getIdentifier();
+      name += "/projects/" + StringUtil.notNullize(myCurrentProject.getIdentifier(), String.valueOf(myCurrentProject.getId()));
     }
     return name;
   }

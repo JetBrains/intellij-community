@@ -111,8 +111,8 @@
     <compiler implementation="com.intellij.packaging.impl.compiler.ArtifactsCompiler" id="artifactsCompiler"/>
     <gotoRelatedProvider implementation="com.intellij.testIntegration.GotoTestRelatedProvider"/>
 
-    <applicationService serviceInterface="com.intellij.ide.RecentProjectsManagerBase"
-                        serviceImplementation="com.intellij.ide.RecentProjectsManager"/>
+    <applicationService serviceInterface="com.intellij.ide.RecentProjectsManager"
+                        serviceImplementation="com.intellij.ide.RecentProjectsManagerImpl"/>
 
     <applicationService serviceInterface="com.intellij.util.descriptors.ConfigFileFactory"
                         serviceImplementation="com.intellij.util.descriptors.impl.ConfigFileFactoryImpl"/>
@@ -143,14 +143,10 @@
     <applicationService serviceInterface="com.intellij.execution.runners.ProcessProxyFactory"
                         serviceImplementation="com.intellij.execution.runners.ProcessProxyFactoryImpl"/>
 
-    <applicationService serviceInterface="com.intellij.debugger.settings.NodeRendererSettings"
-                        serviceImplementation="com.intellij.debugger.settings.NodeRendererSettings"/>
-    <applicationService serviceInterface="com.intellij.debugger.settings.ViewsGeneralSettings"
-                        serviceImplementation="com.intellij.debugger.settings.ViewsGeneralSettings"/>
-    <applicationService serviceInterface="com.intellij.debugger.settings.DebuggerSettings"
-                        serviceImplementation="com.intellij.debugger.settings.DebuggerSettings"/>
-    <applicationService serviceInterface="com.intellij.debugger.settings.ThreadsViewSettings"
-                        serviceImplementation="com.intellij.debugger.settings.ThreadsViewSettings"/>
+    <applicationService serviceImplementation="com.intellij.debugger.settings.NodeRendererSettings"/>
+    <applicationService serviceImplementation="com.intellij.debugger.settings.ViewsGeneralSettings"/>
+    <applicationService serviceImplementation="com.intellij.debugger.settings.DebuggerSettings"/>
+    <applicationService serviceImplementation="com.intellij.debugger.settings.ThreadsViewSettings"/>
 
     <applicationService serviceInterface="com.intellij.packaging.elements.PackagingElementFactory"
                         serviceImplementation="com.intellij.packaging.impl.elements.PackagingElementFactoryImpl"/>
@@ -252,7 +248,7 @@
     <projectConfigurable groupId="language" instance="com.intellij.psi.templateLanguages.TemplateDataLanguageConfigurable" id="Template Data Languages" key="template.data.language.configurable" bundle="messages.LangBundle" />
 
     <!-- Scopes -->
-    <projectConfigurable groupId="appearance" instance="com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable" id="project.scopes" key="scopes.display.name" bundle="messages.IdeBundle" />
+    <projectConfigurable groupId="appearance" groupWeight="111" instance="com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable" id="project.scopes" key="scopes.display.name" bundle="messages.IdeBundle" />
 
     <!-- Application Configurables -->
 
@@ -262,7 +258,7 @@
     <applicationConfigurable groupId="build" instance="com.intellij.application.options.pathMacros.PathMacroConfigurable" id="preferences.pathVariables"
                              key="title.path.variables" bundle="messages.ApplicationBundle"/>
 
-    <applicationConfigurable parentId="editor" instance="com.intellij.execution.console.ConsoleFoldingConfigurable" id="Console Folding"
+    <applicationConfigurable parentId="preferences.editor" instance="com.intellij.execution.console.ConsoleFoldingConfigurable" id="Console Folding"
                              displayName="Console Folding"/>
 
     <editorNotificationProvider implementation="com.intellij.codeInsight.daemon.impl.AttachSourcesNotificationProvider"/>

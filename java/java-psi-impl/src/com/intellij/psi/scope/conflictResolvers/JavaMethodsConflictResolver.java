@@ -259,10 +259,16 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
       }
       PsiMethod existingMethod = (PsiMethod)existing.getElement();
       PsiClass existingClass = existingMethod.getContainingClass();
-      if (class1 != null && existingClass != null && 
-          class1.isInterface() && CommonClassNames.JAVA_LANG_OBJECT.equals(existingClass.getQualifiedName())) { //prefer interface methods to methods from Object
-        signatures.put(signature, info);
-        continue;
+      if (class1 != null && existingClass != null) { //prefer interface methods to methods from Object
+        if (class1.isInterface() && CommonClassNames.JAVA_LANG_OBJECT.equals(existingClass.getQualifiedName())) {
+          signatures.put(signature, info);
+          continue;
+        } 
+        else if (existingClass.isInterface() && CommonClassNames.JAVA_LANG_OBJECT.equals(class1.getQualifiedName())) {
+          conflicts.remove(info);
+          i--;
+          continue;
+        }
       }
       if (method == existingMethod) {
         PsiElement scope1 = info.getCurrentFileResolveScope();
@@ -331,7 +337,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
             currentClass = PsiTreeUtil.getParentOfType(expression, PsiClass.class);
           }
 
-          if (currentClass != null) {
+          if (currentClass != null && existingClass != null && class1 != null) {
             final PsiSubstitutor eSubstitutor = TypeConversionUtil.getMaybeSuperClassSubstitutor(existingClass, currentClass, PsiSubstitutor.EMPTY, null);
             final PsiSubstitutor cSubstitutor = TypeConversionUtil.getMaybeSuperClassSubstitutor(class1, currentClass, PsiSubstitutor.EMPTY, null);
             if (eSubstitutor != null && cSubstitutor != null &&

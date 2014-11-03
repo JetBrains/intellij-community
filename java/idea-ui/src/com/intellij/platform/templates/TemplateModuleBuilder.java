@@ -38,8 +38,11 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.NullableComputable;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.StreamUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
@@ -219,7 +222,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
         @Override
         public byte[] processContent(byte[] content, File file) throws IOException {
           FileType fileType = FileTypeManager.getInstance().getFileTypeByExtension(FileUtilRt.getExtension(file.getName()));
-          return fileType.isBinary() ? content : processTemplates(projectName, new String(content), file);
+          return fileType.isBinary() ? content : processTemplates(projectName, new String(content, CharsetToolkit.UTF8_CHARSET), file);
         }
       }, true);
       String iml = ContainerUtil.find(dir.list(), new Condition<String>() {
@@ -269,7 +272,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
       properties.put(ProjectTemplateParameterFactory.IJ_PROJECT_NAME, projectName);
     }
     String merged = FileTemplateUtil.mergeTemplate(properties, content, true);
-    return merged.replace("\\$", "$").replace("\\#", "#").getBytes(UTF_8);
+    return StringUtilRt.convertLineSeparators(merged.replace("\\$", "$").replace("\\#", "#"), SystemInfo.isWindows ? "\r\n" : "\n").getBytes(UTF_8);
   }
 
   @Nullable

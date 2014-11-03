@@ -85,7 +85,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
   private static void doNotify(@NotNull final Notification notification,
                               @Nullable NotificationDisplayType displayType,
                               @Nullable final Project project) {
-    final NotificationsConfigurationImpl configuration = NotificationsConfigurationImpl.getNotificationsConfigurationImpl();
+    final NotificationsConfigurationImpl configuration = NotificationsConfigurationImpl.getInstanceImpl();
     if (!configuration.isRegistered(notification.getGroupId())) {
       configuration.register(notification.getGroupId(), displayType == null ? NotificationDisplayType.BALLOON : displayType);
     }
@@ -94,12 +94,12 @@ public class NotificationsManagerImpl extends NotificationsManager {
     boolean shouldLog = settings.isShouldLog();
     boolean displayable = settings.getDisplayType() != NotificationDisplayType.NONE;
 
-    boolean willBeShown = displayable && NotificationsConfigurationImpl.getNotificationsConfigurationImpl().SHOW_BALLOONS;
+    boolean willBeShown = displayable && NotificationsConfigurationImpl.getInstanceImpl().SHOW_BALLOONS;
     if (!shouldLog && !willBeShown) {
       notification.expire();
     }
 
-    if (NotificationsConfigurationImpl.getNotificationsConfigurationImpl().SHOW_BALLOONS) {
+    if (NotificationsConfigurationImpl.getInstanceImpl().SHOW_BALLOONS) {
       final Runnable runnable = new DumbAwareRunnable() {
         @Override
         public void run() {
@@ -132,7 +132,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
     final NotificationSettings settings = NotificationsConfigurationImpl.getSettings(groupId);
 
     NotificationDisplayType type = settings.getDisplayType();
-    String toolWindowId = NotificationsConfigurationImpl.getNotificationsConfigurationImpl().getToolWindowId(groupId);
+    String toolWindowId = NotificationsConfigurationImpl.getInstanceImpl().getToolWindowId(groupId);
     if (type == NotificationDisplayType.TOOL_WINDOW &&
         (toolWindowId == null || project == null || !ToolWindowManager.getInstance(project).canShowNotification(toolWindowId))) {
       type = NotificationDisplayType.BALLOON;

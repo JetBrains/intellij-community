@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -108,7 +108,7 @@ public class PythonPatterns extends PlatformPatterns {
 
     // TODO is it better or worse to allow implicits here?
     PyResolveContext context = PyResolveContext.noImplicits()
-      .withTypeEvalContext(TypeEvalContext.codeAnalysis(expression.getContainingFile()));
+      .withTypeEvalContext(TypeEvalContext.codeAnalysis(expression.getProject(), expression.getContainingFile()));
 
     PyCallExpression.PyMarkedCallee callee = call.resolveCallee(context);
     return callee != null ? callee.getCallable() : null;

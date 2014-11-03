@@ -82,10 +82,10 @@ public class SerializableStoresNonSerializableInspection extends BaseInspection 
     }
 
     private class LocalVariableReferenceFinder extends JavaRecursiveElementWalkingVisitor {
-
+      @NotNull
       private final PsiElement myClassOrLambda;
 
-      public LocalVariableReferenceFinder(PsiElement classOrLambda) {
+      public LocalVariableReferenceFinder(@NotNull PsiElement classOrLambda) {
         myClassOrLambda = classOrLambda;
       }
 

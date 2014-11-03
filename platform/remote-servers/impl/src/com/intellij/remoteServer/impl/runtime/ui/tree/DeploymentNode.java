@@ -5,18 +5,24 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author nik
  */
-public interface DeploymentNode {
+public interface DeploymentNode extends ServersTreeNode {
+
   @NotNull
   ServerNode getServerNode();
 
-  boolean isRedeployActionEnabled();
-  void redeploy();
+  boolean isDeployActionVisible();
+
+  boolean isDeployActionEnabled();
+
+  void deploy();
 
   boolean isUndeployActionEnabled();
+
   void undeploy();
 
-  boolean isEditConfigurationActionEnabled();
-  void editConfiguration();
+  boolean isDebugActionVisible();
+
+  void deployWithDebug();
 
   boolean isDeployed();
 

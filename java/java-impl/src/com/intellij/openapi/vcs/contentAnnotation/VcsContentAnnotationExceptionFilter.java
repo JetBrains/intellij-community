@@ -257,7 +257,7 @@ public class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin 
 
     final List<PsiMethod> result = new SmartList<PsiMethod>();
     for (final PsiMethod method : methods) {
-      method.accept(new JavaRecursiveElementWalkingVisitor() {
+      method.accept(new JavaRecursiveElementVisitor() {
         @Override
         public void visitCallExpression(PsiCallExpression callExpression) {
           final PsiMethod resolved = callExpression.resolveMethod();

@@ -1,13 +1,17 @@
 package com.intellij.json;
 
+import com.intellij.formatting.WrapType;
+import com.intellij.json.formatter.JsonCodeStyleSettings;
+import com.intellij.json.formatter.JsonCodeStyleSettings.PropertyAlignment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.FormatterTestCase;
 import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestLoggerFactory;
+import com.intellij.util.ThrowableRunnable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Mikhail Golubev
@@ -57,53 +61,106 @@ public class JsonFormattingTest extends FormatterTestCase {
   }
 
   public void testWrapping() throws Exception {
-    final CodeStyleSettings settings = getSettings();
-    settings.setRightMargin(JsonLanguage.INSTANCE, 20);
-    doTest();
+    withPreservedSettings(new ThrowableRunnable<Exception>() {
+      @Override
+      public void run() throws Exception {
+        getSettings().setRightMargin(JsonLanguage.INSTANCE, 20);
+        doTest();
+      }
+    });
+  }
+
+  // WEB-13587
+  public void testAlignPropertiesOnColon() throws Exception {
+    checkPropertyAlignment(PropertyAlignment.ALIGN_ON_COLON);
+  }
+
+  // WEB-13587
+  public void testAlignPropertiesOnValue() throws Exception {
+    checkPropertyAlignment(PropertyAlignment.ALIGN_ON_VALUE);
+  }
+
+  private void checkPropertyAlignment(@NotNull final PropertyAlignment alignmentType) throws Exception {
+    withPreservedSettings(new ThrowableRunnable<Exception>() {
+      @Override
+      public void run() throws Exception {
+        getCustomSettings().PROPERTY_ALIGNMENT = alignmentType;
+        doTest();
+      }
+    });
+  }
+
+  public void testChopDownArrays() throws Exception {
+    withPreservedSettings(new ThrowableRunnable<Exception>() {
+      @Override
+      public void run() throws Exception {
+        getCustomSettings().ARRAY_WRAPPING = WrapType.CHOP_DOWN_IF_LONG.getLegacyRepresentation();
+        getSettings().setRightMargin(JsonLanguage.INSTANCE, 40);
+        doTest();
+      }
+    });
   }
 
   // Moved from JavaScript
 
   public void testWeb3830() throws Exception {
-    final CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(getProject()).getCurrentSettings();
-    final CommonCodeStyleSettings.IndentOptions indentOptions = settings.getCommonSettings(JsonLanguage.INSTANCE).getIndentOptions();
-    final int indent = indentOptions.INDENT_SIZE;
-    final boolean useTabs = indentOptions.USE_TAB_CHARACTER;
-    final int tabSize = indentOptions.TAB_SIZE;
-    try {
-      indentOptions.INDENT_SIZE = 8;
-      indentOptions.USE_TAB_CHARACTER = true;
-      indentOptions.TAB_SIZE = 8;
-      doTest();
-    }
-    finally {
-      indentOptions.INDENT_SIZE = indent;
-      indentOptions.USE_TAB_CHARACTER = useTabs;
-      indentOptions.TAB_SIZE = tabSize;
-    }
+    withPreservedSettings(new ThrowableRunnable<Exception>() {
+      @Override
+      public void run() throws Exception {
+        CommonCodeStyleSettings.IndentOptions options = getIndentOptions();
+        options.INDENT_SIZE = 8;
+        options.USE_TAB_CHARACTER = true;
+        options.TAB_SIZE = 8;
+        doTest();
+      }
+    });
   }
 
   public void testReformatJSon() throws Exception {
-    final CommonCodeStyleSettings.IndentOptions indentOptions = getSettings().getCommonSettings(JsonLanguage.INSTANCE).getIndentOptions();
-    final int oldIndentSize = indentOptions.INDENT_SIZE;
-    try {
-      indentOptions.INDENT_SIZE = 4;
-      doTest();
-    }
-    finally {
-      indentOptions.INDENT_SIZE = oldIndentSize;
-    }
+    withPreservedSettings(new ThrowableRunnable<Exception>() {
+      @Override
+      public void run() throws Exception {
+        getIndentOptions().INDENT_SIZE = 4;
+        doTest();
+      }
+    });
   }
 
   public void testReformatJSon2() throws Exception {
-    final CommonCodeStyleSettings.IndentOptions indentOptions = getSettings().getCommonSettings(JsonLanguage.INSTANCE).getIndentOptions();
-    final int oldIndentSize = indentOptions.INDENT_SIZE;
+    withPreservedSettings(new ThrowableRunnable<Exception>() {
+      @Override
+      public void run() throws Exception {
+        getIndentOptions().INDENT_SIZE = 4;
+        doTest();
+      }
+    });
+  }
+
+  @NotNull
+  private CommonCodeStyleSettings.IndentOptions getIndentOptions() {
+    CommonCodeStyleSettings.IndentOptions options = getCommonSettings().getIndentOptions();
+    assertNotNull(options);
+    return options;
+  }
+
+  @NotNull
+  private CommonCodeStyleSettings getCommonSettings() {
+    return getSettings().getCommonSettings(JsonLanguage.INSTANCE);
+  }
+
+  @NotNull
+  private JsonCodeStyleSettings getCustomSettings() {
+    return getSettings().getCustomSettings(JsonCodeStyleSettings.class);
+  }
+
+  protected void withPreservedSettings(@NotNull ThrowableRunnable<Exception> runnable) throws Exception {
+    final CodeStyleSettings globalSettings = getSettings();
+    final CodeStyleSettings copy = globalSettings.clone();
     try {
-      indentOptions.INDENT_SIZE = 4;
-      doTest();
+      runnable.run();
     }
     finally {
-      indentOptions.INDENT_SIZE = oldIndentSize;
+      globalSettings.copyFrom(copy);
     }
   }
 }

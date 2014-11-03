@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,17 @@
  */
 package com.jetbrains.python.inspections;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.SuppressQuickFix;
+import com.intellij.codeInspection.SuppressionUtil;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.inspections.quickfix.PySuppressInspectionFix;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.inspections.quickfix.PySuppressInspectionFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFileImpl;
 import org.jetbrains.annotations.Nls;
@@ -129,6 +131,7 @@ public abstract class PyInspection extends LocalInspectionTool {
     return m.matches() && SuppressionUtil.isInspectionToolIdMentioned(m.group(1), getSuppressId());
   }
 
+  @NotNull
   protected String getSuppressId() {
     return getShortName().replace("Inspection", "");
   }

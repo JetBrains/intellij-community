@@ -20,8 +20,10 @@
 package com.intellij.lang.properties;
 
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.SmartList;
@@ -43,7 +45,12 @@ public class ResourceBundleImpl extends ResourceBundle {
     if (ResourceBundleManager.getInstance(getProject()).isDefaultDissociated(myDefaultPropertiesFile.getVirtualFile())) {
       return Collections.singletonList(myDefaultPropertiesFile);
     }
-    PsiFile[] children = myDefaultPropertiesFile.getParent().getFiles();
+    PsiFile[] children = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile[]>() {
+      @Override
+      public PsiFile[] compute() {
+        return myDefaultPropertiesFile.getParent().getFiles();
+      }
+    });
     final String baseName = getBaseName();
     List<PropertiesFile> result = new SmartList<PropertiesFile>();
     for (PsiFile file : children) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.jetbrains.python.psi.types;
 
 import com.intellij.codeInsight.completion.CompletionUtil;
-import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.extensions.Extensions;
@@ -26,6 +25,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -33,7 +33,8 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.codeInsight.PyDynamicMember;
+import com.jetbrains.python.codeInsight.PyCustomMember;
+import com.jetbrains.python.codeInsight.PyCustomMemberUtils;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.ResolveResultList;
@@ -151,7 +152,8 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
                                                              @NotNull PyResolveContext resolveContext,
                                                              boolean inherited) {
     final TypeEvalContext context = resolveContext.getTypeEvalContext();
-    PsiElement classMember = resolveByOverridingMembersProviders(this, name, location); //overriding members provers have priority to normal resolve
+    PsiElement classMember =
+      resolveByOverridingMembersProviders(this, name, location); //overriding members provers have priority to normal resolve
     if (classMember != null) {
       return ResolveResultList.to(classMember);
     }
@@ -219,7 +221,8 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     }
 
     if (inherited) {
-      classMember = resolveByMembersProviders(this, name, location);  //ask providers after real class introspection as providers have less priority
+      classMember =
+        resolveByMembersProviders(this, name, location);  //ask providers after real class introspection as providers have less priority
     }
 
     if (classMember != null) {
@@ -408,22 +411,19 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     boolean suppressParentheses = context.get(CTX_SUPPRESS_PARENTHESES) != null;
     addOwnClassMembers(location, namesAlready, suppressParentheses, ret);
 
-    final TypeEvalContext typeEvalContext = TypeEvalContext.userInitiated(location != null ?
-                                                                          CompletionUtil.getOriginalOrSelf(location).getContainingFile() :
-                                                                          null);
+    PsiFile origin = (location != null) ?
+                     CompletionUtil.getOriginalOrSelf(location)
+                       .getContainingFile() :
+                     null;
+    final TypeEvalContext typeEvalContext = TypeEvalContext.userInitiated(myClass.getProject(), origin);
     addInheritedMembers(prefix, location, namesAlready, context, ret, typeEvalContext);
 
     // from providers
-    for (PyClassMembersProvider provider : Extensions.getExtensions(PyClassMembersProvider.EP_NAME)) {
-      for (PyDynamicMember member : provider.getMembers(this, location)) {
+    for (final PyClassMembersProvider provider : Extensions.getExtensions(PyClassMembersProvider.EP_NAME)) {
+      for (final PyCustomMember member : provider.getMembers(this, location)) {
         final String name = member.getName();
         if (!namesAlready.contains(name)) {
-          LookupElementBuilder lookupElementBuilder = LookupElementBuilder.create(name).withIcon(member.getIcon()).withTypeText(getName());
-          if (member.isFunction()) {
-            lookupElementBuilder = lookupElementBuilder.withInsertHandler(ParenthesesInsertHandler.NO_PARAMETERS);
-            lookupElementBuilder.withTailText("()");
-          }
-          ret.add(lookupElementBuilder);
+          ret.add(PyCustomMemberUtils.toLookUpElement(member, getName()));
         }
       }
     }

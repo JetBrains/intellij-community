@@ -973,7 +973,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     final Shortcut[] shortcuts = getCurrentShortcuts(actionId);
     final Set<String> abbreviations = AbbreviationManager.getInstance().getAbbreviations(actionId);
 
-    final ShortcutRestrictions restrictions = ActionShortcutRestrictions.getForActionId(actionId);
+    final ShortcutRestrictions restrictions = ActionShortcutRestrictions.getInstance().getForActionId(actionId);
 
     if (restrictions.allowKeyboardShortcut) {
       group.add(new DumbAwareAction("Add Keyboard Shortcut") {

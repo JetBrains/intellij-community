@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,6 +56,7 @@ public class LinkLabel<T> extends JLabel {
   private boolean myClickIsBeingProcessed;
   private boolean myPaintDefaultIcon;
   protected static final int DEFAULT_ICON_GAP = 2;
+  protected boolean myPaintUnderline = true;
 
   public LinkLabel() {
     this("", AllIcons.Ide.Link);
@@ -121,7 +122,6 @@ public class LinkLabel<T> extends JLabel {
   }
 
   protected void paintComponent(Graphics g) {
-    super.paintComponent(g);
     final Border border = getBorder();
     int shiftX = 0;
     int shiftY = 0;
@@ -141,7 +141,7 @@ public class LinkLabel<T> extends JLabel {
       int x = myIconWidth;
       int y = getTextBaseLine();
 
-      if (myUnderline) {
+      if (myUnderline && myPaintUnderline) {
         int k = 1;
         if (getFont().getSize() > 11) {
           k += (getFont().getSize() - 11);
@@ -181,6 +181,9 @@ public class LinkLabel<T> extends JLabel {
     return size;
   }
 
+  public void setPaintUnderline(boolean paintUnderline) {
+    myPaintUnderline = paintUnderline;
+  }
 
   public void removeNotify() {
     super.removeNotify();

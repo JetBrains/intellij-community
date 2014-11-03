@@ -169,9 +169,6 @@ public class JavaStackFrame extends XStackFrame {
   // copied from DebuggerTree
   private void buildVariablesThreadAction(DebuggerContextImpl debuggerContext, XValueChildrenList children, XCompositeNode node) {
     try {
-      final StackFrameDescriptorImpl stackDescriptor = myDescriptor;
-      final StackFrameProxyImpl frame = getStackFrameProxy();
-
       final EvaluationContextImpl evaluationContext = debuggerContext.createEvaluationContext();
       if (evaluationContext == null) {
         return;
@@ -181,16 +178,16 @@ public class JavaStackFrame extends XStackFrame {
         //myChildren.add(myNodeManager.createNode(MessageDescriptor.EVALUATION_NOT_POSSIBLE, evaluationContext));
       }
 
-      final Location location = frame.location();
+      final Location location = myDescriptor.getLocation();
       LOG.assertTrue(location != null);
 
-      final ObjectReference thisObjectReference = frame.thisObject();
+      final ObjectReference thisObjectReference = myDescriptor.getThisObject();
       if (thisObjectReference != null) {
-        ValueDescriptorImpl thisDescriptor = myNodeManager.getThisDescriptor(stackDescriptor, thisObjectReference);
+        ValueDescriptorImpl thisDescriptor = myNodeManager.getThisDescriptor(myDescriptor, thisObjectReference);
         children.add(JavaValue.create(thisDescriptor, evaluationContext, myNodeManager));
       }
       else {
-        StaticDescriptorImpl staticDecriptor = myNodeManager.getStaticDescriptor(stackDescriptor, location.method().declaringType());
+        StaticDescriptorImpl staticDecriptor = myNodeManager.getStaticDescriptor(myDescriptor, location.method().declaringType());
         if (staticDecriptor.isExpandable()) {
           children.addTopGroup(new JavaStaticGroup(staticDecriptor, evaluationContext, myNodeManager));
         }
@@ -204,7 +201,7 @@ public class JavaStackFrame extends XStackFrame {
       // add last method return value if any
       final Pair<Method, Value> methodValuePair = debugProcess.getLastExecutedMethod();
       if (methodValuePair != null) {
-        ValueDescriptorImpl returnValueDescriptor = myNodeManager.getMethodReturnValueDescriptor(stackDescriptor, methodValuePair.getFirst(), methodValuePair.getSecond());
+        ValueDescriptorImpl returnValueDescriptor = myNodeManager.getMethodReturnValueDescriptor(myDescriptor, methodValuePair.getFirst(), methodValuePair.getSecond());
         children.add(JavaValue.create(returnValueDescriptor, evaluationContext, myNodeManager));
       }
       // add context exceptions
@@ -213,7 +210,7 @@ public class JavaStackFrame extends XStackFrame {
         if (debugEvent instanceof ExceptionEvent) {
           final ObjectReference exception = ((ExceptionEvent)debugEvent).exception();
           if (exception != null) {
-            final ValueDescriptorImpl exceptionDescriptor = myNodeManager.getThrownExceptionObjectDescriptor(stackDescriptor, exception);
+            final ValueDescriptorImpl exceptionDescriptor = myNodeManager.getThrownExceptionObjectDescriptor(myDescriptor, exception);
             children.add(JavaValue.create(exceptionDescriptor, evaluationContext, myNodeManager));
           }
         }
@@ -229,7 +226,7 @@ public class JavaStackFrame extends XStackFrame {
             for (Field field : clsType.fields()) {
               if ((!vm.canGetSyntheticAttribute() || field.isSynthetic()) && StringUtil
                 .startsWith(field.name(), FieldDescriptorImpl.OUTER_LOCAL_VAR_FIELD_PREFIX)) {
-                final FieldDescriptorImpl fieldDescriptor = myNodeManager.getFieldDescriptor(stackDescriptor, thisObjectReference, field);
+                final FieldDescriptorImpl fieldDescriptor = myNodeManager.getFieldDescriptor(myDescriptor, thisObjectReference, field);
                 children.add(JavaValue.create(fieldDescriptor, evaluationContext, myNodeManager));
               }
             }
@@ -247,11 +244,6 @@ public class JavaStackFrame extends XStackFrame {
         node.setErrorMessage(e.getMessage());
         //myChildren.add(myNodeManager.createMessageNode(new MessageDescriptor(e.getMessage())));
       }
-    }
-    catch (EvaluateException e) {
-      node.setErrorMessage(e.getMessage());
-      //myChildren.clear();
-      //myChildren.add(myNodeManager.createMessageNode(new MessageDescriptor(e.getMessage())));
     }
     catch (InvalidStackFrameException e) {
       LOG.info(e);

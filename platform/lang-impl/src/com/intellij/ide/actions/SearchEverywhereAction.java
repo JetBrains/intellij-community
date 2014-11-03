@@ -464,7 +464,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
               ActionToolbarImpl.updateAllToolbarsImmediately();
             }
           });
-        } finally {
+        }
+        finally {
           result.setDone();
         }
       }
@@ -655,6 +656,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       e = new AnActionEvent(me, DataManager.getInstance().getDataContext(myFocusOwner), ActionPlaces.UNKNOWN, getTemplatePresentation(), ActionManager.getInstance(), 0);
     }
     if (e == null) return;
+    final Project project = e.getProject();
+    if (project == null) return;
 
     updateComponents();
     myContextComponent = PlatformDataKeys.CONTEXT_COMPONENT.getData(e.getDataContext());
@@ -713,7 +716,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     topPanel.add(title, BorderLayout.WEST);
     final JPanel controls = new JPanel(new BorderLayout());
     controls.setOpaque(false);
-    final JLabel settings = new JLabel(AllIcons.General.WebSettings);
+    final JLabel settings = new JLabel(AllIcons.General.SearchEverywhereGear);
     new ClickListener(){
       @Override
       public boolean onClick(@NotNull MouseEvent event, int clickCount) {
@@ -745,10 +748,9 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       })
       .createPopup();
     myBalloon.getContent().setBorder(new EmptyBorder(0,0,0,0));
-    final Window window = WindowManager.getInstance().suggestParentWindow(e.getProject());
+    final Window window = WindowManager.getInstance().suggestParentWindow(project);
 
-    //noinspection ConstantConditions
-    e.getProject().getMessageBus().connect(myBalloon).subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
+    project.getMessageBus().connect(myBalloon).subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
       @Override
       public void enteredDumbMode() {
       }
@@ -760,7 +762,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     });
 
     Component parent = UIUtil.findUltimateParent(window);
-    registerDataProvider(panel, e.getProject());
+    registerDataProvider(panel, project);
     final RelativePoint showPoint;
     if (me != null) {
       final Component label = me.getComponent();
@@ -781,7 +783,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     myList.setFont(UIUtil.getListFont());
     myBalloon.show(showPoint);
     initSearchActions(myBalloon, myPopupField);
-    IdeFocusManager focusManager = IdeFocusManager.getInstance(e.getProject());
+    IdeFocusManager focusManager = IdeFocusManager.getInstance(project);
     focusManager.requestFocus(editor, true);
     FeatureUsageTracker.getInstance().triggerFeatureUsed(IdeActions.ACTION_SEARCH_EVERYWHERE);
   }
@@ -789,7 +791,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   private void showSettings() {
     myPopupField.setText("");
     final SearchListModel model = new SearchListModel();
-    model.addElement(new SEOption("Show current file structure elements", "search.everywhere.structure"));
+    //model.addElement(new SEOption("Show current file structure elements", "search.everywhere.structure"));
     model.addElement(new SEOption("Show files", "search.everywhere.files"));
     model.addElement(new SEOption("Show symbols", "search.everywhere.symbols"));
     model.addElement(new SEOption("Show tool windows", "search.everywhere.toolwindows"));

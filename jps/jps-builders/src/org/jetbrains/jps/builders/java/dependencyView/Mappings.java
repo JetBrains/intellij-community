@@ -400,16 +400,31 @@ public class Mappings {
 
     private boolean hasOverriddenMethods(final ClassRepr fromClass, final MethodRepr.Predicate predicate) {
       for (int superName : fromClass.getSupers()) {
-        final ClassRepr superClass = reprByName(superName);
-        if (superClass == null) {
-          return true; // assumption
+        if (superName == myObjectClassName) {
+          continue;
         }
-        for (MethodRepr mm : superClass.findMethods(predicate)) {
-          if (isVisibleIn(superClass, mm, fromClass)) {
+        final ClassRepr superClass = reprByName(superName);
+        if (superClass != null) {
+          for (MethodRepr mm : superClass.findMethods(predicate)) {
+            if (isVisibleIn(superClass, mm, fromClass)) {
+              return true;
+            }
+          }
+          if (hasOverriddenMethods(superClass, predicate)) {
             return true;
           }
         }
-        if (hasOverriddenMethods(superClass, predicate)) {
+      }
+      return false;
+    }
+
+    private boolean extendsLibraryClass(final ClassRepr fromClass) {
+      for (int superName : fromClass.getSupers()) {
+        if (superName != myObjectClassName) {
+          continue;
+        }
+        final ClassRepr superClass = reprByName(superName);
+        if (superClass == null || extendsLibraryClass(superClass)) {
           return true;
         }
       }
@@ -440,6 +455,9 @@ public class Mappings {
 
     void addOverriddenFields(final FieldRepr f, final ClassRepr fromClass, final Collection<Pair<FieldRepr, ClassRepr>> container) {
       for (int supername : fromClass.getSupers()) {
+        if (supername == myObjectClassName) {
+          continue;
+        }
         final ClassRepr superClass = reprByName(supername);
         if (superClass != null) {
           final FieldRepr ff = superClass.findField(f.name);
@@ -455,6 +473,9 @@ public class Mappings {
 
     boolean hasOverriddenFields(final FieldRepr f, final ClassRepr fromClass) {
       for (int supername : fromClass.getSupers()) {
+        if (supername == myObjectClassName) {
+          continue;
+        }
         final ClassRepr superClass = reprByName(supername);
         if (superClass != null) {
           final FieldRepr ff = superClass.findField(f.name);
@@ -534,15 +555,8 @@ public class Mappings {
       return Boolean.FALSE;
     }
 
-    boolean isMethodVisible(final int className, final MethodRepr m) {
-      final ClassRepr r = reprByName(className);
-      if (r != null) {
-        if (r.findMethods(MethodRepr.equalByJavaRules(m)).size() > 0) {
-          return true;
-        }
-        return hasOverriddenMethods(r, MethodRepr.equalByJavaRules(m));
-      }
-      return false;
+    boolean isMethodVisible(final ClassRepr classRepr, final MethodRepr m) {
+      return classRepr.findMethods(MethodRepr.equalByJavaRules(m)).size() > 0 || hasOverriddenMethods(classRepr, MethodRepr.equalByJavaRules(m));
     }
 
     boolean isFieldVisible(final int className, final FieldRepr field) {
@@ -1082,10 +1096,7 @@ public class Mappings {
           }
           final ClassRepr oldIt = oldItRef.get();
 
-          if (oldIt != null && myPresent.hasOverriddenMethods(oldIt, MethodRepr.equalByJavaRules(m))) {
-
-          }
-          else {
+          if (oldIt == null || !myPresent.hasOverriddenMethods(oldIt, MethodRepr.equalByJavaRules(m))) {
             if (m.myArgumentTypes.length > 0) {
               propagated = myFuture.propagateMethodAccess(m, it.name);
               debug("Conservative case on overriding methods, affecting method usages");
@@ -1170,10 +1181,13 @@ public class Mappings {
               final Collection<File> sourceFileNames = myClassToSourceFile.get(subClass);
               if (sourceFileNames != null && !myCompiledFiles.containsAll(sourceFileNames)) {
                 final int outerClass = r.getOuterClassName();
-                if (!isEmpty(outerClass) && myFuture.isMethodVisible(outerClass, m)) {
-                  myAffectedFiles.addAll(sourceFileNames);
-                  for (File sourceFileName : sourceFileNames) {
-                    debug("Affecting file due to local overriding: ", sourceFileName);
+                if (!isEmpty(outerClass)) {
+                  final ClassRepr outerClassRepr = myFuture.reprByName(outerClass);
+                  if (outerClassRepr != null && (myFuture.isMethodVisible(outerClassRepr, m) || myFuture.extendsLibraryClass(outerClassRepr))) {
+                    myAffectedFiles.addAll(sourceFileNames);
+                    for (File sourceFileName : sourceFileNames) {
+                      debug("Affecting file due to local overriding: ", sourceFileName);
+                    }
                   }
                 }
               }
@@ -1541,14 +1555,16 @@ public class Mappings {
         final FieldRepr field = f.first;
 
         debug("Field: ", field.name);
-
-        if (!field.isPrivate() && (field.access & DESPERATE_MASK) == DESPERATE_MASK) {
+        
+        // only if the field was a compile-time constant
+        if (!field.isPrivate() && (field.access & DESPERATE_MASK) == DESPERATE_MASK && d.hadValue()) { 
           final int changedModifiers = d.addedModifiers() | d.removedModifiers();
           final boolean harmful = (changedModifiers & (Opcodes.ACC_STATIC | Opcodes.ACC_FINAL)) > 0;
           final boolean accessChanged = (changedModifiers & (Opcodes.ACC_PUBLIC | Opcodes.ACC_PRIVATE | Opcodes.ACC_PROTECTED)) > 0;
-          final boolean valueChanged = (d.base() & Difference.VALUE) > 0 && d.hadValue();
+          final boolean becameLessAccessible = accessChanged && !d.weakedAccess();
+          final boolean valueChanged = (d.base() & Difference.VALUE) > 0;
 
-          if (harmful || valueChanged || (accessChanged && !d.weakedAccess())) {
+          if (harmful || valueChanged || becameLessAccessible) {
             debug("Inline field changed it's access or value => a switch to non-incremental mode requested");
             if (myConstantSearch != null) {
               myDelayedWorks.addConstantWork(it.name, field, false, accessChanged);
@@ -2342,6 +2358,13 @@ public class Mappings {
   public Set<ClassRepr> getClasses(final String sourceFileName) {
     synchronized (myLock) {
       return (Set<ClassRepr>)mySourceFileToClasses.get(new File(sourceFileName));
+    }
+  }
+
+  @Nullable
+  public Collection<File> getClassSources(int className) {
+    synchronized (myLock) {
+      return myClassToSourceFile.get(className);
     }
   }
 

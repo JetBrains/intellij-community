@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -260,7 +260,7 @@ public class PyQualifiedReference extends PyReferenceImpl {
     }
     final PyQualifiedExpression element = CompletionUtil.getOriginalOrSelf(myElement);
 
-    PyType qualifierType = TypeEvalContext.userInitiated(element.getContainingFile()).getType(qualifier);
+    PyType qualifierType = TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).getType(qualifier);
     ProcessingContext ctx = new ProcessingContext();
     final Set<String> namesAlready = new HashSet<String>();
     ctx.put(PyType.CTX_NAMES, namesAlready);
@@ -415,7 +415,7 @@ public class PyQualifiedReference extends PyReferenceImpl {
       if (containingFile instanceof StubBasedPsiElement) {
         assert ((StubBasedPsiElement)containingFile).getStub() == null : "Stub origin for type eval context in isReferenceTo()";
       }
-      final TypeEvalContext context = TypeEvalContext.codeAnalysis(containingFile);
+      final TypeEvalContext context = TypeEvalContext.codeAnalysis(containingFile.getProject(), containingFile);
       resolveContext = resolveContext.withTypeEvalContext(context);
     }
     if (element instanceof PyFunction && Comparing.equal(referencedName, ((PyFunction)element).getName()) &&

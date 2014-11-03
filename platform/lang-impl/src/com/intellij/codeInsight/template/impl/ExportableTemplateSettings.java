@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,69 +15,34 @@
  */
 package com.intellij.codeInsight.template.impl;
 
-import com.intellij.openapi.components.PersistentStateComponent;
-
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
-import com.intellij.util.xmlb.XmlSerializer;
-import org.jdom.Element;
+import com.intellij.openapi.components.*;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
-/**
- * Contains exportable part of TemplateSettings (can be shared via export/import settings).
- * @author Rustam Vishnyakov
- */
+@SuppressWarnings("deprecation")
+@Deprecated
 @State(
-  name="ExportableTemplateSettings",
-  storages= {
-    @Storage(
-      file = StoragePathMacros.APP_CONFIG + "/" + ExportableTemplateSettings.EXPORTABLE_SETTINGS_FILE
-    )}
+  name = "ExportableTemplateSettings",
+  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/template.settings.xml", roamingType = RoamingType.DISABLED)
 )
-public class ExportableTemplateSettings implements PersistentStateComponent<Element> {
-
-  public final static String EXPORTABLE_SETTINGS_FILE = "template.settings.xml";
-
-  private Collection<TemplateSettings.TemplateKey> deletedKeys = new ArrayList<TemplateSettings.TemplateKey>();
-  private boolean isLoaded = false;
-  private TemplateSettings parentSettings;
+final class ExportableTemplateSettings implements PersistentStateComponent<ExportableTemplateSettings> {
+  public Collection<TemplateSettings.TemplateKey> deletedKeys = new SmartList<TemplateSettings.TemplateKey>();
 
   @Nullable
   @Override
-  public Element getState() {
-    if (parentSettings != null) {
-      this.deletedKeys.clear();
-      this.deletedKeys.addAll(parentSettings.getDeletedTemplates());
-    }
-    return XmlSerializer.serialize(this);
+  public ExportableTemplateSettings getState() {
+    return this;
   }
 
   @Override
-  public void loadState(Element state) {
-    XmlSerializer.deserializeInto(this, state);
-    isLoaded = true;
-  }
-
-  public boolean isLoaded() {
-    return isLoaded;
-  }
-
-  @SuppressWarnings("UnusedDeclaration") // Property via reflection
-  public Collection<TemplateSettings.TemplateKey> getDeletedKeys() {
-    return deletedKeys;
-  }
-
-
-  @SuppressWarnings("UnusedDeclaration") // Property via reflection
-  public void setDeletedKeys(Collection<TemplateSettings.TemplateKey> deletedKeys) {
-    this.deletedKeys = deletedKeys;
-  }
-
-  void setParentSettings(TemplateSettings settings) {
-    parentSettings = settings;
+  public void loadState(ExportableTemplateSettings state) {
+    TemplateSettings templateSettings = TemplateSettings.getInstance();
+    List<TemplateSettings.TemplateKey> deletedTemplates = templateSettings.getDeletedTemplates();
+    deletedTemplates.clear();
+    deletedTemplates.addAll(state.deletedKeys);
+    templateSettings.applyNewDeletedTemplates();
   }
 }

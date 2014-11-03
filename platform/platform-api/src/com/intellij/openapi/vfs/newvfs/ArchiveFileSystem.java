@@ -74,6 +74,9 @@ public abstract class ArchiveFileSystem extends NewVirtualFileSystem {
   protected abstract String extractLocalPath(@NotNull String rootPath);
 
   @NotNull
+  protected abstract String convertLocalToRootPath(@NotNull String localPath);
+
+  @NotNull
   protected abstract ArchiveHandler getHandler(@NotNull VirtualFile entryFile);
 
   // standard implementations

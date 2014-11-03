@@ -39,7 +39,14 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
   public abstract boolean hasModalProgressIndicator();
   public abstract boolean hasUnsafeProgressIndicator();
 
+  /**
+   * Runs given process synchronously (in calling thread).
+   */
   public abstract void runProcess(@NotNull Runnable process, ProgressIndicator progress) throws ProcessCanceledException;
+
+  /**
+   * Runs given process synchronously (in calling thread).
+   */
   public abstract <T> T runProcess(@NotNull Computable<T> process, ProgressIndicator progress) throws ProcessCanceledException;
 
   @Override
@@ -170,7 +177,6 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
 
   public abstract void runProcessWithProgressAsynchronously(@NotNull Task.Backgroundable task, @NotNull ProgressIndicator progressIndicator);
 
-  public static volatile boolean ALWAYS_CHECK_CANCELED = false;
   protected void indicatorCanceled(@NotNull ProgressIndicator indicator) {
   }
 
@@ -182,9 +188,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
     getInstance().doCheckCanceled();
   }
 
-  public void executeProcessUnderProgress(@NotNull Runnable process,
+  public abstract void executeProcessUnderProgress(@NotNull Runnable process,
                                           @Nullable("null means reuse current progress") ProgressIndicator progress)
-    throws ProcessCanceledException {
-    process.run();
-  }
+    throws ProcessCanceledException;
 }

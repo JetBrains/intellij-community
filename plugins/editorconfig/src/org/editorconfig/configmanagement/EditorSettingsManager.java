@@ -56,12 +56,12 @@ public class EditorSettingsManager extends FileDocumentManagerAdapter {
   }
 
   private void applySettings(VirtualFile file) {
-    if (file == null || !file.isInLocalFileSystem()) return;
+    if (file == null) return;
     if (!Utils.isEnabled(CodeStyleSettingsManager.getInstance(myProject).getCurrentSettings())) return;
     // Get editorconfig settings
-    final String filePath = file.getCanonicalPath();
+    final String filePath = Utils.getFilePath(myProject, file);
     final SettingsProviderComponent settingsProvider = SettingsProviderComponent.getInstance();
-    final List<EditorConfig.OutPair> outPairs = settingsProvider.getOutPairs(filePath);
+    final List<EditorConfig.OutPair> outPairs = settingsProvider.getOutPairs(myProject, filePath);
     // Apply trailing spaces setting
     final String trimTrailingWhitespace = Utils.configValueForKey(outPairs, trimTrailingWhitespaceKey);
     applyConfigValueToUserData(file, TrailingSpacesStripper.OVERRIDE_STRIP_TRAILING_SPACES_KEY,

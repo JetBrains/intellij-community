@@ -136,7 +136,7 @@ public class ImportModuleAction extends AnAction {
     });
     StringBuilder builder = new StringBuilder("<html>Select ");
     boolean first = true;
-    if (list.size() > 1) {
+    if (list.size() > 0) {
       for (ProjectImportProvider provider : list) {
         String sample = provider.getFileSample();
         if (sample != null) {

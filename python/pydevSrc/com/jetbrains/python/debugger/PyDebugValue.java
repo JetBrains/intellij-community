@@ -124,7 +124,10 @@ public class PyDebugValue extends XNamedValue {
 
   private static String removeLeadingZeros(@NotNull String name) {
     //bugs.python.org/issue15254: "0" prefix for octal
-    return name.replaceFirst("^0+(?!$)", "");
+    while (name.length() > 1 && name.startsWith("0")) {
+      name = name.substring(1);
+    }
+    return name;
   }
 
   private static boolean isLen(String name) {

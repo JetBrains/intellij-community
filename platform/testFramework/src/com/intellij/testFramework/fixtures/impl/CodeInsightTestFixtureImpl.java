@@ -150,6 +150,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   private boolean myAllowDirt;
   private boolean myCaresAboutInjection = true;
 
+  // this allows an inspection to be represented in profile, but to appear disabled
+  public final Set<String> myDisabledInspections = new HashSet<String>();
+
   @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
   public CodeInsightTestFixtureImpl(@NotNull IdeaProjectTestFixture projectFixture, @NotNull TempDirTestFixture tempDirTestFixture) {
     myProjectFixture = projectFixture;
@@ -393,8 +396,13 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Override
   public long checkHighlighting(final boolean checkWarnings, final boolean checkInfos, final boolean checkWeakWarnings) {
+    return checkHighlighting(checkWarnings, checkInfos, checkWeakWarnings, false);
+  }
+
+  @Override
+  public long checkHighlighting(final boolean checkWarnings, final boolean checkInfos, final boolean checkWeakWarnings, boolean ignoreExtraHighlighting) {
     try {
-      return collectAndCheckHighlighting(checkWarnings, checkInfos, checkWeakWarnings);
+      return collectAndCheckHighlighting(checkWarnings, checkInfos, checkWeakWarnings, ignoreExtraHighlighting);
     }
     catch (Exception e) {
       throw new RuntimeException(e);
@@ -457,7 +465,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     InspectionManagerEx inspectionManager = (InspectionManagerEx)InspectionManager.getInstance(getProject());
     GlobalInspectionContextImpl globalContext = createGlobalContextForTool(scope, getProject(), inspectionManager, toolWrapper);
 
-    InspectionTestUtil.runTool(toolWrapper, scope, globalContext, inspectionManager);
+    InspectionTestUtil.runTool(toolWrapper, scope, globalContext);
     InspectionTestUtil.compareToolResults(globalContext, toolWrapper, false, new File(getTestDataPath(), testDir).getPath());
   }
 
@@ -1160,6 +1168,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public void setUp() throws Exception {
     super.setUp();
 
+    UsefulTestCase.replaceIdeEventQueueSafely();
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
@@ -1267,7 +1276,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
       @Override
       public boolean isToolEnabled(HighlightDisplayKey key, PsiElement element) {
-        return key != null && key.toString() != null && myAvailableTools.containsKey(key.toString());
+        return key != null && key.toString() != null && myAvailableTools.containsKey(key.toString()) && !myDisabledInspections.contains(key.toString());
       }
 
       @Override
@@ -1407,14 +1416,17 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   private PsiFile configureInner(@NotNull final VirtualFile copy, @NotNull final SelectionAndCaretMarkupLoader loader) {
     assertInitialized();
+
     new WriteCommandAction.Simple(getProject()) {
       @Override
       public void run() {
-        try {
-          copy.setBinaryContent(loader.newFileText.getBytes(copy.getCharset()));
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
+        if (!copy.getFileType().isBinary()) {
+          try {
+            copy.setBinaryContent(loader.newFileText.getBytes(copy.getCharset()));
+          }
+          catch (IOException e) {
+            throw new RuntimeException(e);
+          }
         }
         myFile = copy;
         myEditor = createEditor(copy);
@@ -1435,7 +1447,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         }
       }
     }.execute().throwException();
-
 
     return getFile();
   }
@@ -1479,7 +1490,13 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   private long collectAndCheckHighlighting(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings) throws Exception {
-    ExpectedHighlightingData data = new ExpectedHighlightingData(myEditor.getDocument(), checkWarnings, checkWeakWarnings, checkInfos, getHostFile());
+    return collectAndCheckHighlighting(checkWarnings, checkInfos, checkWeakWarnings, false);
+  }
+  
+  private long collectAndCheckHighlighting(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings, 
+                                           boolean ignoreExtraHighlighting) throws Exception {
+    ExpectedHighlightingData data = new ExpectedHighlightingData(myEditor.getDocument(), 
+                                                                 checkWarnings, checkWeakWarnings, checkInfos, ignoreExtraHighlighting, getHostFile());
     data.init();
     return collectAndCheckHighlighting(data);
   }

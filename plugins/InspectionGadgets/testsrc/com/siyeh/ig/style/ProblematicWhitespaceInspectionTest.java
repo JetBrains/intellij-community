@@ -16,6 +16,8 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.codeInspection.ProblematicWhitespaceInspection;
+import com.intellij.ide.highlighter.HtmlFileType;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -26,6 +28,15 @@ import com.siyeh.ig.LightInspectionTestCase;
  * @author Bas Leijdekkers
  */
 public class ProblematicWhitespaceInspectionTest extends LightInspectionTestCase {
+
+  public void testHtml() {
+    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+    settings.getIndentOptions(HtmlFileType.INSTANCE).USE_TAB_CHARACTER = false;
+    myFixture.configureByText("X.html", "<warning descr=\"File 'X.html' uses tabs for indentation\"><html>\n" +
+                                        "\t<body></body>\n" +
+                                        "</html></warning>");
+    myFixture.testHighlighting(true, false, false);
+  }
 
   public void testTabsInFile() {
     final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
@@ -97,7 +108,7 @@ public class ProblematicWhitespaceInspectionTest extends LightInspectionTestCase
            "}\n/**/");
   }
 
-  public void testSmartTabsInFileWihtoutBinaryExpressionMultilineAlignment() {
+  public void testSmartTabsInFileWithoutBinaryExpressionMultilineAlignment() {
     final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
     final CommonCodeStyleSettings.IndentOptions options = settings.getIndentOptions(JavaFileType.INSTANCE);
     options.USE_TAB_CHARACTER = true;
@@ -106,6 +117,33 @@ public class ProblematicWhitespaceInspectionTest extends LightInspectionTestCase
            "\tSystem.out.println(\"asdf\" +\n" +
            "\t\t\t                   \"asdf\");\n" +
            "}}");
+  }
+
+  public void testSuppression1() {
+    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+    settings.getIndentOptions(JavaFileType.INSTANCE).USE_TAB_CHARACTER = false;
+    myFixture.configureByText("X.html", "<!--suppress ProblematicWhitespace --><html>\n" +
+                                        "\t<body></body>\n" +
+                                        "</html>");
+    myFixture.testHighlighting(true, false, false);
+  }
+
+  public void testSuppression2() {
+    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+    settings.getIndentOptions(JavaFileType.INSTANCE).USE_TAB_CHARACTER = false;
+    myFixture.configureByText("x.css", "/*noinspection ProblematicWhitespace*/\n" +
+                                       "div {\n" +
+                                       " font-family: arial, helvetica;\n" +
+                                       "}");
+    myFixture.testHighlighting(true, false, false);
+  }
+
+  public void testSuppression3() {
+    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+    settings.getIndentOptions(JavaFileType.INSTANCE).USE_TAB_CHARACTER = false;
+    doTest("@SuppressWarnings(\"ProblematicWhitespace\") class X {\n" +
+           "\tString s;\n" +
+           "}\n");
   }
 
   @Override

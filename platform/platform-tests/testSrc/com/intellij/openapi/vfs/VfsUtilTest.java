@@ -107,9 +107,13 @@ public class VfsUtilTest extends PlatformLangTestCase {
 
     File file2 = new File(file1, "test.zip");
     URL url2 = file2.toURI().toURL();
+
     url2 = new URL("jar", "", url2.toExternalForm() + "!/");
+    file0 = VfsUtil.findFileByURL(url2);
+    assertNotNull(file0);
+    assertTrue(file0.isDirectory());
+
     url2 = new URL(url2, "com/intellij/installer");
-    url2 = new URL(url2.toExternalForm());
     file0 = VfsUtil.findFileByURL(url2);
     assertNotNull(file0);
     assertTrue(file0.isDirectory());

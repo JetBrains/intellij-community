@@ -28,8 +28,6 @@ import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
@@ -40,16 +38,17 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.arrangement.engine.ArrangementEngine;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,6 +58,7 @@ import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -170,6 +170,12 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
       }
     }
 
+    if (file == null) return;
+
+    if (!showDialog && processChangedTextOnly && isChangeNotTrackedForFile(project, file)) {
+      processChangedTextOnly = false;
+    }
+
     final TextRange range;
     final boolean processSelectedText = !processWholeFile && hasSelection;
     if (processSelectedText) {
@@ -186,25 +192,26 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
       new ReformatCodeProcessor(project, file, range, !processSelectedText && processChangedTextOnly).run();
     }
 
-    if (rearrangeEntries && file != null && editor != null) {
-      final ArrangementEngine engine = ServiceManager.getService(project, ArrangementEngine.class);
-      try {
-        final PsiFile finalFile = file;
-        SelectionModel selectionModel = editor.getSelectionModel();
-        final TextRange rangeToUse = selectionModel.hasSelection()
-                                     ? TextRange.create(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd())
-                                     : TextRange.create(0, editor.getDocument().getTextLength());
-        CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-          @Override
-          public void run() {
-            engine.arrange(editor, finalFile, Collections.singleton(rangeToUse));
-          }
-        }, getTemplatePresentation().getText(), null);
-      }
-      finally {
-        PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
-      }
+    if (rearrangeEntries && editor != null) {
+      SelectionModel selectionModel = editor.getSelectionModel();
+      final TextRange rangeToUse = selectionModel.hasSelection()
+                                   ? TextRange.create(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd())
+                                   : TextRange.create(0, editor.getDocument().getTextLength());
+      new RearrangeCodeProcessor(project, file, Collections.singleton(rangeToUse)).run();
     }
+  }
+
+  private static boolean isChangeNotTrackedForFile(@NotNull Project project, @NotNull PsiFile file) {
+    boolean isUnderVcs = VcsUtil.isFileUnderVcs(project, VcsUtil.getFilePath(file.getVirtualFile()));
+    if (!isUnderVcs) return true;
+
+    ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(project);
+    List<VirtualFile> unversionedFiles = changeListManager.getUnversionedFiles();
+    if (unversionedFiles.contains(file.getVirtualFile())) {
+      return true;
+    }
+
+    return false;
   }
 
   @Nullable

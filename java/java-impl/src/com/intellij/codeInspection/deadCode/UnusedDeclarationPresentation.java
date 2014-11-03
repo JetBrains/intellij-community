@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,7 +54,7 @@ import java.awt.event.KeyEvent;
 import java.util.*;
 
 public class UnusedDeclarationPresentation extends DefaultInspectionToolPresentation {
-  private Map<String, Set<RefEntity>> myPackageContents = new HashMap<String, Set<RefEntity>>();
+  private final Map<String, Set<RefEntity>> myPackageContents = Collections.synchronizedMap(new HashMap<String, Set<RefEntity>>());
 
   private Map<String, Set<RefEntity>> myOldPackageContents = null;
 
@@ -78,7 +78,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     return myFilter;
   }
   private static class WeakUnreferencedFilter extends UnreferencedFilter {
-    private WeakUnreferencedFilter(@NotNull UnusedDeclarationInspection tool, @NotNull GlobalInspectionContextImpl context) {
+    private WeakUnreferencedFilter(@NotNull UnusedDeclarationInspectionBase tool, @NotNull GlobalInspectionContextImpl context) {
       super(tool, context);
     }
 
@@ -92,8 +92,8 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
   }
 
   @NotNull
-  private UnusedDeclarationInspection getTool() {
-    return (UnusedDeclarationInspection)getToolWrapper().getTool();
+  private UnusedDeclarationInspectionBase getTool() {
+    return (UnusedDeclarationInspectionBase)getToolWrapper().getTool();
   }
 
 
@@ -335,7 +335,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
   @Override
   public void updateContent() {
     getTool().checkForReachables(getContext());
-    myPackageContents = new HashMap<String, Set<RefEntity>>();
+    myPackageContents.clear();
     getContext().getRefManager().iterate(new RefJavaVisitor() {
       @Override public void visitElement(@NotNull RefEntity refEntity) {
         if (!(refEntity instanceof RefJavaElement)) return;//dead code doesn't work with refModule | refPackage
@@ -378,6 +378,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     return false;
   }
 
+  @NotNull
   @Override
   public Map<String, Set<RefEntity>> getContent() {
     return myPackageContents;

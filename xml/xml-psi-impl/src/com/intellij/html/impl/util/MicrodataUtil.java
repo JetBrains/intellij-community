@@ -199,7 +199,7 @@ public class MicrodataUtil {
       if ("prop-nam".equalsIgnoreCase(getStripedAttributeValue(tag, "class"))) {
         final String code = tag.getSubTagText("code");
         if (code != null) {
-          myValues.add(code);
+          myValues.add(StringUtil.stripHtml(code, false));
         }
       }
     }

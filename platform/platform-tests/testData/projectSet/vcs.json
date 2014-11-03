@@ -1,5 +1,8 @@
 {
   "vcs": {
-    "url": "schema://foo.bar/path"
+    "schema": [
+      { "url": "schema://foo.bar/path" },
+      { "url": "schema://foo.bar1/path1", "targetDir": "custom" }
+    ]
   }
 }

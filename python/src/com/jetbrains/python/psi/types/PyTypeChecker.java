@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -392,12 +392,6 @@ public class PyTypeChecker {
   @Nullable
   public static AnalyzeCallResults analyzeCall(@NotNull PyCallExpression call, @NotNull TypeEvalContext context) {
     final PyExpression callee = call.getCallee();
-    if (callee instanceof PyQualifiedExpression) {
-      final PyQualifiedExpression qualified = (PyQualifiedExpression)callee;
-      if (isResolvedToSeveralMethods(qualified, context)) {
-        return null;
-      }
-    }
     final PyArgumentList args = call.getArgumentList();
     if (args != null) {
       final CallArgumentsMapping mapping = args.analyzeCall(PyResolveContext.noImplicits().withTypeEvalContext(context));
@@ -525,44 +519,6 @@ public class PyTypeChecker {
     }
     else if (type instanceof PyCallableType) {
       return ((PyCallableType) type).isCallable();
-    }
-    return false;
-  }
-
-  /**
-   * Hack for skipping type checking for method calls of union members if there are several call alternatives.
-   *
-   * TODO: Multi-resolve callees when analysing calls. This requires multi-resolving in followAssignmentsChain.
-   */
-  public static boolean isResolvedToSeveralMethods(@NotNull PyQualifiedExpression callee, @NotNull TypeEvalContext context) {
-    final PyExpression qualifier = callee.getQualifier();
-    if (qualifier != null) {
-      final PyType qualifierType = context.getType(qualifier);
-      if (qualifierType instanceof PyUnionType) {
-        final PyUnionType unionType = (PyUnionType)qualifierType;
-        final String name = callee.getName();
-        if (name == null) {
-          return false;
-        }
-        int sameNameCount = 0;
-        for (PyType member : unionType.getMembers()) {
-          if (member != null) {
-            final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
-            final List<? extends RatedResolveResult> results = member.resolveMember(name, callee, AccessDirection.READ, resolveContext
-            );
-            if (results != null && !results.isEmpty()) {
-              sameNameCount++;
-            }
-          }
-        }
-        if (sameNameCount > 1) {
-          return true;
-        }
-      }
-      final PyExpression qualifierExpr = qualifier instanceof PyCallExpression ? ((PyCallExpression)qualifier).getCallee() : qualifier;
-      if (qualifierExpr instanceof PyQualifiedExpression) {
-        return isResolvedToSeveralMethods((PyQualifiedExpression)qualifierExpr, context);
-      }
     }
     return false;
   }

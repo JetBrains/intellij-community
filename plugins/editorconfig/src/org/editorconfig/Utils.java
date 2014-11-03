@@ -1,6 +1,7 @@
 package org.editorconfig;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import org.editorconfig.core.EditorConfig.OutPair;
 import org.editorconfig.plugincomponents.EditorConfigNotifier;
@@ -23,10 +24,17 @@ public class Utils {
   }
 
   public static void invalidConfigMessage(Project project, String configValue, String configKey, String filePath) {
-    EditorConfigNotifier.getInstance().error(project, configValue, "\"" + configValue + "\" is not a valid value for " + configKey + " for file " + filePath);
+    EditorConfigNotifier.getInstance().error(project, configValue, "\"" + configValue + "\" is not a valid value" + (!configKey.isEmpty() ? " for " + configKey : "") + " for file " + filePath);
   }
 
   public static void appliedConfigMessage(Project project, String configValue, String configKey, String filePath) {
     EditorConfigNotifier.getInstance().info(project, "Applied .editorconfig settings");
+  }
+
+  public static String getFilePath(Project project, VirtualFile file) {
+    if (!file.isInLocalFileSystem()) {
+      return project.getBasePath() + "/" + file.getNameWithoutExtension() + "." + file.getFileType().getDefaultExtension();
+    }
+    return file.getCanonicalPath();
   }
 }

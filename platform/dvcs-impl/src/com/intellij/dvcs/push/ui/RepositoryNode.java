@@ -27,7 +27,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import java.awt.*;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -36,20 +35,32 @@ public class RepositoryNode extends CheckedTreeNode implements EditableTreeNode,
 
   @NotNull protected final LoadingIcon myLoadingIcon;
   @NotNull protected final AtomicBoolean myLoading = new AtomicBoolean();
+  @NotNull private final CheckBoxModel myCheckBoxModel;
 
   @NotNull private final RepositoryWithBranchPanel myRepositoryPanel;
   @Nullable private Future<AtomicReference<OutgoingResult>> myFuture;
-  protected final int myLoadingIconWidth;
+  protected final int myCheckBoxHGap;
+  private final int myCheckBoxVGap;
 
-  public RepositoryNode(@NotNull RepositoryWithBranchPanel repositoryPanel, boolean enabled) {
+  public RepositoryNode(@NotNull RepositoryWithBranchPanel repositoryPanel, @NotNull CheckBoxModel model, boolean enabled) {
     super(repositoryPanel);
+    myCheckBoxModel = model;
     setChecked(false);
     setEnabled(enabled);
     myRepositoryPanel = repositoryPanel;
+    myLoadingIcon = myRepositoryPanel.getLoadingIcon();
+    myCheckBoxHGap = myRepositoryPanel.getLoadingIconAndCheckBoxGapH();
+    myCheckBoxVGap = myRepositoryPanel.getLoadingIconAndCheckBoxGapV();
+  }
 
-    Dimension size = new JCheckBox().getPreferredSize();
-    myLoadingIconWidth = size.width;
-    myLoadingIcon = LoadingIcon.create(myLoadingIconWidth, size.height);
+  @Override
+  public boolean isChecked() {
+    return myCheckBoxModel.isChecked();
+  }
+
+  @Override
+  public void setChecked(boolean checked) {
+    myCheckBoxModel.setChecked(checked);
   }
 
   public boolean isCheckboxVisible() {
@@ -59,25 +70,47 @@ public class RepositoryNode extends CheckedTreeNode implements EditableTreeNode,
   @Override
   public void render(@NotNull ColoredTreeCellRenderer renderer) {
     int repoFixedWidth = 120;
+    int borderHOffset = myRepositoryPanel.getHBorderOffset(renderer);
     if (myLoading.get()) {
       renderer.setIcon(myLoadingIcon);
       renderer.setIconOnTheRight(false);
-      repoFixedWidth += myLoadingIconWidth;
+      int checkBoxWidth = myRepositoryPanel.getCheckBoxWidth();
+      repoFixedWidth += checkBoxWidth;
+      if (myCheckBoxHGap > 0) {
+        renderer.append("");
+        renderer.appendFixedTextFragmentWidth(checkBoxWidth + renderer.getIconTextGap() + borderHOffset);
+      }
     }
-    renderer.append(getRepoName(renderer, repoFixedWidth), SimpleTextAttributes.GRAY_ATTRIBUTES);
+    else {
+      if (myCheckBoxHGap <= 0) {
+        renderer.append("");
+        renderer.appendFixedTextFragmentWidth(myRepositoryPanel.calculateRendererShiftH(renderer));
+      }
+    }
+    renderer.append(getRepoName(renderer, repoFixedWidth),
+                    isChecked() ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.GRAY_ATTRIBUTES);
     renderer.appendFixedTextFragmentWidth(repoFixedWidth);
-    renderer.append(myRepositoryPanel.getSourceName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-    renderer.append(myRepositoryPanel.getArrow(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    renderer.append(myRepositoryPanel.getSourceName(),
+                    isChecked() ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.GRAY_ATTRIBUTES);
+    renderer
+      .append(myRepositoryPanel.getArrow(), isChecked() ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.GRAY_ATTRIBUTES);
     PushTargetPanel pushTargetPanel = myRepositoryPanel.getTargetPanel();
     pushTargetPanel.render(renderer);
-    Insets insets = BorderFactory.createEmptyBorder().getBorderInsets(pushTargetPanel);
-    renderer.setBorder(new EmptyBorder(insets));
+
+    int maxSize = Math.max(myRepositoryPanel.getCheckBoxHeight(), myLoadingIcon.getIconHeight());
+    int rendererHeight = renderer.getPreferredSize().height;
+    if (maxSize > rendererHeight) {
+      if (myCheckBoxVGap > 0 && isLoading() || myCheckBoxVGap < 0 && !isLoading()) {
+        int vShift = maxSize - rendererHeight;
+        renderer.setBorder(new EmptyBorder((vShift + 1) / 2, 0, (vShift) / 2, 0));
+      }
+    }
   }
 
   @NotNull
   private String getRepoName(@NotNull ColoredTreeCellRenderer renderer, int maxWidth) {
     String name = myRepositoryPanel.getRepositoryName();
-    return GraphicsUtil.stringWidth(name, renderer.getFont()) > maxWidth - UIUtil.DEFAULT_VGAP ? name + "  " : name;
+    return GraphicsUtil.stringWidth(name, renderer.getFont()) > maxWidth - UIUtil.DEFAULT_HGAP ? name + "  " : name;
   }
 
   @Override
@@ -122,10 +155,10 @@ public class RepositoryNode extends CheckedTreeNode implements EditableTreeNode,
 
   public void stopLoading() {
     myLoading.set(false);
+    myLoadingIcon.setImageObserver(null);
   }
 
   public boolean isLoading() {
     return myLoading.get();
   }
-
 }

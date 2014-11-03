@@ -135,6 +135,15 @@ public class PluginModuleCompilationTest extends BaseCompilerTestCase {
     .build().assertFileEqual(outputFile);
   }
 
+  @Override
+  protected void readJdomExternalizables(ModuleImpl module) {
+    super.readJdomExternalizables(module);
+    PluginBuildConfiguration buildConfiguration = PluginBuildConfiguration.getInstance(module);
+    if (buildConfiguration != null) {
+      loadModuleComponentState(module, buildConfiguration);
+    }
+  }
+
   private static void prepareForDeployment(Module module) {
     List<String> errorMessages = new ArrayList<String>();
     PrepareToDeployAction.doPrepare(module, errorMessages, new ArrayList<String>());

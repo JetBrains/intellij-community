@@ -1773,13 +1773,14 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       @Override
       public void run() {
         if (file.isValid()) {
+          int fileId = getIdMaskingNonIdBasedFile(file);
           if (hasContent) {
-            IndexingStamp.setFileIndexedStateCurrent(file, indexId);
+            IndexingStamp.setFileIndexedStateCurrent(fileId, indexId);
           }
           else {
-            IndexingStamp.setFileIndexedStateUnindexed(file, indexId);
+            IndexingStamp.setFileIndexedStateUnindexed(fileId, indexId);
           }
-          if (myNotRequiringContentIndices.contains(indexId)) IndexingStamp.flushCache(file);
+          if (myNotRequiringContentIndices.contains(indexId)) IndexingStamp.flushCache(fileId);
         }
       }
     };
@@ -1973,6 +1974,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
               FileTypeManagerImpl.cacheFileType(file, file.getFileType());
               try {
                 final List<ID<?, ?>> candidates = getAffectedIndexCandidates(file);
+                int fileId = getIdMaskingNonIdBasedFile(file);
                 //noinspection ForLoopReplaceableByForEach
                 boolean scheduleForUpdate = false;
                 boolean resetStamp = false;
@@ -1981,8 +1983,8 @@ public class FileBasedIndexImpl extends FileBasedIndex {
                 for (int i = 0, size = candidates.size(); i < size; ++i) {
                   final ID<?, ?> indexId = candidates.get(i);
                   if (needsFileContentLoading(indexId) && getInputFilter(indexId).acceptInput(file)) {
-                    if (IndexingStamp.isFileIndexedStateCurrent(file, indexId)) {
-                      IndexingStamp.setFileIndexedStateOutdated(file, indexId);
+                    if (IndexingStamp.isFileIndexedStateCurrent(fileId, indexId)) {
+                      IndexingStamp.setFileIndexedStateOutdated(fileId, indexId);
                       resetStamp = true;
                     }
                     scheduleForUpdate = true;
@@ -2045,7 +2047,8 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       cleanProcessedFlag(file);
       IndexingStamp.flushCache(file);
 
-      List<ID<?, ?>> nontrivialFileIndexedStates = IndexingStamp.getNontrivialFileIndexedStates(file);
+      final int fileId = getIdMaskingNonIdBasedFile(file);
+      List<ID<?, ?>> nontrivialFileIndexedStates = IndexingStamp.getNontrivialFileIndexedStates(fileId);
 
       if (!markForReindex) {  // markForReindex really means content changed
         for (ID<?, ?> indexId : nontrivialFileIndexedStates) {
@@ -2074,8 +2077,8 @@ public class FileBasedIndexImpl extends FileBasedIndex {
               //noinspection ForLoopReplaceableByForEach
               for (int i = 0, size = finalNontrivialFileIndexedStates.size(); i < size; ++i) {
                 final ID<?, ?> indexId = finalNontrivialFileIndexedStates.get(i);
-                if (needsFileContentLoading(indexId) && IndexingStamp.isFileIndexedStateCurrent(file, indexId)) {
-                  IndexingStamp.setFileIndexedStateOutdated(file, indexId);
+                if (needsFileContentLoading(indexId) && IndexingStamp.isFileIndexedStateCurrent(fileId, indexId)) {
+                  IndexingStamp.setFileIndexedStateOutdated(fileId, indexId);
                 }
               }
             }
@@ -2260,9 +2263,11 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       final VirtualFile file = fileContent.getVirtualFile();
       final boolean reallyRemoved = myFilesToUpdate.remove(file);
       if (reallyRemoved && file.isValid()) {
+        int fileId = getIdMaskingNonIdBasedFile(file);
         try {
           if (isTooLarge(file)) {
-            removeFileDataFromIndices(ContainerUtil.intersection(IndexingStamp.getNontrivialFileIndexedStates(file), myRequiringContentIndices), file);
+            List<ID<?, ?>> nontrivialFileIndexedStates = IndexingStamp.getNontrivialFileIndexedStates(fileId);
+            removeFileDataFromIndices(ContainerUtil.intersection(nontrivialFileIndexedStates, myRequiringContentIndices), file);
           }
           else {
             doIndexFileContent(project, fileContent);
@@ -2302,6 +2307,10 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       }
       myContentlessIndicesUpdateQueue.signalUpdateEnd();
     }
+  }
+
+  private static int getIdMaskingNonIdBasedFile(VirtualFile file) {
+    return file instanceof VirtualFileWithId ?((VirtualFileWithId)file).getId() : IndexingStamp.INVALID_FILE_ID;
   }
 
   private class UnindexedFilesFinder implements CollectingContentIterator {
@@ -2396,11 +2405,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
   private boolean shouldIndexFile(@NotNull VirtualFile file, @NotNull ID<?, ?> indexId) {
     return getInputFilter(indexId).acceptInput(file) &&
-           (isMock(file) || !isFileIndexed(file, indexId));
-  }
-
-  private static boolean isFileIndexed(VirtualFile file, @NotNull ID<?, ?> indexId) {
-    return IndexingStamp.isFileIndexedStateCurrent(file, indexId);
+           (isMock(file) || !IndexingStamp.isFileIndexedStateCurrent(((NewVirtualFile)file).getId(), indexId));
   }
 
   private boolean isUnderConfigOrSystem(@NotNull VirtualFile file) {
@@ -2452,16 +2457,17 @@ public class FileBasedIndexImpl extends FileBasedIndex {
                 }
               } else { // change in persistent file
                 if (virtualFile instanceof VirtualFileWithId) {
+                  int fileId = ((VirtualFileWithId)virtualFile).getId();
                   boolean wasIndexed = false;
                   for (ID<?, ?> psiBackedIndex : myPsiDependentIndices) {
-                    if (isFileIndexed(virtualFile, psiBackedIndex)) {
-                      IndexingStamp.setFileIndexedStateOutdated(virtualFile, psiBackedIndex);
+                    if (IndexingStamp.isFileIndexedStateCurrent(fileId, psiBackedIndex)) {
+                      IndexingStamp.setFileIndexedStateOutdated(fileId, psiBackedIndex);
                       wasIndexed = true;
                     }
                   }
                   if (wasIndexed) {
                     myChangedFilesCollector.scheduleForUpdate(virtualFile);
-                    IndexingStamp.flushCache(virtualFile);
+                    IndexingStamp.flushCache(fileId);
                   }
                 }
               }

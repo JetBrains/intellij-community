@@ -1,29 +1,37 @@
 package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ConstantFunction;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.graph.GraphColorManagerImpl;
 import com.intellij.vcs.log.graph.GraphCommit;
-import com.intellij.vcs.log.graph.GraphFacade;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl;
-import com.intellij.vcs.log.printer.idea.ColorGenerator;
 import com.intellij.vcs.log.util.StopWatch;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
 import java.util.*;
-import java.util.List;
 
-public class DataPack implements VcsLogDataPack {
+public class DataPack {
+
+  public static final DataPack EMPTY = createEmptyInstance();
 
   @NotNull private final RefsModel myRefsModel;
   @NotNull private final PermanentGraph<Integer> myPermanentGraph;
-  @NotNull private final GraphFacade myGraphFacade;
   @NotNull private final Map<VirtualFile, VcsLogProvider> myLogProviders;
   private boolean myFull;
+
+  DataPack(@NotNull RefsModel refsModel,
+           @NotNull PermanentGraph<Integer> permanentGraph,
+           @NotNull Map<VirtualFile, VcsLogProvider> providers,
+           boolean full) {
+    myRefsModel = refsModel;
+    myPermanentGraph = permanentGraph;
+    myLogProviders = providers;
+    myFull = full;
+  }
 
   @NotNull
   static DataPack build(@NotNull List<? extends GraphCommit<Integer>> commits,
@@ -33,25 +41,7 @@ public class DataPack implements VcsLogDataPack {
                         boolean full) {
     RefsModel refsModel = new RefsModel(refs, hashMap.asIndexGetter());
     PermanentGraph<Integer> graph = buildPermanentGraph(commits, refsModel, hashMap.asIndexGetter(), hashMap.asHashGetter(), providers);
-    return new DataPack(refsModel, graph, createGraphFacade(graph), providers, full);
-  }
-
-  @NotNull
-  private static GraphFacade createGraphFacade(@NotNull PermanentGraph<Integer> permanentGraph) {
-    GraphFacade facade;
-    if (!permanentGraph.getAllCommits().isEmpty()) {
-      ColorGenerator colorGenerator = new ColorGenerator() {
-        @Override
-        public Color getColor(int colorId) {
-          return com.intellij.vcs.log.graph.ColorGenerator.getColor(colorId);
-        }
-      };
-      facade = new DelegateGraphFacade(permanentGraph, colorGenerator);
-    }
-    else {
-      facade = new EmptyGraphFacade();
-    }
-    return facade;
+    return new DataPack(refsModel, graph, providers, full);
   }
 
   @NotNull
@@ -91,22 +81,13 @@ public class DataPack implements VcsLogDataPack {
     return map;
   }
 
-  DataPack(@NotNull RefsModel refsModel, @NotNull PermanentGraph<Integer> permanentGraph, @NotNull GraphFacade graphFacade,
-           @NotNull Map<VirtualFile, VcsLogProvider> providers, boolean full) {
-    myRefsModel = refsModel;
-    myPermanentGraph = permanentGraph;
-    myGraphFacade = graphFacade;
-    myLogProviders = providers;
-    myFull = full;
+  @NotNull
+  private static DataPack createEmptyInstance() {
+    RefsModel emptyModel = new RefsModel(Collections.<VirtualFile, Set<VcsRef>>emptyMap(), new ConstantFunction<Hash, Integer>(0));
+    return new DataPack(emptyModel, EmptyPermanentGraph.getInstance(), Collections.<VirtualFile, VcsLogProvider>emptyMap(), false);
   }
 
   @NotNull
-  public GraphFacade getGraphFacade() {
-    return myGraphFacade;
-  }
-
-  @NotNull
-  @Override
   public VcsLogRefs getRefs() {
     return myRefsModel;
   }
@@ -117,7 +98,6 @@ public class DataPack implements VcsLogDataPack {
   }
 
   @NotNull
-  @Override
   public Map<VirtualFile, VcsLogProvider> getLogProviders() {
     return myLogProviders;
   }

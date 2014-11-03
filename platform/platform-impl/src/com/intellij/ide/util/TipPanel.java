@@ -24,6 +24,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -44,13 +45,13 @@ public class TipPanel extends JPanel {
     setLayout(new BorderLayout());
     JLabel jlabel = new JLabel(AllIcons.General.Tip);
     jlabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 5));
-    JLabel jlabel1 = new JLabel(IdeBundle.message("label.did.you.know"));
-    Font font = jlabel1.getFont();
-    jlabel1.setFont(font.deriveFont(Font.PLAIN, font.getSize() + 4));
+    JLabel label1 = new JLabel(IdeBundle.message("label.did.you.know"));
+    Font font = label1.getFont();
+    label1.setFont(font.deriveFont(Font.PLAIN, font.getSize() + 4));
     JPanel jpanel = new JPanel();
     jpanel.setLayout(new BorderLayout());
     jpanel.add(jlabel, BorderLayout.WEST);
-    jpanel.add(jlabel1, BorderLayout.CENTER);
+    jpanel.add(label1, BorderLayout.CENTER);
     jpanel.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
     add(jpanel, BorderLayout.NORTH);
     myBrowser = TipUIUtil.createTipBrowser();
@@ -61,9 +62,10 @@ public class TipPanel extends JPanel {
     JCheckBox showOnStartCheckBox = new JCheckBox(IdeBundle.message("checkbox.show.tips.on.startup"), true);
     showOnStartCheckBox.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0));
     final GeneralSettings settings = GeneralSettings.getInstance();
-    showOnStartCheckBox.setSelected(settings.showTipsOnStartup());
+    showOnStartCheckBox.setSelected(settings.isShowTipsOnStartup());
     showOnStartCheckBox.addItemListener(new ItemListener() {
-      public void itemStateChanged(ItemEvent e) {
+      @Override
+      public void itemStateChanged(@NotNull ItemEvent e) {
         settings.setShowTipsOnStartup(e.getStateChange() == ItemEvent.SELECTED);
       }
     });
@@ -79,6 +81,7 @@ public class TipPanel extends JPanel {
     Collections.addAll(myTips, Extensions.getExtensions(TipAndTrickBean.EP_NAME));
   }
 
+  @Override
   public Dimension getPreferredSize() {
     return new Dimension(DEFAULT_WIDTH, DEFAULT_HEIGHT);
   }

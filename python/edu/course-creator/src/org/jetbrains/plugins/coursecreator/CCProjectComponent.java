@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.coursecreator.actions.CCRunTestsAction;
 import org.jetbrains.plugins.coursecreator.format.Course;
 import org.jetbrains.plugins.coursecreator.format.Lesson;
 import org.jetbrains.plugins.coursecreator.format.Task;
@@ -158,7 +159,8 @@ public class CCProjectComponent implements ProjectComponent {
     }
 
     private void deleteTaskFile(Course course, VirtualFile removedFile) {
-      VirtualFile taskDir = removedFile.getParent();
+
+      final VirtualFile taskDir = removedFile.getParent();
       if (taskDir == null || !taskDir.getName().contains("task")) {
         return;
       }
@@ -182,6 +184,12 @@ public class CCProjectComponent implements ProjectComponent {
       if (taskFile == null) {
         return;
       }
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
+        public void run() {
+          CCRunTestsAction.clearTestEnvironment(taskDir, myProject);
+        }
+      });
       String name = CCProjectService.getRealTaskFileName(removedFile.getName());
       task.getTaskFiles().remove(name);
     }

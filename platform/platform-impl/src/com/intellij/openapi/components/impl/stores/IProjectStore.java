@@ -15,25 +15,22 @@
  */
 package com.intellij.openapi.components.impl.stores;
 
-import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.StateStorageException;
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.Set;
 
 /**
  * @see com.intellij.openapi.project.ex.ProjectEx#getStateStore()
  */
-public interface IProjectStore extends IComponentStore {
+public interface IProjectStore extends IComponentStore.Reloadable {
   boolean checkVersion();
 
   void setProjectFilePath(@NotNull String filePath);
@@ -54,8 +51,6 @@ public interface IProjectStore extends IComponentStore {
 
   @Nullable
   String getPresentableUrl();
-
-  boolean reload(@NotNull Set<Pair<VirtualFile,StateStorage>> changedFiles) throws IOException;
 
   //------ This methods should be got rid of
   /** @deprecated to remove in IDEA 14 */

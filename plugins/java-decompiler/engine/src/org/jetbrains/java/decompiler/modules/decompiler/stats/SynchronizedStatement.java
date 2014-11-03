@@ -15,12 +15,12 @@
  */
 package org.jetbrains.java.decompiler.modules.decompiler.stats;
 
-import org.jetbrains.java.decompiler.main.DecompilerContext;
+import org.jetbrains.java.decompiler.main.TextBuffer;
+import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.SequenceHelper;
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
-import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -68,24 +68,25 @@ public class SynchronizedStatement extends Statement {
   // public methods
   // *****************************************************************************
 
-  public String toJava(int indent) {
-    String indstr = InterpreterUtil.getIndentString(indent);
-
-    String new_line_separator = DecompilerContext.getNewLineSeparator();
-
-    StringBuilder buf = new StringBuilder();
-    buf.append(ExprProcessor.listToJava(varDefinitions, indent));
-    buf.append(first.toJava(indent));
+  public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
+    TextBuffer buf = new TextBuffer();
+    buf.append(ExprProcessor.listToJava(varDefinitions, indent, tracer));
+    buf.append(first.toJava(indent, tracer));
 
     if (isLabeled()) {
-      buf.append(indstr).append("label").append(this.id).append(":").append(new_line_separator);
+      buf.appendIndent(indent).append("label").append(this.id.toString()).append(":").appendLineSeparator();
+      tracer.incrementCurrentSourceLine();
     }
 
-    buf.append(indstr).append(headexprent.get(0).toJava(indent)).append(" {").append(new_line_separator);
-    buf.append(ExprProcessor.jmpWrapper(body, indent + 1, true));
-    buf.append(indstr).append("}").append(new_line_separator);
+    buf.appendIndent(indent).append(headexprent.get(0).toJava(indent, tracer)).append(" {").appendLineSeparator();
+    tracer.incrementCurrentSourceLine();
 
-    return buf.toString();
+    buf.append(ExprProcessor.jmpWrapper(body, indent + 1, true, tracer));
+
+    buf.appendIndent(indent).append("}").appendLineSeparator();
+    tracer.incrementCurrentSourceLine();
+
+    return buf;
   }
 
   public void initExprents() {

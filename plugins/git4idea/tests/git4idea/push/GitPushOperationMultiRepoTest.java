@@ -27,6 +27,7 @@ import git4idea.commands.GitImpl;
 import git4idea.commands.GitLineHandlerListener;
 import git4idea.repo.GitRepository;
 import git4idea.test.GitTestUtil;
+import git4idea.update.GitUpdateResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,12 +37,15 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
 
-import static git4idea.test.GitExecutor.cd;
+import static git4idea.test.GitExecutor.*;
 
 public class GitPushOperationMultiRepoTest extends GitPushOperationBaseTest {
 
   private GitRepository myCommunity;
   private GitRepository myRepository;
+
+  private File myBro;
+  private File myBroCommunity;
 
   @Override
   protected void setUp() throws Exception {
@@ -56,12 +60,14 @@ public class GitPushOperationMultiRepoTest extends GitPushOperationBaseTest {
     try {
       Trinity<GitRepository, File, File> mainRepo = setupRepositories(myProjectPath, "parent", "bro");
       myRepository = mainRepo.first;
+      myBro = mainRepo.third;
 
       File community = new File(myProjectPath, "community");
       assertTrue(community.mkdir());
       Trinity<GitRepository, File, File> enclosingRepo = setupRepositories(community.getPath(),
                                                                            "community_parent", "community_bro");
       myCommunity = enclosingRepo.first;
+      myBroCommunity = enclosingRepo.third;
 
       cd(myProjectPath);
       refresh();
@@ -120,6 +126,37 @@ public class GitPushOperationMultiRepoTest extends GitPushOperationBaseTest {
     assertResult(GitPushRepoResult.Type.ERROR, -1, "master", "origin/master", null, result1);
     assertEquals("Error text is incorrect", "Failed to push to origin/master", result1.getError());
     assertResult(GitPushRepoResult.Type.SUCCESS, 1, "master", "origin/master", null, result2);
+  }
+
+  public void test_update_all_roots_on_reject_when_needed_even_if_only_one_in_push_spec() throws IOException {
+    cd(myBro);
+    String broHash = makeCommit("bro.txt");
+    git("push");
+    cd(myBroCommunity);
+    String broCommunityHash = makeCommit("bro_com.txt");
+    git("push");
+
+    cd(myRepository);
+    makeCommit("file.txt");
+
+    PushSpec<GitPushSource, GitPushTarget> mainSpec = makePushSpec(myRepository, "master", "origin/master");
+    agreeToUpdate(GitRejectedPushUpdateDialog.MERGE_EXIT_CODE); // auto-update-all-roots is selected by default
+    GitPushResult result = new GitPushOperation(myProject, Collections.singletonMap(myRepository, mainSpec), null, false).execute();
+
+    GitPushRepoResult result1 = result.getResults().get(myRepository);
+    GitPushRepoResult result2 = result.getResults().get(myCommunity);
+
+    assertResult(GitPushRepoResult.Type.SUCCESS, 2, "master", "origin/master", GitUpdateResult.SUCCESS, result1);
+    assertNull(result2); // this was not pushed => no result should be generated
+
+    cd(myCommunity);
+    String lastHash = last();
+    assertEquals("Update in community didn't happen", broCommunityHash, lastHash);
+
+    cd(myRepository);
+    String[] lastCommitParents = git("log -1 --pretty=%P").split(" ");
+    assertEquals("Merge didn't happen in main repository", 2, lastCommitParents.length);
+    assertEquals("Commit from bro repository didn't arrive", broHash, git("log --no-walk HEAD^2 --pretty=%H"));
   }
 
 }

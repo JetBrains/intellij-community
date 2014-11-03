@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs.checkin;
 
 import com.intellij.ide.todo.TodoFilter;
 import com.intellij.ide.todo.TodoIndexPatternProvider;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.ex.DiffFragment;
 import com.intellij.openapi.diff.impl.ComparisonPolicy;
@@ -29,6 +30,7 @@ import com.intellij.openapi.diff.impl.string.DiffString;
 import com.intellij.openapi.diff.impl.util.TextDiffTypeEnum;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -51,6 +53,8 @@ import com.intellij.util.PairConsumer;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.diff.FilesTooBigForDiffException;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -108,22 +112,30 @@ public class TodoCheckinHandlerWorker {
     for (Change change : changes) {
       ProgressManager.checkCanceled();
       if (change.getAfterRevision() == null) continue;
-      VirtualFile afterFile = change.getAfterRevision().getFile().getVirtualFile();
-      if (afterFile == null) {
-        afterFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(change.getAfterRevision().getFile().getIOFile());
-      }
+      final VirtualFile afterFile = getFileWithRefresh(change.getAfterRevision().getFile());
       if (afterFile == null || afterFile.isDirectory() || afterFile.getFileType().isBinary()) continue;
       myPsiFile = null;
 
       if (afterFile.isValid()) {
-        myPsiFile = myPsiManager.findFile(afterFile);
+        myPsiFile = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
+          @Override
+          public PsiFile compute() {
+            return myPsiManager.findFile(afterFile);
+          }
+        });
       }
       if (myPsiFile == null) {
         mySkipped.add(Pair.create(change.getAfterRevision().getFile(), ourInvalidFile));
         continue;
       }
 
-      myNewTodoItems = new ArrayList<TodoItem>(Arrays.asList(mySearchHelper.findTodoItems(myPsiFile)));
+      myNewTodoItems = new ArrayList<TodoItem>(Arrays.asList(
+        ApplicationManager.getApplication().runReadAction(new Computable<TodoItem[]>() {
+          @Override
+          public TodoItem[] compute() {
+            return mySearchHelper.findTodoItems(myPsiFile);
+          }
+        })));
       applyFilterAndRemoveDuplicates(myNewTodoItems, myTodoFilter);
       if (change.getBeforeRevision() == null) {
         // take just all todos
@@ -134,6 +146,15 @@ public class TodoCheckinHandlerWorker {
         myEditedFileProcessor.process(change, myNewTodoItems);
       }
     }
+  }
+
+  @Nullable
+  private static VirtualFile getFileWithRefresh(@NotNull FilePath filePath) {
+    VirtualFile file = filePath.getVirtualFile();
+    if (file == null) {
+      file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(filePath.getIOFile());
+    }
+    return file;
   }
 
   private static void applyFilterAndRemoveDuplicates(final List<TodoItem> todoItems, final TodoFilter filter) {
@@ -235,7 +256,12 @@ public class TodoCheckinHandlerWorker {
 
     private void checkEditedFragment(TodoItem newTodoItem) {
       if (myBeforeFile == null) {
-        myBeforeFile = myPsiFileFactory.createFileFromText("old" + myAfterFile.getName(), myAfterFile.getFileType(), myBeforeContent);
+        myBeforeFile = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
+          @Override
+          public PsiFile compute() {
+            return myPsiFileFactory.createFileFromText("old" + myAfterFile.getName(), myAfterFile.getFileType(), myBeforeContent);
+          }
+        });
       }
       if (myOldItems == null)  {
         final Collection<IndexPatternOccurrence> all =

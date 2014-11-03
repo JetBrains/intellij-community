@@ -30,22 +30,12 @@ import java.awt.image.ImageObserver;
 
 class LoadingIcon extends JBImageIcon {
 
+  //todo fix double size animated icons
   private static final String LOADING_ICON = "/icons/loading.gif";
   private static final Logger LOG = Logger.getInstance(LoadingIcon.class);
 
-  private final int myWidth;
-  private final int myHeight;
-  private final int myDeltaX;
-  private final int myDeltaY;
-
-  LoadingIcon(@NotNull Image image, int width, int height) {
+  LoadingIcon(@NotNull Image image) {
     super(image);
-    int myOriginalWidth = image.getWidth(null);
-    int myOriginalHeight = image.getHeight(null);
-    myWidth = Math.max(width, myOriginalWidth);
-    myHeight = Math.max(height, myOriginalHeight);
-    myDeltaX = (myWidth - myOriginalWidth) / 2 - 2;
-    myDeltaY = (myHeight - myOriginalHeight) / 2 + 2;
   }
 
   @NotNull
@@ -55,31 +45,16 @@ class LoadingIcon extends JBImageIcon {
       LOG.error("Couldn't load image: " + LOADING_ICON);
       return createEmpty(width, height);
     }
-    return new LoadingIcon(image, width, height);
+    return new LoadingIcon(image);
   }
 
   @NotNull
   static LoadingIcon createEmpty(int width, int height) {
-    return new LoadingIcon(UIUtil.createImage(width, height, Transparency.TRANSLUCENT), width, height);
+    return new LoadingIcon(UIUtil.createImage(width, height, Transparency.TRANSLUCENT));
   }
 
   void setObserver(@NotNull JTree tree, @NotNull TreeNode treeNode) {
     setImageObserver(new NodeImageObserver(tree, treeNode));
-  }
-
-  @Override
-  public final synchronized void paintIcon(final Component c, final Graphics g, final int x, final int y) {
-    super.paintIcon(c, g, x + myDeltaX, y + myDeltaY);
-  }
-
-  @Override
-  public int getIconHeight() {
-    return myHeight;
-  }
-
-  @Override
-  public int getIconWidth() {
-    return myWidth;
   }
 
   private static class NodeImageObserver implements ImageObserver {
@@ -94,6 +69,7 @@ class LoadingIcon extends JBImageIcon {
     }
 
     public boolean imageUpdate(Image img, int flags, int x, int y, int w, int h) {
+      if (myNode instanceof RepositoryNode && !((RepositoryNode)myNode).isLoading()) return false;
       if ((flags & (FRAMEBITS | ALLBITS)) != 0) {
         TreeNode[] pathToRoot = myModel.getPathToRoot(myNode);
         if (pathToRoot != null) {

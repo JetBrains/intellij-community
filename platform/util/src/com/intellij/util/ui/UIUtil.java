@@ -25,7 +25,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.ui.*;
 import com.intellij.util.*;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.*;
+import com.intellij.util.containers.WeakHashMap;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -74,6 +75,7 @@ import java.lang.reflect.Method;
 import java.net.URL;
 import java.text.NumberFormat;
 import java.util.*;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -197,6 +199,27 @@ public class UIUtil {
   @NonNls public static final String FOCUS_PROXY_KEY = "isFocusProxy";
 
   public static Key<Integer> KEEP_BORDER_SIDES = Key.create("keepBorderSides");
+  private static Key<UndoManager> UNDO_MANAGER = Key.create("undoManager");
+  private static final AbstractAction REDO_ACTION = new AbstractAction() {
+    @Override
+    public void actionPerformed(ActionEvent e) {
+      Object source = e.getSource();
+      UndoManager manager = source instanceof JComponent ? getClientProperty((JComponent)source, UNDO_MANAGER) : null;
+      if (manager != null && manager.canRedo()) {
+        manager.redo();
+      }
+    }
+  };
+  private static final AbstractAction UNDO_ACTION = new AbstractAction() {
+    @Override
+    public void actionPerformed(ActionEvent e) {
+      Object source = e.getSource();
+      UndoManager manager = source instanceof JComponent ? getClientProperty((JComponent)source, UNDO_MANAGER) : null;
+      if (manager != null && manager.canUndo()) {
+        manager.undo();
+      }
+    }
+  };
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.ui.UIUtil");
 
@@ -255,6 +278,119 @@ public class UIUtil {
   private UIUtil() {
   }
 
+  /**
+   * Utility class for retina routine
+   */
+  private final static class DetectRetinaKit {
+
+    private final static WeakHashMap<GraphicsDevice, Boolean> devicesToRetinaSupportCacheMap = new WeakHashMap<GraphicsDevice, Boolean>();
+
+    /**
+     * The best way to understand whether we are on a retina device is [NSScreen backingScaleFactor]
+     * But we should not invoke it from any thread. We do not have access to the AppKit thread
+     * on the other hand. So let's use a dedicated method. It is rather safe because it caches a
+     * value that has been got on AppKit previously.
+     */
+    private static boolean isOracleMacRetinaDevice (GraphicsDevice device) {
+
+      Boolean isRetina  = devicesToRetinaSupportCacheMap.get(device);
+
+      if (isRetina != null){
+        return isRetina;
+      }
+
+      Method getScaleFactorMethod = null;
+      try {
+        getScaleFactorMethod = Class.forName("sun.awt.CGraphicsDevice").getMethod("getScaleFactor");
+      } catch (ClassNotFoundException e) {
+        // not an Oracle Mac JDK or API has been changed
+        LOG.debug("CGraphicsDevice.getScaleFactor(): not an Oracle Mac JDK or API has been changed");
+      } catch (NoSuchMethodException e) {
+        LOG.debug("CGraphicsDevice.getScaleFactor(): not an Oracle Mac JDK or API has been changed");
+      }
+
+      try {
+        isRetina =  (getScaleFactorMethod == null) || ((Integer)getScaleFactorMethod.invoke(device) != 1);
+      } catch (IllegalAccessException e) {
+        LOG.debug("CGraphicsDevice.getScaleFactor(): Access issue");
+        isRetina = false;
+      } catch (InvocationTargetException e) {
+        LOG.debug("CGraphicsDevice.getScaleFactor(): Invocation issue");
+        isRetina = false;
+      }
+
+      devicesToRetinaSupportCacheMap.put(device, isRetina);
+
+      return isRetina;
+    }
+
+    /**
+     * Could be quite easily implemented with [NSScreen backingScaleFactor]
+     * and JNA
+     */
+    //private static boolean isAppleRetina (Graphics2D g2d) {
+    //  return false;
+    //}
+
+    /**
+     * For JDK6 we have a dedicated property which does not allow to understand anything
+     * per device but could be useful for image creation. We will get true in case
+     * if at least one retina device is present.
+     */
+    private static boolean hasAppleRetinaDevice() {
+      return (Float)Toolkit.getDefaultToolkit()
+        .getDesktopProperty(
+          "apple.awt.contentScaleFactor") != 1.0f;
+    }
+
+    /**
+     * This method perfectly detects retina Graphics2D for jdk7+
+     * For Apple JDK6 it returns false.
+     * @param g graphics to be tested
+     * @return false if the device of the Graphics2D is not a retina device,
+     * jdk is an Apple JDK or Oracle API has been changed.
+     */
+    private static boolean isMacRetina(Graphics2D g) {
+      GraphicsDevice device = g.getDeviceConfiguration().getDevice();
+      return isOracleMacRetinaDevice(device);
+    }
+
+    /**
+     * Checks that at least one retina device is present.
+     * Do not use this method if your are going to make decision for a particular screen.
+     * isRetina(Graphics2D) is more preferable
+     *
+     * @return true if at least one device is a retina device
+     */
+    private static boolean isRetina() {
+      if (SystemInfo.isAppleJvm) {
+        return hasAppleRetinaDevice();
+      }
+
+      // Oracle JDK
+
+      if (SystemInfo.isMac) {
+        GraphicsEnvironment e
+          = GraphicsEnvironment.getLocalGraphicsEnvironment();
+
+        GraphicsDevice[] devices = e.getScreenDevices();
+
+        //now get the configurations for each device
+        for (GraphicsDevice device : devices) {
+          if (isOracleMacRetinaDevice(device)) {
+            return true;
+          }
+        }
+      }
+
+      return false;
+    }
+  }
+
+  //public static boolean isMacRetina(Graphics2D g) {
+  //  return DetectRetinaKit.isMacRetina(g);
+  //}
+
   public static boolean isRetina() {
     if (GraphicsEnvironment.isHeadless()) return false;
 
@@ -263,32 +399,39 @@ public class UIUtil {
       return true;
     }
 
-    synchronized (ourRetina) {
-      if (ourRetina.isNull()) {
-        ourRetina.set(false); // in case HiDPIScaledImage.drawIntoImage is not called for some reason
+    if (Registry.is("new.retina.detection")) {
+      return DetectRetinaKit.isRetina();
+    } else {
+      synchronized (ourRetina) {
+        if (ourRetina.isNull()) {
+          ourRetina.set(false); // in case HiDPIScaledImage.drawIntoImage is not called for some reason
 
-        if (SystemInfo.isJavaVersionAtLeast("1.6.0_33") && SystemInfo.isAppleJvm) {
-          if (!"false".equals(System.getProperty("ide.mac.retina"))) {
-            ourRetina.set(IsRetina.isRetina());
-            return ourRetina.get();
-          }
-        } else if (SystemInfo.isJavaVersionAtLeast("1.7.0_40") && SystemInfo.isOracleJvm) {
-          try {
-            GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
-            final GraphicsDevice device = env.getDefaultScreenDevice();
-            Integer scale = ReflectionUtil.getField(device.getClass(), device, int.class, "scale");
-            if (scale != null && scale.intValue() == 2) {
-              ourRetina.set(true);
-              return true;
+          if (SystemInfo.isJavaVersionAtLeast("1.6.0_33") && SystemInfo.isAppleJvm) {
+            if (!"false".equals(System.getProperty("ide.mac.retina"))) {
+              ourRetina.set(IsRetina.isRetina());
+              return ourRetina.get();
             }
           }
-          catch (AWTError ignore) {}
-          catch (Exception ignore) {}
+          else if (SystemInfo.isJavaVersionAtLeast("1.7.0_40") && SystemInfo.isOracleJvm) {
+            try {
+              GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
+              final GraphicsDevice device = env.getDefaultScreenDevice();
+              Integer scale = ReflectionUtil.getField(device.getClass(), device, int.class, "scale");
+              if (scale != null && scale.intValue() == 2) {
+                ourRetina.set(true);
+                return true;
+              }
+            }
+            catch (AWTError ignore) {
+            }
+            catch (Exception ignore) {
+            }
+          }
+          ourRetina.set(false);
         }
-        ourRetina.set(false);
-      }
 
-      return ourRetina.get();
+        return ourRetina.get();
+      }
     }
   }
 
@@ -320,31 +463,36 @@ public class UIUtil {
     }
   }
 
+  public static <T> T getClientProperty(@NotNull JComponent component, @NotNull Key<T> key) {
+    return (T)component.getClientProperty(key);
+  }
+
+  public static <T> void putClientProperty(@NotNull JComponent component, @NotNull Key<T> key, T value) {
+    component.putClientProperty(key, value);
+  }
+
   public static String getHtmlBody(String text) {
-    return getHtmlBody(new Html(text));
+    int htmlIndex = 6 + text.indexOf("<html>");
+    if (htmlIndex < 6) {
+      return text.replaceAll("\n", "<br>");
+    }
+    int htmlCloseIndex = text.indexOf("</html>", htmlIndex);
+    if (htmlCloseIndex < 0) {
+      htmlCloseIndex = text.length();
+    }
+    int bodyIndex = 6 + text.indexOf("<body>", htmlIndex);
+    if (bodyIndex < 6) {
+      return text.substring(htmlIndex, htmlCloseIndex);
+    }
+    int bodyCloseIndex = text.indexOf("</body>", bodyIndex);
+    if (bodyCloseIndex < 0) {
+      bodyCloseIndex = text.length();
+    }
+    return text.substring(bodyIndex, Math.min(bodyCloseIndex, htmlCloseIndex));
   }
 
   public static String getHtmlBody(Html html) {
-    String text = html.getText();
-    String result;
-    if (!text.startsWith("<html>")) {
-      result = text.replaceAll("\n", "<br>");
-    }
-    else {
-      final int bodyIdx = text.indexOf("<body>");
-      final int closedBodyIdx = text.indexOf("</body>");
-      if (bodyIdx != -1 && closedBodyIdx != -1) {
-        result = text.substring(bodyIdx + "<body>".length(), closedBodyIdx);
-      }
-      else {
-        text = StringUtil.trimStart(text, "<html>").trim();
-        text = StringUtil.trimEnd(text, "</html>").trim();
-        text = StringUtil.trimStart(text, "<body>").trim();
-        text = StringUtil.trimEnd(text, "</body>").trim();
-        result = text;
-      }
-    }
-
+    String result = getHtmlBody(html.getText());
     return html.isKeepFont() ? result : result.replaceAll("<font(.*?)>", "").replaceAll("</font>", "");
   }
 
@@ -1100,6 +1248,7 @@ public class UIUtil {
 
   public static Color shade(final Color c, final double factor, final double alphaFactor) {
     assert factor >= 0 : factor;
+    //noinspection UseJBColor
     return new Color(
       Math.min((int)Math.round(c.getRed() * factor), 255),
       Math.min((int)Math.round(c.getGreen() * factor), 255),
@@ -1111,6 +1260,7 @@ public class UIUtil {
   public static Color mix(final Color c1, final Color c2, final double factor) {
     assert 0 <= factor && factor <= 1.0 : factor;
     final double backFactor = 1.0 - factor;
+    //noinspection UseJBColor
     return new Color(
       Math.min((int)Math.round(c1.getRed() * backFactor + c2.getRed() * factor), 255),
       Math.min((int)Math.round(c1.getGreen() * backFactor + c2.getGreen() * factor), 255),
@@ -1625,7 +1775,7 @@ public class UIUtil {
   /** @see #pump() */
   @TestOnly
   public static void dispatchAllInvocationEvents() {
-    assert SwingUtilities.isEventDispatchThread() : Thread.currentThread();
+    assert SwingUtilities.isEventDispatchThread() : Thread.currentThread() + "; EDT: "+getEventQueueThread();
     final EventQueue eventQueue = Toolkit.getDefaultToolkit().getSystemEventQueue();
     while (true) {
       AWTEvent event = eventQueue.peekEvent();
@@ -1639,6 +1789,16 @@ public class UIUtil {
       catch (Exception e) {
         LOG.error(e); //?
       }
+    }
+  }
+  private static Thread getEventQueueThread() {
+    EventQueue eventQueue = Toolkit.getDefaultToolkit().getSystemEventQueue();
+    try {
+      Method method = ReflectionUtil.getDeclaredMethod(EventQueue.class, "getDispatchThread");
+      return (Thread)method.invoke(eventQueue);
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
     }
   }
 
@@ -1757,12 +1917,21 @@ public class UIUtil {
 
   @Nullable
   public static Component findNearestOpaque(JComponent c) {
+    return findParentByCondition(c, new Condition<Component>() {
+      @Override
+      public boolean value(Component component) {
+        return component.isOpaque();
+      }
+    });
+  }
+
+  @Nullable
+  public static Component findParentByCondition(@NotNull JComponent c, Condition<Component> condition) {
     Component eachParent = c;
     while (eachParent != null) {
-      if (eachParent.isOpaque()) return eachParent;
+      if (condition.value(eachParent)) return eachParent;
       eachParent = eachParent.getParent();
     }
-
     return null;
   }
 
@@ -1914,7 +2083,7 @@ public class UIUtil {
 
   public static Font getTitledBorderFont() {
     Font defFont = getLabelFont();
-    return defFont.deriveFont(Math.max(defFont.getSize() - 2f, 11f));
+    return defFont.deriveFont(defFont.getSize() - 1f);
   }
 
   /**
@@ -1978,7 +2147,7 @@ public class UIUtil {
         if (component instanceof JScrollPane) {
           if (!hasNonPrimitiveParents(c, component)) {
             final JScrollPane scrollPane = (JScrollPane)component;
-            Integer keepBorderSides = (Integer)scrollPane.getClientProperty(KEEP_BORDER_SIDES);
+            Integer keepBorderSides = getClientProperty(scrollPane, KEEP_BORDER_SIDES);
             if (keepBorderSides != null) {
               if (scrollPane.getBorder() instanceof LineBorder) {
                 Color color = ((LineBorder)scrollPane.getBorder()).getLineColor();
@@ -2713,6 +2882,15 @@ public class UIUtil {
     }
   }
 
+  public static void setBackgroundRecursively(@NotNull Component component, @NotNull Color bg) {
+    component.setBackground(bg);
+    if (component instanceof Container) {
+      for (Component c : ((Container)component).getComponents()) {
+        setBackgroundRecursively(c, bg);
+      }
+    }
+  }
+
   public static void addInsets(@NotNull JComponent component, @NotNull Insets insets) {
     if (component.getBorder() != null) {
       component.setBorder(new CompoundBorder(new EmptyBorder(insets), component.getBorder()));
@@ -2867,28 +3045,21 @@ public class UIUtil {
     return false;
   }
 
-  public static void addUndoRedoActions(JTextComponent textComponent) {
-    final UndoManager undoManager = new UndoManager();
+  public static void resetUndoRedoActions(@NotNull JTextComponent textComponent) {
+    UndoManager undoManager = getClientProperty(textComponent, UNDO_MANAGER);
+    if (undoManager != null) {
+      undoManager.discardAllEdits();
+    }
+  }
+
+  public static void addUndoRedoActions(@NotNull final JTextComponent textComponent) {
+    UndoManager undoManager = new UndoManager();
+    textComponent.putClientProperty(UNDO_MANAGER, undoManager);
     textComponent.getDocument().addUndoableEditListener(undoManager);
     textComponent.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_Z, SystemInfo.isMac? InputEvent.META_MASK : InputEvent.CTRL_MASK), "undoKeystroke");
-    textComponent.getActionMap().put("undoKeystroke", new AbstractAction() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        if (undoManager.canUndo()) {
-          undoManager.undo();
-        }
-      }
-    });
-    textComponent.getInputMap().put(
-      KeyStroke.getKeyStroke(KeyEvent.VK_Z, (SystemInfo.isMac? InputEvent.META_MASK : InputEvent.CTRL_MASK) | InputEvent.SHIFT_MASK), "redoKeystroke");
-    textComponent.getActionMap().put("redoKeystroke", new AbstractAction() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-         if (undoManager.canRedo()) {
-           undoManager.redo();
-         }
-      }
-    });
+    textComponent.getActionMap().put("undoKeystroke", UNDO_ACTION);
+    textComponent.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_Z, (SystemInfo.isMac? InputEvent.META_MASK : InputEvent.CTRL_MASK) | InputEvent.SHIFT_MASK), "redoKeystroke");
+    textComponent.getActionMap().put("redoKeystroke", REDO_ACTION);
   }
 
   public static void playSoundFromResource(final String resourceName) {
@@ -2973,8 +3144,7 @@ public class UIUtil {
 
   @NotNull
   public static String rightArrow() {
-    char rightArrow = '\u2192';
-    return getLabelFont().canDisplay(rightArrow) ? String.valueOf(rightArrow) : "->";
+    return FontUtil.rightArrow(getLabelFont());
   }
 
   public static EmptyBorder getTextAlignBorder(@NotNull JToggleButton alignSource) {
@@ -3008,7 +3178,7 @@ public class UIUtil {
   }
 
   public static Color getSidePanelColor() {
-    return new JBColor(new Color(0xD2D6DD), new Color(60, 68, 71));
+    return new JBColor(0xD2D6DD, 0x3C4447);
   }
 
   /**

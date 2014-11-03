@@ -6,3 +6,4 @@ IntelliLang
 IntelliLang-python
 learn-python
 course-creator
+hg4idea

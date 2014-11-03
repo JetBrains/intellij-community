@@ -31,9 +31,7 @@ import com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
-import com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken;
-import com.intellij.psi.codeStyle.arrangement.std.StdArrangementSettings;
-import com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens;
+import com.intellij.psi.codeStyle.arrangement.std.*;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -80,6 +78,10 @@ public abstract class AbstractRearrangerTest extends LightPlatformCodeInsightFix
 
   protected static ArrangementSectionRule section(@Nullable String start, @Nullable String end, @NotNull StdArrangementMatchRule... rules) {
     return ArrangementSectionRule.create(start, end, rules);
+  }
+
+  protected static StdArrangementRuleAliasToken alias(@NotNull String id, @NotNull StdArrangementMatchRule... rules) {
+    return new StdArrangementRuleAliasToken(id, id, ContainerUtil.newArrayList(rules));
   }
 
   @NotNull
@@ -142,6 +144,10 @@ public abstract class AbstractRearrangerTest extends LightPlatformCodeInsightFix
     return new ArrangementAtomMatchCondition(token);
   }
 
+  protected static ArrangementAtomMatchCondition atom(@NotNull ArrangementSettingsToken token, boolean included) {
+    return new ArrangementAtomMatchCondition(token, included);
+  }
+
   @NotNull
   protected static ArrangementAtomMatchCondition atom(@NotNull String nameFilter) {
     return new ArrangementAtomMatchCondition(StdArrangementTokens.Regexp.NAME, nameFilter);
@@ -177,16 +183,16 @@ public abstract class AbstractRearrangerTest extends LightPlatformCodeInsightFix
     if (groupingRules == null) groupingRules = Collections.emptyList();
 
     List<?> rules = (List<?>)args.get("rules");
-    List<ArrangementSectionRule> sectionRules = Collections.emptyList();
-    if (rules != null) sectionRules = ContainerUtil.map(rules, new Function<Object, ArrangementSectionRule>() {
-      @Override
-      public ArrangementSectionRule fun(Object o) {
-        return o instanceof ArrangementSectionRule ? (ArrangementSectionRule)o : ArrangementSectionRule.create((StdArrangementMatchRule)o);
-      }
-    });
+    List<ArrangementSectionRule> sectionRules = getSectionRules(rules);
 
+    @SuppressWarnings("unchecked")
+    List<StdArrangementRuleAliasToken> aliases = (List<StdArrangementRuleAliasToken>)args.get("aliases");
     CommonCodeStyleSettings settings = CodeStyleSettingsManager.getInstance(myFixture.getProject()).getCurrentSettings().getCommonSettings(language);
-    settings.setArrangementSettings(new StdArrangementSettings(groupingRules, sectionRules));
+    final StdArrangementSettings arrangementSettings =
+      aliases == null ?
+      new StdArrangementSettings(groupingRules, sectionRules) :
+      new StdArrangementExtendableSettings(groupingRules, sectionRules, aliases);
+    settings.setArrangementSettings(arrangementSettings);
     ArrangementEngine engine = ServiceManager.getService(myFixture.getProject(), ArrangementEngine.class);
     engine.arrange(myFixture.getEditor(), myFixture.getFile(), info.ranges);
 
@@ -198,6 +204,17 @@ public abstract class AbstractRearrangerTest extends LightPlatformCodeInsightFix
       assertNotNull("Expected to find fold region at offset " + it.start, foldRegion);
       assertEquals(it.end, foldRegion.getEndOffset());
     }
+  }
+
+  protected List<ArrangementSectionRule> getSectionRules(List<?> rules) {
+    List<ArrangementSectionRule> sectionRules = Collections.emptyList();
+    if (rules != null) sectionRules = ContainerUtil.map(rules, new Function<Object, ArrangementSectionRule>() {
+      @Override
+      public ArrangementSectionRule fun(Object o) {
+        return o instanceof ArrangementSectionRule ? (ArrangementSectionRule)o : ArrangementSectionRule.create((StdArrangementMatchRule)o);
+      }
+    });
+    return sectionRules;
   }
 
   private static boolean isEmpty(Collection<?> collection) {

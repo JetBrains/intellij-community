@@ -387,7 +387,7 @@ public class SimplifyExprentsHelper {
       if (asf.getLeft().type == Exprent.EXPRENT_VAR && ass.getRight().type == Exprent.EXPRENT_VAR &&
           asf.getLeft().equals(ass.getRight()) && ((VarExprent)asf.getLeft()).isStack()) {
         if (ass.getLeft().type != Exprent.EXPRENT_VAR || !((VarExprent)ass.getLeft()).isStack()) {
-          asf.setRight(new AssignmentExprent(ass.getLeft(), asf.getRight()));
+          asf.setRight(new AssignmentExprent(ass.getLeft(), asf.getRight(), ass.bytecode));
           return true;
         }
       }
@@ -450,7 +450,7 @@ public class SimplifyExprentsHelper {
             if (left.type != Exprent.EXPRENT_VAR && left.equals(econd)) {
               FunctionExprent ret = new FunctionExprent(
                 func.getFunctype() == FunctionExprent.FUNCTION_ADD ? FunctionExprent.FUNCTION_PPI : FunctionExprent.FUNCTION_MMI,
-                Arrays.asList(new Exprent[]{econd}));
+                Arrays.asList(econd), func.bytecode);
               ret.setImplicitType(VarType.VARTYPE_INT);
               return ret;
             }
@@ -707,7 +707,7 @@ public class SimplifyExprentsHelper {
 
         if (lambda_class != null) { // real lambda class found, replace invocation with an anonymous class
 
-          NewExprent newexp = new NewExprent(new VarType(lambda_class_name, true), null, 0);
+          NewExprent newexp = new NewExprent(new VarType(lambda_class_name, true), null, 0, in.bytecode);
           newexp.setConstructor(in);
           // note: we don't set the instance to null with in.setInstance(null) like it is done for a common constructor invokation
           // lambda can also be a reference to a virtual method (e.g. String x; ...(x::toString);)
@@ -750,6 +750,10 @@ public class SimplifyExprentsHelper {
 
     if (stat.type == Statement.TYPE_IF && stat.getExprents() == null) {
       IfStatement stif = (IfStatement)stat;
+
+      Exprent ifheadexpr = stif.getHeadexprent();
+      Set<Integer> ifheadexpr_bytecode = (ifheadexpr == null ? null : ifheadexpr.bytecode);
+
       if (stif.iftype == IfStatement.IFTYPE_IFELSE) {
         Statement ifstat = stif.getIfstat();
         Statement elsestat = stif.getElsestat();
@@ -788,10 +792,10 @@ public class SimplifyExprentsHelper {
                   data.addAll(stif.getFirst().getExprents());
 
                   data.add(new AssignmentExprent(ifvar, new FunctionExprent(FunctionExprent.FUNCTION_IIF,
-                                                                            Arrays.asList(new Exprent[]{
+                                                                            Arrays.asList(
                                                                               stif.getHeadexprent().getCondition(),
                                                                               ifas.getRight(),
-                                                                              elseas.getRight()}))));
+                                                                              elseas.getRight()), ifheadexpr_bytecode), ifheadexpr_bytecode));
                   stif.setExprents(data);
 
                   if (stif.getAllSuccessorEdges().isEmpty()) {
@@ -829,10 +833,10 @@ public class SimplifyExprentsHelper {
               data.addAll(stif.getFirst().getExprents());
 
               data.add(new ExitExprent(ifex.getExittype(), new FunctionExprent(FunctionExprent.FUNCTION_IIF,
-                                                                               Arrays.asList(new Exprent[]{
+                                                                               Arrays.asList(
                                                                                  stif.getHeadexprent().getCondition(),
                                                                                  ifex.getValue(),
-                                                                                 elseex.getValue()})), ifex.getRettype()));
+                                                                                 elseex.getValue()), ifheadexpr_bytecode), ifex.getRettype(), ifheadexpr_bytecode));
               stif.setExprents(data);
 
               StatEdge retedge = ifstat.getAllSuccessorEdges().get(0);

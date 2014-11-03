@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.StateStorageException;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.xmlb.JDOMXIncluder;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -29,26 +30,27 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.Collection;
 import java.util.Set;
-
 
 class DefaultsStateStorage implements StateStorage {
   private final PathMacroManager myPathMacroManager;
-
 
   public DefaultsStateStorage(@Nullable final PathMacroManager pathMacroManager) {
     myPathMacroManager = pathMacroManager;
   }
 
   @Nullable
-  public Element getState(final Object component, final String componentName) throws StateStorageException {
+  private Element getState(final Object component, final String componentName) throws StateStorageException {
     final URL url = DecodeDefaultsUtil.getDefaults(component, componentName);
-    if (url == null) return null;
+    if (url == null) {
+      return null;
+    }
 
     try {
       Document document = JDOMUtil.loadDocument(url);
       document = JDOMXIncluder.resolve(document, url.toExternalForm());
-      final Element documentElement = document.getRootElement();
+      final Element documentElement = document.detachRootElement();
 
       if (myPathMacroManager != null) {
         myPathMacroManager.expandPaths(documentElement);
@@ -64,33 +66,24 @@ class DefaultsStateStorage implements StateStorage {
     }
   }
 
+  @Override
   @Nullable
-  public <T> T getState(final Object component, @NotNull final String componentName, final Class<T> stateClass, @Nullable final T mergeInto) throws
-                                                                                                                                    StateStorageException {
+  public <T> T getState(final Object component, @NotNull final String componentName, @NotNull final Class<T> stateClass, @Nullable final T mergeInto) {
     return DefaultStateSerializer.deserializeState(getState(component, componentName), stateClass, mergeInto);
   }
 
-  public boolean hasState(final Object component, @NotNull final String componentName, final Class<?> aClass, final boolean reloadData) throws StateStorageException {
-    final URL url = DecodeDefaultsUtil.getDefaults(component, componentName);
-    return url != null;
+  @Override
+  public boolean hasState(@Nullable final Object component, @NotNull final String componentName, final Class<?> aClass, final boolean reloadData) {
+    return DecodeDefaultsUtil.getDefaults(component, componentName) != null;
   }
 
-  @NotNull
+  @Override
+  @Nullable
   public ExternalizationSession startExternalization() {
-    throw new UnsupportedOperationException("Method startExternalization not implemented in " + getClass());
+    return null;
   }
 
-  @NotNull
-  public SaveSession startSave(@NotNull ExternalizationSession externalizationSession) {
-    throw new UnsupportedOperationException("Method startSave not implemented in " + getClass());
+  @Override
+  public void analyzeExternalChangesAndUpdateIfNeed(@NotNull Collection<VirtualFile> changedFiles, @NotNull Set<String> result) {
   }
-
-  public void finishSave(@NotNull SaveSession saveSession) {
-    throw new UnsupportedOperationException("Method finishSave not implemented in " + getClass());
-  }
-
-  public void reload(@NotNull Set<String> changedComponents) {
-    throw new UnsupportedOperationException("Method reload not implemented in " + getClass());
-  }
-
 }

@@ -16,16 +16,20 @@
 
 package com.intellij.psi.impl.source.tree;
 
-import com.intellij.lang.ASTNode;
-import com.intellij.lang.FileASTNode;
+import com.intellij.lang.*;
 import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.CharTableImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.IFileElementType;
+import com.intellij.psi.tree.ILightStubFileElementType;
+import com.intellij.reference.SoftReference;
 import com.intellij.util.CharTable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class FileElement extends LazyParseableElement implements FileASTNode, Getter<FileElement> {
   private volatile CharTable myCharTable = new CharTableImpl();
@@ -45,6 +49,35 @@ public class FileElement extends LazyParseableElement implements FileASTNode, Ge
   @NotNull
   public CharTable getCharTable() {
     return myCharTable;
+  }
+
+  private static final Key<SoftReference<LighterAST>> ourTreeKey = Key.create("lighter.key");
+
+  @Nullable
+  @Override
+  public LighterAST getLighterAST() {
+    final IFileElementType contentType = (IFileElementType)getElementType();
+    assert contentType instanceof ILightStubFileElementType:contentType;
+
+    LighterAST tree;
+    if (!isParsed()) {
+      tree = SoftReference.dereference(getUserData(ourTreeKey));
+      if (tree == null) {
+        final ILightStubFileElementType<?> type = (ILightStubFileElementType)contentType;
+        tree = new FCTSBackedLighterAST(getCharTable(), type.parseContentsLight(this));
+        tree = SoftReference.dereference(putUserDataIfAbsent(ourTreeKey, new SoftReference<LighterAST>(tree)));
+      }
+    }
+    else {
+      tree = new TreeBackedLighterAST(this);
+    }
+    return tree;
+  }
+
+  @Override
+  protected void resetCachesOnParsedStateUpdate() {
+    putUserData(ourTreeKey, null);
+    super.resetCachesOnParsedStateUpdate();
   }
 
   public FileElement(IElementType type, CharSequence text) {

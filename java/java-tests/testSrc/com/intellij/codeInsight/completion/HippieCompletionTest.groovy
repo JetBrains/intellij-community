@@ -211,6 +211,14 @@ foo->bar
 '''
   }
 
+  public void "test inside word"() {
+    myFixture.configureByText "a.c", 'foo fox f<caret>bar'
+    complete()
+    myFixture.checkResult 'foo fox fox<caret>bar'
+    complete()
+    myFixture.checkResult 'foo fox foo<caret>bar'
+  }
+
   private void complete() {
     myFixture.performEditorAction(IdeActions.ACTION_HIPPIE_COMPLETION)
   }

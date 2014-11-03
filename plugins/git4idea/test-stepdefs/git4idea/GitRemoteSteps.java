@@ -15,7 +15,6 @@
  */
 package git4idea;
 
-import com.intellij.openapi.progress.EmptyProgressIndicator;
 import cucumber.annotation.en.Then;
 import cucumber.annotation.en.When;
 import git4idea.checkout.GitCheckoutProvider;
@@ -48,7 +47,7 @@ public class GitRemoteSteps {
       @Override
       public void run() {
         String projectName = url.substring(url.lastIndexOf('/') + 1).replace(".git", "");
-        GitCheckoutProvider.doClone(myProject, new EmptyProgressIndicator(), myGit, projectName, myTestRoot, url);
+        GitCheckoutProvider.doClone(myProject, myGit, projectName, myTestRoot, url);
         myCloneCompleted.countDown();
       }
     });

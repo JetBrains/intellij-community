@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,9 +21,11 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReferenceBase;
+import com.intellij.psi.ResolvingHint;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.xml.impl.XmlEnumerationDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,7 +34,7 @@ import org.jetbrains.annotations.Nullable;
 * @author Dmitry Avdeev
 *         Date: 16.08.13
 */
-public class XmlEnumeratedValueReference extends PsiReferenceBase<XmlElement> implements EmptyResolveMessageProvider {
+public class XmlEnumeratedValueReference extends PsiReferenceBase<XmlElement> implements EmptyResolveMessageProvider, ResolvingHint {
   private final XmlEnumerationDescriptor myDescriptor;
 
   public XmlEnumeratedValueReference(XmlElement value, XmlEnumerationDescriptor descriptor) {
@@ -43,6 +45,11 @@ public class XmlEnumeratedValueReference extends PsiReferenceBase<XmlElement> im
   public XmlEnumeratedValueReference(XmlElement value, XmlEnumerationDescriptor descriptor, TextRange range) {
     super(value, range);
     myDescriptor = descriptor;
+  }
+
+  @Override
+  public boolean canResolveTo(Class<? extends PsiElement> elementClass) {
+    return ReflectionUtil.isAssignable(XmlElement.class, elementClass);
   }
 
   @Nullable

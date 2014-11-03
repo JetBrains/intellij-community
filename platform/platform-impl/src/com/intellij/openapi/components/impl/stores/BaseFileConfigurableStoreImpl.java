@@ -25,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
@@ -75,8 +76,8 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
 
     @Override
     @NotNull
-    protected Element save() {
-      Element root = super.save();
+    protected Element save(@NotNull Map<String, Element> newLiveStates) {
+      Element root = super.save(newLiveStates);
       if (root == null) {
         root = new Element(myRootElementName);
       }
@@ -90,21 +91,14 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
       return new BaseStorageData(this);
     }
 
-    @Override
-    protected int computeHash() {
-      int result = super.computeHash();
-      result = result * 31 + myVersion;
-      return result;
-    }
-
     @Nullable
     @Override
-    public Set<String> getChangedComponentNames(@NotNull StorageData storageData, @Nullable PathMacroSubstitutor substitutor) {
-      BaseStorageData data = (BaseStorageData)storageData;
+    public Set<String> getChangedComponentNames(@NotNull StorageData newStorageData, @Nullable PathMacroSubstitutor substitutor) {
+      BaseStorageData data = (BaseStorageData)newStorageData;
       if (myVersion != data.myVersion) {
         return null;
       }
-      return super.getChangedComponentNames(storageData, substitutor);
+      return super.getChangedComponentNames(newStorageData, substitutor);
     }
   }
 

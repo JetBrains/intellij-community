@@ -32,12 +32,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 
 /**
  * @author Eugene Belyaev
@@ -55,7 +54,6 @@ public final class StructureViewFactoryImpl extends StructureViewFactoryEx imple
     @SuppressWarnings({"WeakerAccess"}) public boolean AUTOSCROLL_MODE = true;
     @SuppressWarnings({"WeakerAccess"}) public boolean AUTOSCROLL_FROM_SOURCE = false;
     @SuppressWarnings({"WeakerAccess"}) public String ACTIVE_ACTIONS = "";
-    public boolean SHOW_TOOLBAR = false;
   }
 
   private final Project myProject;
@@ -145,8 +143,7 @@ public final class StructureViewFactoryImpl extends StructureViewFactoryEx imple
   }
 
   private Collection<String> collectActiveActions() {
-    final String[] strings = myState.ACTIVE_ACTIONS.split(",");
-    return new HashSet<String>(Arrays.asList(strings));
+    return ContainerUtil.newLinkedHashSet(myState.ACTIVE_ACTIONS.split(","));
   }
 
   @Override

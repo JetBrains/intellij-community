@@ -28,7 +28,7 @@ import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.SuppressionUtil;
-import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
+import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.ex.EntryPointsManagerBase;
 import com.intellij.codeInspection.reference.UnusedDeclarationFixProvider;
 import com.intellij.codeInspection.unusedImport.UnusedImportLocalInspection;
@@ -57,7 +57,6 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.source.PsiClassImpl;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PsiNonJavaFileReferenceProcessor;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
@@ -93,7 +92,6 @@ public class PostHighlightingPass extends ProgressableTextEditorHighlightingPass
   private boolean myHasMissortedImports;
   private static final ImplicitUsageProvider[] ourImplicitUsageProviders = Extensions.getExtensions(ImplicitUsageProvider.EP_NAME);
   private UnusedSymbolLocalInspectionBase myUnusedSymbolInspection;
-  private HighlightDisplayKey myUnusedSymbolKey;
   private boolean myInLibrary;
   private HighlightDisplayKey myDeadCodeKey;
   private HighlightInfoType myDeadCodeInfoType;
@@ -203,12 +201,15 @@ public class PostHighlightingPass extends ProgressableTextEditorHighlightingPass
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
     InspectionProfile profile = InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile();
-    myUnusedSymbolKey = HighlightDisplayKey.find(UnusedSymbolLocalInspectionBase.SHORT_NAME);
-    boolean unusedSymbolEnabled = profile.isToolEnabled(myUnusedSymbolKey, myFile);
-    myUnusedSymbolInspection = (UnusedSymbolLocalInspectionBase)profile.getUnwrappedTool(UnusedSymbolLocalInspectionBase.SHORT_NAME, myFile);
-    LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode() || myUnusedSymbolInspection != null);
 
-    myDeadCodeKey = HighlightDisplayKey.find(UnusedDeclarationInspection.SHORT_NAME);
+    myDeadCodeKey = HighlightDisplayKey.find(UnusedDeclarationInspectionBase.SHORT_NAME);
+    boolean unusedSymbolEnabled = profile.isToolEnabled(myDeadCodeKey, myFile);
+
+    final UnusedDeclarationInspectionBase
+      unwrappedTool = (UnusedDeclarationInspectionBase)profile.getUnwrappedTool(UnusedDeclarationInspectionBase.SHORT_NAME, myFile);
+    LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode() || unwrappedTool != null);
+
+    myUnusedSymbolInspection = unwrappedTool != null ? unwrappedTool.getSharedLocalInspectionTool() : null;
 
     HighlightDisplayKey unusedImportKey = HighlightDisplayKey.find(UnusedImportLocalInspection.SHORT_NAME);
 
@@ -306,17 +307,17 @@ public class PostHighlightingPass extends ProgressableTextEditorHighlightingPass
 
     if (!myRefCountHolder.isReferenced(variable)) {
       String message = JavaErrorMessages.message("local.variable.is.never.used", identifier.getText());
-      HighlightInfo highlightInfo = createUnusedSymbolInfo(identifier, message, HighlightInfoType.UNUSED_SYMBOL);
+      HighlightInfo highlightInfo = createUnusedSymbolInfo(identifier, message, myDeadCodeInfoType);
       IntentionAction fix = variable instanceof PsiResourceVariable ? QuickFixFactory.getInstance().createRenameToIgnoredFix(variable) : QuickFixFactory.getInstance().createRemoveUnusedVariableFix(variable);
-      QuickFixAction.registerQuickFixAction(highlightInfo, fix, myUnusedSymbolKey);
+      QuickFixAction.registerQuickFixAction(highlightInfo, fix, myDeadCodeKey);
       return highlightInfo;
     }
 
     boolean referenced = myRefCountHolder.isReferencedForRead(variable);
     if (!referenced && !isImplicitRead(myProject, variable, progress)) {
       String message = JavaErrorMessages.message("local.variable.is.not.used.for.reading", identifier.getText());
-      HighlightInfo highlightInfo = createUnusedSymbolInfo(identifier, message, HighlightInfoType.UNUSED_SYMBOL);
-      QuickFixAction.registerQuickFixAction(highlightInfo, QuickFixFactory.getInstance().createRemoveUnusedVariableFix(variable), myUnusedSymbolKey);
+      HighlightInfo highlightInfo = createUnusedSymbolInfo(identifier, message, myDeadCodeInfoType);
+      QuickFixAction.registerQuickFixAction(highlightInfo, QuickFixFactory.getInstance().createRemoveUnusedVariableFix(variable), myDeadCodeKey);
       return highlightInfo;
     }
 
@@ -324,8 +325,8 @@ public class PostHighlightingPass extends ProgressableTextEditorHighlightingPass
       referenced = myRefCountHolder.isReferencedForWrite(variable);
       if (!referenced && !isImplicitWrite(myProject, variable, progress)) {
         String message = JavaErrorMessages.message("local.variable.is.not.assigned", identifier.getText());
-        final HighlightInfo unusedSymbolInfo = createUnusedSymbolInfo(identifier, message, HighlightInfoType.UNUSED_SYMBOL);
-        QuickFixAction.registerQuickFixAction(unusedSymbolInfo, new EmptyIntentionAction(UnusedSymbolLocalInspectionBase.DISPLAY_NAME), myUnusedSymbolKey);
+        final HighlightInfo unusedSymbolInfo = createUnusedSymbolInfo(identifier, message, myDeadCodeInfoType);
+        QuickFixAction.registerQuickFixAction(unusedSymbolInfo, new EmptyIntentionAction(UnusedSymbolLocalInspectionBase.DISPLAY_NAME), myDeadCodeKey);
         return unusedSymbolInfo;
       }
     }
@@ -420,9 +421,9 @@ public class PostHighlightingPass extends ProgressableTextEditorHighlightingPass
       final boolean writeReferenced = myRefCountHolder.isReferencedForWrite(field);
       if (!writeReferenced && !isImplicitWrite(project, field, progress)) {
         String message = JavaErrorMessages.message("private.field.is.not.assigned", identifier.getText());
-        final HighlightInfo info = createUnusedSymbolInfo(identifier, message, HighlightInfoType.UNUSED_SYMBOL);
+        final HighlightInfo info = createUnusedSymbolInfo(identifier, message, myDeadCodeInfoType);
 
-        QuickFixAction.registerQuickFixAction(info, QuickFixFactory.getInstance().createCreateGetterOrSetterFix(false, true, field), myUnusedSymbolKey);
+        QuickFixAction.registerQuickFixAction(info, QuickFixFactory.getInstance().createCreateGetterOrSetterFix(false, true, field), myDeadCodeKey);
         QuickFixAction.registerQuickFixAction(info, HighlightMethodUtil.getFixRange(field), QuickFixFactory.getInstance().createCreateConstructorParameterFromFieldFix(
           field));
         SpecialAnnotationsUtilBase.createAddToSpecialAnnotationFixes(field, new Processor<String>() {
@@ -457,11 +458,11 @@ public class PostHighlightingPass extends ProgressableTextEditorHighlightingPass
   }
 
   private HighlightInfo suggestionsToMakeFieldUsed(@NotNull PsiField field, @NotNull PsiIdentifier identifier, @NotNull String message) {
-    HighlightInfo highlightInfo = createUnusedSymbolInfo(identifier, message, HighlightInfoType.UNUSED_SYMBOL);
-    QuickFixAction.registerQuickFixAction(highlightInfo, QuickFixFactory.getInstance().createRemoveUnusedVariableFix(field), myUnusedSymbolKey);
-    QuickFixAction.registerQuickFixAction(highlightInfo, QuickFixFactory.getInstance().createCreateGetterOrSetterFix(true, false, field), myUnusedSymbolKey);
-    QuickFixAction.registerQuickFixAction(highlightInfo, QuickFixFactory.getInstance().createCreateGetterOrSetterFix(false, true, field), myUnusedSymbolKey);
-    QuickFixAction.registerQuickFixAction(highlightInfo, QuickFixFactory.getInstance().createCreateGetterOrSetterFix(true, true, field), myUnusedSymbolKey);
+    HighlightInfo highlightInfo = createUnusedSymbolInfo(identifier, message, myDeadCodeInfoType);
+    QuickFixAction.registerQuickFixAction(highlightInfo, QuickFixFactory.getInstance().createRemoveUnusedVariableFix(field), myDeadCodeKey);
+    QuickFixAction.registerQuickFixAction(highlightInfo, QuickFixFactory.getInstance().createCreateGetterOrSetterFix(true, false, field), myDeadCodeKey);
+    QuickFixAction.registerQuickFixAction(highlightInfo, QuickFixFactory.getInstance().createCreateGetterOrSetterFix(false, true, field), myDeadCodeKey);
+    QuickFixAction.registerQuickFixAction(highlightInfo, QuickFixFactory.getInstance().createCreateGetterOrSetterFix(true, true, field), myDeadCodeKey);
     return highlightInfo;
   }
 
@@ -499,7 +500,7 @@ public class PostHighlightingPass extends ProgressableTextEditorHighlightingPass
     else if (declarationScope instanceof PsiForeachStatement && !PsiUtil.isIgnoredName(parameter.getName())) {
       HighlightInfo highlightInfo = checkUnusedParameter(parameter, identifier, progress);
       if (highlightInfo != null) {
-        QuickFixAction.registerQuickFixAction(highlightInfo, QuickFixFactory.getInstance().createRenameToIgnoredFix(parameter), myUnusedSymbolKey);
+        QuickFixAction.registerQuickFixAction(highlightInfo, QuickFixFactory.getInstance().createRenameToIgnoredFix(parameter), myDeadCodeKey);
         return highlightInfo;
       }
     }
@@ -519,7 +520,7 @@ public class PostHighlightingPass extends ProgressableTextEditorHighlightingPass
         return null;
       }
       String message = JavaErrorMessages.message("parameter.is.not.used", identifier.getText());
-      return createUnusedSymbolInfo(identifier, message, HighlightInfoType.UNUSED_SYMBOL);
+      return createUnusedSymbolInfo(identifier, message, myDeadCodeInfoType);
     }
     return null;
   }
@@ -531,17 +532,13 @@ public class PostHighlightingPass extends ProgressableTextEditorHighlightingPass
                                       @NotNull ProgressIndicator progress,
                                       @NotNull GlobalUsageHelper helper) {
     if (isMethodReferenced(myProject, myFile, method, progress, helper)) return null;
-    HighlightInfoType highlightInfoType;
-    HighlightDisplayKey highlightDisplayKey;
+    final HighlightInfoType highlightInfoType = myDeadCodeInfoType;
+    final HighlightDisplayKey highlightDisplayKey = myDeadCodeKey;
     String key;
     if (method.hasModifierProperty(PsiModifier.PRIVATE)) {
-      highlightInfoType = HighlightInfoType.UNUSED_SYMBOL;
-      highlightDisplayKey = myUnusedSymbolKey;
       key = method.isConstructor() ? "private.constructor.is.not.used" : "private.method.is.not.used";
     }
     else {
-      highlightInfoType = myDeadCodeInfoType;
-      highlightDisplayKey = myDeadCodeKey;
       key = method.isConstructor() ? "constructor.is.not.used" : "method.is.not.used";
     }
     String symbolName = HighlightMessageUtil.getSymbolName(method, PsiSubstitutor.EMPTY);
@@ -617,7 +614,9 @@ public class PostHighlightingPass extends ProgressableTextEditorHighlightingPass
         useScope = GlobalSearchScope.projectScope(project).uniteWith((GlobalSearchScope)useScope);
       }
 
-      PsiSearchHelper.SearchCostResult cheapEnough = searchHelper.isCheapEnoughToSearch(name, (GlobalSearchScope)useScope, ignoreFile, progress);
+      // if we've resolved all references, find usages will be fast
+      PsiSearchHelper.SearchCostResult cheapEnough = RefResolveService.ENABLED && RefResolveService.getInstance(project).isUpToDate() ? PsiSearchHelper.SearchCostResult.FEW_OCCURRENCES :
+                                                     searchHelper.isCheapEnoughToSearch(name, (GlobalSearchScope)useScope, ignoreFile, progress);
       if (cheapEnough == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES) return false;
 
       //search usages if it cheap
@@ -669,22 +668,7 @@ public class PostHighlightingPass extends ProgressableTextEditorHighlightingPass
         return element instanceof PsiComment; // ignore comments
       }
     });
-    if (foundUsage) return false;
-    return true;//!(useScope instanceof GlobalSearchScope) || !foundUsageInText(member, (GlobalSearchScope)useScope, searchHelper, ignoreFile);
-  }
-
-  private static boolean foundUsageInText(@NotNull PsiMember member,
-                                          @NotNull GlobalSearchScope scope,
-                                          @NotNull PsiSearchHelper searchHelper,
-                                          final PsiFile ignoreFile) {
-    return !searchHelper.processUsagesInNonJavaFiles(member, member.getName(), new PsiNonJavaFileReferenceProcessor() {
-      @Override
-      public boolean process(final PsiFile psiFile, final int startOffset, final int endOffset) {
-        if (psiFile == ignoreFile) return true; // ignore usages in containingFile because isLocallyUsed() method would have caught that
-        PsiElement element = psiFile.findElementAt(startOffset);
-        return element instanceof PsiComment; // ignore comments
-      }
-    }, scope);
+    return !foundUsage;
   }
 
   private static boolean isEnumValuesMethodUsed(@NotNull Project project,
@@ -717,29 +701,21 @@ public class PostHighlightingPass extends ProgressableTextEditorHighlightingPass
     if (isClassUsed(project, myFile, aClass, progress, helper)) return null;
 
     String pattern;
-    HighlightDisplayKey highlightDisplayKey;
-    HighlightInfoType highlightInfoType;
+    HighlightDisplayKey highlightDisplayKey = myDeadCodeKey;
+    HighlightInfoType highlightInfoType = myDeadCodeInfoType;
     if (aClass.getContainingClass() != null && aClass.hasModifierProperty(PsiModifier.PRIVATE)) {
       pattern = aClass.isInterface()
                        ? "private.inner.interface.is.not.used"
                        : "private.inner.class.is.not.used";
-      highlightDisplayKey = myUnusedSymbolKey;
-      highlightInfoType = HighlightInfoType.UNUSED_SYMBOL;
     }
     else if (aClass.getParent() instanceof PsiDeclarationStatement) { // local class
       pattern = "local.class.is.not.used";
-      highlightDisplayKey = myUnusedSymbolKey;
-      highlightInfoType = HighlightInfoType.UNUSED_SYMBOL;
     }
     else if (aClass instanceof PsiTypeParameter) {
       pattern = "type.parameter.is.not.used";
-      highlightDisplayKey = myUnusedSymbolKey;
-      highlightInfoType = HighlightInfoType.UNUSED_SYMBOL;
     }
     else {
       pattern = "class.is.not.used";
-      highlightDisplayKey = myDeadCodeKey;
-      highlightInfoType = myDeadCodeInfoType;
     }
     return formatUnusedSymbolHighlightInfo(myProject, pattern, aClass, "classes", highlightDisplayKey, highlightInfoType, identifier);
   }

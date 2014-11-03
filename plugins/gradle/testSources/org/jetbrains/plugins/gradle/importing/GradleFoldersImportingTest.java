@@ -43,6 +43,29 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
   }
 
   @Test
+  public void testCompileOutputPathCustomizedWithIdeaPlugin() throws Exception {
+
+    importProject(
+      "apply plugin: 'java'\n" +
+      "apply plugin: 'idea'\n" +
+      "idea {\n" +
+      "  module {\n" +
+      "    outputDir = file(buildDir)\n" +
+      "  }\n" +
+      "}"
+    );
+
+    assertModules("project");
+    assertContentRoots("project", getProjectPath());
+
+    assertDefaultGradleJavaProjectFolders("project");
+
+    assertModuleOutput("project",
+                       getProjectPath() + "/build",
+                       getProjectPath() + "/build/classes/test");
+  }
+
+  @Test
   public void testProjectWithInheritedOutputDirs() throws Exception {
 
     importProject(

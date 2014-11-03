@@ -191,9 +191,16 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    ((StartupManagerImpl)StartupManager.getInstance(getProject())).checkCleared();
-    ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject())).cleanupAfterTest();
-    super.tearDown();
+    try {
+      final Project project = getProject();
+      if (project != null) {
+        ((StartupManagerImpl)StartupManager.getInstance(project)).checkCleared();
+        ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project)).cleanupAfterTest();
+      }
+    }
+    finally {
+      super.tearDown();
+    }
     //((VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance()).assertPointersDisposed();
   }
 

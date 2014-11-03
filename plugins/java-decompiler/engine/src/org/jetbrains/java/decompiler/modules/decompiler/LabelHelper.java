@@ -426,30 +426,28 @@ public class LabelHelper {
     HashSet<Statement> setContinue = new HashSet<Statement>();
 
     if (stat.getExprents() == null) {
-      for(Statement st : stat.getStats()) {
+      for (Statement st : stat.getStats()) {
         HashSet<Statement>[] arr = processStatementLabel(st);
 
         setBreak.addAll(arr[0]);
         setContinue.addAll(arr[1]);
       }
 
-      boolean shieldtype = (stat.type == Statement.TYPE_DO || stat.type == Statement.TYPE_SWITCH);
-
-      for(StatEdge edge : stat.getLabelEdges()) {
-        if (edge.explicit) {
-          if (shieldtype
-              && ((edge.getType() == StatEdge.TYPE_BREAK && setBreak.contains(edge.getSource())) || (edge.getType() == StatEdge.TYPE_CONTINUE && setContinue.contains(edge
-                  .getSource())))) {
+      boolean shieldType = (stat.type == Statement.TYPE_DO || stat.type == Statement.TYPE_SWITCH);
+      if (shieldType) {
+        for (StatEdge edge : stat.getLabelEdges()) {
+          if (edge.explicit && ((edge.getType() == StatEdge.TYPE_BREAK && setBreak.contains(edge.getSource())) ||
+                                (edge.getType() == StatEdge.TYPE_CONTINUE && setContinue.contains(edge.getSource())))) {
             edge.labeled = false;
           }
         }
       }
 
       switch (stat.type) {
-      case Statement.TYPE_DO:
-        setContinue.clear();
-      case Statement.TYPE_SWITCH:
-        setBreak.clear();
+        case Statement.TYPE_DO:
+          setContinue.clear();
+        case Statement.TYPE_SWITCH:
+          setBreak.clear();
       }
     }
 

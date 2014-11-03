@@ -32,6 +32,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ui.ButtonlessScrollBarUI;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -47,6 +48,7 @@ public interface EditorEx extends Editor {
   @NonNls String PROP_COLUMN_MODE = "columnMode";
   @NonNls String PROP_FONT_SIZE = "fontSize";
   Key<TextRange> LAST_PASTED_REGION = Key.create("LAST_PASTED_REGION");
+  Key<Boolean> SHOW_PLACEHOLDER_WHEN_FOCUSED = Key.create("SHOW_PLACEHOLDER_WHEN_FOCUSED");
 
   @NotNull
   @Override
@@ -176,6 +178,8 @@ public interface EditorEx extends Editor {
   @NotNull
   VisualPosition logicalToVisualPosition(@NotNull LogicalPosition logicalPos, boolean softWrapAware);
 
+  int logicalPositionToOffset(@NotNull LogicalPosition logicalPos, boolean softWrapAware);
+
   /**
    * Creates color scheme delegate which is bound to current editor. E.g. all schema changes will update editor state.
    * @param customGlobalScheme
@@ -196,6 +200,8 @@ public interface EditorEx extends Editor {
   /**
    * Allows to define <code>'placeholder text'</code> for the current editor, i.e. virtual text that will be represented until
    * any user data is entered and current editor is not focused.
+   * <p/>
+   * If {@link EditorEx#SHOW_PLACEHOLDER_WHEN_FOCUSED} is set to <code>'true'</code>, the placeholder is shown in focused editor as well.
    * <p/>
    * Feel free to see the detailed feature
    * definition <a href="http://dev.w3.org/html5/spec/Overview.html#the-placeholder-attribute">here</a>.
@@ -262,10 +268,5 @@ public interface EditorEx extends Editor {
    * @param callback  callback which will be called from the {@link javax.swing.JComponent#paint(java.awt.Graphics)} method of
    *                  the editor vertical scrollbar.
    */
-  void registerScrollBarRepaintCallback(@Nullable RepaintCallback callback);
-
-  interface RepaintCallback {
-    void call(Graphics g);
-  }
-
+  void registerScrollBarRepaintCallback(@Nullable ButtonlessScrollBarUI.ScrollbarRepaintCallback callback);
 }

@@ -16,10 +16,10 @@
 package com.intellij.projectImport;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.Consumer;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -32,5 +32,11 @@ public abstract class ProjectSetProcessor {
 
   public abstract String getId();
 
-  public abstract void processEntries(@NotNull List<Pair<String, String>> entries, @Nullable Object param, @NotNull Consumer<Object> onFinish);
+  public abstract void processEntries(@NotNull List<Pair<String, String>> entries, @NotNull Context context, @NotNull Runnable runNext);
+
+  public static class Context {
+    public VirtualFile directory;
+    public String directoryName;
+    public Project project;
+  }
 }

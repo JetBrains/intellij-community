@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vfs.newvfs;
 
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -74,12 +75,12 @@ public class RefreshQueueImpl extends RefreshQueue {
       public void run() {
         try {
           myRefreshIndicator.start();
-          HeavyProcessLatch.INSTANCE.processStarted();
+          AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("Doing file refresh. " + session.toString());
           try {
             doScan(session);
           }
           finally {
-            HeavyProcessLatch.INSTANCE.processFinished();
+            token.finish();
             myRefreshIndicator.stop();
           }
         }

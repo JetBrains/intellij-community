@@ -425,13 +425,8 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
         myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
       }
       else if (myRole1 == ChildRole.FIELD) {
-        int lines = Math.max(getLinesAroundField(), getLinesAroundMethod()) + 1;
-        // IJ has been keeping initialization block which starts at the same line as a field for a while.
-        // However, it's not convenient for a situation when particular code is created via PSI - it's easier to not bothering
-        // with whitespace elements when inserting, say, new initialization blocks. That's why we don't enforce new line
-        // only during explicit reformatting ('Reformat' action).
-        //int minLineFeeds = FormatterUtil.isFormatterCalledExplicitly() ? 0 : 1;
-        myResult = Spacing.createSpacing(0, mySettings.SPACE_BEFORE_CLASS_LBRACE ? 1 : 0, 1, true, mySettings.KEEP_BLANK_LINES_BEFORE_RBRACE, lines);
+        int blankLines = myJavaSettings.BLANK_LINES_AROUND_INITIALIZER + 1;
+        myResult = Spacing.createSpacing(0, mySettings.SPACE_BEFORE_CLASS_LBRACE ? 1 : 0, blankLines, true, mySettings.KEEP_BLANK_LINES_BEFORE_RBRACE);
       }
       else if (myRole1 == ChildRole.CLASS) {
         setAroundClassSpacing();
@@ -450,7 +445,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
         setAroundClassSpacing();
       }
       else {
-        final int blankLines = getLinesAroundMethod() + 1;
+        final int blankLines = myJavaSettings.BLANK_LINES_AROUND_INITIALIZER + 1;
         myResult = Spacing.createSpacing(0, Integer.MAX_VALUE, blankLines, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
       }
     }
@@ -1129,7 +1124,12 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
 
   @Override
   public void visitModifierList(PsiModifierList list) {
-    myResult = Spacing.createSpacing(1, 1, 0, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
+    if (myType1 == JavaTokenType.END_OF_LINE_COMMENT) {
+      myResult = Spacing.createSpacing(0, Integer.MAX_VALUE, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
+    }
+    else {
+      myResult = Spacing.createSpacing(1, 1, 0, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
+    }
   }
 
   @Override

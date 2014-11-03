@@ -39,11 +39,11 @@ public class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImpl impleme
 
   @NotNull private final ThrowableComputable<Collection<Change>, ? extends Exception> myChangesGetter;
 
-  public VcsChangesLazilyParsedDetails(@NotNull Hash hash, @NotNull List<Hash> parents, long timeStamp, @NotNull VirtualFile root,
+  public VcsChangesLazilyParsedDetails(@NotNull Hash hash, @NotNull List<Hash> parents, long commitTime, @NotNull VirtualFile root,
                                        @NotNull String subject, @NotNull VcsUser author, @NotNull String message,
                                        @NotNull VcsUser committer, long authorTime,
                                        @NotNull ThrowableComputable<Collection<Change>, ? extends Exception> changesGetter) {
-    super(hash, parents, timeStamp, root, subject, author, message, committer, authorTime);
+    super(hash, parents, commitTime, root, subject, author, message, committer, authorTime);
     myChangesGetter = changesGetter;
   }
 

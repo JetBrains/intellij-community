@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package com.jetbrains.numpy.codeInsight;
 
-import com.jetbrains.python.codeInsight.PyDynamicMember;
+import com.jetbrains.python.codeInsight.PyCustomMember;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.types.PyModuleMembersProvider;
 
@@ -39,11 +39,11 @@ public class NumpyModuleMembersProvider extends PyModuleMembersProvider {
   };
 
   @Override
-  protected Collection<PyDynamicMember> getMembersByQName(PyFile module, String qName) {
+  protected Collection<PyCustomMember> getMembersByQName(PyFile module, String qName) {
     if ("numpy".equals(qName)) {
-      final List<PyDynamicMember> members = new ArrayList<PyDynamicMember>();
+      final List<PyCustomMember> members = new ArrayList<PyCustomMember>();
       for (String type : NUMERIC_TYPES) {
-        members.add(new PyDynamicMember(type, "numpy.core.multiarray.dtype", false));
+        members.add(new PyCustomMember(type, "numpy.core.multiarray.dtype", false));
       }
       return members;
     }

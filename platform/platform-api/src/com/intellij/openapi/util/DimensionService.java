@@ -15,12 +15,12 @@
  */
 package com.intellij.openapi.util;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.util.containers.hash.LinkedHashMap;
@@ -41,9 +41,14 @@ import java.util.Map;
  */
 @State(
   name = "DimensionService",
-  storages = {@Storage(file = StoragePathMacros.APP_CONFIG + "/options.xml")})
-public class DimensionService implements PersistentStateComponent<Element>, ApplicationComponent {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.DimensionService");
+  storages = {
+    @Storage(file = StoragePathMacros.APP_CONFIG + "/options.xml"),
+    @Storage(file = StoragePathMacros.APP_CONFIG + "/dimensions.xml", roamingType = RoamingType.DISABLED)
+  },
+  storageChooser = LastStorageChooserForWrite.ElementStateLastStorageChooserForWrite.class
+)
+public class DimensionService implements PersistentStateComponent<Element> {
+  private static final Logger LOG = Logger.getInstance(DimensionService.class);
 
   private final Map<String, Point> myKey2Location;
   private final Map<String, Dimension> myKey2Size;
@@ -59,7 +64,7 @@ public class DimensionService implements PersistentStateComponent<Element>, Appl
   @NonNls private static final String ATTRIBUTE_HEIGHT = "height";
 
   public static DimensionService getInstance() {
-    return ApplicationManager.getApplication().getComponent(DimensionService.class);
+    return ServiceManager.getService(DimensionService.class);
   }
 
   /**
@@ -69,14 +74,6 @@ public class DimensionService implements PersistentStateComponent<Element>, Appl
     myKey2Location = new LinkedHashMap<String, Point>();
     myKey2Size = new LinkedHashMap<String, Dimension>();
     myKey2ExtendedState = new TObjectIntHashMap<String>();
-  }
-
-  @Override
-  public void initComponent() {
-  }
-
-  @Override
-  public void disposeComponent() {
   }
 
   /**
@@ -233,12 +230,6 @@ public class DimensionService implements PersistentStateComponent<Element>, Appl
     }
   }
 
-  @Override
-  @NotNull
-  public String getComponentName() {
-    return "DimensionService";
-  }
-
   public void setExtendedState(String key, int extendedState) {
     myKey2ExtendedState.put(key, extendedState);
   }
@@ -262,15 +253,14 @@ public class DimensionService implements PersistentStateComponent<Element>, Appl
     }
 
     JFrame frame = null;
-    if (project == null) {
-      final Component owner = IdeFocusManager.findInstance().getFocusOwner();
-      if (owner != null) {
-        frame = UIUtil.getParentOfType(JFrame.class, owner);
-      }
-      if (frame == null) {
-        frame = WindowManager.getInstance().findVisibleFrame();
-      }
-    } else {
+    final Component owner = IdeFocusManager.findInstance().getFocusOwner();
+    if (owner != null) {
+      frame = UIUtil.getParentOfType(JFrame.class, owner);
+    }
+    if (frame == null) {
+      frame = WindowManager.getInstance().findVisibleFrame();
+    }
+    if (project != null && (frame == null || (frame instanceof IdeFrame && project != ((IdeFrame)frame).getProject()))) {
       frame = WindowManager.getInstance().getFrame(project);
     }
     Rectangle screen = new Rectangle(0, 0, 0, 0);

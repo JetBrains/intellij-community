@@ -48,9 +48,11 @@ import static com.intellij.codeInspection.bytecodeAnalysis.Direction.*;
 public class ProjectBytecodeAnalysis {
   public static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.bytecodeAnalysis");
   public static final Key<Boolean> INFERRED_ANNOTATION = Key.create("INFERRED_ANNOTATION");
+  public static final String NULLABLE_METHOD = "java.annotations.inference.nullable.method";
   public static final String NULLABLE_METHOD_TRANSITIVITY = "java.annotations.inference.nullable.method.transitivity";
   public static final int EQUATIONS_LIMIT = 1000;
   private final Project myProject;
+  private final boolean nullableMethod;
   private final boolean nullableMethodTransitivity;
 
   public static ProjectBytecodeAnalysis getInstance(@NotNull Project project) {
@@ -59,6 +61,7 @@ public class ProjectBytecodeAnalysis {
 
   public ProjectBytecodeAnalysis(Project project) {
     myProject = project;
+    nullableMethod = Registry.is(NULLABLE_METHOD);
     nullableMethodTransitivity = Registry.is(NULLABLE_METHOD_TRANSITIVITY);
   }
 
@@ -104,50 +107,12 @@ public class ProjectBytecodeAnalysis {
         return PsiAnnotation.EMPTY_ARRAY;
       }
       if (listOwner instanceof PsiMethod) {
-        ArrayList<HKey> allKeys = contractKeys((PsiMethod)listOwner, primaryKey);
+        ArrayList<HKey> allKeys = collectMethodKeys((PsiMethod)listOwner, primaryKey);
         MethodAnnotations methodAnnotations = loadMethodAnnotations((PsiMethod)listOwner, primaryKey, allKeys);
-        boolean notNull = methodAnnotations.notNulls.contains(primaryKey);
-        boolean nullable = methodAnnotations.nullables.contains(primaryKey);
-        String contractValue = methodAnnotations.contracts.get(primaryKey);
-        if (notNull && contractValue != null) {
-          return new PsiAnnotation[]{
-            getNotNullAnnotation(),
-            createAnnotationFromText("@" + ControlFlowAnalyzer.ORG_JETBRAINS_ANNOTATIONS_CONTRACT + "(" + contractValue + ")")
-          };
-        }
-        if (nullable && contractValue != null) {
-          return new PsiAnnotation[]{
-            getNullableAnnotation(),
-            createAnnotationFromText("@" + ControlFlowAnalyzer.ORG_JETBRAINS_ANNOTATIONS_CONTRACT + "(" + contractValue + ")")
-          };
-        }
-        else if (notNull) {
-          return new PsiAnnotation[]{
-            getNotNullAnnotation()
-          };
-        }
-        else if (nullable) {
-          return new PsiAnnotation[]{
-            getNullableAnnotation()
-          };
-        }
-        else if (contractValue != null) {
-          return new PsiAnnotation[]{
-            createAnnotationFromText("@" + ControlFlowAnalyzer.ORG_JETBRAINS_ANNOTATIONS_CONTRACT + "(" + contractValue + ")")
-          };
-        }
+        return toPsi(primaryKey, methodAnnotations);
       } else if (listOwner instanceof PsiParameter) {
         ParameterAnnotations parameterAnnotations = loadParameterAnnotations(primaryKey);
-        if (parameterAnnotations.notNull) {
-          return new PsiAnnotation[]{
-            getNotNullAnnotation()
-          };
-        }
-        else if (parameterAnnotations.nullable) {
-          return new PsiAnnotation[]{
-            getNullableAnnotation()
-          };
-        }
+        return toPsi(parameterAnnotations);
       }
       return PsiAnnotation.EMPTY_ARRAY;
     }
@@ -160,6 +125,77 @@ public class ProjectBytecodeAnalysis {
       LOG.error(e);
       return PsiAnnotation.EMPTY_ARRAY;
     }
+  }
+
+  /**
+   * Converts inferred method annotations to Psi annotations
+   *
+   * @param primaryKey primary compressed key for method
+   * @param methodAnnotations inferred annotations
+   * @return Psi annotations
+   */
+  private PsiAnnotation[] toPsi(HKey primaryKey, MethodAnnotations methodAnnotations) {
+    boolean notNull = methodAnnotations.notNulls.contains(primaryKey);
+    boolean nullable = methodAnnotations.nullables.contains(primaryKey);
+    boolean pure = methodAnnotations.pures.contains(primaryKey);
+    String contractValues = methodAnnotations.contractsValues.get(primaryKey);
+    String contractPsiText = null;
+
+    if (contractValues != null) {
+      contractPsiText = pure ? "value=" + contractValues + ",pure=true" : contractValues;
+    } else if (pure) {
+      contractPsiText = "pure=true";
+    }
+
+    PsiAnnotation psiAnnotation =
+      contractPsiText == null ? null : createContractAnnotation(contractPsiText);
+
+    if (notNull && psiAnnotation != null) {
+      return new PsiAnnotation[]{
+        getNotNullAnnotation(), psiAnnotation
+      };
+    }
+    if (nullable && psiAnnotation != null) {
+      return new PsiAnnotation[]{
+        getNullableAnnotation(), psiAnnotation
+      };
+    }
+    if (notNull) {
+      return new PsiAnnotation[]{
+        getNotNullAnnotation()
+      };
+    }
+    if (nullable) {
+      return new PsiAnnotation[]{
+        getNullableAnnotation()
+      };
+    }
+    if (psiAnnotation != null) {
+      return new PsiAnnotation[]{
+        psiAnnotation
+      };
+    }
+    return PsiAnnotation.EMPTY_ARRAY;
+  }
+
+  /**
+   * Converts inferred parameter annotations to Psi annotations
+   *
+   * @param parameterAnnotations inferred parameter annotations
+   * @return Psi annotations
+   */
+  private PsiAnnotation[] toPsi(ParameterAnnotations parameterAnnotations) {
+    if (parameterAnnotations.notNull) {
+      return new PsiAnnotation[]{
+        getNotNullAnnotation()
+      };
+    }
+    else if (parameterAnnotations.nullable) {
+      return new PsiAnnotation[]{
+        getNullableAnnotation()
+      };
+    }
+    return PsiAnnotation.EMPTY_ARRAY;
   }
 
   private PsiAnnotation getNotNullAnnotation() {
@@ -198,17 +234,22 @@ public class ProjectBytecodeAnalysis {
         PsiElement gParent = parent.getParent();
         if (gParent instanceof PsiMethod) {
           final int index = ((PsiParameterList)parent).getParameterIndex((PsiParameter)owner);
-          return BytecodeAnalysisConverter.psiKey((PsiMethod)gParent, new In(index, In.NOT_NULL), md);
+          return BytecodeAnalysisConverter.psiKey((PsiMethod)gParent, new In(index, In.NOT_NULL_MASK), md);
         }
       }
     }
     return null;
   }
 
-  public static ArrayList<HKey> contractKeys(@NotNull PsiMethod owner, HKey primaryKey) {
-    ArrayList<HKey> result = BytecodeAnalysisConverter.mkInOutKeys(owner, primaryKey);
-    result.add(primaryKey);
-    return result;
+  /**
+   * Collects all (starting) keys needed to infer all pieces of method annotations.
+   *
+   * @param method Psi method for which annotations are being inferred
+   * @param primaryKey primary compressed key for this method
+   * @return compressed keys for this method
+   */
+  public static ArrayList<HKey> collectMethodKeys(@NotNull PsiMethod method, HKey primaryKey) {
+    return BytecodeAnalysisConverter.mkInOutKeys(method, primaryKey);
   }
 
   private ParameterAnnotations loadParameterAnnotations(@NotNull HKey notNullKey)
@@ -220,6 +261,7 @@ public class ProjectBytecodeAnalysis {
     collectEquations(Collections.singletonList(notNullKey), notNullSolver, equationsCache);
 
     HashMap<HKey, Value> notNullSolutions = notNullSolver.solve();
+    // subtle point
     boolean notNull =
       (Value.NotNull == notNullSolutions.get(notNullKey)) || (Value.NotNull == notNullSolutions.get(notNullKey.mkUnstable()));
 
@@ -227,6 +269,7 @@ public class ProjectBytecodeAnalysis {
     final HKey nullableKey = new HKey(notNullKey.key, notNullKey.dirKey + 1, true);
     collectEquations(Collections.singletonList(nullableKey), nullableSolver, equationsCache);
     HashMap<HKey, Value> nullableSolutions = nullableSolver.solve();
+    // subtle point
     boolean nullable =
       (Value.Null == nullableSolutions.get(nullableKey)) || (Value.Null == nullableSolutions.get(nullableKey.mkUnstable()));
     return new ParameterAnnotations(notNull, nullable);
@@ -243,18 +286,19 @@ public class ProjectBytecodeAnalysis {
     int arity = owner.getParameterList().getParameters().length;
     BytecodeAnalysisConverter.addMethodAnnotations(solutions, result, key, arity);
 
-    final Solver nullableMethodSolver = new Solver(new ELattice<Value>(Value.Bot, Value.Null), Value.Bot);
-    HKey nullableKey = key.updateDirection(BytecodeAnalysisConverter.mkDirectionKey(NullableOut));
-    if (nullableMethodTransitivity) {
-      collectEquations(Collections.singletonList(nullableKey), nullableMethodSolver, equationsCache);
-    }
-    else {
-      collectSingleEquation(nullableKey, nullableMethodSolver, equationsCache);
-    }
-
-    HashMap<HKey, Value> nullableSolutions = nullableMethodSolver.solve();
-    if (nullableSolutions.get(nullableKey) == Value.Null || nullableSolutions.get(nullableKey.negate()) == Value.Null) {
-      result.nullables.add(key);
+    if (nullableMethod) {
+      final Solver nullableMethodSolver = new Solver(new ELattice<Value>(Value.Bot, Value.Null), Value.Bot);
+      HKey nullableKey = key.updateDirection(BytecodeAnalysisConverter.mkDirectionKey(NullableOut));
+      if (nullableMethodTransitivity) {
+        collectEquations(Collections.singletonList(nullableKey), nullableMethodSolver, equationsCache);
+      }
+      else {
+        collectSingleEquation(nullableKey, nullableMethodSolver, equationsCache);
+      }
+      HashMap<HKey, Value> nullableSolutions = nullableMethodSolver.solve();
+      if (nullableSolutions.get(nullableKey) == Value.Null || nullableSolutions.get(nullableKey.negate()) == Value.Null) {
+        result.nullables.add(key);
+      }
     }
     return result;
   }
@@ -347,11 +391,13 @@ public class ProjectBytecodeAnalysis {
 
 class MethodAnnotations {
   // @NotNull keys
-  final HashSet<HKey> notNulls = new HashSet<HKey>();
+  final Set<HKey> notNulls = new HashSet<HKey>(1);
   // @Nullable keys
-  final HashSet<HKey> nullables = new HashSet<HKey>();
+  final Set<HKey> nullables = new HashSet<HKey>(1);
+  // @Contract(pure=true) part of contract
+  final Set<HKey> pures = new HashSet<HKey>(1);
   // @Contracts
-  final HashMap<HKey, String> contracts = new HashMap<HKey, String>();
+  final Map<HKey, String> contractsValues = new HashMap<HKey, String>();
 }
 
 class ParameterAnnotations {

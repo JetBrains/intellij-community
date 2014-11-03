@@ -37,25 +37,22 @@ public abstract class BaseNavigateToSourceAction extends AnAction implements Dum
   }
 
 
-  public void update(AnActionEvent event) {
-    DataContext dataContext = event.getDataContext();
-    final Navigatable target = findTargetForUpdate(dataContext);
+  public void update(AnActionEvent e) {
+    boolean inPopup = ActionPlaces.isPopupPlace(e.getPlace());
+    Navigatable target = findTargetForUpdate(e.getDataContext());
     boolean enabled = target != null;
-    if (ActionPlaces.isPopupPlace(event.getPlace())) {
-      event.getPresentation().setVisible(enabled);
-      if (!(this instanceof OpenModuleSettingsAction) && OpenModuleSettingsAction.isModuleInProjectViewPopup(event)) {
-        event.getPresentation().setVisible(false);
-        return;
-      }
-    }
-    else {
-      event.getPresentation().setEnabled(enabled);
+    if (inPopup && !(this instanceof OpenModuleSettingsAction) && OpenModuleSettingsAction.isModuleInProjectViewPopup(e)) {
+      e.getPresentation().setVisible(false);
+      return;
     }
     //as myFocusEditor is always ignored - Main Menu|View always contains 2 actions with the same name and actually same behaviour
-    event.getPresentation().setVisible(target == null || myFocusEditor);
+    e.getPresentation().setVisible((enabled || !inPopup) &&
+                                   (myFocusEditor || !(target instanceof NavigatableWithText)));
+    e.getPresentation().setEnabled(enabled);
+
     String navigateActionText = myFocusEditor && target instanceof NavigatableWithText?
                                 ((NavigatableWithText)target).getNavigateActionText(true) : null;
-    event.getPresentation().setText(navigateActionText == null ? getTemplatePresentation().getText() : navigateActionText);
+    e.getPresentation().setText(navigateActionText == null ? getTemplatePresentation().getText() : navigateActionText);
   }
 
   @Nullable

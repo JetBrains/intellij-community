@@ -152,7 +152,7 @@ public class InstalledPackagesPanel extends JPanel {
 
                                       @Override
                                       public void operationFinished(String packageName,
-                                                                    @Nullable String errorDescription) {
+                                                                    @Nullable PackageManagementService.ErrorDescription errorDescription) {
                                         myNotificationArea.showResult(packageName, errorDescription);
                                         myPackagesTable.clearSelection();
                                         doUpdatePackages(myPackageManagementService);
@@ -230,7 +230,8 @@ public class InstalledPackagesPanel extends JPanel {
               }
 
               @Override
-              public void operationFinished(final String packageName, @Nullable final String errorDescription) {
+              public void operationFinished(final String packageName,
+                                            @Nullable final PackageManagementService.ErrorDescription errorDescription) {
                 UIUtil.invokeLaterIfNeeded(new Runnable() {
                   @Override
                   public void run() {
@@ -242,9 +243,8 @@ public class InstalledPackagesPanel extends JPanel {
                       myNotificationArea.showSuccess("Package " + packageName + " successfully upgraded");
                     }
                     else {
-                      myNotificationArea.showError("Upgrade packages failed. <a href=\"xxx\">Details...</a>",
-                                                   "Upgrade Packages Failed",
-                                                   "Upgrade packages failed.\n" + errorDescription);
+                      myNotificationArea.showError("Upgrade packages failed. <a href=\"xxx\">Details...</a>", "Upgrade Packages Failed",
+                                                   errorDescription);
                     }
 
                     if (myCurrentlyInstalling.isEmpty() && !myWaitingToUpgrade.isEmpty()) {
@@ -340,7 +340,8 @@ public class InstalledPackagesPanel extends JPanel {
         }
 
         @Override
-        public void operationFinished(final String packageName, @Nullable final String errorDescription) {
+        public void operationFinished(final String packageName,
+                                      @Nullable final PackageManagementService.ErrorDescription errorDescription) {
           UIUtil.invokeLaterIfNeeded(new Runnable() {
             @Override
             public void run() {
@@ -356,9 +357,8 @@ public class InstalledPackagesPanel extends JPanel {
                 }
               }
               else {
-                myNotificationArea.showError("Uninstall packages failed. <a href=\"xxx\">Details...</a>",
-                                             "Uninstall Packages Failed",
-                                             "Uninstall packages failed.\n" + errorDescription);
+                myNotificationArea.showError("Uninstall packages failed. <a href=\"xxx\">Details...</a>", "Uninstall Packages Failed",
+                                             errorDescription);
               }
             }
           });

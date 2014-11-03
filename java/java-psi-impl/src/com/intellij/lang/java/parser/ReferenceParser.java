@@ -17,6 +17,7 @@ package com.intellij.lang.java.parser;
 
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.lang.PsiBuilder;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
@@ -342,6 +343,12 @@ public class ReferenceParser {
     final PsiBuilder.Marker param = builder.mark();
 
     myParser.getDeclarationParser().parseAnnotations(builder);
+
+    if (EXPERIMENTAL_FEATURES && "any".equals(builder.getTokenText()) && getLanguageLevel(builder).isAtLeast(LanguageLevel.JDK_1_9)) {
+      PsiBuilder.Marker mark = builder.mark();
+      builder.advanceLexer();
+      mark.done(JavaElementType.DUMMY_ELEMENT);
+    }
 
     final boolean wild = expect(builder, JavaTokenType.QUEST);
     if (!wild && !expect(builder, JavaTokenType.IDENTIFIER)) {

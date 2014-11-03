@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -118,7 +118,7 @@ public class AddFieldQuickFix implements LocalQuickFix {
     if (element instanceof PyQualifiedExpression) {
       final PyExpression qualifier = ((PyQualifiedExpression)element).getQualifier();
       if (qualifier == null) return null;
-      final PyType type = TypeEvalContext.userInitiated(element.getContainingFile()).getType(qualifier);
+      final PyType type = TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).getType(qualifier);
       return type instanceof PyClassType ? (PyClassType)type : null;
     }
     final PyClass aClass = PsiTreeUtil.getParentOfType(element, PyClass.class);
@@ -166,7 +166,7 @@ public class AddFieldQuickFix implements LocalQuickFix {
         appendToMethod(newInit, callback);
 
         PsiElement addAnchor = null;
-        PyFunction[] meths = cls.getMethods();
+        PyFunction[] meths = cls.getMethods(false);
         if (meths.length > 0) addAnchor = meths[0].getPrevSibling();
         PyStatementList clsContent = cls.getStatementList();
         newInit = (PyFunction) clsContent.addAfter(newInit, addAnchor);

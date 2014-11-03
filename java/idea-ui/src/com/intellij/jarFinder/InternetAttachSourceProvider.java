@@ -14,7 +14,10 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.PathUIUtils;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
@@ -112,7 +115,7 @@ public class InternetAttachSourceProvider implements AttachSourcesProvider {
     return Collections.<AttachSourcesAction>singleton(new LightAttachSourcesAction() {
       @Override
       public String getName() {
-        return "Search in internet...";
+        return "Download...";
       }
 
       @Override

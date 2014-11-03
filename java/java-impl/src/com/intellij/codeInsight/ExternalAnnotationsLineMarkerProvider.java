@@ -45,26 +45,33 @@ import java.util.Collection;
 import java.util.List;
 
 public class ExternalAnnotationsLineMarkerProvider implements LineMarkerProvider {
+  private static final Function<PsiElement, String> ourTooltipProvider = new Function<PsiElement, String>() {
+    @Override
+    public String fun(PsiElement nameIdentifier) {
+      return XmlStringUtil.wrapInHtml(JavaDocInfoGenerator.generateSignature(nameIdentifier.getParent()));
+    }
+  };
+
   @Nullable
   @Override
-  public LineMarkerInfo getLineMarkerInfo(@NotNull PsiElement element) {
-    if (!(element instanceof PsiModifierListOwner)) return null;
-    if (element instanceof PsiParameter || element instanceof PsiLocalVariable) return null;
+  public LineMarkerInfo getLineMarkerInfo(@NotNull final PsiElement element) {
+    PsiElement owner = element.getParent();
+    if (!(owner instanceof PsiModifierListOwner) || !(owner instanceof PsiNameIdentifierOwner)) return null;
+    if (owner instanceof PsiParameter || owner instanceof PsiLocalVariable) return null;
 
-    if (!shouldShowSignature((PsiModifierListOwner)element)) {
+    // support non-Java languages where getNameIdentifier may return non-physical psi with the same range
+    PsiElement nameIdentifier = ((PsiNameIdentifierOwner)owner).getNameIdentifier();
+    if (nameIdentifier == null || !nameIdentifier.getTextRange().equals(element.getTextRange())) return null;
+
+    if (!shouldShowSignature((PsiModifierListOwner)owner)) {
       return null;
     }
 
-    final Function<PsiModifierListOwner, String> annotationsCollector = new Function<PsiModifierListOwner, String>() {
-      @Override
-      public String fun(PsiModifierListOwner owner) {
-        return XmlStringUtil.wrapInHtml(JavaDocInfoGenerator.generateSignature(owner));
-      }
-    };
-    return new LineMarkerInfo<PsiModifierListOwner>((PsiModifierListOwner)element, element.getTextOffset(), AllIcons.Gutter.ExtAnnotation,
-                                                    Pass.UPDATE_ALL,
-                                                    annotationsCollector, new MyIconGutterHandler(),
-                                                    GutterIconRenderer.Alignment.LEFT);
+    return new LineMarkerInfo<PsiElement>(element, element.getTextRange().getStartOffset(),
+                                          AllIcons.Gutter.ExtAnnotation,
+                                          Pass.UPDATE_ALL,
+                                          ourTooltipProvider, MyIconGutterHandler.INSTANCE,
+                                          GutterIconRenderer.Alignment.LEFT);
   }
 
   private static boolean shouldShowSignature(PsiModifierListOwner owner) {
@@ -112,9 +119,12 @@ public class ExternalAnnotationsLineMarkerProvider implements LineMarkerProvider
   @Override
   public void collectSlowLineMarkers(@NotNull List<PsiElement> elements, @NotNull Collection<LineMarkerInfo> result) {}
 
-  private static class MyIconGutterHandler implements GutterIconNavigationHandler<PsiModifierListOwner> {
+  private static class MyIconGutterHandler implements GutterIconNavigationHandler<PsiElement> {
+    static final MyIconGutterHandler INSTANCE = new MyIconGutterHandler();
+
     @Override
-    public void navigate(MouseEvent e, final PsiModifierListOwner listOwner) {
+    public void navigate(MouseEvent e, PsiElement nameIdentifier) {
+      final PsiElement listOwner = nameIdentifier.getParent();
       final PsiFile containingFile = listOwner.getContainingFile();
       final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(listOwner);
       if (virtualFile != null && containingFile != null) {

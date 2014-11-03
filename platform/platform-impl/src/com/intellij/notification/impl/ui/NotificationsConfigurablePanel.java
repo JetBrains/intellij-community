@@ -19,19 +19,16 @@ import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.impl.NotificationSettings;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.ComboBoxTableRenderer;
 import com.intellij.openapi.ui.StripeTable;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TableSpeedSearch;
-import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.border.LineBorder;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumn;
@@ -54,18 +51,12 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
   private final JCheckBox myDisplayBalloons;
 
   public NotificationsConfigurablePanel() {
-    setLayout(new BorderLayout());
+    setLayout(new BorderLayout(5, 5));
     myTable = new NotificationsTable();
 
-    boolean newSettings = ApplicationManager.getApplication().isInternal() && Registry.is("ide.new.settings.view");
-    JScrollPane scrollPane = new JBScrollPane(myTable);
-    scrollPane.setBorder(newSettings ? BorderFactory.createEmptyBorder() : new LineBorder(UIUtil.getBorderColor()));
-    add(scrollPane, BorderLayout.CENTER);
+    add(ScrollPaneFactory.createScrollPane(myTable), BorderLayout.CENTER);
     myDisplayBalloons = new JCheckBox("Display balloon notifications");
     myDisplayBalloons.setMnemonic('b');
-    if (newSettings) {
-      myDisplayBalloons.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-    }
     add(myDisplayBalloons, BorderLayout.NORTH);
     myDisplayBalloons.addActionListener(new ActionListener() {
       @Override
@@ -99,7 +90,7 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
       }
     }
 
-    return NotificationsConfigurationImpl.getNotificationsConfigurationImpl().SHOW_BALLOONS != myDisplayBalloons.isSelected();
+    return NotificationsConfigurationImpl.getInstanceImpl().SHOW_BALLOONS != myDisplayBalloons.isSelected();
   }
 
   public void apply() {
@@ -108,7 +99,7 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
       settingsWrapper.apply();
     }
 
-    NotificationsConfigurationImpl.getNotificationsConfigurationImpl().SHOW_BALLOONS = myDisplayBalloons.isSelected();
+    NotificationsConfigurationImpl.getInstanceImpl().SHOW_BALLOONS = myDisplayBalloons.isSelected();
   }
 
   public void reset() {
@@ -117,7 +108,7 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
       settingsWrapper.reset();
     }
     
-    myDisplayBalloons.setSelected(NotificationsConfigurationImpl.getNotificationsConfigurationImpl().SHOW_BALLOONS);
+    myDisplayBalloons.setSelected(NotificationsConfigurationImpl.getInstanceImpl().SHOW_BALLOONS);
 
     myTable.invalidate();
     myTable.repaint();
@@ -191,7 +182,7 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
           if (value != NotificationDisplayType.TOOL_WINDOW) return true;
 
           String groupId = ((NotificationsTableModel)getModel()).getSettings(row).getGroupId();
-          return NotificationsConfigurationImpl.getNotificationsConfigurationImpl().hasToolWindowCapability(groupId);
+          return NotificationsConfigurationImpl.getInstanceImpl().hasToolWindowCapability(groupId);
         }
 
         @Override
@@ -291,7 +282,7 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
         NotificationsConfigurationImpl.remove(getGroupId());
       }
       else {
-        NotificationsConfigurationImpl.getNotificationsConfigurationImpl().changeSettings(myVersion);
+        NotificationsConfigurationImpl.getInstanceImpl().changeSettings(myVersion);
       }
     }
 
@@ -310,7 +301,7 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
 
     public NotificationsTableModel() {
       final List<SettingsWrapper> list = new ArrayList<SettingsWrapper>();
-      for (NotificationSettings setting : NotificationsConfigurationImpl.getAllSettings()) {
+      for (NotificationSettings setting : NotificationsConfigurationImpl.getInstanceImpl().getAllSettings()) {
         list.add(new SettingsWrapper(setting));
       }
 

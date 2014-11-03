@@ -292,4 +292,8 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
   public Icon getIcon() {
     return myIcon;
   }
+
+  public ObjectReference getThisObject() {
+    return myThisObject;
+  }
 }

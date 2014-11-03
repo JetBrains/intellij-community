@@ -50,7 +50,7 @@ public class JavaReferringObjectsValue extends JavaValue {
   }
 
   public JavaReferringObjectsValue(@NotNull JavaValue javaValue, boolean isField) {
-    super(null, javaValue.getDescriptor(), javaValue.getEvaluationContext(), null, false);
+    super(null, javaValue.getDescriptor(), javaValue.getEvaluationContext(), javaValue.getNodeManager(), false);
     myIsField = isField;
   }
 
@@ -61,9 +61,7 @@ public class JavaReferringObjectsValue extends JavaValue {
 
   @Override
   public void computeChildren(@NotNull final XCompositeNode node) {
-    if (checkContextNotResumed(node)) return;
-    getEvaluationContext().getDebugProcess().getManagerThread().schedule(
-      new SuspendContextCommandImpl(getEvaluationContext().getSuspendContext()) {
+    scheduleCommand(getEvaluationContext(), node, new SuspendContextCommandImpl(getEvaluationContext().getSuspendContext()) {
         @Override
         public Priority getPriority() {
           return Priority.NORMAL;
@@ -86,7 +84,7 @@ public class JavaReferringObjectsValue extends JavaValue {
                   return reference;
                 }
               };
-              children.add(new JavaReferringObjectsValue(null, descriptor, getEvaluationContext(), null, true));
+              children.add(new JavaReferringObjectsValue(null, descriptor, getEvaluationContext(), getNodeManager(), true));
               i++;
             }
             else {
@@ -111,7 +109,7 @@ public class JavaReferringObjectsValue extends JavaValue {
                   return null;
                 }
               };
-              children.add("Referrer " + i++, new JavaReferringObjectsValue(null, descriptor, getEvaluationContext(), null, false));
+              children.add("Referrer " + i++, new JavaReferringObjectsValue(null, descriptor, getEvaluationContext(), getNodeManager(), false));
             }
           }
 
@@ -168,6 +166,12 @@ public class JavaReferringObjectsValue extends JavaValue {
         return field;
       }
     }
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public XValueModifier getModifier() {
     return null;
   }
 }

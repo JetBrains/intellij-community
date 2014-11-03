@@ -15,23 +15,25 @@
  */
 package com.intellij.openapi.components.impl.stores;
 
-import com.intellij.codeInspection.SmartHashMap;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.StateStorage.SaveSession;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.CurrentUserHolder;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.RoamingTypeDisabled;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtilRt;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.messages.MessageBus;
 import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import gnu.trove.TObjectLongHashMap;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -67,7 +69,6 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   private final Map<String, StateStorage> myPathToStorage = new THashMap<String, StateStorage>();
   private final TrackingPathMacroSubstitutor myPathMacroSubstitutor;
   private final String myRootTagName;
-  private Object mySession;
   private final PicoContainer myPicoContainer;
 
   private TObjectLongHashMap<String> myComponentVersions;
@@ -253,30 +254,45 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   @Nullable
   private StateStorage createDirectoryStateStorage(String file, Class<? extends StateSplitter> splitterClass) {
     StateSplitter splitter = ReflectionUtil.newInstance(splitterClass);
-    return new DirectoryBasedStorage(myPathMacroSubstitutor, expandMacros(file), splitter, this, myPicoContainer);
+    return new DirectoryBasedStorage(myPathMacroSubstitutor, expandMacros(file), splitter, this, createStorageTopicListener());
   }
 
   @Nullable
-  private StateStorage createFileStateStorage(@NotNull final String fileSpec, @Nullable RoamingType roamingType) {
+  private StateStorage createFileStateStorage(@NotNull String fileSpec, @Nullable RoamingType roamingType) {
     String expandedFile = expandMacros(fileSpec);
 
     if (!ourHeadlessEnvironment && PathUtilRt.getFileName(expandedFile).lastIndexOf('.') < 0) {
       throw new IllegalArgumentException("Extension is missing for storage file: " + expandedFile);
     }
 
-    if (roamingType != RoamingType.PER_USER && fileSpec.equals(StoragePathMacros.WORKSPACE_FILE)) {
+    if (roamingType == RoamingType.PER_USER && fileSpec.equals(StoragePathMacros.WORKSPACE_FILE)) {
       roamingType = RoamingType.DISABLED;
     }
 
     beforeFileBasedStorageCreate();
     return new FileBasedStorage(expandedFile, fileSpec, roamingType, getMacroSubstitutor(fileSpec), myRootTagName, this,
-                                myPicoContainer, getStreamProvider(), this) {
+                                createStorageTopicListener(), getStreamProvider(), this) {
       @Override
       @NotNull
       protected StorageData createStorageData() {
-        return StateStorageManagerImpl.this.createStorageData(fileSpec);
+        return StateStorageManagerImpl.this.createStorageData(myFileSpec);
+      }
+
+      @Override
+      protected boolean isUseXmlProlog() {
+        return StateStorageManagerImpl.this.isUseXmlProlog();
       }
     };
+  }
+
+  @Nullable
+  protected StateStorage.Listener createStorageTopicListener() {
+    MessageBus messageBus = (MessageBus)myPicoContainer.getComponentInstanceOfType(MessageBus.class);
+    return messageBus == null ? null : messageBus.syncPublisher(StateStorage.STORAGE_TOPIC);
+  }
+
+  protected boolean isUseXmlProlog() {
+    return true;
   }
 
   protected void beforeFileBasedStorageCreate() {
@@ -355,7 +371,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     return myPathMacroSubstitutor;
   }
 
-  protected abstract StorageData createStorageData(String storageSpec);
+  protected abstract StorageData createStorageData(@NotNull String storageSpec);
 
   private static final Pattern MACRO_PATTERN = Pattern.compile("(\\$[^\\$]*\\$)");
 
@@ -390,173 +406,11 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   @NotNull
   @Override
   public ExternalizationSession startExternalization() {
-    if (mySession != null) {
-      LOG.error("Starting duplicate externalization session: " + mySession);
-    }
-    ExternalizationSession session = new MyExternalizationSession();
-    mySession = session;
-    return session;
-  }
-
-  @NotNull
-  @Override
-  public SaveSession startSave(@NotNull ExternalizationSession externalizationSession) {
-    assert mySession == externalizationSession;
-    SaveSession session = new MySaveSession((MyExternalizationSession)externalizationSession);
-    mySession = session;
-    return session;
+    return new StateStorageManagerExternalizationSession();
   }
 
   @Override
-  public void finishSave(@NotNull final SaveSession saveSession) {
-    try {
-      assert mySession == saveSession : "mySession=" + mySession + " saveSession=" + saveSession;
-      ((MySaveSession)saveSession).finishSave();
-    }
-    finally {
-      mySession = null;
-      save();
-    }
-  }
-
-  @Override
-  public void reset() {
-    mySession = null;
-  }
-
-  protected class MyExternalizationSession implements ExternalizationSession {
-    final Map<StateStorage, StateStorage.ExternalizationSession> mySessions = new SmartHashMap<StateStorage, StateStorage.ExternalizationSession>();
-
-    @Override
-    public void setState(@NotNull Storage[] storageSpecs, @NotNull Object component, @NotNull String componentName, @NotNull Object state) {
-      assert mySession == this;
-
-      for (Storage storageSpec : storageSpecs) {
-        StateStorage stateStorage = getStateStorage(storageSpec);
-        if (stateStorage == null) {
-          continue;
-        }
-
-        getExternalizationSession(stateStorage).setState(component, componentName, state, storageSpec);
-      }
-    }
-
-    @Override
-    public void setStateInOldStorage(@NotNull Object component, @NotNull String componentName, @NotNull Object state) {
-      assert mySession == this;
-      StateStorage stateStorage = getOldStorage(component, componentName, StateStorageOperation.WRITE);
-      if (stateStorage != null) {
-        getExternalizationSession(stateStorage).setState(component, componentName, state, null);
-      }
-    }
-
-    @NotNull
-    private StateStorage.ExternalizationSession getExternalizationSession(@NotNull StateStorage stateStore) {
-      StateStorage.ExternalizationSession session = mySessions.get(stateStore);
-      if (session == null) {
-        mySessions.put(stateStore, session = stateStore.startExternalization());
-      }
-      return session;
-    }
-  }
-
-  @Override
-  @Nullable
-  public StateStorage getOldStorage(@NotNull Object component, @NotNull String componentName, @NotNull StateStorageOperation operation) {
-    String oldStorageSpec = getOldStorageSpec(component, componentName, operation);
-    //noinspection deprecation
-    return oldStorageSpec == null ? null : getStateStorage(oldStorageSpec, component instanceof RoamingTypeDisabled ? RoamingType.DISABLED : RoamingType.PER_USER);
-  }
-
-  @Nullable
-  protected abstract String getOldStorageSpec(@NotNull Object component, @NotNull String componentName, @NotNull StateStorageOperation operation);
-
-  protected class MySaveSession implements SaveSession {
-    private final Map<StateStorage, StateStorage.SaveSession> mySaveSessions = new SmartHashMap<StateStorage, StateStorage.SaveSession>();
-
-    public MySaveSession(@NotNull MyExternalizationSession externalizationSession) {
-      for (StateStorage stateStorage : externalizationSession.mySessions.keySet()) {
-        mySaveSessions.put(stateStorage, stateStorage.startSave(externalizationSession.getExternalizationSession(stateStorage)));
-      }
-    }
-
-    @Override
-    public void collectAllStorageFiles(@NotNull List<VirtualFile> files) {
-      for (StateStorage.SaveSession saveSession : mySaveSessions.values()) {
-        saveSession.collectAllStorageFiles(files);
-      }
-    }
-
-    @Override
-    public void save() throws StateStorageException {
-      assert mySession == this;
-      for (StateStorage.SaveSession saveSession : mySaveSessions.values()) {
-        saveSession.save();
-      }
-    }
-
-    public void finishSave() {
-      RuntimeException re = null;
-      try {
-        LOG.assertTrue(mySession == this);
-      }
-      finally {
-        for (StateStorage stateStorage : mySaveSessions.keySet()) {
-          try {
-            stateStorage.finishSave(mySaveSessions.get(stateStorage));
-          }
-          catch (RuntimeException e) {
-            re = e;
-          }
-        }
-      }
-
-      if (re != null) {
-        throw re;
-      }
-    }
-
-    @Override
-    @Nullable
-    public Set<String> analyzeExternalChanges(@NotNull Set<Pair<VirtualFile, StateStorage>> changedFiles) {
-      Set<String> result = null;
-      for (Pair<VirtualFile, StateStorage> pair : changedFiles) {
-        StateStorage.SaveSession saveSession = mySaveSessions.get(pair.second);
-        if (saveSession == null) {
-          continue;
-        }
-
-        Set<String> changes = saveSession.analyzeExternalChanges(changedFiles);
-        if (changes == null) {
-          return null;
-        }
-
-        if (result == null) {
-          result = new THashSet<String>();
-        }
-        result.addAll(changes);
-      }
-      return result == null ? Collections.<String>emptySet() : result;
-    }
-  }
-
-  @Override
-  public void dispose() {
-  }
-
-  @Override
-  public void registerStreamProvider(@SuppressWarnings("deprecation") com.intellij.openapi.options.StreamProvider streamProvider, final RoamingType type) {
-    synchronized (myOldStreamProvider) {
-      myOldStreamProvider.myStreamProviders.add(new OldStreamProviderAdapter(streamProvider, type));
-    }
-  }
-
-  @Override
-  public void setStreamProvider(@Nullable StreamProvider streamProvider) {
-    myStreamProvider = streamProvider;
-  }
-
-  public void save() {
+  public void finishSave(@NotNull SaveSession saveSession) {
     if (!isDirty) {
       return;
     }
@@ -573,6 +427,104 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
         LOG.info(e);
       }
     }
+  }
+
+  private final class StateStorageManagerExternalizationSession implements ExternalizationSession {
+    final Map<StateStorage, StateStorage.ExternalizationSession> mySessions = new LinkedHashMap<StateStorage, StateStorage.ExternalizationSession>();
+
+    @Override
+    public void setState(@NotNull Storage[] storageSpecs, @NotNull Object component, @NotNull String componentName, @NotNull Object state) {
+      for (Storage storageSpec : storageSpecs) {
+        StateStorage stateStorage = getStateStorage(storageSpec);
+        if (stateStorage == null) {
+          continue;
+        }
+
+        StateStorage.ExternalizationSession session = getExternalizationSession(stateStorage);
+        if (session != null) {
+          session.setState(component, componentName, state, storageSpec);
+        }
+      }
+    }
+
+    @Override
+    public void setStateInOldStorage(@NotNull Object component, @NotNull String componentName, @NotNull Object state) {
+      StateStorage stateStorage = getOldStorage(component, componentName, StateStorageOperation.WRITE);
+      if (stateStorage != null) {
+        StateStorage.ExternalizationSession session = getExternalizationSession(stateStorage);
+        if (session != null) {
+          session.setState(component, componentName, state, null);
+        }
+      }
+    }
+
+    @Nullable
+    private StateStorage.ExternalizationSession getExternalizationSession(@NotNull StateStorage stateStorage) {
+      StateStorage.ExternalizationSession session = mySessions.get(stateStorage);
+      if (session == null) {
+        session = stateStorage.startExternalization();
+        if (session != null) {
+          mySessions.put(stateStorage, session);
+        }
+      }
+      return session;
+    }
+
+    @Nullable
+    @Override
+    public SaveSession createSaveSession() {
+      if (mySessions.isEmpty()) {
+        return null;
+      }
+
+      List<SaveSession> saveSessions = null;
+      for (StateStorage.ExternalizationSession session : mySessions.values()) {
+        SaveSession saveSession = session.createSaveSession();
+        if (saveSession != null) {
+          if (saveSessions == null) {
+            saveSessions = new SmartList<SaveSession>();
+          }
+          saveSessions.add(saveSession);
+        }
+      }
+
+      final List<SaveSession> list = saveSessions;
+      return saveSessions == null ? null : new SaveSession() {
+        @Override
+        public void save() {
+          for (SaveSession saveSession : list) {
+            saveSession.save();
+          }
+        }
+      };
+    }
+  }
+
+  @Override
+  @Nullable
+  public StateStorage getOldStorage(@NotNull Object component, @NotNull String componentName, @NotNull StateStorageOperation operation) {
+    String oldStorageSpec = getOldStorageSpec(component, componentName, operation);
+    //noinspection deprecation
+    return oldStorageSpec == null ? null : getStateStorage(oldStorageSpec, component instanceof RoamingTypeDisabled ? RoamingType.DISABLED : RoamingType.PER_USER);
+  }
+
+  @Nullable
+  protected abstract String getOldStorageSpec(@NotNull Object component, @NotNull String componentName, @NotNull StateStorageOperation operation);
+
+  @Override
+  public void dispose() {
+  }
+
+  @Override
+  public void registerStreamProvider(@SuppressWarnings("deprecation") com.intellij.openapi.options.StreamProvider streamProvider, final RoamingType type) {
+    synchronized (myOldStreamProvider) {
+      myOldStreamProvider.myStreamProviders.add(new OldStreamProviderAdapter(streamProvider, type));
+    }
+  }
+
+  @Override
+  public void setStreamProvider(@Nullable StreamProvider streamProvider) {
+    myStreamProvider = streamProvider;
   }
 
   private TObjectLongHashMap<String> getComponentVersions() {

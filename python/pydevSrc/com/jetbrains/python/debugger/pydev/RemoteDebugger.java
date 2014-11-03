@@ -437,6 +437,16 @@ public class RemoteDebugger implements ProcessDebugger {
   }
 
   @Override
+  public void setBreakpointWithFuncName(String typeId, String file, int line, String condition, String logExpression, String funcName) {
+    final SetBreakpointCommand command =
+      new SetBreakpointCommand(this, typeId, file, line,
+                               condition,
+                               logExpression,
+                               funcName);
+    execute(command);
+  }
+
+  @Override
   public void removeBreakpoint(String typeId, String file, int line) {
     final RemoveBreakpointCommand command =
       new RemoveBreakpointCommand(this, typeId, file, line);

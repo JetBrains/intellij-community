@@ -15,12 +15,15 @@
  */
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
+import org.jetbrains.java.decompiler.main.TextBuffer;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+
+import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.CheckTypesResult;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
-
-import java.util.ArrayList;
-import java.util.List;
 
 
 public class SwitchExprent extends Exprent {
@@ -33,12 +36,15 @@ public class SwitchExprent extends Exprent {
     this.type = EXPRENT_SWITCH;
   }
 
-  public SwitchExprent(Exprent value) {
+  public SwitchExprent(Exprent value, Set<Integer> bytecode_offsets) {
     this.value = value;
+
+    addBytecodeOffsets(bytecode_offsets);
   }
 
+  @Override
   public Exprent copy() {
-    SwitchExprent swexpr = new SwitchExprent(value.copy());
+    SwitchExprent swexpr = new SwitchExprent(value.copy(), bytecode);
 
     List<List<ConstExprent>> lstCaseValues = new ArrayList<List<ConstExprent>>();
     for (List<ConstExprent> lst : caseValues) {
@@ -81,8 +87,10 @@ public class SwitchExprent extends Exprent {
     return lst;
   }
 
-  public String toJava(int indent) {
-    return "switch(" + value.toJava(indent) + ")";
+  @Override
+  public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
+    tracer.addMapping(bytecode);
+    return value.toJava(indent, tracer).enclose("switch(", ")");
   }
 
   public boolean equals(Object o) {

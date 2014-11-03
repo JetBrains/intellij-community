@@ -100,10 +100,6 @@ public abstract class SdkHomeConfigurable implements SearchableConfigurable {
     myPanel = null;
   }
 
-  public static class SdkHomeBean {
-    public String SDK_HOME;
-  }
-
   @Override
   public Runnable enableSearch(String option) {
     return null;

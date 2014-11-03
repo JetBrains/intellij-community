@@ -22,19 +22,17 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
-import gnu.trove.THashMap;
+import com.intellij.util.containers.hash.LinkedHashMap;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -42,15 +40,13 @@ import java.util.Map;
  */
 @State(
   name = "LastSelectedPropertiesFileStore",
-  storages = {
-    @Storage(
-      file = StoragePathMacros.APP_CONFIG + "/other.xml"
-    )}
+  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/lastSelectedPropertiesFile.xml", roamingType = RoamingType.DISABLED)
 )
 public class LastSelectedPropertiesFileStore implements PersistentStateComponent<Element> {
-  private final Map<String, String> lastSelectedUrls = new THashMap<String, String>();
+  private static final String PROPERTIES_FILE_STATISTICS_KEY = "PROPERTIES_FILE";
+
+  private final Map<String, String> lastSelectedUrls = new LinkedHashMap<String, String>();
   private String lastSelectedFileUrl;
-  @NonNls private static final String PROPERTIES_FILE_STATISTICS_KEY = "PROPERTIES_FILE";
 
   public static LastSelectedPropertiesFileStore getInstance() {
     return ServiceManager.getService(LastSelectedPropertiesFileStore.class);
@@ -96,15 +92,29 @@ public class LastSelectedPropertiesFileStore implements PersistentStateComponent
       VirtualFile containingDir = virtualFile.getParent();
       lastSelectedUrls.put(containingDir.getUrl(), url);
       lastSelectedFileUrl = url;
-      StatisticsManager.getInstance().incUseCount(new StatisticsInfo(PROPERTIES_FILE_STATISTICS_KEY, FileUtil.toSystemDependentName(VfsUtil.urlToPath(url))));
+      StatisticsManager.getInstance().incUseCount(new StatisticsInfo(PROPERTIES_FILE_STATISTICS_KEY, FileUtil.toSystemDependentName(VfsUtilCore.urlToPath(url))));
     }
   }
 
-  private void readExternal(@NonNls Element element) {
+  @Override
+  public Element getState() {
+    Element state = new Element("state");
+    for (Map.Entry<String, String> entry : lastSelectedUrls.entrySet()) {
+      Element child = new Element("entry");
+      child.setAttribute("context", entry.getKey());
+      child.setAttribute("url", entry.getValue());
+      state.addContent(child);
+    }
+    if (lastSelectedFileUrl != null) {
+      state.setAttribute("lastSelectedFileUrl", lastSelectedFileUrl);
+    }
+    return state;
+  }
+
+  @Override
+  public void loadState(Element state) {
     lastSelectedUrls.clear();
-    List list = element.getChildren("entry");
-    for (Object o : list) {
-      @NonNls Element child = (Element)o;
+    for (Element child : state.getChildren("entry")) {
       String context = child.getAttributeValue("context");
       String url = child.getAttributeValue("url");
       VirtualFile propFile = VirtualFileManager.getInstance().findFileByUrl(url);
@@ -113,30 +123,6 @@ public class LastSelectedPropertiesFileStore implements PersistentStateComponent
         lastSelectedUrls.put(context, url);
       }
     }
-    lastSelectedFileUrl = element.getAttributeValue("lastSelectedFileUrl");
-  }
-
-  private void writeExternal(@NonNls Element element) {
-    for (Map.Entry<String, String> entry : lastSelectedUrls.entrySet()) {
-      String context = entry.getKey();
-      String url = entry.getValue();
-      @NonNls Element child = new Element("entry");
-      child.setAttribute("context", context);
-      child.setAttribute("url", url);
-      element.addContent(child);
-    }
-    if (lastSelectedFileUrl != null) {
-      element.setAttribute("lastSelectedFileUrl", lastSelectedFileUrl);
-    }
-  }
-
-  public Element getState() {
-    final Element e = new Element("state");
-    writeExternal(e);
-    return e;
-  }
-
-  public void loadState(Element state) {
-    readExternal(state);
+    lastSelectedFileUrl = state.getAttributeValue("lastSelectedFileUrl");
   }
 }

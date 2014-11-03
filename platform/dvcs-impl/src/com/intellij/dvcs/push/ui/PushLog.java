@@ -16,6 +16,9 @@
 package com.intellij.dvcs.push.ui;
 
 import com.intellij.dvcs.push.PushTargetPanel;
+import com.intellij.icons.AllIcons;
+import com.intellij.ide.actions.EditSourceAction;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataSink;
@@ -36,6 +39,7 @@ import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.CellEditorListener;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.TreeSelectionEvent;
@@ -44,7 +48,9 @@ import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.EventObject;
 import java.util.List;
 
 public class PushLog extends JPanel implements TypeSafeDataProvider {
@@ -111,7 +117,10 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
         }
       }
     };
+    myTree.setBorder(new EmptyBorder(2, 0, 0, 0));  //additional vertical indent
     myTree.setEditable(true);
+    myTree.setHorizontalAutoScrollingEnabled(false);
+    myTree.setShowsRootHandles(root.getChildCount() > 1);
     MyTreeCellEditor treeCellEditor = new MyTreeCellEditor();
     myTree.setCellEditor(treeCellEditor);
     treeCellEditor.addCellEditorListener(new CellEditorListener() {
@@ -121,6 +130,7 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
         if (node != null && node instanceof EditableTreeNode) {
           ((EditableTreeNode)node).fireOnChange();
         }
+        myTree.firePropertyChange(PushLogTreeUtil.EDIT_MODE_PROP, true, false);
       }
 
       @Override
@@ -129,6 +139,7 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
         if (node != null && node instanceof EditableTreeNode) {
           ((EditableTreeNode)node).fireOnCancel();
         }
+        myTree.firePropertyChange(PushLogTreeUtil.EDIT_MODE_PROP, true, false);
       }
     });
     myTree.setRootVisible(false);
@@ -154,6 +165,7 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
       new ChangesBrowser(project, null, Collections.<Change>emptyList(), null, false, true, null, ChangesBrowser.MyUseCase.LOCAL_CHANGES,
                          null);
     myChangesBrowser.getDiffAction().registerCustomShortcutSet(CommonShortcuts.getDiff(), myTree);
+    myChangesBrowser.addToolbarAction(createEditSourceAction());
     setDefaultEmptyText();
 
     Splitter splitter = new Splitter(false, 0.7f);
@@ -164,9 +176,19 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
     add(splitter);
   }
 
+  @NotNull
+  private EditSourceAction createEditSourceAction() {
+    final EditSourceAction editAction = new EditSourceAction();
+    editAction.registerCustomShortcutSet(CommonShortcuts.getEditSource(), myChangesBrowser.getViewer());
+    editAction.getTemplatePresentation().setIcon(AllIcons.Actions.EditSource);
+    editAction.getTemplatePresentation().setText("Edit Source");
+    editAction.getTemplatePresentation().setDescription(ActionsBundle.actionText("EditSource"));
+    return editAction;
+  }
+
   private void updateChangesView() {
     int[] rows = myTree.getSelectionRows();
-    if (rows.length != 0) {
+    if (rows != null && rows.length != 0) {
       myChangesBrowser.getViewer().setEmptyText("No differences");
       myChangesBrowser.setChangesToDisplay(collectAllChanges(rows));
     }
@@ -231,7 +253,7 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
   public void calcData(DataKey key, DataSink sink) {
     if (VcsDataKeys.CHANGES.equals(key)) {
       int[] rows = myTree.getSelectionRows();
-      if (rows.length != 0) {
+      if (rows != null && rows.length != 0) {
         Collection<Change> changes = collectAllChanges(rows);
         sink.put(key, ArrayUtil.toObjectArray(changes, Change.class));
       }
@@ -301,6 +323,7 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
     public Component getTreeCellEditorComponent(JTree tree, Object value, boolean isSelected, boolean expanded, boolean leaf, int row) {
       RepositoryWithBranchPanel panel = (RepositoryWithBranchPanel)((DefaultMutableTreeNode)value).getUserObject();
       myValue = panel;
+      myTree.firePropertyChange(PushLogTreeUtil.EDIT_MODE_PROP, false, true);
       return panel.getTreeCellEditorComponent(tree, value, isSelected, expanded, leaf, row, true);
     }
 
@@ -336,6 +359,9 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
       if (!(value instanceof DefaultMutableTreeNode)) {
         return;
       }
+      myCheckbox.setBorder(null); //checkBox may have no border by default, but insets are not null,
+      // it depends on LaF, OS and isItRenderedPane, see com.intellij.ide.ui.laf.darcula.ui.DarculaCheckBoxBorder.
+      // null border works as expected always.
       if (value instanceof RepositoryNode) {
         //todo simplify, remove instance of
         myCheckbox.setVisible(((RepositoryNode)value).isCheckboxVisible());

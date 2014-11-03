@@ -18,7 +18,6 @@ package org.jetbrains.plugins.github.ui;
 import com.intellij.CommonBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -151,8 +150,13 @@ public class GithubCreatePullRequestDialog extends DialogWrapper {
     });
 
     myPanel.setForks(myWorker.getForks());
-    myPanel.setSelectedFork(myProjectSettings.getCreatePullRequestDefaultRepo());
-    myPanel.setSelectedBranch(myProjectSettings.getCreatePullRequestDefaultBranch());
+
+    GithubFullPath defaultRepo = myProjectSettings.getCreatePullRequestDefaultRepo();
+    String defaultBranch = myProjectSettings.getCreatePullRequestDefaultBranch();
+    myPanel.setSelectedFork(defaultRepo);
+    if (defaultBranch != null) { // do not rewrite default value of Fork.getDefaultBranch() by null
+      myPanel.setSelectedBranch(defaultBranch);
+    }
 
     setTitle("Create Pull Request - " + myWorker.getCurrentBranch());
     init();

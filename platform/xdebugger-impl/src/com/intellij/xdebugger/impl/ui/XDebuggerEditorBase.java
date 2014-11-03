@@ -60,7 +60,7 @@ public abstract class XDebuggerEditorBase {
   @NotNull private final EvaluationMode myMode;
   @Nullable private final String myHistoryId;
   @Nullable private XSourcePosition mySourcePosition;
-  private int myHistoryIndex;
+  private int myHistoryIndex = -1;
 
   private final JLabel myChooseFactory = new JLabel();
   private WeakReference<ListPopup> myPopup;
@@ -142,7 +142,7 @@ public abstract class XDebuggerEditorBase {
 
   public abstract JComponent getComponent();
 
-  protected abstract void doSetText(XExpression text);
+  protected abstract void setEditorText(XExpression text);
 
   public void setExpression(@Nullable XExpression text) {
     if (text == null) {
@@ -174,7 +174,7 @@ public abstract class XDebuggerEditorBase {
       myChooseFactory.setDisabledIcon(IconLoader.getDisabledIcon(icon));
     }
 
-    doSetText(text);
+    setEditorText(text);
   }
 
   @Nullable
@@ -209,7 +209,7 @@ public abstract class XDebuggerEditorBase {
   private void saveTextInHistory(final XExpression text) {
     if (myHistoryId != null) {
       boolean update = XDebuggerHistoryManager.getInstance(myProject).addRecentExpression(myHistoryId, text);
-      myHistoryIndex = 0;
+      myHistoryIndex = -1; //meaning not from the history list
       if (update) {
         onHistoryChanged();
       }
@@ -240,7 +240,7 @@ public abstract class XDebuggerEditorBase {
     final List<XExpression> expressions = getRecentExpressions();
     if (myHistoryIndex < expressions.size() - 1) {
       myHistoryIndex++;
-      doSetText(expressions.get(myHistoryIndex));
+      setEditorText(expressions.get(myHistoryIndex));
     }
   }
 
@@ -248,7 +248,7 @@ public abstract class XDebuggerEditorBase {
     final List<XExpression> expressions = getRecentExpressions();
     if (myHistoryIndex > 0) {
       myHistoryIndex--;
-      doSetText(expressions.get(myHistoryIndex));
+      setEditorText(expressions.get(myHistoryIndex));
     }
   }
 }

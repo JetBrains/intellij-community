@@ -22,6 +22,7 @@ import com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokenType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -55,8 +56,10 @@ public class StdArrangementMatchRule extends ArrangementMatchRule implements Clo
 
   @Override
   public int compareTo(@NotNull StdArrangementMatchRule o) {
-    final Set<ArrangementSettingsToken> tokens = ArrangementUtil.extractTokens(getMatcher().getCondition()).keySet();
-    final Set<ArrangementSettingsToken> tokens1 = ArrangementUtil.extractTokens(o.getMatcher().getCondition()).keySet();
+    final Map<ArrangementSettingsToken, Object> tokenValues = ArrangementUtil.extractTokens(getMatcher().getCondition());
+    final Map<ArrangementSettingsToken, Object> tokenValues1 = ArrangementUtil.extractTokens(o.getMatcher().getCondition());
+    final Set<ArrangementSettingsToken> tokens = tokenValues.keySet();
+    final Set<ArrangementSettingsToken> tokens1 = tokenValues1.keySet();
     if (tokens1.containsAll(tokens)) {
       return tokens.containsAll(tokens1) ? 0 : 1;
     }
@@ -65,9 +68,9 @@ public class StdArrangementMatchRule extends ArrangementMatchRule implements Clo
         return -1;
       }
 
-      final String entryType = getEntryType(tokens);
-      final String entryType1 = getEntryType(tokens1);
-      final int compare = StringUtil.compare(entryType, entryType1, false);
+      final String entryType = getEntryType(tokenValues);
+      final String entryType1 = getEntryType(tokenValues1);
+      final int compare = StringUtil.compare(entryType1, entryType, false);
       if (compare != 0 || tokens.size() == tokens1.size()) {
         return compare;
       }
@@ -76,10 +79,13 @@ public class StdArrangementMatchRule extends ArrangementMatchRule implements Clo
   }
 
   @Nullable
-  private static String getEntryType(@NotNull Set<ArrangementSettingsToken> tokens) {
-    for (ArrangementSettingsToken token : tokens) {
-      if (StdArrangementTokenType.ENTRY_TYPE.is(token)) {
-        return token.getId();
+  private static String getEntryType(@NotNull Map<ArrangementSettingsToken, Object> tokens) {
+    for (Map.Entry<ArrangementSettingsToken, Object> token : tokens.entrySet()) {
+      if (StdArrangementTokenType.ENTRY_TYPE.is(token.getKey())) {
+        final Object value = token.getValue();
+        if (!(value instanceof Boolean) || (Boolean)value) {
+          return token.getKey().getId();
+        }
       }
     }
     return null;

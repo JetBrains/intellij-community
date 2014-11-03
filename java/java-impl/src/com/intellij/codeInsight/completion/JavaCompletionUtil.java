@@ -448,12 +448,15 @@ public class JavaCompletionUtil {
             PsiSubstitutor plainSub = plainResult.getSubstitutor();
             PsiSubstitutor castSub = TypeConversionUtil.getSuperClassSubstitutor(plainClass, (PsiClassType)castType);
             PsiType returnType = method.getReturnType();
-            if (method.getSignature(plainSub).equals(method.getSignature(castSub)) &&
-                returnType != null &&
-                castSub.substitute(returnType).isAssignableFrom(plainSub.substitute(returnType)) &&
-                processor.isAccessible(plainClass.findMethodBySignature(method, true))
-              ) {
-              return item;
+            if (method.getSignature(plainSub).equals(method.getSignature(castSub))) {
+              PsiType typeAfterCast = toRaw(castSub.substitute(returnType));
+              PsiType typeDeclared = toRaw(plainSub.substitute(returnType));
+              if (typeAfterCast != null && typeDeclared != null && 
+                  typeAfterCast.isAssignableFrom(typeDeclared) &&
+                  processor.isAccessible(plainClass.findMethodBySignature(method, true))
+                ) {
+                return item;
+              }
             }
           }
         }
@@ -493,6 +496,11 @@ public class JavaCompletionUtil {
         item.getDelegate().handleInsert(context);
       }
     });
+  }
+  
+  @Nullable 
+  private static PsiType toRaw(@Nullable PsiType type) {
+    return type instanceof PsiClassType ? ((PsiClassType)type).rawType() : type;
   }
 
   public static LookupElement highlightIfNeeded(PsiType qualifierType, LookupElement item, Object object) {

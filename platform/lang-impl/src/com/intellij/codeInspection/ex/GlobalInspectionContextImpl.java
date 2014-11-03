@@ -312,7 +312,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
 
   @Override
   protected void runTools(@NotNull AnalysisScope scope, boolean runGlobalToolsOnly) {
-    final InspectionManagerEx inspectionManager = (InspectionManagerEx)InspectionManager.getInstance(getProject());
+    final InspectionManager inspectionManager = InspectionManager.getInstance(getProject());
     List<Tools> globalTools = new ArrayList<Tools>();
     final List<Tools> localTools = new ArrayList<Tools>();
     final List<Tools> globalSimpleTools = new ArrayList<Tools>();
@@ -337,7 +337,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
       @Override
       public void visitFile(final PsiFile file) {
         final VirtualFile virtualFile = file.getVirtualFile();
-        if (virtualFile == null) return;
+        if (virtualFile == null || isBinary(file)) return;
 
         if (myView == null && !headlessEnvironment) {
           throw new ProcessCanceledException();
@@ -354,7 +354,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
 
         final FileViewProvider viewProvider = psiManager.findViewProvider(virtualFile);
         final com.intellij.openapi.editor.Document document = viewProvider == null ? null : viewProvider.getDocument();
-        if (document == null || isBinary(file)) return; //do not inspect binary files
+        if (document == null) return;
         final LocalInspectionsPass pass = new LocalInspectionsPass(file, document, 0,
                                                                    file.getTextLength(), LocalInspectionsPass.EMPTY_PRIORITY_RANGE, true,
                                                                    HighlightInfoProcessor.getEmpty());
@@ -403,7 +403,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     }
   }
 
-  private void runGlobalTools(@NotNull AnalysisScope scope, @NotNull InspectionManagerEx inspectionManager, @NotNull List<Tools> globalTools) {
+  private void runGlobalTools(@NotNull AnalysisScope scope, @NotNull InspectionManager inspectionManager, @NotNull List<Tools> globalTools) {
     final List<InspectionToolWrapper> needRepeatSearchRequest = new ArrayList<InspectionToolWrapper>();
 
     final boolean surelyNoExternalUsages = scope.getScopeType() == AnalysisScope.PROJECT;
@@ -678,8 +678,9 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
                                                                      range != null ? range.getEndOffset() : file.getTextLength(), LocalInspectionsPass.EMPTY_PRIORITY_RANGE, true,
                                                                      HighlightInfoProcessor.getEmpty());
           Runnable runnable = new Runnable() {
+            @Override
             public void run() {
-              pass.doInspectInBatch(GlobalInspectionContextImpl.this, (InspectionManagerEx)InspectionManager.getInstance(project), lTools);
+              pass.doInspectInBatch(GlobalInspectionContextImpl.this, InspectionManager.getInstance(project), lTools);
             }
           };
           ApplicationManager.getApplication().runReadAction(runnable);
@@ -693,11 +694,27 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
               }
             }
           }
-          results.put(file, infos);
+          if (!infos.isEmpty()) {
+            results.put(file, infos);
+          }
         }
       }
     });
 
+    if (results.isEmpty()) {
+      UIUtil.invokeLaterIfNeeded(new Runnable() {
+        @Override
+        public void run() {
+          if (commandName != null) {
+            NOTIFICATION_GROUP.createNotification(InspectionsBundle.message("inspection.no.problems.message"), MessageType.INFO).notify(getProject());
+          }
+          if (postRunnable != null) {
+            postRunnable.run();
+          }
+        }
+      });
+      return;
+    }
     Runnable runnable = new Runnable() {
       @Override
       public void run() {

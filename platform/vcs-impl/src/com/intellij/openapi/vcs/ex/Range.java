@@ -22,11 +22,14 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 /**
  * author: lesya
  */
 public class Range {
   private static final Logger LOG = Logger.getInstance(Range.class);
+  public static final byte EQUAL = 0;
   public static final byte MODIFIED = 1;
   public static final byte INSERTED = 2;
   public static final byte DELETED = 3;
@@ -41,38 +44,25 @@ public class Range {
   private final byte myType;
   @Nullable private RangeHighlighter myRangeHighlighter;
 
+  @Nullable private final List<InnerRange> myInnerRanges;
+
   private boolean myValid = true;
-
-  public static Range createOn(@NotNull Diff.Change change, int shift, int vcsShift) {
-    byte type = getChangeTypeFrom(change);
-
-    int line1 = shift + change.line1;
-    int line2 = line1 + change.inserted;
-
-    int vcsLine1 = vcsShift + change.line0;
-    int vcsLine2 = vcsLine1 + change.deleted;
-
-    return new Range(line1, line2, vcsLine1, vcsLine2, type);
-  }
-
-  private static byte getChangeTypeFrom(@NotNull Diff.Change change) {
-    if ((change.deleted > 0) && (change.inserted > 0)) return MODIFIED;
-    if ((change.deleted > 0)) return DELETED;
-    if ((change.inserted > 0)) return INSERTED;
-    LOG.error("Unknown change type");
-    return 0;
-  }
 
   public Range(@NotNull Range range) {
     this(range.getLine1(), range.getLine2(), range.getVcsLine1(), range.getVcsLine2(), range.getType());
   }
 
   public Range(int line1, int line2, int vcsLine1, int vcsLine2, byte type) {
+    this(line1, line2, vcsLine1, vcsLine2, type, null);
+  }
+
+  public Range(int line1, int line2, int vcsLine1, int vcsLine2, byte type, @Nullable List<InnerRange> innerRanges) {
     myLine1 = line1;
     myLine2 = line2;
     myVcsLine1 = vcsLine1;
     myVcsLine2 = vcsLine2;
     myType = type;
+    myInnerRanges = innerRanges;
   }
 
   public int hashCode() {
@@ -82,6 +72,19 @@ public class Range {
   public boolean equals(Object object) {
     if (!(object instanceof Range)) return false;
     Range other = (Range)object;
+
+    if (myInnerRanges != null) {
+      if (other.myInnerRanges == null) return false;
+      if (myInnerRanges.size() != other.myInnerRanges.size()) return false;
+
+      for (int i = 0; i < myInnerRanges.size(); i++) {
+        if (!myInnerRanges.get(i).equals(other.myInnerRanges.get(i))) return false;
+      }
+    }
+    else {
+      if (other.myInnerRanges != null) return false;
+    }
+
     return
       (myVcsLine1 == other.myVcsLine1)
       && (myVcsLine2 == other.myVcsLine2)
@@ -118,6 +121,17 @@ public class Range {
   public void shift(int shift) {
     myLine1 += shift;
     myLine2 += shift;
+
+    if (myInnerRanges != null) {
+      for (InnerRange range : myInnerRanges) {
+        range.shift(shift);
+      }
+    }
+  }
+
+  @Nullable
+  public List<InnerRange> getInnerRanges() {
+    return myInnerRanges;
   }
 
   public int getLine1() {
@@ -159,6 +173,76 @@ public class Range {
 
   public void invalidate() {
     myValid = false;
+  }
+
+  public static class InnerRange {
+    private int myLine1;
+    private int myLine2;
+    private final byte myType;
+
+    public InnerRange(int line1, int line2, byte type) {
+      myLine1 = line1;
+      myLine2 = line2;
+      myType = type;
+    }
+
+    public int getLine1() {
+      return myLine1;
+    }
+
+    public int getLine2() {
+      return myLine2;
+    }
+
+    public byte getType() {
+      return myType;
+    }
+
+    public void shift(int shift) {
+      myLine1 += shift;
+      myLine2 += shift;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      InnerRange range = (InnerRange)o;
+
+      if (myLine2 != range.myLine2) return false;
+      if (myLine1 != range.myLine1) return false;
+      if (myType != range.myType) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = myLine1;
+      result = 31 * result + myLine2;
+      result = 31 * result + (int)myType;
+      return result;
+    }
+
+    public String toString() {
+      return String.format("%s, %s, %s", myLine1, myLine2, getTypeName());
+    }
+
+    @NonNls
+    private String getTypeName() {
+      switch (myType) {
+        case MODIFIED:
+          return "MODIFIED";
+        case INSERTED:
+          return "INSERTED";
+        case DELETED:
+          return "DELETED";
+        case EQUAL:
+          return "EQUAL";
+      }
+      return "UNKNOWN";
+    }
   }
 
   /*

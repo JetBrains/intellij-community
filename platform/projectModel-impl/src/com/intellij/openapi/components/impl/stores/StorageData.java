@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.application.options.PathMacrosCollector;
-import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.openapi.components.PathMacroSubstitutor;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.components.XmlConfigurationMerger;
@@ -24,38 +23,43 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
+import com.intellij.util.containers.SmartHashSet;
+import com.intellij.util.containers.StringInterner;
 import org.jdom.Attribute;
 import org.jdom.Element;
-import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.*;
 
-public class StorageData {
+import static com.intellij.openapi.components.impl.stores.StateMap.getNewByteIfDiffers;
+
+public class StorageData extends StorageDataBase {
   private static final Logger LOG = Logger.getInstance(StorageData.class);
   @NonNls public static final String COMPONENT = "component";
   @NonNls public static final String NAME = "name";
 
-  final Map<String, Element> myComponentStates;
+  private final StateMap myStates;
+
   protected final String myRootElementName;
-  private int myHash = -1;
 
   public StorageData(@NotNull String rootElementName) {
-    myComponentStates = new THashMap<String, Element>();
+    myStates = new StateMap();
     myRootElementName = rootElementName;
   }
 
   StorageData(@NotNull StorageData storageData) {
     myRootElementName = storageData.myRootElementName;
-    myComponentStates = new THashMap<String, Element>(storageData.myComponentStates);
+    myStates = new StateMap(storageData.myStates);
+  }
+
+  @Override
+  @NotNull
+  public Set<String> getComponentNames() {
+    return myStates.keys();
   }
 
   public void load(@NotNull Element rootElement, @Nullable PathMacroSubstitutor pathMacroSubstitutor, boolean intern) {
@@ -63,36 +67,43 @@ public class StorageData {
       pathMacroSubstitutor.expandPaths(rootElement);
     }
 
+    StringInterner interner = intern ? new StringInterner() : null;
     for (Iterator<Element> iterator = rootElement.getChildren(COMPONENT).iterator(); iterator.hasNext(); ) {
       Element element = iterator.next();
-      String name = element.getAttributeValue(NAME);
-      if (name == null) {
-        LOG.info("Broken content in file : " + this);
+      String name = getComponentNameIfValid(element);
+      if (name == null || !(element.getAttributes().size() > 1 || !element.getChildren().isEmpty())) {
         continue;
       }
 
-      if (element.getAttributes().size() > 1 || !element.getChildren().isEmpty()) {
-        assert element.getAttributeValue(NAME) != null : "No name attribute for component: " + name + " in " + this;
-
-        iterator.remove();
-        if (intern) {
-          IdeaPluginDescriptorImpl.internJDOMElement(element);
-        }
-
-        Element serverElement = myComponentStates.get(name);
-        if (serverElement != null) {
-          element = mergeElements(name, element, serverElement);
-        }
-
-        myComponentStates.put(name, element);
+      iterator.remove();
+      if (interner != null) {
+        JDOMUtil.internElement(element, interner);
       }
-    }
 
-    if (pathMacroSubstitutor instanceof TrackingPathMacroSubstitutor) {
-      for (String componentName : myComponentStates.keySet()) {
-        ((TrackingPathMacroSubstitutor)pathMacroSubstitutor).addUnknownMacros(componentName, PathMacrosCollector.getMacroNames(myComponentStates.get(componentName)));
+      Object serverElement = myStates.get(name);
+      if (serverElement != null) {
+        element = mergeElements(name, element, (Element)serverElement);
       }
+
+      myStates.put(name, element);
+
+      if (pathMacroSubstitutor instanceof TrackingPathMacroSubstitutor) {
+        ((TrackingPathMacroSubstitutor)pathMacroSubstitutor).addUnknownMacros(name, PathMacrosCollector.getMacroNames(element));
+      }
+
+      // remove only after "getMacroNames" - some PathMacroFilter requires element name attribute
+      element.removeAttribute(NAME);
     }
+  }
+
+  @Nullable
+  static String getComponentNameIfValid(@NotNull Element element) {
+    String name = element.getAttributeValue(NAME);
+    if (StringUtil.isEmpty(name)) {
+      LOG.warn("No name attribute for component in " + JDOMUtil.writeElement(element));
+      return null;
+    }
+    return name;
   }
 
   @NotNull
@@ -107,65 +118,122 @@ public class StorageData {
   }
 
   @Nullable
-  protected Element save() {
-    if (myComponentStates.isEmpty()) {
+  protected Element save(@NotNull Map<String, Element> newLiveStates) {
+    if (myStates.isEmpty()) {
       return null;
     }
 
     Element rootElement = new Element(myRootElementName);
-    String[] componentNames = ArrayUtil.toStringArray(myComponentStates.keySet());
+    String[] componentNames = ArrayUtil.toStringArray(myStates.keys());
     Arrays.sort(componentNames);
     for (String componentName : componentNames) {
       assert componentName != null;
-      final Element element = myComponentStates.get(componentName);
+      Element element = myStates.getElement(componentName, newLiveStates);
+      // name attribute should be first
+      List<Attribute> elementAttributes = element.getAttributes();
+      if (elementAttributes.isEmpty()) {
+        element.setAttribute(NAME, componentName);
+      }
+      else {
+        Attribute nameAttribute = element.getAttribute(NAME);
+        if (nameAttribute == null) {
+          nameAttribute = new Attribute(NAME, componentName);
+          elementAttributes.add(0, nameAttribute);
+        }
+        else {
+          nameAttribute.setValue(componentName);
+          if (elementAttributes.get(0) != nameAttribute) {
+            elementAttributes.remove(nameAttribute);
+            elementAttributes.add(0, nameAttribute);
+          }
+        }
+      }
 
-      if (element.getAttribute(NAME) == null) element.setAttribute(NAME, componentName);
-
-      rootElement.addContent(element.clone());
+      rootElement.addContent(element);
     }
     return rootElement;
   }
 
   @Nullable
-  public Element getState(final String name) {
-    final Element element = myComponentStates.get(name);
-    if (element != null) {
-      assert element.getAttributeValue(NAME) != null : "No name attribute for component: " + name + " in " + this;
-      element.removeAttribute(NAME);
-    }
-    return element;
+  public Element getState(@NotNull String name) {
+    return myStates.getState(name);
   }
 
-  void removeState(final String componentName) {
-    myComponentStates.remove(componentName);
-    clearHash();
+  @Nullable
+  public Element getStateAndArchive(@NotNull String name) {
+    return myStates.getStateAndArchive(name);
   }
 
-  void setState(@NotNull String componentName, @NotNull Element element) {
-    element.setName(COMPONENT);
+  @Nullable
+  static StorageData setStateAndCloneIfNeed(@NotNull String componentName, @Nullable Element newState, @NotNull StorageData storageData, @NotNull Map<String, Element> newLiveStates) {
+    Object oldState = storageData.myStates.get(componentName);
+    if (newState == null || JDOMUtil.isEmpty(newState)) {
+      if (oldState == null) {
+        return null;
+      }
 
-    // componentName should be first
-    List<Attribute> elementAttributes = element.getAttributes();
-    if (elementAttributes.isEmpty()) {
-      element.setAttribute(NAME, componentName);
-    }
-    else {
-      Attribute nameAttribute = element.getAttribute(NAME);
-      if (nameAttribute == null) {
-        nameAttribute = new Attribute(NAME, componentName);
-        elementAttributes.add(0, nameAttribute);
-      }
-      else {
-        nameAttribute.setValue(componentName);
-        if (elementAttributes.get(0) != nameAttribute) {
-          elementAttributes.remove(nameAttribute);
-          elementAttributes.add(0, nameAttribute);
-        }
-      }
+      StorageData newStorageData = storageData.clone();
+      newStorageData.myStates.remove(componentName);
+      return newStorageData;
     }
 
-    myComponentStates.put(componentName, element);
-    clearHash();
+    prepareElement(newState);
+
+    newLiveStates.put(componentName, newState);
+
+    byte[] newBytes = null;
+    if (oldState instanceof Element) {
+      if (JDOMUtil.areElementsEqual((Element)oldState, newState)) {
+        return null;
+      }
+    }
+    else if (oldState != null) {
+      newBytes = getNewByteIfDiffers(componentName, newState, (byte[])oldState);
+      if (newBytes == null) {
+        return null;
+      }
+    }
+
+    StorageData newStorageData = storageData.clone();
+    newStorageData.myStates.put(componentName, newBytes == null ? newState : newBytes);
+    return newStorageData;
+  }
+
+  @Nullable
+  final Object setState(@NotNull String componentName, @Nullable Element newState, @NotNull Map<String, Element> newLiveStates) {
+    if (newState == null || JDOMUtil.isEmpty(newState)) {
+      return myStates.remove(componentName);
+    }
+
+    prepareElement(newState);
+
+    newLiveStates.put(componentName, newState);
+
+    Object oldState = myStates.get(componentName);
+
+    byte[] newBytes = null;
+    if (oldState instanceof Element) {
+      if (JDOMUtil.areElementsEqual((Element)oldState, newState)) {
+        return null;
+      }
+    }
+    else if (oldState != null) {
+      newBytes = getNewByteIfDiffers(componentName, newState, (byte[])oldState);
+      if (newBytes == null) {
+        return null;
+      }
+    }
+
+    myStates.put(componentName, newBytes == null ? newState : newBytes);
+    return newState;
+  }
+
+  private static void prepareElement(@NotNull Element state) {
+    if (state.getParent() != null) {
+      LOG.warn("State element must not have parent " + JDOMUtil.writeElement(state));
+      state.detach();
+    }
+    state.setName(COMPONENT);
   }
 
   @Override
@@ -173,71 +241,24 @@ public class StorageData {
     return new StorageData(this);
   }
 
-  public final int getHash() {
-    if (myHash == -1) {
-      myHash = computeHash();
-      if (myHash == -1) {
-        myHash = 0;
-      }
-    }
-    return myHash;
-  }
+  // newStorageData - myStates contains only live (unarchived) states
+  public Set<String> getChangedComponentNames(@NotNull StorageData newStorageData, @Nullable PathMacroSubstitutor substitutor) {
+    Set<String> bothStates = new SmartHashSet<String>(myStates.keys());
+    bothStates.retainAll(newStorageData.myStates.keys());
 
-  protected int computeHash() {
-    int result = 0;
-    for (String name : myComponentStates.keySet()) {
-      result = 31 * result + name.hashCode();
-      result = 31 * result + JDOMUtil.getTreeHash(myComponentStates.get(name));
-    }
-    return result;
-  }
-
-  protected void clearHash() {
-    myHash = -1;
-  }
-
-  public Set<String> getChangedComponentNames(@NotNull StorageData storageData, @Nullable PathMacroSubstitutor substitutor) {
-    Set<String> bothStates = new THashSet<String>(myComponentStates.keySet());
-    bothStates.retainAll(storageData.myComponentStates.keySet());
-
-    Set<String> diffs = new THashSet<String>();
-    diffs.addAll(storageData.myComponentStates.keySet());
-    diffs.addAll(myComponentStates.keySet());
+    Set<String> diffs = new SmartHashSet<String>();
+    diffs.addAll(newStorageData.myStates.keys());
+    diffs.addAll(myStates.keys());
     diffs.removeAll(bothStates);
 
     for (String componentName : bothStates) {
-      final Element e1 = myComponentStates.get(componentName);
-      final Element e2 = storageData.myComponentStates.get(componentName);
-
-      // some configurations want to collapse path elements in writeExternal so make sure paths are expanded
-      if (substitutor != null) {
-        substitutor.expandPaths(e2);
-      }
-
-      if (!JDOMUtil.areElementsEqual(e1, e2)) {
-        diffs.add(componentName);
-      }
+      myStates.compare(componentName, newStorageData.myStates, diffs);
     }
-
     return diffs;
   }
 
-  public boolean isEmpty() {
-    return myComponentStates.isEmpty();
-  }
-
+  @Override
   public boolean hasState(@NotNull String componentName) {
-      return myComponentStates.containsKey(componentName);
-  }
-
-  @NotNull
-  public static Element load(@NotNull VirtualFile file) throws IOException, JDOMException {
-    InputStream stream = file.getInputStream();
-    try {
-      return JDOMUtil.loadDocument(stream).getRootElement();
-    }
-    finally {
-      stream.close();
-    }
+    return myStates.hasState(componentName);
   }
 }

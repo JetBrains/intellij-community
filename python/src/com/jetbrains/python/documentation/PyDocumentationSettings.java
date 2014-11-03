@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.jetbrains.python.documentation;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleServiceManager;
 import com.intellij.openapi.util.text.StringUtil;
@@ -36,8 +37,9 @@ import java.util.List;
 /**
  * @author yole
  */
-@State(name = "PyDocumentationSettings",
-       storages = {@Storage(file = "$MODULE_FILE$")}
+@State(
+  name = "PyDocumentationSettings",
+  storages = @Storage(file = StoragePathMacros.MODULE_FILE)
 )
 public class PyDocumentationSettings implements PersistentStateComponent<PyDocumentationSettings> {
   public String myDocStringFormat = DocStringFormat.REST;

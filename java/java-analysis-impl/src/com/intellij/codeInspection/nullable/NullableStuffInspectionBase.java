@@ -108,7 +108,7 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
             }
             message += "\' but \'" + anno + "\' would be used for code generation.";
             final PsiJavaCodeReferenceElement annotationNameReferenceElement = annotation.getNameReferenceElement();
-            holder.registerProblem(annotationNameReferenceElement != null ? annotationNameReferenceElement : field.getNameIdentifier(),
+            holder.registerProblem(annotationNameReferenceElement != null && annotationNameReferenceElement.isPhysical() ? annotationNameReferenceElement : field.getNameIdentifier(),
                                    message,
                                    ProblemHighlightType.WEAK_WARNING,
                                    new ChangeNullableDefaultsFix(notNull, nullable, manager));
@@ -161,8 +161,7 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
                                      addAnnoFix);
             }
             if (PropertyUtil.isSimpleSetter(setter)) {
-              if (annotated.isDeclaredNotNull && isNullableNotInferred(parameter, false) ||
-                  annotated.isDeclaredNullable && isNotNullNotInferred(parameter, false, false)) {
+              if (annotated.isDeclaredNotNull && isNullableNotInferred(parameter, false)) {
                 final PsiIdentifier nameIdentifier1 = parameter.getNameIdentifier();
                 assertValidElement(setter, parameter, nameIdentifier1);
                 holder.registerProblem(nameIdentifier1, InspectionsBundle.message(
@@ -187,12 +186,13 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
           for (PsiExpression rhs : initializers) {
             if (rhs instanceof PsiReferenceExpression) {
               PsiElement target = ((PsiReferenceExpression)rhs).resolve();
-              if (target instanceof PsiParameter) {
+              if (target instanceof PsiParameter && target.isPhysical()) {
                 PsiParameter parameter = (PsiParameter)target;
                 AddAnnotationPsiFix fix = new AddAnnotationPsiFix(anno, parameter, PsiNameValuePair.EMPTY_ARRAY, ArrayUtil.toStringArray(annoToRemove));
                 if (REPORT_NOT_ANNOTATED_GETTER && !manager.hasNullability(parameter) && !TypeConversionUtil.isPrimitiveAndNotNull(parameter.getType())) {
                   final PsiIdentifier nameIdentifier2 = parameter.getNameIdentifier();
                   assert nameIdentifier2 != null : parameter;
+                  assert nameIdentifier2.isPhysical() : parameter;
                   holder.registerProblem(nameIdentifier2, InspectionsBundle
                     .message("inspection.nullable.problems.annotated.field.constructor.parameter.not.annotated",
                              getPresentableAnnoName(field)),
@@ -421,8 +421,9 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
           if (!nullableManager.hasNullability(superParameter) && isNotNullNotInferred(parameter, false, false)) {
             PsiAnnotation notNullAnnotation = nullableManager.getNotNullAnnotation(parameter, false);
             assert notNullAnnotation != null;
-            final LocalQuickFix fix = new RemoveAnnotationQuickFix(notNullAnnotation, parameter);
-            holder.registerProblem(notNullAnnotation,
+            boolean physical = PsiTreeUtil.isAncestor(parameter, notNullAnnotation, true);
+            final LocalQuickFix fix = physical ? new RemoveAnnotationQuickFix(notNullAnnotation, parameter) : null;
+            holder.registerProblem(physical ? notNullAnnotation : parameter.getNameIdentifier(),
                                    InspectionsBundle.message("inspection.nullable.problems.NotNull.parameter.overrides.not.annotated", getPresentableAnnoName(parameter)),
                                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                    wrapFix(fix));

@@ -126,6 +126,8 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   private static final boolean ourFlattenPackagesDefaults = false;
   private final Map<String, Boolean> myShowMembers = new THashMap<String, Boolean>();
   private static final boolean ourShowMembersDefaults = false;
+  private final Map<String, Boolean> myManualOrder = new THashMap<String, Boolean>();
+  private static final boolean ourManualOrderDefaults = false;
   private final Map<String, Boolean> mySortByType = new THashMap<String, Boolean>();
   private static final boolean ourSortByTypeDefaults = false;
   private final Map<String, Boolean> myShowModules = new THashMap<String, Boolean>();
@@ -703,6 +705,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
     myActionGroup.addAction(myAutoScrollToSourceHandler.createToggleAction()).setAsSecondary(true);
     myActionGroup.addAction(myAutoScrollFromSourceHandler.createToggleAction()).setAsSecondary(true);
+    myActionGroup.addAction(new ManualOrderAction()).setAsSecondary(true);
     myActionGroup.addAction(new SortByTypeAction()).setAsSecondary(true);
     myActionGroup.addAction(new FoldersAlwaysOnTopAction()).setAsSecondary(true);
 
@@ -1784,6 +1787,18 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   }
 
   @Override
+  public boolean isManualOrder(String paneId) {
+    return getPaneOptionValue(myManualOrder, paneId, ourManualOrderDefaults);
+  }
+
+  @Override
+  public void setManualOrder(@NotNull String paneId, final boolean enabled) {
+    setPaneOption(myManualOrder, enabled, paneId, false);
+    final AbstractProjectViewPane pane = getProjectViewPaneById(paneId);
+    pane.installComparator();
+  }
+
+  @Override
   public boolean isSortByType(String paneId) {
     return getPaneOptionValue(mySortByType, paneId, ourSortByTypeDefaults);
   }
@@ -1795,7 +1810,31 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     pane.installComparator();
   }
 
-  private class SortByTypeAction extends ToggleAction {
+  private class ManualOrderAction extends ToggleAction implements DumbAware {
+    private ManualOrderAction() {
+      super(IdeBundle.message("action.manual.order"), IdeBundle.message("action.manual.order"), AllIcons.ObjectBrowser.Sorted);
+    }
+
+    @Override
+    public boolean isSelected(AnActionEvent event) {
+      return isManualOrder(getCurrentViewId());
+    }
+
+    @Override
+    public void setSelected(AnActionEvent event, boolean flag) {
+      setManualOrder(getCurrentViewId(), flag);
+    }
+
+    @Override
+    public void update(final AnActionEvent e) {
+      super.update(e);
+      final Presentation presentation = e.getPresentation();
+      AbstractProjectViewPane pane = getCurrentProjectViewPane();
+      presentation.setVisible(pane != null && pane.supportsManualOrder());
+    }
+  }
+  
+  private class SortByTypeAction extends ToggleAction implements DumbAware {
     private SortByTypeAction() {
       super(IdeBundle.message("action.sort.by.type"), IdeBundle.message("action.sort.by.type"), AllIcons.ObjectBrowser.SortByType);
     }
@@ -1818,7 +1857,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
   }
 
-  private class FoldersAlwaysOnTopAction extends ToggleAction {
+  private class FoldersAlwaysOnTopAction extends ToggleAction implements DumbAware {
     private FoldersAlwaysOnTopAction() {
       super("Folders Always on Top");
     }

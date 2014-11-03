@@ -21,12 +21,13 @@ import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 
 public class DefaultFileTypeSpecificInputFilter implements FileBasedIndex.FileTypeSpecificInputFilter {
-  private FileType[] myFileTypes;
+  private final FileType[] myFileTypes;
 
   public DefaultFileTypeSpecificInputFilter(@NotNull FileType... fileTypes) {
     myFileTypes = fileTypes;
   }
 
+  @Override
   public void registerFileTypesUsedForIndexing(@NotNull Consumer<FileType> fileTypeSink) {
     for(FileType ft:myFileTypes) fileTypeSink.consume(ft);
   }

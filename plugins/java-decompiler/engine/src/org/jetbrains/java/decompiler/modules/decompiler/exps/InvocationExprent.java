@@ -18,6 +18,8 @@ package org.jetbrains.java.decompiler.modules.decompiler.exps;
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
+import org.jetbrains.java.decompiler.main.TextBuffer;
+import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.java.decompiler.main.rels.MethodWrapper;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
@@ -78,7 +80,7 @@ public class InvocationExprent extends Exprent {
   public InvocationExprent() {
   }
 
-  public InvocationExprent(int opcode, LinkConstant cn, ListStack<Exprent> stack, int dynamic_invokation_type) {
+  public InvocationExprent(int opcode, LinkConstant cn, ListStack<Exprent> stack, int dynamic_invokation_type, Set<Integer> bytecode_offsets) {
 
     name = cn.elementname;
     classname = cn.classname;
@@ -132,6 +134,8 @@ public class InvocationExprent extends Exprent {
     else {
       instance = stack.pop();
     }
+
+    addBytecodeOffsets(bytecode_offsets);
   }
 
   private InvocationExprent(InvocationExprent expr) {
@@ -150,6 +154,7 @@ public class InvocationExprent extends Exprent {
     for (int i = 0; i < lstParameters.size(); i++) {
       lstParameters.set(i, lstParameters.get(i).copy());
     }
+    bytecode.addAll(expr.bytecode);
   }
 
 
@@ -182,15 +187,19 @@ public class InvocationExprent extends Exprent {
   }
 
 
+  @Override
   public Exprent copy() {
     return new InvocationExprent(this);
   }
 
-  public String toJava(int indent) {
-    StringBuilder buf = new StringBuilder("");
+  @Override
+  public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
+    TextBuffer buf = new TextBuffer();
 
     String super_qualifier = null;
     boolean isInstanceThis = false;
+
+    tracer.addMapping(bytecode);
 
     if (invocationTyp == INVOKE_DYNAMIC) {
       //			ClassNode node = (ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASSNODE);
@@ -271,7 +280,7 @@ public class InvocationExprent extends Exprent {
           buf.append("super");
         }
         else {
-          String res = instance.toJava(indent);
+          TextBuffer res = instance.toJava(indent, tracer);
 
           VarType rightType = instance.getExprType();
           VarType leftType = new VarType(CodeConstants.TYPE_OBJECT, 0, classname);
@@ -280,7 +289,7 @@ public class InvocationExprent extends Exprent {
             buf.append("((").append(ExprProcessor.getCastTypeName(leftType)).append(")");
 
             if (instance.getPrecedence() >= FunctionExprent.getPrecedence(FunctionExprent.FUNCTION_CAST)) {
-              res = "(" + res + ")";
+              res.enclose("(", ")");
             }
             buf.append(res).append(")");
           }
@@ -297,7 +306,7 @@ public class InvocationExprent extends Exprent {
     switch (functype) {
       case TYP_GENERAL:
         if (VarExprent.VAR_NAMELESS_ENCLOSURE.equals(buf.toString())) {
-          buf = new StringBuilder("");
+          buf = new TextBuffer();
         }
 
         if (buf.length() > 0) {
@@ -321,7 +330,7 @@ public class InvocationExprent extends Exprent {
           buf.append("this(");
         }
         else {
-          buf.append(instance.toJava(indent));
+          buf.append(instance.toJava(indent, tracer));
           buf.append(".<init>(");
           //				throw new RuntimeException("Unrecognized invocation of <init>"); // FIXME: activate
         }
@@ -348,24 +357,26 @@ public class InvocationExprent extends Exprent {
 
     Set<Integer> setAmbiguousParameters = getAmbiguousParameters();
 
-    boolean firstpar = true;
+    boolean firstParameter = true;
     int start = isEnum ? 2 : 0;
     for (int i = start; i < lstParameters.size(); i++) {
       if (sigFields == null || sigFields.get(i) == null) {
-        if (!firstpar) {
+        if (!firstParameter) {
           buf.append(", ");
         }
 
-        StringBuilder buff = new StringBuilder();
-        ExprProcessor.getCastedExprent(lstParameters.get(i), descriptor.params[i], buff, indent, true, setAmbiguousParameters.contains(i));
-
+        TextBuffer buff = new TextBuffer();
+        boolean ambiguous = setAmbiguousParameters.contains(i);
+        ExprProcessor.getCastedExprent(lstParameters.get(i), descriptor.params[i], buff, indent, true, ambiguous, tracer);
         buf.append(buff);
-        firstpar = false;
+
+        firstParameter = false;
       }
     }
+
     buf.append(")");
 
-    return buf.toString();
+    return buf;
   }
 
   private Set<Integer> getAmbiguousParameters() {

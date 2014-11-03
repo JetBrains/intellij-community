@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -302,7 +302,7 @@ public class PyCompatibilityInspection extends PyInspection {
     public void visitPyReferenceExpression(PyReferenceExpression node) {
       super.visitPyElement(node);
       if (shouldBeCompatibleWithPy3()) {
-        final TypeEvalContext context = TypeEvalContext.codeAnalysis(node.getContainingFile());
+        final TypeEvalContext context = TypeEvalContext.codeAnalysis(node.getProject(), node.getContainingFile());
         final String nodeText = node.getText();
         if (nodeText.endsWith("iteritems") || nodeText.endsWith("iterkeys") || nodeText.endsWith("itervalues")) {
           final PyExpression qualifier = node.getQualifier();

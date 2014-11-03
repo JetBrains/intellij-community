@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,19 @@
  */
 package com.intellij.psi.impl;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.psi.PsiElement;
 import org.intellij.lang.regexp.DefaultRegExpPropertiesProvider;
 import org.intellij.lang.regexp.RegExpLanguageHost;
+import org.intellij.lang.regexp.psi.RegExpChar;
 import org.intellij.lang.regexp.psi.RegExpGroup;
+import org.intellij.lang.regexp.psi.RegExpNamedGroupRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,17 +64,41 @@ public class JavaRegExpHost implements RegExpLanguageHost {
 
   @Override
   public boolean supportsNamedGroupSyntax(RegExpGroup group) {
-    if (group.isRubyNamedGroup()) {
-      final Module module = ModuleUtilCore.findModuleForPsiElement(group);
-      if (module != null) {
-        final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
-        if (sdk != null && sdk.getSdkType() instanceof JavaSdk) {
-          final JavaSdkVersion version = JavaSdk.getInstance().getVersion(sdk);
-          return version != null && version.isAtLeast(JavaSdkVersion.JDK_1_7);
-        }
-      }
+    if (group.isNamedGroup()) {
+      final JavaSdkVersion version = getJavaVersion(group);
+      return version != null && version.isAtLeast(JavaSdkVersion.JDK_1_7);
     }
     return false;
+  }
+
+  @Override
+  public boolean supportsNamedGroupRefSyntax(RegExpNamedGroupRef ref) {
+    if (ref.isNamedGroupRef()) {
+      final JavaSdkVersion version = getJavaVersion(ref);
+      return version != null && version.isAtLeast(JavaSdkVersion.JDK_1_7);
+    }
+    return false;
+  }
+
+  @Override
+  public boolean supportsExtendedHexCharacter(RegExpChar regExpChar) {
+    final JavaSdkVersion version = getJavaVersion(regExpChar);
+    return version != null && version.isAtLeast(JavaSdkVersion.JDK_1_7);
+  }
+
+  @Nullable
+  private static JavaSdkVersion getJavaVersion(PsiElement element) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return JavaSdkVersion.JDK_1_9;
+    }
+    final Module module = ModuleUtilCore.findModuleForPsiElement(element);
+    if (module != null) {
+      final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
+      if (sdk != null && sdk.getSdkType() instanceof JavaSdk) {
+        return JavaSdk.getInstance().getVersion(sdk);
+      }
+    }
+    return null;
   }
 
   @Override

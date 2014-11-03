@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -187,7 +187,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     mySdkCombo.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
     mySdkCombo.setRenderer(new PySdkListCellRenderer(false));
 
-    final PackagesNotificationPanel notificationsArea = new PackagesNotificationPanel(myProject);
+    final PackagesNotificationPanel notificationsArea = new PackagesNotificationPanel();
     final JComponent notificationsComponent = notificationsArea.getComponent();
     final Dimension preferredSize = mySdkCombo.getPreferredSize();
     mySdkCombo.setPreferredSize(preferredSize);

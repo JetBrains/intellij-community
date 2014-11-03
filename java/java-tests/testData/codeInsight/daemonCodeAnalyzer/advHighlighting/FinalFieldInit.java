@@ -260,3 +260,20 @@ class StaticInitializerUsedInAnotherStaticField {
 
   private static final int ourEnumerationCacheConstant = ENUMERATION_CACHE_SIZE;
 }
+
+class InitializedInClassInitializerUsedInTheFollowingFieldInitializer {
+  private final int i;
+  {
+    i = 0;
+  }
+
+  private int j = i;
+
+  private final int k;
+
+  private int l = <error descr="Variable 'k' might not have been initialized">k</error>;
+
+  {
+    k = 1;
+  }
+}

@@ -22,6 +22,7 @@ import git4idea.commands.GitCommand;
 import git4idea.commands.GitLineHandler;
 import git4idea.i18n.GitBundle;
 import git4idea.util.GitUIUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
@@ -99,6 +100,12 @@ public class GitResetDialog extends DialogWrapper {
       }
     });
     init();
+  }
+
+  @Nullable
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return myCommitTextField;
   }
 
   /**

@@ -21,6 +21,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.accessStaticViaInstance.AccessStaticViaInstance;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
+import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.deprecation.DeprecationInspection;
 import com.intellij.codeInspection.javaDoc.JavaDocLocalInspection;
 import com.intellij.codeInspection.reference.EntryPoint;
@@ -29,7 +30,7 @@ import com.intellij.codeInspection.sillyAssignment.SillyAssignmentInspection;
 import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
 import com.intellij.codeInspection.unneededThrows.RedundantThrowsDeclaration;
 import com.intellij.codeInspection.unusedImport.UnusedImportLocalInspection;
-import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
+import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageAnnotators;
 import com.intellij.lang.annotation.Annotation;
@@ -67,8 +68,7 @@ import java.util.List;
  */
 public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   @NonNls static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/advHighlighting";
-
-  private UnusedSymbolLocalInspection myUnusedSymbolLocalInspection;
+  private UnusedDeclarationInspectionBase myUnusedDeclarationInspection;
 
   private void doTest(boolean checkWarnings, boolean checkInfos) {
     doTest(BASE_PATH + "/" + getTestName(false) + ".java", checkWarnings, checkInfos);
@@ -77,6 +77,8 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
+    myUnusedDeclarationInspection = new UnusedDeclarationInspection();
+    enableInspectionTool(myUnusedDeclarationInspection);
     setLanguageLevel(LanguageLevel.JDK_1_4);
   }
 
@@ -88,7 +90,6 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
       new AccessStaticViaInstance(),
       new DeprecationInspection(),
       new RedundantThrowsDeclaration(),
-      myUnusedSymbolLocalInspection = new UnusedSymbolLocalInspection(),
       new UnusedImportLocalInspection(),
       new UncheckedWarningLocalInspection()
     };
@@ -149,7 +150,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testCatchType() { doTest(false, false); }
   public void testMustBeThrowable() { doTest(false, false); }
   public void testUnhandledMessingWithFinally() { doTest(false, false); }
-  public void testSerializableStuff() { enableInspectionTool(new UnusedDeclarationInspection()); doTest(true, false); }
+  public void testSerializableStuff() {  doTest(true, false); }
   public void testDeprecated() { doTest(true, false); }
   public void testJavadoc() { enableInspectionTool(new JavaDocLocalInspection()); doTest(true, false); }
   public void testExpressionsInSwitch () { doTest(false, false); }
@@ -214,14 +215,25 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testInnerClassesShadowing() { doTest(false, false); }
 
   public void testUnusedParamsOfPublicMethodDisabled() {
-    myUnusedSymbolLocalInspection.REPORT_PARAMETER_FOR_PUBLIC_METHODS = false;
-    doTest(true, false);
+    final UnusedSymbolLocalInspectionBase localInspectionTool = myUnusedDeclarationInspection.getSharedLocalInspectionTool();
+    boolean oldVal = localInspectionTool.REPORT_PARAMETER_FOR_PUBLIC_METHODS;
+    try {
+      localInspectionTool.REPORT_PARAMETER_FOR_PUBLIC_METHODS = false;
+      doTest(true, false);
+    }
+    finally {
+      localInspectionTool.REPORT_PARAMETER_FOR_PUBLIC_METHODS = oldVal;
+    }
   }
 
   public void testUnusedNonPrivateMembers() {
-    UnusedDeclarationInspection deadCodeInspection = new UnusedDeclarationInspection();
-    enableInspectionTool(deadCodeInspection);
-    doTest(true, false);
+    try {
+      myUnusedDeclarationInspection.setEnabledInEditor(true);
+      doTest(true, false);
+    }
+    finally {
+      myUnusedDeclarationInspection.setEnabledInEditor(false);
+    }
   }
 
   public void testUnusedNonPrivateMembers2() {
@@ -261,39 +273,41 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
     point.registerExtension(extension);
 
     try {
-      UnusedDeclarationInspection deadCodeInspection = new UnusedDeclarationInspection();
-      enableInspectionTool(deadCodeInspection);
-
+      myUnusedDeclarationInspection = new UnusedDeclarationInspectionBase(true);
       doTest(true, false);
     }
     finally {
       point.unregisterExtension(extension);
+      myUnusedDeclarationInspection = new UnusedDeclarationInspectionBase();
     }
   }
   public void testUnusedNonPrivateMembersReferencedFromText() {
-    UnusedDeclarationInspection deadCodeInspection = new UnusedDeclarationInspection();
-    enableInspectionTool(deadCodeInspection);
-
-    doTest(true, false);
-    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
-      @Override
-      public void run() {
-        PsiDirectory directory = myFile.getParent();
-        assertNotNull(myFile.toString(), directory);
-        PsiFile txt = directory.createFile("x.txt");
-        VirtualFile vFile = txt.getVirtualFile();
-        assertNotNull(txt.toString(), vFile);
-        try {
-          VfsUtil.saveText(vFile, "XXX");
+    try {
+      myUnusedDeclarationInspection.setEnabledInEditor(true);
+      doTest(true, false);
+      WriteCommandAction.runWriteCommandAction(null, new Runnable() {
+        @Override
+        public void run() {
+          PsiDirectory directory = myFile.getParent();
+          assertNotNull(myFile.toString(), directory);
+          PsiFile txt = directory.createFile("x.txt");
+          VirtualFile vFile = txt.getVirtualFile();
+          assertNotNull(txt.toString(), vFile);
+          try {
+            VfsUtil.saveText(vFile, "XXX");
+          }
+          catch (IOException e) {
+            throw new RuntimeException(e);
+          }
         }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
-      }
-    });
+      });
 
-    List<HighlightInfo> infos = doHighlighting(HighlightSeverity.WARNING);
-    assertEmpty(infos);
+      List<HighlightInfo> infos = doHighlighting(HighlightSeverity.WARNING);
+      assertEmpty(infos);
+    }
+    finally {
+      myUnusedDeclarationInspection.setEnabledInEditor(false);
+    }
   }
 
   public void testNamesHighlighting() {

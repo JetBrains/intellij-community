@@ -15,8 +15,12 @@
  */
 package org.zmlx.hg4idea.action;
 
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgVcsMessages;
@@ -24,11 +28,16 @@ import org.zmlx.hg4idea.repo.HgRepository;
 
 public class HgUpdateToFromLogAction extends HgLogSingleCommitAction {
   @Override
-  protected void actionPerformed(@NotNull HgRepository repository, @NotNull VcsFullCommitDetails commit) {
-    String revisionHash = commit.getId().asString();
-    Project project = repository.getProject();
-    VirtualFile rootFile = repository.getRoot();
-    String title = HgVcsMessages.message("hg4idea.progress.updatingTo", revisionHash);
-    HgUpdateToAction.runUpdateToInBackground(project, title, rootFile, revisionHash, false);
+  protected void actionPerformed(@NotNull final HgRepository repository, @NotNull VcsFullCommitDetails commit) {
+    final Hash revisionHash = commit.getId();
+    final Project project = repository.getProject();
+    final VirtualFile root = repository.getRoot();
+    FileDocumentManager.getInstance().saveAllDocuments();
+    new Task.Backgroundable(project, HgVcsMessages.message("hg4idea.progress.updatingTo", revisionHash.toShortString())) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        HgUpdateToAction.updateTo(project, root, revisionHash.asString(), false);
+      }
+    }.queue();
   }
 }

@@ -37,7 +37,7 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.Query;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
-import com.intellij.util.containers.StripedLockIntObjectConcurrentHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -133,7 +133,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
   protected RootIndex.InfoCache createRootInfoCache() {
     return new RootIndex.InfoCache() {
       // Upsource can't use int-mapping because different files may have the same id there
-      private final ConcurrentIntObjectMap<DirectoryInfo> myInfoCache = new StripedLockIntObjectConcurrentHashMap<DirectoryInfo>();
+      private final ConcurrentIntObjectMap<DirectoryInfo> myInfoCache = ContainerUtil.createConcurrentIntObjectMap();
       @Override
       public void cacheInfo(@NotNull VirtualFile dir, @NotNull DirectoryInfo info) {
         myInfoCache.put(((NewVirtualFile)dir).getId(), info);

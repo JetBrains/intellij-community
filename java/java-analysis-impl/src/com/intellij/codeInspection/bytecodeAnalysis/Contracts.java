@@ -200,20 +200,6 @@ class InOutAnalysis extends Analysis<Result<Key, Value>> {
       return;
     }
 
-    if (opcode == IFEQ && popValue(frame) instanceof ParamValue) {
-      int nextInsnIndex = inValue == Value.True ? insnIndex + 1 : methodNode.instructions.indexOf(((JumpInsnNode)insnNode).label);
-      State nextState = new State(++id, new Conf(nextInsnIndex, nextFrame), nextHistory, true, false);
-      pendingPush(nextState);
-      return;
-    }
-
-    if (opcode == IFNE && popValue(frame) instanceof ParamValue) {
-      int nextInsnIndex = inValue == Value.False ? insnIndex + 1 : methodNode.instructions.indexOf(((JumpInsnNode)insnNode).label);
-      State nextState = new State(++id, new Conf(nextInsnIndex, nextFrame), nextHistory, true, false);
-      pendingPush(nextState);
-      return;
-    }
-
     // general case
     for (int nextInsnIndex : controlFlow.transitions[insnIndex]) {
       Frame<BasicValue> nextFrame1 = nextFrame;

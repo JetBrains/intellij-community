@@ -21,6 +21,7 @@ import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.ide.ui.search.ActionFromOptionDescriptorProvider;
 import com.intellij.ide.ui.search.OptionDescription;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.application.ex.ApplicationEx;
@@ -35,7 +36,9 @@ import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.IdeBorderFactory;
@@ -62,6 +65,7 @@ import java.util.List;
  * User: anna
  */
 public class InstalledPluginsManagerMain extends PluginManagerMain {
+  private static final String PLUGINS_PRESELECTION_PATH = "plugins.preselection.path";
 
   public InstalledPluginsManagerMain(PluginManagerUISettings uiSettings) {
     super(uiSettings);
@@ -138,10 +142,13 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
     };
     descriptor.setTitle("Choose Plugin File");
     descriptor.setDescription("JAR and ZIP archives are accepted");
-    FileChooser.chooseFile(descriptor, null, parent, null, new Consumer<VirtualFile>() {
+    final String oldPath = PropertiesComponent.getInstance().getValue(PLUGINS_PRESELECTION_PATH);
+    final VirtualFile toSelect = oldPath == null ? null : VfsUtil.findFileByIoFile(new File(FileUtil.toSystemDependentName(oldPath)), false);
+    FileChooser.chooseFile(descriptor, null, parent, toSelect, new Consumer<VirtualFile>() {
       @Override
       public void consume(@NotNull VirtualFile virtualFile) {
         final File file = VfsUtilCore.virtualToIoFile(virtualFile);
+        PropertiesComponent.getInstance().setValue(PLUGINS_PRESELECTION_PATH, FileUtil.toSystemIndependentName(file.getParent()));
         try {
           final IdeaPluginDescriptorImpl pluginDescriptor = PluginDownloader.loadDescriptionFromJar(file);
           if (pluginDescriptor == null) {
@@ -255,14 +262,20 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
     };
   }
 
+  @Override
   protected JScrollPane createTable() {
     pluginsModel = new InstalledPluginsTableModel();
+    if (PluginManagerUISettings.getInstance().installedSortByStatus) {
+      pluginsModel.setSortByStatus(true);
+    }
+
     pluginTable = new PluginTable(pluginsModel);
     pluginTable.setTableHeader(null);
 
     JScrollPane installedScrollPane = ScrollPaneFactory.createScrollPane(pluginTable, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                                                                          ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     pluginTable.registerKeyboardAction(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         final int column = InstalledPluginsTableModel.getCheckboxColumn();
         final int[] selectedRows = pluginTable.getSelectedRows();
@@ -320,19 +333,12 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
     if (modified) return true;
     final List<String> disabledPlugins = PluginManagerCore.getDisabledPlugins();
     for (int i = 0; i < pluginsModel.getRowCount(); i++) {
-      final IdeaPluginDescriptor pluginDescriptor = pluginsModel.getObjectAt(i);
-      final PluginId pluginId = pluginDescriptor.getPluginId();
-      final boolean enabledInTable = ((InstalledPluginsTableModel)pluginsModel).isEnabled(pluginId);
-      if (pluginDescriptor.isEnabled() != enabledInTable) {
-        if (enabledInTable && !disabledPlugins.contains(pluginId.getIdString())) {
-          continue; //was disabled automatically on startup
-        }
+      if (isPluginStateChanged(pluginsModel.getObjectAt(i), disabledPlugins)) {
         return true;
       }
     }
     for (IdeaPluginDescriptor descriptor : pluginsModel.filtered) {
-      if (descriptor.isEnabled() !=
-          ((InstalledPluginsTableModel)pluginsModel).isEnabled(descriptor.getPluginId())) {
+      if (isPluginStateChanged(descriptor, disabledPlugins)) {
         return true;
       }
     }
@@ -343,6 +349,19 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
       }
     }
 
+    return false;
+  }
+
+  private boolean isPluginStateChanged(final IdeaPluginDescriptor pluginDescriptor,
+                                       final List<String> disabledPlugins) {
+    final PluginId pluginId = pluginDescriptor.getPluginId();
+    final boolean enabledInTable = ((InstalledPluginsTableModel)pluginsModel).isEnabled(pluginId);
+    if (pluginDescriptor.isEnabled() != enabledInTable) {
+      if (enabledInTable && !disabledPlugins.contains(pluginId.getIdString())) {
+        return false; //was disabled automatically on startup
+      }
+      return true;
+    }
     return false;
   }
 
@@ -397,6 +416,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
       return "<html><body style=\"padding: 5px;\">Unable to apply changes: plugin" +
              (dependentToRequiredListMap.size() == 1 ? " " : "s ") +
              StringUtil.join(dependentToRequiredListMap.keySet(), new Function<PluginId, String>() {
+               @Override
                public String fun(final PluginId pluginId) {
                  final IdeaPluginDescriptor ideaPluginDescriptor = PluginManager.getPlugin(pluginId);
                  return "\"" + (ideaPluginDescriptor != null ? ideaPluginDescriptor.getName() : pluginId.getIdString()) + "\"";

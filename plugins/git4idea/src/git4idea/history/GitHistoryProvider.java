@@ -15,6 +15,7 @@
  */
 package git4idea.history;
 
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -51,7 +52,7 @@ import java.util.List;
 /**
  * Git history provider implementation
  */
-public class GitHistoryProvider implements VcsHistoryProvider, VcsCacheableHistorySessionFactory<Boolean, VcsAbstractHistorySession>,
+public class GitHistoryProvider implements VcsHistoryProviderEx, VcsCacheableHistorySessionFactory<Boolean, VcsAbstractHistorySession>,
                                            VcsBaseRevisionAdviser {
   private static final Logger log = Logger.getInstance(GitHistoryProvider.class.getName());
 
@@ -66,7 +67,10 @@ public class GitHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
   }
 
   public AnAction[] getAdditionalActions(Runnable refresher) {
-    return new AnAction[]{ ShowAllAffectedGenericAction.getInstance(), new CopyRevisionNumberAction(), new SelectRevisionInGitLogAction()};
+    return new AnAction[] {
+      ShowAllAffectedGenericAction.getInstance(),
+      ActionManager.getInstance().getAction("Vcs.CopyRevisionNumberAction"),
+      new SelectRevisionInGitLogAction() };
   }
 
   public boolean isDateOmittable() {
@@ -133,6 +137,14 @@ public class GitHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
         return createSession(filePath, getRevisionList(), getCurrentRevisionNumber());
       }
     };
+  }
+
+  @Nullable
+  @Override
+  public VcsFileRevision getLastRevision(FilePath filePath) throws VcsException {
+    List<VcsFileRevision> history = GitHistoryUtils.history(myProject, filePath, "--max-count=1");
+    if (history == null || history.isEmpty()) return null;
+    return history.get(0);
   }
 
   @Override

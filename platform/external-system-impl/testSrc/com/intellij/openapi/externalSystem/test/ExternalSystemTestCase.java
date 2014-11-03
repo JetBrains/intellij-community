@@ -16,7 +16,6 @@
 package com.intellij.openapi.externalSystem.test;
 
 import com.intellij.compiler.CompilerTestUtil;
-import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.artifacts.ArtifactsTestUtil;
 import com.intellij.compiler.impl.ModuleCompileScope;
 import com.intellij.openapi.application.AccessToken;
@@ -24,10 +23,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.compiler.CompileContext;
-import com.intellij.openapi.compiler.CompileScope;
-import com.intellij.openapi.compiler.CompileStatusNotification;
-import com.intellij.openapi.compiler.CompilerManager;
+import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
@@ -43,22 +39,16 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.impl.compiler.ArtifactCompileScope;
-import com.intellij.testFramework.IdeaTestCase;
-import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
-import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.io.TestFileSystemItem;
-import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Before;
 
-import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -363,43 +353,34 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
   }
 
   private void compile(final CompileScope scope) {
-    edt(new Runnable() {
-      @Override
-      public void run() {
-        for (Module module : scope.getAffectedModules()) {
-          setupJdkForModule(module.getName());
+    try {
+      CompilerTester tester = new CompilerTester(myProject, Arrays.asList(scope.getAffectedModules()));
+      try {
+        List<CompilerMessage> messages = tester.make(scope);
+        for (CompilerMessage message : messages) {
+          switch (message.getCategory()) {
+            case ERROR:
+              fail("Compilation failed with error: " + message.getMessage());
+              break;
+            case WARNING:
+              System.out.println("Compilation warning: " + message.getMessage());
+              break;
+            case INFORMATION:
+              break;
+            case STATISTICS:
+              break;
+          }
         }
       }
-    });
-
-    CompilerWorkspaceConfiguration.getInstance(myProject).CLEAR_OUTPUT_DIRECTORY = true;
-
-    final Semaphore semaphore = new Semaphore();
-    semaphore.down();
-    edt(new Runnable() {
-      @Override
-      public void run() {
-        CompilerTestUtil.enableExternalCompiler();
-        CompilerManager.getInstance(myProject).make(scope, new CompileStatusNotification() {
-          @Override
-          public void finished(boolean aborted, int errors, int warnings, CompileContext compileContext) {
-            //assertFalse(aborted);
-            //assertEquals(collectMessages(compileContext, CompilerMessageCategory.ERROR), 0, errors);
-            //assertEquals(collectMessages(compileContext, CompilerMessageCategory.WARNING), 0, warnings);
-            semaphore.up();
-          }
-        });
-      }
-    });
-    while (!semaphore.waitFor(100)) {
-      if (SwingUtilities.isEventDispatchThread()) {
-        UIUtil.dispatchAllInvocationEvents();
+      finally {
+        tester.tearDown();
       }
     }
-    if (SwingUtilities.isEventDispatchThread()) {
-      UIUtil.dispatchAllInvocationEvents();
+    catch (Exception e) {
+      throw new RuntimeException(e);
     }
   }
+
 
   private CompileScope createModulesCompileScope(final String[] moduleNames) {
     final List<Module> modules = new ArrayList<Module>();

@@ -16,7 +16,6 @@
 package com.intellij.ui.tabs.impl.table;
 
 import com.intellij.ui.tabs.TabInfo;
-import com.intellij.ui.tabs.TabsUtil;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.tabs.impl.LayoutPassInfo;
 import com.intellij.ui.tabs.impl.TabLabel;
@@ -103,10 +102,10 @@ public class TableLayout extends TabLayout {
       toMove.add(data.table.get(i));
     }
 
-    for (TableRow eachMove : toMove) {
-      data.table.remove(eachMove);
-      data.table.add(0, eachMove);
-    }
+    //for (TableRow eachMove : toMove) {
+    //  data.table.remove(eachMove);
+    //  data.table.add(0, eachMove);
+    //}
 
 
     return data;
@@ -131,7 +130,7 @@ public class TableLayout extends TabLayout {
     int eachY = insets.top;
     int eachX;
     int row = 0;
-    final int tabUnderlineFix = myTabs.isEditorTabs() ? TabsUtil.ACTIVE_TAB_UNDERLINE_HEIGHT : 0;
+    final int tabUnderlineFix = myTabs.isEditorTabs() ? myTabs.getActiveTabUnderlineHeight() : 0;
     
     for (TableRow eachRow : data.table) {
       eachX = insets.left;

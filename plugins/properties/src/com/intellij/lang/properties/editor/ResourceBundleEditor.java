@@ -383,7 +383,6 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
           writeEditorPropertyValue(editor, propertiesFile, null);
         }
       });
-      editor.getDocument().putUserData(UndoConstants.DONT_RECORD_UNDO, Boolean.TRUE);
       gc.gridx = 0;
       gc.gridy = y++;
       gc.gridheight = 1;

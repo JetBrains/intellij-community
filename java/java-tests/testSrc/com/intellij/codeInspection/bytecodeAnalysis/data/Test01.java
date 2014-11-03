@@ -41,6 +41,7 @@ public class Test01 {
     o.toString();
   }
 
+  @ExpectContract(pure = true)
   static void v(Object o) {
 
   }
@@ -55,21 +56,24 @@ public class Test01 {
     return o == null ? "null" : o.toString();
   }
 
+  @ExpectContract(pure = true)
   @ExpectNotNull
   static String constantString() {
     return "s";
   }
 
-  @ExpectContract("!null->!null;null->null")
+  @ExpectContract(value = "!null->!null;null->null", pure = true)
   static String idString(String s) {
     return s;
   }
 
+  @ExpectContract(pure = true)
   @ExpectNotNull
   public Test01 getThis() {
     return this;
   }
 
+  @ExpectContract(pure = true)
   @ExpectNotNull
   protected Test01 createRoot() {
     return new Test01();

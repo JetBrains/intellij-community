@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.OptionAction;
+import com.intellij.openapi.ui.ValidationInfo;
 import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,10 +59,10 @@ public class VcsPushDialog extends DialogWrapper {
     myListPanel = myController.getPushPanelLog();
 
     init();
-    updateButtons();
+    enableOkActions(myController.isPushAllowed());
     setOKButtonText("Push");
     setOKButtonMnemonic('P');
-    setTitle("Push Dialog");
+    setTitle("Push Commits");
   }
 
   @Override
@@ -79,6 +80,18 @@ public class VcsPushDialog extends DialogWrapper {
   @Override
   protected String getDimensionServiceKey() {
     return ID;
+  }
+
+  @Nullable
+  @Override
+  protected ValidationInfo doValidate() {
+    enableOkActions(myController.isPushAllowed());
+    return null;
+  }
+
+  @Override
+  protected boolean postponeValidation() {
+    return false;
   }
 
   @Override
@@ -117,11 +130,10 @@ public class VcsPushDialog extends DialogWrapper {
     return ID;
   }
 
-  public void updateButtons() {
-    boolean pushAllowed = myController.isPushAllowed();
-    myPushAction.setEnabled(pushAllowed);
+  public void enableOkActions(boolean isEnabled) {
+    myPushAction.setEnabled(isEnabled);
     if (myForcePushAction != null) {
-      myForcePushAction.setEnabled(pushAllowed && myController.isForcePushAllowed());
+      myForcePushAction.setEnabled(isEnabled && myController.isForcePushAllowed());
     }
   }
 

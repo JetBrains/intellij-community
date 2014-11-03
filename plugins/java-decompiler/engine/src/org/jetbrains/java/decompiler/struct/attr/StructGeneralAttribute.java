@@ -46,6 +46,7 @@ public class StructGeneralAttribute {
   public static final String ATTRIBUTE_BOOTSTRAP_METHODS = "BootstrapMethods";
   public static final String ATTRIBUTE_SYNTHETIC = "Synthetic";
   public static final String ATTRIBUTE_DEPRECATED = "Deprecated";
+  public static final String ATTRIBUTE_LINE_NUMBER_TABLE = "LineNumberTable";
 
   private String name;
   private byte[] info;
@@ -92,6 +93,9 @@ public class StructGeneralAttribute {
     else if (ATTRIBUTE_SYNTHETIC.equals(name) ||
              ATTRIBUTE_DEPRECATED.equals(name)) {
       attr = new StructGeneralAttribute();
+    }
+    else if (ATTRIBUTE_LINE_NUMBER_TABLE.equals(name)) {
+      attr = new StructLineNumberTableAttribute();
     }
     else {
       // unsupported attribute

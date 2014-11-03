@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ public class PyUpdatePropertySignatureQuickFix implements LocalQuickFix {
   @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final PsiElement element = descriptor.getPsiElement();
-    final PyFunction function = PsiTreeUtil.getParentOfType(element, PyFunction.class);
+    final PyFunction function = PsiTreeUtil.getParentOfType(element, PyFunction.class, false);
     assert function != null;
     final PyParameterList parameterList = function.getParameterList();
     final PyParameter[] parameters = parameterList.getParameters();

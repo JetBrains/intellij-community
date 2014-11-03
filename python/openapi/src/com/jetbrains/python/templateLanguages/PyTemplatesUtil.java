@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,9 @@
  */
 package com.jetbrains.python.templateLanguages;
 
+import com.intellij.execution.ExecutionException;
 import com.intellij.facet.ui.ValidationResult;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.jetbrains.python.packaging.PyExternalProcessException;
 import com.jetbrains.python.packaging.PyPackage;
 import com.jetbrains.python.packaging.PyPackageManager;
 import org.jetbrains.annotations.NonNls;
@@ -44,7 +44,7 @@ public class PyTemplatesUtil {
           if (installedPackage == null)
             return new ValidationResult(templateBinding + " will be installed on selected interpreter");
         }
-        catch (PyExternalProcessException ignored) {
+        catch (ExecutionException ignored) {
         }
       }
     }
@@ -55,7 +55,7 @@ public class PyTemplatesUtil {
           return new ValidationResult(language + " will be installed on selected interpreter");
         }
       }
-      catch (PyExternalProcessException ignored) {
+      catch (ExecutionException ignored) {
       }
     }
     return null;

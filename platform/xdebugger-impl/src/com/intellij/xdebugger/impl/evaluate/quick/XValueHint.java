@@ -34,6 +34,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.LinkMouseListenerBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SimpleColoredComponent;
@@ -163,7 +164,7 @@ public class XValueHint extends AbstractValueHint {
             }
 
             SimpleColoredText text = new SimpleColoredText();
-            text.append(myValueName, XDebuggerUIConstants.VALUE_NAME_ATTRIBUTES);
+            text.append(StringUtil.trimMiddle(myValueName, 200), XDebuggerUIConstants.VALUE_NAME_ATTRIBUTES);
             XValueNodeImpl.buildText(valuePresenter, text);
 
             if (!hasChildren) {
@@ -180,8 +181,10 @@ public class XValueHint extends AbstractValueHint {
               }
               showHint(component);
             }
-            else if (getType() == ValueHintType.MOUSE_CLICK_HINT && !myShown) {
-              showTree(result);
+            else if (getType() == ValueHintType.MOUSE_CLICK_HINT) {
+              if (!myShown) {
+                showTree(result);
+              }
             }
             else {
               if (getType() == ValueHintType.MOUSE_OVER_HINT) {

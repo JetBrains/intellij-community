@@ -21,9 +21,9 @@ import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.StateStorageException;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.components.impl.stores.ComponentVersionProvider;
+import com.intellij.openapi.components.impl.stores.StorageData;
 import com.intellij.openapi.components.impl.stores.XmlElementStorage;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightPlatformLangTestCase;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +31,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.Set;
 
 import static com.intellij.openapi.util.JDOMBuilder.attr;
@@ -57,7 +56,7 @@ public class XmlElementStorageTest extends LightPlatformLangTestCase {
 
   public void testGetStateSucceeded() throws Exception {
     MyXmlElementStorage storage =
-        new MyXmlElementStorage(tag("root", tag("component", attr("name", "test"), tag("foo"))), myParentDisposable);
+        new MyXmlElementStorage(tag("root", tag("component", attr("name", "test"), tag("foo"))));
     Element state = storage.getState(this, "test", Element.class, null);
     assertNotNull(state);
     assertEquals("component", state.getName());
@@ -65,18 +64,18 @@ public class XmlElementStorageTest extends LightPlatformLangTestCase {
   }
 
   public void testGetStateNotSucceeded() throws Exception {
-    MyXmlElementStorage storage = new MyXmlElementStorage(tag("root"), myParentDisposable);
+    MyXmlElementStorage storage = new MyXmlElementStorage(tag("root"));
     Element state = storage.getState(this, "test", Element.class, null);
     assertNull(state);
   }
 
   public void testSetStateOverridesOldState() throws Exception {
     MyXmlElementStorage storage =
-        new MyXmlElementStorage(tag("root", tag("component", attr("name", "test"), tag("foo"))), myParentDisposable);
+        new MyXmlElementStorage(tag("root", tag("component", attr("name", "test"), tag("foo"))));
     Element newState = tag("component", attr("name", "test"), tag("bar"));
     StateStorage.ExternalizationSession externalizationSession = storage.startExternalization();
     externalizationSession.setState(this, "test", newState, null);
-    storage.startSave(externalizationSession).save();
+    externalizationSession.createSaveSession().save();
     assertNotNull(storage.mySavedElement);
     assertNotNull(storage.mySavedElement.getChild("component").getChild("bar"));
     assertNull(storage.mySavedElement.getChild("component").getChild("foo"));
@@ -87,8 +86,8 @@ public class XmlElementStorageTest extends LightPlatformLangTestCase {
     private final Element myElement;
     private Element mySavedElement;
 
-    public MyXmlElementStorage(Element element, final Disposable parentDisposable) throws StateStorageException {
-      super("", RoamingType.PER_USER, new MyPathMacroManager(), parentDisposable, "root", null, ComponentVersionProvider.EMPTY);
+    public MyXmlElementStorage(Element element) throws StateStorageException {
+      super("", RoamingType.PER_USER, new MyPathMacroManager(), "root", null, ComponentVersionProvider.EMPTY);
       myElement = element;
     }
 
@@ -98,16 +97,11 @@ public class XmlElementStorageTest extends LightPlatformLangTestCase {
     }
 
     @Override
-    protected MySaveSession createSaveSession(final MyExternalizationSession externalizationSession) {
-      return new MySaveSession(externalizationSession) {
+    protected XmlElementStorageSaveSession createSaveSession(@NotNull StorageData storageData) {
+      return new XmlElementStorageSaveSession(storageData) {
         @Override
-        protected void doSave() throws StateStorageException {
-          Element elementToSave = getElementToSave();
-          mySavedElement = elementToSave == null ? null : elementToSave.clone();
-        }
-
-        @Override
-        public void collectAllStorageFiles(@NotNull List<VirtualFile> files) {
+        protected void doSave(@Nullable Element element) {
+          mySavedElement = element == null ? null : element.clone();
         }
       };
     }

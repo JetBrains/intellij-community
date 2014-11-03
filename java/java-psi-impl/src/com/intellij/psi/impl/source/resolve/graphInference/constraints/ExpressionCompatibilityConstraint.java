@@ -90,13 +90,9 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
         if (method != null && !method.isConstructor()) {
           returnType = method.getReturnType();
           if (returnType != null) {
-            List<PsiTypeParameter> params = new ArrayList<PsiTypeParameter>();
-            for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable(method)) {
-              params.add(parameter);
-            }
-            typeParams = params.toArray(new PsiTypeParameter[params.size()]);
+            typeParams = method.getTypeParameters();
           }
-        } else if (myExpression instanceof PsiNewExpression) {  //default constructor
+        } else if (myExpression instanceof PsiNewExpression) {
           final PsiJavaCodeReferenceElement classReference = ((PsiNewExpression)myExpression).getClassOrAnonymousClassReference();
           if (classReference != null) {
             final PsiElement psiClass = classReference.resolve();
@@ -108,7 +104,9 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
         }
 
         if (typeParams != null) {
-          final InferenceSession callSession = new InferenceSession(typeParams, PsiSubstitutor.EMPTY, myExpression.getManager(), myExpression);
+          PsiSubstitutor siteSubstitutor =
+            resolveResult instanceof MethodCandidateInfo && method != null && !method.isConstructor() ? ((MethodCandidateInfo)resolveResult).getSiteSubstitutor() : PsiSubstitutor.EMPTY;
+          final InferenceSession callSession = new InferenceSession(typeParams, siteSubstitutor, myExpression.getManager(), myExpression);
           callSession.propagateVariables(session.getInferenceVariables());
           if (method != null) {
             final PsiExpression[] args = argumentList.getExpressions();
@@ -120,7 +118,7 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
           if (!accepted) {
             return false;
           }
-          callSession.registerReturnTypeConstraints(returnType, myT);
+          callSession.registerReturnTypeConstraints(siteSubstitutor.substitute(returnType), myT);
           if (callSession.repeatInferencePhases(true)) {
             session.registerNestedSession(callSession);
           } else {

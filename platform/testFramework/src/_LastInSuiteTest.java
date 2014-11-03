@@ -36,6 +36,7 @@ public class _LastInSuiteTest extends TestCase {
     new WriteCommandAction.Simple(null) {
       @Override
       protected void run() throws Throwable {
+        LightPlatformTestCase.initApplication(); // in case nobody cared to init. LightPlatformTestCase.disposeApplication() would not work otherwise.
         LightPlatformTestCase.closeAndDeleteProject();
       }
     }.execute().throwException();
@@ -46,6 +47,7 @@ public class _LastInSuiteTest extends TestCase {
       public void run() {
         ((ApplicationImpl)ApplicationManager.getApplication()).setDisposeInProgress(true);
         LightPlatformTestCase.disposeApplication();
+        UIUtil.dispatchAllInvocationEvents();
       }
     });
 

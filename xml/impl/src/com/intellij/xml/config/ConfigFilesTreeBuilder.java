@@ -19,6 +19,8 @@ import com.intellij.ide.presentation.VirtualFilePresentation;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.roots.ui.configuration.ModulesAlphaComparator;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -89,12 +91,7 @@ public class ConfigFilesTreeBuilder {
 
     final HashSet<PsiFile> psiFiles = new HashSet<PsiFile>();
     final List<Module> modules = new ArrayList<Module>(files.keySet());
-    Collections.sort(modules, new Comparator<Module>() {
-      @Override
-      public int compare(final Module o1, final Module o2) {
-        return o1.getName().compareTo(o2.getName());
-      }
-    });
+    Collections.sort(modules, ModulesAlphaComparator.INSTANCE);
     for (Module module : modules) {
       DefaultMutableTreeNode moduleNode = createFileNode(module);
       root.add(moduleNode);
@@ -161,7 +158,7 @@ public class ConfigFilesTreeBuilder {
   private static final Comparator<PsiFile> FILE_COMPARATOR = new Comparator<PsiFile>() {
     @Override
     public int compare(final PsiFile o1, final PsiFile o2) {
-      return o1.getName().compareTo(o2.getName());
+      return StringUtil.naturalCompare(o1.getName(), o2.getName());
     }
   };
 

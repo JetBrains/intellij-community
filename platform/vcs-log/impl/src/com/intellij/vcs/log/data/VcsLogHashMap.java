@@ -23,13 +23,18 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.CommonProcessors;
+import com.intellij.util.Function;
 import com.intellij.util.NotNullFunction;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.Page;
 import com.intellij.util.io.PersistentEnumerator;
 import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.impl.HashImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,6 +43,9 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Supports the int <-> Hash persistent mapping.
@@ -49,8 +57,8 @@ public class VcsLogHashMap implements Disposable {
 
   private final PersistentEnumerator<Hash> myPersistentEnumerator;
 
-  VcsLogHashMap(@NotNull Project project) throws IOException {
-    final File myMapFile = new File(LOG_CACHE_APP_DIR, project.getName() + "." + project.getLocationHash());
+  VcsLogHashMap(@NotNull Project project, @NotNull Map<VirtualFile, VcsLogProvider> logProviders) throws IOException {
+    final File myMapFile = new File(LOG_CACHE_APP_DIR, calcLogId(project, logProviders));
     Disposer.register(project, this);
     myPersistentEnumerator = IOUtil.openCleanOrResetBroken(new ThrowableComputable<PersistentEnumerator<Hash>, IOException>() {
       @Override
@@ -58,6 +66,23 @@ public class VcsLogHashMap implements Disposable {
         return new PersistentEnumerator<Hash>(myMapFile, new MyHashKeyDescriptor(), Page.PAGE_SIZE);
       }
     }, myMapFile);
+  }
+
+  @NotNull
+  private static String calcLogId(@NotNull Project project, @NotNull final Map<VirtualFile, VcsLogProvider> logProviders) {
+    List<VirtualFile> sortedRoots = ContainerUtil.sorted(logProviders.keySet(), new Comparator<VirtualFile>() {
+      @Override
+      public int compare(@NotNull VirtualFile o1, @NotNull VirtualFile o2) {
+        return o1.getPath().compareTo(o2.getPath());
+      }
+    });
+    String rootsWithVcss = StringUtil.join(sortedRoots, new Function<VirtualFile, String>() {
+      @Override
+      public String fun(VirtualFile root) {
+        return root.getPath() + "." + logProviders.get(root).getSupportedVcs().getName();
+      }
+    }, ".");
+    return project.getName() + "." + rootsWithVcss.hashCode();
   }
 
   @Nullable
@@ -89,6 +114,23 @@ public class VcsLogHashMap implements Disposable {
     }
     catch (IOException e) {
       throw new RuntimeException(e); // TODO map is corrupted => need to recreate it
+    }
+  }
+
+  @Nullable
+  public Hash findHashByString(@NotNull String string) {
+    final String pHash = string.toLowerCase();
+    try {
+      return findHash(new Condition<Hash>() {
+        @Override
+        public boolean value(@NotNull Hash hash) {
+          return hash.toString().toLowerCase().startsWith(pHash);
+        }
+      });
+    }
+    catch (IOException e) {
+      LOG.error(e);
+      return null;
     }
   }
 

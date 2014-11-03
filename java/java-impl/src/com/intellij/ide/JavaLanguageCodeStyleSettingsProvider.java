@@ -168,6 +168,10 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
       String groupName = ApplicationBundle.message("wrapping.fields.annotation");
       consumer.showCustomOption(JavaCodeStyleSettings.class, "DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION", "Do not wrap after single annotation", groupName);
     }
+    else if (settingsType == SettingsType.BLANK_LINES_SETTINGS) {
+      consumer.showAllStandardOptions();
+      consumer.showCustomOption(JavaCodeStyleSettings.class, "BLANK_LINES_AROUND_INITIALIZER", ApplicationBundle.message("editbox.blanklines.around.initializer"), CodeStyleSettingsCustomizable.BLANK_LINES);
+    }
     else {
       consumer.showAllStandardOptions();
     }
@@ -184,7 +188,7 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
 
   @Override
   public DisplayPriority getDisplayPriority() {
-    if (PlatformUtils.isIdeaUltimate()) return DisplayPriority.KEY_LANGUAGE_SETTINGS;
+    if (PlatformUtils.isIntelliJ()) return DisplayPriority.KEY_LANGUAGE_SETTINGS;
     return DisplayPriority.LANGUAGE_SETTINGS;
   }
 

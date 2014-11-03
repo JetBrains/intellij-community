@@ -1,4 +1,14 @@
 <root>
+  <item name="org.apache.commons.lang.text.CompositeFormat java.text.Format getFormatter()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.text.CompositeFormat java.text.Format getParser()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="org.apache.commons.lang.text.ExtendedMessageFormat boolean containsElements(java.util.Collection) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
@@ -26,6 +36,11 @@
   </item>
   <item name="org.apache.commons.lang.text.ExtendedMessageFormat java.lang.String parseFormatDescription(java.lang.String, java.text.ParsePosition)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.text.ExtendedMessageFormat java.lang.String toPattern()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
   </item>
   <item name="org.apache.commons.lang.text.ExtendedMessageFormat java.lang.StringBuffer appendQuotedString(java.lang.String, java.text.ParsePosition, java.lang.StringBuffer, boolean) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -80,6 +95,11 @@
   <item name="org.apache.commons.lang.text.StrBuilder StrBuilder(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
+  <item name="org.apache.commons.lang.text.StrBuilder boolean contains(char)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="org.apache.commons.lang.text.StrBuilder boolean endsWith(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
@@ -98,12 +118,17 @@
   </item>
   <item name="org.apache.commons.lang.text.StrBuilder boolean equals(org.apache.commons.lang.text.StrBuilder)">
     <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;null-&gt;true&quot;"/>
+      <val val="value=&quot;null-&gt;true&quot;,pure=true"/>
     </annotation>
   </item>
   <item name="org.apache.commons.lang.text.StrBuilder boolean equalsIgnoreCase(org.apache.commons.lang.text.StrBuilder)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;true&quot;"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.text.StrBuilder boolean isEmpty()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
     </annotation>
   </item>
   <item name="org.apache.commons.lang.text.StrBuilder boolean startsWith(java.lang.String) 0">
@@ -122,11 +147,31 @@
       <val val="&quot;!null-&gt;!null;null-&gt;!null&quot;"/>
     </annotation>
   </item>
+  <item name="org.apache.commons.lang.text.StrBuilder int capacity()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.text.StrBuilder int hashCode()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.text.StrBuilder int indexOf(char, int)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="org.apache.commons.lang.text.StrBuilder int indexOf(java.lang.String, int) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.text.StrBuilder int indexOf(org.apache.commons.lang.text.StrMatcher, int) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.text.StrBuilder int lastIndexOf(char, int)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
   </item>
   <item name="org.apache.commons.lang.text.StrBuilder int lastIndexOf(java.lang.String, int) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
@@ -134,11 +179,31 @@
   <item name="org.apache.commons.lang.text.StrBuilder int lastIndexOf(org.apache.commons.lang.text.StrMatcher, int) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
+  <item name="org.apache.commons.lang.text.StrBuilder int length()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.text.StrBuilder int size()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="org.apache.commons.lang.text.StrBuilder java.io.Reader asReader()">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.lang.text.StrBuilder java.io.Writer asWriter()">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.text.StrBuilder java.lang.String getNewLineText()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.text.StrBuilder java.lang.String getNullText()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
   </item>
   <item name="org.apache.commons.lang.text.StrBuilder java.lang.String leftString(int)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -415,17 +480,57 @@
   <item name="org.apache.commons.lang.text.StrBuilder org.apache.commons.lang.text.StrTokenizer asTokenizer()">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.commons.lang.text.StrBuilder.StrBuilderReader boolean markSupported()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="org.apache.commons.lang.text.StrBuilder.StrBuilderReader int read(char[], int, int) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.text.StrBuilder.StrBuilderReader void close()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
   </item>
   <item name="org.apache.commons.lang.text.StrBuilder.StrBuilderTokenizer java.util.List tokenize(char[], int, int) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
+  <item name="org.apache.commons.lang.text.StrBuilder.StrBuilderWriter void close()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.text.StrBuilder.StrBuilderWriter void flush()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.text.StrLookup StrLookup()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="org.apache.commons.lang.text.StrLookup org.apache.commons.lang.text.StrLookup mapLookup(java.util.Map)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.commons.lang.text.StrLookup org.apache.commons.lang.text.StrLookup noneLookup()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.text.StrLookup org.apache.commons.lang.text.StrLookup systemPropertiesLookup()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="org.apache.commons.lang.text.StrLookup.MapStrLookup java.lang.String lookup(java.lang.String)">
     <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.text.StrMatcher StrMatcher()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
   </item>
   <item name="org.apache.commons.lang.text.StrMatcher int isMatch(char[], int) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -439,11 +544,61 @@
   <item name="org.apache.commons.lang.text.StrMatcher org.apache.commons.lang.text.StrMatcher charSetMatcher(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
+  <item name="org.apache.commons.lang.text.StrMatcher org.apache.commons.lang.text.StrMatcher commaMatcher()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.text.StrMatcher org.apache.commons.lang.text.StrMatcher doubleQuoteMatcher()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.text.StrMatcher org.apache.commons.lang.text.StrMatcher noneMatcher()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.text.StrMatcher org.apache.commons.lang.text.StrMatcher quoteMatcher()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.text.StrMatcher org.apache.commons.lang.text.StrMatcher singleQuoteMatcher()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.text.StrMatcher org.apache.commons.lang.text.StrMatcher spaceMatcher()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.text.StrMatcher org.apache.commons.lang.text.StrMatcher splitMatcher()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="org.apache.commons.lang.text.StrMatcher org.apache.commons.lang.text.StrMatcher stringMatcher(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
+  <item name="org.apache.commons.lang.text.StrMatcher org.apache.commons.lang.text.StrMatcher tabMatcher()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.text.StrMatcher org.apache.commons.lang.text.StrMatcher trimMatcher()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="org.apache.commons.lang.text.StrMatcher.CharMatcher int isMatch(char[], int, int, int) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.text.StrMatcher.CharMatcher int isMatch(char[], int, int, int)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
   </item>
   <item name="org.apache.commons.lang.text.StrMatcher.CharSetMatcher CharSetMatcher(char[]) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -451,14 +606,44 @@
   <item name="org.apache.commons.lang.text.StrMatcher.CharSetMatcher int isMatch(char[], int, int, int) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.commons.lang.text.StrMatcher.CharSetMatcher int isMatch(char[], int, int, int)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.text.StrMatcher.NoMatcher NoMatcher()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="org.apache.commons.lang.text.StrMatcher.NoMatcher int isMatch(char[], int, int, int) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.text.StrMatcher.NoMatcher int isMatch(char[], int, int, int)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
   </item>
   <item name="org.apache.commons.lang.text.StrMatcher.StringMatcher StringMatcher(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.commons.lang.text.StrMatcher.StringMatcher int isMatch(char[], int, int, int)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.text.StrMatcher.TrimMatcher TrimMatcher()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="org.apache.commons.lang.text.StrMatcher.TrimMatcher int isMatch(char[], int, int, int) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.text.StrMatcher.TrimMatcher int isMatch(char[], int, int, int)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
   </item>
   <item name="org.apache.commons.lang.text.StrSubstitutor boolean replaceIn(java.lang.StringBuffer) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
@@ -494,6 +679,11 @@
   </item>
   <item name="org.apache.commons.lang.text.StrSubstitutor boolean substitute(org.apache.commons.lang.text.StrBuilder, int, int) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.text.StrSubstitutor char getEscapeChar()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
   </item>
   <item name="org.apache.commons.lang.text.StrSubstitutor int substitute(org.apache.commons.lang.text.StrBuilder, int, int, java.util.List) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -588,6 +778,21 @@
   <item name="org.apache.commons.lang.text.StrSubstitutor java.lang.String resolveVariable(java.lang.String, org.apache.commons.lang.text.StrBuilder, int, int)">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
+  <item name="org.apache.commons.lang.text.StrSubstitutor org.apache.commons.lang.text.StrLookup getVariableResolver()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.text.StrSubstitutor org.apache.commons.lang.text.StrMatcher getVariablePrefixMatcher()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.text.StrSubstitutor org.apache.commons.lang.text.StrMatcher getVariableSuffixMatcher()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="org.apache.commons.lang.text.StrSubstitutor org.apache.commons.lang.text.StrSubstitutor setVariablePrefix(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
@@ -627,6 +832,31 @@
   <item name="org.apache.commons.lang.text.StrTokenizer StrTokenizer(java.lang.String, org.apache.commons.lang.text.StrMatcher, org.apache.commons.lang.text.StrMatcher) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
+  <item name="org.apache.commons.lang.text.StrTokenizer boolean isEmptyTokenAsNull()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.text.StrTokenizer boolean isIgnoreEmptyTokens()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.text.StrTokenizer boolean isQuote(char[], int, int, int, int)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.text.StrTokenizer int nextIndex()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.text.StrTokenizer int previousIndex()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="org.apache.commons.lang.text.StrTokenizer int readWithQuotes(char[], int, int, org.apache.commons.lang.text.StrBuilder, java.util.List, int, int) 3">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
@@ -647,6 +877,26 @@
   </item>
   <item name="org.apache.commons.lang.text.StrTokenizer java.util.List tokenize(char[], int, int) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.text.StrTokenizer org.apache.commons.lang.text.StrMatcher getDelimiterMatcher()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.text.StrTokenizer org.apache.commons.lang.text.StrMatcher getIgnoredMatcher()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.text.StrTokenizer org.apache.commons.lang.text.StrMatcher getQuoteMatcher()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.text.StrTokenizer org.apache.commons.lang.text.StrMatcher getTrimmerMatcher()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
   </item>
   <item name="org.apache.commons.lang.text.StrTokenizer org.apache.commons.lang.text.StrTokenizer reset()">
     <annotation name="org.jetbrains.annotations.NotNull"/>

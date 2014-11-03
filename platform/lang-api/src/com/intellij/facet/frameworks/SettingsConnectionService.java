@@ -20,6 +20,7 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.net.HttpConfigurable;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -69,8 +70,13 @@ public abstract class SettingsConnectionService {
   private Map<String, String> readSettings(String... attributes) {
     Map<String, String> settings = ContainerUtil.newLinkedHashMap();
     try {
-      URL url = new URL(getSettingsUrl());
-      String text = FileUtil.loadTextAndClose(getStream(url));
+      String url = getSettingsUrl();
+      HttpConfigurable.getInstance().prepareURL(url);
+      String text = FileUtil.loadTextAndClose(getStream(new URL(url)));
+      if (text.startsWith("<html>") || text.startsWith("<!DOCTYPE html>")) {
+        LOG.info("HTML text obtained from " + url + ": " + StringUtil.first(text, 300, true));
+        return settings;
+      }
       try {
         Document document = JDOMUtil.loadDocument(text);
         Element root = document.getRootElement();

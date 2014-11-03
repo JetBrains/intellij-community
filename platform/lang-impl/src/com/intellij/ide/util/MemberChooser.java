@@ -454,7 +454,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
   protected void fillToolbarActions(DefaultActionGroup group) {
     final boolean alphabeticallySorted = PropertiesComponent.getInstance().isTrueValue(PROP_SORTED);
     if (alphabeticallySorted) {
-      setSortComparator(new OrderComparator());
+      setSortComparator(new AlphaComparator());
     }
     myAlphabeticallySorted = alphabeticallySorted;
     group.add(mySortAction);
@@ -463,7 +463,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
       ShowContainersAction showContainersAction = getShowContainersAction();
       showContainersAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.ALT_MASK)),
                                                      myTree);
-      setShowClasses(PropertiesComponent.getInstance().isTrueValue(PROP_SHOWCLASSES));
+      setShowClasses(PropertiesComponent.getInstance().getBoolean(PROP_SHOWCLASSES, true));
       group.add(showContainersAction);
     }
   }

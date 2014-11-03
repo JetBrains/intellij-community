@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.util.xmlb;
 
 import org.jetbrains.annotations.NotNull;
@@ -26,8 +25,14 @@ public interface Accessor {
 
   void write(Object o, Object value);
 
+  @Deprecated
   @NotNull
+  /**
+   * @deprecated to remove in IDEA 15
+   */
   Annotation[] getAnnotations();
+
+  <T extends Annotation> T getAnnotation(@NotNull Class<T> annotationClass);
 
   String getName();
 

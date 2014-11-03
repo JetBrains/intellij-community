@@ -29,9 +29,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
-import com.intellij.vcs.log.data.DataPack;
-import com.intellij.vcs.log.data.VcsLogDataHolder;
-import com.intellij.vcs.log.data.VcsLogRefreshListener;
 import com.intellij.vcs.log.impl.HashImpl;
 import git4idea.GitBranch;
 import git4idea.commands.GitCommand;
@@ -53,7 +50,7 @@ public class DeepComparator implements Disposable {
   @NotNull private final Project myProject;
   @NotNull private final GitRepositoryManager myRepositoryManager;
   @NotNull private final VcsLogUi myUi;
-  @NotNull private final VcsLogFilterChangeListener myFilterChangeListener;
+  @NotNull private final VcsLogListener myLogListener;
 
   @Nullable private VcsLogHighlighter myHighlighter;
   @Nullable private MyTask myTask;
@@ -70,44 +67,38 @@ public class DeepComparator implements Disposable {
     myUi = ui;
     Disposer.register(parent, this);
 
-    myFilterChangeListener = new VcsLogFilterChangeListener() {
+    myLogListener = new VcsLogListener() {
       @Override
-      public void filtersPossiblyChanged() {
-        if (myTask == null) { // no task in progress => not interested in filter changes
-          return;
-        }
-
-        VcsLogBranchFilter branchFilter = myUi.getFilterUi().getFilters().getBranchFilter();
-        if (branchFilter == null ||
-            branchFilter.getBranchNames().size() != 1 ||
-            !branchFilter.getBranchNames().iterator().next().equals(myTask.myComparedBranch)) {
-          stopAndUnhighlight();
-        }
-      }
-    };
-    myUi.addFilterChangeListener(myFilterChangeListener);
-
-    project.getMessageBus().connect(project).subscribe(VcsLogDataHolder.REFRESH_COMPLETED, new VcsLogRefreshListener() {
-      @Override
-      public void refresh(@NotNull DataPack dataPack) {
+      public void onChange(@NotNull VcsLogDataPack dataPack, boolean refreshHappened) {
         if (myTask == null) { // no task in progress => not interested in refresh events
           return;
         }
 
-        // collect data
-        String comparedBranch = myTask.myComparedBranch;
-        Map<GitRepository, GitBranch> repositoriesWithCurrentBranches = myTask.myRepositoriesWithCurrentBranches;
-        VcsLogDataProvider provider = myTask.myProvider;
+        if (refreshHappened) {
+          // collect data
+          String comparedBranch = myTask.myComparedBranch;
+          Map<GitRepository, GitBranch> repositoriesWithCurrentBranches = myTask.myRepositoriesWithCurrentBranches;
+          VcsLogDataProvider provider = myTask.myProvider;
 
-        stopAndUnhighlight();
+          stopAndUnhighlight();
 
-        // highlight again
-        Map<GitRepository, GitBranch> repositories = getRepositories(myUi.getDataPack().getLogProviders(), comparedBranch);
-        if (repositories.equals(repositoriesWithCurrentBranches)) { // but not if current branch changed
-          highlightInBackground(comparedBranch, provider);
+          // highlight again
+          Map<GitRepository, GitBranch> repositories = getRepositories(myUi.getDataPack().getLogProviders(), comparedBranch);
+          if (repositories.equals(repositoriesWithCurrentBranches)) { // but not if current branch changed
+            highlightInBackground(comparedBranch, provider);
+          }
+        }
+        else {
+          VcsLogBranchFilter branchFilter = myUi.getFilterUi().getFilters().getBranchFilter();
+          if (branchFilter == null ||
+              branchFilter.getBranchNames().size() != 1 ||
+              !branchFilter.getBranchNames().iterator().next().equals(myTask.myComparedBranch)) {
+            stopAndUnhighlight();
+          }
         }
       }
-    });
+    };
+    myUi.addLogListener(myLogListener);
   }
 
   public void highlightInBackground(@NotNull String branchToCompare, @NotNull VcsLogDataProvider dataProvider) {
@@ -153,7 +144,7 @@ public class DeepComparator implements Disposable {
   @Override
   public void dispose() {
     stopAndUnhighlight();
-    myUi.removeFilterChangeListener(myFilterChangeListener);
+    myUi.removeLogListener(myLogListener);
   }
 
   public boolean hasHighlightingOrInProgress() {

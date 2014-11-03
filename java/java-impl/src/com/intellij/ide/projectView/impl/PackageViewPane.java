@@ -40,6 +40,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiDirectory;
@@ -148,14 +149,16 @@ public final class PackageViewPane extends AbstractProjectViewPSIPane {
         GlobalSearchScope scope = GlobalSearchScope.moduleScope(module);
         Collections.addAll(directories, aPackage.getDirectories(scope));
 
-        Object parentValue = node.getParent().getValue();
-        PsiPackage parentNodePackage = parentValue instanceof PackageElement ? ((PackageElement)parentValue).getPackage() : null;
-        while (true) {
-          aPackage = aPackage.getParentPackage();
-          if (aPackage == null || aPackage.getQualifiedName().isEmpty() || aPackage.equals(parentNodePackage)) {
-            break;
+        if (Registry.is("projectView.choose.directory.on.compacted.middle.packages")) {
+          Object parentValue = node.getParent().getValue();
+          PsiPackage parentNodePackage = parentValue instanceof PackageElement ? ((PackageElement)parentValue).getPackage() : null;
+          while (true) {
+            aPackage = aPackage.getParentPackage();
+            if (aPackage == null || aPackage.getQualifiedName().isEmpty() || aPackage.equals(parentNodePackage)) {
+              break;
+            }
+            Collections.addAll(directories, aPackage.getDirectories(scope));
           }
-          Collections.addAll(directories, aPackage.getDirectories(scope));
         }
       }
     }

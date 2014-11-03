@@ -762,11 +762,12 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
   }
 
   public void synchronizeSelected() {
-    if (!checkCanDelete()) {
+    List<DirDiffElementImpl> selectedElements = getSelectedElements();
+    if (!checkCanDelete(selectedElements)) {
       return;
     }
     rememberSelection();
-    for (DirDiffElementImpl element : getSelectedElements()) {
+    for (DirDiffElementImpl element : selectedElements) {
       syncElement(element);
     }
     restoreSelection();
@@ -779,19 +780,20 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
   }
 
   public void synchronizeAll() {
-    if (!checkCanDelete()) {
+    List<DirDiffElementImpl> elements = new ArrayList<DirDiffElementImpl>(myElements);
+    if (!checkCanDelete(elements)) {
       return;
     }
-    for (DirDiffElementImpl element : myElements.toArray(new DirDiffElementImpl[myElements.size()])) {
+    for (DirDiffElementImpl element : elements) {
       syncElement(element);
     }
     selectFirstRow();
   }
 
-  private boolean checkCanDelete() {
+  private boolean checkCanDelete(List<DirDiffElementImpl> elements) {
     if (WarnOnDeletion.isWarnWhenDeleteItems()) {
       int count = 0;
-      for (DirDiffElementImpl element : myElements) {
+      for (DirDiffElementImpl element : elements) {
         if (element.getOperation() == DirDiffOperation.DELETE) {
           count++;
         }

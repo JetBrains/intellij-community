@@ -171,6 +171,12 @@ def process_exec_queue(interpreter):
 
     set_return_control_callback(return_control)
 
+    from pydev_import_hook import import_hook_manager
+    from pydev_ipython.matplotlibtools import activate_matplotlib, activate_pylab, activate_pyplot
+    import_hook_manager.add_module_name("matplotlib", activate_matplotlib(interpreter))
+    import_hook_manager.add_module_name("pylab", activate_pylab)
+    import_hook_manager.add_module_name("pyplot", activate_pyplot)
+
     while 1:
         # Running the request may have changed the inputhook in use
         inputhook = get_inputhook()
@@ -322,6 +328,10 @@ def get_interpreter():
     try:
         interpreterInterface = getattr(__builtin__, 'interpreter')
     except AttributeError:
+        # fake return_controll_callback function just to prevent exception in PyCharm bebug console
+        from pydev_ipython.inputhook import set_return_control_callback
+        set_return_control_callback(lambda x: True)
+
         interpreterInterface = InterpreterInterface(None, None, threading.currentThread())
         setattr(__builtin__, 'interpreter', interpreterInterface)
 

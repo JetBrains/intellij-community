@@ -50,7 +50,7 @@ def get_what_to_run_by_env(environment):
         what_to_run = ["."]
 
     for path in what_to_run:
-        assert os.path.exists(path), "{} does not exist".format(path)
+        assert os.path.exists(path), "{0} does not exist".format(path)
 
     base_dir = what_to_run[0]
     if os.path.isfile(what_to_run[0]):
@@ -103,7 +103,7 @@ class BddRunner(object):
         :return: location in format file:line (as supported in tcmessages)
         """
         my_file = str(location.file).lstrip("/\\")
-        return "file:///{}:{}".format(os.path.normpath(os.path.join(self.__base_dir, my_file)), location.line)
+        return "file:///{0}:{1}".format(os.path.normpath(os.path.join(self.__base_dir, my_file)), location.line)
 
     def _test_undefined(self, test_name, location):
         """
@@ -129,7 +129,7 @@ class BddRunner(object):
         """
         if test_name != self.__last_test_name:
             self._test_started(test_name, location)
-        self.tc_messages.testIgnored(test_name, "Skipped: {}".format(reason))
+        self.tc_messages.testIgnored(test_name, "Skipped: {0}".format(reason))
         self.__last_test_name = None
         pass
 

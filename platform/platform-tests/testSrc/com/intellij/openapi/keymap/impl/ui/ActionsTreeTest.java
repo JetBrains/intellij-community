@@ -15,15 +15,22 @@
  */
 package com.intellij.openapi.keymap.impl.ui;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.QuickList;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
+import com.intellij.openapi.keymap.impl.ActionShortcutRestrictions;
 import com.intellij.openapi.keymap.impl.KeymapImpl;
 import com.intellij.openapi.keymap.impl.KeymapManagerImpl;
+import com.intellij.openapi.keymap.impl.ShortcutRestrictions;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import com.intellij.testFramework.PlatformTestCase;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.picocontainer.MutablePicoContainer;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -40,7 +47,9 @@ public class ActionsTreeTest extends LightPlatformCodeInsightTestCase {
   private static final String ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION_REDEFINED = "DummyWithUseShortcutOfExistentActionRedefined";
   private static final String ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION_REDEFINED_IN_PARENT = "DummyWithUseShortcutOfExistentActionRedefinedInParent";
   private static final String ACTION_WITH_USE_SHORTCUT_OF_NON_EXISTENT_ACTION = "DummyWithUseShortcutOfNonExistentAction";
-  
+
+  private static final String ACTION_WITH_FIXED_SHORTCUTS = "DummyActionWithFixedShortcuts";
+
   private static final String ACTION_EDITOR_DELETE_WITH_SHORTCUT = "EditorDelete";
   private static final String ACTION_EDITOR_CUT_WITHOUT_SHORTCUT = "EditorCut";
 
@@ -52,8 +61,12 @@ public class ActionsTreeTest extends LightPlatformCodeInsightTestCase {
   private AnAction myActionWithUseShortcutOfExistentRedefined;
   private AnAction myActionWithUseShortcutOfExistentRedefinedInParent;
   private AnAction myActionWithUseShortcutOfNonExistent;
-  
+  private AnAction myActionWithFixedShortcuts;
+
   private ActionsTree myActionsTree;
+
+  private ActionShortcutRestrictions mySavedRestrictions;
+
   static {
     PlatformTestCase.initPlatformLangPrefix();
   }
@@ -69,6 +82,7 @@ public class ActionsTreeTest extends LightPlatformCodeInsightTestCase {
     myActionWithUseShortcutOfExistentRedefined = new MyAction("text", "description");
     myActionWithUseShortcutOfExistentRedefinedInParent = new MyAction("text", "description");
     myActionWithUseShortcutOfNonExistent = new MyAction("text", "description");
+    myActionWithFixedShortcuts = new MyAction("text", "description");
       
     ActionManager actionManager = ActionManager.getInstance();
     actionManager.registerAction(ACTION_WITHOUT_TEXT_AND_DESCRIPTION, myActionWithoutTextAndDescription);
@@ -79,11 +93,22 @@ public class ActionsTreeTest extends LightPlatformCodeInsightTestCase {
     actionManager.registerAction(ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION_REDEFINED, myActionWithUseShortcutOfExistentRedefined);
     actionManager.registerAction(ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION_REDEFINED_IN_PARENT, myActionWithUseShortcutOfExistentRedefinedInParent);
     actionManager.registerAction(ACTION_WITH_USE_SHORTCUT_OF_NON_EXISTENT_ACTION, myActionWithUseShortcutOfNonExistent);
+    actionManager.registerAction(ACTION_WITH_FIXED_SHORTCUTS, myActionWithFixedShortcuts);
 
     KeymapManagerEx.getInstanceEx().bindShortcuts(EXISTENT_ACTION, ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION);
     KeymapManagerEx.getInstanceEx().bindShortcuts(EXISTENT_ACTION, ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION_REDEFINED);
     KeymapManagerEx.getInstanceEx().bindShortcuts(EXISTENT_ACTION, ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION_REDEFINED_IN_PARENT);
     KeymapManagerEx.getInstanceEx().bindShortcuts(NON_EXISTENT_ACTION, ACTION_WITH_USE_SHORTCUT_OF_NON_EXISTENT_ACTION);
+
+    mySavedRestrictions = ActionShortcutRestrictions.getInstance();
+    setRestrictions(new ActionShortcutRestrictions(){
+      @NotNull
+      @Override
+      public ShortcutRestrictions getForActionId(String actionId) {
+        return ACTION_WITH_FIXED_SHORTCUTS.equals(actionId)
+               ? new ShortcutRestrictions(false, false, false, false, false) : ShortcutRestrictions.NO_RESTRICTIONS;
+      }
+    });
 
     assertEquals("$Delete", KeymapManagerEx.getInstanceEx().getActionBinding(ACTION_EDITOR_DELETE_WITH_SHORTCUT));
     assertEquals("$Cut", KeymapManagerEx.getInstanceEx().getActionBinding(ACTION_EDITOR_CUT_WITHOUT_SHORTCUT));
@@ -98,7 +123,8 @@ public class ActionsTreeTest extends LightPlatformCodeInsightTestCase {
                  myActionWithUseShortcutOfExistent, 
                  myActionWithUseShortcutOfExistentRedefined, 
                  myActionWithUseShortcutOfExistentRedefinedInParent, 
-                 myActionWithUseShortcutOfNonExistent);
+                 myActionWithUseShortcutOfNonExistent,
+                 myActionWithFixedShortcuts);
     // populate action tree
     myActionsTree = new ActionsTree();
 
@@ -118,6 +144,10 @@ public class ActionsTreeTest extends LightPlatformCodeInsightTestCase {
   @Override
   protected void tearDown() throws Exception {
     try {
+      if (mySavedRestrictions != null) {
+        setRestrictions(mySavedRestrictions);
+      }
+
       ActionManager actionManager = ActionManager.getInstance();
       DefaultActionGroup group = (DefaultActionGroup)actionManager.getAction(IdeActions.GROUP_EDITOR);
       group.remove(myActionWithoutTextAndDescription);
@@ -128,6 +158,7 @@ public class ActionsTreeTest extends LightPlatformCodeInsightTestCase {
       group.remove(myActionWithUseShortcutOfExistentRedefined);
       group.remove(myActionWithUseShortcutOfExistentRedefinedInParent);
       group.remove(myActionWithUseShortcutOfNonExistent);
+      group.remove(myActionWithFixedShortcuts);
       actionManager.unregisterAction(ACTION_WITHOUT_TEXT_AND_DESCRIPTION);
       actionManager.unregisterAction(ACTION_WITH_TEXT_ONLY);
       actionManager.unregisterAction(ACTION_WITH_TEXT_AND_DESCRIPTION);
@@ -136,6 +167,7 @@ public class ActionsTreeTest extends LightPlatformCodeInsightTestCase {
       actionManager.unregisterAction(ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION_REDEFINED);
       actionManager.unregisterAction(ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION_REDEFINED_IN_PARENT);
       actionManager.unregisterAction(ACTION_WITH_USE_SHORTCUT_OF_NON_EXISTENT_ACTION);
+      actionManager.unregisterAction(ACTION_WITH_FIXED_SHORTCUTS);
 
       ((KeymapManagerImpl)KeymapManager.getInstance()).unbindShortcuts(ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION);
       ((KeymapManagerImpl)KeymapManager.getInstance()).unbindShortcuts(ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION_REDEFINED);
@@ -145,6 +177,13 @@ public class ActionsTreeTest extends LightPlatformCodeInsightTestCase {
     finally {
       super.tearDown();
     }
+  }
+
+  private static void setRestrictions(ActionShortcutRestrictions restrictions) {
+    MutablePicoContainer picoContainer = (MutablePicoContainer) ApplicationManager.getApplication().getPicoContainer();
+    String restrictionsKey = ActionShortcutRestrictions.class.getName();
+    picoContainer.unregisterComponent(restrictionsKey);
+    picoContainer.registerComponentInstance(restrictionsKey, restrictions);
   }
 
   public void testVariousActionsArePresent() {
@@ -160,10 +199,46 @@ public class ActionsTreeTest extends LightPlatformCodeInsightTestCase {
              ACTION_EDITOR_DELETE_WITH_SHORTCUT), // this action is shown, since the keymap redefines the shortcut of $Delete
            Arrays.asList(
              NON_EXISTENT_ACTION,
-             ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION,  
-             ACTION_EDITOR_CUT_WITHOUT_SHORTCUT // this one is not shown since bound to $cut  
+             ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION,
+             ACTION_EDITOR_CUT_WITHOUT_SHORTCUT, // this one is not shown since bound to $cut
+             ACTION_WITH_FIXED_SHORTCUTS
            )
     );
+  }
+
+  public void testPresentation() {
+    ActionManager manager = ActionManager.getInstance();
+    for (String id : manager.getActionIds("")) {
+      if (!ACTION_WITHOUT_TEXT_AND_DESCRIPTION.equals(id)) {
+        try {
+          AnAction stub = manager.getActionOrStub(id);
+          AnAction action = manager.getAction(id);
+          String message = id + " (" + action.getClass().getName() + ")";
+          if (stub != action) {
+            Presentation before = stub.getTemplatePresentation();
+            Presentation after = action.getTemplatePresentation();
+            checkPresentationProperty("icon", message, before.getIcon(), after.getIcon());
+            checkPresentationProperty("text", message, before.getText(), after.getText());
+            checkPresentationProperty("description", message, before.getDescription(), after.getDescription());
+          }
+          if (action instanceof ActionGroup) {
+            System.out.println("ignored action group: " + message);
+          }
+          else {
+            assertFalse("no text: " + message, StringUtil.isEmpty(action.getTemplatePresentation().getText()));
+          }
+        }
+        catch (PluginException exception) {
+          System.out.println(id + " ignored because " + exception.getMessage());
+        }
+      }
+    }
+  }
+
+  private static void checkPresentationProperty(String name, String message, Object expected, Object actual) {
+    if (!(expected == null ? actual == null : expected.equals(actual))) {
+      System.out.println(name + " updated: "+ message + "; old:" + expected + "; new:" + actual);
+    }
   }
 
   public void testFiltering() {
@@ -181,7 +256,8 @@ public class ActionsTreeTest extends LightPlatformCodeInsightTestCase {
              NON_EXISTENT_ACTION,
              ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION,
              ACTION_EDITOR_DELETE_WITH_SHORTCUT,
-             ACTION_EDITOR_CUT_WITHOUT_SHORTCUT
+             ACTION_EDITOR_CUT_WITHOUT_SHORTCUT,
+             ACTION_WITH_FIXED_SHORTCUTS
            )
     );
   }
@@ -209,7 +285,7 @@ public class ActionsTreeTest extends LightPlatformCodeInsightTestCase {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
     }
   }
 }

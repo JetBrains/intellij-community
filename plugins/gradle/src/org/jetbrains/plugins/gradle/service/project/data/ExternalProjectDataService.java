@@ -15,32 +15,17 @@
  */
 package org.jetbrains.plugins.gradle.service.project.data;
 
-import com.intellij.CommonBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.*;
-import com.intellij.openapi.externalSystem.model.project.ProjectData;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
-import com.intellij.openapi.externalSystem.service.internal.ExternalSystemResolveProjectTask;
-import com.intellij.openapi.externalSystem.service.notification.ExternalSystemNotificationManager;
-import com.intellij.openapi.externalSystem.service.notification.NotificationSource;
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager;
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataService;
-import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
-import com.intellij.openapi.externalSystem.util.*;
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
+import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
+import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ConcurrentFactoryMap;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -97,107 +82,6 @@ public class ExternalProjectDataService implements ProjectDataService<ExternalPr
 
   @Override
   public void removeData(@NotNull final Collection<? extends Project> modules, @NotNull Project project, boolean synchronous) {
-  }
-
-  @Nullable
-  public ExternalProject getOrImportRootExternalProject(@NotNull Project project,
-                                                        @NotNull ProjectSystemId systemId,
-                                                        @NotNull File projectRootDir) {
-    final ExternalProject externalProject = getRootExternalProject(systemId, projectRootDir);
-    return externalProject != null ? externalProject : importExternalProject(project, systemId, projectRootDir);
-  }
-
-  @Nullable
-  private ExternalProject importExternalProject(@NotNull final Project project,
-                                                @NotNull final ProjectSystemId projectSystemId,
-                                                @NotNull final File projectRootDir) {
-    final Boolean result = UIUtil.invokeAndWaitIfNeeded(new Computable<Boolean>() {
-      @Override
-      public Boolean compute() {
-        final Ref<Boolean> result = new Ref<Boolean>(false);
-        if (project.isDisposed()) return false;
-
-        final String linkedProjectPath = FileUtil.toCanonicalPath(projectRootDir.getPath());
-        final ExternalProjectSettings projectSettings =
-          ExternalSystemApiUtil.getSettings(project, projectSystemId).getLinkedProjectSettings(linkedProjectPath);
-        if (projectSettings == null) {
-          LOG.warn("Unable to get project settings for project path: " + linkedProjectPath);
-          if (LOG.isDebugEnabled()) {
-            LOG.debug("Available projects paths: " + ContainerUtil.map(
-              ExternalSystemApiUtil.getSettings(project, projectSystemId).getLinkedProjectsSettings(),
-              new Function<ExternalProjectSettings, String>() {
-                @Override
-                public String fun(ExternalProjectSettings settings) {
-                  return settings.getExternalProjectPath();
-                }
-              }));
-          }
-          return false;
-        }
-
-        final File projectFile = new File(linkedProjectPath);
-        final String projectName;
-        if (projectFile.isFile()) {
-          projectName = projectFile.getParentFile().getName();
-        }
-        else {
-          projectName = projectFile.getName();
-        }
-
-        // ask a user for the project import if auto-import is disabled
-        if (!projectSettings.isUseAutoImport()) {
-          String message = String.format("Project '%s' require synchronization with %s configuration. \nImport the project?",
-                                         projectName, projectSystemId.getReadableName());
-          int returnValue = Messages.showOkCancelDialog(
-            message, "Import Project", CommonBundle.getOkButtonText(), CommonBundle.getCancelButtonText(), Messages.getQuestionIcon()
-          );
-          if (returnValue != Messages.OK) return false;
-        }
-
-        final String title = ExternalSystemBundle.message("progress.import.text", linkedProjectPath, projectSystemId.getReadableName());
-        new Task.Modal(project, title, false) {
-          @Override
-          public void run(@NotNull ProgressIndicator indicator) {
-            if (project.isDisposed()) return;
-
-            ExternalSystemNotificationManager.getInstance(project)
-              .clearNotifications(null, NotificationSource.PROJECT_SYNC, projectSystemId);
-            ExternalSystemResolveProjectTask task =
-              new ExternalSystemResolveProjectTask(projectSystemId, project, linkedProjectPath, false);
-            task.execute(indicator, ExternalSystemTaskNotificationListener.EP_NAME.getExtensions());
-            if (project.isDisposed()) return;
-
-            final Throwable error = task.getError();
-            if (error != null) {
-              ExternalSystemNotificationManager.getInstance(project)
-                .processExternalProjectRefreshError(error, projectName, projectSystemId);
-              return;
-            }
-            final DataNode<ProjectData> projectDataDataNode = task.getExternalProject();
-            if (projectDataDataNode == null) return;
-
-            final Collection<DataNode<ExternalProject>> nodes = ExternalSystemApiUtil.findAll(projectDataDataNode, KEY);
-            if (nodes.size() != 1) {
-              throw new IllegalArgumentException(
-                String.format("Expected to get a single external project but got %d: %s", nodes.size(), nodes));
-            }
-
-            ProjectRootManagerEx.getInstanceEx(myProject).mergeRootsChangesDuring(new Runnable() {
-              @Override
-              public void run() {
-                myProjectDataManager.importData(KEY, nodes, project, true);
-              }
-            });
-
-            result.set(true);
-          }
-        }.queue();
-
-        return result.get();
-      }
-    });
-
-    return result ? getRootExternalProject(projectSystemId, projectRootDir) : null;
   }
 
   @Nullable

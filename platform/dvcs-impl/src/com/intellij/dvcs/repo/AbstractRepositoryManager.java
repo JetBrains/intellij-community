@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,7 +31,8 @@ public abstract class AbstractRepositoryManager<T extends Repository> extends Ab
   @NotNull private final AbstractVcs myVcs;
   @NotNull private final String myRepoDirName;
 
-  @NotNull protected final Map<VirtualFile, T> myRepositories = new HashMap<VirtualFile, T>();
+  @NotNull protected final Map<VirtualFile, T> myRepositories = ContainerUtil.newHashMap();
+  @NotNull protected final Map<VirtualFile, T> myExternalRepositories = ContainerUtil.newHashMap();
 
   @NotNull protected final ReentrantReadWriteLock REPO_LOCK = new ReentrantReadWriteLock();
   @NotNull private final CountDownLatch myInitializationWaiter = new CountDownLatch(1);
@@ -73,7 +75,41 @@ public abstract class AbstractRepositoryManager<T extends Repository> extends Ab
     }
     try {
       REPO_LOCK.readLock().lock();
-      return myRepositories.get(root);
+      T repo = myRepositories.get(root);
+      return repo != null ? repo : myExternalRepositories.get(root);
+    }
+    finally {
+      REPO_LOCK.readLock().unlock();
+    }
+  }
+
+  @Override
+  public void addExternalRepository(@NotNull VirtualFile root, @NotNull T repository) {
+    REPO_LOCK.writeLock().lock();
+    try {
+      myExternalRepositories.put(root, repository);
+    }
+    finally {
+      REPO_LOCK.writeLock().unlock();
+    }
+  }
+
+  @Override
+  public void removeExternalRepository(@NotNull VirtualFile root) {
+    REPO_LOCK.writeLock().lock();
+    try {
+      myExternalRepositories.remove(root);
+    }
+    finally {
+      REPO_LOCK.writeLock().unlock();
+    }
+  }
+
+  @Override
+  public boolean isExternal(@NotNull T repository) {
+    try {
+      REPO_LOCK.readLock().lock();
+      return !myRepositories.containsValue(repository) && myExternalRepositories.containsValue(repository);
     }
     finally {
       REPO_LOCK.readLock().unlock();

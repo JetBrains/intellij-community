@@ -28,6 +28,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -139,6 +140,19 @@ public class PositionManagerImpl implements PositionManager {
       lineNumber = -1;
     }
 
+    if (lineNumber > -1) {
+      VirtualFile file = psiFile.getVirtualFile();
+      if (file != null) {
+        int[] data = file.getUserData(LINE_NUMBERS_MAPPING_KEY);
+        if (data != null) {
+          int line = mapLine(lineNumber+1, data);
+          if (line > -1) {
+            return SourcePosition.createFromLine(psiFile, line-1);
+          }
+        }
+      }
+    }
+
     if (psiFile instanceof PsiCompiledElement || lineNumber < 0) {
       final String methodSignature = location.method().signature();
       if (methodSignature == null) {
@@ -152,7 +166,7 @@ public class PositionManagerImpl implements PositionManager {
         return SourcePosition.createFromLine(psiFile, -1);
       }
 
-      final MethodFinder finder = new MethodFinder(location.declaringType().name(), methodSignature);
+      final MethodFinder finder = new MethodFinder(location.declaringType().name(), methodName, methodSignature);
       psiFile.accept(finder);
 
       final PsiMethod compiledMethod = finder.getCompiledMethod();
@@ -163,6 +177,15 @@ public class PositionManagerImpl implements PositionManager {
     }
 
     return SourcePosition.createFromLine(psiFile, lineNumber);
+  }
+
+  private static int mapLine(int line, int[] mapping) {
+    for (int i = 0; i < mapping.length; i+=2) {
+      if (mapping[i] == line) {
+        return mapping[i+1];
+      }
+    }
+    return -1;
   }
 
   @Nullable
@@ -382,11 +405,13 @@ public class PositionManagerImpl implements PositionManager {
   private class MethodFinder extends JavaRecursiveElementVisitor {
     private final String myClassName;
     private PsiClass myCompiledClass;
+    private final String myMethodName;
     private final String myMethodSignature;
     private PsiMethod myCompiledMethod;
 
-    public MethodFinder(final String className, final String methodSignature) {
+    public MethodFinder(final String className, final String methodName, final String methodSignature) {
       myClassName = className;
+      myMethodName = methodName;
       myMethodSignature = methodSignature;
     }
 
@@ -409,9 +434,8 @@ public class PositionManagerImpl implements PositionManager {
 
         if(containingClass != null &&
            containingClass.equals(myCompiledClass) &&
-           methodName.equals(methodName) &&
+           methodName.equals(myMethodName) &&
            JVMNameUtil.getJVMSignature(method).getName(myDebugProcess).equals(myMethodSignature)) {
-
           myCompiledMethod = method;
         }
       }

@@ -56,8 +56,7 @@ public class Utils {
       if (file.delete() || !file.exists()) return;
       try {
         Thread.sleep(10);
-      }
-      catch (InterruptedException ignore) {
+      } catch (InterruptedException ignore) {
         Runner.printStackTrace(ignore);
       }
     }

@@ -1,11 +1,18 @@
 package com.siyeh.ig.migration;
 
-import com.siyeh.ig.IGInspectionTestCase;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.Nullable;
 
-public class StringBufferReplaceableByStringBuilderInspectionTest extends IGInspectionTestCase {
+public class StringBufferReplaceableByStringBuilderInspectionTest extends LightInspectionTestCase {
 
-  public void test() throws Exception {
-    doTest("com/siyeh/igtest/migration/string_buffer_replaceable_by_string_builder",
-           new StringBufferReplaceableByStringBuilderInspection());
+  public void testStringBufferReplaceableByStringBuilder() {
+    doTest();
+  }
+
+  @Nullable
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    return new StringBufferReplaceableByStringBuilderInspection();
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,7 +82,7 @@ public class PythonUnitTestUtil {
         if (expression.getText().equals("TestCase")) return true;
       }
     }
-    for (PyClassLikeType type : cls.getAncestorTypes(TypeEvalContext.codeInsightFallback())) {
+    for (PyClassLikeType type : cls.getAncestorTypes(TypeEvalContext.codeInsightFallback(cls.getProject()))) {
       if (type != null && testQualifiedNames.contains(type.getClassQName())) {
         return true;
       }
@@ -153,7 +153,7 @@ public class PythonUnitTestUtil {
   }
 
   public static boolean isTestCaseClass(@NotNull PyClass cls, Set<String> testQualifiedNames) {
-    for (PyClassLikeType type : cls.getAncestorTypes(TypeEvalContext.codeInsightFallback())) {
+    for (PyClassLikeType type : cls.getAncestorTypes(TypeEvalContext.codeInsightFallback(cls.getProject()))) {
       if (type != null) {
         if (testQualifiedNames.contains(type.getClassQName())) {
           return true;
@@ -162,6 +162,8 @@ public class PythonUnitTestUtil {
         String[] names = new String[0];
         if (clsName != null)
           names = clsName.split("\\.");
+        if (names.length == 0) return false;
+
         clsName = names[names.length - 1];
         if (TEST_MATCH_PATTERN.matcher(clsName).find()) {
           return true;

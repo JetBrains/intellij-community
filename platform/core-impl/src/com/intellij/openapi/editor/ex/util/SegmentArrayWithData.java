@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ public class SegmentArrayWithData extends SegmentArray {
 
   public void setElementAt(int i, int startOffset, int endOffset, int data) {
     if (data < 0 && data > Short.MAX_VALUE) throw new IndexOutOfBoundsException("data out of short range" + data);
-    super.setElementAt(i, startOffset, endOffset);
+    setElementAt(i, startOffset, endOffset);
     myData = reallocateArray(myData, i+1);
     myData[i] = (short)data;
   }

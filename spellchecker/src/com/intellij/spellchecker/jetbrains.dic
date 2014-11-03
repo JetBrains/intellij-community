@@ -48,6 +48,7 @@ builtin
 bzip
 calc
 callee
+camelcase
 cancelable
 cancellable
 capath
@@ -60,6 +61,7 @@ charset
 charsets
 checkbox
 checkboxes
+checkstyle
 checksum
 chmod
 classpath
@@ -76,6 +78,8 @@ codesign
 commandline
 committer
 commonjs
+concat
+cond
 conf
 config
 configs
@@ -131,11 +135,14 @@ endregion
 enqueue
 enum
 enums
+eqeqeq
+eval
 evex
 exif
 expr
 facebook
 facelet
+fallthrough
 favicon
 filename
 fileset
@@ -169,6 +176,7 @@ giud
 globals
 google
 gruntfile
+gulpfile
 gzip
 gzipped
 hamcrest
@@ -188,6 +196,7 @@ html
 http
 https
 iconable
+iife
 impl
 inbox
 incrementer
@@ -206,6 +215,7 @@ insteadof
 intellij
 iphone
 iphoneos
+isnan
 isnull
 javabean
 javabeans
@@ -224,6 +234,7 @@ jnilib
 jpeg
 jpdl
 jquery
+jsdoc
 jsessionid
 jshint
 json
@@ -233,6 +244,8 @@ keychain
 keychains
 keyframe
 keyframes
+keymap
+keymaps
 kotlin
 labeler
 labelers
@@ -356,6 +369,7 @@ pageable
 param
 parameterizable
 params
+paren
 patcher
 patchers
 pathname
@@ -373,6 +387,7 @@ plist
 plsql
 plugin
 plugins
+plusplus
 pointcut
 pointcuts
 portlet
@@ -396,6 +411,7 @@ println
 processlist
 profiler
 progressbar
+proto
 proven
 proxool
 pycharm
@@ -407,6 +423,7 @@ rebase
 rebased
 rebasing
 rect
+redeclare
 redis
 redispatch
 redistributions
@@ -561,10 +578,14 @@ tuple
 twitter
 typedef
 typedefs
+typeof
+ubuntu
+unary
 unboxing
 unbuffered
 uncomment
 uncommented
+undef
 underwave
 undoable
 undofile
@@ -595,6 +616,8 @@ verdana
 versa
 vertices
 viewlet
+viewport
+viewports
 vtlvariable
 watchlist
 webpack

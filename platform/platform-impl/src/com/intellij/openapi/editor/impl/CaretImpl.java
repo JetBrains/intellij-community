@@ -116,13 +116,15 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
     myVisualLineEnd = doc.getLineCount() > 1 ? doc.getLineStartOffset(1) : doc.getLineCount() == 0 ? 0 : doc.getLineEndOffset(0);
   }
 
-  void onBulkDocumentUpdateStarted(@NotNull Document doc) {
-    if (doc != myEditor.getDocument() || myOffset > doc.getTextLength() || savedBeforeBulkCaretMarker != null) return;
+  void onBulkDocumentUpdateStarted() {
+    Document doc = myEditor.getDocument();
+    if (myOffset > doc.getTextLength() || savedBeforeBulkCaretMarker != null) return;
     savedBeforeBulkCaretMarker = doc.createRangeMarker(myOffset, myOffset);
   }
 
-  void onBulkDocumentUpdateFinished(@NotNull Document doc) {
-    if (doc != myEditor.getDocument() || myEditor.getCaretModel().myIsInUpdate) return;
+  void onBulkDocumentUpdateFinished() {
+    Document doc = myEditor.getDocument();
+    if (myEditor.getCaretModel().myIsInUpdate) return;
     LOG.assertTrue(!myReportCaretMoves);
 
     if (savedBeforeBulkCaretMarker != null) {
@@ -198,15 +200,14 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
           final DocumentEx document = myEditor.getDocument();
           int textEnd = Math.min(document.getTextLength() - 1, Math.max(offset, myOffset) + 1);
           CharSequence text = document.getCharsSequence().subSequence(textStart, textEnd);
-          StringBuilder positionToOffsetTrace = new StringBuilder();
-          int inverseOffset = myEditor.logicalPositionToOffset(logicalPosition, positionToOffsetTrace);
+          int inverseOffset = myEditor.logicalPositionToOffset(logicalPosition);
           LogMessageEx.error(
             LOG, "caret moved to wrong offset. Please submit a dedicated ticket and attach current editor's text to it.",
             String.format(
               "Requested: offset=%d, logical position='%s' but actual: offset=%d, logical position='%s' (%s). %s%n"
-              + "interested text [%d;%d): '%s'%n debug trace: %s%nLogical position -> offset ('%s'->'%d') trace: %s",
+              + "interested text [%d;%d): '%s'%n debug trace: %s%nLogical position -> offset ('%s'->'%d')",
               offset, logicalPosition, myOffset, myLogicalCaret, positionByOffsetAfterMove, myEditor.dumpState(),
-              textStart, textEnd, text, debugBuffer, logicalPosition, inverseOffset, positionToOffsetTrace
+              textStart, textEnd, text, debugBuffer, logicalPosition, inverseOffset
             )
           );
         }
@@ -281,7 +282,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
         if (!editorSettings.isVirtualSpace() && lineShift == 0 && columnShift == 1) {
           int lastLine = document.getLineCount() - 1;
           if (lastLine < 0) lastLine = 0;
-          if (EditorModificationUtil.calcAfterLineEnd(myEditor) >= 0 &&
+          if (newColumnNumber > EditorUtil.getLastVisualLineColumnNumber(myEditor, newLineNumber) &&
               newLineNumber < myEditor.logicalToVisualPosition(new LogicalPosition(lastLine, 0)).line) {
             newColumnNumber = 0;
             newLineNumber++;
@@ -922,12 +923,11 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
     int offset = getOffset();
     if (offset == 0) return 0;
     int lineNumber = getLogicalPosition().line;
-    CharSequence text = document.getCharsSequence();
     int newOffset = offset - 1;
     int minOffset = lineNumber > 0 ? document.getLineEndOffset(lineNumber - 1) : 0;
     boolean camel = myEditor.getSettings().isCamelWords();
     for (; newOffset > minOffset; newOffset--) {
-      if (EditorActionUtil.isWordStart(text, newOffset, camel)) break;
+      if (EditorActionUtil.isWordOrLexemeStart(myEditor, newOffset, camel)) break;
     }
 
     return newOffset;
@@ -937,7 +937,6 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
     Document document = myEditor.getDocument();
     int offset = getOffset();
 
-    CharSequence text = document.getCharsSequence();
     if (offset >= document.getTextLength() - 1 || document.getLineCount() == 0) return offset;
 
     int newOffset = offset + 1;
@@ -950,7 +949,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
     }
     boolean camel = myEditor.getSettings().isCamelWords();
     for (; newOffset < maxOffset; newOffset++) {
-      if (EditorActionUtil.isWordEnd(text, newOffset, camel)) break;
+      if (EditorActionUtil.isWordOrLexemeEnd(myEditor, newOffset, camel)) break;
     }
 
     return newOffset;

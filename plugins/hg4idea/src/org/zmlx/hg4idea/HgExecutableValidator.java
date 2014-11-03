@@ -13,7 +13,6 @@
 package org.zmlx.hg4idea;
 
 import com.intellij.execution.ExecutableValidator;
-import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.util.HgUtil;
@@ -36,8 +35,8 @@ public class HgExecutableValidator extends ExecutableValidator {
 
   @NotNull
   @Override
-  protected Configurable getConfigurable() {
-    return myVcs.getConfigurable();
+  protected String getConfigurableDisplayName() {
+    return HgProjectConfigurable.DISPLAY_NAME;
   }
 
   @Override

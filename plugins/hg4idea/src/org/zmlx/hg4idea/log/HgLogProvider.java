@@ -268,6 +268,12 @@ public class HgLogProvider implements VcsLogProvider {
     return HgHistoryUtil.getDescendingHeadsOfBranches(myProject, root, commitHash);
   }
 
+  @Nullable
+  @Override
+  public <T> T getPropertyValue(VcsLogProperties.VcsLogProperty<T> property) {
+    return null;
+  }
+
   private static boolean branchExists(@NotNull HgRepository repository, @NotNull String branchName) {
     return repository.getBranches().keySet().contains(branchName) ||
            HgUtil.getNamesWithoutHashes(repository.getBookmarks()).contains(branchName);

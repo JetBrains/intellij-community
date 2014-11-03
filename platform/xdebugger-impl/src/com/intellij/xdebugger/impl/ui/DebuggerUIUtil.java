@@ -114,24 +114,33 @@ public class DebuggerUIUtil {
 
     textArea.setPreferredSize(size);
 
-    JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(textArea, null)
-      .setResizable(true)
-      .setMovable(true)
-      .setDimensionServiceKey(project, FULL_VALUE_POPUP_DIMENSION_KEY, false)
-      .setRequestFocus(false)
-      .setCancelCallback(new Computable<Boolean>() {
-        @Override
-        public Boolean compute() {
-          callback.setObsolete();
-          return true;
-        }
-      }).createPopup();
+    JBPopup popup = createValuePopup(project, textArea, callback);
     if (editor == null) {
       popup.show(new RelativePoint(event.getComponent(), new Point(event.getX() - size.width, event.getY() - size.height)));
     }
     else {
       popup.showInBestPositionFor(editor);
     }
+  }
+
+  public static JBPopup createValuePopup(Project project,
+                                          JComponent component,
+                                          @Nullable final FullValueEvaluationCallbackImpl callback) {
+    ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(component, null);
+    builder.setResizable(true)
+        .setMovable(true)
+        .setDimensionServiceKey(project, FULL_VALUE_POPUP_DIMENSION_KEY, false)
+        .setRequestFocus(false);
+      if (callback != null) {
+        builder.setCancelCallback(new Computable<Boolean>() {
+          @Override
+          public Boolean compute() {
+            callback.setObsolete();
+            return true;
+          }
+        });
+      }
+    return builder.createPopup();
   }
 
   public static void showXBreakpointEditorBalloon(final Project project,

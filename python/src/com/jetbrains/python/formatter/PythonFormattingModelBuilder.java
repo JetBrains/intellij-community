@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,8 +63,7 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilderEx, C
   @Override
   public CommonCodeStyleSettings.IndentOptions getIndentOptionsToUse(@NotNull PsiFile file,
                                                                      @NotNull FormatTextRanges ranges,
-                                                                     @NotNull CodeStyleSettings settings)
-  {
+                                                                     @NotNull CodeStyleSettings settings) {
     return null;
   }
 

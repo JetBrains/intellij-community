@@ -81,6 +81,7 @@ import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.usageView.UsageViewShortNameLocation;
 import com.intellij.usageView.UsageViewTypeLocation;
+import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
@@ -487,7 +488,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
   }
 
   @Nullable
-  private Info getInfoAt(@NotNull Editor editor, @NotNull PsiFile file, int offset, @NotNull BrowseMode browseMode) {
+  private Info getInfoAt(@NotNull final Editor editor, @NotNull PsiFile file, int offset, @NotNull BrowseMode browseMode) {
     PsiElement targetElement = null;
 
     if (browseMode == BrowseMode.TypeDeclaration) {
@@ -523,7 +524,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       if (resolvedElements.size() == 1) {
         return new InfoSingle(ref, resolvedElements.get(0));
       }
-      else if (resolvedElements.size() > 1) {
+      if (resolvedElements.size() > 1) {
         return elementAtPointer != null ? new InfoMultiple(elementAtPointer, ref) : null;
       }
     }
@@ -567,6 +568,27 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       }
     }
 
+    final PsiNameIdentifierOwner element = GotoDeclarationAction.findElementToShowUsagesOf(editor, file, offset);
+    if (element != null) {
+      PsiElement identifier = element.getNameIdentifier();
+      return new Info(identifier){
+        @Override
+        public void showDocInfo(@NotNull DocumentationManager docManager) {
+        }
+
+        @NotNull
+        @Override
+        public DocInfo getInfo() {
+          String name = UsageViewUtil.getType(element) + " '"+ UsageViewUtil.getShortName(element)+"'";
+          return new DocInfo("Show usages of "+name, null, element);
+        }
+
+        @Override
+        public boolean isValid(@NotNull Document document) {
+          return element.isValid();
+        }
+      };
+    }
     return null;
   }
 

@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -243,12 +244,9 @@ public class UnnecessaryUnboxingInspection extends BaseInspection {
       if (!(expression instanceof PsiMethodCallExpression)) {
         return false;
       }
-      final PsiMethodCallExpression methodCallExpression =
-        (PsiMethodCallExpression)expression;
-      final PsiReferenceExpression methodExpression =
-        methodCallExpression.getMethodExpression();
-      final PsiExpression qualifier =
-        methodExpression.getQualifierExpression();
+      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
+      final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
+      final PsiExpression qualifier = methodExpression.getQualifierExpression();
       if (qualifier == null) {
         return false;
       }
@@ -261,31 +259,45 @@ public class UnnecessaryUnboxingInspection extends BaseInspection {
         return false;
       }
       final String methodName = methodExpression.getReferenceName();
-      final String unboxingMethod =
-        s_unboxingMethods.get(qualifierTypeName);
+      final String unboxingMethod = s_unboxingMethods.get(qualifierTypeName);
       return unboxingMethod.equals(methodName);
     }
 
-    private boolean isSameMethodCalledWithoutUnboxing(
-      @NotNull PsiCallExpression callExpression,
-      @NotNull PsiMethodCallExpression unboxingExpression) {
-      final PsiExpressionList argumentList =
-        callExpression.getArgumentList();
+    private boolean isSameMethodCalledWithoutUnboxing(@NotNull PsiCallExpression callExpression,
+                                                      @NotNull PsiMethodCallExpression unboxingExpression) {
+      final PsiExpressionList argumentList = callExpression.getArgumentList();
       if (argumentList == null) {
         return false;
       }
       final PsiExpression[] expressions = argumentList.getExpressions();
-      final PsiMethod originalMethod =
-        callExpression.resolveMethod();
+      final PsiMethod originalMethod = callExpression.resolveMethod();
       if (originalMethod == null) {
         return false;
       }
       final String name = originalMethod.getName();
-      final PsiClass containingClass =
-        originalMethod.getContainingClass();
+
+      final PsiExpression qualifierExpression;
+      if (callExpression instanceof PsiMethodCallExpression) {
+        qualifierExpression = ((PsiMethodCallExpression)callExpression).getMethodExpression().getQualifierExpression();
+      } else if (callExpression instanceof PsiNewExpression) {
+        qualifierExpression = ((PsiNewExpression)callExpression).getQualifier();
+      } else {
+        return false;
+      }
+
+      final PsiClass containingClass;
+      if (qualifierExpression == null) {
+        final PsiElement scope = callExpression.resolveMethodGenerics().getCurrentFileResolveScope();
+        containingClass = scope instanceof PsiClass ? (PsiClass)scope : null;
+      }
+      else {
+        containingClass = PsiUtil.resolveClassInType(GenericsUtil.getVariableTypeByExpressionType(qualifierExpression.getType()));
+      }
+
       if (containingClass == null) {
         return false;
       }
+
       final PsiType[] types = PsiType.createArray(expressions.length);
       for (int i = 0; i < expressions.length; i++) {
         final PsiExpression expression = expressions[i];
@@ -294,20 +306,17 @@ public class UnnecessaryUnboxingInspection extends BaseInspection {
           if (!(type instanceof PsiPrimitiveType)) {
             return false;
           }
-          final PsiPrimitiveType primitiveType =
-            (PsiPrimitiveType)type;
+          final PsiPrimitiveType primitiveType = (PsiPrimitiveType)type;
           types[i] = primitiveType.getBoxedType(unboxingExpression);
         }
         else {
           types[i] = type;
         }
       }
-      final PsiMethod[] methods =
-        containingClass.findMethodsByName(name, true);
+      final PsiMethod[] methods = containingClass.findMethodsByName(name, true);
       for (final PsiMethod method : methods) {
         if (!originalMethod.equals(method)) {
-          if (MethodCallUtils.isApplicable(method,
-                                           PsiSubstitutor.EMPTY, types)) {
+          if (MethodCallUtils.isApplicable(method, PsiSubstitutor.EMPTY, types)) {
             return false;
           }
         }

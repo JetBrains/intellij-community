@@ -635,14 +635,12 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     }
 
     if (wndToOpenIn == null || !wndToOpenIn.isFileOpen(file)) {
-      PreviewManager previewManager = PreviewManager.SERVICE.getInstance(myProject);
-      if (previewManager != null) {
-        Pair<FileEditor[], FileEditorProvider[]> previewResult = previewManager.preview(FilePreviewPanelProvider.ID, file, focusEditor);
+      Pair<FileEditor[], FileEditorProvider[]> previewResult =
+        PreviewManager.SERVICE.preview(myProject, FilePreviewPanelProvider.ID, file, focusEditor);
         if (previewResult != null) {
           return previewResult;
         }
       }
-    }
 
     EditorsSplitters splitters = getSplitters();
 
@@ -747,7 +745,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
                                                          final boolean focusEditor,
                                                          final Boolean pin,
                                                          final int index) {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
+    assert ApplicationManager.getApplication().isDispatchThread() || !ApplicationManager.getApplication().isReadAccessAllowed() : "must not open files under read action since we are doing a lot of invokeAndWaits here";
 
     final Ref<EditorWithProviderComposite> compositeRef = new Ref<EditorWithProviderComposite>();
 
@@ -773,10 +771,16 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
         try {
           final FileEditorProvider provider = newProviders[i];
           LOG.assertTrue(provider != null, "Provider for file "+file+" is null. All providers: "+Arrays.asList(newProviders));
-          LOG.assertTrue(provider.accept(myProject, file), "Provider " + provider + " doesn't accept file " + file);
-          if (provider instanceof AsyncFileEditorProvider) {
-            builders[i] = ((AsyncFileEditorProvider)provider).createEditorAsync(myProject, file);
-          }
+          builders[i] = ApplicationManager.getApplication().runReadAction(new Computable<AsyncFileEditorProvider.Builder>() {
+            @Override
+            public AsyncFileEditorProvider.Builder compute() {
+              if (myProject.isDisposed() || !file.isValid()) {
+                return null;
+              }
+              LOG.assertTrue(provider.accept(myProject, file), "Provider " + provider + " doesn't accept file " + file);
+              return provider instanceof AsyncFileEditorProvider ? ((AsyncFileEditorProvider)provider).createEditorAsync(myProject, file) : null;
+            }
+          });
         }
         catch (Exception e) {
           LOG.error(e);

@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Set;
+import java.util.Map;
 
 public class StudyDirectoryNode extends PsiDirectoryNode {
   private final PsiDirectory myValue;
@@ -68,11 +68,11 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
       setStudyAttributes(lesson, data, lesson.getName());
     }
 
-    if (valueName.contains(Course.PLAYGROUND_DIR)) {
+    if (valueName.contains(Course.SANDBOX_DIR)) {
       if (myValue.getParent() != null) {
-        if (!myValue.getParent().getName().contains(Course.PLAYGROUND_DIR)) {
-          data.setPresentableText(Course.PLAYGROUND_DIR);
-          data.setIcon(StudyIcons.Playground);
+        if (!myValue.getParent().getName().contains(Course.SANDBOX_DIR)) {
+          data.setPresentableText(Course.SANDBOX_DIR);
+          data.setIcon(StudyIcons.Sandbox);
           return;
         }
       }
@@ -87,7 +87,7 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
       String logicalName = name.contains(Lesson.LESSON_DIR) ? Lesson.LESSON_DIR : Task.TASK_DIR;
       return StudyUtils.getIndex(name, logicalName) + 1;
     }
-    return name.contains(Course.PLAYGROUND_DIR) ? 0 : 3;
+    return name.contains(Course.SANDBOX_DIR) ? 0 : 3;
   }
 
   private static void setStudyAttributes(Stateful stateful, PresentationData data, String additionalName) {
@@ -144,15 +144,24 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
           FileEditorManager.getInstance(myProject).closeFile(openFile);
         }
         VirtualFile child = null;
-        Set<String> fileNames = task.getTaskFiles().keySet();
-        for (String name : fileNames) {
-           child = taskDir.findChild(name);
-          if (child != null) {
-            FileEditorManager.getInstance(myProject).openFile(child, true);
+        Map<String, TaskFile> taskFiles = task.getTaskFiles();
+        for (Map.Entry<String, TaskFile> entry: taskFiles.entrySet()) {
+          VirtualFile file = taskDir.findChild(entry.getKey());
+          if (file != null) {
+            FileEditorManager.getInstance(myProject).openFile(file, true);
+          }
+          if (!entry.getValue().getTaskWindows().isEmpty()) {
+            child = file;
           }
         }
         if (child != null) {
           ProjectView.getInstance(myProject).select(child, child, false);
+          FileEditorManager.getInstance(myProject).openFile(child, true);
+        } else {
+          VirtualFile[] children = taskDir.getChildren();
+          if (children.length > 0) {
+            ProjectView.getInstance(myProject).select(children[0], children[0], false);
+          }
         }
       }
     }

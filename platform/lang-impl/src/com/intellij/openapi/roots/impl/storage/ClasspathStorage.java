@@ -17,11 +17,7 @@
 package com.intellij.openapi.roots.impl.storage;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.PathMacroManager;
-import com.intellij.openapi.components.StateStorage;
-import com.intellij.openapi.components.StateStorageException;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
@@ -32,17 +28,14 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.SafeWriteRequestor;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.tracker.VirtualFileTracker;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.messages.MessageBus;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -53,6 +46,7 @@ import org.jetbrains.jps.model.serialization.JpsProjectLoader;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -63,8 +57,6 @@ import java.util.Set;
  * Time: 1:42:06 PM
  */
 public class ClasspathStorage implements StateStorage {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.storage.ClasspathStorage");
-
   @NonNls public static final String SPECIAL_STORAGE = "special";
 
   public static final String DEFAULT_STORAGE_DESCR = ProjectBundle.message("project.roots.classpath.format.default.descr");
@@ -72,21 +64,17 @@ public class ClasspathStorage implements StateStorage {
   @NonNls public static final String CLASSPATH_DIR_OPTION = JpsProjectLoader.CLASSPATH_DIR_ATTRIBUTE;
 
   @NonNls private static final String COMPONENT_TAG = "component";
-  private Object mySession;
   private final ClasspathStorageProvider.ClasspathConverter myConverter;
-
 
   public ClasspathStorage(Module module) {
     myConverter = getProvider(ClassPathStorageUtil.getStorageType(module)).createConverter(module);
-    final MessageBus messageBus = module.getMessageBus();
-    final VirtualFileTracker virtualFileTracker =
-      (VirtualFileTracker)module.getPicoContainer().getComponentInstanceOfType(VirtualFileTracker.class);
+    final VirtualFileTracker virtualFileTracker = ServiceManager.getService(VirtualFileTracker.class);
     if (virtualFileTracker != null) {
       final ArrayList<VirtualFile> files = new ArrayList<VirtualFile>();
       try {
         myConverter.getFileSet().listFiles(files);
         for (VirtualFile file : files) {
-          final Listener listener = messageBus.syncPublisher(STORAGE_TOPIC);
+          final Listener listener = module.getProject().getMessageBus().syncPublisher(PROJECT_STORAGE_TOPIC);
           virtualFileTracker.addTracker(file.getUrl(), new VirtualFileAdapter() {
             @Override
             public void contentsChanged(@NotNull final VirtualFileEvent event) {
@@ -107,7 +95,7 @@ public class ClasspathStorage implements StateStorage {
 
   @Override
   @Nullable
-  public <T> T getState(final Object component, @NotNull final String componentName, Class<T> stateClass, @Nullable T mergeInto)
+  public <T> T getState(final Object component, @NotNull final String componentName, @NotNull Class<T> stateClass, @Nullable T mergeInto)
     throws StateStorageException {
     assert component instanceof ModuleRootManager;
     assert componentName.equals("NewModuleRootManager");
@@ -147,8 +135,7 @@ public class ClasspathStorage implements StateStorage {
   }
 
   @Override
-  public boolean hasState(final Object component, @NotNull final String componentName, final Class<?> aClass, final boolean reloadData)
-    throws StateStorageException {
+  public boolean hasState(@Nullable final Object component, @NotNull final String componentName, final Class<?> aClass, final boolean reloadData) {
     return true;
   }
 
@@ -171,42 +158,11 @@ public class ClasspathStorage implements StateStorage {
   @Override
   @NotNull
   public ExternalizationSession startExternalization() {
-    final ExternalizationSession session = new ExternalizationSession() {
-      @Override
-      public void setState(@NotNull Object component, @NotNull String componentName, @NotNull Object state, Storage storageSpec) {
-        assert mySession == this;
-        ClasspathStorage.this.setState(component, componentName, state);
-      }
-    };
-
-    mySession = session;
-    return session;
+    return new ClasspathSaveSession();
   }
 
   @Override
-  @NotNull
-  public SaveSession startSave(@NotNull final ExternalizationSession externalizationSession) {
-    assert mySession == externalizationSession;
-
-    final SaveSession session = new MySaveSession();
-
-    mySession = session;
-    return session;
-  }
-
-
-  @Override
-  public void finishSave(@NotNull final SaveSession saveSession) {
-    try {
-      LOG.assertTrue(mySession == saveSession);
-    }
-    finally {
-      mySession = null;
-    }
-  }
-
-  @Override
-  public void reload(@NotNull Set<String> changedComponents) {
+  public void analyzeExternalChangesAndUpdateIfNeed(@NotNull Collection<VirtualFile> changedFiles, @NotNull Set<String> result) {
   }
 
   public void save() throws StateStorageException {
@@ -399,22 +355,21 @@ public class ClasspathStorage implements StateStorage {
     }
   }
 
-  private class MySaveSession implements SaveSession, SafeWriteRequestor {
+  private final class ClasspathSaveSession implements ExternalizationSession, SaveSession {
+    @Override
+    public void setState(@NotNull Object component, @NotNull String componentName, @NotNull Object state, Storage storageSpec) {
+      ClasspathStorage.this.setState(component, componentName, state);
+    }
+
+    @Nullable
+    @Override
+    public SaveSession createSaveSession() {
+      return this;
+    }
+
     @Override
     public void save() {
-      assert mySession == this;
       ClasspathStorage.this.save();
-    }
-
-    @Override
-    @Nullable
-    public Set<String> analyzeExternalChanges(@NotNull final Set<Pair<VirtualFile, StateStorage>> changedFiles) {
-      return null;
-    }
-
-    @Override
-    public void collectAllStorageFiles(@NotNull List<VirtualFile> files) {
-      getFileSet().listFiles(files);
     }
   }
 }

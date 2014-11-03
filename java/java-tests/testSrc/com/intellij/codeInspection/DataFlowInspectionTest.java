@@ -67,6 +67,7 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testExceptionFromFinally() throws Throwable { doTest(); }
   public void testExceptionFromFinallyNesting() throws Throwable { doTest(); }
   public void testNestedFinally() { doTest(); }
+  public void testTryFinallyInsideFinally() { doTest(); }
   public void testFieldChangedBetweenSynchronizedBlocks() throws Throwable { doTest(); }
 
   public void testGeneratedEquals() throws Throwable { doTest(); }
@@ -241,6 +242,7 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testManyContinuesNotComplex() { doTest(); }
   public void testFinallyNotComplex() { doTest(); }
   public void testFlushFurtherUnusedVariables() { doTest(); }
+  public void testDontFlushVariablesUsedInClosures() { doTest(); }
 
   public void testVariablesDiverge() { doTest(); }
   public void testMergeByNullability() { doTest(); }
@@ -255,6 +257,7 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testAndEquals() { doTest(); }
 
   public void testUnusedCallDoesNotMakeUnknown() { doTest(); }
+  public void testEmptyCallDoesNotMakeNullable() { doTest(); }
   public void testGettersAndPureNoFlushing() { doTest(); }
   
   public void testNotNullAfterDereference() { doTest(); }

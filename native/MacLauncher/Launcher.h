@@ -15,6 +15,7 @@
 }
 - (id)initWithArgc:(int)anArgc argv:(char **)anArgv;
 
+BOOL validationJavaVersion();
 
 - (void) launch;
 @end

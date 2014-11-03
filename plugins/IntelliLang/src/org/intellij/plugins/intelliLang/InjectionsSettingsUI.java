@@ -74,7 +74,7 @@ import java.util.List;
 /**
  * @author Gregory.Shrago
  */
-public class InjectionsSettingsUI implements SearchableConfigurable.Parent, Configurable.NoScroll {
+public class InjectionsSettingsUI extends SearchableConfigurable.Parent.Abstract implements Configurable.NoScroll {
 
   private final Project myProject;
   private final CfgInfo[] myInfos;
@@ -86,7 +86,6 @@ public class InjectionsSettingsUI implements SearchableConfigurable.Parent, Conf
   private final List<AnAction> myAddActions = ContainerUtil.newArrayList();
   private final JLabel myCountLabel;
 
-  private Configurable[] myConfigurables;
   private Configuration myConfiguration;
 
   public InjectionsSettingsUI(final Project project, final Configuration configuration) {
@@ -372,13 +371,7 @@ public class InjectionsSettingsUI implements SearchableConfigurable.Parent, Conf
   }
 
   @Override
-  public boolean isVisible() {
-    return true;
-  }
-
-  @Override
-  public Configurable[] getConfigurables() {
-    if (myConfigurables == null) {
+  protected Configurable[] buildConfigurables() {
       final ArrayList<Configurable> configurables = new ArrayList<Configurable>();
       for (LanguageInjectionSupport support : InjectorUtils.getActiveInjectionSupports()) {
         ContainerUtil.addAll(configurables, support.createSettings(myProject, myConfiguration));
@@ -388,21 +381,13 @@ public class InjectionsSettingsUI implements SearchableConfigurable.Parent, Conf
           return Comparing.compare(o1.getDisplayName(), o2.getDisplayName());
         }
       });
-      myConfigurables = configurables.toArray(new Configurable[configurables.size()]);
-    }
-
-    return myConfigurables;
+      return configurables.toArray(new Configurable[configurables.size()]);
   }
 
   @NotNull
   @Override
   public String getId() {
     return "IntelliLang.Configuration";
-  }
-
-  @Override
-  public Runnable enableSearch(String option) {
-    return null;
   }
 
   private static void sortInjections(final List<BaseInjection> injections) {
@@ -427,9 +412,6 @@ public class InjectionsSettingsUI implements SearchableConfigurable.Parent, Conf
     }
     myInjectionsTable.getListTableModel().setItems(getInjInfoList(myInfos));
     updateCountLabel();
-  }
-
-  public void disposeUIResources() {
   }
 
   public void apply() {

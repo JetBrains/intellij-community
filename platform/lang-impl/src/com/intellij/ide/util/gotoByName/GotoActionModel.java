@@ -62,8 +62,6 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
   @Nullable private final Project myProject;
   private final Component myContextComponent;
 
-  private static final Set<String> FORBIDDEN_GROUPS = ContainerUtil.set("Active Editor"); // todo: think about better solution
-  
   protected final ActionManager myActionManager = ActionManager.getInstance();
 
   private static final Icon EMPTY_ICON = EmptyIcon.ICON_18;
@@ -161,10 +159,16 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
     private int getMatchingDegree() {
       String text = getValueText();
       if (text != null) {
-        if (StringUtil.equalsIgnoreCase(StringUtil.trimEnd(text, "..."), pattern)) return 3;
-        if (StringUtil.startsWithIgnoreCase(text, pattern)) return 2;
-        if (StringUtil.containsIgnoreCase(text, pattern)) return 1;
+        int degree = getRank(text);
+        return value instanceof ActionWrapper && !((ActionWrapper)value).isGroupAction() ? degree + 1 : degree;
       }
+      return 0;
+    }
+
+    private int getRank(@NotNull String text) {
+      if (StringUtil.equalsIgnoreCase(StringUtil.trimEnd(text, "..."), pattern)) return 3;
+      if (StringUtil.startsWithIgnoreCase(text, pattern)) return 2;
+      if (StringUtil.containsIgnoreCase(text, pattern)) return 1;
       return 0;
     }
 
@@ -172,14 +176,19 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
     public int compareTo(@NotNull MatchedValue o) {
       boolean edt = ApplicationManager.getApplication().isDispatchThread();
 
-      if (value instanceof ActionWrapper) {
-        boolean available = edt && ((ActionWrapper)value).isAvailable();
-        if (o.value instanceof BooleanOptionDescription || o.value instanceof ActionWrapper) return available ? -1 : 1;
+      if (value instanceof ActionWrapper && o.value instanceof ActionWrapper && edt) {
+        boolean p1Enable = ((ActionWrapper)value).isAvailable();
+        boolean p2enable = ((ActionWrapper)o.value).isAvailable();
+        if (p1Enable && !p2enable) return -1;
+        if (!p1Enable && p2enable) return 1;
       }
       
-      if (o.value instanceof ActionWrapper) {
-        boolean available = edt && ((ActionWrapper)o.value).isAvailable();
-        if (value instanceof BooleanOptionDescription) return available ? 1 : -1;
+      if (value instanceof ActionWrapper && o.value instanceof BooleanOptionDescription) {
+        return edt && ((ActionWrapper)value).isAvailable() ? -1 : 1;
+      }
+      
+      if (o.value instanceof ActionWrapper && value instanceof BooleanOptionDescription) {
+        return edt && ((ActionWrapper)o.value).isAvailable() ? 1 : -1;
       }
       
       if (value instanceof OptionDescription && o.value instanceof BooleanOptionDescription) return 1;
@@ -189,15 +198,17 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
       if (o.value instanceof OptionDescription && !(value instanceof OptionDescription)) return -1;
 
       int diff = o.getMatchingDegree() - getMatchingDegree();
+      if (diff != 0) return diff;
       //noinspection unchecked
-      return diff != 0 ? diff : value.compareTo(o.value);
+      int compare = value.compareTo(o.value);
+      if (compare != 0) return compare;
+      return o.hashCode() - hashCode(); 
     }
   }
 
   @Override
   public ListCellRenderer getListCellRenderer() {
     return new DefaultListCellRenderer() {
-
       @Override
       public Component getListCellRendererComponent(@NotNull final JList list,
                                                     final Object matchedValue,
@@ -226,27 +237,35 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
 
         if (value instanceof ActionWrapper) {
           final ActionWrapper actionWithParentGroup = (ActionWrapper)value;
-
           final AnAction anAction = actionWithParentGroup.getAction();
-          final Presentation templatePresentation = anAction.getTemplatePresentation();
-
+          final Presentation presentation = anAction.getTemplatePresentation();
+          boolean toggle = anAction instanceof ToggleAction;
+          String groupName = actionWithParentGroup.getAction() instanceof ApplyIntentionAction ? null : actionWithParentGroup.getGroupName();
           final Color fg = defaultActionForeground(isSelected, actionWithParentGroup.getPresentation());
-
-          panel.add(createIconLabel(templatePresentation.getIcon()), BorderLayout.WEST);
-
-          appendWithColoredMatches(nameComponent, templatePresentation.getText(), pattern, fg, isSelected);
+          panel.add(createIconLabel(presentation.getIcon()), BorderLayout.WEST);
+          appendWithColoredMatches(nameComponent, getName(presentation.getText(), groupName, toggle), pattern, fg, isSelected);
 
           final Shortcut shortcut = preferKeyboardShortcut(KeymapManager.getInstance().getActiveKeymap().getShortcuts(getActionId(anAction)));
           if (shortcut != null) {
             nameComponent.append(" (" + KeymapUtil.getShortcutText(shortcut) + ")", new SimpleTextAttributes(STYLE_PLAIN, groupFg));
           }
 
-          String groupName = actionWithParentGroup.getAction() instanceof ApplyIntentionAction ? null : actionWithParentGroup.getGroupName();
-          if (groupName != null) {
-            final JLabel groupLabel = new JLabel(groupName);
-            groupLabel.setBackground(bg);
-            groupLabel.setForeground(groupFg);
-            panel.add(groupLabel, BorderLayout.EAST);
+          if (toggle) {
+            final OnOffButton button = new OnOffButton();
+            AnActionEvent event = new AnActionEvent(null, ((ActionWrapper)value).myDataContext,
+                                                    ActionPlaces.UNKNOWN, new Presentation(), ActionManager.getInstance(),
+                                                    0);
+            button.setSelected(((ToggleAction)anAction).isSelected(event));
+            panel.add(button, BorderLayout.EAST);
+            panel.setBorder(IdeBorderFactory.createEmptyBorder());
+          }
+          else {
+            if (groupName != null) {
+              final JLabel groupLabel = new JLabel(groupName);
+              groupLabel.setBackground(bg);
+              groupLabel.setForeground(groupFg);
+              panel.add(groupLabel, BorderLayout.EAST);
+            }
           }
         }
         else if (value instanceof OptionDescription) {
@@ -260,20 +279,24 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
             hit = ((OptionDescription)value).getOption();
           }
           hit = StringUtil.unescapeXml(hit);
-          hit = StringUtil.first(hit, 50, true);
-          hit = hit.replace("  ", " "); //avoid extra spaces from mnemonics and xml conversion
+          hit = hit.replace("  ", " "); // avoid extra spaces from mnemonics and xml conversion
+          String fullHit = hit;
+          hit = StringUtil.first(hit, 45, true);
 
           final Color fg = UIUtil.getListForeground(isSelected);
 
           appendWithColoredMatches(nameComponent, hit.trim(), pattern, fg, isSelected);
 
           panel.add(new JLabel(EMPTY_ICON), BorderLayout.WEST);
+          panel.setToolTipText(fullHit);
 
           if (value instanceof BooleanOptionDescription) {
             final OnOffButton button = new OnOffButton();
             button.setSelected(((BooleanOptionDescription)value).isOptionEnabled());
             panel.add(button, BorderLayout.EAST);
-          } else {
+            panel.setBorder(IdeBorderFactory.createEmptyBorder());
+          } 
+          else {
             final JLabel settingsLabel = new JLabel(getGroupName((OptionDescription)value));
             settingsLabel.setForeground(groupFg);
             settingsLabel.setBackground(bg);
@@ -281,6 +304,10 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
           }
         }
         return panel;
+      }
+
+      public String getName(String text, String groupName, boolean toggle) {
+        return toggle && StringUtil.isNotEmpty(groupName)? groupName + ": "+ text : text;
       }
 
       private void appendWithColoredMatches(SimpleColoredComponent nameComponent, String name, String pattern, Color fg, boolean selected) {
@@ -346,7 +373,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
   public int compare(@NotNull Object o1, @NotNull Object o2) {
     if (ChooseByNameBase.EXTRA_ELEM.equals(o1)) return 1;
     if (ChooseByNameBase.EXTRA_ELEM.equals(o2)) return -1;
-    return ((MatchedValue) o1).compareTo((MatchedValue)o2);
+    return ((MatchedValue)o1).compareTo((MatchedValue)o2);
   }
 
   public static AnActionEvent updateActionBeforeShow(AnAction anAction, DataContext dataContext) {
@@ -460,9 +487,6 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
     String description = presentation.getDescription();
     String groupName = myActionGroups.get(anAction);
     PatternMatcher matcher = getMatcher();
-    if (groupName != null && FORBIDDEN_GROUPS.contains(groupName)) {
-      return MatchMode.NONE;
-    }
     if (text != null && matcher.matches(text, compiledPattern)) {
       return MatchMode.NAME;
     }
@@ -473,9 +497,16 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
       return MatchMode.NONE;
     }
     if (groupName == null) {
-      return matcher.matches(text, compiledPattern) ? MatchMode.NON_MENU : MatchMode.NONE;
+      return matches(pattern, compiledPattern, matcher, text) ? MatchMode.NON_MENU : MatchMode.NONE;
     }
-    return matcher.matches(groupName + " " + text, compiledPattern) ? MatchMode.GROUP : MatchMode.NONE;
+    if (matches(pattern, compiledPattern, matcher, groupName + " " + text)) {
+      return anAction instanceof ToggleAction ? MatchMode.NAME : MatchMode.GROUP;
+    }
+    return matches(pattern, compiledPattern, matcher, text + " " + groupName) ? MatchMode.GROUP : MatchMode.NONE;
+  }
+
+  private static boolean matches(String pattern, Pattern compiledPattern, PatternMatcher matcher, String str) {
+    return StringUtil.containsIgnoreCase(str, pattern) || matcher.matches(str, compiledPattern);
   }
 
   @Nullable
@@ -579,7 +610,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
         firstIdentifierLetter = true;
       }
       else if (c == ' ') {
-        buffer.append("[^A-Z]*\\ ");
+        buffer.append(".*\\ ");
         firstIdentifierLetter = true;
       }
       else {
@@ -651,9 +682,16 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
     @Override
     public int compareTo(@NotNull ActionWrapper o) {
       int compared = myMode.compareTo(o.getMode());
-      return compared != 0
-             ? compared
-             : StringUtil.compare(myAction.getTemplatePresentation().getText(), o.getAction().getTemplatePresentation().getText(), true);
+      if (compared != 0) return compared;
+      Presentation myPresentation = myAction.getTemplatePresentation();
+      Presentation oPresentation = o.getAction().getTemplatePresentation();
+      int byText = StringUtil.compare(myPresentation.getText(), oPresentation.getText(), true);
+      if (byText != 0) return byText;
+      int byGroup = Comparing.compare(myGroupName, o.getGroupName());
+      if (byGroup !=0) return byGroup;
+      int byDesc = StringUtil.compare(myPresentation.getDescription(), oPresentation.getDescription(), true);
+      if (byDesc != 0) return byDesc;
+      return 0;
     }
 
     private boolean isAvailable() {
@@ -667,6 +705,10 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
 
     public String getGroupName() {
       return myGroupName;
+    }
+    
+    public boolean isGroupAction() {
+      return myAction instanceof ActionGroup;
     }
 
     @Override

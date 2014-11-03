@@ -27,6 +27,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -83,8 +84,7 @@ public class CustomTemplateCallback {
 
   @Nullable
   public TemplateImpl findApplicableTemplate(@NotNull String key) {
-    List<TemplateImpl> templates = findApplicableTemplates(key);
-    return templates.size() > 0 ? templates.get(0) : null;
+    return ContainerUtil.getFirstItem(findApplicableTemplates(key));
   }
 
   @NotNull

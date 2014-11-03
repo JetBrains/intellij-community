@@ -388,7 +388,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
 
       final Component anchor = getAnchor(pane);
 
-      JBPopupFactory.getInstance().createBalloonBuilder(panel.getRootPanel())
+      JBPopupFactory.getInstance().createBalloonBuilder(panel.getProgressPanel())
         .setFadeoutTime(0)
         .setFillColor(Gray.TRANSPARENT)
         .setShowCallout(false)

@@ -18,27 +18,24 @@ package com.intellij.vcs.log.data;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.SLRUMap;
-import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.VcsRef;
+import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.util.SequentialLimitedLifoExecutor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
 
 /**
  * Provides capabilities to asynchronously calculate "contained in branches" information.
  */
-public class ContainingBranchesGetter {
+public class ContainingBranchesGetter implements VcsLogListener {
 
   private static final Logger LOG = Logger.getInstance(ContainingBranchesGetter.class);
 
@@ -47,13 +44,15 @@ public class ContainingBranchesGetter {
   @NotNull private volatile SLRUMap<Hash, List<String>> myCache = createCache();
   @Nullable private Runnable myLoadingFinishedListener; // access only from EDT
   private int myCurrentBranchesChecksum;
+  @Nullable private VcsLogRefs myRefs;
+  @Nullable private PermanentGraph<Integer> myGraph;
 
-  ContainingBranchesGetter(@NotNull Project project, @NotNull VcsLogDataHolder dataHolder, @NotNull Disposable parentDisposable) {
+  ContainingBranchesGetter(@NotNull VcsLogDataHolder dataHolder, @NotNull Disposable parentDisposable) {
     myDataHolder = dataHolder;
     myTaskExecutor = new SequentialLimitedLifoExecutor<Task>(parentDisposable, 10, new ThrowableConsumer<Task, Throwable>() {
       @Override
       public void consume(final Task task) throws Throwable {
-        final List<String> branches = getContainingBranches(task.root, task.hash);
+        final List<String> branches = task.getContainingBranches(myDataHolder);
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
           public void run() {
@@ -65,17 +64,20 @@ public class ContainingBranchesGetter {
         });
       }
     });
-    project.getMessageBus().connect(parentDisposable).subscribe(VcsLogDataHolder.REFRESH_COMPLETED, new VcsLogRefreshListener() {
-      @Override
-      public void refresh(@NotNull DataPack dataPack) {
-        Collection<VcsRef> currentBranches = dataPack.getRefs().getBranches();
-        int checksum = currentBranches.hashCode();
-        if (myCurrentBranchesChecksum != 0 && myCurrentBranchesChecksum != checksum) { // clear cache if branches set changed after refresh
-          clearCache();
-        }
-        myCurrentBranchesChecksum = checksum;
+  }
+
+  @Override
+  public void onChange(@NotNull VcsLogDataPack dataPack, boolean refreshHappened) {
+    if (refreshHappened) {
+      myRefs = dataPack.getRefs();
+      Collection<VcsRef> currentBranches = myRefs.getBranches();
+      int checksum = currentBranches.hashCode();
+      if (myCurrentBranchesChecksum != 0 && myCurrentBranchesChecksum != checksum) { // clear cache if branches set changed after refresh
+        clearCache();
       }
-    });
+      myCurrentBranchesChecksum = checksum;
+      myGraph = dataPack.getPermanentGraph();
+    }
   }
 
   private void clearCache() {
@@ -113,7 +115,7 @@ public class ContainingBranchesGetter {
   public List<String> requestContainingBranches(@NotNull VirtualFile root, @NotNull Hash hash) {
     List<String> refs = myCache.get(hash);
     if (refs == null) {
-      myTaskExecutor.queue(new Task(root, hash, myCache));
+      myTaskExecutor.queue(new Task(root, hash, myCache, myGraph, myRefs));
     }
     return refs;
   }
@@ -123,28 +125,56 @@ public class ContainingBranchesGetter {
     return new SLRUMap<Hash, List<String>>(1000, 1000);
   }
 
-  @NotNull
-  private List<String> getContainingBranches(@NotNull VirtualFile root, @NotNull Hash hash) {
-    try {
-      List<String> branches = new ArrayList<String>(myDataHolder.getLogProvider(root).getContainingBranches(root, hash));
-      Collections.sort(branches);
-      return branches;
-    }
-    catch (VcsException e) {
-      LOG.warn(e);
-      return Collections.emptyList();
-    }
-  }
-
   private static class Task {
     private final VirtualFile root;
     private final Hash hash;
     private final SLRUMap<Hash, List<String>> cache;
+    @Nullable private final VcsLogRefs refs;
+    @Nullable private final PermanentGraph<Integer> graph;
 
-    public Task(VirtualFile root, Hash hash, SLRUMap<Hash, List<String>> cache) {
+    public Task(VirtualFile root,
+                Hash hash,
+                SLRUMap<Hash, List<String>> cache,
+                @Nullable PermanentGraph<Integer> graph,
+                @Nullable VcsLogRefs refs) {
       this.root = root;
       this.hash = hash;
       this.cache = cache;
+      this.graph = graph;
+      this.refs = refs;
+    }
+
+    @NotNull
+    public List<String> getContainingBranches(VcsLogDataHolder dataHolder) {
+      try {
+        VcsLogProvider provider = dataHolder.getLogProvider(root);
+        if (graph != null && refs != null && VcsLogProperties.get(provider, VcsLogProperties.LIGHTWEIGHT_BRANCHES)) {
+          Set<Integer> branchesIndexes = graph.getContainingBranches(dataHolder.getCommitIndex(hash));
+
+          Set<VcsRef> branchesRefs = new HashSet<VcsRef>();
+          for (Integer index : branchesIndexes) {
+            branchesRefs.addAll(refs.refsToCommit(dataHolder.getHash(index)));
+          }
+
+          ArrayList<String> branchesList = new ArrayList<String>();
+          for (VcsRef ref : branchesRefs) {
+            if (ref.getType().isBranch()) {
+              branchesList.add(ref.getName());
+            }
+          }
+          Collections.sort(branchesList);
+          return branchesList;
+        }
+        else {
+          List<String> branches = new ArrayList<String>(provider.getContainingBranches(root, hash));
+          Collections.sort(branches);
+          return branches;
+        }
+      }
+      catch (VcsException e) {
+        LOG.warn(e);
+        return Collections.emptyList();
+      }
     }
   }
 

@@ -1,5 +1,6 @@
 <idea-plugin version="2">
-  <!-- Components and extensions declared in this file work both in PyCharm and Python plugin. -->
+  <!-- Components and extensions declared in this file work both in PyCharm and Python plugin.
+       Both Community and Professional editions. -->
 
   <resource-bundle>com.jetbrains.python.PyBundle</resource-bundle>
 
@@ -718,6 +719,11 @@
     <action id="PyInvertBooleanAction" class="com.jetbrains.python.refactoring.invertBoolean.PyInvertBooleanAction" text="Invert Boolean">
       <add-to-group group-id="RefactoringMenu" anchor="last" />
     </action>
+
+    <action id="PyDebugger.ViewArray" class="com.jetbrains.python.debugger.array.PyViewArrayAction" text="View as Array">
+      <add-to-group group-id="XDebugger.ValueGroup" anchor="after" relative-to-action="Debugger.Tree.AddToWatches"/>
+    </action>
+
   </actions>
 
   <extensions defaultExtensionNs="com.intellij.spellchecker">

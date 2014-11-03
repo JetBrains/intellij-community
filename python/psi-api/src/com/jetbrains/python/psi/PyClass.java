@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -110,8 +110,12 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefine
   @NotNull
   PyExpression[] getSuperClassExpressions();
 
+  /**
+   * @param inherited return inherited (parent) methods as well
+   * @return class methods
+   */
   @NotNull
-  PyFunction[] getMethods();
+  PyFunction[] getMethods(boolean inherited);
 
   /**
    * Get class properties.
@@ -243,4 +247,12 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefine
    */
   @Nullable
   PyExpression getMetaClassExpression();
+
+  /**
+   *
+   * @param context eval context
+   * @return {@link com.jetbrains.python.psi.types.PyType} casted if it has right type
+   */
+  @Nullable
+  PyClassLikeType getType(@NotNull TypeEvalContext context);
 }

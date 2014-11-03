@@ -26,6 +26,8 @@ import java.awt.event.MouseEvent;
 
 public class PushLogTreeUtil {
 
+  public static final String EDIT_MODE_PROP = "tree.edit.mode";
+
   @Nullable
   public static Object getTagAtForRenderer(CheckboxTree.CheckboxTreeCellRenderer renderer, MouseEvent e) {
     JTree tree = (JTree)e.getSource();

@@ -259,6 +259,10 @@
       <add-to-group group-id="NavBarVcsGroup" anchor="first"/>
     </group>
 
+    <action id="Vcs.ShowDiffWithLocal" class="com.intellij.openapi.vcs.history.ShowDiffWithLocalAction"
+            text="Compare with Local" description="Compare version from selected revision with current version"
+            icon="AllIcons.Actions.DiffWithCurrent"/>
+
     <!-- Window -->
     <action id="CloseAllUnmodifiedEditors" class="com.intellij.ide.actions.CloseAllUnmodifiedEditorsAction">
       <add-to-group group-id="CloseEditorsGroup" anchor="before" relative-to-action="CloseAllUnpinnedEditors"/>
@@ -271,5 +275,9 @@
       icon="AllIcons.General.GetProjectfromVCS">
       <add-to-group group-id="WelcomeScreen.QuickStart" anchor="first"/>
     </action>
+
+    <action id="Vcs.CopyRevisionNumberAction" class="com.intellij.openapi.vcs.history.CopyRevisionNumberAction"
+            text="Copy Revision Number" description="Copy short revision numbers of selected commits to the clipboard"
+            icon="AllIcons.Actions.Copy" />
   </actions>
 </component>

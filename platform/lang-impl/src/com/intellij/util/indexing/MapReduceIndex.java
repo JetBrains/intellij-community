@@ -321,7 +321,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
       myInputsSnapshotMapping = createInputSnapshotMapping();
     }
     myInputsIndex = createInputsIndex();
-    if (DebugAssertions.EXTRA_SANITY_CHECKS && myIndexId != null) {
+    if (DebugAssertions.EXTRA_SANITY_CHECKS && myHasSnapshotMapping && myIndexId != null) {
       myIndexingTrace = createIndexingTrace();
     }
   }

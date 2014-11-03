@@ -46,7 +46,6 @@ class InjectedSelfElementInfo extends SelfElementInfo {
                           @NotNull PsiElement hostContext) {
     super(project, hostContext);
     assert containingFile.getViewProvider() instanceof FreeThreadedFileViewProvider : "element parameter must be an injected element: "+injectedElement+"; "+containingFile;
-    TextRange.assertProperRange(injectedRange);
     assert containingFile.getTextRange().contains(injectedRange) : "Injected range outside the file: "+injectedRange +"; file: "+containingFile.getTextRange();
 
     TextRange hostRange = InjectedLanguageManager.getInstance(project).injectedToHost(injectedElement, injectedRange);

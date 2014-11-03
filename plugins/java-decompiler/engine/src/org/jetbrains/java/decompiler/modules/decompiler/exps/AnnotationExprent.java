@@ -16,6 +16,8 @@
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
 import org.jetbrains.java.decompiler.main.DecompilerContext;
+import org.jetbrains.java.decompiler.main.TextBuffer;
+import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
@@ -45,42 +47,37 @@ public class AnnotationExprent extends Exprent {
     this.parvalues = parvalues;
   }
 
-  public String toJava(int indent) {
+  @Override
+  public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
+    TextBuffer buffer = new TextBuffer();
 
-    String new_line_separator = DecompilerContext.getNewLineSeparator();
-
-    StringBuilder buffer = new StringBuilder();
-    String indstr = InterpreterUtil.getIndentString(indent);
-
-    buffer.append(indstr);
+    buffer.appendIndent(indent);
     buffer.append("@");
     buffer.append(DecompilerContext.getImportCollector().getShortName(ExprProcessor.buildJavaClassName(classname)));
 
     if (!parnames.isEmpty()) {
       buffer.append("(");
       if (parnames.size() == 1 && "value".equals(parnames.get(0))) {
-        buffer.append(parvalues.get(0).toJava(indent + 1));
+        buffer.append(parvalues.get(0).toJava(indent + 1, tracer));
       }
       else {
-        String indstr1 = InterpreterUtil.getIndentString(indent + 1);
-
         for (int i = 0; i < parnames.size(); i++) {
-          buffer.append(new_line_separator).append(indstr1);
+          buffer.appendLineSeparator().appendIndent(indent + 1);
           buffer.append(parnames.get(i));
           buffer.append(" = ");
-          buffer.append(parvalues.get(i).toJava(indent + 2));
+          buffer.append(parvalues.get(i).toJava(indent + 2, tracer));
 
           if (i < parnames.size() - 1) {
             buffer.append(",");
           }
         }
-        buffer.append(new_line_separator).append(indstr);
+        buffer.appendLineSeparator().appendIndent(indent);
       }
 
       buffer.append(")");
     }
 
-    return buffer.toString();
+    return buffer;
   }
 
   public int getAnnotationType() {

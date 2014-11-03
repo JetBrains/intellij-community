@@ -20,6 +20,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.TokenType;
@@ -171,7 +172,7 @@ public class XmlBlock extends AbstractXmlBlock {
     }
 
     ASTNode child = node.getFirstChildNode();
-    if (child == null && !(node instanceof PsiWhiteSpace) && node.getElementType() != TokenType.ERROR_ELEMENT) {
+    if (child == null && !(node instanceof PsiWhiteSpace) && node.getElementType() != TokenType.ERROR_ELEMENT && node.getTextLength() > 0) {
       result.add(new ReadOnlyBlock(node));
       return;
     }
@@ -324,7 +325,8 @@ public class XmlBlock extends AbstractXmlBlock {
   @Override
   @NotNull
   public ChildAttributes getChildAttributes(final int newChildIndex) {
-    if (myNode.getPsi() instanceof PsiFile) {
+    PsiElement element = myNode.getPsi();
+    if (element instanceof PsiFile || element instanceof XmlDocument) {
       return new ChildAttributes(Indent.getNoneIndent(), null);
     }
     else {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package com.jetbrains.python.codeInsight.stdlib;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
-import com.jetbrains.python.codeInsight.PyDynamicMember;
+import com.jetbrains.python.codeInsight.PyCustomMember;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyTargetExpression;
@@ -35,16 +35,16 @@ import java.util.List;
  * @author yole
  */
 public class PyStdlibClassMembersProvider extends PyClassMembersProviderBase {
-  private Key<List<PyDynamicMember>> mySocketMembersKey = Key.create("socket.members");
+  private Key<List<PyCustomMember>> mySocketMembersKey = Key.create("socket.members");
 
   @NotNull
   @Override
-  public Collection<PyDynamicMember> getMembers(PyClassType classType, PsiElement location) {
+  public Collection<PyCustomMember> getMembers(PyClassType classType, PsiElement location) {
     PyClass clazz = classType.getPyClass();
     final String qualifiedName = clazz.getQualifiedName();
     if ("socket._socketobject".equals(qualifiedName)) {
       final PyFile socketFile = (PyFile)clazz.getContainingFile();
-      List<PyDynamicMember> socketMembers = socketFile.getUserData(mySocketMembersKey);
+      List<PyCustomMember> socketMembers = socketFile.getUserData(mySocketMembersKey);
       if (socketMembers == null) {
         socketMembers = calcSocketMembers(socketFile);
         socketFile.putUserData(mySocketMembersKey, socketMembers);
@@ -54,20 +54,20 @@ public class PyStdlibClassMembersProvider extends PyClassMembersProviderBase {
     return Collections.emptyList();
   }
 
-  private static List<PyDynamicMember> calcSocketMembers(PyFile socketFile) {
-    List<PyDynamicMember> result = new ArrayList<PyDynamicMember>();
+  private static List<PyCustomMember> calcSocketMembers(PyFile socketFile) {
+    List<PyCustomMember> result = new ArrayList<PyCustomMember>();
     addMethodsFromAttr(socketFile, result, "_socketmethods");
     addMethodsFromAttr(socketFile, result, "_delegate_methods");
     return result;
   }
 
-  private static void addMethodsFromAttr(PyFile socketFile, List<PyDynamicMember> result, final String attrName) {
+  private static void addMethodsFromAttr(PyFile socketFile, List<PyCustomMember> result, final String attrName) {
     final PyTargetExpression socketMethods = socketFile.findTopLevelAttribute(attrName);
     if (socketMethods != null) {
       final List<String> methods = PyUtil.getStringListFromTargetExpression(socketMethods);
       if (methods != null) {
         for (String name : methods) {
-          result.add(new PyDynamicMember(name).resolvesTo("_socket").toClass("SocketType").toFunction(name));
+          result.add(new PyCustomMember(name).resolvesTo("_socket").toClass("SocketType").toFunction(name));
         }
       }
     }

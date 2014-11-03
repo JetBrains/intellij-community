@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,7 +54,7 @@ public class PyMethodNavigationOffsetProvider implements MethodNavigationOffsetP
       array.add(psiElement);
     }
     else if (psiElement instanceof PyClass) {
-      Collections.addAll(array, ((PyClass)psiElement).getMethods());
+      Collections.addAll(array, ((PyClass)psiElement).getMethods(false));
     }
   }
 }

@@ -144,7 +144,7 @@ public class RepositoryLibrarySynchronizer implements StartupActivity, DumbAware
     if (libsToSync.isEmpty()) return;
 
     Map<String, MavenRepositoryInfo> repoMap = new THashMap<String, MavenRepositoryInfo>();
-    for (String url : MavenRepositoryServicesManager.getServiceUrls()) {
+    for (String url : MavenRepositoryServicesManager.getInstance().getUrls()) {
       for (MavenRepositoryInfo info : MavenRepositoryServicesManager.getRepositories(url)) {
         repoMap.put(info.getId(), info);
       }
@@ -165,7 +165,7 @@ public class RepositoryLibrarySynchronizer implements StartupActivity, DumbAware
 
       // detect repositories: we need to re-search artifacts, it's faster than to query hundreds of them.
       ArrayList<MavenRepositoryInfo> repositories = new ArrayList<MavenRepositoryInfo>();
-      for (String url : MavenRepositoryServicesManager.getServiceUrls()) {
+      for (String url : MavenRepositoryServicesManager.getInstance().getUrls()) {
         List<MavenArtifactInfo> artifacts = MavenRepositoryServicesManager.findArtifacts(new MavenArtifactInfo(mavenId, "jar", null), url);
         for (MavenArtifactInfo artifact : artifacts) {
           ContainerUtil.addIfNotNull(repositories, repoMap.get(artifact.getRepositoryId()));

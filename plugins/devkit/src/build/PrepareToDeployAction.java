@@ -116,7 +116,7 @@ public class PrepareToDeployAction extends AnAction {
                                                             : DevKitBundle.message("success.deployment.message.all"));
                                  }
                                }
-                             });
+                             }, project.getDisposed());
                            }
                          });
   }

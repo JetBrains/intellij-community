@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,35 +15,19 @@
  */
 package com.intellij.spellchecker.state;
 
-import com.intellij.openapi.components.StateSplitter;
+import com.intellij.openapi.components.StateSplitterEx;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.text.UniqueNameGenerator;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created by IntelliJ IDEA.
- *
  * @author shkate@jetbrains.com
  */
-public class ProjectDictionarySplitter implements StateSplitter {
+public class ProjectDictionarySplitter extends StateSplitterEx {
   @Override
-  public List<Pair<Element, String>> splitState(Element e) {
-    final UniqueNameGenerator generator = new UniqueNameGenerator();
-    List<Pair<Element, String>> result = new ArrayList<Pair<Element, String>>();
-    for (Element element : e.getChildren()) {
-      result.add(Pair.create(element, generator.generateUniqueName(FileUtil.sanitizeFileName(element.getAttributeValue(DictionaryState.NAME_ATTRIBUTE))) + ".xml"));
-    }
-    return result;
-  }
-
-  @Override
-  public void mergeStatesInto(Element target, Element[] elements) {
-    for (Element e : elements) {
-      target.addContent(e);
-    }
+  public List<Pair<Element, String>> splitState(@NotNull Element state) {
+    return splitState(state, DictionaryState.NAME_ATTRIBUTE);
   }
 }

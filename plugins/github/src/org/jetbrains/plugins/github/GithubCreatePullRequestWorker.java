@@ -643,7 +643,7 @@ public class GithubCreatePullRequestWorker {
           }
         }
       );
-      if (!forks.contains(mySource)) forks.add(mySource);
+      if (!forks.contains(mySource)) return ContainerUtil.concat(true, forks, mySource);
       return forks;
     }
     catch (IOException e) {

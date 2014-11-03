@@ -23,13 +23,11 @@ import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ReadTask;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.util.Alarm;
-import com.intellij.util.Function;
-import com.intellij.util.Processor;
-import com.intellij.util.SystemProperties;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.DoubleArrayList;
 import com.intellij.util.containers.Stack;
@@ -361,6 +359,18 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
       }
     }, indicator3);
     assertFalse(checkCanceledCalled);
+  }
+
+  public void testProgressPerformance() {
+    PlatformTestUtil.startPerformanceTest("progress", 100, new ThrowableRunnable() {
+      @Override
+      public void run() throws Throwable {
+        EmptyProgressIndicator indicator = new EmptyProgressIndicator();
+        for (int i=0;i<100000;i++) {
+          ProgressManager.getInstance().executeProcessUnderProgress(EmptyRunnable.getInstance(), indicator);
+        }
+      }
+    }).assertTiming();
   }
 
   private static class ProgressIndicatorStub implements ProgressIndicatorEx {

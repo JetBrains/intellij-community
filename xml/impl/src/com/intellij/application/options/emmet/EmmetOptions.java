@@ -18,33 +18,27 @@ package com.intellij.application.options.emmet;
 import com.intellij.codeInsight.template.emmet.filters.BemEmmetFilter;
 import com.intellij.codeInsight.template.emmet.filters.ZenCodingFilter;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
-import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.util.Map;
 import java.util.Set;
 
 @State(
   name = "EmmetOptions",
-  storages = {
-    @Storage(
-      file = StoragePathMacros.APP_CONFIG + "/emmet.xml"
-    )}
+  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/emmet.xml")
 )
-public class EmmetOptions implements PersistentStateComponent<EmmetOptions>, ExportableComponent {
+public class EmmetOptions implements PersistentStateComponent<EmmetOptions> {
   /**
    * @deprecated delete after IDEA 14
    */
   private boolean myBemFilterEnabledByDefault = false;
   private boolean myEmmetEnabled = true;
   private int myEmmetExpandShortcut = TemplateSettings.TAB_CHAR;
-  private boolean myFuzzySearchEnabled = false;
+  private boolean myFuzzySearchEnabled = true;
   private boolean myAutoInsertCssPrefixedEnabled = true;
   private boolean myPreviewEnabled = false;
   private Set<String> myFiltersEnabledByDefault = ContainerUtil.newHashSet();
@@ -124,18 +118,6 @@ public class EmmetOptions implements PersistentStateComponent<EmmetOptions>, Exp
   //use {@link CssEmmetOptions}
   public boolean isFuzzySearchEnabled() {
     return myFuzzySearchEnabled;
-  }
-
-  @NotNull
-  @Override
-  public File[] getExportFiles() {
-    return new File[]{PathManager.getOptionsFile("emmet")};
-  }
-
-  @NotNull
-  @Override
-  public String getPresentableName() {
-    return XmlBundle.message("emmet.configuration.title");
   }
 
   @Nullable

@@ -53,10 +53,11 @@ public class BytecodeAnalysisConverter {
     ProgressManager.checkCanceled();
 
     Result<Key, Value> rhs = equation.rhs;
-    HResult result;
+    HResult hResult;
     if (rhs instanceof Final) {
-      result = new HFinal(((Final<Key, Value>)rhs).value);
-    } else {
+      hResult = new HFinal(((Final<Key, Value>)rhs).value);
+    }
+    else {
       Pending<Key, Value> pending = (Pending<Key, Value>)rhs;
       Set<Product<Key, Value>> sumOrigin = pending.sum;
       HComponent[] components = new HComponent[sumOrigin.size()];
@@ -64,17 +65,17 @@ public class BytecodeAnalysisConverter {
       for (Product<Key, Value> prod : sumOrigin) {
         HKey[] intProd = new HKey[prod.ids.size()];
         int idI = 0;
-        for (Key id : prod.ids) {
-          intProd[idI] = asmKey(id, md);
+        for (Key key : prod.ids) {
+          intProd[idI] = asmKey(key, md);
           idI++;
         }
         HComponent intIdComponent = new HComponent(prod.value, intProd);
         components[componentI] = intIdComponent;
         componentI++;
       }
-      result = new HPending(components);
+      hResult = new HPending(components);
     }
-    return new DirectionResultPair(mkDirectionKey(equation.id.direction), result);
+    return new DirectionResultPair(mkDirectionKey(equation.id.direction), hResult);
   }
 
   /**
@@ -274,6 +275,23 @@ public class BytecodeAnalysisConverter {
   }
 
 
+  /**
+   * Converts Direction object to int.
+   *
+   * 0 - Out
+   * 1 - NullableOut
+   * 2 - Pure
+   *
+   * 3 - 0-th NOT_NULL
+   * 4 - 0-th NULLABLE
+   * ...
+   *
+   * 11 - 1-st NOT_NULL
+   * 12 - 1-st NULLABLE
+   *
+   * @param dir direction of analysis
+   * @return unique int for direction
+   */
   static int mkDirectionKey(Direction dir) {
     if (dir == Out) {
       return 0;
@@ -281,17 +299,28 @@ public class BytecodeAnalysisConverter {
     else if (dir == NullableOut) {
       return 1;
     }
+    else if (dir == Pure) {
+      return 2;
+    }
     else if (dir instanceof In) {
       In in = (In)dir;
       // nullity mask is 0/1
-      return 2 + 8 * in.paramId() + in.nullityMask;
+      return 3 + 8 * in.paramId() + in.nullityMask;
     }
     else {
+      // valueId is [1-5]
       InOut inOut = (InOut)dir;
-      return 4 + 8 * inOut.paramId() + inOut.valueId();
+      return 3 + 8 * inOut.paramId() + 2 + inOut.valueId();
     }
   }
 
+  /**
+   * Converts int to Direction object.
+   *
+   * @param  directionKey int representation of direction
+   * @return Direction object
+   * @see    #mkDirectionKey(Direction)
+   */
   @NotNull
   private static Direction extractDirection(int directionKey) {
     if (directionKey == 0) {
@@ -300,35 +329,40 @@ public class BytecodeAnalysisConverter {
     else if (directionKey == 1) {
       return NullableOut;
     }
+    else if (directionKey == 2) {
+      return Pure;
+    }
     else {
-      directionKey--;
-      int paramId = directionKey / 8;
-      int subDirection = directionKey % 8;
-      if (subDirection <= 2) {
-        return new In(paramId, subDirection - 1);
+      int paramKey = directionKey - 3;
+      int paramId = paramKey / 8;
+      // shifting first 3 values - now we have key [0 - 7]
+      int subDirectionId = paramKey % 8;
+      // 0 - 1 - @NotNull, @Nullable, parameter
+      if (subDirectionId <= 1) {
+        return new In(paramId, subDirectionId);
       }
       else {
-        return new InOut(paramId, Value.values()[subDirection - 3]);
+        int valueId = subDirectionId - 2;
+        return new InOut(paramId, Value.values()[valueId]);
       }
     }
   }
 
   /**
    * Given a PSI method and its primary HKey enumerate all contract keys for it.
+   *
+   * @param psiMethod psi method
+   * @param primaryKey primary stable keys
+   * @return corresponding (stable!) keys
    */
   @NotNull
   public static ArrayList<HKey> mkInOutKeys(@NotNull PsiMethod psiMethod, @NotNull HKey primaryKey) {
     PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
-    ArrayList<HKey> keys = new ArrayList<HKey>(parameters.length * 2 + 1);
+    ArrayList<HKey> keys = new ArrayList<HKey>(parameters.length * 2 + 2);
+    keys.add(primaryKey);
+    keys.add(primaryKey.updateDirection(mkDirectionKey(Pure)));
     for (int i = 0; i < parameters.length; i++) {
-      PsiParameter parameter = parameters[i];
-      PsiType parameterType = parameter.getType();
-      if (parameterType instanceof PsiPrimitiveType) {
-        if (PsiType.BOOLEAN.equals(parameterType)) {
-          keys.add(primaryKey.updateDirection(mkDirectionKey(new InOut(i, Value.False))));
-          keys.add(primaryKey.updateDirection(mkDirectionKey(new InOut(i, Value.True))));
-        }
-      } else {
+      if (!(parameters[i].getType() instanceof PsiPrimitiveType)) {
         keys.add(primaryKey.updateDirection(mkDirectionKey(new InOut(i, Value.NotNull))));
         keys.add(primaryKey.updateDirection(mkDirectionKey(new InOut(i, Value.Null))));
       }
@@ -341,38 +375,47 @@ public class BytecodeAnalysisConverter {
    *
    * @param solution solution of equations
    * @param methodAnnotations annotations to which corresponding solutions should be added
-   * @param methodKey a primary key of a method being analyzed
+   * @param methodKey a primary key of a method being analyzed. not it is stable
    * @param arity arity of this method (hint for constructing @Contract annotations)
    */
   public static void addMethodAnnotations(@NotNull HashMap<HKey, Value> solution, @NotNull MethodAnnotations methodAnnotations, @NotNull HKey methodKey, int arity) {
-    List<String> clauses = new ArrayList<String>();
-    HashSet<HKey> notNulls = methodAnnotations.notNulls;
-    HashMap<HKey, String> contracts = methodAnnotations.contracts;
+    List<String> contractClauses = new ArrayList<String>(arity * 2);
+    Set<HKey> notNulls = methodAnnotations.notNulls;
+    Set<HKey> pures = methodAnnotations.pures;
+    Map<HKey, String> contracts = methodAnnotations.contractsValues;
+
     for (Map.Entry<HKey, Value> entry : solution.entrySet()) {
-      HKey key = entry.getKey().mkStable();
+      // NB: keys from Psi are always stable, so we need to stabilize keys from equations
       Value value = entry.getValue();
       if (value == Value.Top || value == Value.Bot) {
         continue;
       }
+      HKey key = entry.getKey().mkStable();
       Direction direction = extractDirection(key.dirKey);
-      if (value == Value.NotNull && direction == Out && methodKey.equals(key)) {
-        notNulls.add(key);
+      HKey baseKey = key.mkBase();
+      if (!methodKey.equals(baseKey)) {
+        continue;
+      }
+      if (value == Value.NotNull && direction == Out) {
+        notNulls.add(methodKey);
+      }
+      else if (value == Value.Pure && direction == Pure) {
+        pures.add(methodKey);
       }
       else if (direction instanceof InOut) {
-        HKey baseKey = key.mkBase();
-        if (methodKey.equals(baseKey)) {
-          clauses.add(contractElement(arity, (InOut)direction, value));
-        }
+        contractClauses.add(contractElement(arity, (InOut)direction, value));
       }
     }
 
-    if (!notNulls.contains(methodKey) && !clauses.isEmpty()) {
-      Collections.sort(clauses);
+    if (!notNulls.contains(methodKey) && !contractClauses.isEmpty()) {
+      // no contract clauses for @NotNull methods
+      Collections.sort(contractClauses);
       StringBuilder sb = new StringBuilder("\"");
-      StringUtil.join(clauses, ";", sb);
+      StringUtil.join(contractClauses, ";", sb);
       sb.append('"');
       contracts.put(methodKey, sb.toString().intern());
     }
+
   }
 
   private static String contractValueString(@NotNull Value v) {

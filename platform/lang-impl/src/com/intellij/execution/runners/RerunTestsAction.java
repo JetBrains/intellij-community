@@ -1,7 +1,5 @@
 package com.intellij.execution.runners;
 
-import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -10,7 +8,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
+import java.util.Set;
 
 /**
  * Reruns all registered execution sessions.<p>
@@ -24,33 +22,34 @@ import java.util.List;
  */
 public class RerunTestsAction extends DumbAwareAction implements AnAction.TransparentUpdate {
   public static final String ID = "RerunTests";
-  private static final List<ExecutionEnvironment> REGISTRY = ContainerUtil.createLockFreeCopyOnWriteList();
+  private static final Set<ExecutionEnvironment> REGISTRY = ContainerUtil.newHashSet();
 
   public static void register(@NotNull final ExecutionEnvironment environment) {
-    REGISTRY.add(environment);
-    Disposer.register(environment, new Disposable() {
-      @Override
-      public void dispose() {
-        REGISTRY.remove(environment);
-      }
-    });
+    if (REGISTRY.add(environment)) {
+      Disposer.register(environment, new Disposable() {
+        @Override
+        public void dispose() {
+          REGISTRY.remove(environment);
+        }
+      });
+    }
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
-    for (ExecutionEnvironment environment : REGISTRY) {
-      if (!Disposer.isDisposed(environment)) {
-        RunContentDescriptor descriptor = environment.getContentToReuse();
-        ProcessHandler processHandler = descriptor == null ? null : descriptor.getProcessHandler();
-        if (processHandler != null && processHandler.isProcessTerminated()) {
-          ExecutionUtil.restart(environment);
-        }
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    ExecutionEnvironment[] environments = REGISTRY.toArray(new ExecutionEnvironment[REGISTRY.size()]);
+    for (ExecutionEnvironment environment : environments) {
+      if (Disposer.isDisposed(environment)) {
+        REGISTRY.remove(environment);
+      }
+      else if (environment.getProject() == e.getProject()) {
+        ExecutionUtil.restart(environment);
       }
     }
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(true);
   }
 }

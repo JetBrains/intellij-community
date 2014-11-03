@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,13 @@
  */
 package com.intellij.ide.bookmarks;
 
-import com.intellij.openapi.editor.CaretModel;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.impl.AbstractEditorTest;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.TestFileType;
 import org.jetbrains.annotations.NonNls;
@@ -30,6 +29,7 @@ import org.picocontainer.ComponentAdapter;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -91,6 +91,62 @@ public class BookmarkManagerTest extends AbstractEditorTest {
     delete();
     assertTrue(getManager().getValidBookmarks().isEmpty());
   }
+
+  public void testTwoBookmarksOnSameLine1() throws  IOException {
+    @NonNls String text =
+      "public class Test {\n" +
+      "    public void test() {\n" +
+      "        int i = 1;\n" +
+      "        int j = 1;\n" +
+      "    }\n" +
+      "}";
+    init(text, TestFileType.TEXT);
+
+    addBookmark(2);
+    addBookmark(3);
+    List<Bookmark> bookmarksBefore = getManager().getValidBookmarks();
+    assertEquals(2, bookmarksBefore.size());
+
+    myEditor.getCaretModel().setCaretsAndSelections(
+      Collections.singletonList(new CaretState(myEditor.visualToLogicalPosition(new VisualPosition(3, 0)), null, null)));
+    backspace();
+
+    List<Bookmark> bookmarksAfter = getManager().getValidBookmarks();
+    assertEquals(1, bookmarksAfter.size());
+    for (Bookmark bookmark : bookmarksAfter) {
+      checkBookmarkNavigation(bookmark);
+    }
+  }
+  public void testTwoBookmarksOnSameLine2() throws  IOException {
+    @NonNls String text =
+      "public class Test {\n" +
+      "    public void test() {\n" +
+      "        int i = 1;\n" +
+      "        int j = 1;\n" +
+      "    }\n" +
+      "}";
+    init(text, TestFileType.TEXT);
+
+    addBookmark(2);
+    addBookmark(3);
+    List<Bookmark> bookmarksBefore = getManager().getValidBookmarks();
+    assertEquals(2, bookmarksBefore.size());
+
+    myEditor.getCaretModel().setCaretsAndSelections(
+      Collections.singletonList(new CaretState(myEditor.visualToLogicalPosition(new VisualPosition(2, myEditor.getDocument().getLineEndOffset(2)+1)), null, null)));
+    delete();
+
+    List<Bookmark> bookmarksAfter = getManager().getValidBookmarks();
+    assertEquals(1, bookmarksAfter.size());
+    for (Bookmark bookmark : bookmarksAfter) {
+      checkBookmarkNavigation(bookmark);
+    }
+    init(text, TestFileType.TEXT);
+    myEditor.getCaretModel().setCaretsAndSelections(
+      Collections.singletonList(
+        new CaretState(myEditor.visualToLogicalPosition(new VisualPosition(2, myEditor.getDocument().getLineEndOffset(2))), null, null)));
+    delete();
+  }
   
   public void testBookmarkIsSavedAfterRemoteChange() throws IOException {
     @NonNls String text =
@@ -117,6 +173,7 @@ public class BookmarkManagerTest extends AbstractEditorTest {
 
     myVFile = getSourceRoot().createChildData(null, getTestName(false) + ".txt");
     VfsUtil.saveText(myVFile, text);
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
 
     Bookmark bookmark = getManager().addTextBookmark(myVFile, 1, "xxx");
     assertNotNull(bookmark);

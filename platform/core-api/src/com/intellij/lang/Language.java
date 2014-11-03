@@ -22,13 +22,14 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * The base class for all programming language support implementations. Specific language implementations should inherit from this class
@@ -42,9 +43,9 @@ import java.util.*;
 public abstract class Language extends UserDataHolderBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.Language");
 
-  private static final Map<Class<? extends Language>, Language> ourRegisteredLanguages = Collections.synchronizedMap(new THashMap<Class<? extends Language>, Language>());
-  private static final Map<String, List<Language>> ourRegisteredMimeTypes = Collections.synchronizedMap(new THashMap<String, List<Language>>());
-  private static final Map<String, Language> ourRegisteredIDs = Collections.synchronizedMap(new THashMap<String, Language>());
+  private static final Map<Class<? extends Language>, Language> ourRegisteredLanguages = ContainerUtil.newConcurrentMap();
+  private static final ConcurrentMap<String, List<Language>> ourRegisteredMimeTypes = ContainerUtil.newConcurrentMap();
+  private static final Map<String, Language> ourRegisteredIDs = ContainerUtil.newConcurrentMap();
   private final Language myBaseLanguage;
   private final String myID;
   private final String[] myMimeTypes;
@@ -85,13 +86,7 @@ public abstract class Language extends UserDataHolderBase {
       }
       List<Language> languagesByMimeType = ourRegisteredMimeTypes.get(mimeType);
       if (languagesByMimeType == null) {
-        synchronized (ourRegisteredMimeTypes) {
-          languagesByMimeType = ourRegisteredMimeTypes.get(mimeType);
-          if (languagesByMimeType == null) {
-            languagesByMimeType = Collections.synchronizedList(new ArrayList<Language>());
-            ourRegisteredMimeTypes.put(mimeType, languagesByMimeType);
-          }
-        }
+        languagesByMimeType = ConcurrencyUtil.cacheOrGet(ourRegisteredMimeTypes, mimeType, ContainerUtil.<Language>createConcurrentList());
       }
       languagesByMimeType.add(this);
     }

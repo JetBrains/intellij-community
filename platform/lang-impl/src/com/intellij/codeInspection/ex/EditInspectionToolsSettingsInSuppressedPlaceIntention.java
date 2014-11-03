@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,8 +57,7 @@ public class EditInspectionToolsSettingsInSuppressedPlaceIntention implements In
     int offset = editor.getCaretModel().getOffset();
     PsiElement element = file.findElementAt(offset);
     while (element != null && !(element instanceof PsiFile)) {
-      for (InspectionExtensionsFactory factory : Extensions
-        .getExtensions(InspectionExtensionsFactory.EP_NAME)) {
+      for (InspectionExtensionsFactory factory : Extensions.getExtensions(InspectionExtensionsFactory.EP_NAME)) {
         final String suppressedIds = factory.getSuppressedInspectionIdsIn(element);
         if (suppressedIds != null) {
           String text = element.getText();

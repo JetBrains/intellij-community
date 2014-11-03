@@ -16,25 +16,15 @@
 package com.intellij.openapi.components.store;
 
 import com.intellij.openapi.components.StateStorage;
-import com.intellij.openapi.components.impl.stores.StateStorageManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.Set;
 
 public interface ComponentSaveSession {
   @NotNull
-  ComponentSaveSession save(@NotNull List<Pair<StateStorageManager.SaveSession, VirtualFile>> readonlyFiles);
+  ComponentSaveSession save(@NotNull List<Pair<StateStorage.SaveSession, VirtualFile>> readonlyFiles);
 
   void finishSave();
-
-  void reset();
-
-  @Nullable
-  Set<String> analyzeExternalChanges(@NotNull Set<Pair<VirtualFile, StateStorage>> changedFiles);
-
-  void collectAllStorageFiles(boolean includingSubStructures, @NotNull List<VirtualFile> files);
 }

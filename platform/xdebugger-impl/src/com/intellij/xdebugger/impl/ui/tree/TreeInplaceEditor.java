@@ -89,6 +89,10 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
 
   protected abstract Project getProject();
 
+  private static void setInplaceEditorBounds(JComponent component, int x, int y, int width, int height) {
+    component.setBounds(x, y, width, Math.max(height, component.getPreferredSize().height));
+  }
+
   public final void show() {
     LOG.assertTrue(myInplaceEditorComponent == null, "editor is not released");
     final JTree tree = getTree();
@@ -108,12 +112,7 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
     final JComponent inplaceEditorComponent = createInplaceEditorComponent();
     myInplaceEditorComponent = inplaceEditorComponent;
     LOG.assertTrue(inplaceEditorComponent != null);
-    inplaceEditorComponent.setBounds(
-      layeredPanePoint.x,
-      layeredPanePoint.y,
-      bounds.width,
-      Math.max(bounds.height, inplaceEditorComponent.getPreferredSize().height)
-    );
+    setInplaceEditorBounds(inplaceEditorComponent, layeredPanePoint.x, layeredPanePoint.y, bounds.width, bounds.height);
 
     layeredPane.add(inplaceEditorComponent, new Integer(250));
 
@@ -145,7 +144,7 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
               return;
             }
             Point layeredPanePoint = SwingUtilities.convertPoint(tree, bounds.x, bounds.y, layeredPane);
-            inplaceEditorComponent.setBounds(layeredPanePoint.x, layeredPanePoint.y, bounds.width, bounds.height);
+            setInplaceEditorBounds(inplaceEditorComponent, layeredPanePoint.x, layeredPanePoint.y, bounds.width, bounds.height);
             inplaceEditorComponent.revalidate();
           }
         });

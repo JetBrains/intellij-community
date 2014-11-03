@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,29 +16,16 @@
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
-import org.jdom.Attribute;
-import org.jdom.Element;
+import com.intellij.util.xmlb.XmlSerializerUtil;
 
 /**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 7/27/12
- * Time: 8:51 PM
+ * We don't use roaming type PER_PLATFORM - path macros is enough ($USER_HOME$/Dropbox for example)
  */
 @State(
   name = "VcsApplicationSettings",
-  storages = {
-    @Storage(
-      file = StoragePathMacros.APP_CONFIG + "/other.xml"
-    )
-  }
+  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/vcs.xml")
 )
-public class VcsApplicationSettings implements PersistentStateComponent<Element> {
-  private final static Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.VcsApplicationSettings");
+public class VcsApplicationSettings implements PersistentStateComponent<VcsApplicationSettings> {
   public String PATCH_STORAGE_LOCATION = null;
 
   public static VcsApplicationSettings getInstance() {
@@ -46,32 +33,12 @@ public class VcsApplicationSettings implements PersistentStateComponent<Element>
   }
 
   @Override
-  public Element getState() {
-    try {
-      final Element e = new Element("state");
-      if (PATCH_STORAGE_LOCATION != null) {
-        e.setAttribute("PATCH_STORAGE_LOCATION", PATCH_STORAGE_LOCATION);
-      }
-      DefaultJDOMExternalizer.writeExternal(this, e);
-      return e;
-    }
-    catch (WriteExternalException e1) {
-      LOG.error(e1);
-      return null;
-    }
+  public VcsApplicationSettings getState() {
+    return this;
   }
 
   @Override
-  public void loadState(Element state) {
-    try {
-      DefaultJDOMExternalizer.readExternal(this, state);
-      Attribute location = state.getAttribute("PATCH_STORAGE_LOCATION");
-      if (location != null) {
-        PATCH_STORAGE_LOCATION = location.getValue();
-      }
-    }
-    catch (InvalidDataException e) {
-      LOG.error(e);
-    }
+  public void loadState(VcsApplicationSettings state) {
+    XmlSerializerUtil.copyBean(state, this);
   }
 }

@@ -25,10 +25,11 @@ public class SingleRepositoryNode extends RepositoryNode {
   @NotNull private final RepositoryWithBranchPanel myRepositoryPanel;
   private final LoadingIcon myEmptyIcon;
 
-  public SingleRepositoryNode(@NotNull RepositoryWithBranchPanel repositoryPanel) {
-    super(repositoryPanel, true);
+  public SingleRepositoryNode(@NotNull RepositoryWithBranchPanel repositoryPanel, @NotNull CheckBoxModel model) {
+    super(repositoryPanel, model, true);
     myRepositoryPanel = repositoryPanel;
-    myEmptyIcon = LoadingIcon.createEmpty(myLoadingIcon.getIconWidth(), myLoadingIcon.getIconHeight());
+    myEmptyIcon =
+      LoadingIcon.createEmpty(repositoryPanel.getLoadingIcon().getIconWidth(), repositoryPanel.getLoadingIcon().getIconHeight());
   }
 
   @Override
@@ -36,13 +37,18 @@ public class SingleRepositoryNode extends RepositoryNode {
     return false;
   }
 
+  public LoadingIcon getEmptyIcon() {
+    return myEmptyIcon;
+  }
+
+  @Override
+  public void fireOnSelectionChange(boolean isSelected) {
+  }
+
   @Override
   public void render(@NotNull ColoredTreeCellRenderer renderer) {
-    renderer.setIcon(myLoading.get() ? myLoadingIcon : myEmptyIcon);
+    renderer.setIcon(myLoading.get() ? myRepositoryPanel.getLoadingIcon() : myEmptyIcon);
     renderer.setIconOnTheRight(false);
-
-    renderer.append("");
-    renderer.appendFixedTextFragmentWidth(myLoadingIconWidth);
     renderer.append(myRepositoryPanel.getSourceName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     renderer.append(myRepositoryPanel.getArrow(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     PushTargetPanel pushTargetPanel = myRepositoryPanel.getTargetPanel();

@@ -160,11 +160,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
 
     element.addContent(entryPointsElement);
     if (!additional_annotations.isEmpty()) {
-      try {
-        additional_annotations.writeExternal(element);
-      }
-      catch (WriteExternalException ignored) {
-      }
+      additional_annotations.writeExternal(element);
     }
   }
 

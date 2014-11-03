@@ -247,15 +247,15 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testIsInstance() {
-      doTest("str",
-             "def f(c):\n" +
-             "    def g():\n" +
-             "        '''\n" +
-             "        :rtype: int or str\n" +
-             "        '''\n" +
-             "    x = g()\n" +
-             "    if isinstance(x, str):\n" +
-             "        expr = x");
+    doTest("str",
+           "def f(c):\n" +
+           "    def g():\n" +
+           "        '''\n" +
+           "        :rtype: int or str\n" +
+           "        '''\n" +
+           "    x = g()\n" +
+           "    if isinstance(x, str):\n" +
+           "        expr = x");
   }
 
   // PY-2140
@@ -621,12 +621,25 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testFunctionTypeAsUnificationArgument() {
-    doTest("int",
+    doTest("list[int] | str | unicode",
            "def map2(f, xs):\n" +
            "    '''\n" +
            "    :type f: (T) -> V | None\n" +
-           "    :type xs: collections.Iterable[T] | bytes | unicode\n" +
-           "    :rtype: list[V] | bytes | unicode\n" +
+           "    :type xs: collections.Iterable[T] | str | unicode\n" +
+           "    :rtype: list[V] | str | unicode\n" +
+           "    '''\n" +
+           "    pass\n" +
+           "\n" +
+           "expr = map2(lambda x: 10, ['1', '2', '3'])\n");
+  }
+
+  public void testFunctionTypeAsUnificationArgumentWithSubscription() {
+    doTest("int | str | unicode",
+           "def map2(f, xs):\n" +
+           "    '''\n" +
+           "    :type f: (T) -> V | None\n" +
+           "    :type xs: collections.Iterable[T] | str | unicode\n" +
+           "    :rtype: list[V] | str | unicode\n" +
            "    '''\n" +
            "    pass\n" +
            "\n" +
@@ -835,6 +848,11 @@ public class PyTypeTest extends PyTestCase {
            "expr = (1,) + (True, 'spam') + ()");
   }
 
+  public void testTupleMultiplication() {
+    doTest("(int, bool, int, bool)",
+           "expr = (1, False) * 2");
+  }
+
   public void testConstructorUnification() {
     doTest("C[int]",
            "class C(object):\n" +
@@ -866,8 +884,76 @@ public class PyTypeTest extends PyTestCase {
            "expr = C(10).foo()\n");
   }
 
+  // PY-8836
+  public void testNumpyArrayIntMultiplicationType() {
+    doMultiFileTest("ndarray",
+                    "import numpy as np\n" +
+                    "expr = np.ones(10) * 2\n");
+  }
+
+  // PY-9439
+  public void testNumpyArrayType() {
+    doMultiFileTest("ndarray",
+                    "import numpy as np\n" +
+                    "expr = np.array([1,2,3])\n");
+  }
+
+  public void testUnionTypeAttributeOfDifferentTypes() {
+    doTest("list | int",
+           "class Foo:\n" +
+           "    x = []\n" +
+           "\n" +
+           "class Bar:\n" +
+           "    x = 42\n" +
+           "\n" +
+           "def f(c):\n" +
+           "    o = Foo() if c else Bar()\n" +
+           "    expr = o.x\n");
+  }
+
+  // PY-11364
+  public void testUnionTypeAttributeCallOfDifferentTypes() {
+    doTest("C1 | C2",
+           "class C1:\n" +
+           "    def foo(self):\n" +
+           "        return self\n" +
+           "\n" +
+           "class C2:\n" +
+           "    def foo(self):\n" +
+           "        return self\n" +
+           "\n" +
+           "def f():\n" +
+           "    '''\n" +
+           "    :rtype: C1 | C2\n" +
+           "    '''\n" +
+           "    pass\n" +
+           "\n" +
+           "expr = f().foo()\n");
+  }
+
+  // PY-12862
+  public void testUnionTypeAttributeSubscriptionOfDifferentTypes() {
+    doTest("C1 | C2",
+           "class C1:\n" +
+           "    def __getitem__(self, item):\n" +
+           "        return self\n" +
+           "\n" +
+           "class C2:\n" +
+           "    def __getitem__(self, item):\n" +
+           "        return self\n" +
+           "\n" +
+           "def f():\n" +
+           "    '''\n" +
+           "    :rtype: C1 | C2\n" +
+           "    '''\n" +
+           "    pass\n" +
+           "\n" +
+           "expr = f()[0]\n" +
+           "print(expr)\n");
+  }
+
   private static TypeEvalContext getTypeEvalContext(@NotNull PyExpression element) {
-    return TypeEvalContext.userInitiated(element.getContainingFile()).withTracing();
+    return TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing();
   }
 
   private PyExpression parseExpr(String text) {
@@ -876,6 +962,17 @@ public class PyTypeTest extends PyTestCase {
   }
 
   private void doTest(final String expectedType, final String text) {
+    PyExpression expr = parseExpr(text);
+    TypeEvalContext context = getTypeEvalContext(expr);
+    PyType actual = context.getType(expr);
+    final String actualType = PythonDocumentationProvider.getTypeName(actual, context);
+    assertEquals(expectedType, actualType);
+  }
+
+  public static final String TEST_DIRECTORY = "/types/";
+
+  private void doMultiFileTest(final String expectedType, final String text) {
+    myFixture.copyDirectoryToProject(TEST_DIRECTORY + getTestName(false), "");
     PyExpression expr = parseExpr(text);
     TypeEvalContext context = getTypeEvalContext(expr);
     PyType actual = context.getType(expr);

@@ -130,8 +130,9 @@ public class ConfigurableExtensionPointUtil {
   }
 
   private static boolean isSuppressed(Configurable each, ConfigurableFilter filter) {
+    OptionalConfigurable optional = ConfigurableWrapper.cast(OptionalConfigurable.class, each);
     return each instanceof Configurable.Assistant
-        || each instanceof OptionalConfigurable && !((OptionalConfigurable) each).needDisplay()
+        || optional != null && !optional.needDisplay()
         || filter != null && !filter.isIncluded(each);
   }
 

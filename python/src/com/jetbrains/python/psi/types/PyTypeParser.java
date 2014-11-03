@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -343,7 +343,7 @@ public class PyTypeParser {
 
       if (file instanceof PyFile) {
         final PyFile pyFile = (PyFile)file;
-        final TypeEvalContext context = TypeEvalContext.codeInsightFallback();
+        final TypeEvalContext context = TypeEvalContext.codeInsightFallback(file.getProject());
         final Map<TextRange, PyType> types = new HashMap<TextRange, PyType>();
         final Map<PyType, TextRange> fullRanges = new HashMap<PyType, TextRange>();
         final Map<PyType, PyImportElement> imports = new HashMap<PyType, PyImportElement>();

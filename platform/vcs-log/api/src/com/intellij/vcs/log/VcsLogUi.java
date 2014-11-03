@@ -28,7 +28,12 @@ public interface VcsLogUi {
   void addHighlighter(@NotNull VcsLogHighlighter highlighter);
   void removeHighlighter(@NotNull VcsLogHighlighter highlighter);
 
-  void addFilterChangeListener(@NotNull VcsLogFilterChangeListener listener);
-  void removeFilterChangeListener(@NotNull VcsLogFilterChangeListener listener);
+  void addLogListener(@NotNull VcsLogListener listener);
+  void removeLogListener(@NotNull VcsLogListener listener);
 
+  void setBranchesPanelVisible(boolean visible);
+
+  boolean isMultipleRoots();
+  boolean isShowRootNames();
+  void setShowRootNames(boolean showRootNames);
 }

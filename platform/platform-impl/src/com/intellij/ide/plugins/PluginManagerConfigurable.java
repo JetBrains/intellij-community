@@ -78,9 +78,9 @@ public class PluginManagerConfigurable extends BaseConfigurable implements Searc
     //      }
     //    }
     //  }
-    //  myPluginManagerMain.pluginsModel.setSortByStatus(myUISettings.AVAILABLE_SORT_BY_STATUS);
+    //  myPluginManagerMain.pluginsModel.setSortByStatus(myUISettings.availableSortByStatus);
     //} else {
-    //  myPluginManagerMain.pluginsModel.setSortByStatus(myUISettings.INSTALLED_SORT_BY_STATUS);
+    //  myPluginManagerMain.pluginsModel.setSortByStatus(myUISettings.installedSortByStatus);
     //}
     myPluginManagerMain.pluginsModel.sort();
     getSplitterProportions().restoreSplitterProportions(myPluginManagerMain.getMainPanel());
@@ -102,13 +102,13 @@ public class PluginManagerConfigurable extends BaseConfigurable implements Searc
           final List<? extends RowSorter.SortKey> sortKeys = rowSorter.getSortKeys();
           if (sortKeys.size() > 0) {
             final RowSorter.SortKey sortKey = sortKeys.get(0);
-            myUISettings.AVAILABLE_SORT_MODE = sortKey.getColumn();
             myUISettings.AVAILABLE_SORT_COLUMN_ORDER = sortKey.getSortOrder().ordinal();
           }
         }
-        myUISettings.AVAILABLE_SORT_BY_STATUS = myPluginManagerMain.pluginsModel.isSortByStatus();
-      } else {
-        myUISettings.INSTALLED_SORT_BY_STATUS = myPluginManagerMain.pluginsModel.isSortByStatus();
+        myUISettings.availableSortByStatus = myPluginManagerMain.pluginsModel.isSortByStatus();
+      }
+      else {
+        myUISettings.installedSortByStatus = myPluginManagerMain.pluginsModel.isSortByStatus();
       }
 
       Disposer.dispose(myPluginManagerMain);
@@ -117,7 +117,7 @@ public class PluginManagerConfigurable extends BaseConfigurable implements Searc
   }
 
   private SplitterProportionsData getSplitterProportions() {
-    return myAvailable ? myUISettings.getAvailableSplitterProportionsData() : myUISettings.getSplitterProportionsData();
+    return myAvailable ? myUISettings.availableProportions : myUISettings.installedProportions;
   }
 
   @Override

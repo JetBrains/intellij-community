@@ -16,7 +16,7 @@
 package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.components.StateStorage;
-import com.intellij.openapi.components.StateStorageException;
+import com.intellij.openapi.components.StateStorage.SaveSession;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.components.store.ComponentSaveSession;
 import com.intellij.openapi.module.Module;
@@ -27,12 +27,9 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.SmartHashSet;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -45,12 +42,16 @@ public class ProjectWithModulesStoreImpl extends ProjectStoreImpl {
   }
 
   @Override
-  public void reinitComponents(@NotNull Set<String> componentNames, boolean reloadData) {
-    super.reinitComponents(componentNames, reloadData);
+  protected boolean reinitComponent(@NotNull String componentName, @NotNull Set<StateStorage> changedStorages) {
+    if (super.reinitComponent(componentName, changedStorages)) {
+      return true;
+    }
 
     for (Module module : getPersistentModules()) {
-      ((ModuleImpl)module).getStateStore().reinitComponents(componentNames, reloadData);
+      // we have to reinit all modules for component because we don't know affected module
+      ((ModuleStoreImpl)((ModuleImpl)module).getStateStore()).reinitComponent(componentName, changedStorages);
     }
+    return true;
   }
 
   @Override
@@ -87,52 +88,27 @@ public class ProjectWithModulesStoreImpl extends ProjectStoreImpl {
   }
 
   @Override
-  protected SaveSessionImpl createSaveSession() throws StateStorageException {
-    return new ProjectWithModulesSaveSession();
+  protected SaveSessionImpl createSaveSession(@Nullable SaveSession storageManagerSaveSession) {
+    List<ComponentSaveSession> moduleSaveSessions = new SmartList<ComponentSaveSession>();
+    for (Module module : getPersistentModules()) {
+      ContainerUtil.addIfNotNull(moduleSaveSessions, ((ModuleImpl)module).getStateStore().startSave());
+    }
+
+    if (moduleSaveSessions.isEmpty()) {
+      return super.createSaveSession(storageManagerSaveSession);
+    }
+    else {
+      return new ProjectWithModulesSaveSession(storageManagerSaveSession, moduleSaveSessions);
+    }
   }
 
   private class ProjectWithModulesSaveSession extends ProjectSaveSession {
-    List<ComponentSaveSession> myModuleSaveSessions = new SmartList<ComponentSaveSession>();
+    private final List<ComponentSaveSession> myModuleSaveSessions;
 
-    public ProjectWithModulesSaveSession() {
-      for (Module module : getPersistentModules()) {
-        myModuleSaveSessions.add(((ModuleImpl)module).getStateStore().startSave());
-      }
-    }
+    public ProjectWithModulesSaveSession(@Nullable SaveSession storageManagerSaveSession, @NotNull List<ComponentSaveSession> moduleSaveSessions) {
+      super(storageManagerSaveSession);
 
-    @Override
-    public void collectAllStorageFiles(boolean includingSubStructures, @NotNull List<VirtualFile> files) {
-      super.collectAllStorageFiles(includingSubStructures, files);
-
-      if (includingSubStructures) {
-        for (ComponentSaveSession moduleSaveSession : myModuleSaveSessions) {
-          moduleSaveSession.collectAllStorageFiles(true, files);
-        }
-      }
-    }
-
-    @Override
-    @Nullable
-    public Set<String> analyzeExternalChanges(@NotNull Set<Pair<VirtualFile, StateStorage>> changedFiles) {
-      Set<String> superResult = super.analyzeExternalChanges(changedFiles);
-      if (superResult == null) {
-        return null;
-      }
-
-      Set<String> result = superResult.isEmpty() ? null : new THashSet<String>(superResult);
-      for (ComponentSaveSession moduleSaveSession : myModuleSaveSessions) {
-        Set<String> s = moduleSaveSession.analyzeExternalChanges(changedFiles);
-        if (s == null) {
-          return null;
-        }
-        if (!s.isEmpty()) {
-          if (result == null) {
-            result = new SmartHashSet<String>();
-          }
-          result.addAll(s);
-        }
-      }
-      return result == null ? Collections.<String>emptySet() : result;
+      myModuleSaveSessions = moduleSaveSessions;
     }
 
     @Override
@@ -160,19 +136,7 @@ public class ProjectWithModulesStoreImpl extends ProjectStoreImpl {
     }
 
     @Override
-    public void reset() {
-      try {
-        for (ComponentSaveSession moduleSaveSession : myModuleSaveSessions) {
-          moduleSaveSession.reset();
-        }
-      }
-      finally {
-        super.reset();
-      }
-    }
-
-    @Override
-    protected void beforeSave(@NotNull List<Pair<StateStorageManager.SaveSession, VirtualFile>> readonlyFiles) {
+    protected void beforeSave(@NotNull List<Pair<SaveSession, VirtualFile>> readonlyFiles) {
       super.beforeSave(readonlyFiles);
 
       for (ComponentSaveSession moduleSaveSession : myModuleSaveSessions) {

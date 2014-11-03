@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,9 +36,9 @@ import java.util.zip.ZipFile;
  *         Date: 3/25/11
  */
 public class UrlUtil {
-  private static final String JAR_SEPARATOR = "!/";
+  private static final String JAR_SEPARATOR = URLUtil.JAR_SEPARATOR;
   private static final String URL_PATH_SEPARATOR = "/";
-  private static final String FILE_PROTOCOL = "file";
+  private static final String FILE_PROTOCOL = URLUtil.FILE_PROTOCOL;
   private static final String FILE_PROTOCOL_PREFIX = FILE_PROTOCOL + ":";
 
   public static String loadText(URL url) throws IOException {
@@ -56,7 +56,7 @@ public class UrlUtil {
     if ("jar".equalsIgnoreCase(protocol)) {
       return getChildPathsFromJar(root);
     }
-    if ("file".equalsIgnoreCase(protocol)){
+    if (FILE_PROTOCOL.equalsIgnoreCase(protocol)){
       return getChildPathsFromFile(root);
     }
     return Collections.emptyList();

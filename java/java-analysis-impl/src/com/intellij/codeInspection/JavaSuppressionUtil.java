@@ -110,7 +110,7 @@ public class JavaSuppressionUtil {
     return result;
   }
 
-  public static PsiElement getElementMemberSuppressedIn(@NotNull PsiDocCommentOwner owner, String inspectionToolID) {
+  public static PsiElement getElementMemberSuppressedIn(@NotNull PsiDocCommentOwner owner, @NotNull String inspectionToolID) {
     PsiElement element = getDocCommentToolSuppressedIn(owner, inspectionToolID);
     if (element != null) return element;
     element = getAnnotationMemberSuppressedIn(owner, inspectionToolID);
@@ -128,7 +128,7 @@ public class JavaSuppressionUtil {
     return null;
   }
 
-  static PsiElement getAnnotationMemberSuppressedIn(@NotNull PsiModifierListOwner owner, String inspectionToolID) {
+  static PsiElement getAnnotationMemberSuppressedIn(@NotNull PsiModifierListOwner owner, @NotNull String inspectionToolID) {
     final PsiAnnotation generatedAnnotation = AnnotationUtil.findAnnotation(owner, Generated.class.getName());
     if (generatedAnnotation != null) return generatedAnnotation;
     PsiModifierList modifierList = owner.getModifierList();
@@ -141,7 +141,7 @@ public class JavaSuppressionUtil {
     return null;
   }
 
-  static PsiElement getDocCommentToolSuppressedIn(@NotNull PsiDocCommentOwner owner, String inspectionToolID) {
+  static PsiElement getDocCommentToolSuppressedIn(@NotNull PsiDocCommentOwner owner, @NotNull String inspectionToolID) {
     PsiDocComment docComment = owner.getDocComment();
     if (docComment == null && owner.getParent() instanceof PsiDeclarationStatement) {
       final PsiElement el = PsiTreeUtil.skipSiblingsBackward(owner.getParent(), PsiWhiteSpace.class);
@@ -198,7 +198,7 @@ public class JavaSuppressionUtil {
     return null;
   }
 
-  static PsiElement getElementToolSuppressedIn(@NotNull final PsiElement place, final String toolId) {
+  static PsiElement getElementToolSuppressedIn(@NotNull final PsiElement place, @NotNull final String toolId) {
     if (place instanceof PsiFile) return null;
     return ApplicationManager.getApplication().runReadAction(new Computable<PsiElement>() {
       @Override

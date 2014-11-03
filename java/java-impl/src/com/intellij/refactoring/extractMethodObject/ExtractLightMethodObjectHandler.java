@@ -73,12 +73,9 @@ public class ExtractLightMethodObjectHandler {
                                                        final PsiFile file,
                                                        @NotNull final PsiCodeFragment fragment,
                                                        final String methodName) throws PrepareFailedException {
-    PsiExpression expression = CodeInsightUtil.findExpressionInRange(fragment, 0, fragment.getTextLength());
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
-    final PsiElement[] elements;
-    if (expression != null) {
-      elements = new PsiElement[] {elementFactory.createStatementFromText(expression.getText() + ";", expression)};
-    } else {
+    PsiElement[] elements = completeToStatementArray(fragment, elementFactory);
+    if (elements == null) {
       elements = CodeInsightUtil.findStatementsInRange(fragment, 0, fragment.getTextLength());
     }
     if (elements.length == 0) {
@@ -95,9 +92,28 @@ public class ExtractLightMethodObjectHandler {
     final TextRange range = originalContext.getTextRange();
     final PsiElement originalAnchor =
       CodeInsightUtil.findElementInRange(copy, range.getStartOffset(), range.getEndOffset(), originalContext.getClass());
-    //todo before this or super, not found etc
-    final PsiElement anchor = RefactoringUtil.getParentStatement(originalAnchor, false);
-    final PsiElement container = anchor.getParent();
+
+    final PsiClass containingClass = PsiTreeUtil.getParentOfType(originalAnchor, PsiClass.class);
+    if (containingClass == null) {
+      return null;
+    }
+
+    PsiElement anchor = RefactoringUtil.getParentStatement(originalAnchor, false);
+    if (anchor == null) {
+      if (PsiTreeUtil.getParentOfType(originalAnchor, PsiCodeBlock.class) != null) {
+        anchor = originalAnchor;
+      }
+    }
+
+    final PsiElement container;
+    if (anchor == null) {
+      container = ((PsiClassInitializer)containingClass.add(elementFactory.createClassInitializer())).getBody();
+      anchor = container.getLastChild();
+    }
+    else {
+      container = anchor.getParent();
+    }
+
     final PsiElement firstElementCopy = container.addRangeBefore(elements[0], elements[elements.length - 1], anchor);
     final PsiElement[] elementsCopy = CodeInsightUtil.findStatementsInRange(copy,
                                                                             firstElementCopy.getTextRange().getStartOffset(),
@@ -208,6 +224,30 @@ public class ExtractLightMethodObjectHandler {
     return new ExtractedData(generatedCall,
                              (PsiClass)CodeStyleManager.getInstance(project).reformat(extractMethodObjectProcessor.getInnerClass()),
                              originalAnchor);
+  }
+
+  @Nullable 
+  private static PsiElement[] completeToStatementArray(PsiCodeFragment fragment, PsiElementFactory elementFactory) {
+    PsiExpression expression = CodeInsightUtil.findExpressionInRange(fragment, 0, fragment.getTextLength());
+    if (expression != null) {
+      String completeExpressionText = null;
+      if (expression instanceof PsiArrayInitializerExpression) {
+        final PsiExpression[] initializers = ((PsiArrayInitializerExpression)expression).getInitializers();
+        if (initializers.length > 0) {
+          final PsiType type = initializers[0].getType();
+          if (type != null) {
+            completeExpressionText = "new " + type.getCanonicalText() + "[]" + expression.getText(); 
+          } 
+        }
+      } else {
+        completeExpressionText = expression.getText();
+      }
+
+      if (completeExpressionText != null) {
+        return new PsiElement[] {elementFactory.createStatementFromText(completeExpressionText + ";", expression)};
+      }
+    }
+    return null;
   }
 
   private static boolean isValidVariableType(PsiType type) {

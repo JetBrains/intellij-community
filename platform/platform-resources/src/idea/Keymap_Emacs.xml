@@ -234,9 +234,6 @@
     <action id="EmacsStyleIndent">
       <keyboard-shortcut first-keystroke="TAB"/>
     </action>
-    <action id="ExpandLiveTemplateByTab">
-      <keyboard-shortcut first-keystroke="TAB"/>
-    </action>
     <action id="EditorUp">
       <keyboard-shortcut first-keystroke="UP"/>
       <keyboard-shortcut first-keystroke="control P"/>

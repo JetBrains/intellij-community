@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,10 @@
 package org.jetbrains.idea.maven.services;
 
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
-import org.jdom.Element;
+import com.intellij.util.xmlb.annotations.AbstractCollection;
+import com.intellij.util.xmlb.annotations.Property;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenArtifactInfo;
 import org.jetbrains.idea.maven.model.MavenRepositoryInfo;
@@ -36,10 +36,16 @@ import java.util.List;
  */
 @State(
   name = "MavenServices",
-  storages = {@Storage(
-    file = StoragePathMacros.APP_CONFIG + "/mavenServices.xml")})
-public class MavenRepositoryServicesManager implements PersistentStateComponent<Element> {
+  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/mavenServices.xml")
+)
+public class MavenRepositoryServicesManager implements PersistentStateComponent<MavenRepositoryServicesManager> {
   private final List<String> myUrls = new ArrayList<String>();
+
+  public MavenRepositoryServicesManager() {
+    myUrls.add("http://oss.sonatype.org/service/local/");
+    myUrls.add("http://repo.jfrog.org/artifactory/api/");
+    myUrls.add("https://repository.jboss.org/nexus/service/local/");
+  }
 
   @NotNull
   public static MavenRepositoryServicesManager getInstance() {
@@ -52,42 +58,32 @@ public class MavenRepositoryServicesManager implements PersistentStateComponent<
   }
 
   public static String[] getServiceUrls() {
-    final List<String> configured = getInstance().getUrls();
-    if (!configured.isEmpty()) return ArrayUtil.toStringArray(configured);
-    return new String[]{
-      "http://oss.sonatype.org/service/local/",
-      "http://repo.jfrog.org/artifactory/api/",
-      "https://repository.jboss.org/nexus/service/local/"
-    };
+    return ArrayUtil.toStringArray(getInstance().getUrls());
   }
 
+  @NotNull
+  @Property(surroundWithTag = false)
+  @AbstractCollection(surroundWithTag = false, elementTag = "service-url", elementValueAttribute = "")
   public List<String> getUrls() {
     return myUrls;
   }
 
-  public void setUrls(List<String> urls) {
-    myUrls.clear();
-    myUrls.addAll(urls);
-  }
-
-
-  @Override
-  public Element getState() {
-    final Element element = new Element("maven-services");
-    for (String url : myUrls) {
-      final Element child = new Element("service-url");
-      child.setText(StringUtil.escapeXml(url));
-      element.addContent(child);
+  public void setUrls(@NotNull List<String> urls) {
+    if (myUrls != urls) {
+      myUrls.clear();
+      myUrls.addAll(urls);
     }
-    return element;
   }
 
   @Override
-  public void loadState(Element state) {
+  public MavenRepositoryServicesManager getState() {
+    return this;
+  }
+
+  @Override
+  public void loadState(MavenRepositoryServicesManager state) {
     myUrls.clear();
-    for (Element element : state.getChildren("service-url")) {
-      myUrls.add(StringUtil.unescapeXml(element.getTextTrim()));
-    }
+    myUrls.addAll(state.getUrls());
   }
 
   @NotNull

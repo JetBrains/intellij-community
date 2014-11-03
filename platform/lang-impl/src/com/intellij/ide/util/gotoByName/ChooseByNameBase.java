@@ -950,6 +950,17 @@ public abstract class ChooseByNameBase {
     }
 
     myAlarm.cancelAllRequests();
+
+    if (delay > 0) {
+      myAlarm.addRequest(new Runnable() {
+        @Override
+        public void run() {
+          rebuildList(pos, 0, modalityState, postRunnable);
+        }
+      }, delay, ModalityState.stateForComponent(myTextField));
+      return;
+    }
+    
     myListUpdater.cancelAll();
 
     final CalcElementsThread calcElementsThread = myCalcElementsThread;
@@ -977,32 +988,20 @@ public abstract class ChooseByNameBase {
       ((MatcherHolder)cellRenderer).setPatternMatcher(matcher);
     }
 
-    final Runnable request = new Runnable() {
+    scheduleCalcElements(text, myCheckBox.isSelected(), modalityState, new Consumer<Set<?>>() {
       @Override
-      public void run() {
-        scheduleCalcElements(text, myCheckBox.isSelected(), modalityState, new Consumer<Set<?>>() {
-          @Override
-          public void consume(Set<?> elements) {
-            ApplicationManager.getApplication().assertIsDispatchThread();
-            if (checkDisposed()) {
-              return;
-            }
-            backgroundCalculationFinished(elements, pos);
+      public void consume(Set<?> elements) {
+        ApplicationManager.getApplication().assertIsDispatchThread();
+        if (checkDisposed()) {
+          return;
+        }
+        backgroundCalculationFinished(elements, pos);
 
-            if (postRunnable != null) {
-              postRunnable.run();
-            }
-          }
-        });
+        if (postRunnable != null) {
+          postRunnable.run();
+        }
       }
-    };
-
-    if (delay > 0) {
-      myAlarm.addRequest(request, delay, ModalityState.stateForComponent(myTextField));
-    }
-    else {
-      request.run();
-    }
+    });
   }
 
   private void backgroundCalculationFinished(Collection<?> result, int toSelect) {
@@ -1238,10 +1237,12 @@ public abstract class ChooseByNameBase {
 
     private MyTextField() {
       super(40);
-      if (!(getUI() instanceof DarculaTextFieldUI)) {
-        setUI((DarculaTextFieldUI)DarculaTextFieldUI.createUI(this));
+      if (!UIUtil.isUnderGTKLookAndFeel()) {
+        if (!(getUI() instanceof DarculaTextFieldUI)) {
+          setUI(DarculaTextFieldUI.createUI(this));
+        }
+        setBorder(new DarculaTextBorder());
       }
-      setBorder(new DarculaTextBorder());
       enableEvents(AWTEvent.KEY_EVENT_MASK);
       myCompletionKeyStroke = getShortcut(IdeActions.ACTION_CODE_COMPLETION);
       forwardStroke = getShortcut(IdeActions.ACTION_GOTO_FORWARD);
@@ -1515,13 +1516,14 @@ public abstract class ChooseByNameBase {
               ApplicationManager.getApplication().runReadAction(new Runnable() {
                 @Override
                 public void run() {
-                  if (myProject.isDisposed()) return;
+                  if (myProject != null && myProject.isDisposed()) return;
 
                   ApplicationAdapter listener = new ApplicationAdapter() {
                     @Override
                     public void beforeWriteActionStart(Object action) {
-                      cancel();
-                      scheduleRestart();
+                      if (cancel()) {
+                        scheduleRestart(); //don't restart if already canceled explicitly
+                      }
                       ApplicationManager.getApplication().removeApplicationListener(this);
                     }
                   };

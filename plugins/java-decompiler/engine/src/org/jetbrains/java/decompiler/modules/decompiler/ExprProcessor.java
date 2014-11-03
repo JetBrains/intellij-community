@@ -20,6 +20,8 @@ import org.jetbrains.java.decompiler.code.Instruction;
 import org.jetbrains.java.decompiler.code.InstructionSequence;
 import org.jetbrains.java.decompiler.code.cfg.BasicBlock;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
+import org.jetbrains.java.decompiler.main.TextBuffer;
+import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.*;
 import org.jetbrains.java.decompiler.modules.decompiler.sforms.DirectGraph;
 import org.jetbrains.java.decompiler.modules.decompiler.sforms.DirectNode;
@@ -36,7 +38,6 @@ import org.jetbrains.java.decompiler.struct.consts.PooledConstant;
 import org.jetbrains.java.decompiler.struct.consts.PrimitiveConstant;
 import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
-import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
 import java.util.*;
 
@@ -330,33 +331,35 @@ public class ExprProcessor implements CodeConstants {
     for (int i = 0; i < seq.length(); i++) {
 
       Instruction instr = seq.getInstr(i);
+      Integer bytecode_offset = block.getOldOffset(i);
+      Set<Integer> bytecode_offsets = bytecode_offset >= 0 ? new HashSet<Integer>(Arrays.asList(bytecode_offset)) : null;
 
       switch (instr.opcode) {
         case opc_aconst_null:
-          pushEx(stack, exprlist, new ConstExprent(VarType.VARTYPE_NULL, null));
+          pushEx(stack, exprlist, new ConstExprent(VarType.VARTYPE_NULL, null, bytecode_offsets));
           break;
         case opc_bipush:
         case opc_sipush:
-          pushEx(stack, exprlist, new ConstExprent(instr.getOperand(0), true));
+          pushEx(stack, exprlist, new ConstExprent(instr.getOperand(0), true, bytecode_offsets));
           break;
         case opc_lconst_0:
         case opc_lconst_1:
-          pushEx(stack, exprlist, new ConstExprent(VarType.VARTYPE_LONG, new Long(instr.opcode - opc_lconst_0)));
+          pushEx(stack, exprlist, new ConstExprent(VarType.VARTYPE_LONG, new Long(instr.opcode - opc_lconst_0), bytecode_offsets));
           break;
         case opc_fconst_0:
         case opc_fconst_1:
         case opc_fconst_2:
-          pushEx(stack, exprlist, new ConstExprent(VarType.VARTYPE_FLOAT, new Float(instr.opcode - opc_fconst_0)));
+          pushEx(stack, exprlist, new ConstExprent(VarType.VARTYPE_FLOAT, new Float(instr.opcode - opc_fconst_0), bytecode_offsets));
           break;
         case opc_dconst_0:
         case opc_dconst_1:
-          pushEx(stack, exprlist, new ConstExprent(VarType.VARTYPE_DOUBLE, new Double(instr.opcode - opc_dconst_0)));
+          pushEx(stack, exprlist, new ConstExprent(VarType.VARTYPE_DOUBLE, new Double(instr.opcode - opc_dconst_0), bytecode_offsets));
           break;
         case opc_ldc:
         case opc_ldc_w:
         case opc_ldc2_w:
           PrimitiveConstant cn = pool.getPrimitiveConstant(instr.getOperand(0));
-          pushEx(stack, exprlist, new ConstExprent(consts[cn.type - CONSTANT_Integer], cn.value));
+          pushEx(stack, exprlist, new ConstExprent(consts[cn.type - CONSTANT_Integer], cn.value, bytecode_offsets));
           break;
         case opc_iload:
         case opc_lload:
@@ -384,7 +387,7 @@ public class ExprProcessor implements CodeConstants {
             case opc_daload:
               vartype = VarType.VARTYPE_DOUBLE;
           }
-          pushEx(stack, exprlist, new ArrayExprent(arr, index, arrtypes[instr.opcode - opc_iaload]), vartype);
+          pushEx(stack, exprlist, new ArrayExprent(arr, index, arrtypes[instr.opcode - opc_iaload], bytecode_offsets), vartype);
           break;
         case opc_istore:
         case opc_lstore:
@@ -394,7 +397,7 @@ public class ExprProcessor implements CodeConstants {
           Exprent top = stack.pop();
           int varindex = instr.getOperand(0);
           AssignmentExprent assign =
-            new AssignmentExprent(new VarExprent(varindex, vartypes[instr.opcode - opc_istore], varProcessor), top);
+            new AssignmentExprent(new VarExprent(varindex, vartypes[instr.opcode - opc_istore], varProcessor), top, bytecode_offsets);
           exprlist.add(assign);
           break;
         case opc_iastore:
@@ -409,7 +412,7 @@ public class ExprProcessor implements CodeConstants {
           Exprent index_store = stack.pop();
           Exprent arr_store = stack.pop();
           AssignmentExprent arrassign =
-            new AssignmentExprent(new ArrayExprent(arr_store, index_store, arrtypes[instr.opcode - opc_iastore]), value);
+            new AssignmentExprent(new ArrayExprent(arr_store, index_store, arrtypes[instr.opcode - opc_iastore], bytecode_offsets), value, bytecode_offsets);
           exprlist.add(arrassign);
           break;
         case opc_iadd:
@@ -432,7 +435,7 @@ public class ExprProcessor implements CodeConstants {
         case opc_lrem:
         case opc_frem:
         case opc_drem:
-          pushEx(stack, exprlist, new FunctionExprent(func1[(instr.opcode - opc_iadd) / 4], stack));
+          pushEx(stack, exprlist, new FunctionExprent(func1[(instr.opcode - opc_iadd) / 4], stack, bytecode_offsets));
           break;
         case opc_ishl:
         case opc_lshl:
@@ -446,19 +449,20 @@ public class ExprProcessor implements CodeConstants {
         case opc_lor:
         case opc_ixor:
         case opc_lxor:
-          pushEx(stack, exprlist, new FunctionExprent(func2[(instr.opcode - opc_ishl) / 2], stack));
+          pushEx(stack, exprlist, new FunctionExprent(func2[(instr.opcode - opc_ishl) / 2], stack, bytecode_offsets));
           break;
         case opc_ineg:
         case opc_lneg:
         case opc_fneg:
         case opc_dneg:
-          pushEx(stack, exprlist, new FunctionExprent(FunctionExprent.FUNCTION_NEG, stack));
+          pushEx(stack, exprlist, new FunctionExprent(FunctionExprent.FUNCTION_NEG, stack, bytecode_offsets));
           break;
         case opc_iinc:
           VarExprent vevar = new VarExprent(instr.getOperand(0), VarType.VARTYPE_INT, varProcessor);
           exprlist.add(new AssignmentExprent(vevar, new FunctionExprent(
             instr.getOperand(1) < 0 ? FunctionExprent.FUNCTION_SUB : FunctionExprent.FUNCTION_ADD, Arrays
-            .asList(new Exprent[]{vevar.copy(), new ConstExprent(VarType.VARTYPE_INT, new Integer(Math.abs(instr.getOperand(1))))}))));
+            .asList(vevar.copy(), new ConstExprent(VarType.VARTYPE_INT, Math.abs(instr.getOperand(1)), null)),
+            bytecode_offsets), bytecode_offsets));
           break;
         case opc_i2l:
         case opc_i2f:
@@ -475,14 +479,14 @@ public class ExprProcessor implements CodeConstants {
         case opc_i2b:
         case opc_i2c:
         case opc_i2s:
-          pushEx(stack, exprlist, new FunctionExprent(func3[instr.opcode - opc_i2l], stack));
+          pushEx(stack, exprlist, new FunctionExprent(func3[instr.opcode - opc_i2l], stack, bytecode_offsets));
           break;
         case opc_lcmp:
         case opc_fcmpl:
         case opc_fcmpg:
         case opc_dcmpl:
         case opc_dcmpg:
-          pushEx(stack, exprlist, new FunctionExprent(func4[instr.opcode - opc_lcmp], stack));
+          pushEx(stack, exprlist, new FunctionExprent(func4[instr.opcode - opc_lcmp], stack, bytecode_offsets));
           break;
         case opc_ifeq:
         case opc_ifne:
@@ -490,7 +494,7 @@ public class ExprProcessor implements CodeConstants {
         case opc_ifge:
         case opc_ifgt:
         case opc_ifle:
-          exprlist.add(new IfExprent(negifs[func5[instr.opcode - opc_ifeq]], stack));
+          exprlist.add(new IfExprent(negifs[func5[instr.opcode - opc_ifeq]], stack, bytecode_offsets));
           break;
         case opc_if_icmpeq:
         case opc_if_icmpne:
@@ -500,16 +504,16 @@ public class ExprProcessor implements CodeConstants {
         case opc_if_icmple:
         case opc_if_acmpeq:
         case opc_if_acmpne:
-          exprlist.add(new IfExprent(negifs[func6[instr.opcode - opc_if_icmpeq]], stack));
+          exprlist.add(new IfExprent(negifs[func6[instr.opcode - opc_if_icmpeq]], stack, bytecode_offsets));
           break;
         case opc_ifnull:
         case opc_ifnonnull:
-          exprlist.add(new IfExprent(negifs[func7[instr.opcode - opc_ifnull]], stack));
+          exprlist.add(new IfExprent(negifs[func7[instr.opcode - opc_ifnull]], stack, bytecode_offsets));
           break;
         case opc_tableswitch:
         case opc_lookupswitch:
-          exprlist.add(new SwitchExprent(stack.pop()));
-          break;
+          exprlist.add(new SwitchExprent(stack.pop(), bytecode_offsets));
+        break;
         case opc_ireturn:
         case opc_lreturn:
         case opc_freturn:
@@ -522,29 +526,30 @@ public class ExprProcessor implements CodeConstants {
                                        instr.opcode == opc_athrow
                                        ? null
                                        : ((MethodDescriptor)DecompilerContext
-                                         .getProperty(DecompilerContext.CURRENT_METHOD_DESCRIPTOR)).ret));
-          break;
+                                         .getProperty(DecompilerContext.CURRENT_METHOD_DESCRIPTOR)).ret,
+                                       bytecode_offsets));
+        break;
         case opc_monitorenter:
         case opc_monitorexit:
-          exprlist.add(new MonitorExprent(func8[instr.opcode - opc_monitorenter], stack.pop()));
+          exprlist.add(new MonitorExprent(func8[instr.opcode - opc_monitorenter], stack.pop(), bytecode_offsets));
           break;
         case opc_checkcast:
         case opc_instanceof:
-          stack.push(new ConstExprent(new VarType(pool.getPrimitiveConstant(instr.getOperand(0)).getString(), true), null));
+          stack.push(new ConstExprent(new VarType(pool.getPrimitiveConstant(instr.getOperand(0)).getString(), true), null, null));
         case opc_arraylength:
-          pushEx(stack, exprlist, new FunctionExprent(mapConsts.get(instr.opcode).intValue(), stack));
+          pushEx(stack, exprlist, new FunctionExprent(mapConsts.get(instr.opcode).intValue(), stack, bytecode_offsets));
           break;
         case opc_getstatic:
         case opc_getfield:
           pushEx(stack, exprlist,
-                 new FieldExprent(pool.getLinkConstant(instr.getOperand(0)), instr.opcode == opc_getstatic ? null : stack.pop()));
+                 new FieldExprent(pool.getLinkConstant(instr.getOperand(0)), instr.opcode == opc_getstatic ? null : stack.pop(), bytecode_offsets));
           break;
         case opc_putstatic:
         case opc_putfield:
           Exprent valfield = stack.pop();
           Exprent exprfield =
-            new FieldExprent(pool.getLinkConstant(instr.getOperand(0)), instr.opcode == opc_putstatic ? null : stack.pop());
-          exprlist.add(new AssignmentExprent(exprfield, valfield));
+            new FieldExprent(pool.getLinkConstant(instr.getOperand(0)), instr.opcode == opc_putstatic ? null : stack.pop(), bytecode_offsets);
+          exprlist.add(new AssignmentExprent(exprfield, valfield, bytecode_offsets));
           break;
         case opc_invokevirtual:
         case opc_invokespecial:
@@ -563,7 +568,7 @@ public class ExprProcessor implements CodeConstants {
               dynamic_invokation_type = content_method_handle.index1;
             }
 
-            InvocationExprent exprinv = new InvocationExprent(instr.opcode, invoke_constant, stack, dynamic_invokation_type);
+            InvocationExprent exprinv = new InvocationExprent(instr.opcode, invoke_constant, stack, dynamic_invokation_type, bytecode_offsets);
             if (exprinv.getDescriptor().ret.type == CodeConstants.TYPE_VOID) {
               exprlist.add(exprinv);
             }
@@ -580,10 +585,10 @@ public class ExprProcessor implements CodeConstants {
           if (instr.opcode != opc_multianewarray) {
             arrtype.arraydim += arrdims;
           }
-          pushEx(stack, exprlist, new NewExprent(arrtype, stack, arrdims));
+          pushEx(stack, exprlist, new NewExprent(arrtype, stack, arrdims, bytecode_offsets));
           break;
         case opc_newarray:
-          pushEx(stack, exprlist, new NewExprent(new VarType(arr_type[instr.getOperand(0) - 4], 1), stack, 1));
+          pushEx(stack, exprlist, new NewExprent(new VarType(arr_type[instr.getOperand(0) - 4], 1), stack, 1, bytecode_offsets));
           break;
         case opc_dup:
           pushEx(stack, exprlist, stack.getByOffset(-1).copy());
@@ -657,7 +662,7 @@ public class ExprProcessor implements CodeConstants {
     VarExprent var = new VarExprent(varindex, vartype == null ? exprent.getExprType() : vartype, varProcessor);
     var.setStack(true);
 
-    exprlist.add(new AssignmentExprent(var, exprent));
+    exprlist.add(new AssignmentExprent(var, exprent, null));
     stack.push(var.copy());
   }
 
@@ -671,14 +676,14 @@ public class ExprProcessor implements CodeConstants {
       Exprent varex = stack.pop();
       VarExprent varnew = new VarExprent(base + i + 1, varex.getExprType(), varProcessor);
       varnew.setStack(true);
-      exprlist.add(new AssignmentExprent(varnew, varex));
+      exprlist.add(new AssignmentExprent(varnew, varex, null));
       lst.add(0, (VarExprent)varnew.copy());
     }
 
     Exprent exprent = lst.get(lst.size() + copyoffset).copy();
     VarExprent var = new VarExprent(base + offset, exprent.getExprType(), varProcessor);
     var.setStack(true);
-    exprlist.add(new AssignmentExprent(var, exprent));
+    exprlist.add(new AssignmentExprent(var, exprent, null));
     lst.add(0, (VarExprent)var.copy());
 
     for (VarExprent expr : lst) {
@@ -739,7 +744,7 @@ public class ExprProcessor implements CodeConstants {
     VarExprent vartmp = new VarExprent(VarExprent.STACK_BASE, var.getExprType(), var.getProcessor());
     vartmp.setStack(true);
 
-    prlst.getLstExprents().add(new AssignmentExprent(vartmp, var.copy()));
+    prlst.getLstExprents().add(new AssignmentExprent(vartmp, var.copy(), null));
     prlst.getStack().push(vartmp.copy());
     return prlst;
   }
@@ -753,16 +758,14 @@ public class ExprProcessor implements CodeConstants {
                .isClassdef()));
   }
 
-  public static String jmpWrapper(Statement stat, int indent, boolean semicolon) {
-    StringBuilder buf = new StringBuilder(stat.toJava(indent));
-
-    String new_line_separator = DecompilerContext.getNewLineSeparator();
+  public static TextBuffer jmpWrapper(Statement stat, int indent, boolean semicolon, BytecodeMappingTracer tracer) {
+    TextBuffer buf = stat.toJava(indent, tracer);
 
     List<StatEdge> lstSuccs = stat.getSuccessorEdges(Statement.STATEDGE_DIRECT_ALL);
     if (lstSuccs.size() == 1) {
       StatEdge edge = lstSuccs.get(0);
       if (edge.getType() != StatEdge.TYPE_REGULAR && edge.explicit && edge.getDestination().type != Statement.TYPE_DUMMYEXIT) {
-        buf.append(InterpreterUtil.getIndentString(indent));
+        buf.appendIndent(indent);
 
         switch (edge.getType()) {
           case StatEdge.TYPE_BREAK:
@@ -773,17 +776,19 @@ public class ExprProcessor implements CodeConstants {
         }
 
         if (edge.labeled) {
-          buf.append(" label").append(edge.closure.id);
+          buf.append(" label").append(edge.closure.id.toString());
         }
-        buf.append(";").append(new_line_separator);
+        buf.append(";").appendLineSeparator();
+        tracer.incrementCurrentSourceLine();
       }
     }
 
     if (buf.length() == 0 && semicolon) {
-      buf.append(InterpreterUtil.getIndentString(indent)).append(";").append(new_line_separator);
+      buf.appendIndent(indent).append(";").appendLineSeparator();
+      tracer.incrementCurrentSourceLine();
     }
 
-    return buf.toString();
+    return buf;
   }
 
   public static String buildJavaClassName(String name) {
@@ -800,21 +805,18 @@ public class ExprProcessor implements CodeConstants {
     return res;
   }
 
-  public static String listToJava(List<Exprent> lst, int indent) {
+  public static TextBuffer listToJava(List<Exprent> lst, int indent, BytecodeMappingTracer tracer) {
     if (lst == null || lst.isEmpty()) {
-      return "";
+      return new TextBuffer();
     }
 
-    String indstr = InterpreterUtil.getIndentString(indent);
-    String new_line_separator = DecompilerContext.getNewLineSeparator();
-
-    StringBuilder buf = new StringBuilder();
+    TextBuffer buf = new TextBuffer();
 
     for (Exprent expr : lst) {
-      String content = expr.toJava(indent);
+      TextBuffer content = expr.toJava(indent, tracer);
       if (content.length() > 0) {
         if (expr.type != Exprent.EXPRENT_VAR || !((VarExprent)expr).isClassdef()) {
-          buf.append(indstr);
+          buf.appendIndent(indent);
         }
         buf.append(content);
         if (expr.type == Exprent.EXPRENT_MONITOR && ((MonitorExprent)expr).getMontype() == MonitorExprent.MONITOR_ENTER) {
@@ -823,75 +825,74 @@ public class ExprProcessor implements CodeConstants {
         if (endsWithSemikolon(expr)) {
           buf.append(";");
         }
-        buf.append(new_line_separator);
+        buf.appendLineSeparator();
+        tracer.incrementCurrentSourceLine();
       }
     }
 
-    return buf.toString();
+    return buf;
   }
 
   public static ConstExprent getDefaultArrayValue(VarType arrtype) {
 
     ConstExprent defaultval;
     if (arrtype.type == CodeConstants.TYPE_OBJECT || arrtype.arraydim > 0) {
-      defaultval = new ConstExprent(VarType.VARTYPE_NULL, null);
+      defaultval = new ConstExprent(VarType.VARTYPE_NULL, null, null);
     }
     else if (arrtype.type == CodeConstants.TYPE_FLOAT) {
-      defaultval = new ConstExprent(VarType.VARTYPE_FLOAT, new Float(0));
+      defaultval = new ConstExprent(VarType.VARTYPE_FLOAT, new Float(0), null);
     }
     else if (arrtype.type == CodeConstants.TYPE_LONG) {
-      defaultval = new ConstExprent(VarType.VARTYPE_LONG, new Long(0));
+      defaultval = new ConstExprent(VarType.VARTYPE_LONG, new Long(0), null);
     }
     else if (arrtype.type == CodeConstants.TYPE_DOUBLE) {
-      defaultval = new ConstExprent(VarType.VARTYPE_DOUBLE, new Double(0));
+      defaultval = new ConstExprent(VarType.VARTYPE_DOUBLE, new Double(0), null);
     }
     else { // integer types
-      defaultval = new ConstExprent(0, true);
+      defaultval = new ConstExprent(0, true, null);
     }
 
     return defaultval;
   }
 
-  public static boolean getCastedExprent(Exprent exprent, VarType leftType, StringBuilder buffer, int indent, boolean castNull) {
-    return getCastedExprent(exprent, leftType, buffer, indent, castNull, false);
+  public static boolean getCastedExprent(Exprent exprent,
+                                         VarType leftType,
+                                         TextBuffer buffer,
+                                         int indent,
+                                         boolean castNull,
+                                         BytecodeMappingTracer tracer) {
+    return getCastedExprent(exprent, leftType, buffer, indent, castNull, false, tracer);
   }
 
   public static boolean getCastedExprent(Exprent exprent,
                                          VarType leftType,
-                                         StringBuilder buffer,
+                                         TextBuffer buffer,
                                          int indent,
                                          boolean castNull,
-                                         boolean castAlways) {
+                                         boolean castAlways,
+                                         BytecodeMappingTracer tracer) {
 
-    boolean ret = false;
     VarType rightType = exprent.getExprType();
 
-    String res = exprent.toJava(indent);
+    TextBuffer res = exprent.toJava(indent, tracer);
 
     boolean cast =
-      !leftType.isSuperset(rightType) && (rightType.equals(VarType.VARTYPE_OBJECT) || leftType.type != CodeConstants.TYPE_OBJECT);
-    cast |= castAlways;
-
-    if (!cast && castNull && rightType.type == CodeConstants.TYPE_NULL) {
-      // check for a nameless anonymous class
-      cast = !UNDEFINED_TYPE_STRING.equals(getTypeName(leftType));
-    }
-    if (!cast) {
-      cast = isIntConstant(exprent) && VarType.VARTYPE_INT.isStrictSuperset(leftType);
-    }
+      castAlways ||
+      (!leftType.isSuperset(rightType) && (rightType.equals(VarType.VARTYPE_OBJECT) || leftType.type != CodeConstants.TYPE_OBJECT)) ||
+      (castNull && rightType.type == CodeConstants.TYPE_NULL && !UNDEFINED_TYPE_STRING.equals(getTypeName(leftType))) ||
+      (isIntConstant(exprent) && VarType.VARTYPE_INT.isStrictSuperset(leftType));
 
     if (cast) {
       if (exprent.getPrecedence() >= FunctionExprent.getPrecedence(FunctionExprent.FUNCTION_CAST)) {
-        res = "(" + res + ")";
+        res.enclose("(", ")");
       }
 
-      res = "(" + getCastTypeName(leftType) + ")" + res;
-      ret = true;
+      res.prepend("(" + getCastTypeName(leftType) + ")");
     }
 
     buffer.append(res);
 
-    return ret;
+    return cast;
   }
 
   private static boolean isIntConstant(Exprent exprent) {

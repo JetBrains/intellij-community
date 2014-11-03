@@ -281,6 +281,16 @@ public class ArrangementListRowDecorator extends JPanel implements ArrangementUi
   }
 
   @Override
+  public void handleMouseClickOnSelected() {
+    myDelegate.handleMouseClickOnSelected();
+  }
+
+  @Override
+  public boolean alwaysCanBeActive() {
+    return false;
+  }
+
+  @Override
   public String toString() {
     return "list row decorator for " + myDelegate.toString();
   }

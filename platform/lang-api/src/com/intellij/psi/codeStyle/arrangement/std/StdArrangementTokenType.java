@@ -63,6 +63,7 @@ public class StdArrangementTokenType {
   public static final String REG_EXP_ID = "REG_EXP";
   public static final String ENTRY_TYPE_ID = "ENTRY_TYPE";
   public static final String ORDER_ID = "ORDER";
+  public static final String ALIAS_ID = "ALIAS";
 
   public static final StdArrangementTokenType GENERAL = new StdArrangementTokenType(StdArrangementTokenUiRole.LABEL, GENERAL_ID);
   public static final StdArrangementTokenType GROUPING = new StdArrangementTokenType(StdArrangementTokenUiRole.CHECKBOX, GROUPING_ID);
@@ -70,4 +71,5 @@ public class StdArrangementTokenType {
   public static final StdArrangementTokenType REG_EXP = new StdArrangementTokenType(StdArrangementTokenUiRole.TEXT_FIELD, REG_EXP_ID);
   public static final StdArrangementTokenType ENTRY_TYPE = new StdArrangementTokenType(StdArrangementTokenUiRole.BULB, ENTRY_TYPE_ID);
   public static final StdArrangementTokenType ORDER = new StdArrangementTokenType(StdArrangementTokenUiRole.COMBO_BOX, ORDER_ID);
+  public static final StdArrangementTokenType ALIAS = new StdArrangementTokenType(StdArrangementTokenUiRole.BULB, ALIAS_ID);
 }

@@ -28,6 +28,7 @@ import com.intellij.openapi.util.text.CharFilter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.components.JBTextField;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
@@ -387,10 +388,20 @@ public class GuiUtils {
   }
 
   public static JTextField createUndoableTextField() {
-    JTextField field = new JTextField();
-    if (ApplicationManager.getApplication() != null) {
-      new TextComponentUndoProvider(field);
-    }
-    return field;
+    return new JBTextField();
+  }
+
+  /**
+   * Returns dimension with width required to type certain number of chars in provided component
+   * @param charCount number of chars
+   * @param comp component
+   * @return dimension with width enough to insert provided number of chars into component
+   */
+  @NotNull
+  public static Dimension getSizeByChars(int charCount, @NotNull JComponent comp) {
+    Dimension size = comp.getPreferredSize();
+    FontMetrics fontMetrics = comp.getFontMetrics(comp.getFont());
+    size.width = fontMetrics.charWidth('a') * charCount;
+    return size;
   }
 }

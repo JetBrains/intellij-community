@@ -100,8 +100,7 @@ public class GrBindingVariable extends GrLightVariable implements GrVariable {
 
   @Override
   public void accept(GroovyElementVisitor visitor) {
-    //todo
-    throw new UnsupportedOperationException();
+    visitor.visitVariable(this);
   }
 
   @Override
