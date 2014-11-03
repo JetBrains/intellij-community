@@ -29,6 +29,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.util.List;
 import java.util.Observable;
 
@@ -38,17 +40,52 @@ import java.util.Observable;
 public abstract class ListTableWithButtons<T> extends Observable {
   private final List<T> myElements = ContainerUtil.newArrayList();
   private final JPanel myPanel;
-  private final TableView myTableView;
+  private final TableView<T> myTableView;
   private boolean myIsEnabled = true;
 
   protected ListTableWithButtons() {
-    myTableView = new TableView(createListModel());
+    myTableView = new TableView(createListModel()) {
+      @Override
+      protected void createDefaultEditors() {
+        super.createDefaultEditors();
+        Object editor = defaultEditorsByColumnClass.get(String.class);
+        if (editor instanceof DefaultCellEditor) {
+          ((DefaultCellEditor)editor).getComponent().addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+              final int column = myTableView.getEditingColumn();
+              final int row = myTableView.getEditingRow();
+              if (e.getModifiers() == 0 && (e.getKeyCode() == KeyEvent.VK_ENTER || e.getKeyCode() == KeyEvent.VK_TAB)) {
+                SwingUtilities.invokeLater(new Runnable() {
+                  @Override
+                  public void run() {
+                    stopEditing();
+                    int nextColumn = column < myTableView.getColumnCount() - 1? column + 1 : 0;
+                    int nextRow = nextColumn == 0 ? row + 1 : row;
+                    if (nextRow > myTableView.getRowCount() - 1) {
+                      if (myElements.isEmpty() || !ListTableWithButtons.this.isEmpty(myElements.get(myElements.size() - 1))) {
+                        ToolbarDecorator.findAddButton(myPanel).actionPerformed(null);
+                        return;
+                      } else {
+                        nextRow = 0;
+                      }
+                    }
+                    myTableView.editCellAt(nextRow, nextColumn);
+                  }
+                });
+              }
+            }
+          });
+        }
+      }
+    };
     myTableView.setRowHeight(new JTextField().getPreferredSize().height);
     myTableView.getTableViewModel().setSortable(false);
     myPanel = ToolbarDecorator.createDecorator(myTableView)
       .setAddAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
+          if (!myElements.isEmpty() && isEmpty(myElements.get(myElements.size() - 1))) return;
           myTableView.stopEditing();
           setModified();
           SwingUtilities.invokeLater(new Runnable() {
@@ -56,6 +93,7 @@ public abstract class ListTableWithButtons<T> extends Observable {
             public void run() {
               myElements.add(createElement());
               myTableView.getTableViewModel().setItems(myElements);
+              myTableView.scrollRectToVisible(myTableView.getCellRect(myElements.size() - 1, 0, true));
               myTableView.getComponent().editCellAt(myElements.size() - 1, 0);
             }
           });
@@ -65,7 +103,7 @@ public abstract class ListTableWithButtons<T> extends Observable {
         public void run(AnActionButton button) {
           myTableView.stopEditing();
           setModified();
-          Object selected = getSelection();
+          T selected = getSelection();
           if (selected != null) {
             int selectedIndex = myElements.indexOf(selected);
             myElements.remove(selected);
@@ -80,7 +118,7 @@ public abstract class ListTableWithButtons<T> extends Observable {
             }
           }
         }
-      }).disableUpDownActions().createPanel();
+      }).disableUpDownActions().addExtraActions(createExtraActions()).createPanel();
 
     ToolbarDecorator.findRemoveButton(myPanel).addCustomUpdater(new AnActionButtonUpdater() {
       @Override
@@ -134,6 +172,12 @@ public abstract class ListTableWithButtons<T> extends Observable {
   }
 
   protected abstract T createElement();
+
+  protected abstract boolean isEmpty(T element);
+
+  protected AnActionButton[] createExtraActions() {
+    return null;
+  }
 
 
   protected T getSelection() {
