@@ -41,6 +41,12 @@ public class ClassWithOnlyPrivateConstructorsInspectionTest extends LightInspect
     doTest("class X {}");
   }
 
+  public void testNoWarnOnFinalClass() {
+    doTest("final class X {" +
+           "  private X() {}" +
+           "}");
+  }
+
   public void testEnum() {
     doTest("enum Currencies {\n" +
            "    EURO, DOLLAR;\n" +
