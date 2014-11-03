@@ -44,6 +44,11 @@ public abstract class BreakpointTarget {
     }
 
     @Override
+    public String toString() {
+      return script.toString();
+    }
+
+    @Override
     public boolean equals(Object o) {
       if (this == o) {
         return true;
@@ -61,6 +66,8 @@ public abstract class BreakpointTarget {
     }
   }
 
+  public abstract String toString();
+
   /**
    * A target that refers to a script by its name. Breakpoint will be set on every matching script currently loaded in VM.
    */
@@ -73,6 +80,11 @@ public abstract class BreakpointTarget {
 
     @NotNull
     public String getName() {
+      return name;
+    }
+
+    @Override
+    public String toString() {
       return name;
     }
 
