@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,10 +33,9 @@ import javax.swing.*;
 public class ApplicationConfigurationType implements ConfigurationType {
   private final ConfigurationFactory myFactory;
 
-
-  /**reflection*/
   public ApplicationConfigurationType() {
     myFactory = new ConfigurationFactoryEx(this) {
+      @Override
       public RunConfiguration createTemplateConfiguration(Project project) {
         return new ApplicationConfiguration("", project, ApplicationConfigurationType.this);
       }
@@ -48,18 +47,22 @@ public class ApplicationConfigurationType implements ConfigurationType {
     };
   }
 
+  @Override
   public String getDisplayName() {
     return ExecutionBundle.message("application.configuration.name");
   }
 
+  @Override
   public String getConfigurationTypeDescription() {
     return ExecutionBundle.message("application.configuration.description");
   }
 
+  @Override
   public Icon getIcon() {
     return AllIcons.RunConfigurations.Application;
   }
 
+  @Override
   public ConfigurationFactory[] getConfigurationFactories() {
     return new ConfigurationFactory[]{myFactory};
   }
@@ -87,6 +90,7 @@ public class ApplicationConfigurationType implements ConfigurationType {
   }
 
 
+  @Override
   @NotNull
   @NonNls
   public String getId() {
@@ -97,5 +101,4 @@ public class ApplicationConfigurationType implements ConfigurationType {
   public static ApplicationConfigurationType getInstance() {
     return ConfigurationTypeUtil.findConfigurationType(ApplicationConfigurationType.class);
   }
-
 }

@@ -121,7 +121,7 @@ public class IdeaLogger extends Logger {
   @Override
   public void error(String message, @Nullable Throwable t, @NotNull String... details) {
     if (t instanceof ProcessCanceledException) {
-      myLogger.error(new Throwable("Do not log ProcessCanceledException").initCause(t));
+      myLogger.error(message, new Throwable("Do not log ProcessCanceledException").initCause(t));
       throw (ProcessCanceledException)t;
     }
 

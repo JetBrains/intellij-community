@@ -244,6 +244,8 @@ keychain
 keychains
 keyframe
 keyframes
+keymap
+keymaps
 kotlin
 labeler
 labelers
@@ -577,6 +579,7 @@ twitter
 typedef
 typedefs
 typeof
+ubuntu
 unary
 unboxing
 unbuffered
@@ -613,6 +616,8 @@ verdana
 versa
 vertices
 viewlet
+viewport
+viewports
 vtlvariable
 watchlist
 webpack

@@ -90,4 +90,8 @@ public class RegExpElementVisitor extends PsiElementVisitor {
     public void visitRegExpPyCondRef(RegExpPyCondRef condRef) {
         visitRegExpElement(condRef);
     }
+
+    public void visitPosixBracketExpression(RegExpPosixBracketExpression posixBracketExpression) {
+        visitRegExpElement(posixBracketExpression);
+    }
 }

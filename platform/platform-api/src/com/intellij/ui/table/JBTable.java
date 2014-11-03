@@ -51,6 +51,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   private int myRowHeight = -1;
   private boolean myRowHeightIsExplicitlySet;
   private boolean myRowHeightIsComputing;
+  private boolean myUiUpdating = true;
 
   private Integer myMinRowHeight;
   private boolean myStriped;
@@ -139,6 +140,8 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
     //noinspection UnusedDeclaration
     boolean marker = Patches.SUN_BUG_ID_4503845; // Don't remove. It's a marker for find usages
+
+    myUiUpdating = false;
   }
 
   @Override
@@ -184,16 +187,24 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
   @Override
   public void setRowHeight(int rowHeight) {
-    myRowHeight = rowHeight;
-    myRowHeightIsExplicitlySet = true;
+    if (!myUiUpdating || !UIUtil.isUnderGTKLookAndFeel()) {
+      myRowHeight = rowHeight;
+      myRowHeightIsExplicitlySet = true;
+    }
     // call super to clean rowModel
     super.setRowHeight(rowHeight);
   }
 
   @Override
   public void updateUI() {
-    super.updateUI();
-    myMinRowHeight = null;
+    myUiUpdating = true;
+    try {
+      super.updateUI();
+      myMinRowHeight = null;
+    }
+    finally {
+      myUiUpdating = false;
+    }
   }
 
   private void repaintViewport() {
@@ -808,4 +819,3 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     }
   }
 }
-

@@ -24,6 +24,7 @@ import com.intellij.lang.annotation.Annotator;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.regexp.RegExpLanguageHosts;
 import org.intellij.lang.regexp.RegExpTT;
 import org.intellij.lang.regexp.psi.*;
@@ -31,8 +32,11 @@ import org.jetbrains.annotations.NotNull;
 
 import java.math.BigInteger;
 import java.util.HashSet;
+import java.util.Set;
 
 public final class RegExpAnnotator extends RegExpElementVisitor implements Annotator {
+  private static final Set<String> POSIX_CHARACTER_CLASSES = ContainerUtil.newHashSet(
+    "alnum", "alpha", "ascii", "blank", "cntrl", "digit", "graph", "lower", "print", "punct", "space", "upper", "word", "xdigit");
   private AnnotationHolder myHolder;
   private final RegExpLanguageHosts myLanguageHosts;
 
@@ -279,6 +283,17 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
     if (quantifier.getType() == RegExpQuantifier.Type.POSSESSIVE) {
       if (!myLanguageHosts.supportsPossessiveQuantifiers(quantifier)) {
         myHolder.createErrorAnnotation(quantifier, "Nested quantifier in regexp");
+      }
+    }
+  }
+
+  @Override
+  public void visitPosixBracketExpression(RegExpPosixBracketExpression posixBracketExpression) {
+    final String className = posixBracketExpression.getClassName();
+    if (!POSIX_CHARACTER_CLASSES.contains(className)) {
+      final Annotation annotation = myHolder.createErrorAnnotation(posixBracketExpression, "Unknown POSIX character class");
+      if (annotation != null) {
+        annotation.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
       }
     }
   }

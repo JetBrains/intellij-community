@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,13 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package test;
+package org.intellij.lang.regexp;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
 import com.intellij.util.ArrayUtil;
-import org.intellij.lang.regexp.DefaultRegExpPropertiesProvider;
 
 import java.io.File;
 import java.util.ArrayList;
