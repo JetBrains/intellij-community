@@ -538,7 +538,8 @@ def run_python_code_mac(pid, python_code, connect_debugger_tracing=False, show_d
             ])
 
     cmd.extend([
-        "-o 'process continue'",
+        "-o 'process detach'",
+        "-o 'script import os; os._exit(1)'",
     ])
 
     #print ' '.join(cmd)
