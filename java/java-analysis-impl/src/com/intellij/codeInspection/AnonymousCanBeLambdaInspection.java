@@ -211,8 +211,11 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
       if (element instanceof PsiNewExpression) {
         if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return;
         final PsiAnonymousClass anonymousClass = ((PsiNewExpression)element).getAnonymousClass();
-        
+
         LOG.assertTrue(anonymousClass != null);
+
+        final boolean voidCompatible = PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType(anonymousClass.getBaseClassType()));
+
         ChangeContextUtil.encodeContextInfo(anonymousClass, true);
         final PsiElement lambdaContext = anonymousClass.getParent().getParent();
         boolean validContext = LambdaUtil.isValidLambdaContext(lambdaContext);
@@ -254,7 +257,7 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
             if (value != null) {
               copy = value.copy();
             }
-          } else if (statements[0] instanceof PsiExpressionStatement) {
+          } else if (statements[0] instanceof PsiExpressionStatement && !(voidCompatible && lambdaContext instanceof PsiExpressionList)) {
             copy = ((PsiExpressionStatement)statements[0]).getExpression().copy();
           }
         }
