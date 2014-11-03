@@ -124,10 +124,11 @@ public class TestDataLineMarkerProvider implements LineMarkerProvider {
   }
 
   @Nullable
-  public static String getTestDataBasePath(PsiClass psiClass) {
-    final PsiAnnotation annotation = AnnotationUtil.findAnnotationInHierarchy(psiClass,
-                                                                              Collections.singleton(
-                                                                                TEST_DATA_PATH_ANNOTATION_QUALIFIED_NAME));
+  public static String getTestDataBasePath(@Nullable PsiClass psiClass) {
+    if (psiClass == null) return null;
+
+    final PsiAnnotation annotation =
+      AnnotationUtil.findAnnotationInHierarchy(psiClass, Collections.singleton(TEST_DATA_PATH_ANNOTATION_QUALIFIED_NAME));
     if (annotation != null) {
       final PsiAnnotationMemberValue value = annotation.findAttributeValue(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME);
       if (value instanceof PsiExpression) {
