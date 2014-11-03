@@ -207,6 +207,11 @@ public class ManageTemplateVariablesDialog extends DialogWrapper {
     }
 
     @Override
+    protected boolean isEmpty(TemplateVariable element) {
+      return element.getName().isEmpty() && element.getValue().isEmpty();
+    }
+
+    @Override
     protected TemplateVariable cloneElement(final TemplateVariable variable) {
       return variable.clone();
     }

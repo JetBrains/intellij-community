@@ -44,7 +44,7 @@ public class ExpandOneLineLambda2CodeBlockIntention extends Intention {
     final PsiElement body = lambdaExpression.getBody();
     LOG.assertTrue(body instanceof PsiExpression);
     String blockText = "{";
-    blockText += ((PsiExpression)body).getType() == PsiType.VOID ? "" : "return ";
+    blockText += PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType(lambdaExpression)) ? "" : "return ";
     blockText +=  body.getText() + ";}";
 
     final String resultedLambdaText = lambdaExpression.getParameterList().getText() + "->" + blockText;
