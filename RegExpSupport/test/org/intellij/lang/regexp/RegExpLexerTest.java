@@ -16,40 +16,48 @@
 package org.intellij.lang.regexp;
 
 import com.intellij.lexer.Lexer;
-import junit.framework.TestCase;
+import com.intellij.testFramework.LexerTestCase;
 
 import java.util.EnumSet;
 
 /**
  * @author Bas Leijdekkers
  */
-public class RegExpLexerTest extends TestCase {
+public class RegExpLexerTest extends LexerTestCase {
 
   public void testAmpersand() {
     final RegExpLexer lexer = new RegExpLexer(EnumSet.noneOf(RegExpCapability.class));
-    doTest("[a&&]", lexer, "CLASS_BEGIN([) CHARACTER(a) CHARACTER(&) CHARACTER(&) CLASS_END(])");
+    doTest("[a&&]", "CLASS_BEGIN ('[')\n" +
+                    "CHARACTER ('a')\n" +
+                    "CHARACTER ('&')\n" +
+                    "CHARACTER ('&')\n" +
+                    "CLASS_END (']')", lexer);
   }
 
   public void testIntersection() {
     final RegExpLexer lexer = new RegExpLexer(EnumSet.of(RegExpCapability.NESTED_CHARACTER_CLASSES));
-    doTest("[a&&]", lexer, "CLASS_BEGIN([) CHARACTER(a) ANDAND(&&) CLASS_END(])");
+    doTest("[a&&]", "CLASS_BEGIN ('[')\n" +
+                    "CHARACTER ('a')\n" +
+                    "ANDAND ('&&')\n" +
+                    "CLASS_END (']')", lexer);
   }
 
   public void testPosixBracketExpression() {
     final RegExpLexer lexer = new RegExpLexer(EnumSet.of(RegExpCapability.POSIX_BRACKET_EXPRESSIONS));
-    doTest("[[:xdigit:]]", lexer, "CLASS_BEGIN([) BRACKET_EXPRESSION_BEGIN([:) NAME(xdigit) BRACKET_EXPRESSION_END(:]) CLASS_END(])");
+    doTest("[[:xdigit:]]", "CLASS_BEGIN ('[')\n" +
+                           "BRACKET_EXPRESSION_BEGIN ('[:')\n" +
+                           "NAME ('xdigit')\n" +
+                           "BRACKET_EXPRESSION_END (':]')\n" +
+                           "CLASS_END (']')", lexer);
   }
 
-  public static void doTest(String text, Lexer lexer, String expectedTokens) {
-    lexer.start(text);
-    final StringBuilder actualTokens = new StringBuilder();
-    boolean first = true;
-    while (lexer.getTokenType() != null) {
-      if (first) first = false;
-      else actualTokens.append(" ");
-      actualTokens.append(lexer.getTokenType()).append('(').append(lexer.getTokenText()).append(')');
-      lexer.advance();
-    }
-    assertEquals(expectedTokens, actualTokens.toString());
+  @Override
+  protected Lexer createLexer() {
+    return null;
+  }
+
+  @Override
+  protected String getDirPath() {
+    return "";
   }
 }
