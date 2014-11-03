@@ -38,6 +38,9 @@ def __lldb_init_module(debugger, internal_dict):
 
                         print('Will settrace in: %s' % (frame,))
 
+                        for f in thread:
+                            print(f)
+
                         res = frame.EvaluateExpression("(int) SetSysTraceFunc(%s, %s)" % (
                             show_debug_info, is_debug), options)
                         error = res.GetError()
