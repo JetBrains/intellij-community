@@ -1147,6 +1147,12 @@ class XInternalError {}
     assertFirstStringItems "XInternalError", "XInternalTimerServiceController"
   }
 
+  public void testMetaAnnotation() {
+    myFixture.configureByText "a.java", "@<caret> @interface Anno {}"
+    myFixture.complete(CompletionType.BASIC)
+    assert myFixture.lookup.items.find { it.lookupString == 'Retention' }
+  }
+
   public void testAnnotationClassFromWithinAnnotation() { doTest() }
 
   public void testStaticallyImportedFieldsTwice() {

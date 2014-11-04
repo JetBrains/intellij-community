@@ -92,7 +92,7 @@ public class JavaNoVariantsDelegator extends CompletionContributor {
       suggestCollectionUtilities(parameters, result, position);
 
       if (parameters.getInvocationCount() <= 1 &&
-          JavaCompletionContributor.mayStartClassName(result) &&
+          (JavaCompletionContributor.mayStartClassName(result) || suggestMetaAnnotations(parameters)) &&
           JavaCompletionContributor.isClassNamePossible(parameters)) {
         suggestNonImportedClasses(parameters, result, null);
         return;
