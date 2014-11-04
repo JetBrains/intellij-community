@@ -115,6 +115,58 @@ public class Foo extends goo.Super {
 '''
   }
 
+  public void testImportFoldingWithConflicts() {
+
+    myFixture.addClass 'package p1; public class B {}'
+    myFixture.addClass 'package p1; public class A1 {}'
+    myFixture.addClass 'package p1; public class A2 {}'
+    myFixture.addClass 'package p1; public class A3 {}'
+    myFixture.addClass 'package p1; public class A4 {}'
+    myFixture.addClass 'package p1; public class A5 {}'
+
+    myFixture.addClass 'package p2; public class B {}'
+    myFixture.configureByText 'C.java', '''package p2;
+
+import p1.A1;
+import p1.A2;
+import p1.A3;
+import p1.A4;
+import p1.B;
+
+class C {
+
+     A1 a1;
+     A2 a2;
+     A3 a3;
+     A4 a4;
+     A<caret>5 a5;
+
+     B b;
+}
+
+'''
+    importClass()
+
+    myFixture.checkResult '''package p2;
+
+import p1.*;
+import p1.B;
+
+class C {
+
+     A1 a1;
+     A2 a2;
+     A3 a3;
+     A4 a4;
+     A5 a5;
+
+     B b;
+}
+
+'''
+  }
+
+
   public void testAnnotatedImport() {
     myFixture.configureByText 'a.java', '''
 import java.lang.annotation.*;
