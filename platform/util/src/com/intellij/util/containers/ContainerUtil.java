@@ -1190,24 +1190,6 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   @NotNull
-  public static <T> List<T> concatenate(@NotNull final List<T> list1, @NotNull final List<T> list2) {
-    if (list1.isEmpty() && list2.isEmpty()) {
-      return Collections.emptyList();
-    }
-    else if (list1.isEmpty()) {
-      //noinspection unchecked
-      return list2;
-    }
-    else if (list2.isEmpty()) {
-      //noinspection unchecked
-      return list1;
-    }
-
-    list1.addAll(list2);
-    return list1;
-  }
-
-  @NotNull
   @Contract(pure=true)
   public static <T, V> List<T> concat(@NotNull V[] array, @NotNull Function<V, Collection<? extends T>> fun) {
     return concat(Arrays.asList(array), fun);

@@ -18,9 +18,9 @@ package com.intellij.psi.augment;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -33,11 +33,15 @@ public abstract class PsiAugmentProvider {
 
   @NotNull
   public static <Psi extends PsiElement> List<Psi> collectAugments(@NotNull final PsiElement element, @NotNull final Class<Psi> type) {
-    List<Psi> augments = Collections.emptyList();
+    List<Psi> result = Collections.emptyList();
     for (PsiAugmentProvider provider : Extensions.getExtensions(EP_NAME)) {
-      augments = ContainerUtil.concatenate(augments, provider.getAugments(element, type));
+      List<Psi> augments = provider.getAugments(element, type);
+      if (!augments.isEmpty()) {
+        if (result.isEmpty()) result = new ArrayList<Psi>(augments.size());
+        result.addAll(augments);
+      }
     }
 
-    return augments;
+    return result;
   }
 }
