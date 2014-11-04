@@ -75,18 +75,18 @@ public class VarDefinitionHelper {
           varindex++;
         }
         else {
-          varindex += md.params[i - 1].stack_size;
+          varindex += md.params[i - 1].stackSize;
         }
       }
       else {
-        varindex += md.params[i].stack_size;
+        varindex += md.params[i].stackSize;
       }
     }
 
     if (thisvar) {
       StructClass current_class = (StructClass)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS);
 
-      varproc.getThisvars().put(new VarVersionPaar(0, 0), current_class.qualifiedName);
+      varproc.getThisVars().put(new VarVersionPaar(0, 0), current_class.qualifiedName);
       varproc.setVarName(new VarVersionPaar(0, 0), "this");
       vc.addName("this");
     }

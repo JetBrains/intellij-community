@@ -15,11 +15,6 @@
  */
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Set;
-
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.TextBuffer;
@@ -30,82 +25,79 @@ import org.jetbrains.java.decompiler.struct.gen.FieldDescriptor;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
+import java.util.*;
+
 public class ConstExprent extends Exprent {
-  private static final HashMap<Integer, String> escapes = new HashMap<Integer, String>();
+  private static final Map<Integer, String> ESCAPES = new HashMap<Integer, String>() {{
+    put(new Integer(0x8), "\\b");   /* \u0008: backspace BS */
+    put(new Integer(0x9), "\\t");   /* \u0009: horizontal tab HT */
+    put(new Integer(0xA), "\\n");   /* \u000a: linefeed LF */
+    put(new Integer(0xC), "\\f");   /* \u000c: form feed FF */
+    put(new Integer(0xD), "\\r");   /* \u000d: carriage return CR */
+    put(new Integer(0x22), "\\\""); /* \u0022: double quote " */
+    put(new Integer(0x27), "\\\'"); /* \u0027: single quote ' */
+    put(new Integer(0x5C), "\\\\"); /* \u005c: backslash \ */
+  }};
 
-  static {
-    escapes.put(new Integer(0x8), "\\b"); /* \u0008: backspace BS */
-    escapes.put(new Integer(0x9), "\\t"); /* \u0009: horizontal tab HT */
-    escapes.put(new Integer(0xA), "\\n"); /* \u000a: linefeed LF */
-    escapes.put(new Integer(0xC), "\\f"); /* \u000c: form feed FF */
-    escapes.put(new Integer(0xD), "\\r"); /* \u000d: carriage return CR */
-    escapes.put(new Integer(0x22), "\\\""); /* \u0022: double quote " */
-    escapes.put(new Integer(0x27), "\\\'"); /* \u0027: single quote ' */
-    escapes.put(new Integer(0x5C), "\\\\"); /* \u005c: backslash \ */
+  private VarType constType;
+  private final Object value;
+  private final boolean boolPermitted;
+
+  public ConstExprent(int val, boolean boolPermitted, Set<Integer> bytecodeOffsets) {
+    this(guessType(val, boolPermitted), new Integer(val), boolPermitted, bytecodeOffsets);
   }
 
-
-  private VarType consttype;
-
-  private Object value;
-
-  private boolean boolPermitted;
-
-  {
-    this.type = EXPRENT_CONST;
+  public ConstExprent(VarType constType, Object value, Set<Integer> bytecodeOffsets) {
+    this(constType, value, false, bytecodeOffsets);
   }
 
-  public ConstExprent(int val, boolean boolPermitted, Set<Integer> bytecode_offsets) {
-
+  private ConstExprent(VarType constType, Object value, boolean boolPermitted, Set<Integer> bytecodeOffsets) {
+    super(EXPRENT_CONST);
+    this.constType = constType;
+    this.value = value;
     this.boolPermitted = boolPermitted;
+    addBytecodeOffsets(bytecodeOffsets);
+  }
+
+  private static VarType guessType(int val, boolean boolPermitted) {
     if (boolPermitted) {
-      consttype = VarType.VARTYPE_BOOLEAN;
+      VarType constType = VarType.VARTYPE_BOOLEAN;
       if (val != 0 && val != 1) {
-        consttype = consttype.copy();
-        consttype.convinfo |= VarType.FALSEBOOLEAN;
+        constType = constType.copy(true);
       }
+      return constType;
+    }
+    else if (0 <= val && val <= 127) {
+      return VarType.VARTYPE_BYTECHAR;
+    }
+    else if (-128 <= val && val <= 127) {
+      return VarType.VARTYPE_BYTE;
+    }
+    else if (0 <= val && val <= 32767) {
+      return VarType.VARTYPE_SHORTCHAR;
+    }
+    else if (-32768 <= val && val <= 32767) {
+      return VarType.VARTYPE_SHORT;
+    }
+    else if (0 <= val && val <= 0xFFFF) {
+      return VarType.VARTYPE_CHAR;
     }
     else {
-      if (0 <= val && val <= 127) {
-        consttype = VarType.VARTYPE_BYTECHAR;
-      }
-      else if (-128 <= val && val <= 127) {
-        consttype = VarType.VARTYPE_BYTE;
-      }
-      else if (0 <= val && val <= 32767) {
-        consttype = VarType.VARTYPE_SHORTCHAR;
-      }
-      else if (-32768 <= val && val <= 32767) {
-        consttype = VarType.VARTYPE_SHORT;
-      }
-      else if (0 <= val && val <= 0xFFFF) {
-        consttype = VarType.VARTYPE_CHAR;
-      }
-      else {
-        consttype = VarType.VARTYPE_INT;
-      }
+      return VarType.VARTYPE_INT;
     }
-    value = new Integer(val);
-
-    addBytecodeOffsets(bytecode_offsets);
-  }
-
-  public ConstExprent(VarType consttype, Object value, Set<Integer> bytecode_offsets) {
-    this.consttype = consttype;
-    this.value = value;
-
-    addBytecodeOffsets(bytecode_offsets);
   }
 
   @Override
   public Exprent copy() {
-    return new ConstExprent(consttype, value, bytecode);
+    return new ConstExprent(constType, value, bytecode);
   }
 
+  @Override
   public VarType getExprType() {
-    return consttype;
+    return constType;
   }
 
+  @Override
   public int getExprentUse() {
     return Exprent.MULTIPLE_USES | Exprent.SIDE_EFFECTS_FREE;
   }
@@ -121,16 +113,16 @@ public class ConstExprent extends Exprent {
 
     tracer.addMapping(bytecode);
 
-    if (consttype.type != CodeConstants.TYPE_NULL && value == null) {
-      return new TextBuffer(ExprProcessor.getCastTypeName(consttype));
+    if (constType.type != CodeConstants.TYPE_NULL && value == null) {
+      return new TextBuffer(ExprProcessor.getCastTypeName(constType));
     }
     else {
-      switch (consttype.type) {
+      switch (constType.type) {
         case CodeConstants.TYPE_BOOLEAN:
           return new TextBuffer(Boolean.toString(((Integer)value).intValue() != 0));
         case CodeConstants.TYPE_CHAR:
           Integer val = (Integer)value;
-          String ret = escapes.get(val);
+          String ret = ESCAPES.get(val);
           if (ret == null) {
             char c = (char)val.intValue();
             if (c >= 32 && c < 127 || !ascii && InterpreterUtil.isPrintableUnicode(c)) {
@@ -256,10 +248,10 @@ public class ConstExprent extends Exprent {
         case CodeConstants.TYPE_NULL:
           return new TextBuffer("null");
         case CodeConstants.TYPE_OBJECT:
-          if (consttype.equals(VarType.VARTYPE_STRING)) {
+          if (constType.equals(VarType.VARTYPE_STRING)) {
             return new TextBuffer(convertStringToJava(value.toString(), ascii)).enclose("\"", "\"");
           }
-          else if (consttype.equals(VarType.VARTYPE_CLASS)) {
+          else if (constType.equals(VarType.VARTYPE_CLASS)) {
             String strval = value.toString();
 
             VarType classtype;
@@ -321,19 +313,18 @@ public class ConstExprent extends Exprent {
     return buffer.toString();
   }
 
-
+  @Override
   public boolean equals(Object o) {
     if (o == this) return true;
     if (o == null || !(o instanceof ConstExprent)) return false;
 
     ConstExprent cn = (ConstExprent)o;
-    return InterpreterUtil.equalObjects(consttype, cn.getConsttype()) &&
+    return InterpreterUtil.equalObjects(constType, cn.getConstType()) &&
            InterpreterUtil.equalObjects(value, cn.getValue());
   }
 
   public boolean hasBooleanValue() {
-
-    switch (consttype.type) {
+    switch (constType.type) {
       case CodeConstants.TYPE_BOOLEAN:
       case CodeConstants.TYPE_CHAR:
       case CodeConstants.TYPE_BYTE:
@@ -350,8 +341,7 @@ public class ConstExprent extends Exprent {
   }
 
   public boolean hasValueOne() {
-
-    switch (consttype.type) {
+    switch (constType.type) {
       case CodeConstants.TYPE_BOOLEAN:
       case CodeConstants.TYPE_CHAR:
       case CodeConstants.TYPE_BYTE:
@@ -372,7 +362,6 @@ public class ConstExprent extends Exprent {
   }
 
   public static ConstExprent getZeroConstant(int type) {
-
     switch (type) {
       case CodeConstants.TYPE_INT:
         return new ConstExprent(VarType.VARTYPE_INT, new Integer(0), null);
@@ -387,12 +376,12 @@ public class ConstExprent extends Exprent {
     throw new RuntimeException("Invalid argument!");
   }
 
-  public VarType getConsttype() {
-    return consttype;
+  public VarType getConstType() {
+    return constType;
   }
 
-  public void setConsttype(VarType consttype) {
-    this.consttype = consttype;
+  public void setConstType(VarType constType) {
+    this.constType = constType;
   }
 
   public Object getValue() {
@@ -405,9 +394,5 @@ public class ConstExprent extends Exprent {
 
   public boolean isBoolPermitted() {
     return boolPermitted;
-  }
-
-  public void setBoolPermitted(boolean boolPermitted) {
-    this.boolPermitted = boolPermitted;
   }
 }

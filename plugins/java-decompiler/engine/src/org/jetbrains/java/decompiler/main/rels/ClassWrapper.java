@@ -124,7 +124,7 @@ public class ClassWrapper {
 
           int paramcount = 0;
           if (thisvar) {
-            varproc.getThisvars().put(new VarVersionPaar(0, 0), classStruct.qualifiedName);
+            varproc.getThisVars().put(new VarVersionPaar(0, 0), classStruct.qualifiedName);
             paramcount = 1;
           }
           paramcount += md.params.length;
@@ -138,11 +138,11 @@ public class ClassWrapper {
                 varindex++;
               }
               else {
-                varindex += md.params[i - 1].stack_size;
+                varindex += md.params[i - 1].stackSize;
               }
             }
             else {
-              varindex += md.params[i].stack_size;
+              varindex += md.params[i].stackSize;
             }
           }
         }

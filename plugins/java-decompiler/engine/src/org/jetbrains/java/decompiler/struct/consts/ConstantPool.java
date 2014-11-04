@@ -20,6 +20,7 @@ import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.modules.renamer.PoolInterceptor;
 import org.jetbrains.java.decompiler.struct.gen.FieldDescriptor;
 import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
+import org.jetbrains.java.decompiler.struct.gen.NewClassNameBuilder;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.util.DataInputFullStream;
 
@@ -28,7 +29,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ConstantPool {
+public class ConstantPool implements NewClassNameBuilder {
 
   public static final int FIELD = 1;
   public static final int METHOD = 2;
@@ -154,8 +155,7 @@ public class ConstantPool {
         elementName = newElement.split(" ")[1];
       }
 
-      int type = elementType == FIELD ? CodeConstants.CONSTANT_Fieldref : CodeConstants.CONSTANT_Methodref;
-      String newDescriptor = buildNewDescriptor(type, descriptor);
+      String newDescriptor = buildNewDescriptor(elementType == FIELD, descriptor);
       if (newDescriptor != null) {
         descriptor = newDescriptor;
       }
@@ -192,7 +192,7 @@ public class ConstantPool {
          ln.type == CodeConstants.CONSTANT_InterfaceMethodref)) {
       String newClassName = buildNewClassname(ln.classname);
       String newElement = interceptor.getName(ln.classname + " " + ln.elementname + " " + ln.descriptor);
-      String newDescriptor = buildNewDescriptor(ln.type, ln.descriptor);
+      String newDescriptor = buildNewDescriptor(ln.type == CodeConstants.CONSTANT_Fieldref, ln.descriptor);
 
       if (newClassName != null || newElement != null || newDescriptor != null) {
         String className = newClassName == null ? ln.classname : newClassName;
@@ -205,15 +205,16 @@ public class ConstantPool {
     return ln;
   }
 
-  private String buildNewClassname(String className) {
+  @Override
+  public String buildNewClassname(String className) {
     VarType vt = new VarType(className, true);
 
     String newName = interceptor.getName(vt.value);
     if (newName != null) {
       StringBuilder buffer = new StringBuilder();
 
-      if (vt.arraydim > 0) {
-        for (int i = 0; i < vt.arraydim; i++) {
+      if (vt.arrayDim > 0) {
+        for (int i = 0; i < vt.arrayDim; i++) {
           buffer.append("[");
         }
 
@@ -229,53 +230,12 @@ public class ConstantPool {
     return null;
   }
 
-  private String buildNewDescriptor(int type, String descriptor) {
-    boolean updated = false;
-
-    if (type == CodeConstants.CONSTANT_Fieldref) {
-      FieldDescriptor fd = FieldDescriptor.parseDescriptor(descriptor);
-
-      VarType fType = fd.type;
-      if (fType.type == CodeConstants.TYPE_OBJECT) {
-        String newClassName = buildNewClassname(fType.value);
-        if (newClassName != null) {
-          fType.value = newClassName;
-          updated = true;
-        }
-      }
-
-      if (updated) {
-        return fd.getDescriptor();
-      }
+  private String buildNewDescriptor(boolean isField, String descriptor) {
+    if (isField) {
+      return FieldDescriptor.parseDescriptor(descriptor).buildNewDescriptor(this);
     }
     else {
-      MethodDescriptor md = MethodDescriptor.parseDescriptor(descriptor);
-
-      // parameters
-      for (VarType paramType : md.params) {
-        if (paramType.type == CodeConstants.TYPE_OBJECT) {
-          String newClassName = buildNewClassname(paramType.value);
-          if (newClassName != null) {
-            paramType.value = newClassName;
-            updated = true;
-          }
-        }
-      }
-
-      // return value
-      if (md.ret.type == CodeConstants.TYPE_OBJECT) {
-        String newClassName = buildNewClassname(md.ret.value);
-        if (newClassName != null) {
-          md.ret.value = newClassName;
-          updated = true;
-        }
-      }
-
-      if (updated) {
-        return md.getDescriptor();
-      }
+      return MethodDescriptor.parseDescriptor(descriptor).buildNewDescriptor(this);
     }
-
-    return null;
   }
 }

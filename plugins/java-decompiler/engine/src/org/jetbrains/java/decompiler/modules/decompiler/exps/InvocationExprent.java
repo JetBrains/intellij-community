@@ -33,9 +33,9 @@ import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.jetbrains.java.decompiler.util.ListStack;
+import org.jetbrains.java.decompiler.util.TextUtil;
 
 import java.util.*;
-
 
 public class InvocationExprent extends Exprent {
 
@@ -49,40 +49,25 @@ public class InvocationExprent extends Exprent {
   public static final int TYP_INIT = 2;
   public static final int TYP_CLINIT = 3;
 
-  public static final int CONSTRUCTOR_NOT = 0;
-  public static final int CONSTRUCTOR_THIS = 1;
-  public static final int CONSTRUCTOR_SUPER = 2;
-
   private static final BitSet EMPTY_BIT_SET = new BitSet(0);
 
   private String name;
-
   private String classname;
-
   private boolean isStatic;
-
   private int functype = TYP_GENERAL;
-
   private Exprent instance;
-
   private MethodDescriptor descriptor;
-
   private String stringDescriptor;
-
-  private String invoke_dynamic_classsuffix;
-
+  private String invokeDynamicClassSuffix;
   private int invocationTyp = INVOKE_VIRTUAL;
-
   private List<Exprent> lstParameters = new ArrayList<Exprent>();
 
-  {
-    this.type = EXPRENT_INVOCATION;
-  }
-
   public InvocationExprent() {
+    super(EXPRENT_INVOCATION);
   }
 
-  public InvocationExprent(int opcode, LinkConstant cn, ListStack<Exprent> stack, int dynamic_invokation_type, Set<Integer> bytecode_offsets) {
+  public InvocationExprent(int opcode, LinkConstant cn, ListStack<Exprent> stack, int dynamicInvocationType, Set<Integer> bytecodeOffsets) {
+    this();
 
     name = cn.elementname;
     classname = cn.classname;
@@ -104,7 +89,7 @@ public class InvocationExprent extends Exprent {
         invocationTyp = INVOKE_DYNAMIC;
 
         classname = "java/lang/Class"; // dummy class name
-        invoke_dynamic_classsuffix = "##Lambda_" + cn.index1 + "_" + cn.index2;
+        invokeDynamicClassSuffix = "##Lambda_" + cn.index1 + "_" + cn.index2;
     }
 
     if ("<init>".equals(name)) {
@@ -117,17 +102,17 @@ public class InvocationExprent extends Exprent {
     stringDescriptor = cn.descriptor;
     descriptor = MethodDescriptor.parseDescriptor(cn.descriptor);
 
-    for (int i = 0; i < descriptor.params.length; i++) {
+    for (VarType ignored : descriptor.params) {
       lstParameters.add(0, stack.pop());
     }
 
     if (opcode == CodeConstants.opc_invokedynamic) {
-      if (dynamic_invokation_type == CodeConstants.CONSTANT_MethodHandle_REF_invokeStatic) {
+      if (dynamicInvocationType == CodeConstants.CONSTANT_MethodHandle_REF_invokeStatic) {
         isStatic = true;
       }
       else {
-        instance = lstParameters
-          .get(0); // FIXME: remove the first parameter completely from the list. It's the object type for a virtual lambda method.
+        // FIXME: remove the first parameter completely from the list. It's the object type for a virtual lambda method.
+        instance = lstParameters.get(0);
       }
     }
     else if (opcode == CodeConstants.opc_invokestatic) {
@@ -137,10 +122,12 @@ public class InvocationExprent extends Exprent {
       instance = stack.pop();
     }
 
-    addBytecodeOffsets(bytecode_offsets);
+    addBytecodeOffsets(bytecodeOffsets);
   }
 
   private InvocationExprent(InvocationExprent expr) {
+    this();
+
     name = expr.getName();
     classname = expr.getClassname();
     isStatic = expr.isStatic();
@@ -153,17 +140,17 @@ public class InvocationExprent extends Exprent {
     stringDescriptor = expr.getStringDescriptor();
     descriptor = expr.getDescriptor();
     lstParameters = new ArrayList<Exprent>(expr.getLstParameters());
-    for (int i = 0; i < lstParameters.size(); i++) {
-      lstParameters.set(i, lstParameters.get(i).copy());
-    }
-    bytecode.addAll(expr.bytecode);
+    ExprProcessor.copyEntries(lstParameters);
+
+    addBytecodeOffsets(expr.bytecode);
   }
 
-
+  @Override
   public VarType getExprType() {
     return descriptor.ret;
   }
 
+  @Override
   public CheckTypesResult checkExprTypeBounds() {
     CheckTypesResult result = new CheckTypesResult();
 
@@ -172,13 +159,14 @@ public class InvocationExprent extends Exprent {
 
       VarType leftType = descriptor.params[i];
 
-      result.addMinTypeExprent(parameter, VarType.getMinTypeInFamily(leftType.type_family));
+      result.addMinTypeExprent(parameter, VarType.getMinTypeInFamily(leftType.typeFamily));
       result.addMaxTypeExprent(parameter, leftType);
     }
 
     return result;
   }
 
+  @Override
   public List<Exprent> getAllExprents() {
     List<Exprent> lst = new ArrayList<Exprent>();
     if (instance != null) {
@@ -203,11 +191,11 @@ public class InvocationExprent extends Exprent {
 
     tracer.addMapping(bytecode);
 
-    if (invocationTyp == INVOKE_DYNAMIC) {
+    /*if (invocationTyp == INVOKE_DYNAMIC) {
       //			ClassNode node = (ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASSNODE);
       //
       //			if(node != null) {
-      //				ClassNode lambda_node = DecompilerContext.getClassprocessor().getMapRootClasses().get(node.classStruct.qualifiedName + invoke_dynamic_classsuffix);
+      //				ClassNode lambda_node = DecompilerContext.getClassprocessor().getMapRootClasses().get(node.classStruct.qualifiedName + invokeDynamicClassSuffix);
       //				if(lambda_node != null) {
       //
       //					String typename = ExprProcessor.getCastTypeName(lambda_node.anonimousClassType);
@@ -234,7 +222,7 @@ public class InvocationExprent extends Exprent {
       //			}
 
     }
-    else if (isStatic) {
+    else*/ if (isStatic) {
 
       ClassNode node = (ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS_NODE);
       if (node == null || !classname.equals(node.classStruct.qualifiedName)) {
@@ -257,7 +245,7 @@ public class InvocationExprent extends Exprent {
 
         String this_classname = null;
         if (vproc != null) {
-          this_classname = vproc.getThisvars().get(varpaar);
+          this_classname = vproc.getThisVars().get(varpaar);
         }
 
         if (this_classname != null) {
@@ -273,15 +261,9 @@ public class InvocationExprent extends Exprent {
 
       if (functype == TYP_GENERAL) {
         if (super_qualifier != null) {
-          StructClass current_class = ((ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS_NODE)).classStruct;
-
-          if (!super_qualifier.equals(current_class.qualifiedName)) {
-            buf.append(DecompilerContext.getImportCollector().getShortName(ExprProcessor.buildJavaClassName(super_qualifier)));
-            buf.append(".");
-          }
-          buf.append("super");
+          TextUtil.writeQualifiedSuper(buf, super_qualifier);
         }
-        else {
+        else if (instance != null) {
           TextBuffer res = instance.toJava(indent, tracer);
 
           VarType rightType = instance.getExprType();
@@ -332,9 +314,7 @@ public class InvocationExprent extends Exprent {
           buf.append("this(");
         }
         else {
-          buf.append(instance.toJava(indent, tracer));
-          buf.append(".<init>(");
-          //				throw new RuntimeException("Unrecognized invocation of <init>"); // FIXME: activate
+          throw new RuntimeException("Unrecognized invocation of <init>");
         }
     }
 
@@ -362,7 +342,7 @@ public class InvocationExprent extends Exprent {
     boolean firstParameter = true;
     int start = isEnum ? 2 : 0;
     for (int i = start; i < lstParameters.size(); i++) {
-      if (sigFields == null || sigFields.get(i) == null) {
+      if (sigFields == null) {
         if (!firstParameter) {
           buf.append(", ");
         }
@@ -393,7 +373,7 @@ public class InvocationExprent extends Exprent {
         MethodDescriptor md = MethodDescriptor.parseDescriptor(mt.getDescriptor());
         if (md.params.length == descriptor.params.length) {
           for (int i = 0; i < md.params.length; i++) {
-            if (md.params[i].type_family != descriptor.params[i].type_family) {
+            if (md.params[i].typeFamily != descriptor.params[i].typeFamily) {
               continue nextMethod;
             }
           }
@@ -433,6 +413,20 @@ public class InvocationExprent extends Exprent {
     return ambiguous;
   }
 
+  @Override
+  public void replaceExprent(Exprent oldExpr, Exprent newExpr) {
+    if (oldExpr == instance) {
+      instance = newExpr;
+    }
+
+    for (int i = 0; i < lstParameters.size(); i++) {
+      if (oldExpr == lstParameters.get(i)) {
+        lstParameters.set(i, newExpr);
+      }
+    }
+  }
+
+  @Override
   public boolean equals(Object o) {
     if (o == this) return true;
     if (o == null || !(o instanceof InvocationExprent)) return false;
@@ -445,18 +439,6 @@ public class InvocationExprent extends Exprent {
            InterpreterUtil.equalObjects(descriptor, it.getDescriptor()) &&
            functype == it.getFunctype() &&
            InterpreterUtil.equalLists(lstParameters, it.getLstParameters());
-  }
-
-  public void replaceExprent(Exprent oldexpr, Exprent newexpr) {
-    if (oldexpr == instance) {
-      instance = newexpr;
-    }
-
-    for (int i = 0; i < lstParameters.size(); i++) {
-      if (oldexpr == lstParameters.get(i)) {
-        lstParameters.set(i, newexpr);
-      }
-    }
   }
 
   public List<Exprent> getLstParameters() {
@@ -527,11 +509,7 @@ public class InvocationExprent extends Exprent {
     return invocationTyp;
   }
 
-  public void setInvocationTyp(int invocationTyp) {
-    this.invocationTyp = invocationTyp;
-  }
-
   public String getInvokeDynamicClassSuffix() {
-    return invoke_dynamic_classsuffix;
+    return invokeDynamicClassSuffix;
   }
 }

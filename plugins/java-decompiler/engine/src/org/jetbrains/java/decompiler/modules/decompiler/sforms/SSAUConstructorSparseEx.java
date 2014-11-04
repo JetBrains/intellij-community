@@ -177,7 +177,7 @@ public class SSAUConstructorSparseEx {
     switch (expr.type) {
       case Exprent.EXPRENT_ASSIGNMENT:
         AssignmentExprent assexpr = (AssignmentExprent)expr;
-        if (assexpr.getCondtype() == AssignmentExprent.CONDITION_NONE) {
+        if (assexpr.getCondType() == AssignmentExprent.CONDITION_NONE) {
           Exprent dest = assexpr.getLeft();
           if (dest.type == Exprent.EXPRENT_VAR) {
             varassign = (VarExprent)dest;
@@ -186,7 +186,7 @@ public class SSAUConstructorSparseEx {
         break;
       case Exprent.EXPRENT_FUNCTION:
         FunctionExprent func = (FunctionExprent)expr;
-        switch (func.getFunctype()) {
+        switch (func.getFuncType()) {
           case FunctionExprent.FUNCTION_IIF:
             processExprent(func.getLstOperands().get(0), varmaparr, stat, calcLiveVars);
 
@@ -271,7 +271,7 @@ public class SSAUConstructorSparseEx {
     }
     else if (expr.type == Exprent.EXPRENT_INVOCATION ||
              (expr.type == Exprent.EXPRENT_ASSIGNMENT && ((AssignmentExprent)expr).getLeft().type == Exprent.EXPRENT_FIELD) ||
-             (expr.type == Exprent.EXPRENT_NEW && ((NewExprent)expr).getNewtype().type == CodeConstants.TYPE_OBJECT) ||
+             (expr.type == Exprent.EXPRENT_NEW && ((NewExprent)expr).getNewType().type == CodeConstants.TYPE_OBJECT) ||
              expr.type == Exprent.EXPRENT_FUNCTION) {
 
       boolean ismmpp = true;
@@ -281,7 +281,7 @@ public class SSAUConstructorSparseEx {
         ismmpp = false;
 
         FunctionExprent fexpr = (FunctionExprent)expr;
-        if (fexpr.getFunctype() >= FunctionExprent.FUNCTION_IMM && fexpr.getFunctype() <= FunctionExprent.FUNCTION_PPI) {
+        if (fexpr.getFuncType() >= FunctionExprent.FUNCTION_IMM && fexpr.getFuncType() <= FunctionExprent.FUNCTION_PPI) {
           if (fexpr.getLstOperands().get(0).type == Exprent.EXPRENT_FIELD) {
             ismmpp = true;
           }
@@ -320,7 +320,7 @@ public class SSAUConstructorSparseEx {
     else if (expr.type == Exprent.EXPRENT_FUNCTION) { // MM or PP function
       FunctionExprent func = (FunctionExprent)expr;
 
-      switch (func.getFunctype()) {
+      switch (func.getFuncType()) {
         case FunctionExprent.FUNCTION_IMM:
         case FunctionExprent.FUNCTION_MMI:
         case FunctionExprent.FUNCTION_IPP:
@@ -777,11 +777,11 @@ public class SSAUConstructorSparseEx {
           varindex++;
         }
         else {
-          varindex += md.params[i - 1].stack_size;
+          varindex += md.params[i - 1].stackSize;
         }
       }
       else {
-        varindex += md.params[i].stack_size;
+        varindex += md.params[i].stackSize;
       }
     }
 
