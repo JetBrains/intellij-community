@@ -83,4 +83,13 @@ public class ImplicitNumericConversion
     private void polyadic() {
         long l = <warning descr="Implicit numeric conversion of '1 + 2 + 3' from 'int' to 'long'">1 + 2 + 3</warning>;
     }
+
+    void equality(int i, long l, byte b, double d, float f) {
+        if (<warning descr="Implicit numeric conversion of 'i' from 'int' to 'long'">i</warning> == l) {
+        } else if (i == <warning descr="Implicit numeric conversion of 'b' from 'byte' to 'int'">b</warning>) {}
+        if (<warning descr="Implicit numeric conversion of 'i' from 'int' to 'double'">i</warning> == d) {}
+        if (<warning descr="Implicit numeric conversion of 'l' from 'long' to 'float'">l</warning> == f) {}
+        if (true == true == (Boolean)new Object()) {}
+        if (null == null) {}
+    }
 }
