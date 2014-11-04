@@ -366,11 +366,13 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
   public JavaResolveResult[] multiResolve(final boolean incompleteCode) {
     FileElement fileElement = SharedImplUtil.findFileElement(this);
     if (fileElement == null) {
+      PsiUtilCore.ensureValid(this);
       LOG.error("fileElement == null!");
       return JavaResolveResult.EMPTY_ARRAY;
     }
     final PsiManagerEx manager = fileElement.getManager();
     if (manager == null) {
+      PsiUtilCore.ensureValid(this);
       LOG.error("getManager() == null!");
       return JavaResolveResult.EMPTY_ARRAY;
     }
