@@ -1,8 +1,9 @@
-package com.intellij.xdebugger;
+package org.jetbrains.debugger;
 
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.util.Consumer;
 import com.intellij.util.PairConsumer;
+import com.intellij.xdebugger.Obsolescent;
 import org.jetbrains.annotations.NotNull;
 
 public final class ObsolescentAsyncResults {
