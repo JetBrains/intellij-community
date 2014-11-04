@@ -1190,7 +1190,7 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   @NotNull
-  public static <T> List<T> addAll(@NotNull final List<T> list1, @NotNull final List<T> list2) {
+  public static <T> List<T> concatenate(@NotNull final List<T> list1, @NotNull final List<T> list2) {
     if (list1.isEmpty() && list2.isEmpty()) {
       return Collections.emptyList();
     }

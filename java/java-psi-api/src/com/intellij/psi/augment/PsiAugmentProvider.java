@@ -35,7 +35,7 @@ public abstract class PsiAugmentProvider {
   public static <Psi extends PsiElement> List<Psi> collectAugments(@NotNull final PsiElement element, @NotNull final Class<Psi> type) {
     List<Psi> augments = Collections.emptyList();
     for (PsiAugmentProvider provider : Extensions.getExtensions(EP_NAME)) {
-      augments = ContainerUtil.addAll(augments, provider.getAugments(element, type));
+      augments = ContainerUtil.concatenate(augments, provider.getAugments(element, type));
     }
 
     return augments;
