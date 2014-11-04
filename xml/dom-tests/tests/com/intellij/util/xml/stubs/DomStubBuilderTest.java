@@ -23,6 +23,7 @@ import com.intellij.psi.stubs.ObjectStubTree;
 import com.intellij.psi.stubs.StubTreeLoader;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.XmlName;
@@ -47,11 +48,24 @@ public class DomStubBuilderTest extends DomStubTest {
   public void testFoo() throws Exception {
     doBuilderTest("foo.xml", "File:foo\n" +
                              "  Element:foo\n" +
-                             "    Element:id\n" +
+                             "    Element:id:foo\n" +
                              "    Element:bar\n" +
                              "      Attribute:string:xxx\n" +
                              "      Attribute:int:666\n" +
                              "    Element:bar\n");
+  }
+
+  public void testFooNoStubbedValueWhenNestedTags() {
+    final ElementStub rootStub = getRootStub("foo.xml");
+    assertEquals("", rootStub.getValue());
+
+    final DomStub fooStub = assertOneElement(rootStub.getChildrenStubs());
+    final ElementStub fooElementStub = assertInstanceOf(fooStub, ElementStub.class);
+    assertEquals("", fooElementStub.getValue());
+
+    final DomStub idStub = ContainerUtil.getFirstItem(fooStub.getChildrenStubs());
+    final ElementStub idElementStub = assertInstanceOf(idStub, ElementStub.class);
+    assertEquals("foo", idElementStub.getValue());
   }
 
   public void testIncompleteAttribute() throws Exception {

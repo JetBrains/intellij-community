@@ -87,6 +87,6 @@ public class DomStubBuilder implements BinaryFileStubBuilder {
 
   @Override
   public int getStubVersion() {
-    return 19 + DomApplicationComponent.getInstance().getCumulativeVersion();
+    return 20 + DomApplicationComponent.getInstance().getCumulativeVersion();
   }
 }

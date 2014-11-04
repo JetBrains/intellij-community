@@ -64,7 +64,7 @@ class DomStubBuilderVisitor {
                                          index,
                                          description instanceof CustomDomChildrenDescription,
                                          elementClass == null ? null : StringRef.fromNullableString(elementClass),
-                                         tag.getValue().getText());
+                                         tag.getSubTags().length == 0 ? tag.getValue().getText() : "");
 
       for (XmlAttribute attribute : tag.getAttributes()) {
         visitXmlElement(attribute, stub, 0);
