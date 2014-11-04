@@ -53,6 +53,8 @@ public class InvocationExprent extends Exprent {
   public static final int CONSTRUCTOR_THIS = 1;
   public static final int CONSTRUCTOR_SUPER = 2;
 
+  private static final BitSet EMPTY_BIT_SET = new BitSet(0);
+
   private String name;
 
   private String classname;
@@ -321,7 +323,7 @@ public class InvocationExprent extends Exprent {
 
         break;
       case TYP_CLINIT:
-        throw new RuntimeException("Explicite invocation of <clinit>");
+        throw new RuntimeException("Explicit invocation of <clinit>");
       case TYP_INIT:
         if (super_qualifier != null) {
           buf.append("super(");
@@ -355,7 +357,7 @@ public class InvocationExprent extends Exprent {
       }
     }
 
-    Set<Integer> setAmbiguousParameters = getAmbiguousParameters();
+    BitSet setAmbiguousParameters = getAmbiguousParameters();
 
     boolean firstParameter = true;
     int start = isEnum ? 2 : 0;
@@ -366,7 +368,7 @@ public class InvocationExprent extends Exprent {
         }
 
         TextBuffer buff = new TextBuffer();
-        boolean ambiguous = setAmbiguousParameters.contains(i);
+        boolean ambiguous = setAmbiguousParameters.get(i);
         ExprProcessor.getCastedExprent(lstParameters.get(i), descriptor.params[i], buff, indent, true, ambiguous, tracer);
         buf.append(buff);
 
@@ -379,47 +381,56 @@ public class InvocationExprent extends Exprent {
     return buf;
   }
 
-  private Set<Integer> getAmbiguousParameters() {
+  private BitSet getAmbiguousParameters() {
+    StructClass cl = DecompilerContext.getStructContext().getClass(classname);
+    if (cl == null) return EMPTY_BIT_SET;
 
-    Set<Integer> ret = new HashSet<Integer>();
-
-    StructClass cstr = DecompilerContext.getStructContext().getClass(classname);
-    if (cstr != null) {
-      List<MethodDescriptor> lstMethods = new ArrayList<MethodDescriptor>();
-      for (StructMethod meth : cstr.getMethods()) {
-        if (name.equals(meth.getName())) {
-          MethodDescriptor md = MethodDescriptor.parseDescriptor(meth.getDescriptor());
-          if (md.params.length == descriptor.params.length) {
-            boolean equals = true;
-            for (int i = 0; i < md.params.length; i++) {
-              if (md.params[i].type_family != descriptor.params[i].type_family) {
-                equals = false;
-                break;
-              }
-            }
-
-            if (equals) {
-              lstMethods.add(md);
+    // check number of matches
+    List<MethodDescriptor> matches = new ArrayList<MethodDescriptor>();
+    nextMethod:
+    for (StructMethod mt : cl.getMethods()) {
+      if (name.equals(mt.getName())) {
+        MethodDescriptor md = MethodDescriptor.parseDescriptor(mt.getDescriptor());
+        if (md.params.length == descriptor.params.length) {
+          for (int i = 0; i < md.params.length; i++) {
+            if (md.params[i].type_family != descriptor.params[i].type_family) {
+              continue nextMethod;
             }
           }
-        }
-      }
-
-      if (lstMethods.size() > 1) {
-        for (int i = 0; i < descriptor.params.length; i++) {
-          VarType partype = descriptor.params[i];
-
-          for (MethodDescriptor md : lstMethods) {
-            if (!partype.equals(md.params[i])) {
-              ret.add(i);
-              break;
-            }
-          }
+          matches.add(md);
         }
       }
     }
+    if (matches.size() == 1) return EMPTY_BIT_SET;
 
-    return ret;
+    // check if a call is unambiguous
+    StructMethod mt = cl.getMethod(InterpreterUtil.makeUniqueKey(name, stringDescriptor));
+    if (mt != null) {
+      MethodDescriptor md = MethodDescriptor.parseDescriptor(mt.getDescriptor());
+      if (md.params.length == lstParameters.size()) {
+        boolean exact = true;
+        for (int i = 0; i < md.params.length; i++) {
+          if (!md.params[i].equals(lstParameters.get(i).getExprType())) {
+            exact = false;
+            break;
+          }
+        }
+        if (exact) return EMPTY_BIT_SET;
+      }
+    }
+
+    // mark parameters
+    BitSet ambiguous = new BitSet(descriptor.params.length);
+    for (int i = 0; i < descriptor.params.length; i++) {
+      VarType paramType = descriptor.params[i];
+      for (MethodDescriptor md : matches) {
+        if (!paramType.equals(md.params[i])) {
+          ambiguous.set(i);
+          break;
+        }
+      }
+    }
+    return ambiguous;
   }
 
   public boolean equals(Object o) {

@@ -18,7 +18,7 @@ public enum TestEnum {
    }
 
    private TestEnum() {
-      this((String)"?");
+      this("?");
    }
 
    private TestEnum(@Deprecated String var3) {
