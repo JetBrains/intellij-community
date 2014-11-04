@@ -126,6 +126,10 @@ public class PyOverrideTest extends PyTestCase {
     doTest();
   }
 
+  // PY-11127
+  public void testOverriddenMethodRaisesNotImplementedErrorNoInstance() {
+    doTest();
+  }
 
   public void testPy3k() {
     doTest3k();
