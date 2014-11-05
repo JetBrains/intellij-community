@@ -15,11 +15,11 @@
  */
 package com.intellij.dvcs.push.ui;
 
-import org.jetbrains.annotations.NotNull;
 
-import javax.swing.tree.DefaultMutableTreeNode;
-import java.awt.event.MouseEvent;
-
-public interface VcsLinkListener {
-  void hyperlinkActivated(@NotNull DefaultMutableTreeNode sourceNode, @NotNull MouseEvent event);
+/**
+ * Event on this component should start edit mode for appropriate path in JTree
+ *
+ * @see com.intellij.dvcs.push.ui.PushLog
+ */
+public interface VcsEditableComponent {
 }

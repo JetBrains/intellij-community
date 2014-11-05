@@ -16,14 +16,11 @@
 package com.intellij.dvcs.push.ui;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.awt.event.MouseEvent;
+public class VcsEditableTextComponent extends VcsLinkedText implements VcsEditableComponent {
 
-/**
- *
- */
-public interface ExtraEditControl {
-
-  void click(@NotNull MouseEvent event);
-
+  public VcsEditableTextComponent(@NotNull String text, @Nullable VcsLinkListener listener) {
+    super(text, listener);
+  }
 }
