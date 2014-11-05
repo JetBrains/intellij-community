@@ -39,9 +39,9 @@ public class VarTypeProcessor {
   public static final int VAR_EXPLICIT_FINAL = 2;
   public static final int VAR_FINAL = 3;
 
-  private Map<VarVersionPaar, VarType> mapExprentMinTypes = new HashMap<VarVersionPaar, VarType>();
-  private Map<VarVersionPaar, VarType> mapExprentMaxTypes = new HashMap<VarVersionPaar, VarType>();
-  private Map<VarVersionPaar, Integer> mapFinalVars = new HashMap<VarVersionPaar, Integer>();
+  private Map<VarVersionPair, VarType> mapExprentMinTypes = new HashMap<VarVersionPair, VarType>();
+  private Map<VarVersionPair, VarType> mapExprentMaxTypes = new HashMap<VarVersionPair, VarType>();
+  private Map<VarVersionPair, Integer> mapFinalVars = new HashMap<VarVersionPair, Integer>();
 
   private void setInitVars(RootStatement root) {
     StructMethod mt = (StructMethod)DecompilerContext.getProperty(DecompilerContext.CURRENT_METHOD);
@@ -53,14 +53,14 @@ public class VarTypeProcessor {
     if (thisVar) {
       StructClass cl = (StructClass)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS);
       VarType clType = new VarType(CodeConstants.TYPE_OBJECT, 0, cl.qualifiedName);
-      mapExprentMinTypes.put(new VarVersionPaar(0, 1), clType);
-      mapExprentMaxTypes.put(new VarVersionPaar(0, 1), clType);
+      mapExprentMinTypes.put(new VarVersionPair(0, 1), clType);
+      mapExprentMaxTypes.put(new VarVersionPair(0, 1), clType);
     }
 
     int varIndex = 0;
     for (int i = 0; i < md.params.length; i++) {
-      mapExprentMinTypes.put(new VarVersionPaar(varIndex + (thisVar ? 1 : 0), 1), md.params[i]);
-      mapExprentMaxTypes.put(new VarVersionPaar(varIndex + (thisVar ? 1 : 0), 1), md.params[i]);
+      mapExprentMinTypes.put(new VarVersionPair(varIndex + (thisVar ? 1 : 0), 1), md.params[i]);
+      mapExprentMaxTypes.put(new VarVersionPair(varIndex + (thisVar ? 1 : 0), 1), md.params[i]);
       varIndex += md.params[i].stackSize;
     }
 
@@ -81,8 +81,8 @@ public class VarTypeProcessor {
 
       if (lstVars != null) {
         for (VarExprent var : lstVars) {
-          mapExprentMinTypes.put(new VarVersionPaar(var.getIndex(), 1), var.getVarType());
-          mapExprentMaxTypes.put(new VarVersionPaar(var.getIndex(), 1), var.getVarType());
+          mapExprentMinTypes.put(new VarVersionPair(var.getIndex(), 1), var.getVarType());
+          mapExprentMaxTypes.put(new VarVersionPair(var.getIndex(), 1), var.getVarType());
         }
       }
 
@@ -142,7 +142,7 @@ public class VarTypeProcessor {
     if (exprent.type == Exprent.EXPRENT_CONST) {
       ConstExprent constExpr = (ConstExprent)exprent;
       if (constExpr.getConstType().typeFamily <= CodeConstants.TYPE_FAMILY_INTEGER) { // boolean or integer
-        VarVersionPaar pair = new VarVersionPaar(constExpr.id, -1);
+        VarVersionPair pair = new VarVersionPair(constExpr.id, -1);
         if (!mapExprentMinTypes.containsKey(pair)) {
           mapExprentMinTypes.put(pair, constExpr.getConstType());
         }
@@ -184,13 +184,13 @@ public class VarTypeProcessor {
           }
         }
       case Exprent.EXPRENT_VAR:
-        VarVersionPaar pair = null;
+        VarVersionPair pair = null;
         if (exprent.type == Exprent.EXPRENT_CONST) {
-          pair = new VarVersionPaar(((ConstExprent)exprent).id, -1);
+          pair = new VarVersionPair(((ConstExprent)exprent).id, -1);
         }
         else if (exprent.type == Exprent.EXPRENT_VAR) {
           //noinspection ConstantConditions
-          pair = new VarVersionPaar((VarExprent)exprent);
+          pair = new VarVersionPair((VarExprent)exprent);
         }
 
         if (minMax == 0) { // min
@@ -255,23 +255,23 @@ public class VarTypeProcessor {
     return res;
   }
 
-  public Map<VarVersionPaar, VarType> getMapExprentMaxTypes() {
+  public Map<VarVersionPair, VarType> getMapExprentMaxTypes() {
     return mapExprentMaxTypes;
   }
 
-  public Map<VarVersionPaar, VarType> getMapExprentMinTypes() {
+  public Map<VarVersionPair, VarType> getMapExprentMinTypes() {
     return mapExprentMinTypes;
   }
 
-  public Map<VarVersionPaar, Integer> getMapFinalVars() {
+  public Map<VarVersionPair, Integer> getMapFinalVars() {
     return mapFinalVars;
   }
 
-  public void setVarType(VarVersionPaar pair, VarType type) {
+  public void setVarType(VarVersionPair pair, VarType type) {
     mapExprentMinTypes.put(pair, type);
   }
 
-  public VarType getVarType(VarVersionPaar pair) {
+  public VarType getVarType(VarVersionPair pair) {
     return mapExprentMinTypes.get(pair);
   }
 }

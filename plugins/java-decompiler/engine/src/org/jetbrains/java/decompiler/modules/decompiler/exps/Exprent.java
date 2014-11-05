@@ -20,7 +20,7 @@ import org.jetbrains.java.decompiler.main.TextBuffer;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.CheckTypesResult;
-import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPaar;
+import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 
 import java.util.*;
@@ -94,14 +94,14 @@ public class Exprent {
     return lst;
   }
 
-  public Set<VarVersionPaar> getAllVariables() {
+  public Set<VarVersionPair> getAllVariables() {
     List<Exprent> lstAllExprents = getAllExprents(true);
     lstAllExprents.add(this);
 
-    Set<VarVersionPaar> set = new HashSet<VarVersionPaar>();
+    Set<VarVersionPair> set = new HashSet<VarVersionPair>();
     for (Exprent expr : lstAllExprents) {
       if (expr.type == EXPRENT_VAR) {
-        set.add(new VarVersionPaar((VarExprent)expr));
+        set.add(new VarVersionPair((VarExprent)expr));
       }
     }
     return set;

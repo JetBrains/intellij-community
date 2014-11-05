@@ -2,7 +2,6 @@ package org.jetbrains.rpc;
 
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.util.Function;
-import com.intellij.util.PairConsumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
@@ -36,7 +35,7 @@ public abstract class CommandSenderBase<SUCCESS_RESPONSE, ERROR_DETAILS> impleme
     }
 
     @Override
-    public void onSuccess(@Nullable SUCCESS_RESPONSE response, @NotNull ResultReader<SUCCESS_RESPONSE> resultReader) {
+    public void onSuccess(SUCCESS_RESPONSE response, @NotNull ResultReader<SUCCESS_RESPONSE> resultReader) {
       try {
         setResult(methodName == null ? null : resultReader.<RESULT>readResult(methodName, response));
       }
@@ -60,29 +59,5 @@ public abstract class CommandSenderBase<SUCCESS_RESPONSE, ERROR_DETAILS> impleme
       new CommandCallbackWithResponse<SUCCESS_RESPONSE, RESULT, TRANSFORMED_RESULT, ERROR_DETAILS>(message.getMethodName(), transform, errorConsumer);
     send(message, callback);
     return callback.callback;
-  }
-
-  @Override
-  public final <RESULT, TRANSFORMED_RESULT> void send(@NotNull AsyncResult<TRANSFORMED_RESULT> result,
-                                                      @NotNull RequestWithResponse message,
-                                                      @NotNull Function<RESULT, TRANSFORMED_RESULT> transform) {
-    send(message, new CommandCallbackWithResponse<SUCCESS_RESPONSE, RESULT, TRANSFORMED_RESULT, ERROR_DETAILS>(result, message.getMethodName(), transform, null));
-  }
-
-  @Override
-  public final <RESULT, TRANSFORMED_RESULT> AsyncResult<TRANSFORMED_RESULT> send(@NotNull AsyncResult<TRANSFORMED_RESULT> result,
-                                                                                 @NotNull RequestWithResponse message,
-                                                                                 @NotNull PairConsumer<RESULT, AsyncResult<TRANSFORMED_RESULT>> consumer) {
-    send(message, new NestedCommandCallbackWithResponse<SUCCESS_RESPONSE, RESULT, TRANSFORMED_RESULT, ERROR_DETAILS>(result, message.getMethodName(), consumer, null));
-    return result;
-  }
-
-  @Override
-  public final <RESULT, TRANSFORMED_RESULT> AsyncResult<TRANSFORMED_RESULT> send(@NotNull AsyncResult<TRANSFORMED_RESULT> result,
-                                                                                 @NotNull RequestWithResponse message,
-                                                                                 @NotNull PairConsumer<RESULT, AsyncResult<TRANSFORMED_RESULT>> consumer,
-                                                                                 @Nullable ErrorConsumer<AsyncResult<TRANSFORMED_RESULT>, ERROR_DETAILS> errorConsumer) {
-    send(message, new NestedCommandCallbackWithResponse<SUCCESS_RESPONSE, RESULT, TRANSFORMED_RESULT, ERROR_DETAILS>(result, message.getMethodName(), consumer, errorConsumer));
-    return result;
   }
 }

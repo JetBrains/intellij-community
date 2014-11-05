@@ -25,7 +25,7 @@ import org.jetbrains.java.decompiler.main.rels.MethodWrapper;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.CheckTypesResult;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
-import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPaar;
+import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
 import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.StructMethod;
 import org.jetbrains.java.decompiler.struct.consts.LinkConstant;
@@ -233,7 +233,7 @@ public class InvocationExprent extends Exprent {
 
       if (instance != null && instance.type == Exprent.EXPRENT_VAR) {
         VarExprent instvar = (VarExprent)instance;
-        VarVersionPaar varpaar = new VarVersionPaar(instvar);
+        VarVersionPair varpaar = new VarVersionPair(instvar);
 
         VarProcessor vproc = instvar.getProcessor();
         if (vproc == null) {
@@ -318,7 +318,7 @@ public class InvocationExprent extends Exprent {
         }
     }
 
-    List<VarVersionPaar> sigFields = null;
+    List<VarVersionPair> sigFields = null;
     boolean isEnum = false;
     if (functype == TYP_INIT) {
       ClassNode newNode = DecompilerContext.getClassProcessor().getMapRootClasses().get(classname);
@@ -329,8 +329,8 @@ public class InvocationExprent extends Exprent {
         }
         else {
           if (newNode.type == ClassNode.CLASS_MEMBER && (newNode.access & CodeConstants.ACC_STATIC) == 0) { // non-static member class
-            sigFields = new ArrayList<VarVersionPaar>(Collections.nCopies(lstParameters.size(), (VarVersionPaar)null));
-            sigFields.set(0, new VarVersionPaar(-1, 0));
+            sigFields = new ArrayList<VarVersionPair>(Collections.nCopies(lstParameters.size(), (VarVersionPair)null));
+            sigFields.set(0, new VarVersionPair(-1, 0));
           }
         }
         isEnum = newNode.classStruct.hasModifier(CodeConstants.ACC_ENUM) && DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_ENUM);
