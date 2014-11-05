@@ -83,8 +83,8 @@ public class ClassesProcessor {
               }
               else if (simpleName != null && DecompilerContext.getOption(IFernflowerPreferences.RENAME_ENTITIES)) {
                 IIdentifierRenamer renamer = DecompilerContext.getPoolInterceptor().getHelper();
-                if (renamer.toBeRenamed(IIdentifierRenamer.ELEMENT_CLASS, simpleName, null, null)) {
-                  simpleName = renamer.getNextClassname(innername, simpleName);
+                if (renamer.toBeRenamed(IIdentifierRenamer.Type.ELEMENT_CLASS, simpleName, null, null)) {
+                  simpleName = renamer.getNextClassName(innername, simpleName);
                   mapNewSimpleNames.put(innername, simpleName);
                 }
               }

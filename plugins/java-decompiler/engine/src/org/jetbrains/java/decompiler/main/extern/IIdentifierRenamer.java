@@ -15,21 +15,15 @@
  */
 package org.jetbrains.java.decompiler.main.extern;
 
-
 public interface IIdentifierRenamer {
 
-  int ELEMENT_CLASS = 1;
+  enum Type {ELEMENT_CLASS, ELEMENT_FIELD, ELEMENT_METHOD};
 
-  int ELEMENT_FIELD = 2;
+  boolean toBeRenamed(Type elementType, String className, String element, String descriptor);
 
-  int ELEMENT_METHOD = 3;
+  String getNextClassName(String fullName, String shortName);
 
+  String getNextFieldName(String className, String field, String descriptor);
 
-  boolean toBeRenamed(int element_type, String classname, String element, String descriptor);
-
-  String getNextClassname(String fullname, String shortname);
-
-  String getNextFieldname(String classname, String field, String descriptor);
-
-  String getNextMethodname(String classname, String method, String descriptor);
+  String getNextMethodName(String className, String method, String descriptor);
 }
