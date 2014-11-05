@@ -9,30 +9,27 @@ import java.util.UUID;
 * @author Eugene Zhuravlev
 *         Date: 7/3/13
 */
-class MessageHandlerWrapper implements BuilderMessageHandler {
-  private final BuilderMessageHandler myHandler;
+abstract class DelegatingMessageHandler implements BuilderMessageHandler {
 
-  public MessageHandlerWrapper(BuilderMessageHandler handler) {
-    myHandler = handler;
-  }
+  protected abstract BuilderMessageHandler getDelegateHandler();
 
   @Override
   public void buildStarted(UUID sessionId) {
-    myHandler.buildStarted(sessionId);
+    getDelegateHandler().buildStarted(sessionId);
   }
 
   @Override
   public void handleBuildMessage(Channel channel, UUID sessionId, CmdlineRemoteProto.Message.BuilderMessage msg) {
-    myHandler.handleBuildMessage(channel, sessionId, msg);
+    getDelegateHandler().handleBuildMessage(channel, sessionId, msg);
   }
 
   @Override
   public void handleFailure(UUID sessionId, CmdlineRemoteProto.Message.Failure failure) {
-    myHandler.handleFailure(sessionId, failure);
+    getDelegateHandler().handleFailure(sessionId, failure);
   }
 
   @Override
   public void sessionTerminated(UUID sessionId) {
-    myHandler.sessionTerminated(sessionId);
+    getDelegateHandler().sessionTerminated(sessionId);
   }
 }

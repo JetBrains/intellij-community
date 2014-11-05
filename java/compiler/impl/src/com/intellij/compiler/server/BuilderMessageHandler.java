@@ -25,6 +25,24 @@ import java.util.UUID;
  *         Date: 4/25/12
  */
 public interface BuilderMessageHandler {
+  BuilderMessageHandler DEAF = new BuilderMessageHandler() {
+    @Override
+    public void buildStarted(UUID sessionId) {
+    }
+
+    @Override
+    public void handleBuildMessage(Channel channel, UUID sessionId, CmdlineRemoteProto.Message.BuilderMessage msg) {
+    }
+
+    @Override
+    public void handleFailure(UUID sessionId, CmdlineRemoteProto.Message.Failure failure) {
+    }
+
+    @Override
+    public void sessionTerminated(UUID sessionId) {
+    }
+  };
+  
   void buildStarted(UUID sessionId);
   
   void handleBuildMessage(Channel channel, UUID sessionId, CmdlineRemoteProto.Message.BuilderMessage msg);

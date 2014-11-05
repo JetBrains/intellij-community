@@ -233,4 +233,11 @@ public class StringUtilTest extends TestCase {
   public void testReplace() {
     assertEquals(StringUtil.replace("$PROJECT_FILE$/filename", "$PROJECT_FILE$", "/tmp"), "/tmp/filename");
   }
+
+  public void testContains() {
+    assertTrue(StringUtil.contains("1", "1"));
+    assertFalse(StringUtil.contains("1", "12"));
+    assertTrue(StringUtil.contains("12", "1"));
+    assertTrue(StringUtil.contains("12", "2"));
+  }
 }

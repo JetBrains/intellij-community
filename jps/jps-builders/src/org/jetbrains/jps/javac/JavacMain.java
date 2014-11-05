@@ -168,7 +168,16 @@ public class JavacMain {
       diagnosticConsumer.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, e.getMessage()));
     }
     catch (CompilationCanceledException ignored) {
-      diagnosticConsumer.report(new PlainMessageDiagnostic(Diagnostic.Kind.OTHER, "Compilation was canceled"));
+      handleCancelException(diagnosticConsumer);
+    }
+    catch (RuntimeException e) {
+      final Throwable cause = e.getCause();
+      if (cause instanceof CompilationCanceledException) {
+        handleCancelException(diagnosticConsumer);
+      }
+      else {
+        throw e;
+      }
     }
     finally {
       fileManager.close();
@@ -177,6 +186,10 @@ public class JavacMain {
       }
     }
     return false;
+  }
+
+  private static void handleCancelException(DiagnosticOutputConsumer diagnosticConsumer) {
+    diagnosticConsumer.report(new PlainMessageDiagnostic(Diagnostic.Kind.OTHER, "Compilation was canceled"));
   }
 
   private static List<JavaSourceTransformer> getSourceTransformers() {
