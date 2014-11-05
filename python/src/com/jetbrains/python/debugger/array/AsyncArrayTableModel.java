@@ -144,7 +144,7 @@ public class AsyncArrayTableModel extends AbstractTableModel {
     return myRows;
   }
 
-  public void forcedChange(int row, int col, Object value) {
+  public void changeValue(int row, int col, Object value) {
     Future<Object[][]> chunk = myChunkCache.getIfPresent(itemToChunkKey(row, col));
     if (chunk != null && chunk.isDone()) {
       try {
