@@ -36,6 +36,7 @@ import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -166,7 +167,9 @@ public abstract class JavaMethodElementType extends JavaStubElementType<PsiMetho
         for (StubElement paramStub : ((PsiParameterListStub)stubElement).getChildrenStubs()) {
           if (paramStub instanceof PsiParameterStub) {
             TypeInfo type = ((PsiParameterStub)paramStub).getType(false);
+            if (type.arrayCount > 0) continue;
             String typeName = type.getShortTypeText();
+            if (TypeConversionUtil.isPrimitive(typeName) || TypeConversionUtil.isPrimitiveWrapper(typeName)) continue;
             sink.occurrence(JavaStubIndexKeys.METHOD_TYPES, typeName);
             if (methodTypeParams != null && methodTypeParams.contains(typeName)) {
               sink.occurrence(JavaStubIndexKeys.METHOD_TYPES, TYPE_PARAMETER_PSEUDO_NAME);
