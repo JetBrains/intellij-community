@@ -17,24 +17,24 @@ package org.jetbrains.java.decompiler.modules.decompiler.vars;
 
 import org.jetbrains.java.decompiler.modules.decompiler.exps.VarExprent;
 
-public class VarVersionPaar {
+public class VarVersionPair {
 
-  public int var;
-  public int version;
+  public final int var;
+  public final int version;
 
   private int hashCode = -1;
 
-  public VarVersionPaar(int var, int version) {
+  public VarVersionPair(int var, int version) {
     this.var = var;
     this.version = version;
   }
 
-  public VarVersionPaar(Integer var, Integer version) {
+  public VarVersionPair(Integer var, Integer version) {
     this.var = var.intValue();
     this.version = version.intValue();
   }
 
-  public VarVersionPaar(VarExprent var) {
+  public VarVersionPair(VarExprent var) {
     this.var = var.getIndex();
     this.version = var.getVersion();
   }
@@ -42,9 +42,9 @@ public class VarVersionPaar {
   @Override
   public boolean equals(Object o) {
     if (o == this) return true;
-    if (o == null || !(o instanceof VarVersionPaar)) return false;
+    if (o == null || !(o instanceof VarVersionPair)) return false;
 
-    VarVersionPaar paar = (VarVersionPaar)o;
+    VarVersionPair paar = (VarVersionPair)o;
     return var == paar.var && version == paar.version;
   }
 

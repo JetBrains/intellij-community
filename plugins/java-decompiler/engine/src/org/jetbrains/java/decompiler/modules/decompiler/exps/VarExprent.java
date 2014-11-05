@@ -24,7 +24,7 @@ import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarTypeProcessor;
-import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPaar;
+import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
@@ -89,11 +89,11 @@ public class VarExprent extends Exprent {
     else {
       String name = null;
       if (processor != null) {
-        name = processor.getVarName(new VarVersionPaar(index, version));
+        name = processor.getVarName(new VarVersionPair(index, version));
       }
 
       if (definition) {
-        if (processor != null && processor.getVarFinal(new VarVersionPaar(index, version)) == VarTypeProcessor.VAR_EXPLICIT_FINAL) {
+        if (processor != null && processor.getVarFinal(new VarVersionPair(index, version)) == VarTypeProcessor.VAR_EXPLICIT_FINAL) {
           buffer.append("final ");
         }
         buffer.append(ExprProcessor.getCastTypeName(getVarType())).append(" ");
@@ -126,7 +126,7 @@ public class VarExprent extends Exprent {
   public VarType getVarType() {
     VarType vt = null;
     if (processor != null) {
-      vt = processor.getVarType(new VarVersionPaar(index, version));
+      vt = processor.getVarType(new VarVersionPair(index, version));
     }
 
     if (vt == null || (varType != null && varType.type != CodeConstants.TYPE_UNKNOWN)) {

@@ -22,7 +22,7 @@ import org.jetbrains.java.decompiler.main.TextBuffer;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.main.rels.MethodWrapper;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
-import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPaar;
+import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
 import org.jetbrains.java.decompiler.struct.consts.LinkConstant;
 import org.jetbrains.java.decompiler.struct.gen.FieldDescriptor;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
@@ -96,7 +96,7 @@ public class FieldExprent extends Exprent {
 
       if (instance != null && instance.type == Exprent.EXPRENT_VAR) {
         VarExprent instVar = (VarExprent)instance;
-        VarVersionPaar pair = new VarVersionPaar(instVar);
+        VarVersionPair pair = new VarVersionPair(instVar);
 
         MethodWrapper currentMethod = (MethodWrapper)DecompilerContext.getProperty(DecompilerContext.CURRENT_METHOD_WRAPPER);
 

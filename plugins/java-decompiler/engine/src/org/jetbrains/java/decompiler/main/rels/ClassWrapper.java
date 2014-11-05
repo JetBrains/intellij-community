@@ -24,7 +24,7 @@ import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
-import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPaar;
+import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
 import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.StructField;
 import org.jetbrains.java.decompiler.struct.StructMethod;
@@ -124,14 +124,14 @@ public class ClassWrapper {
 
           int paramcount = 0;
           if (thisvar) {
-            varproc.getThisVars().put(new VarVersionPaar(0, 0), classStruct.qualifiedName);
+            varproc.getThisVars().put(new VarVersionPair(0, 0), classStruct.qualifiedName);
             paramcount = 1;
           }
           paramcount += md.params.length;
 
           int varindex = 0;
           for (int i = 0; i < paramcount; i++) {
-            varproc.setVarName(new VarVersionPaar(varindex, 0), vc.getFreeName(varindex));
+            varproc.setVarName(new VarVersionPair(varindex, 0), vc.getFreeName(varindex));
 
             if (thisvar) {
               if (i == 0) {
