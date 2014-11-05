@@ -524,10 +524,10 @@ public final class VariableView extends XNamedValue implements VariableContext {
   @Override
   public void computeSourcePosition(@NotNull final XNavigatable navigatable) {
     if (value instanceof FunctionValue) {
-      ((FunctionValue)value).resolve().doWhenDone(new Consumer<FunctionValue>() {
+      ((FunctionValue)value).resolve().done(new Consumer<FunctionValue>() {
         @Override
         public void consume(final FunctionValue function) {
-          getViewSupport().getVm().getScriptManager().getScript(function).doWhenDone(new Consumer<Script>() {
+          getViewSupport().getVm().getScriptManager().getScript(function).done(new Consumer<Script>() {
             @Override
             public void consume(Script script) {
               SourceInfo position = script == null ? null : getViewSupport().getSourceInfo(null, script, function.getOpenParenLine(), function.getOpenParenColumn());

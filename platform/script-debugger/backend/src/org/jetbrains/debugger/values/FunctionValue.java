@@ -1,9 +1,9 @@
 package org.jetbrains.debugger.values;
 
-import com.intellij.openapi.util.AsyncResult;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
 import org.jetbrains.debugger.Scope;
 
 public interface FunctionValue extends ObjectValue {
@@ -11,7 +11,7 @@ public interface FunctionValue extends ObjectValue {
    * You must invoke {@link #resolve} to use any function value methods
    */
   @NotNull
-  AsyncResult<FunctionValue> resolve();
+  Promise<FunctionValue> resolve();
 
   /**
    * Returns position of opening parenthesis of function arguments. Position is absolute
