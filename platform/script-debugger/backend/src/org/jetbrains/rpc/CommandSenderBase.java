@@ -22,11 +22,6 @@ public abstract class CommandSenderBase<SUCCESS_RESPONSE, ERROR_DETAILS> impleme
   }
 
   @Override
-  public final <RESULT, TRANSFORMED_RESULT> AsyncResult<TRANSFORMED_RESULT> send(@NotNull RequestWithResponse message, @NotNull Function<RESULT, TRANSFORMED_RESULT> transform) {
-    return send(message, transform, null);
-  }
-
-  @Override
   public final <RESULT> Promise<RESULT> send(@NotNull RequestWithResponse<RESULT> request) {
     PromiseWrapper<SUCCESS_RESPONSE, RESULT, ERROR_DETAILS> callback = new PromiseWrapper<SUCCESS_RESPONSE, RESULT, ERROR_DETAILS>(request.getMethodName());
     send(request, callback);

@@ -3,6 +3,7 @@ package org.jetbrains.debugger.values;
 import com.intellij.openapi.util.ActionCallback;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.ConsumerRunnable;
+import org.jetbrains.concurrency.Promise;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -49,5 +50,10 @@ public abstract class ValueManager {
       return true;
     }
     return false;
+  }
+
+  @NotNull
+  public static <T> Promise<T> reject() {
+    return Promise.reject("Obsolete context");
   }
 }

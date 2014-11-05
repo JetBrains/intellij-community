@@ -15,8 +15,6 @@ public interface CommandSender<ERROR_DETAILS> {
 
   <RESULT> Promise<RESULT> send(@NotNull RequestWithResponse<RESULT> message);
 
-  <RESULT, TRANSFORMED_RESULT> AsyncResult<TRANSFORMED_RESULT> send(@NotNull RequestWithResponse message, @NotNull Function<RESULT, TRANSFORMED_RESULT> transform);
-
   <RESULT, TRANSFORMED_RESULT> AsyncResult<TRANSFORMED_RESULT> send(@NotNull RequestWithResponse message,
                                                                     @NotNull Function<RESULT, TRANSFORMED_RESULT> transform,
                                                                     @Nullable ErrorConsumer<AsyncResult<TRANSFORMED_RESULT>, ERROR_DETAILS> errorConsumer);

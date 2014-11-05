@@ -132,4 +132,19 @@ public abstract class Promise<T> {
   public abstract boolean isProcessed();
 
   public abstract boolean isRejected();
+
+  public final void notify(@NotNull final AsyncResult<T> result) {
+    done(new Consumer<T>() {
+      @Override
+      public void consume(T t) {
+        result.setDone(t);
+      }
+    });
+    rejected(new Consumer<String>() {
+      @Override
+      public void consume(String error) {
+        result.reject(error);
+      }
+    });
+  }
 }
