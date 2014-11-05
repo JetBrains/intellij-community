@@ -88,19 +88,6 @@ public class AsyncArrayTableModel extends AbstractTableModel {
     try {
       ListenableFuture<Object[][]> chunk = myChunkCache.get(key);
 
-      chunk.addListener(new Runnable() {
-        @Override
-        public void run() {
-          UIUtil.invokeLaterIfNeeded(new Runnable() {
-            @Override
-            public void run() {
-              fireTableCellUpdated(row, col);
-            }
-          });
-        }
-      }, myExecutorService);
-
-
       if (chunk.isDone()) {
         int r = row % CHUNK_ROW_SIZE;
         int c = col % CHUNK_COL_SIZE;
@@ -110,6 +97,18 @@ public class AsyncArrayTableModel extends AbstractTableModel {
             return myProvider.correctStringValue((String)chunk.get()[r][c]);
           }
         }
+      } else {
+        chunk.addListener(new Runnable() {
+          @Override
+          public void run() {
+            UIUtil.invokeLaterIfNeeded(new Runnable() {
+              @Override
+              public void run() {
+                fireTableCellUpdated(row, col);
+              }
+            });
+          }
+        }, myExecutorService);
       }
       return EMPTY_CELL_VALUE;
     }

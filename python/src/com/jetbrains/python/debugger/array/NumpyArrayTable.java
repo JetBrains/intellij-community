@@ -566,7 +566,6 @@ public class NumpyArrayTable {
 
   public void showError(String message) {
     myDialog.setError(message);
-    setBusy(false);
   }
 
   public void showInfoHint(final String message) {
