@@ -971,13 +971,13 @@ from pydevd_vars import getVariable
 MAXIMUM_ARRAY_SIZE = 300
 
 class InternalGetArray(InternalThreadCommand):
-    def __init__(self, seq, thread_id, frame_id, scope, name, temp, roffset, coffset, rows, cols, format):
+    def __init__(self, seq, roffset, coffset, rows, cols, format, thread_id, frame_id, scope, attrs):
         self.sequence = seq
         self.thread_id = thread_id
         self.frame_id = frame_id
         self.scope = scope
-        self.name = name
-        self.temp = temp;
+        self.name = attrs[-1]
+        self.attrs = attrs;
         self.roffset = int(roffset)
         self.coffset = int(coffset)
         self.rows = int(rows)
@@ -986,7 +986,7 @@ class InternalGetArray(InternalThreadCommand):
 
     def doIt(self, dbg):
         try:
-            var = getVariable(self.thread_id, self.frame_id, self.scope, self.temp)
+            var = getVariable(self.thread_id, self.frame_id, 'EXPRESSION', self.attrs)
 
             rows = min(self.rows, MAXIMUM_ARRAY_SIZE)
             cols = min(self.cols, MAXIMUM_ARRAY_SIZE)

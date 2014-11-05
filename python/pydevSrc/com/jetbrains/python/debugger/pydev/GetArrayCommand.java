@@ -8,36 +8,45 @@ import com.jetbrains.python.debugger.PyDebuggerException;
  */
 public class GetArrayCommand extends GetFrameCommand {
 
+  private final PyDebugValue myParent;
   private final String myVariableName;
   private final int myRowOffset;
   private final int myColOffset;
   private final int myRows;
   private final int myColumns;
   private final String myFormat;
-  private final String myTempName;
   private Object[][] myArrayItems;
 
   public GetArrayCommand(final RemoteDebugger debugger, final String threadId, final String frameId, PyDebugValue var, int rowOffset, int colOffset, int rows, int cols, String format) {
     super(debugger, GET_ARRAY, threadId, frameId);
-    myVariableName = var.getName();
-    myTempName = var.getTempName();
+    myVariableName = GetVariableCommand.composeName(var);
     myRowOffset = rowOffset;
     myColOffset = colOffset;
     myRows = rows;
     myColumns = cols;
     myFormat = format;
+    myParent = var;
   }
 
   @Override
   protected void buildPayload(Payload payload) {
-    super.buildPayload(payload);
-    payload.add(myVariableName);
-    payload.add(myTempName);
     payload.add(myRowOffset);
     payload.add(myColOffset);
     payload.add(myRows);
     payload.add(myColumns);
     payload.add(myFormat);
+
+    if (myParent.getVariableLocator() != null) {
+      payload.add(myParent.getVariableLocator().getThreadId()).add(myParent.getVariableLocator().getPyDBLocation());
+    }
+    else if (myVariableName.contains(GetVariableCommand.BY_ID)) {
+      //id instead of frame_id
+      payload.add(getThreadId()).add(myVariableName);
+    }
+    else {
+      super.buildPayload(payload);
+      payload.add(myVariableName);
+    }
   }
 
   @Override

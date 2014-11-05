@@ -797,8 +797,14 @@ class PyDB:
                     # we received some command to get an array variable
                     # the text is: thread_id\tframe_id\tFRAME|GLOBAL\tname\ttemp\troffs\tcoffs\trows\tcols\tformat
                     try:
-                        thread_id, frame_id, scope, name, temp, roffset, coffset, rows, cols, format = text.split('\t')
-                        int_cmd = InternalGetArray(seq, thread_id, frame_id, scope, name, temp, roffset, coffset, rows, cols, format)
+                        roffset, coffset, rows, cols, format, thread_id, frame_id, scopeattrs  = text.split('\t', 7)
+
+                        if scopeattrs.find('\t') != -1:  # there are attributes beyond scope
+                            scope, attrs = scopeattrs.split('\t', 1)
+                        else:
+                            scope, attrs = (scopeattrs, None)
+
+                        int_cmd = InternalGetArray(seq, roffset, coffset, rows, cols, format, thread_id, frame_id, scope, attrs)
                         self.postInternalCommand(int_cmd, thread_id)
 
                     except:
