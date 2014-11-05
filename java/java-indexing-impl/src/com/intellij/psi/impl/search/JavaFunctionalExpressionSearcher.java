@@ -16,8 +16,14 @@
 package com.intellij.psi.impl.search;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.impl.scopes.ModulesScope;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.LanguageLevelModuleExtension;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Computable;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.JavaMethodElementType;
 import com.intellij.psi.impl.java.stubs.index.JavaMethodParameterTypesIndex;
@@ -31,10 +37,12 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
+import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.LinkedHashSet;
+import java.util.Set;
 
 public class JavaFunctionalExpressionSearcher implements QueryExecutor<PsiFunctionalExpression, FunctionalExpressionSearch.SearchParameters> {
 
@@ -42,10 +50,26 @@ public class JavaFunctionalExpressionSearcher implements QueryExecutor<PsiFuncti
   public boolean execute(@NotNull final FunctionalExpressionSearch.SearchParameters queryParameters,
                          @NotNull final Processor<PsiFunctionalExpression> consumer) {
     final PsiClass aClass = queryParameters.getElementToSearch();
+    final Set<Module> highLevelModules = new HashSet<Module>();
     if (ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
       @Override
       public Boolean compute() {
-        return !LambdaUtil.isFunctionalClass(aClass) || !PsiUtil.isLanguageLevel8OrHigher(aClass);
+        if (LambdaUtil.isFunctionalClass(aClass)) {
+          final Project project = aClass.getProject();
+          final boolean projectLevelIsHigh = PsiUtil.getLanguageLevel(project).isAtLeast(LanguageLevel.JDK_1_8);
+
+          for (Module module : ModuleManager.getInstance(project).getModules()) {
+            final LanguageLevelModuleExtension extension = ModuleRootManager.getInstance(module).getModuleExtension(LanguageLevelModuleExtension.class);
+            if (extension != null) {
+              final LanguageLevel level = extension.getLanguageLevel();
+              if (level == null && projectLevelIsHigh || level != null && level.isAtLeast(LanguageLevel.JDK_1_8)) {
+                highLevelModules.add(module);
+              }
+            }
+          }
+          return highLevelModules.isEmpty();
+        }
+        return true;
       }
     })) {
       return true;
@@ -55,12 +79,13 @@ public class JavaFunctionalExpressionSearcher implements QueryExecutor<PsiFuncti
       public SearchScope compute() {
         return queryParameters.getEffectiveSearchScope();
       }
-    }), consumer);
+    }), consumer, highLevelModules);
   }
 
   public static boolean collectFunctionalExpressions(final PsiClass aClass,
                                                      final SearchScope searchScope,
-                                                     final Processor<PsiFunctionalExpression> consumer) {
+                                                     final Processor<PsiFunctionalExpression> consumer, 
+                                                     final Set<Module> highLevelModules) {
     final SearchScope classScope = ApplicationManager.getApplication().runReadAction(new Computable<SearchScope>() {
       @Override
       public SearchScope compute() {
@@ -74,7 +99,8 @@ public class JavaFunctionalExpressionSearcher implements QueryExecutor<PsiFuncti
       }
     });
     final Project project = PsiUtilCore.getProjectInReadAction(aClass);
-    final GlobalSearchScope scope = useScope instanceof GlobalSearchScope ? (GlobalSearchScope)useScope : new EverythingGlobalScope(project);
+    final GlobalSearchScope scope = new ModulesScope(highLevelModules, project)
+      .intersectWith(useScope instanceof GlobalSearchScope ? (GlobalSearchScope)useScope : new EverythingGlobalScope(project));
     final Collection<PsiMethod> lambdaCandidates = ApplicationManager.getApplication().runReadAction(new Computable<Collection<PsiMethod>>() {
       @Override
       public Collection<PsiMethod> compute() {
@@ -82,7 +108,8 @@ public class JavaFunctionalExpressionSearcher implements QueryExecutor<PsiFuncti
         final GlobalSearchScope useClassScope = classScope instanceof GlobalSearchScope ? (GlobalSearchScope)classScope : scope;
         JavaMethodParameterTypesIndex parameterTypesIndex = JavaMethodParameterTypesIndex.getInstance();
         LinkedHashSet<PsiMethod> methods = new LinkedHashSet<PsiMethod>(parameterTypesIndex.get(functionalInterfaceName, project, useClassScope));
-        methods.addAll(parameterTypesIndex.get(JavaMethodElementType.TYPE_PARAMETER_PSEUDO_NAME, project, GlobalSearchScope.allScope(project)));
+        methods.addAll(parameterTypesIndex.get(JavaMethodElementType.TYPE_PARAMETER_PSEUDO_NAME, project,
+                                               GlobalSearchScope.allScope(project)));
         return methods;
       }
     });
