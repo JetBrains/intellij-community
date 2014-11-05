@@ -514,7 +514,7 @@ public class NumpyArrayTable {
                   protected void run(@NotNull Result result) throws Throwable {
                     if (getEditor().getEditor() != null) {
                       getEditor().getEditor().getDocument().setText(corrected);
-                      ((AsyncArrayTableModel)myTable.getModel()).forcedChange(row, col, corrected);
+                      ((AsyncArrayTableModel)myTable.getModel()).changeValue(row, col, corrected);
                       cancelEditing();
                     }
                   }
