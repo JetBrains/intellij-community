@@ -41,12 +41,15 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author max
  */
 public abstract class JavaMethodElementType extends JavaStubElementType<PsiMethodStub, PsiMethod> {
+  public static final String TYPE_PARAMETER_PSEUDO_NAME = "$TYPE_PARAMETER$";
   public JavaMethodElementType(@NonNls final String name) {
     super(name);
   }
@@ -147,11 +150,28 @@ public abstract class JavaMethodElementType extends JavaStubElementType<PsiMetho
       }
     }
 
+    Set<String> methodTypeParams = null;
     for (StubElement stubElement : stub.getChildrenStubs()) {
-      if (stubElement instanceof PsiParameterListStub) {
+      if (stubElement instanceof PsiTypeParameterListStub) {
+        for (Object tStub : stubElement.getChildrenStubs()) {
+          if (tStub instanceof PsiTypeParameterStub) {
+            if (methodTypeParams == null) {
+              methodTypeParams = new HashSet<String>();
+            }
+            methodTypeParams.add(((PsiTypeParameterStub)tStub).getName());
+          }
+        }
+      }
+      else if (stubElement instanceof PsiParameterListStub) {
         for (StubElement paramStub : ((PsiParameterListStub)stubElement).getChildrenStubs()) {
           if (paramStub instanceof PsiParameterStub) {
-            sink.occurrence(JavaStubIndexKeys.METHOD_TYPES, ((PsiParameterStub)paramStub).getType(false).getShortTypeText());
+            TypeInfo type = ((PsiParameterStub)paramStub).getType(false);
+            String typeName = type.getShortTypeText();
+            sink.occurrence(JavaStubIndexKeys.METHOD_TYPES, typeName);
+            if (methodTypeParams != null && methodTypeParams.contains(typeName)) {
+              sink.occurrence(JavaStubIndexKeys.METHOD_TYPES, TYPE_PARAMETER_PSEUDO_NAME);
+              methodTypeParams = null;
+            }
           }
         }
         break;

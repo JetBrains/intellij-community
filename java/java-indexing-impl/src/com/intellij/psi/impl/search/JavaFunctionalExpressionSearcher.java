@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.java.stubs.JavaMethodElementType;
 import com.intellij.psi.impl.java.stubs.index.JavaMethodParameterTypesIndex;
 import com.intellij.psi.search.EverythingGlobalScope;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -33,6 +34,7 @@ import com.intellij.util.QueryExecutor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.LinkedHashSet;
 
 public class JavaFunctionalExpressionSearcher implements QueryExecutor<PsiFunctionalExpression, FunctionalExpressionSearch.SearchParameters> {
 
@@ -78,7 +80,10 @@ public class JavaFunctionalExpressionSearcher implements QueryExecutor<PsiFuncti
       public Collection<PsiMethod> compute() {
         final String functionalInterfaceName = aClass.getName();
         final GlobalSearchScope useClassScope = classScope instanceof GlobalSearchScope ? (GlobalSearchScope)classScope : scope;
-        return JavaMethodParameterTypesIndex.getInstance().get(functionalInterfaceName, project, useClassScope);
+        JavaMethodParameterTypesIndex parameterTypesIndex = JavaMethodParameterTypesIndex.getInstance();
+        LinkedHashSet<PsiMethod> methods = new LinkedHashSet<PsiMethod>(parameterTypesIndex.get(functionalInterfaceName, project, useClassScope));
+        methods.addAll(parameterTypesIndex.get(JavaMethodElementType.TYPE_PARAMETER_PSEUDO_NAME, project, GlobalSearchScope.allScope(project)));
+        return methods;
       }
     });
     for (PsiMethod psiMethod : lambdaCandidates) {
