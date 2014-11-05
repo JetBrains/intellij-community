@@ -386,6 +386,16 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
     doMultiFileTest();
   }
 
+  // PY-12738
+  public void testNamespacePackageNameDoesntMatchFileName() {
+    doMultiFileTest();
+  }
+
+  // PY-13259
+  public void testNestedNamespacePackageName() {
+    doMultiFileTest();
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {
