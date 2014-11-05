@@ -43,12 +43,10 @@ public class GitBranchesAction extends DumbAwareAction {
     VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
     GitRepository repository = (file == null ?
                                 GitBranchUtil.getCurrentRepository(project):
-                                repositoryManager.getRepositoryForRoot(GitBranchUtil.getVcsRootOrGuess(project, file)));
-    if (repository == null) {
-      return;
+                                repositoryManager.getRepositoryForFile(file));
+    if (repository != null) {
+      GitBranchPopup.getInstance(project, repository).asListPopup().showInBestPositionFor(e.getDataContext());
     }
-
-    GitBranchPopup.getInstance(project, repository).asListPopup().showInBestPositionFor(e.getDataContext());
   }
 
   @Override
