@@ -22,6 +22,7 @@ import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -95,7 +96,7 @@ public class RepositoryNode extends CheckedTreeNode implements EditableTreeNode,
     renderer
       .append(myRepositoryPanel.getArrow(), isChecked() ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.GRAY_ATTRIBUTES);
     PushTargetPanel pushTargetPanel = myRepositoryPanel.getTargetPanel();
-    pushTargetPanel.render(renderer);
+    pushTargetPanel.render(renderer, renderer.getTree().isPathSelected(TreeUtil.getPathFromRoot(this)));
 
     int maxSize = Math.max(myRepositoryPanel.getCheckBoxHeight(), myLoadingIcon.getIconHeight());
     int rendererHeight = renderer.getPreferredSize().height;

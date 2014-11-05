@@ -41,6 +41,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeNode;
+import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
@@ -366,7 +368,7 @@ public class PushController implements Disposable {
                 public DefaultMutableTreeNode fun(final VcsError error) {
                   VcsLinkedText errorLinkText = new VcsLinkedText(error.getText(), new VcsLinkListener() {
                     @Override
-                    public void hyperlinkActivated(@NotNull DefaultMutableTreeNode sourceNode) {
+                    public void hyperlinkActivated(@NotNull DefaultMutableTreeNode sourceNode, @NotNull MouseEvent event) {
                       error.handleError(new CommitLoader() {
                         @Override
                         public void reloadCommits() {
@@ -509,8 +511,11 @@ public class PushController implements Disposable {
       if (i >= commitsNum) {
         final VcsLinkedText moreCommitsLink = new VcsLinkedText("<a href='loadMore'>...</a>", new VcsLinkListener() {
           @Override
-          public void hyperlinkActivated(@NotNull DefaultMutableTreeNode sourceNode) {
-            addMoreCommits((RepositoryNode)sourceNode);
+          public void hyperlinkActivated(@NotNull DefaultMutableTreeNode sourceNode, @NotNull MouseEvent event) {
+            TreeNode parent = sourceNode.getParent();
+            if (parent instanceof RepositoryNode) {
+              addMoreCommits((RepositoryNode)parent);
+            }
           }
         });
         childrenToShown.add(new TextWithLinkNode(moreCommitsLink));

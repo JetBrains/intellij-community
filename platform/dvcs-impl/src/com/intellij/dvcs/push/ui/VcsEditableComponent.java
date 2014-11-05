@@ -13,18 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.xdebugger.impl.actions;
+package com.intellij.dvcs.push.ui;
 
-import com.intellij.openapi.project.DumbAware;
-import com.intellij.xdebugger.impl.DebuggerSupport;
-import org.jetbrains.annotations.NotNull;
 
 /**
- * @author nik
+ * Event on this component should start edit mode for appropriate path in JTree
+ *
+ * @see com.intellij.dvcs.push.ui.PushLog
  */
-public class StepOverAction extends XDebuggerActionBase implements DumbAware {
-  @NotNull
-  protected DebuggerActionHandler getHandler(@NotNull final DebuggerSupport debuggerSupport) {
-    return debuggerSupport.getStepOverHandler();
-  }
+public interface VcsEditableComponent {
 }

@@ -41,6 +41,7 @@ public class RemoveManagedFilesAction extends MavenAction {
     final DataContext context = e.getDataContext();
 
     MavenProjectsManager projectsManager = MavenActionUtil.getProjectsManager(context);
+    if(projectsManager == null) return;
 
     List<VirtualFile> selectedFiles = MavenActionUtil.getMavenProjectsFiles(context);
     List<VirtualFile> removableFiles = new ArrayList<VirtualFile>();

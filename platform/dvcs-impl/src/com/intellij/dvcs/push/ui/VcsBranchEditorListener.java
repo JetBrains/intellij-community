@@ -20,13 +20,41 @@ import com.intellij.ui.CheckboxTree;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreePath;
+import java.awt.*;
 import java.awt.event.MouseEvent;
 
 public class VcsBranchEditorListener extends LinkMouseListenerBase {
   private final CheckboxTree.CheckboxTreeCellRenderer myRenderer;
+  private VcsLinkedText underlined;
 
   public VcsBranchEditorListener(final CheckboxTree.CheckboxTreeCellRenderer renderer) {
     myRenderer = renderer;
+  }
+
+  @Override
+  public void mouseMoved(MouseEvent e) {
+    Component component = (Component)e.getSource();
+    Object tag = getTagAt(e);
+    boolean shouldRepaint = false;
+    if (underlined != null) {
+      underlined.setUnderlined(false);
+      shouldRepaint = true;
+    }
+    if (tag != null && tag instanceof VcsLinkedText) {
+      component.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+      VcsLinkedText linkedText = (VcsLinkedText)tag;
+      linkedText.setUnderlined(true);
+      underlined = linkedText;
+      shouldRepaint = true;
+    }
+    else {
+      super.mouseMoved(e);
+    }
+    if (shouldRepaint) {
+      myRenderer.getTextRenderer().getTree().repaint();
+    }
   }
 
   @Nullable
@@ -36,12 +64,13 @@ public class VcsBranchEditorListener extends LinkMouseListenerBase {
   }
 
   protected void handleTagClick(@Nullable final Object tag, @NotNull MouseEvent event) {
-    if (tag instanceof TextWithLinkNode) {
-      TextWithLinkNode textWithLink = (TextWithLinkNode)tag;
-      textWithLink.fireOnClick(textWithLink);
-    }
-    if (tag instanceof ExtraEditControl) {
-      ((ExtraEditControl)tag).click(event);
+    if (tag instanceof VcsLinkedText) {
+      VcsLinkedText textWithLink = (VcsLinkedText)tag;
+      final TreePath path = myRenderer.getTextRenderer().getTree().getPathForLocation(event.getX(), event.getY());
+      if (path == null) return;
+      Object node = path.getLastPathComponent();
+      if (node == null || (!(node instanceof DefaultMutableTreeNode))) return;
+      textWithLink.fireOnClick((DefaultMutableTreeNode)node, event);
     }
     if (tag instanceof Runnable) {
       ((Runnable)tag).run();

@@ -18,6 +18,7 @@ package org.jetbrains.idea.maven.project.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.utils.MavenSettings;
 import org.jetbrains.idea.maven.utils.actions.MavenAction;
 import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
@@ -28,7 +29,7 @@ public class EditSettingsAction extends MavenAction {
     showSettingsFor(MavenActionUtil.getProject(e.getDataContext()));
   }
 
-  protected static void showSettingsFor(Project project) {
+  protected static void showSettingsFor(@Nullable Project project) {
     ShowSettingsUtil.getInstance().showSettingsDialog(project, MavenSettings.DISPLAY_NAME);
   }
 }

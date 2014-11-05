@@ -264,7 +264,7 @@ public class JavaCompletionContributor extends CompletionContributor {
     return PsiUtilCore.findLanguageFromElement(position).isKindOf(JavaLanguage.INSTANCE);
   }
 
-  public static void addAllClasses(CompletionParameters parameters,
+  public static void addAllClasses(final CompletionParameters parameters,
                                    final CompletionResultSet result,
                                    final InheritorsHolder inheritors) {
     if (!isClassNamePossible(parameters) || !mayStartClassName(result)) {
@@ -276,7 +276,7 @@ public class JavaCompletionContributor extends CompletionContributor {
         @Override
         public void consume(LookupElement element) {
           if (!inheritors.alreadyProcessed(element)) {
-            result.addElement(element);
+            result.addElement(JavaClassNameCompletionContributor.highlightIfNeeded((JavaPsiClassReferenceElement)element, parameters));
           }
         }
       });
