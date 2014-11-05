@@ -27,7 +27,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.inspections.quickfix.PyRenameElementQuickFix;
@@ -126,7 +125,7 @@ public class PyPep8NamingInspection extends PyInspection {
         public boolean value(PyClass ancestor) {
           final PsiFile ancestorsModule = ancestor.getContainingFile();
           final Sdk sdk = PyBuiltinCache.findSdkForFile(ancestorsModule);
-          if (PythonSdkType.isStdLib(ancestorsModule.getVirtualFile(), sdk) && !PyUtil.isObjectClass(cls)) {
+          if (PythonSdkType.isStdLib(ancestorsModule.getVirtualFile(), sdk) && !PyUtil.isObjectClass(ancestor)) {
             return true;
           }
           return false;
