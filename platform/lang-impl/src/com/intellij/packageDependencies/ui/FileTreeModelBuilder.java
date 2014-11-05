@@ -17,6 +17,7 @@
 package com.intellij.packageDependencies.ui;
 
 import com.intellij.analysis.AnalysisScopeBundle;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper;
@@ -73,6 +74,8 @@ public class FileTreeModelBuilder {
   private final Map<VirtualFile,DirectoryNode> myModuleDirNodes = new HashMap<VirtualFile, DirectoryNode>();
   private final Map<Module, ModuleNode> myModuleNodes = new HashMap<Module, ModuleNode>();
   private final Map<String, ModuleGroupNode> myModuleGroupNodes = new HashMap<String, ModuleGroupNode>();
+  private GeneralGroupNode myExternalNode;
+
   private int myScannedFileCount = 0;
   private int myTotalFileCount = 0;
   private int myMarkedFileCount = 0;
@@ -540,6 +543,13 @@ public class FileTreeModelBuilder {
         }
         if (root != null) {
           getModuleDirNode(root, module, null).add(directoryNode);
+        } else {
+          if (myExternalNode == null) {
+            myExternalNode = new GeneralGroupNode("External Dependencies", AllIcons.Nodes.PpLibFolder, myProject);
+            myRoot.add(myExternalNode);
+          }
+
+          myExternalNode.add(directoryNode);
         }
       }
     }

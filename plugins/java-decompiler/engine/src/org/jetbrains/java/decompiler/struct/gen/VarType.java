@@ -20,7 +20,7 @@ import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
 public class VarType {  // TODO: optimize switch
 
-  public static final int FALSEBOOLEAN = 1;
+  public static final VarType[] EMPTY_ARRAY = {};
 
   public static final VarType VARTYPE_UNKNOWN = new VarType(CodeConstants.TYPE_UNKNOWN);
   public static final VarType VARTYPE_INT = new VarType(CodeConstants.TYPE_INT);
@@ -35,312 +35,80 @@ public class VarType {  // TODO: optimize switch
   public static final VarType VARTYPE_SHORTCHAR = new VarType(CodeConstants.TYPE_SHORTCHAR);
 
   public static final VarType VARTYPE_NULL = new VarType(CodeConstants.TYPE_NULL, 0, null);
-  public static final VarType VARTYPE_GROUP2EMPTY = new VarType(CodeConstants.TYPE_GROUP2EMPTY);
   public static final VarType VARTYPE_STRING = new VarType(CodeConstants.TYPE_OBJECT, 0, "java/lang/String");
   public static final VarType VARTYPE_CLASS = new VarType(CodeConstants.TYPE_OBJECT, 0, "java/lang/Class");
   public static final VarType VARTYPE_OBJECT = new VarType(CodeConstants.TYPE_OBJECT, 0, "java/lang/Object");
   public static final VarType VARTYPE_VOID = new VarType(CodeConstants.TYPE_VOID);
 
-  public int type;
-
-  public int type_family;
-
-  public int arraydim;
-
-  public String value;
-
-  public int stack_size;
-
-  public int convinfo;
+  public final int type;
+  public final int arrayDim;
+  public final String value;
+  public final int typeFamily;
+  public final int stackSize;
+  public final boolean falseBoolean;
 
   public VarType(int type) {
+    this(type, 0);
+  }
+
+  public VarType(int type, int arrayDim) {
+    this(type, arrayDim, getChar(type));
+  }
+
+  public VarType(int type, int arrayDim, String value) {
+    this(type, arrayDim, value, getFamily(type, arrayDim), getStackSize(type, arrayDim), false);
+  }
+
+  private VarType(int type, int arrayDim, String value, int typeFamily, int stackSize, boolean falseBoolean) {
     this.type = type;
-    this.arraydim = 0;
-
-    value = getChar(type);
-    setStackSize(type);
-    setFamily();
-  }
-
-  public VarType(int type, int arraydim) {
-    this(type);
-    this.arraydim = arraydim;
-    setFamily();
-  }
-
-  public VarType(int type, int arraydim, String value) {
-    this(type);
-    this.arraydim = arraydim;
+    this.arrayDim = arrayDim;
     this.value = value;
-    setFamily();
+    this.typeFamily = typeFamily;
+    this.stackSize = stackSize;
+    this.falseBoolean = falseBoolean;
   }
 
-  public VarType(String strtype) {
-    this(strtype, false);
+  public VarType(String signature) {
+    this(signature, false);
   }
 
-  public VarType(String strtype, boolean cltype) {
-    parseTypeString(strtype, cltype);
-    setStackSize(type);
-    setFamily();
-  }
+  public VarType(String signature, boolean clType) {
+    int type = 0;
+    int arrayDim = 0;
+    String value = null;
 
-  public void decArrayDim() {
-    if (arraydim > 0) {
-      arraydim--;
-      setFamily();
-    }
-    else {
-      // throw new RuntimeException("array dimension equals 0!"); FIXME: investigate this case
-    }
-  }
-
-  public String toString() {
-    String res = "";
-
-    for (int i = 0; i < arraydim; i++) {
-      res += "[";
-    }
-
-    if (type == CodeConstants.TYPE_OBJECT) {
-      res += "L" + value + ";";
-    }
-    else {
-      res += value;
-    }
-
-    return res;
-  }
-
-  public VarType copy() {
-    VarType v = new VarType(type, arraydim, value);
-    v.convinfo = convinfo;
-    return v;
-  }
-
-  public boolean isFalseBoolean() {
-    return (convinfo & FALSEBOOLEAN) != 0;
-  }
-
-  public boolean isSuperset(VarType val) {
-
-    return this.equals(val) || this.isStrictSuperset(val);
-  }
-
-  public boolean isStrictSuperset(VarType val) {
-
-    int valtype = val.type;
-
-    if (valtype == CodeConstants.TYPE_UNKNOWN && type != CodeConstants.TYPE_UNKNOWN) {
-      return true;
-    }
-
-    if (val.arraydim > 0) {
-      return this.equals(VARTYPE_OBJECT);
-    }
-    else if (arraydim > 0) {
-      return (valtype == CodeConstants.TYPE_NULL);
-    }
-
-    boolean res = false;
-
-    switch (type) {
-      case CodeConstants.TYPE_INT:
-        res |= (valtype == CodeConstants.TYPE_SHORT ||
-                valtype == CodeConstants.TYPE_CHAR);
-      case CodeConstants.TYPE_SHORT:
-        res |= (valtype == CodeConstants.TYPE_BYTE);
-      case CodeConstants.TYPE_CHAR:
-        res |= (valtype == CodeConstants.TYPE_SHORTCHAR);
-      case CodeConstants.TYPE_BYTE:
-      case CodeConstants.TYPE_SHORTCHAR:
-        res |= (valtype == CodeConstants.TYPE_BYTECHAR);
-      case CodeConstants.TYPE_BYTECHAR:
-        res |= (valtype == CodeConstants.TYPE_BOOLEAN);
-        break;
-      case CodeConstants.TYPE_OBJECT:
-        if (valtype == CodeConstants.TYPE_NULL) {
-          return true;
-        }
-        else if (this.equals(VARTYPE_OBJECT)) {
-          return valtype == CodeConstants.TYPE_OBJECT &&
-                 !val.equals(VARTYPE_OBJECT);
-        }
-    }
-
-    return res;
-  }
-
-  // type1 and type2 must not be null
-  public static VarType getCommonMinType(VarType type1, VarType type2) {
-
-    if (type1.type == CodeConstants.TYPE_BOOLEAN && type2.type == CodeConstants.TYPE_BOOLEAN) { // special case booleans
-      return type1.isFalseBoolean() ? type2 : type1;
-    }
-
-    if (type1.isSuperset(type2)) {
-      return type2;
-    }
-    else if (type2.isSuperset(type1)) {
-      return type1;
-    }
-    else if (type1.type_family == type2.type_family) {
-      switch (type1.type_family) {
-        case CodeConstants.TYPE_FAMILY_INTEGER:
-          if ((type1.type == CodeConstants.TYPE_CHAR && type2.type == CodeConstants.TYPE_SHORT)
-              || (type1.type == CodeConstants.TYPE_SHORT && type2.type == CodeConstants.TYPE_CHAR)) {
-            return VARTYPE_SHORTCHAR;
-          }
-          else {
-            return VARTYPE_BYTECHAR;
-          }
-        case CodeConstants.TYPE_FAMILY_OBJECT:
-          return VARTYPE_NULL;
-      }
-    }
-
-    return null;
-  }
-
-  // type1 and type2 must not be null
-  public static VarType getCommonSupertype(VarType type1, VarType type2) {
-
-    if (type1.type == CodeConstants.TYPE_BOOLEAN && type2.type == CodeConstants.TYPE_BOOLEAN) { // special case booleans
-      return type1.isFalseBoolean() ? type1 : type2;
-    }
-
-    if (type1.isSuperset(type2)) {
-      return type1;
-    }
-    else if (type2.isSuperset(type1)) {
-      return type2;
-    }
-    else if (type1.type_family == type2.type_family) {
-      switch (type1.type_family) {
-        case CodeConstants.TYPE_FAMILY_INTEGER:
-          if ((type1.type == CodeConstants.TYPE_SHORTCHAR && type2.type == CodeConstants.TYPE_BYTE)
-              || (type1.type == CodeConstants.TYPE_BYTE && type2.type == CodeConstants.TYPE_SHORTCHAR)) {
-            return VARTYPE_SHORT;
-          }
-          else {
-            return VARTYPE_INT;
-          }
-        case CodeConstants.TYPE_FAMILY_OBJECT:
-          return VARTYPE_OBJECT;
-      }
-    }
-
-    return null;
-  }
-
-  public static VarType getMinTypeInFamily(int family) {
-    switch (family) {
-      case CodeConstants.TYPE_FAMILY_BOOLEAN:
-        return VARTYPE_BOOLEAN;
-      case CodeConstants.TYPE_FAMILY_INTEGER:
-        return VARTYPE_BYTECHAR;
-      case CodeConstants.TYPE_FAMILY_OBJECT:
-        return VARTYPE_NULL;
-      case CodeConstants.TYPE_FAMILY_FLOAT:
-        return VARTYPE_FLOAT;
-      case CodeConstants.TYPE_FAMILY_LONG:
-        return VARTYPE_LONG;
-      case CodeConstants.TYPE_FAMILY_DOUBLE:
-        return VARTYPE_DOUBLE;
-      case CodeConstants.TYPE_FAMILY_UNKNOWN:
-        return VARTYPE_UNKNOWN;
-      default:
-        throw new RuntimeException("invalid type family!");
-    }
-  }
-
-  public boolean equals(Object o) {
-
-    if (o == this) {
-      return true;
-    }
-
-    if (o == null || !(o instanceof VarType)) {
-      return false;
-    }
-
-    VarType vt = (VarType)o;
-    return type == vt.type && arraydim == vt.arraydim && InterpreterUtil.equalObjects(value, vt.value);
-  }
-
-  private void parseTypeString(String strtype, boolean cltype) {
-
-    for (int i = 0; i < strtype.length(); i++) {
-      switch (strtype.charAt(i)) {
+    loop:
+    for (int i = 0; i < signature.length(); i++) {
+      switch (signature.charAt(i)) {
         case '[':
-          arraydim++;
+          arrayDim++;
           break;
+
         case 'L':
-          if (strtype.charAt(strtype.length() - 1) == ';') {
+          if (signature.charAt(signature.length() - 1) == ';') {
             type = CodeConstants.TYPE_OBJECT;
-            value = strtype.substring(i + 1, strtype.length() - 1);
-            return;
+            value = signature.substring(i + 1, signature.length() - 1);
+            break loop;
           }
+
         default:
-          value = strtype.substring(i, strtype.length());
-          if ((cltype && i == 0) || value.length() > 1) {
+          value = signature.substring(i, signature.length());
+          if ((clType && i == 0) || value.length() > 1) {
             type = CodeConstants.TYPE_OBJECT;
           }
           else {
             type = getType(value.charAt(0));
           }
-          return;
+          break loop;
       }
     }
-  }
 
-  private void setStackSize(int type) {
-    if (arraydim > 0) {
-      stack_size = 1;
-    }
-    else {
-      stack_size = (type == CodeConstants.TYPE_DOUBLE ||
-                    type == CodeConstants.TYPE_LONG) ? 2 :
-                   ((type == CodeConstants.TYPE_VOID ||
-                     type == CodeConstants.TYPE_GROUP2EMPTY) ? 0 : 1);
-    }
-  }
-
-  private static int getType(char c) {
-    switch (c) {
-      case 'B':
-        return CodeConstants.TYPE_BYTE;
-      case 'C':
-        return CodeConstants.TYPE_CHAR;
-      case 'D':
-        return CodeConstants.TYPE_DOUBLE;
-      case 'F':
-        return CodeConstants.TYPE_FLOAT;
-      case 'I':
-        return CodeConstants.TYPE_INT;
-      case 'J':
-        return CodeConstants.TYPE_LONG;
-      case 'S':
-        return CodeConstants.TYPE_SHORT;
-      case 'Z':
-        return CodeConstants.TYPE_BOOLEAN;
-      case 'V':
-        return CodeConstants.TYPE_VOID;
-      case 'G':
-        return CodeConstants.TYPE_GROUP2EMPTY;
-      case 'N':
-        return CodeConstants.TYPE_NOTINITIALIZED;
-      case 'A':
-        return CodeConstants.TYPE_ADDRESS;
-      case 'X':
-        return CodeConstants.TYPE_BYTECHAR;
-      case 'Y':
-        return CodeConstants.TYPE_SHORTCHAR;
-      case 'U':
-        return CodeConstants.TYPE_UNKNOWN;
-      default:
-        throw new RuntimeException("Invalid type");
-    }
+    this.type = type;
+    this.arrayDim = arrayDim;
+    this.value = value;
+    this.typeFamily = getFamily(type, arrayDim);
+    this.stackSize = getStackSize(type, arrayDim);
+    this.falseBoolean = false;
   }
 
   private static String getChar(int type) {
@@ -383,11 +151,26 @@ public class VarType {  // TODO: optimize switch
     }
   }
 
-  public void setFamily() {
+  private static int getStackSize(int type, int arrayDim) {
+    if (arrayDim > 0) {
+      return 1;
+    }
 
-    if (arraydim > 0) {
-      this.type_family = CodeConstants.TYPE_FAMILY_OBJECT;
-      return;
+    switch (type) {
+      case CodeConstants.TYPE_DOUBLE:
+      case CodeConstants.TYPE_LONG:
+        return 2;
+      case CodeConstants.TYPE_VOID:
+      case CodeConstants.TYPE_GROUP2EMPTY:
+        return 0;
+      default:
+        return 1;
+    }
+  }
+
+  private static int getFamily(int type, int arrayDim) {
+    if (arrayDim > 0) {
+      return CodeConstants.TYPE_FAMILY_OBJECT;
     }
 
     switch (type) {
@@ -397,26 +180,239 @@ public class VarType {  // TODO: optimize switch
       case CodeConstants.TYPE_CHAR:
       case CodeConstants.TYPE_SHORT:
       case CodeConstants.TYPE_INT:
-        this.type_family = CodeConstants.TYPE_FAMILY_INTEGER;
-        break;
+        return CodeConstants.TYPE_FAMILY_INTEGER;
       case CodeConstants.TYPE_DOUBLE:
-        this.type_family = CodeConstants.TYPE_FAMILY_DOUBLE;
-        break;
+        return CodeConstants.TYPE_FAMILY_DOUBLE;
       case CodeConstants.TYPE_FLOAT:
-        this.type_family = CodeConstants.TYPE_FAMILY_FLOAT;
-        break;
+        return CodeConstants.TYPE_FAMILY_FLOAT;
       case CodeConstants.TYPE_LONG:
-        this.type_family = CodeConstants.TYPE_FAMILY_LONG;
-        break;
+        return CodeConstants.TYPE_FAMILY_LONG;
       case CodeConstants.TYPE_BOOLEAN:
-        this.type_family = CodeConstants.TYPE_FAMILY_BOOLEAN;
-        break;
+        return CodeConstants.TYPE_FAMILY_BOOLEAN;
       case CodeConstants.TYPE_NULL:
       case CodeConstants.TYPE_OBJECT:
-        this.type_family = CodeConstants.TYPE_FAMILY_OBJECT;
-        break;
+        return CodeConstants.TYPE_FAMILY_OBJECT;
       default:
-        this.type_family = CodeConstants.TYPE_FAMILY_UNKNOWN;
+        return CodeConstants.TYPE_FAMILY_UNKNOWN;
+    }
+  }
+
+  public VarType decreaseArrayDim() {
+    if (arrayDim > 0) {
+      return new VarType(type, arrayDim - 1, value);
+    }
+    else {
+      //throw new RuntimeException("array dimension equals 0!"); FIXME: investigate this case
+      return this;
+    }
+  }
+
+  public VarType resizeArrayDim(int newArrayDim) {
+    return new VarType(type, newArrayDim, value, typeFamily, stackSize, falseBoolean);
+  }
+
+  public VarType copy() {
+    return copy(false);
+  }
+
+  public VarType copy(boolean forceFalseBoolean) {
+    return new VarType(type, arrayDim, value, typeFamily, stackSize, falseBoolean || forceFalseBoolean);
+  }
+
+  public boolean isFalseBoolean() {
+    return falseBoolean;
+  }
+
+  public boolean isSuperset(VarType val) {
+    return this.equals(val) || this.isStrictSuperset(val);
+  }
+
+  public boolean isStrictSuperset(VarType val) {
+    int valType = val.type;
+
+    if (valType == CodeConstants.TYPE_UNKNOWN && type != CodeConstants.TYPE_UNKNOWN) {
+      return true;
+    }
+
+    if (val.arrayDim > 0) {
+      return this.equals(VARTYPE_OBJECT);
+    }
+    else if (arrayDim > 0) {
+      return (valType == CodeConstants.TYPE_NULL);
+    }
+
+    boolean res = false;
+
+    switch (type) {
+      case CodeConstants.TYPE_INT:
+        res = (valType == CodeConstants.TYPE_SHORT || valType == CodeConstants.TYPE_CHAR);
+      case CodeConstants.TYPE_SHORT:
+        res |= (valType == CodeConstants.TYPE_BYTE);
+      case CodeConstants.TYPE_CHAR:
+        res |= (valType == CodeConstants.TYPE_SHORTCHAR);
+      case CodeConstants.TYPE_BYTE:
+      case CodeConstants.TYPE_SHORTCHAR:
+        res |= (valType == CodeConstants.TYPE_BYTECHAR);
+      case CodeConstants.TYPE_BYTECHAR:
+        res |= (valType == CodeConstants.TYPE_BOOLEAN);
+        break;
+
+      case CodeConstants.TYPE_OBJECT:
+        if (valType == CodeConstants.TYPE_NULL) {
+          return true;
+        }
+        else if (this.equals(VARTYPE_OBJECT)) {
+          return valType == CodeConstants.TYPE_OBJECT && !val.equals(VARTYPE_OBJECT);
+        }
+    }
+
+    return res;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == this) {
+      return true;
+    }
+
+    if (o == null || !(o instanceof VarType)) {
+      return false;
+    }
+
+    VarType vt = (VarType)o;
+    return type == vt.type && arrayDim == vt.arrayDim && InterpreterUtil.equalObjects(value, vt.value);
+  }
+
+  @Override
+  public String toString() {
+    StringBuilder res = new StringBuilder();
+    for (int i = 0; i < arrayDim; i++) {
+      res.append('[');
+    }
+    if (type == CodeConstants.TYPE_OBJECT) {
+      res.append('L').append(value).append(';');
+    }
+    else {
+      res.append(value);
+    }
+    return res.toString();
+  }
+
+  // type1 and type2 must not be null
+  public static VarType getCommonMinType(VarType type1, VarType type2) {
+    if (type1.type == CodeConstants.TYPE_BOOLEAN && type2.type == CodeConstants.TYPE_BOOLEAN) { // special case booleans
+      return type1.isFalseBoolean() ? type2 : type1;
+    }
+
+    if (type1.isSuperset(type2)) {
+      return type2;
+    }
+    else if (type2.isSuperset(type1)) {
+      return type1;
+    }
+    else if (type1.typeFamily == type2.typeFamily) {
+      switch (type1.typeFamily) {
+        case CodeConstants.TYPE_FAMILY_INTEGER:
+          if ((type1.type == CodeConstants.TYPE_CHAR && type2.type == CodeConstants.TYPE_SHORT)
+              || (type1.type == CodeConstants.TYPE_SHORT && type2.type == CodeConstants.TYPE_CHAR)) {
+            return VARTYPE_SHORTCHAR;
+          }
+          else {
+            return VARTYPE_BYTECHAR;
+          }
+        case CodeConstants.TYPE_FAMILY_OBJECT:
+          return VARTYPE_NULL;
+      }
+    }
+
+    return null;
+  }
+
+  // type1 and type2 must not be null
+  public static VarType getCommonSupertype(VarType type1, VarType type2) {
+    if (type1.type == CodeConstants.TYPE_BOOLEAN && type2.type == CodeConstants.TYPE_BOOLEAN) { // special case booleans
+      return type1.isFalseBoolean() ? type1 : type2;
+    }
+
+    if (type1.isSuperset(type2)) {
+      return type1;
+    }
+    else if (type2.isSuperset(type1)) {
+      return type2;
+    }
+    else if (type1.typeFamily == type2.typeFamily) {
+      switch (type1.typeFamily) {
+        case CodeConstants.TYPE_FAMILY_INTEGER:
+          if ((type1.type == CodeConstants.TYPE_SHORTCHAR && type2.type == CodeConstants.TYPE_BYTE)
+              || (type1.type == CodeConstants.TYPE_BYTE && type2.type == CodeConstants.TYPE_SHORTCHAR)) {
+            return VARTYPE_SHORT;
+          }
+          else {
+            return VARTYPE_INT;
+          }
+        case CodeConstants.TYPE_FAMILY_OBJECT:
+          return VARTYPE_OBJECT;
+      }
+    }
+
+    return null;
+  }
+
+  public static VarType getMinTypeInFamily(int family) {
+    switch (family) {
+      case CodeConstants.TYPE_FAMILY_BOOLEAN:
+        return VARTYPE_BOOLEAN;
+      case CodeConstants.TYPE_FAMILY_INTEGER:
+        return VARTYPE_BYTECHAR;
+      case CodeConstants.TYPE_FAMILY_OBJECT:
+        return VARTYPE_NULL;
+      case CodeConstants.TYPE_FAMILY_FLOAT:
+        return VARTYPE_FLOAT;
+      case CodeConstants.TYPE_FAMILY_LONG:
+        return VARTYPE_LONG;
+      case CodeConstants.TYPE_FAMILY_DOUBLE:
+        return VARTYPE_DOUBLE;
+      case CodeConstants.TYPE_FAMILY_UNKNOWN:
+        return VARTYPE_UNKNOWN;
+      default:
+        throw new IllegalArgumentException("Invalid type family: " + family);
+    }
+  }
+
+  public static int getType(char c) {
+    switch (c) {
+      case 'B':
+        return CodeConstants.TYPE_BYTE;
+      case 'C':
+        return CodeConstants.TYPE_CHAR;
+      case 'D':
+        return CodeConstants.TYPE_DOUBLE;
+      case 'F':
+        return CodeConstants.TYPE_FLOAT;
+      case 'I':
+        return CodeConstants.TYPE_INT;
+      case 'J':
+        return CodeConstants.TYPE_LONG;
+      case 'S':
+        return CodeConstants.TYPE_SHORT;
+      case 'Z':
+        return CodeConstants.TYPE_BOOLEAN;
+      case 'V':
+        return CodeConstants.TYPE_VOID;
+      case 'G':
+        return CodeConstants.TYPE_GROUP2EMPTY;
+      case 'N':
+        return CodeConstants.TYPE_NOTINITIALIZED;
+      case 'A':
+        return CodeConstants.TYPE_ADDRESS;
+      case 'X':
+        return CodeConstants.TYPE_BYTECHAR;
+      case 'Y':
+        return CodeConstants.TYPE_SHORTCHAR;
+      case 'U':
+        return CodeConstants.TYPE_UNKNOWN;
+      default:
+        throw new IllegalArgumentException("Invalid type: " + c);
     }
   }
 }

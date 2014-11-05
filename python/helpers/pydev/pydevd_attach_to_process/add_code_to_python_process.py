@@ -505,7 +505,7 @@ def run_python_code_mac(pid, python_code, connect_debugger_tracing=False, show_d
         raise RuntimeError('Could not find dll file to inject: %s' % target_dll)
 
     lldb_threads_settrace_file = find_helper_script(filedir, 'lldb_threads_settrace.py')
-    lldb_threads_prepare_file = find_helper_script(filedir, 'lldb_threads_prepare.py')
+    lldb_prepare_file = find_helper_script(filedir, 'lldb_prepare.py')
     # Note: we currently don't support debug builds
 
     is_debug = 0
@@ -525,10 +525,8 @@ def run_python_code_mac(pid, python_code, connect_debugger_tracing=False, show_d
 
     cmd.extend([
         "-o 'process attach --pid %d'"%pid,
-        "-o 'command script import \"%s\"'" % (lldb_threads_prepare_file,),
-        "-o 'expr (void*)dlopen(\"%s\", 2);'" % target_dll,
-        # "-o 'expr (int)hello();'",
-        "-o 'expr (int)DoAttach(%s, \"%s\", %s);'" % (
+        "-o 'command script import \"%s\"'" % (lldb_prepare_file,),
+        "-o 'load_lib_and_attach \"%s\" %s \"%s\" %s'" % (target_dll,
             is_debug, python_code, show_debug_info),
     ])
 
@@ -540,7 +538,8 @@ def run_python_code_mac(pid, python_code, connect_debugger_tracing=False, show_d
             ])
 
     cmd.extend([
-        "-o 'process continue'",
+        "-o 'process detach'",
+        "-o 'script import os; os._exit(1)'",
     ])
 
     #print ' '.join(cmd)
@@ -555,8 +554,8 @@ def run_python_code_mac(pid, python_code, connect_debugger_tracing=False, show_d
         ' '.join(cmd),
         shell=True,
         env=env,
-        stdout=None,
-        stderr=None,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
         )
     print('Running lldb in target process.')
     out, err = p.communicate()

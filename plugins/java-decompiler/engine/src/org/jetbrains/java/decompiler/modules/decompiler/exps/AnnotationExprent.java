@@ -23,28 +23,21 @@ import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
 import java.util.List;
 
-
 public class AnnotationExprent extends Exprent {
 
   public static final int ANNOTATION_NORMAL = 1;
   public static final int ANNOTATION_MARKER = 2;
   public static final int ANNOTATION_SINGLE_ELEMENT = 3;
 
+  private final String className;
+  private final List<String> parNames;
+  private final List<Exprent> parValues;
 
-  private String classname;
-
-  private List<String> parnames;
-
-  private List<Exprent> parvalues;
-
-  {
-    this.type = EXPRENT_ANNOTATION;
-  }
-
-  public AnnotationExprent(String classname, List<String> parnames, List<Exprent> parvalues) {
-    this.classname = classname;
-    this.parnames = parnames;
-    this.parvalues = parvalues;
+  public AnnotationExprent(String className, List<String> parNames, List<Exprent> parValues) {
+    super(EXPRENT_ANNOTATION);
+    this.className = className;
+    this.parNames = parNames;
+    this.parValues = parValues;
   }
 
   @Override
@@ -53,21 +46,21 @@ public class AnnotationExprent extends Exprent {
 
     buffer.appendIndent(indent);
     buffer.append("@");
-    buffer.append(DecompilerContext.getImportCollector().getShortName(ExprProcessor.buildJavaClassName(classname)));
+    buffer.append(DecompilerContext.getImportCollector().getShortName(ExprProcessor.buildJavaClassName(className)));
 
-    if (!parnames.isEmpty()) {
+    if (!parNames.isEmpty()) {
       buffer.append("(");
-      if (parnames.size() == 1 && "value".equals(parnames.get(0))) {
-        buffer.append(parvalues.get(0).toJava(indent + 1, tracer));
+      if (parNames.size() == 1 && "value".equals(parNames.get(0))) {
+        buffer.append(parValues.get(0).toJava(indent + 1, tracer));
       }
       else {
-        for (int i = 0; i < parnames.size(); i++) {
+        for (int i = 0; i < parNames.size(); i++) {
           buffer.appendLineSeparator().appendIndent(indent + 1);
-          buffer.append(parnames.get(i));
+          buffer.append(parNames.get(i));
           buffer.append(" = ");
-          buffer.append(parvalues.get(i).toJava(indent + 2, tracer));
+          buffer.append(parValues.get(i).toJava(indent + 2, tracer));
 
-          if (i < parnames.size() - 1) {
+          if (i < parNames.size() - 1) {
             buffer.append(",");
           }
         }
@@ -80,32 +73,30 @@ public class AnnotationExprent extends Exprent {
     return buffer;
   }
 
-  public int getAnnotationType() {
+  public String getClassName() {
+    return className;
+  }
 
-    if (parnames.isEmpty()) {
+  public int getAnnotationType() {
+    if (parNames.isEmpty()) {
       return ANNOTATION_MARKER;
     }
+    else if (parNames.size() == 1 && "value".equals(parNames.get(0))) {
+      return ANNOTATION_SINGLE_ELEMENT;
+    }
     else {
-      if (parnames.size() == 1 && "value".equals(parnames.get(0))) {
-        return ANNOTATION_SINGLE_ELEMENT;
-      }
-      else {
-        return ANNOTATION_NORMAL;
-      }
+      return ANNOTATION_NORMAL;
     }
   }
 
+  @Override
   public boolean equals(Object o) {
     if (o == this) return true;
     if (o == null || !(o instanceof AnnotationExprent)) return false;
 
     AnnotationExprent ann = (AnnotationExprent)o;
-    return classname.equals(ann.classname) &&
-           InterpreterUtil.equalLists(parnames, ann.parnames) &&
-           InterpreterUtil.equalLists(parvalues, ann.parvalues);
-  }
-
-  public String getClassname() {
-    return classname;
+    return className.equals(ann.className) &&
+           InterpreterUtil.equalLists(parNames, ann.parNames) &&
+           InterpreterUtil.equalLists(parValues, ann.parValues);
   }
 }

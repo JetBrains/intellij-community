@@ -143,4 +143,8 @@ public final class RegExpLanguageHosts extends ClassExtension<RegExpLanguageHost
     final RegExpLanguageHost host = findRegExpHost(element);
     return host != null ? host.getKnownCharacterClasses() : myDefaultProvider.getKnownCharacterClasses();
   }
+
+  String[][] getPosixCharacterClasses(@NotNull final PsiElement element) {
+    return myDefaultProvider.getPosixCharacterClasses();
+  }
 }

@@ -50,6 +50,7 @@ public abstract class SmartStepTarget {
     return myNeedBreakpointRequest;
   }
 
+  @Nullable
   public Range<Integer> getCallingExpressionLines() {
     return myExpressionLines;
   }

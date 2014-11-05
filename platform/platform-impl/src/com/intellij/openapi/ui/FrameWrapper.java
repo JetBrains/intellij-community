@@ -86,9 +86,11 @@ public class FrameWrapper implements Disposable, DataProvider {
   }
 
   public FrameWrapper(Project project, @Nullable @NonNls String dimensionServiceKey, boolean isDialog) {
-    myProject = project;
     myDimensionKey = dimensionServiceKey;
     myIsDialog = isDialog;
+    if (project != null) {
+      setProject(project);
+    }
   }
 
   public void setDimensionKey(String dimensionKey) {
@@ -271,6 +273,9 @@ public class FrameWrapper implements Disposable, DataProvider {
 
   @Override
   public Object getData(@NonNls String dataId) {
+    if (CommonDataKeys.PROJECT.is(dataId)) {
+      return myProject;
+    }
     return null;
   }
 

@@ -57,7 +57,7 @@ public class FileElement extends LazyParseableElement implements FileASTNode, Ge
   @Override
   public LighterAST getLighterAST() {
     final IFileElementType contentType = (IFileElementType)getElementType();
-    assert contentType instanceof ILightStubFileElementType;
+    assert contentType instanceof ILightStubFileElementType:contentType;
 
     LighterAST tree;
     if (!isParsed()) {
@@ -65,7 +65,7 @@ public class FileElement extends LazyParseableElement implements FileASTNode, Ge
       if (tree == null) {
         final ILightStubFileElementType<?> type = (ILightStubFileElementType)contentType;
         tree = new FCTSBackedLighterAST(getCharTable(), type.parseContentsLight(this));
-        putUserData(ourTreeKey, new SoftReference<LighterAST>(tree));
+        tree = SoftReference.dereference(putUserDataIfAbsent(ourTreeKey, new SoftReference<LighterAST>(tree)));
       }
     }
     else {

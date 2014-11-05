@@ -15,10 +15,14 @@
  */
 package com.intellij.idea;
 
+import com.intellij.ide.customize.CustomizeIDEWizardDialog;
+import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.startupWizard.StartupWizard;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ConfigImportHelper;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
@@ -30,6 +34,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.EnvironmentUtil;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.lang.UrlClassLoader;
 import com.sun.jna.Native;
 import org.jetbrains.annotations.NonNls;
@@ -66,12 +71,12 @@ public class StartupUtil {
     ourLock.setActivateListener(consumer);
   }
 
-  interface AppStarter {
-    void start(boolean newConfigFolder);
-  }
-
   public synchronized static int getAcquiredPort() {
     return ourLock.getAcquiredPort();
+  }
+
+  interface AppStarter {
+    void start(boolean newConfigFolder);
   }
 
   static void prepareAndStart(String[] args, AppStarter appStarter) {
@@ -292,6 +297,31 @@ public class StartupUtil {
     List<String> arguments = ManagementFactory.getRuntimeMXBean().getInputArguments();
     if (arguments != null) {
       log.info("JVM Args: " + StringUtil.join(arguments, " "));
+    }
+  }
+
+  static void runStartupWizard() {
+    ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
+
+    String stepsProvider = appInfo.getCustomizeIDEWizardStepsProvider();
+    if (stepsProvider != null) {
+      CustomizeIDEWizardDialog.showCustomSteps(stepsProvider);
+      PluginManagerCore.invalidatePlugins();
+      return;
+    }
+
+    if (PlatformUtils.isIntelliJ()) {
+      new CustomizeIDEWizardDialog().show();
+      PluginManagerCore.invalidatePlugins();
+      return;
+    }
+
+    List<ApplicationInfoEx.PluginChooserPage> pages = appInfo.getPluginChooserPages();
+    if (!pages.isEmpty()) {
+      StartupWizard startupWizard = new StartupWizard(pages);
+      startupWizard.setCancelText("Skip");
+      startupWizard.show();
+      PluginManagerCore.invalidatePlugins();
     }
   }
 }

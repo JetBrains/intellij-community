@@ -17,18 +17,25 @@ package com.intellij.vcs.log.statistics;
 
 import com.intellij.internal.statistic.AbstractApplicationUsagesCollector;
 import com.intellij.internal.statistic.CollectUsagesException;
+import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.VcsLogProvider;
+import com.intellij.vcs.log.data.VisiblePack;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.impl.VcsLogContentProvider;
 import com.intellij.vcs.log.impl.VcsLogManager;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.Map;
@@ -42,36 +49,46 @@ public class VcsLogRepoSizeCollector extends AbstractApplicationUsagesCollector 
   @Override
   public Set<UsageDescriptor> getProjectUsages(@NotNull Project project) throws CollectUsagesException {
     VcsLogManager logManager = VcsLogContentProvider.findLogManager(project);
-    if (logManager != null) {
-      VcsLogUiImpl ui = logManager.getLogUi();
-      if (ui != null) {
-        PermanentGraph<Integer> permanentGraph = ui.getDataPack().getPermanentGraph();
-        Map<VcsKey, Integer> rootCounts = groupRootsByVcs(ui.getDataPack().getLogProviders());
+    VisiblePack dataPack = getDataPack(logManager);
+    if (dataPack != null) {
+      PermanentGraph<Integer> permanentGraph = dataPack.getPermanentGraph();
+      MultiMap<VcsKey, VirtualFile> groupedRoots = groupRootsByVcs(dataPack.getLogProviders());
 
-        Set<UsageDescriptor> usages = ContainerUtil.newHashSet();
-        usages.add(new UsageDescriptor("vcs.log.commit.count", permanentGraph.getAllCommits().size()));
-        for (Map.Entry<VcsKey, Integer> entry : rootCounts.entrySet()) {
-          usages.add(new RootUsage(entry.getKey(), entry.getValue()));
-        }
-        return usages;
+      Set<UsageDescriptor> usages = ContainerUtil.newHashSet();
+      usages.add(new UsageDescriptor("vcs.log.commit.count", permanentGraph.getAllCommits().size()));
+      for (VcsKey vcs : groupedRoots.keySet()) {
+        usages.add(new RootUsage(vcs, groupedRoots.get(vcs).size()));
       }
+      return usages;
     }
     return Collections.emptySet();
   }
 
+  @Nullable
+  private static VisiblePack getDataPack(@Nullable VcsLogManager logManager) {
+    if (logManager != null) {
+      final VcsLogUiImpl ui = logManager.getLogUi();
+      if (ui != null) {
+        final Ref<VisiblePack> dataPack = Ref.create();
+        ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+          @Override
+          public void run() {
+            dataPack.set(ui.getDataPack());
+          }
+        }, ModalityState.defaultModalityState());
+        return dataPack.get();
+      }
+    }
+    return null;
+  }
+
   @NotNull
-  private static Map<VcsKey, Integer> groupRootsByVcs(@NotNull Map<VirtualFile, VcsLogProvider> providers) {
-    Map<VcsKey, Integer> result = ContainerUtil.newHashMap();
+  private static MultiMap<VcsKey, VirtualFile> groupRootsByVcs(@NotNull Map<VirtualFile, VcsLogProvider> providers) {
+    MultiMap<VcsKey, VirtualFile> result = MultiMap.create();
     for (Map.Entry<VirtualFile, VcsLogProvider> entry : providers.entrySet()) {
-      VcsLogProvider provider = entry.getValue();
-      VcsKey vcs = provider.getSupportedVcs();
-      Integer count = result.get(vcs);
-      if (count == null) {
-        result.put(vcs, 1);
-      }
-      else {
-        result.put(vcs, count + 1);
-      }
+      VirtualFile root = entry.getKey();
+      VcsKey vcs = entry.getValue().getSupportedVcs();
+      result.putValue(vcs, root);
     }
     return result;
   }
@@ -85,7 +102,7 @@ public class VcsLogRepoSizeCollector extends AbstractApplicationUsagesCollector 
   @SuppressWarnings("StringToUpperCaseOrToLowerCaseWithoutLocale")
   private static class RootUsage extends UsageDescriptor {
     RootUsage(VcsKey vcs, int value) {
-      super("vcs.log." + vcs.getName().toLowerCase() + ".root.count", value);
+      super(ConvertUsagesUtil.ensureProperKey("vcs.log." + vcs.getName().toLowerCase() + ".root.count"), value);
     }
   }
 

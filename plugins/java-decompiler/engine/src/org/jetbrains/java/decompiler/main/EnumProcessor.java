@@ -103,7 +103,7 @@ public class EnumProcessor {
         VarExprent instvar = (VarExprent)inv.getInstance();
         VarVersionPaar varpaar = new VarVersionPaar(instvar);
 
-        String classname = meth.varproc.getThisvars().get(varpaar);
+        String classname = meth.varproc.getThisVars().get(varpaar);
 
         if (classname != null) { // any this instance. TODO: Restrict to current class?
           if (!wrapper.getClassStruct().qualifiedName.equals(inv.getClassname())) {

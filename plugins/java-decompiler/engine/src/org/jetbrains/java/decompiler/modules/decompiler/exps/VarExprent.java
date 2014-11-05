@@ -15,9 +15,6 @@
  */
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.ClassWriter;
 import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
@@ -31,54 +28,50 @@ import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPaar;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class VarExprent extends Exprent {
 
   public static final int STACK_BASE = 10000;
-
   public static final String VAR_NAMELESS_ENCLOSURE = "<VAR_NAMELESS_ENCLOSURE>";
 
   private int index;
-
-  private VarType vartype;
-
+  private VarType varType;
   private boolean definition = false;
-
   private VarProcessor processor;
-
   private int version = 0;
-
-  private boolean classdef = false;
-
+  private boolean classDef = false;
   private boolean stack = false;
 
-  {
-    this.type = EXPRENT_VAR;
-  }
-
-  public VarExprent(int index, VarType vartype, VarProcessor processor) {
+  public VarExprent(int index, VarType varType, VarProcessor processor) {
+    super(EXPRENT_VAR);
     this.index = index;
-    this.vartype = vartype;
+    this.varType = varType;
     this.processor = processor;
   }
 
+  @Override
   public VarType getExprType() {
-    return getVartype();
+    return getVarType();
   }
 
+  @Override
   public int getExprentUse() {
     return Exprent.MULTIPLE_USES | Exprent.SIDE_EFFECTS_FREE;
   }
 
+  @Override
   public List<Exprent> getAllExprents() {
     return new ArrayList<Exprent>();
   }
 
   @Override
   public Exprent copy() {
-    VarExprent var = new VarExprent(index, getVartype(), processor);
+    VarExprent var = new VarExprent(index, getVarType(), processor);
     var.setDefinition(definition);
     var.setVersion(version);
-    var.setClassdef(classdef);
+    var.setClassDef(classDef);
     var.setStack(stack);
     return var;
   }
@@ -89,8 +82,8 @@ public class VarExprent extends Exprent {
 
     tracer.addMapping(bytecode);
 
-    if (classdef) {
-      ClassNode child = DecompilerContext.getClassProcessor().getMapRootClasses().get(vartype.value);
+    if (classDef) {
+      ClassNode child = DecompilerContext.getClassProcessor().getMapRootClasses().get(varType.value);
       new ClassWriter().classToJava(child, buffer, indent, tracer);
     }
     else {
@@ -100,10 +93,10 @@ public class VarExprent extends Exprent {
       }
 
       if (definition) {
-        if (processor != null && processor.getVarFinal(new VarVersionPaar(index, version)) == VarTypeProcessor.VAR_FINALEXPLICIT) {
+        if (processor != null && processor.getVarFinal(new VarVersionPaar(index, version)) == VarTypeProcessor.VAR_EXPLICIT_FINAL) {
           buffer.append("final ");
         }
-        buffer.append(ExprProcessor.getCastTypeName(getVartype())).append(" ");
+        buffer.append(ExprProcessor.getCastTypeName(getVarType())).append(" ");
       }
       buffer.append(name == null ? ("var" + index + (version == 0 ? "" : "_" + version)) : name);
     }
@@ -111,6 +104,7 @@ public class VarExprent extends Exprent {
     return buffer;
   }
 
+  @Override
   public boolean equals(Object o) {
     if (o == this) return true;
     if (o == null || !(o instanceof VarExprent)) return false;
@@ -118,7 +112,7 @@ public class VarExprent extends Exprent {
     VarExprent ve = (VarExprent)o;
     return index == ve.getIndex() &&
            version == ve.getVersion() &&
-           InterpreterUtil.equalObjects(getVartype(), ve.getVartype()); // FIXME: vartype comparison redundant?
+           InterpreterUtil.equalObjects(getVarType(), ve.getVarType()); // FIXME: varType comparison redundant?
   }
 
   public int getIndex() {
@@ -129,21 +123,21 @@ public class VarExprent extends Exprent {
     this.index = index;
   }
 
-  public VarType getVartype() {
+  public VarType getVarType() {
     VarType vt = null;
     if (processor != null) {
       vt = processor.getVarType(new VarVersionPaar(index, version));
     }
 
-    if (vt == null || (vartype != null && vartype.type != CodeConstants.TYPE_UNKNOWN)) {
-      vt = vartype;
+    if (vt == null || (varType != null && varType.type != CodeConstants.TYPE_UNKNOWN)) {
+      vt = varType;
     }
 
     return vt == null ? VarType.VARTYPE_UNKNOWN : vt;
   }
 
-  public void setVartype(VarType vartype) {
-    this.vartype = vartype;
+  public void setVarType(VarType varType) {
+    this.varType = varType;
   }
 
   public boolean isDefinition() {
@@ -170,12 +164,12 @@ public class VarExprent extends Exprent {
     this.version = version;
   }
 
-  public boolean isClassdef() {
-    return classdef;
+  public boolean isClassDef() {
+    return classDef;
   }
 
-  public void setClassdef(boolean classdef) {
-    this.classdef = classdef;
+  public void setClassDef(boolean classDef) {
+    this.classDef = classDef;
   }
 
   public boolean isStack() {

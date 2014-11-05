@@ -27,6 +27,8 @@ import io.netty.handler.codec.protobuf.ProtobufDecoder;
 import io.netty.handler.codec.protobuf.ProtobufEncoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
+import io.netty.util.internal.logging.InternalLoggerFactory;
+import io.netty.util.internal.logging.Log4JLoggerFactory;
 import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.xml.DOMConfigurator;
@@ -329,6 +331,7 @@ public class BuildMain {
     }
 
     Logger.setFactory(MyLoggerFactory.class);
+    InternalLoggerFactory.setDefaultFactory(new Log4JLoggerFactory());
   }
 
   private static void ensureLogConfigExists(final File logConfig) throws IOException {

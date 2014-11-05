@@ -30,6 +30,7 @@ import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.reference.SoftReference;
@@ -656,7 +657,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
    */
   private void assertNotNestedModification() throws IllegalStateException {
     if (myChangeInProgress) {
-      throw new IllegalStateException("Detected nested request for document modification from 'before change' callback!");
+      throw new IllegalStateException("Detected document modification from DocumentListener");
     }
   }
 
@@ -708,17 +709,27 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
                           boolean wholeTextReplaced,
                           long newModificationStamp) {
     assertNotNestedModification();
+    boolean enableRecursiveModifications = Registry.is("enable.recursive.document.changes"); // temporary property, to remove in IDEA 16
     myChangeInProgress = true;
     final DocumentEvent event;
     try {
-      event = doBeforeChangedUpdate(offset, oldString, newString, wholeTextReplaced);
+      try {
+        event = doBeforeChangedUpdate(offset, oldString, newString, wholeTextReplaced);
+      }
+      finally {
+        if (enableRecursiveModifications) {
+          myChangeInProgress = false;
+        }
+      }
+      myTextString = null;
+      myText = newText;
+      changedUpdate(event, newModificationStamp);
     }
     finally {
-      myChangeInProgress = false;
+      if (!enableRecursiveModifications) {
+        myChangeInProgress = false;
+      }
     }
-    myTextString = null;
-    myText = newText;
-    changedUpdate(event, newModificationStamp);
   }
 
   @NotNull

@@ -41,10 +41,50 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+/**
+ * Utility to patch project model by excluding folders/files from content roots.
+ * Can be used for running offline inspections (from command-line directly or in teamcity).
+ *
+ * The main logic is in the method {@link #patchProject(com.intellij.openapi.project.Project)}.
+ *
+ * @see com.intellij.codeInspection.InspectionApplication
+ */
 public class PatchProjectUtil {
   private PatchProjectUtil() {
   }
 
+  /**
+   * Excludes folders specified in patterns in the <code>idea.exclude.patterns</code> system property from the project.
+   *
+   * <p>Pattern syntax:
+   * <br>
+   *
+   * <ul>
+   *   <li><code>patterns := pattern(';'pattern)*</code>
+   *   <li><code>pattern := ('['moduleRegEx']')? directoryAntPattern</code>
+   * </ul>
+   *
+   * Where
+   * <ul>
+   *   <li> <code>moduleRegex</code> - regular expression to match module name.
+   *   <li> <code>directoryAntPattern</code> - ant-style pattern to match folder in a module.
+   *        <code>directoryAntPattern</code> considers paths <b>relative</b> to a content root of a module.
+   * </ul>
+   *
+   *
+   * <p>
+   * Example:<br>
+   * <code>
+   *   -Didea.exclude.patterns=testData/**;.reports/**;[sql]/test/*.sql;[graph]/**;[graph-openapi]/**
+   * </code>
+   * <br>
+   *
+   * In this example the <code>testData/**</code> pattern is applied to all modules
+   * and the pattern <code>/test/*.sql</code> to applied to the module <code>sql</code> only.
+   *
+   * @param project project to patch
+   * @see <a href="http://ant.apache.org/manual/dirtasks.html">http://ant.apache.org/manual/dirtasks.html</a>
+   */
   public static void patchProject(final Project project) {
     final Map<Pattern, Set<Pattern>> excludePatterns = loadPatterns("idea.exclude.patterns");
     final Map<Pattern, Set<Pattern>> includePatterns = loadPatterns("idea.include.patterns");
@@ -138,6 +178,13 @@ public class PatchProjectUtil {
     });
   }
 
+  /**
+   * Parses patterns for exclude items.
+   *
+   * @param propertyKey system property key for pattern
+   * @return A map in the form <code>ModulePattern -> DirectoryPattern*</code>.
+   *         ModulePattern may be null (meaning that a directory pattern is applied to all modules).
+   */
   public static Map<Pattern, Set<Pattern>> loadPatterns(@NonNls String propertyKey) {
     final Map<Pattern, Set<Pattern>> result = new HashMap<Pattern, Set<Pattern>>();
     final String patterns = System.getProperty(propertyKey);

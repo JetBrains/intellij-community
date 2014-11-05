@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -124,7 +124,20 @@ public class FileColorManagerImpl extends FileColorManager implements Persistent
   @Nullable
   public Color getColor(@NotNull final String name) {
     Color color = ourDefaultColors.get(name);
-    return color == null ? ColorUtil.fromHex(name, null) : color;
+    if (color != null) {
+      return color;
+    }
+
+    if ("ffffe4".equals(name) || "494539".equals(name)) {
+      return new JBColor(0xffffe4, 0x494539);
+    }
+
+    if ("e7fadb".equals(name) || "2a3b2c".equals(name)) {
+      return new JBColor(0xe7fadb, 0x2a3b2c);
+    }
+
+    return ColorUtil.fromHex(name, null);
+
   }
 
   @Override

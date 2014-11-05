@@ -136,7 +136,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
 
   private boolean myDisposed = false;
   private final GenericDataProvider myDataProvider;
-  private final Project myProject;
+  @NotNull private final Project myProject;
   private final boolean myIsHorizontal;
   private final DiffTool myParentTool;
   private EditorNotificationPanel myTopMessageDiffPanel;
@@ -144,7 +144,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
   private final int myDiffDividerPolygonsOffset;
 
   public DiffPanelImpl(final Window owner,
-                       Project project,
+                       @NotNull Project project,
                        boolean enableToolbar,
                        boolean horizontal,
                        int diffDividerPolygonsOffset,

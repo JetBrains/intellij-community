@@ -13,11 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package test;
+package org.intellij.lang.regexp;
 
-import org.intellij.lang.regexp.RegExpFileType;
-import org.intellij.lang.regexp.RegExpLanguageHost;
-import org.intellij.lang.regexp.RegExpLanguageHosts;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.input.SAXBuilder;
@@ -30,7 +27,7 @@ import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-public class MainParseTest extends BaseParseTestcase {
+public class RegExpParseTest extends BaseParseTestCase {
 
   private ByteArrayOutputStream myOut;
 
@@ -175,16 +172,19 @@ public class MainParseTest extends BaseParseTestcase {
       System.out.print("filename = " + name);
       n++;
 
-      final MainParseTest.Test test = myMap.get(name);
+      final RegExpParseTest.Test test = myMap.get(name);
       try {
         if (test.regExpHost != null) {
           final Class<RegExpLanguageHost> aClass = (Class<RegExpLanguageHost>)Class.forName(test.regExpHost);
           final RegExpLanguageHost host = aClass.newInstance();
           RegExpLanguageHosts.setRegExpHost(host);
         }
-        myFixture.configureByText(RegExpFileType.INSTANCE, test.pattern);
-        myFixture.testHighlighting(test.showWarnings, true, test.showInfo);
-        RegExpLanguageHosts.setRegExpHost(null);
+        try {
+          myFixture.configureByText(RegExpFileType.INSTANCE, test.pattern);
+          myFixture.testHighlighting(test.showWarnings, true, test.showInfo);
+        } finally {
+          RegExpLanguageHosts.setRegExpHost(null);
+        }
 
         if (test.expectedResult == Result.ERR) {
           System.out.println("  FAILED. Expression incorrectly parsed OK: " + test.pattern);

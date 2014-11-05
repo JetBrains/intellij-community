@@ -30,7 +30,7 @@ public abstract class CloudModuleBuilderContributionFactory {
 
   public static CloudModuleBuilderContributionFactory getInstanceByType(ServerType<?> cloudType) {
     for (CloudModuleBuilderContributionFactory contribution : EP_NAME.getExtensions()) {
-      if (contribution.getCloudType() == cloudType) {
+      if (contribution.getCloudType().equals(cloudType)) {
         return contribution;
       }
     }

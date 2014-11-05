@@ -15,12 +15,6 @@
  */
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.TextBuffer;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
@@ -30,6 +24,7 @@ import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.jetbrains.java.decompiler.util.ListStack;
 
+import java.util.*;
 
 public class FunctionExprent extends Exprent {
 
@@ -48,8 +43,8 @@ public class FunctionExprent extends Exprent {
   public static final int FUNCTION_SHR = 9;
   public static final int FUNCTION_USHR = 10;
 
-  public static final int FUNCTION_BITNOT = 11;
-  public static final int FUNCTION_BOOLNOT = 12;
+  public static final int FUNCTION_BIT_NOT = 11;
+  public static final int FUNCTION_BOOL_NOT = 12;
   public static final int FUNCTION_NEG = 13;
 
   public final static int FUNCTION_I2L = 14;
@@ -71,7 +66,7 @@ public class FunctionExprent extends Exprent {
   public final static int FUNCTION_CAST = 29;
   public final static int FUNCTION_INSTANCEOF = 30;
 
-  public final static int FUNCTION_ARRAYLENGTH = 31;
+  public final static int FUNCTION_ARRAY_LENGTH = 31;
 
   public final static int FUNCTION_IMM = 32;
   public final static int FUNCTION_MMI = 33;
@@ -97,9 +92,9 @@ public class FunctionExprent extends Exprent {
   public static final int FUNCTION_CADD = 48;
   public static final int FUNCTION_COR = 49;
 
-  public static final int FUNCTION_STRCONCAT = 50;
+  public static final int FUNCTION_STR_CONCAT = 50;
 
-  private static final VarType[] types = new VarType[]{
+  private static final VarType[] TYPES = {
     VarType.VARTYPE_LONG,
     VarType.VARTYPE_FLOAT,
     VarType.VARTYPE_DOUBLE,
@@ -117,7 +112,7 @@ public class FunctionExprent extends Exprent {
     VarType.VARTYPE_SHORT
   };
 
-  private static final String[] operators = new String[]{
+  private static final String[] OPERATORS = {
     " + ",
     " - ",
     " * ",
@@ -140,81 +135,74 @@ public class FunctionExprent extends Exprent {
     " + "
   };
 
-  private static final int[] precedence = new int[]{
-    3,        //		FUNCTION_ADD
-    3,        //		FUNCTION_SUB
-    2,        //		FUNCTION_MUL
-    2,        //		FUNCTION_DIV
-    7,        //		FUNCTION_AND
-    9,        //		FUNCTION_OR
-    8,        //		FUNCTION_XOR
-    2,        //		FUNCTION_REM
-    4,        //		FUNCTION_SHL
-    4,        //		FUNCTION_SHR
-    4,        //		FUNCTION_USHR
-    1,        //		FUNCTION_BITNOT
-    1,        //		FUNCTION_BOOLNOT
-    1,        //		FUNCTION_NEG
-    1,        //		FUNCTION_I2L
-    1,        //		FUNCTION_I2F
-    1,        //		FUNCTION_I2D
-    1,        //		FUNCTION_L2I
-    1,        //		FUNCTION_L2F
-    1,        //		FUNCTION_L2D
-    1,        //		FUNCTION_F2I
-    1,        //		FUNCTION_F2L
-    1,        //		FUNCTION_F2D
-    1,        //		FUNCTION_D2I
-    1,        //		FUNCTION_D2L
-    1,        //		FUNCTION_D2F
-    1,        //		FUNCTION_I2B
-    1,        //		FUNCTION_I2C
-    1,        //		FUNCTION_I2S
-    1,        //		FUNCTION_CAST
-    6,        //		FUNCTION_INSTANCEOF
-    0,        //		FUNCTION_ARRAYLENGTH
-    1,        //		FUNCTION_IMM
-    1,        //		FUNCTION_MMI
-    1,        //		FUNCTION_IPP
-    1,        //		FUNCTION_PPI
-    12,        //		FUNCTION_IFF
-    -1,        //		FUNCTION_LCMP
-    -1,        //		FUNCTION_FCMPL
-    -1,        //		FUNCTION_FCMPG
-    -1,        //		FUNCTION_DCMPL
-    -1,        //		FUNCTION_DCMPG
-    6,        //		FUNCTION_EQ = 41;
-    6,        //		FUNCTION_NE = 42;
-    5,        //		FUNCTION_LT = 43;
-    5,        //		FUNCTION_GE = 44;
-    5,        //		FUNCTION_GT = 45;
-    5,        //		FUNCTION_LE = 46;
-    10,        //		FUNCTION_CADD = 47;
-    11,        //		FUNCTION_COR = 48;
-    3        //		FUNCTION_STRCONCAT = 49;
+  private static final int[] PRECEDENCE = {
+    3,   // FUNCTION_ADD
+    3,   // FUNCTION_SUB
+    2,   // FUNCTION_MUL
+    2,   // FUNCTION_DIV
+    7,   // FUNCTION_AND
+    9,   // FUNCTION_OR
+    8,   // FUNCTION_XOR
+    2,   // FUNCTION_REM
+    4,   // FUNCTION_SHL
+    4,   // FUNCTION_SHR
+    4,   // FUNCTION_USHR
+    1,   // FUNCTION_BIT_NOT
+    1,   // FUNCTION_BOOL_NOT
+    1,   // FUNCTION_NEG
+    1,   // FUNCTION_I2L
+    1,   // FUNCTION_I2F
+    1,   // FUNCTION_I2D
+    1,   // FUNCTION_L2I
+    1,   // FUNCTION_L2F
+    1,   // FUNCTION_L2D
+    1,   // FUNCTION_F2I
+    1,   // FUNCTION_F2L
+    1,   // FUNCTION_F2D
+    1,   // FUNCTION_D2I
+    1,   // FUNCTION_D2L
+    1,   // FUNCTION_D2F
+    1,   // FUNCTION_I2B
+    1,   // FUNCTION_I2C
+    1,   // FUNCTION_I2S
+    1,   // FUNCTION_CAST
+    6,   // FUNCTION_INSTANCEOF
+    0,   // FUNCTION_ARRAY_LENGTH
+    1,   // FUNCTION_IMM
+    1,   // FUNCTION_MMI
+    1,   // FUNCTION_IPP
+    1,   // FUNCTION_PPI
+    12,  // FUNCTION_IFF
+    -1,  // FUNCTION_LCMP
+    -1,  // FUNCTION_FCMPL
+    -1,  // FUNCTION_FCMPG
+    -1,  // FUNCTION_DCMPL
+    -1,  // FUNCTION_DCMPG
+    6,   // FUNCTION_EQ = 41;
+    6,   // FUNCTION_NE = 42;
+    5,   // FUNCTION_LT = 43;
+    5,   // FUNCTION_GE = 44;
+    5,   // FUNCTION_GT = 45;
+    5,   // FUNCTION_LE = 46;
+    10,  // FUNCTION_CADD = 47;
+    11,  // FUNCTION_COR = 48;
+    3    // FUNCTION_STR_CONCAT = 49;
   };
 
-  private static final HashSet<Integer> associativity =
-    new HashSet<Integer>(Arrays.asList(new Integer[]{FUNCTION_ADD, FUNCTION_MUL, FUNCTION_AND,
-      FUNCTION_OR, FUNCTION_XOR, FUNCTION_CADD, FUNCTION_COR, FUNCTION_STRCONCAT}));
+  private static final Set<Integer> ASSOCIATIVITY = new HashSet<Integer>(Arrays.asList(
+    FUNCTION_ADD, FUNCTION_MUL, FUNCTION_AND, FUNCTION_OR, FUNCTION_XOR, FUNCTION_CADD, FUNCTION_COR, FUNCTION_STR_CONCAT));
 
-  private int functype;
-
+  private int funcType;
   private VarType implicitType;
+  private final List<Exprent> lstOperands;
 
-  private List<Exprent> lstOperands = new ArrayList<Exprent>();
+  public FunctionExprent(int funcType, ListStack<Exprent> stack, Set<Integer> bytecodeOffsets) {
+    this(funcType, new ArrayList<Exprent>(), bytecodeOffsets);
 
-  {
-    this.type = EXPRENT_FUNCTION;
-  }
-
-  public FunctionExprent(int functype, ListStack<Exprent> stack, Set<Integer> bytecode_offsets) {
-    this.functype = functype;
-    if (functype >= FUNCTION_BITNOT && functype <= FUNCTION_PPI && functype != FUNCTION_CAST
-        && functype != FUNCTION_INSTANCEOF) {
+    if (funcType >= FUNCTION_BIT_NOT && funcType <= FUNCTION_PPI && funcType != FUNCTION_CAST && funcType != FUNCTION_INSTANCEOF) {
       lstOperands.add(stack.pop());
     }
-    else if (functype == FUNCTION_IIF) {
+    else if (funcType == FUNCTION_IIF) {
       throw new RuntimeException("no direct instantiation possible");
     }
     else {
@@ -222,22 +210,22 @@ public class FunctionExprent extends Exprent {
       lstOperands.add(stack.pop());
       lstOperands.add(expr);
     }
-
-    addBytecodeOffsets(bytecode_offsets);
   }
 
-  public FunctionExprent(int functype, List<Exprent> operands, Set<Integer> bytecode_offsets) {
-    this.functype = functype;
+  public FunctionExprent(int funcType, List<Exprent> operands, Set<Integer> bytecodeOffsets) {
+    super(EXPRENT_FUNCTION);
+    this.funcType = funcType;
     this.lstOperands = operands;
 
-    addBytecodeOffsets(bytecode_offsets);
+    addBytecodeOffsets(bytecodeOffsets);
   }
 
+  @Override
   public VarType getExprType() {
     VarType exprType = null;
 
-    if (functype <= FUNCTION_NEG || functype == FUNCTION_IPP || functype == FUNCTION_PPI
-        || functype == FUNCTION_IMM || functype == FUNCTION_MMI) {
+    if (funcType <= FUNCTION_NEG || funcType == FUNCTION_IPP || funcType == FUNCTION_PPI
+        || funcType == FUNCTION_IMM || funcType == FUNCTION_MMI) {
 
       VarType type1 = lstOperands.get(0).getExprType();
       VarType type2 = null;
@@ -245,20 +233,20 @@ public class FunctionExprent extends Exprent {
         type2 = lstOperands.get(1).getExprType();
       }
 
-      switch (functype) {
+      switch (funcType) {
         case FUNCTION_IMM:
         case FUNCTION_MMI:
         case FUNCTION_IPP:
         case FUNCTION_PPI:
           exprType = implicitType;
           break;
-        case FUNCTION_BOOLNOT:
+        case FUNCTION_BOOL_NOT:
           exprType = VarType.VARTYPE_BOOLEAN;
           break;
         case FUNCTION_SHL:
         case FUNCTION_SHR:
         case FUNCTION_USHR:
-        case FUNCTION_BITNOT:
+        case FUNCTION_BIT_NOT:
         case FUNCTION_NEG:
           exprType = getMaxVarType(new VarType[]{type1});
           break;
@@ -280,10 +268,10 @@ public class FunctionExprent extends Exprent {
           }
       }
     }
-    else if (functype == FUNCTION_CAST) {
+    else if (funcType == FUNCTION_CAST) {
       exprType = lstOperands.get(1).getExprType();
     }
-    else if (functype == FUNCTION_IIF) {
+    else if (funcType == FUNCTION_IIF) {
       Exprent param1 = lstOperands.get(1);
       Exprent param2 = lstOperands.get(2);
       VarType supertype = VarType.getCommonSupertype(param1.getExprType(), param2.getExprType());
@@ -296,25 +284,25 @@ public class FunctionExprent extends Exprent {
         exprType = supertype;
       }
     }
-    else if (functype == FUNCTION_STRCONCAT) {
+    else if (funcType == FUNCTION_STR_CONCAT) {
       exprType = VarType.VARTYPE_STRING;
     }
-    else if (functype >= FUNCTION_EQ || functype == FUNCTION_INSTANCEOF) {
+    else if (funcType >= FUNCTION_EQ || funcType == FUNCTION_INSTANCEOF) {
       exprType = VarType.VARTYPE_BOOLEAN;
     }
-    else if (functype >= FUNCTION_ARRAYLENGTH) {
+    else if (funcType >= FUNCTION_ARRAY_LENGTH) {
       exprType = VarType.VARTYPE_INT;
     }
     else {
-      exprType = types[functype - FUNCTION_I2L];
+      exprType = TYPES[funcType - FUNCTION_I2L];
     }
 
     return exprType;
   }
 
+  @Override
   public int getExprentUse() {
-
-    if (functype >= FUNCTION_IMM && functype <= FUNCTION_PPI) {
+    if (funcType >= FUNCTION_IMM && funcType <= FUNCTION_PPI) {
       return 0;
     }
     else {
@@ -326,6 +314,7 @@ public class FunctionExprent extends Exprent {
     }
   }
 
+  @Override
   public CheckTypesResult checkExprTypeBounds() {
     CheckTypesResult result = new CheckTypesResult();
 
@@ -339,15 +328,15 @@ public class FunctionExprent extends Exprent {
       type2 = param2.getExprType();
     }
 
-    switch (functype) {
+    switch (funcType) {
       case FUNCTION_IIF:
         VarType supertype = getExprType();
         if (supertype == null) {
           supertype = getExprType();
         }
         result.addMinTypeExprent(param1, VarType.VARTYPE_BOOLEAN);
-        result.addMinTypeExprent(param2, VarType.getMinTypeInFamily(supertype.type_family));
-        result.addMinTypeExprent(lstOperands.get(2), VarType.getMinTypeInFamily(supertype.type_family));
+        result.addMinTypeExprent(param2, VarType.getMinTypeInFamily(supertype.typeFamily));
+        result.addMinTypeExprent(lstOperands.get(2), VarType.getMinTypeInFamily(supertype.typeFamily));
         break;
       case FUNCTION_I2L:
       case FUNCTION_I2F:
@@ -378,8 +367,8 @@ public class FunctionExprent extends Exprent {
       case FUNCTION_GT:
       case FUNCTION_LE:
         result.addMinTypeExprent(param2, VarType.VARTYPE_BYTECHAR);
-      case FUNCTION_BITNOT:
-        // case FUNCTION_BOOLNOT:
+      case FUNCTION_BIT_NOT:
+        // case FUNCTION_BOOL_NOT:
       case FUNCTION_NEG:
         result.addMinTypeExprent(param1, VarType.VARTYPE_BYTECHAR);
         break;
@@ -389,13 +378,10 @@ public class FunctionExprent extends Exprent {
       case FUNCTION_EQ:
       case FUNCTION_NE: {
         if (type1.type == CodeConstants.TYPE_BOOLEAN) {
-
           if (type2.isStrictSuperset(type1)) {
-
             result.addMinTypeExprent(param1, VarType.VARTYPE_BYTECHAR);
           }
           else { // both are booleans
-
             boolean param1_false_boolean =
               type1.isFalseBoolean() || (param1.type == Exprent.EXPRENT_CONST && !((ConstExprent)param1).hasBooleanValue());
             boolean param2_false_boolean =
@@ -408,7 +394,6 @@ public class FunctionExprent extends Exprent {
           }
         }
         else if (type2.type == CodeConstants.TYPE_BOOLEAN) {
-
           if (type1.isStrictSuperset(type2)) {
             result.addMinTypeExprent(param2, VarType.VARTYPE_BYTECHAR);
           }
@@ -419,6 +404,7 @@ public class FunctionExprent extends Exprent {
     return result;
   }
 
+  @Override
   public List<Exprent> getAllExprents() {
     List<Exprent> lst = new ArrayList<Exprent>();
     lst.addAll(lstOperands);
@@ -431,64 +417,63 @@ public class FunctionExprent extends Exprent {
     for (Exprent expr : lstOperands) {
       lst.add(expr.copy());
     }
-    FunctionExprent func = new FunctionExprent(functype, lst, bytecode);
+    FunctionExprent func = new FunctionExprent(funcType, lst, bytecode);
     func.setImplicitType(implicitType);
 
     return func;
   }
 
+  @Override
   public boolean equals(Object o) {
     if (o == this) return true;
     if (o == null || !(o instanceof FunctionExprent)) return false;
 
     FunctionExprent fe = (FunctionExprent)o;
-    return functype == fe.getFunctype() &&
+    return funcType == fe.getFuncType() &&
            InterpreterUtil.equalLists(lstOperands, fe.getLstOperands()); // TODO: order of operands insignificant
   }
 
-  public void replaceExprent(Exprent oldexpr, Exprent newexpr) {
+  @Override
+  public void replaceExprent(Exprent oldExpr, Exprent newExpr) {
     for (int i = 0; i < lstOperands.size(); i++) {
-      if (oldexpr == lstOperands.get(i)) {
-        lstOperands.set(i, newexpr);
+      if (oldExpr == lstOperands.get(i)) {
+        lstOperands.set(i, newExpr);
       }
     }
   }
 
   @Override
   public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
-
     tracer.addMapping(bytecode);
 
-    if (functype <= FUNCTION_USHR) {
+    if (funcType <= FUNCTION_USHR) {
       return wrapOperandString(lstOperands.get(0), false, indent, tracer)
-        .append(operators[functype])
+        .append(OPERATORS[funcType])
         .append(wrapOperandString(lstOperands.get(1), true, indent, tracer));
     }
 
-    if (functype >= FUNCTION_EQ) {
+    if (funcType >= FUNCTION_EQ) {
       return wrapOperandString(lstOperands.get(0), false, indent, tracer)
-        .append(operators[functype - FUNCTION_EQ + 11])
+        .append(OPERATORS[funcType - FUNCTION_EQ + 11])
         .append(wrapOperandString(lstOperands.get(1), true, indent, tracer));
     }
 
-    switch (functype) {
-      case FUNCTION_BITNOT:
+    switch (funcType) {
+      case FUNCTION_BIT_NOT:
         return wrapOperandString(lstOperands.get(0), true, indent, tracer).prepend("~");
-      case FUNCTION_BOOLNOT:
+      case FUNCTION_BOOL_NOT:
         return wrapOperandString(lstOperands.get(0), true, indent, tracer).prepend("!");
       case FUNCTION_NEG:
         return wrapOperandString(lstOperands.get(0), true, indent, tracer).prepend("-");
       case FUNCTION_CAST:
         return lstOperands.get(1).toJava(indent, tracer).enclose("(", ")").append(wrapOperandString(lstOperands.get(0), true, indent, tracer));
-      case FUNCTION_ARRAYLENGTH:
+      case FUNCTION_ARRAY_LENGTH:
         Exprent arr = lstOperands.get(0);
 
         TextBuffer res = wrapOperandString(arr, false, indent, tracer);
-        if (arr.getExprType().arraydim == 0) {
-          VarType objarr = VarType.VARTYPE_OBJECT.copy();
-          objarr.arraydim = 1; // type family does not change
-
-          res.enclose("((" + ExprProcessor.getCastTypeName(objarr) + ")", ")");
+        if (arr.getExprType().arrayDim == 0) {
+          VarType objArr = VarType.VARTYPE_OBJECT.resizeArrayDim(1); // type family does not change
+          res.enclose("((" + ExprProcessor.getCastTypeName(objArr) + ")", ")");
         }
         return res.append(".length");
       case FUNCTION_IIF:
@@ -534,28 +519,29 @@ public class FunctionExprent extends Exprent {
                  .append(")");
     }
 
-    if (functype <= FUNCTION_I2S) {
-      return wrapOperandString(lstOperands.get(0), true, indent, tracer).prepend("(" + ExprProcessor.getTypeName(types[functype - FUNCTION_I2L]) + ")");
+    if (funcType <= FUNCTION_I2S) {
+      return wrapOperandString(lstOperands.get(0), true, indent, tracer).prepend("(" + ExprProcessor.getTypeName(
+        TYPES[funcType - FUNCTION_I2L]) + ")");
     }
 
     //		return "<unknown function>";
     throw new RuntimeException("invalid function");
   }
 
+  @Override
   public int getPrecedence() {
-    return getPrecedence(functype);
+    return getPrecedence(funcType);
   }
 
   public static int getPrecedence(int func) {
-    return precedence[func];
+    return PRECEDENCE[func];
   }
 
   public VarType getSimpleCastType() {
-    return types[functype - FUNCTION_I2L];
+    return TYPES[funcType - FUNCTION_I2L];
   }
 
   private TextBuffer wrapOperandString(Exprent expr, boolean eq, int indent, BytecodeMappingTracer tracer) {
-
     int myprec = getPrecedence();
     int exprprec = expr.getPrecedence();
 
@@ -564,8 +550,8 @@ public class FunctionExprent extends Exprent {
       parentheses = (exprprec == myprec);
       if (parentheses) {
         if (expr.type == Exprent.EXPRENT_FUNCTION &&
-            ((FunctionExprent)expr).getFunctype() == functype) {
-          parentheses = !associativity.contains(functype);
+            ((FunctionExprent)expr).getFuncType() == funcType) {
+          parentheses = !ASSOCIATIVITY.contains(funcType);
         }
       }
     }
@@ -580,7 +566,6 @@ public class FunctionExprent extends Exprent {
   }
 
   private static VarType getMaxVarType(VarType[] arr) {
-
     int[] types = new int[]{CodeConstants.TYPE_DOUBLE, CodeConstants.TYPE_FLOAT, CodeConstants.TYPE_LONG};
     VarType[] vartypes = new VarType[]{VarType.VARTYPE_DOUBLE, VarType.VARTYPE_FLOAT, VarType.VARTYPE_LONG};
 
@@ -599,28 +584,19 @@ public class FunctionExprent extends Exprent {
   // getter and setter methods
   // *****************************************************************************
 
-  public int getFunctype() {
-    return functype;
+  public int getFuncType() {
+    return funcType;
   }
 
-  public void setFunctype(int functype) {
-    this.functype = functype;
+  public void setFuncType(int funcType) {
+    this.funcType = funcType;
   }
 
   public List<Exprent> getLstOperands() {
     return lstOperands;
   }
 
-  public void setLstOperands(List<Exprent> lstOperands) {
-    this.lstOperands = lstOperands;
-  }
-
-  public VarType getImplicitType() {
-    return implicitType;
-  }
-
   public void setImplicitType(VarType implicitType) {
     this.implicitType = implicitType;
   }
 }
-

@@ -16,10 +16,22 @@
 
 package com.intellij.execution.util;
 
+import com.intellij.icons.AllIcons;
+import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.AnActionButton;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.StringSelection;
+import java.util.ArrayList;
 import java.util.List;
 
 public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable> {
@@ -89,6 +101,61 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
   @Override
   protected EnvironmentVariable createElement() {
     return new EnvironmentVariable("", "", false);
+  }
+
+  @Override
+  protected boolean isEmpty(EnvironmentVariable element) {
+    return element.getName().isEmpty() && element.getValue().isEmpty();
+  }
+
+  @Override
+  protected AnActionButton[] createExtraActions() {
+    AnActionButton copyButton = new AnActionButton(ActionsBundle.message("action.EditorCopy.text"), AllIcons.Actions.Copy) {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        stopEditing();
+        StringBuilder sb = new StringBuilder();
+        List<EnvironmentVariable> variables = getEnvironmentVariables();
+        for (EnvironmentVariable environmentVariable : variables) {
+          if (environmentVariable.getIsPredefined() || isEmpty(environmentVariable)) continue;
+          if (sb.length() > 0) sb.append('\n');
+          sb.append(StringUtil.escapeChar(environmentVariable.getName(), '=')).append('=')
+            .append(StringUtil.escapeChar(environmentVariable.getValue(), '='));
+        }
+        CopyPasteManager.getInstance().setContents(new StringSelection(sb.toString()));
+      }
+    };
+    AnActionButton pasteButton = new AnActionButton(ActionsBundle.message("action.EditorPaste.text"), AllIcons.Actions.Menu_paste) {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        stopEditing();
+        String content = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
+        if (content == null || !content.contains("=")) return;
+        List<EnvironmentVariable> parsed = new ArrayList<EnvironmentVariable>();
+        List<String> lines = StringUtil.split(content, "\n");
+        for (String line : lines) {
+          int pos = line.indexOf('=');
+          if (pos == -1) continue;
+          while (pos > 0 && line.charAt(pos - 1) == '\\') {
+            pos = line.indexOf('=', pos + 1);
+          }
+          parsed.add(new EnvironmentVariable(
+            StringUtil.unescapeStringCharacters(line.substring(0, pos)),
+            StringUtil.unescapeStringCharacters(line.substring(pos + 1)),
+            false));
+        }
+        List<EnvironmentVariable> variables =
+          new ArrayList<EnvironmentVariable>(ContainerUtil.filter(getEnvironmentVariables(), new Condition<EnvironmentVariable>() {
+            @Override
+            public boolean value(EnvironmentVariable variable) {
+              return variable.getIsPredefined();
+            }
+          }));
+        variables.addAll(parsed);
+        setValues(variables);
+      }
+    };
+    return new AnActionButton[]{copyButton, pasteButton};
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.intellij.execution;
 
 import com.intellij.execution.configuration.RunConfigurationExtensionsManager;
 import com.intellij.execution.configurations.RunConfigurationBase;
-import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 
@@ -26,7 +25,7 @@ import com.intellij.openapi.diagnostic.Logger;
  * Date: 10/4/11
  */
 public class JavaRunConfigurationExtensionManager extends RunConfigurationExtensionsManager<RunConfigurationBase, RunConfigurationExtension> {
-  private static final Logger LOG = Logger.getInstance("#" + RunConfigurationExtension.class.getName());
+  private static final Logger LOG = Logger.getInstance(RunConfigurationExtension.class);
 
   public JavaRunConfigurationExtensionManager() {
     super(RunConfigurationExtension.EP_NAME);
@@ -36,7 +35,7 @@ public class JavaRunConfigurationExtensionManager extends RunConfigurationExtens
      return ServiceManager.getService(JavaRunConfigurationExtensionManager.class);
    }
 
-  public static void checkConfigurationIsValid(RunConfigurationBase configuration) throws RuntimeConfigurationException {
+  public static void checkConfigurationIsValid(RunConfigurationBase configuration) {
     try {
       getInstance().validateConfiguration(configuration, false);
     }

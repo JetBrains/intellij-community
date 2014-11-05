@@ -35,6 +35,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.Range;
 import com.sun.jdi.Location;
 import com.sun.jdi.Method;
 import com.sun.jdi.VMDisconnectedException;
@@ -142,8 +143,8 @@ public class RequestHint {
       return myPosition.getLine() == locationPosition.getLine();
     }
     else {
-      return locationPosition.getLine() >= myMethodFilter.getCallingExpressionLines().getFrom() &&
-             locationPosition.getLine() <= myMethodFilter.getCallingExpressionLines().getTo();
+      Range<Integer> exprLines = myMethodFilter.getCallingExpressionLines();
+      return exprLines != null && locationPosition.getLine() >= exprLines.getFrom() && locationPosition.getLine() <= exprLines.getTo();
     }
   }
 

@@ -35,7 +35,7 @@ import java.util.Map;
 */
 public class StructLocalVariableTableAttribute extends StructGeneralAttribute {
 
-  private Map<Integer, String> mapVarNames = new HashMap<Integer, String>();
+  private Map<Integer, String> mapVarNames = Collections.emptyMap();
 
   @Override
   public void initContent(ConstantPool pool) throws IOException {

@@ -261,7 +261,7 @@ public class InitializerProcessor {
       switch (expr.type) {
         case Exprent.EXPRENT_VAR:
           VarVersionPaar varpaar = new VarVersionPaar((VarExprent)expr);
-          if (!meth.varproc.getExternvars().contains(varpaar)) {
+          if (!meth.varproc.getExternalVars().contains(varpaar)) {
             String varname = meth.varproc.getVarName(varpaar);
 
             if (!varname.equals("this") && !varname.endsWith(".this")) { // FIXME: remove direct comparison with strings
@@ -308,7 +308,7 @@ public class InitializerProcessor {
         VarExprent instvar = (VarExprent)inv.getInstance();
         VarVersionPaar varpaar = new VarVersionPaar(instvar);
 
-        String classname = meth.varproc.getThisvars().get(varpaar);
+        String classname = meth.varproc.getThisVars().get(varpaar);
 
         if (classname != null) { // any this instance. TODO: Restrict to current class?
           if (withThis || !wrapper.getClassStruct().qualifiedName.equals(inv.getClassname())) {

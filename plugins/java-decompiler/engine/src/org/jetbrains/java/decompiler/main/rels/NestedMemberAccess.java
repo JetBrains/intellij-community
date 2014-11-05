@@ -91,7 +91,7 @@ public class NestedMemberAccess {
 
             if (exprent.type == Exprent.EXPRENT_EXIT) {
               ExitExprent exexpr = (ExitExprent)exprent;
-              if (exexpr.getExittype() == ExitExprent.EXIT_RETURN && exexpr.getValue() != null) {
+              if (exexpr.getExitType() == ExitExprent.EXIT_RETURN && exexpr.getValue() != null) {
                 exprCore = exexpr.getValue();
               }
             }
@@ -188,7 +188,7 @@ public class NestedMemberAccess {
                       if (((VarExprent)asexpr.getRight()).getIndex() == parcount - 1) {
 
                         ExitExprent exexpr = (ExitExprent)exprentSecond;
-                        if (exexpr.getExittype() == ExitExprent.EXIT_RETURN && exexpr.getValue() != null) {
+                        if (exexpr.getExitType() == ExitExprent.EXIT_RETURN && exexpr.getValue() != null) {
                           if (exexpr.getValue().type == Exprent.EXPRENT_VAR &&
                               ((VarExprent)asexpr.getRight()).getIndex() == parcount - 1) {
                             type = METHOD_ACCESS_FIELD_SET;
@@ -375,7 +375,7 @@ public class NestedMemberAccess {
           }
 
           int index = methdest.counter.getCounterAndIncrement(CounterContainer.VAR_COUNTER);
-          VarExprent ret = new VarExprent(index, var.getVartype(), methdest.varproc);
+          VarExprent ret = new VarExprent(index, var.getVarType(), methdest.varproc);
           methdest.varproc.setVarName(new VarVersionPaar(index, 0), varname);
 
           retexprent = ret;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,23 +17,29 @@ package com.intellij.debugger.impl;
 
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.execution.configurations.DebuggingRunnerData;
-import com.intellij.execution.configurations.RunnerSettings;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
-import org.jdom.Element;
+import com.intellij.execution.configurations.RunnerSettingsEx;
+import com.intellij.util.xmlb.annotations.OptionTag;
+import com.intellij.util.xmlb.annotations.Transient;
 
-public class GenericDebuggerRunnerSettings implements RunnerSettings, DebuggingRunnerData {
+public class GenericDebuggerRunnerSettings extends RunnerSettingsEx implements DebuggingRunnerData {
+  @Transient
+  @Deprecated
   public String DEBUG_PORT = "";
+
   public int TRANSPORT = DebuggerSettings.SOCKET_TRANSPORT;
   public boolean LOCAL = true;
 
-  public GenericDebuggerRunnerSettings() {
+  @Override
+  @OptionTag("DEBUG_PORT")
+  public String getDebugPort() {
+    //noinspection deprecation
+    return DEBUG_PORT;
   }
 
   @Override
-  public String getDebugPort() {
-    return DEBUG_PORT;
+  public void setDebugPort(String port) {
+    //noinspection deprecation
+    DEBUG_PORT = port;
   }
 
   @Override
@@ -46,31 +52,12 @@ public class GenericDebuggerRunnerSettings implements RunnerSettings, DebuggingR
     LOCAL = isLocal;
   }
 
-  @Override
-  public void setDebugPort(String port) {
-    DEBUG_PORT = port;
+  @Transient
+  public int getTransport() {
+    return LOCAL ? DebuggerSettings.getInstance().DEBUGGER_TRANSPORT : TRANSPORT;
   }
 
   public void setTransport(int transport) {
     TRANSPORT = transport;
-  }
-
-  @Override
-  public void readExternal(Element element) throws InvalidDataException {
-    DefaultJDOMExternalizer.readExternal(this, element);
-  }
-
-  @Override
-  public void writeExternal(Element element) throws WriteExternalException {
-    DefaultJDOMExternalizer.writeExternal(this, element);
-  }
-
-  public int getTransport() {
-    if (LOCAL) {
-      return DebuggerSettings.getInstance().DEBUGGER_TRANSPORT;
-    }
-    else {
-      return TRANSPORT;
-    }
   }
 }

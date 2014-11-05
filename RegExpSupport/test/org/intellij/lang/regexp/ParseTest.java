@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package test;
+package org.intellij.lang.regexp;
 
-public class ParseTest extends BaseParseTestcase {
+public class ParseTest extends BaseParseTestCase {
 
     //public void test0() throws Throwable {
     //    myFixture.testHighlighting("test0.regexp");
