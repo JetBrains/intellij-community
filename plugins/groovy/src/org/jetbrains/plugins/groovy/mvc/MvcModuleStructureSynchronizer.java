@@ -270,42 +270,37 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
       }
       return;
     }
-    
-    app.invokeLater(new Runnable() {
+
+    final Set<Pair<Object, SyncAction>> orderSnapshot = takeOrderSnapshot();
+    ProgressIndicatorUtils.scheduleWithWriteActionPriority(new ReadTask() {
       @Override
-      public void run() {
-        final Set<Pair<Object, SyncAction>> orderSnapshot = takeOrderSnapshot();
-        ProgressIndicatorUtils.scheduleWithWriteActionPriority(new ReadTask() {
+      public void computeInReadAction(@NotNull ProgressIndicator indicator) {
+        if (!isUpToDate()) {
+          indicator.cancel();
+          return;
+        }
+
+        final Set<Trinity<Module, SyncAction, MvcFramework>> actions = computeRawActions(orderSnapshot);
+        app.invokeLater(new Runnable() {
           @Override
-          public void computeInReadAction(@NotNull ProgressIndicator indicator) {
+          public void run() {
             if (!isUpToDate()) {
-              indicator.cancel();
-              return;
+              scheduleRunActions();
             }
-
-            final Set<Trinity<Module, SyncAction, MvcFramework>> actions = computeRawActions(orderSnapshot);
-            app.invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                if (!isUpToDate()) {
-                  scheduleRunActions();
-                }
-                else {
-                  runActions(actions);
-                }
-              }
-            }, ModalityState.NON_MODAL);
+            else {
+              runActions(actions);
+            }
           }
+        }, ModalityState.NON_MODAL);
+      }
 
-          @Override
-          public void onCanceled(@NotNull ProgressIndicator indicator) {
-            scheduleRunActions();
-          }
+      @Override
+      public void onCanceled(@NotNull ProgressIndicator indicator) {
+        scheduleRunActions();
+      }
 
-          private boolean isUpToDate() {
-            return !myProject.isDisposed() && orderSnapshot.equals(takeOrderSnapshot());
-          }
-        });
+      private boolean isUpToDate() {
+        return !myProject.isDisposed() && orderSnapshot.equals(takeOrderSnapshot());
       }
     });
   }
