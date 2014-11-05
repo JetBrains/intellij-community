@@ -1,7 +1,7 @@
 package org.jetbrains.rpc;
 
-import com.intellij.openapi.util.ActionCallback;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.concurrency.Promise;
 import org.jetbrains.jsonProtocol.Request;
 
 public interface MessageProcessor {
@@ -9,5 +9,6 @@ public interface MessageProcessor {
 
   void closed();
 
-  ActionCallback send(@NotNull Request message);
+  @NotNull
+  Promise<Void> send(@NotNull Request message);
 }

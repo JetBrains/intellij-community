@@ -16,7 +16,7 @@ public interface ScriptManager {
 
   boolean hasSource(Script script);
 
-  boolean containsScript(Script script);
+  boolean containsScript(@NotNull Script script);
 
   /**
    * Demands that script text should be replaced with a new one if possible. VM may get resumed after this command

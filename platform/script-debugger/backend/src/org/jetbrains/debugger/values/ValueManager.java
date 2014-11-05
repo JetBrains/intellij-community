@@ -2,6 +2,7 @@ package org.jetbrains.debugger.values;
 
 import com.intellij.openapi.util.ActionCallback;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.concurrency.ConsumerRunnable;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -21,8 +22,8 @@ public abstract class ValueManager {
   }
 
   @NotNull
-  public Runnable getClearCachesTask() {
-    return new Runnable() {
+  public ConsumerRunnable getClearCachesTask() {
+    return new ConsumerRunnable() {
       @Override
       public void run() {
         clearCaches();
