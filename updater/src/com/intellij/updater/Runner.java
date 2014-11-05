@@ -40,12 +40,7 @@ public class Runner {
       initLogger();
 
       ZIP_AS_BINARY = Arrays.asList(args).contains("--zip_as_binary");
-      if (ZIP_AS_BINARY) {
-        logger.info("--preparing patch AS_BINARY ");
-      } else {
-        logger.info("--preparing patch AS_USUALLY ");
-      }
-
+      if (ZIP_AS_BINARY) logger.info("patch mode: binary");
 
       List<String> ignoredFiles = extractFiles(args, "ignored");
       List<String> criticalFiles = extractFiles(args, "critical");
