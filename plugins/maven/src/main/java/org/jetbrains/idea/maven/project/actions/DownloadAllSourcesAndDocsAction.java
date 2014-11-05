@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.project.actions;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
 public class DownloadAllSourcesAndDocsAction extends MavenProjectsManagerAction {
@@ -32,7 +33,7 @@ public class DownloadAllSourcesAndDocsAction extends MavenProjectsManagerAction 
   }
 
   @Override
-  protected void perform(MavenProjectsManager manager) {
+  protected void perform(@NotNull MavenProjectsManager manager) {
     manager.scheduleArtifactsDownloading(manager.getProjects(), null, mySources, myDocs, null);
   }
 }

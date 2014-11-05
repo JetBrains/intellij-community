@@ -24,7 +24,10 @@ import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
 public abstract class MavenProjectsManagerAction extends MavenAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    perform(MavenActionUtil.getProjectsManager(e.getDataContext()));
+    final MavenProjectsManager projectsManager = MavenActionUtil.getProjectsManager(e.getDataContext());
+    if (projectsManager != null) {
+      perform(projectsManager);
+    }
   }
 
   @Override
@@ -34,5 +37,5 @@ public abstract class MavenProjectsManagerAction extends MavenAction {
     return projectsManager != null && projectsManager.isMavenizedProject();
   }
 
-  protected abstract void perform(MavenProjectsManager manager);
+  protected abstract void perform(@NotNull MavenProjectsManager manager);
 }
