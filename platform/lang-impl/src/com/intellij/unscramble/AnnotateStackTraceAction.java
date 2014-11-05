@@ -22,6 +22,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorGutterAction;
 import com.intellij.openapi.editor.colors.ColorKey;
@@ -63,6 +64,8 @@ import java.util.List;
 * @author Konstantin Bulenkov
 */
 public class AnnotateStackTraceAction extends AnAction implements DumbAware {
+  private static final Logger LOG = Logger.getInstance(AnnotateStackTraceAction.class);
+
   private final EditorHyperlinkSupport myHyperlinks;
   private Map<Integer, LastRevision> cache;
   private int newestLine = -1;
@@ -275,7 +278,7 @@ public class AnnotateStackTraceAction extends AnAction implements DumbAware {
           }
         }
         catch (VcsException ignored) {
-          ignored.printStackTrace();
+          LOG.warn(ignored);
           return null;
         }
       }
