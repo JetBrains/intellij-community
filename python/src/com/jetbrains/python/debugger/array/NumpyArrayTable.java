@@ -126,6 +126,7 @@ public class NumpyArrayTable {
 
     // add slice actions
     initSliceFieldActions();
+
     //make value name read-only
     myComponent.getSliceTextField().addFocusListener(new FocusListener() {
       @Override
@@ -144,6 +145,20 @@ public class NumpyArrayTable {
 
     //add format actions
     initFormatFieldActions();
+
+    //clear error on scroll
+    myComponent.getScrollPane().getHorizontalScrollBar().addAdjustmentListener(new AdjustmentListener() {
+      @Override
+      public void adjustmentValueChanged(AdjustmentEvent e) {
+        clearErrorMessage();
+      }
+    });
+    myComponent.getScrollPane().getVerticalScrollBar().addAdjustmentListener(new AdjustmentListener() {
+      @Override
+      public void adjustmentValueChanged(AdjustmentEvent e) {
+        clearErrorMessage();
+      }
+    });
   }
 
   public void disableColor() {
@@ -233,9 +248,6 @@ public class NumpyArrayTable {
         myComponent.getSliceTextField().setText(getDefaultPresentation());
         myComponent.getFormatTextField().setText(getDefaultFormat());
         myDialog.setTitle(getTitlePresentation(getDefaultPresentation()));
-        if (myTable.getColumnCount() > 0) {
-          myTable.setDefaultEditor(myTable.getColumnClass(0), getArrayTableCellEditor());
-        }
       }
     });
     initTableModel(false);
@@ -441,6 +453,9 @@ public class NumpyArrayTable {
         }
         ((AsyncArrayTableModel)myTable.getModel()).fireTableDataChanged();
         ((AsyncArrayTableModel)myTable.getModel()).fireTableCellUpdated(0, 0);
+        if (myTable.getColumnCount() > 0) {
+          myTable.setDefaultRenderer(myTable.getColumnClass(0), myTableCellRenderer);
+        }
       }
     });
   }
@@ -539,6 +554,16 @@ public class NumpyArrayTable {
         super.doOKAction(row, col);
       }
     };
+  }
+
+  public String correctStringValue(@NotNull String value) {
+    String corrected = value;
+    if (isNumeric()) {
+      if (value.startsWith("\'") || value.startsWith("\"")) {
+        corrected = value.substring(1, value.length() - 1);
+      }
+    }
+    return corrected;
   }
 
   public void setDtypeKind(String dtype) {

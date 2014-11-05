@@ -21,5 +21,5 @@ public interface PyFrameAccessor {
   @Nullable
   PyReferrersLoader getReferrersLoader();
 
-  Object[][] getArrayItems(PyDebugValue var, int colOffset, int rowOffset, int cols, int rows, String format);
+  Object[][] getArrayItems(PyDebugValue var, int colOffset, int rowOffset, int rows, int cols, String format) throws PyDebuggerException;
 }

@@ -154,6 +154,14 @@ public class RemoteDebugger implements ProcessDebugger {
     return command.getVariables();
   }
 
+  @Override
+  public Object[][] loadArrayItems(String  threadId, String frameId, PyDebugValue var, int rowOffset, int colOffset, int rows, int cols, String format) throws PyDebuggerException {
+    setTempVariable(threadId, frameId, var);
+    final GetArrayCommand command = new GetArrayCommand(this, threadId, frameId, var, rowOffset, colOffset, rows, cols, format);
+    command.execute();
+    return command.getArray();
+  }
+
 
   @Override
   public void loadReferrers(final String threadId,

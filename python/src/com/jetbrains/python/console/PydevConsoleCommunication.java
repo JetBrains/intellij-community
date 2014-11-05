@@ -532,7 +532,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
   }
 
   @Override
-  public Object[][] getArrayItems(PyDebugValue var, int colOffset, int rowOffset, int cols, int rows, String format) {
+  public Object[][] getArrayItems(PyDebugValue var, int colOffset, int rowOffset, int rows, int cols, String format) {
     return new Object[][]{new Object[]{1, 2}, new Object[]{3, 4}};
   }
 
