@@ -30,6 +30,10 @@ public abstract class AbstractInplaceIntroduceTest extends LightPlatformCodeInsi
   protected abstract String getBasePath();
 
   protected void doTestEscape() {
+    doTestEscape(null);
+  }
+
+  protected void doTestEscape(Pass<AbstractInplaceIntroducer> pass) {
     String name = getTestName(true);
     configureByFile(getBasePath() + name + getExtension());
     final boolean enabled = getEditor().getSettings().isVariableInplaceRenameEnabled();
@@ -37,7 +41,10 @@ public abstract class AbstractInplaceIntroduceTest extends LightPlatformCodeInsi
       TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
       getEditor().getSettings().setVariableInplaceRenameEnabled(true);
 
-      invokeRefactoring();
+      final AbstractInplaceIntroducer introducer = invokeRefactoring();
+      if (pass != null) {
+        pass.pass(introducer);
+      }
       TemplateState state = TemplateManagerImpl.getTemplateState(getEditor());
       assert state != null;
       state.gotoEnd(true);

@@ -510,6 +510,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
         }
 
         myOccurrenceMarkers = null;
+
         deleteTemplateField(psiField);
       }
     });
@@ -523,24 +524,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
 
   @Override
   protected boolean performRefactoring() {
-    final String newName = getInputName();
-    if (getLocalVariable() == null && myExpr == null ||
-        newName == null ||
-        getLocalVariable() != null && !getLocalVariable().isValid() ||
-        myExpr != null && !myExpr.isValid()) {
-      super.moveOffsetAfter(false);
-      return false;
-    }
-    if (getLocalVariable() != null) {
-      new WriteCommandAction(myProject, getCommandName(), getCommandName()) {
-        @Override
-        protected void run(Result result) throws Throwable {
-          getLocalVariable().setName(myLocalName);
-        }
-      }.execute();
-    }
-
-    if (!isIdentifier(newName, myExpr != null ? myExpr.getLanguage() : getLocalVariable().getLanguage())) return false;
+    if (!ensureValid()) return false;
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       @Override
       public void run() {
@@ -560,6 +544,28 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
       saveSettings(variable);
     }
     return false;
+  }
+
+  protected boolean ensureValid() {
+    final String newName = getInputName();
+    if (getLocalVariable() == null && myExpr == null ||
+        newName == null ||
+        getLocalVariable() != null && !getLocalVariable().isValid() ||
+        myExpr != null && !myExpr.isValid()) {
+      super.moveOffsetAfter(false);
+      return false;
+    }
+    if (getLocalVariable() != null) {
+      new WriteCommandAction(myProject, getCommandName(), getCommandName()) {
+        @Override
+        protected void run(Result result) throws Throwable {
+          getLocalVariable().setName(myLocalName);
+        }
+      }.execute();
+    }
+
+    if (!isIdentifier(newName, myExpr != null ? myExpr.getLanguage() : getLocalVariable().getLanguage())) return false;
+    return true;
   }
 
   @Override
