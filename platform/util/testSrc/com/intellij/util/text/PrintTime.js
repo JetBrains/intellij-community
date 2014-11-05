@@ -1,2 +1,3 @@
 var dt = new Date(parseInt(WSH.Arguments(0)));
-WSH.Echo(dt.toLocaleTimeString());
+var du = new Date(dt.getUTCFullYear(), dt.getUTCMonth(), dt.getUTCDay(), dt.getUTCHours(), dt.getUTCMinutes(), dt.getUTCSeconds(), 0);
+WSH.Echo(du.toLocaleTimeString());

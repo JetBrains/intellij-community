@@ -248,7 +248,7 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
   }
 
 
-  public void testFocusInJavadoc() {
+  public void "test popup in javadoc reference"() {
     myFixture.configureByText("a.java", """
     /**
     * {@link AIO<caret>}
@@ -256,8 +256,18 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
       class Foo {}
     """)
     type 'O'
-    assert lookup.focused
+    assert lookup
+  }
 
+  public void "test autopopup in javadoc tag name"() {
+    myFixture.configureByText("a.java", """
+    /**
+    * @a<caret>
+    */
+      class Foo {}
+    """)
+    type 'u'
+    assert lookup
   }
 
   public void "test no autopopup in javadoc parameter descriptions"() {

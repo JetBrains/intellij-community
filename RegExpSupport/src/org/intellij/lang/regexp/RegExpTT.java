@@ -38,6 +38,8 @@ public interface RegExpTT {
     IElementType CLASS_BEGIN = new RegExpElementType("CLASS_BEGIN");
     IElementType CLASS_END = new RegExpElementType("CLASS_END");
     IElementType ANDAND = new RegExpElementType("ANDAND");
+    IElementType BRACKET_EXPRESSION_BEGIN = new RegExpElementType("BRACKET_EXPRESSION_BEGIN");
+    IElementType BRACKET_EXPRESSION_END = new RegExpElementType("BRACKET_EXPRESSION_END");
 
     IElementType GROUP_BEGIN = new RegExpElementType("GROUP_BEGIN");
     IElementType GROUP_END = new RegExpElementType("GROUP_END");

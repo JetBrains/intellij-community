@@ -338,8 +338,8 @@ public class StackVarsProcessor {
         if (right.type == Exprent.EXPRENT_NEW) {
           // new Object(); permitted
           NewExprent nexpr = (NewExprent)right;
-          if (nexpr.isAnonymous() || nexpr.getNewtype().arraydim > 0
-              || nexpr.getNewtype().type != CodeConstants.TYPE_OBJECT) {
+          if (nexpr.isAnonymous() || nexpr.getNewType().arrayDim > 0
+              || nexpr.getNewType().type != CodeConstants.TYPE_OBJECT) {
             return new int[]{-1, changed};
           }
         }
@@ -511,7 +511,7 @@ public class StackVarsProcessor {
     boolean isHeadSynchronized = false;
     if (next == null && parent.type == Exprent.EXPRENT_MONITOR) {
       MonitorExprent monexpr = (MonitorExprent)parent;
-      if (monexpr.getMontype() == MonitorExprent.MONITOR_ENTER && exprent.equals(monexpr.getValue())) {
+      if (monexpr.getMonType() == MonitorExprent.MONITOR_ENTER && exprent.equals(monexpr.getValue())) {
         isHeadSynchronized = true;
       }
     }

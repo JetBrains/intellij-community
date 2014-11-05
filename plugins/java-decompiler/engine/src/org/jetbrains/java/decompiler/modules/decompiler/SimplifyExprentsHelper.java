@@ -229,8 +229,7 @@ public class SimplifyExprentsHelper {
                   if (init.type == Exprent.EXPRENT_CONST) {
                     ConstExprent cinit = (ConstExprent)init;
 
-                    VarType arrtype = newex.getNewtype().copy();
-                    arrtype.decArrayDim();
+                    VarType arrtype = newex.getNewType().decreaseArrayDim();
 
                     ConstExprent defaultval = ExprProcessor.getDefaultArrayValue(arrtype);
 
@@ -243,7 +242,7 @@ public class SimplifyExprentsHelper {
 
                         if (tempexpr.type == Exprent.EXPRENT_NEW) {
                           NewExprent tempnewex = (NewExprent)tempexpr;
-                          int dims = newex.getNewtype().arraydim;
+                          int dims = newex.getNewType().arrayDim;
                           if (dims > 1 && !tempnewex.getLstArrayElements().isEmpty()) {
                             tempnewex.setDirectArrayInit(true);
                           }
@@ -274,7 +273,7 @@ public class SimplifyExprentsHelper {
       if (as.getRight().type == Exprent.EXPRENT_NEW && as.getLeft().type == Exprent.EXPRENT_VAR) {
         NewExprent newex = (NewExprent)as.getRight();
 
-        if (newex.getExprType().arraydim > 0 && newex.getLstDims().size() == 1 && newex.getLstArrayElements().isEmpty() &&
+        if (newex.getExprType().arrayDim > 0 && newex.getLstDims().size() == 1 && newex.getLstArrayElements().isEmpty() &&
             newex.getLstDims().get(0).type == Exprent.EXPRENT_CONST) {
 
           int size = ((Integer)((ConstExprent)newex.getLstDims().get(0)).getValue()).intValue();
@@ -326,8 +325,7 @@ public class SimplifyExprentsHelper {
 
             List<Exprent> lstRet = new ArrayList<Exprent>();
 
-            VarType arrtype = newex.getNewtype().copy();
-            arrtype.decArrayDim();
+            VarType arrtype = newex.getNewType().decreaseArrayDim();
 
             ConstExprent defaultval = ExprProcessor.getDefaultArrayValue(arrtype);
 
@@ -335,7 +333,7 @@ public class SimplifyExprentsHelper {
               lstRet.add(defaultval.copy());
             }
 
-            int dims = newex.getNewtype().arraydim;
+            int dims = newex.getNewType().arrayDim;
             for (Entry<Integer, Exprent> ent : mapInit.entrySet()) {
               Exprent tempexpr = ent.getValue();
               lstRet.set(ent.getKey(), tempexpr);
@@ -433,13 +431,13 @@ public class SimplifyExprentsHelper {
       if (as.getRight().type == Exprent.EXPRENT_FUNCTION) {
         FunctionExprent func = (FunctionExprent)as.getRight();
 
-        if (func.getFunctype() == FunctionExprent.FUNCTION_ADD ||
-            func.getFunctype() == FunctionExprent.FUNCTION_SUB) {
+        if (func.getFuncType() == FunctionExprent.FUNCTION_ADD ||
+            func.getFuncType() == FunctionExprent.FUNCTION_SUB) {
           Exprent econd = func.getLstOperands().get(0);
           Exprent econst = func.getLstOperands().get(1);
 
           if (econst.type != Exprent.EXPRENT_CONST && econd.type == Exprent.EXPRENT_CONST &&
-              func.getFunctype() == FunctionExprent.FUNCTION_ADD) {
+              func.getFuncType() == FunctionExprent.FUNCTION_ADD) {
             econd = econst;
             econst = func.getLstOperands().get(0);
           }
@@ -449,7 +447,7 @@ public class SimplifyExprentsHelper {
 
             if (left.type != Exprent.EXPRENT_VAR && left.equals(econd)) {
               FunctionExprent ret = new FunctionExprent(
-                func.getFunctype() == FunctionExprent.FUNCTION_ADD ? FunctionExprent.FUNCTION_PPI : FunctionExprent.FUNCTION_MMI,
+                func.getFuncType() == FunctionExprent.FUNCTION_ADD ? FunctionExprent.FUNCTION_PPI : FunctionExprent.FUNCTION_MMI,
                 Arrays.asList(econd), func.bytecode);
               ret.setImplicitType(VarType.VARTYPE_INT);
               return ret;
@@ -468,14 +466,14 @@ public class SimplifyExprentsHelper {
       AssignmentExprent as = (AssignmentExprent)first;
       FunctionExprent in = (FunctionExprent)second;
 
-      if ((in.getFunctype() == FunctionExprent.FUNCTION_MMI || in.getFunctype() == FunctionExprent.FUNCTION_PPI) &&
+      if ((in.getFuncType() == FunctionExprent.FUNCTION_MMI || in.getFuncType() == FunctionExprent.FUNCTION_PPI) &&
           in.getLstOperands().get(0).equals(as.getRight())) {
 
-        if (in.getFunctype() == FunctionExprent.FUNCTION_MMI) {
-          in.setFunctype(FunctionExprent.FUNCTION_IMM);
+        if (in.getFuncType() == FunctionExprent.FUNCTION_MMI) {
+          in.setFuncType(FunctionExprent.FUNCTION_IMM);
         }
         else {
-          in.setFunctype(FunctionExprent.FUNCTION_IPP);
+          in.setFuncType(FunctionExprent.FUNCTION_IPP);
         }
         as.setRight(in);
 
@@ -489,7 +487,7 @@ public class SimplifyExprentsHelper {
   private static boolean isMonitorExit(Exprent first) {
     if (first.type == Exprent.EXPRENT_MONITOR) {
       MonitorExprent monexpr = (MonitorExprent)first;
-      if (monexpr.getMontype() == MonitorExprent.MONITOR_EXIT && monexpr.getValue().type == Exprent.EXPRENT_VAR
+      if (monexpr.getMonType() == MonitorExprent.MONITOR_EXIT && monexpr.getValue().type == Exprent.EXPRENT_VAR
           && !((VarExprent)monexpr.getValue()).isStack()) {
         return true;
       }
@@ -515,7 +513,7 @@ public class SimplifyExprentsHelper {
             if (nexpr.getConstructor() != null && !nexpr.getConstructor().getLstParameters().isEmpty() &&
                 nexpr.getConstructor().getLstParameters().get(0).equals(invexpr.getInstance())) {
 
-              String classname = nexpr.getNewtype().value;
+              String classname = nexpr.getNewType().value;
               ClassNode node = DecompilerContext.getClassProcessor().getMapRootClasses().get(classname);
               if (node != null && node.type != ClassNode.CLASS_ROOT) {
                 return true;
@@ -539,10 +537,10 @@ public class SimplifyExprentsHelper {
   //			if(as.getLeft().type == Exprent.EXPRENT_VAR && as.getRight().type == Exprent.EXPRENT_NEW) {
   //
   //				NewExprent newexpr = (NewExprent)as.getRight();
-  //				VarType newtype = newexpr.getNewtype();
+  //				VarType newtype = newexpr.getNewType();
   //				VarVersionPaar leftPaar = new VarVersionPaar((VarExprent)as.getLeft());
   //
-  //				if(newtype.type == CodeConstants.TYPE_OBJECT && newtype.arraydim == 0 &&
+  //				if(newtype.type == CodeConstants.TYPE_OBJECT && newtype.arrayDim == 0 &&
   //						newexpr.getConstructor() == null) {
   //
   //					Set<VarVersionPaar> setChangedVars = new HashSet<VarVersionPaar>();
@@ -553,7 +551,7 @@ public class SimplifyExprentsHelper {
   //						if(remote.type == Exprent.EXPRENT_INVOCATION) {
   //							InvocationExprent in = (InvocationExprent)remote;
   //
-  //							if(in.getFunctype() == InvocationExprent.TYP_INIT && in.getInstance().type == Exprent.EXPRENT_VAR
+  //							if(in.getFuncType() == InvocationExprent.TYP_INIT && in.getInstance().type == Exprent.EXPRENT_VAR
   //									&& as.getLeft().equals(in.getInstance())) {
   //
   //								Set<VarVersionPaar>  setVars = remote.getAllVariables();
@@ -613,8 +611,8 @@ public class SimplifyExprentsHelper {
   ////							}
   ////						} else if(remote.type == Exprent.EXPRENT_FUNCTION) {
   ////							FunctionExprent fexpr = (FunctionExprent)remote;
-  ////							if(fexpr.getFunctype() == FunctionExprent.FUNCTION_IPP || fexpr.getFunctype() == FunctionExprent.FUNCTION_IMM
-  ////									|| fexpr.getFunctype() == FunctionExprent.FUNCTION_PPI || fexpr.getFunctype() == FunctionExprent.FUNCTION_MMI) {
+  ////							if(fexpr.getFuncType() == FunctionExprent.FUNCTION_IPP || fexpr.getFuncType() == FunctionExprent.FUNCTION_IMM
+  ////									|| fexpr.getFuncType() == FunctionExprent.FUNCTION_PPI || fexpr.getFuncType() == FunctionExprent.FUNCTION_MMI) {
   ////								if(fexpr.getLstOperands().get(0).type == Exprent.EXPRENT_VAR) {
   ////									setChangedVars.add(new VarVersionPaar((VarExprent)fexpr.getLstOperands().get(0)));
   ////									isTempAssignment = true;
@@ -649,10 +647,10 @@ public class SimplifyExprentsHelper {
       if (as.getLeft().type == Exprent.EXPRENT_VAR && as.getRight().type == Exprent.EXPRENT_NEW) {
 
         NewExprent newexpr = (NewExprent)as.getRight();
-        VarType newtype = newexpr.getNewtype();
+        VarType newtype = newexpr.getNewType();
         VarVersionPaar leftPaar = new VarVersionPaar((VarExprent)as.getLeft());
 
-        if (newtype.type == CodeConstants.TYPE_OBJECT && newtype.arraydim == 0 && newexpr.getConstructor() == null) {
+        if (newtype.type == CodeConstants.TYPE_OBJECT && newtype.arrayDim == 0 && newexpr.getConstructor() == null) {
 
           for (int i = index + 1; i < list.size(); i++) {
             Exprent remote = list.get(i);
@@ -819,12 +817,12 @@ public class SimplifyExprentsHelper {
             ExitExprent ifex = (ExitExprent)ifexpr;
             ExitExprent elseex = (ExitExprent)elseexpr;
 
-            if (ifex.getExittype() == elseex.getExittype() && ifex.getValue() != null && elseex.getValue() != null &&
-                ifex.getExittype() == ExitExprent.EXIT_RETURN) {
+            if (ifex.getExitType() == elseex.getExitType() && ifex.getValue() != null && elseex.getValue() != null &&
+                ifex.getExitType() == ExitExprent.EXIT_RETURN) {
 
               // throw is dangerous, because of implicit casting to a common superclass
               // e.g. throws IOException and throw true?new RuntimeException():new IOException(); won't work
-              if (ifex.getExittype() == ExitExprent.EXIT_THROW &&
+              if (ifex.getExitType() == ExitExprent.EXIT_THROW &&
                   !ifex.getValue().getExprType().equals(elseex.getValue().getExprType())) {  // note: getExprType unreliable at this point!
                 return false;
               }
@@ -832,11 +830,11 @@ public class SimplifyExprentsHelper {
               List<Exprent> data = new ArrayList<Exprent>();
               data.addAll(stif.getFirst().getExprents());
 
-              data.add(new ExitExprent(ifex.getExittype(), new FunctionExprent(FunctionExprent.FUNCTION_IIF,
+              data.add(new ExitExprent(ifex.getExitType(), new FunctionExprent(FunctionExprent.FUNCTION_IIF,
                                                                                Arrays.asList(
                                                                                  stif.getHeadexprent().getCondition(),
                                                                                  ifex.getValue(),
-                                                                                 elseex.getValue()), ifheadexpr_bytecode), ifex.getRettype(), ifheadexpr_bytecode));
+                                                                                 elseex.getValue()), ifheadexpr_bytecode), ifex.getRetType(), ifheadexpr_bytecode));
               stif.setExprents(data);
 
               StatEdge retedge = ifstat.getAllSuccessorEdges().get(0);

@@ -243,7 +243,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
             @Override
             public void run() {
               fixGtkPopupStyle();
-              patchOptionPaneIcons(UIManager.getLookAndFeelDefaults());
+              patchGtkDefaults(UIManager.getLookAndFeelDefaults());
             }
           });
         }
@@ -535,7 +535,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
 
     patchLafFonts(uiDefaults);
 
-    patchOptionPaneIcons(uiDefaults);
+    patchGtkDefaults(uiDefaults);
 
     fixSeparatorColor(uiDefaults);
 
@@ -695,13 +695,12 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     }
   }
 
-  private static void patchOptionPaneIcons(UIDefaults defaults) {
+  private static void patchGtkDefaults(UIDefaults defaults) {
     if (!UIUtil.isUnderGTKLookAndFeel()) return;
 
     Map<String, Icon> map = ContainerUtil.newHashMap(
       Arrays.asList("OptionPane.errorIcon", "OptionPane.informationIcon", "OptionPane.warningIcon", "OptionPane.questionIcon"),
       Arrays.asList(AllIcons.General.ErrorDialog, AllIcons.General.InformationDialog, AllIcons.General.WarningDialog, AllIcons.General.QuestionDialog));
-
     // GTK+ L&F keeps icons hidden in style
     SynthStyle style = SynthLookAndFeel.getStyle(new JOptionPane(""), Region.DESKTOP_ICON);
     for (String key : map.keySet()) {
@@ -709,6 +708,12 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
 
       Object icon = style == null ? null : style.get(null, key);
       defaults.put(key, icon instanceof Icon ? icon : map.get(key));
+    }
+
+    Color fg = defaults.getColor("Label.foreground");
+    Color bg = defaults.getColor("Label.background");
+    if (fg != null && bg != null) {
+      defaults.put("Label.disabledForeground", UIUtil.mix(fg, bg, 0.5));
     }
   }
 

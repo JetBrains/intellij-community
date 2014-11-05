@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package test;
+package org.intellij.lang.regexp;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.Result;
@@ -26,15 +26,14 @@ import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
-import org.intellij.lang.regexp.RegExpFileType;
 
 import java.io.File;
 
-public abstract class BaseParseTestcase extends UsefulTestCase{
+public abstract class BaseParseTestCase extends UsefulTestCase{
   protected CodeInsightTestFixture myFixture;
 
   @SuppressWarnings({"JUnitTestCaseWithNonTrivialConstructors"})
-  public BaseParseTestcase() {
+  public BaseParseTestCase() {
     PlatformTestCase.initPlatformLangPrefix();
   }
 

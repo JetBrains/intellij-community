@@ -191,7 +191,16 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
   }
 
   public ToolbarDecorator addExtraAction(AnActionButton action) {
-    myExtraActions.add(action);
+    if (action != null) {
+      myExtraActions.add(action);
+    }
+    return this;
+  }
+
+  public ToolbarDecorator addExtraActions(AnActionButton... actions) {
+    for (AnActionButton action : actions) {
+      addExtraAction(action);
+    }
     return this;
   }
 

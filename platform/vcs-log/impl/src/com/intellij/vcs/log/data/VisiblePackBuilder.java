@@ -63,12 +63,13 @@ class VisiblePackBuilder {
       return Pair.create(applyHashFilter(dataPack, hashFilter.getHashes(), sortType), commitCount);
     }
 
+    Set<Integer> matchingHeads = getMatchingHeads(dataPack.getRefs(), filters);
     List<VcsLogDetailsFilter> detailsFilters = filters.getDetailsFilters();
     List<Hash> matchingCommits = null;
     boolean canRequestMore = false;
     if (!detailsFilters.isEmpty()) {
       if (commitCount == CommitCountStage.INITIAL) {
-        matchingCommits = filterInMemory(dataPack.getPermanentGraph(), detailsFilters);
+        matchingCommits = filterInMemory(dataPack.getPermanentGraph(), detailsFilters, matchingHeads);
         if (matchingCommits.size() < commitCount.getCount()) {
           commitCount = commitCount.next();
           matchingCommits = null;
@@ -90,12 +91,11 @@ class VisiblePackBuilder {
     }
 
     VisibleGraph<Integer> visibleGraph;
-    if (matchingCommits != null && matchingCommits.isEmpty()) {
+    if (((matchingHeads != null) && matchingHeads.isEmpty()) || ((matchingCommits != null) && matchingCommits.isEmpty())) {
       visibleGraph = EmptyVisibleGraph.getInstance();
     }
     else {
-      visibleGraph = dataPack.getPermanentGraph().createVisibleGraph(sortType, getMatchingHeads(dataPack.getRefs(), filters),
-                                                                     getFilterFromCommits(matchingCommits));
+      visibleGraph = dataPack.getPermanentGraph().createVisibleGraph(sortType, matchingHeads, getFilterFromCommits(matchingCommits));
     }
     return Pair.create(new VisiblePack(dataPack, visibleGraph, canRequestMore), commitCount);
   }
@@ -139,7 +139,9 @@ class VisiblePackBuilder {
   }
 
   @NotNull
-  private List<Hash> filterInMemory(@NotNull PermanentGraph<Integer> permanentGraph, @NotNull List<VcsLogDetailsFilter> detailsFilters) {
+  private List<Hash> filterInMemory(@NotNull PermanentGraph<Integer> permanentGraph,
+                                    @NotNull List<VcsLogDetailsFilter> detailsFilters,
+                                    @Nullable Set<Integer> matchingHeads) {
     List<Hash> result = ContainerUtil.newArrayList();
     for (GraphCommit<Integer> commit : permanentGraph.getAllCommits()) {
       VcsCommitMetadata data = getDetailsFromCache(commit.getId());
@@ -147,18 +149,34 @@ class VisiblePackBuilder {
         // no more continuous details in the cache
         break;
       }
-      if (matchesAllFilters(data, detailsFilters)) {
+      if (matchesAllFilters(data, permanentGraph, detailsFilters, matchingHeads)) {
         result.add(data.getId());
       }
     }
     return result;
   }
 
-  private static boolean matchesAllFilters(@NotNull final VcsCommitMetadata commit, @NotNull List<VcsLogDetailsFilter> detailsFilters) {
+  private boolean matchesAllFilters(@NotNull final VcsCommitMetadata commit,
+                                    @NotNull final PermanentGraph<Integer> permanentGraph,
+                                    @NotNull List<VcsLogDetailsFilter> detailsFilters,
+                                    @Nullable final Set<Integer> matchingHeads) {
+    final int commitIndex = myHashMap.getCommitIndex(commit.getId());
     return ContainerUtil.and(detailsFilters, new Condition<VcsLogDetailsFilter>() {
       @Override
       public boolean value(VcsLogDetailsFilter filter) {
-        return filter.matches(commit);
+        if (!filter.matches(commit)) {
+          return false;
+        }
+        if (matchingHeads == null) {
+          return true;
+        }
+        Set<Integer> containingBranches = permanentGraph.getContainingBranches(commitIndex);
+        return ContainerUtil.exists(containingBranches, new Condition<Integer>() {
+          @Override
+          public boolean value(Integer integer) {
+            return matchingHeads.contains(integer);
+          }
+        });
       }
     });
   }

@@ -34,7 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.EnumSet;
 
 public class RegExpParserDefinition implements ParserDefinition {
-  private static final TokenSet COMMENT_TOKENS = TokenSet.create(RegExpTT.COMMENT);
+    private static final TokenSet COMMENT_TOKENS = TokenSet.create(RegExpTT.COMMENT);
 
     @NotNull
     public Lexer createLexer(Project project) {
@@ -104,6 +104,8 @@ public class RegExpParserDefinition implements ParserDefinition {
             return new RegExpNamedGroupRefImpl(node);
         } else if (type == RegExpElementTypes.PY_COND_REF) {
             return new RegExpPyCondRefImpl(node);
+        } else if (type == RegExpElementTypes.POSIX_BRACKET_EXPRESSION) {
+            return new RegExpPosixBracketExpressionImpl(node);
         }
       
         return new ASTWrapperPsiElement(node);

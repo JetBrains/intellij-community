@@ -168,6 +168,11 @@ public class PsiLambdaExpressionImpl extends ExpressionPsiElement implements Psi
   }
 
   @Override
+  public boolean isAcceptable(PsiType left) {
+    return isAcceptable(left, false);
+  }
+
+  @Override
   public boolean isAcceptable(PsiType leftType, boolean checkReturnType) {
     if (leftType instanceof PsiIntersectionType) {
       for (PsiType conjunctType : ((PsiIntersectionType)leftType).getConjuncts()) {

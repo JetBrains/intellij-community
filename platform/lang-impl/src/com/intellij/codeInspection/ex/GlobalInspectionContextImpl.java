@@ -46,6 +46,7 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtilCore;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.TextRange;
@@ -62,6 +63,7 @@ import com.intellij.ui.content.*;
 import com.intellij.util.Processor;
 import com.intellij.util.SequentialModalProgressTask;
 import com.intellij.util.TripleFunction;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
@@ -655,6 +657,13 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     else {
       range = null;
     }
+    final Iterable<Tools> inspectionTools = ContainerUtil.filter(profile.getAllEnabledInspectionTools(project), new Condition<Tools>() {
+      @Override
+      public boolean value(Tools tools) {
+        assert tools != null;
+        return tools.getTool().getTool() instanceof CleanupLocalInspectionTool;
+      }
+    });
     scope.accept(new PsiElementVisitor() {
       private int myCount = 0;
       @Override
@@ -663,13 +672,11 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
           progressIndicator.setFraction(((double)++ myCount)/fileCount);
         }
         if (isBinary(file)) return;
-        for (final Tools tools : profile.getAllEnabledInspectionTools(project)) {
-          if (tools.getTool().getTool() instanceof CleanupLocalInspectionTool) {
-            final InspectionToolWrapper tool = tools.getEnabledTool(file);
-            if (tool instanceof LocalInspectionToolWrapper) {
-              lTools.add((LocalInspectionToolWrapper)tool);
-              tool.initialize(GlobalInspectionContextImpl.this);
-            }
+        for (final Tools tools : inspectionTools) {
+          final InspectionToolWrapper tool = tools.getEnabledTool(file);
+          if (tool instanceof LocalInspectionToolWrapper) {
+            lTools.add((LocalInspectionToolWrapper)tool);
+            tool.initialize(GlobalInspectionContextImpl.this);
           }
         }
 

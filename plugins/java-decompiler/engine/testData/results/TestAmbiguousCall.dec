@@ -1,0 +1,18 @@
+package pkg;
+
+class TestAmbiguousCall {
+   void m1(RuntimeException var1, String var2) {
+   }
+
+   void m1(IllegalArgumentException var1, String var2) {
+   }
+
+   void test() {
+      IllegalArgumentException var1 = new IllegalArgumentException();
+      this.m1((RuntimeException)var1, "RE");
+      this.m1(var1, "IAE");
+      IllegalArgumentException var2 = new IllegalArgumentException();
+      this.m1((RuntimeException)var2, "RE");
+      this.m1((IllegalArgumentException)var2, "IAE");
+   }
+}

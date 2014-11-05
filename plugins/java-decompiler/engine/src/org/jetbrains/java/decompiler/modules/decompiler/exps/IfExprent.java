@@ -16,16 +16,12 @@
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
 import org.jetbrains.java.decompiler.main.TextBuffer;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
-
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.jetbrains.java.decompiler.util.ListStack;
 
+import java.util.*;
 
 public class IfExprent extends Exprent {
 
@@ -54,7 +50,7 @@ public class IfExprent extends Exprent {
   public static final int IF_NOT = 18;
   public static final int IF_VALUE = 19;
 
-  private static final int[] functypes = new int[]{
+  private static final int[] FUNC_TYPES = {
     FunctionExprent.FUNCTION_EQ,
     FunctionExprent.FUNCTION_NE,
     FunctionExprent.FUNCTION_LT,
@@ -73,39 +69,35 @@ public class IfExprent extends Exprent {
     FunctionExprent.FUNCTION_NE,
     FunctionExprent.FUNCTION_CADD,
     FunctionExprent.FUNCTION_COR,
-    FunctionExprent.FUNCTION_BOOLNOT,
+    FunctionExprent.FUNCTION_BOOL_NOT,
     -1
   };
 
   private Exprent condition;
 
-  {
-    this.type = EXPRENT_IF;
-  }
+  public IfExprent(int ifType, ListStack<Exprent> stack, Set<Integer> bytecodeOffsets) {
+    this(null, bytecodeOffsets);
 
-  public IfExprent(int iftype, ListStack<Exprent> stack, Set<Integer> bytecode_offsets) {
-
-    if (iftype <= IF_LE) {
+    if (ifType <= IF_LE) {
       stack.push(new ConstExprent(0, true, null));
     }
-    else if (iftype <= IF_NONNULL) {
+    else if (ifType <= IF_NONNULL) {
       stack.push(new ConstExprent(VarType.VARTYPE_NULL, null, null));
     }
 
-    if (iftype == IF_VALUE) {
+    if (ifType == IF_VALUE) {
       condition = stack.pop();
     }
     else {
-      condition = new FunctionExprent(functypes[iftype], stack, null);
+      condition = new FunctionExprent(FUNC_TYPES[ifType], stack, null);
     }
-
-    addBytecodeOffsets(bytecode_offsets);
   }
 
-  private IfExprent(Exprent condition, Set<Integer> bytecode_offsets) {
+  private IfExprent(Exprent condition, Set<Integer> bytecodeOffsets) {
+    super(EXPRENT_IF);
     this.condition = condition;
 
-    addBytecodeOffsets(bytecode_offsets);
+    addBytecodeOffsets(bytecodeOffsets);
   }
 
   @Override
@@ -113,6 +105,7 @@ public class IfExprent extends Exprent {
     return new IfExprent(condition.copy(), bytecode);
   }
 
+  @Override
   public List<Exprent> getAllExprents() {
     List<Exprent> lst = new ArrayList<Exprent>();
     lst.add(condition);
@@ -125,6 +118,14 @@ public class IfExprent extends Exprent {
     return condition.toJava(indent, tracer).enclose("if(", ")");
   }
 
+  @Override
+  public void replaceExprent(Exprent oldExpr, Exprent newExpr) {
+    if (oldExpr == condition) {
+      condition = newExpr;
+    }
+  }
+
+  @Override
   public boolean equals(Object o) {
     if (o == this) return true;
     if (o == null || !(o instanceof IfExprent)) return false;
@@ -133,15 +134,8 @@ public class IfExprent extends Exprent {
     return InterpreterUtil.equalObjects(condition, ie.getCondition());
   }
 
-  public void replaceExprent(Exprent oldexpr, Exprent newexpr) {
-    if (oldexpr == condition) {
-      condition = newexpr;
-    }
-  }
-
   public IfExprent negateIf() {
-    condition = new FunctionExprent(FunctionExprent.FUNCTION_BOOLNOT,
-                                    Arrays.asList(condition), condition.bytecode);
+    condition = new FunctionExprent(FunctionExprent.FUNCTION_BOOL_NOT, Collections.singletonList(condition), condition.bytecode);
     return this;
   }
 

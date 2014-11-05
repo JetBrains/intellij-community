@@ -77,7 +77,7 @@ public class RedundantLambdaCodeBlockInspection extends BaseJavaBatchLocalInspec
         if (body instanceof PsiCodeBlock) {
           PsiExpression psiExpression = getExpression((PsiCodeBlock)body);
           if (psiExpression != null && !findCommentsOutsideExpression(body, psiExpression)) {
-            if (!expression.isVoidCompatible() && LambdaUtil.isExpressionStatementExpression(psiExpression)) {
+            if (LambdaUtil.isExpressionStatementExpression(psiExpression)) {
               final PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
               if (parent instanceof PsiExpressionList) {
                 final PsiElement gParent = parent.getParent();

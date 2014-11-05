@@ -6,6 +6,7 @@ import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.ExpressionContext;
 import com.intellij.codeInsight.template.Result;
 import com.intellij.codeInsight.template.TextResult;
+import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
@@ -49,7 +50,6 @@ public abstract class AbstractJavaInplaceIntroducer extends AbstractInplaceIntro
 
   @Override
   protected String[] suggestNames(boolean replaceAll, PsiVariable variable) {
-    myTypeSelectorManager.setAllOccurrences(replaceAll);
     final PsiType defaultType = myTypeSelectorManager.getTypeSelector().getSelectedType();
     final String propertyName = variable != null
                                 ? JavaCodeStyleManager.getInstance(myProject).variableNameToPropertyName(variable.getName(), VariableKind.LOCAL_VARIABLE)
@@ -204,4 +204,11 @@ public abstract class AbstractJavaInplaceIntroducer extends AbstractInplaceIntro
      };
    }
 
+  protected String chooseName(String[] names, Language language) {
+    String inputName = getInputName();
+    if (inputName != null && !isIdentifier(inputName, language)) {
+      inputName = null;
+    }
+    return inputName != null ? inputName : names[0];
+  }
 }

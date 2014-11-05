@@ -157,7 +157,7 @@ public class SSAConstructorSparseEx {
     switch (expr.type) {
       case Exprent.EXPRENT_ASSIGNMENT:
         AssignmentExprent assexpr = (AssignmentExprent)expr;
-        if (assexpr.getCondtype() == AssignmentExprent.CONDITION_NONE) {
+        if (assexpr.getCondType() == AssignmentExprent.CONDITION_NONE) {
           Exprent dest = assexpr.getLeft();
           if (dest.type == Exprent.EXPRENT_VAR) {
             varassign = (VarExprent)dest;
@@ -166,7 +166,7 @@ public class SSAConstructorSparseEx {
         break;
       case Exprent.EXPRENT_FUNCTION:
         FunctionExprent func = (FunctionExprent)expr;
-        switch (func.getFunctype()) {
+        switch (func.getFuncType()) {
           case FunctionExprent.FUNCTION_IIF:
             processExprent(func.getLstOperands().get(0), varmaparr);
 
@@ -508,11 +508,11 @@ public class SSAConstructorSparseEx {
           varindex++;
         }
         else {
-          varindex += md.params[i - 1].stack_size;
+          varindex += md.params[i - 1].stackSize;
         }
       }
       else {
-        varindex += md.params[i].stack_size;
+        varindex += md.params[i].stackSize;
       }
     }
 

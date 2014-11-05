@@ -27,15 +27,25 @@ def __lldb_init_module(debugger, internal_dict):
                         if not thread.IsStopped():
                             # thread.Suspend()
                             error = process.Stop()
-                        frame = thread.GetSelectedFrame()
-                        if frame:
-                            print('Will settrace in: %s' % (frame,))
 
-                            res = frame.EvaluateExpression("(int) SetSysTraceFunc(%s, %s)" % (
-                                show_debug_info, is_debug), options)
-                            error = res.GetError()
-                            if error:
-                                print(error)
+                        frame = thread.GetSelectedFrame()
+
+                        if frame.GetFunctionName() == '__select':
+                            # print('We are in __select')
+                            # Step over select, otherwise evaluating expression there can terminate thread
+                            thread.StepOver()
+                            frame = thread.GetSelectedFrame()
+
+                        print('Will settrace in: %s' % (frame,))
+
+                        for f in thread:
+                            print(f)
+
+                        res = frame.EvaluateExpression("(int) SetSysTraceFunc(%s, %s)" % (
+                            show_debug_info, is_debug), options)
+                        error = res.GetError()
+                        if error:
+                            print(error)
 
                         thread.Resume()
     except:

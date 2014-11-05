@@ -15,6 +15,8 @@
  */
 package org.jetbrains.java.decompiler.struct.gen;
 
+import org.jetbrains.java.decompiler.code.CodeConstants;
+
 public class FieldDescriptor {
 
   public static final FieldDescriptor INTEGER_DESCRIPTOR = parseDescriptor("Ljava/lang/Integer;");
@@ -22,25 +24,27 @@ public class FieldDescriptor {
   public static final FieldDescriptor FLOAT_DESCRIPTOR = parseDescriptor("Ljava/lang/Float;");
   public static final FieldDescriptor DOUBLE_DESCRIPTOR = parseDescriptor("Ljava/lang/Double;");
 
-  public VarType type;
+  public final VarType type;
+  public final String descriptorString;
 
-  public String descriptorString;
-
-  private FieldDescriptor() {
+  private FieldDescriptor(String descriptor) {
+    type = new VarType(descriptor);
+    descriptorString = descriptor;
   }
 
-  public static FieldDescriptor parseDescriptor(String descr) {
-
-    FieldDescriptor fd = new FieldDescriptor();
-
-    fd.type = new VarType(descr);
-    fd.descriptorString = descr;
-
-    return fd;
+  public static FieldDescriptor parseDescriptor(String descriptor) {
+    return new FieldDescriptor(descriptor);
   }
 
-  public String getDescriptor() {
-    return type.toString();
+  public String buildNewDescriptor(NewClassNameBuilder builder) {
+    if (type.type == CodeConstants.TYPE_OBJECT) {
+      String newClassName = builder.buildNewClassname(type.value);
+      if (newClassName != null) {
+        return new VarType(type.type, type.arrayDim, newClassName).toString();
+      }
+    }
+
+    return null;
   }
 
   @Override

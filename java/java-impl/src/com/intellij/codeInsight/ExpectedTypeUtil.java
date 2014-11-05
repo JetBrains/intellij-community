@@ -129,6 +129,8 @@ public class ExpectedTypeUtil {
         return type.isAssignableFrom(infoType);
       case ExpectedTypeInfo.TYPE_BETWEEN:
         return type.isAssignableFrom(info.getDefaultType()) && infoType.isAssignableFrom(type);
+      case ExpectedTypeInfo.TYPE_SAME_SHAPED:
+        return true;
     }
 
     LOG.error("Unexpected ExpectedInfo kind");

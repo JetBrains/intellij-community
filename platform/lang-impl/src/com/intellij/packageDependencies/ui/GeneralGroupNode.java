@@ -45,7 +45,7 @@ public class GeneralGroupNode extends PackageDependenciesNode {
   }
 
   public int getWeight() {
-    return 2;
+    return 6;
   }
 
   public boolean equals(Object o) {

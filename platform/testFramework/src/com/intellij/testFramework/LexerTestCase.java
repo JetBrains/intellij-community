@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -37,7 +38,11 @@ public abstract class LexerTestCase extends UsefulTestCase {
   }
 
   protected void doTest(@NonNls String text, @Nullable String expected) {
-    String result = printTokens(text, 0);
+    doTest(text, expected, createLexer());
+  }
+
+  protected void doTest(@NonNls String text, @Nullable String expected, @NotNull Lexer lexer) {
+    String result = printTokens(text, 0, lexer);
 
     if (expected != null) {
       assertSameLines(expected, result);

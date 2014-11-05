@@ -24,10 +24,11 @@ import com.jetbrains.python.inspections.quickfix.PyChangeSignatureQuickFix;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyUtil;
-import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import static com.intellij.util.ObjectUtils.assertNotNull;
 
 /**
  * Detect and report incompatibilities between __new__ and __init__ signatures.
@@ -61,10 +62,9 @@ public class PyInitNewSignatureInspection extends PyInspection {
       final PyClass cls = node.getContainingClass();
       if (cls == null) return;
       if (!cls.isNewStyleClass()) return;
-      final PyBuiltinCache builtins = PyBuiltinCache.getInstance(cls);
       final String complementaryName = PyNames.NEW.equals(functionName) ? PyNames.INIT : PyNames.NEW;
       final PyFunction complementaryMethod = cls.findMethodByName(complementaryName, true);
-      if (complementaryMethod == null || builtins.getClass("object") == complementaryMethod.getContainingClass()) return;
+      if (complementaryMethod == null || PyUtil.isObjectClass(assertNotNull(complementaryMethod.getContainingClass()))) return;
       if (!PyUtil.isSignatureCompatibleTo(complementaryMethod, node, myTypeEvalContext) &&
           !PyUtil.isSignatureCompatibleTo(node, complementaryMethod, myTypeEvalContext) &&
           node.getContainingFile() == cls.getContainingFile()) {

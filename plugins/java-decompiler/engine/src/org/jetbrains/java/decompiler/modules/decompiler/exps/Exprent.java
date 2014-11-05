@@ -15,12 +15,6 @@
  */
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.TextBuffer;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
@@ -29,13 +23,13 @@ import org.jetbrains.java.decompiler.modules.decompiler.vars.CheckTypesResult;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPaar;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 
+import java.util.*;
 
 public class Exprent {
 
   public static final int MULTIPLE_USES = 1;
   public static final int SIDE_EFFECTS_FREE = 2;
   public static final int BOTH_FLAGS = 3;
-
 
   public static final int EXPRENT_ARRAY = 1;
   public static final int EXPRENT_ASSIGNMENT = 2;
@@ -52,16 +46,13 @@ public class Exprent {
   public static final int EXPRENT_ANNOTATION = 13;
   public static final int EXPRENT_ASSERT = 14;
 
-  public int type;
+  public final int type;
+  public final int id;
+  public final Set<Integer> bytecode = new HashSet<Integer>();  // offsets of bytecode instructions decompiled to this exprent
 
-  public int id;
-
-  //offsets of bytecode instructions decompiled to this exprent
-  public Set<Integer> bytecode = new HashSet<Integer>();
-
-  {
-    // set exprent id
-    id = DecompilerContext.getCounterContainer().getCounterAndIncrement(CounterContainer.EXPRENT_COUNTER);
+  public Exprent(int type) {
+    this.type = type;
+    this.id = DecompilerContext.getCounterContainer().getCounterAndIncrement(CounterContainer.EXPRENT_COUNTER);
   }
 
   public int getPrecedence() {
@@ -81,12 +72,11 @@ public class Exprent {
   }
 
   public boolean containsExprent(Exprent exprent) {
-
     List<Exprent> listTemp = new ArrayList<Exprent>(getAllExprents(true));
     listTemp.add(this);
 
-    for (Exprent lstexpr : listTemp) {
-      if (lstexpr.equals(exprent)) {
+    for (Exprent lstExpr : listTemp) {
+      if (lstExpr.equals(exprent)) {
         return true;
       }
     }
@@ -96,29 +86,24 @@ public class Exprent {
 
   public List<Exprent> getAllExprents(boolean recursive) {
     List<Exprent> lst = getAllExprents();
-
     if (recursive) {
       for (int i = lst.size() - 1; i >= 0; i--) {
         lst.addAll(lst.get(i).getAllExprents(true));
       }
     }
-
     return lst;
   }
 
   public Set<VarVersionPaar> getAllVariables() {
-
-    HashSet<VarVersionPaar> set = new HashSet<VarVersionPaar>();
-
     List<Exprent> lstAllExprents = getAllExprents(true);
     lstAllExprents.add(this);
 
+    Set<VarVersionPaar> set = new HashSet<VarVersionPaar>();
     for (Exprent expr : lstAllExprents) {
       if (expr.type == EXPRENT_VAR) {
         set.add(new VarVersionPaar((VarExprent)expr));
       }
     }
-
     return set;
   }
 
@@ -134,12 +119,11 @@ public class Exprent {
     throw new RuntimeException("not implemented");
   }
 
-  public void replaceExprent(Exprent oldexpr, Exprent newexpr) {
-  }
+  public void replaceExprent(Exprent oldExpr, Exprent newExpr) { }
 
-  public void addBytecodeOffsets(Collection<Integer> bytecode_offsets) {
-    if(bytecode_offsets != null) {
-      bytecode.addAll(bytecode_offsets);
+  public void addBytecodeOffsets(Collection<Integer> bytecodeOffsets) {
+    if (bytecodeOffsets != null) {
+      bytecode.addAll(bytecodeOffsets);
     }
   }
 }

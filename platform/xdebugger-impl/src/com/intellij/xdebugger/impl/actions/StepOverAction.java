@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,14 @@
  */
 package com.intellij.xdebugger.impl.actions;
 
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.xdebugger.impl.DebuggerSupport;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author nik
  */
-public class StepOverAction extends XDebuggerActionBase {
+public class StepOverAction extends XDebuggerActionBase implements DumbAware {
   @NotNull
   protected DebuggerActionHandler getHandler(@NotNull final DebuggerSupport debuggerSupport) {
     return debuggerSupport.getStepOverHandler();

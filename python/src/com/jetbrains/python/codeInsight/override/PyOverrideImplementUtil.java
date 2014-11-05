@@ -28,7 +28,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
@@ -264,7 +263,7 @@ public class PyOverrideImplementUtil {
     return pyFunctionBuilder;
   }
 
-  private static boolean raisesNotImplementedError(@NotNull PyFunction function) {
+  public static boolean raisesNotImplementedError(@NotNull PyFunction function) {
     for (PyStatement statement : function.getStatementList().getStatements()) {
       if (!(statement instanceof PyRaiseStatement)) {
         continue;
@@ -272,12 +271,15 @@ public class PyOverrideImplementUtil {
       final PyRaiseStatement raiseStatement = (PyRaiseStatement)statement;
       final PyExpression[] expressions = raiseStatement.getExpressions();
       if (expressions.length > 0) {
-        final PyExpression expression = expressions[0];
-        if (expression instanceof PyCallExpression) {
-          final PyExpression callee = ((PyCallExpression)expression).getCallee();
-          if (callee instanceof PyReferenceExpression && Comparing.equal(callee.getName(), "NotImplementedError")) {
+        final PyExpression firstExpression = expressions[0];
+        if (firstExpression instanceof PyCallExpression) {
+          final PyExpression callee = ((PyCallExpression)firstExpression).getCallee();
+          if (callee != null && callee.getText().equals(PyNames.NOT_IMPLEMENTED_ERROR)) {
             return true;
           }
+        }
+        else if (firstExpression.getText().equals(PyNames.NOT_IMPLEMENTED_ERROR)) {
+          return true;
         }
       }
     }

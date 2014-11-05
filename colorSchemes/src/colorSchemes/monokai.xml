@@ -50,7 +50,7 @@
         <option name="FOREGROUND" value="E6DB74" />
       </value>
     </option>
-    <option name="CLASS_REFERENCE">
+    <option name="OC.CLASS_REFERENCE">
       <value>
         <option name="FOREGROUND" value="A6E22E" />
         <option name="EFFECT_TYPE" value="1" />
@@ -191,7 +191,7 @@
         <option name="FOREGROUND" value="E6DB74" />
       </value>
     </option>
-    <option name="CONDITIONALLY_NOT_COMPILED">
+    <option name="OC.CONDITIONALLY_NOT_COMPILED">
       <value>
         <option name="FOREGROUND" value="75715E" />
       </value>
@@ -604,7 +604,7 @@
         <option name="BACKGROUND" value="30322b" />
       </value>
     </option>
-    <option name="ENUM_CONST">
+    <option name="OC.ENUM_CONST">
       <value>
         <option name="FOREGROUND" value="AE81FF" />
       </value>
@@ -882,12 +882,12 @@
         <option name="FOREGROUND" value="E6DB74" />
       </value>
     </option>
-    <option name="LABEL">
+    <option name="OC.LABEL">
       <value>
         <option name="FOREGROUND" value="F92672" />
       </value>
     </option>
-    <option name="MACRONAME">
+    <option name="OC.MACRONAME">
       <value>
         <option name="FOREGROUND" value="A6E22E" />
       </value>
@@ -897,7 +897,7 @@
         <option name="BACKGROUND" value="3a6da0" />
       </value>
     </option>
-    <option name="MESSAGE_ARGUMENT">
+    <option name="OC.MESSAGE_ARGUMENT">
       <value>
         <option name="FOREGROUND" value="A6E22E" />
       </value>
@@ -1466,7 +1466,7 @@
         <option name="ERROR_STRIPE_COLOR" value="ff" />
       </value>
     </option>
-    <option name="TYPEDEF">
+    <option name="OC.TYPEDEF">
       <value>
         <option name="FOREGROUND" value="66D9EF" />
         <option name="FONT_TYPE" value="2" />
