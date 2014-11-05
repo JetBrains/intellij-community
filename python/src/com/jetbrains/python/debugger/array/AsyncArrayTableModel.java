@@ -25,10 +25,7 @@ import com.intellij.util.ui.UIUtil;
 import com.jetbrains.python.debugger.PyDebugValue;
 
 import javax.swing.table.AbstractTableModel;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 
 /**
  * @author traff
@@ -78,7 +75,15 @@ public class AsyncArrayTableModel extends AbstractTableModel {
   }
 
   @Override
-  public boolean isCellEditable(int row, int column) {
+  public boolean isCellEditable(int row, int col) {
+    //Pair<Integer, Integer> key = itemToChunkKey(row, col);
+    //try {
+    //  return myChunkCache.get(key).isDone();
+    //}
+    //catch (ExecutionException e) {
+    //  return false;
+    //}
+    //TODO: make it editable
     return false;
   }
 
