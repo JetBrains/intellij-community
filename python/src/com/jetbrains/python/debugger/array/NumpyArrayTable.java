@@ -22,9 +22,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.XValue;
-import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.jetbrains.python.debugger.PyDebugValue;
 import com.jetbrains.python.debugger.PyDebuggerEvaluator;
 import org.jetbrains.annotations.NotNull;
@@ -145,27 +145,13 @@ public class NumpyArrayTable {
 
     //add format actions
     initFormatFieldActions();
-
-    //clear error on scroll
-    myComponent.getScrollPane().getHorizontalScrollBar().addAdjustmentListener(new AdjustmentListener() {
-      @Override
-      public void adjustmentValueChanged(AdjustmentEvent e) {
-        clearErrorMessage();
-      }
-    });
-    myComponent.getScrollPane().getVerticalScrollBar().addAdjustmentListener(new AdjustmentListener() {
-      @Override
-      public void adjustmentValueChanged(AdjustmentEvent e) {
-        clearErrorMessage();
-      }
-    });
   }
 
   public void disableColor() {
     myTableCellRenderer.setMin(Double.MAX_VALUE);
     myTableCellRenderer.setMax(Double.MIN_VALUE);
     myTableCellRenderer.setColored(false);
-    DebuggerUIUtil.invokeLater(new Runnable() {
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
         myComponent.getColoredCheckbox().setSelected(false);
@@ -242,7 +228,7 @@ public class NumpyArrayTable {
       return;
     }
 
-    DebuggerUIUtil.invokeLater(new Runnable() {
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
         myComponent.getSliceTextField().setText(getDefaultPresentation());
@@ -442,7 +428,7 @@ public class NumpyArrayTable {
   private void initTableModel(final boolean inPlace) {
     myPagingModel = createTableModel(myShape);
 
-    DebuggerUIUtil.invokeLater(new Runnable() {
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
         myTable.setModel(myPagingModel);
@@ -584,7 +570,7 @@ public class NumpyArrayTable {
   }
 
   public void showInfoHint(final String message) {
-    DebuggerUIUtil.invokeLater(new Runnable() {
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
         if (myComponent.getSliceTextField().getEditor() != null) {
@@ -605,7 +591,7 @@ public class NumpyArrayTable {
       }
 
       if (myDtypeKind.equals("b") || myDtypeKind.equals("c")) {
-        DebuggerUIUtil.invokeLater(new Runnable() {
+        UIUtil.invokeLaterIfNeeded(new Runnable() {
           @Override
           public void run() {
             myComponent.getFormatTextField().getComponent().setEnabled(false);
@@ -706,7 +692,7 @@ public class NumpyArrayTable {
   }
 
   public void setBusy(final boolean busy) {
-    DebuggerUIUtil.invokeLater(new Runnable() {
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
         myComponent.setBusy(busy);
