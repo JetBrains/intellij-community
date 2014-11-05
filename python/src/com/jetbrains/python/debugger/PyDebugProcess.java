@@ -571,6 +571,11 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     return myReferrersProvider;
   }
 
+  @Override
+  public Object[][] getArrayItems(PyDebugValue var, int colOffset, int rowOffset, int cols, int rows, String format) {
+    return new Object[][]{new Object[]{1, 2}, new Object[]{3, 4}};
+  }
+
   @Nullable
   public String loadSource(String path) {
     return myDebugger.loadSource(path);

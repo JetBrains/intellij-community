@@ -531,6 +531,11 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
     return null;
   }
 
+  @Override
+  public Object[][] getArrayItems(PyDebugValue var, int colOffset, int rowOffset, int cols, int rows, String format) {
+    return new Object[][]{new Object[]{1, 2}, new Object[]{3, 4}};
+  }
+
   /**
    * Request that pydevconsole connect (with pydevd) to the specified port
    *

@@ -21,6 +21,7 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.table.JBTable;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.jetbrains.python.PythonFileType;
+import com.jetbrains.python.debugger.PyDebugValue;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -42,7 +43,7 @@ public class ArrayTableForm {
   private JLabel myFormatLabel;
   private JPanel myFormatPanel;
   private JPanel myMainPanel;
-  private JBTable myTable;
+  private JTable myTable;
   private JBTable myBusyTable;
   private final Project myProject;
 
@@ -58,19 +59,8 @@ public class ArrayTableForm {
     mySliceTextField = new EditorTextField("", myProject, PythonFileType.INSTANCE);
 
     myTable = new JBTableWithRowHeaders();
-    myTable.setAutoResizeMode(JTable.AUTO_RESIZE_SUBSEQUENT_COLUMNS);
-    myTable.setRowSelectionAllowed(false);
-    myTable.setTableHeader(new CustomTableHeader(myTable));
-    myTable.getTableHeader().setDefaultRenderer(new ColumnHeaderRenderer());
-    myTable.getTableHeader().setReorderingAllowed(false);
 
-    myScrollPane = PagingTableModel.LazyViewport.createLazyScrollPaneFor(myTable);
-    JTable rowTable = new JBTableWithRowHeaders.RowHeaderTable(myTable);
-    myScrollPane.setRowHeaderView(rowTable);
-    myScrollPane.setCorner(ScrollPaneConstants.UPPER_LEFT_CORNER,
-                           rowTable.getTableHeader());
-
-    ((JBTableWithRowHeaders)myTable).setRowHeaderTable((JBTableWithRowHeaders.RowHeaderTable)rowTable);
+    myScrollPane = ((JBTableWithRowHeaders)myTable).getScrollPane();
 
     myFormatTextField = new EditorTextField("", myProject, PythonFileType.INSTANCE);
 
@@ -88,7 +78,7 @@ public class ArrayTableForm {
     return myFormatTextField;
   }
 
-  public JBTable getTable() {
+  public JTable getTable() {
     return myTable;
   }
 
@@ -96,15 +86,15 @@ public class ArrayTableForm {
     return myColoredCheckbox;
   }
 
-  public void setDefaultStatus() {
-    if (myTable != null) {
-      myTable.getEmptyText().setText(DATA_LOADING_IN_PROCESS);
-    }
-  }
+  //public void setDefaultStatus() {
+  //  if (myTable != null) {
+      //myTable.getEmptyText().setText(DATA_LOADING_IN_PROCESS);
+    //}
+  //}
 
-  public void setNotApplicableStatus(XValueNodeImpl node) {
-    myTable.getEmptyText().setText(NOT_APPLICABLE + node.getName());
-  }
+  //public void setNotApplicableStatus(PyDebugValue node) {
+  //  myTable.getEmptyText().setText(NOT_APPLICABLE + node.getName());
+  //}
 
   public JComponent getMainPanel() {
     return myMainPanel;
@@ -116,25 +106,6 @@ public class ArrayTableForm {
 
   public void setBusy(boolean busy) {
     myBusyTable.setPaintBusy(busy);
-  }
-
-  public static class CustomTableHeader extends JTableHeader {
-
-    public CustomTableHeader(JTable table) {
-      super();
-      setColumnModel(table.getColumnModel());
-      table.getColumnModel().getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-        @Override
-        public void valueChanged(ListSelectionEvent e) {
-          repaint();
-        }
-      });
-    }
-
-    @Override
-    public void columnSelectionChanged(ListSelectionEvent e) {
-      repaint();
-    }
   }
 
   public static class ColumnHeaderRenderer extends DefaultTableHeaderCellRenderer {

@@ -62,7 +62,7 @@ class ArrayTableCellRenderer extends DefaultTableCellRenderer {
     if (myMax != myMin) {
       if (myColored && value != null) {
         try {
-          double rangedValue = NumpyArrayValueProvider.getRangedValue(value.toString(), myType, myMin, myMax, myComplexMax, myComplexMin);
+          double rangedValue = NumpyArrayTable.getRangedValue(value.toString(), myType, myMin, myMax, myComplexMax, myComplexMin);
           this.setBackground(
             new JBColor(new Color((int)Math.round(255 * rangedValue), 0, (int)Math.round(255 * (1 - rangedValue)), 130),
                         new Color((int)Math.round(255 * rangedValue), 0, (int)Math.round(255 * (1 - rangedValue)), 130)));
