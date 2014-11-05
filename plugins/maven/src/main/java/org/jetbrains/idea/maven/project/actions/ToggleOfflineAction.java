@@ -16,17 +16,22 @@
 package org.jetbrains.idea.maven.project.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
 import org.jetbrains.idea.maven.utils.actions.MavenToggleAction;
 
 public class ToggleOfflineAction extends MavenToggleAction {
   @Override
   protected boolean doIsSelected(AnActionEvent e) {
-    return MavenActionUtil.getProjectsManager(e.getDataContext()).getGeneralSettings().isWorkOffline();
+    final MavenProjectsManager projectsManager = MavenActionUtil.getProjectsManager(e.getDataContext());
+    return projectsManager != null && projectsManager.getGeneralSettings().isWorkOffline();
   }
 
   @Override
   public void setSelected(AnActionEvent e, boolean state) {
-    MavenActionUtil.getProjectsManager(e.getDataContext()).getGeneralSettings().setWorkOffline(state);
+    final MavenProjectsManager projectsManager = MavenActionUtil.getProjectsManager(e.getDataContext());
+    if (projectsManager != null) {
+      projectsManager.getGeneralSettings().setWorkOffline(state);
+    }
   }
 }

@@ -20,6 +20,11 @@ public final class ScriptRegExpBreakpointTarget extends BreakpointTarget {
   }
 
   @Override
+  public String toString() {
+    return regExp;
+  }
+
+  @Override
   public boolean equals(Object o) {
     if (this == o) {
       return true;

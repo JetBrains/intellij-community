@@ -59,6 +59,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   private AsyncProcessIcon myBusyIcon;
   private boolean myBusy;
 
+  private int myMaxItemsForSizeCalculation = Integer.MAX_VALUE;
 
   public JBTable() {
     this(new DefaultTableModel());
@@ -153,8 +154,8 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     if (myRowHeight < 0) {
       try {
         myRowHeightIsComputing = true;
-        for (int row = 0; row < getRowCount(); row++) {
-          for (int column = 0; column < getColumnCount(); column++) {
+        for (int row = 0; row < Math.min(getRowCount(), myMaxItemsForSizeCalculation); row++) {
+          for (int column = 0; column < Math.min(getColumnCount(), myMaxItemsForSizeCalculation); column++) {
             final TableCellRenderer renderer = getCellRenderer(row, column);
             if (renderer != null) {
               final Object value = getValueAt(row, column);
@@ -817,5 +818,16 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       TableColumnModel columnModel = getColumnModel();
       return resizingAllowed && columnModel.getColumn(columnIdx).getResizable();
     }
+  }
+
+  /**
+   * JTable gets table data from model lazily - only for a table part to be shown.
+   * JBTable loads <i>all</i> the data on initialization to calculate cell size.
+   * This methods provides possibility to calculate size without loading all the table data.
+   *
+   * @param maxItemsForSizeCalculation maximum number ot items in table to be loaded for size calculation
+   */
+  public void setMaxItemsForSizeCalculation(int maxItemsForSizeCalculation) {
+    myMaxItemsForSizeCalculation = maxItemsForSizeCalculation;
   }
 }

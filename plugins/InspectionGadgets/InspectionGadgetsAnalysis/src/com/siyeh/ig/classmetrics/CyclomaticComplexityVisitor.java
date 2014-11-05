@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ig.methodmetrics;
+package com.siyeh.ig.classmetrics;
 
 import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
-class CyclomaticComplexityVisitor extends JavaRecursiveElementVisitor {
+public class CyclomaticComplexityVisitor extends JavaRecursiveElementVisitor {
   private int m_complexity = 1;
 
   @Override
@@ -84,7 +85,26 @@ class CyclomaticComplexityVisitor extends JavaRecursiveElementVisitor {
     m_complexity++;
   }
 
+  @Override
+  public void visitPolyadicExpression(PsiPolyadicExpression expression) {
+    super.visitPolyadicExpression(expression);
+    final IElementType token = expression.getOperationTokenType();
+    if (token.equals(JavaTokenType.ANDAND) || token.equals(JavaTokenType.OROR)) {
+      m_complexity += expression.getOperands().length - 1;
+    }
+  }
+
+  @Override
+  public void visitCatchSection(PsiCatchSection section) {
+    super.visitCatchSection(section);
+    m_complexity++;
+  }
+
   public int getComplexity() {
     return m_complexity;
+  }
+
+  public void reset() {
+    m_complexity = 1;
   }
 }

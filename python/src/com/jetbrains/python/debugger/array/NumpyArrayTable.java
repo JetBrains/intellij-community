@@ -22,20 +22,15 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.ui.AppUIUtil;
-import com.intellij.ui.table.JBTable;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.XValue;
-import com.intellij.xdebugger.frame.XValueNode;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
-import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
-import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
-import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.jetbrains.python.debugger.PyDebugValue;
 import com.jetbrains.python.debugger.PyDebuggerEvaluator;
 import org.jetbrains.annotations.NotNull;
 
 import javax.management.InvalidAttributeValueException;
+import javax.swing.*;
 import javax.swing.table.TableCellEditor;
 import java.awt.*;
 import java.awt.event.*;
@@ -47,18 +42,17 @@ import java.util.regex.Pattern;
 /**
  * @author amarch
  */
-public class NumpyArrayValueProvider extends ArrayValueProvider {
-  private PyViewArrayAction.MyDialog myDialog;
-  private ArrayTableForm myComponent;
-  private JBTable myTable;
+public class NumpyArrayTable {
+  private final PyDebugValue myValue;
+  private final PyViewArrayAction.ViewArrayDialog myDialog;
+  private final ArrayTableForm myComponent;
+  private final JTable myTable;
   private Project myProject;
   private PyDebuggerEvaluator myEvaluator;
-  private NumpyArraySlice myLastPresentation;
   private String myDtypeKind;
   private int[] myShape;
   private ArrayTableCellRenderer myTableCellRenderer;
-  private PagingTableModel myPagingModel;
-  private boolean lastSuccessful = false;
+  private AsyncArrayTableModel myPagingModel;
 
   private final static int COLUMNS_IN_DEFAULT_SLICE = 40;
   private final static int ROWS_IN_DEFAULT_SLICE = 40;
@@ -75,62 +69,28 @@ public class NumpyArrayValueProvider extends ArrayValueProvider {
 
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.debugger.array.NumpyArrayValueProvider");
 
-  public NumpyArrayValueProvider(@NotNull XValueNode node, PyViewArrayAction.MyDialog dialog, @NotNull Project project) {
-    super(node);
+  public NumpyArrayTable(@NotNull Project project,
+                         @NotNull PyViewArrayAction.ViewArrayDialog dialog, @NotNull PyDebugValue value) {
+    myValue = value;
     myDialog = dialog;
-    if (dialog != null) {
-      myComponent = dialog.getComponent();
-      myTable = myComponent.getTable();
-    }
+    myComponent = new ArrayTableForm(project);
+    myTable = myComponent.getTable();
     myProject = project;
-    myEvaluator = new PyDebuggerEvaluator(project, getValueContainer().getFrameAccessor());
+    myEvaluator = new PyDebuggerEvaluator(project, getDebugValue().getFrameAccessor());
   }
 
-  private PagingTableModel getPagingModel(@NotNull int[] shape, boolean rendered, final NumpyArraySlice mainSlice) {
+  public ArrayTableForm getComponent() {
+    return myComponent;
+  }
+
+  private AsyncArrayTableModel createTableModel(@NotNull int[] shape) {
     final int columns = Math.min(getMaxColumn(shape), COLUMNS_IN_DEFAULT_VIEW);
     int rows = Math.min(getMaxRow(shape), ROWS_IN_DEFAULT_VIEW);
     if (columns == 0 || rows == 0) {
       showError("Slice with zero axis shape.");
     }
 
-    return new PagingTableModel(rows, columns, rendered, this, mainSlice) {
-
-      private final String myFormat = mainSlice.getFormat();
-      private final String myBaseSlice = mainSlice.getBaseSlice();
-
-      @Override
-      protected NumpyArraySlice createChunk(int rows, int columns, int rOffset, int cOffset) {
-        return new NumpyArraySlice(myBaseSlice, rows, columns, rOffset, cOffset, myFormat, getInstance());
-      }
-
-      @Override
-      protected Runnable getDataEvaluator(final ArrayChunk chunk) {
-        final NumpyArraySlice arraySlice =
-          new NumpyArraySlice(chunk.getBaseSlice(), chunk.getRows(), chunk.getColumns(), chunk.getRowOffset(), chunk.getColOffset(),
-                              myFormat, getInstance());
-
-        if (arraySlice.getFormat().isEmpty()) {
-          arraySlice.setFormat(getDefaultFormat());
-        }
-
-        return new Runnable() {
-          public void run() {
-            if (!arraySlice.dataFilled()) {
-              arraySlice.fillData(new Runnable() {
-                @Override
-                public void run() {
-                  //check that we still running on the right model
-                  if (!myBaseSlice.equals(getModelFullChunk().getBaseSlice()) || !myFormat.equals(getModelFullChunk().getFormat())) {
-                    return;
-                  }
-                  notifyChunkLoaded(arraySlice);
-                }
-              });
-            }
-          }
-        };
-      }
-    };
+    return new AsyncArrayTableModel(rows, columns, this);
   }
 
   private void initComponent() {
@@ -232,23 +192,19 @@ public class NumpyArrayValueProvider extends ArrayValueProvider {
     });
   }
 
-  public NumpyArrayValueProvider getInstance() {
-    return this;
-  }
-
-  public PyDebugValue getValueContainer() {
-    return (PyDebugValue)((XValueNodeImpl)myBaseNode).getValueContainer();
+  public PyDebugValue getDebugValue() {
+    return myValue;
   }
 
   public PyDebuggerEvaluator getEvaluator() {
     return myEvaluator;
   }
 
-  public void startFillTable() {
+  public void init() {
     Runnable returnToFillTable = new Runnable() {
       @Override
       public void run() {
-        startFillTable();
+        init();
       }
     };
 
@@ -282,9 +238,7 @@ public class NumpyArrayValueProvider extends ArrayValueProvider {
         }
       }
     });
-    startFillTable(new NumpyArraySlice(getDefaultPresentation(), Math.min(getMaxRow(myShape), ROWS_IN_DEFAULT_VIEW),
-                                       Math.min(getMaxColumn(myShape), COLUMNS_IN_DEFAULT_VIEW), 0, 0, getDefaultFormat(), getInstance()),
-                   false, false);
+    initTableModel(false);
   }
 
   private static String getTitlePresentation(String slice) {
@@ -466,7 +420,6 @@ public class NumpyArrayValueProvider extends ArrayValueProvider {
     }
   }
 
-  @Override
   public boolean isNumeric() {
     if (myDtypeKind != null) {
       return "biufc".contains(myDtypeKind.substring(0, 1));
@@ -474,15 +427,8 @@ public class NumpyArrayValueProvider extends ArrayValueProvider {
     return false;
   }
 
-  private void startFillTable(final NumpyArraySlice arraySlice, boolean rendered, final boolean inPlace) {
-    if (myLastPresentation != null &&
-        arraySlice.getBaseSlice().equals(myLastPresentation.getBaseSlice()) &&
-        arraySlice.getFormat().equals(myLastPresentation.getFormat()) && lastSuccessful) {
-      return;
-    }
-
-    lastSuccessful = false;
-    myPagingModel = getPagingModel(myShape, rendered, arraySlice);
+  private void initTableModel(final boolean inPlace) {
+    myPagingModel = createTableModel(myShape);
 
     DebuggerUIUtil.invokeLater(new Runnable() {
       @Override
@@ -493,8 +439,8 @@ public class NumpyArrayValueProvider extends ArrayValueProvider {
           JBTableWithRowHeaders.RowHeaderTable rowTable = ((JBTableWithRowHeaders)myTable).getRowHeaderTable();
           rowTable.setRowShift(0);
         }
-        ((PagingTableModel)myTable.getModel()).fireTableDataChanged();
-        ((PagingTableModel)myTable.getModel()).fireTableCellUpdated(0, 0);
+        ((AsyncArrayTableModel)myTable.getModel()).fireTableDataChanged();
+        ((AsyncArrayTableModel)myTable.getModel()).fireTableCellUpdated(0, 0);
       }
     });
   }
@@ -544,15 +490,6 @@ public class NumpyArrayValueProvider extends ArrayValueProvider {
         myEvaluator.evaluate(changeValExpression(), new XDebuggerEvaluator.XEvaluationCallback() {
           @Override
           public void evaluated(@NotNull XValue result) {
-            AppUIUtil.invokeOnEdt(new Runnable() {
-              @Override
-              public void run() {
-                XDebuggerTree tree = ((XValueNodeImpl)myBaseNode).getTree();
-                final XDebuggerTreeState treeState = XDebuggerTreeState.saveState(tree);
-                tree.rebuildAndRestore(treeState);
-              }
-            });
-
             XDebuggerEvaluator.XEvaluationCallback callback = new XDebuggerEvaluator.XEvaluationCallback() {
               @Override
               public void evaluated(@NotNull XValue value) {
@@ -577,7 +514,7 @@ public class NumpyArrayValueProvider extends ArrayValueProvider {
                   protected void run(@NotNull Result result) throws Throwable {
                     if (getEditor().getEditor() != null) {
                       getEditor().getEditor().getDocument().setText(corrected);
-                      ((PagingTableModel)myTable.getModel()).forcedChange(row, col, corrected);
+                      ((AsyncArrayTableModel)myTable.getModel()).changeValue(row, col, corrected);
                       cancelEditing();
                     }
                   }
@@ -616,29 +553,9 @@ public class NumpyArrayValueProvider extends ArrayValueProvider {
     this.myShape = shape;
   }
 
-  public void completeCurrentLoad() {
-    setBusy(false);
-    if (myPagingModel.getColumnCount() < getMaxColumn(myShape) || myPagingModel.getRowCount() < getMaxRow(myShape)) {
-      String hintMessage = LOAD_SMALLER_SLICE;
-      if (isNumeric()) {
-        hintMessage += "\n" + DISABLE_COLOR_FOR_HUGE_ARRAY;
-      }
-      showInfoHint(hintMessage);
-    }
-  }
-
   public void showError(String message) {
     myDialog.setError(message);
     setBusy(false);
-  }
-
-  public void showError(String message, NumpyArraySlice chunk) {
-    if (!chunk.getFormat().equals(getModelFullChunk().getFormat()) ||
-        !chunk.getBaseSlice().equals(getModelFullChunk().getBaseSlice())) {
-      //ignore error message from previous task
-      return;
-    }
-    showError(message);
   }
 
   public void showInfoHint(final String message) {
@@ -710,7 +627,7 @@ public class NumpyArrayValueProvider extends ArrayValueProvider {
     }
 
     myShape = shape;
-    startRefillTable(false);
+    reset();
   }
 
   private static String getEvalShapeCommand(@NotNull String slice) {
@@ -737,20 +654,12 @@ public class NumpyArrayValueProvider extends ArrayValueProvider {
   }
 
   private void doApplyFormat() {
-    startRefillTable(true);
+    reset();
   }
 
-  private void startRefillTable(boolean inPlace) {
-    clearTableData();
-    Rectangle vr = myTable.getVisibleRect();
-    int rOffset = myTable.rowAtPoint(vr.getLocation());
-    int cOffset = myTable.columnAtPoint(vr.getLocation());
-    startFillTable(new NumpyArraySlice(getSliceText(), 0, 0, rOffset, cOffset, getFormat(), this), true, inPlace);
-  }
-
-  private void clearTableData() {
+  private void reset() {
     clearErrorMessage();
-    ((PagingTableModel)myTable.getModel()).clearCached();
+    initTableModel(true);
   }
 
   public String evalTypeFunc(String format) {
@@ -771,24 +680,6 @@ public class NumpyArrayValueProvider extends ArrayValueProvider {
     return 0;
   }
 
-  public void notifyChunkLoaded(final NumpyArraySlice arraySlice) {
-    myLastPresentation = arraySlice;
-    lastSuccessful = true;
-    myPagingModel.addDataInCache(arraySlice.getRowOffset(), arraySlice.getColOffset(), arraySlice.getData());
-    myPagingModel.runNextLoadingTask();
-    DebuggerUIUtil.invokeLater(new Runnable() {
-      public void run() {
-        myTable.setDefaultRenderer(myTable.getColumnClass(0), myTableCellRenderer);
-        myDialog.setTitle(getTitlePresentation(getSliceText()));
-        for (int r = 0; r < arraySlice.getRows(); r++) {
-          for (int c = 0; c < arraySlice.getColumns(); c++) {
-            myPagingModel.fireTableCellUpdated(r + arraySlice.getRowOffset(), c + arraySlice.getColOffset());
-          }
-        }
-      }
-    });
-  }
-
   public void setBusy(final boolean busy) {
     DebuggerUIUtil.invokeLater(new Runnable() {
       @Override
@@ -796,10 +687,6 @@ public class NumpyArrayValueProvider extends ArrayValueProvider {
         myComponent.setBusy(busy);
       }
     });
-  }
-
-  private NumpyArraySlice getModelFullChunk() {
-    return (NumpyArraySlice)myPagingModel.getFullChunk();
   }
 
   /**
@@ -851,5 +738,9 @@ public class NumpyArrayValueProvider extends ArrayValueProvider {
     else {
       throw new IllegalArgumentException("Not a valid python complex value: " + pyComplexValue);
     }
+  }
+
+  public String getNodeName() {
+    return (myValue).getName();
   }
 }

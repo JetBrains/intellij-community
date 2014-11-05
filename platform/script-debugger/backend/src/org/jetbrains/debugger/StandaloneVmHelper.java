@@ -1,11 +1,13 @@
 package org.jetbrains.debugger;
 
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.util.Consumer;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
 import org.jetbrains.io.NettyUtil;
 import org.jetbrains.jsonProtocol.Request;
 import org.jetbrains.rpc.MessageProcessor;
@@ -79,13 +81,13 @@ public class StandaloneVmHelper extends MessageWriter {
       return closeChannel(currentChannel);
     }
 
-    ActionCallback callback = vm.getCommandProcessor().send(disconnectRequest);
+    Promise<Void> promise = vm.getCommandProcessor().send(disconnectRequest);
     vm.getCommandProcessor().closed();
     channel = null;
     final ActionCallback subCallback = new ActionCallback();
-    callback.doWhenProcessed(new Runnable() {
+    promise.processed(new Consumer<Void>() {
       @Override
-      public void run() {
+      public void consume(Void o) {
         try {
           vm.getCommandProcessor().cancelWaitingRequests();
           NettyUtil.closeAndReleaseFactory(currentChannel);

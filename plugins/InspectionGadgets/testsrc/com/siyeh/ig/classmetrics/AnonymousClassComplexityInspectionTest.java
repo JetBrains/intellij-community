@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.vcs.history;
+package com.siyeh.ig.classmetrics;
 
-import com.intellij.openapi.vcs.CalledInBackground;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.VcsException;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.ig.LightInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
-public interface VcsHistoryProviderEx extends VcsHistoryProvider {
+/**
+ * @author Bas Leijdekkers
+ */
+public class AnonymousClassComplexityInspectionTest extends LightInspectionTestCase {
+
+  public void testAnonymousClassComplexity() {
+    doTest();
+  }
+
   @Nullable
-  @CalledInBackground
-  VcsFileRevision getLastRevision(FilePath filePath) throws VcsException;
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    return new AnonymousClassComplexityInspection();
+  }
 }

@@ -1,7 +1,6 @@
 package org.jetbrains.debugger;
 
 import com.intellij.util.PairConsumer;
-import com.intellij.xdebugger.ObsolescentAsyncResults;
 import com.intellij.xdebugger.frame.XCompositeNode;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.intellij.xdebugger.frame.XValueGroup;

@@ -13,6 +13,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.socketConnection.ConnectionStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.AsyncPromise;
+import org.jetbrains.concurrency.Promise;
 import org.jetbrains.debugger.Vm;
 
 import javax.swing.*;
@@ -96,12 +98,12 @@ public abstract class RemoteVmConnection extends VmConnection<Vm> {
   }
 
   @NotNull
-  public static <T> AsyncResult<T> chooseDebuggee(@NotNull final Collection<T> targets, final int selectedIndex, @NotNull final Function<T, String> itemToString) {
+  public static <T> Promise<T> chooseDebuggee(@NotNull final Collection<T> targets, final int selectedIndex, @NotNull final Function<T, String> itemToString) {
     if (targets.size() == 1) {
-      return AsyncResult.done(ContainerUtil.getFirstItem(targets));
+      return Promise.resolve(ContainerUtil.getFirstItem(targets));
     }
 
-    final AsyncResult<T> result = new AsyncResult<T>();
+    final AsyncPromise<T> result = new AsyncPromise<T>();
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
@@ -124,10 +126,10 @@ public abstract class RemoteVmConnection extends VmConnection<Vm> {
               @SuppressWarnings("unchecked")
               T value = (T)list.getSelectedValue();
               if (value == null) {
-                result.setRejected();
+                result.setError(null);
               }
               else {
-                result.setDone(value);
+                result.setResult(value);
               }
             }
           }).

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -225,7 +225,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
 
     myEditButton = new AnActionButton(ProjectBundle.message("module.classpath.button.edit"), null, IconUtil.getEditIcon()) {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         doEdit();
       }
 
@@ -251,12 +251,12 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     DefaultActionGroup actionGroup = new DefaultActionGroup();
     final AnAction navigateAction = new AnAction(ProjectBundle.message("classpath.panel.navigate.action.text")) {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         navigate(false);
       }
 
       @Override
-      public void update(AnActionEvent e) {
+      public void update(@NotNull AnActionEvent e) {
         final Presentation presentation = e.getPresentation();
         presentation.setEnabled(false);
         final OrderEntry entry = getSelectedEntry();
@@ -354,7 +354,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
 
     final AnActionButton analyzeButton = new AnActionButton(ProjectBundle.message("classpath.panel.analyze"), null, IconUtil.getAnalyzeIcon()) {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         AnalyzeDependenciesDialog.show(getRootModel().getModule());
       }
     };
@@ -815,7 +815,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       final OrderEntry selectedEntry = getSelectedEntry();
       GlobalSearchScope targetScope;
       if (selectedEntry instanceof ModuleOrderEntry) {
@@ -830,11 +830,6 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
       }
       new AnalyzeDependenciesOnSpecifiedTargetHandler(getProject(), new AnalysisScope(myState.getRootModel().getModule()),
                                                       targetScope) {
-        @Override
-        protected boolean canStartInBackground() {
-          return false;
-        }
-
         @Override
         protected boolean shouldShowDependenciesPanel(List<DependenciesBuilder> builders) {
           for (DependenciesBuilder builder : builders) {
@@ -859,7 +854,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       final OrderEntry entry = getSelectedEntry();
       e.getPresentation().setVisible(entry instanceof ModuleOrderEntry && ((ModuleOrderEntry)entry).getModule() != null
                                    || entry instanceof LibraryOrderEntry && ((LibraryOrderEntry)entry).getLibrary() != null);

@@ -22,13 +22,18 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.ui.AppUIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.util.concurrent.Executor;
 
 /**
+ * Methods in this class are used to equip long background processes which take read actions with a special listener
+ * that fires when a write action is about to begin, and cancels corresponding progress indicators to avoid blocking the UI.
+ * These processes should be ready to get {@link com.intellij.openapi.progress.ProcessCanceledException} at any moment.
+ * Processes may want to react on cancellation event by restarting the activity, see
+ * {@link com.intellij.openapi.progress.util.ReadTask#onCanceled(com.intellij.openapi.progress.ProgressIndicator)} for that.
+ *
  * @author gregsh
  */
 public class ProgressIndicatorUtils {
@@ -59,15 +64,22 @@ public class ProgressIndicatorUtils {
   public static void scheduleWithWriteActionPriority(@NotNull final ProgressIndicator progressIndicator,
                                                      @NotNull final Executor executor,
                                                      @NotNull final ReadTask readTask) {
-    AppUIUtil.invokeOnEdt(new Runnable() {
+    final Application application = ApplicationManager.getApplication();
+    // later even if on EDT
+    // to avoid tasks eagerly restarting immediately, allocating many pooled threads
+    // which get cancelled too soon when a next write action arrives in the same EDT batch
+    // (can happen when processing multiple VFS events or writing multiple files on save)
+    application.invokeLater(new Runnable() {
       @Override
       public void run() {
-        final Application application = ApplicationManager.getApplication();
         application.assertIsDispatchThread();
         final ApplicationAdapter listener = new ApplicationAdapter() {
           @Override
           public void beforeWriteActionStart(Object action) {
-            progressIndicator.cancel();
+            if (!progressIndicator.isCanceled()) {
+              progressIndicator.cancel();
+              readTask.onCanceled(progressIndicator);
+            }
           }
         };
         application.addApplicationListener(listener);
@@ -100,8 +112,6 @@ public class ProgressIndicatorUtils {
     ProgressManager.getInstance().runProcess(new Runnable() {
       @Override
       public void run() {
-        // This read action can possible last for a long time, we want it to stop immediately on the first write access.
-        // For this purpose we launch it under empty progress and invoke progressIndicator#cancel on write access to avoid possible write lock delays.
         try {
           ApplicationManager.getApplication().runReadAction(new Runnable() {
             @Override
@@ -111,11 +121,6 @@ public class ProgressIndicatorUtils {
           });
         }
         catch (ProcessCanceledException ignore) {
-        }
-        finally {
-          if (progressIndicator.isCanceled()) {
-            task.onCanceled(progressIndicator);
-          }
         }
       }
     }, progressIndicator);

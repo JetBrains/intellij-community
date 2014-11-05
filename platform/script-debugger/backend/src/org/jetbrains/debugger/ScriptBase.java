@@ -20,7 +20,7 @@ public abstract class ScriptBase extends UserDataHolderBase implements Script {
 
   private SourceMap sourceMap;
 
-  protected ScriptBase(Type type, @NotNull Url url, int line, int column, int endLine) {
+  protected ScriptBase(@NotNull Type type, @NotNull Url url, int line, int column, int endLine) {
     this.type = type;
     this.url = url;
     this.line = line;

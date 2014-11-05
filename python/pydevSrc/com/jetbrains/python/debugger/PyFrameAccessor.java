@@ -20,4 +20,6 @@ public interface PyFrameAccessor {
 
   @Nullable
   PyReferrersLoader getReferrersLoader();
+
+  Object[][] getArrayItems(PyDebugValue var, int colOffset, int rowOffset, int cols, int rows, String format);
 }

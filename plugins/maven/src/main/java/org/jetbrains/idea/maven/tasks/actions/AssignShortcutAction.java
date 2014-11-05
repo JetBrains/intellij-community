@@ -18,8 +18,11 @@ package org.jetbrains.idea.maven.tasks.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.keymap.impl.ui.EditKeymapsDialog;
+import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.tasks.MavenShortcutsManager;
 import org.jetbrains.idea.maven.utils.MavenDataKeys;
 import org.jetbrains.idea.maven.utils.actions.MavenAction;
@@ -37,10 +40,11 @@ public class AssignShortcutAction extends MavenAction {
   private static boolean isIgnoredProject(DataContext context) {
     final MavenProject project = MavenActionUtil.getMavenProject(context);
     if (project == null) return false;
-    return MavenActionUtil.getProjectsManager(context).isIgnored(project);
+    final MavenProjectsManager projectsManager = MavenActionUtil.getProjectsManager(context);
+    return projectsManager != null && projectsManager.isIgnored(project);
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final DataContext context = e.getDataContext();
     String actionId = getGoalActionId(context);
     if (actionId != null) {
@@ -60,11 +64,15 @@ public class AssignShortcutAction extends MavenAction {
 
     String goal = goals.get(0);
 
-    return getShortcutsManager(context).getActionId(project.getPath(), goal);
+    final MavenShortcutsManager shortcutsManager = getShortcutsManager(context);
+    return shortcutsManager != null ? shortcutsManager.getActionId(project.getPath(), goal) : null;
   }
 
+  @Nullable
   protected static MavenShortcutsManager getShortcutsManager(DataContext context) {
-    return MavenShortcutsManager.getInstance(MavenActionUtil.getProject(context));
+    final Project project = MavenActionUtil.getProject(context);
+    if(project == null) return null;
+    return MavenShortcutsManager.getInstance(project);
   }
 }
 

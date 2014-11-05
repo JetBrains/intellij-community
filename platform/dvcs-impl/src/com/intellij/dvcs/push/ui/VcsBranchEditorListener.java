@@ -27,7 +27,7 @@ import java.awt.event.MouseEvent;
 
 public class VcsBranchEditorListener extends LinkMouseListenerBase {
   private final CheckboxTree.CheckboxTreeCellRenderer myRenderer;
-  private VcsLinkedText underlined;
+  private VcsLinkedTextComponent underlined;
 
   public VcsBranchEditorListener(final CheckboxTree.CheckboxTreeCellRenderer renderer) {
     myRenderer = renderer;
@@ -42,9 +42,9 @@ public class VcsBranchEditorListener extends LinkMouseListenerBase {
       underlined.setUnderlined(false);
       shouldRepaint = true;
     }
-    if (tag != null && tag instanceof VcsLinkedText) {
+    if (tag != null && tag instanceof VcsLinkedTextComponent) {
       component.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-      VcsLinkedText linkedText = (VcsLinkedText)tag;
+      VcsLinkedTextComponent linkedText = (VcsLinkedTextComponent)tag;
       linkedText.setUnderlined(true);
       underlined = linkedText;
       shouldRepaint = true;
@@ -64,8 +64,8 @@ public class VcsBranchEditorListener extends LinkMouseListenerBase {
   }
 
   protected void handleTagClick(@Nullable final Object tag, @NotNull MouseEvent event) {
-    if (tag instanceof VcsLinkedText) {
-      VcsLinkedText textWithLink = (VcsLinkedText)tag;
+    if (tag instanceof VcsLinkedTextComponent) {
+      VcsLinkedTextComponent textWithLink = (VcsLinkedTextComponent)tag;
       final TreePath path = myRenderer.getTextRenderer().getTree().getPathForLocation(event.getX(), event.getY());
       if (path == null) return;
       Object node = path.getLastPathComponent();

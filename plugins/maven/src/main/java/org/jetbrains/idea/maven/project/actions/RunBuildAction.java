@@ -17,10 +17,13 @@ package org.jetbrains.idea.maven.project.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.execution.MavenRunConfigurationType;
 import org.jetbrains.idea.maven.execution.MavenRunnerParameters;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenDataKeys;
 import org.jetbrains.idea.maven.utils.actions.MavenAction;
 import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
@@ -34,7 +37,7 @@ public class RunBuildAction extends MavenAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     checkOrPerform(e.getDataContext(), true);
   }
 
@@ -42,18 +45,22 @@ public class RunBuildAction extends MavenAction {
     final List<String> goals = MavenDataKeys.MAVEN_GOALS.getData(context);
     if (goals == null || goals.isEmpty()) return false;
 
-    final MavenProject project = MavenActionUtil.getMavenProject(context);
-    if (project == null) return false;
+    final Project project = MavenActionUtil.getProject(context);
+    if(project == null) return false;
+    final MavenProject mavenProject = MavenActionUtil.getMavenProject(context);
+    if (mavenProject == null) return false;
 
     if (!perform) return true;
 
-    MavenExplicitProfiles explicitProfiles = MavenActionUtil.getProjectsManager(context).getExplicitProfiles();
+    final MavenProjectsManager projectsManager = MavenActionUtil.getProjectsManager(context);
+    if(projectsManager == null) return false;
+    MavenExplicitProfiles explicitProfiles = projectsManager.getExplicitProfiles();
     final MavenRunnerParameters params = new MavenRunnerParameters(true,
-                                                                   project.getDirectory(),
+                                                                   mavenProject.getDirectory(),
                                                                    goals,
                                                                    explicitProfiles.getEnabledProfiles(),
                                                                    explicitProfiles.getDisabledProfiles());
-    MavenRunConfigurationType.runConfiguration(MavenActionUtil.getProject(context), params, null);
+    MavenRunConfigurationType.runConfiguration(project, params, null);
 
     return true;
   }
