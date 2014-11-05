@@ -52,7 +52,7 @@ public class NumpyArrayTable {
   private String myDtypeKind;
   private int[] myShape;
   private ArrayTableCellRenderer myTableCellRenderer;
-  private PagingTableModel myPagingModel;
+  private AsyncArrayTableModel myPagingModel;
 
   private final static int COLUMNS_IN_DEFAULT_SLICE = 40;
   private final static int ROWS_IN_DEFAULT_SLICE = 40;
@@ -83,14 +83,14 @@ public class NumpyArrayTable {
     return myComponent;
   }
 
-  private PagingTableModel createTableModel(@NotNull int[] shape) {
+  private AsyncArrayTableModel createTableModel(@NotNull int[] shape) {
     final int columns = Math.min(getMaxColumn(shape), COLUMNS_IN_DEFAULT_VIEW);
     int rows = Math.min(getMaxRow(shape), ROWS_IN_DEFAULT_VIEW);
     if (columns == 0 || rows == 0) {
       showError("Slice with zero axis shape.");
     }
 
-    return new PagingTableModel(rows, columns, this);
+    return new AsyncArrayTableModel(rows, columns, this);
   }
 
   private void initComponent() {
@@ -439,8 +439,8 @@ public class NumpyArrayTable {
           JBTableWithRowHeaders.RowHeaderTable rowTable = ((JBTableWithRowHeaders)myTable).getRowHeaderTable();
           rowTable.setRowShift(0);
         }
-        ((PagingTableModel)myTable.getModel()).fireTableDataChanged();
-        ((PagingTableModel)myTable.getModel()).fireTableCellUpdated(0, 0);
+        ((AsyncArrayTableModel)myTable.getModel()).fireTableDataChanged();
+        ((AsyncArrayTableModel)myTable.getModel()).fireTableCellUpdated(0, 0);
       }
     });
   }
@@ -514,7 +514,7 @@ public class NumpyArrayTable {
                   protected void run(@NotNull Result result) throws Throwable {
                     if (getEditor().getEditor() != null) {
                       getEditor().getEditor().getDocument().setText(corrected);
-                      ((PagingTableModel)myTable.getModel()).forcedChange(row, col, corrected);
+                      ((AsyncArrayTableModel)myTable.getModel()).forcedChange(row, col, corrected);
                       cancelEditing();
                     }
                   }
