@@ -76,10 +76,10 @@ class TaskItemProvider implements ChooseByNameItemProvider, Disposable {
     });
 
     // Newer request always wins
-    Future<List<Task>> oldFeature = myFutureReference.getAndSet(future);
-    if (oldFeature != null) {
+    Future<List<Task>> oldFuture = myFutureReference.getAndSet(future);
+    if (oldFuture != null) {
       LOG.debug("Cancelling existing task");
-      oldFeature.cancel(true);
+      oldFuture.cancel(true);
     }
 
     if (myAlarm.isDisposed()) {
