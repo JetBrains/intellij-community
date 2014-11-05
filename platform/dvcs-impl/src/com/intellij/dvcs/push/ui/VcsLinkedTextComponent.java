@@ -21,13 +21,13 @@ import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
-import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class VcsLinkedText extends Component {
+public class VcsLinkedTextComponent extends JLabel{
   private static final Pattern HREF_PATTERN = Pattern.compile("<a(?:\\s+href\\s*=\\s*[\"']([^\"']*)[\"'])?\\s*>([^<]*)</a>");
 
   @NotNull private String myTextBefore;
@@ -38,7 +38,7 @@ public class VcsLinkedText extends Component {
   private boolean mySelected;
   private boolean myUnderlined;
 
-  public VcsLinkedText(@NotNull String text, @Nullable VcsLinkListener listener) {
+  public VcsLinkedTextComponent(@NotNull String text, @Nullable VcsLinkListener listener) {
     Matcher aMatcher = HREF_PATTERN.matcher(text);
     if (aMatcher.find()) {
       myTextBefore = text.substring(0, aMatcher.start());

@@ -24,9 +24,9 @@ import javax.swing.tree.DefaultMutableTreeNode;
 
 public class TextWithLinkNode extends DefaultMutableTreeNode implements CustomRenderedTreeNode {
 
-  @NotNull protected VcsLinkedText myLinkedText;
+  @NotNull protected VcsLinkedTextComponent myLinkedText;
 
-  public TextWithLinkNode(@NotNull VcsLinkedText linkedText) {
+  public TextWithLinkNode(@NotNull VcsLinkedTextComponent linkedText) {
     myLinkedText = linkedText;
   }
 
