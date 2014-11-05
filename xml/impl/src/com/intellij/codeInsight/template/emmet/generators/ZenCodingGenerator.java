@@ -127,7 +127,7 @@ public abstract class ZenCodingGenerator {
            : null;
   }
 
-  private static boolean isAllowedChar(char c) {
+  protected boolean isAllowedChar(char c) {
     return (Character.isDigit(c) || Character.isLetter(c) || StringUtil.containsChar("/>+^[](){}#.*:$-_!@|%", c));
   }
 
