@@ -18,6 +18,7 @@ package org.jetbrains.idea.maven.project.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.DumbAware;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
 
 public class DownloadActionGroup extends DefaultActionGroup implements DumbAware {
@@ -28,7 +29,8 @@ public class DownloadActionGroup extends DefaultActionGroup implements DumbAware
   }
 
   private static boolean isEnabled(AnActionEvent e) {
-    return MavenActionUtil.hasProject(e.getDataContext())
-           && MavenActionUtil.getProjectsManager(e.getDataContext()).isMavenizedProject();
+    if(!MavenActionUtil.hasProject(e.getDataContext())) return false;
+    final MavenProjectsManager projectsManager = MavenActionUtil.getProjectsManager(e.getDataContext());
+    return projectsManager != null && projectsManager.isMavenizedProject();
   }
 }

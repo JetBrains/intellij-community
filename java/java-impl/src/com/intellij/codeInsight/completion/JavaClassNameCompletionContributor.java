@@ -134,6 +134,10 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
       });
   }
 
+  static LookupElement highlightIfNeeded(JavaPsiClassReferenceElement element, CompletionParameters parameters) {
+    return JavaCompletionUtil.highlightIfNeeded(null, element, element.getObject(), parameters.getPosition());
+  }
+
   public static JavaPsiClassReferenceElement createClassLookupItem(final PsiClass psiClass, final boolean inJavaContext) {
     return AllClassesGetter.createLookupItem(psiClass, inJavaContext ? JavaClassNameInsertHandler.JAVA_CLASS_INSERT_HANDLER
                                                                      : AllClassesGetter.TRY_SHORTENING);

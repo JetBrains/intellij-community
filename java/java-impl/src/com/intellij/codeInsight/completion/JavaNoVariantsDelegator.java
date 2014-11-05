@@ -20,7 +20,6 @@ import com.intellij.codeInsight.completion.impl.BetterPrefixMatcher;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -93,7 +92,7 @@ public class JavaNoVariantsDelegator extends CompletionContributor {
       suggestCollectionUtilities(parameters, result, position);
 
       if (parameters.getInvocationCount() <= 1 &&
-          JavaCompletionContributor.mayStartClassName(result) &&
+          (JavaCompletionContributor.mayStartClassName(result) || suggestMetaAnnotations(parameters)) &&
           JavaCompletionContributor.isClassNamePossible(parameters)) {
         suggestNonImportedClasses(parameters, result, null);
         return;
@@ -145,7 +144,7 @@ public class JavaNoVariantsDelegator extends CompletionContributor {
         if (ref != null) {
           for (final LookupElement item : JavaSmartCompletionContributor.completeReference(position, ref, filter, true, true, parameters,
                                                                                            result.getPrefixMatcher())) {
-            qualifiedCollector.addElement(new JavaChainLookupElement(base, item));
+            qualifiedCollector.addElement(JavaCompletionUtil.highlightIfNeeded(null, new JavaChainLookupElement(base, item), item.getObject(), position));
           }
         }
       }
@@ -178,7 +177,7 @@ public class JavaNoVariantsDelegator extends CompletionContributor {
     return allClasses;
   }
 
-  private static void suggestNonImportedClasses(CompletionParameters parameters, final CompletionResultSet result, @Nullable final InheritorsHolder inheritorsHolder) {
+  private static void suggestNonImportedClasses(final CompletionParameters parameters, final CompletionResultSet result, @Nullable final InheritorsHolder inheritorsHolder) {
     JavaClassNameCompletionContributor.addAllClasses(parameters,
                                                      true, result.getPrefixMatcher(), new Consumer<LookupElement>() {
       @Override
@@ -189,6 +188,7 @@ public class JavaNoVariantsDelegator extends CompletionContributor {
         JavaPsiClassReferenceElement classElement = element.as(JavaPsiClassReferenceElement.CLASS_CONDITION_KEY);
         if (classElement != null) {
           classElement.setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
+          element = JavaClassNameCompletionContributor.highlightIfNeeded(classElement, parameters);
         }
 
         result.addElement(element);

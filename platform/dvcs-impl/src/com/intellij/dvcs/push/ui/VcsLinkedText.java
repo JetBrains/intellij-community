@@ -15,15 +15,18 @@
  */
 package com.intellij.dvcs.push.ui;
 
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.ColoredTreeCellRenderer;
+import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
+import java.awt.event.MouseEvent;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class VcsLinkedText {
-
   private static final Pattern HREF_PATTERN = Pattern.compile("<a(?:\\s+href\\s*=\\s*[\"']([^\"']*)[\"'])?\\s*>([^<]*)</a>");
 
   @NotNull private String myTextBefore;
@@ -31,6 +34,8 @@ public class VcsLinkedText {
   @NotNull private String myHandledLink;
 
   @Nullable private final VcsLinkListener myLinkListener;
+  private boolean mySelected;
+  private boolean myUnderlined;
 
   public VcsLinkedText(@NotNull String text, @Nullable VcsLinkListener listener) {
     Matcher aMatcher = HREF_PATTERN.matcher(text);
@@ -47,24 +52,38 @@ public class VcsLinkedText {
     myLinkListener = listener;
   }
 
-  @NotNull
-  public String getTextBefore() {
-    return myTextBefore;
+  public void updateLinkText(@NotNull String text) {
+    myHandledLink = text;
   }
 
-  @NotNull
-  public String getTextAfter() {
-    return myTextAfter;
-  }
-
-  @NotNull
-  public String getLinkText() {
-    return myHandledLink;
-  }
-
-  public void hyperLinkActivate(@NotNull DefaultMutableTreeNode relatedNode) {
+  public void fireOnClick(@NotNull DefaultMutableTreeNode relatedNode, @NotNull MouseEvent event) {
     if (myLinkListener != null) {
-      myLinkListener.hyperlinkActivated(relatedNode);
+      myLinkListener.hyperlinkActivated(relatedNode, event);
     }
+  }
+
+  public void render(@NotNull ColoredTreeCellRenderer renderer) {
+    if (!StringUtil.isEmptyOrSpaces(myTextBefore)) {
+      renderer.append(myTextBefore, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      renderer.append(" ");
+    }
+    if (!StringUtil.isEmptyOrSpaces(myHandledLink)) {
+      renderer.append(myHandledLink,
+                      myUnderlined || mySelected ? SimpleTextAttributes.LINK_ATTRIBUTES : SimpleTextAttributes.SYNTHETIC_ATTRIBUTES, this);
+    }
+    renderer.append(myTextAfter, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+  }
+
+  public void setUnderlined(boolean underlined) {
+    myUnderlined = underlined;
+  }
+
+  public void setSelected(boolean selected) {
+    mySelected = selected;
+  }
+
+  @NotNull
+  public String getText() {
+    return myTextBefore + myHandledLink + myTextAfter;
   }
 }

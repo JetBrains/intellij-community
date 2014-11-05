@@ -27,7 +27,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.inspections.quickfix.PyRenameElementQuickFix;
@@ -35,7 +34,6 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 import com.jetbrains.python.sdk.PythonSdkType;
-import com.jetbrains.python.testing.pytest.PyTestUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -122,19 +120,13 @@ public class PyPep8NamingInspection extends PyInspection {
     }
 
     private boolean isStandardClassDescendant(@NotNull final PyClass cls) {
-      if (PyTestUtil.isPyTestClass(cls)) {
-        return true;
-      }
       return ContainerUtil.exists(cls.getAncestorClasses(myTypeEvalContext), new Condition<PyClass>() {
         @Override
         public boolean value(PyClass ancestor) {
           final PsiFile ancestorsModule = ancestor.getContainingFile();
           final Sdk sdk = PyBuiltinCache.findSdkForFile(ancestorsModule);
-          if (PythonSdkType.isStdLib(ancestorsModule.getVirtualFile(), sdk)) {
-            final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(cls);
-            if (ancestor != builtinCache.getClass(PyNames.OBJECT) && ancestor != builtinCache.getClass(PyNames.FAKE_OLD_BASE)) {
-              return true;
-            }
+          if (PythonSdkType.isStdLib(ancestorsModule.getVirtualFile(), sdk) && !PyUtil.isObjectClass(ancestor)) {
+            return true;
           }
           return false;
         }

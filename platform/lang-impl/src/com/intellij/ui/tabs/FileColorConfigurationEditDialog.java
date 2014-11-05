@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,8 +36,10 @@ import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author spleaner
@@ -146,7 +148,14 @@ public class FileColorConfigurationEditDialog extends DialogWrapper {
       if (color == null) {
         color = ColorUtil.getColor(myScopeNames.get(item).getClass());
       }
-      if (color != null) myColorSelectionComponent.setCustomButtonColor(color);
+      if (color != null) {
+        final String colorName = ColorSelectionComponent.findColorName(color);
+        if (colorName != null) {
+          myColorSelectionComponent.setSelectedColor(colorName);
+        } else {
+          myColorSelectionComponent.setCustomButtonColor(color);
+        }
+      }
     }
   }
 

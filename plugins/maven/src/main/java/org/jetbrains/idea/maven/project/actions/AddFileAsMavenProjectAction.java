@@ -18,7 +18,6 @@ package org.jetbrains.idea.maven.project.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
@@ -32,7 +31,9 @@ public class AddFileAsMavenProjectAction extends MavenAction {
   public void actionPerformed(AnActionEvent e) {
     final DataContext context = e.getDataContext();
     MavenProjectsManager manager = MavenActionUtil.getProjectsManager(context);
-    manager.addManagedFilesOrUnignore(Collections.singletonList(getSelectedFile(context)));
+    if (manager != null) {
+      manager.addManagedFilesOrUnignore(Collections.singletonList(getSelectedFile(context)));
+    }
   }
 
   @Override
@@ -51,7 +52,7 @@ public class AddFileAsMavenProjectAction extends MavenAction {
 
   private static boolean isExistingProjectFile(DataContext context, VirtualFile file) {
     MavenProjectsManager manager = MavenActionUtil.getProjectsManager(context);
-    return manager.findProject(file) != null;
+    return manager != null && manager.findProject(file) != null;
   }
 
   @Nullable

@@ -101,7 +101,7 @@ import java.util.concurrent.atomic.AtomicReference;
 */
 public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements MavenServerEmbedder {
 
-  private final static boolean USE_MVN2_COMPATIBLE_DEPENDENCY_RESOLVING = System.getProperty("maven3.use.compat.resolver") != null;
+  private final static boolean USE_MVN2_COMPATIBLE_DEPENDENCY_RESOLVING = System.getProperty("idea.maven3.use.compat.resolver") != null;
 
   @NotNull private final DefaultPlexusContainer myContainer;
   @NotNull private final Settings myMavenSettings;

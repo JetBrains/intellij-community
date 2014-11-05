@@ -69,6 +69,6 @@ public abstract class DiffManager {
    * @param disposable
    *@param parentTool @deprecated use {@link #createDiffPanel(Window, Project, Disposable)} instead
    */
-  public abstract DiffPanel createDiffPanel(Window window, Project project, DiffTool parentTool);
-  public abstract DiffPanel createDiffPanel(Window window, Project project, @NotNull Disposable parentDisposable, DiffTool parentTool);
+  public abstract DiffPanel createDiffPanel(Window window, @NotNull Project project, DiffTool parentTool);
+  public abstract DiffPanel createDiffPanel(Window window, @NotNull Project project, @NotNull Disposable parentDisposable, DiffTool parentTool);
 }

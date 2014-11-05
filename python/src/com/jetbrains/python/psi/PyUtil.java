@@ -1687,15 +1687,6 @@ public class PyUtil {
     return PyNames.INIT.equals(function.getName());
   }
 
-
-  private static boolean isObject(@NotNull final PyMemberInfo<PyElement> classMemberInfo) {
-    final PyElement element = classMemberInfo.getMember();
-    if ((element instanceof PyClass) && PyNames.OBJECT.equals(element.getName())) {
-      return true;
-    }
-    return false;
-  }
-
   /**
    * Filters out {@link com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo}
    * that should not be displayed in this refactoring (like object)
@@ -1764,5 +1755,38 @@ public class PyUtil {
     }
     final String symboldName = qualifiedName.getLastComponent();
     return expectedName.equals(symboldName);
+  }
+
+  /**
+   * Checks that given class is the root of class hierarchy, i.e. it's either {@code object} or
+   * special {@link com.jetbrains.python.PyNames#FAKE_OLD_BASE} class for old-style classes.
+   *
+   * @param cls    Python class to check
+   * @see com.jetbrains.python.psi.impl.PyBuiltinCache
+   * @see PyNames#FAKE_OLD_BASE
+   */
+  public static boolean isObjectClass(@NotNull PyClass cls) {
+    final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(cls);
+    if (cls == builtinCache.getClass(PyNames.OBJECT) || cls == builtinCache.getClass(PyNames.FAKE_OLD_BASE)) {
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Checks that given type is the root of type hierarchy, i.e. it's type of either {@code object} or special
+   * {@link com.jetbrains.python.PyNames#FAKE_OLD_BASE} class for old-style classes.
+   *
+   * @param type   Python class to check
+   * @param anchor arbitrary PSI element to find appropriate SDK
+   * @see com.jetbrains.python.psi.impl.PyBuiltinCache
+   * @see PyNames#FAKE_OLD_BASE
+   */
+  public static boolean isObjectType(@NotNull PyType type, @NotNull PsiElement anchor) {
+    final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(anchor);
+    if (type == builtinCache.getObjectType() || type == builtinCache.getOldstyleClassobjType()) {
+      return true;
+    }
+    return false;
   }
 }

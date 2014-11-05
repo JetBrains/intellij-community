@@ -155,12 +155,12 @@ public class DiffManagerImpl extends DiffManager implements JDOMExternalizable {
   }
 
   @Override
-  public DiffPanel createDiffPanel(Window window, Project project, DiffTool parentTool) {
+  public DiffPanel createDiffPanel(Window window, @NotNull Project project, DiffTool parentTool) {
     return new DiffPanelImpl(window, project, true, true, FULL_DIFF_DIVIDER_POLYGONS_OFFSET, parentTool);
   }
 
   @Override
-  public DiffPanel createDiffPanel(Window window, Project project, @NotNull Disposable parentDisposable, DiffTool parentTool) {
+  public DiffPanel createDiffPanel(Window window, @NotNull Project project, @NotNull Disposable parentDisposable, DiffTool parentTool) {
     DiffPanel diffPanel = createDiffPanel(window, project, parentTool);
     Disposer.register(parentDisposable, diffPanel);
     return diffPanel;

@@ -18,6 +18,7 @@ package org.jetbrains.idea.maven.tasks.actions;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenProject;
@@ -40,7 +41,9 @@ public class ToggleBeforeRunTaskAction extends MavenToggleAction {
     final DataContext context = e.getDataContext();
     final Pair<MavenProject, String> desc = getTaskDesc(context);
     if (desc != null) {
-      for (MavenBeforeRunTask each : getRunManager(context).getBeforeRunTasks(MavenBeforeRunTasksProvider.ID)) {
+      final RunManagerEx runManager = getRunManager(context);
+      if(runManager == null) return false;
+      for (MavenBeforeRunTask each : runManager.getBeforeRunTasks(MavenBeforeRunTasksProvider.ID)) {
         if (each.isFor(desc.first, desc.second)) return true;
       }
     }
@@ -68,7 +71,10 @@ public class ToggleBeforeRunTaskAction extends MavenToggleAction {
     return Pair.create(mavenProject, goals.get(0));
   }
 
+  @Nullable
   private static RunManagerEx getRunManager(DataContext context) {
-    return RunManagerEx.getInstanceEx(MavenActionUtil.getProject(context));
+    final Project project = MavenActionUtil.getProject(context);
+    if(project == null) return null;
+    return RunManagerEx.getInstanceEx(project);
   }
 }

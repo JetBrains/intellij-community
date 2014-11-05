@@ -41,7 +41,7 @@ public class MavenActionUtil {
     return CommonDataKeys.PROJECT.getData(context) != null;
   }
 
-  @NotNull
+  @Nullable
   public static Project getProject(DataContext context) {
     return CommonDataKeys.PROJECT.getData(context);
   }
@@ -55,6 +55,7 @@ public class MavenActionUtil {
   public static MavenProject getMavenProject(DataContext context) {
     MavenProject result;
     final MavenProjectsManager manager = getProjectsManager(context);
+    if(manager == null) return null;
 
     final VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(context);
     if (file != null) {
@@ -77,9 +78,11 @@ public class MavenActionUtil {
     return module != null ? module : DataKeys.MODULE_CONTEXT.getData(context);
   }
 
-  @NotNull
+  @Nullable
   public static MavenProjectsManager getProjectsManager(DataContext context) {
-    return MavenProjectsManager.getInstance(getProject(context));
+    final Project project = getProject(context);
+    if(project == null) return null;
+    return MavenProjectsManager.getInstance(project);
   }
 
   public static boolean isMavenProjectFile(VirtualFile file) {

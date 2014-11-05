@@ -217,7 +217,7 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
     if (Disposer.isDisposed(repository.getProject())) {
       return;
     }
-    if (!info.equals(previousInfo)) {
+    if (previousInfo != null && !info.equals(previousInfo)) {
       repository.getProject().getMessageBus().syncPublisher(GIT_REPO_CHANGE).repositoryChanged(repository);
     }
   }

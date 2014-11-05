@@ -15,11 +15,6 @@
  */
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
-
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.ClassWriter;
 import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
@@ -35,92 +30,78 @@ import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.jetbrains.java.decompiler.util.ListStack;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+
 public class NewExprent extends Exprent {
 
   private InvocationExprent constructor;
-
-  private VarType newtype;
-
+  private VarType newType;
   private List<Exprent> lstDims = new ArrayList<Exprent>();
-
   private List<Exprent> lstArrayElements = new ArrayList<Exprent>();
-
   private boolean directArrayInit;
-
   private boolean anonymous;
-
   private boolean lambda;
+  private boolean enumConst;
 
-  private boolean enumconst;
-
-  {
-    this.type = EXPRENT_NEW;
+  public NewExprent(VarType newType, ListStack<Exprent> stack, int arrayDim, Set<Integer> bytecodeOffsets) {
+    this(newType, getDimensions(arrayDim, stack), bytecodeOffsets);
   }
 
-  public NewExprent(VarType newtype, ListStack<Exprent> stack, int arraydim, Set<Integer> bytecode_offsets) {
-    this.newtype = newtype;
-    for (int i = 0; i < arraydim; i++) {
-      lstDims.add(0, stack.pop());
-    }
-
-    addBytecodeOffsets(bytecode_offsets);
-    setAnonymous();
-  }
-
-  public NewExprent(VarType newtype, List<Exprent> lstDims, Set<Integer> bytecode_offsets) {
-    this.newtype = newtype;
+  public NewExprent(VarType newType, List<Exprent> lstDims, Set<Integer> bytecodeOffsets) {
+    super(EXPRENT_NEW);
+    this.newType = newType;
     this.lstDims = lstDims;
-
-    addBytecodeOffsets(bytecode_offsets);
-    setAnonymous();
-  }
-
-  private void setAnonymous() {
 
     anonymous = false;
     lambda = false;
-
-    if (newtype.type == CodeConstants.TYPE_OBJECT && newtype.arraydim == 0) {
-      ClassNode node = DecompilerContext.getClassProcessor().getMapRootClasses().get(newtype.value);
-
+    if (newType.type == CodeConstants.TYPE_OBJECT && newType.arrayDim == 0) {
+      ClassNode node = DecompilerContext.getClassProcessor().getMapRootClasses().get(newType.value);
       if (node != null && (node.type == ClassNode.CLASS_ANONYMOUS || node.type == ClassNode.CLASS_LAMBDA)) {
         anonymous = true;
-
         if (node.type == ClassNode.CLASS_LAMBDA) {
           lambda = true;
         }
       }
     }
+
+    addBytecodeOffsets(bytecodeOffsets);
   }
 
+  private static List<Exprent> getDimensions(int arrayDim, ListStack<Exprent> stack) {
+    List<Exprent> lstDims = new ArrayList<Exprent>();
+    for (int i = 0; i < arrayDim; i++) {
+      lstDims.add(0, stack.pop());
+    }
+    return lstDims;
+  }
+
+  @Override
   public VarType getExprType() {
-
     if (anonymous) {
-      ClassNode node = DecompilerContext.getClassProcessor().getMapRootClasses().get(newtype.value);
-
-      return node.anonymousClassType;
+      return DecompilerContext.getClassProcessor().getMapRootClasses().get(newType.value).anonymousClassType;
     }
     else {
-      return newtype;
+      return newType;
     }
   }
 
+  @Override
   public CheckTypesResult checkExprTypeBounds() {
     CheckTypesResult result = new CheckTypesResult();
 
-    if (newtype.arraydim != 0) {
+    if (newType.arrayDim != 0) {
       for (Exprent dim : lstDims) {
         result.addMinTypeExprent(dim, VarType.VARTYPE_BYTECHAR);
         result.addMaxTypeExprent(dim, VarType.VARTYPE_INT);
       }
 
-      if (newtype.arraydim == 1) {
-
-        VarType leftType = newtype.copy();
-        leftType.decArrayDim();
-
+      if (newType.arrayDim == 1) {
+        VarType leftType = newType.decreaseArrayDim();
         for (Exprent element : lstArrayElements) {
-          result.addMinTypeExprent(element, VarType.getMinTypeInFamily(leftType.type_family));
+          result.addMinTypeExprent(element, VarType.getMinTypeInFamily(leftType.typeFamily));
           result.addMaxTypeExprent(element, leftType);
         }
       }
@@ -134,9 +115,10 @@ public class NewExprent extends Exprent {
     return result;
   }
 
+  @Override
   public List<Exprent> getAllExprents() {
     List<Exprent> lst = new ArrayList<Exprent>();
-    if (newtype.arraydim == 0) {
+    if (newType.arrayDim == 0) {
       if (constructor != null) {
         Exprent constructor_instance = constructor.getInstance();
 
@@ -162,15 +144,16 @@ public class NewExprent extends Exprent {
       lst.add(expr.copy());
     }
 
-    NewExprent ret = new NewExprent(newtype, lst, bytecode);
+    NewExprent ret = new NewExprent(newType, lst, bytecode);
     ret.setConstructor(constructor == null ? null : (InvocationExprent)constructor.copy());
     ret.setLstArrayElements(lstArrayElements);
     ret.setDirectArrayInit(directArrayInit);
     ret.setAnonymous(anonymous);
-    ret.setEnumconst(enumconst);
+    ret.setEnumConst(enumConst);
     return ret;
   }
 
+  @Override
   public int getPrecedence() {
     return 1; // precedence of new
   }
@@ -181,7 +164,7 @@ public class NewExprent extends Exprent {
 
     if (anonymous) {
 
-      ClassNode child = DecompilerContext.getClassProcessor().getMapRootClasses().get(newtype.value);
+      ClassNode child = DecompilerContext.getClassProcessor().getMapRootClasses().get(newType.value);
 
       buf.append("(");
 
@@ -207,7 +190,7 @@ public class NewExprent extends Exprent {
 
         boolean firstpar = true;
         int start = 0, end = invsuper.getLstParameters().size();
-        if (enumconst) {
+        if (enumConst) {
           start += 2;
           end -= 1;
         }
@@ -234,7 +217,7 @@ public class NewExprent extends Exprent {
         }
       }
 
-      if (!enumconst) {
+      if (!enumConst) {
         String enclosing = null;
         if (!lambda && constructor != null) {
           enclosing = getQualifiedNewInstance(child.anonymousClassType.value, constructor.getLstParameters(), indent, tracer);
@@ -260,7 +243,7 @@ public class NewExprent extends Exprent {
 
       buf.append(")");
 
-      if (enumconst && buf.length() == 2) {
+      if (enumConst && buf.length() == 2) {
         buf.setLength(0);
       }
 
@@ -278,9 +261,7 @@ public class NewExprent extends Exprent {
       }
     }
     else if (directArrayInit) {
-      VarType leftType = newtype.copy();
-      leftType.decArrayDim();
-
+      VarType leftType = newType.decreaseArrayDim();
       buf.append("{");
       for (int i = 0; i < lstArrayElements.size(); i++) {
         if (i > 0) {
@@ -291,7 +272,7 @@ public class NewExprent extends Exprent {
       buf.append("}");
     }
     else {
-      if (newtype.arraydim == 0) {
+      if (newType.arrayDim == 0) {
 
         if (constructor != null) {
 
@@ -313,8 +294,8 @@ public class NewExprent extends Exprent {
             }
           }
 
-          int start = enumconst ? 2 : 0;
-          if (!enumconst || start < lstParameters.size()) {
+          int start = enumConst ? 2 : 0;
+          if (!enumConst || start < lstParameters.size()) {
             buf.append("(");
 
             boolean firstParam = true;
@@ -346,16 +327,16 @@ public class NewExprent extends Exprent {
           }
         }
 
-        if (!enumconst) {
+        if (!enumConst) {
           String enclosing = null;
           if (constructor != null) {
-            enclosing = getQualifiedNewInstance(newtype.value, constructor.getLstParameters(), indent, tracer);
+            enclosing = getQualifiedNewInstance(newType.value, constructor.getLstParameters(), indent, tracer);
           }
 
-          String typename = ExprProcessor.getTypeName(newtype);
+          String typename = ExprProcessor.getTypeName(newType);
 
           if (enclosing != null) {
-            ClassNode newNode = DecompilerContext.getClassProcessor().getMapRootClasses().get(newtype.value);
+            ClassNode newNode = DecompilerContext.getClassProcessor().getMapRootClasses().get(newType.value);
             if (newNode != null) {
               typename = newNode.simpleName;
             }
@@ -371,10 +352,10 @@ public class NewExprent extends Exprent {
         }
       }
       else {
-        buf.append("new ").append(ExprProcessor.getTypeName(newtype));
+        buf.append("new ").append(ExprProcessor.getTypeName(newType));
 
         if (lstArrayElements.isEmpty()) {
-          for (int i = 0; i < newtype.arraydim; i++) {
+          for (int i = 0; i < newType.arrayDim; i++) {
             buf.append("[");
             if (i < lstDims.size()) {
               buf.append(lstDims.get(i).toJava(indent, tracer));
@@ -383,13 +364,11 @@ public class NewExprent extends Exprent {
           }
         }
         else {
-          for (int i = 0; i < newtype.arraydim; i++) {
+          for (int i = 0; i < newType.arrayDim; i++) {
             buf.append("[]");
           }
 
-          VarType leftType = newtype.copy();
-          leftType.decArrayDim();
-
+          VarType leftType = newType.decreaseArrayDim();
           buf.append("{");
           for (int i = 0; i < lstArrayElements.size(); i++) {
             if (i > 0) {
@@ -408,7 +387,6 @@ public class NewExprent extends Exprent {
   }
 
   private static String getQualifiedNewInstance(String classname, List<Exprent> lstParams, int indent, BytecodeMappingTracer tracer) {
-
     ClassNode node = DecompilerContext.getClassProcessor().getMapRootClasses().get(classname);
 
     if (node != null && node.type != ClassNode.CLASS_ROOT && (node.access & CodeConstants.ACC_STATIC) == 0) {
@@ -421,7 +399,7 @@ public class NewExprent extends Exprent {
           VarExprent varEnclosing = (VarExprent)enclosing;
 
           StructClass current_class = ((ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS_NODE)).classStruct;
-          String this_classname = varEnclosing.getProcessor().getThisvars().get(new VarVersionPaar(varEnclosing));
+          String this_classname = varEnclosing.getProcessor().getThisVars().get(new VarVersionPaar(varEnclosing));
 
           if (!current_class.qualifiedName.equals(this_classname)) {
             isQualifiedNew = true;
@@ -440,38 +418,40 @@ public class NewExprent extends Exprent {
     return null;
   }
 
+  @Override
+  public void replaceExprent(Exprent oldExpr, Exprent newExpr) {
+    if (oldExpr == constructor) {
+      constructor = (InvocationExprent)newExpr;
+    }
+
+    if (constructor != null) {
+      constructor.replaceExprent(oldExpr, newExpr);
+    }
+
+    for (int i = 0; i < lstDims.size(); i++) {
+      if (oldExpr == lstDims.get(i)) {
+        lstDims.set(i, newExpr);
+      }
+    }
+
+    for (int i = 0; i < lstArrayElements.size(); i++) {
+      if (oldExpr == lstArrayElements.get(i)) {
+        lstArrayElements.set(i, newExpr);
+      }
+    }
+  }
+
+  @Override
   public boolean equals(Object o) {
     if (o == this) return true;
     if (o == null || !(o instanceof NewExprent)) return false;
 
     NewExprent ne = (NewExprent)o;
-    return InterpreterUtil.equalObjects(newtype, ne.getNewtype()) &&
+    return InterpreterUtil.equalObjects(newType, ne.getNewType()) &&
            InterpreterUtil.equalLists(lstDims, ne.getLstDims()) &&
            InterpreterUtil.equalObjects(constructor, ne.getConstructor()) &&
            directArrayInit == ne.directArrayInit &&
            InterpreterUtil.equalLists(lstArrayElements, ne.getLstArrayElements());
-  }
-
-  public void replaceExprent(Exprent oldexpr, Exprent newexpr) {
-    if (oldexpr == constructor) {
-      constructor = (InvocationExprent)newexpr;
-    }
-
-    if (constructor != null) {
-      constructor.replaceExprent(oldexpr, newexpr);
-    }
-
-    for (int i = 0; i < lstDims.size(); i++) {
-      if (oldexpr == lstDims.get(i)) {
-        lstDims.set(i, newexpr);
-      }
-    }
-
-    for (int i = 0; i < lstArrayElements.size(); i++) {
-      if (oldexpr == lstArrayElements.get(i)) {
-        lstArrayElements.set(i, newexpr);
-      }
-    }
   }
 
   public InvocationExprent getConstructor() {
@@ -486,8 +466,8 @@ public class NewExprent extends Exprent {
     return lstDims;
   }
 
-  public VarType getNewtype() {
-    return newtype;
+  public VarType getNewType() {
+    return newType;
   }
 
   public List<Exprent> getLstArrayElements() {
@@ -496,10 +476,6 @@ public class NewExprent extends Exprent {
 
   public void setLstArrayElements(List<Exprent> lstArrayElements) {
     this.lstArrayElements = lstArrayElements;
-  }
-
-  public boolean isDirectArrayInit() {
-    return directArrayInit;
   }
 
   public void setDirectArrayInit(boolean directArrayInit) {
@@ -518,11 +494,7 @@ public class NewExprent extends Exprent {
     this.anonymous = anonymous;
   }
 
-  public boolean isEnumconst() {
-    return enumconst;
-  }
-
-  public void setEnumconst(boolean enumconst) {
-    this.enumconst = enumconst;
+  public void setEnumConst(boolean enumConst) {
+    this.enumConst = enumConst;
   }
 }

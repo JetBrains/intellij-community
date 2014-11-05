@@ -25,7 +25,7 @@ public class IpnbCutCellAction extends AnAction {
     }
   }
 
-  public void cutCell(@NotNull final IpnbFilePanel ipnbFilePanel) {
+  public static void cutCell(@NotNull final IpnbFilePanel ipnbFilePanel) {
     ipnbFilePanel.cutCell();
     ipnbFilePanel.revalidate();
     ipnbFilePanel.repaint();
