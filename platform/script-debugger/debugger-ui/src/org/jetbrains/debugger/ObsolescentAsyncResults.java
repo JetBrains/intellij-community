@@ -1,9 +1,11 @@
-package com.intellij.xdebugger;
+package org.jetbrains.debugger;
 
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.util.Consumer;
 import com.intellij.util.PairConsumer;
+import com.intellij.xdebugger.Obsolescent;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.concurrency.Promise;
 
 public final class ObsolescentAsyncResults {
   @NotNull
@@ -34,5 +36,20 @@ public final class ObsolescentAsyncResults {
       }
     });
     return result;
+  }
+
+  @NotNull
+  public static <O extends Obsolescent, T> Promise<T> consume(@NotNull final Promise<T> promise,
+                                                        @NotNull final O obsolescent,
+                                                        @NotNull final PairConsumer<T, O> consumer) {
+    promise.done(new Consumer<T>() {
+      @Override
+      public void consume(T result) {
+        if (!obsolescent.isObsolete()) {
+          consumer.consume(result, obsolescent);
+        }
+      }
+    });
+    return promise;
   }
 }

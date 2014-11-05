@@ -1,16 +1,12 @@
 package org.jetbrains.debugger.frame;
 
-import com.intellij.openapi.util.AsyncResult;
-import com.intellij.util.Consumer;
-import com.intellij.util.PairConsumer;
 import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.frame.XSuspendContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.debugger.DebuggerViewSupport;
-import org.jetbrains.debugger.EvaluateContext;
-import org.jetbrains.debugger.Script;
-import org.jetbrains.debugger.SuspendContext;
+import org.jetbrains.concurrency.AsyncFunction;
+import org.jetbrains.concurrency.Promise;
+import org.jetbrains.debugger.*;
 import org.jetbrains.debugger.values.StringValue;
 import org.jetbrains.debugger.values.Value;
 
@@ -34,58 +30,36 @@ public class SuspendContextImpl extends XSuspendContext {
     return executionStack;
   }
 
-  public AsyncResult<String> evaluateExpression(@NotNull String expression) {
+  @NotNull
+  public Promise<String> evaluateExpression(@NotNull String expression) {
     CallFrameView frame = executionStack.getTopFrame();
     if (frame == null) {
-      return new AsyncResult.Rejected<String>("Top frame is null");
+      return Promise.reject("Top frame is null");
     }
-    return evaluateExpression(frame.getCallFrame().getEvaluateContext(), expression);
-  }
-
-  private static String formatErrorMessage(@Nullable String reason) {
-    String messagePrefix = "Can not evaluate log expression";
-    return reason != null ? messagePrefix + ": " + reason : messagePrefix;
+    else {
+      return evaluateExpression(frame.getCallFrame().getEvaluateContext(), expression);
+    }
   }
 
   @NotNull
-  private static AsyncResult<String> evaluateExpression(@NotNull EvaluateContext evaluateContext, @NotNull String expression) {
-    final AsyncResult<String> result = new AsyncResult<String>();
-    evaluateContext.evaluate(expression).doWhenDone(new Consumer<Value>() {
+  private static Promise<String> evaluateExpression(@NotNull EvaluateContext evaluateContext, @NotNull String expression) {
+    return evaluateContext.evaluate(expression).then(new AsyncFunction<EvaluateResult, String>() {
+      @NotNull
       @Override
-      public void consume(final Value value) {
+      public Promise<String> fun(EvaluateResult result) {
+        final Value value = result.value;
         if (value == null) {
-          result.setDone("Log expression result doesn't have value");
+          return Promise.resolve("Log expression result doesn't have value");
         }
         else {
           if (value instanceof StringValue && ((StringValue)value).isTruncated()) {
-            ((StringValue)value).getFullString().doWhenDone(new Runnable() {
-              @Override
-              public void run() {
-                result.setDone(value.getValueString());
-              }
-            }).doWhenRejected(new Runnable() {
-              @Override
-              public void run() {
-                result.setRejected(formatErrorMessage("whole expression result can not be loaded"));
-              }
-            });
+            return ((StringValue)value).getFullString();
           }
           else {
-            result.setDone(value.getValueString());
+            return Promise.resolve(value.getValueString());
           }
-        }
-      }
-    }).doWhenRejected(new PairConsumer<Value, String>() {
-      @Override
-      public void consume(Value value, String error) {
-        if (value == null) {
-          result.setRejected(formatErrorMessage(error));
-        }
-        else {
-          result.setRejected(formatErrorMessage(value.getValueString()));
         }
       }
     });
-    return result;
   }
 }

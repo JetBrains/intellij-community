@@ -1,11 +1,11 @@
 package org.jetbrains.debugger.values;
 
-import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.AsyncValueLoaderManager;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
 import org.jetbrains.debugger.Variable;
 
 import java.util.List;
@@ -46,8 +46,8 @@ public abstract class ObjectValueBase<VALUE_LOADER extends ValueManager> extends
 
   @NotNull
   @Override
-  public final AsyncResult<List<Variable>> getProperties() {
-    return PROPERTIES_LOADER.get(this);
+  public final Promise<List<Variable>> getProperties() {
+    return Promise.wrap(PROPERTIES_LOADER.get(this));
   }
 
   @Nullable
@@ -70,8 +70,8 @@ public abstract class ObjectValueBase<VALUE_LOADER extends ValueManager> extends
 
   @NotNull
   @Override
-  public ActionCallback getIndexedProperties(int from, int to, int bucketThreshold, @NotNull IndexedVariablesConsumer consumer, @Nullable ValueType componentType) {
-    return ActionCallback.REJECTED;
+  public Promise<Void> getIndexedProperties(int from, int to, int bucketThreshold, @NotNull IndexedVariablesConsumer consumer, @Nullable ValueType componentType) {
+    return Promise.REJECTED;
   }
 
   @Override

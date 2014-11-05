@@ -295,7 +295,7 @@
     <gotoFileContributor implementation="com.intellij.ide.util.gotoByName.ProjectBaseDirNavigationContributor"/>
 
     <consoleFilterProvider implementation="com.intellij.execution.filters.DefaultConsoleFiltersProvider"/>
-
+    <consoleFilterProvider implementation="com.intellij.execution.filters.UrlFilter$UrlFilterProvider"/>
 
     <selectInTarget implementation="com.intellij.ide.impl.ProjectStructureSelectInTarget"/>
 

@@ -24,6 +24,7 @@ import com.intellij.ui.table.TableView;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -175,8 +176,9 @@ public abstract class ListTableWithButtons<T> extends Observable {
 
   protected abstract boolean isEmpty(T element);
 
+  @NotNull
   protected AnActionButton[] createExtraActions() {
-    return null;
+    return new AnActionButton[0];
   }
 
 

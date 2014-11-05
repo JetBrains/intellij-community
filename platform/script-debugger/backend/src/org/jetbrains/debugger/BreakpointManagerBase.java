@@ -1,16 +1,17 @@
 package org.jetbrains.debugger;
 
-import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.ConcurrentHashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
 
+import java.util.List;
 import java.util.Set;
 
 public abstract class BreakpointManagerBase<T extends BreakpointBase<?>> implements BreakpointManager {
@@ -41,7 +42,7 @@ public abstract class BreakpointManagerBase<T extends BreakpointBase<?>> impleme
 
   protected abstract T createBreakpoint(@NotNull BreakpointTarget target, int line, int column, @Nullable String condition, int ignoreCount, boolean enabled);
 
-  protected abstract AsyncResult<Breakpoint> doSetBreakpoint(BreakpointTarget target, T breakpoint);
+  protected abstract Promise<Breakpoint> doSetBreakpoint(@NotNull BreakpointTarget target, @NotNull T breakpoint);
 
   @Override
   public Breakpoint setBreakpoint(@NotNull final BreakpointTarget target, int line, int column, @Nullable String condition, int ignoreCount, boolean enabled) {
@@ -53,7 +54,7 @@ public abstract class BreakpointManagerBase<T extends BreakpointBase<?>> impleme
 
     breakpoints.add(breakpoint);
     if (enabled) {
-      doSetBreakpoint(target, breakpoint).doWhenRejected(new Consumer<String>() {
+      doSetBreakpoint(target, breakpoint).rejected(new Consumer<String>() {
         @Override
         public void consume(@Nullable String errorMessage) {
           dispatcher.getMulticaster().errorOccurred(breakpoint, errorMessage);
@@ -64,33 +65,33 @@ public abstract class BreakpointManagerBase<T extends BreakpointBase<?>> impleme
   }
 
   @Override
-  public ActionCallback remove(@NotNull Breakpoint breakpoint) {
+  public Promise<Void> remove(@NotNull Breakpoint breakpoint) {
     @SuppressWarnings("unchecked")
     T b = (T)breakpoint;
     boolean existed = breakpoints.remove(b);
     if (existed) {
       breakpointDuplicationByTarget.remove(b);
     }
-    return !existed || !b.isVmRegistered() ? ActionCallback.DONE : doClearBreakpoint(b);
+    return !existed || !b.isVmRegistered() ? Promise.DONE : doClearBreakpoint(b);
   }
 
   @NotNull
   @Override
-  public ActionCallback removeAll() {
+  public Promise<Void> removeAll() {
     BreakpointBase[] list = breakpoints.toArray(new BreakpointBase[breakpoints.size()]);
     breakpoints.clear();
     breakpointDuplicationByTarget.clear();
-    ActionCallback.Chunk chunk = new ActionCallback.Chunk();
+    List<Promise<?>> promises = new SmartList<Promise<?>>();
     for (BreakpointBase b : list) {
       if (b.isVmRegistered()) {
         //noinspection unchecked
-        chunk.add(doClearBreakpoint((T)b));
+        promises.add(doClearBreakpoint((T)b));
       }
     }
-    return chunk.create();
+    return Promise.all(promises);
   }
 
-  protected abstract ActionCallback doClearBreakpoint(@NotNull T breakpoint);
+  protected abstract Promise<Void> doClearBreakpoint(@NotNull T breakpoint);
 
   @Override
   public void addBreakpointListener(@NotNull BreakpointListener listener) {
@@ -106,5 +107,11 @@ public abstract class BreakpointManagerBase<T extends BreakpointBase<?>> impleme
     if (breakpoint.isResolved()) {
       dispatcher.getMulticaster().resolved(breakpoint);
     }
+  }
+
+  @Nullable
+  @Override
+  public FunctionSupport getFunctionSupport() {
+    return null;
   }
 }

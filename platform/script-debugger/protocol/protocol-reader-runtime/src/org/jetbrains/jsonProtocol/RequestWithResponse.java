@@ -1,4 +1,4 @@
 package org.jetbrains.jsonProtocol;
 
-public interface RequestWithResponse extends Request {
+public interface RequestWithResponse<RESULT> extends Request {
 }

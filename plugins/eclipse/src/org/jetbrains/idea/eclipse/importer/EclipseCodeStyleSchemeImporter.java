@@ -274,6 +274,9 @@ public class EclipseCodeStyleSchemeImporter implements SchemeImporter<CodeStyleS
         commonSettings.SPACE_BEFORE_FINALLY_LBRACE = insertSpace;
         commonSettings.SPACE_BEFORE_SYNCHRONIZED_LBRACE = insertSpace;
       }
+      else if (OPTION_JOIN_WRAPPED_LINES.equals(key)) {
+        commonSettings.KEEP_LINE_BREAKS = !valueToBoolean(key, value);
+      }
     }
     else if (object instanceof CommonCodeStyleSettings.IndentOptions) {
       CommonCodeStyleSettings.IndentOptions indentOptions = (CommonCodeStyleSettings.IndentOptions)object;

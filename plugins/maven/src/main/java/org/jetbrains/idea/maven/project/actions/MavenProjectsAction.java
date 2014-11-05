@@ -32,7 +32,7 @@ public abstract class MavenProjectsAction extends MavenAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final DataContext context = e.getDataContext();
     final MavenProjectsManager projectsManager = MavenActionUtil.getProjectsManager(context);
     if(projectsManager == null) return;

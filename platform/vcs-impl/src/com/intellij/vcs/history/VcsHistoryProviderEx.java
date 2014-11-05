@@ -13,11 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.vcs.history;
+package com.intellij.vcs.history;
 
 import com.intellij.openapi.vcs.CalledInBackground;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.history.VcsFileRevision;
+import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import org.jetbrains.annotations.Nullable;
 
 public interface VcsHistoryProviderEx extends VcsHistoryProvider {

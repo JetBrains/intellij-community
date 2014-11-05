@@ -1,6 +1,7 @@
 package org.jetbrains.rpc;
 
 import com.intellij.openapi.util.ActionCallback;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 abstract class CommandCallbackWithResponseBase<SUCCESS_RESPONSE, C extends ActionCallback, RESULT, ERROR_DETAILS>
@@ -15,7 +16,7 @@ abstract class CommandCallbackWithResponseBase<SUCCESS_RESPONSE, C extends Actio
   }
 
   @Override
-  public final void onSuccess(SUCCESS_RESPONSE response, ResultReader<SUCCESS_RESPONSE> resultReader) {
+  public final void onSuccess(SUCCESS_RESPONSE response, @NotNull ResultReader<SUCCESS_RESPONSE> resultReader) {
     try {
       onSuccess(resultReader.<RESULT>readResult(methodName, response));
     }

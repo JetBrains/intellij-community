@@ -486,6 +486,7 @@
       <separator/>
       <reference ref="CompareClipboardWithSelection"/>
       <reference ref="$SearchWeb"/>
+      <action id="CopyUrl" class="com.intellij.ide.actions.CopyUrlAction"/>
     </group>
 
     <group id="EditorTabPopupMenu">

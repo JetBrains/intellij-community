@@ -1,6 +1,6 @@
 package org.jetbrains.debugger.values;
 
-import com.intellij.openapi.util.ActionCallback;
+import org.jetbrains.concurrency.Promise;
 
 public interface StringValue extends Value {
   boolean isTruncated();
@@ -10,5 +10,5 @@ public interface StringValue extends Value {
   /**
    * Asynchronously reloads object value with extended size limit
    */
-  ActionCallback getFullString();
+  Promise<String> getFullString();
 }

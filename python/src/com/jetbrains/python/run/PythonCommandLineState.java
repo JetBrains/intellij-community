@@ -22,10 +22,8 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
-import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
-import com.intellij.execution.filters.UrlFilter;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -82,8 +80,6 @@ public abstract class PythonCommandLineState extends CommandLineState {
   public static final String GROUP_SCRIPT = "Script";
   private final AbstractPythonRunConfiguration myConfig;
 
-  private final List<Filter> myFilters = Lists.<Filter>newArrayList(new UrlFilter());
-
   private Boolean myMultiprocessDebug = null;
 
   public boolean isDebug() {
@@ -130,7 +126,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
   @NotNull
   protected ConsoleView createAndAttachConsole(Project project, ProcessHandler processHandler, Executor executor)
     throws ExecutionException {
-    final ConsoleView consoleView = createConsoleBuilder(project).filters(myFilters).getConsole();
+    final ConsoleView consoleView = createConsoleBuilder(project).getConsole();
 
     addTracebackFilter(project, consoleView, processHandler);
 
