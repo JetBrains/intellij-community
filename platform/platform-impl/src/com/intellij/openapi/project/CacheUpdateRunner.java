@@ -21,6 +21,7 @@ import com.intellij.ide.caches.FileContent;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -159,7 +160,16 @@ public class CacheUpdateRunner extends DumbModeTask {
       }
     };
     final Application application = ApplicationManager.getApplication();
-    application.addApplicationListener(canceller);
+    Runnable addListenerAction = new Runnable() {
+      @Override
+      public void run() {
+        application.addApplicationListener(canceller);
+      }
+    };
+    if (application.isDispatchThread()) addListenerAction.run();
+    else {
+      application.invokeAndWait(addListenerAction, ModalityState.any());
+    }
 
     final AtomicBoolean isFinished = new AtomicBoolean();
     try {

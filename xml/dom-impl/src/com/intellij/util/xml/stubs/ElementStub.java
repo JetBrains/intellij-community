@@ -69,7 +69,8 @@ public class ElementStub extends DomStub {
   @Override
   public String toString() {
     String key = getNamespaceKey();
-    return StringUtil.isEmpty(key) ? getName() : key + ":" + getName();
+    return (StringUtil.isEmpty(key) ? getName() : key + ":" + getName()) +
+           (StringUtil.isEmpty(getValue()) ? "" : ":" + getValue());
   }
 
   @Override

@@ -175,28 +175,24 @@ public class ExpectedTypeUtils {
         expectedType = unaryNumericPromotion(wrappedExpressionType);
       }
       else if (ComparisonUtils.isEqualityComparison(polyadicExpression)) {
-        // JLS 15.21.1 Numerical Equality Operators == and !=
-        if (TypeConversionUtil.isPrimitiveAndNotNull(wrappedExpressionType)) {
-          expectedType = wrappedExpressionType;
-        }
-        else if (operands[0] == wrappedExpression) {
-          if (TypeConversionUtil.isPrimitiveAndNotNull(operands[1].getType())) {
-            expectedType = PsiPrimitiveType.getUnboxedType(wrappedExpressionType);
+        final PsiExpression operand1 = operands[0];
+        final PsiExpression operand2 = operands[1];
+        if (operand1 == wrappedExpression || operand2 == wrappedExpression) {
+          final PsiType type1 = operand1.getType();
+          final PsiType type2 = operand2.getType();
+          if (type1 instanceof PsiPrimitiveType) {
+            expectedType = expectedPrimitiveType((PsiPrimitiveType)type1, type2);
+          }
+          else if (type2 instanceof PsiPrimitiveType) {
+            expectedType = expectedPrimitiveType((PsiPrimitiveType)type2, type1);
           }
           else {
             expectedType = TypeUtils.getObjectType(wrappedExpression);
           }
         }
-        else if (operands[1] == wrappedExpression) {
-         if (TypeConversionUtil.isPrimitiveAndNotNull(operands[0].getType())) {
-            expectedType = PsiPrimitiveType.getUnboxedType(wrappedExpressionType);
-         }
-          else {
-           expectedType = TypeUtils.getObjectType(wrappedExpression);
-         }
-        }
         else {
-          expectedType = PsiPrimitiveType.getUnboxedType(wrappedExpressionType);
+          // third or more operand must always be boolean or does not compile
+          expectedType = TypeConversionUtil.isBooleanType(wrappedExpressionType) ? PsiType.BOOLEAN : null;
         }
       }
       else if (ComparisonUtils.isComparisonOperation(tokenType)) {
@@ -214,6 +210,22 @@ public class ExpectedTypeUtils {
       else {
         expectedType = null;
       }
+    }
+
+    private PsiType expectedPrimitiveType(PsiPrimitiveType type1, PsiType type2) {
+      if (TypeConversionUtil.isNumericType(type1)) {
+        // JLS 15.21.1. Numerical Equality Operators == and !=
+        return TypeConversionUtil.isNumericType(type2) ? TypeConversionUtil.binaryNumericPromotion(type1, type2) : null;
+      }
+      else if (PsiType.BOOLEAN.equals(type1)) {
+        // JLS 15.21.2. Boolean Equality Operators == and !=
+        return TypeConversionUtil.isBooleanType(type2) ? PsiType.BOOLEAN : null;
+      }
+      else if (PsiType.NULL.equals(type1)) {
+        return TypeUtils.getObjectType(wrappedExpression);
+      }
+      // void
+      return null;
     }
 
     /**

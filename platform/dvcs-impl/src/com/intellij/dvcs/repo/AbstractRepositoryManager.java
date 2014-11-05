@@ -3,6 +3,7 @@ package com.intellij.dvcs.repo;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.*;
@@ -75,6 +76,9 @@ public abstract class AbstractRepositoryManager<T extends Repository> extends Ab
     }
     try {
       REPO_LOCK.readLock().lock();
+      if (Disposer.isDisposed(this)) {
+        throw new ProcessCanceledException();
+      }
       T repo = myRepositories.get(root);
       return repo != null ? repo : myExternalRepositories.get(root);
     }
