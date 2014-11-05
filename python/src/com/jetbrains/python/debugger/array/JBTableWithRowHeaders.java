@@ -15,10 +15,13 @@
  */
 package com.jetbrains.python.debugger.array;
 
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.table.JBTable;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -33,7 +36,29 @@ import java.beans.PropertyChangeListener;
  * @author amarch
  */
 public class JBTableWithRowHeaders extends JBTable {
+  private final JBScrollPane myScrollPane;
   private RowHeaderTable myRowHeaderTable;
+
+  public JBScrollPane getScrollPane() {
+    return myScrollPane;
+  }
+
+  public JBTableWithRowHeaders() {
+    setAutoResizeMode(JTable.AUTO_RESIZE_SUBSEQUENT_COLUMNS);
+    setRowSelectionAllowed(false);
+    setMaxItemsForSizeCalculation(50);
+    setTableHeader(new CustomTableHeader(this));
+    getTableHeader().setDefaultRenderer(new ArrayTableForm.ColumnHeaderRenderer());
+    getTableHeader().setReorderingAllowed(false);
+
+    myScrollPane = new JBScrollPane(this);
+    JBTableWithRowHeaders.RowHeaderTable rowTable = new JBTableWithRowHeaders.RowHeaderTable(this);
+    myScrollPane.setRowHeaderView(rowTable);
+    myScrollPane.setCorner(ScrollPaneConstants.UPPER_LEFT_CORNER,
+                           rowTable.getTableHeader());
+
+    setRowHeaderTable(rowTable);
+  }
 
   public boolean getScrollableTracksViewportWidth() {
     return getPreferredSize().width < getParent().getWidth();
@@ -48,10 +73,10 @@ public class JBTableWithRowHeaders extends JBTable {
   }
 
   public static class RowHeaderTable extends JBTable implements PropertyChangeListener, TableModelListener {
-    private JBTable myMainTable;
+    private JTable myMainTable;
     private int myRowShift = 0;
 
-    public RowHeaderTable(JBTable table) {
+    public RowHeaderTable(JTable table) {
       myMainTable = table;
       myMainTable.getModel().addTableModelListener(this);
 
@@ -156,6 +181,25 @@ public class JBTableWithRowHeaders extends JBTable {
 
         return this;
       }
+    }
+  }
+
+  public static class CustomTableHeader extends JTableHeader {
+
+    public CustomTableHeader(JTable table) {
+      super();
+      setColumnModel(table.getColumnModel());
+      table.getColumnModel().getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+        @Override
+        public void valueChanged(ListSelectionEvent e) {
+          repaint();
+        }
+      });
+    }
+
+    @Override
+    public void columnSelectionChanged(ListSelectionEvent e) {
+      repaint();
     }
   }
 }

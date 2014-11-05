@@ -22,7 +22,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
-import com.jetbrains.python.console.PydevConsoleCommunication;
 import com.jetbrains.python.debugger.PyDebugValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,9 +37,11 @@ public class PyViewArrayAction extends XDebuggerTreeActionBase {
 
   @Override
   protected void perform(XValueNodeImpl node, @NotNull String nodeName, AnActionEvent e) {
-    final MyDialog dialog = new MyDialog(e.getProject());
-    dialog.setValue(node);
-    dialog.show();
+    Project p = e.getProject();
+    if (p != null && node != null && node.getValueContainer() instanceof PyDebugValue && node.isComputed()) {
+      final ViewArrayDialog dialog = new ViewArrayDialog(p, (PyDebugValue)(node.getValueContainer()));
+      dialog.show();
+    }
   }
 
   @Nullable
@@ -53,18 +54,14 @@ public class PyViewArrayAction extends XDebuggerTreeActionBase {
   public void update(AnActionEvent e) {
     TreePath[] paths = getSelectedNodes(e.getDataContext());
     if (paths != null) {
-      if(paths.length > 1) {
+      if (paths.length > 1) {
         e.getPresentation().setVisible(false);
         return;
       }
 
-      XValueNodeImpl node  = getSelectedNode(e.getDataContext());
+      XValueNodeImpl node = getSelectedNode(e.getDataContext());
       if (node != null && node.getValueContainer() instanceof PyDebugValue && node.isComputed()) {
-        PyDebugValue debugValue = (PyDebugValue) node.getValueContainer();
-        if (debugValue.getFrameAccessor() instanceof PydevConsoleCommunication) {
-          e.getPresentation().setVisible(false);
-          return;
-        }
+        PyDebugValue debugValue = (PyDebugValue)node.getValueContainer();
 
         String nodeType = debugValue.getType();
         if ("ndarray".equals(nodeType)) {
@@ -76,41 +73,21 @@ public class PyViewArrayAction extends XDebuggerTreeActionBase {
     e.getPresentation().setVisible(false);
   }
 
-  protected class MyDialog extends DialogWrapper {
+  protected static class ViewArrayDialog extends DialogWrapper {
     private Project myProject;
-    private ArrayTableForm myComponent;
+    private NumpyArrayTable myNumpyArrayTable;
 
-    private MyDialog(Project project) {
+    private ViewArrayDialog(@NotNull Project project, PyDebugValue debugValue) {
       super(project, false);
       setModal(false);
       setCancelButtonText("Close");
       setCrossClosesWindow(true);
 
       myProject = project;
-      myComponent = new ArrayTableForm(project);
+      myNumpyArrayTable = new NumpyArrayTable(myProject, this, debugValue);
 
+      myNumpyArrayTable.init();
       init();
-    }
-
-    public void setValue(XValueNodeImpl node) {
-
-      if (node.getValueContainer() instanceof PyDebugValue) {
-        PyDebugValue debugValue = (PyDebugValue)node.getValueContainer();
-
-        if ("ndarray".equals(debugValue.getType())) {
-          myComponent.setDefaultStatus();
-          final NumpyArrayValueProvider valueProvider = new NumpyArrayValueProvider(node, this, myProject);
-          try {
-            valueProvider.startFillTable();
-          }
-          catch (Exception e) {
-            setErrorText(e.getMessage());
-          }
-        }
-        else {
-          myComponent.setNotApplicableStatus(node);
-        }
-      }
     }
 
     public void setError(String text) {
@@ -131,11 +108,11 @@ public class PyViewArrayAction extends XDebuggerTreeActionBase {
 
     @Override
     protected JComponent createCenterPanel() {
-      return myComponent.getMainPanel();
+      return myNumpyArrayTable.getComponent().getMainPanel();
     }
 
     public ArrayTableForm getComponent() {
-      return myComponent;
+      return myNumpyArrayTable.getComponent();
     }
   }
 }
