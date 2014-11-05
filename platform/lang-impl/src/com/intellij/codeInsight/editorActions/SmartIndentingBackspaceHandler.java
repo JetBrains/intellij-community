@@ -17,7 +17,9 @@ package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeStyle.CodeStyleFacade;
-import com.intellij.formatting.*;
+import com.intellij.formatting.FormatterEx;
+import com.intellij.formatting.FormattingModel;
+import com.intellij.formatting.FormattingModelBuilder;
 import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.CaretModel;
@@ -33,40 +35,30 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Makes Backspace action delete all whitespace till next valid indent position
- */
-public class IndentingBackspaceHandler extends BackspaceHandlerDelegate {
-  private static final Logger LOG = Logger.getInstance(IndentingBackspaceHandler.class);
+public class SmartIndentingBackspaceHandler extends AbstractIndentingBackspaceHandler {
+  private static final Logger LOG = Logger.getInstance(SmartIndentingBackspaceHandler.class);
 
-  private boolean isApplicable;
   private boolean caretWasAtLineStart;
   private String precalculatedSpacing;
 
+  public SmartIndentingBackspaceHandler() {
+    super(CodeInsightSettings.AUTOINDENT);
+  }
+
   @Override
-  public void beforeCharDeleted(char c, PsiFile file, Editor editor) {
-    if (CodeInsightSettings.getInstance().SMART_BACKSPACE != CodeInsightSettings.AUTOINDENT || !StringUtil.isWhiteSpace(c)) {
-      isApplicable = false;
-      return;
-    }
-    LanguageCodeStyleSettingsProvider codeStyleSettingsProvider = LanguageCodeStyleSettingsProvider.forLanguage(file.getLanguage());
-    if (codeStyleSettingsProvider != null && codeStyleSettingsProvider.isIndentBasedLanguageSemantics()) {
-      isApplicable = false;
-      return;
-    }
+  protected void doBeforeCharDeleted(char c, PsiFile file, Editor editor) {
     Document document = editor.getDocument();
     CharSequence charSequence = document.getCharsSequence();
     CaretModel caretModel = editor.getCaretModel();
     int caretOffset = caretModel.getOffset();
     LogicalPosition pos = caretModel.getLogicalPosition();
-    isApplicable = true;
     caretWasAtLineStart = pos.column == 0;
     precalculatedSpacing = null;
-    if (caretWasAtLineStart && pos.line > 0 && caretOffset < charSequence.length() && !StringUtil.isWhiteSpace(charSequence.charAt(caretOffset))) {
+    if (caretWasAtLineStart && pos.line > 0 && caretOffset < charSequence.length()
+        && !StringUtil.isWhiteSpace(charSequence.charAt(caretOffset))) {
       int prevLineEnd = document.getLineEndOffset(pos.line - 1);
       if (prevLineEnd > 0 && !StringUtil.isWhiteSpace(charSequence.charAt(prevLineEnd - 1))) {
         PsiDocumentManager.getInstance(file.getProject()).commitDocument(document);
@@ -76,11 +68,7 @@ public class IndentingBackspaceHandler extends BackspaceHandlerDelegate {
   }
 
   @Override
-  public boolean charDeleted(char c, PsiFile file, Editor editor) {
-    if (!isApplicable) {
-      return false;
-    }
-
+  protected boolean doCharDeleted(char c, PsiFile file, Editor editor) {
     Project project = file.getProject();
     Document document = editor.getDocument();
     CaretModel caretModel = editor.getCaretModel();
@@ -153,6 +141,17 @@ public class IndentingBackspaceHandler extends BackspaceHandlerDelegate {
     return true;
   }
 
+  private static String getSpacing(PsiFile file, int offset) {
+    FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(file);
+    if (builder == null) {
+      return "";
+    }
+    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(file.getProject());
+    FormattingModel model = builder.createModel(file, settings);
+    int spacing = FormatterEx.getInstance().getSpacingForBlockAtOffset(model, offset);
+    return StringUtil.repeatSymbol(' ', spacing);
+  }
+
   private static int getTabSize(@NotNull CodeStyleFacade codeStyleFacade, @NotNull Document document) {
     VirtualFile file = FileDocumentManager.getInstance().getFile(document);
     FileType fileType = file == null ? null : file.getFileType();
@@ -174,16 +173,5 @@ public class IndentingBackspaceHandler extends BackspaceHandlerDelegate {
       }
     }
     return width;
-  }
-
-  private static String getSpacing(PsiFile file, int offset) {
-    FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(file);
-    if (builder == null) {
-      return "";
-    }
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(file.getProject());
-    FormattingModel model = builder.createModel(file, settings);
-    int spacing = FormatterEx.getInstance().getSpacingForBlockAtOffset(model, offset);
-    return StringUtil.repeatSymbol(' ', spacing);
   }
 }
