@@ -40,7 +40,6 @@ public class Runner {
       initLogger();
 
       ZIP_AS_BINARY = Arrays.asList(args).contains("--zip_as_binary");
-      if (ZIP_AS_BINARY) logger.info("patch mode: binary");
 
       List<String> ignoredFiles = extractFiles(args, "ignored");
       List<String> criticalFiles = extractFiles(args, "critical");
@@ -238,6 +237,7 @@ public class Runner {
       try {
         File patchFile = Utils.createTempFile();
         ZipFile jarFile = new ZipFile(resolveJarFile());
+        if (ZIP_AS_BINARY) logger.info("patch mode: binary");
 
         logger.info("Extracting patch file...");
         ui.startProcess("Extracting patch file...");
