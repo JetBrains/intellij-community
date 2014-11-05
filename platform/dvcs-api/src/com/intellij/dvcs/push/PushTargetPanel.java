@@ -24,7 +24,7 @@ import javax.swing.*;
 
 public abstract class PushTargetPanel<T extends PushTarget> extends JPanel {
 
-  abstract public void render(@NotNull ColoredTreeCellRenderer renderer);
+  abstract public void render(@NotNull ColoredTreeCellRenderer renderer, boolean isSelected);
 
   @NotNull
   abstract public T getValue();
