@@ -37,11 +37,10 @@ import java.util.concurrent.*;
 /**
  * @author traff
  */
-public class PagingTableModel extends AbstractTableModel {
+public class AsyncArrayTableModel extends AbstractTableModel {
   private static final int CHUNK_COL_SIZE = 2; //TODO set to 100
   private static final int CHUNK_ROW_SIZE = 2;
-  private static final int DEFAULT_MAX_CACHED_SIZE = 100;
-  public static final String EMPTY_CELL_VALUE = "...";
+  public static final String EMPTY_CELL_VALUE = "";
 
   private final int myRows;
   private final int myColumns;
@@ -74,7 +73,7 @@ public class PagingTableModel extends AbstractTableModel {
       }
     });
 
-  public PagingTableModel(int rows, int columns, NumpyArrayTable provider) {
+  public AsyncArrayTableModel(int rows, int columns, NumpyArrayTable provider) {
     myRows = rows;
     myColumns = columns;
     myProvider = provider;
