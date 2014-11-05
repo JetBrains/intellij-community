@@ -30,6 +30,7 @@ import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.model.MavenPlugin;
 import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil;
 import org.jetbrains.idea.maven.utils.MavenPluginInfo;
 import org.jetbrains.idea.maven.utils.actions.MavenAction;
@@ -177,13 +178,18 @@ public class MavenKeymapExtension implements KeymapExtension {
 
     public void actionPerformed(AnActionEvent e) {
       final DataContext context = e.getDataContext();
-      MavenExplicitProfiles explicitProfiles = MavenActionUtil.getProjectsManager(context).getExplicitProfiles();
+      final Project project = MavenActionUtil.getProject(context);
+      if (project == null) return;
+
+      final MavenProjectsManager projectsManager = MavenActionUtil.getProjectsManager(context);
+      if(projectsManager == null) return;
+      MavenExplicitProfiles explicitProfiles = projectsManager.getExplicitProfiles();
       MavenRunnerParameters params = new MavenRunnerParameters(true,
                                                                myMavenProject.getDirectory(),
                                                                Arrays.asList(myGoal),
                                                                explicitProfiles.getEnabledProfiles(),
                                                                explicitProfiles.getDisabledProfiles());
-      MavenRunConfigurationType.runConfiguration(MavenActionUtil.getProject(context), params, null);
+      MavenRunConfigurationType.runConfiguration(project, params, null);
     }
 
     public MavenProject getMavenProject() {

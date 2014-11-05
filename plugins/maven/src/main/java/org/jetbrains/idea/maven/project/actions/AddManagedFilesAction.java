@@ -32,6 +32,7 @@ public class AddManagedFilesAction extends MavenAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
     final MavenProjectsManager manager = MavenActionUtil.getProjectsManager(e.getDataContext());
+    if(manager == null) return;
     FileChooserDescriptor singlePomSelection = new FileChooserDescriptor(true, false, false, false, false, true) {
       @Override
       public boolean isFileSelectable(VirtualFile file) {
