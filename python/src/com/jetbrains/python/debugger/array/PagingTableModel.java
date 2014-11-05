@@ -18,18 +18,21 @@ package com.jetbrains.python.debugger.array;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListenableFutureTask;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBViewport;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.Queue;
+import com.intellij.util.ui.UIUtil;
 import com.jetbrains.python.debugger.PyDebugValue;
 
 import javax.swing.table.AbstractTableModel;
 import java.awt.*;
 import java.util.TreeSet;
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.*;
 
 /**
  * @author traff
@@ -40,21 +43,36 @@ public class PagingTableModel extends AbstractTableModel {
   private static final int DEFAULT_MAX_CACHED_SIZE = 100;
   public static final String EMPTY_CELL_VALUE = "...";
 
-  private LoadingCache<Pair<Integer, Integer>, Object[][]> myChunkCache = CacheBuilder.newBuilder().build(
-    new CacheLoader<Pair<Integer, Integer>, Object[][]>() {
+  private final int myRows;
+  private final int myColumns;
+  private final NumpyArrayTable myProvider;
+
+
+  private final ExecutorService myExecutorService = Executors.newSingleThreadExecutor();
+
+
+  private LoadingCache<Pair<Integer, Integer>, ListenableFuture<Object[][]>> myChunkCache = CacheBuilder.newBuilder().build(
+    new CacheLoader<Pair<Integer, Integer>, ListenableFuture<Object[][]>>() {
       @Override
-      public Object[][] load(Pair<Integer, Integer> key) throws Exception {
-        PyDebugValue value = myProvider.getDebugValue();
-        value = new PyDebugValue(myProvider.getSliceText(), value.getType(), value.getValue(), value.isContainer(), value.isErrorOnEval(),
-                                 value.getFrameAccessor());
-        return value.getFrameAccessor().getArrayItems(value, key.first, key.second, CHUNK_COL_SIZE, CHUNK_ROW_SIZE, myProvider.getFormat());
+      public ListenableFuture<Object[][]> load(final Pair<Integer, Integer> key) throws Exception {
+        final PyDebugValue value = myProvider.getDebugValue();
+        final PyDebugValue slicedValue =
+          new PyDebugValue(myProvider.getSliceText(), value.getType(), value.getValue(), value.isContainer(), value.isErrorOnEval(),
+                           value.getFrameAccessor());
+
+        ListenableFutureTask<Object[][]> task = ListenableFutureTask.create(new Callable<Object[][]>() {
+          @Override
+          public Object[][] call() throws Exception {
+            return value.getFrameAccessor()
+              .getArrayItems(slicedValue, key.first, key.second, CHUNK_COL_SIZE, CHUNK_ROW_SIZE, myProvider.getFormat());
+          }
+        });
+
+        myExecutorService.execute(task);
+
+        return task;
       }
     });
-
-  private int myRows = 0;
-  private int myColumns = 0;
-  private NumpyArrayTable myProvider;
-
 
   public PagingTableModel(int rows, int columns, NumpyArrayTable provider) {
     myRows = rows;
@@ -67,28 +85,38 @@ public class PagingTableModel extends AbstractTableModel {
     return !getValueAt(row, column).equals(EMPTY_CELL_VALUE);
   }
 
-  public Object getValueAt(int row, int col) {
+  public Object getValueAt(final int row, final int col) {
     Pair<Integer, Integer> key = itemToChunkKey(row, col);
 
     try {
-      Object[][] chunk = myChunkCache.get(key);
+      ListenableFuture<Object[][]> chunk = myChunkCache.get(key);
 
-      int r = row % CHUNK_ROW_SIZE;
-      int c = col % CHUNK_COL_SIZE;
-
-      if (r < chunk.length) {
-        if (c < chunk[r].length) {
-          return chunk[r][c];
+      chunk.addListener(new Runnable() {
+        @Override
+        public void run() {
+          UIUtil.invokeLaterIfNeeded(new Runnable() {
+            @Override
+            public void run() {
+              fireTableCellUpdated(row, col);
+            }
+          });
         }
-        else {
-          return EMPTY_CELL_VALUE;
+      }, myExecutorService);
+
+
+      if (chunk.isDone()) {
+        int r = row % CHUNK_ROW_SIZE;
+        int c = col % CHUNK_COL_SIZE;
+
+        if (r < chunk.get().length) {
+          if (c < chunk.get()[r].length) {
+            return chunk.get()[r][c];
+          }
         }
       }
-      else {
-        return EMPTY_CELL_VALUE;
-      }
+      return EMPTY_CELL_VALUE;
     }
-    catch (ExecutionException e) {
+    catch (Exception e) {
       return EMPTY_CELL_VALUE; //TODO: handle it
     }
   }
@@ -118,9 +146,14 @@ public class PagingTableModel extends AbstractTableModel {
   }
 
   public void forcedChange(int row, int col, Object value) {
-    Object[][] chunk = myChunkCache.getIfPresent(itemToChunkKey(row, col));
-    if (chunk != null) {
-      chunk[row - getPageRowStart(row)][col - getPageColStart(col)] = value;
+    Future<Object[][]> chunk = myChunkCache.getIfPresent(itemToChunkKey(row, col));
+    if (chunk != null && chunk.isDone()) {
+      try {
+        chunk.get()[row - getPageRowStart(row)][col - getPageColStart(col)] = value;
+      }
+      catch (Exception e) {
+        throw new IllegalStateException(e);
+      }
     }
     else {
       throw new IllegalArgumentException("Forced to change empty cell in " + row + " row and " + col + "column.");
