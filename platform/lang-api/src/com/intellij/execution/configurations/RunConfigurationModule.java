@@ -23,9 +23,13 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -38,7 +42,7 @@ public class RunConfigurationModule implements JDOMExternalizable {
   private String myModuleName;
   private final Project myProject;
 
-  public RunConfigurationModule(final Project project) {
+  public RunConfigurationModule(@NotNull Project project) {
     myProject = project;
   }
 
