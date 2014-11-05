@@ -17,11 +17,15 @@ package com.intellij.debugger.impl;
 
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.execution.configurations.DebuggingRunnerData;
-import com.intellij.execution.configurations.RunnerSettingsEx;
+import com.intellij.execution.configurations.RunnerSettings;
+import com.intellij.util.xmlb.SmartSerializer;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import com.intellij.util.xmlb.annotations.Transient;
+import org.jdom.Element;
 
-public class GenericDebuggerRunnerSettings extends RunnerSettingsEx implements DebuggingRunnerData {
+public class GenericDebuggerRunnerSettings implements DebuggingRunnerData, RunnerSettings {
+  private final SmartSerializer mySerializer = new SmartSerializer();
+
   @Transient
   @Deprecated
   public String DEBUG_PORT = "";
@@ -59,5 +63,15 @@ public class GenericDebuggerRunnerSettings extends RunnerSettingsEx implements D
 
   public void setTransport(int transport) {
     TRANSPORT = transport;
+  }
+
+  @Override
+  public void readExternal(Element element) {
+    mySerializer.readExternal(this, element);
+  }
+
+  @Override
+  public void writeExternal(Element element) {
+    mySerializer.writeExternal(this, element);
   }
 }
