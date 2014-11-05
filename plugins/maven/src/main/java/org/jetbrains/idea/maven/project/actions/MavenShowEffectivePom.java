@@ -109,7 +109,7 @@ public class MavenShowEffectivePom extends AnAction implements DumbAware {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent event) {
+  public void actionPerformed(@NotNull AnActionEvent event) {
     final Project project = MavenActionUtil.getProject(event.getDataContext());
     if(project == null) return;
     final VirtualFile file = findPomXml(event.getDataContext());
@@ -124,7 +124,7 @@ public class MavenShowEffectivePom extends AnAction implements DumbAware {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     Presentation p = e.getPresentation();
 
     boolean visible = findPomXml(e.getDataContext()) != null;

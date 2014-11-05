@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.idea.maven.utils.actions.MavenAction;
 import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
@@ -65,20 +66,24 @@ public abstract class MavenOpenOrCreateFilesAction extends MavenAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = MavenActionUtil.getProject(e.getDataContext());
+    if(project == null) return;
     final List<File> files = getFiles(e);
     final List<VirtualFile> virtualFiles = collectVirtualFiles(files);
 
     if (files.size() == 1 && virtualFiles.isEmpty()) {
       new WriteCommandAction(project, e.getPresentation().getText()) {
         @Override
-        protected void run(Result result) throws Throwable {
+        protected void run(@NotNull Result result) throws Throwable {
           File file = files.get(0);
           try {
-            VirtualFile newFile = VfsUtil.createDirectoryIfMissing(file.getParent()).createChildData(this, file.getName());
-            virtualFiles.add(newFile);
-            MavenUtil.runFileTemplate(project, newFile, getFileTemplate());
+            final VirtualFile virtualFile = VfsUtil.createDirectoryIfMissing(file.getParent());
+            if(virtualFile != null) {
+              VirtualFile newFile = virtualFile.createChildData(this, file.getName());
+              virtualFiles.add(newFile);
+              MavenUtil.runFileTemplate(project, newFile, getFileTemplate());
+            }
           }
           catch (IOException ex) {
             MavenUtil.showError(project, "Cannot create " + file.getName(), ex);
