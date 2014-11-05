@@ -20,26 +20,22 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListenableFutureTask;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Pair;
-import com.intellij.ui.components.JBScrollPane;
-import com.intellij.ui.components.JBViewport;
-import com.intellij.util.containers.HashMap;
-import com.intellij.util.containers.Queue;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.python.debugger.PyDebugValue;
 
 import javax.swing.table.AbstractTableModel;
-import java.awt.*;
-import java.util.TreeSet;
-import java.util.concurrent.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 /**
  * @author traff
  */
 public class AsyncArrayTableModel extends AbstractTableModel {
-  private static final int CHUNK_COL_SIZE = 2; //TODO set to 100
-  private static final int CHUNK_ROW_SIZE = 2;
+  private static final int CHUNK_COL_SIZE = 30;
+  private static final int CHUNK_ROW_SIZE = 30;
   public static final String EMPTY_CELL_VALUE = "";
 
   private final int myRows;
@@ -63,7 +59,9 @@ public class AsyncArrayTableModel extends AbstractTableModel {
           @Override
           public Object[][] call() throws Exception {
             return value.getFrameAccessor()
-              .getArrayItems(slicedValue, key.first, key.second, CHUNK_COL_SIZE, CHUNK_ROW_SIZE, myProvider.getFormat());
+              .getArrayItems(slicedValue, key.first, key.second, Math.min(CHUNK_COL_SIZE, getRowCount() - key.first),
+                             Math.min(CHUNK_ROW_SIZE, getColumnCount() - key.second),
+                             myProvider.getFormat());
           }
         });
 
@@ -81,7 +79,7 @@ public class AsyncArrayTableModel extends AbstractTableModel {
 
   @Override
   public boolean isCellEditable(int row, int column) {
-    return !getValueAt(row, column).equals(EMPTY_CELL_VALUE);
+    return false;
   }
 
   public Object getValueAt(final int row, final int col) {
@@ -109,13 +107,14 @@ public class AsyncArrayTableModel extends AbstractTableModel {
 
         if (r < chunk.get().length) {
           if (c < chunk.get()[r].length) {
-            return chunk.get()[r][c];
+            return myProvider.correctStringValue((String)chunk.get()[r][c]);
           }
         }
       }
       return EMPTY_CELL_VALUE;
     }
     catch (Exception e) {
+      myProvider.showError(e.getMessage());
       return EMPTY_CELL_VALUE; //TODO: handle it
     }
   }

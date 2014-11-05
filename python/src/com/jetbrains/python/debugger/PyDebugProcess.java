@@ -572,8 +572,10 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   @Override
-  public Object[][] getArrayItems(PyDebugValue var, int colOffset, int rowOffset, int cols, int rows, String format) {
-    return new Object[][]{new Object[]{1, 2}, new Object[]{3, 4}};
+  public Object[][] getArrayItems(PyDebugValue var, int rowOffset, int colOffset, int rows, int cols, String format)
+    throws PyDebuggerException {
+    final PyStackFrame frame = currentFrame();
+    return myDebugger.loadArrayItems(frame.getThreadId(), frame.getFrameId(), var, rowOffset, colOffset, rows, cols, format);
   }
 
   @Nullable

@@ -36,6 +36,8 @@ public interface ProcessDebugger {
   // todo: don't generate temp variables for qualified expressions - just split 'em
   XValueChildrenList loadVariable(String threadId, String frameId, PyDebugValue var) throws PyDebuggerException;
 
+  Object[][] loadArrayItems(String threadId, String frameId, PyDebugValue var, int rowOffset, int colOffset, int rows, int cols, String format) throws PyDebuggerException;
+
   void loadReferrers(String threadId, String frameId, PyReferringObjectsValue var, PyDebugCallback<XValueChildrenList> callback);
 
   PyDebugValue changeVariable(String threadId, String frameId, PyDebugValue var, String value)

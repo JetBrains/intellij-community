@@ -136,7 +136,7 @@ CMD_IGNORE_THROWN_EXCEPTION_AT = 140
 CMD_ENABLE_DONT_TRACE = 141
 CMD_SHOW_CONSOLE = 142
 
-
+CMD_GET_ARRAY = 143
 
 CMD_VERSION = 501
 CMD_RETURN = 502
@@ -189,6 +189,8 @@ ID_TO_MEANING = {
     '501':'CMD_VERSION',
     '502':'CMD_RETURN',
     '901':'CMD_ERROR',
+
+    '143':'CMD_GET_ARRAY',
     }
 
 MAX_IO_MSG_SIZE = 1000  #if the io is too big, we'll not send all (could make the debugger too non-responsive)
@@ -692,6 +694,13 @@ class NetCommandFactory:
         except Exception:
             return self.makeErrorMessage(seq, GetExceptionTracebackStr())
 
+
+    def makeGetArrayMessage(self, seq, payload):
+        try:
+            return NetCommand(CMD_GET_ARRAY, seq, payload)
+        except Exception:
+            return self.makeErrorMessage(seq, GetExceptionTracebackStr())
+
     def makeGetFrameMessage(self, seq, payload):
         try:
             return NetCommand(CMD_GET_FRAME, seq, payload)
@@ -953,6 +962,83 @@ class InternalGetVariable(InternalThreadCommand):
             cmd = dbg.cmdFactory.makeErrorMessage(self.sequence, "Error resolving variables " + GetExceptionTracebackStr())
             dbg.writer.addCommand(cmd)
 
+
+#=======================================================================================================================
+# InternalGetArray
+#=======================================================================================================================
+from pydevd_vars import getVariable
+
+MAXIMUM_ARRAY_SIZE = 300
+
+class InternalGetArray(InternalThreadCommand):
+    def __init__(self, seq, thread_id, frame_id, scope, name, temp, roffset, coffset, rows, cols, format):
+        self.sequence = seq
+        self.thread_id = thread_id
+        self.frame_id = frame_id
+        self.scope = scope
+        self.name = name
+        self.temp = temp;
+        self.roffset = int(roffset)
+        self.coffset = int(coffset)
+        self.rows = int(rows)
+        self.cols = int(cols)
+        self.format = '\'' + format + '\''
+
+    def doIt(self, dbg):
+        try:
+            var = getVariable(self.thread_id, self.frame_id, self.scope, self.temp)
+
+            rows = min(self.rows, MAXIMUM_ARRAY_SIZE)
+            cols = min(self.cols, MAXIMUM_ARRAY_SIZE)
+
+            if self.rows == 1 and self.cols == 1:
+                rows = 1
+                cols = 1
+            elif self.rows == 1 or self.cols == 1:
+                is_row = True if (self.rows == 1) else False
+                pure_1d = False if (len(var) == 1) else True
+
+                if not pure_1d:
+                    var = var[0]
+
+                if is_row:
+                    var = var[self.coffset:]
+                    cols = min(cols, len(var))
+                else:
+                    var = var[self.roffset:]
+                    rows = min(rows, len(var))
+            else:
+                var = var[self.roffset:, self.coffset:]
+                rows = min(rows, len(var))
+                cols = min(cols, len(var[0]))
+
+            xml = "<xml>"
+            xml += "<array name=\"%s\" rows=\"%s\" cols=\"%s\"/>" % (self.name, rows, cols)
+
+            for row in range(rows):
+                xml += "<row index=\"%s\"/>" % to_string(row)
+                for col in range(cols):
+                    value = var
+                    name = '%s[%s][%s]' % (self.name, row, col)
+                    if self.rows == 1 or self.cols == 1:
+                        if self.rows == 1 and self.cols == 1:
+                            value = var
+                            name = '%s' % self.name
+                        else:
+                            dim = col if (self.rows == 1) else row
+                            value = var[dim]
+                            name = '%s[%s]' % (self.name, dim)
+                    else:
+                        value = var[row][col]
+                    value = self.format % value
+                    xml += pydevd_vars.varToXML(value, name)
+
+            xml += "</xml>"
+            cmd = dbg.cmdFactory.makeGetArrayMessage(self.sequence, xml)
+            dbg.writer.addCommand(cmd)
+        except:
+            cmd = dbg.cmdFactory.makeErrorMessage(self.sequence, "Error resolving array " + GetExceptionTracebackStr())
+            dbg.writer.addCommand(cmd)
 
 #=======================================================================================================================
 # InternalChangeVariable
