@@ -1,9 +1,9 @@
 package x;
 import java.io.*;
 
-/**
+<warning descr="Default File template">/**
  * Created by Alexey on 02.12.2005.
- */
+ */</warning>
 public class X implements Runnable{
     File f; //kkj lkkl jjkuufdffffjkkjjh kjh kjhj kkjh kjh  i k kj kj klj lkj lkj lkjl kj klkl kl
     {
@@ -60,4 +60,3 @@ public class X implements Runnable{
         }
     }
 }
-
