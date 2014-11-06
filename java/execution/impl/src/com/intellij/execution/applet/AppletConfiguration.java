@@ -28,7 +28,6 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
@@ -36,6 +35,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
+import com.intellij.util.xmlb.SmartSerializer;
+import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -60,6 +61,7 @@ public class AppletConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
   private AppletParameter[] myAppletParameters;
   public boolean ALTERNATIVE_JRE_PATH_ENABLED;
   public String ALTERNATIVE_JRE_PATH;
+
   @NonNls
   protected static final String NAME_ATTR = "name";
   @NonNls
@@ -67,8 +69,12 @@ public class AppletConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
   @NonNls
   protected static final String PARAMETER_ELEMENT_NAME = "parameter";
 
-  public AppletConfiguration(final Project project, ConfigurationFactory factory) {
+  private final SmartSerializer mySerializer;
+
+  public AppletConfiguration(@NotNull Project project, ConfigurationFactory factory) {
     super(new JavaRunConfigurationModule(project, false), factory);
+
+    mySerializer = new SmartSerializer(project.isDefault(), true);
   }
 
   @Override
@@ -134,12 +140,13 @@ public class AppletConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
     return null;
   }
 
-  public void setPolicyFile(final String localPath) {
-    POLICY_FILE = ExternalizablePath.urlValue(localPath);
-  }
-
+  @Transient
   public String getPolicyFile() {
     return ExternalizablePath.localPathValue(POLICY_FILE);
+  }
+
+  public void setPolicyFile(final String localPath) {
+    POLICY_FILE = ExternalizablePath.urlValue(localPath);
   }
 
   public static class AppletParameter {
@@ -185,7 +192,7 @@ public class AppletConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
 
   @Override
   public void readExternal(final Element parentNode) throws InvalidDataException {
-    DefaultJDOMExternalizer.readExternal(this, parentNode);
+    mySerializer.readExternal(this, parentNode);
     readModule(parentNode);
     final ArrayList<AppletParameter> parameters = new ArrayList<AppletParameter>();
     for (final Element element : parentNode.getChildren(PARAMETER_ELEMENT_NAME)) {
@@ -195,9 +202,14 @@ public class AppletConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
   }
 
   @Override
+  protected boolean isNewSerializationUsed() {
+    return true;
+  }
+
+  @Override
   public void writeExternal(final Element parentNode) throws WriteExternalException {
     writeModule(parentNode);
-    DefaultJDOMExternalizer.writeExternal(this, parentNode);
+    mySerializer.writeExternal(this, parentNode);
     if (myAppletParameters != null) {
       for (AppletParameter myAppletParameter : myAppletParameters) {
         final Element element = new Element(PARAMETER_ELEMENT_NAME);
@@ -263,11 +275,12 @@ public class AppletConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
     throw new RuntimeConfigurationWarning("URL " + HTML_FILE_NAME + " is not valid: " + ex.getLocalizedMessage());
   }
 
+  @Transient
   public AppletParameter[] getAppletParameters() {
     return myAppletParameters;
   }
 
-  public void setAppletParameters(final AppletParameter[] appletParameters) {
+  public void setAppletParameters(AppletParameter[] appletParameters) {
     myAppletParameters = appletParameters;
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.JDOMUtil;
@@ -29,12 +28,12 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 class TagBinding extends BasePrimitiveBinding {
-  private final Tag myTagAnnotation;
+  private final String myTextIfEmpty;
 
-  public TagBinding(Accessor accessor, Tag tagAnnotation) {
+  public TagBinding(@NotNull Accessor accessor, @NotNull Tag tagAnnotation) {
     super(accessor, tagAnnotation.value(), null);
 
-    myTagAnnotation = tagAnnotation;
+    myTextIfEmpty = tagAnnotation.textIfEmpty();
   }
 
   @Nullable
@@ -73,7 +72,7 @@ class TagBinding extends BasePrimitiveBinding {
     }
 
     if (children.length == 0) {
-      children = new Object[] {new Text(myTagAnnotation.textIfEmpty())};
+      children = new Object[] {new Text(myTextIfEmpty)};
     }
 
     assert myBinding != null;

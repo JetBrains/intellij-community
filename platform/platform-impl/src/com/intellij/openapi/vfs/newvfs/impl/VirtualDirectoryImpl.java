@@ -529,7 +529,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   @Override
-  protected void setUserMap(KeyFMap map) {
+  protected void setUserMap(@NotNull KeyFMap map) {
     myData.myUserMap = map;
   }
 

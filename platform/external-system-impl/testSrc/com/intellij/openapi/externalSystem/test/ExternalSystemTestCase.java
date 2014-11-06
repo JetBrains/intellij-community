@@ -23,7 +23,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.compiler.*;
+import com.intellij.openapi.compiler.CompileScope;
+import com.intellij.openapi.compiler.CompilerMessage;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
@@ -32,8 +33,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -50,12 +55,15 @@ import org.junit.After;
 import org.junit.Before;
 
 import java.awt.*;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.*;
 import java.util.List;
+import java.util.jar.Attributes;
+import java.util.jar.JarEntry;
+import java.util.jar.JarOutputStream;
+import java.util.jar.Manifest;
 
 /**
  * @author Vladislav.Soroka
@@ -335,6 +343,39 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
       throw new AssertionError("Unable to create the project sub file: " + f.getAbsolutePath());
     }
     return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f);
+  }
+
+  @NotNull
+  protected VirtualFile createProjectJarSubFile(String relativePath, Pair<ByteSequence, String>... contentEntries) throws IOException {
+    assertTrue("Use 'jar' extension for JAR files: '" + relativePath + "'", FileUtilRt.extensionEquals(relativePath, "jar"));
+    File f = new File(getProjectPath(), relativePath);
+    FileUtil.ensureExists(f.getParentFile());
+    FileUtil.ensureCanCreateFile(f);
+    final boolean created = f.createNewFile();
+    if (!created) {
+      throw new AssertionError("Unable to create the project sub file: " + f.getAbsolutePath());
+    }
+
+    Manifest manifest = new Manifest();
+    manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
+    JarOutputStream target = new JarOutputStream(new FileOutputStream(f), manifest);
+    for (Pair<ByteSequence, String> contentEntry : contentEntries) {
+      addJarEntry(contentEntry.first.getBytes(), contentEntry.second, target);
+    }
+    target.close();
+
+    final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f);
+    assertNotNull(virtualFile);
+    final VirtualFile jarFile = JarFileSystem.getInstance().getJarRootForLocalFile(virtualFile);
+    assertNotNull(jarFile);
+    return jarFile;
+  }
+
+  private static void addJarEntry(byte[] bytes, String path, JarOutputStream target) throws IOException {
+    JarEntry entry = new JarEntry(path.replace("\\", "/"));
+    target.putNextEntry(entry);
+    target.write(bytes);
+    target.close();
   }
 
   protected VirtualFile createProjectSubFile(String relativePath, String content) throws IOException {

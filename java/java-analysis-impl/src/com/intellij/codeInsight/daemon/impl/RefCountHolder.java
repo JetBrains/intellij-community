@@ -50,15 +50,27 @@ public class RefCountHolder {
   private final Map<PsiAnchor, Boolean> myDclsUsedMap = ContainerUtil.newConcurrentMap();
   private final Map<PsiReference, PsiImportStatementBase> myImportStatements = ContainerUtil.newConcurrentMap();
   private final AtomicReference<ProgressIndicator> myState = new AtomicReference<ProgressIndicator>(VIRGIN);
-  private static final ProgressIndicator VIRGIN = new DaemonProgressIndicator(); // just created or cleared
-  private static final ProgressIndicator READY = new DaemonProgressIndicator();
+  // contains actual info
+  private static final ProgressIndicator READY = new DaemonProgressIndicator() {
+    @Override
+    public String toString() {
+      return "READY";
+    }
+  };
+  // just created or cleared
+  private static final ProgressIndicator VIRGIN = new DaemonProgressIndicator() {
+    @Override
+    public String toString() {
+      return "VIRGIN";
+    }
+  };
   private volatile ProgressIndicator analyzedUnder;
 
   private static class HolderReference extends SoftReference<RefCountHolder> {
     // Map holding hard references to RefCountHolder for each highlighting pass (identified by its progress indicator)
     // there can be multiple passes running simultaneously (one actual and several passes just canceled and winding down but still alive)
     // so there is a chance they overlap the usage of RCH
-    // As soon as everybody finished using RCH, map become empty and the RefCountHolder is eligible for gc
+    // As soon as everybody finished using RCH, map becomes empty and the RefCountHolder is eligible for gc
     private final Map<ProgressIndicator, RefCountHolder> map = new ConcurrentHashMap<ProgressIndicator, RefCountHolder>();
 
     public HolderReference(@NotNull RefCountHolder holder) {
@@ -69,8 +81,6 @@ public class RefCountHolder {
       RefCountHolder holder = get();
       assert holder != null: "no way";
       map.put(indicator, holder);
-      holder = get();
-      assert holder != null: "can't be!";
     }
 
     private RefCountHolder release(@NotNull ProgressIndicator indicator) {
@@ -123,7 +133,7 @@ public class RefCountHolder {
 
   private RefCountHolder(@NotNull PsiFile file) {
     myFile = file;
-    log("c: created: ", myState.get(), " for ", file);
+    log("c: created for ", file);
   }
 
   private void clear() {

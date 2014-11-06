@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.ipnb.configuration;
 
+import com.google.common.collect.ImmutableMap;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.KillableColoredProcessHandler;
@@ -20,6 +21,7 @@ import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -102,7 +104,7 @@ public final class IpnbConnectionManager implements ProjectComponent {
       long time = System.currentTimeMillis() - startTime;
       while (time < 5000) {
         final String line = reader.readLine();
-        if (line.contains("The IPython Notebook is running")) {
+        if (line != null && line.contains("The IPython Notebook is running")) {
           break;
         }
         time = System.currentTimeMillis() - startTime;
@@ -185,16 +187,11 @@ public final class IpnbConnectionManager implements ProjectComponent {
       showWarning(fileEditor, "Please check Python Interpreter in Settings->Python Interpreter");
       return false;
     }
-    final VirtualFile directory = sdk.getHomeDirectory();
-    if (directory == null) return false;
-    final VirtualFile ipython = directory.getParent().findChild("ipython");
-    if (ipython == null) {
-      showWarning(fileEditor, "Could not find Ipython Notebook in selected interpreter");
-      return false;
-    }
+    final Map<String, String> env = ImmutableMap.of("PYCHARM_EP_DIST", "ipython", "PYCHARM_EP_NAME", "ipython");
     try {
-      final GeneralCommandLine commandLine = new GeneralCommandLine(ipython.getPath(), "notebook", "--no-browser").
-        withWorkDirectory(myProject.getBasePath());
+      final String ipython = PythonHelpersLocator.getHelperPath("pycharm/pycharm_load_entry_point.py");
+      final GeneralCommandLine commandLine = new GeneralCommandLine(sdk.getHomePath(), ipython, "notebook", "--no-browser").
+        withWorkDirectory(myProject.getBasePath()).withEnvironment(env);
 
       myProcessHandler = new KillableColoredProcessHandler(commandLine);
 

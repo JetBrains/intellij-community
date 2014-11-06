@@ -73,7 +73,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
   @NonNls public static final String SHORT_NAME = "unused";
   @NonNls public static final String ALTERNATIVE_ID = "UnusedDeclaration";
 
-  public final EntryPoint[] myExtensions;
+  protected final EntryPoint[] myExtensions;
   private static final Logger LOG = Logger.getInstance("#" + UnusedDeclarationInspectionBase.class.getName());
   private GlobalInspectionContext myContext;
   protected UnusedSymbolLocalInspectionBase myLocalInspectionBase = createUnusedSymbolLocalInspection();
@@ -86,9 +86,9 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
 
   public UnusedDeclarationInspectionBase() {
     ExtensionPoint<EntryPoint> point = Extensions.getRootArea().getExtensionPoint(ToolExtensionPoints.DEAD_CODE_TOOL);
-    final EntryPoint[] deadCodeAddins = new EntryPoint[point.getExtensions().length];
     EntryPoint[] extensions = point.getExtensions();
-    for (int i = 0, extensionsLength = extensions.length; i < extensionsLength; i++) {
+    final EntryPoint[] deadCodeAddins = new EntryPoint[extensions.length];
+    for (int i = 0; i < extensions.length; i++) {
       EntryPoint entryPoint = extensions[i];
       try {
         deadCodeAddins[i] = entryPoint.clone();
@@ -375,15 +375,6 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     }
     if (element instanceof PsiClass) {
       PsiClass aClass = (PsiClass)element;
-      /*
-      if (aClass.isAnnotationType()) {
-        return true;
-      }
-
-      if (aClass.isEnum()) {
-        return true;
-      }
-      */
       final PsiClass applet = psiFacade.findClass("java.applet.Applet", GlobalSearchScope.allScope(project));
       if (isAddAppletEnabled() && applet != null && aClass.isInheritor(applet, true)) {
         return true;
