@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.model.serialization.runConfigurations;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.containers.hash.HashMap;
 import org.jdom.Element;
@@ -31,6 +32,8 @@ import java.util.Map;
  * @author nik
  */
 public class JpsRunConfigurationSerializer {
+  private static final Logger LOG = Logger.getInstance(JpsRunConfigurationSerializer.class);
+
   public static void loadRunConfigurations(@NotNull JpsProject project, @Nullable Element runManagerTag) {
     Map<String, JpsRunConfigurationPropertiesSerializer<?>> serializers = new HashMap<String, JpsRunConfigurationPropertiesSerializer<?>>();
     for (JpsModelSerializerExtension extension : JpsModelSerializerExtension.getExtensions()) {
@@ -50,8 +53,11 @@ public class JpsRunConfigurationSerializer {
       if (serializer != null) {
         loadRunConfiguration(name, configurationTag, serializer, project);
       }
-      else {
+      else if (typeId != null) {
         project.addRunConfiguration(name, new JpsUnknownRunConfigurationType(typeId), JpsElementFactory.getInstance().createDummyElement());
+      }
+      else {
+        LOG.info("Run configuration '" + name + "' wasn't loaded because 'type' attribute is missing");
       }
     }
   }
