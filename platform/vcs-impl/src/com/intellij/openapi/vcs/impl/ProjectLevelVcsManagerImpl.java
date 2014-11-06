@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.actions.ToggleToolbarAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -34,7 +35,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
@@ -242,7 +242,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
           myContentManager = toolWindow.getContentManager();
           toolWindow.setIcon(AllIcons.Toolwindows.VcsSmallTab);
           DefaultActionGroup gearActions = new DefaultActionGroup();
-          gearActions.addAction(SimpleToolWindowPanel.createToggleToolbarAction(myProject, toolWindow)).setAsSecondary(true);
+          gearActions.addAction(ToggleToolbarAction.createToggleToolbarGroup(myProject, toolWindow)).setAsSecondary(true);
           ((ToolWindowEx)toolWindow).setAdditionalGearActions(gearActions);
           toolWindow.installWatcher(myContentManager);
         }
