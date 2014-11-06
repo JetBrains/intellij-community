@@ -385,6 +385,21 @@ class BaseInterpreterInterface:
 
         return xml
 
+    def getArray(self, attr):
+        xml = "<xml>"
+        valDict = pydevd_vars.resolveVar(self.getNamespace(), attributes)
+        if valDict is None:
+            valDict = {}
+
+        keys = valDict.keys()
+
+        for k in keys:
+            xml += pydevd_vars.varToXML(valDict[k], to_string(k))
+
+        xml += "</xml>"
+
+        return xml
+
     def changeVariable(self, attr, value):
         def do_change_variable():
             Exec('%s=%s' % (attr, value), self.getNamespace(), self.getNamespace())
