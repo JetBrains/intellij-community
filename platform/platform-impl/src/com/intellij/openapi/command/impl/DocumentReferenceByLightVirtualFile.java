@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,20 +19,20 @@ import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.LightVirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class DocumentReferenceByVirtualFile implements DocumentReference {
-  private VirtualFile myFile;
+class DocumentReferenceByLightVirtualFile implements DocumentReference {
+  private LightVirtualFile myFile;
 
-  DocumentReferenceByVirtualFile(@NotNull VirtualFile file) {
+  DocumentReferenceByLightVirtualFile(@NotNull LightVirtualFile file) {
     myFile = file;
   }
 
   @Override
   @Nullable
   public Document getDocument() {
-    assert myFile.isValid() : "should not be called on references to deleted file: " + myFile;
     return FileDocumentManager.getInstance().getDocument(myFile);
   }
 
@@ -45,9 +45,5 @@ public class DocumentReferenceByVirtualFile implements DocumentReference {
   @Override
   public String toString() {
     return myFile.toString();
-  }
-
-  public void update(VirtualFile f) {
-    myFile = f;
   }
 }
