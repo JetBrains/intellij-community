@@ -143,7 +143,7 @@ public class ArrayTableCellEditor extends AbstractCellEditor implements TableCel
     }
 
     @Override
-    protected void setEditorText(XExpression text) {
+    protected void doSetText(XExpression text) {
       myEditorTextField.setText(text.getExpression());
     }
 
