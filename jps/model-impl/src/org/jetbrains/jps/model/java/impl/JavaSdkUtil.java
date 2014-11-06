@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.jetbrains.jps.model.java.impl;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -30,11 +31,11 @@ import java.util.Set;
  * @author nik
  */
 public class JavaSdkUtil {
-  public static List<File> getJdkClassesRoots(File home, boolean isJre) {
+  @NotNull
+  public static List<File> getJdkClassesRoots(@NotNull File home, boolean isJre) {
     FileFilter jarFileFilter = new FileFilter() {
       @Override
-      @SuppressWarnings({"HardCodedStringLiteral"})
-      public boolean accept(File f) {
+      public boolean accept(@NotNull File f) {
         return !f.isDirectory() && f.getName().endsWith(".jar");
       }
     };
