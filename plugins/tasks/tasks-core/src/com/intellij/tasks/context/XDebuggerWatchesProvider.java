@@ -54,7 +54,7 @@ public class XDebuggerWatchesProvider extends WorkingContextProvider {
     XDebuggerWatchesManager.WatchesManagerState state = myWatchesManager.getState();
     Element serialize = XmlSerializer.serialize(state, new SerializationFilter() {
       @Override
-      public boolean accepts(Accessor accessor, Object bean) {
+      public boolean accepts(@NotNull Accessor accessor, Object bean) {
         return accessor.read(bean) != null;
       }
     });

@@ -537,7 +537,7 @@ public class XmlSerializerTest extends TestCase {
                      "</BeanWithPublicFields>",
                      new SerializationFilter() {
       @Override
-      public boolean accepts(Accessor accessor, Object bean) {
+      public boolean accepts(@NotNull Accessor accessor, Object bean) {
         return accessor.getName().startsWith("I");
       }
     });
@@ -850,7 +850,7 @@ public class XmlSerializerTest extends TestCase {
   }
   public static class PropertyFilterTest implements SerializationFilter {
     @Override
-    public boolean accepts(Accessor accessor, Object bean) {
+    public boolean accepts(@NotNull Accessor accessor, Object bean) {
       return !accessor.read(bean).equals("skip");
     }
   }
