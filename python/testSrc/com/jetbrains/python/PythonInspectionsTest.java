@@ -245,6 +245,11 @@ public class PythonInspectionsTest extends PyTestCase {
     doTestWithLanguageLevel(getTestName(false), new PyPropertyDefinitionInspection(), LanguageLevel.PYTHON26);
   }
 
+  // PY-11426
+  public void testPyPropertyDefinitionInspection33() {
+    doTestWithLanguageLevel(getTestName(false), new PyPropertyDefinitionInspection(), LanguageLevel.PYTHON33);
+  }
+
   public void testInconsistentIndentation() {
     doHighlightingTest(PyInconsistentIndentationInspection.class, LanguageLevel.PYTHON26);
   }
