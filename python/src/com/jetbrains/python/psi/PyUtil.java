@@ -69,7 +69,9 @@ import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
+import com.jetbrains.python.psi.stubs.PySetuptoolsNamespaceIndex;
 import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.refactoring.classes.PyDependenciesComparator;
 import com.jetbrains.python.refactoring.classes.extractSuperclass.PyExtractSuperclassHelper;
@@ -1008,7 +1010,7 @@ public class PyUtil {
     if (level.isAtLeast(LanguageLevel.PYTHON33)) {
       return true;
     }
-    return hasNamespacePackageFile(directory);
+    return isSetuptoolsNamespacePackage(directory);
   }
 
   public static boolean isPackage(@NotNull PsiFile file) {
@@ -1027,18 +1029,15 @@ public class PyUtil {
     return null;
   }
 
-  private static boolean hasNamespacePackageFile(@NotNull PsiDirectory directory) {
-    final String name = directory.getName().toLowerCase();
-    final PsiDirectory parent = directory.getParent();
-    if (parent != null) {
-      for (PsiFile file : parent.getFiles()) {
-        final String filename = file.getName().toLowerCase();
-        if (filename.startsWith(name) && filename.endsWith("-nspkg.pth")) {
-          return true;
-        }
-      }
-    }
-    return false;
+  private static boolean isSetuptoolsNamespacePackage(@NotNull PsiDirectory directory) {
+    final String packagePath = getPackagePath(directory);
+    return packagePath != null && !PySetuptoolsNamespaceIndex.find(packagePath, directory.getProject()).isEmpty();
+  }
+
+  @Nullable
+  private static String getPackagePath(@NotNull PsiDirectory directory) {
+    final QualifiedName name = QualifiedNameFinder.findShortestImportableQName(directory);
+    return name != null ? name.toString() : null;
   }
 
   /**
