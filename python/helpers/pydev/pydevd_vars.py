@@ -277,6 +277,43 @@ def customOperation(thread_id, frame_id, scope, attrs, style, code_or_file, oper
         traceback.print_exc()
 
 
+def evalInContext(expression, globals, locals):
+    result = None
+    try:
+        result = eval(expression, globals, locals)
+    except Exception:
+        s = StringIO()
+        traceback.print_exc(file=s)
+        result = s.getvalue()
+
+        try:
+            try:
+                etype, value, tb = sys.exc_info()
+                result = value
+            finally:
+                etype = value = tb = None
+        except:
+            pass
+
+        result = ExceptionOnEvaluate(result)
+
+        # Ok, we have the initial error message, but let's see if we're dealing with a name mangling error...
+        try:
+            if '__' in expression:
+                # Try to handle '__' name mangling...
+                split = expression.split('.')
+                curr = locals.get(split[0])
+                for entry in split[1:]:
+                    if entry.startswith('__') and not hasattr(curr, entry):
+                        entry = '_%s%s' % (curr.__class__.__name__, entry)
+                    curr = getattr(curr, entry)
+
+                result = curr
+        except:
+            pass
+    return result
+
+
 def evaluateExpression(thread_id, frame_id, expression, doExec):
     '''returns the result of the evaluated expression
     @param doExec: determines if we should do an exec or an eval
@@ -284,9 +321,6 @@ def evaluateExpression(thread_id, frame_id, expression, doExec):
     frame = findFrame(thread_id, frame_id)
     if frame is None:
         return
-
-    expression = str(expression.replace('@LINE@', '\n'))
-
 
     #Not using frame.f_globals because of https://sourceforge.net/tracker2/?func=detail&aid=2541355&group_id=85796&atid=577329
     #(Names not resolved in generator expression in method)
@@ -296,6 +330,7 @@ def evaluateExpression(thread_id, frame_id, expression, doExec):
     updated_globals.update(frame.f_locals)  #locals later because it has precedence over the actual globals
 
     try:
+        expression = str(expression.replace('@LINE@', '\n'))
 
         if doExec:
             try:
@@ -312,42 +347,7 @@ def evaluateExpression(thread_id, frame_id, expression, doExec):
             return
 
         else:
-            result = None
-            try:
-                result = eval(expression, updated_globals, frame.f_locals)
-            except Exception:
-                s = StringIO()
-                traceback.print_exc(file=s)
-                result = s.getvalue()
-
-                try:
-                    try:
-                        etype, value, tb = sys.exc_info()
-                        result = value
-                    finally:
-                        etype = value = tb = None
-                except:
-                    pass
-
-                result = ExceptionOnEvaluate(result)
-
-                # Ok, we have the initial error message, but let's see if we're dealing with a name mangling error...
-                try:
-                    if '__' in expression:
-                        # Try to handle '__' name mangling...
-                        split = expression.split('.')
-                        curr = frame.f_locals.get(split[0])
-                        for entry in split[1:]:
-                            if entry.startswith('__') and not hasattr(curr, entry):
-                                entry = '_%s%s' % (curr.__class__.__name__, entry)
-                            curr = getattr(curr, entry)
-
-                        result = curr
-                except:
-                    pass
-
-
-            return result
+            return evalInContext(expression, updated_globals, frame.f_locals)
     finally:
         #Should not be kept alive if an exception happens and this frame is kept in the stack.
         del updated_globals
