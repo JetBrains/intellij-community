@@ -17,6 +17,7 @@ package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.LowMemoryWatcher;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.io.FileUtil;
@@ -84,7 +85,7 @@ public class IncProjectBuilder {
 
   private static final String CLASSPATH_INDEX_FINE_NAME = "classpath.index";
   private static final boolean GENERATE_CLASSPATH_INDEX = Boolean.parseBoolean(System.getProperty(GlobalOptions.GENERATE_CLASSPATH_INDEX_OPTION, "false"));
-  private static final boolean SYNC_DELETE = Boolean.parseBoolean(System.getProperty("jps.sync.delete", "false"));
+  private static final boolean SYNC_DELETE = Boolean.parseBoolean(System.getProperty("jps.sync.delete", SystemInfo.isWindows ? "true" : "false"));
   private static final GlobalContextKey<Set<BuildTarget<?>>> TARGET_WITH_CLEARED_OUTPUT = GlobalContextKey.create("_targets_with_cleared_output_");
   public static final int MAX_BUILDER_THREADS;
   static {
