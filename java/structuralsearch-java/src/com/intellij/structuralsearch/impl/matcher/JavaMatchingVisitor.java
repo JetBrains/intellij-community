@@ -420,7 +420,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       (elements2 != null) ? elements2.getReferenceElements() : PsiElement.EMPTY_ARRAY
     );
   }
-  
+
   private boolean compareClasses(final PsiClass clazz, final PsiClass clazz2) {
     final PsiClass saveClazz = this.myClazz;
     final MatchContext.MatchedElementsListener oldListener = myMatchingVisitor.getMatchContext().getMatchedElementsListener();
@@ -838,6 +838,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     String text2;
     if (el2 instanceof PsiClass) {
       text2 = ((PsiClass)el2).getQualifiedName();
+      if (text2 == null) text2 = el2.getText();
     } else {
       text2 = el2.getText();
     }
