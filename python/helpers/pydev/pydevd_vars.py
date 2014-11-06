@@ -19,6 +19,7 @@ import _pydev_threading as threading
 import traceback
 import pydevd_save_locals
 from pydev_imports import Exec, quote, execfile
+from pydevd_utils import to_string
 
 try:
     import types
@@ -386,6 +387,49 @@ def changeAttrExpression(thread_id, frame_id, attr, expression, dbg):
 
     except Exception:
         traceback.print_exc()
+
+MAXIMUM_ARRAY_SIZE = 300
+
+def array_to_xml(array, roffset, coffset, rows, cols, format):
+    xml = ""
+    rows = min(rows, MAXIMUM_ARRAY_SIZE)
+    cols = min(cols, MAXIMUM_ARRAY_SIZE)
+    if rows == 1 and cols == 1:
+        rows = 1
+        cols = 1
+    elif rows == 1 or cols == 1:
+        is_row = True if (rows == 1) else False
+        pure_1d = False if (len(array) == 1) else True
+
+        if not pure_1d:
+            array = array[0]
+
+        if is_row:
+            array = array[coffset:]
+            cols = min(cols, len(array))
+        else:
+            array = array[roffset:]
+            rows = min(rows, len(array))
+    else:
+        array = array[roffset:, coffset:]
+        rows = min(rows, len(array))
+        cols = min(cols, len(array[0]))
+    xml += "<array rows=\"%s\" cols=\"%s\"/>" % (rows, cols)
+    for row in range(rows):
+        xml += "<row index=\"%s\"/>" % to_string(row)
+        for col in range(cols):
+            value = array
+            if rows == 1 or cols == 1:
+                if rows == 1 and cols == 1:
+                    value = array
+                else:
+                    dim = col if (rows == 1) else row
+                    value = array[dim]
+            else:
+                value = array[row][col]
+            value = format % value
+            xml += varToXML(value, '')
+    return xml
 
 
 
