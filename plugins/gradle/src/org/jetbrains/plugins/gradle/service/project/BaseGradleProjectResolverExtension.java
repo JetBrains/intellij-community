@@ -68,6 +68,8 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.net.URL;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * {@link BaseGradleProjectResolverExtension} provides base implementation of Gradle project resolver.
@@ -641,6 +643,18 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
     else {
       level = LibraryLevel.PROJECT;
       libraryName = String.format("%s:%s:%s", moduleVersion.getGroup(), moduleVersion.getName(), moduleVersion.getVersion());
+      if (binaryPath.isFile()) {
+        String libraryFileName = FileUtil.getNameWithoutExtension(binaryPath);
+        final String mavenLibraryFileName = String.format("%s-%s", moduleVersion.getName(), moduleVersion.getVersion());
+        if (!mavenLibraryFileName.equals(libraryFileName)) {
+          Pattern pattern = Pattern.compile(moduleVersion.getName() + "-" + moduleVersion.getVersion() + "-(.*)");
+          Matcher matcher = pattern.matcher(libraryFileName);
+          if (matcher.matches()) {
+            final String classifier = matcher.group(1);
+            libraryName += (":" + classifier);
+          }
+        }
+      }
     }
 
     final LibraryData library = new LibraryData(GradleConstants.SYSTEM_ID, libraryName, unresolved);
