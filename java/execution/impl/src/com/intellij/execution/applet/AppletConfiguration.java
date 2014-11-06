@@ -35,6 +35,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
+import com.intellij.util.SmartList;
 import com.intellij.util.xmlb.SmartSerializer;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
@@ -46,7 +47,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -74,7 +74,7 @@ public class AppletConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
   public AppletConfiguration(@NotNull Project project, ConfigurationFactory factory) {
     super(new JavaRunConfigurationModule(project, false), factory);
 
-    mySerializer = new SmartSerializer(project.isDefault(), true);
+    mySerializer = new SmartSerializer(!project.isDefault(), true);
   }
 
   @Override
@@ -193,12 +193,18 @@ public class AppletConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
   @Override
   public void readExternal(final Element parentNode) throws InvalidDataException {
     mySerializer.readExternal(this, parentNode);
-    readModule(parentNode);
-    final ArrayList<AppletParameter> parameters = new ArrayList<AppletParameter>();
-    for (final Element element : parentNode.getChildren(PARAMETER_ELEMENT_NAME)) {
-      parameters.add(new AppletParameter(element.getAttributeValue(NAME_ATTR), element.getAttributeValue(VALUE_ATTR)));
+
+    List<Element> paramList = parentNode.getChildren(PARAMETER_ELEMENT_NAME);
+    if (paramList.isEmpty()) {
+      myAppletParameters = null;
     }
-    myAppletParameters = parameters.toArray(new AppletParameter[parameters.size()]);
+    else {
+      List<AppletParameter> parameters = new SmartList<AppletParameter>();
+      for (Element element : paramList) {
+        parameters.add(new AppletParameter(element.getAttributeValue(NAME_ATTR), element.getAttributeValue(VALUE_ATTR)));
+      }
+      myAppletParameters = parameters.toArray(new AppletParameter[parameters.size()]);
+    }
   }
 
   @Override
@@ -208,7 +214,6 @@ public class AppletConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
 
   @Override
   public void writeExternal(final Element parentNode) throws WriteExternalException {
-    writeModule(parentNode);
     mySerializer.writeExternal(this, parentNode);
     if (myAppletParameters != null) {
       for (AppletParameter myAppletParameter : myAppletParameters) {
@@ -227,6 +232,7 @@ public class AppletConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
   }
 
   @Override
+  @Transient
   public PsiClass getMainClass() {
     return getConfigurationModule().findClass(MAIN_CLASS_NAME);
   }

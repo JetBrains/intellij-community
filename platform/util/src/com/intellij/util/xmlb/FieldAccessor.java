@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
 
 class FieldAccessor implements Accessor {
@@ -79,6 +80,11 @@ class FieldAccessor implements Accessor {
   @Override
   public Type getGenericType() {
     return myField.getGenericType();
+  }
+
+  @Override
+  public boolean isFinal() {
+    return Modifier.isFinal(myField.getModifiers());
   }
 
   @NonNls

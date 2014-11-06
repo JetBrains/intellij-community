@@ -16,6 +16,7 @@
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.xmlb.annotations.Tag;
@@ -25,6 +26,7 @@ import org.jdom.Text;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 
 class TagBinding extends BasePrimitiveBinding {
@@ -33,7 +35,7 @@ class TagBinding extends BasePrimitiveBinding {
   public TagBinding(@NotNull Accessor accessor, @NotNull Tag tagAnnotation) {
     super(accessor, tagAnnotation.value(), null);
 
-    myTextIfEmpty = tagAnnotation.textIfEmpty();
+    myTextIfEmpty = StringUtil.nullize(tagAnnotation.textIfEmpty());
   }
 
   @Nullable
@@ -57,28 +59,35 @@ class TagBinding extends BasePrimitiveBinding {
   @Nullable
   public Object deserialize(Object o, @NotNull Object... nodes) {
     assert nodes.length > 0;
-    Object[] children;
+    List<? extends Content> children;
+    boolean isBeanBinding = myBinding instanceof BeanBinding;
     if (nodes.length == 1) {
-      children = JDOMUtil.getContent((Element)nodes[0]);
+      Element node = (Element)nodes[0];
+      children = isBeanBinding ? node.getChildren() : node.getContent();
     }
     else {
       String name = ((Element)nodes[0]).getName();
-      List<Content> childrenList = new SmartList<Content>();
+      children = new SmartList<Content>();
       for (Object node : nodes) {
-        assert ((Element)node).getName().equals(name);
-        childrenList.addAll(((Element)node).getContent());
+        Element element = (Element)node;
+        assert element.getName().equals(name);
+        //noinspection unchecked
+        children.addAll(((List)(isBeanBinding ? element.getChildren() : element.getContent())));
       }
-      children = ArrayUtil.toObjectArray(childrenList);
-    }
-
-    if (children.length == 0) {
-      children = new Object[] {new Text(myTextIfEmpty)};
     }
 
     assert myBinding != null;
-    Object v = myBinding.deserialize(myAccessor.read(o), children);
-    Object value = XmlSerializerImpl.convert(v, myAccessor.getValueClass());
-    myAccessor.write(o, value);
+    if (isBeanBinding && myAccessor.isFinal()) {
+      ((BeanBinding)myBinding).deserializeInto(o, (Element)children.get(0), null);
+    }
+    else {
+      if (children.isEmpty() && myTextIfEmpty != null) {
+        children = Collections.<Content>singletonList(new Text(myTextIfEmpty));
+      }
+
+      Object v = myBinding.deserialize(myAccessor.read(o), ArrayUtil.toObjectArray(children));
+      myAccessor.write(o, XmlSerializerImpl.convert(v, myAccessor.getValueClass()));
+    }
     return o;
   }
 

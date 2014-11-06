@@ -26,6 +26,7 @@ import java.lang.annotation.Annotation;
 import java.lang.ref.SoftReference;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -72,7 +73,18 @@ class XmlSerializerImpl {
   }
 
   static Binding getTypeBinding(@NotNull Type type, @Nullable Accessor accessor) {
-    return _getClassBinding(type instanceof Class ? (Class<?>)type : (Class<?>)((ParameterizedType)type).getRawType(), type, accessor);
+    Class<?> aClass;
+    if (type instanceof Class) {
+      aClass = (Class<?>)type;
+    }
+    else if (type instanceof TypeVariable) {
+      Type bound = ((TypeVariable)type).getBounds()[0];
+      aClass = bound instanceof Class ? (Class)bound : (Class<?>)((ParameterizedType)bound).getRawType();
+    }
+    else {
+      aClass = (Class<?>)((ParameterizedType)type).getRawType();
+    }
+    return _getClassBinding(aClass, type, accessor);
   }
 
   private static synchronized Binding _getClassBinding(@NotNull Class<?> aClass, @NotNull Type originalType, @Nullable Accessor accessor) {
