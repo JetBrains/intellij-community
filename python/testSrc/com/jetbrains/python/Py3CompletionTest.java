@@ -110,4 +110,9 @@ public class Py3CompletionTest extends PyTestCase {
   public void testImportQualifiedNamespacePackage() {
     doMultiFileTest();
   }
+
+  // PY-6477
+  public void testFromQualifiedNamespacePackageImport() {
+    doMultiFileTest();
+  }
 }
