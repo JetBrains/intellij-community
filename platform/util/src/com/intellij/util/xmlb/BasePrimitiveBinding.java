@@ -16,6 +16,7 @@
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,7 +35,7 @@ abstract class BasePrimitiveBinding implements Binding {
     }
     else {
       //noinspection unchecked
-      myConverter = XmlSerializerImpl.newInstance(converterClass);
+      myConverter = ReflectionUtil.newInstance(converterClass);
     }
   }
 
