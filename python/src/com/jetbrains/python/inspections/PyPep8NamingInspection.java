@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,47 +20,49 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
-import com.intellij.util.containers.hash.HashMap;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.inspections.quickfix.PyRenameElementQuickFix;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
-import com.jetbrains.python.testing.pytest.PyTestUtil;
+import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Map;
 import java.util.regex.Pattern;
 
 /**
- *
  * User : ktisha
  */
 public class PyPep8NamingInspection extends PyInspection {
+  private static final Pattern LOWERCASE_REGEX = Pattern.compile("[_\\p{javaLowerCase}][_\\p{javaLowerCase}0-9]*");
+  private static final Pattern UPPERCASE_REGEX = Pattern.compile("[_\\p{javaUpperCase}][_\\p{javaUpperCase}0-9]*");
+  private static final Pattern MIXEDCASE_REGEX = Pattern.compile("_?[\\p{javaUpperCase}][\\p{javaLowerCase}\\p{javaUpperCase}0-9]*");
+
   public boolean ignoreOverriddenFunctions = true;
-  public boolean ignoreTestFunctions = false;
-  private static Pattern LOWERCASE_REGEX = Pattern.compile("[_\\p{javaLowerCase}][_\\p{javaLowerCase}0-9]*");
-  private static Pattern UPPERCASE_REGEX = Pattern.compile("[_\\p{javaUpperCase}][_\\p{javaUpperCase}0-9]*");
-  private static Pattern MIXEDCASE_REGEX = Pattern.compile("_?[\\p{javaUpperCase}][\\p{javaLowerCase}\\p{javaUpperCase}0-9]*");
+  public boolean ignoreDescendantsOfStandardClasses = false;
 
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
                                         boolean isOnTheFly,
                                         @NotNull LocalInspectionToolSession session) {
-    if (ApplicationManager.getApplication().isUnitTestMode())
-      ignoreTestFunctions = true;
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      ignoreDescendantsOfStandardClasses = true;
+    }
     return new Visitor(holder, session);
   }
 
   public class Visitor extends PyInspectionVisitor {
-    private final Map<PyFunction, Boolean> myHasSupers = new HashMap<PyFunction, Boolean>();
-
     public Visitor(@NotNull final ProblemsHolder holder, LocalInspectionToolSession session) {
       super(holder, session);
     }
@@ -95,20 +97,40 @@ public class PyPep8NamingInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyFunction(PyFunction node) {
-      final PyClass containingClass = node.getContainingClass();
-      if (hasSupers(node) && ignoreOverriddenFunctions) return;
-      if(containingClass != null && PyTestUtil.isPyTestClass(containingClass) && ignoreTestFunctions) return;
-      final String name = node.getName();
+    public void visitPyFunction(PyFunction function) {
+      final PyClass containingClass = function.getContainingClass();
+      if (ignoreOverriddenFunctions && isOverriddenMethod(function)) return;
+      final String name = function.getName();
       if (name == null) return;
-      if (containingClass != null && name.startsWith("__") && name.endsWith("__")) {
+      if (containingClass != null && PyUtil.isSpecialName(name)) {
+        return;
+      }
+      if (containingClass != null && ignoreDescendantsOfStandardClasses && isStandardClassDescendant(containingClass)) {
         return;
       }
       if (!LOWERCASE_REGEX.matcher(name).matches()) {
-        final ASTNode nameNode = node.getNameNode();
+        final ASTNode nameNode = function.getNameNode();
         if (nameNode != null)
           registerProblem(nameNode.getPsi(), "Function name should be lowercase", new PyRenameElementQuickFix());
       }
+    }
+
+    private boolean isOverriddenMethod(@NotNull PyFunction function) {
+      return PySuperMethodsSearch.search(function).findFirst() != null;
+    }
+
+    private boolean isStandardClassDescendant(@NotNull final PyClass cls) {
+      return ContainerUtil.exists(cls.getAncestorClasses(myTypeEvalContext), new Condition<PyClass>() {
+        @Override
+        public boolean value(PyClass ancestor) {
+          final PsiFile ancestorsModule = ancestor.getContainingFile();
+          final Sdk sdk = PyBuiltinCache.findSdkForFile(ancestorsModule);
+          if (PythonSdkType.isStdLib(ancestorsModule.getVirtualFile(), sdk) && !PyUtil.isObjectClass(ancestor)) {
+            return true;
+          }
+          return false;
+        }
+      });
     }
 
     @Override
@@ -147,16 +169,6 @@ public class PyPep8NamingInspection extends PyInspection {
         registerProblem(node.getAsNameElement(), "CamelCase variable imported as constant", new PyRenameElementQuickFix());
       }
     }
-
-    private boolean hasSupers(@NotNull PyFunction function) {
-      final Boolean cached = myHasSupers.get(function);
-      if (cached != null) {
-        return cached;
-      }
-      final boolean result = PySuperMethodsSearch.search(function).findFirst() != null;
-      myHasSupers.put(function, result);
-      return result;
-    }
   }
 
   @Nullable
@@ -164,7 +176,7 @@ public class PyPep8NamingInspection extends PyInspection {
   public JComponent createOptionsPanel() {
     MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
     panel.addCheckbox("Ignore overridden functions", "ignoreOverriddenFunctions");
-    panel.addCheckbox("Ignore test functions", "ignoreTestFunctions");
+    panel.addCheckbox("Ignore descendants of standard classes", "ignoreDescendantsOfStandardClasses");
     return panel;
   }
 }

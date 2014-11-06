@@ -16,14 +16,14 @@ from pydevd_constants import IS_PY24, IS_PY3K, IS_JYTHON
 
 
 if IS_PY24:
-    from third_party.uuid_old import uuid4
+    from _pydev_imps._pydev_uuid_old import uuid4
 else:
     from uuid import uuid4
 
 if IS_PY3K:
     import pkgutil
 else:
-    import pkgutil_old as pkgutil
+    from _pydev_imps import _pydev_pkgutil_old as pkgutil
 
 import errno
 try:

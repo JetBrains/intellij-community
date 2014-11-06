@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -135,7 +135,40 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
         }
       }
       else if ("__builtin__.tuple.__add__".equals(qname) && callSite instanceof PyBinaryExpression) {
-        return getTupleConcatenationResultType(((PyBinaryExpression)callSite), context);
+        return getTupleConcatenationResultType((PyBinaryExpression)callSite, context);
+      }
+      else if ("__builtin__.tuple.__mul__".equals(qname) && callSite instanceof PyBinaryExpression) {
+        return getTupleMultiplicationResultType((PyBinaryExpression)callSite, context);
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static PyType getTupleMultiplicationResultType(@NotNull PyBinaryExpression multiplication, @NotNull TypeEvalContext context) {
+    final PyTupleType leftTupleType = as(context.getType(multiplication.getLeftExpression()), PyTupleType.class);
+    if (leftTupleType == null) {
+      return null;
+    }
+    PyExpression rightExpression = multiplication.getRightExpression();
+    if (rightExpression instanceof PyReferenceExpression) {
+      final PsiElement target = ((PyReferenceExpression)rightExpression).getReference().resolve();
+      if (target instanceof PyTargetExpression) {
+        rightExpression = ((PyTargetExpression)target).findAssignedValue();
+      }
+    }
+    if (rightExpression instanceof PyNumericLiteralExpression && ((PyNumericLiteralExpression)rightExpression).isIntegerLiteral()) {
+      final int multiplier = ((PyNumericLiteralExpression)rightExpression).getBigIntegerValue().intValue();
+      final int originalSize = leftTupleType.getElementCount();
+      // Heuristic
+      if (originalSize * multiplier <= 20) {
+        final PyType[] elementTypes = new PyType[leftTupleType.getElementCount() * multiplier];
+        for (int i = 0; i < multiplier; i++) {
+          for (int j = 0; j < originalSize; j++) {
+            elementTypes[i * originalSize + j] = leftTupleType.getElementType(j);
+          }
+        }
+        return PyTupleType.create(multiplication, elementTypes);
       }
     }
     return null;

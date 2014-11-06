@@ -178,8 +178,11 @@ def GenerateImportsTipForModule(obj_to_complete, dirComps=None, getattr=getattr,
         args = ''
 
         try:
-            obj = getattr(obj_to_complete, d)
-        except: #just ignore and get it without aditional info
+            try:
+                obj = getattr(obj_to_complete.__class__, d)
+            except:
+                obj = getattr(obj_to_complete, d)
+        except: #just ignore and get it without additional info
             ret.append((d, '', args, TYPE_BUILTIN))
         else:
 

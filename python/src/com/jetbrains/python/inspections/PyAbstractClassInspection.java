@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,20 +59,27 @@ public class PyAbstractClassInspection extends PyInspection {
 
     @Override
     public void visitPyClass(PyClass node) {
-      Set<PyFunction> toBeImplemented = new HashSet<PyFunction>();
+      final Set<PyFunction> toBeImplemented = new HashSet<PyFunction>();
       final Collection<PyFunction> functions = PyOverrideImplementUtil.getAllSuperFunctions(node);
       for (PyFunction method : functions) {
-        final String methodName = method.getName();
-        if (methodName != null && PyUtil.isDecoratedAsAbstract(method) &&
-            node.findMethodByName(methodName, false) == null && node.findClassAttribute(methodName, false) == null) {
+        if (isAbstractMethodForClass(method, node)) {
           toBeImplemented.add(method);
         }
       }
       final ASTNode nameNode = node.getNameNode();
       if (!toBeImplemented.isEmpty() && nameNode != null) {
-        registerProblem(nameNode.getPsi(), PyBundle.message("INSP.NAME.abstract.class.$0.must.implement", node.getName()),
+        registerProblem(nameNode.getPsi(),
+                        PyBundle.message("INSP.NAME.abstract.class.$0.must.implement", node.getName()),
                         new PyImplementMethodsQuickFix(node, toBeImplemented));
       }
+    }
+
+    private static boolean isAbstractMethodForClass(@NotNull PyFunction method, @NotNull PyClass cls) {
+      final String methodName = method.getName();
+      if (methodName == null || cls.findMethodByName(methodName, false) != null || cls.findClassAttribute(methodName, false) != null) {
+        return false;
+      }
+      return PyUtil.isDecoratedAsAbstract(method) || PyOverrideImplementUtil.raisesNotImplementedError(method);
     }
   }
 }

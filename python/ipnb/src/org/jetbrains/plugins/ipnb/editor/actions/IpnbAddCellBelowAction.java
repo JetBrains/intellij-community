@@ -21,7 +21,7 @@ public class IpnbAddCellBelowAction extends AnAction {
     }
   }
 
-  public void addCell(@NotNull final IpnbFilePanel ipnbFilePanel) {
+  public static void addCell(@NotNull final IpnbFilePanel ipnbFilePanel) {
     ipnbFilePanel.createAndAddCell(true);
   }
 }

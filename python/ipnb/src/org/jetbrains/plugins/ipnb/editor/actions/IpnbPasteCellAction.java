@@ -25,7 +25,7 @@ public class IpnbPasteCellAction extends AnAction {
     }
   }
 
-  public void pasteCell(@NotNull final IpnbFilePanel ipnbFilePanel) {
+  public static void pasteCell(@NotNull final IpnbFilePanel ipnbFilePanel) {
     ipnbFilePanel.pasteCell();
   }
 }
