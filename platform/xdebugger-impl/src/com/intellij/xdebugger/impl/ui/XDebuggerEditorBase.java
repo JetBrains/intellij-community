@@ -142,7 +142,7 @@ public abstract class XDebuggerEditorBase {
 
   public abstract JComponent getComponent();
 
-  protected abstract void setEditorText(XExpression text);
+  protected abstract void doSetText(XExpression text);
 
   public void setExpression(@Nullable XExpression text) {
     if (text == null) {
@@ -174,7 +174,7 @@ public abstract class XDebuggerEditorBase {
       myChooseFactory.setDisabledIcon(IconLoader.getDisabledIcon(icon));
     }
 
-    setEditorText(text);
+    doSetText(text);
   }
 
   @Nullable
