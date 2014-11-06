@@ -186,7 +186,7 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
 
   public static class FontFilter implements SerializationFilter {
     @Override
-    public boolean accepts(Accessor accessor, Object bean) {
+    public boolean accepts(@NotNull Accessor accessor, Object bean) {
       UISettings settings = (UISettings)bean;
       return !hasDefaultFontSetting(settings);
     }

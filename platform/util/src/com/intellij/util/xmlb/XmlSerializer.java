@@ -31,7 +31,7 @@ import java.util.Set;
 public class XmlSerializer {
   private static final SerializationFilter TRUE_FILTER = new SerializationFilter() {
     @Override
-    public boolean accepts(Accessor accessor, Object bean) {
+    public boolean accepts(@NotNull Accessor accessor, Object bean) {
       return true;
     }
   };
