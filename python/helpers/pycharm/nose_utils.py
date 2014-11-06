@@ -160,14 +160,12 @@ class TeamcityPlugin(ErrorClassPlugin, TextTestResult, TeamcityTestResult):
   def getSuiteName(self, test):
     test_name_full = str(test)
 
-    if self.is_gen(test):
-      ind_1 = test_name_full.rfind('(')
-      if ind_1 != -1:
-        ind = test_name_full.rfind('.')
-        if ind != -1:
-          return test_name_full[:test_name_full.rfind(".")]
-
     ind_1 = test_name_full.rfind('(')
+    if self.is_gen(test) and ind_1 != -1:
+      ind = test_name_full[:ind_1].rfind('.')
+      if ind != -1:
+        return test_name_full[:ind]
+
     if ind_1 != -1:
       return test_name_full[ind_1 + 1: -1]
     ind = test_name_full.rfind('.')
