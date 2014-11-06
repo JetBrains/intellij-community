@@ -22,10 +22,7 @@ import com.intellij.formatting.FormattingModel;
 import com.intellij.formatting.FormattingModelBuilder;
 import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.CaretModel;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
@@ -41,8 +38,8 @@ import org.jetbrains.annotations.NotNull;
 public class SmartIndentingBackspaceHandler extends AbstractIndentingBackspaceHandler {
   private static final Logger LOG = Logger.getInstance(SmartIndentingBackspaceHandler.class);
 
-  private boolean caretWasAtLineStart;
-  private String precalculatedSpacing;
+  private String myReplacement;
+  private int myStartOffset;
 
   public SmartIndentingBackspaceHandler() {
     super(CodeInsightSettings.AUTOINDENT);
@@ -50,94 +47,58 @@ public class SmartIndentingBackspaceHandler extends AbstractIndentingBackspaceHa
 
   @Override
   protected void doBeforeCharDeleted(char c, PsiFile file, Editor editor) {
+    Project project = file.getProject();
     Document document = editor.getDocument();
-    CharSequence charSequence = document.getCharsSequence();
+    CharSequence charSequence = document.getImmutableCharSequence();
     CaretModel caretModel = editor.getCaretModel();
     int caretOffset = caretModel.getOffset();
     LogicalPosition pos = caretModel.getLogicalPosition();
-    caretWasAtLineStart = pos.column == 0;
-    precalculatedSpacing = null;
-    if (caretWasAtLineStart && pos.line > 0 && caretOffset < charSequence.length()
-        && !StringUtil.isWhiteSpace(charSequence.charAt(caretOffset))) {
-      int prevLineEnd = document.getLineEndOffset(pos.line - 1);
-      if (prevLineEnd > 0 && !StringUtil.isWhiteSpace(charSequence.charAt(prevLineEnd - 1))) {
-        PsiDocumentManager.getInstance(file.getProject()).commitDocument(document);
-        precalculatedSpacing = getSpacing(file, caretOffset);
+    int lineStartOffset = document.getLineStartOffset(pos.line);
+    int beforeWhitespaceOffset = CharArrayUtil.shiftBackward(charSequence, caretOffset - 1, " \t") + 1;
+    if (beforeWhitespaceOffset != lineStartOffset) {
+      myReplacement = null;
+      return;
+    }
+    PsiDocumentManager.getInstance(project).commitDocument(document);
+    CodeStyleFacade codeStyleFacade = CodeStyleFacade.getInstance(project);
+    myReplacement = codeStyleFacade.getLineIndent(document, lineStartOffset);
+    if (myReplacement == null) {
+      return;
+    }
+    int tabSize = getTabSize(codeStyleFacade, document);
+    int targetColumn = getWidth(myReplacement, tabSize);
+    int endOffset = CharArrayUtil.shiftForward(charSequence, caretOffset, " \t");
+    LogicalPosition logicalPosition = caretOffset < endOffset ? editor.offsetToLogicalPosition(endOffset) : pos;
+    int currentColumn = logicalPosition.column;
+    if (currentColumn > targetColumn) {
+      myStartOffset = lineStartOffset;
+    }
+    else if (logicalPosition.line == 0) {
+      myStartOffset = 0;
+      myReplacement = "";
+    }
+    else {
+      int prevLineEndOffset = document.getLineEndOffset(logicalPosition.line - 1);
+      myStartOffset = CharArrayUtil.shiftBackward(charSequence, prevLineEndOffset - 1, " \t") + 1;
+      if (myStartOffset != document.getLineStartOffset(logicalPosition.line - 1)) {
+        myReplacement = getSpacing(file, endOffset);
       }
     }
   }
 
   @Override
   protected boolean doCharDeleted(char c, PsiFile file, Editor editor) {
-    Project project = file.getProject();
+    if (myReplacement == null) {
+      return false;
+    }
+
     Document document = editor.getDocument();
     CaretModel caretModel = editor.getCaretModel();
+    int endOffset = CharArrayUtil.shiftForward(document.getImmutableCharSequence(), caretModel.getOffset(), " \t");
 
-    int caretOffset = caretModel.getOffset();
-    int offset = CharArrayUtil.shiftForward(document.getCharsSequence(), caretOffset, " \t");
-    int beforeWhitespaceOffset = CharArrayUtil.shiftBackward(document.getCharsSequence(), offset - 1, " \t") + 1;
-    LogicalPosition logicalPosition = caretOffset < offset ? editor.offsetToLogicalPosition(offset) : caretModel.getLogicalPosition();
-    int lineStartOffset = document.getLineStartOffset(logicalPosition.line);
-    if (lineStartOffset < beforeWhitespaceOffset) {
-      if (caretWasAtLineStart && beforeWhitespaceOffset <= offset) {
-        String spacing;
-        if (precalculatedSpacing == null) {
-          PsiDocumentManager.getInstance(project).commitDocument(document);
-          spacing = getSpacing(file, offset);
-        }
-        else {
-          spacing = precalculatedSpacing;
-        }
-        if (beforeWhitespaceOffset < offset || !spacing.isEmpty()) {
-          document.replaceString(beforeWhitespaceOffset, offset, spacing);
-          caretModel.moveToOffset(beforeWhitespaceOffset + spacing.length());
-          return true;
-        }
-      }
-      return false;
-    }
+    document.replaceString(myStartOffset, endOffset, myReplacement);
+    caretModel.moveToOffset(myStartOffset + myReplacement.length());
 
-    PsiDocumentManager.getInstance(project).commitDocument(document);
-    CodeStyleFacade codeStyleFacade = CodeStyleFacade.getInstance(project);
-    String indent = codeStyleFacade.getLineIndent(document, lineStartOffset);
-    if (indent == null) {
-      return false;
-    }
-
-    int tabSize = getTabSize(codeStyleFacade, document);
-    int targetColumn = getWidth(indent, tabSize);
-
-    if (logicalPosition.column == targetColumn) {
-      if (caretOffset < offset) {
-        caretModel.moveToLogicalPosition(logicalPosition);
-        return true;
-      }
-      return false;
-    }
-
-    if (caretWasAtLineStart || logicalPosition.column > targetColumn) {
-      document.replaceString(lineStartOffset, offset, indent);
-      caretModel.moveToLogicalPosition(new LogicalPosition(logicalPosition.line, targetColumn));
-      return true;
-    }
-
-    if (logicalPosition.line == 0) {
-      return false;
-    }
-
-    int prevLineStartOffset = document.getLineStartOffset(logicalPosition.line - 1);
-    int prevLineEndOffset = document.getLineEndOffset(logicalPosition.line - 1);
-    int targetOffset = CharArrayUtil.shiftBackward(document.getCharsSequence(), prevLineEndOffset - 1, " \t") + 1;
-
-    if (prevLineStartOffset < targetOffset) {
-      String spacing = getSpacing(file, offset);
-      document.replaceString(targetOffset, offset, spacing);
-      caretModel.moveToOffset(targetOffset + spacing.length());
-    }
-    else {
-      document.replaceString(prevLineStartOffset, offset, indent);
-      caretModel.moveToLogicalPosition(new LogicalPosition(logicalPosition.line - 1, targetColumn));
-    }
     return true;
   }
 
