@@ -56,8 +56,8 @@ public class AsyncArrayTableModel extends AbstractTableModel {
           @Override
           public Object[][] call() throws Exception {
             return value.getFrameAccessor()
-              .getArrayItems(slicedValue, key.first, key.second, Math.min(CHUNK_COL_SIZE, getRowCount() - key.first),
-                             Math.min(CHUNK_ROW_SIZE, getColumnCount() - key.second),
+              .getArrayItems(slicedValue, key.first, key.second, Math.min(CHUNK_ROW_SIZE, getRowCount() - key.first),
+                             Math.min(CHUNK_COL_SIZE, getColumnCount() - key.second),
                              myProvider.getFormat());
           }
         });
@@ -99,10 +99,11 @@ public class AsyncArrayTableModel extends AbstractTableModel {
 
         if (r < chunk.get().length) {
           if (c < chunk.get()[r].length) {
-            return myProvider.correctStringValue((String)chunk.get()[r][c]);
+            return myProvider.correctStringValue(chunk.get()[r][c]);
           }
         }
-      } else {
+      }
+      else {
         chunk.addListener(new Runnable() {
           @Override
           public void run() {

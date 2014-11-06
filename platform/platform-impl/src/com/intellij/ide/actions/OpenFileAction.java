@@ -49,7 +49,7 @@ import java.util.List;
 
 public class OpenFileAction extends AnAction implements DumbAware {
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getProject();
     final boolean showFiles = project != null || PlatformProjectOpenProcessor.getInstanceIfItExists() != null;
     final FileChooserDescriptor descriptor = showFiles ? new ProjectOrFileChooserDescriptor() : new ProjectOnlyFileChooserDescriptor();
@@ -141,7 +141,7 @@ public class OpenFileAction extends AnAction implements DumbAware {
     }
   }
 
-  // vanilla OpenProjectFileChooserDescriptor only accepts project files; this on is overridden to accept any files
+  // vanilla OpenProjectFileChooserDescriptor only accepts project files; this one is overridden to accept any files
   private static class ProjectOrFileChooserDescriptor extends OpenProjectFileChooserDescriptor {
     private final FileChooserDescriptor myStandardDescriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor();
 
@@ -157,7 +157,7 @@ public class OpenFileAction extends AnAction implements DumbAware {
 
     @Override
     public boolean isFileSelectable(VirtualFile file) {
-      return file.isDirectory() ? super.isFileSelectable(file) :  myStandardDescriptor.isFileSelectable(file);
+      return file.isDirectory() ? super.isFileSelectable(file) : myStandardDescriptor.isFileSelectable(file);
     }
 
     @Override

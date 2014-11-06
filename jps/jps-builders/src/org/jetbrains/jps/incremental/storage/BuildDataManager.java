@@ -246,20 +246,24 @@ public class BuildDataManager implements StorageOwner {
     finally {
       try {
         closeSourceToOutputStorages();
-        myOutputToTargetRegistry.close();
       }
       finally {
         try {
-          closeStorage(mySrcToFormMap);
+          myOutputToTargetRegistry.close();
         }
         finally {
-          final Mappings mappings = myMappings;
-          if (mappings != null) {
-            try {
-              mappings.close();
-            }
-            catch (BuildDataCorruptedException e) {
-              throw e.getCause();
+          try {
+            closeStorage(mySrcToFormMap);
+          }
+          finally {
+            final Mappings mappings = myMappings;
+            if (mappings != null) {
+              try {
+                mappings.close();
+              }
+              catch (BuildDataCorruptedException e) {
+                throw e.getCause();
+              }
             }
           }
         }
