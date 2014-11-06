@@ -167,11 +167,7 @@ public class NumpyArrayTable {
   }
 
   private void initSliceFieldActions() {
-    if (myComponent.getSliceTextField().getEditor() == null) {
-      LOG.error("Null editor in slice field.");
-      return;
-    }
-    myComponent.getSliceTextField().getEditor().getContentComponent().addKeyListener(new KeyAdapter() {
+    myComponent.getSliceTextField().addKeyListener(new KeyAdapter() {
       @Override
       public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_ENTER) {
@@ -182,11 +178,7 @@ public class NumpyArrayTable {
   }
 
   private void initFormatFieldActions() {
-    if (myComponent.getFormatTextField().getEditor() == null) {
-      LOG.error("Null editor in format field.");
-      return;
-    }
-    myComponent.getFormatTextField().getEditor().getContentComponent().addKeyListener(new KeyAdapter() {
+    myComponent.getFormatTextField().addKeyListener(new KeyAdapter() {
       @Override
       public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_ENTER) {
