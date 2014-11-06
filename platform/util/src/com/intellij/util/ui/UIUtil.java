@@ -680,11 +680,11 @@ public class UIUtil {
   }
 
   public static Color getLabelBackground() {
-    return UIManager.getColor("Label.background");
+    return getColor("Label.background");
   }
 
   public static Color getLabelForeground() {
-    return UIManager.getColor("Label.foreground");
+    return getColor("Label.foreground");
   }
 
   public static Color getLabelDisabledForeground() {
@@ -734,11 +734,11 @@ public class UIUtil {
   }
 
   public static Color getTableHeaderBackground() {
-    return UIManager.getColor("TableHeader.background");
+    return getColor("TableHeader.background");
   }
 
   public static Color getTreeTextForeground() {
-    return UIManager.getColor("Tree.textForeground");
+    return getColor("Tree.textForeground");
   }
 
   public static Color getTreeSelectionBackground() {
@@ -748,23 +748,22 @@ public class UIUtil {
       color = UIManager.getColor("nimbusSelectionBackground");
       if (color != null) return color;
     }
-    return UIManager.getColor("Tree.selectionBackground");
+    return getColor("Tree.selectionBackground");
   }
 
   public static Color getTreeTextBackground() {
-    return UIManager.getColor("Tree.textBackground");
+    return getColor("Tree.textBackground");
   }
 
   public static Color getListSelectionForeground() {
-    final Color color = UIManager.getColor("List.selectionForeground");
-    if (color == null) {
+    if (isUnderNimbusLookAndFeel()) {
       return UIManager.getColor("List[Selected].textForeground");  // Nimbus
     }
-    return color;
+    return getColor("List.selectionForeground");
   }
 
   public static Color getFieldForegroundColor() {
-    return UIManager.getColor("field.foreground");
+    return getColor("field.foreground");
   }
 
   public static Color getTableSelectionBackground() {
@@ -774,11 +773,23 @@ public class UIUtil {
       color = UIManager.getColor("nimbusSelectionBackground");
       if (color != null) return color;
     }
-    return UIManager.getColor("Table.selectionBackground");
+    return getColor("Table.selectionBackground");
   }
 
   public static Color getActiveTextColor() {
-    return UIManager.getColor("textActiveText");
+    return getColor("textActiveText");
+  }
+
+  @NotNull
+  private static Color getColor(final String property) {
+    return new JBColor(new NotNullProducer<Color>() {
+      @NotNull
+      @Override
+      public Color produce() {
+        final Color color = UIManager.getColor(property);
+        return color == null ? Gray.TRANSPARENT : color;
+      }
+    });
   }
 
   public static Color getInactiveTextColor() {
@@ -798,7 +809,7 @@ public class UIUtil {
   }
 
   public static Color getInactiveTextFieldBackgroundColor() {
-    return UIManager.getColor("TextField.inactiveBackground");
+    return getColor("TextField.inactiveBackground");
   }
 
   public static Font getTreeFont() {
@@ -810,7 +821,7 @@ public class UIUtil {
   }
 
   public static Color getTreeSelectionForeground() {
-    return UIManager.getColor("Tree.selectionForeground");
+    return getColor("Tree.selectionForeground");
   }
 
   /**
@@ -829,7 +840,7 @@ public class UIUtil {
   }
 
   public static Color getTreeSelectionBorderColor() {
-    return UIManager.getColor("Tree.selectionBorderColor");
+    return getColor("Tree.selectionBorderColor");
   }
 
   public static int getTreeRightChildIndent() {
@@ -841,23 +852,23 @@ public class UIUtil {
   }
 
   public static Color getToolTipBackground() {
-    return UIManager.getColor("ToolTip.background");
+    return getColor("ToolTip.background");
   }
 
   public static Color getToolTipForeground() {
-    return UIManager.getColor("ToolTip.foreground");
+    return getColor("ToolTip.foreground");
   }
 
   public static Color getComboBoxDisabledForeground() {
-    return UIManager.getColor("ComboBox.disabledForeground");
+    return getColor("ComboBox.disabledForeground");
   }
 
   public static Color getComboBoxDisabledBackground() {
-    return UIManager.getColor("ComboBox.disabledBackground");
+    return getColor("ComboBox.disabledBackground");
   }
 
   public static Color getButtonSelectColor() {
-    return UIManager.getColor("Button.select");
+    return getColor("Button.select");
   }
 
   public static Integer getPropertyMaxGutterIconWidth(final String propertyPrefix) {
@@ -865,7 +876,7 @@ public class UIUtil {
   }
 
   public static Color getMenuItemDisabledForeground() {
-    return UIManager.getColor("MenuItem.disabledForeground");
+    return getColor("MenuItem.disabledForeground");
   }
 
   public static Object getMenuItemDisabledForegroundObject() {
@@ -882,7 +893,7 @@ public class UIUtil {
 
   public static Color getTableBackground() {
     // Under GTK+ L&F "Table.background" often has main panel color, which looks ugly
-    return isUnderGTKLookAndFeel() ? getTreeTextBackground() : UIManager.getColor("Table.background");
+    return isUnderGTKLookAndFeel() ? getTreeTextBackground() : getColor("Table.background");
   }
 
   public static Color getTableBackground(final boolean isSelected) {
@@ -893,11 +904,11 @@ public class UIUtil {
     if (isUnderNimbusLookAndFeel()) {
       return UIManager.getColor("Table[Enabled+Selected].textForeground");
     }
-    return UIManager.getColor("Table.selectionForeground");
+    return getColor("Table.selectionForeground");
   }
 
   public static Color getTableForeground() {
-    return UIManager.getColor("Table.foreground");
+    return getColor("Table.foreground");
   }
 
   public static Color getTableForeground(final boolean isSelected) {
@@ -905,7 +916,7 @@ public class UIUtil {
   }
 
   public static Color getTableGridColor() {
-    return UIManager.getColor("Table.gridColor");
+    return getColor("Table.gridColor");
   }
 
   public static Color getListBackground() {
@@ -915,7 +926,7 @@ public class UIUtil {
       return new Color(color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha());
     }
     // Under GTK+ L&F "Table.background" often has main panel color, which looks ugly
-    return isUnderGTKLookAndFeel() ? getTreeTextBackground() : UIManager.getColor("List.background");
+    return isUnderGTKLookAndFeel() ? getTreeTextBackground() : getColor("List.background");
   }
 
   public static Color getListBackground(boolean isSelected) {
@@ -923,7 +934,7 @@ public class UIUtil {
   }
 
   public static Color getListForeground() {
-    return UIManager.getColor("List.foreground");
+    return getColor("List.foreground");
   }
 
   public static Color getListForeground(boolean isSelected) {
@@ -931,26 +942,26 @@ public class UIUtil {
   }
 
   public static Color getPanelBackground() {
-    return UIManager.getColor("Panel.background");
+    return getColor("Panel.background");
   }
 
   public static Color getTreeBackground() {
-    return UIManager.getColor("Tree.background");
+    return getColor("Tree.background");
   }
 
   public static Color getTreeForeground() {
-    return UIManager.getColor("Tree.foreground");
+    return getColor("Tree.foreground");
   }
 
   public static Color getTableFocusCellBackground() {
-    return UIManager.getColor(TABLE_FOCUS_CELL_BACKGROUND_PROPERTY);
+    return getColor(TABLE_FOCUS_CELL_BACKGROUND_PROPERTY);
   }
 
   public static Color getListSelectionBackground() {
     if (isUnderNimbusLookAndFeel()) {
       return UIManager.getColor("List[Selected].textBackground");  // Nimbus
     }
-    return UIManager.getColor("List.selectionBackground");
+    return getColor("List.selectionBackground");
   }
 
   public static Color getListUnfocusedSelectionBackground() {
@@ -967,11 +978,11 @@ public class UIUtil {
   }
 
   public static Color getTextFieldForeground() {
-    return UIManager.getColor("TextField.foreground");
+    return getColor("TextField.foreground");
   }
 
   public static Color getTextFieldBackground() {
-    return isUnderGTKLookAndFeel() ? UIManager.getColor("EditorPane.background") : UIManager.getColor("TextField.background");
+    return isUnderGTKLookAndFeel() ? UIManager.getColor("EditorPane.background") : getColor("TextField.background");
   }
 
   public static Font getButtonFont() {
@@ -983,7 +994,7 @@ public class UIUtil {
   }
 
   public static Color getTabbedPaneBackground() {
-    return UIManager.getColor("TabbedPane.background");
+    return getColor("TabbedPane.background");
   }
 
   public static void setSliderIsFilled(final JSlider slider, final boolean value) {
@@ -991,11 +1002,11 @@ public class UIUtil {
   }
 
   public static Color getLabelTextForeground() {
-    return UIManager.getColor("Label.textForeground");
+    return getColor("Label.textForeground");
   }
 
   public static Color getControlColor() {
-    return UIManager.getColor("control");
+    return getColor("control");
   }
 
   public static Font getOptionPaneMessageFont() {
@@ -1007,19 +1018,19 @@ public class UIUtil {
   }
 
   public static Color getSeparatorForeground() {
-    return UIManager.getColor("Separator.foreground");
+    return getColor("Separator.foreground");
   }
 
   public static Color getSeparatorBackground() {
-    return UIManager.getColor("Separator.background");
+    return getColor("Separator.background");
   }
 
   public static Color getSeparatorShadow() {
-    return UIManager.getColor("Separator.shadow");
+    return getColor("Separator.shadow");
   }
 
   public static Color getSeparatorHighlight() {
-    return UIManager.getColor("Separator.highlight");
+    return getColor("Separator.highlight");
   }
 
   public static Color getSeparatorColorUnderNimbus() {
@@ -1054,7 +1065,7 @@ public class UIUtil {
   }
 
   public static Color getTableFocusCellForeground() {
-    return UIManager.getColor("Table.focusCellForeground");
+    return getColor("Table.focusCellForeground");
   }
 
   /**
@@ -1149,15 +1160,15 @@ public class UIUtil {
   }
 
   public static Color getWindowColor() {
-    return UIManager.getColor("window");
+    return getColor("window");
   }
 
   public static Color getTextAreaForeground() {
-    return UIManager.getColor("TextArea.foreground");
+    return getColor("TextArea.foreground");
   }
 
   public static Color getOptionPaneBackground() {
-    return UIManager.getColor("OptionPane.background");
+    return getColor("OptionPane.background");
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})

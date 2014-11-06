@@ -22,6 +22,7 @@ import org.jetbrains.plugins.ipnb.format.cells.output.IpnbOutputCell;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -284,6 +285,22 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider {
             getParent().dispatchEvent(e);
           }
         }
+      }
+      else if (e.getKeyCode() == KeyEvent.VK_DELETE) {
+        if (!mySelectedCell.isEditing())
+          deleteCell(mySelectedCell);
+      }
+      else if (e.getKeyCode() == KeyEvent.VK_X && e.getModifiers() == InputEvent.CTRL_MASK) {
+        if (!mySelectedCell.isEditing())
+          cutCell();
+      }
+      else if (e.getKeyCode() == KeyEvent.VK_C && e.getModifiers() == InputEvent.CTRL_MASK) {
+        if (!mySelectedCell.isEditing())
+          copyCell();
+      }
+      else if (e.getKeyCode() == KeyEvent.VK_V && e.getModifiers() == InputEvent.CTRL_MASK) {
+        if (!mySelectedCell.isEditing())
+          pasteCell();
       }
       else {
         getParent().dispatchEvent(e);

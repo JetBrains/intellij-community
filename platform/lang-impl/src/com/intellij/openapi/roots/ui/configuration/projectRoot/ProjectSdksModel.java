@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.openapi.actionSystem.AnAction;
@@ -36,14 +35,15 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Consumer;
 import com.intellij.util.EventDispatcher;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
 
 /**
- * User: anna
- * Date: 05-Jun-2006
+ * @author anna
+ * @since 05-Jun-2006
  */
 public class ProjectSdksModel implements SdkModel {
   private static final Logger LOG = Logger.getInstance("com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel");
@@ -116,7 +116,7 @@ public class ProjectSdksModel implements SdkModel {
     return myProjectSdks;
   }
 
-  public boolean isModified(){
+  public boolean isModified() {
     return myModified;
   }
 
@@ -201,7 +201,7 @@ public class ProjectSdksModel implements SdkModel {
       final SdkAdditionalData sdkAdditionalData = currItem.getSdkAdditionalData();
       if (sdkAdditionalData instanceof ValidatableSdkAdditionalData) {
         try {
-          ((ValidatableSdkAdditionalData) sdkAdditionalData).checkValid(this);
+          ((ValidatableSdkAdditionalData)sdkAdditionalData).checkValid(this);
         }
         catch (ConfigurationException e) {
           if (rootConfigurable != null) {
@@ -249,14 +249,12 @@ public class ProjectSdksModel implements SdkModel {
     final SdkType[] types = SdkType.getAllTypes();
     for (final SdkType type : types) {
       if (filter != null && !filter.value(type)) continue;
-      final AnAction addAction = new DumbAwareAction(type.getPresentableName(),
-                                              null,
-                                              type.getIconForAddAction()) {
-          @Override
-          public void actionPerformed(AnActionEvent e) {
-            doAdd(parent, type, updateTree);
-          }
-        };
+      final AnAction addAction = new DumbAwareAction(type.getPresentableName(), null, type.getIconForAddAction()) {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e) {
+          doAdd(parent, type, updateTree);
+        }
+      };
       group.add(addAction);
     }
   }
@@ -290,8 +288,8 @@ public class ProjectSdksModel implements SdkModel {
     if (!sdkType.setupSdkPaths(newJdk, this)) return;
 
     if (newJdk.getVersionString() == null) {
-       Messages.showMessageDialog(ProjectBundle.message("sdk.java.corrupt.error", home),
-                                  ProjectBundle.message("sdk.java.corrupt.title"), Messages.getErrorIcon());
+      String message = ProjectBundle.message("sdk.java.corrupt.error", home);
+      Messages.showMessageDialog(message, ProjectBundle.message("sdk.java.corrupt.title"), Messages.getErrorIcon());
     }
 
     doAdd(newJdk, callback);

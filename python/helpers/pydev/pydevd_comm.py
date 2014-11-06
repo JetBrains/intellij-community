@@ -968,8 +968,6 @@ class InternalGetVariable(InternalThreadCommand):
 #=======================================================================================================================
 from pydevd_vars import getVariable
 
-MAXIMUM_ARRAY_SIZE = 300
-
 class InternalGetArray(InternalThreadCommand):
     def __init__(self, seq, roffset, coffset, rows, cols, format, thread_id, frame_id, scope, attrs):
         self.sequence = seq
@@ -988,50 +986,9 @@ class InternalGetArray(InternalThreadCommand):
         try:
             var = getVariable(self.thread_id, self.frame_id, 'EXPRESSION', self.attrs)
 
-            rows = min(self.rows, MAXIMUM_ARRAY_SIZE)
-            cols = min(self.cols, MAXIMUM_ARRAY_SIZE)
-
-            if self.rows == 1 and self.cols == 1:
-                rows = 1
-                cols = 1
-            elif self.rows == 1 or self.cols == 1:
-                is_row = True if (self.rows == 1) else False
-                pure_1d = False if (len(var) == 1) else True
-
-                if not pure_1d:
-                    var = var[0]
-
-                if is_row:
-                    var = var[self.coffset:]
-                    cols = min(cols, len(var))
-                else:
-                    var = var[self.roffset:]
-                    rows = min(rows, len(var))
-            else:
-                var = var[self.roffset:, self.coffset:]
-                rows = min(rows, len(var))
-                cols = min(cols, len(var[0]))
-
             xml = "<xml>"
-            xml += "<array name=\"%s\" rows=\"%s\" cols=\"%s\"/>" % (self.name, rows, cols)
 
-            for row in range(rows):
-                xml += "<row index=\"%s\"/>" % to_string(row)
-                for col in range(cols):
-                    value = var
-                    name = '%s[%s][%s]' % (self.name, row, col)
-                    if self.rows == 1 or self.cols == 1:
-                        if self.rows == 1 and self.cols == 1:
-                            value = var
-                            name = '%s' % self.name
-                        else:
-                            dim = col if (self.rows == 1) else row
-                            value = var[dim]
-                            name = '%s[%s]' % (self.name, dim)
-                    else:
-                        value = var[row][col]
-                    value = self.format % value
-                    xml += pydevd_vars.varToXML(value, name)
+            xml += pydevd_vars.array_to_xml(var, self.roffset, self.coffset, self.rows, self.cols, self.format)
 
             xml += "</xml>"
             cmd = dbg.cmdFactory.makeGetArrayMessage(self.sequence, xml)

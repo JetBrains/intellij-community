@@ -22,11 +22,14 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.XValue;
 import com.jetbrains.python.debugger.PyDebugValue;
 import com.jetbrains.python.debugger.PyDebuggerEvaluator;
+import com.jetbrains.python.debugger.PyDebuggerException;
+import com.jetbrains.python.debugger.PyFrameAccessor;
 import org.jetbrains.annotations.NotNull;
 
 import javax.management.InvalidAttributeValueException;
@@ -164,11 +167,7 @@ public class NumpyArrayTable {
   }
 
   private void initSliceFieldActions() {
-    if (myComponent.getSliceTextField().getEditor() == null) {
-      LOG.error("Null editor in slice field.");
-      return;
-    }
-    myComponent.getSliceTextField().getEditor().getContentComponent().addKeyListener(new KeyAdapter() {
+    myComponent.getSliceTextField().addKeyListener(new KeyAdapter() {
       @Override
       public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_ENTER) {
@@ -179,11 +178,7 @@ public class NumpyArrayTable {
   }
 
   private void initFormatFieldActions() {
-    if (myComponent.getFormatTextField().getEditor() == null) {
-      LOG.error("Null editor in format field.");
-      return;
-    }
-    myComponent.getFormatTextField().getEditor().getContentComponent().addKeyListener(new KeyAdapter() {
+    myComponent.getFormatTextField().addKeyListener(new KeyAdapter() {
       @Override
       public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_ENTER) {
@@ -197,8 +192,8 @@ public class NumpyArrayTable {
     return myValue;
   }
 
-  public PyDebuggerEvaluator getEvaluator() {
-    return myEvaluator;
+  public PyFrameAccessor getEvaluator() {
+    return myValue.getFrameAccessor();
   }
 
   public void init() {
@@ -244,10 +239,10 @@ public class NumpyArrayTable {
   }
 
   private void fillColorRange(@NotNull final Runnable returnToMain) {
-    XDebuggerEvaluator.XEvaluationCallback callback = new XDebuggerEvaluator.XEvaluationCallback() {
+    Consumer<PyDebugValue> callback = new Consumer<PyDebugValue>() {
       @Override
-      public void evaluated(@NotNull XValue result) {
-        String rawValue = ((PyDebugValue)result).getValue();
+      public void consume(@NotNull PyDebugValue result) {
+        String rawValue = result.getValue();
         double min;
         double max;
         String minValue = rawValue.substring(1, rawValue.indexOf(","));
@@ -271,11 +266,6 @@ public class NumpyArrayTable {
         myTableCellRenderer.setMax(max);
         returnToMain.run();
       }
-
-      @Override
-      public void errorOccurred(@NotNull String errorMessage) {
-        showError(errorMessage);
-      }
     };
 
     if (getMaxRow(myShape) * getMaxColumn(myShape) > HUGE_ARRAY_SIZE) {
@@ -284,7 +274,13 @@ public class NumpyArrayTable {
     }
 
     String evalTypeCommand = "[" + getNodeName() + ".min(), " + getNodeName() + ".max()]";
-    getEvaluator().evaluate(evalTypeCommand, callback, null);
+    try {
+      PyDebugValue value = getEvaluator().evaluate(evalTypeCommand, false, false);
+      callback.consume(value);
+    }
+    catch (PyDebuggerException e) {
+      showError(e.getMessage());
+    }
   }
 
   public String getDefaultPresentation() {
@@ -341,46 +337,36 @@ public class NumpyArrayTable {
   }
 
   private void fillType(@NotNull final Runnable returnToMain) {
-    XDebuggerEvaluator.XEvaluationCallback callback = new XDebuggerEvaluator.XEvaluationCallback() {
-      @Override
-      public void evaluated(@NotNull XValue result) {
-        setDtypeKind(((PyDebugValue)result).getValue());
-        returnToMain.run();
-      }
-
-      @Override
-      public void errorOccurred(@NotNull String errorMessage) {
-        showError(errorMessage);
-      }
-    };
     String evalTypeCommand = getNodeName() + ".dtype.kind";
-    getEvaluator().evaluate(evalTypeCommand, callback, null);
+    try {
+      PyDebugValue value = getEvaluator().evaluate(evalTypeCommand, false, false);
+      setDtypeKind(value.getValue());
+      returnToMain.run();
+    }
+    catch (PyDebuggerException e) {
+      showError(e.getMessage());
+    }
   }
 
   private void fillShape(@NotNull final Runnable returnToMain) {
-    XDebuggerEvaluator.XEvaluationCallback callback = new XDebuggerEvaluator.XEvaluationCallback() {
-      @Override
-      public void evaluated(@NotNull XValue result) {
-        try {
-          setShape(parseShape(((PyDebugValue)result).getValue()));
-          returnToMain.run();
-        }
-        catch (InvalidAttributeValueException e) {
-          errorOccurred(e.getMessage());
-        }
-      }
-
-      @Override
-      public void errorOccurred(@NotNull String errorMessage) {
-        showError(errorMessage);
-      }
-    };
     String evalShapeCommand = getEvalShapeCommand(getNodeName());
-    getEvaluator().evaluate(evalShapeCommand, callback, null);
+    try {
+      PyDebugValue value = getEvaluator().evaluate(evalShapeCommand, false, false);
+      setShape(parseShape(value.getValue()));
+      returnToMain.run();
+    }
+    catch (Exception e) {
+      showError(e.getMessage());
+    }
   }
 
   private int[] parseShape(String value) throws InvalidAttributeValueException {
-    String shape = value.substring(0, value.indexOf('#'));
+    int index = value.indexOf('#');
+    if (index == -1) {
+      LOG.error("Wrong shape format: " + value);
+      return new int[]{0, 0};
+    }
+    String shape = value.substring(0, index);
     if (shape.equals("()")) {
       return new int[]{1, 1};
     }
@@ -542,14 +528,20 @@ public class NumpyArrayTable {
     };
   }
 
-  public String correctStringValue(@NotNull String value) {
-    String corrected = value;
-    if (isNumeric()) {
-      if (value.startsWith("\'") || value.startsWith("\"")) {
-        corrected = value.substring(1, value.length() - 1);
+  public String correctStringValue(@NotNull Object value) {
+    if (value instanceof String) {
+      String corrected = (String)value;
+      if (isNumeric()) {
+        if (corrected.startsWith("\'") || corrected.startsWith("\"")) {
+          corrected = corrected.substring(1, corrected.length() - 1);
+        }
       }
+      return corrected;
     }
-    return corrected;
+    else if (value instanceof Integer) {
+      return Integer.toString((Integer)value);
+    }
+    return value.toString();
   }
 
   public void setDtypeKind(String dtype) {
@@ -611,28 +603,18 @@ public class NumpyArrayTable {
 
   private void doReslice(final String newSlice, int[] shape) {
     if (shape == null) {
-      XDebuggerEvaluator.XEvaluationCallback callback = new XDebuggerEvaluator.XEvaluationCallback() {
-        @Override
-        public void evaluated(@NotNull XValue result) {
-          try {
-            int[] shape = parseShape(((PyDebugValue)result).getValue());
-            if (!is2DShape(shape)) {
-              errorOccurred("Incorrect slice shape " + ((PyDebugValue)result).getValue() + ".");
-            }
-            doReslice(newSlice, shape);
-          }
-          catch (InvalidAttributeValueException e) {
-            errorOccurred(e.getMessage());
-          }
-        }
-
-        @Override
-        public void errorOccurred(@NotNull String errorMessage) {
-          showError(errorMessage);
-        }
-      };
       String evalShapeCommand = getEvalShapeCommand(newSlice);
-      getEvaluator().evaluate(evalShapeCommand, callback, null);
+      try {
+        PyDebugValue result = getEvaluator().evaluate(evalShapeCommand, false, false);
+        shape = parseShape(((PyDebugValue)result).getValue());
+        if (!is2DShape(shape)) {
+          showError("Incorrect slice shape " + ((PyDebugValue)result).getValue() + ".");
+        }
+        doReslice(newSlice, shape);
+      }
+      catch (Exception e) {
+        showError(e.getMessage());
+      }
       return;
     }
 

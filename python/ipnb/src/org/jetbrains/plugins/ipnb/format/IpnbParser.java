@@ -89,7 +89,7 @@ public class IpnbParser {
   }
 
   public static class IpnbFileRaw {
-    Map<String, String> metadata = new HashMap<String, String>();
+    Map<String, Object> metadata = new HashMap<String, Object>();
     int nbformat = 3;
     int nbformat_minor;
     IpnbWorksheet[] worksheets;

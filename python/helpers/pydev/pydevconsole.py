@@ -293,6 +293,8 @@ def start_server(host, port, interpreter):
     server.register_function(handshake)
     server.register_function(interpreter.connectToDebugger)
     server.register_function(interpreter.hello)
+    server.register_function(interpreter.getArray)
+    server.register_function(interpreter.evaluate)
 
     # Functions for GUI main loop integration
     server.register_function(interpreter.enableGui)
