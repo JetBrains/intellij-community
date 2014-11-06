@@ -17,6 +17,7 @@
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.actions.ToggleToolbarAction;
 import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -27,7 +28,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -87,7 +87,7 @@ public class ChangesViewContentManager extends AbstractProjectComponent implemen
           myToolWindow = toolWindowManager.registerToolWindow(TOOLWINDOW_ID, true, ToolWindowAnchor.BOTTOM, myProject, true);
           myToolWindow.setIcon(AllIcons.Toolwindows.ToolWindowChanges);
           DefaultActionGroup gearActions = new DefaultActionGroup();
-          gearActions.addAction(SimpleToolWindowPanel.createToggleToolbarAction(myProject, myToolWindow)).setAsSecondary(true);
+          gearActions.addAction(ToggleToolbarAction.createToggleToolbarGroup(myProject, myToolWindow)).setAsSecondary(true);
           ((ToolWindowEx)myToolWindow).setAdditionalGearActions(gearActions);
 
           updateToolWindowAvailability();

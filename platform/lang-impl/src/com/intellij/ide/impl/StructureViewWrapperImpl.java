@@ -16,8 +16,10 @@
 
 package com.intellij.ide.impl;
 
+import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.actions.ToggleToolbarAction;
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.ide.structureView.*;
 import com.intellij.ide.structureView.impl.StructureViewComposite;
@@ -36,7 +38,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
@@ -92,7 +93,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
   public StructureViewWrapperImpl(Project project, ToolWindowEx toolWindow) {
     myProject = project;
     myToolWindow = toolWindow;
-    myShowToolbarAction = SimpleToolWindowPanel.createToggleToolbarAction(project, myToolWindow);
+    myShowToolbarAction = ToggleToolbarAction.createToggleToolbarGroup(project, myToolWindow);
 
     myUpdateQueue = new MergingUpdateQueue("StructureView", Registry.intValue("structureView.coalesceTime"), false, myToolWindow.getComponent(), this, myToolWindow.getComponent(), true);
     myUpdateQueue.setRestartTimerOnAdd(true);
@@ -368,12 +369,14 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
   }
 
   private void updateHeaderActions(StructureView structureView) {
-    DefaultActionGroup gearActions = new DefaultActionGroup();
     AnAction[] titleActions = AnAction.EMPTY_ARRAY;
     if (structureView instanceof StructureViewComponent) {
-      gearActions.addAll(((StructureViewComponent)structureView).getGearActions());
-      titleActions = ((StructureViewComponent)structureView).getTitleActions();
+      JTree tree = ((StructureViewComponent)structureView).getTree();
+      titleActions = new AnAction[]{
+        CommonActionsManager.getInstance().createExpandAllHeaderAction(tree),
+        CommonActionsManager.getInstance().createCollapseAllHeaderAction(tree)};
     }
+    DefaultActionGroup gearActions = new DefaultActionGroup();
     gearActions.addAction(myShowToolbarAction).setAsSecondary(true);
     myToolWindow.setAdditionalGearActions(gearActions);
     myToolWindow.setTitleActions(titleActions);
