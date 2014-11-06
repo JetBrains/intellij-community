@@ -25,9 +25,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.impl.HashImpl;
-import git4idea.GitBranch;
-import git4idea.GitLocalBranch;
-import git4idea.GitRemoteBranch;
+import git4idea.*;
 import git4idea.branch.GitBranchUtil;
 import git4idea.branch.GitBranchesCollection;
 import org.jetbrains.annotations.NonNls;
@@ -349,7 +347,7 @@ class GitRepositoryReader {
             String hash = loadHashFromBranchFile(file);
             Hash h = createHash(hash);
             if (h != null) {
-              GitRemoteBranch remoteBranch = GitBranchUtil.parseRemoteBranch(branchName, h, remotes);
+              GitRemoteBranch remoteBranch = parseRemoteBranch(branchName, h, remotes);
               if (remoteBranch != null) {
                 branches.add(remoteBranch);
               }
@@ -386,13 +384,38 @@ class GitRepositoryReader {
         localBranches.add(new GitLocalBranch(branchName, hash));
       }
       else if (branchName.startsWith(REFS_REMOTES_PREFIX)) {
-        GitRemoteBranch remoteBranch = GitBranchUtil.parseRemoteBranch(branchName, hash, remotes);
+        GitRemoteBranch remoteBranch = parseRemoteBranch(branchName, hash, remotes);
         if (remoteBranch != null) {
           remoteBranches.add(remoteBranch);
         }
       }
     }
     return new GitBranchesCollection(localBranches, remoteBranches);
+  }
+
+  @Nullable
+  private static GitRemoteBranch parseRemoteBranch(@NotNull String fullBranchName,
+                                                   @NotNull Hash hash,
+                                                   @NotNull Collection<GitRemote> remotes) {
+    String stdName = GitBranchUtil.stripRefsPrefix(fullBranchName);
+
+    int slash = stdName.indexOf('/');
+    if (slash == -1) { // .git/refs/remotes/my_branch => git-svn
+      return new GitSvnRemoteBranch(fullBranchName, hash);
+    }
+    else {
+      String remoteName = stdName.substring(0, slash);
+      String branchName = stdName.substring(slash + 1);
+      GitRemote remote = GitUtil.findRemoteByName(remotes, remoteName);
+      if (remote == null) {
+        // user may remove the remote section from .git/config, but leave remote refs untouched in .git/refs/remotes
+        LOG.debug(String.format("No remote found with the name [%s]. All remotes: %s", remoteName, remotes));
+        GitRemote fakeRemote = new GitRemote(remoteName, ContainerUtil.<String>emptyList(), Collections.<String>emptyList(),
+                                             Collections.<String>emptyList(), Collections.<String>emptyList());
+        return new GitStandardRemoteBranch(fakeRemote, branchName, hash);
+      }
+      return new GitStandardRemoteBranch(remote, branchName, hash);
+    }
   }
 
   @NotNull

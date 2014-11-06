@@ -687,8 +687,13 @@ public class GitUtil {
 
 
   @Nullable
-  public static GitRemote findRemoteByName(@NotNull GitRepository repository, @Nullable final String name) {
-    return ContainerUtil.find(repository.getRemotes(), new Condition<GitRemote>() {
+  public static GitRemote findRemoteByName(@NotNull GitRepository repository, @NotNull final String name) {
+    return findRemoteByName(repository.getRemotes(), name);
+  }
+
+  @Nullable
+  public static GitRemote findRemoteByName(Collection<GitRemote> remotes, @NotNull final String name) {
+    return ContainerUtil.find(remotes, new Condition<GitRemote>() {
       @Override
       public boolean value(GitRemote remote) {
         return remote.getName().equals(name);
