@@ -107,7 +107,7 @@ public class BlockSupportImpl extends BlockSupport {
     }
 
     final ASTNode leafAtStart = fileElement.findLeafElementAt(Math.max(0, changedPsiRange.getStartOffset() - 1));
-    final ASTNode leafAtEnd = fileElement.findLeafElementAt(changedPsiRange.getEndOffset());
+    final ASTNode leafAtEnd = fileElement.findLeafElementAt(Math.min(changedPsiRange.getEndOffset(), fileElement.getTextLength() - 1));
     ASTNode node = leafAtStart != null && leafAtEnd != null ? TreeUtil.findCommonParent(leafAtStart, leafAtEnd) : fileElement;
     Language baseLanguage = file.getViewProvider().getBaseLanguage();
 
