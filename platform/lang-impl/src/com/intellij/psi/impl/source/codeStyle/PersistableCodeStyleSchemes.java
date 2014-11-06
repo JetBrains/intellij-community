@@ -52,7 +52,7 @@ public class PersistableCodeStyleSchemes extends CodeStyleSchemesImpl implements
   public Element getState() {
     return XmlSerializer.serialize(this, new SerializationFilter() {
       @Override
-      public boolean accepts(Accessor accessor, Object bean) {
+      public boolean accepts(@NotNull Accessor accessor, Object bean) {
         return accessor.getValueClass().equals(String.class);
       }
     });
