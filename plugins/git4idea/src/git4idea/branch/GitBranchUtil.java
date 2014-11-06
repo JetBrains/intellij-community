@@ -30,7 +30,6 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.Hash;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.*;
 import git4idea.commands.GitCommand;
@@ -207,46 +206,6 @@ public class GitBranchUtil {
       return null;
     }
     return remote;
-  }
-
-  /**
-   *
-   * @return {@link git4idea.GitStandardRemoteBranch} or {@link GitSvnRemoteBranch}, or null in case of an error. The error is logged in this method.
-   * @deprecated Should be used only in the GitRepositoryReader, i. e. moved there once all other usages are removed.
-   */
-  @Deprecated
-  @Nullable
-  public static GitRemoteBranch parseRemoteBranch(@NotNull String fullBranchName, @NotNull Hash hash,
-                                                  @NotNull Collection<GitRemote> remotes) {
-    String stdName = stripRefsPrefix(fullBranchName);
-
-    int slash = stdName.indexOf('/');
-    if (slash == -1) { // .git/refs/remotes/my_branch => git-svn
-      return new GitSvnRemoteBranch(fullBranchName, hash);
-    }
-    else {
-      String remoteName = stdName.substring(0, slash);
-      String branchName = stdName.substring(slash + 1);
-      GitRemote remote = findRemoteByName(remoteName, remotes);
-      if (remote == null) {
-        // user may remove the remote section from .git/config, but leave remote refs untouched in .git/refs/remotes
-        LOG.info(String.format("No remote found with the name [%s]. All remotes: %s", remoteName, remotes));
-        GitRemote fakeRemote = new GitRemote(remoteName, ContainerUtil.<String>emptyList(), Collections.<String>emptyList(),
-                                             Collections.<String>emptyList(), Collections.<String>emptyList());
-        return new GitStandardRemoteBranch(fakeRemote, branchName, hash);
-      }
-      return new GitStandardRemoteBranch(remote, branchName, hash);
-    }
-  }
-
-  @Nullable
-  private static GitRemote findRemoteByName(@NotNull String remoteName, @NotNull Collection<GitRemote> remotes) {
-    for (GitRemote remote : remotes) {
-      if (remote.getName().equals(remoteName)) {
-        return remote;
-      }
-    }
-    return null;
   }
 
   /**
