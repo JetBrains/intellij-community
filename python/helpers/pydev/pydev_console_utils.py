@@ -385,16 +385,21 @@ class BaseInterpreterInterface:
 
         return xml
 
-    def getArray(self, attr):
+    def getArray(self, attr, roffset, coffset, rows, cols, format):
         xml = "<xml>"
-        valDict = pydevd_vars.resolveVar(self.getNamespace(), attributes)
-        if valDict is None:
-            valDict = {}
+        array = pydevd_vars.evalInContext(attr, self.getNamespace(), self.getNamespace())
 
-        keys = valDict.keys()
+        xml += pydevd_vars.array_to_xml(array, roffset, coffset, rows, cols, format)
 
-        for k in keys:
-            xml += pydevd_vars.varToXML(valDict[k], to_string(k))
+        xml += "</xml>"
+
+        return xml
+
+    def evaluate(self, expression):
+        xml = "<xml>"
+        result = pydevd_vars.evalInContext(expression, self.getNamespace(), self.getNamespace())
+
+        xml += pydevd_vars.varToXML(result, expression)
 
         xml += "</xml>"
 
