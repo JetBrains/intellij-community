@@ -283,7 +283,7 @@ public class NumpyArrayTable {
 
     String evalTypeCommand = "[" + getNodeName() + ".min(), " + getNodeName() + ".max()]";
     try {
-      PyDebugValue value = getEvaluator().evaluate(evalTypeCommand, true, false);
+      PyDebugValue value = getEvaluator().evaluate(evalTypeCommand, false, false);
       callback.consume(value);
     }
     catch (PyDebuggerException e) {
@@ -347,7 +347,7 @@ public class NumpyArrayTable {
   private void fillType(@NotNull final Runnable returnToMain) {
     String evalTypeCommand = getNodeName() + ".dtype.kind";
     try {
-      PyDebugValue value = getEvaluator().evaluate(evalTypeCommand, true, false);
+      PyDebugValue value = getEvaluator().evaluate(evalTypeCommand, false, false);
       setDtypeKind(value.getValue());
       returnToMain.run();
     }
@@ -359,7 +359,7 @@ public class NumpyArrayTable {
   private void fillShape(@NotNull final Runnable returnToMain) {
     String evalShapeCommand = getEvalShapeCommand(getNodeName());
     try {
-      PyDebugValue value = getEvaluator().evaluate(evalShapeCommand, true, false);
+      PyDebugValue value = getEvaluator().evaluate(evalShapeCommand, false, false);
       setShape(parseShape(value.getValue()));
       returnToMain.run();
     }
@@ -369,7 +369,12 @@ public class NumpyArrayTable {
   }
 
   private int[] parseShape(String value) throws InvalidAttributeValueException {
-    String shape = value.substring(0, value.indexOf('#'));
+    int index = value.indexOf('#');
+    if (index == -1) {
+      LOG.error("Wrong shape format: " + value);
+      return new int[]{0, 0};
+    }
+    String shape = value.substring(0, index);
     if (shape.equals("()")) {
       return new int[]{1, 1};
     }
@@ -608,7 +613,7 @@ public class NumpyArrayTable {
     if (shape == null) {
       String evalShapeCommand = getEvalShapeCommand(newSlice);
       try {
-        PyDebugValue result = getEvaluator().evaluate(evalShapeCommand, true, false);
+        PyDebugValue result = getEvaluator().evaluate(evalShapeCommand, false, false);
         shape = parseShape(((PyDebugValue)result).getValue());
         if (!is2DShape(shape)) {
           showError("Incorrect slice shape " + ((PyDebugValue)result).getValue() + ".");
