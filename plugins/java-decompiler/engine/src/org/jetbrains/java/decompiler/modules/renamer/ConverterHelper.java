@@ -17,102 +17,51 @@ package org.jetbrains.java.decompiler.modules.renamer;
 
 import org.jetbrains.java.decompiler.main.extern.IIdentifierRenamer;
 
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Set;
 
 public class ConverterHelper implements IIdentifierRenamer {
 
-  private static HashSet<String> setReserved = new HashSet<String>();
+  private static final Set<String> KEYWORDS = new HashSet<String>(Arrays.asList(
+    "abstract", "do", "if", "package", "synchronized", "boolean", "double", "implements", "private", "this", "break", "else", "import",
+    "protected", "throw", "byte", "extends", "instanceof", "public", "throws", "case", "false", "int", "return", "transient", "catch",
+    "final", "interface", "short", "true", "char", "finally", "long", "static", "try", "class", "float", "native", "strictfp", "void",
+    "const", "for", "new", "super", "volatile", "continue", "goto", "null", "switch", "while", "default", "assert", "enum"));
 
-  static {
-    setReserved.add("abstract");
-    setReserved.add("do");
-    setReserved.add("if");
-    setReserved.add("package");
-    setReserved.add("synchronized");
-    setReserved.add("boolean");
-    setReserved.add("double");
-    setReserved.add("implements");
-    setReserved.add("private");
-    setReserved.add("this");
-    setReserved.add("break");
-    setReserved.add("else");
-    setReserved.add("import");
-    setReserved.add("protected");
-    setReserved.add("throw");
-    setReserved.add("byte");
-    setReserved.add("extends");
-    setReserved.add("instanceof");
-    setReserved.add("public");
-    setReserved.add("throws");
-    setReserved.add("case");
-    setReserved.add("false");
-    setReserved.add("int");
-    setReserved.add("return");
-    setReserved.add("transient");
-    setReserved.add("catch");
-    setReserved.add("final");
-    setReserved.add("interface");
-    setReserved.add("short");
-    setReserved.add("true");
-    setReserved.add("char");
-    setReserved.add("finally");
-    setReserved.add("long");
-    setReserved.add("static");
-    setReserved.add("try");
-    setReserved.add("class");
-    setReserved.add("float");
-    setReserved.add("native");
-    setReserved.add("strictfp");
-    setReserved.add("void");
-    setReserved.add("const");
-    setReserved.add("for");
-    setReserved.add("new");
-    setReserved.add("super");
-    setReserved.add("volatile");
-    setReserved.add("continue");
-    setReserved.add("goto");
-    setReserved.add("null");
-    setReserved.add("switch");
-    setReserved.add("while");
-    setReserved.add("default");
-    setReserved.add("assert");
-    setReserved.add("enum");
-  }
+  private int classCounter = 0;
+  private int fieldCounter = 0;
+  private int methodCounter = 0;
+  private Set<String> setNonStandardClassNames = new HashSet<String>();
 
-  private int class_counter = 0;
-
-  private int field_counter = 0;
-
-  private int method_counter = 0;
-
-  private HashSet<String> setNonStandardClassNames = new HashSet<String>();
-
-  public boolean toBeRenamed(int element_type, String classname, String element, String descriptor) {
-    String value = (element_type == IIdentifierRenamer.ELEMENT_CLASS) ? classname : element;
-    return value == null || value.length() == 0 || value.length() <= 2 || setReserved.contains(value) || Character.isDigit(value.charAt(0));
+  @Override
+  public boolean toBeRenamed(Type elementType, String className, String element, String descriptor) {
+    String value = elementType == Type.ELEMENT_CLASS ? className : element;
+    return value == null || value.length() == 0 || value.length() <= 2 || KEYWORDS.contains(value) || Character.isDigit(value.charAt(0));
   }
 
   // TODO: consider possible conflicts with not renamed classes, fields and methods!
   // We should get all relevant information here.
-  public String getNextClassname(String fullname, String shortname) {
+  @Override
+  public String getNextClassName(String fullName, String shortName) {
 
-    if (shortname == null) {
-      return "class_" + (class_counter++);
+    if (shortName == null) {
+      return "class_" + (classCounter++);
     }
 
     int index = 0;
-    while (Character.isDigit(shortname.charAt(index))) {
+    while (Character.isDigit(shortName.charAt(index))) {
       index++;
     }
 
-    if (index == 0 || index == shortname.length()) {
-      return "class_" + (class_counter++);
+    if (index == 0 || index == shortName.length()) {
+      return "class_" + (classCounter++);
     }
     else {
-      String name = shortname.substring(index);
+      String name = shortName.substring(index);
 
       if (setNonStandardClassNames.contains(name)) {
-        return "Inner" + name + "_" + (class_counter++);
+        return "Inner" + name + "_" + (classCounter++);
       }
       else {
         setNonStandardClassNames.add(name);
@@ -121,23 +70,25 @@ public class ConverterHelper implements IIdentifierRenamer {
     }
   }
 
-  public String getNextFieldname(String classname, String field, String descriptor) {
-    return "field_" + (field_counter++);
+  @Override
+  public String getNextFieldName(String className, String field, String descriptor) {
+    return "field_" + (fieldCounter++);
   }
 
-  public String getNextMethodname(String classname, String method, String descriptor) {
-    return "method_" + (method_counter++);
+  @Override
+  public String getNextMethodName(String className, String method, String descriptor) {
+    return "method_" + (methodCounter++);
   }
 
   // *****************************************************************************
   // static methods
   // *****************************************************************************
 
-  public static String getSimpleClassName(String fullname) {
-    return fullname.substring(fullname.lastIndexOf('/') + 1);
+  public static String getSimpleClassName(String fullName) {
+    return fullName.substring(fullName.lastIndexOf('/') + 1);
   }
 
-  public static String replaceSimpleClassName(String fullname, String newname) {
-    return fullname.substring(0, fullname.lastIndexOf('/') + 1) + newname;
+  public static String replaceSimpleClassName(String fullName, String newName) {
+    return fullName.substring(0, fullName.lastIndexOf('/') + 1) + newName;
   }
 }

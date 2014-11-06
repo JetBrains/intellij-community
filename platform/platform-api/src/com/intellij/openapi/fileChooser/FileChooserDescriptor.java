@@ -231,6 +231,10 @@ public class FileChooserDescriptor implements Cloneable {
    * Defines whether a file is visible in the tree.
    */
   public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
+    if (file.is(VFileProperty.SYMLINK) && file.getCanonicalPath() == null) {
+      return false;
+    }
+
     if (!file.isDirectory()) {
       if (FileElement.isArchive(file)) {
         if (!myChooseJars && !myChooseJarContents) {
@@ -262,6 +266,9 @@ public class FileChooserDescriptor implements Cloneable {
   public boolean isFileSelectable(VirtualFile file) {
     if (file == null) return false;
 
+    if (file.is(VFileProperty.SYMLINK) && file.getCanonicalPath() == null) {
+      return false;
+    }
     if (file.isDirectory() && myChooseFolders) {
       return true;
     }

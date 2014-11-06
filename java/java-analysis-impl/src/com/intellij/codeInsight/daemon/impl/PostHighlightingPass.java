@@ -451,10 +451,13 @@ public class PostHighlightingPass extends ProgressableTextEditorHighlightingPass
                                       @NotNull PsiField field,
                                       @NotNull ProgressIndicator progress,
                                       @NotNull GlobalUsageHelper helper) {
-    if (helper.isLocallyUsed(field) || !weAreSureThereAreNoUsages(project, containingFile, field, progress, helper)) {
+    if (helper.isLocallyUsed(field)) {
       return false;
     }
-    return !(field instanceof PsiEnumConstant) || !isEnumValuesMethodUsed(project, containingFile, field, progress, helper);
+    if (field instanceof PsiEnumConstant && isEnumValuesMethodUsed(project, containingFile, field, progress, helper)) {
+      return false;
+    }
+    return weAreSureThereAreNoUsages(project, containingFile, field, progress, helper);
   }
 
   private HighlightInfo suggestionsToMakeFieldUsed(@NotNull PsiField field, @NotNull PsiIdentifier identifier, @NotNull String message) {

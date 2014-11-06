@@ -6,6 +6,7 @@ import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
 import org.jetbrains.debugger.values.FunctionValue;
 
 public interface ScriptManager {
@@ -22,7 +23,7 @@ public interface ScriptManager {
    * Demands that script text should be replaced with a new one if possible. VM may get resumed after this command
    */
   @NotNull
-  AsyncResult<?> setSourceOnRemote(@NotNull Script script, @NotNull CharSequence newSource, boolean preview);
+  Promise<?> setSourceOnRemote(@NotNull Script script, @NotNull CharSequence newSource, boolean preview);
 
   void forEachScript(@NotNull Processor<Script> scriptProcessor);
 
@@ -30,7 +31,7 @@ public interface ScriptManager {
   Script forEachScript(@NotNull CommonProcessors.FindProcessor<Script> scriptProcessor);
 
   @NotNull
-  AsyncResult<Script> getScript(@NotNull FunctionValue function);
+  Promise<Script> getScript(@NotNull FunctionValue function);
 
   @Nullable("if call frame script is native (at least in Google Chrome)")
   Script getScript(@NotNull CallFrame frame);

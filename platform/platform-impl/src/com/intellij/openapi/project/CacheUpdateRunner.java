@@ -61,7 +61,7 @@ public class CacheUpdateRunner extends DumbModeTask {
   }
 
   private int queryNeededFiles(@NotNull ProgressIndicator indicator) {
-    // can be queried twice in DumbService  
+    // can be queried twice in DumbService
     return getSession(indicator).getFilesToUpdate().size();
   }
 
@@ -160,16 +160,12 @@ public class CacheUpdateRunner extends DumbModeTask {
       }
     };
     final Application application = ApplicationManager.getApplication();
-    Runnable addListenerAction = new Runnable() {
+    application.invokeAndWait(new Runnable() {
       @Override
       public void run() {
         application.addApplicationListener(canceller);
       }
-    };
-    if (application.isDispatchThread()) addListenerAction.run();
-    else {
-      application.invokeAndWait(addListenerAction, ModalityState.any());
-    }
+    }, ModalityState.any());
 
     final AtomicBoolean isFinished = new AtomicBoolean();
     try {

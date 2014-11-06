@@ -83,6 +83,7 @@ public class PostHighlightingPassFactory extends AbstractProjectComponent implem
     return create(file, document, null, highlightInfoProcessor);
   }
 
+  @NotNull
   private PostHighlightingPass create(@NotNull final PsiFile file,
                                       @NotNull Document document, Editor editor,
                                       @NotNull HighlightInfoProcessor highlightInfoProcessor) {

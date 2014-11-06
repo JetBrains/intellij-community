@@ -19,7 +19,7 @@ import com.intellij.dvcs.push.PushTargetPanel;
 import com.intellij.dvcs.push.ui.PushTargetTextField;
 import com.intellij.dvcs.push.ui.VcsEditableTextComponent;
 import com.intellij.dvcs.push.ui.VcsLinkListener;
-import com.intellij.dvcs.push.ui.VcsLinkedText;
+import com.intellij.dvcs.push.ui.VcsLinkedTextComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -57,7 +57,7 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
   @NotNull private final GitRepository myRepository;
   @NotNull private final VcsEditableTextComponent myTargetRenderedComponent;
   @NotNull private final PushTargetTextField myTargetTextField;
-  @NotNull private final VcsLinkedText myRemoteRenderedComponent;
+  @NotNull private final VcsLinkedTextComponent myRemoteRenderedComponent;
 
   @Nullable private GitPushTarget myCurrentTarget;
   @Nullable private String myError;
@@ -90,7 +90,7 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
     }
     myTargetRenderedComponent = new VcsEditableTextComponent("<a href=''>" + initialBranch + "</a>", null);
     myTargetTextField = new PushTargetTextField(repository.getProject(), getTargetNames(myRepository), initialBranch);
-    myRemoteRenderedComponent = new VcsLinkedText("<a href=''>" + initialRemote + "</a>", new VcsLinkListener() {
+    myRemoteRenderedComponent = new VcsLinkedTextComponent("<a href=''>" + initialRemote + "</a>", new VcsLinkListener() {
       @Override
       public void hyperlinkActivated(@NotNull DefaultMutableTreeNode sourceNode, @NotNull MouseEvent event) {
         showRemoteSelector(event);
@@ -101,7 +101,7 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
     setOpaque(false);
     JPanel remoteAndSeparator = new JPanel(new BorderLayout());
     remoteAndSeparator.setOpaque(false);
-    remoteAndSeparator.add(new JBLabel(myRemoteRenderedComponent.getText()), BorderLayout.CENTER);
+    remoteAndSeparator.add(myRemoteRenderedComponent, BorderLayout.CENTER);
     remoteAndSeparator.add(new JBLabel(SEPARATOR), BorderLayout.EAST);
 
     add(remoteAndSeparator, BorderLayout.WEST);

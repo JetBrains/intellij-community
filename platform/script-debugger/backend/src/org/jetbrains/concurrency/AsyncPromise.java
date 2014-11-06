@@ -121,7 +121,12 @@ public class AsyncPromise<T> extends Promise<T> {
       @Override
       public void consume(T result) {
         try {
-          promise.setResult(fulfilled.fun(result));
+          if (fulfilled instanceof ObsolescentFunction && ((ObsolescentFunction)fulfilled).isObsolete()) {
+            promise.setError("Obsolete");
+          }
+          else {
+            promise.setResult(fulfilled.fun(result));
+          }
         }
         catch (Throwable e) {
           promise.setError(e.getMessage());

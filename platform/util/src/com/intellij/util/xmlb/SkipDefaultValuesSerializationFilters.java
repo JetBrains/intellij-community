@@ -18,6 +18,7 @@ package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.util.ReflectionUtil;
 import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -43,7 +44,7 @@ public class SkipDefaultValuesSerializationFilters extends SerializationFilterBa
     Class<?> c = bean.getClass();
     Object o = myDefaultBeans.get(c);
     if (o == null) {
-      o = XmlSerializerImpl.newInstance(c);
+      o = ReflectionUtil.newInstance(c);
       configure(o);
 
       myDefaultBeans.put(c, o);

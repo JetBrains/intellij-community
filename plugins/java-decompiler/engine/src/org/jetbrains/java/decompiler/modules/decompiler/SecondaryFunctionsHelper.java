@@ -22,7 +22,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.exps.*;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.IfStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
-import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPaar;
+import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 
 import java.util.ArrayList;
@@ -315,7 +315,7 @@ public class SecondaryFunctionsHelper {
                                                                                                   lstOperands.get(1)), null), null),
               ConstExprent.getZeroConstant(type.type)), null);
 
-            processor.setVarType(new VarVersionPaar(var, 0), type);
+            processor.setVarType(new VarVersionPair(var, 0), type);
 
             return new FunctionExprent(FunctionExprent.FUNCTION_IIF, Arrays.asList(
               head, new ConstExprent(VarType.VARTYPE_INT, new Integer(0), null), iff), fexpr.bytecode);

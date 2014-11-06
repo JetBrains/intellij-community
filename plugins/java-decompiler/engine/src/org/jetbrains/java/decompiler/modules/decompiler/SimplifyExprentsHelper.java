@@ -23,7 +23,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.exps.*;
 import org.jetbrains.java.decompiler.modules.decompiler.sforms.SSAConstructorSparseEx;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.IfStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
-import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPaar;
+import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
 import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.util.FastSparseSetFactory.FastSparseSet;
@@ -538,12 +538,12 @@ public class SimplifyExprentsHelper {
   //
   //				NewExprent newexpr = (NewExprent)as.getRight();
   //				VarType newtype = newexpr.getNewType();
-  //				VarVersionPaar leftPaar = new VarVersionPaar((VarExprent)as.getLeft());
+  //				VarVersionPair leftPaar = new VarVersionPair((VarExprent)as.getLeft());
   //
   //				if(newtype.type == CodeConstants.TYPE_OBJECT && newtype.arrayDim == 0 &&
   //						newexpr.getConstructor() == null) {
   //
-  //					Set<VarVersionPaar> setChangedVars = new HashSet<VarVersionPaar>();
+  //					Set<VarVersionPair> setChangedVars = new HashSet<VarVersionPair>();
   //
   //					for(int i = index + 1; i < list.size(); i++) {
   //						Exprent remote = list.get(i);
@@ -554,7 +554,7 @@ public class SimplifyExprentsHelper {
   //							if(in.getFuncType() == InvocationExprent.TYP_INIT && in.getInstance().type == Exprent.EXPRENT_VAR
   //									&& as.getLeft().equals(in.getInstance())) {
   //
-  //								Set<VarVersionPaar>  setVars = remote.getAllVariables();
+  //								Set<VarVersionPair>  setVars = remote.getAllVariables();
   //								setVars.remove(leftPaar);
   //								setVars.retainAll(setChangedVars);
   //
@@ -581,7 +581,7 @@ public class SimplifyExprentsHelper {
   //							AssignmentExprent asremote = (AssignmentExprent)remote;
   //							if(asremote.getLeft().type == Exprent.EXPRENT_VAR &&
   //									asremote.getRight().type == Exprent.EXPRENT_VAR) {
-  //								setChangedVars.add(new VarVersionPaar((VarExprent)asremote.getLeft()));
+  //								setChangedVars.add(new VarVersionPair((VarExprent)asremote.getLeft()));
   //								isTempAssignment = true;
   //							}
   //
@@ -592,7 +592,7 @@ public class SimplifyExprentsHelper {
   ////								List<Exprent> lstRightExprents = asremote.getRight().getAllExprents(true);
   ////								lstRightExprents.add(asremote.getRight());
   ////
-  ////								Set<VarVersionPaar> setTempChangedVars = new HashSet<VarVersionPaar>();
+  ////								Set<VarVersionPair> setTempChangedVars = new HashSet<VarVersionPair>();
   ////								boolean isTemp = true;
   ////
   ////								for(Exprent expr : lstRightExprents) {
@@ -600,7 +600,7 @@ public class SimplifyExprentsHelper {
   ////										isTemp = false;
   ////										break;
   ////									} else if(expr.type == Exprent.EXPRENT_VAR) {
-  ////										setTempChangedVars.add(new VarVersionPaar((VarExprent)expr));
+  ////										setTempChangedVars.add(new VarVersionPair((VarExprent)expr));
   ////									}
   ////								}
   ////
@@ -614,14 +614,14 @@ public class SimplifyExprentsHelper {
   ////							if(fexpr.getFuncType() == FunctionExprent.FUNCTION_IPP || fexpr.getFuncType() == FunctionExprent.FUNCTION_IMM
   ////									|| fexpr.getFuncType() == FunctionExprent.FUNCTION_PPI || fexpr.getFuncType() == FunctionExprent.FUNCTION_MMI) {
   ////								if(fexpr.getLstOperands().get(0).type == Exprent.EXPRENT_VAR) {
-  ////									setChangedVars.add(new VarVersionPaar((VarExprent)fexpr.getLstOperands().get(0)));
+  ////									setChangedVars.add(new VarVersionPair((VarExprent)fexpr.getLstOperands().get(0)));
   ////									isTempAssignment = true;
   ////								}
   ////							}
   //						}
   //
   //						if(!isTempAssignment) {
-  //							Set<VarVersionPaar> setVars = remote.getAllVariables();
+  //							Set<VarVersionPair> setVars = remote.getAllVariables();
   //							if(setVars.contains(leftPaar)) {
   //								return false;
   //							} else {
@@ -648,7 +648,7 @@ public class SimplifyExprentsHelper {
 
         NewExprent newexpr = (NewExprent)as.getRight();
         VarType newtype = newexpr.getNewType();
-        VarVersionPaar leftPaar = new VarVersionPaar((VarExprent)as.getLeft());
+        VarVersionPair leftPaar = new VarVersionPair((VarExprent)as.getLeft());
 
         if (newtype.type == CodeConstants.TYPE_OBJECT && newtype.arrayDim == 0 && newexpr.getConstructor() == null) {
 
@@ -673,7 +673,7 @@ public class SimplifyExprentsHelper {
             }
 
             // check for variable in use
-            Set<VarVersionPaar> setVars = remote.getAllVariables();
+            Set<VarVersionPair> setVars = remote.getAllVariables();
             if (setVars.contains(leftPaar)) { // variable used somewhere in between -> exit, need a better reduced code
               return false;
             }
@@ -776,7 +776,7 @@ public class SimplifyExprentsHelper {
 
                 boolean found = false;
 
-                for (Entry<VarVersionPaar, FastSparseSet<Integer>> ent : ssa.getPhi().entrySet()) {
+                for (Entry<VarVersionPair, FastSparseSet<Integer>> ent : ssa.getPhi().entrySet()) {
                   if (ent.getKey().var == ifvar.getIndex()) {
                     if (ent.getValue().contains(ifvar.getVersion()) && ent.getValue().contains(elsevar.getVersion())) {
                       found = true;

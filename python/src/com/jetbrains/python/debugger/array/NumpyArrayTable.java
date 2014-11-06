@@ -22,9 +22,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.XValue;
-import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.jetbrains.python.debugger.PyDebugValue;
 import com.jetbrains.python.debugger.PyDebuggerEvaluator;
 import org.jetbrains.annotations.NotNull;
@@ -52,7 +52,7 @@ public class NumpyArrayTable {
   private String myDtypeKind;
   private int[] myShape;
   private ArrayTableCellRenderer myTableCellRenderer;
-  private PagingTableModel myPagingModel;
+  private AsyncArrayTableModel myPagingModel;
 
   private final static int COLUMNS_IN_DEFAULT_SLICE = 40;
   private final static int ROWS_IN_DEFAULT_SLICE = 40;
@@ -83,14 +83,14 @@ public class NumpyArrayTable {
     return myComponent;
   }
 
-  private PagingTableModel createTableModel(@NotNull int[] shape) {
+  private AsyncArrayTableModel createTableModel(@NotNull int[] shape) {
     final int columns = Math.min(getMaxColumn(shape), COLUMNS_IN_DEFAULT_VIEW);
     int rows = Math.min(getMaxRow(shape), ROWS_IN_DEFAULT_VIEW);
     if (columns == 0 || rows == 0) {
       showError("Slice with zero axis shape.");
     }
 
-    return new PagingTableModel(rows, columns, this);
+    return new AsyncArrayTableModel(rows, columns, this);
   }
 
   private void initComponent() {
@@ -126,6 +126,7 @@ public class NumpyArrayTable {
 
     // add slice actions
     initSliceFieldActions();
+
     //make value name read-only
     myComponent.getSliceTextField().addFocusListener(new FocusListener() {
       @Override
@@ -150,7 +151,7 @@ public class NumpyArrayTable {
     myTableCellRenderer.setMin(Double.MAX_VALUE);
     myTableCellRenderer.setMax(Double.MIN_VALUE);
     myTableCellRenderer.setColored(false);
-    DebuggerUIUtil.invokeLater(new Runnable() {
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
         myComponent.getColoredCheckbox().setSelected(false);
@@ -227,15 +228,12 @@ public class NumpyArrayTable {
       return;
     }
 
-    DebuggerUIUtil.invokeLater(new Runnable() {
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
         myComponent.getSliceTextField().setText(getDefaultPresentation());
         myComponent.getFormatTextField().setText(getDefaultFormat());
         myDialog.setTitle(getTitlePresentation(getDefaultPresentation()));
-        if (myTable.getColumnCount() > 0) {
-          myTable.setDefaultEditor(myTable.getColumnClass(0), getArrayTableCellEditor());
-        }
       }
     });
     initTableModel(false);
@@ -430,7 +428,7 @@ public class NumpyArrayTable {
   private void initTableModel(final boolean inPlace) {
     myPagingModel = createTableModel(myShape);
 
-    DebuggerUIUtil.invokeLater(new Runnable() {
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
         myTable.setModel(myPagingModel);
@@ -439,8 +437,11 @@ public class NumpyArrayTable {
           JBTableWithRowHeaders.RowHeaderTable rowTable = ((JBTableWithRowHeaders)myTable).getRowHeaderTable();
           rowTable.setRowShift(0);
         }
-        ((PagingTableModel)myTable.getModel()).fireTableDataChanged();
-        ((PagingTableModel)myTable.getModel()).fireTableCellUpdated(0, 0);
+        ((AsyncArrayTableModel)myTable.getModel()).fireTableDataChanged();
+        ((AsyncArrayTableModel)myTable.getModel()).fireTableCellUpdated(0, 0);
+        if (myTable.getColumnCount() > 0) {
+          myTable.setDefaultRenderer(myTable.getColumnClass(0), myTableCellRenderer);
+        }
       }
     });
   }
@@ -514,7 +515,7 @@ public class NumpyArrayTable {
                   protected void run(@NotNull Result result) throws Throwable {
                     if (getEditor().getEditor() != null) {
                       getEditor().getEditor().getDocument().setText(corrected);
-                      ((PagingTableModel)myTable.getModel()).forcedChange(row, col, corrected);
+                      ((AsyncArrayTableModel)myTable.getModel()).changeValue(row, col, corrected);
                       cancelEditing();
                     }
                   }
@@ -541,6 +542,16 @@ public class NumpyArrayTable {
     };
   }
 
+  public String correctStringValue(@NotNull String value) {
+    String corrected = value;
+    if (isNumeric()) {
+      if (value.startsWith("\'") || value.startsWith("\"")) {
+        corrected = value.substring(1, value.length() - 1);
+      }
+    }
+    return corrected;
+  }
+
   public void setDtypeKind(String dtype) {
     this.myDtypeKind = dtype;
   }
@@ -555,11 +566,10 @@ public class NumpyArrayTable {
 
   public void showError(String message) {
     myDialog.setError(message);
-    setBusy(false);
   }
 
   public void showInfoHint(final String message) {
-    DebuggerUIUtil.invokeLater(new Runnable() {
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
         if (myComponent.getSliceTextField().getEditor() != null) {
@@ -580,7 +590,7 @@ public class NumpyArrayTable {
       }
 
       if (myDtypeKind.equals("b") || myDtypeKind.equals("c")) {
-        DebuggerUIUtil.invokeLater(new Runnable() {
+        UIUtil.invokeLaterIfNeeded(new Runnable() {
           @Override
           public void run() {
             myComponent.getFormatTextField().getComponent().setEnabled(false);
@@ -681,7 +691,7 @@ public class NumpyArrayTable {
   }
 
   public void setBusy(final boolean busy) {
-    DebuggerUIUtil.invokeLater(new Runnable() {
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
         myComponent.setBusy(busy);

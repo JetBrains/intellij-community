@@ -260,6 +260,7 @@ public class StringUtil extends StringUtilRt {
   }
 
   @Contract(pure = true)
+  @NotNull
   public static String stripHtml(@NotNull String html, boolean convertBreaks) {
     if (convertBreaks) {
       html = html.replaceAll("<br/?>", "\n\n");

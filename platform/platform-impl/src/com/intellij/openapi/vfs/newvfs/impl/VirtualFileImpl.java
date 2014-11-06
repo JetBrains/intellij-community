@@ -130,7 +130,7 @@ public class VirtualFileImpl extends VirtualFileSystemEntry {
   }
 
   @Override
-  protected void setUserMap(KeyFMap map) {
+  protected void setUserMap(@NotNull KeyFMap map) {
     mySegment.setUserMap(Math.abs(getId()), map);
   }
 

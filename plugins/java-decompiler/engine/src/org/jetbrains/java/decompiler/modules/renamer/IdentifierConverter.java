@@ -180,11 +180,11 @@ public class IdentifierConverter implements NewClassNameBuilder {
 
     // TODO: rename packages
     String clSimpleName = ConverterHelper.getSimpleClassName(classOldFullName);
-    if (helper.toBeRenamed(IIdentifierRenamer.ELEMENT_CLASS, clSimpleName, null, null)) {
+    if (helper.toBeRenamed(IIdentifierRenamer.Type.ELEMENT_CLASS, clSimpleName, null, null)) {
       String classNewFullName;
 
       do {
-        String classname = helper.getNextClassname(classOldFullName, ConverterHelper.getSimpleClassName(classOldFullName));
+        String classname = helper.getNextClassName(classOldFullName, ConverterHelper.getSimpleClassName(classOldFullName));
         classNewFullName = ConverterHelper.replaceSimpleClassName(classOldFullName, classname);
       }
       while (context.getClasses().containsKey(classNewFullName));
@@ -223,10 +223,10 @@ public class IdentifierConverter implements NewClassNameBuilder {
           names.put(key, name);
         }
       }
-      else if (helper.toBeRenamed(IIdentifierRenamer.ELEMENT_METHOD, classOldFullName, name, mt.getDescriptor())) {
+      else if (helper.toBeRenamed(IIdentifierRenamer.Type.ELEMENT_METHOD, classOldFullName, name, mt.getDescriptor())) {
         if (isPrivate || !names.containsKey(key)) {
           do {
-            name = helper.getNextMethodname(classOldFullName, name, mt.getDescriptor());
+            name = helper.getNextMethodName(classOldFullName, name, mt.getDescriptor());
           }
           while (setMethodNames.contains(name));
 
@@ -256,16 +256,15 @@ public class IdentifierConverter implements NewClassNameBuilder {
     }
 
     for (StructField fd : cl.getFields()) {
-      if (helper.toBeRenamed(IIdentifierRenamer.ELEMENT_FIELD, classOldFullName, fd.getName(), fd.getDescriptor())) {
-        String newname;
-
+      if (helper.toBeRenamed(IIdentifierRenamer.Type.ELEMENT_FIELD, classOldFullName, fd.getName(), fd.getDescriptor())) {
+        String newName;
         do {
-          newname = helper.getNextFieldname(classOldFullName, fd.getName(), fd.getDescriptor());
+          newName = helper.getNextFieldName(classOldFullName, fd.getName(), fd.getDescriptor());
         }
-        while (setFieldNames.contains(newname));
+        while (setFieldNames.contains(newName));
 
         interceptor.addName(classOldFullName + " " + fd.getName() + " " + fd.getDescriptor(),
-                            classNewFullName + " " + newname + " " + buildNewDescriptor(true, fd.getDescriptor()));
+                            classNewFullName + " " + newName + " " + buildNewDescriptor(true, fd.getDescriptor()));
       }
     }
   }

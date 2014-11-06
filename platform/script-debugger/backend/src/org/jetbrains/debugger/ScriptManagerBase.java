@@ -8,6 +8,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.Url;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
 
 public abstract class ScriptManagerBase<SCRIPT extends ScriptBase> implements ScriptManager {
   @SuppressWarnings("unchecked")
@@ -15,11 +16,12 @@ public abstract class ScriptManagerBase<SCRIPT extends ScriptBase> implements Sc
     @Override
     public void load(@NotNull ScriptBase script, @NotNull AsyncResult<String> result) {
       //noinspection unchecked
-      loadScriptSource((SCRIPT)script, result);
+      loadScriptSource((SCRIPT)script).notify(result);
     }
   };
 
-  protected abstract void loadScriptSource(SCRIPT script, AsyncResult<String> result);
+  @NotNull
+  protected abstract Promise<String> loadScriptSource(@NotNull SCRIPT script);
 
   @NotNull
   @Override

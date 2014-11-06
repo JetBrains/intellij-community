@@ -18,7 +18,7 @@ package com.intellij.dvcs.push.ui;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class VcsEditableTextComponent extends VcsLinkedText implements VcsEditableComponent {
+public class VcsEditableTextComponent extends VcsLinkedTextComponent implements VcsEditableComponent {
 
   public VcsEditableTextComponent(@NotNull String text, @Nullable VcsLinkListener listener) {
     super(text, listener);

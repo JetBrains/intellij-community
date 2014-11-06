@@ -84,7 +84,7 @@ public class CompilingEvaluator implements ExpressionEvaluator {
 
     ClassLoaderReference classLoader;
     try {
-      classLoader = getClassLoader(evaluationContext);
+      classLoader = getClassLoader(evaluationContext, process);
     }
     catch (Exception e) {
       throw new EvaluateException("Error creating evaluation class loader: " + e, e);
@@ -129,17 +129,12 @@ public class CompilingEvaluator implements ExpressionEvaluator {
     }
   }
 
-  private static ClassLoaderReference getClassLoader(EvaluationContext context)
+  private static ClassLoaderReference getClassLoader(EvaluationContext context, DebugProcess process)
     throws EvaluateException, InvocationException, InvalidTypeException, ClassNotLoadedException, IncompatibleThreadStateException {
     // TODO: cache
-    DebugProcess process = context.getDebugProcess();
     ClassType loaderClass = (ClassType)process.findClass(context, "java.net.URLClassLoader", context.getClassLoader());
     Method ctorMethod = loaderClass.concreteMethodByName("<init>", "([Ljava/net/URL;Ljava/lang/ClassLoader;)V");
-    ThreadReference threadReference = context.getSuspendContext().getThread().getThreadReference();
-    ClassLoaderReference reference = (ClassLoaderReference)loaderClass.newInstance(threadReference, ctorMethod,
-                                                                                   Arrays.asList(createURLArray(context),
-                                                                                                 context.getClassLoader()),
-                                                                                   ClassType.INVOKE_SINGLE_THREADED);
+    ClassLoaderReference reference = (ClassLoaderReference)process.newInstance(context, loaderClass, ctorMethod, Arrays.asList(createURLArray(context), context.getClassLoader()));
     keep(reference, context);
     return reference;
   }
@@ -243,11 +238,10 @@ public class CompilingEvaluator implements ExpressionEvaluator {
     keep(arrayRef, context);
     ClassType classType = (ClassType)process.findClass(context, "java.net.URL", context.getClassLoader());
     VirtualMachineProxyImpl proxy = (VirtualMachineProxyImpl)process.getVirtualMachineProxy();
-    ThreadReference threadReference = context.getSuspendContext().getThread().getThreadReference();
     StringReference url = proxy.mirrorOf("file:a");
     keep(url, context);
-    ObjectReference reference = classType.newInstance(threadReference, classType.concreteMethodByName("<init>", "(Ljava/lang/String;)V"),
-                                                      Collections.singletonList(url), ClassType.INVOKE_SINGLE_THREADED);
+    ObjectReference reference = process.newInstance(context, classType, classType.concreteMethodByName("<init>", "(Ljava/lang/String;)V"),
+                                                    Collections.singletonList(url));
     keep(reference, context);
     arrayRef.setValues(Collections.singletonList(reference));
     return arrayRef;

@@ -21,7 +21,9 @@ public abstract class ObjectValueBase<VALUE_LOADER extends ValueManager> extends
 
       @Override
       public void load(@NotNull ObjectValueBase host, @NotNull AsyncResult<List<Variable>> result) {
-        host.loadProperties(result);
+        if (!host.valueManager.rejectIfObsolete(result)) {
+          host.loadProperties(result);
+        }
       }
     };
 

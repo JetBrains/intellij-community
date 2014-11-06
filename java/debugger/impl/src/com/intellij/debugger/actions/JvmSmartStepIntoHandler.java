@@ -42,7 +42,7 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.event.ActionEvent;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -122,7 +122,7 @@ public abstract class JvmSmartStepIntoHandler {
   private static void highlightTarget(PsiMethodListPopupStep popupStep, SmartStepTarget target) {
     final PsiElement highlightElement = target.getHighlightElement();
     if (highlightElement != null) {
-      popupStep.getScopeHighlighter().highlight(highlightElement, Arrays.asList(highlightElement));
+      popupStep.getScopeHighlighter().highlight(highlightElement, Collections.singletonList(highlightElement));
     }
   }
 

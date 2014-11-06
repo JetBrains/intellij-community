@@ -27,7 +27,7 @@ import org.jetbrains.java.decompiler.main.rels.LambdaProcessor;
 import org.jetbrains.java.decompiler.main.rels.NestedClassProcessor;
 import org.jetbrains.java.decompiler.main.rels.NestedMemberAccess;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.InvocationExprent;
-import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPaar;
+import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
 import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.StructContext;
 import org.jetbrains.java.decompiler.struct.StructMethod;
@@ -83,8 +83,8 @@ public class ClassesProcessor {
               }
               else if (simpleName != null && DecompilerContext.getOption(IFernflowerPreferences.RENAME_ENTITIES)) {
                 IIdentifierRenamer renamer = DecompilerContext.getPoolInterceptor().getHelper();
-                if (renamer.toBeRenamed(IIdentifierRenamer.ELEMENT_CLASS, simpleName, null, null)) {
-                  simpleName = renamer.getNextClassname(innername, simpleName);
+                if (renamer.toBeRenamed(IIdentifierRenamer.Type.ELEMENT_CLASS, simpleName, null, null)) {
+                  simpleName = renamer.getNextClassName(innername, simpleName);
                   mapNewSimpleNames.put(innername, simpleName);
                 }
               }
@@ -357,7 +357,7 @@ public class ClassesProcessor {
     public ClassWrapper wrapper;
     public String enclosingMethod;
     public InvocationExprent superInvocation;
-    public Map<String, VarVersionPaar> mapFieldsToVars = new HashMap<String, VarVersionPaar>();
+    public Map<String, VarVersionPair> mapFieldsToVars = new HashMap<String, VarVersionPair>();
     public VarType anonymousClassType;
     public List<ClassNode> nested = new ArrayList<ClassNode>();
     public Set<String> enclosingClasses = new HashSet<String>();

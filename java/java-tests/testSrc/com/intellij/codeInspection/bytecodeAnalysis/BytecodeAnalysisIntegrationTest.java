@@ -133,13 +133,15 @@ public class BytecodeAnalysisIntegrationTest extends JavaCodeInsightFixtureTestC
   public void testInferredAnnoGutter() {
     setUpLibraries();
     openDecompiledClass("org.apache.velocity.util.ExceptionUtils");
-    checkHasGutter("<i>@Contract(&quot;null,_,_-&gt;null&quot;)</i>");
+    checkHasGutter("<html><i>@Contract(&quot;null,_,_-&gt;null&quot;)</i>&nbsp;\n" +
+                   "public static&nbsp;Throwable&nbsp;<b>createWithCause</b>(");
   }
 
   public void testExternalAnnoGutter() {
     setUpExternalUpAnnotations();
     openDecompiledClass("java.lang.Boolean");
-    checkHasGutter("@org.jetbrains.annotations.Contract(&quot;null-&gt;false&quot;)&nbsp;");
+    checkHasGutter("<html>@org.jetbrains.annotations.Contract(&quot;null-&gt;false&quot;)&nbsp;\n" +
+                   "private static&nbsp;boolean&nbsp;<b>toBoolean</b>(@org.jetbrains.annotations.Nullable&nbsp;String&nbsp;var0)</html>");
   }
 
   private void checkHasGutter(final String expectedText) {

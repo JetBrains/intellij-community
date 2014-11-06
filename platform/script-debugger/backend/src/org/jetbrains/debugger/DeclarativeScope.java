@@ -21,7 +21,7 @@ public abstract class DeclarativeScope<VALUE_LOADER extends ValueManager> extend
 
       @Override
       public void load(@NotNull DeclarativeScope host, @NotNull AsyncResult<List<Variable>> result) {
-        host.loadVariables(result);
+        host.loadVariables().notify(result);
       }
     };
 
@@ -41,27 +41,23 @@ public abstract class DeclarativeScope<VALUE_LOADER extends ValueManager> extend
   /**
    * You must call {@link #updateCacheStamp()} when data loaded
    */
-  protected abstract void loadVariables(@NotNull AsyncResult<List<? extends Variable>> result);
+  @NotNull
+  protected abstract Promise<List<Variable>> loadVariables();
 
   protected final void updateCacheStamp() {
     cacheStamp = valueManager.getCacheStamp();
   }
 
-  protected final void loadScopeObjectProperties(@NotNull ObjectValue value, @NotNull final AsyncResult<List<? extends Variable>> result) {
-    if (valueManager.rejectIfObsolete(result)) {
-      return;
+  @NotNull
+  protected final Promise<List<Variable>> loadScopeObjectProperties(@NotNull ObjectValue value) {
+    if (valueManager.isObsolete()) {
+      return ValueManager.reject();
     }
 
-    value.getProperties().done(new Consumer<List<Variable>>() {
+    return value.getProperties().done(new Consumer<List<Variable>>() {
       @Override
       public void consume(List<Variable> variables) {
         updateCacheStamp();
-        result.setDone(variables);
-      }
-    }).rejected(new Consumer<String>() {
-      @Override
-      public void consume(String error) {
-        result.reject(error);
       }
     });
   }

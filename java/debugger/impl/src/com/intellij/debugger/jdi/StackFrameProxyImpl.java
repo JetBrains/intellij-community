@@ -81,10 +81,7 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
         throw e;
       }
     }
-    if (error != null) {
-      throw new EvaluateException(error.getMessage(), error);
-    }
-    return false;
+    throw new EvaluateException(error.getMessage(), error);
   }
 
   @Override
@@ -163,7 +160,6 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
     return (VirtualMachineProxyImpl) myTimer;
   }
 
-  @Nullable
   @Override
   public Location location() throws EvaluateException {
     InvalidStackFrameException error = null;
@@ -176,10 +172,7 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
         clearCaches();
       }
     }
-    if (error != null) {
-      throw new EvaluateException(error.getMessage(), error);
-    }
-    return null;
+    throw new EvaluateException(error.getMessage(), error);
   }
 
   @Override
@@ -243,10 +236,7 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
         throw EvaluateExceptionUtil.createEvaluateException(e);
       }
     }
-    if (error != null) {
-      throw new EvaluateException(error.getMessage(), error);
-    }
-    return Collections.emptyList();
+    throw new EvaluateException(error.getMessage(), error);
   }
 
   @Override
@@ -282,10 +272,7 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
         throw EvaluateExceptionUtil.createEvaluateException(e);
       }
     }
-    if (error != null) {
-      throw new EvaluateException(error.getMessage(), error);
-    }
-    return null;
+    throw new EvaluateException(error.getMessage(), error);
   }
 
   public Value getValue(LocalVariableProxyImpl localVariable) throws EvaluateException {
@@ -300,10 +287,7 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
         clearCaches();
       }
     }
-    if (error != null) {
-      throw new EvaluateException(error.getMessage(), error);
-    }
-    return null;
+    throw new EvaluateException(error.getMessage(), error);
   }
 
   public List<Value> getArgumentValues() throws EvaluateException {
@@ -330,10 +314,7 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
         clearCaches();
       }
     }
-    if (error != null) {
-      throw new EvaluateException(error.getMessage(), error);
-    }
-    return Collections.emptyList();
+    throw new EvaluateException(error.getMessage(), error);
   }
 
   private Map<LocalVariable, Value> getAllValues() throws EvaluateException{
@@ -375,9 +356,7 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
         clearCaches();
       }
     }
-    if (error != null) {
-      throw new EvaluateException(error.getMessage(), error);
-    }
+    throw new EvaluateException(error.getMessage(), error);
   }
 
   public int hashCode() {

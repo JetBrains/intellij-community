@@ -152,6 +152,7 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
     }
   }
 
+  @NotNull
   public static List<VirtualFile> toVf(@NotNull int[] ids) {
     List<VirtualFile> res = new ArrayList<VirtualFile>();
     for (int id : ids) {
@@ -163,11 +164,13 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
     return res;
   }
 
+  @NotNull
   public static String toVfString(@NotNull int[] backIds) {
     List<VirtualFile> list = toVf(backIds);
     return toVfString(list);
   }
 
+  @NotNull
   private static String toVfString(@NotNull Collection<VirtualFile> list) {
     List<VirtualFile> sub = new ArrayList<VirtualFile>(list).subList(0, Math.min(list.size(), 100));
     return list.size() + " files: " + StringUtil.join(sub, new Function<VirtualFile, String>() {

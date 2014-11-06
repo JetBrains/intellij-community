@@ -24,7 +24,7 @@ import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.CheckTypesResult;
-import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPaar;
+import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
 import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
@@ -174,7 +174,7 @@ public class NewExprent extends Exprent {
 
         ClassNode newnode = DecompilerContext.getClassProcessor().getMapRootClasses().get(invsuper.getClassname());
 
-        List<VarVersionPaar> sigFields = null;
+        List<VarVersionPair> sigFields = null;
         if (newnode != null) { // own class
           if (newnode.wrapper != null) {
             sigFields = newnode.wrapper.getMethodWrapper("<init>", invsuper.getStringDescriptor()).signatureFields;
@@ -182,8 +182,8 @@ public class NewExprent extends Exprent {
           else {
             if (newnode.type == ClassNode.CLASS_MEMBER && (newnode.access & CodeConstants.ACC_STATIC) == 0 &&
                 !constructor.getLstParameters().isEmpty()) { // member non-static class invoked with enclosing class instance
-              sigFields = new ArrayList<VarVersionPaar>(Collections.nCopies(constructor.getLstParameters().size(), (VarVersionPaar)null));
-              sigFields.set(0, new VarVersionPaar(-1, 0));
+              sigFields = new ArrayList<VarVersionPair>(Collections.nCopies(constructor.getLstParameters().size(), (VarVersionPair)null));
+              sigFields.set(0, new VarVersionPair(-1, 0));
             }
           }
         }
@@ -280,7 +280,7 @@ public class NewExprent extends Exprent {
 
           ClassNode newnode = DecompilerContext.getClassProcessor().getMapRootClasses().get(constructor.getClassname());
 
-          List<VarVersionPaar> sigFields = null;
+          List<VarVersionPair> sigFields = null;
           if (newnode != null) { // own class
             if (newnode.wrapper != null) {
               sigFields = newnode.wrapper.getMethodWrapper("<init>", constructor.getStringDescriptor()).signatureFields;
@@ -288,8 +288,8 @@ public class NewExprent extends Exprent {
             else {
               if (newnode.type == ClassNode.CLASS_MEMBER && (newnode.access & CodeConstants.ACC_STATIC) == 0 &&
                   !constructor.getLstParameters().isEmpty()) { // member non-static class invoked with enclosing class instance
-                sigFields = new ArrayList<VarVersionPaar>(Collections.nCopies(lstParameters.size(), (VarVersionPaar)null));
-                sigFields.set(0, new VarVersionPaar(-1, 0));
+                sigFields = new ArrayList<VarVersionPair>(Collections.nCopies(lstParameters.size(), (VarVersionPair)null));
+                sigFields.set(0, new VarVersionPair(-1, 0));
               }
             }
           }
@@ -399,7 +399,7 @@ public class NewExprent extends Exprent {
           VarExprent varEnclosing = (VarExprent)enclosing;
 
           StructClass current_class = ((ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS_NODE)).classStruct;
-          String this_classname = varEnclosing.getProcessor().getThisVars().get(new VarVersionPaar(varEnclosing));
+          String this_classname = varEnclosing.getProcessor().getThisVars().get(new VarVersionPair(varEnclosing));
 
           if (!current_class.qualifiedName.equals(this_classname)) {
             isQualifiedNew = true;
