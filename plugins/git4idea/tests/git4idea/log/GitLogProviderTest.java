@@ -131,6 +131,20 @@ public class GitLogProviderTest extends GitSingleRepoTest {
     assertEquals("User email is incorrect", expected.getEmail(), user.getEmail());
   }
 
+  public void test_dont_report_origin_HEAD() throws Exception {
+    prepareSomeHistory();
+    git("update-ref refs/remotes/origin/HEAD master");
+
+    VcsLogProvider.DetailedLogData block = myLogProvider.readFirstBlock(myProjectRoot,
+                                                                        new RequirementsImpl(1000, false, Collections.<VcsRef>emptySet()));
+    assertFalse("origin/HEAD should be ignored", ContainerUtil.exists(block.getRefs(), new Condition<VcsRef>() {
+      @Override
+      public boolean value(VcsRef ref) {
+        return ref.getName().equals("origin/HEAD");
+      }
+    }));
+  }
+
   private static void prepareSomeHistory() {
     tac("a.txt");
     git("tag ATAG");

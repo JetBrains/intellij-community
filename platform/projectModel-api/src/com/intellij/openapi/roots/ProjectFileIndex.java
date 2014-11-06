@@ -125,7 +125,7 @@ public interface ProjectFileIndex extends FileIndex {
   boolean isLibraryClassFile(@NotNull VirtualFile file);
 
   /**
-   * Returns true if <code>fileOrDir</code> is a file or directory from the content source or library sources.
+   * Returns true if <code>fileOrDir</code> is a file or directory from the content production/test source or library source.
    *
    * @param fileOrDir the file or directory to check.
    * @return true if the file or directory belongs to project or library sources, false otherwise.

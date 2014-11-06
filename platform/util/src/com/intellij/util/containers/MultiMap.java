@@ -63,7 +63,7 @@ public class MultiMap<K, V> implements Serializable {
 
   @NotNull
   protected Collection<V> createCollection() {
-    return new ArrayList<V>();
+    return new SmartList<V>();
   }
 
   @NotNull
@@ -261,12 +261,6 @@ public class MultiMap<K, V> implements Serializable {
       protected Map<K, Collection<V>> createMap() {
         return new THashMap<K, Collection<V>>(strategy);
       }
-
-      @NotNull
-      @Override
-      protected Collection<V> createCollection() {
-        return new SmartList<V>();
-      }
     };
   }
 
@@ -289,12 +283,6 @@ public class MultiMap<K, V> implements Serializable {
   @NotNull
   public static <K, V> MultiMap<K, V> createSmartList() {
     return new MultiMap<K, V>() {
-      @NotNull
-      @Override
-      protected Collection<V> createCollection() {
-        return new SmartList<V>();
-      }
-
       @NotNull
       @Override
       protected Map<K, Collection<V>> createMap() {

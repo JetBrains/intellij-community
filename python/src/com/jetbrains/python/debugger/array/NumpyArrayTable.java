@@ -19,6 +19,7 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -76,7 +77,21 @@ public class NumpyArrayTable {
                          @NotNull PyViewArrayAction.ViewArrayDialog dialog, @NotNull PyDebugValue value) {
     myValue = value;
     myDialog = dialog;
-    myComponent = new ArrayTableForm(project);
+    myComponent = new ArrayTableForm(project, new KeyAdapter() {
+      @Override
+      public void keyPressed(KeyEvent e) {
+        if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+          doReslice(getSliceText(), null);
+        }
+      }
+    }, new KeyAdapter() {
+      @Override
+      public void keyPressed(KeyEvent e) {
+        if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+          doApplyFormat();
+        }
+      }
+    });
     myTable = myComponent.getTable();
     myProject = project;
     myEvaluator = new PyDebuggerEvaluator(project, getDebugValue().getFrameAccessor());
@@ -127,9 +142,6 @@ public class NumpyArrayTable {
       });
     }
 
-    // add slice actions
-    initSliceFieldActions();
-
     //make value name read-only
     myComponent.getSliceTextField().addFocusListener(new FocusListener() {
       @Override
@@ -145,9 +157,6 @@ public class NumpyArrayTable {
         }
       }
     });
-
-    //add format actions
-    initFormatFieldActions();
   }
 
   public void disableColor() {
@@ -161,28 +170,6 @@ public class NumpyArrayTable {
         myComponent.getColoredCheckbox().setEnabled(false);
         if (myTable.getColumnCount() > 0) {
           myTable.setDefaultRenderer(myTable.getColumnClass(0), myTableCellRenderer);
-        }
-      }
-    });
-  }
-
-  private void initSliceFieldActions() {
-    myComponent.getSliceTextField().addKeyListener(new KeyAdapter() {
-      @Override
-      public void keyPressed(KeyEvent e) {
-        if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-          doReslice(getSliceText(), null);
-        }
-      }
-    });
-  }
-
-  private void initFormatFieldActions() {
-    myComponent.getFormatTextField().addKeyListener(new KeyAdapter() {
-      @Override
-      public void keyPressed(KeyEvent e) {
-        if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-          doApplyFormat();
         }
       }
     });

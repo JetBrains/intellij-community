@@ -15,7 +15,6 @@
  */
 package git4idea;
 
-import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.collect.Collections2;
 import com.intellij.openapi.components.ServiceManager;
@@ -26,7 +25,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.ex.MultiLineLabel;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
@@ -99,14 +97,9 @@ public class GitUtil {
   public static final Charset UTF8_CHARSET = Charset.forName(UTF8_ENCODING);
   public static final String DOT_GIT = ".git";
 
-  private final static Logger LOG = Logger.getInstance(GitUtil.class);
+  public static final String ORIGIN_HEAD = "origin/HEAD";
 
-  public static final Predicate<GitBranchTrackInfo> NOT_NULL_PREDICATE = new Predicate<GitBranchTrackInfo>() {
-    @Override
-    public boolean apply(@Nullable GitBranchTrackInfo input) {
-      return input != null;
-    }
-  };
+  private final static Logger LOG = Logger.getInstance(GitUtil.class);
 
   /**
    * A private constructor to suppress instance creation
@@ -225,22 +218,6 @@ public class GitUtil {
   public static Map<VirtualFile, List<FilePath>> sortFilePathsByGitRoot(final Collection<FilePath> files) throws VcsException {
     return sortFilePathsByGitRoot(files, false);
   }
-
-  /**
-   * Sort files by vcs root
-   *
-   * @param files files to sort.
-   * @return the map from root to the files under the root
-   */
-  public static Map<VirtualFile, List<FilePath>> sortGitFilePathsByGitRoot(Collection<FilePath> files) {
-    try {
-      return sortFilePathsByGitRoot(files, true);
-    }
-    catch (VcsException e) {
-      throw new RuntimeException("Unexpected exception:", e);
-    }
-  }
-
 
   /**
    * Sort files by vcs root
@@ -687,8 +664,13 @@ public class GitUtil {
 
 
   @Nullable
-  public static GitRemote findRemoteByName(@NotNull GitRepository repository, @Nullable final String name) {
-    return ContainerUtil.find(repository.getRemotes(), new Condition<GitRemote>() {
+  public static GitRemote findRemoteByName(@NotNull GitRepository repository, @NotNull final String name) {
+    return findRemoteByName(repository.getRemotes(), name);
+  }
+
+  @Nullable
+  public static GitRemote findRemoteByName(Collection<GitRemote> remotes, @NotNull final String name) {
+    return ContainerUtil.find(remotes, new Condition<GitRemote>() {
       @Override
       public boolean value(GitRemote remote) {
         return remote.getName().equals(name);
@@ -709,39 +691,6 @@ public class GitUtil {
     });
   }
 
-  /**
-   * @deprecated Calls Git for tracked info, use {@link GitRepository#getBranchTrackInfos()} instead.
-   */
-  @Nullable
-  @Deprecated
-  public static Pair<GitRemote, GitRemoteBranch> findMatchingRemoteBranch(GitRepository repository, GitLocalBranch branch)
-    throws VcsException {
-    /*
-    from man git-push:
-    git push
-               Works like git push <remote>, where <remote> is the current branch's remote (or origin, if no
-               remote is configured for the current branch).
-
-     */
-    String remoteName = GitBranchUtil.getTrackedRemoteName(repository.getProject(), repository.getRoot(), branch.getName());
-    GitRemote remote;
-    if (remoteName == null) {
-      remote = findOrigin(repository.getRemotes());
-    } else {
-      remote = findRemoteByName(repository, remoteName);
-    }
-    if (remote == null) {
-      return null;
-    }
-
-    for (GitRemoteBranch remoteBranch : repository.getBranches().getRemoteBranches()) {
-      if (remoteBranch.getName().equals(remote.getName() + "/" + branch.getName())) {
-        return Pair.create(remote, remoteBranch);
-      }
-    }
-    return null;
-  }
-
   @Nullable
   private static GitRemote findOrigin(Collection<GitRemote> remotes) {
     for (GitRemote remote : remotes) {
@@ -750,10 +699,6 @@ public class GitUtil {
       }
     }
     return null;
-  }
-
-  public static boolean repoContainsRemoteBranch(@NotNull GitRepository repository, @NotNull GitRemoteBranch dest) {
-    return repository.getBranches().getRemoteBranches().contains(dest);
   }
 
   @NotNull
