@@ -996,16 +996,17 @@ class InternalGetArray(InternalThreadCommand):
                 cols = 1
             elif self.rows == 1 or self.cols == 1:
                 is_row = True if (self.rows == 1) else False
-                pure_1d = False if (len(var) == 1) else True
+                if is_row:
+                    var = var[self.roffset:]
+                else:
+                    var = var[self.coffset:]
 
-                if not pure_1d:
+                if len(var) == 1:
                     var = var[0]
 
                 if is_row:
-                    var = var[self.coffset:]
                     cols = min(cols, len(var))
                 else:
-                    var = var[self.roffset:]
                     rows = min(rows, len(var))
             else:
                 var = var[self.roffset:, self.coffset:]
