@@ -374,9 +374,19 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       return context.getType((PyTypedElement)target);
     }
     if (target instanceof PsiDirectory) {
-      PsiFile file = ((PsiDirectory)target).findFile(PyNames.INIT_DOT_PY);
+      final PsiDirectory dir = (PsiDirectory)target;
+      PsiFile file = dir.findFile(PyNames.INIT_DOT_PY);
       if (file != null) {
         return getTypeFromTarget(file, context, anchor);
+      }
+      if (context.maySwitchToAST(anchor) && PyUtil.isPackage(dir, anchor)) {
+        final PyImportElement importElement = PsiTreeUtil.getParentOfType(anchor, PyImportElement.class);
+        final PsiFile containingFile = anchor.getContainingFile();
+        if (importElement != null && containingFile instanceof PyFile) {
+          final QualifiedName qualifiedName = QualifiedName.fromComponents(dir.getName());
+          final PyImportedModule module = new PyImportedModule(importElement, (PyFile)containingFile, qualifiedName);
+          return new PyImportedModuleType(module);
+        }
       }
     }
     return null;
