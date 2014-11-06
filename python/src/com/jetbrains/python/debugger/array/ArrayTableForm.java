@@ -15,6 +15,8 @@
  */
 package com.jetbrains.python.debugger.array;
 
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.components.JBScrollPane;
@@ -31,6 +33,7 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
 import java.awt.*;
+import java.awt.event.KeyListener;
 
 /**
  * @author amarch
@@ -46,23 +49,41 @@ public class ArrayTableForm {
   private JTable myTable;
   private JBTable myBusyTable;
   private final Project myProject;
+  private KeyListener myResliceCallback;
+  private KeyListener myReformatCallback;
 
 
   private static final String DATA_LOADING_IN_PROCESS = "Please wait, load array data.";
   private static final String NOT_APPLICABLE = "View not applicable for ";
 
-  public ArrayTableForm(@NotNull Project project) {
+  public ArrayTableForm(@NotNull Project project, KeyListener resliceCallback, KeyListener reformatCallback) {
     myProject = project;
+    myResliceCallback = resliceCallback;
+    myReformatCallback = reformatCallback;
   }
 
   private void createUIComponents() {
-    mySliceTextField = new EditorTextField("", myProject, PythonFileType.INSTANCE);
+    mySliceTextField = new EditorTextField("", myProject, PythonFileType.INSTANCE) {
+      @Override
+      protected EditorEx createEditor() {
+        EditorEx editor = super.createEditor();
+        editor.getContentComponent().addKeyListener(myResliceCallback);
+        return editor;
+      }
+    };
 
     myTable = new JBTableWithRowHeaders();
 
     myScrollPane = ((JBTableWithRowHeaders)myTable).getScrollPane();
 
-    myFormatTextField = new EditorTextField("", myProject, PythonFileType.INSTANCE);
+    myFormatTextField = new EditorTextField("", myProject, PythonFileType.INSTANCE) {
+      @Override
+      protected EditorEx createEditor() {
+        EditorEx editor = super.createEditor();
+        editor.getContentComponent().addKeyListener(myReformatCallback);
+        return editor;
+      }
+    };
 
     myBusyTable = new JBTable(new DefaultTableModel());
     myBusyTable.getEmptyText().setText("");
