@@ -1204,6 +1204,10 @@ public abstract class ChooseByNameBase {
     myPostponedOkAction = null;
   }
 
+  public boolean hasPostponedAction() {
+    return myPostponedOkAction != null;
+  }
+
   protected abstract void showList();
 
   protected abstract void hideList();
