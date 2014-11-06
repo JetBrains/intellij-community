@@ -21,11 +21,14 @@ import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -48,27 +51,16 @@ public class FileHeaderChecker {
     FileTemplate defaultTemplate = FileTemplateManager.getInstance().getDefaultTemplate(FileTemplateManager.FILE_HEADER_TEMPLATE_NAME);
     Pattern pattern = getTemplatePattern(defaultTemplate, file.getProject(), offsetToProperty);
     Matcher matcher = pattern.matcher(file.getViewProvider().getContents());
-    if (!matcher.matches()) return null;
+    if (!matcher.matches()) {
+      return null;
+    }
 
-    final int startOffset = matcher.start(1);
-    final int endOffset = matcher.end(1);
-    final Ref<PsiDocComment> docComment = new Ref<PsiDocComment>();
-    file.accept(new JavaRecursiveElementWalkingVisitor() {
-      @Override
-      public void visitElement(PsiElement element) {
-        if (docComment.get() != null) return;
-        TextRange range = element.getTextRange();
-        if (!range.contains(startOffset) && !range.contains(endOffset)) return;
-        super.visitElement(element);
-      }
-
-      @Override
-      public void visitDocComment(PsiDocComment comment) {
-        docComment.set(comment);
-      }
-    });
-    PsiDocComment element = docComment.get();
-    if (element == null) return null;
+    int startOffset = matcher.start(1);
+    int endOffset = matcher.end(1);
+    PsiComment element = PsiTreeUtil.getParentOfType(file.findElementAt(startOffset), PsiComment.class);
+    if (element == null || !element.getTextRange().equals(new TextRange(startOffset, endOffset))) {
+      return null;
+    }
 
     LocalQuickFix[] fixes = createQuickFix(matcher, offsetToProperty);
     String description = InspectionsBundle.message("default.file.template.description");

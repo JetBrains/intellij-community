@@ -28,6 +28,7 @@ public class DefaultFileTemplateUsageInspectionTest extends LightCodeInsightFixt
   public void testX() { doTest(); }
   public void testX2() { doTest(); }
   public void testX3() { doTest(); }
+  public void testRange() { doTest(); }
 
   public void doTest() {
     myFixture.enableInspections(new DefaultFileTemplateUsageInspection());
