@@ -318,6 +318,9 @@ public class PyPropertyDefinitionInspection extends PyInspection {
       }
       if (allowed ^ hasReturns) {
         if (allowed && callable instanceof PyFunction) {
+          if (PyUtil.isDecoratedAsAbstract(((PyFunction)callable))) {
+            return;
+          }
           // one last chance: maybe there's no return but a 'raise' statement, see PY-4043, PY-5048
           PyStatementList statementList = ((PyFunction)callable).getStatementList();
           for (PyStatement stmt : statementList.getStatements()) {
