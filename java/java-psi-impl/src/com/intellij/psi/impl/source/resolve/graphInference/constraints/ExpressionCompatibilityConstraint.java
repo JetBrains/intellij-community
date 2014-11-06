@@ -105,7 +105,7 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
 
         if (typeParams != null) {
           PsiSubstitutor siteSubstitutor =
-            resolveResult instanceof MethodCandidateInfo && method != null && !method.isConstructor() ? ((MethodCandidateInfo)resolveResult).getSiteSubstitutor() : PsiSubstitutor.EMPTY;
+            resolveResult instanceof MethodCandidateInfo && method != null && !method.isConstructor() ? ((MethodCandidateInfo)resolveResult).getSiteSubstitutor() : candidateProperties != null ? candidateProperties.getSubstitutor() : PsiSubstitutor.EMPTY;
           final InferenceSession callSession = new InferenceSession(typeParams, siteSubstitutor, myExpression.getManager(), myExpression);
           callSession.propagateVariables(session.getInferenceVariables());
           if (method != null) {
