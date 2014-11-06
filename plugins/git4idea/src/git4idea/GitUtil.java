@@ -97,6 +97,8 @@ public class GitUtil {
   public static final Charset UTF8_CHARSET = Charset.forName(UTF8_ENCODING);
   public static final String DOT_GIT = ".git";
 
+  public static final String ORIGIN_HEAD = "origin/HEAD";
+
   private final static Logger LOG = Logger.getInstance(GitUtil.class);
 
   /**

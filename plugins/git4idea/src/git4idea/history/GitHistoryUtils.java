@@ -583,7 +583,7 @@ public class GitHistoryUtils {
       public VcsRef fun(String refName) {
         VcsRefType type = GitRefManager.getRefType(refName);
         refName = GitBranchUtil.stripRefsPrefix(refName);
-        return factory.createRef(hash, refName, type, root);
+        return refName.equals(GitUtil.ORIGIN_HEAD) ? null : factory.createRef(hash, refName, type, root);
       }
     });
   }
