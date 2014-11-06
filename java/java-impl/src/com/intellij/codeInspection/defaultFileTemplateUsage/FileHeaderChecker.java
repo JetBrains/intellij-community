@@ -21,7 +21,6 @@ import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiComment;
@@ -55,10 +54,8 @@ public class FileHeaderChecker {
       return null;
     }
 
-    int startOffset = matcher.start(1);
-    int endOffset = matcher.end(1);
-    PsiComment element = PsiTreeUtil.getParentOfType(file.findElementAt(startOffset), PsiComment.class);
-    if (element == null || !element.getTextRange().equals(new TextRange(startOffset, endOffset))) {
+    PsiComment element = PsiTreeUtil.findElementOfClassAtRange(file, matcher.start(1), matcher.end(1), PsiComment.class);
+    if (element == null) {
       return null;
     }
 
