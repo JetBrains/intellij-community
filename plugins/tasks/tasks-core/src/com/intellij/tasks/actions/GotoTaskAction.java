@@ -54,7 +54,6 @@ public class GotoTaskAction extends GotoActionBase implements DumbAware {
 
     popup.setShowListForEmptyPattern(true);
     popup.setSearchInAnyPlace(true);
-    popup.setFixLostTyping(false);
     popup.setAlwaysHasMore(true);
     popup.setAdText("<html>Press SHIFT to merge with current context<br/>" +
                     "Pressing " +
