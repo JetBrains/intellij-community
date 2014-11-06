@@ -40,6 +40,7 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.ui.Gray;
+import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
@@ -414,6 +415,8 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
 
   @NotNull
   private static Component getAnchor(@NotNull JRootPane pane) {
+    Component tabWrapper = UIUtil.findComponentOfType(pane, TabbedPaneWrapper.TabWrapper.class);
+    if (tabWrapper != null) return tabWrapper;
     Component splitters = UIUtil.findComponentOfType(pane, EditorsSplitters.class);
     if (splitters != null) return splitters;
     FileEditorManagerEx ex = FileEditorManagerEx.getInstanceEx(ProjectUtil.guessCurrentProject(pane));
