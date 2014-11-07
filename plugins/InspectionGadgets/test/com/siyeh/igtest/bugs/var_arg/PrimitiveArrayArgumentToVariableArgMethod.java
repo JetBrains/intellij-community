@@ -4,7 +4,7 @@ public class PrimitiveArrayArgumentToVariableArgMethod
 {
     public static void main(String[] arg)
     {
-        methodVarArgObject(new byte[3]);
+        methodVarArgObject(<warning descr="Confusing primitive array argument to var-arg method">new byte[3]</warning>);
         methodVarArgByteArray(new byte[3]);
     }
 
