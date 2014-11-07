@@ -27,6 +27,7 @@ import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -89,7 +90,7 @@ public class TaskRepositoriesConfigurable extends BaseConfigurable implements Co
         String description = "New " + subtype.getName() + " server";
         createActions.add(new IconWithTextAction(subtype.getName(), description, subtype.getIcon()) {
           @Override
-          public void actionPerformed(AnActionEvent e) {
+          public void actionPerformed(@NotNull AnActionEvent e) {
             TaskRepository repository = repositoryType.createRepository(subtype);
             addRepository(repository);
           }
@@ -113,7 +114,7 @@ public class TaskRepositoriesConfigurable extends BaseConfigurable implements Co
           for (final TaskRepository repository : repositories) {
             group.add(new IconWithTextAction(repository.getUrl(), repository.getUrl(), repository.getIcon()) {
               @Override
-              public void actionPerformed(AnActionEvent e) {
+              public void actionPerformed(@NotNull AnActionEvent e) {
                 addRepository(repository);
               }
             });
@@ -151,7 +152,7 @@ public class TaskRepositoriesConfigurable extends BaseConfigurable implements Co
     myServersPanel.add(toolbarDecorator.createPanel(), BorderLayout.CENTER);
 
     myRepositoriesList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-      public void valueChanged(ListSelectionEvent e) {
+      public void valueChanged(@NotNull ListSelectionEvent e) {
         TaskRepository repository = getSelectedRepository();
         if (repository != null) {
           String name = myRepoNames.get(repository);
@@ -182,21 +183,17 @@ public class TaskRepositoriesConfigurable extends BaseConfigurable implements Co
   private void addRepository(TaskRepository repository) {
     myRepositories.add(repository);
     ((CollectionListModel)myRepositoriesList.getModel()).add(repository);
-    addRepositoryEditor(repository, true);
+    addRepositoryEditor(repository);
     myRepositoriesList.setSelectedIndex(myRepositoriesList.getModel().getSize() - 1);
   }
 
-  private void addRepositoryEditor(TaskRepository repository, boolean requestFocus) {
+  private void addRepositoryEditor(TaskRepository repository) {
     TaskRepositoryEditor editor = repository.getRepositoryType().createEditor(repository, myProject, myChangeListener);
     myEditors.add(editor);
     JComponent component = editor.createComponent();
     String name = myRepoNames.get(repository);
     myRepositoryEditor.add(component, name);
     myRepositoryEditor.doLayout();
-    JComponent preferred = editor.getPreferredFocusedComponent();
-    if (preferred != null && requestFocus) {
-//      IdeFocusManager.getInstance(myProject).requestFocus(preferred, false);
-    }
   }
 
   @Nullable
@@ -255,7 +252,7 @@ public class TaskRepositoriesConfigurable extends BaseConfigurable implements Co
     myRepositoriesList.setModel(listModel);
 
     for (TaskRepository clone : myRepositories) {
-      addRepositoryEditor(clone, false);
+      addRepositoryEditor(clone);
     }
     
     if (!myRepositories.isEmpty()) {
