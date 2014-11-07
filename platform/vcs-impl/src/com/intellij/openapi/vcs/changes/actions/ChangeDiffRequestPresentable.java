@@ -249,8 +249,8 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
     if (hasContents(bRev, errSb)) return true;
     if (hasContents(aRev, errSb)) return true;
     errSb.add("Can't load revisions content:");
-    if (bRev != null) errSb.add("Can't load content of " + bRev.getFile() + " at " + bRev.getRevisionNumber().asString());
-    if (aRev != null) errSb.add("Can't load content of " + aRev.getFile() + " at " + aRev.getRevisionNumber().asString());
+    if (bRev != null) errSb.add("Can't load content of " + bRev.getFile().getPresentableUrl() + " at " + bRev.getRevisionNumber().asString());
+    if (aRev != null) errSb.add("Can't load content of " + aRev.getFile().getPresentableUrl() + " at " + aRev.getRevisionNumber().asString());
     if (aRev == null && bRev == null) errSb.add("Both revisions are empty");
     return false;
   }
