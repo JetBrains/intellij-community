@@ -39,7 +39,7 @@ public class ToggleToolbarAction extends ToggleAction implements DumbAware {
 
   @NotNull
   public static ActionGroup createToggleToolbarGroup(@NotNull Project project, @NotNull ToolWindow toolWindow) {
-    return new DefaultActionGroup(new ToolbarTogglesGroup(toolWindow),
+    return new DefaultActionGroup(new OptionsGroup(toolWindow),
                                   new ToggleToolbarAction(toolWindow, PropertiesComponent.getInstance(project)));
   }
 
@@ -102,18 +102,19 @@ public class ToggleToolbarAction extends ToggleAction implements DumbAware {
     return JBSwingUtilities.uiTraverser().preOrderTraversal(root).filter(ActionToolbar.class);
   }
 
-  private static class ToolbarTogglesGroup extends ActionGroup {
+  private static class OptionsGroup extends ActionGroup {
 
     private final ToolWindow myToolWindow;
 
-    public ToolbarTogglesGroup(ToolWindow toolWindow) {
+    public OptionsGroup(ToolWindow toolWindow) {
       super("View Options", true);
       myToolWindow = toolWindow;
     }
 
     @Override
     public boolean isPopup() {
-      return getChildren(null).length > 3;
+      // configured in getChildren()
+      return super.isPopup();
     }
 
     @Override
@@ -129,15 +130,21 @@ public class ToggleToolbarAction extends ToggleAction implements DumbAware {
       JComponent contentComponent = selectedContent != null ? selectedContent.getComponent() : null;
       if (contentComponent == null) return EMPTY_ARRAY;
       List<AnAction> result = ContainerUtil.newSmartList();
+      boolean addSeparator = false;
       for (final ActionToolbar toolbar : iterateToolbars(contentComponent)) {
         JComponent c = toolbar.getComponent();
         if (c.isVisible() || !c.isValid()) continue;
         List<AnAction> actions = toolbar.getActions(false);
         for (AnAction action : actions) {
-          if (!(action instanceof ToggleAction || action instanceof Separator)) continue;
+          if (action instanceof Separator && (addSeparator = true) || !(action instanceof ToggleAction)) continue;
+          if (addSeparator && !result.isEmpty()) result.add(Separator.getInstance());
           result.add(action);
+          addSeparator = false;
         }
       }
+      boolean popup = result.size() > 3;
+      setPopup(popup);
+      if (!popup && !result.isEmpty()) result.add(Separator.getInstance());
       return result.toArray(new AnAction[result.size()]);
     }
   }
