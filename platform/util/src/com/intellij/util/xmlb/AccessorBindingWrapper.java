@@ -19,12 +19,12 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-class AccessorBindingWrapper implements Binding {
-  private final Accessor myAccessor;
+class AccessorBindingWrapper extends Binding {
   private final Binding myBinding;
 
   public AccessorBindingWrapper(@NotNull Accessor accessor, @NotNull Binding binding) {
-    myAccessor = accessor;
+    super(accessor);
+
     myBinding = binding;
   }
 

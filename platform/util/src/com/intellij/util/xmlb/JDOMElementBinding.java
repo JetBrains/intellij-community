@@ -23,12 +23,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 
-class JDOMElementBinding implements Binding {
-  private final Accessor myAccessor;
+class JDOMElementBinding extends Binding {
   private final String myTagName;
 
   public JDOMElementBinding(@NotNull Accessor accessor) {
-    myAccessor = accessor;
+    super(accessor);
+
     Tag tag = myAccessor.getAnnotation(Tag.class);
     assert tag != null : "jdom.Element property without @Tag annotation: " + accessor;
 

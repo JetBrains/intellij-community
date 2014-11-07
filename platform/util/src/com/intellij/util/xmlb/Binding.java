@@ -18,16 +18,28 @@ package com.intellij.util.xmlb;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-interface Binding {
-  @Nullable
-  Object serialize(Object o, @Nullable Object context, SerializationFilter filter);
+abstract class Binding {
+  protected final Accessor myAccessor;
+
+  protected Binding(Accessor accessor) {
+    myAccessor = accessor;
+  }
+
+  @NotNull
+  public Accessor getAccessor() {
+    return myAccessor;
+  }
 
   @Nullable
-  Object deserialize(Object context, @NotNull Object... nodes);
+  public abstract Object serialize(Object o, @Nullable Object context, SerializationFilter filter);
 
-  boolean isBoundTo(Object node);
+  @Nullable
+  public abstract Object deserialize(Object context, @NotNull Object... nodes);
 
-  Class getBoundNodeType();
+  public abstract boolean isBoundTo(Object node);
 
-  void init();
+  public abstract Class getBoundNodeType();
+
+  public void init() {
+  }
 }

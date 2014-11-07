@@ -87,6 +87,7 @@ class XmlSerializerImpl {
     return _getClassBinding(aClass, type, accessor);
   }
 
+  @NotNull
   private static synchronized Binding _getClassBinding(@NotNull Class<?> aClass, @NotNull Type originalType, @Nullable Accessor accessor) {
     Pair<Type, Accessor> key = Pair.create(originalType, accessor);
     Map<Pair<Type, Accessor>, Binding> map = getBindingCacheMap();
@@ -109,26 +110,42 @@ class XmlSerializerImpl {
     return map;
   }
 
+  @NotNull
   private static Binding _getNonCachedClassBinding(@NotNull Class<?> aClass, @Nullable Accessor accessor, @NotNull Type originalType) {
-    if (aClass.isPrimitive()) return new PrimitiveValueBinding(aClass);
+    if (aClass.isPrimitive()) {
+      return new PrimitiveValueBinding(aClass, accessor);
+    }
     if (aClass.isArray()) {
       return Element.class.isAssignableFrom(aClass.getComponentType())
              ? new JDOMElementBinding(accessor) : new ArrayBinding(aClass, accessor);
     }
-    if (Number.class.isAssignableFrom(aClass)) return new PrimitiveValueBinding(aClass);
-    if (Boolean.class.isAssignableFrom(aClass)) return new PrimitiveValueBinding(aClass);
-    if (String.class.isAssignableFrom(aClass)) return new PrimitiveValueBinding(aClass);
+    if (Number.class.isAssignableFrom(aClass)) {
+      return new PrimitiveValueBinding(aClass, accessor);
+    }
+    if (Boolean.class.isAssignableFrom(aClass)) {
+      return new PrimitiveValueBinding(aClass, accessor);
+    }
+    if (String.class.isAssignableFrom(aClass)) {
+      return new PrimitiveValueBinding(aClass, accessor);
+    }
     if (Collection.class.isAssignableFrom(aClass) && originalType instanceof ParameterizedType) {
       return new CollectionBinding((ParameterizedType)originalType, accessor);
     }
-    if (Map.class.isAssignableFrom(aClass) && originalType instanceof ParameterizedType) {
-      return new MapBinding((ParameterizedType)originalType, accessor);
+    if (accessor != null) {
+      if (Map.class.isAssignableFrom(aClass) && originalType instanceof ParameterizedType) {
+        return new MapBinding((ParameterizedType)originalType, accessor);
+      }
+      if (Element.class.isAssignableFrom(aClass)) {
+        return new JDOMElementBinding(accessor);
+      }
     }
-    if (Element.class.isAssignableFrom(aClass)) return new JDOMElementBinding(accessor);
-    if (Date.class.isAssignableFrom(aClass)) return new DateBinding();
-    if (aClass.isEnum()) return new PrimitiveValueBinding(aClass);
-
-    return new BeanBinding(aClass);
+    if (Date.class.isAssignableFrom(aClass)) {
+      return new DateBinding(accessor);
+    }
+    if (aClass.isEnum()) {
+      return new PrimitiveValueBinding(aClass, accessor);
+    }
+    return new BeanBinding(aClass, accessor);
   }
 
   @Nullable

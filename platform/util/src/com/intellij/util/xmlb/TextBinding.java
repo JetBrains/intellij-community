@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.util.xmlb;
 
 import org.jdom.Content;
@@ -21,12 +20,11 @@ import org.jdom.Text;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class TextBinding implements Binding {
-  private final Accessor myAccessor;
+public class TextBinding extends Binding {
   private volatile Binding myBinding;
 
-  public TextBinding(final Accessor accessor) {
-    myAccessor = accessor;
+  public TextBinding(@NotNull Accessor accessor) {
+    super(accessor);
   }
 
   @Nullable
