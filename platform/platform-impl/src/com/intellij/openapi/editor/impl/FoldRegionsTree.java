@@ -17,8 +17,6 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.FoldRegion;
-import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -31,8 +29,6 @@ import java.util.*;
 */
 abstract class FoldRegionsTree {
   @NotNull private CachedData myCachedData = new CachedData();
-
-  int myCachedLastIndex = -1;
 
   //sorted using RangeMarker.BY_START_OFFSET comparator
   //i.e., first by start offset, then, if start offsets are equal, by end offset
@@ -66,8 +62,6 @@ abstract class FoldRegionsTree {
   }
 
   protected abstract boolean isFoldingEnabled();
-
-  protected abstract boolean isBatchFoldingProcessing();
 
   void rebuild() {
     List<FoldRegion> topLevels = new ArrayList<FoldRegion>(myRegions.size() / 2);
@@ -165,43 +159,38 @@ abstract class FoldRegionsTree {
   }
 
   boolean addRegion(@NotNull FoldRegion range) {
-    // During batchProcessing elements are inserted in ascending order,
-    // binary search find acceptable insertion place first time
-    boolean canUseCachedValue = false;
-    if (isBatchFoldingProcessing() && myCachedLastIndex >= 0 && myCachedLastIndex < myRegions.size()) {
-      FoldRegion lastRegion = myRegions.get(myCachedLastIndex);
-      if (RangeMarker.BY_START_OFFSET.compare(lastRegion, range) < 0) {
-        canUseCachedValue = myCachedLastIndex == (myRegions.size() - 1)
-                            || RangeMarker.BY_START_OFFSET.compare(range, myRegions.get(myCachedLastIndex + 1)) <= 0;
+    int start = range.getStartOffset();
+    int end = range.getEndOffset();
+    int insertionIndex = myRegions.size();
+    for (int i = 0; i < myRegions.size(); i++) {
+      FoldRegion region = myRegions.get(i);
+      int rStart = region.getStartOffset();
+      int rEnd = region.getEndOffset();
+      if (rStart < start) {
+        if (region.isValid() && start < rEnd && rEnd < end) {
+          return false;
+        }
       }
-    }
-    int index = canUseCachedValue ? myCachedLastIndex + 1 : Collections.binarySearch(myRegions, range, RangeMarker.BY_START_OFFSET);
-    if (index < 0) index = -index - 1;
-
-    if (index < myRegions.size()) {
-      FoldRegion foldRegion = myRegions.get(index);
-      if (TextRange.areSegmentsEqual(foldRegion, range)) {
-        return false;
+      else if (rStart == start) {
+        if (rEnd == end) {
+          return false;
+        }
+        else if (rEnd > end) {
+          insertionIndex = Math.min(insertionIndex, i);
+        }
       }
-    } 
-    
-    for (int i = index - 1; i >=0; --i) {
-      final FoldRegion region = myRegions.get(i);
-      if (region.getEndOffset() < range.getStartOffset()) break;
-      if (region.isValid() && intersects(region, range)) {
-        return false;
-      }
-    }
-
-    for (int i = index; i < myRegions.size(); i++) {
-      final FoldRegion region = myRegions.get(i);
-      if (region.getStartOffset() > range.getEndOffset()) break;
-      if (region.isValid() && intersects(region, range)) {
-        return false;
+      else {
+        insertionIndex = Math.min(insertionIndex, i);
+        if (rStart > end) {
+          break;
+        }
+        if (region.isValid() && rStart < end && end < rEnd) {
+          return false;
+        }
       }
     }
 
-    myRegions.add(myCachedLastIndex = index,range);
+    myRegions.add(insertionIndex, range);
     return true;
   }
 
@@ -247,14 +236,6 @@ abstract class FoldRegionsTree {
 
   private static boolean contains(FoldRegion outer, FoldRegion inner) {
     return outer.getStartOffset() <= inner.getStartOffset() && outer.getEndOffset() >= inner.getEndOffset();
-  }
-
-  private static boolean intersects(FoldRegion r1, FoldRegion r2) {
-    final int s1 = r1.getStartOffset();
-    final int s2 = r2.getStartOffset();
-    final int e1 = r1.getEndOffset();
-    final int e2 = r2.getEndOffset();
-    return s1 < s2 && s2 < e1 && e1 < e2 || s2 < s1 && s1 < e2 && e2 < e1;
   }
 
   static boolean contains(FoldRegion region, int offset) {

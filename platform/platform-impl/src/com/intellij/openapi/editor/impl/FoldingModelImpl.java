@@ -79,11 +79,6 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
       protected boolean isFoldingEnabled() {
         return FoldingModelImpl.this.isFoldingEnabled();
       }
-
-      @Override
-      protected boolean isBatchFoldingProcessing() {
-        return myIsBatchFoldingProcessing;
-      }
     };
     myFoldRegionsProcessed = false;
     refreshSettings();
@@ -210,12 +205,9 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
     }
 
     myIsBatchFoldingProcessing = true;
-    myFoldTree.myCachedLastIndex = -1;
     try {
       operation.run();
     } finally {
-      myFoldTree.myCachedLastIndex = -1;
-
       if (!oldBatchFlag) {
         if (myFoldRegionsProcessed) {
           notifyBatchFoldingProcessingDone(moveCaret);
