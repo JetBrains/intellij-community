@@ -58,4 +58,8 @@ public class AutoBoxing {
       System.out.println((Boolean)<warning descr="Auto-boxing 'b'">b</warning>);
       final Object o1 = (Object) <warning descr="Auto-boxing 'b'">b</warning>;
     }
+
+    void polymorphicSignature(java.lang.invoke.MethodHandle meh) throws Throwable {
+        meh.invokeExact(1);
+    }
 }
