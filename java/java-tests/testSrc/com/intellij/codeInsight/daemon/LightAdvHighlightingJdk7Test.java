@@ -107,6 +107,7 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
   public void testInnerInTypeArguments() { doTest(false, false); }
   public void testRawSubstitutor() { doTest(false, false); }
   public void testIncompleteDiamonds() { doTest(false, false); }
+  public void testResolveConflictDiamonds() { doTest(false, false); }
 
   public void testDynamicallyAddIgnoredAnnotations() {
     ExtensionPoint<EntryPoint> point = Extensions.getRootArea().getExtensionPoint(ToolExtensionPoints.DEAD_CODE_TOOL);
