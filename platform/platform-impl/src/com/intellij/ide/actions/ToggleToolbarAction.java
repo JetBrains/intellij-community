@@ -142,12 +142,19 @@ public class ToggleToolbarAction extends ToggleAction implements DumbAware {
       for (final ActionToolbar toolbar : iterateToolbars(contentComponent)) {
         JComponent c = toolbar.getComponent();
         if (c.isVisible() || !c.isValid()) continue;
+        if (!result.isEmpty()) result.add(Separator.getInstance());
+
         List<AnAction> actions = toolbar.getActions(false);
         for (AnAction action : actions) {
-          if (action instanceof Separator && (addSeparator = true) || !(action instanceof ToggleAction)) continue;
-          if (addSeparator && !result.isEmpty()) result.add(Separator.getInstance());
-          result.add(action);
-          addSeparator = false;
+          if (!(action instanceof Separator && (addSeparator = true)) &&
+              action instanceof ToggleAction &&
+              !result.contains(action)) {
+            if (addSeparator && result.size() > 1 && !(result.get(result.size() - 2) instanceof Separator)) {
+              result.add(Separator.getInstance());
+            }
+            result.add(action);
+            addSeparator = false;
+          }
         }
       }
       boolean popup = result.size() > 3;
