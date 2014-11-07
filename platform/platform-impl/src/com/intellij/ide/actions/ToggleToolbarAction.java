@@ -40,13 +40,14 @@ public class ToggleToolbarAction extends ToggleAction implements DumbAware {
   @NotNull
   public static ActionGroup createToggleToolbarGroup(@NotNull Project project, @NotNull ToolWindow toolWindow) {
     return new DefaultActionGroup(new OptionsGroup(toolWindow),
-                                  new ToggleToolbarAction(toolWindow, PropertiesComponent.getInstance(project)));
+                                  new ToggleToolbarAction(toolWindow, PropertiesComponent.getInstance(project)),
+                                  Separator.getInstance());
   }
 
   private final PropertiesComponent myPropertiesComponent;
   private final ToolWindow myToolWindow;
 
-  ToggleToolbarAction(@NotNull ToolWindow toolWindow, @NotNull PropertiesComponent propertiesComponent) {
+  private ToggleToolbarAction(@NotNull ToolWindow toolWindow, @NotNull PropertiesComponent propertiesComponent) {
     super("Show Toolbar");
     myPropertiesComponent = propertiesComponent;
     myToolWindow = toolWindow;
@@ -62,6 +63,13 @@ public class ToggleToolbarAction extends ToggleAction implements DumbAware {
         if (contentManager != null) contentManager.addContentManagerListener(this);
       }
     });
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    super.update(e);
+    boolean hasToolbars = iterateToolbars(myToolWindow.getContentManager().getComponent()).iterator().hasNext();
+    e.getPresentation().setVisible(hasToolbars);
   }
 
   @Override
@@ -94,7 +102,7 @@ public class ToggleToolbarAction extends ToggleAction implements DumbAware {
 
   @NotNull
   public static String getShowToolbarProperty(@NotNull ToolWindow window) {
-    return window.getStripeTitle() + ".ShowToolbar";
+    return "ToolWindow" + window.getStripeTitle() + ".ShowToolbar";
   }
 
   @NotNull
