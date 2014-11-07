@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring;
 
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlUnusedNamespaceInspection;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -23,6 +24,7 @@ import com.intellij.codeInspection.QuickFix;
 import com.intellij.lang.ImportOptimizer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlFile;
@@ -64,6 +66,8 @@ public class XmlImportOptimizer implements ImportOptimizer {
       public void run() {
         XmlFile xmlFile = (XmlFile)file;
         Project project = xmlFile.getProject();
+        HighlightDisplayKey key = HighlightDisplayKey.find(myInspection.getShortName());
+        if (!InspectionProjectProfileManager.getInstance(project).getInspectionProfile().isToolEnabled(key, xmlFile)) return;
         ProblemsHolder holder = new ProblemsHolder(InspectionManager.getInstance(project), xmlFile, false);
         final XmlElementVisitor visitor = (XmlElementVisitor)myInspection.buildVisitor(holder, false);
         new PsiRecursiveElementVisitor() {

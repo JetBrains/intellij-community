@@ -22,6 +22,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgRevisionNumber;
@@ -137,10 +138,25 @@ public abstract class HgBaseLogParser<CommitT> implements Function<String, Commi
     if (!includeFiles) {
       return ArrayUtil.toStringArray(templates);
     }
-    templates.addAll(Arrays.asList("{file_adds}", "{file_mods}", "{file_dels}"));
-    templates
-      .add(currentVersion.isBuiltInFunctionSupported() ? "{join(file_copies,'" + HgChangesetUtil.FILE_SEPARATOR + "')}" : "{file_copies}");
+    List<String> fileTypes = ContainerUtil.newArrayList("{file_adds}", "{file_mods}", "{file_dels}", "{file_copies}");
+    if (currentVersion.isBuiltInFunctionSupported()) {
+      templates.addAll(ContainerUtil.map(fileTypes, new Function<String, String>() {
+        @Override
+        public String fun(String s) {
+          return wrapInJoin(s);
+        }
+      }));
+    }
+    else {
+      templates.addAll(fileTypes);
+    }
     return ArrayUtil.toStringArray(templates);
+  }
+
+  @NotNull
+  private static String wrapInJoin(@NotNull String filesType) {
+    int len = filesType.length();
+    return "{join(" + filesType.substring(1, len - 1) + ",'" + HgChangesetUtil.FILE_SEPARATOR + "')}";
   }
 
   @NotNull

@@ -116,9 +116,12 @@ java.sql.PreparedStatement#executeLargeUpdate()
 java.sql.BatchUpdateException#BatchUpdateException(java.lang.String;java.lang.String;int;long[];java.lang.Throwable;)
 java.sql.BatchUpdateException#getLargeUpdateCounts()
 java.sql.BatchUpdateException#longUpdateCounts
+java.lang.invoke.LambdaConversionException
+java.lang.invoke.LambdaMetafactory
 java.lang.invoke.MethodHandles#reflectAs(java.lang.Class<T>;java.lang.invoke.MethodHandle;)
 java.lang.invoke.MethodHandles.Lookup#revealDirect(java.lang.invoke.MethodHandle;)
 java.lang.invoke.MethodHandleInfo
+java.lang.invoke.SerializedLambda
 java.lang.reflect.Type#getTypeName()
 java.lang.reflect.Field#getAnnotationsByType(java.lang.Class<T>;)
 java.lang.reflect.Field#getAnnotatedType()

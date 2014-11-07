@@ -19,7 +19,6 @@ package com.intellij.ide.impl;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.actions.ToggleToolbarAction;
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.ide.structureView.*;
 import com.intellij.ide.structureView.impl.StructureViewComposite;
@@ -71,7 +70,6 @@ import java.util.List;
 public class StructureViewWrapperImpl implements StructureViewWrapper, Disposable {
   private final Project myProject;
   private final ToolWindowEx myToolWindow;
-  private final AnAction myShowToolbarAction;
 
   private VirtualFile myFile;
 
@@ -93,7 +91,6 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
   public StructureViewWrapperImpl(Project project, ToolWindowEx toolWindow) {
     myProject = project;
     myToolWindow = toolWindow;
-    myShowToolbarAction = ToggleToolbarAction.createToggleToolbarGroup(project, myToolWindow);
 
     myUpdateQueue = new MergingUpdateQueue("StructureView", Registry.intValue("structureView.coalesceTime"), false, myToolWindow.getComponent(), this, myToolWindow.getComponent(), true);
     myUpdateQueue.setRestartTimerOnAdd(true);
@@ -376,9 +373,6 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
         CommonActionsManager.getInstance().createExpandAllHeaderAction(tree),
         CommonActionsManager.getInstance().createCollapseAllHeaderAction(tree)};
     }
-    DefaultActionGroup gearActions = new DefaultActionGroup();
-    gearActions.addAction(myShowToolbarAction).setAsSecondary(true);
-    myToolWindow.setAdditionalGearActions(gearActions);
     myToolWindow.setTitleActions(titleActions);
   }
 

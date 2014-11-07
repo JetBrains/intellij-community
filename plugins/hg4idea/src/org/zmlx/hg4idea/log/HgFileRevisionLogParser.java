@@ -60,16 +60,17 @@ public class HgFileRevisionLogParser extends HgBaseLogParser<HgFileRevision> {
     Set<String> filesDeleted = Collections.emptySet();
     Map<String, String> copies = Collections.emptyMap();
     boolean shouldParseOldTemplate = !myVersion.isBuiltInFunctionSupported();
+    String separator = shouldParseOldTemplate ? " " : HgChangesetUtil.FILE_SEPARATOR;
     // At least in the case of the long template, it's OK that we don't have everything...for example, if there were no
     //  deleted or copied files, then we won't get any attributes for them...
     if (numAttributes > FILES_ADDED_INDEX) {
-      filesAdded = parseFileList(attributes.get(FILES_ADDED_INDEX));
+      filesAdded = parseFileList(attributes.get(FILES_ADDED_INDEX), separator);
 
       if (numAttributes > FILES_MODIFIED_INDEX) {
-        filesModified = parseFileList(attributes.get(FILES_MODIFIED_INDEX));
+        filesModified = parseFileList(attributes.get(FILES_MODIFIED_INDEX), separator);
 
         if (numAttributes > FILES_DELETED_INDEX) {
-          filesDeleted = parseFileList(attributes.get(FILES_DELETED_INDEX));
+          filesDeleted = parseFileList(attributes.get(FILES_DELETED_INDEX), separator);
 
           if (numAttributes > FILES_COPIED_INDEX) {
             copies = shouldParseOldTemplate
@@ -95,13 +96,10 @@ public class HgFileRevisionLogParser extends HgBaseLogParser<HgFileRevision> {
                               filesModified, filesAdded, filesDeleted, copies);
   }
 
-  private static Set<String> parseFileList(@Nullable String fileListString) {
-    if (StringUtil.isEmpty(fileListString)) {
-      return Collections.emptySet();
-    }
-    else {
-      return new HashSet<String>(StringUtil.split(fileListString," "));
-    }
+  private static Set<String> parseFileList(@Nullable String fileListString, @NotNull String separator) {
+    return StringUtil.isEmpty(fileListString)
+           ? Collections.<String>emptySet()
+           : new HashSet<String>(StringUtil.split(fileListString, separator));
   }
 
   @NotNull

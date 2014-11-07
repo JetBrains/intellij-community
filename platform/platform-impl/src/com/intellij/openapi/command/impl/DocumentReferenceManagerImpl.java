@@ -28,7 +28,6 @@ import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.reference.SoftReference;
-import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.containers.WeakKeyWeakValueHashMap;
 import com.intellij.util.containers.WeakValueHashMap;
 import com.intellij.util.io.fs.FilePath;
@@ -134,10 +133,10 @@ public class DocumentReferenceManagerImpl extends DocumentReferenceManager imple
   public DocumentReference create(@NotNull VirtualFile file) {
     assertInDispatchThread();
 
-    if (file instanceof LightVirtualFile) {
+    if (!file.isInLocalFileSystem()) { // we treat local files differently from non local because we can undo their deletion
       DocumentReference reference = file.getUserData(FILE_TO_STRONG_REF_KEY);
       if (reference == null) {
-        file.putUserData(FILE_TO_STRONG_REF_KEY, reference = new DocumentReferenceByLightVirtualFile((LightVirtualFile)file));
+        file.putUserData(FILE_TO_STRONG_REF_KEY, reference = new DocumentReferenceByNonlocalVirtualFile(file));
       }
       return reference;
     }

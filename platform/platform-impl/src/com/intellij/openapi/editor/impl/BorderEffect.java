@@ -144,9 +144,14 @@ public class BorderEffect {
     border.horizontalTo(editor.getMaxWidthInRange(startOffset, endOffset) - 1);
     border.verticalRel(height - 1);
     border.horizontalTo(endX);
-    border.verticalRel(editor.getLineHeight());
-    border.horizontalTo(0);
-    border.verticalRel(-height + 1);
+    if (endX > 0) {
+      border.verticalRel(editor.getLineHeight());
+      border.horizontalTo(0);
+      border.verticalRel(-height + 1);
+    }
+    else {
+      border.verticalTo(startY + editor.getLineHeight() - 1);
+    }
     border.horizontalTo(startX);
     border.verticalTo(startY);
   }

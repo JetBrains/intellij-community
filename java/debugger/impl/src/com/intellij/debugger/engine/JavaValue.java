@@ -16,7 +16,6 @@
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.DebuggerBundle;
-import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.actions.JavaReferringObjectsValue;
 import com.intellij.debugger.actions.JumpToObjectAction;
@@ -181,13 +180,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
 
                     @Override
                     public void contextAction() throws Exception {
-                      final String valueAsString = myValueDescriptor.getValueText();
-                      DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
-                        @Override
-                        public void run() {
-                          callback.evaluated(valueAsString);
-                        }
-                      });
+                      callback.evaluated(myValueDescriptor.getValueText());
                     }
                   });
                 }

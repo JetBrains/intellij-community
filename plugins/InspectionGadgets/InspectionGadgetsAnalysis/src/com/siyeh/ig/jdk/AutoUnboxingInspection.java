@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.jdk;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.java.JavaLanguage;
@@ -340,6 +341,11 @@ public class AutoUnboxingInspection extends BaseInspection {
     @Override
     public void visitMethodCallExpression(PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
+      final PsiMethod method = expression.resolveMethod();
+      if (method != null &&
+          AnnotationUtil.isAnnotated(method, Collections.singletonList( "java.lang.invoke.MethodHandle.PolymorphicSignature"))) {
+        return;
+      }
       checkExpression(expression);
     }
 
