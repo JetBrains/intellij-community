@@ -218,6 +218,10 @@
             <option name="TAB_SIZE" value="8" />
           </indentOptions>
         </codeStyleSettings>
+        <codeStyleSettings language="JSON">
+          <option name="KEEP_LINE_BREAKS" value="false" />
+          <option name="PARENT_SETTINGS_INSTALLED" value="true" />
+        </codeStyleSettings>
         <codeStyleSettings language="JSP">
           <indentOptions>
             <option name="INDENT_SIZE" value="2" />
@@ -309,4 +313,3 @@
     <option name="USE_PER_PROJECT_SETTINGS" value="true" />
   </component>
 </project>
-
