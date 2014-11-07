@@ -77,4 +77,8 @@ public class AutoUnboxing {
                 <warning descr="Auto-unboxing 'Boolean.valueOf(false)'">Boolean.valueOf(false)</warning>;
     boolean g = Boolean.valueOf(true) == Boolean.valueOf(false) == true;
   }
+
+  int polymorphicSignature(java.lang.invoke.MethodHandle mh) throws Throwable {
+    return (int)mh.invokeExact();
+  }
 }
