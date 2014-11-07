@@ -1,8 +1,11 @@
 <idea-plugin version="2">
   <name>Settings Repository</name>
   <id>org.jetbrains.settingsRepository</id>
-  <description>Supports sharing settings between installations of IntelliJ Platform based products used by the same developer (or team) on different computers</description>
-  <version>999.999</version>
+  <description><![CDATA[
+  <p>Supports sharing settings between installations of IntelliJ Platform based products used by the same developer (or team) on different computers.</p>
+  <p>Synchronization is performed automatically after successful completion of "Update Project" or "Push" actions. Also you can do sync using VCS -> Sync Settings.</p>
+  <p>See <a href="https://github.com/develar/settings-repository">project page</a> for more info.</p>]]></description>
+  <version>2.0.3.140</version>
   <idea-version since-build="140.143" until-build="141.0"/>
   <vendor>JetBrains</vendor>
 
