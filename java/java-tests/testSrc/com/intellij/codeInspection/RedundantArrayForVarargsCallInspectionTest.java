@@ -24,4 +24,5 @@ public class RedundantArrayForVarargsCallInspectionTest extends InspectionTestCa
   public void testCheckEnumConstant() throws Exception { doTest(); }
   public void testGeneric() throws Exception { doTest(); }
   public void testRawArray() throws Exception { doTest(); }
+  public void testPolymorphicSignature() throws Exception { doTest(); }
 }
