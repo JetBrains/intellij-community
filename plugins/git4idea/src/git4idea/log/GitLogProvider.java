@@ -343,10 +343,10 @@ public class GitLogProvider implements VcsLogProvider {
     Set<VcsRef> refs = new THashSet<VcsRef>(localBranches.size() + remoteBranches.size());
     for (GitLocalBranch localBranch : localBranches) {
       refs.add(
-        myVcsObjectsFactory.createRef(HashImpl.build(localBranch.getHash()), localBranch.getName(), GitRefManager.LOCAL_BRANCH, root));
+        myVcsObjectsFactory.createRef(localBranch.getHash(), localBranch.getName(), GitRefManager.LOCAL_BRANCH, root));
     }
     for (GitRemoteBranch remoteBranch : remoteBranches) {
-      refs.add(myVcsObjectsFactory.createRef(HashImpl.build(remoteBranch.getHash()), remoteBranch.getNameForLocalOperations(),
+      refs.add(myVcsObjectsFactory.createRef(remoteBranch.getHash(), remoteBranch.getNameForLocalOperations(),
                                              GitRefManager.REMOTE_BRANCH, root));
     }
     String currentRevision = repository.getCurrentRevision();
