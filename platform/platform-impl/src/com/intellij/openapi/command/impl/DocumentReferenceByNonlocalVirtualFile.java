@@ -19,14 +19,13 @@ import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.LightVirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-class DocumentReferenceByLightVirtualFile implements DocumentReference {
-  private LightVirtualFile myFile;
+class DocumentReferenceByNonlocalVirtualFile implements DocumentReference {
+  private final VirtualFile myFile;
 
-  DocumentReferenceByLightVirtualFile(@NotNull LightVirtualFile file) {
+  DocumentReferenceByNonlocalVirtualFile(@NotNull VirtualFile file) {
     myFile = file;
   }
 

@@ -21,7 +21,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.WeakList;
 import gnu.trove.THashSet;
@@ -35,9 +34,11 @@ class UndoRedoStacksHolder {
   private final boolean myUndo;
 
   private final LinkedList<UndoableGroup> myGlobalStack = new LinkedList<UndoableGroup>();
+  // strongly reference local files for which we can undo file removal
+  // document without files and nonlocal files are stored without strong reference
   private final Map<DocumentReference, LinkedList<UndoableGroup>> myDocumentStacks = new HashMap<DocumentReference, LinkedList<UndoableGroup>>();
   private final WeakList<Document> myDocumentsWithStacks = new WeakList<Document>();
-  private final WeakList<LightVirtualFile> myLightVirtualFilesWithStacks = new WeakList<LightVirtualFile>();
+  private final WeakList<VirtualFile> myNonlocalVirtualFilesWithStacks = new WeakList<VirtualFile>();
 
   public UndoRedoStacksHolder(boolean isUndo) {
     myUndo = isUndo;
@@ -53,8 +54,8 @@ class UndoRedoStacksHolder {
     LinkedList<UndoableGroup> result;
     VirtualFile file = r.getFile();
 
-    if (file instanceof LightVirtualFile) {
-      result = addWeaklyTrackedEmptyStack((LightVirtualFile)file, myLightVirtualFilesWithStacks);
+    if (!file.isInLocalFileSystem()) {
+      result = addWeaklyTrackedEmptyStack(file, myNonlocalVirtualFilesWithStacks);
     }
     else {
       result = myDocumentStacks.get(r);
@@ -178,7 +179,7 @@ class UndoRedoStacksHolder {
 
 
     cleanWeaklyTrackedEmptyStacks(myDocumentsWithStacks);
-    cleanWeaklyTrackedEmptyStacks(myLightVirtualFilesWithStacks);
+    cleanWeaklyTrackedEmptyStacks(myNonlocalVirtualFilesWithStacks);
   }
 
   private <T extends UserDataHolder> void cleanWeaklyTrackedEmptyStacks(WeakList<T> stackHolders) {
@@ -240,7 +241,7 @@ class UndoRedoStacksHolder {
     for (Document each : myDocumentsWithStacks) {
       result.add(documentReferenceManager.create(each));
     }
-    for (LightVirtualFile each : myLightVirtualFilesWithStacks) {
+    for (VirtualFile each : myNonlocalVirtualFilesWithStacks) {
       result.add(documentReferenceManager.create(each));
     }
   }
