@@ -15,8 +15,8 @@
  */
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.FoldRegion;
+import com.intellij.openapi.editor.*;
+import com.intellij.openapi.util.Key;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -309,7 +309,13 @@ abstract class FoldRegionsTree {
 
     return end;
   }
-  
+
+  @Nullable
+  public FoldRegion getRegionAt(int startOffset, int endOffset) {
+    int index = Collections.binarySearch(myRegions, new DummyFoldRegion(startOffset, endOffset), RangeMarker.BY_START_OFFSET);
+    return index < 0 ? null : myRegions.get(index);
+  }
+
   private class CachedData implements Cloneable {
     private final FoldRegion[] visibleRegions;
     private final FoldRegion[] topLevelRegions;
@@ -335,6 +341,105 @@ abstract class FoldRegionsTree {
 
     private boolean isUnavailable() {
       return !isFoldingEnabled() || visibleRegions == null;
+    }
+  }
+
+  private static class DummyFoldRegion implements FoldRegion {
+    private final int myStartOffset;
+    private final int myEndOffset;
+
+    private DummyFoldRegion(int startOffset, int endOffset) {
+      myStartOffset = startOffset;
+      myEndOffset = endOffset;
+    }
+
+    @Override
+    public boolean isExpanded() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void setExpanded(boolean expanded) {
+      throw new UnsupportedOperationException();
+    }
+
+    @NotNull
+    @Override
+    public String getPlaceholderText() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Editor getEditor() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Nullable
+    @Override
+    public FoldingGroup getGroup() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean shouldNeverExpand() {
+      throw new UnsupportedOperationException();
+    }
+
+    @NotNull
+    @Override
+    public Document getDocument() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public int getStartOffset() {
+      return myStartOffset;
+    }
+
+    @Override
+    public int getEndOffset() {
+      return myEndOffset;
+    }
+
+    @Override
+    public boolean isValid() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void setGreedyToLeft(boolean greedy) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void setGreedyToRight(boolean greedy) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean isGreedyToRight() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean isGreedyToLeft() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void dispose() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Nullable
+    @Override
+    public <T> T getUserData(@NotNull Key<T> key) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
+      throw new UnsupportedOperationException();
     }
   }
 }

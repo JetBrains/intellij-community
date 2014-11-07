@@ -245,6 +245,13 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
     return myFoldTree.fetchOutermost(offset);
   }
 
+  @Nullable
+  @Override
+  public FoldRegion getFoldRegion(int startOffset, int endOffset) {
+    assertReadAccess();
+    return myFoldTree.getRegionAt(startOffset, endOffset);
+  }
+
   @Override
   @Nullable
   public FoldRegion getFoldingPlaceholderAt(Point p) {
