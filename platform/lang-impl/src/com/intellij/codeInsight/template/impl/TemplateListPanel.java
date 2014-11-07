@@ -632,7 +632,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
       .disableUpAction()
       .addExtraAction(new AnActionButton("Copy", PlatformIcons.COPY_ICON) {
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           copyRow();
         }
 
@@ -655,7 +655,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
     if (getSchemesManager().isExportAvailable()) {
       decorator.addExtraAction(new AnActionButton("Share...", PlatformIcons.EXPORT_ICON) {
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           exportCurrentGroup();
         }
 
@@ -669,7 +669,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
     if (getSchemesManager().isImportAvailable()) {
       decorator.addExtraAction(new AnActionButton("Import Shared...", PlatformIcons.IMPORT_ICON) {
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           new SchemesToImportPopup<TemplateGroup, TemplateGroup>(TemplateListPanel.this){
             @Override
             protected void onSchemeSelected(final TemplateGroup scheme) {
@@ -703,13 +703,13 @@ public class TemplateListPanel extends JPanel implements Disposable {
     DefaultActionGroup group = new DefaultActionGroup();
     group.add(new DumbAwareAction("Live Template") {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         addTemplate();
       }
     });
     group.add(new DumbAwareAction("Template Group...") {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         String newName = Messages
           .showInputDialog(myTree, "Enter the new group name:", "Create New Group", null, "", new TemplateGroupInputValidator(null));
         if (newName != null) {
@@ -734,7 +734,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
     final DumbAwareAction rename = new DumbAwareAction("Rename") {
 
       @Override
-      public void update(AnActionEvent e) {
+      public void update(@NotNull AnActionEvent e) {
         final int selected = getSingleSelectedIndex();
         final TemplateGroup templateGroup = getGroup(selected);
         boolean enabled = templateGroup != null;
@@ -744,7 +744,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
       }
 
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         renameGroup();
       }
     };
@@ -769,7 +769,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
             if (!oldGroups.contains(newGroupName) && !schemesManager.isShared(group)) {
               add(new DumbAwareAction(newGroupName) {
                 @Override
-                public void actionPerformed(AnActionEvent e) {
+                public void actionPerformed(@NotNull AnActionEvent e) {
                   moveTemplates(templates, newGroupName);
                 }
               });
@@ -778,7 +778,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
           addSeparator();
           add(new DumbAwareAction("New group...") {
             @Override
-            public void actionPerformed(AnActionEvent e) {
+            public void actionPerformed(@NotNull AnActionEvent e) {
               String newName = Messages.showInputDialog(myTree, "Enter the new group name:", "Move to a New Group", null, "", new TemplateGroupInputValidator(null));
               if (newName != null) {
                 moveTemplates(templates, newName);
@@ -792,14 +792,14 @@ public class TemplateListPanel extends JPanel implements Disposable {
     final DumbAwareAction changeContext = new DumbAwareAction("Change context...") {
 
       @Override
-      public void update(AnActionEvent e) {
+      public void update(@NotNull AnActionEvent e) {
         boolean enabled = !getSelectedTemplates().isEmpty();
         e.getPresentation().setEnabled(enabled);
         super.update(e);
       }
 
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         Map<TemplateImpl, DefaultMutableTreeNode> templates = getSelectedTemplates();
         TemplateContext context = new TemplateContext();
         JPanel contextPanel = LiveTemplateSettingsEditor.createPopupContextPanel(EmptyRunnable.INSTANCE, context);
@@ -819,7 +819,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
     final DumbAwareAction revert = new DumbAwareAction("Restore defaults", "Restore default setting for the selected templates", null) {
 
       @Override
-      public void update(AnActionEvent e) {
+      public void update(@NotNull AnActionEvent e) {
         boolean enabled = false;
         Map<TemplateImpl, DefaultMutableTreeNode> templates = getSelectedTemplates();
         for (TemplateImpl template : templates.keySet()) {
@@ -834,7 +834,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
       }
 
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         Map<TemplateImpl, DefaultMutableTreeNode> templates = getSelectedTemplates();
         for (TemplateImpl template : templates.keySet()) {
           TemplateImpl defaultTemplate = TemplateSettings.getInstance().getDefaultTemplate(template);
