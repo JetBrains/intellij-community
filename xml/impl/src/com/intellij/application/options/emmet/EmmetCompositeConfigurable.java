@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,9 @@
  */
 package com.intellij.application.options.emmet;
 
-import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.template.emmet.generators.XmlZenCodingGenerator;
 import com.intellij.codeInsight.template.emmet.generators.ZenCodingGenerator;
-import com.intellij.codeInsight.template.impl.TemplateSettings;
+import com.intellij.codeInsight.template.impl.TemplateExpandShortcutPanel;
 import com.intellij.openapi.options.CompositeConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -41,18 +41,8 @@ import java.util.List;
 public class EmmetCompositeConfigurable extends CompositeConfigurable<UnnamedConfigurable> implements SearchableConfigurable {
   private JPanel myRootPanel;
   private JPanel myGeneratorSettingsPanel;
-  private JComboBox myEmmetExpandShortcutCombo;
-
-  private static final String SPACE = CodeInsightBundle.message("template.shortcut.space");
-  private static final String TAB = CodeInsightBundle.message("template.shortcut.tab");
-  private static final String ENTER = CodeInsightBundle.message("template.shortcut.enter");
-
-  public EmmetCompositeConfigurable() {
-    myEmmetExpandShortcutCombo.addItem(SPACE);
-    myEmmetExpandShortcutCombo.addItem(TAB);
-    myEmmetExpandShortcutCombo.addItem(ENTER);
-  }
-
+  private TemplateExpandShortcutPanel myTemplateExpandShortcutPanel;
+  
   @Nls
   @Override
   public String getDisplayName() {
@@ -73,6 +63,7 @@ public class EmmetCompositeConfigurable extends CompositeConfigurable<UnnamedCon
     for (int i = 0; i < configurables.size(); i++) {
       UnnamedConfigurable configurable = configurables.get(i);
       final JComponent component = configurable.createComponent();
+      assert component != null;
       myGeneratorSettingsPanel.add(component,
                                    new GridConstraints(i, 0, 1, 1, 0, GridConstraints.FILL_HORIZONTAL, 
                                                        GridConstraints.SIZEPOLICY_CAN_GROW | GridConstraints.SIZEPOLICY_WANT_GROW | GridConstraints.SIZEPOLICY_CAN_SHRINK,
@@ -87,29 +78,20 @@ public class EmmetCompositeConfigurable extends CompositeConfigurable<UnnamedCon
   @Override
   public void reset() {
     final EmmetOptions emmetOptions = EmmetOptions.getInstance();
-    char shortcut = (char)emmetOptions.getEmmetExpandShortcut();
-    if (shortcut == TemplateSettings.TAB_CHAR) {
-      myEmmetExpandShortcutCombo.setSelectedItem(TAB);
-    }
-    else if (shortcut == TemplateSettings.ENTER_CHAR) {
-      myEmmetExpandShortcutCombo.setSelectedItem(ENTER);
-    }
-    else {
-      myEmmetExpandShortcutCombo.setSelectedItem(SPACE);
-    }
+    myTemplateExpandShortcutPanel.setSelectedChar((char)emmetOptions.getEmmetExpandShortcut());
     super.reset();
   }
 
   @Override
   public void apply() throws ConfigurationException {
     final EmmetOptions emmetOptions = EmmetOptions.getInstance();
-    emmetOptions.setEmmetExpandShortcut(getSelectedEmmetExpandShortcut());
+    emmetOptions.setEmmetExpandShortcut(myTemplateExpandShortcutPanel.getSelectedChar());
     super.apply();
   }
 
   @Override
   public boolean isModified() {
-    return EmmetOptions.getInstance().getEmmetExpandShortcut() != getSelectedEmmetExpandShortcut() || super.isModified();
+    return EmmetOptions.getInstance().getEmmetExpandShortcut() != myTemplateExpandShortcutPanel.getSelectedChar() || super.isModified();
   }
 
   @Override
@@ -120,22 +102,17 @@ public class EmmetCompositeConfigurable extends CompositeConfigurable<UnnamedCon
 
   @Override
   protected List<UnnamedConfigurable> createConfigurables() {
-    List<UnnamedConfigurable> configurables = ContainerUtil.newArrayList();
+    List<UnnamedConfigurable> xmlConfigurables = ContainerUtil.newSmartList();
+    List<UnnamedConfigurable> configurables = ContainerUtil.newSmartList();
     for (ZenCodingGenerator zenCodingGenerator : ZenCodingGenerator.getInstances()) {
-      ContainerUtil.addIfNotNull(configurables, zenCodingGenerator.createConfigurable());
+      if (zenCodingGenerator instanceof XmlZenCodingGenerator) {
+        ContainerUtil.addIfNotNull(xmlConfigurables, zenCodingGenerator.createConfigurable());
+      }
+      else {
+        ContainerUtil.addIfNotNull(configurables, zenCodingGenerator.createConfigurable());
+      }
     }
-    return configurables;
-  }
-
-  private char getSelectedEmmetExpandShortcut() {
-    Object selectedItem = myEmmetExpandShortcutCombo.getSelectedItem();
-    if (TAB.equals(selectedItem)) {
-      return TemplateSettings.TAB_CHAR;
-    }
-    else if (ENTER.equals(selectedItem)) {
-      return TemplateSettings.ENTER_CHAR;
-    }
-    return TemplateSettings.SPACE_CHAR;
+    return ContainerUtil.concat(xmlConfigurables, configurables);
   }
 
   @NotNull
@@ -148,5 +125,9 @@ public class EmmetCompositeConfigurable extends CompositeConfigurable<UnnamedCon
   @Override
   public Runnable enableSearch(String option) {
     return null;
+  }
+
+  private void createUIComponents() {
+    myTemplateExpandShortcutPanel = new TemplateExpandShortcutPanel(XmlBundle.message("emmet.expand.abbreviation.with"));
   }
 }
