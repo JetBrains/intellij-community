@@ -155,7 +155,7 @@ public final class UpdateChecker {
                                             final @Nullable ActionCallback callback) {
     final CheckForUpdateResult result = checkForUpdates(updateSettings);
 
-    if (result.getState() == UpdateStrategy.State.LOADED) {
+    if (manualCheck && result.getState() == UpdateStrategy.State.LOADED) {
       UpdateSettings settings = UpdateSettings.getInstance();
       settings.saveLastCheckedInfo();
       settings.setKnownChannelIds(result.getAllChannelsIds());
