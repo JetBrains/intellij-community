@@ -16,8 +16,9 @@
 package com.intellij.formatting;
 
 import com.intellij.diagnostic.LogMessageEx;
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,10 +51,16 @@ public abstract class AbstractBlockAlignmentProcessor implements BlockAlignmentP
     }
 
     if (diff > 0) {
-      whiteSpace.setSpaces(whiteSpace.getSpaces() + diff, whiteSpace.getIndentSpaces());
+      int alignmentSpaces = whiteSpace.getSpaces() + diff;
+      if (alignmentSpaces > context.maxAlignmentSpaces) {
+        whiteSpace.setSpaces(1, whiteSpace.getIndentSpaces());
+        reportAlignmentProcessingError(context);
+        return Result.RECURSION_DETECTED;
+      }
+      whiteSpace.setSpaces(alignmentSpaces, whiteSpace.getIndentSpaces());
 
-      // Avoid tabulations usage for aligning blocks that are not the first blocks on a line.
       if (!whiteSpace.containsLineFeeds()) {
+        // Avoid tabulations usage for aligning blocks that are not the first blocks on a line.
         whiteSpace.setForceSkipTabulationsUsage(true);
       }
       return Result.TARGET_BLOCK_ALIGNED;
@@ -127,4 +134,12 @@ public abstract class AbstractBlockAlignmentProcessor implements BlockAlignmentP
    * @return                        alignment anchor indent minus current target block indent
    */
   protected abstract int getAlignmentIndentDiff(@NotNull IndentData alignmentAnchorIndent, @NotNull Context context);
+
+  private static void reportAlignmentProcessingError(Context context) {
+    ASTNode node = context.targetBlock.getNode();
+    Language language = node != null ? node.getPsi().getLanguage() : null;
+    LogMessageEx.error(LOG,
+                       (language != null ? language.getDisplayName() + ": " : "") +
+                       "Can't align block " + context.targetBlock, context.document.getText());
+  }
 }
