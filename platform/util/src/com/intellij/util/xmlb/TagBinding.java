@@ -17,7 +17,6 @@ package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jdom.Content;
@@ -55,27 +54,30 @@ class TagBinding extends BasePrimitiveBinding {
     return v;
   }
 
+  @Nullable
+  @Override
+  public Object deserializeList(Object context, @NotNull List<?> nodes) {
+    boolean isBeanBinding = myBinding instanceof BeanBinding;
+    String name = ((Element)nodes.get(0)).getName();
+    List<? extends Content> children = new SmartList<Content>();
+    for (Object node : nodes) {
+      Element element = (Element)node;
+      assert element.getName().equals(name);
+      //noinspection unchecked
+      children.addAll(((List)(isBeanBinding ? element.getChildren() : element.getContent())));
+    }
+    return deserialize(context, children, isBeanBinding);
+  }
+
   @Override
   @Nullable
-  public Object deserialize(Object o, @NotNull Object... nodes) {
-    assert nodes.length > 0;
-    List<? extends Content> children;
+  public Object deserialize(Object context, @NotNull Object node) {
     boolean isBeanBinding = myBinding instanceof BeanBinding;
-    if (nodes.length == 1) {
-      Element node = (Element)nodes[0];
-      children = isBeanBinding ? node.getChildren() : node.getContent();
-    }
-    else {
-      String name = ((Element)nodes[0]).getName();
-      children = new SmartList<Content>();
-      for (Object node : nodes) {
-        Element element = (Element)node;
-        assert element.getName().equals(name);
-        //noinspection unchecked
-        children.addAll(((List)(isBeanBinding ? element.getChildren() : element.getContent())));
-      }
-    }
+    Element element = (Element)node;
+    return deserialize(context, isBeanBinding ? element.getChildren() : element.getContent(), isBeanBinding);
+  }
 
+  private Object deserialize(Object o, List<? extends Content> children, boolean isBeanBinding) {
     assert myBinding != null;
     if (isBeanBinding && myAccessor.isFinal()) {
       ((BeanBinding)myBinding).deserializeInto(o, (Element)children.get(0), null);
@@ -85,7 +87,7 @@ class TagBinding extends BasePrimitiveBinding {
         children = Collections.<Content>singletonList(new Text(myTextIfEmpty));
       }
 
-      Object v = myBinding.deserialize(myAccessor.read(o), ArrayUtil.toObjectArray(children));
+      Object v = myBinding.deserializeList(myAccessor.read(o), children);
       myAccessor.write(o, XmlSerializerImpl.convert(v, myAccessor.getValueClass()));
     }
     return o;

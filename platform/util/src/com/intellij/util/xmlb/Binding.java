@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ package com.intellij.util.xmlb;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 abstract class Binding {
   protected final Accessor myAccessor;
 
@@ -34,7 +36,10 @@ abstract class Binding {
   public abstract Object serialize(Object o, @Nullable Object context, SerializationFilter filter);
 
   @Nullable
-  public abstract Object deserialize(Object context, @NotNull Object... nodes);
+  public abstract Object deserialize(Object context, @NotNull Object node);
+
+  @Nullable
+  public abstract Object deserializeList(Object context, @NotNull List<?> nodes);
 
   public abstract boolean isBoundTo(Object node);
 

@@ -15,7 +15,6 @@
  */
 package com.intellij.util.xmlb;
 
-import com.intellij.openapi.util.JDOMUtil;
 import org.jdom.Content;
 import org.jdom.Element;
 import org.jdom.Text;
@@ -23,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 //todo: merge with option tag binding
-class TagBindingWrapper extends Binding {
+class TagBindingWrapper extends SingleBinding {
   private final Binding binding;
   private final String myTagName;
   private final String myAttributeName;
@@ -59,19 +58,14 @@ class TagBindingWrapper extends Binding {
   }
 
   @Override
-  public Object deserialize(Object context, @NotNull Object... nodes) {
-    assert nodes.length == 1;
-
-    Element e = (Element)nodes[0];
-    final Object[] childNodes;
-    if (!myAttributeName.isEmpty()) {
-      childNodes = new Object[]{e.getAttribute(myAttributeName)};
+  public Object deserialize(Object context, @NotNull Object node) {
+    Element element = (Element)node;
+    if (myAttributeName.isEmpty()) {
+      return binding.deserializeList(context, element.getContent());
     }
     else {
-      childNodes = JDOMUtil.getContent(e);
+      return binding.deserialize(context, element.getAttribute(myAttributeName));
     }
-  
-    return binding.deserialize(context, childNodes);
   }
 
   @Override

@@ -16,12 +16,14 @@
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.List;
 
 class JDOMElementBinding extends Binding {
   private final String myTagName;
@@ -62,18 +64,36 @@ class JDOMElementBinding extends Binding {
     throw new XmlSerializationException("org.jdom.Element expected but " + value + " found");
   }
 
-  @Override
   @Nullable
-  public Object deserialize(Object context, @NotNull Object... nodes) {
+  @Override
+  public Object deserializeList(Object context, @NotNull List<?> nodes) {
     if (myAccessor.getValueClass().isArray()) {
-      Element[] result = new Element[nodes.length];
-      System.arraycopy(nodes, 0, result, 0, nodes.length);
-      myAccessor.write(context, result);
+      List<Element> result = new SmartList<Element>();
+      for (Object aNode : nodes) {
+        if (!XmlSerializerImpl.isIgnoredNode(aNode)) {
+          result.add((Element)aNode);
+        }
+      }
+      myAccessor.write(context, result.toArray(new Element[nodes.size()]));
     }
     else {
-      assert nodes.length == 1;
-      myAccessor.write(context, nodes[0]);
+      Element element = null;
+      for (Object aNode : nodes) {
+        if (!XmlSerializerImpl.isIgnoredNode(aNode)) {
+          element = (Element)aNode;
+          break;
+        }
+      }
+      assert element != null;
+      myAccessor.write(context, element);
     }
+    return context;
+  }
+
+  @Override
+  @Nullable
+  public Object deserialize(Object context, @NotNull Object node) {
+    myAccessor.write(context, node);
     return context;
   }
 
@@ -85,9 +105,5 @@ class JDOMElementBinding extends Binding {
   @Override
   public Class getBoundNodeType() {
     throw new UnsupportedOperationException("Method getBoundNodeType is not supported in " + getClass());
-  }
-
-  @Override
-  public void init() {
   }
 }

@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.util.xmlb;
 
 import com.intellij.util.SmartList;
@@ -91,6 +90,7 @@ abstract class AbstractCollectionBinding extends Binding {
 
   private Binding getBinding(@NotNull Class type) {
     Binding binding = XmlSerializerImpl.getBinding(type);
+    //noinspection unchecked
     return binding.getBoundNodeType().isAssignableFrom(Element.class) ? binding : createElementTagWrapper(binding);
   }
 
@@ -142,12 +142,13 @@ abstract class AbstractCollectionBinding extends Binding {
     }
   }
 
+  @Nullable
   @Override
-  public Object deserialize(Object o, @NotNull Object... nodes) {
+  public Object deserializeList(Object context, @NotNull List<?> nodes) {
     Collection result;
-    if (getTagName(o) == null) {
-      if (o instanceof Collection) {
-        result = (Collection)o;
+    if (getTagName(context) == null) {
+      if (context instanceof Collection) {
+        result = (Collection)context;
         result.clear();
       }
       else {
@@ -156,26 +157,57 @@ abstract class AbstractCollectionBinding extends Binding {
       for (Object node : nodes) {
         if (!XmlSerializerImpl.isIgnoredNode(node)) {
           //noinspection unchecked
-          result.add(getElementBinding(node).deserialize(o, node));
+          result.add(getElementBinding(node).deserialize(context, node));
         }
       }
 
-      if (result == o) {
+      if (result == context) {
         return result;
       }
     }
     else {
-      assert nodes.length == 1;
-      Element e = (Element)nodes[0];
-      result = createCollection(e.getName());
-      for (Content child : e.getContent()) {
-        if (!XmlSerializerImpl.isIgnoredNode(child)) {
-          //noinspection unchecked
-          result.add(getElementBinding(child).deserialize(o, child));
-        }
+      assert nodes.size() == 1;
+      result = processSingle(context, (Element)nodes.get(0));
+    }
+    return processResult(result, context);
+  }
+
+  @Override
+  public Object deserialize(Object context, @NotNull Object node) {
+    Collection result;
+    if (getTagName(context) == null) {
+      if (context instanceof Collection) {
+        result = (Collection)context;
+        result.clear();
+      }
+      else {
+        result = new SmartList();
+      }
+      if (!XmlSerializerImpl.isIgnoredNode(node)) {
+        //noinspection unchecked
+        result.add(getElementBinding(node).deserialize(context, node));
+      }
+
+      if (result == context) {
+        return result;
       }
     }
-    return processResult(result, o);
+    else {
+      result = processSingle(context, (Element)node);
+    }
+    return processResult(result, context);
+  }
+
+  @NotNull
+  private Collection processSingle(Object context, @NotNull Element node) {
+    Collection result = createCollection(node.getName());
+    for (Content child : node.getContent()) {
+      if (!XmlSerializerImpl.isIgnoredNode(child)) {
+        //noinspection unchecked
+        result.add(getElementBinding(child).deserialize(context, child));
+      }
+    }
+    return result;
   }
 
   protected Collection createCollection(@NotNull String tagName) {

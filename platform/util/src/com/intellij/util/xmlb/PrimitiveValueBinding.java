@@ -15,12 +15,13 @@
  */
 package com.intellij.util.xmlb;
 
-import com.intellij.openapi.util.JDOMUtil;
 import org.jdom.Attribute;
 import org.jdom.Content;
 import org.jdom.Text;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 class PrimitiveValueBinding extends Binding {
   private final Class<?> myType;
@@ -36,22 +37,28 @@ class PrimitiveValueBinding extends Binding {
     return new Text(String.valueOf(o));
   }
 
-  @Override
   @Nullable
-  public Object deserialize(Object o, @NotNull Object... nodes) {
-    if (nodes.length == 0) {
+  @Override
+  public Object deserializeList(Object context, @NotNull List<?> nodes) {
+    if (nodes.isEmpty()) {
       return convertString("");
     }
-
-    String value;
-    if (nodes.length > 1) {
-      value = JDOMUtil.concatTextNodesValues(nodes);
+    else if (nodes.size() > 1) {
+      StringBuilder result = new StringBuilder();
+      for (Object node : nodes) {
+        result.append(node instanceof Attribute ? ((Attribute)node).getValue() : ((Content)node).getValue());
+      }
+      return convertString(result.toString());
     }
     else {
-      Object node = nodes[0];
-      value = node instanceof Attribute ? ((Attribute)node).getValue() : ((Content)node).getValue();
+      return deserialize(context, nodes.get(0));
     }
-    return convertString(value);
+  }
+
+  @Override
+  @Nullable
+  public Object deserialize(Object o, @NotNull Object node) {
+    return convertString(node instanceof Attribute ? ((Attribute)node).getValue() : ((Content)node).getValue());
   }
 
   @Nullable
@@ -67,9 +74,5 @@ class PrimitiveValueBinding extends Binding {
   @Override
   public Class getBoundNodeType() {
     return Text.class;
-  }
-
-  @Override
-  public void init() {
   }
 }

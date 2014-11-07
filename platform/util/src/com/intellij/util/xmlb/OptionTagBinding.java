@@ -19,7 +19,6 @@ package com.intellij.util.xmlb;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import org.jdom.Attribute;
@@ -92,16 +91,23 @@ class OptionTagBinding extends BasePrimitiveBinding {
     return targetElement;
   }
 
+  @Nullable
   @Override
-  public Object deserialize(Object context, @NotNull Object... nodes) {
-    if (nodes.length > 1) {
+  public Object deserializeList(Object context, @NotNull List<?> nodes) {
+    if (nodes.size() > 1) {
       LOG.info("Duplicate options for " + context + " will be ignored");
     }
-    assert nodes.length != 0 : "Empty nodes passed to: " + this;
+    assert !nodes.isEmpty() : "Empty nodes passed to: " + this;
+    return deserialize(context, ((Element)nodes.get(0)));
+  }
 
-    Element element = ((Element)nodes[0]);
+  @Override
+  public Object deserialize(Object context, @NotNull Object node) {
+    return deserialize(context, (Element)node);
+  }
+
+  private Object deserialize(Object context, Element element) {
     Attribute valueAttribute = element.getAttribute(myValueAttribute);
-
     if (valueAttribute != null) {
       Object value;
       if (myConverter != null) {
@@ -123,14 +129,13 @@ class OptionTagBinding extends BasePrimitiveBinding {
 
       if (!children.isEmpty()) {
         assert myBinding != null;
-        Object value = myBinding.deserialize(myAccessor.read(context), ArrayUtil.toObjectArray(children));
+        Object value = myBinding.deserializeList(myAccessor.read(context), children);
         myAccessor.write(context, value);
       }
       else {
         myAccessor.write(context, null);
       }
     }
-
     return context;
   }
 

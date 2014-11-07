@@ -20,7 +20,6 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ConcurrentSoftValueHashMap;
 import com.intellij.util.containers.ContainerUtil;
@@ -122,7 +121,15 @@ class BeanBinding extends Binding {
   }
 
   @Override
-  public Object deserialize(Object o, @NotNull Object... nodes) {
+  public Object deserialize(Object context, @NotNull Object node) {
+    Object instance = ReflectionUtil.newInstance(myBeanClass);
+    deserializeInto(instance, (Element)node, null);
+    return instance;
+  }
+
+  @Nullable
+  @Override
+  public Object deserializeList(Object context, @NotNull List<?> nodes) {
     Element element = null;
     for (Object aNode : nodes) {
       if (!XmlSerializerImpl.isIgnoredNode(aNode)) {
@@ -132,8 +139,9 @@ class BeanBinding extends Binding {
     }
 
     if (element == null) {
-      return o;
+      return context;
     }
+
     Object instance = ReflectionUtil.newInstance(myBeanClass);
     deserializeInto(instance, element, null);
     return instance;
@@ -198,7 +206,7 @@ class BeanBinding extends Binding {
       if (accessorNameTracker != null) {
         accessorNameTracker.add(binding.getAccessor().getName());
       }
-      binding.deserialize(result, ArrayUtil.toObjectArray(data.get(binding)));
+      binding.deserializeList(result, (List<?>)data.get(binding));
     }
   }
 
