@@ -62,6 +62,18 @@ class Foo {
     performPaste()
     myFixture.checkResult "/** Foo#foo(byte)<caret> */"
   }
+
+  public void "test paste correct generic signature to javadoc"() {
+    myFixture.configureByText "a.java", """
+class Foo {
+  void foo<caret>(java.util.List<String[]> a) {}
+}
+"""
+    performCopy()
+    myFixture.configureByText "b.java", "/** <caret> */"
+    performPaste()
+    myFixture.checkResult "/** Foo#foo(java.util.List)<caret> */"
+  }
   
   public void testFqnInImport() {
     myFixture.addClass("package foo; public class Foo {}")
