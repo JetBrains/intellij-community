@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction;
 import com.intellij.openapi.ui.Splitter;
@@ -87,12 +88,10 @@ public class TaskRepositoriesConfigurable extends BaseConfigurable implements Co
     final List<AnAction> createActions = new ArrayList<AnAction>();
     for (final TaskRepositoryType repositoryType : groups) {
       for (final TaskRepositorySubtype subtype : (List<TaskRepositorySubtype>)repositoryType.getAvailableSubtypes()) {
-        String description = "New " + subtype.getName() + " server";
-        createActions.add(new IconWithTextAction(subtype.getName(), description, subtype.getIcon()) {
+        createActions.add(new AddServerAction(subtype) {
           @Override
-          public void actionPerformed(@NotNull AnActionEvent e) {
-            TaskRepository repository = repositoryType.createRepository(subtype);
-            addRepository(repository);
+          protected TaskRepository getRepository() {
+            return repositoryType.createRepository(subtype);
           }
         });
       }
@@ -112,10 +111,10 @@ public class TaskRepositoriesConfigurable extends BaseConfigurable implements Co
         if (!repositories.isEmpty()) {
           group.add(Separator.getInstance());
           for (final TaskRepository repository : repositories) {
-            group.add(new IconWithTextAction(repository.getUrl(), repository.getUrl(), repository.getIcon()) {
+            group.add(new AddServerAction(repository) {
               @Override
-              public void actionPerformed(@NotNull AnActionEvent e) {
-                addRepository(repository);
+              protected TaskRepository getRepository() {
+                return repository;
               }
             });
           }
@@ -123,7 +122,7 @@ public class TaskRepositoriesConfigurable extends BaseConfigurable implements Co
 
         JBPopupFactory.getInstance()
           .createActionGroupPopup("Add server", group, DataManager.getInstance().getDataContext(anActionButton.getContextComponent()),
-                                  JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false).show(
+                                  JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true).show(
           anActionButton.getPreferredPopupPoint());
       }
     });
@@ -267,6 +266,24 @@ public class TaskRepositoriesConfigurable extends BaseConfigurable implements Co
   public void disposeUIResources() {
     for (TaskRepositoryEditor editor : myEditors) {
       Disposer.dispose(editor);
+    }
+  }
+
+  private abstract class AddServerAction extends IconWithTextAction implements DumbAware {
+
+    public AddServerAction(TaskRepositorySubtype subtype) {
+      super(subtype.getName(), "New " + subtype.getName() + " server", subtype.getIcon());
+    }
+
+    public AddServerAction(TaskRepository repository) {
+      super(repository.getUrl(), repository.getUrl(), repository.getIcon());
+    }
+
+    protected abstract TaskRepository getRepository();
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      addRepository(getRepository());
     }
   }
 }
