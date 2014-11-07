@@ -5,8 +5,6 @@ import org.eclipse.jgit.lib.ObjectId
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vcs.merge.MergeData
 import org.jetbrains.settingsRepository.RepositoryVirtualFile
-import com.intellij.openapi.util.io.FileUtil
-import java.io.File
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.vfs.CharsetToolkit
 import java.nio.CharBuffer
@@ -52,59 +50,11 @@ class JGitMergeProvider(private val repository: Repository, private val myCommit
   override fun isBinary(file: VirtualFile) = file.getFileType().isBinary()
 
   override fun loadRevisions(file: VirtualFile): MergeData {
-    val mergeData = MergeData()
-
     val sequences = conflicts[file.getPath()]!!.getSequences()
+    val mergeData = MergeData()
     mergeData.ORIGINAL = (sequences[0] as RawText).getContent()
     mergeData.CURRENT = (sequences[1] as RawText).getContent()
     mergeData.LAST = (sequences[2] as RawText).getContent()
-//    val dirCache = repository.lockDirCache()
-//    try {
-//      if (objectReader == null) {
-//        objectReader = repository.newObjectReader()
-//      }
-//
-//      var index = dirCache.findEntry(file.getPath())
-//      assert(index >= 0)
-//
-//      var dirCacheEntry = dirCache.getEntry(index)
-//      if (dirCacheEntry.getStage() == DirCacheEntry.STAGE_2) {
-//        // our merge doesn't have base
-//        // todo ask Kirill - is it correct?
-//        val data = getCachedBytes(dirCacheEntry)
-//        mergeData.ORIGINAL = data
-//        mergeData.CURRENT = data
-//      }
-//      else {
-//        assert(dirCacheEntry.getStage() == DirCacheEntry.STAGE_1)
-//        mergeData.ORIGINAL = getCachedBytes(dirCacheEntry)
-//
-//        dirCacheEntry = dirCache.getEntry(++index)
-//        assert(dirCacheEntry.getStage() == DirCacheEntry.STAGE_2)
-//        mergeData.CURRENT = getCachedBytes(dirCacheEntry)
-//      }
-//
-//      val theirsEntryIndex = index + 1
-//      if (dirCache.nextEntry(index) == theirsEntryIndex) {
-//        // deleted
-//        mergeData.LAST = ArrayUtil.EMPTY_BYTE_ARRAY
-//      }
-//      else {
-//        dirCacheEntry = dirCache.getEntry(theirsEntryIndex)
-//        assert(dirCacheEntry.getStage() == DirCacheEntry.STAGE_3)
-//        mergeData.LAST = getCachedBytes(dirCacheEntry)
-//      }
-//    }
-//    finally {
-//      try {
-//        dirCache.unlock()
-//      }
-//      finally {
-//        if (objectReader != null) {
-//          objectReader!!.release()
-//        }
-//      }
-//    }
     return mergeData
   }
 
