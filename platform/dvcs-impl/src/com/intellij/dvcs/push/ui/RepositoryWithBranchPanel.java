@@ -162,7 +162,7 @@ public class RepositoryWithBranchPanel<T extends PushTarget> extends NonOpaquePa
     myTextRenderer.append(getSourceName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     myTextRenderer.append(getArrow(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     if (bounds != null) {
-      setPreferredSize(new Dimension(tree.getWidth() - bounds.x, bounds.height));
+      setPreferredSize(new Dimension(tree.getVisibleRect().width - bounds.x, bounds.height));
     }
     myDestPushTargetPanelComponent.requestFocus();
     revalidate();
