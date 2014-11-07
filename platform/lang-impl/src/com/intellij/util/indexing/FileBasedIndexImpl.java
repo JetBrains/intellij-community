@@ -2287,7 +2287,12 @@ public class FileBasedIndexImpl extends FileBasedIndex {
             removeFileDataFromIndices(ContainerUtil.intersection(nontrivialFileIndexedStates, myRequiringContentIndices), file);
           }
           else {
-            doIndexFileContent(project, fileContent);
+            try {
+              doIndexFileContent(project, fileContent);
+            } catch (ProcessCanceledException ex) {
+              myFilesToUpdate.add(file); // PCE from running invalidation tasks should reschedule file processing
+              throw ex;
+            }
           }
         }
         finally {
