@@ -275,14 +275,8 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
       super.setThumbBounds(x, y, width, height);
     }
     else {
-        /* If the thumbs bounds haven't changed, we're done.
-         */
-      if ((thumbRect.x == x) &&
-          (thumbRect.y == y) &&
-          (thumbRect.width == width) &&
-          (thumbRect.height == height)) {
-        return;
-      }
+      // We want to repaint whole scrollbar even if thumb wasn't moved (on small scroll of a big panel)
+      // Even if scrollbar wasn't changed itself, myRepaintCallback could need repaint
 
         /* Update thumbRect, and repaint the union of x,y,w,h and
          * the old thumbRect.
