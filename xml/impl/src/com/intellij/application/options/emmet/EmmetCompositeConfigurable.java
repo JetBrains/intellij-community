@@ -15,6 +15,7 @@
  */
 package com.intellij.application.options.emmet;
 
+import com.intellij.codeInsight.template.emmet.generators.XmlZenCodingGenerator;
 import com.intellij.codeInsight.template.emmet.generators.ZenCodingGenerator;
 import com.intellij.codeInsight.template.impl.TemplateExpandShortcutPanel;
 import com.intellij.openapi.options.CompositeConfigurable;
@@ -101,11 +102,17 @@ public class EmmetCompositeConfigurable extends CompositeConfigurable<UnnamedCon
 
   @Override
   protected List<UnnamedConfigurable> createConfigurables() {
-    List<UnnamedConfigurable> configurables = ContainerUtil.newArrayList();
+    List<UnnamedConfigurable> xmlConfigurables = ContainerUtil.newSmartList();
+    List<UnnamedConfigurable> configurables = ContainerUtil.newSmartList();
     for (ZenCodingGenerator zenCodingGenerator : ZenCodingGenerator.getInstances()) {
-      ContainerUtil.addIfNotNull(configurables, zenCodingGenerator.createConfigurable());
+      if (zenCodingGenerator instanceof XmlZenCodingGenerator) {
+        ContainerUtil.addIfNotNull(xmlConfigurables, zenCodingGenerator.createConfigurable());
+      }
+      else {
+        ContainerUtil.addIfNotNull(configurables, zenCodingGenerator.createConfigurable());
+      }
     }
-    return configurables;
+    return ContainerUtil.concat(xmlConfigurables, configurables);
   }
 
   @NotNull
