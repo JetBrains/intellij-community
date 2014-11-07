@@ -44,11 +44,12 @@ public class DuplicatesInspectionBase extends LocalInspectionTool {
     final Ref<DuplicatedCodeProcessor> myProcessorRef = new Ref<DuplicatedCodeProcessor>();
 
     if (profile instanceof LightDuplicateProfile && DuplicatesIndex.ourEnabledLightProfiles) {
-
-      ((LightDuplicateProfile)profile).process(psiFile, new LightDuplicateProfile.Callback() {
+      LighterAST ast = psiFile.getNode().getLighterAST();
+      assert ast != null;
+      ((LightDuplicateProfile)profile).process(ast, new LightDuplicateProfile.Callback() {
         DuplicatedCodeProcessor<LighterASTNode> myProcessor;
         @Override
-        public void process(final LighterAST ast, final LighterASTNode node, int hash) {
+        public void process(@NotNull final LighterAST ast, @NotNull final LighterASTNode node, int hash) {
           class LightDuplicatedCodeProcessor extends DuplicatedCodeProcessor<LighterASTNode> {
 
             LightDuplicatedCodeProcessor(VirtualFile file, Project project) {

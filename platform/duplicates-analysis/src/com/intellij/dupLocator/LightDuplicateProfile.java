@@ -17,15 +17,15 @@ package com.intellij.dupLocator;
 
 import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
-import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by Maxim.Mossienko on 10/1/2014.
  */
 public interface LightDuplicateProfile {
-  void process(PsiFile file, Callback callback);
+  void process(@NotNull LighterAST ast, @NotNull Callback callback);
 
   interface Callback {
-    void process(LighterAST ast, LighterASTNode node, int hash);
+    void process(@NotNull LighterAST ast, @NotNull LighterASTNode node, int hash);
   }
 }

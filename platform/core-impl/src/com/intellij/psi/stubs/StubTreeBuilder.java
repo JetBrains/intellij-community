@@ -21,6 +21,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.StubBuilder;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.util.indexing.FileContent;
@@ -56,7 +57,8 @@ public class StubTreeBuilder {
         final IFileElementType type = LanguageParserDefinitions.INSTANCE.forLanguage(l).getFileNodeType();
 
         CharSequence contentAsText = inputData.getContentAsText();
-        PsiFile psi = ((FileContentImpl)inputData).getPsiFileAccountingForUnsavedDocument();
+        FileContentImpl fileContent = (FileContentImpl)inputData;
+        PsiFile psi = fileContent.getPsiFileAccountingForUnsavedDocument();
         psi = psi.getViewProvider().getStubBindingRoot();
         psi.putUserData(IndexingDataKeys.FILE_TEXT_CONTENT_KEY, contentAsText);
 
@@ -78,7 +80,11 @@ public class StubTreeBuilder {
             stubFileElementType = null;
           }
           if (stubFileElementType != null) {
-            data = stubFileElementType.getBuilder().buildStubTree(psi);
+            StubBuilder stubBuilder = stubFileElementType.getBuilder();
+            if (stubBuilder instanceof LightStubBuilder) { // each builder is pristine
+              ((LightStubBuilder)stubBuilder).setForcedLighterAst(fileContent.getLighterAST());
+            }
+            data = stubBuilder.buildStubTree(psi);
           }
         }
         finally {
