@@ -22,8 +22,7 @@ import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
-import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
-import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
+import com.intellij.openapi.actionSystem.impl.*;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.SystemInfo;
@@ -37,7 +36,9 @@ import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.tabs.TabsUtil;
 import com.intellij.util.Producer;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -49,6 +50,7 @@ import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.List;
 
 /**
  * @author pegov
@@ -65,6 +67,11 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
   private ToolWindowType myImageType;
   private final JPanel myButtonPanel;
   private final ToolWindowHeader.ActionButton myGearButton;
+
+  private final PresentationFactory myPresentationFactory = new PresentationFactory();
+  private final ToolbarUpdater myUpdater;
+  private final DefaultActionGroup myActionGroup = new DefaultActionGroup();
+  private List<AnAction> myVisibleActions = ContainerUtil.newArrayListWithCapacity(2);
 
   public ToolWindowHeader(final ToolWindowImpl toolWindow, @NotNull WindowInfoImpl info, @NotNull final Producer<ActionGroup> gearProducer) {
     setLayout(new BorderLayout());
@@ -103,7 +110,7 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
 
     myGearButton = new ActionButton(new AnAction() {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         final InputEvent inputEvent = e.getInputEvent();
         final ActionPopupMenu popupMenu =
           ((ActionManagerImpl)ActionManager.getInstance())
@@ -127,17 +134,15 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
 
     myHideButton = new ActionButton(new HideAction() {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         hideToolWindow();
       }
     }, new HideSideAction() {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         sideHidden();
       }
-    },
-                                    AllIcons.General.HideLeft, null, null
-    ) {
+    }, AllIcons.General.HideLeft, null, null) {
       @Override
       protected Icon getActiveIcon() {
         return getHideToolWindowIcon(myToolWindow);
@@ -190,6 +195,19 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
     setBorder(BorderFactory.createEmptyBorder(TabsUtil.TABS_BORDER, 1, TabsUtil.TABS_BORDER, 1));
 
     UISettings.getInstance().addUISettingsListener(this, toolWindow.getContentUI());
+    myUpdater = new ToolbarUpdater(this) {
+      @Override
+      protected void updateActionsImpl(boolean transparentOnly, boolean forced) {
+        ToolWindowHeader.this.updateActionsImpl(transparentOnly, forced);
+      }
+
+      @Override
+      protected void updateActionTooltips() {
+        for (ActionButton actionButton : JBSwingUtilities.uiTraverser().preOrderTraversal(myButtonPanel).filter(ActionButton.class)) {
+          actionButton.updateTooltip();
+        }
+      }
+    };
   }
 
   @Override
@@ -211,32 +229,46 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
     myInfo = null;
   }
 
-  public void updateTooltips() {
-    if (myHideButton != null) {
-      myHideButton.updateTooltip();
-    }
+  public void setAdditionalTitleActions(AnAction[] actions) {
+    myActionGroup.removeAll();
+    myActionGroup.addAll(actions);
+    myUpdater.updateActions(false, true);
   }
 
-  public void setAdditionalTitleActions(AnAction[] actions) {
-    myButtonPanel.removeAll();
-    boolean actionAdded = false;
-    for (final AnAction action : actions) {
-      if (action == null) continue;
-      myButtonPanel.add(new ActionButton(action, action.getTemplatePresentation().getIcon()) {
-        @Override
-        protected Icon getActiveHoveredIcon() {
-          final Icon icon = action.getTemplatePresentation().getHoveredIcon();
-          return icon != null ? icon : super.getActiveHoveredIcon();
-        }
-      });
-      myButtonPanel.add(Box.createHorizontalStrut(9));
-      actionAdded = true;
+  private void updateActionsImpl(boolean transparentOnly, boolean forced) {
+    List<AnAction> newVisibleActions = ContainerUtil.newArrayListWithCapacity(myVisibleActions.size());
+    DataContext dataContext = DataManager.getInstance().getDataContext(this);
+
+    Utils.expandActionGroup(myActionGroup, newVisibleActions, myPresentationFactory, dataContext,
+                            ActionPlaces.TOOLWINDOW_TITLE, myUpdater.getActionManager(), transparentOnly);
+
+    if (forced || !newVisibleActions.equals(myVisibleActions)) {
+      myVisibleActions = newVisibleActions;
+
+      myButtonPanel.removeAll();
+      boolean actionAdded = false;
+      for (final AnAction action : newVisibleActions) {
+        if (action == null) continue;
+        final Presentation presentation = myPresentationFactory.getPresentation(action);
+        myButtonPanel.add(new ActionButton(action, presentation.getIcon()) {
+          @Override
+          protected Icon getActiveHoveredIcon() {
+            Icon icon = presentation.getHoveredIcon();
+            return icon != null ? icon : super.getActiveHoveredIcon();
+          }
+        });
+        myButtonPanel.add(Box.createHorizontalStrut(9));
+        actionAdded = true;
+      }
+      if (actionAdded) {
+        myButtonPanel.add(new JLabel(AllIcons.General.Divider));
+        myButtonPanel.add(Box.createHorizontalStrut(6));
+      }
+      addDefaultActions(myButtonPanel);
+
+      revalidate();
+      repaint();
     }
-    if (actionAdded) {
-      myButtonPanel.add(new JLabel(AllIcons.General.Divider));
-      myButtonPanel.add(Box.createHorizontalStrut(6));
-    }
-    addDefaultActions(myButtonPanel);
   }
 
   private static Icon getHideToolWindowIcon(ToolWindow toolWindow) {
@@ -484,7 +516,7 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
       final ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
       InputEvent inputEvent = e.getSource() instanceof InputEvent ? (InputEvent) e.getSource() : null;
       final AnActionEvent event =
-        new AnActionEvent(inputEvent, dataContext, ActionPlaces.UNKNOWN, action.getTemplatePresentation(),
+        new AnActionEvent(inputEvent, dataContext, ActionPlaces.TOOLWINDOW_TITLE, action.getTemplatePresentation(),
                           ActionManager.getInstance(),
                           0);
       actionManager.fireBeforeActionPerformed(action, dataContext, event);
@@ -542,9 +574,9 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
       getTemplatePresentation().setText(UIBundle.message("tool.window.hideSide.action.name"));
     }
 
-    public abstract void actionPerformed(final AnActionEvent e);
+    public abstract void actionPerformed(@NotNull final AnActionEvent e);
 
-    public final void update(final AnActionEvent event) {
+    public final void update(@NotNull final AnActionEvent event) {
       final Presentation presentation = event.getPresentation();
       presentation.setEnabled(myInfo.isVisible());
     }
@@ -558,7 +590,7 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
       getTemplatePresentation().setText(UIBundle.message("tool.window.hide.action.name"));
     }
 
-    public final void update(final AnActionEvent event) {
+    public final void update(@NotNull final AnActionEvent event) {
       final Presentation presentation = event.getPresentation();
       presentation.setEnabled(myInfo.isVisible());
     }

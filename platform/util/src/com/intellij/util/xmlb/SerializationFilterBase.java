@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 
 public abstract class SerializationFilterBase implements SerializationFilter {
   @Override
-  public final boolean accepts(Accessor accessor, Object bean) {
+  public final boolean accepts(@NotNull Accessor accessor, Object bean) {
     if (bean == null) {
       return true;
     }

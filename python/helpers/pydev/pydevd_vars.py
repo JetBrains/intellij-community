@@ -399,16 +399,17 @@ def array_to_xml(array, roffset, coffset, rows, cols, format):
         cols = 1
     elif rows == 1 or cols == 1:
         is_row = True if (rows == 1) else False
-        pure_1d = False if (len(array) == 1) else True
+        if is_row:
+            array = array[roffset:]
+        else:
+            array = array[coffset:]
 
-        if not pure_1d:
+        if len(array) == 1:
             array = array[0]
 
         if is_row:
-            array = array[coffset:]
             cols = min(cols, len(array))
         else:
-            array = array[roffset:]
             rows = min(rows, len(array))
     else:
         array = array[roffset:, coffset:]

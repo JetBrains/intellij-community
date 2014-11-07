@@ -86,4 +86,8 @@ public class AttributeBinding extends BasePrimitiveBinding {
       throw new XmlSerializationException("Can't use attribute binding for non-text content: " + myAccessor);
     }
   }
+
+  public String toString() {
+    return "AttributeBinding[" + myName + ", binding=" + myBinding + "]";
+  }
 }

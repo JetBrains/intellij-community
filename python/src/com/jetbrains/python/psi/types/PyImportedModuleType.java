@@ -19,15 +19,13 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.QualifiedName;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
-import com.jetbrains.python.psi.AccessDirection;
-import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.PyFile;
-import com.jetbrains.python.psi.PyImportElement;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyImportedModule;
-import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
@@ -82,7 +80,14 @@ public class PyImportedModuleType implements PyType {
         }
       }
     }
-    return result.toArray(new Object[result.size()]);
+    final PsiElement resolved = myImportedModule.resolve();
+    if (resolved instanceof PsiDirectory) {
+      final PsiDirectory dir = (PsiDirectory)resolved;
+      if (PyUtil.isPackage(dir, location)) {
+        result.addAll(PyModuleType.getSubModuleVariants(dir, location, null));
+      }
+    }
+    return ArrayUtil.toObjectArray(result);
   }
 
   public String getName() {

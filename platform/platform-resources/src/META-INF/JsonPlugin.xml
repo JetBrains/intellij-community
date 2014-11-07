@@ -31,6 +31,7 @@
 
     <!-- Codeinsight -->
     <breadcrumbsInfoProvider implementation="com.intellij.json.breadcrumbs.JsonBreadcrumbsProvider"/>
+    <qualifiedNameProvider implementation="com.intellij.json.navigation.JsonQualifiedNameProvider"/>
     <completion.contributor language="JSON" implementationClass="com.intellij.json.codeinsight.JsonCompletionContributor"/>
     <lang.psiStructureViewFactory language="JSON" implementationClass="com.intellij.json.structureView.JsonStructureViewBuilderFactory"/>
     <lang.foldingBuilder language="JSON" implementationClass="com.intellij.json.editor.folding.JsonFoldingBuilder"/>
@@ -57,5 +58,11 @@
     <lang.elementManipulator forClass="com.intellij.json.psi.JsonStringLiteral"
                              implementationClass="com.intellij.json.psi.JsonStringLiteralManipulator"/>
   </extensions>
+
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.json.jsonStandardComplianceProvider"
+                    interface="com.intellij.json.codeinsight.JsonStandardComplianceProvider"/>
+  </extensionPoints>
 
 </idea-plugin>

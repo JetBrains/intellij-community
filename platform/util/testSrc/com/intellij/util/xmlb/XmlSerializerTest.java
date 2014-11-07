@@ -24,9 +24,11 @@ import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
 import org.intellij.lang.annotations.Language;
 import org.jdom.Element;
+import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -535,7 +537,7 @@ public class XmlSerializerTest extends TestCase {
                      "</BeanWithPublicFields>",
                      new SerializationFilter() {
       @Override
-      public boolean accepts(Accessor accessor, Object bean) {
+      public boolean accepts(@NotNull Accessor accessor, Object bean) {
         return accessor.getName().startsWith("I");
       }
     });
@@ -848,7 +850,7 @@ public class XmlSerializerTest extends TestCase {
   }
   public static class PropertyFilterTest implements SerializationFilter {
     @Override
-    public boolean accepts(Accessor accessor, Object bean) {
+    public boolean accepts(@NotNull Accessor accessor, Object bean) {
       return !accessor.read(bean).equals("skip");
     }
   }
@@ -1219,6 +1221,37 @@ public class XmlSerializerTest extends TestCase {
     doSerializerTest("<BeanWithDefaultAttributeName foo=\"foo\" />", bean);
   }
 
+  static class Bean2 {
+    @Attribute
+    public String ab;
+
+    @Attribute
+    public String module;
+
+    @Attribute
+    public String ac;
+  }
+
+  public void testOrdered() throws IOException, JDOMException {
+    Bean2 bean = new Bean2();
+    bean.module = "module";
+    bean.ab = "ab";
+    doSerializerTest("<Bean2 ab=\"ab\" module=\"module\" />", bean);
+
+    checkSmartSerialization(new Bean2(), "<Bean2 module=\"1\" ab=\"2\" ac=\"32\" />");
+    checkSmartSerialization(new Bean2(), "<Bean2 ab=\"2\" module=\"1\" ac=\"32\" />");
+    checkSmartSerialization(new Bean2(), "<Bean2 ac=\"2\" module=\"1\" ab=\"32\" />");
+    checkSmartSerialization(new Bean2(), "<Bean2 ac=\"2\" ab=\"32\" />");
+  }
+
+  private static void checkSmartSerialization(@NotNull Bean2 bean, @NotNull String serialized) throws IOException, JDOMException {
+    SmartSerializer serializer = new SmartSerializer();
+    serializer.readExternal(bean, JDOMUtil.loadDocument(serialized).getRootElement());
+    Element serializedState = new Element("Bean2");
+    serializer.writeExternal(bean, serializedState);
+    assertEquals(serialized, JDOMUtil.writeElement(serializedState));
+  }
+
   //---------------------------------------------------------------------------------------------------
   private static Element assertSerializer(Object bean, String expected, SerializationFilter filter) {
     return assertSerializer(bean, expected, "Serialization failure", filter);
@@ -1232,6 +1265,7 @@ public class XmlSerializerTest extends TestCase {
     Element element = assertSerializer(bean, expectedText, filter);
 
     //test deserializer
+    @SuppressWarnings("unchecked")
     Class<T> aClass = (Class<T>)bean.getClass();
     T o = XmlSerializer.deserialize(element, aClass);
     assertSerializer(o, expectedText, "Deserialization failure", filter);

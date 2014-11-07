@@ -34,7 +34,7 @@ import java.util.Map;
 
 import static com.intellij.util.xmlb.Constants.*;
 
-class MapBinding implements Binding {
+class MapBinding extends Binding {
   private static final Logger LOG = Logger.getInstance(MapBinding.class);
 
   private static final Comparator<Object> KEY_COMPARATOR = new Comparator<Object>() {
@@ -54,7 +54,9 @@ class MapBinding implements Binding {
   private final Binding myValueBinding;
   private final MapAnnotation myMapAnnotation;
 
-  public MapBinding(ParameterizedType type, Accessor accessor) {
+  public MapBinding(ParameterizedType type, @NotNull Accessor accessor) {
+    super(accessor);
+
     Type[] arguments = type.getActualTypeArguments();
     Type keyType = arguments[0];
     Type valueType = arguments[1];
@@ -62,6 +64,10 @@ class MapBinding implements Binding {
     myKeyBinding = XmlSerializerImpl.getBinding(keyType);
     myValueBinding = XmlSerializerImpl.getBinding(valueType);
     myMapAnnotation = accessor.getAnnotation(MapAnnotation.class);
+  }
+
+  @Override
+  public void init() {
   }
 
   @Nullable
@@ -217,9 +223,5 @@ class MapBinding implements Binding {
   @Override
   public Class getBoundNodeType() {
     return Element.class;
-  }
-
-  @Override
-  public void init() {
   }
 }

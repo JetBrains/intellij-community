@@ -39,6 +39,7 @@ import git4idea.history.GitHistoryUtils;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryChangeListener;
 import git4idea.repo.GitRepositoryManager;
+import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -121,10 +122,10 @@ public class GitLogProvider implements VcsLogProvider {
       currentTagNames = readCurrentTagNames(root);
       addOldStillExistingTags(allRefs, currentTagNames, rex.getPreviousRefs());
 
-      allDetails = ContainerUtil.newHashSet(data.getCommits());
+      allDetails = newHashSet(data.getCommits());
 
-      Set<String> previousTags = new HashSet<String>(ContainerUtil.mapNotNull(rex.getPreviousRefs(), GET_TAG_NAME));
-      Set<String> safeTags = new HashSet<String>(ContainerUtil.mapNotNull(safeRefs, GET_TAG_NAME));
+      Set<String> previousTags = newHashSet(ContainerUtil.mapNotNull(rex.getPreviousRefs(), GET_TAG_NAME));
+      Set<String> safeTags = newHashSet(ContainerUtil.mapNotNull(safeRefs, GET_TAG_NAME));
       Set<String> newUnmatchedTags = remove(currentTagNames, previousTags, safeTags);
 
       if (!newUnmatchedTags.isEmpty()) {
@@ -263,14 +264,14 @@ public class GitLogProvider implements VcsLogProvider {
 
   @NotNull
   private Set<String> readCurrentTagNames(@NotNull VirtualFile root) throws VcsException {
-    Set<String> tags = ContainerUtil.newHashSet();
+    Set<String> tags = newHashSet();
     GitTag.listAsStrings(myProject, root, tags, null);
     return tags;
   }
 
   @NotNull
   private static <T> Set<T> remove(@NotNull Set<T> original, @NotNull Set<T>... toRemove) {
-    Set<T> result = ContainerUtil.newHashSet(original);
+    Set<T> result = newHashSet(original);
     for (Set<T> set : toRemove) {
       result.removeAll(set);
     }
@@ -305,8 +306,8 @@ public class GitLogProvider implements VcsLogProvider {
     parameters.add("--sparse");
 
     final GitBekParentFixer parentFixer = GitBekParentFixer.prepare(root, this);
-    Set<VcsUser> userRegistry = ContainerUtil.newHashSet();
-    Set<VcsRef> refs = ContainerUtil.newHashSet();
+    Set<VcsUser> userRegistry = newHashSet();
+    Set<VcsRef> refs = newHashSet();
     GitHistoryUtils.readCommits(myProject, root, parameters, new CollectConsumer<VcsUser>(userRegistry),
                                 new CollectConsumer<VcsRef>(refs), new Consumer<TimedVcsCommit>() {
       @Override
@@ -339,13 +340,13 @@ public class GitLogProvider implements VcsLogProvider {
     VirtualFile root = repository.getRoot();
     Collection<GitLocalBranch> localBranches = repository.getBranches().getLocalBranches();
     Collection<GitRemoteBranch> remoteBranches = repository.getBranches().getRemoteBranches();
-    Set<VcsRef> refs = new HashSet<VcsRef>(localBranches.size() + remoteBranches.size());
+    Set<VcsRef> refs = new THashSet<VcsRef>(localBranches.size() + remoteBranches.size());
     for (GitLocalBranch localBranch : localBranches) {
       refs.add(
-        myVcsObjectsFactory.createRef(HashImpl.build(localBranch.getHash()), localBranch.getName(), GitRefManager.LOCAL_BRANCH, root));
+        myVcsObjectsFactory.createRef(localBranch.getHash(), localBranch.getName(), GitRefManager.LOCAL_BRANCH, root));
     }
     for (GitRemoteBranch remoteBranch : remoteBranches) {
-      refs.add(myVcsObjectsFactory.createRef(HashImpl.build(remoteBranch.getHash()), remoteBranch.getNameForLocalOperations(),
+      refs.add(myVcsObjectsFactory.createRef(remoteBranch.getHash(), remoteBranch.getNameForLocalOperations(),
                                              GitRefManager.REMOTE_BRANCH, root));
     }
     String currentRevision = repository.getCurrentRevision();
@@ -495,4 +496,15 @@ public class GitLogProvider implements VcsLogProvider {
     }
     return true;
   }
+
+  @NotNull
+  private static <T> Set<T> newHashSet() {
+    return new THashSet<T>();
+  }
+
+  @NotNull
+  private static <T> Set<T> newHashSet(@NotNull Collection<T> initialCollection) {
+    return new THashSet<T>(initialCollection);
+  }
+
 }

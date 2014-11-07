@@ -250,11 +250,23 @@ public class JBColor extends Color {
   public static final Color CYAN = cyan;
 
   public static Color foreground() {
-    return UIUtil.getLabelForeground();
+    return new JBColor(new NotNullProducer<Color>() {
+      @NotNull
+      @Override
+      public Color produce() {
+        return UIUtil.getLabelForeground();
+      }
+    });
   }
 
   public static Color background() {
-    return UIUtil.getListBackground();
+    return new JBColor(new NotNullProducer<Color>() {
+      @NotNull
+      @Override
+      public Color produce() {
+        return UIUtil.getListBackground();
+      }
+    });
   }
 
   public static Color border() {

@@ -16,14 +16,18 @@
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.JDOMUtil;
+import org.jdom.Attribute;
+import org.jdom.Content;
 import org.jdom.Text;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-class PrimitiveValueBinding implements Binding {
+class PrimitiveValueBinding extends Binding {
   private final Class<?> myType;
 
-  public PrimitiveValueBinding(@NotNull Class<?> myType) {
+  public PrimitiveValueBinding(@NotNull Class<?> myType, @Nullable Accessor accessor) {
+    super(accessor);
+
     this.myType = myType;
   }
 
@@ -44,8 +48,8 @@ class PrimitiveValueBinding implements Binding {
       value = JDOMUtil.concatTextNodesValues(nodes);
     }
     else {
-      assert nodes[0] != null;
-      value = JDOMUtil.getValue(nodes[0]);
+      Object node = nodes[0];
+      value = node instanceof Attribute ? ((Attribute)node).getValue() : ((Content)node).getValue();
     }
     return convertString(value);
   }

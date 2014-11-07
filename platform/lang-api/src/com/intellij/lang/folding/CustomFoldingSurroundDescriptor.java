@@ -26,10 +26,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -62,7 +59,7 @@ public class CustomFoldingSurroundDescriptor implements SurroundDescriptor {
   @NotNull
   @Override
   public PsiElement[] getElementsToSurround(PsiFile file, int startOffset, int endOffset) {
-    if (startOffset >= endOffset - 1) return PsiElement.EMPTY_ARRAY;
+    if (startOffset >= endOffset) return PsiElement.EMPTY_ARRAY;
     Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(file.getLanguage());
     if (commenter == null || commenter.getLineCommentPrefix() == null) return PsiElement.EMPTY_ARRAY;
     PsiElement startElement = file.findElementAt(startOffset);
@@ -70,18 +67,11 @@ public class CustomFoldingSurroundDescriptor implements SurroundDescriptor {
     PsiElement endElement = file.findElementAt(endOffset - 1);
     if (endElement instanceof PsiWhiteSpace) endElement = endElement.getPrevSibling();
     if (startElement != null && endElement != null) {
-      if (startElement.getTextRange().getStartOffset() > endElement.getTextRange().getStartOffset()) return PsiElement.EMPTY_ARRAY;
       startElement = findClosestParentAfterLineBreak(startElement);
       if (startElement != null) {
         endElement = findClosestParentBeforeLineBreak(endElement);
         if (endElement != null) {
-          startElement = adjustStartElementIfEndAbsorbed(startElement, endElement);
-          endElement = adjustEndElementIfStartAbsorbed(startElement, endElement);
-          final PsiElement commonParent = startElement.getParent();
-          if (endElement.getParent() == commonParent) {
-            if (startElement == endElement) return new PsiElement[]{startElement};
-            return new PsiElement[]{startElement, endElement};
-          }
+          return adjustRange(startElement, endElement);
         }
       }
     }
@@ -89,44 +79,114 @@ public class CustomFoldingSurroundDescriptor implements SurroundDescriptor {
   }
 
   @NotNull
-  private static PsiElement adjustEndElementIfStartAbsorbed(@NotNull PsiElement start, @NotNull PsiElement end) {
-    if (PsiTreeUtil.isAncestor(end, start, false) && start.getTextRange().getEndOffset() == end.getTextRange().getEndOffset()) {
-      return start;
+  private static PsiElement[] adjustRange(@NotNull PsiElement start, @NotNull PsiElement end) {
+    PsiElement newStart = lowerStartElementIfNeeded(start, end);
+    PsiElement newEnd = lowerEndElementIfNeeded(start, end);
+    if (newStart == null || newEnd == null) {
+      return PsiElement.EMPTY_ARRAY;
+    }
+    final PsiElement commonParent = findCommonAncestorForWholeRange(newStart, newEnd);
+    if (commonParent != null) {
+      return new PsiElement[] {commonParent};
+    }
+    // If either start or end element is the first/last leaf element in its parent, use the parent itself instead
+    // to prevent selection of clearly illegal ranges like the following:
+    // [
+    //   <selection>1
+    // ]</selection>
+    // E.g. in case shown, because of that adjustment, closing bracket and number literal won't have the same parent
+    // and next test will fail.
+    if (newStart.getParent().getFirstChild() == newStart && newStart.getFirstChild() == null) {
+      newStart = newStart.getParent();
+    }
+    if (newEnd.getParent().getLastChild() == newEnd && newEnd.getFirstChild() == null) {
+      newEnd = newEnd.getParent();
+    }
+    if (newStart.getParent() == newEnd.getParent()) {
+      return new PsiElement[] {newStart, newEnd};
+    }
+    return PsiElement.EMPTY_ARRAY;
+  }
+
+  @Nullable
+  private static PsiElement lowerEndElementIfNeeded(@NotNull PsiElement start, @NotNull PsiElement end) {
+    if (PsiTreeUtil.isAncestor(end, start, true)) {
+      PsiElement lastChild = end.getLastChild();
+      while (lastChild != null && lastChild.getParent() != start.getParent()) {
+        lastChild = lastChild.getLastChild();
+      }
+      return lastChild;
     }
     return end;
   }
 
-  @NotNull
-  private static PsiElement adjustStartElementIfEndAbsorbed(@NotNull PsiElement start, @NotNull PsiElement end) {
-    if (PsiTreeUtil.isAncestor(start, end, false) && start.getTextRange().getStartOffset() == end.getTextRange().getStartOffset()) {
-      return end;
+  @Nullable
+  private static PsiElement lowerStartElementIfNeeded(@NotNull PsiElement start, @NotNull PsiElement end) {
+    if (PsiTreeUtil.isAncestor(start, end, true)) {
+      PsiElement firstChild = start.getFirstChild();
+      while (firstChild != null && firstChild.getParent() != end.getParent()) {
+        firstChild = firstChild.getFirstChild();
+      }
+      return firstChild;
     }
     return start;
   }
 
   @Nullable
-  private static PsiElement findClosestParentAfterLineBreak(PsiElement element) {
-    PsiElement parent = element;
-    while (parent != null) {
-      PsiElement prev = parent.getPrevSibling();
-      while (prev != null && prev.getTextLength() <= 0) {
-        prev = prev.getPrevSibling();
-      }
-      if (isWhiteSpaceWithLineFeed(prev)) return parent;
-      parent = parent.getParent();
+  private static PsiElement findCommonAncestorForWholeRange(@NotNull PsiElement start, @NotNull PsiElement end) {
+    final PsiElement parent = PsiTreeUtil.findCommonParent(start, end);
+    if (parent == null) {
+      return null;
+    }
+    final TextRange parentRange = parent.getTextRange();
+    if (parentRange.getStartOffset() == start.getTextRange().getStartOffset() &&
+        parentRange.getEndOffset() == end.getTextRange().getEndOffset()) {
+      return parent;
     }
     return null;
   }
 
   @Nullable
-  private static PsiElement findClosestParentBeforeLineBreak(PsiElement element) {
+  private static PsiElement findClosestParentAfterLineBreak(PsiElement element) {
     PsiElement parent = element;
-    while (parent != null) {
-      PsiElement next = parent.getNextSibling();
-      if (isWhiteSpaceWithLineFeed(next)) return parent;
+    while (parent != null && !(parent instanceof PsiFileSystemItem)) {
+      PsiElement prev = parent.getPrevSibling();
+      while (prev != null && prev.getTextLength() <= 0) {
+        prev = prev.getPrevSibling();
+      }
+      if (firstElementInFile(parent)) {
+        return parent.getContainingFile();
+      }
+      else if (isWhiteSpaceWithLineFeed(prev)) {
+        return parent;
+      }
       parent = parent.getParent();
     }
     return null;
+  }
+
+  private static boolean firstElementInFile(@NotNull PsiElement element) {
+    return element.getTextOffset() == 0;
+  }
+
+  @Nullable
+  private static PsiElement findClosestParentBeforeLineBreak(PsiElement element) {
+    PsiElement parent = element;
+    while (parent != null && !(parent instanceof PsiFileSystemItem)) {
+      final PsiElement next = parent.getNextSibling();
+      if (lastElementInFile(parent)) {
+        return parent.getContainingFile();
+      }
+      else if (isWhiteSpaceWithLineFeed(next)) {
+        return parent;
+      }
+      parent = parent.getParent();
+    }
+    return null;
+  }
+
+  private static boolean lastElementInFile(@NotNull PsiElement element) {
+    return element.getTextRange().getEndOffset() == element.getContainingFile().getTextRange().getEndOffset();
   }
 
   private static boolean isWhiteSpaceWithLineFeed(@Nullable PsiElement element) {

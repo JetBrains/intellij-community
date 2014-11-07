@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.util.containers;
 
 import com.intellij.util.containers.hash.LinkedHashMap;
@@ -26,15 +25,15 @@ import java.util.Map;
  * @author Evgeny Gerashchenko
  */
 public class LinkedMultiMap<K, V> extends MultiMap<K, V> {
-    @NotNull
-    @Override
-    protected Map<K, Collection<V>> createMap() {
-        return new LinkedHashMap<K, Collection<V>>();
-    }
+  @NotNull
+  @Override
+  protected Map<K, Collection<V>> createMap() {
+    return new LinkedHashMap<K, Collection<V>>();
+  }
 
-    @NotNull
-    @Override
-    protected Map<K, Collection<V>> createMap(int initialCapacity, float loadFactor) {
-        return new LinkedHashMap<K, Collection<V>>(initialCapacity, loadFactor);
-    }
+  @NotNull
+  @Override
+  protected Map<K, Collection<V>> createMap(int initialCapacity, float loadFactor) {
+    return new LinkedHashMap<K, Collection<V>>(initialCapacity, loadFactor);
+  }
 }

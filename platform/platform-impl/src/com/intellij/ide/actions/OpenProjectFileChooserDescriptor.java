@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectOpenProcessor;
+import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -34,6 +35,7 @@ import javax.swing.*;
  */
 public class OpenProjectFileChooserDescriptor extends FileChooserDescriptor {
   private static final Icon ourProjectIcon = IconLoader.getIcon(ApplicationInfoEx.getInstanceEx().getSmallIconUrl());
+  private static final boolean ourCanInspectDirs = SystemProperties.getBooleanProperty("idea.chooser.lookup.for.project.dirs", true);
 
   public OpenProjectFileChooserDescriptor(boolean chooseFiles) {
     super(chooseFiles, true, chooseFiles, chooseFiles, false, false);
@@ -64,15 +66,14 @@ public class OpenProjectFileChooserDescriptor extends FileChooserDescriptor {
   }
 
   private static boolean canInspectDirectory(VirtualFile file) {
-    if (file.getParent() == null) return false;
-
     VirtualFile home = VfsUtil.getUserHomeDir();
-    if (home == null) return false;  // unnatural situation
-    VirtualFile homes = home.getParent();
-    if (homes == null) return false;  // another one
-    if (homes.equals(file.getParent()) || VfsUtilCore.isAncestor(file, homes, false)) return false;
-
-    return true;
+    if (home == null || VfsUtilCore.isAncestor(file, home, false)) {
+      return false;
+    }
+    if (ourCanInspectDirs || VfsUtilCore.isAncestor(home, file, true)) {
+      return true;
+    }
+    return false;
   }
 
   private static Icon getImporterIcon(VirtualFile file) {

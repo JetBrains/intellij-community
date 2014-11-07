@@ -127,7 +127,15 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
       public void editingStopped(ChangeEvent e) {
         DefaultMutableTreeNode node = (DefaultMutableTreeNode)myTree.getLastSelectedPathComponent();
         if (node != null && node instanceof EditableTreeNode) {
-          ((EditableTreeNode)node).fireOnChange();
+          JComponent editedComponent = (JComponent)node.getUserObject();
+          InputVerifier verifier = editedComponent.getInputVerifier();
+          if (verifier != null && !verifier.verify(editedComponent)) {
+            // if invalid and interrupted, then revert
+            ((EditableTreeNode)node).fireOnCancel();
+          }
+          else {
+            ((EditableTreeNode)node).fireOnChange();
+          }
         }
         myTree.firePropertyChange(PushLogTreeUtil.EDIT_MODE_PROP, true, false);
       }
@@ -141,6 +149,8 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
         myTree.firePropertyChange(PushLogTreeUtil.EDIT_MODE_PROP, true, false);
       }
     });
+    // complete editing when interrupt
+    myTree.setInvokesStopCellEditing(true);
     myTree.setRootVisible(false);
     TreeUtil.collapseAll(myTree, 1);
     final VcsBranchEditorListener linkMouseListener = new VcsBranchEditorListener(myTreeCellRenderer);

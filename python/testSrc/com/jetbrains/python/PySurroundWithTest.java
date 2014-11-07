@@ -19,11 +19,9 @@ import com.intellij.codeInsight.generation.surroundWith.SurroundWithHandler;
 import com.intellij.lang.folding.CustomFoldingSurroundDescriptor;
 import com.intellij.lang.surroundWith.Surrounder;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.editor.SelectionModel;
-import com.intellij.psi.PsiElement;
+import com.intellij.openapi.util.Condition;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
-import com.jetbrains.python.psi.PyElement;
-import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.refactoring.surround.surrounders.statements.PyWithIfSurrounder;
 import com.jetbrains.python.refactoring.surround.surrounders.statements.PyWithTryExceptSurrounder;
 import com.jetbrains.python.refactoring.surround.surrounders.statements.PyWithWhileSurrounder;
@@ -45,32 +43,45 @@ public class PySurroundWithTest extends PyTestCase {
   }
 
   // PY-11357
-  public void testSurroundFirstMethodWithCustomFoldingRegion() {
-    checkCustomFoldingRegionRange(PyFunction.class);
+  public void testCustomFoldingRegionFirstMethod() throws Exception {
+    doTestSurroundWithCustomFoldingRegion();
   }
 
   // PY-11357
-  public void testSurroundLastMethodWithCustomFoldingRegion() {
-    checkCustomFoldingRegionRange(PyFunction.class);
+  public void testCustomFoldingRegionLastMethod() throws Exception {
+    doTestSurroundWithCustomFoldingRegion();
   }
 
   // PY-14261
-  public void testSurroundWithCustomFoldingRegion() throws Exception {
-    doTest(CustomFoldingSurroundDescriptor.SURROUNDERS[0]);
+  public void testCustomFoldingRegionPreservesIndentation() throws Exception {
+    doTestSurroundWithCustomFoldingRegion();
   }
 
+  public void testCustomFoldingRegionSingleCharacter() throws Exception {
+    doTestSurroundWithCustomFoldingRegion();
+  }
 
-  private PsiElement[] checkCustomFoldingRegionRange(Class<? extends PyElement>... elementTypes) {
-    myFixture.configureByFile("/surround/" + getTestName(false) + ".py");
-    final SelectionModel selection = myFixture.getEditor().getSelectionModel();
-    final PsiElement[] range = CustomFoldingSurroundDescriptor.INSTANCE.getElementsToSurround(myFixture.getFile(),
-                                                                                              selection.getSelectionStart(),
-                                                                                              selection.getSelectionEnd());
-    assertEquals(elementTypes.length, range.length);
-    for (int i = 0; i < elementTypes.length; i++) {
-      assertInstanceOf(range[i], elementTypes[i]);
-    }
-    return range;
+  public void testCustomFoldingRegionSingleStatementInFile() throws Exception {
+    doTestSurroundWithCustomFoldingRegion();
+  }
+
+  public void testCustomFoldingRegionIllegalSelection() throws Exception {
+    doTestSurroundWithCustomFoldingRegion();
+  }
+
+  public void testCustomFoldingRegionSeveralMethods() throws Exception {
+    doTestSurroundWithCustomFoldingRegion();
+  }
+
+  private void doTestSurroundWithCustomFoldingRegion() throws Exception {
+    final Surrounder surrounder = ContainerUtil.find(CustomFoldingSurroundDescriptor.SURROUNDERS, new Condition<Surrounder>() {
+      @Override
+      public boolean value(Surrounder surrounder) {
+        return surrounder.getTemplateDescription().contains("<editor-fold");
+      }
+    });
+    assertNotNull(surrounder);
+    doTest(surrounder);
   }
 
   private void doTest(final Surrounder surrounder) throws Exception {

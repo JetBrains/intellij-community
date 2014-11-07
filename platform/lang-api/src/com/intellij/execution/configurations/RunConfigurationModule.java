@@ -26,6 +26,9 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.xmlb.annotations.Attribute;
+import com.intellij.util.xmlb.annotations.Tag;
+import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -33,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+@Tag("module")
 public class RunConfigurationModule implements JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance(RunConfigurationModule.class);
 
@@ -40,7 +44,10 @@ public class RunConfigurationModule implements JDOMExternalizable {
   @NonNls private static final String ATTRIBUTE = "name";
 
   private Module myModule = null;
+
+  @Attribute("name")
   private String myModuleName;
+
   private final Project myProject;
 
   public RunConfigurationModule(@NotNull Project project) {
@@ -81,6 +88,7 @@ public class RunConfigurationModule implements JDOMExternalizable {
   }
 
   @Nullable
+  @Transient
   public Module getModule() {
     if (myModuleName != null) { //caching
       myModule = findModule(myModuleName);

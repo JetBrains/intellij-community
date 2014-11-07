@@ -15,15 +15,16 @@
  */
 package com.intellij.util.xmlb;
 
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-class AccessorBindingWrapper implements Binding {
-  private final Accessor myAccessor;
+class AccessorBindingWrapper extends Binding {
   private final Binding myBinding;
 
   public AccessorBindingWrapper(@NotNull Accessor accessor, @NotNull Binding binding) {
-    myAccessor = accessor;
+    super(accessor);
+
     myBinding = binding;
   }
 
@@ -41,9 +42,14 @@ class AccessorBindingWrapper implements Binding {
   @Nullable
   public Object deserialize(Object context, @NotNull Object... nodes) {
     Object currentValue = myAccessor.read(context);
-    Object deserializedValue = myBinding.deserialize(currentValue, nodes);
-    if (currentValue != deserializedValue) {
-      myAccessor.write(context, deserializedValue);
+    if (myBinding instanceof BeanBinding && myAccessor.isFinal()) {
+      ((BeanBinding)myBinding).deserializeInto(currentValue, (Element)nodes[0], null);
+    }
+    else {
+      Object deserializedValue = myBinding.deserialize(currentValue, nodes);
+      if (currentValue != deserializedValue) {
+        myAccessor.write(context, deserializedValue);
+      }
     }
     return context;
   }

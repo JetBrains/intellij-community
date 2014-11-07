@@ -157,8 +157,8 @@ public class PyImportReference extends PyReferenceImpl {
     }
     ASTNode node = myElement.getNode();
     while (node != null) {
-      final IElementType node_type = node.getElementType();
-      if (node_type == PyTokenTypes.IMPORT_KEYWORD) {
+      final IElementType nodeType = node.getElementType();
+      if (nodeType == PyTokenTypes.IMPORT_KEYWORD) {
         return true;
       }
       node = node.getTreeNext();
@@ -175,7 +175,7 @@ public class PyImportReference extends PyReferenceImpl {
     public ImportVariantCollector(@NotNull TypeEvalContext context) {
       myContext = context;
       PsiFile currentFile = myElement.getContainingFile();
-      if (currentFile != null) currentFile = currentFile.getOriginalFile();
+      currentFile = currentFile.getOriginalFile();
       myCurrentFile = currentFile;
       myNamesAlready = new HashSet<String>();
       myObjects = new ArrayList<Object>();
@@ -187,15 +187,15 @@ public class PyImportReference extends PyReferenceImpl {
 
       // NOTE: could use getPointInImport()
       // are we in "import _" or "from foo import _"?
-      PyFromImportStatement from_import = PsiTreeUtil.getParentOfType(myElement, PyFromImportStatement.class);
-      if (from_import != null && myElement.getParent() != from_import) { // in "from foo import _"
-        PyReferenceExpression src = from_import.getImportSource();
+      PyFromImportStatement fromImport = PsiTreeUtil.getParentOfType(myElement, PyFromImportStatement.class);
+      if (fromImport != null && myElement.getParent() != fromImport) { // in "from foo import _"
+        PyReferenceExpression src = fromImport.getImportSource();
         if (src != null) {
-          PsiElement mod_candidate = src.getReference().resolve();
-          if (mod_candidate instanceof PyExpression) {
-            addImportedNames(from_import.getImportElements()); // don't propose already imported items
+          PsiElement modCandidate = src.getReference().resolve();
+          if (modCandidate instanceof PyExpression) {
+            addImportedNames(fromImport.getImportElements()); // don't propose already imported items
             // try to collect submodules
-            PyExpression module = (PyExpression)mod_candidate;
+            PyExpression module = (PyExpression)modCandidate;
             PyType qualifierType = myContext.getType(module);
             if (qualifierType != null) {
               ProcessingContext ctx = new ProcessingContext();
@@ -204,18 +204,18 @@ public class PyImportReference extends PyReferenceImpl {
             }
             return myObjects.toArray();
           }
-          else if (mod_candidate instanceof PsiDirectory) {
-            fillFromDir((PsiDirectory)mod_candidate, ImportKeywordHandler.INSTANCE);
+          else if (modCandidate instanceof PsiDirectory) {
+            fillFromDir((PsiDirectory)modCandidate, ImportKeywordHandler.INSTANCE);
             return myObjects.toArray();
           }
         }
         else { // null source, must be a "from ... import"
-          relativeLevel = from_import.getRelativeLevel();
+          relativeLevel = fromImport.getRelativeLevel();
           if (relativeLevel > 0) {
-            PsiDirectory relative_dir = ResolveImportUtil.stepBackFrom(myCurrentFile, relativeLevel);
-            if (relative_dir != null) {
-              addImportedNames(from_import.getImportElements());
-              fillFromDir(relative_dir, null);
+            PsiDirectory relativeDir = ResolveImportUtil.stepBackFrom(myCurrentFile, relativeLevel);
+            if (relativeDir != null) {
+              addImportedNames(fromImport.getImportElements());
+              fillFromDir(relativeDir, null);
             }
           }
         }
@@ -226,21 +226,21 @@ public class PyImportReference extends PyReferenceImpl {
           relativeLevel += 1;
           n = n.getTreePrev();
         }
-        if (from_import != null) {
-          addImportedNames(from_import.getImportElements());
+        if (fromImport != null) {
+          addImportedNames(fromImport.getImportElements());
           if (!alreadyHasImportKeyword()) {
             insertHandler = ImportKeywordHandler.INSTANCE;
           }
         }
         else {
           myNamesAlready.add(PyNames.FUTURE_MODULE); // never add it to "import ..."
-          PyImportStatement import_stmt = PsiTreeUtil.getParentOfType(myElement, PyImportStatement.class);
-          if (import_stmt != null) {
-            addImportedNames(import_stmt.getImportElements());
+          PyImportStatement importStatement = PsiTreeUtil.getParentOfType(myElement, PyImportStatement.class);
+          if (importStatement != null) {
+            addImportedNames(importStatement.getImportElements());
           }
         }
         // look at dir by level
-        if (myCurrentFile != null && (relativeLevel >= 0 || !ResolveImportUtil.isAbsoluteImportEnabledFor(myCurrentFile))) {
+        if ((relativeLevel >= 0 || !ResolveImportUtil.isAbsoluteImportEnabledFor(myCurrentFile))) {
           final PsiDirectory containingDirectory = myCurrentFile.getContainingDirectory();
           if (containingDirectory != null) {
             QualifiedName thisQName = QualifiedNameFinder.findShortestImportableQName(containingDirectory);
@@ -268,9 +268,9 @@ public class PyImportReference extends PyReferenceImpl {
       }
     }
 
-    private void addImportedNames(@NotNull PyImportElement[] import_elts) {
-      for (PyImportElement ielt : import_elts) {
-        PyReferenceExpression ref = ielt.getImportReferenceExpression();
+    private void addImportedNames(@NotNull PyImportElement[] importElements) {
+      for (PyImportElement element : importElements) {
+        PyReferenceExpression ref = element.getImportReferenceExpression();
         if (ref != null) {
           String s = ref.getReferencedName();
           if (s != null) myNamesAlready.add(s);
@@ -278,22 +278,24 @@ public class PyImportReference extends PyReferenceImpl {
       }
     }
 
-    // adds variants found under given dir
-    private void fillFromDir(PsiDirectory target_dir, @Nullable InsertHandler<LookupElement> insertHandler) {
-      if (target_dir != null) {
-        PsiFile initPy = target_dir.findFile(PyNames.INIT_DOT_PY);
+    /**
+     * Adds variants found under given dir.
+     */
+    private void fillFromDir(PsiDirectory targetDir, @Nullable InsertHandler<LookupElement> insertHandler) {
+      if (targetDir != null) {
+        PsiFile initPy = targetDir.findFile(PyNames.INIT_DOT_PY);
         if (initPy instanceof PyFile) {
           PyModuleType moduleType = new PyModuleType((PyFile)initPy);
           ProcessingContext context = new ProcessingContext();
           context.put(PyType.CTX_NAMES, myNamesAlready);
-          Object[] completionVariants = moduleType.getCompletionVariants("", (PyExpression)getElement(), context);
+          Object[] completionVariants = moduleType.getCompletionVariants("", getElement(), context);
           if (insertHandler != null) {
             replaceInsertHandler(completionVariants, insertHandler);
           }
           myObjects.addAll(Arrays.asList(completionVariants));
         }
         else {
-          myObjects.addAll(PyModuleType.getSubModuleVariants(target_dir, myElement, myNamesAlready));
+          myObjects.addAll(PyModuleType.getSubModuleVariants(targetDir, myElement, myNamesAlready));
         }
       }
     }

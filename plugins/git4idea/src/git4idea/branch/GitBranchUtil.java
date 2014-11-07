@@ -16,10 +16,8 @@
 package git4idea.branch;
 
 import com.google.common.base.Function;
-import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
-import com.google.common.collect.Iterables;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.repo.RepositoryUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -32,7 +30,6 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.Hash;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.*;
 import git4idea.commands.GitCommand;
@@ -47,7 +44,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 
 /**
  * @author Kirill Likhodedov
@@ -209,46 +209,6 @@ public class GitBranchUtil {
   }
 
   /**
-   *
-   * @return {@link git4idea.GitStandardRemoteBranch} or {@link GitSvnRemoteBranch}, or null in case of an error. The error is logged in this method.
-   * @deprecated Should be used only in the GitRepositoryReader, i. e. moved there once all other usages are removed.
-   */
-  @Deprecated
-  @Nullable
-  public static GitRemoteBranch parseRemoteBranch(@NotNull String fullBranchName, @NotNull Hash hash,
-                                                  @NotNull Collection<GitRemote> remotes) {
-    String stdName = stripRefsPrefix(fullBranchName);
-
-    int slash = stdName.indexOf('/');
-    if (slash == -1) { // .git/refs/remotes/my_branch => git-svn
-      return new GitSvnRemoteBranch(fullBranchName, hash);
-    }
-    else {
-      String remoteName = stdName.substring(0, slash);
-      String branchName = stdName.substring(slash + 1);
-      GitRemote remote = findRemoteByName(remoteName, remotes);
-      if (remote == null) {
-        // user may remove the remote section from .git/config, but leave remote refs untouched in .git/refs/remotes
-        LOG.info(String.format("No remote found with the name [%s]. All remotes: %s", remoteName, remotes));
-        GitRemote fakeRemote = new GitRemote(remoteName, ContainerUtil.<String>emptyList(), Collections.<String>emptyList(),
-                                             Collections.<String>emptyList(), Collections.<String>emptyList());
-        return new GitStandardRemoteBranch(fakeRemote, branchName, hash);
-      }
-      return new GitStandardRemoteBranch(remote, branchName, hash);
-    }
-  }
-
-  @Nullable
-  private static GitRemote findRemoteByName(@NotNull String remoteName, @NotNull Collection<GitRemote> remotes) {
-    for (GitRemote remote : remotes) {
-      if (remote.getName().equals(remoteName)) {
-        return remote;
-      }
-    }
-    return null;
-  }
-
-  /**
    * Convert {@link git4idea.GitRemoteBranch GitRemoteBranches} to their names, and remove remote HEAD pointers: origin/HEAD.
    */
   @NotNull
@@ -260,50 +220,6 @@ public class GitBranchUtil {
         return !input.equals("HEAD");
       }
     });
-  }
-
-  /**
-   * @deprecated Don't use names, use {@link GitLocalBranch} objects.
-   */
-  @Deprecated
-  @Nullable
-  public static GitLocalBranch findLocalBranchByName(@NotNull GitRepository repository, @NotNull final String branchName) {
-    Optional<GitLocalBranch> optional = Iterables.tryFind(repository.getBranches().getLocalBranches(), new Predicate<GitLocalBranch>() {
-      @Override
-      public boolean apply(@Nullable GitLocalBranch input) {
-        assert input != null;
-        return input.getName().equals(branchName);
-      }
-    });
-    if (optional.isPresent()) {
-      return optional.get();
-    }
-    LOG.info(String.format("Couldn't find branch with name %s in %s", branchName, repository));
-    return null;
-
-  }
-
-  /**
-   * Looks through the remote branches in the given repository and tries to find the one from the given remote,
-   * which the given name.
-   * @return remote branch or null if such branch couldn't be found.
-   */
-  @Nullable
-  public static GitRemoteBranch findRemoteBranchByName(@NotNull String remoteBranchName, @NotNull final String remoteName,
-                                                       @NotNull final Collection<GitRemoteBranch> remoteBranches) {
-    final String branchName = stripRefsPrefix(remoteBranchName);
-    Optional<GitRemoteBranch> optional = Iterables.tryFind(remoteBranches, new Predicate<GitRemoteBranch>() {
-      @Override
-      public boolean apply(@Nullable GitRemoteBranch input) {
-        assert input != null;
-        return input.getNameForRemoteOperations().equals(branchName) && input.getRemote().getName().equals(remoteName);
-      }
-    });
-    if (optional.isPresent()) {
-      return optional.get();
-    }
-    LOG.info(String.format("Couldn't find branch with name %s", branchName));
-    return null;
   }
 
   @NotNull
