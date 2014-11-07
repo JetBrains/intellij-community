@@ -366,7 +366,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     }
 
     if (status.errorAnalyzingFinished) {
-      boolean isDumb = DumbService.isDumb(project);
+      boolean isDumb = project != null && DumbService.isDumb(project);
       if (isDumb) {
         statusLabel = "Shallow analysis completed";
         statusExtraLine = "Complete results will be available after indexing";
