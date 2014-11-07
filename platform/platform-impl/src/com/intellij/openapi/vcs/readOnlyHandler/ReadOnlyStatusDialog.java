@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.readOnlyHandler;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.ui.CollectionComboBoxModel;
@@ -107,11 +108,12 @@ public class ReadOnlyStatusDialog extends OptionsDialog {
           @Override
           protected void doCustomize(JList list, String value, int index, boolean selected, boolean hasFocus) {
             if (value == null) return;
+            String trimmed = StringUtil.first(value, 50, true);
             if (value.equals(defaultChangelist)) {
-              append(value, selected ? SELECTED_BOLD_ATTRIBUTES : BOLD_ATTRIBUTES);
+              append(trimmed, selected ? SELECTED_BOLD_ATTRIBUTES : BOLD_ATTRIBUTES);
             }
             else {
-              append(value, selected ? SimpleTextAttributes.SELECTED_SIMPLE_CELL_ATTRIBUTES : SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
+              append(trimmed, selected ? SimpleTextAttributes.SELECTED_SIMPLE_CELL_ATTRIBUTES : SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
             }
           }
         }); 

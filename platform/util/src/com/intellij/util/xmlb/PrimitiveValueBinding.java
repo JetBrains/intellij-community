@@ -22,10 +22,12 @@ import org.jdom.Text;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-class PrimitiveValueBinding implements Binding {
+class PrimitiveValueBinding extends Binding {
   private final Class<?> myType;
 
-  public PrimitiveValueBinding(@NotNull Class<?> myType) {
+  public PrimitiveValueBinding(@NotNull Class<?> myType, @Nullable Accessor accessor) {
+    super(accessor);
+
     this.myType = myType;
   }
 

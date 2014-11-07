@@ -1,10 +1,23 @@
 package com.siyeh.ig.bugs;
 
-import com.siyeh.ig.IGInspectionTestCase;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.Nullable;
 
-public class PrimitiveArrayArgumentToVariableArgMethodInspectionTest extends IGInspectionTestCase {
+public class PrimitiveArrayArgumentToVariableArgMethodInspectionTest extends LightInspectionTestCase {
 
-  public void test() throws Exception {
-    doTest("com/siyeh/igtest/bugs/var_arg", new PrimitiveArrayArgumentToVariableArgMethodInspection());
+  public void testPrimitiveArrayArgumentToVariableArgMethod() throws Exception {
+    doTest();
+  }
+
+  @Nullable
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    return new PrimitiveArrayArgumentToVariableArgMethodInspection();
+  }
+
+  @Override
+  protected String getBasePath() {
+    return "/plugins/InspectionGadgets/test/com/siyeh/igtest/bugs/var_arg";
   }
 }

@@ -106,7 +106,8 @@ public class JavaFunctionalExpressionSearcher implements QueryExecutor<PsiFuncti
       .intersectWith(useScope instanceof GlobalSearchScope ? (GlobalSearchScope)useScope : new EverythingGlobalScope(project));
    
     final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
-    CommonProcessors.CollectProcessor<VirtualFile> processor = new CommonProcessors.CollectProcessor<VirtualFile>() {
+    final HashSet<VirtualFile> files = new HashSet<VirtualFile>();
+    CommonProcessors.CollectProcessor<VirtualFile> processor = new CommonProcessors.CollectProcessor<VirtualFile>(files) {
       @Override
       protected boolean accept(VirtualFile virtualFile) {
         return scope.contains(virtualFile) && virtualFile.getFileType() == JavaFileType.INSTANCE && index.isInSource(virtualFile);
@@ -116,8 +117,6 @@ public class JavaFunctionalExpressionSearcher implements QueryExecutor<PsiFuncti
     final PsiSearchHelperImpl helper = (PsiSearchHelperImpl)PsiSearchHelper.SERVICE.getInstance(project);
     helper.processFilesWithText(scope, UsageSearchContext.IN_CODE, true, "::", processor);
     helper.processFilesWithText(scope, UsageSearchContext.IN_CODE, true, "->", processor);
-
-    Collection<VirtualFile> files = processor.getResults();
     LOG.info("#files: " + files.size());
 
     final PsiManager psiManager = PsiManager.getInstance(project);

@@ -443,7 +443,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   private ActionCallback onFocusLost() {
     final ActionCallback result = new ActionCallback();
     //noinspection SSBasedInspection
-    SwingUtilities.invokeLater(new Runnable() {
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
         try {

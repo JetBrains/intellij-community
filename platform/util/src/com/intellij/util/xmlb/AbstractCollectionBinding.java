@@ -29,18 +29,18 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-abstract class AbstractCollectionBinding implements Binding {
+abstract class AbstractCollectionBinding extends Binding {
   private Map<Class, Binding> myElementBindings;
 
   private final Class myElementType;
   private final String myTagName;
-  @Nullable protected final Accessor myAccessor;
   private final AbstractCollection myAnnotation;
 
   public AbstractCollectionBinding(Class elementType, String tagName, @Nullable Accessor accessor) {
+    super(accessor);
+
     myElementType = elementType;
     myTagName = tagName;
-    myAccessor = accessor;
     myAnnotation = accessor == null ? null : accessor.getAnnotation(AbstractCollection.class);
   }
 

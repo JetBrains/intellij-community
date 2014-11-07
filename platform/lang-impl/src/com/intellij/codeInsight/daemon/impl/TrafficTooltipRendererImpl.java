@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ public class TrafficTooltipRendererImpl extends ComparableObject.Impl implements
   public void repaintTooltipWindow() {
     if (myPanel != null) {
       SeverityRegistrar severityRegistrar = SeverityRegistrar.getSeverityRegistrar(myTrafficLightRenderer.getProject());
-      TrafficLightRenderer.DaemonCodeAnalyzerStatus status = myTrafficLightRenderer.getDaemonCodeAnalyzerStatus(true, severityRegistrar);
+      TrafficLightRenderer.DaemonCodeAnalyzerStatus status = myTrafficLightRenderer.getDaemonCodeAnalyzerStatus(severityRegistrar);
       myPanel.updatePanel(status, false);
     }
   }
@@ -57,7 +57,8 @@ public class TrafficTooltipRendererImpl extends ComparableObject.Impl implements
   public LightweightHint show(@NotNull Editor editor, @NotNull Point p, boolean alignToRight, @NotNull TooltipGroup group, @NotNull HintHint hintHint) {
     myTrafficLightRenderer = (TrafficLightRenderer)((EditorMarkupModelImpl)editor.getMarkupModel()).getErrorStripeRenderer();
     myPanel = new TrafficProgressPanel(myTrafficLightRenderer, editor, hintHint);
-    LineTooltipRenderer.correctLocation(editor, myPanel, p, alignToRight, false, -1);
+    repaintTooltipWindow();
+    LineTooltipRenderer.correctLocation(editor, myPanel, p, alignToRight, true, myPanel.getMinWidth());
     LightweightHint hint = new LightweightHint(myPanel);
 
     HintManagerImpl hintManager = (HintManagerImpl)HintManager.getInstance();
@@ -72,7 +73,6 @@ public class TrafficTooltipRendererImpl extends ComparableObject.Impl implements
         onHide.run();
       }
     });
-    repaintTooltipWindow();
     return hint;
   }
 }

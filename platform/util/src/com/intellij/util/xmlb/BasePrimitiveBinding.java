@@ -20,15 +20,15 @@ import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-abstract class BasePrimitiveBinding implements Binding {
-  protected final Accessor myAccessor;
+abstract class BasePrimitiveBinding extends Binding {
   protected final String myName;
 
   protected final @Nullable Converter<Object> myConverter;
   @Nullable protected Binding myBinding;
 
   protected BasePrimitiveBinding(@NotNull Accessor accessor, @Nullable String suggestedName, @Nullable Class<? extends Converter> converterClass) {
-    myAccessor = accessor;
+    super(accessor);
+
     myName = StringUtil.isEmpty(suggestedName) ? myAccessor.getName() : suggestedName;
     if (converterClass == null || converterClass == Converter.class) {
       myConverter = null;

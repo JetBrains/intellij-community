@@ -19,6 +19,7 @@ package com.intellij.history.core.changes;
 import com.intellij.history.core.Content;
 import com.intellij.history.core.StreamUtil;
 import com.intellij.history.utils.LocalHistoryLog;
+import com.intellij.openapi.util.Ref;
 import com.intellij.util.Producer;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -60,15 +61,27 @@ public class ChangeSet {
     isLocked = true;
   }
 
-  public void write(DataOutput out) throws IOException {
+  public void write(final DataOutput out) throws IOException {
     out.writeLong(myId);
     StreamUtil.writeStringOrNull(out, myName);
     out.writeLong(myTimestamp);
 
-    out.writeInt(myChanges.size());
-    for (Change c : myChanges) {
-      StreamUtil.writeChange(out, c);
-    }
+    final Ref<IOException> ref = new Ref<IOException>();
+    accessChanges(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          out.writeInt(myChanges.size());
+          for (Change c : myChanges) {
+            StreamUtil.writeChange(out, c);
+          }
+        }
+        catch (IOException e) {
+          ref.set(e);
+        }
+      }
+    });
+    if (ref.get() != null) throw ref.get();
   }
 
   public void setName(@Nullable String name) {

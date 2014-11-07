@@ -21,11 +21,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedHashSet;
-import java.util.List;
 
 public final class SmartSerializer {
   private final LinkedHashSet<String> mySerializedAccessorNameTracker;
-  private List<Binding> myOrderedBindings;
+  private Binding[] myOrderedBindings;
   private final SerializationFilter mySerializationFilter;
 
   public SmartSerializer(boolean trackSerializedNames, boolean useSkipEmptySerializationFilter) {
@@ -56,6 +55,7 @@ public final class SmartSerializer {
   public void readExternal(@NotNull Object bean, @NotNull Element element) {
     if (mySerializedAccessorNameTracker != null) {
       mySerializedAccessorNameTracker.clear();
+      myOrderedBindings = null;
     }
 
     BeanBinding beanBinding = (BeanBinding)XmlSerializerImpl.getBinding(bean.getClass());
