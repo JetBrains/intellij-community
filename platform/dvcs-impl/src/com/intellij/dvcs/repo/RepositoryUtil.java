@@ -181,15 +181,11 @@ public class RepositoryUtil {
   @Nullable
   public static VirtualFile getVcsRoot(@NotNull Project project, @Nullable VirtualFile file) {
     VirtualFile root = null;
-    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     if (file != null) {
-      if (fileIndex.isInLibrarySource(file) || fileIndex.isInLibraryClasses(file)) {
-        LOGGER.debug("File is in library sources " + file);
-        root = getVcsRootForLibraryFile(project, file);
-      }
-      else {
-        LOGGER.debug("File is not in library sources " + file);
         root = ProjectLevelVcsManager.getInstance(project).getVcsRootFor(file);
+      if (root == null) {
+        LOGGER.debug("Cannot get root by file. Trying with get by library: " + file);
+        root = getVcsRootForLibraryFile(project, file);
       }
     }
     return root;
