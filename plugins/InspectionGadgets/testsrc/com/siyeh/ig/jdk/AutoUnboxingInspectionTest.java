@@ -1,10 +1,18 @@
 package com.siyeh.ig.jdk;
 
-import com.siyeh.ig.IGInspectionTestCase;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.Nullable;
 
-public class AutoUnboxingInspectionTest extends IGInspectionTestCase {
+public class AutoUnboxingInspectionTest extends LightInspectionTestCase {
 
-  public void test() throws Exception {
-    doTest("com/siyeh/igtest/jdk/auto_unboxing", new AutoUnboxingInspection());
+  public void testAutoUnboxing() {
+    doTest();
+  }
+
+  @Nullable
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    return new AutoUnboxingInspection();
   }
 }
