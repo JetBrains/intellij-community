@@ -6064,6 +6064,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     public void setEditorFontSize(int fontSize) {
       if (fontSize < MIN_FONT_SIZE) fontSize = MIN_FONT_SIZE;
       if (fontSize > myMaxFontSize) fontSize = myMaxFontSize;
+      if (fontSize == myFontSize) return;
       myFontSize = fontSize;
       initFonts();
     }
@@ -6076,8 +6077,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     @Override
     public void setFontPreferences(@NotNull FontPreferences preferences) {
+      if (Comparing.equal(preferences, myFontPreferences)) return;
       preferences.copyTo(myFontPreferences);
-      initFonts();
+      reinitSettings();
     }
 
     @Override
@@ -6090,6 +6092,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     @Override
     public void setEditorFontName(String fontName) {
+      if (Comparing.equal(fontName, myFaceName)) return;
       myFaceName = fontName;
       initFonts();
     }
