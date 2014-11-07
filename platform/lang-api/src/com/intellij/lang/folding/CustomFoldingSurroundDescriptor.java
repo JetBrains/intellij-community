@@ -260,6 +260,8 @@ public class CustomFoldingSurroundDescriptor implements SurroundDescriptor {
       int prefixLength = linePrefix.length();
       int startOffset = firstElement.getTextRange().getStartOffset();
       final Document document = editor.getDocument();
+      final int startLineNumber = document.getLineNumber(startOffset);
+      final String startIndent = document.getText(new TextRange(document.getLineStartOffset(startLineNumber), startOffset));
       int endOffset = lastElement.getTextRange().getEndOffset();
       int delta = 0;
       TextRange rangeToSelect = new TextRange(startOffset, startOffset);
@@ -269,12 +271,11 @@ public class CustomFoldingSurroundDescriptor implements SurroundDescriptor {
         startText = startText.replace("?", DEFAULT_DESC_TEXT);
         rangeToSelect = new TextRange(startOffset + descPos, startOffset + descPos + DEFAULT_DESC_TEXT.length());
       }
-      String startString = linePrefix + startText + "\n";
+      String startString = linePrefix + startText + "\n" + startIndent;
       String endString = "\n" + linePrefix + myProvider.getEndString();
       document.insertString(endOffset, endString);
       delta += endString.length();
-      final int startCommentInsertionOffset = document.getLineStartOffset(document.getLineNumber(startOffset));
-      document.insertString(startCommentInsertionOffset, startString);
+      document.insertString(startOffset, startString);
       delta += startString.length();
       rangeToSelect = rangeToSelect.shiftRight(prefixLength);
       PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
@@ -282,7 +283,7 @@ public class CustomFoldingSurroundDescriptor implements SurroundDescriptor {
       adjustLineIndent(project, psiFile, language,
                        new TextRange(endOffset + delta - endString.length(), endOffset + delta));
       adjustLineIndent(project, psiFile, language,
-                       new TextRange(startCommentInsertionOffset, startCommentInsertionOffset + startString.length()));
+                       new TextRange(startOffset, startOffset + startString.length()));
       return rangeToSelect;
     }
 
