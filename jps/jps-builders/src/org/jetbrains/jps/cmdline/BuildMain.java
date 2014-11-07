@@ -277,7 +277,13 @@ public class BuildMain {
             else {
               try {
                 LOG.info("Build canceled, but no build session is running. Exiting.");
+                Thread.interrupted(); // to clear 'interrupted' flag
                 channel.close();
+                final PreloadedData preloaded = ourPreloadedData;
+                final ProjectDescriptor pd = preloaded != null? preloaded.getProjectDescriptor() : null;
+                if (pd != null) {
+                  pd.release();
+                }
               }
               finally {
                 System.exit(0);
