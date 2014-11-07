@@ -17,8 +17,10 @@ package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ReflectionUtil;
-import org.jdom.*;
+import org.jdom.Attribute;
+import org.jdom.Comment;
+import org.jdom.Element;
+import org.jdom.Text;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,7 +29,9 @@ import java.lang.ref.SoftReference;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
-import java.util.*;
+import java.util.Collection;
+import java.util.Date;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -217,28 +221,5 @@ class XmlSerializerImpl {
       }
     }
     return false;
-  }
-
-  public static Content[] getNotIgnoredContent(final Element m) {
-    List<Content> result = new ArrayList<Content>();
-    final List content = m.getContent();
-
-    for (Object o : content) {
-      if (!isIgnoredNode(o)) result.add((Content)o);
-    }
-
-    return result.toArray(new Content[result.size()]);
-  }
-
-  /**
-   * {@link Class#newInstance()} cannot instantiate private classes
-   */
-  static <T> T newInstance(@NotNull Class<T> aClass) {
-    try {
-      return ReflectionUtil.newInstance(aClass);
-    }
-    catch (Exception e) {
-      throw new XmlSerializationException(e);
-    }
   }
 }
