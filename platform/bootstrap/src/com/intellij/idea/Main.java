@@ -49,12 +49,8 @@ public class Main {
   private Main() { }
 
   public static void main(String[] args) {
-
     if (args.length == 1 && "%f".equals(args[0])) {
       args = NO_ARGS;
-    }
-    if (args.length == 1 && "exit".equals(args[0])) {
-      System.exit(0);
     }
 
     setFlags(args);
@@ -133,17 +129,29 @@ public class Main {
     // always delete previous patch copy
     File patchCopy = new File(tempDir, patchFileName + "_copy");
     File log4jCopy = new File(tempDir, "log4j.jar." + platform + "_copy");
-    if (!FileUtilRt.delete(patchCopy) || !FileUtilRt.delete(log4jCopy)) {
+    File jnaUtilsCopy = new File(tempDir, "jna-utils.jar." + platform + "_copy");
+    File jnaCopy = new File(tempDir, "jna.jar." + platform + "_copy");
+    if (!FileUtilRt.delete(patchCopy) || !FileUtilRt.delete(log4jCopy) || !FileUtilRt.delete(jnaUtilsCopy) || !FileUtilRt.delete(jnaCopy)) {
       throw new IOException("Cannot delete temporary files in " + tempDir);
     }
 
     File patch = new File(tempDir, patchFileName);
     if (!patch.exists()) return;
+
     File log4j = new File(PathManager.getLibPath(), "log4j.jar");
-    if (!log4j.exists()) throw new IOException("Log4J missing: " + log4j);
+    if (!log4j.exists()) throw new IOException("Log4J is missing: " + log4j);
+
+    File jnaUtils = new File(PathManager.getLibPath(), "jna-utils.jar");
+    if (!jnaUtils.exists()) throw new IOException("jna-utils.jar is missing: " + jnaUtils);
+
+    File jna = new File(PathManager.getLibPath(), "jna.jar");
+    if (!jna.exists()) throw new IOException("jna is missing: " + jna);
+
     copyFile(patch, patchCopy, true);
     copyFile(log4j, log4jCopy, false);
-
+    copyFile(jna, jnaCopy, false);
+    copyFile(jnaUtils, jnaUtilsCopy, false);
+    String java;
     int status = 0;
     if (Restarter.isSupported()) {
       List<String> args = new ArrayList<String>();
@@ -151,14 +159,17 @@ public class Main {
       if (SystemInfoRt.isWindows) {
         File launcher = new File(PathManager.getBinPath(), "VistaLauncher.exe");
         args.add(Restarter.createTempExecutable(launcher).getPath());
+        java = Restarter.createTempExecutable(new File(System.getProperty("java.home") + "/bin/java")).getPath();
+      }else{
+        java = System.getProperty("java.home") + "/bin/java";
       }
 
       //noinspection SpellCheckingInspection
       Collections.addAll(args,
-                         System.getProperty("java.home") + "/bin/java",
+                         java,
                          "-Xmx500m",
                          "-classpath",
-                         patchCopy.getPath() + File.pathSeparator + log4jCopy.getPath(),
+                         patchCopy.getPath() + File.pathSeparator + log4jCopy.getPath() + File.pathSeparator + jnaCopy.getPath() + File.pathSeparator + jnaUtilsCopy.getPath(),
                          "-Djava.io.tmpdir=" + tempDir,
                          "-Didea.updater.log=" + PathManager.getLogPath(),
                          "-Dswing.defaultlaf=" + UIManager.getSystemLookAndFeelClassName(),

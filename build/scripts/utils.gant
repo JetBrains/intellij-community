@@ -166,7 +166,8 @@ projectBuilder.buildInfoPrinter = new TeamCityBuildInfoPrinter()
 projectBuilder.compressJars = false
 
 binding.setVariable("notifyArtifactBuilt", { String artifactPath ->
-  if (!artifactPath.startsWith(home)) {
+  projectBuilder.info("notifyArtifactBuilt pass")
+/*  if (!artifactPath.startsWith(home)) {
     projectBuilder.error("Artifact path $artifactPath should start with $home")
   }
   def relativePath = artifactPath.substring(home.length())
@@ -177,7 +178,7 @@ binding.setVariable("notifyArtifactBuilt", { String artifactPath ->
   if (file.isDirectory()) {
     relativePath += "=>" + file.name
   }
-  projectBuilder.info("##teamcity[publishArtifacts '$relativePath']")
+  projectBuilder.info("##teamcity[publishArtifacts '$relativePath']") */
 })
 
 def suspendUntilDebuggerConnect = System.getProperty("debug.suspend") ?: "n"
@@ -691,13 +692,13 @@ private String submapToXml(Map properties, List keys) {
   return buff.toString()
 }
 
-private List<File> getElements(File file) {
+private List<File> getChildren(File file) {
   if (!file.isDirectory()) return []
   return file.listFiles().sort { File f -> f.name.toLowerCase() }
 }
 
 binding.setVariable("getCustomJDK", { File customJdkDir ->
-  getElements(customJdkDir).each {
+  getChildren(customJdkDir).each {
     if (it.getName().endsWith(".tar.gz")) {
       def customJdkFileName = it.getAbsolutePath().substring(0, it.getAbsolutePath().length() - 3)
       if (new File(customJdkFileName).exists()){ ant.delete(file: customJdkFileName) }
