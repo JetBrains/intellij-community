@@ -16,7 +16,6 @@
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.SmartList;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -25,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-class JDOMElementBinding extends Binding {
+class JDOMElementBinding extends Binding implements MultiNodeBinding {
   private final String myTagName;
 
   public JDOMElementBinding(@NotNull Accessor accessor) {
@@ -68,13 +67,8 @@ class JDOMElementBinding extends Binding {
   @Override
   public Object deserializeList(Object context, @NotNull List<?> nodes) {
     if (myAccessor.getValueClass().isArray()) {
-      List<Element> result = new SmartList<Element>();
-      for (Object aNode : nodes) {
-        if (!XmlSerializerImpl.isIgnoredNode(aNode)) {
-          result.add((Element)aNode);
-        }
-      }
-      myAccessor.write(context, result.toArray(new Element[nodes.size()]));
+      //noinspection SuspiciousToArrayCall
+      myAccessor.write(context, nodes.toArray(new Element[nodes.size()]));
     }
     else {
       Element element = null;
@@ -88,6 +82,11 @@ class JDOMElementBinding extends Binding {
       myAccessor.write(context, element);
     }
     return context;
+  }
+
+  @Override
+  public boolean isMulti() {
+    return true;
   }
 
   @Override

@@ -127,26 +127,6 @@ class BeanBinding extends Binding {
     return instance;
   }
 
-  @Nullable
-  @Override
-  public Object deserializeList(Object context, @NotNull List<?> nodes) {
-    Element element = null;
-    for (Object aNode : nodes) {
-      if (!XmlSerializerImpl.isIgnoredNode(aNode)) {
-        element = (Element)aNode;
-        break;
-      }
-    }
-
-    if (element == null) {
-      return context;
-    }
-
-    Object instance = ReflectionUtil.newInstance(myBeanClass);
-    deserializeInto(instance, element, null);
-    return instance;
-  }
-
   @NotNull
   public Binding[] computeOrderedBindings(@NotNull LinkedHashSet<String> accessorNameTracker) {
     final TObjectDoubleHashMap<String> weights = new TObjectDoubleHashMap<String>(accessorNameTracker.size());
@@ -182,7 +162,7 @@ class BeanBinding extends Binding {
   }
 
   public void deserializeInto(@NotNull Object result, @NotNull Element element, @Nullable Set<String> accessorNameTracker) {
-    MultiMap<Binding, Object> data = MultiMap.createLinked();
+    MultiMap<Binding, Object> data = null;
     nextNode:
     for (Object child : ContainerUtil.concat(element.getContent(), element.getAttributes())) {
       if (XmlSerializerImpl.isIgnoredNode(child)) {
@@ -191,7 +171,18 @@ class BeanBinding extends Binding {
 
       for (Binding binding : myBindings) {
         if (binding.isBoundTo(child)) {
-          data.putValue(binding, child);
+          if (binding instanceof MultiNodeBinding && ((MultiNodeBinding)binding).isMulti()) {
+            if (data == null) {
+              data = MultiMap.createLinked();
+            }
+            data.putValue(binding, child);
+          }
+          else {
+            if (accessorNameTracker != null) {
+              accessorNameTracker.add(binding.getAccessor().getName());
+            }
+            binding.deserialize(result, child);
+          }
           continue nextNode;
         }
       }
@@ -202,11 +193,13 @@ class BeanBinding extends Binding {
       Logger.getInstance("#" + myBeanClass.getName()).debug(message);
     }
 
-    for (Binding binding : data.keySet()) {
-      if (accessorNameTracker != null) {
-        accessorNameTracker.add(binding.getAccessor().getName());
+    if (data != null) {
+      for (Binding binding : data.keySet()) {
+        if (accessorNameTracker != null) {
+          accessorNameTracker.add(binding.getAccessor().getName());
+        }
+        ((MultiNodeBinding)binding).deserializeList(result, (List<?>)data.get(binding));
       }
-      binding.deserializeList(result, (List<?>)data.get(binding));
     }
   }
 

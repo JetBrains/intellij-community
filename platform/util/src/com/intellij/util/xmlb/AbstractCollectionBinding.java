@@ -28,7 +28,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-abstract class AbstractCollectionBinding extends Binding {
+abstract class AbstractCollectionBinding extends Binding implements MultiNodeBinding {
   private Map<Class, Binding> myElementBindings;
 
   private final Class myElementType;
@@ -41,6 +41,11 @@ abstract class AbstractCollectionBinding extends Binding {
     myElementType = elementType;
     myTagName = tagName;
     myAnnotation = accessor == null ? null : accessor.getAnnotation(AbstractCollection.class);
+  }
+
+  @Override
+  public boolean isMulti() {
+    return true;
   }
 
   @Override

@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-class PrimitiveValueBinding extends Binding {
+class PrimitiveValueBinding extends Binding implements MultiNodeBinding {
   private final Class<?> myType;
 
   public PrimitiveValueBinding(@NotNull Class<?> myType, @Nullable Accessor accessor) {
@@ -53,6 +53,11 @@ class PrimitiveValueBinding extends Binding {
     else {
       return deserialize(context, nodes.get(0));
     }
+  }
+
+  @Override
+  public boolean isMulti() {
+    return true;
   }
 
   @Override

@@ -17,10 +17,8 @@ package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import org.jdom.Attribute;
-import org.jdom.Comment;
-import org.jdom.Element;
-import org.jdom.Text;
+import org.jdom.*;
+import org.jdom.filter.Filter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,16 +27,35 @@ import java.lang.ref.SoftReference;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
-import java.util.Collection;
-import java.util.Date;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author mike
  */
 class XmlSerializerImpl {
+  private static final Filter<Content> CONTENT_FILTER = new Filter<Content>() {
+    @Override
+    public boolean matches(Object obj) {
+      return !isIgnoredNode(obj);
+    }
+  };
+
   private static SoftReference<Map<Pair<Type, Accessor>, Binding>> ourBindings;
+
+  @NotNull
+  static List<Content> getFilteredContent(@NotNull Element element) {
+    List<Content> content = element.getContent();
+    if (content.isEmpty()) {
+      return content;
+    }
+    else if (content.size() == 1) {
+      return isIgnoredNode(content.get(0)) ? Collections.<Content>emptyList() : content;
+    }
+    else {
+      return element.getContent(CONTENT_FILTER);
+    }
+  }
 
   @NotNull
   static Element serialize(@NotNull Object object, @NotNull SerializationFilter filter) throws XmlSerializationException {

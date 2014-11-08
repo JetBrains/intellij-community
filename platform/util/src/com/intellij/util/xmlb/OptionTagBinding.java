@@ -13,13 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.util.xmlb;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.SmartList;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import org.jdom.Attribute;
 import org.jdom.Content;
@@ -32,8 +29,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 class OptionTagBinding extends BasePrimitiveBinding {
-  private static final Logger LOG = Logger.getInstance(OptionTagBinding.class);
-
   private final String myTagName;
   private final String myNameAttribute;
   private final String myValueAttribute;
@@ -91,16 +86,6 @@ class OptionTagBinding extends BasePrimitiveBinding {
     return targetElement;
   }
 
-  @Nullable
-  @Override
-  public Object deserializeList(Object context, @NotNull List<?> nodes) {
-    if (nodes.size() > 1) {
-      LOG.info("Duplicate options for " + context + " will be ignored");
-    }
-    assert !nodes.isEmpty() : "Empty nodes passed to: " + this;
-    return deserialize(context, ((Element)nodes.get(0)));
-  }
-
   @Override
   public Object deserialize(Object context, @NotNull Object node) {
     return deserialize(context, (Element)node);
@@ -108,7 +93,17 @@ class OptionTagBinding extends BasePrimitiveBinding {
 
   private Object deserialize(Object context, Element element) {
     Attribute valueAttribute = element.getAttribute(myValueAttribute);
-    if (valueAttribute != null) {
+    if (valueAttribute == null) {
+      List<Content> children = XmlSerializerImpl.getFilteredContent(element);
+      if (children.isEmpty()) {
+        myAccessor.write(context, null);
+      }
+      else {
+        assert myBinding != null;
+        myAccessor.write(context, Binding.deserializeList(myBinding, myAccessor.read(context), children));
+      }
+    }
+    else {
       Object value;
       if (myConverter != null) {
         value = myConverter.fromString(valueAttribute.getValue());
@@ -118,23 +113,6 @@ class OptionTagBinding extends BasePrimitiveBinding {
         value = myBinding.deserialize(context, valueAttribute);
       }
       myAccessor.write(context, value);
-    }
-    else {
-      List<Object> children = new SmartList<Object>();
-      for (Content child : element.getContent()) {
-        if (!XmlSerializerImpl.isIgnoredNode(child)) {
-          children.add(child);
-        }
-      }
-
-      if (!children.isEmpty()) {
-        assert myBinding != null;
-        Object value = myBinding.deserializeList(myAccessor.read(context), children);
-        myAccessor.write(context, value);
-      }
-      else {
-        myAccessor.write(context, null);
-      }
     }
     return context;
   }

@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-class TagBinding extends BasePrimitiveBinding {
+class TagBinding extends BasePrimitiveBinding implements MultiNodeBinding {
   private final String myTextIfEmpty;
 
   public TagBinding(@NotNull Accessor accessor, @NotNull Tag tagAnnotation) {
@@ -64,9 +64,14 @@ class TagBinding extends BasePrimitiveBinding {
       Element element = (Element)node;
       assert element.getName().equals(name);
       //noinspection unchecked
-      children.addAll(((List)(isBeanBinding ? element.getChildren() : element.getContent())));
+      children.addAll(((List)(isBeanBinding ? element.getChildren() : XmlSerializerImpl.getFilteredContent(element))));
     }
     return deserialize(context, children, isBeanBinding);
+  }
+
+  @Override
+  public boolean isMulti() {
+    return myBinding instanceof MultiNodeBinding && ((MultiNodeBinding)myBinding).isMulti();
   }
 
   @Override
@@ -74,7 +79,7 @@ class TagBinding extends BasePrimitiveBinding {
   public Object deserialize(Object context, @NotNull Object node) {
     boolean isBeanBinding = myBinding instanceof BeanBinding;
     Element element = (Element)node;
-    return deserialize(context, isBeanBinding ? element.getChildren() : element.getContent(), isBeanBinding);
+    return deserialize(context, isBeanBinding ? element.getChildren() : XmlSerializerImpl.getFilteredContent(element), isBeanBinding);
   }
 
   private Object deserialize(Object o, List<? extends Content> children, boolean isBeanBinding) {
@@ -87,7 +92,7 @@ class TagBinding extends BasePrimitiveBinding {
         children = Collections.<Content>singletonList(new Text(myTextIfEmpty));
       }
 
-      Object v = myBinding.deserializeList(myAccessor.read(o), children);
+      Object v = Binding.deserializeList(myBinding, myAccessor.read(o), children);
       myAccessor.write(o, XmlSerializerImpl.convert(v, myAccessor.getValueClass()));
     }
     return o;

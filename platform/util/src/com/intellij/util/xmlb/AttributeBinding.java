@@ -21,8 +21,6 @@ import org.jdom.Text;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-
 public class AttributeBinding extends BasePrimitiveBinding {
   public AttributeBinding(@NotNull Accessor accessor, @NotNull Attribute attribute) {
     super(accessor, attribute.value(), attribute.converter());
@@ -50,13 +48,6 @@ public class AttributeBinding extends BasePrimitiveBinding {
       stringValue = content.getValue();
     }
     return new org.jdom.Attribute(myName, stringValue);
-  }
-
-  @Nullable
-  @Override
-  public Object deserializeList(Object context, @NotNull List<?> nodes) {
-    assert nodes.size() == 1;
-    return deserialize(context, nodes.get(0));
   }
 
   @Override

@@ -22,15 +22,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 //todo: merge with option tag binding
-class TagBindingWrapper extends SingleBinding {
-  private final Binding binding;
+class TagBindingWrapper extends Binding {
+  private final Binding myBinding;
   private final String myTagName;
   private final String myAttributeName;
 
   public TagBindingWrapper(@NotNull Binding binding, final String tagName, final String attributeName) {
     super(binding.myAccessor);
 
-    this.binding = binding;
+    myBinding = binding;
 
     //noinspection unchecked
     assert binding.getBoundNodeType().isAssignableFrom(Text.class);
@@ -42,7 +42,7 @@ class TagBindingWrapper extends SingleBinding {
   @Override
   public Object serialize(Object o, @Nullable Object context, SerializationFilter filter) {
     Element e = new Element(myTagName);
-    Content content = (Content)binding.serialize(o, e, filter);
+    Content content = (Content)myBinding.serialize(o, e, filter);
     if (content != null) {
       if (!myAttributeName.isEmpty()) {
         e.setAttribute(myAttributeName, content.getValue());
@@ -61,10 +61,10 @@ class TagBindingWrapper extends SingleBinding {
   public Object deserialize(Object context, @NotNull Object node) {
     Element element = (Element)node;
     if (myAttributeName.isEmpty()) {
-      return binding.deserializeList(context, element.getContent());
+      return Binding.deserializeList(myBinding, context, XmlSerializerImpl.getFilteredContent(element));
     }
     else {
-      return binding.deserialize(context, element.getAttribute(myAttributeName));
+      return myBinding.deserialize(context, element.getAttribute(myAttributeName));
     }
   }
 

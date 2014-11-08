@@ -15,38 +15,14 @@
  */
 package com.intellij.util.xmlb;
 
-import org.jdom.Text;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Date;
+import java.util.List;
 
-/**
- * @author Dmitry Avdeev
- */
-public class DateBinding extends PrimitiveValueBinding {
-  public DateBinding(@Nullable Accessor accessor) {
-    super(Date.class, accessor);
-  }
-
+interface MultiNodeBinding {
   @Nullable
-  @Override
-  public Object serialize(Object o, @Nullable Object context, SerializationFilter filter) {
-    return new Text(Long.toString(((Date)o).getTime()));
-  }
+  Object deserializeList(Object context, @NotNull List<?> nodes);
 
-  @Override
-  protected Object convertString(String value) {
-    try {
-      long l = Long.parseLong(value);
-      return new Date(l);
-    }
-    catch (NumberFormatException e) {
-      return new Date(0);
-    }
-  }
-
-  @Override
-  public boolean isMulti() {
-    return false;
-  }
+  boolean isMulti();
 }

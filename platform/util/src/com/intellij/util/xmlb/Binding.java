@@ -38,13 +38,22 @@ abstract class Binding {
   @Nullable
   public abstract Object deserialize(Object context, @NotNull Object node);
 
-  @Nullable
-  public abstract Object deserializeList(Object context, @NotNull List<?> nodes);
-
   public abstract boolean isBoundTo(Object node);
 
   public abstract Class getBoundNodeType();
 
   public void init() {
+  }
+
+  @SuppressWarnings("CastToIncompatibleInterface")
+  @Nullable
+  public static Object deserializeList(@NotNull Binding binding, Object context, @NotNull List<?> nodes) {
+    if (binding instanceof MultiNodeBinding) {
+      return ((MultiNodeBinding)binding).deserializeList(context, nodes);
+    }
+    else {
+      assert nodes.size() == 1;
+      return binding.deserialize(context, nodes.get(0));
+    }
   }
 }

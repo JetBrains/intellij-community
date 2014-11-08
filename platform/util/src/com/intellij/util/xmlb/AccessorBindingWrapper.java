@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-class AccessorBindingWrapper extends Binding {
+class AccessorBindingWrapper extends Binding implements MultiNodeBinding {
   private final Binding myBinding;
 
   public AccessorBindingWrapper(@NotNull Accessor accessor, @NotNull Binding binding) {
@@ -64,12 +64,17 @@ class AccessorBindingWrapper extends Binding {
       ((BeanBinding)myBinding).deserializeInto(currentValue, (Element)nodes.get(0), null);
     }
     else {
-      Object deserializedValue = myBinding.deserializeList(currentValue, nodes);
+      Object deserializedValue = Binding.deserializeList(myBinding, currentValue, nodes);
       if (currentValue != deserializedValue) {
         myAccessor.write(context, deserializedValue);
       }
     }
     return context;
+  }
+
+  @Override
+  public boolean isMulti() {
+    return myBinding instanceof MultiNodeBinding && ((MultiNodeBinding)myBinding).isMulti();
   }
 
   @Override

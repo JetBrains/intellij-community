@@ -32,11 +32,11 @@ import java.util.*;
 
 import static com.intellij.util.xmlb.Constants.*;
 
-class MapBinding extends Binding {
+class MapBinding extends Binding implements MultiNodeBinding {
   private static final Logger LOG = Logger.getInstance(MapBinding.class);
 
   private static final Comparator<Object> KEY_COMPARATOR = new Comparator<Object>() {
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "NullableProblems"})
     @Override
     public int compare(Object o1, Object o2) {
       if (o1 instanceof Comparable && o2 instanceof Comparable) {
@@ -62,6 +62,11 @@ class MapBinding extends Binding {
     myKeyBinding = XmlSerializerImpl.getBinding(keyType);
     myValueBinding = XmlSerializerImpl.getBinding(valueType);
     myMapAnnotation = accessor.getAnnotation(MapAnnotation.class);
+  }
+
+  @Override
+  public boolean isMulti() {
+    return true;
   }
 
   @Nullable
@@ -186,7 +191,7 @@ class MapBinding extends Binding {
           }
         }
         else {
-          k = myKeyBinding.deserializeList(context, entry.getChild(getKeyAttributeName()).getContent());
+          k = Binding.deserializeList(myKeyBinding, context, XmlSerializerImpl.getFilteredContent(entry.getChild(getKeyAttributeName())));
         }
       }
 
@@ -204,7 +209,7 @@ class MapBinding extends Binding {
           }
         }
         else {
-          v = myValueBinding.deserializeList(context, entry.getChild(getValueAttributeName()).getContent());
+          v = Binding.deserializeList(myValueBinding, context, XmlSerializerImpl.getFilteredContent(entry.getChild(getValueAttributeName())));
         }
       }
 

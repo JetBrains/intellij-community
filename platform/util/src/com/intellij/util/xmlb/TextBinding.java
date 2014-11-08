@@ -20,7 +20,7 @@ import org.jdom.Text;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class TextBinding extends SingleBinding {
+public class TextBinding extends Binding {
   private volatile Binding myBinding;
 
   public TextBinding(@NotNull Accessor accessor) {
