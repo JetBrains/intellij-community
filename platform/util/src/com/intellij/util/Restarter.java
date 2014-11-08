@@ -53,7 +53,10 @@ public class Restarter {
   }
 
   public static boolean isSupported() {
-    return getRestartCode() != 0 || SystemInfo.isWindows || SystemInfo.isMac;
+    if (getRestartCode() != 0) return true;
+    if (SystemInfo.isWindows) return true;
+    if (SystemInfo.isMac) return PathManager.getHomePath().contains(".app");
+    return false;
   }
 
   public static int scheduleRestart(@NotNull String... beforeRestart) throws IOException {
@@ -147,7 +150,7 @@ public class Restarter {
     List<String> commands = new ArrayList<String>();
     commands.add(createTempExecutable(restarterFile).getPath());
     argumentsBuilder.consume(commands);
-    Runtime.getRuntime().exec(commands.toArray(new String[commands.size()]));
+    Runtime.getRuntime().exec(ArrayUtil.toStringArray(commands));
   }
 
   public static File createTempExecutable(File executable) throws IOException {
@@ -190,8 +193,7 @@ public class Restarter {
       try {
         StreamUtil.copyStreamContent(myIn, myOut);
       }
-      catch (IOException ignore) {
-      }
+      catch (IOException ignore) { }
     }
   }
 }
