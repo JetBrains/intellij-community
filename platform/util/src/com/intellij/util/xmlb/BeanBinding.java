@@ -26,7 +26,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.xmlb.annotations.*;
-import gnu.trove.TObjectDoubleHashMap;
+import gnu.trove.TObjectFloatHashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -85,12 +85,7 @@ class BeanBinding extends Binding {
 
   @Nullable
   public Element serializeInto(@NotNull Object o, @Nullable Element element, @NotNull SerializationFilter filter) {
-    return serializeInto(o, element, filter, myBindings);
-  }
-
-  @Nullable
-  public Element serializeInto(@NotNull Object o, @Nullable Element element, @NotNull SerializationFilter filter, @Nullable Binding[] bindings) {
-    for (Binding binding : bindings == null ? myBindings : bindings) {
+    for (Binding binding : myBindings) {
       Accessor accessor = binding.getAccessor();
       if (!filter.accepts(accessor, o)) {
         continue;
@@ -128,10 +123,10 @@ class BeanBinding extends Binding {
   }
 
   @NotNull
-  public Binding[] computeOrderedBindings(@NotNull LinkedHashSet<String> accessorNameTracker) {
-    final TObjectDoubleHashMap<String> weights = new TObjectDoubleHashMap<String>(accessorNameTracker.size());
-    double weight = 0;
-    double step = (double)myBindings.length / (double)accessorNameTracker.size();
+  public TObjectFloatHashMap<String> computeBindingWeights(@NotNull LinkedHashSet<String> accessorNameTracker) {
+    TObjectFloatHashMap<String> weights = new TObjectFloatHashMap<String>(accessorNameTracker.size());
+    float weight = 0;
+    float step = (float)myBindings.length / (float)accessorNameTracker.size();
     for (String name : accessorNameTracker) {
       weights.put(name, weight);
       weight += step;
@@ -146,19 +141,20 @@ class BeanBinding extends Binding {
 
       weight++;
     }
+    return weights;
+  }
 
-    Binding[] result = Arrays.copyOf(myBindings, myBindings.length);
-    Arrays.sort(result, new Comparator<Binding>() {
+  public void sortBindings(@NotNull final TObjectFloatHashMap<String> weights) {
+    Arrays.sort(myBindings, new Comparator<Binding>() {
       @Override
       public int compare(@NotNull Binding o1, @NotNull Binding o2) {
         String n1 = o1.getAccessor().getName();
         String n2 = o2.getAccessor().getName();
-        double w1 = weights.get(n1);
-        double w2 = weights.get(n2);
+        float w1 = weights.get(n1);
+        float w2 = weights.get(n2);
         return (int)(w1 - w2);
       }
     });
-    return result;
   }
 
   public void deserializeInto(@NotNull Object result, @NotNull Element element, @Nullable Set<String> accessorNameTracker) {
