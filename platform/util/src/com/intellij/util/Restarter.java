@@ -129,13 +129,15 @@ public class Restarter {
   }
 
   private static void restartOnMac(@NotNull final String... beforeRestart) throws IOException {
-    final String homePath = PathManager.getHomePath().substring(0, PathManager.getHomePath().indexOf( ".app" ) + 4);
-    if (!StringUtil.endsWithIgnoreCase(homePath, ".app")) throw new IOException("Application bundle not found: " + homePath);
+    String homePath = PathManager.getHomePath();
+    int p = homePath.indexOf(".app");
+    if (p < 0) throw new IOException("Application bundle not found: " + homePath);
 
+    final String bundlePath = homePath.substring(0, p + 4);
     doScheduleRestart(new File(PathManager.getBinPath(), "restarter"), new Consumer<List<String>>() {
       @Override
       public void consume(List<String> commands) {
-        Collections.addAll(commands, homePath);
+        Collections.addAll(commands, bundlePath);
         Collections.addAll(commands, beforeRestart);
       }
     });
