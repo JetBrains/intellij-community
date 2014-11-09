@@ -86,9 +86,6 @@ class TeamcityPlugin(ErrorClassPlugin, TextTestResult, TeamcityTestResult):
     ind_1 = test_name_full.rfind('(')
     if ind_1 != -1:
       return test_name_full[:ind_1]
-    ind = test_name_full.rfind('.')
-    if ind != -1:
-      return test_name_full[test_name_full.rfind(".") + 1:]
     return test_name_full
 
 
