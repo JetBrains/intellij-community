@@ -31,7 +31,7 @@
 
     <action id="NextEditorTab" class="com.intellij.openapi.fileEditor.impl.SelectNextEditorTabAction"/>
     <action id="PreviousEditorTab" class="com.intellij.openapi.fileEditor.impl.SelectPreviousEditorTabAction"/>
-    
+
     <action id="TextComponent.ClearAction" class="com.intellij.ui.ClearTextAction"/>
     <action id="Switcher" class="com.intellij.ide.actions.Switcher" text="Switcher"/>
     <action id="QuickDocCopy" text="Copy Quick Doc" class="com.intellij.codeInsight.documentation.actions.CopyQuickDocAction" use-shortcut-of="$Copy"/>
@@ -176,6 +176,8 @@
           <action id="OpenFile" class="com.intellij.ide.actions.OpenFileAction" icon="AllIcons.Actions.Menu_open"/>
           <group id="$LRU" class="com.intellij.ide.actions.RecentProjectsGroup" popup="true"/>
           <action id="CloseProject" class="com.intellij.ide.actions.CloseProjectAction"/>
+          <action id="CloseOtherProjects" class="com.intellij.ide.actions.CloseOtherProjectsAction"/>
+          <action id="CloseAllProject" class="com.intellij.ide.actions.CloseAllProjectsAction"/>
         </group>
         <separator/>
         <group id="FileMainSettingsGroup">
@@ -194,9 +196,9 @@
         <action id="SaveAll" class="com.intellij.ide.actions.SaveAllAction" icon="AllIcons.Actions.Menu_saveall"/>
         <action id="Synchronize" class="com.intellij.ide.actions.SynchronizeAction" icon="AllIcons.Actions.Refresh"/>
         <action id="InvalidateCaches" class="com.intellij.ide.actions.InvalidateCachesAction"/>
-        
+
         <action id="ChangeFileEncodingAction" class="com.intellij.openapi.vfs.encoding.ChangeFileEncodingAction"/>
-        
+
         <group id="ChangeLineSeparators" text="Line Separators" popup="true" class="com.intellij.ide.actions.NonTrivialActionGroup">
           <action id="ConvertToWindowsLineSeparators" class="com.intellij.codeStyle.ConvertToWindowsLineSeparatorsAction"/>
           <action id="ConvertToUnixLineSeparators" class="com.intellij.codeStyle.ConvertToUnixLineSeparatorsAction"/>
