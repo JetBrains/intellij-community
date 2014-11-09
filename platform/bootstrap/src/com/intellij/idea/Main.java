@@ -159,7 +159,7 @@ public class Main {
       if (SystemInfoRt.isWindows) {
         File launcher = new File(PathManager.getBinPath(), "VistaLauncher.exe");
         args.add(Restarter.createTempExecutable(launcher).getPath());
-        java = Restarter.createTempExecutable(new File(System.getProperty("java.home") + "/bin/java")).getPath();
+        java = Restarter.createTempExecutable(new File(System.getProperty("java.home") + "/bin/java.exe")).getPath();
       }else{
         java = System.getProperty("java.home") + "/bin/java";
       }
