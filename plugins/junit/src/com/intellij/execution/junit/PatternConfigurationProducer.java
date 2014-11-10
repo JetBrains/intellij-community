@@ -51,7 +51,9 @@ public class PatternConfigurationProducer extends JUnitConfigurationProducer {
                                                   Ref<PsiElement> sourceElement) {
     final LinkedHashSet<String> classes = new LinkedHashSet<String>();
     PsiElement[] elements = collectPatternElements(context, classes);
-    if (classes.size() <= 1) return false;
+    if (elements == null || collectTestMembers(elements, false).size() <= 1) {
+      return false;
+    }
     sourceElement.set(elements[0]);
     final JUnitConfiguration.Data data = configuration.getPersistentData();
     data.setPatterns(classes);
