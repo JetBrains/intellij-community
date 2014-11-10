@@ -264,7 +264,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   @Nullable
   @Override
   public Caret addCaret(@NotNull VisualPosition pos) {
-    myEditor.assertIsDispatchThread();
+    EditorImpl.assertIsDispatchThread();
     CaretImpl caret = new CaretImpl(myEditor);
     caret.moveToVisualPosition(pos, false);
     if (addCaret(caret)) {
@@ -291,7 +291,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
 
   @Override
   public boolean removeCaret(@NotNull Caret caret) {
-    myEditor.assertIsDispatchThread();
+    EditorImpl.assertIsDispatchThread();
     if (myCarets.size() <= 1 || !(caret instanceof CaretImpl)) {
       return false;
     }
@@ -307,7 +307,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
 
   @Override
   public void removeSecondaryCarets() {
-    myEditor.assertIsDispatchThread();
+    EditorImpl.assertIsDispatchThread();
     if (!supportsMultipleCarets()) {
       return;
     }
@@ -329,7 +329,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
 
   @Override
   public void runForEachCaret(@NotNull final CaretAction action, final boolean reverseOrder) {
-    myEditor.assertIsDispatchThread();
+    EditorImpl.assertIsDispatchThread();
     if (!supportsMultipleCarets()) {
       action.perform(getPrimaryCaret());
       return;
@@ -358,7 +358,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
 
   @Override
   public void runBatchCaretOperation(@NotNull Runnable runnable) {
-    myEditor.assertIsDispatchThread();
+    EditorImpl.assertIsDispatchThread();
     doWithCaretMerging(runnable);
   }
 
@@ -442,7 +442,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
 
   @Override
   public void setCaretsAndSelections(@NotNull final List<CaretState> caretStates, final boolean updateSystemSelection) {
-    myEditor.assertIsDispatchThread();
+    EditorImpl.assertIsDispatchThread();
     if (caretStates.isEmpty()) {
       throw new IllegalArgumentException("At least one caret should exist");
     }
