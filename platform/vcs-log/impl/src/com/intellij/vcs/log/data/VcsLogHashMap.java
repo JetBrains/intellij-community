@@ -54,18 +54,24 @@ public class VcsLogHashMap implements Disposable {
 
   private static final File LOG_CACHE_APP_DIR = new File(PathManager.getSystemPath(), "vcs-log");
   private static final Logger LOG = Logger.getInstance(VcsLogHashMap.class);
+  private static final int VERSION = 1;
 
   private final PersistentEnumerator<Hash> myPersistentEnumerator;
 
   VcsLogHashMap(@NotNull Project project, @NotNull Map<VirtualFile, VcsLogProvider> logProviders) throws IOException {
-    final File myMapFile = new File(LOG_CACHE_APP_DIR, calcLogId(project, logProviders));
+    String logId = calcLogId(project, logProviders);
+    final File mapFile = new File(LOG_CACHE_APP_DIR, logId + "." + VERSION);
+    if (!mapFile.exists()) {
+      IOUtil.deleteAllFilesStartingWith(new File(LOG_CACHE_APP_DIR, logId));
+    }
+
     Disposer.register(project, this);
     myPersistentEnumerator = IOUtil.openCleanOrResetBroken(new ThrowableComputable<PersistentEnumerator<Hash>, IOException>() {
       @Override
       public PersistentEnumerator<Hash> compute() throws IOException {
-        return new PersistentEnumerator<Hash>(myMapFile, new MyHashKeyDescriptor(), Page.PAGE_SIZE);
+        return new PersistentEnumerator<Hash>(mapFile, new MyHashKeyDescriptor(), Page.PAGE_SIZE);
       }
-    }, myMapFile);
+    }, mapFile);
   }
 
   @NotNull
@@ -189,12 +195,12 @@ public class VcsLogHashMap implements Disposable {
   private static class MyHashKeyDescriptor implements KeyDescriptor<Hash> {
     @Override
     public void save(@NotNull DataOutput out, Hash value) throws IOException {
-      out.writeUTF(value.asString());
+      ((HashImpl)value).write(out);
     }
 
     @Override
     public Hash read(@NotNull DataInput in) throws IOException {
-      return HashImpl.build(in.readUTF());
+      return HashImpl.read(in);
     }
 
     @Override
