@@ -43,14 +43,15 @@ public class HashImpl implements Hash {
     int length = inputStr.length();
     byte even = (byte)(length % 2);
     byte[] data = new byte[length / 2 + 1 + even];
+    final int base = 16;
     data[0] = even;
     try {
       for (int i = 0; i < length / 2; i++) {
-        int k = Integer.parseInt(inputStr.substring(2 * i, 2 * i + 2), 16);
+        int k = Character.digit(inputStr.charAt(2 * i), base) * base + Character.digit(inputStr.charAt(2 * i + 1), base);
         data[i + 1] = (byte)(k - 128);
       }
       if (even == 1) {
-        int k = Integer.parseInt(inputStr.substring(length - 1), 16);
+        int k = Character.digit(inputStr.charAt(length - 1), base);
         data[length / 2 + 1] = (byte)(k - 128);
       }
     }
