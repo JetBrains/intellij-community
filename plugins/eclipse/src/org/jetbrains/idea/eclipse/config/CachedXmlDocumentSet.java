@@ -72,12 +72,12 @@ public class CachedXmlDocumentSet implements FileSet {
 
   public boolean exists(String name) {
     assertKnownName(name);
-    return !deletedContent.contains(name) && getVFile(name, false) != null;
+    return !deletedContent.contains(name) && getVFile(name) != null;
   }
 
   @Nullable
   protected VirtualFile getVFile(@NotNull String name) {
-    return getVFile(name, true);
+    return getVFile(name, false);
   }
 
   @Nullable
@@ -148,7 +148,7 @@ public class CachedXmlDocumentSet implements FileSet {
   public void preload() {
     for (String key : nameToDir.keySet()) {
       try {
-        load(key, true);
+        load(key, false);
       }
       catch (IOException ignore) {
       }
