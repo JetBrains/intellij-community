@@ -44,8 +44,6 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.evaluation.XInstanceEvaluator;
 import com.intellij.xdebugger.frame.*;
-import com.intellij.xdebugger.frame.presentation.XRegularValuePresentation;
-import com.intellij.xdebugger.frame.presentation.XStringValuePresentation;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.evaluate.XValueCompactPresentation;
 import com.intellij.xdebugger.impl.ui.XValueTextProvider;
@@ -140,22 +138,10 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
             final String value = StringUtil.notNullize(strings[1]);
             String type = strings[0];
             XValuePresentation presentation;
-            if (myValueDescriptor.isString()) {
-              presentation = new TypedStringValuePresentation(value, type);
-            }
-            else {
-              @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
-              EvaluateException exception = myValueDescriptor.getEvaluateException();
-              if (myValueDescriptor.getLastRenderer() instanceof ToStringRenderer && exception == null) {
-                presentation = new XRegularValuePresentation(StringUtil.wrapWithDoubleQuote(truncateToMaxLength(value)), type);
-              }
-              else if (myValueDescriptor.getLastRenderer() instanceof CompoundReferenceRenderer && exception == null) {
-                presentation = new XRegularValuePresentation(truncateToMaxLength(value), type);
-              }
-              else {
-                presentation = new JavaValuePresentation(value, type, exception != null ? exception.getMessage() : null);
-              }
-            }
+            @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
+            EvaluateException exception = myValueDescriptor.getEvaluateException();
+            presentation = new JavaValuePresentation(value, type, exception != null ? exception.getMessage() : null, myValueDescriptor);
+
             if (myValueDescriptor.getLastRenderer() instanceof FullValueEvaluatorProvider) {
               node.setFullValueEvaluator(((FullValueEvaluatorProvider)myValueDescriptor.getLastRenderer()).getFullValueEvaluator(myEvaluationContext, myValueDescriptor));
             }
@@ -198,11 +184,13 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
     private final String myValue;
     private final String myType;
     private final String myError;
+    private final ValueDescriptorImpl myValueDescriptor;
 
-    public JavaValuePresentation(@NotNull String value, @Nullable String type, @Nullable String error) {
+    public JavaValuePresentation(@NotNull String value, @Nullable String type, @Nullable String error, ValueDescriptorImpl valueDescriptor) {
       myValue = value;
       myType = type;
       myError = error;
+      myValueDescriptor = valueDescriptor;
     }
 
     @Nullable
@@ -254,28 +242,36 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
             }
           }
         }
-        renderer.renderValue(myValue);
+
+        String value = myValue;
+        if (myValueDescriptor.isString()) {
+          renderer.renderStringValue(myValue, "\"\\", XValueNode.MAX_VALUE_LENGTH);
+          return;
+        }
+        else if (myValueDescriptor.getLastRenderer() instanceof ToStringRenderer) {
+          value = StringUtil.wrapWithDoubleQuote(truncateToMaxLength(myValue));
+        }
+        else if (myValueDescriptor.getLastRenderer() instanceof CompoundReferenceRenderer) {
+          value = truncateToMaxLength(myValue);
+        }
+        renderer.renderValue(value);
       }
+    }
+
+    @NotNull
+    @Override
+    public String getSeparator() {
+      String fullName = myValueDescriptor.calcValueName();
+      String name = myValueDescriptor.getName();
+      if (!StringUtil.isEmpty(fullName) && !name.equals(fullName) && fullName.startsWith(name)) {
+        return fullName.substring(name.length()) + " " + DEFAULT_SEPARATOR;
+      }
+      return DEFAULT_SEPARATOR;
     }
   }
 
   String getValueString() {
     return splitValue(myValueDescriptor.getValueLabel())[1];
-  }
-
-  private static class TypedStringValuePresentation extends XStringValuePresentation {
-    private final String myType;
-
-    public TypedStringValuePresentation(@NotNull String value, @Nullable String type) {
-      super(value);
-      myType = type;
-    }
-
-    @Nullable
-    @Override
-    public String getType() {
-      return myType;
-    }
   }
 
   private static String[] splitValue(String value) {
