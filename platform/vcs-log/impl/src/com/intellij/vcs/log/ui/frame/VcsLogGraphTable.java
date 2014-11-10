@@ -25,13 +25,11 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
 import com.intellij.openapi.vcs.changes.issueLinks.TableLinkMouseListener;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.ColoredTableCellRenderer;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.PopupHandler;
-import com.intellij.ui.TableScrollingUtil;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.Function;
+import com.intellij.util.NotNullProducer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
@@ -46,6 +44,7 @@ import com.intellij.vcs.log.graph.actions.GraphMouseAction;
 import com.intellij.vcs.log.printer.idea.GraphCellPainter;
 import com.intellij.vcs.log.printer.idea.PositionUtil;
 import com.intellij.vcs.log.printer.idea.SimpleGraphCellPainter;
+import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.render.GraphCommitCell;
 import com.intellij.vcs.log.ui.render.GraphCommitCellRender;
@@ -73,8 +72,8 @@ import static com.intellij.vcs.log.printer.idea.PrintParameters.HEIGHT_CELL;
 
 public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, CopyProvider {
 
-  private static final int ROOT_INDICATOR_COLORED_WIDTH = 8;
-  private static final int ROOT_INDICATOR_WHITE_WIDTH = 5;
+  public static final int ROOT_INDICATOR_COLORED_WIDTH = 8;
+  public static final int ROOT_INDICATOR_WHITE_WIDTH = 5;
   private static final int ROOT_INDICATOR_WIDTH = ROOT_INDICATOR_WHITE_WIDTH + ROOT_INDICATOR_COLORED_WIDTH;
   private static final int ROOT_NAME_MAX_WIDTH = 200;
   private static final int MAX_DEFAULT_AUTHOR_COLUMN_WIDTH = 200;
@@ -367,6 +366,17 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
     return null;
   }
 
+  public static JBColor getRootBackgroundColor(@NotNull VirtualFile root, @NotNull VcsLogColorManager colorManager) {
+    final Color rootColor = colorManager.getRootColor(root);
+    return new JBColor(new NotNullProducer<Color>() {
+      @NotNull
+      @Override
+      public Color produce() {
+        return ColorUtil.mix(rootColor, UIUtil.getTableBackground(), 1 - (50.0 / 255));
+      }
+    });
+  }
+
   private class MyHeaderMouseAdapter extends MouseAdapter {
     @Override
     public void mouseMoved(MouseEvent e) {
@@ -531,17 +541,14 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
         } else {
           text = "";
         }
-        color = myUi.getColorManager().getRootColor(root);
+        color = getRootBackgroundColor(root, myUi.getColorManager());
       }
       else {
         text = null;
         color = UIUtil.getTableBackground(isSelected);
       }
 
-      //we create JBColor later
-      //noinspection UseJBColor
-      Color transparentColor = new Color(color.getRed(), color.getGreen(), color.getBlue(), 50);
-      myColor = new JBColor(transparentColor, transparentColor);
+      myColor = color;
       myBorderColor = myRenderer.getTableCellRendererComponent(table, text, isSelected, hasFocus, row, column).getBackground();
       setForeground(UIUtil.getTableForeground(false));
 
