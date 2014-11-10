@@ -44,7 +44,10 @@ public class ForCanBeForeachInspectionTest {
 
   @BeforeEach
   void setUp() {
-    fixture.get().enableInspections(new ForCanBeForeachInspection());
+    // Android Studio: changed REPORT_INDEXED_LOOP to false, but this test is for REPORT_INDEXED_LOOP=true.
+    var inspection = new ForCanBeForeachInspection();
+    inspection.REPORT_INDEXED_LOOP = true;
+    fixture.get().enableInspections(inspection);
   }
 
   @Test
