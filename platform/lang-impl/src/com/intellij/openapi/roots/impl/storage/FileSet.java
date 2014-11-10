@@ -27,6 +27,4 @@ public interface FileSet {
   boolean hasChanged();
 
   void commit() throws IOException;
-
-  void listModifiedFiles(@NotNull List<VirtualFile> list);
 }

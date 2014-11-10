@@ -196,19 +196,6 @@ public class CachedXmlDocumentSet implements FileSet {
   }
 
   @Override
-  public void listModifiedFiles(@NotNull List<VirtualFile> list) {
-    for (String key : modifiedContent.keySet()) {
-      try {
-        if (hasChanged(key)) {
-          list.add(getOrCreateVFile(key));
-        }
-      }
-      catch (IOException ignore) {
-      }
-    }
-  }
-
-  @Override
   public boolean hasChanged() {
     for (String key : modifiedContent.keySet()) {
       if (hasChanged(key)) {
