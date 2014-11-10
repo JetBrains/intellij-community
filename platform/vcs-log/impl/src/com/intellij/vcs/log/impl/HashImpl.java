@@ -15,9 +15,13 @@
  */
 package com.intellij.vcs.log.impl;
 
+import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.vcs.log.Hash;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 import java.util.Arrays;
 
 /**
@@ -35,6 +39,19 @@ public class HashImpl implements Hash {
   public static Hash build(@NotNull String inputStr) {
     byte[] data = buildData(inputStr);
     return new HashImpl(data);
+  }
+
+  @NotNull
+  public static Hash read(@NotNull DataInput in) throws IOException {
+    int length = DataInputOutputUtil.readINT(in);
+    byte[] buf = new byte[length];
+    in.readFully(buf);
+    return new HashImpl(buf);
+  }
+
+  public void write(@NotNull DataOutput out) throws IOException {
+    DataInputOutputUtil.writeINT(out, myData.length);
+    out.write(myData);
   }
 
   @NotNull
