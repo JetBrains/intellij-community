@@ -23,6 +23,7 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashMap;
+import gnu.trove.THashSet;
 import org.jdom.Document;
 import org.jdom.JDOMException;
 import org.jdom.output.EclipseJDOMUtil;
@@ -30,7 +31,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class CachedXmlDocumentSet implements FileSet {
   protected final Map<String, String> nameToDir = new HashMap<String, String>();
@@ -48,11 +52,11 @@ public class CachedXmlDocumentSet implements FileSet {
   }
 
   public Document read(final String name, final boolean refresh) throws IOException, JDOMException {
-    return (Document)load(name, refresh).clone();
+    return load(name, refresh).clone();
   }
 
   public void write(Document document, String name) throws IOException {
-    update((Document)document.clone(), name);
+    update(document.clone(), name);
   }
 
   public String getParent(final String name) {
@@ -100,6 +104,7 @@ public class CachedXmlDocumentSet implements FileSet {
       }
       final IOException[] ex = new IOException[1];
       final VirtualFile file = ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
+        @Override
         public VirtualFile compute() {
           try {
             return vDir.createChildData(this, name);
@@ -166,20 +171,22 @@ public class CachedXmlDocumentSet implements FileSet {
     //nameToDir.remove(name);
   }
 
-  public void listFiles(final List<VirtualFile> list) {
-    Set<String> existingFiles = new HashSet<String>(savedContent.keySet());
+  @Override
+  public void listFiles(@NotNull List<VirtualFile> list) {
+    Set<String> existingFiles = new THashSet<String>(savedContent.keySet());
     existingFiles.addAll(modifiedContent.keySet());
     for (String key : existingFiles) {
       try {
-        if(getVFile(key)==null) {
-          savedContent.remove(key); // deleted on disk
+        if (getVFile(key) == null) {
+          // deleted on disk
+          savedContent.remove(key);
         }
         list.add(getOrCreateVFile(key));
       }
       catch (IOException ignore) {
       }
     }
-    Set<String> newFiles = new HashSet<String>(nameToDir.keySet());
+    Set<String> newFiles = new THashSet<String>(nameToDir.keySet());
     newFiles.removeAll(existingFiles);
     for (String name : newFiles) {
       VirtualFile vFile = getVFile(name);
@@ -202,6 +209,7 @@ public class CachedXmlDocumentSet implements FileSet {
     }
   }
 
+  @Override
   public boolean hasChanged() {
     for (String key : modifiedContent.keySet()) {
       if (hasChanged(key)) {
@@ -221,6 +229,7 @@ public class CachedXmlDocumentSet implements FileSet {
     return physical1 != physical2;
   }
 
+  @Override
   public void commit() throws IOException {
     for (String key : modifiedContent.keySet()) {
       if (hasChanged(key)) {
@@ -239,6 +248,7 @@ public class CachedXmlDocumentSet implements FileSet {
     }
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         for (String deleted : deletedContent) {
           VirtualFile file = getVFile(deleted);
