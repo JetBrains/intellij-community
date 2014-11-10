@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.CommonProcessors;
@@ -52,13 +53,14 @@ import java.util.Map;
  */
 public class VcsLogHashMap implements Disposable {
 
-  private static final File LOG_CACHE_APP_DIR = new File(PathManager.getSystemPath(), "vcs-log");
+  private static final File LOG_CACHE_APP_DIR = new File(new File(PathManager.getSystemPath(), "vcs-log"), "hashes");
   private static final Logger LOG = Logger.getInstance(VcsLogHashMap.class);
   private static final int VERSION = 1;
 
   private final PersistentEnumerator<Hash> myPersistentEnumerator;
 
   VcsLogHashMap(@NotNull Project project, @NotNull Map<VirtualFile, VcsLogProvider> logProviders) throws IOException {
+    cleanupOldNaming(project, logProviders);
     String logId = calcLogId(project, logProviders);
     final File mapFile = new File(LOG_CACHE_APP_DIR, logId + "." + VERSION);
     if (!mapFile.exists()) {
@@ -76,19 +78,30 @@ public class VcsLogHashMap implements Disposable {
 
   @NotNull
   private static String calcLogId(@NotNull Project project, @NotNull final Map<VirtualFile, VcsLogProvider> logProviders) {
+    int hashcode = calcLogProvidersHash(logProviders);
+    return project.getLocationHash() + "." + Integer.toHexString(hashcode);
+  }
+
+  // TODO remove in IDEA 15
+  private static void cleanupOldNaming(@NotNull Project project, @NotNull Map<VirtualFile, VcsLogProvider> providers) {
+    int hashcode = calcLogProvidersHash(providers);
+    String oldLogId = project.getName() + "." + hashcode;
+    FileUtil.delete(new File(new File(PathManager.getSystemPath(), "vcs-log"), oldLogId));
+  }
+
+  private static int calcLogProvidersHash(@NotNull final Map<VirtualFile, VcsLogProvider> logProviders) {
     List<VirtualFile> sortedRoots = ContainerUtil.sorted(logProviders.keySet(), new Comparator<VirtualFile>() {
       @Override
       public int compare(@NotNull VirtualFile o1, @NotNull VirtualFile o2) {
         return o1.getPath().compareTo(o2.getPath());
       }
     });
-    String rootsWithVcss = StringUtil.join(sortedRoots, new Function<VirtualFile, String>() {
+    return StringUtil.join(sortedRoots, new Function<VirtualFile, String>() {
       @Override
       public String fun(VirtualFile root) {
         return root.getPath() + "." + logProviders.get(root).getSupportedVcs().getName();
       }
-    }, ".");
-    return project.getName() + "." + rootsWithVcss.hashCode();
+    }, ".").hashCode();
   }
 
   @Nullable
