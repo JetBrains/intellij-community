@@ -43,7 +43,8 @@ public class GradientViewport extends JViewport {
     super.paint(g);
     g = g.create();
     try {
-      Color background = getBackground();
+      Component view = getView();
+      Color background = view == null ? null : view.getBackground();
       Component header = getHeader();
       if (header != null) {
         header.setBounds(0, 0, getWidth(), header.getPreferredSize().height);
