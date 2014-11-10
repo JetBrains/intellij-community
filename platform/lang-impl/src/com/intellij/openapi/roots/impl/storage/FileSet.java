@@ -17,14 +17,13 @@
 package com.intellij.openapi.roots.impl.storage;
 
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.io.fs.IFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.List;
 
 public interface FileSet {
-  void listFiles(List<VirtualFile> list);
+  void listFiles(@NotNull List<VirtualFile> list);
 
   boolean hasChanged();
 
