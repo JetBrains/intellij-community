@@ -16,6 +16,7 @@
 package com.siyeh.ig.javadoc;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -26,8 +27,13 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 public class MissingDeprecatedAnnotationInspection extends BaseInspection {
+
+  @SuppressWarnings("PublicField") public boolean warnOnMissingJavadoc = false;
 
   @Override
   @NotNull
@@ -38,7 +44,17 @@ public class MissingDeprecatedAnnotationInspection extends BaseInspection {
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message("missing.deprecated.annotation.problem.descriptor");
+    final boolean annotationWarning = ((Boolean)infos[0]).booleanValue();
+    return annotationWarning
+           ? InspectionGadgetsBundle.message("missing.deprecated.annotation.problem.descriptor")
+           : InspectionGadgetsBundle.message("missing.deprecated.tag.problem.descriptor");
+  }
+
+  @Nullable
+  @Override
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("missing.deprecated.tag.option"),
+                                          this, "warnOnMissingJavadoc");
   }
 
   @Override
@@ -48,6 +64,10 @@ public class MissingDeprecatedAnnotationInspection extends BaseInspection {
 
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
+    final boolean annotationWarning = ((Boolean)infos[0]).booleanValue();
+    if (!annotationWarning) {
+      return null;
+    }
     return new MissingDeprecatedAnnotationFix();
   }
 
@@ -87,7 +107,7 @@ public class MissingDeprecatedAnnotationInspection extends BaseInspection {
     return new MissingDeprecatedAnnotationVisitor();
   }
 
-  private static class MissingDeprecatedAnnotationVisitor extends BaseInspectionVisitor {
+  private class MissingDeprecatedAnnotationVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitClass(@NotNull PsiClass aClass) {
@@ -95,10 +115,14 @@ public class MissingDeprecatedAnnotationInspection extends BaseInspection {
       if (!PsiUtil.isLanguageLevel5OrHigher(aClass)) {
         return;
       }
-      if (!hasDeprecatedComment(aClass) || hasDeprecatedAnnotation(aClass)) {
-        return;
+      if (hasDeprecatedAnnotation(aClass)) {
+        if (warnOnMissingJavadoc && !hasDeprecatedComment(aClass, true)) {
+          registerClassError(aClass, Boolean.FALSE);
+        }
       }
-      registerClassError(aClass);
+      else if (hasDeprecatedComment(aClass, false)) {
+        registerClassError(aClass, Boolean.TRUE);
+      }
     }
 
     @Override
@@ -109,10 +133,14 @@ public class MissingDeprecatedAnnotationInspection extends BaseInspection {
       if (method.getNameIdentifier() == null) {
         return;
       }
-      if (!hasDeprecatedComment(method) || hasDeprecatedAnnotation(method)) {
-        return;
+      if (hasDeprecatedAnnotation(method)) {
+        if (warnOnMissingJavadoc && !hasDeprecatedComment(method, true)) {
+          registerMethodError(method, Boolean.FALSE);
+        }
       }
-      registerMethodError(method);
+      else if (hasDeprecatedComment(method, false)) {
+        registerMethodError(method, Boolean.TRUE);
+      }
     }
 
     @Override
@@ -120,28 +148,31 @@ public class MissingDeprecatedAnnotationInspection extends BaseInspection {
       if (!PsiUtil.isLanguageLevel5OrHigher(field)) {
         return;
       }
-      if (!hasDeprecatedComment(field) || hasDeprecatedAnnotation(field)) {
-        return;
+      if (hasDeprecatedAnnotation(field)) {
+        if (warnOnMissingJavadoc && !hasDeprecatedComment(field, true)) {
+          registerFieldError(field, Boolean.FALSE);
+        }
       }
-      registerFieldError(field);
+      else if (hasDeprecatedComment(field, false)) {
+        registerFieldError(field, Boolean.TRUE);
+      }
     }
 
-    private static boolean hasDeprecatedAnnotation(PsiModifierListOwner element) {
+    private boolean hasDeprecatedAnnotation(PsiModifierListOwner element) {
       final PsiModifierList modifierList = element.getModifierList();
-      if (modifierList == null) {
-        return false;
-      }
-      final PsiAnnotation annotation = modifierList.findAnnotation(CommonClassNames.JAVA_LANG_DEPRECATED);
-      return annotation != null;
+      return modifierList != null && modifierList.findAnnotation(CommonClassNames.JAVA_LANG_DEPRECATED) != null;
     }
 
-    private static boolean hasDeprecatedComment(PsiDocCommentOwner element) {
+    private boolean hasDeprecatedComment(PsiDocCommentOwner element, boolean checkContent) {
       final PsiDocComment comment = element.getDocComment();
       if (comment == null) {
         return false;
       }
       final PsiDocTag deprecatedTag = comment.findTagByName("deprecated");
-      return deprecatedTag != null;
+      if (deprecatedTag == null) {
+        return false;
+      }
+      return !checkContent || deprecatedTag.getValueElement() != null;
     }
   }
 }
