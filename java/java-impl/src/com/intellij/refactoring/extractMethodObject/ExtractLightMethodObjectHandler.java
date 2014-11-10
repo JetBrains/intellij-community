@@ -85,10 +85,21 @@ public class ExtractLightMethodObjectHandler {
     final PsiFile copy = PsiFileFactory.getInstance(project)
       .createFileFromText(file.getName(), file.getFileType(), file.getText(), file.getModificationStamp(), false);
 
-    final PsiElement originalContext = fragment.getContext();
+    PsiElement originalContext = fragment.getContext();
     if (originalContext == null) {
       return null;
     }
+
+    if (originalContext instanceof PsiKeyword && PsiModifier.PRIVATE.equals(originalContext.getText())) {
+      final PsiNameIdentifierOwner identifierOwner = PsiTreeUtil.getParentOfType(originalContext, PsiNameIdentifierOwner.class);
+      if (identifierOwner != null) {
+        final PsiElement identifier = identifierOwner.getNameIdentifier();
+        if (identifier != null) {
+          originalContext = identifier;
+        }
+      }
+    }
+
     final TextRange range = originalContext.getTextRange();
     final PsiElement originalAnchor =
       CodeInsightUtil.findElementInRange(copy, range.getStartOffset(), range.getEndOffset(), originalContext.getClass());
