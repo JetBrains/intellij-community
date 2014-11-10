@@ -37,12 +37,18 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.SystemDock;
 import com.intellij.openapi.wm.impl.WindowManagerImpl;
 import com.intellij.openapi.wm.impl.X11UiUtil;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
+import com.intellij.platform.PlatformProjectOpenProcessor;
+import com.intellij.ui.CustomProtocolHandler;
 import com.intellij.ui.Splash;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -50,6 +56,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.File;
 import java.util.Arrays;
 
 public class IdeaApplication {
@@ -239,6 +246,37 @@ public class IdeaApplication {
       catch (Throwable t) {
         LOG.warn(t);
         return null;
+      }
+    }
+
+    @Override
+    public boolean canProcessExternalCommandLine() {
+      return true;
+    }
+
+    @Override
+    public void processExternalCommandLine(String[] args, @Nullable String currentDirectory) {
+      LOG.info("Request to open in " + currentDirectory + " with parameters: " + StringUtil.join(args, ","));
+
+      if (args.length > 0) {
+        String filename = args[0];
+        File file = new File(currentDirectory, filename);
+
+        if(file.exists()) {
+          VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+          if (virtualFile != null) {
+            int line = -1;
+            if (args.length > 2 && CustomProtocolHandler.LINE_NUMBER_ARG_NAME.equals(args[1])) {
+              try {
+                line = Integer.parseInt(args[2]);
+              } catch (NumberFormatException ex) {
+                LOG.error("Wrong line number:" + args[2]);
+              }
+            }
+            PlatformProjectOpenProcessor.doOpenProject(virtualFile, null, false, line, null, false);
+          }
+        }
+        throw new IncorrectOperationException("Can't find file:" + file);
       }
     }
 

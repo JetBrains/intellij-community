@@ -316,6 +316,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         break;
       }
 
+      int annotationSize = myTextAnnotationGutterSizes.get(i);
       for (int j = startLineNumber; j < endLineNumber; j++) {
         int logLine = myEditor.visualToLogicalPosition(new VisualPosition(j, 0)).line;
         String s = gutterProvider.getLineText(logLine, myEditor);
@@ -323,7 +324,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         final Color bg = gutterProvider.getBgColor(logLine, myEditor);
         if (bg != null) {
           g.setColor(bg);
-          g.fillRect(x, j * lineHeight, w, lineHeight);
+          g.fillRect(x, j * lineHeight, annotationSize, lineHeight);
         }
         g.setColor(myEditor.getColorsScheme().getColor(gutterProvider.getColor(logLine, myEditor)));
         g.setFont(myEditor.getColorsScheme().getFont(style));
@@ -332,7 +333,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         }
       }
 
-      x += myTextAnnotationGutterSizes.get(i);
+      x += annotationSize;
     }
   }
 

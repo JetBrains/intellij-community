@@ -13,22 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi;
+package com.siyeh.ig.javadoc;
 
-import com.intellij.openapi.util.Iconable;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.ig.LightInspectionTestCase;
+import junit.framework.TestCase;
 import org.jetbrains.annotations.Nullable;
 
-public interface PsiFunctionalExpression extends PsiExpression, Iconable, NavigatablePsiElement {
-  PsiFunctionalExpression[] EMPTY_ARRAY = new PsiFunctionalExpression[0];
-  /**
-   * @return SAM type the lambda expression corresponds to
-   *         null when no SAM type could be found
-   */
-  @Nullable
-  PsiType getFunctionalInterfaceType();
+/**
+ * @author Bas Leijdekkers
+ */
+public class MissingDeprecatedAnnotationInspectionTest extends LightInspectionTestCase {
 
-  /**
-   * @return true if assignment SAM s = expr is correctly shaped
-   */
-  boolean isAcceptable(PsiType left);
+  public void testMissingDeprecatedAnnotation() {
+    doTest();
+  }
+
+  @Nullable
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    final MissingDeprecatedAnnotationInspection inspection = new MissingDeprecatedAnnotationInspection();
+    inspection.warnOnMissingJavadoc = true;
+    return inspection;
+  }
 }

@@ -38,7 +38,7 @@ public class PyDictLiteralExpressionImpl extends PyElementImpl implements PyDict
   }
 
   public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
-    return PyBuiltinCache.createLiteralCollectionType(this, "dict");
+    return PyBuiltinCache.getInstance(this).createLiteralCollectionType(this, "dict", context);
   }
 
   @Override
