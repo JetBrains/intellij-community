@@ -353,7 +353,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
       statusExtraLine = "(" + status.reasonWhySuspended + ")";
       passStatusesVisible = true;
       progressBarsCompleted = Boolean.FALSE;
-      icon = AllIcons.Actions.Pause;
+      icon = AllIcons.Actions.InspectionsPause;
       return result;
     }
 
