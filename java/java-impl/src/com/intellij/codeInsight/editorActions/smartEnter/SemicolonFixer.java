@@ -47,7 +47,7 @@ public class SemicolonFixer implements Fixer {
 
   private static boolean fixReturn(@NotNull Editor editor, @Nullable PsiElement psiElement) {
     if (psiElement instanceof PsiReturnStatement) {
-      PsiMethod method = PsiTreeUtil.getParentOfType(psiElement, PsiMethod.class);
+      PsiMethod method = PsiTreeUtil.getParentOfType(psiElement, PsiMethod.class, true, PsiLambdaExpression.class);
       if (method != null && PsiType.VOID.equals(method.getReturnType())) {
         PsiReturnStatement stmt = (PsiReturnStatement)psiElement;
         if (stmt.getReturnValue() != null) {
