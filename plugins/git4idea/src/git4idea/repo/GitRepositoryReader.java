@@ -15,9 +15,9 @@
  */
 package git4idea.repo;
 
+import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.repo.RepoStateException;
 import com.intellij.dvcs.repo.Repository;
-import com.intellij.dvcs.repo.RepositoryUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
@@ -67,9 +67,9 @@ class GitRepositoryReader {
 
   GitRepositoryReader(@NotNull File gitDir) {
     myGitDir = gitDir;
-    RepositoryUtil.assertFileExists(myGitDir, ".git directory not found in " + gitDir);
+    DvcsUtil.assertFileExists(myGitDir, ".git directory not found in " + gitDir);
     myHeadFile = new File(myGitDir, "HEAD");
-    RepositoryUtil.assertFileExists(myHeadFile, ".git/HEAD file not found in " + gitDir);
+    DvcsUtil.assertFileExists(myHeadFile, ".git/HEAD file not found in " + gitDir);
     myRefsHeadsDir = new File(new File(myGitDir, "refs"), "heads");
     myRefsRemotesDir = new File(new File(myGitDir, "refs"), "remotes");
     myPackedRefsFile = new File(myGitDir, "packed-refs");
@@ -168,7 +168,7 @@ class GitRepositoryReader {
     if (!headName.exists()) {
       return null;
     }
-    String branchName = RepositoryUtil.tryLoadFile(headName);
+    String branchName = DvcsUtil.tryLoadFile(headName);
     File branchFile = findBranchFile(branchName);
     if (!branchFile.exists()) { // can happen when rebasing from detached HEAD: IDEA-93806
       return null;
@@ -229,7 +229,7 @@ class GitRepositoryReader {
    *                            If null, the whole file is read, and all valid entries are returned.
    */
   private List<HashAndName> readPackedRefsFile(@Nullable final Condition<HashAndName> firstMatchCondition) {
-    return RepositoryUtil.tryOrThrow(new Callable<List<HashAndName>>() {
+    return DvcsUtil.tryOrThrow(new Callable<List<HashAndName>>() {
       @Override
       public List<HashAndName> call() throws Exception {
         List<HashAndName> hashAndNames = ContainerUtil.newArrayList();
@@ -319,7 +319,7 @@ class GitRepositoryReader {
   @Nullable
   private static String loadHashFromBranchFile(@NotNull File branchFile) {
     try {
-      return RepositoryUtil.tryLoadFile(branchFile);
+      return DvcsUtil.tryLoadFile(branchFile);
     }
     catch (RepoStateException e) {  // notify about error but don't break the process
       LOG.error("Couldn't read " + branchFile, e);
@@ -420,12 +420,12 @@ class GitRepositoryReader {
 
   @NotNull
   private static String readBranchFile(@NotNull File branchFile) {
-    return RepositoryUtil.tryLoadFile(branchFile);
+    return DvcsUtil.tryLoadFile(branchFile);
   }
 
   @NotNull
   private Head readHead() {
-    String headContent = RepositoryUtil.tryLoadFile(myHeadFile);
+    String headContent = DvcsUtil.tryLoadFile(myHeadFile);
     Matcher matcher = BRANCH_PATTERN.matcher(headContent);
     if (matcher.matches()) {
       return new Head(true, matcher.group(1));

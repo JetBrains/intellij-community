@@ -16,7 +16,7 @@
 package git4idea.reset;
 
 import com.intellij.dvcs.DvcsUtil;
-import com.intellij.dvcs.repo.RepositoryUtil;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -179,7 +179,7 @@ public class GitResetOperation {
 
   @NotNull
   private static String joinRepos(@NotNull Collection<GitRepository> repositories) {
-    return StringUtil.join(RepositoryUtil.sortRepositories(repositories), ", ");
+    return StringUtil.join(DvcsUtil.sortRepositories(repositories), ", ");
   }
 
   private static void saveAllDocuments() {

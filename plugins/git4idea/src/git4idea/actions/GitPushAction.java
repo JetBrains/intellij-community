@@ -15,8 +15,8 @@
  */
 package git4idea.actions;
 
+import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.push.ui.VcsPushDialog;
-import com.intellij.dvcs.repo.RepositoryUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -41,7 +41,7 @@ public class GitPushAction extends DumbAwareAction {
     Collection<GitRepository> repositories = e.getData(CommonDataKeys.EDITOR) != null
                                              ? ContainerUtil.<GitRepository>emptyList()
                                              : collectRepositories(project, e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY));
-    new VcsPushDialog(project, RepositoryUtil.sortRepositories(repositories), GitBranchUtil.getCurrentRepository(project)).show();
+    new VcsPushDialog(project, DvcsUtil.sortRepositories(repositories), GitBranchUtil.getCurrentRepository(project)).show();
   }
 
   @NotNull

@@ -15,9 +15,9 @@
  */
 package org.zmlx.hg4idea.repo;
 
+import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.repo.RepoStateException;
 import com.intellij.dvcs.repo.Repository;
-import com.intellij.dvcs.repo.RepositoryUtil;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.vcs.log.Hash;
@@ -67,7 +67,7 @@ public class HgRepositoryReader {
 
   public HgRepositoryReader(@NotNull HgVcs vcs, @NotNull File hgDir) {
     myHgDir = hgDir;
-    RepositoryUtil.assertFileExists(myHgDir, ".hg directory not found in " + myHgDir);
+    DvcsUtil.assertFileExists(myHgDir, ".hg directory not found in " + myHgDir);
     myVcs = vcs;
     HgVersion version = myVcs.getVersion();
     myStatusInBranchFile = version.hasBranch2();
@@ -139,7 +139,7 @@ public class HgRepositoryReader {
   @Nullable
   public String readCurrentTipRevision() {
     if (!isBranchInfoAvailable()) return null;
-    String[] branchesWithHeads = RepositoryUtil.tryLoadFile(myBranchHeadsFile).split("\n");
+    String[] branchesWithHeads = DvcsUtil.tryLoadFile(myBranchHeadsFile).split("\n");
     String head = branchesWithHeads[0];
     Matcher matcher = HASH_NAME.matcher(head);
     if (matcher.matches()) {
@@ -162,7 +162,7 @@ public class HgRepositoryReader {
    */
   @NotNull
   public String readCurrentBranch() {
-    return branchExist() ? RepositoryUtil.tryLoadFile(myCurrentBranch) : HgRepository.DEFAULT_BRANCH;
+    return branchExist() ? DvcsUtil.tryLoadFile(myCurrentBranch) : HgRepository.DEFAULT_BRANCH;
   }
 
   @NotNull
@@ -171,7 +171,7 @@ public class HgRepositoryReader {
     // Set<String> branchNames = new HashSet<String>();
     if (isBranchInfoAvailable()) {
       Pattern activeBranchPattern = myStatusInBranchFile ? HASH_STATUS_NAME : HASH_NAME;
-      String[] branchesWithHeads = RepositoryUtil.tryLoadFile(myBranchHeadsFile).split("\n");
+      String[] branchesWithHeads = DvcsUtil.tryLoadFile(myBranchHeadsFile).split("\n");
       // first one - is a head revision: head hash + head number;
       for (int i = 1; i < branchesWithHeads.length; ++i) {
         Matcher matcher = activeBranchPattern.matcher(branchesWithHeads[i]);
@@ -241,7 +241,7 @@ public class HgRepositoryReader {
     if (!fileWithReferences.exists()) {
       return refs;
     }
-    String[] namesWithHashes = RepositoryUtil.tryLoadFile(fileWithReferences).split("\n");
+    String[] namesWithHashes = DvcsUtil.tryLoadFile(fileWithReferences).split("\n");
     for (String str : namesWithHashes) {
       Matcher matcher = HASH_NAME.matcher(str);
       if (matcher.matches()) {
@@ -253,7 +253,7 @@ public class HgRepositoryReader {
 
   @Nullable
   public String readCurrentBookmark() {
-    return myCurrentBookmark.exists() ? RepositoryUtil.tryLoadFile(myCurrentBookmark) : null;
+    return myCurrentBookmark.exists() ? DvcsUtil.tryLoadFile(myCurrentBookmark) : null;
   }
 
   @NotNull
