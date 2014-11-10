@@ -36,6 +36,7 @@ import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.eclipse.ConversionException;
 import org.jetbrains.idea.eclipse.EclipseBundle;
 import org.jetbrains.idea.eclipse.EclipseXml;
@@ -137,7 +138,8 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
     fileCache.register(module.getName() + EclipseXml.IDEA_SETTINGS_POSTFIX, moduleRoot);
   }
 
-  static CachedXmlDocumentSet getFileCache(final Module module) {
+  @NotNull
+  static CachedXmlDocumentSet getFileCache(@NotNull Module module) {
     final EclipseModuleManagerImpl moduleManager = EclipseModuleManagerImpl.getInstance(module);
     CachedXmlDocumentSet fileCache = moduleManager != null ? moduleManager.getDocumentSet() : null;
     if (fileCache == null) {
@@ -155,12 +157,8 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
   public void moduleRenamed(final Module module, String newName) {
     if (ClassPathStorageUtil.getStorageType(module).equals(JpsEclipseClasspathSerializer.CLASSPATH_STORAGE_ID)) {
       try {
-        final CachedXmlDocumentSet documentSet = getFileCache(module);
-
-
         final String oldEmlName = module.getName() + EclipseXml.IDEA_SETTINGS_POSTFIX;
-
-        final String root = documentSet.getParent(oldEmlName);
+        final String root = getFileCache(module).getParent(oldEmlName);
         final File source = new File(root, oldEmlName);
         if (source.exists()) {
           final File target = new File(root, newName + EclipseXml.IDEA_SETTINGS_POSTFIX);
@@ -183,7 +181,7 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
   public static class EclipseClasspathConverter implements ClasspathConverter {
     private final Module module;
 
-    public EclipseClasspathConverter(final Module module) {
+    public EclipseClasspathConverter(@NotNull Module module) {
       this.module = module;
     }
 
