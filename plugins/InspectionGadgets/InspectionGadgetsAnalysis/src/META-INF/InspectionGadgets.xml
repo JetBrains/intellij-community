@@ -458,10 +458,6 @@
     <localInspection language="JAVA" shortName="MarkerInterface" bundle="com.siyeh.InspectionGadgetsBundle" key="marker.interface.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.class.structure" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.classlayout.MarkerInterfaceInspection"/>
-    <localInspection language="JAVA" shortName="MissingDeprecatedAnnotation" bundle="com.siyeh.InspectionGadgetsBundle"
-                     key="missing.deprecated.annotation.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.class.structure" enabledByDefault="false" level="WARNING" runForWholeFile="true"
-                     implementationClass="com.siyeh.ig.classlayout.MissingDeprecatedAnnotationInspection"/>
     <localInspection language="JAVA" shortName="MultipleTopLevelClassesInFile" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="multiple.top.level.classes.in.file.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.class.structure" enabledByDefault="false" level="WARNING"
@@ -1231,6 +1227,10 @@
                      key="html.tag.can.be.javadoc.tag.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.javadoc.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.javadoc.HtmlTagCanBeJavadocTagInspection"/>
+    <localInspection language="JAVA" shortName="MissingDeprecatedAnnotation" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="missing.deprecated.annotation.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.javadoc.issues" enabledByDefault="false" level="WARNING" runForWholeFile="true"
+                     implementationClass="com.siyeh.ig.javadoc.MissingDeprecatedAnnotationInspection"/>
     <globalInspection language="JAVA" shortName="MissingPackageInfo" bundle="com.siyeh.InspectionGadgetsBundle"
                       key="missing.package.info.display.name" groupBundle="messages.InspectionsBundle"
                       groupKey="group.names.javadoc.issues" enabledByDefault="false" level="WARNING"
