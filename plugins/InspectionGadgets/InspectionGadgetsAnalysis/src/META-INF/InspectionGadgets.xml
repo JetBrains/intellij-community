@@ -729,6 +729,9 @@
                      bundle="com.siyeh.InspectionGadgetsBundle" key="unnecessary.conditional.expression.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.control.flow.issues" enabledByDefault="true"
                      level="WARNING" implementationClass="com.siyeh.ig.controlflow.UnnecessaryConditionalExpressionInspection"/>
+    <localInspection language="JAVA" shortName="UnnecessaryBreak" bundle="com.siyeh.InspectionGadgetsBundle" key="unnecessary.break.display.name"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.control.flow.issues" enabledByDefault="true"
+                     level="WARNING" implementationClass="com.siyeh.ig.controlflow.UnnecessaryBreakInspection"/>
     <localInspection language="JAVA" shortName="UnnecessaryContinue" bundle="com.siyeh.InspectionGadgetsBundle" key="unnecessary.continue.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.control.flow.issues" enabledByDefault="true"
                      level="WARNING" implementationClass="com.siyeh.ig.controlflow.UnnecessaryContinueInspection"/>
