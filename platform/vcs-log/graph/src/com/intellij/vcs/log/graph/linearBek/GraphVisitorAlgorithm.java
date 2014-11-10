@@ -18,18 +18,27 @@ package com.intellij.vcs.log.graph.linearBek;
 import com.intellij.util.containers.IntStack;
 import com.intellij.vcs.log.graph.api.GraphLayout;
 import com.intellij.vcs.log.graph.api.LinearGraph;
-import com.intellij.vcs.log.graph.utils.DfsUtil;
 import com.intellij.vcs.log.graph.utils.impl.BitSetFlags;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.vcs.log.graph.utils.LinearGraphUtils.getDownNodes;
 import static com.intellij.vcs.log.graph.utils.LinearGraphUtils.getUpNodes;
 
 // better DfsUtil, with ... uh ... well ... you know
-public class GraphVisitorUtil {
+public class GraphVisitorAlgorithm {
   private static final int NODE_NOT_FOUND = -1;
+  private final boolean myBackwards;
+
+  public GraphVisitorAlgorithm(boolean backwards) {
+    myBackwards = backwards;
+  }
+
+  public GraphVisitorAlgorithm() {
+    this(false);
+  }
 
   public void visitGraph(@NotNull final LinearGraph graph, @NotNull GraphLayout layout, @NotNull final GraphVisitor visitor) {
     final BitSetFlags visited = new BitSetFlags(graph.nodesCount(), false);
@@ -58,6 +67,8 @@ public class GraphVisitorUtil {
 
   private int nextNode(@NotNull LinearGraph graph, int currentNode, @NotNull BitSetFlags visited) {
     List<Integer> downNodes = getDownNodes(graph, currentNode);
+    if (myBackwards) Collections.reverse(downNodes);
+
     for (int downNode : downNodes) {
       if (!visited.get(downNode)) {
 

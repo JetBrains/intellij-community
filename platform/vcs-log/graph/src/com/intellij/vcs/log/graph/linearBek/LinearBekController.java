@@ -47,10 +47,10 @@ public class LinearBekController extends CascadeLinearGraphController {
     final GraphAdditionalEdges missingEdges = createSimpleAdditionalEdges();
     final GraphAdditionalEdges newEdges = createSimpleAdditionalEdges();
 
-    GraphVisitorUtil graphVisitorUtil = new GraphVisitorUtil();
+    GraphVisitorAlgorithm graphVisitorAlgorithm = new GraphVisitorAlgorithm(false);
     final IntStack starts = new IntStack();
 
-    graphVisitorUtil.visitGraph(graph, graphLayout, new GraphVisitorUtil.GraphVisitor() {
+    graphVisitorAlgorithm.visitGraph(graph, graphLayout, new GraphVisitorAlgorithm.GraphVisitor() {
       @Override
       public void enterSubtree(int currentNode) {
         if (canBeStructureEnd(graph, currentNode)) {
