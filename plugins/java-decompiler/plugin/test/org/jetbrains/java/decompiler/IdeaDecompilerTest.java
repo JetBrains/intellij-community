@@ -39,6 +39,12 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Set;
 
 public class IdeaDecompilerTest extends LightCodeInsightFixtureTestCase {
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    myFixture.setTestDataPath(PluginPathManager.getPluginHomePath("java-decompiler") + "/plugin/testData");
+  }
+
   public void testSimple() {
     String path = PlatformTestUtil.getRtJarPath() + "!/java/lang/String.class";
     VirtualFile file = StandardFileSystems.jar().findFileByPath(path);
@@ -94,18 +100,14 @@ public class IdeaDecompilerTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testNavigation() {
-    VirtualFile file = getTestFile("Navigation.class");
-    myFixture.openFileInEditor(file);
-
+    myFixture.openFileInEditor(getTestFile("Navigation.class"));
     doTestNavigation(11, 14, 14, 10);  // to "m2()"
     doTestNavigation(15, 21, 14, 17);  // to "int i"
     doTestNavigation(16, 28, 15, 13);  // to "int r"
   }
 
   public void testHighlighting() {
-    VirtualFile file = getTestFile("Navigation.class");
-    myFixture.openFileInEditor(file);
-
+    myFixture.openFileInEditor(getTestFile("Navigation.class"));
     IdentifierHighlighterPassFactory.doWithHighlightingEnabled(new Runnable() {
       public void run() {
         myFixture.getEditor().getCaretModel().moveToOffset(offset(11, 14));  // m2(): usage, declaration
@@ -120,8 +122,8 @@ public class IdeaDecompilerTest extends LightCodeInsightFixtureTestCase {
     });
   }
 
-  private static VirtualFile getTestFile(String name) {
-    String path = PluginPathManager.getPluginHomePath("java-decompiler") + "/plugin/testData/" + name;
+  private VirtualFile getTestFile(String name) {
+    String path = myFixture.getTestDataPath() + "/" + name;
     VirtualFile file = StandardFileSystems.local().refreshAndFindFileByPath(path);
     assertNotNull(path, file);
     return file;
