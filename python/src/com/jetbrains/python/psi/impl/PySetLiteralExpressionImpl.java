@@ -31,7 +31,7 @@ public class PySetLiteralExpressionImpl extends PyElementImpl implements PySetLi
   }
 
   public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
-    return PyBuiltinCache.createLiteralCollectionType(this, "set");
+    return PyBuiltinCache.getInstance(this).createLiteralCollectionType(this, "set", context);
   }
 
   @Override

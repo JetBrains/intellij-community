@@ -21,9 +21,7 @@ import org.jdom.Text;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-
-class PrimitiveValueBinding extends Binding implements MultiNodeBinding {
+class PrimitiveValueBinding extends Binding {
   private final Class<?> myType;
 
   public PrimitiveValueBinding(@NotNull Class<?> myType, @Nullable Accessor accessor) {
@@ -37,33 +35,15 @@ class PrimitiveValueBinding extends Binding implements MultiNodeBinding {
     return new Text(String.valueOf(o));
   }
 
-  @Nullable
-  @Override
-  public Object deserializeList(Object context, @NotNull List<?> nodes) {
-    if (nodes.isEmpty()) {
-      return convertString("");
-    }
-    else if (nodes.size() > 1) {
-      StringBuilder result = new StringBuilder();
-      for (Object node : nodes) {
-        result.append(node instanceof Attribute ? ((Attribute)node).getValue() : ((Content)node).getValue());
-      }
-      return convertString(result.toString());
-    }
-    else {
-      return deserialize(context, nodes.get(0));
-    }
-  }
-
-  @Override
-  public boolean isMulti() {
-    return true;
-  }
-
   @Override
   @Nullable
   public Object deserialize(Object o, @NotNull Object node) {
     return convertString(node instanceof Attribute ? ((Attribute)node).getValue() : ((Content)node).getValue());
+  }
+
+  @Override
+  public Object deserializeEmpty(Object context) {
+    return convertString("");
   }
 
   @Nullable

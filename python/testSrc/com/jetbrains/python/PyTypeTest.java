@@ -505,7 +505,7 @@ public class PyTypeTest extends PyTestCase {
 
   // EA-40207
   public void testRecursion() {
-    doTest("list[list]",
+    doTest("list",
            "def f():\n" +
            "    return [f()]\n" +
            "expr = f()\n");
@@ -950,6 +950,14 @@ public class PyTypeTest extends PyTestCase {
            "\n" +
            "expr = f()[0]\n" +
            "print(expr)\n");
+  }
+
+  // PY-11541
+  public void testIsInstanceBaseStringCheck() {
+    doTest("str | unicode",
+           "def f(x):\n" +
+           "    if isinstance(x, basestring):\n" +
+           "        expr = x\n");
   }
 
   private static TypeEvalContext getTypeEvalContext(@NotNull PyExpression element) {

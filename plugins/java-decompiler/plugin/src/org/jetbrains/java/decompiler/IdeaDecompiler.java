@@ -82,6 +82,7 @@ public class IdeaDecompiler extends ClassFileDecompilers.Light {
     myOptions.put(IFernflowerPreferences.LITERALS_AS_IS, "1");
     myOptions.put(IFernflowerPreferences.NEW_LINE_SEPARATOR, "1");
     myOptions.put(IFernflowerPreferences.BANNER, BANNER);
+    myOptions.put(IFernflowerPreferences.MAX_PROCESSING_METHOD, 30);
 
     Project project = DefaultProjectFactory.getInstance().getDefaultProject();
     CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(project).getCurrentSettings();

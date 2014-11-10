@@ -37,16 +37,10 @@ public class DateBinding extends PrimitiveValueBinding {
   @Override
   protected Object convertString(String value) {
     try {
-      long l = Long.parseLong(value);
-      return new Date(l);
+      return new Date(Long.parseLong(value));
     }
     catch (NumberFormatException e) {
       return new Date(0);
     }
-  }
-
-  @Override
-  public boolean isMulti() {
-    return false;
   }
 }

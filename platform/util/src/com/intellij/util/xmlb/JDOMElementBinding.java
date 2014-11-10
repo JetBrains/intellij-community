@@ -71,15 +71,7 @@ class JDOMElementBinding extends Binding implements MultiNodeBinding {
       myAccessor.write(context, nodes.toArray(new Element[nodes.size()]));
     }
     else {
-      Element element = null;
-      for (Object aNode : nodes) {
-        if (!XmlSerializerImpl.isIgnoredNode(aNode)) {
-          element = (Element)aNode;
-          break;
-        }
-      }
-      assert element != null;
-      myAccessor.write(context, element);
+      myAccessor.write(context, nodes.get(0));
     }
     return context;
   }

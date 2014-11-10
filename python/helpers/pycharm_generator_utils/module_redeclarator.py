@@ -294,6 +294,8 @@ class ModuleRedeclarator(object):
                             break
                     if self._defined.get(found_name, False):
                         out(indent, prefix, found_name, postfix)
+                    elif hasattr(self, "app"):
+                        return
                     else:
                         # a forward / circular declaration happens
                         notice = ""
