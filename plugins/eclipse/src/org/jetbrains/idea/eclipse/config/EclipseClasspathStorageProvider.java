@@ -31,6 +31,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.SmartList;
+import gnu.trove.THashSet;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -46,8 +48,7 @@ import org.jetbrains.jps.eclipse.model.JpsEclipseClasspathSerializer;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -191,26 +192,29 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
     }
 
     @Override
-    public Set<String> getClasspath(ModifiableRootModel model, final Element element) throws IOException, InvalidDataException {
+    public Set<String> getClasspath(@NotNull ModifiableRootModel model, @NotNull Element element) throws IOException, InvalidDataException {
       try {
-        final HashSet<String> usedVariables = new HashSet<String>();
-        final CachedXmlDocumentSet documentSet = getFileSet();
+        CachedXmlDocumentSet documentSet = getFileSet();
         String path = documentSet.getParent(EclipseXml.PROJECT_FILE);
         if (!documentSet.exists(EclipseXml.PROJECT_FILE)) {
           if (!documentSet.exists(EclipseXml.CLASSPATH_FILE)) {
-            return usedVariables;
+            return Collections.emptySet();
           }
 
           path = documentSet.getParent(EclipseXml.CLASSPATH_FILE);
         }
-        final EclipseClasspathReader classpathReader = new EclipseClasspathReader(path, module.getProject(), null);
+
+        Set<String> usedVariables;
+        EclipseClasspathReader classpathReader = new EclipseClasspathReader(path, module.getProject(), null);
         classpathReader.init(model);
         if (documentSet.exists(EclipseXml.CLASSPATH_FILE)) {
-          classpathReader.readClasspath(model, new ArrayList<String>(), new ArrayList<String>(), usedVariables, new HashSet<String>(), null,
+          usedVariables = new THashSet<String>();
+          classpathReader.readClasspath(model, new SmartList<String>(), new SmartList<String>(), usedVariables, new THashSet<String>(), null,
                                         documentSet.read(EclipseXml.CLASSPATH_FILE, false).getRootElement());
         }
         else {
           EclipseClasspathReader.setOutputUrl(model, path + "/bin");
+          usedVariables = Collections.emptySet();
         }
         final String eml = model.getModule().getName() + EclipseXml.IDEA_SETTINGS_POSTFIX;
         if (documentSet.exists(eml)) {
