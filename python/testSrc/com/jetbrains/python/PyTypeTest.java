@@ -952,6 +952,14 @@ public class PyTypeTest extends PyTestCase {
            "print(expr)\n");
   }
 
+  // PY-11541
+  public void testIsInstanceBaseStringCheck() {
+    doTest("str | unicode",
+           "def f(x):\n" +
+           "    if isinstance(x, basestring):\n" +
+           "        expr = x\n");
+  }
+
   private static TypeEvalContext getTypeEvalContext(@NotNull PyExpression element) {
     return TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing();
   }
