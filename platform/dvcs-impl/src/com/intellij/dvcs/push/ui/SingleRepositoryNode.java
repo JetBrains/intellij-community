@@ -43,6 +43,10 @@ public class SingleRepositoryNode extends RepositoryNode {
   }
 
   @Override
+  public void setChecked(boolean checked) {
+  }
+
+  @Override
   public void fireOnSelectionChange(boolean isSelected) {
   }
 
