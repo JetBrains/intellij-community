@@ -16,9 +16,13 @@
 package com.intellij.openapi.application.ex;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.concurrent.*;
 
 public class ApplicationUtil {
   // throws exception if can't grab read action right now
@@ -41,7 +45,31 @@ public class ApplicationUtil {
     }
   }
 
-  public static class CannotRunReadActionException extends RuntimeException{
+  /**
+   * Allows to interrupt a process which does not performs checkCancelled() calls by itself.
+   * Note that the process may continue to run in background indefinitely - so <b>avoid using this method unless absolutely needed</b>.
+   */
+  public static <T> T runWithCheckCanceled(@NotNull Callable<T> callable) throws ExecutionException, InterruptedException {
+    Future<T> future = ApplicationManager.getApplication().executeOnPooledThread(callable);
+
+    while (true) {
+      try {
+        ProgressManager.checkCanceled();
+      }
+      catch (ProcessCanceledException e) {
+        future.cancel(true);
+        throw e;
+      }
+
+      try {
+        return future.get(200, TimeUnit.MILLISECONDS);
+      }
+      catch (TimeoutException ignored) { }
+    }
+  }
+
+  public static class CannotRunReadActionException extends RuntimeException {
+    @SuppressWarnings({"NullableProblems", "NonSynchronizedMethodOverridesSynchronizedMethod"})
     @Override
     public Throwable fillInStackTrace() {
       return this;

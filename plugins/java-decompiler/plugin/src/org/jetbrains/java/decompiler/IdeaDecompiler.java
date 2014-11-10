@@ -26,6 +26,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DefaultProjectFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -174,6 +175,9 @@ public class IdeaDecompiler extends ClassFileDecompilers.Light {
       file.putUserData(PositionManager.LINE_NUMBERS_MAPPING_KEY, saver.myMapping);
 
       return saver.myResult;
+    }
+    catch (ProcessCanceledException e) {
+      throw e;
     }
     catch (Exception e) {
       if (ApplicationManager.getApplication().isUnitTestMode()) {

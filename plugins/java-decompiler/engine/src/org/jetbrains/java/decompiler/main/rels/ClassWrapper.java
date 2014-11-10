@@ -95,8 +95,14 @@ public class ClassWrapper {
             mtThread.start();
 
             while (!mtProc.isFinished()) {
-              synchronized (mtProc.lock) {
-                mtProc.lock.wait(100);
+              try {
+                synchronized (mtProc.lock) {
+                  mtProc.lock.wait(200);
+                }
+              }
+              catch (InterruptedException e) {
+                killThread(mtThread);
+                throw e;
               }
 
               if (System.currentTimeMillis() >= stopAt) {
