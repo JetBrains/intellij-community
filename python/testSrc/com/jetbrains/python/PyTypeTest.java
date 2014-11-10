@@ -505,7 +505,7 @@ public class PyTypeTest extends PyTestCase {
 
   // EA-40207
   public void testRecursion() {
-    doTest("list[list]",
+    doTest("list",
            "def f():\n" +
            "    return [f()]\n" +
            "expr = f()\n");
