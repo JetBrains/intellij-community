@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package org.jetbrains.idea.eclipse.config;
 
 import com.intellij.openapi.components.PathMacroManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.roots.*;
@@ -176,17 +175,13 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
       }
       catch (IOException ignore) {
       }
-      catch (JDOMException e) {
-
+      catch (JDOMException ignored) {
       }
     }
   }
 
-
   public static class EclipseClasspathConverter implements ClasspathConverter {
-
     private final Module module;
-    private static final Logger LOG = Logger.getInstance("#" + EclipseClasspathConverter.class.getName());
 
     public EclipseClasspathConverter(final Module module) {
       this.module = module;
