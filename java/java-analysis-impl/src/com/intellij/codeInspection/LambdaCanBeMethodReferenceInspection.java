@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -187,6 +188,25 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
         } else if (containingClass != PsiTreeUtil.getParentOfType(body, PsiClass.class) && containingClass.getName() == null) {
           return null;
         }
+
+        if (!isReceiverType && psiMethod != null) {
+          final PsiClass memberClass = psiMethod.getContainingClass();
+          PsiClass accessClass;
+          if (qualifierExpression != null) {
+            accessClass = PsiUtil.resolveClassInType(qualifierExpression.getType());
+          }
+          else {
+            accessClass = PsiTreeUtil.getParentOfType(methodCall, PsiClass.class);
+            while (accessClass != null && !InheritanceUtil.isInheritorOrSelf(accessClass, memberClass, true)) {
+              accessClass = PsiTreeUtil.getParentOfType(accessClass, PsiClass.class, true);
+            }
+          }
+          if (!JavaResolveUtil.isAccessible(psiMethod, memberClass, psiMethod.getModifierList(),
+                                            methodCall, accessClass, null, methodCall.getContainingFile())) {
+            return null;
+          }
+        }
+
         return methodCall;
       } else if (methodCall instanceof PsiNewExpression) {
         final PsiExpression[] dimensions = ((PsiNewExpression)methodCall).getArrayDimensions();
@@ -289,11 +309,12 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
         if (psiMethod.hasModifierProperty(PsiModifier.STATIC)) {
           methodRefText = getClassReferenceName(containingClass);
         } else {
-          PsiClass treeContainingClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
-          while (!InheritanceUtil.isInheritorOrSelf(treeContainingClass, containingClass, true)) {
+          final PsiClass parentContainingClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
+          PsiClass treeContainingClass = parentContainingClass;
+          while (treeContainingClass != null && !InheritanceUtil.isInheritorOrSelf(treeContainingClass, containingClass, true)) {
             treeContainingClass = PsiTreeUtil.getParentOfType(treeContainingClass, PsiClass.class, true);
           }
-          if (containingClass != PsiTreeUtil.getParentOfType(element, PsiClass.class) ) {
+          if (treeContainingClass != null && containingClass != parentContainingClass && treeContainingClass != parentContainingClass) {
             methodRefText = treeContainingClass.getName() + ".this";
           } else {
             methodRefText = "this";
