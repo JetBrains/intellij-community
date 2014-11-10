@@ -1355,6 +1355,14 @@ class XInternalError {}
     checkResult()
   }
 
+  public void testImplementViaOverrideCompletion() {
+    configure()
+    myFixture.assertPreferredCompletionItems 0, 'Override', 'public void run'
+    lookup.currentItem = lookup.items[1]
+    myFixture.type('\n')
+    checkResult()
+  }
+
   public void testAccessorViaCompletion() {
     configure()
 
