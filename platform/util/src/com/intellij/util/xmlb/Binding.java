@@ -38,6 +38,10 @@ abstract class Binding {
   @Nullable
   public abstract Object deserialize(Object context, @NotNull Object node);
 
+  public Object deserializeEmpty(Object context) {
+    return null;
+  }
+
   public abstract boolean isBoundTo(Object node);
 
   public abstract Class getBoundNodeType();
@@ -52,8 +56,15 @@ abstract class Binding {
       return ((MultiNodeBinding)binding).deserializeList(context, nodes);
     }
     else {
-      assert nodes.size() == 1;
-      return binding.deserialize(context, nodes.get(0));
+      if (nodes.size() == 1) {
+        return binding.deserialize(context, nodes.get(0));
+      }
+      else if (nodes.isEmpty()) {
+        return binding.deserializeEmpty(context);
+      }
+      else {
+        throw new AssertionError("Duplicate data for " + binding + " will be ignored");
+      }
     }
   }
 }
