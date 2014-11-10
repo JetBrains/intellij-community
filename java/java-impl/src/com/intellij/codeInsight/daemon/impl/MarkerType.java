@@ -236,7 +236,7 @@ public class MarkerType {
     PsiClass[] subclasses = processor.toArray(PsiClass.EMPTY_ARRAY);
     if (subclasses.length == 0) {
       final PsiElementProcessor.CollectElementsWithLimit<PsiFunctionalExpression> functionalImplementations =
-        new PsiElementProcessor.CollectElementsWithLimit<>(2, new THashSet<PsiFunctionalExpression>());
+        new PsiElementProcessor.CollectElementsWithLimit<PsiFunctionalExpression>(2, new THashSet<PsiFunctionalExpression>());
       FunctionalExpressionSearch.search(aClass).forEach(new PsiElementProcessorAdapter<PsiFunctionalExpression>(functionalImplementations));
       if (!functionalImplementations.getCollection().isEmpty()) {
         return "Has functional implementations";
