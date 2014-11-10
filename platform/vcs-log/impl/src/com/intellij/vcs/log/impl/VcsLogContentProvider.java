@@ -19,20 +19,23 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsListener;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentEP;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider;
+import com.intellij.ui.components.JBPanel;
 import com.intellij.util.Function;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.vcs.log.VcsLogSettings;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.Arrays;
 
 /**
@@ -45,14 +48,23 @@ public class VcsLogContentProvider implements ChangesViewContentProvider, NotNul
   public static final String TAB_NAME = "Log";
   private static final Logger LOG = Logger.getInstance(VcsLogContentProvider.class);
 
-  @NotNull private final VcsLogManager myLogManager;
+  @NotNull private final Project myProject;
+  @NotNull private VcsLogManager myLogManager;
   @NotNull private final ProjectLevelVcsManager myVcsManager;
+  @NotNull private final VcsLogSettings mySettings;
+  @NotNull private final VcsLogUiProperties myUiProperties;
+  @NotNull private final JPanel myContainer = new JBPanel(new BorderLayout());
+  @NotNull private final MyVcsListener myVcsListener = new MyVcsListener();
+  private MessageBusConnection myConnection;
 
   public VcsLogContentProvider(@NotNull Project project,
                                @NotNull ProjectLevelVcsManager manager,
                                @NotNull VcsLogSettings settings,
                                @NotNull VcsLogUiProperties uiProperties) {
+    myProject = project;
     myVcsManager = manager;
+    mySettings = settings;
+    myUiProperties = uiProperties;
     myLogManager = new VcsLogManager(project, settings, uiProperties);
   }
 
@@ -96,12 +108,30 @@ public class VcsLogContentProvider implements ChangesViewContentProvider, NotNul
 
   @Override
   public JComponent initContent() {
-    return myLogManager.initContent(Arrays.asList(myVcsManager.getAllVcsRoots()), TAB_NAME);
+    myConnection = myProject.getMessageBus().connect();
+    myConnection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, myVcsListener);
+    initContentInternal();
+    return myContainer;
+  }
+
+  private void initContentInternal() {
+    myContainer.add(myLogManager.initContent(Arrays.asList(myVcsManager.getAllVcsRoots()), TAB_NAME), BorderLayout.CENTER);
   }
 
   @Override
   public void disposeContent() {
+    myConnection.disconnect();
     Disposer.dispose(myLogManager);
   }
 
+  private class MyVcsListener implements VcsListener {
+    @Override
+    public void directoryMappingChanged() {
+      myContainer.removeAll();
+      Disposer.dispose(myLogManager);
+
+      myLogManager = new VcsLogManager(myProject, mySettings, myUiProperties);
+      initContentInternal();
+    }
+  }
 }
