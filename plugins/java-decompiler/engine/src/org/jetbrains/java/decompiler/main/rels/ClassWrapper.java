@@ -94,7 +94,7 @@ public class ClassWrapper {
 
             mtThread.start();
 
-            while (mtThread.isAlive()) {
+            while (!mtProc.isFinished()) {
               synchronized (mtProc.lock) {
                 mtProc.lock.wait(100);
               }

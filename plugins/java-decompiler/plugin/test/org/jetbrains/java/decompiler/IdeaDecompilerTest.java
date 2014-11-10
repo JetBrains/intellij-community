@@ -21,19 +21,19 @@ import com.intellij.debugger.PositionManager;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
-import com.intellij.openapi.vfs.StandardFileSystems;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileVisitor;
+import com.intellij.openapi.vfs.*;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.compiled.ClsFileImpl;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
@@ -47,9 +47,7 @@ public class IdeaDecompilerTest extends LightCodeInsightFixtureTestCase {
 
   public void testSimple() {
     String path = PlatformTestUtil.getRtJarPath() + "!/java/lang/String.class";
-    VirtualFile file = StandardFileSystems.jar().findFileByPath(path);
-    assertNotNull(path, file);
-
+    VirtualFile file = getTestFile(path);
     String decompiled = new IdeaDecompiler().getText(file).toString();
     assertTrue(decompiled, decompiled.startsWith(IdeaDecompiler.BANNER + "package java.lang;\n"));
     assertTrue(decompiled, decompiled.contains("public final class String"));
@@ -61,8 +59,7 @@ public class IdeaDecompilerTest extends LightCodeInsightFixtureTestCase {
 
   public void testStubCompatibility() {
     String path = PlatformTestUtil.getRtJarPath() + "!/java";
-    VirtualFile dir = StandardFileSystems.jar().findFileByPath(path);
-    assertNotNull(path, dir);
+    VirtualFile dir = getTestFile(path);
     doTestStubCompatibility(dir);
   }
 
@@ -123,8 +120,9 @@ public class IdeaDecompilerTest extends LightCodeInsightFixtureTestCase {
   }
 
   private VirtualFile getTestFile(String name) {
-    String path = myFixture.getTestDataPath() + "/" + name;
-    VirtualFile file = StandardFileSystems.local().refreshAndFindFileByPath(path);
+    String path = FileUtil.isAbsolute(name) ? name : myFixture.getTestDataPath() + "/" + name;
+    VirtualFileSystem fs = path.contains(URLUtil.JAR_SEPARATOR) ? StandardFileSystems.jar() : StandardFileSystems.local();
+    VirtualFile file = fs.refreshAndFindFileByPath(path);
     assertNotNull(path, file);
     return file;
   }
@@ -159,5 +157,16 @@ public class IdeaDecompilerTest extends LightCodeInsightFixtureTestCase {
     finally {
       value.setValue(old);
     }
+  }
+
+  public void testPerformance() {
+    final IdeaDecompiler decompiler = new IdeaDecompiler();
+    final VirtualFile file = getTestFile(PlatformTestUtil.getRtJarPath() + "!/javax/swing/JTable.class");
+    PlatformTestUtil.startPerformanceTest("decompiling JTable.class", 2500, new ThrowableRunnable() {
+      @Override
+      public void run() throws Throwable {
+        decompiler.getText(file);
+      }
+    }).cpuBound().assertTiming();
   }
 }

@@ -41,6 +41,7 @@ public class MethodProcessorRunnable implements Runnable {
 
   private volatile RootStatement root;
   private volatile Throwable error;
+  private volatile boolean finished = false;
 
   public MethodProcessorRunnable(StructMethod method, VarProcessor varProc, DecompilerContext parentContext) {
     this.method = method;
@@ -57,16 +58,20 @@ public class MethodProcessorRunnable implements Runnable {
 
     try {
       root = codeToJava(method, varProc);
-
-      synchronized (lock) {
-        lock.notifyAll();
-      }
     }
     catch (ThreadDeath ex) {
       throw ex;
     }
     catch (Throwable ex) {
       error = ex;
+    }
+    finally {
+      DecompilerContext.setCurrentContext(null);
+    }
+
+    finished = true;
+    synchronized (lock) {
+      lock.notifyAll();
     }
   }
 
@@ -206,7 +211,7 @@ public class MethodProcessorRunnable implements Runnable {
     return root;
   }
 
-  public Throwable getError() {
-    return error;
+  public boolean isFinished() {
+    return finished;
   }
 }
