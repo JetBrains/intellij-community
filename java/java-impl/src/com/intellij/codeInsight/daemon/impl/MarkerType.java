@@ -23,9 +23,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.DaemonBundle;
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
 import com.intellij.codeInsight.navigation.ListBackgroundUpdaterTask;
-import com.intellij.ide.util.MethodCellRenderer;
-import com.intellij.ide.util.PsiClassListCellRenderer;
-import com.intellij.ide.util.PsiElementListCellRenderer;
+import com.intellij.ide.util.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -36,6 +34,7 @@ import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiElementProcessorAdapter;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
+import com.intellij.psi.search.searches.FunctionalExpressionSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.*;
@@ -136,7 +135,7 @@ public class MarkerType {
     }
   });
 
-  public static String getOverriddenMethodTooltip(PsiMethod method) {
+  public static String getOverriddenMethodTooltip(final PsiMethod method) {
     PsiElementProcessor.CollectElementsWithLimit<PsiMethod> processor = new PsiElementProcessor.CollectElementsWithLimit<PsiMethod>(5);
     OverridingMethodsSearch.search(method, true).forEach(new PsiElementProcessorAdapter<PsiMethod>(processor));
 
@@ -146,8 +145,14 @@ public class MarkerType {
       return isAbstract ? DaemonBundle.message("method.is.implemented.too.many") : DaemonBundle.message("method.is.overridden.too.many");
     }
 
-    PsiMethod[] overridings = processor.toArray(new PsiMethod[processor.getCollection().size()]);
-    if (overridings.length == 0) return null;
+    PsiMethod[] overridings = processor.toArray(PsiMethod.EMPTY_ARRAY);
+    if (overridings.length == 0) {
+      final PsiClass aClass = method.getContainingClass();
+      if (aClass != null && FunctionalExpressionSearch.search(aClass).findFirst() != null) {
+        return "Has functional implementations";
+      }
+      return null;
+    }
 
     Comparator<PsiMethod> comparator = new MethodCellRenderer(false).getComparator();
     Arrays.sort(overridings, comparator);
@@ -166,19 +171,33 @@ public class MarkerType {
 
     final PsiElementProcessor.CollectElementsWithLimit<PsiMethod> collectProcessor =
       new PsiElementProcessor.CollectElementsWithLimit<PsiMethod>(2, new THashSet<PsiMethod>());
+    final PsiElementProcessor.CollectElementsWithLimit<PsiFunctionalExpression> collectExprProcessor = 
+      new PsiElementProcessor.CollectElementsWithLimit<PsiFunctionalExpression>(2, new THashSet<PsiFunctionalExpression>());
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       @Override
       public void run() {
         OverridingMethodsSearch.search(method, true).forEach(new PsiElementProcessorAdapter<PsiMethod>(collectProcessor));
+        if (collectProcessor.getCollection().isEmpty()) {
+          final PsiClass aClass = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
+            @Override
+            public PsiClass compute() {
+              return method.getContainingClass();
+            }
+          });
+          if (aClass != null) {
+            FunctionalExpressionSearch.search(aClass).forEach(new PsiElementProcessorAdapter<PsiFunctionalExpression>(collectExprProcessor));
+          }
+        }
       }
     }, SEARCHING_FOR_OVERRIDING_METHODS, true, method.getProject(), (JComponent)e.getComponent())) {
       return;
     }
 
-    PsiMethod[] overridings = collectProcessor.toArray(PsiMethod.EMPTY_ARRAY);
+    final PsiMethod[] methodOverriders = collectProcessor.toArray(PsiMethod.EMPTY_ARRAY);
+    NavigatablePsiElement[] overridings = ArrayUtil.mergeArrays(methodOverriders, collectExprProcessor.toArray(PsiFunctionalExpression.EMPTY_ARRAY));
     if (overridings.length == 0) return;
-    boolean showMethodNames = !PsiUtil.allMethodsHaveSameSignature(overridings);
-    MethodCellRenderer renderer = new MethodCellRenderer(showMethodNames);
+    boolean showMethodNames = !PsiUtil.allMethodsHaveSameSignature(methodOverriders);
+    MethodOrFunctionalExpressionCellRenderer renderer = new MethodOrFunctionalExpressionCellRenderer(showMethodNames);
     Arrays.sort(overridings, renderer.getComparator());
     final OverridingMethodsUpdater methodsUpdater = new OverridingMethodsUpdater(method, renderer);
     PsiElementListNavigator.openTargets(e, overridings, methodsUpdater.getCaption(overridings.length), "Overriding methods of " + method.getName(), renderer, methodsUpdater);
@@ -214,8 +233,16 @@ public class MarkerType {
              : DaemonBundle.message("class.is.subclassed.too.many");
     }
 
-    PsiClass[] subclasses = processor.toArray(new PsiClass[processor.getCollection().size()]);
-    if (subclasses.length == 0) return null;
+    PsiClass[] subclasses = processor.toArray(PsiClass.EMPTY_ARRAY);
+    if (subclasses.length == 0) {
+      final PsiElementProcessor.CollectElementsWithLimit<PsiFunctionalExpression> functionalImplementations =
+        new PsiElementProcessor.CollectElementsWithLimit<>(2, new THashSet<PsiFunctionalExpression>());
+      FunctionalExpressionSearch.search(aClass).forEach(new PsiElementProcessorAdapter<PsiFunctionalExpression>(functionalImplementations));
+      if (!functionalImplementations.getCollection().isEmpty()) {
+        return "Has functional implementations";
+      }
+      return null;
+    }
 
     Comparator<PsiClass> comparator = new PsiClassListCellRenderer().getComparator();
     Arrays.sort(subclasses, comparator);
@@ -234,18 +261,23 @@ public class MarkerType {
     }
 
     final PsiElementProcessor.CollectElementsWithLimit<PsiClass> collectProcessor = new PsiElementProcessor.CollectElementsWithLimit<PsiClass>(2, new THashSet<PsiClass>());
+    final PsiElementProcessor.CollectElementsWithLimit<PsiFunctionalExpression> collectExprProcessor = new PsiElementProcessor.CollectElementsWithLimit<PsiFunctionalExpression>(2, new THashSet<PsiFunctionalExpression>());
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       @Override
       public void run() {
         ClassInheritorsSearch.search(aClass, true).forEach(new PsiElementProcessorAdapter<PsiClass>(collectProcessor));
+        if (collectProcessor.getCollection().isEmpty()) {
+          FunctionalExpressionSearch.search(aClass).forEach(new PsiElementProcessorAdapter<PsiFunctionalExpression>(collectExprProcessor));
+        }
       }
     }, SEARCHING_FOR_OVERRIDDEN_METHODS, true, aClass.getProject(), (JComponent)e.getComponent())) {
       return;
     }
 
-    PsiClass[] inheritors = collectProcessor.toArray(PsiClass.EMPTY_ARRAY);
+    NavigatablePsiElement[] inheritors = ArrayUtil.mergeArrays(collectProcessor.toArray(PsiClass.EMPTY_ARRAY),
+                                                               collectExprProcessor.toArray(PsiFunctionalExpression.EMPTY_ARRAY));
     if (inheritors.length == 0) return;
-    final PsiClassListCellRenderer renderer = new PsiClassListCellRenderer();
+    final PsiClassOrFunctionalExpressionListCellRenderer renderer = new PsiClassOrFunctionalExpressionListCellRenderer();
     final SubclassUpdater subclassUpdater = new SubclassUpdater(aClass, renderer);
     Arrays.sort(inheritors, renderer.getComparator());
     PsiElementListNavigator.openTargets(e, inheritors, subclassUpdater.getCaption(inheritors.length), CodeInsightBundle.message("goto.implementation.findUsages.title", aClass.getName()), renderer, subclassUpdater);
@@ -276,9 +308,9 @@ public class MarkerType {
 
   private static class SubclassUpdater extends ListBackgroundUpdaterTask {
     private final PsiClass myClass;
-    private final PsiClassListCellRenderer myRenderer;
+    private final PsiClassOrFunctionalExpressionListCellRenderer myRenderer;
 
-    public SubclassUpdater(PsiClass aClass, PsiClassListCellRenderer renderer) {
+    public SubclassUpdater(PsiClass aClass, PsiClassOrFunctionalExpressionListCellRenderer renderer) {
       super(aClass.getProject(), SEARCHING_FOR_OVERRIDDEN_METHODS);
       myClass = aClass;
       myRenderer = renderer;
@@ -307,6 +339,17 @@ public class MarkerType {
           }
           indicator.checkCanceled();
           return super.process(o);
+        }
+      });
+
+      FunctionalExpressionSearch.search(myClass).forEach(new CommonProcessors.CollectProcessor<PsiFunctionalExpression>() {
+        @Override
+        public boolean process(final PsiFunctionalExpression expr) {
+          if (!updateComponent(expr, myRenderer.getComparator())) {
+            indicator.cancel();
+          }
+          indicator.checkCanceled();
+          return super.process(expr);
         }
       });
     }
@@ -344,6 +387,22 @@ public class MarkerType {
             return super.process(psiMethod);
           }
         });
+      final PsiClass psiClass = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
+        @Override
+        public PsiClass compute() {
+          return myMethod.getContainingClass();
+        }
+      });
+      FunctionalExpressionSearch.search(psiClass).forEach(new CommonProcessors.CollectProcessor<PsiFunctionalExpression>() {
+        @Override
+        public boolean process(final PsiFunctionalExpression expr) {
+          if (!updateComponent(expr, myRenderer.getComparator())) {
+            indicator.cancel();
+          }
+          indicator.checkCanceled();
+          return super.process(expr);
+        }
+      });
     }
   }
 }
