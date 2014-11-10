@@ -233,7 +233,11 @@ public class TableUtil {
   }
 
   public static void setupCheckboxColumn(@NotNull TableColumn column) {
-    int checkboxWidth = new JCheckBox().getPreferredSize().width;
+    setupCheckboxColumn(column, 0);
+  }
+
+  public static void setupCheckboxColumn(@NotNull TableColumn column, int additionalWidth) {
+    int checkboxWidth = new JCheckBox().getPreferredSize().width + additionalWidth;
     column.setResizable(false);
     column.setPreferredWidth(checkboxWidth);
     column.setMaxWidth(checkboxWidth);
