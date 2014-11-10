@@ -62,7 +62,7 @@ public class ColorGetterByLayoutIndex<CommitId> {
       return myColorManager.getColorOfFragment(headCommitId, Math.max(upLayoutIndex, downLayoutIndex));
     }
 
-    if (upLayoutIndex == getLayoutIndex(getLayoutIndex(upNodeIndex)))
+    if (upLayoutIndex == getLayoutIndex(getHeadNodeId(upNodeIndex)))
       return myColorManager.getColorOfBranch(headCommitId);
     else
       return myColorManager.getColorOfFragment(headCommitId, upLayoutIndex);
