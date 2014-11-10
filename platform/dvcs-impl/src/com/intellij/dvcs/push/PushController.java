@@ -281,18 +281,12 @@ public class PushController implements Disposable {
   }
 
   private boolean isPushAllowed(@NotNull PushSupport<?, ?, ?> pushSupport) {
-    if (mySingleRepoProject) {
-      MyRepoModel repoModel = ContainerUtil.getFirstItem(myView2Model.values());
-      assert repoModel != null;
-      return hasSomethingToPush(myView2Model.keySet()) ||
-             !repoModel.getLoadedCommits().isEmpty() ||
-             myDialog.getAdditionalOptionValue(pushSupport) != null;
-    }
     Collection<RepositoryNode> nodes = getNodesForSupport(pushSupport);
-    if (pushSupport.getRepositoryManager().isSyncEnabled()) {
-      return hasSomethingToPush(nodes) || (hasCheckedNode(nodes) && allNodesAreLoaded(nodes));
+    if (hasSomethingToPush(nodes)) return true;
+    if (hasCheckedNodesWithContent(nodes, myDialog.getAdditionalOptionValue(pushSupport) != null)) {
+      return !pushSupport.getRepositoryManager().isSyncEnabled() || allNodesAreLoaded(nodes);
     }
-    return hasSomethingToPush(nodes) || (hasCheckedNode(nodes));
+    return false;
   }
 
   private boolean hasSomethingToPush(Collection<RepositoryNode> nodes) {
@@ -306,11 +300,11 @@ public class PushController implements Disposable {
     });
   }
 
-  private static boolean hasCheckedNode(@NotNull Collection<RepositoryNode> nodes) {
+  private boolean hasCheckedNodesWithContent(@NotNull Collection<RepositoryNode> nodes, final boolean withRefs) {
     return ContainerUtil.exists(nodes, new Condition<RepositoryNode>() {
       @Override
       public boolean value(@NotNull RepositoryNode node) {
-        return node.isChecked();
+        return node.isChecked() && (withRefs || !myView2Model.get(node).getLoadedCommits().isEmpty());
       }
     });
   }
@@ -362,7 +356,7 @@ public class PushController implements Disposable {
             boolean shouldBeSelected;
             if (!errors.isEmpty()) {
               shouldBeSelected = false;
-              model.setLoadedCommits(outgoing.getCommits());
+              model.setLoadedCommits(ContainerUtil.<VcsFullCommitDetails>emptyList());
               myPushLog.setChildren(node, ContainerUtil.map(errors, new Function<VcsError, DefaultMutableTreeNode>() {
                 @Override
                 public DefaultMutableTreeNode fun(final VcsError error) {
