@@ -15,13 +15,7 @@
  */
 package com.intellij.dvcs.push.ui;
 
-import com.intellij.icons.AllIcons;
-import com.intellij.ide.actions.EditSourceAction;
-import com.intellij.idea.ActionsBundle;
-import com.intellij.openapi.actionSystem.CommonShortcuts;
-import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.actionSystem.DataSink;
-import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.vcs.VcsDataKeys;
@@ -174,7 +168,7 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
       new ChangesBrowser(project, null, Collections.<Change>emptyList(), null, false, true, null, ChangesBrowser.MyUseCase.LOCAL_CHANGES,
                          null);
     myChangesBrowser.getDiffAction().registerCustomShortcutSet(CommonShortcuts.getDiff(), myTree);
-    myChangesBrowser.addToolbarAction(createEditSourceAction());
+    myChangesBrowser.addToolbarAction(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE));
     setDefaultEmptyText();
 
     Splitter splitter = new Splitter(false, 0.7f);
@@ -183,16 +177,6 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
 
     setLayout(new BorderLayout());
     add(splitter);
-  }
-
-  @NotNull
-  private EditSourceAction createEditSourceAction() {
-    final EditSourceAction editAction = new EditSourceAction();
-    editAction.registerCustomShortcutSet(CommonShortcuts.getEditSource(), myChangesBrowser.getViewer());
-    editAction.getTemplatePresentation().setIcon(AllIcons.Actions.EditSource);
-    editAction.getTemplatePresentation().setText("Edit Source");
-    editAction.getTemplatePresentation().setDescription(ActionsBundle.actionText("EditSource"));
-    return editAction;
   }
 
   private void updateChangesView() {
