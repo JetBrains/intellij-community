@@ -22,7 +22,7 @@ package com.intellij.util.io.storage;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.containers.ConcurrentHashSet;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.EventListener;
@@ -31,7 +31,7 @@ import java.util.Set;
 public class HeavyProcessLatch {
   public static final HeavyProcessLatch INSTANCE = new HeavyProcessLatch();
 
-  private final Set<String> myHeavyProcesses = new ConcurrentHashSet<String>();
+  private final Set<String> myHeavyProcesses = new THashSet<String>();
   private final EventDispatcher<HeavyProcessListener> myEventDispatcher = EventDispatcher.create(HeavyProcessListener.class);
 
   private HeavyProcessLatch() {
@@ -47,24 +47,32 @@ public class HeavyProcessLatch {
 
   @NotNull
   public AccessToken processStarted(@NotNull final String operationName) {
-    myHeavyProcesses.add(operationName);
+    synchronized (myHeavyProcesses) {
+      myHeavyProcesses.add(operationName);
+    }
     myEventDispatcher.getMulticaster().processStarted();
     return new AccessToken() {
       @Override
       public void finish() {
-        myHeavyProcesses.remove(operationName);
+        synchronized (myHeavyProcesses) {
+          myHeavyProcesses.remove(operationName);
+        }
       }
     };
   }
 
   @Deprecated // use processStarted(String)
   public void processFinished() {
-    myHeavyProcesses.remove("");
+    synchronized (myHeavyProcesses) {
+      myHeavyProcesses.remove("");
+    }
     myEventDispatcher.getMulticaster().processFinished();
   }
 
   public boolean isRunning() {
-    return !myHeavyProcesses.isEmpty();
+    synchronized (myHeavyProcesses) {
+      return !myHeavyProcesses.isEmpty();
+    }
   }
 
   public String getRunningOperationName() {
@@ -80,8 +88,7 @@ public class HeavyProcessLatch {
     public void processFinished();
   }
 
-  public void addListener(@NotNull Disposable parentDisposable,
-                          @NotNull HeavyProcessListener listener) {
+  public void addListener(@NotNull Disposable parentDisposable, @NotNull HeavyProcessListener listener) {
     myEventDispatcher.addListener(listener, parentDisposable);
   }
 }

@@ -323,7 +323,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     progressBarsEnabled = false;
     progressBarsCompleted = null;
     statistics = "";
-    passStatusesVisible = (false);
+    passStatusesVisible = false;
     statusLabel = null;
     statusExtraLine = null;
 
@@ -343,7 +343,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     if (status.reasonWhyDisabled != null) {
       statusLabel = "No analysis has been performed";
       statusExtraLine = "(" + status.reasonWhyDisabled + ")";
-      passStatusesVisible = (true);
+      passStatusesVisible = true;
       progressBarsCompleted = Boolean.FALSE;
       icon = AllIcons.General.NoAnalysis;
       return result;
@@ -351,7 +351,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     if (status.reasonWhySuspended != null) {
       statusLabel = "Code analysis has been suspended";
       statusExtraLine = "(" + status.reasonWhySuspended + ")";
-      passStatusesVisible = (true);
+      passStatusesVisible = true;
       progressBarsCompleted = Boolean.FALSE;
       icon = AllIcons.Actions.Pause;
       return result;
@@ -413,7 +413,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     passes.clear();
     for (ProgressableTextEditorHighlightingPass pass : status.passStati) {
       JProgressBar progressBar = new JProgressBar(0, MAX);
-      progressBar.setMaximum(TrafficLightRenderer.MAX);
+      progressBar.setMaximum(MAX);
       progressBar.putClientProperty("JComponent.sizeVariant", "mini");
       JLabel percLabel = new JLabel();
       percLabel.setText(TrafficProgressPanel.MAX_TEXT);

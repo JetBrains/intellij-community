@@ -214,7 +214,7 @@ public class ProjectViewPane extends AbstractProjectViewPSIPane {
       super.update(e);
       final Presentation presentation = e.getPresentation();
       final ProjectView projectView = ProjectView.getInstance(myProject);
-      presentation.setVisible(projectView.getCurrentProjectViewPane() == ProjectViewPane.this);
+      presentation.setEnabledAndVisible(projectView.getCurrentProjectViewPane() == ProjectViewPane.this);
     }
   }
 }

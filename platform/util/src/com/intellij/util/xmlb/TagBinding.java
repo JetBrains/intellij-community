@@ -58,13 +58,19 @@ class TagBinding extends BasePrimitiveBinding implements MultiNodeBinding {
   @Override
   public Object deserializeList(Object context, @NotNull List<?> nodes) {
     boolean isBeanBinding = myBinding instanceof BeanBinding;
-    String name = ((Element)nodes.get(0)).getName();
-    List<? extends Content> children = new SmartList<Content>();
-    for (Object node : nodes) {
-      Element element = (Element)node;
-      assert element.getName().equals(name);
-      //noinspection unchecked
-      children.addAll(((List)(isBeanBinding ? element.getChildren() : XmlSerializerImpl.getFilteredContent(element))));
+    List<? extends Content> children;
+    if (nodes.size() == 1) {
+      children = getContents(isBeanBinding, (Element)nodes.get(0));
+    }
+    else {
+      String name = ((Element)nodes.get(0)).getName();
+      children = new SmartList<Content>();
+      for (Object node : nodes) {
+        Element element = (Element)node;
+        assert element.getName().equals(name);
+        //noinspection unchecked
+        children.addAll(((List)getContents(isBeanBinding, element)));
+      }
     }
     return deserialize(context, children, isBeanBinding);
   }
@@ -79,7 +85,7 @@ class TagBinding extends BasePrimitiveBinding implements MultiNodeBinding {
   public Object deserialize(Object context, @NotNull Object node) {
     boolean isBeanBinding = myBinding instanceof BeanBinding;
     Element element = (Element)node;
-    return deserialize(context, isBeanBinding ? element.getChildren() : XmlSerializerImpl.getFilteredContent(element), isBeanBinding);
+    return deserialize(context, getContents(isBeanBinding, element), isBeanBinding);
   }
 
   private Object deserialize(Object o, List<? extends Content> children, boolean isBeanBinding) {
@@ -101,5 +107,10 @@ class TagBinding extends BasePrimitiveBinding implements MultiNodeBinding {
   @Override
   public boolean isBoundTo(Object node) {
     return node instanceof Element && ((Element)node).getName().equals(myName);
+  }
+
+  @NotNull
+  private static List<? extends Content> getContents(boolean isBeanBinding, Element element) {
+    return isBeanBinding ? element.getChildren() : XmlSerializerImpl.getFilteredContent(element);
   }
 }

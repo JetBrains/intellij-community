@@ -438,9 +438,9 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
 
   private void _removeTimerListener(TimerListener listener, boolean transparent) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
-    LOG.assertTrue(myTimer != null);
-
-    myTimer.removeTimerListener(listener, transparent);
+    if (LOG.assertTrue(myTimer != null)) {
+      myTimer.removeTimerListener(listener, transparent);
+    }
   }
 
   public ActionPopupMenu createActionPopupMenu(String place, @NotNull ActionGroup group, @Nullable PresentationFactory presentationFactory) {
