@@ -37,7 +37,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -83,17 +82,16 @@ public class VcsRootProblemNotifier {
       return;
     }
 
-    Collection<VcsRootError> unregisteredRoots = getUnregisteredRoots(errors);
-    Collection<VcsRootError> important = getImportantMappings(unregisteredRoots);
+    Collection<VcsRootError> importantUnregisteredRoots = getImportantUnregisteredMappings(errors);
     Collection<VcsRootError> invalidRoots = getInvalidRoots(errors);
 
-    if (invalidRoots.isEmpty() && (important.isEmpty() || myReportedUnregisteredRoots.containsAll(important))) {
+    if (invalidRoots.isEmpty() && (importantUnregisteredRoots.isEmpty() || myReportedUnregisteredRoots.containsAll(importantUnregisteredRoots))) {
       return;
     }
-    myReportedUnregisteredRoots.addAll(unregisteredRoots);
+    myReportedUnregisteredRoots.addAll(importantUnregisteredRoots);
 
-    String title = makeTitle(unregisteredRoots, invalidRoots);
-    String description = makeDescription(unregisteredRoots, invalidRoots);
+    String title = makeTitle(importantUnregisteredRoots, invalidRoots);
+    String description = makeDescription(importantUnregisteredRoots, invalidRoots);
 
     synchronized (NOTIFICATION_LOCK) {
       expireNotification();
@@ -103,17 +101,6 @@ public class VcsRootProblemNotifier {
                        ? notifier.notifyMinorInfo(title, description, listener)
                        : notifier.notifyError(title, description, listener);
     }
-  }
-
-  @NotNull
-  private List<VcsRootError> getImportantMappings(@NotNull Collection<VcsRootError> unregisteredRoots) {
-    return ContainerUtil.filter(unregisteredRoots, new Condition<VcsRootError>() {
-      @Override
-      public boolean value(VcsRootError error) {
-        String mapping = error.getMapping();
-        return isUnderProjectDir(mapping) && !isIgnored(mapping);
-      }
-    });
   }
 
   private boolean isUnderProjectDir(@NotNull String mapping) {
@@ -207,24 +194,24 @@ public class VcsRootProblemNotifier {
   }
 
   @NotNull
-  private static Collection<VcsRootError> getUnregisteredRoots(@NotNull Collection<VcsRootError> errors) {
-    return filterErrorsByType(errors, VcsRootError.Type.UNREGISTERED_ROOT);
+  private List<VcsRootError> getImportantUnregisteredMappings(@NotNull Collection<VcsRootError> errors) {
+    return ContainerUtil.filter(errors, new Condition<VcsRootError>() {
+      @Override
+      public boolean value(VcsRootError error) {
+        String mapping = error.getMapping();
+        return error.getType() == VcsRootError.Type.UNREGISTERED_ROOT && isUnderProjectDir(mapping) && !isIgnored(mapping);
+      }
+    });
   }
 
   @NotNull
   private static Collection<VcsRootError> getInvalidRoots(@NotNull Collection<VcsRootError> errors) {
-    return filterErrorsByType(errors, VcsRootError.Type.EXTRA_MAPPING);
-  }
-
-  @NotNull
-  private static Collection<VcsRootError> filterErrorsByType(@NotNull Collection<VcsRootError> errors, @NotNull VcsRootError.Type type) {
-    Collection<VcsRootError> roots = new ArrayList<VcsRootError>();
-    for (VcsRootError error : errors) {
-      if (error.getType() == type) {
-        roots.add(error);
+    return ContainerUtil.filter(errors, new Condition<VcsRootError>() {
+      @Override
+      public boolean value(VcsRootError error) {
+        return error.getType() == VcsRootError.Type.EXTRA_MAPPING;
       }
-    }
-    return roots;
+    });
   }
 
   private static class MyNotificationListener implements NotificationListener {
