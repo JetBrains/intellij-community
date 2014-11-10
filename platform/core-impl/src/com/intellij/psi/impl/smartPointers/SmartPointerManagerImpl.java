@@ -43,11 +43,13 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
 
   private final Project myProject;
   private final Object lock = new Object();
-  private static final Key<List<SmartPointerEx>> POINTERS_KEY = Key.create("SMART_POINTERS");
-  private static final Key<Boolean> POINTERS_ARE_FASTENED_KEY = Key.create("SMART_POINTERS_ARE_FASTENED");
+  private final Key<List<SmartPointerEx>> POINTERS_KEY;
+  private final Key<Boolean> POINTERS_ARE_FASTENED_KEY;
 
   public SmartPointerManagerImpl(Project project) {
     myProject = project;
+    POINTERS_KEY = Key.create("SMART_POINTERS for "+project);
+    POINTERS_ARE_FASTENED_KEY = Key.create("SMART_POINTERS_ARE_FASTENED for "+project);
   }
 
   public void fastenBelts(@NotNull VirtualFile file, int offset, @Nullable RangeMarker[] cachedRangeMarkers) {
@@ -219,7 +221,7 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
     return false;
   }
 
-  private static List<SmartPointerEx> getPointers(@NotNull VirtualFile containingFile) {
+  private List<SmartPointerEx> getPointers(@NotNull VirtualFile containingFile) {
     return containingFile.getUserData(POINTERS_KEY);
   }
 
@@ -231,17 +233,17 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
     }
   }
 
-  private static boolean getAndFasten(@NotNull VirtualFile file) {
+  private boolean getAndFasten(@NotNull VirtualFile file) {
     boolean fastened = areBeltsFastened(file);
     file.putUserData(POINTERS_ARE_FASTENED_KEY, Boolean.TRUE);
     return fastened;
   }
-  private static boolean getAndUnfasten(@NotNull VirtualFile file) {
+  private boolean getAndUnfasten(@NotNull VirtualFile file) {
     boolean fastened = areBeltsFastened(file);
     file.putUserData(POINTERS_ARE_FASTENED_KEY, null);
     return fastened;
   }
-  private static boolean areBeltsFastened(VirtualFile file) {
+  private boolean areBeltsFastened(VirtualFile file) {
     return file.getUserData(POINTERS_ARE_FASTENED_KEY) == Boolean.TRUE;
   }
 
