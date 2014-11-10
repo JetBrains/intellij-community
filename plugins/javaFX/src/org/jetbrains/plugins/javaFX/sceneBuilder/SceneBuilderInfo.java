@@ -47,7 +47,7 @@ public class SceneBuilderInfo {
     JavaFxSettings settings = JavaFxSettings.getInstance();
     String pathToSceneBuilder = settings.getPathToSceneBuilder();
 
-    if (StringUtil.isEmptyOrSpaces(pathToSceneBuilder)) {
+    if (StringUtil.isEmptyOrSpaces(pathToSceneBuilder) || !new File(pathToSceneBuilder).exists()) {
       VirtualFile sceneBuilderFile = null;
       if (choosePathIfEmpty) {
         sceneBuilderFile = FileChooser.chooseFile(JavaFxSettingsConfigurable.createSceneBuilderDescriptor(), project, getPredefinedPath());
