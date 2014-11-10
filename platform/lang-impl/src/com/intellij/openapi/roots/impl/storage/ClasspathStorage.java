@@ -18,7 +18,6 @@ package com.intellij.openapi.roots.impl.storage;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.ProjectBundle;
@@ -36,6 +35,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.tracker.VirtualFileTracker;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
@@ -71,7 +71,7 @@ public class ClasspathStorage implements StateStorage {
     myConverter = getProvider(ClassPathStorageUtil.getStorageType(module)).createConverter(module);
     final VirtualFileTracker virtualFileTracker = ServiceManager.getService(VirtualFileTracker.class);
     if (virtualFileTracker != null) {
-      final ArrayList<VirtualFile> files = new ArrayList<VirtualFile>();
+      List<VirtualFile> files = new SmartList<VirtualFile>();
       try {
         myConverter.getFileSet().listFiles(files);
         for (VirtualFile file : files) {
@@ -209,9 +209,9 @@ public class ClasspathStorage implements StateStorage {
 
   @NotNull
   public static List<ClasspathStorageProvider> getProviders() {
-    final List<ClasspathStorageProvider> list = new ArrayList<ClasspathStorageProvider>();
+    List<ClasspathStorageProvider> list = new ArrayList<ClasspathStorageProvider>();
     list.add(new DefaultStorageProvider());
-    ContainerUtil.addAll(list, Extensions.getExtensions(ClasspathStorageProvider.EXTENSION_POINT_NAME));
+    ContainerUtil.addAll(list, ClasspathStorageProvider.EXTENSION_POINT_NAME.getExtensions());
     return list;
   }
 
