@@ -1985,6 +1985,10 @@ public class JavaDocInfoGenerator {
     if (aClass == null) {
       return null;
     }
+    
+    if (aClass instanceof PsiAnonymousClass) {
+      return searchDocTagInSupers(new PsiClassType[] {((PsiAnonymousClass)aClass).getBaseClassType()}, aMethod, loc, visitedClasses);
+    }
 
     PsiClassType[] implementsTypes = aClass.getImplementsListTypes();
     Pair<T, InheritDocProvider<T>> tag = searchDocTagInSupers(implementsTypes, aMethod, loc, visitedClasses);
