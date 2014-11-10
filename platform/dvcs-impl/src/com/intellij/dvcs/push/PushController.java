@@ -18,7 +18,6 @@ package com.intellij.dvcs.push;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.push.ui.*;
 import com.intellij.dvcs.repo.Repository;
-import com.intellij.dvcs.repo.RepositoryUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.Extensions;
@@ -28,13 +27,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsFullCommitDetails;
-import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,6 +57,7 @@ public class PushController implements Disposable {
   @NotNull private final VcsPushDialog myDialog;
   @NotNull private final PushSettings myExcludedSettings;
   @NotNull private final Set<String> myExcludedRepositoryRoots;
+  @Nullable private final Repository myCurrentlyOpenedRepository;
   private boolean mySingleRepoProject;
   private static final int DEFAULT_CHILDREN_PRESENTATION_NUMBER = 20;
   private final ExecutorService myExecutorService = Executors.newSingleThreadExecutor();
@@ -69,11 +67,12 @@ public class PushController implements Disposable {
 
   public PushController(@NotNull Project project,
                         @NotNull VcsPushDialog dialog,
-                        @NotNull List<? extends Repository> preselectedRepositories) {
+                        @NotNull List<? extends Repository> preselectedRepositories, @Nullable Repository currentRepo) {
     myProject = project;
     myExcludedSettings = ServiceManager.getService(project, PushSettings.class);
     myExcludedRepositoryRoots = ContainerUtil.newHashSet(myExcludedSettings.getExcludedRepoRoots());
     myPreselectedRepositories = preselectedRepositories;
+    myCurrentlyOpenedRepository = currentRepo;
     myPushSupports = getAffectedSupports(myProject);
     mySingleRepoProject = isSingleRepoProject(myPushSupports);
     CheckedTreeNode rootNode = new CheckedTreeNode(null);
@@ -131,39 +130,34 @@ public class PushController implements Disposable {
   private void startLoadingCommits() {
     Map<RepositoryNode, MyRepoModel> priorityLoading = ContainerUtil.newLinkedHashMap();
     Map<RepositoryNode, MyRepoModel> others = ContainerUtil.newLinkedHashMap();
-    Map.Entry<RepositoryNode, MyRepoModel> repositoryForCurrentEditor = findRepositoryForCurrentEditor();
+    RepositoryNode nodeForCurrentEditor = findInfoByRepo(myCurrentlyOpenedRepository);
     for (Map.Entry<RepositoryNode, MyRepoModel> entry : myView2Model.entrySet()) {
       MyRepoModel model = entry.getValue();
       Repository repository = model.getRepository();
+      RepositoryNode repoNode = entry.getKey();
       if (preselectByUser(repository)) {
-        priorityLoading.put(entry.getKey(), model);
+        priorityLoading.put(repoNode, model);
       }
-      else if (model.getSupport().shouldRequestIncomingChangesForNotCheckedRepositories() && !entry.equals(repositoryForCurrentEditor)) {
-        others.put(entry.getKey(), model);
+      else if (model.getSupport().shouldRequestIncomingChangesForNotCheckedRepositories() && !repoNode.equals(nodeForCurrentEditor)) {
+        others.put(repoNode, model);
       }
     }
-    if (repositoryForCurrentEditor != null) {
+    if (nodeForCurrentEditor != null) {
       //add repo for currently opened editor to the end of priority queue
-      priorityLoading.put(repositoryForCurrentEditor.getKey(), repositoryForCurrentEditor.getValue());
+      priorityLoading.put(nodeForCurrentEditor, myView2Model.get(nodeForCurrentEditor));
     }
     loadCommitsFromMap(priorityLoading);
     loadCommitsFromMap(others);
   }
 
   @Nullable
-  private Map.Entry<RepositoryNode, MyRepoModel> findRepositoryForCurrentEditor() {
-    //todo should be simplified when there will be one common repository manager and one push action
-    VirtualFile file = DvcsUtil.getSelectedFile(myProject);
-    final VirtualFile currentEditorRoot = RepositoryUtil.getVcsRoot(myProject, file);
-    if (currentEditorRoot == null) return null;
-    final AbstractVcs vcs = VcsUtil.getVcsFor(myProject, currentEditorRoot);
-    return ContainerUtil.find(myView2Model.entrySet(), new Condition<Map.Entry<RepositoryNode, MyRepoModel>>() {
-      @Override
-      public boolean value(Map.Entry<RepositoryNode, MyRepoModel> entry) {
-        MyRepoModel model = entry.getValue();
-        return model.getVcs().equals(vcs) && model.getRepository().getRoot().equals(currentEditorRoot);
-      }
-    });
+  private RepositoryNode findInfoByRepo(@Nullable final Repository repository) {
+    if (repository == null) return null;
+    for (Map.Entry<RepositoryNode, MyRepoModel> entry : myView2Model.entrySet()) {
+      MyRepoModel model = entry.getValue();
+      if (model.getRepository().getRoot().equals(repository)) return entry.getKey();
+    }
+    return null;
   }
 
   private void loadCommitsFromMap(@NotNull Map<RepositoryNode, MyRepoModel> items) {
