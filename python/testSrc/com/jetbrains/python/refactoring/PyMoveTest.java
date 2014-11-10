@@ -133,6 +133,11 @@ public class PyMoveTest extends PyTestCase {
     doMoveSymbolTest("g", "c.py");
   }
 
+  // PY-13870
+  public void testConditionalImport() {
+    doMoveFileTest("mod2.py", "pkg1");
+  }
+
   private void doMoveFileTest(String fileName, String toDirName)  {
     Project project = myFixture.getProject();
     PsiManager manager = PsiManager.getInstance(project);
