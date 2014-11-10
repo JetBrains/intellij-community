@@ -28,8 +28,14 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public class ForCanBeForeachInspection extends BaseInspection {
+  /**
+   * Android Studio: Change default from true to false. In Android applications we generally
+   * don't want to encourage people to replace deliberate indexed iteration with for each
+   * since it will add an iterator, which accumulates garbage and can generate jank when done
+   * in drawing/layout code etc.
+   */
   @SuppressWarnings("PublicField")
-  public boolean REPORT_INDEXED_LOOP = true;
+  public boolean REPORT_INDEXED_LOOP = false;
   @SuppressWarnings("PublicField")
   public boolean ignoreUntypedCollections;
 
