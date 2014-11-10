@@ -22,12 +22,12 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.HashSet;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.Set;
 
 public class CommonCheckinFilesAction extends AbstractCommonCheckinAction {
   @Override
@@ -83,13 +83,14 @@ public class CommonCheckinFilesAction extends AbstractCommonCheckinAction {
     return changeList == null ? defaultChangeList : changeList;
   }
 
-  private static Collection<LocalChangeList> getChangeListsForRoot(ChangeListManager changeListManager, final FilePath dirPath) {
+  private static Collection<LocalChangeList> getChangeListsForRoot(final ChangeListManager changeListManager, final FilePath dirPath) {
     Collection<Change> changes = changeListManager.getChangesIn(dirPath);
-    Set<LocalChangeList> changeLists = new HashSet<LocalChangeList>();
-    for (Change change : changes) {
-      changeLists.add(changeListManager.getChangeList(change));
-    }
-    return changeLists;
+    return ContainerUtil.map(changes, new Function<Change, LocalChangeList>() {
+      @Override
+      public LocalChangeList fun(Change change) {
+        return changeListManager.getChangeList(change);
+      }
+    });
   }
 
   private String getCheckinActionName(final VcsContext dataContext) {
