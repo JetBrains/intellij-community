@@ -51,10 +51,12 @@ public class VcsPushDialog extends DialogWrapper {
   private Action myPushAction;
   @Nullable private ForcePushAction myForcePushAction;
 
-  public VcsPushDialog(@NotNull Project project, @NotNull List<? extends Repository> selectedRepositories) {
+  public VcsPushDialog(@NotNull Project project,
+                       @NotNull List<? extends Repository> selectedRepositories,
+                       @Nullable Repository currentRepo) {
     super(project);
     myProject = project;
-    myController = new PushController(project, this, selectedRepositories);
+    myController = new PushController(project, this, selectedRepositories, currentRepo);
     myAdditionalPanels = myController.createAdditionalPanels();
     myListPanel = myController.getPushPanelLog();
 
