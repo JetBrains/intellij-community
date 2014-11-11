@@ -54,7 +54,6 @@ public class VcsLogContentProvider implements ChangesViewContentProvider, NotNul
   @NotNull private final VcsLogSettings mySettings;
   @NotNull private final VcsLogUiProperties myUiProperties;
   @NotNull private final JPanel myContainer = new JBPanel(new BorderLayout());
-  @NotNull private final MyVcsListener myVcsListener = new MyVcsListener();
   private MessageBusConnection myConnection;
 
   public VcsLogContentProvider(@NotNull Project project,
@@ -109,7 +108,7 @@ public class VcsLogContentProvider implements ChangesViewContentProvider, NotNul
   @Override
   public JComponent initContent() {
     myConnection = myProject.getMessageBus().connect();
-    myConnection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, myVcsListener);
+    myConnection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, new MyVcsListener());
     initContentInternal();
     return myContainer;
   }
