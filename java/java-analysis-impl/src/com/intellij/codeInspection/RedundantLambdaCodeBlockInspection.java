@@ -28,7 +28,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -75,7 +74,7 @@ public class RedundantLambdaCodeBlockInspection extends BaseJavaBatchLocalInspec
         super.visitLambdaExpression(expression);
         final PsiElement body = expression.getBody();
         if (body instanceof PsiCodeBlock) {
-          PsiExpression psiExpression = getExpression((PsiCodeBlock)body);
+          PsiExpression psiExpression = LambdaUtil.extractSingleExpressionFromBody(body);
           if (psiExpression != null && !findCommentsOutsideExpression(body, psiExpression)) {
             if (LambdaUtil.isExpressionStatementExpression(psiExpression)) {
               final PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
@@ -122,26 +121,6 @@ public class RedundantLambdaCodeBlockInspection extends BaseJavaBatchLocalInspec
     };
   }
 
-  @Nullable
-  private static PsiExpression getExpression(PsiCodeBlock body) {
-    final PsiStatement[] statements = body.getStatements();
-    if (statements.length == 1) {
-      if (statements[0] instanceof PsiBlockStatement) {
-        return getExpression(((PsiBlockStatement)statements[0]).getCodeBlock());
-      }
-      if (statements[0] instanceof PsiReturnStatement || statements[0] instanceof PsiExpressionStatement) {
-        if (statements[0] instanceof PsiReturnStatement) {
-          final PsiReturnStatement returnStatement = (PsiReturnStatement)statements[0];
-          return returnStatement.getReturnValue();
-        }
-        else {
-          return ((PsiExpressionStatement)statements[0]).getExpression();
-        }
-      }
-    }
-    return null;
-  }
-
   private static class ReplaceWithExprFix implements LocalQuickFix, HighPriorityAction {
     @NotNull
     @Override
@@ -164,7 +143,7 @@ public class RedundantLambdaCodeBlockInspection extends BaseJavaBatchLocalInspec
         if (lambdaExpression != null) {
           final PsiElement body = lambdaExpression.getBody();
           if (body != null) {
-            PsiExpression expression = getExpression((PsiCodeBlock)body);
+            PsiExpression expression = LambdaUtil.extractSingleExpressionFromBody(body);
             if (expression != null) {
               body.replace(expression);
             }
