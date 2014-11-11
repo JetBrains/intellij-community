@@ -101,14 +101,16 @@ public class TemplateListPanel extends JPanel implements Disposable {
   private final Map<Integer, TemplateContext> myTemplateContext = ContainerUtil.newLinkedHashMap();
   private final JPanel myDetailsPanel = new JPanel(new CardLayout());
   private LiveTemplateSettingsEditor myCurrentTemplateEditor;
+  private final JLabel myEmptyCardLabel = new JLabel();
 
   public TemplateListPanel() {
     super(new BorderLayout());
 
     myDetailsPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
-    JLabel label = new JLabel("No live template is selected");
-    label.setHorizontalAlignment(SwingConstants.CENTER);
-    myDetailsPanel.add(label, NO_SELECTION);
+
+    myEmptyCardLabel.setHorizontalAlignment(SwingConstants.CENTER);
+    myDetailsPanel.add(myEmptyCardLabel, NO_SELECTION);
+
     createTemplateEditor(MOCK_TEMPLATE, "Tab", MOCK_TEMPLATE.createOptions(), MOCK_TEMPLATE.createContext());
 
     add(createExpandByPanel(), BorderLayout.NORTH);
@@ -633,7 +635,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
     };
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
-    myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
+    myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION);
 
     myTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener(){
       @Override
@@ -644,7 +646,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
           templateSettings.setLastSelectedTemplate(template.getGroupName(), template.getKey());
         } else {
           templateSettings.setLastSelectedTemplate(null, null);
-          ((CardLayout) myDetailsPanel.getLayout()).show(myDetailsPanel, NO_SELECTION);
+          showEmptyCard();
         }
         if (myUpdateNeeded) {
           myAlarm.cancelAllRequests();
@@ -716,6 +718,13 @@ public class TemplateListPanel extends JPanel implements Disposable {
 
     return initToolbar().createPanel();
 
+  }
+
+  private void showEmptyCard() {
+    int[] rows = myTree.getSelectionRows();
+    boolean multiSelection = rows != null && rows.length > 1;
+    myEmptyCardLabel.setText(multiSelection ? "Multiple live templates are selected" : "No live templates are selected");
+    ((CardLayout) myDetailsPanel.getLayout()).show(myDetailsPanel, NO_SELECTION);
   }
 
   private boolean templatesDiffer(@NotNull TemplateImpl template, @NotNull TemplateImpl defaultTemplate) {
@@ -1020,7 +1029,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
     int selected = getSingleSelectedIndex();
     CardLayout layout = (CardLayout)myDetailsPanel.getLayout();
     if (selected < 0 || getTemplate(selected) == null) {
-      layout.show(myDetailsPanel, NO_SELECTION);
+      showEmptyCard();
     }
     else {
       TemplateImpl newTemplate = getTemplate(selected);
