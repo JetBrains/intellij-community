@@ -103,8 +103,11 @@ public class VcsRootProblemNotifier {
     }
   }
 
-  private boolean isUnderProjectDir(@NotNull String mapping) {
-    return mapping.equals(VcsDirectoryMapping.PROJECT_CONSTANT) || FileUtil.isAncestor(myProject.getBasePath(), mapping, false);
+  private boolean isUnderOrAboveProjectDir(@NotNull String mapping) {
+    String projectDir = myProject.getBasePath();
+    return mapping.equals(VcsDirectoryMapping.PROJECT_CONSTANT) ||
+           FileUtil.isAncestor(projectDir, mapping, false) ||
+           FileUtil.isAncestor(mapping, projectDir, false);
   }
 
   private boolean isIgnored(@NotNull String mapping) {
@@ -199,7 +202,7 @@ public class VcsRootProblemNotifier {
       @Override
       public boolean value(VcsRootError error) {
         String mapping = error.getMapping();
-        return error.getType() == VcsRootError.Type.UNREGISTERED_ROOT && isUnderProjectDir(mapping) && !isIgnored(mapping);
+        return error.getType() == VcsRootError.Type.UNREGISTERED_ROOT && isUnderOrAboveProjectDir(mapping) && !isIgnored(mapping);
       }
     });
   }
