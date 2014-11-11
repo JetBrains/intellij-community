@@ -227,7 +227,8 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     //method reference 
     final PsiCallExpression callExpression = LambdaCanBeMethodReferenceInspection
       .canBeMethodReferenceProblem(body instanceof PsiBlockStatement ? ((PsiBlockStatement)body).getCodeBlock() : body,
-                                   new PsiParameter[]{parameter}, null);
+                                   new PsiParameter[]{parameter}, 
+                                   createDefaultConsumerType(parameter.getProject(), parameter));
     if (callExpression == null) {
       return true;
     }
@@ -293,9 +294,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
           String methodReferenceText = null;
           final PsiCallExpression callExpression = LambdaCanBeMethodReferenceInspection.extractMethodCallFromBlock(body);
           if (callExpression != null) {
-            final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
-            final PsiClass consumerClass = psiFacade.findClass("java.util.function.Consumer", GlobalSearchScope.allScope(project));
-            final PsiClassType functionalType = consumerClass != null ? psiFacade.getElementFactory().createType(consumerClass, callExpression.getType()) : null;
+            final PsiClassType functionalType = createDefaultConsumerType(project, parameter);
 
             final PsiCallExpression toConvertCall = LambdaCanBeMethodReferenceInspection.canBeMethodReferenceProblem(body instanceof PsiBlockStatement ? ((PsiBlockStatement)body).getCodeBlock() : body, parameters, functionalType);
             methodReferenceText = LambdaCanBeMethodReferenceInspection.createMethodReferenceText(toConvertCall, functionalType, parameters);
@@ -330,6 +329,12 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       }
       return bodyText;
     }
+  }
+
+  private static PsiClassType createDefaultConsumerType(Project project, PsiParameter parameter) {
+    final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+    final PsiClass consumerClass = psiFacade.findClass("java.util.function.Consumer", GlobalSearchScope.allScope(project));
+    return consumerClass != null ? psiFacade.getElementFactory().createType(consumerClass, parameter.getType()) : null;
   }
 
   private static class ReplaceWithCollectCallFix implements LocalQuickFix {
