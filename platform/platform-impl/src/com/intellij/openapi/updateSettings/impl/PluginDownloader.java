@@ -32,6 +32,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.util.HttpRequests;
 import com.intellij.util.PathUtil;
 import com.intellij.util.io.UrlConnectionUtil;
 import com.intellij.util.io.ZipUtil;
@@ -290,7 +291,7 @@ public class PluginDownloader {
   }
 
   private URLConnection openConnection(@NotNull String url) throws IOException {
-    Pair<URLConnection, String> result = RepositoryHelper.openConnection(url, false);
+    Pair<URLConnection, String> result = HttpRequests.openConnection(url, false);
     if (result.second != null) {
       myPluginUrl = result.second;
     }

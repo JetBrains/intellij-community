@@ -16,25 +16,23 @@
 package com.intellij.openapi.updateSettings.impl;
 
 
-import com.intellij.ide.IdeBundle;
-import com.intellij.ide.reporter.ConnectionException;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.net.HttpConfigurable;
+import com.intellij.util.HttpRequests;
+import com.intellij.util.ThrowableConvertor;
+import com.intellij.util.Time;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.InputStream;
-import java.util.concurrent.*;
+import java.net.URLConnection;
 
 class UpdatesXmlLoader {
   private static final Logger LOG = Logger.getInstance(UpdatesXmlLoader.class);
 
   @Nullable
-  public static UpdatesInfo loadUpdatesInfo(@Nullable final String updateUrl) throws ConnectionException {
+  public static UpdatesInfo loadUpdatesInfo(@Nullable final String updateUrl) throws Exception {
     if (LOG.isDebugEnabled()) {
       LOG.debug("load update xml (UPDATE_URL='" + updateUrl + "' )");
     }
@@ -44,56 +42,25 @@ class UpdatesXmlLoader {
       return null;
     }
 
-    final Ref<Exception> error = new Ref<Exception>();
-    Future<UpdatesInfo> future = ApplicationManager.getApplication().executeOnPooledThread(new Callable<UpdatesInfo>() {
-      @Nullable
-      @Override
-      public UpdatesInfo call() throws Exception {
-        try {
-          String url = updateUrl.startsWith("file:") ? updateUrl : updateUrl + '?' + UpdateChecker.prepareUpdateCheckArgs();
-          InputStream inputStream = HttpConfigurable.getInstance().openConnection(url).getInputStream();
+    return HttpRequests.request(updateUrl.startsWith("file:") ? updateUrl : updateUrl + '?' + UpdateChecker.prepareUpdateCheckArgs())
+      .connectTimeout(5 * Time.SECOND)
+      .readTimeout(5 * Time.SECOND)
+      .get(new ThrowableConvertor<URLConnection, UpdatesInfo, Exception>() {
+        @Override
+        public UpdatesInfo convert(URLConnection connection) throws Exception {
+          InputStream inputStream = connection.getInputStream();
           try {
             return new UpdatesInfo(JDOMUtil.loadDocument(inputStream).getRootElement());
           }
           catch (JDOMException e) {
-            LOG.info(e); // Broken xml downloaded. Don't bother telling user.
+            // Broken xml downloaded. Don't bother telling user.
+            LOG.info(e);
+            return null;
           }
           finally {
             inputStream.close();
           }
         }
-        catch (Exception e) {
-          LOG.debug(e);
-          error.set(e);
-        }
-        return null;
-      }
-    });
-
-    UpdatesInfo result = null;
-    try {
-      result = future.get(5, TimeUnit.SECONDS);
-    }
-    catch (TimeoutException ignored) {
-    }
-    catch (InterruptedException e) {
-      LOG.debug(e);
-      error.set(e);
-    }
-    catch (ExecutionException e) {
-      LOG.debug(e);
-      error.set(e);
-    }
-
-    if (!future.isDone()) {
-      future.cancel(true);
-      if (error.isNull()) {
-        throw new ConnectionException(IdeBundle.message("updates.timeout.error"));
-      }
-    }
-    if (!error.isNull()) {
-      throw new ConnectionException(error.get());
-    }
-    return result;
+      });
   }
 }

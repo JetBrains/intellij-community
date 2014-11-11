@@ -18,17 +18,16 @@ package com.intellij.ide.plugins;
 import com.google.common.hash.Hashing;
 import com.google.common.io.Files;
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.BuildNumber;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.util.HttpRequests;
 import com.intellij.util.PathUtil;
-import com.intellij.util.net.HttpConfigurable;
+import com.intellij.util.ThrowableConvertor;
 import com.intellij.util.net.NetUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -38,7 +37,6 @@ import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import java.io.*;
 import java.net.HttpURLConnection;
-import java.net.URL;
 import java.net.URLConnection;
 import java.util.List;
 import java.util.zip.GZIPInputStream;
@@ -52,50 +50,6 @@ public class RepositoryHelper {
 
   public static List<IdeaPluginDescriptor> loadPluginsFromRepository(@Nullable ProgressIndicator indicator) throws Exception {
     return loadPluginsFromRepository(indicator, null);
-  }
-
-  @NotNull
-  public static Pair<URLConnection, String> openConnection(@NotNull String initialUrl, boolean supportGzip) throws IOException {
-    int i = 0;
-    String url = initialUrl;
-    while (i++ < 99) {
-      URLConnection connection;
-      if (ApplicationManager.getApplication() != null) {
-        connection = HttpConfigurable.getInstance().openConnection(url);
-      }
-      else {
-        connection = new URL(url).openConnection();
-        connection.setConnectTimeout(HttpConfigurable.CONNECTION_TIMEOUT);
-        connection.setReadTimeout(HttpConfigurable.CONNECTION_TIMEOUT);
-      }
-
-      if (supportGzip) {
-        connection.setRequestProperty("Accept-Encoding", "gzip");
-      }
-      connection.setUseCaches(false);
-
-      if (connection instanceof HttpURLConnection) {
-        int responseCode = ((HttpURLConnection)connection).getResponseCode();
-        if (responseCode != HttpURLConnection.HTTP_OK && responseCode != HttpURLConnection.HTTP_NOT_MODIFIED) {
-          if (responseCode == HttpURLConnection.HTTP_MOVED_PERM || responseCode == HttpURLConnection.HTTP_MOVED_TEMP) {
-            url = connection.getHeaderField("Location");
-          }
-          else {
-            url = null;
-          }
-
-          if (url == null) {
-            throw new IOException(IdeBundle.message("error.connection.failed.with.http.code.N", responseCode));
-          }
-          else {
-            ((HttpURLConnection)connection).disconnect();
-            continue;
-          }
-        }
-      }
-      return Pair.create(connection, url == initialUrl ? null : url);
-    }
-    throw new IOException("Infinite redirection");
   }
 
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
@@ -117,8 +71,8 @@ public class RepositoryHelper {
   }
 
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-  public static List<IdeaPluginDescriptor> loadPluginsFromRepository(@Nullable ProgressIndicator indicator, @Nullable BuildNumber buildnumber) throws Exception {
-    ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
+  public static List<IdeaPluginDescriptor> loadPluginsFromRepository(@Nullable final ProgressIndicator indicator, @Nullable BuildNumber buildnumber) throws Exception {
+    final ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
 
     String url = appInfo.getPluginsListUrl() + "?build=" + (buildnumber != null ? buildnumber.asString() : appInfo.getApiVersion());
 
@@ -126,7 +80,7 @@ public class RepositoryHelper {
       indicator.setText2(IdeBundle.message("progress.connecting.to.plugin.manager", appInfo.getPluginManagerUrl()));
     }
 
-    File pluginListFile = new File(PathManager.getPluginsPath(), PLUGIN_LIST_FILE);
+    final File pluginListFile = new File(PathManager.getPluginsPath(), PLUGIN_LIST_FILE);
     if (pluginListFile.length() > 0) {
       try {
         url = url + "&crc32=" + Files.hash(pluginListFile, Hashing.crc32()).toString();
@@ -137,30 +91,27 @@ public class RepositoryHelper {
       }
     }
 
-    URLConnection connection = openConnection(url, true).first;
-    if (indicator != null) {
-      indicator.setText2(IdeBundle.message("progress.waiting.for.reply.from.plugin.manager", appInfo.getPluginManagerUrl()));
-    }
-    connection.connect();
-    try {
-      if (indicator != null) {
-        indicator.checkCanceled();
-      }
+    return HttpRequests.request(url).supportGzip(true).get(new ThrowableConvertor<URLConnection, List<IdeaPluginDescriptor>, Exception>() {
+      @Override
+      public List<IdeaPluginDescriptor> convert(URLConnection connection) throws Exception {
+        if (indicator != null) {
+          indicator.setText2(IdeBundle.message("progress.waiting.for.reply.from.plugin.manager", appInfo.getPluginManagerUrl()));
+        }
+        connection.connect();
+        if (indicator != null) {
+          indicator.checkCanceled();
+        }
 
-      if (connection instanceof HttpURLConnection && ((HttpURLConnection)connection).getResponseCode() == HttpURLConnection.HTTP_NOT_MODIFIED) {
-        return loadPluginList(pluginListFile);
-      }
+        if (connection instanceof HttpURLConnection && ((HttpURLConnection)connection).getResponseCode() == HttpURLConnection.HTTP_NOT_MODIFIED) {
+          return loadPluginList(pluginListFile);
+        }
 
-      if (indicator != null) {
-        indicator.setText2(IdeBundle.message("progress.downloading.list.of.plugins"));
+        if (indicator != null) {
+          indicator.setText2(IdeBundle.message("progress.downloading.list.of.plugins"));
+        }
+        return readPluginsStream(connection, indicator, PLUGIN_LIST_FILE);
       }
-      return readPluginsStream(connection, indicator, PLUGIN_LIST_FILE);
-    }
-    finally {
-      if (connection instanceof HttpURLConnection) {
-        ((HttpURLConnection)connection).disconnect();
-      }
-    }
+    });
   }
 
   private synchronized static List<IdeaPluginDescriptor> readPluginsStream(@NotNull URLConnection connection,
