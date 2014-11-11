@@ -375,7 +375,7 @@ public final class LoadTextUtil {
         CharSequence text;
 
         final Application app = ApplicationManager.getApplication();
-        if (app != null && app.isDispatchThread() && !app.isUnitTestMode()) {
+        if (app != null && app.isDispatchThread() && !app.isWriteAccessAllowed()) {
           final Ref<CharSequence> result = Ref.create(ArrayUtil.EMPTY_CHAR_SEQUENCE);
           final Ref<RuntimeException> exception = Ref.create();
 
