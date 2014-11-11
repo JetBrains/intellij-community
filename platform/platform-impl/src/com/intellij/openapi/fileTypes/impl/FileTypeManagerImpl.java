@@ -22,7 +22,9 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.TransferToPooledThreadQueue;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.ExportableApplicationComponent;
+import com.intellij.openapi.components.RoamingType;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
@@ -275,7 +277,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     reDetectQueue.drain();
   }
   @TestOnly
-  public void reDetectAsync(boolean enable) {
+  void reDetectAsync(boolean enable) {
     RE_DETECT_ASYNC = enable;
   }
 
@@ -1237,11 +1239,12 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     return PlatformUtils.isIdeaCommunity() ? "CommunityFileTypes" : "FileTypeManager";
   }
 
-  public FileTypeAssocTable getExtensionMap() {
+  @NotNull
+  FileTypeAssocTable getExtensionMap() {
     return myPatternsTable;
   }
 
-  public void setPatternsTable(@NotNull Set<FileType> fileTypes, @NotNull FileTypeAssocTable<FileType> assocTable) {
+  void setPatternsTable(@NotNull Set<FileType> fileTypes, @NotNull FileTypeAssocTable<FileType> assocTable) {
     fireBeforeFileTypesChanged();
     for (FileType existing : getRegisteredFileTypes()) {
       if (!fileTypes.contains(existing)) {

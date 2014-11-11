@@ -113,6 +113,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
 
   @Override
   public void dispose() {
+    myProgress.cancel();
     EditorWindowImpl.disposeInvalidEditors();
   }
 
