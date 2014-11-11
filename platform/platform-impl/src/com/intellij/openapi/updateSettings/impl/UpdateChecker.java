@@ -42,6 +42,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
+import com.intellij.util.HttpRequests;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.UrlConnectionUtil;
@@ -471,7 +472,10 @@ public final class UpdateChecker {
         return new CheckForUpdateResult(UpdateStrategy.State.NOTHING_LOADED);
       }
     }
-    catch (ConnectionException e) {
+    catch (InterruptedIOException e) {
+      return new CheckForUpdateResult(UpdateStrategy.State.CONNECTION_ERROR, new ConnectionException(IdeBundle.message("updates.timeout.error")));
+    }
+    catch (Exception e) {
       return new CheckForUpdateResult(UpdateStrategy.State.CONNECTION_ERROR, e);
     }
 
@@ -627,7 +631,7 @@ public final class UpdateChecker {
             urlToCheck = url;
           }
 
-          URLConnection connection = RepositoryHelper.openConnection(urlToCheck, true).first;
+          URLConnection connection = HttpRequests.openConnection(urlToCheck, true).first;
           connection.connect();
           connectionRef.set(connection);
         }
