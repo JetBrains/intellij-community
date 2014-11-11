@@ -179,7 +179,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
         for (int j = 0; j < i; j++) {
           ProgressManager.checkCanceled();
           final CandidateInfo conflict = newConflictsArray[j];
-          if (nonComparable(method, conflict)) continue; 
+          if (nonComparable(method, conflict, applicabilityLevel == MethodCandidateInfo.ApplicabilityLevel.FIXED_ARITY)) continue; 
           switch (isMoreSpecific((MethodCandidateInfo)method, (MethodCandidateInfo)conflict, applicabilityLevel, languageLevel)) {
             case FIRST:
               conflicts.remove(conflict);
@@ -195,7 +195,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     }
   }
 
-  protected boolean nonComparable(@NotNull CandidateInfo method, @NotNull CandidateInfo conflict) {
+  protected boolean nonComparable(@NotNull CandidateInfo method, @NotNull CandidateInfo conflict, boolean fixedArity) {
     assert method != conflict;
     return false;
   }
