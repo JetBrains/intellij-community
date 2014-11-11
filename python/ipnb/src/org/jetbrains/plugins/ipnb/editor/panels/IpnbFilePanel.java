@@ -374,6 +374,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider {
     myListener.selectionChanged(ipnbPanel);
   }
 
+  @Nullable
   public IpnbEditablePanel getSelectedCell() {
     return mySelectedCell;
   }
