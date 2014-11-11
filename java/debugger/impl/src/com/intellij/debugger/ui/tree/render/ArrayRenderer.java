@@ -15,6 +15,7 @@
  */
 package com.intellij.debugger.ui.tree.render;
 
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -179,10 +180,10 @@ public class ArrayRenderer extends NodeRendererImpl{
 
       if (added == 0) {
         if(START_INDEX == 0 && array.length() - 1 <= END_INDEX) {
-          children.add(nodeManager.createMessageNode(MessageDescriptor.ALL_ELEMENTS_IN_RANGE_ARE_NULL.getLabel()));
+          children.add(nodeManager.createMessageNode(MessageDescriptor.ALL_ELEMENTS_IN_RANGE_ARE_NULL));
         }
         else {
-          children.add(nodeManager.createMessageNode(MessageDescriptor.ALL_ELEMENTS_IN_VISIBLE_RANGE_ARE_NULL.getLabel()));
+          children.add(nodeManager.createMessageNode(DebuggerBundle.message("message.node.all.array.elements.null", START_INDEX, END_INDEX)));
         }
       }
       else {
