@@ -20,6 +20,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
+import com.intellij.util.ExceptionUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.*;
@@ -49,8 +50,21 @@ public class ApplicationUtil {
    * Allows to interrupt a process which does not performs checkCancelled() calls by itself.
    * Note that the process may continue to run in background indefinitely - so <b>avoid using this method unless absolutely needed</b>.
    */
-  public static <T> T runWithCheckCanceled(@NotNull Callable<T> callable) throws ExecutionException, InterruptedException {
-    Future<T> future = ApplicationManager.getApplication().executeOnPooledThread(callable);
+  public static <T> T runWithCheckCanceled(@NotNull final Callable<T> callable) throws Exception {
+    final Ref<Throwable> error = Ref.create();
+
+    Future<T> future = ApplicationManager.getApplication().executeOnPooledThread(new Callable<T>() {
+      @Override
+      public T call() throws Exception {
+        try {
+          return callable.call();
+        }
+        catch (Throwable t) {
+          error.set(t);
+          return null;
+        }
+      };
+    });
 
     while (true) {
       try {
@@ -62,7 +76,9 @@ public class ApplicationUtil {
       }
 
       try {
-        return future.get(200, TimeUnit.MILLISECONDS);
+        T result = future.get(200, TimeUnit.MILLISECONDS);
+        ExceptionUtil.rethrowAll(error.get());
+        return result;
       }
       catch (TimeoutException ignored) { }
     }

@@ -37,6 +37,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -374,11 +375,10 @@ public final class LoadTextUtil {
       if (decompiler != null) {
         CharSequence text;
 
-        final Application app = ApplicationManager.getApplication();
+        Application app = ApplicationManager.getApplication();
         if (app != null && app.isDispatchThread() && !app.isWriteAccessAllowed()) {
           final Ref<CharSequence> result = Ref.create(ArrayUtil.EMPTY_CHAR_SEQUENCE);
-          final Ref<RuntimeException> exception = Ref.create();
-
+          final Ref<Throwable> error = Ref.create();
           ProgressManager.getInstance().run(new Task.Modal(null, "Decompiling " + file.getName(), true) {
             @Override
             public void run(@NotNull ProgressIndicator indicator) {
@@ -391,17 +391,12 @@ public final class LoadTextUtil {
                   }
                 }));
               }
-              catch (RuntimeException e) {
-                exception.set(e);
+              catch (Throwable t) {
+                error.set(t);
               }
-              catch (Exception ignored) { }
             }
           });
-
-          if (!exception.isNull()) {
-            throw exception.get();
-          }
-
+          ExceptionUtil.rethrowUnchecked(error.get());
           text = result.get();
         }
         else {
