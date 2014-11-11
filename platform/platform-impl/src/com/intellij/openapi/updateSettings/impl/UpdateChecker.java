@@ -41,9 +41,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Function;
-import com.intellij.util.HttpRequests;
-import com.intellij.util.PlatformUtils;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.UrlConnectionUtil;
 import com.intellij.util.net.HttpConfigurable;
@@ -462,12 +460,44 @@ public final class UpdateChecker {
     return pluginFile.getUrl();
   }
 
+  @Nullable
+  private static UpdatesInfo loadUpdatesInfo(@Nullable final String updateUrl) throws Exception {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("load update xml (UPDATE_URL='" + updateUrl + "' )");
+    }
+
+    if (StringUtil.isEmpty(updateUrl)) {
+      LOG.debug("update url is empty: updates will not be checked");
+      return null;
+    }
+
+    return HttpRequests.request(updateUrl.startsWith("file:") ? updateUrl : updateUrl + '?' + prepareUpdateCheckArgs())
+      .connectTimeout(5 * Time.SECOND)
+      .readTimeout(5 * Time.SECOND)
+      .get(new ThrowableConvertor<URLConnection, UpdatesInfo, Exception>() {
+        @Override
+        public UpdatesInfo convert(URLConnection connection) throws Exception {
+          InputStream inputStream = connection.getInputStream();
+          try {
+            return new UpdatesInfo(JDOMUtil.loadDocument(inputStream).getRootElement());
+          }
+          catch (JDOMException e) {
+            // Broken xml downloaded. Don't bother telling user.
+            LOG.info(e);
+            return null;
+          }
+          finally {
+            inputStream.close();
+          }
+        }
+      });
+  }
+
   @NotNull
   private static CheckForUpdateResult checkForUpdates(final UpdateSettings settings) {
     UpdatesInfo info;
     try {
-      UpdatesXmlLoader loader = new UpdatesXmlLoader(getUpdateUrl());
-      info = loader.loadUpdatesInfo();
+      info = loadUpdatesInfo(getUpdateUrl());
       if (info == null) {
         return new CheckForUpdateResult(UpdateStrategy.State.NOTHING_LOADED);
       }
