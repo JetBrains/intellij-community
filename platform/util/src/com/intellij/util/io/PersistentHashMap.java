@@ -122,7 +122,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
   public PersistentHashMap(@NotNull final File file, @NotNull KeyDescriptor<Key> keyDescriptor, @NotNull DataExternalizer<Value> valueExternalizer) throws IOException {
     this(file, keyDescriptor, valueExternalizer, INITIAL_INDEX_SIZE);
   }
-  
+
   public PersistentHashMap(@NotNull final File file, @NotNull KeyDescriptor<Key> keyDescriptor, @NotNull DataExternalizer<Value> valueExternalizer, final int initialSize) throws IOException {
     super(checkDataFiles(file), keyDescriptor, initialSize);
 
@@ -387,7 +387,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
   public interface ValueDataAppender {
     void append(DataOutput out) throws IOException;
   }
-  
+
   public final void appendData(Key key, @NotNull ValueDataAppender appender) throws IOException {
     synchronized (myEnumerator) {
       doAppendData(key, appender);
@@ -672,6 +672,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
       final String newPath = getDataFile(myEnumerator.myFile).getPath() + ".new";
       final PersistentHashMapValueStorage newStorage = PersistentHashMapValueStorage.create(newPath);
       myValueStorage.switchToCompactionMode();
+      myEnumerator.markDirty(true);
       long sizeBefore = myValueStorage.getSize();
 
       myLiveAndGarbageKeysCounter = 0;
