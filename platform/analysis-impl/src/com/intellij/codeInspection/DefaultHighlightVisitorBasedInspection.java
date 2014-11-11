@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -162,65 +162,38 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
       final Project project = file.getProject();
       Document document = PsiDocumentManager.getInstance(project).getDocument(file);
       if (document == null) return;
-      //final HighlightInfoFilter[] filters = ApplicationManager.getApplication().getExtensions(HighlightInfoFilter.EXTENSION_POINT_NAME);
       DaemonProgressIndicator progress = new DaemonProgressIndicator();
       progress.start();
-      TextEditorHighlightingPassRegistrarEx passRegistrarEx = TextEditorHighlightingPassRegistrarEx.getInstanceEx(project);
-      List<TextEditorHighlightingPass> passes = passRegistrarEx.instantiateMainPasses(file, document, HighlightInfoProcessor.getEmpty());
-      List<GeneralHighlightingPass> gpasses = ContainerUtil.collect(passes.iterator(), FilteringIterator.instanceOf(GeneralHighlightingPass.class));
-      for (final GeneralHighlightingPass gpass : gpasses) {
-        gpass.setHighlightVisitorProducer(new NotNullProducer<HighlightVisitor[]>() {
-          @NotNull
-          @Override
-          public HighlightVisitor[] produce() {
-            gpass.incVisitorUsageCount(1);
-            return new HighlightVisitor[]{new DefaultHighlightVisitor(project, highlightErrorElements, runAnnotators, true)};
+      try {
+        TextEditorHighlightingPassRegistrarEx passRegistrarEx = TextEditorHighlightingPassRegistrarEx.getInstanceEx(project);
+        List<TextEditorHighlightingPass> passes = passRegistrarEx.instantiateMainPasses(file, document, HighlightInfoProcessor.getEmpty());
+        List<GeneralHighlightingPass> gpasses = ContainerUtil.collect(passes.iterator(), FilteringIterator.instanceOf(GeneralHighlightingPass.class));
+        for (final GeneralHighlightingPass gpass : gpasses) {
+          gpass.setHighlightVisitorProducer(new NotNullProducer<HighlightVisitor[]>() {
+            @NotNull
+            @Override
+            public HighlightVisitor[] produce() {
+              gpass.incVisitorUsageCount(1);
+              return new HighlightVisitor[]{new DefaultHighlightVisitor(project, highlightErrorElements, runAnnotators, true)};
+            }
+          });
+        }
+
+
+        for (TextEditorHighlightingPass pass : gpasses) {
+          pass.doCollectInformation(progress);
+          List<HighlightInfo> infos = pass.getInfos();
+          for (HighlightInfo info : infos) {
+            if (info == null) continue;
+            //if (info.type == HighlightInfoType.INJECTED_LANGUAGE_FRAGMENT) continue;
+            if (info.getSeverity().compareTo(HighlightSeverity.INFORMATION) <= 0) continue;
+            result.add(Pair.create(file, info));
           }
-        });
-      }
-
-
-      for (TextEditorHighlightingPass pass : gpasses) {
-        pass.doCollectInformation(progress);
-        List<HighlightInfo> infos = pass.getInfos();
-        for (HighlightInfo info : infos) {
-          if (info == null) continue;
-          //if (info.type == HighlightInfoType.INJECTED_LANGUAGE_FRAGMENT) continue;
-          if (info.getSeverity().compareTo(HighlightSeverity.INFORMATION) <= 0) continue;
-          result.add(Pair.create(file, info));
         }
       }
-      //GeneralHighlightingPass pass =
-      //  new GeneralHighlightingPass(project, file, document, 0, file.getTextLength(), true, new ProperTextRange(0, document.getTextLength()), null, HighlightInfoProcessor.getEmpty()) {
-      //    @NotNull
-      //    @Override
-      //    protected HighlightVisitor[] createHighlightVisitors() {
-      //      return new HighlightVisitor[]{new DefaultHighlightVisitor(project, highlightErrorElements, runAnnotators, true)};
-      //    }
-      //
-      //    @Override
-      //    protected HighlightInfoHolder createInfoHolder(final PsiFile file) {
-      //      return new CustomHighlightInfoHolder(file, getColorsScheme(), filters) {
-      //        @Override
-      //        public boolean add(@Nullable HighlightInfo info) {
-      //          if (info == null) return true;
-      //          if (info.type == HighlightInfoType.INJECTED_LANGUAGE_FRAGMENT) return true;
-      //          if (info.getSeverity() == HighlightSeverity.INFORMATION) return true;
-      //
-      //          result.add(Pair.create(file, info));
-      //
-      //          return true;
-      //        }
-      //      };
-      //    }
-      //
-      //    @Override
-      //    protected boolean isFailFastOnAcquireReadAction() {
-      //      return myOnTheFly;
-      //    }
-      //  };
-      //progress.start();
-      //pass.collectInformation(progress);
+      finally {
+        progress.stop();
+      }
     }
   }
 }
