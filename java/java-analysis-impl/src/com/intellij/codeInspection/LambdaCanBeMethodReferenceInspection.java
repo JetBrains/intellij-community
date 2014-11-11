@@ -198,86 +198,104 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
   protected static String createMethodReferenceText(final PsiElement element,
                                                     final PsiType functionalInterfaceType,
                                                     final PsiParameter[] parameters) {
-    String methodRefText = null;
     if (element instanceof PsiMethodCallExpression) {
       final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)element;
+
       final PsiMethod psiMethod = methodCall.resolveMethod();
-      if (psiMethod == null) return null;
-      PsiClass containingClass = psiMethod.getContainingClass();
-      LOG.assertTrue(containingClass != null);
-      final PsiReferenceExpression methodExpression = methodCall.getMethodExpression();
-      final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
-      final String methodReferenceName = methodExpression.getReferenceName();
-      if (qualifierExpression != null) {
-        boolean isReceiverType = PsiMethodReferenceUtil.isReceiverType(functionalInterfaceType, containingClass, psiMethod);
-        final String qualifier = isReceiverType ? composeReceiverQualifierText(parameters, psiMethod, containingClass, qualifierExpression) 
-                                                : qualifierExpression.getText();
-        if (qualifier == null) {
-          return null;
-        }
-        methodRefText = qualifier;
-      }
-      else {
-        if (psiMethod.hasModifierProperty(PsiModifier.STATIC)) {
-          methodRefText = getClassReferenceName(containingClass);
-        } else {
-          final PsiClass parentContainingClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
-          PsiClass treeContainingClass = parentContainingClass;
-          while (treeContainingClass != null && !InheritanceUtil.isInheritorOrSelf(treeContainingClass, containingClass, true)) {
-            treeContainingClass = PsiTreeUtil.getParentOfType(treeContainingClass, PsiClass.class, true);
-          }
-          if (treeContainingClass != null && containingClass != parentContainingClass && treeContainingClass != parentContainingClass) {
-            final String treeContainingClassName = treeContainingClass.getName();
-            if (treeContainingClassName == null) {
-              return null;
-            }
-            methodRefText = treeContainingClassName + ".this";
-          } else {
-            methodRefText = "this";
-          }
-        }
-      }
-      methodRefText += "::" + ((PsiMethodCallExpression)element).getTypeArgumentList().getText() + methodReferenceName;
-    }
-    else if (element instanceof PsiNewExpression) {
-      final PsiMethod constructor = ((PsiNewExpression)element).resolveConstructor();
-      PsiClass containingClass = null;
-      if (constructor != null) {
-        containingClass = constructor.getContainingClass();
-        LOG.assertTrue(containingClass != null);
-      }
-      else {
-        final PsiJavaCodeReferenceElement classReference = ((PsiNewExpression)element).getClassOrAnonymousClassReference();
-        if (classReference != null) {
-          final JavaResolveResult resolve = classReference.advancedResolve(false);
-          final PsiElement resolveElement = resolve.getElement();
-          if (resolveElement instanceof PsiClass) {
-            containingClass = (PsiClass)resolveElement;
-          }
-        }
-      }
-      final PsiType newExprType = ((PsiNewExpression)element).getType();
-      if (containingClass != null) {
-        methodRefText = getClassReferenceName(containingClass);
-      } 
-      else if (newExprType instanceof PsiArrayType){
-        final PsiType deepComponentType = newExprType.getDeepComponentType();
-        if (deepComponentType instanceof PsiPrimitiveType) {
-          methodRefText = deepComponentType.getCanonicalText();
-        }
+      if (psiMethod == null) {
+        return null;
       }
 
-      if (methodRefText != null) {
-        if (newExprType != null) {
-          int dim = newExprType.getArrayDimensions();
-          while (dim-- > 0) {
-            methodRefText += "[]";
-          }
-        }
-        methodRefText += ((PsiNewExpression)element).getTypeArgumentList().getText() + "::new";
+      final PsiReferenceExpression methodExpression = methodCall.getMethodExpression();
+      final String qualifierByMethodCall = getQualifierTextByMethodCall(methodCall, functionalInterfaceType, parameters, psiMethod);
+      if (qualifierByMethodCall != null) {
+        return qualifierByMethodCall + "::" + ((PsiMethodCallExpression)element).getTypeArgumentList().getText() + methodExpression.getReferenceName();
       }
     }
-    return methodRefText;
+    else if (element instanceof PsiNewExpression) {
+      final String qualifierByNew = getQualifierTextByNewExpression((PsiNewExpression)element);
+      if (qualifierByNew != null) {
+        return qualifierByNew + ((PsiNewExpression)element).getTypeArgumentList().getText() + "::new";
+      }
+    }
+    return null;
+  }
+
+  private static String getQualifierTextByNewExpression(PsiNewExpression element) {
+    final PsiType newExprType = element.getType();
+    if (newExprType == null) {
+      return null;
+    }
+
+    PsiClass containingClass = null;
+    final PsiJavaCodeReferenceElement classReference = element.getClassOrAnonymousClassReference();
+    if (classReference != null) {
+      final JavaResolveResult resolve = classReference.advancedResolve(false);
+      final PsiElement resolveElement = resolve.getElement();
+      if (resolveElement instanceof PsiClass) {
+        containingClass = (PsiClass)resolveElement;
+      }
+    }
+
+    String classOrPrimitiveName = null;
+    if (containingClass != null) {
+      classOrPrimitiveName = getClassReferenceName(containingClass);
+    } 
+    else if (newExprType instanceof PsiArrayType){
+      final PsiType deepComponentType = newExprType.getDeepComponentType();
+      if (deepComponentType instanceof PsiPrimitiveType) {
+        classOrPrimitiveName = deepComponentType.getCanonicalText();
+      }
+    }
+
+    if (classOrPrimitiveName == null) {
+      return null;
+    }
+
+    int dim = newExprType.getArrayDimensions();
+    while (dim-- > 0) {
+      classOrPrimitiveName += "[]";
+    }
+    return classOrPrimitiveName;
+  }
+
+  private static String getQualifierTextByMethodCall(final PsiMethodCallExpression methodCall,
+                                                     final PsiType functionalInterfaceType,
+                                                     final PsiParameter[] parameters,
+                                                     final PsiMethod psiMethod) {
+
+    final PsiExpression qualifierExpression = methodCall.getMethodExpression().getQualifierExpression();
+
+    final PsiClass containingClass = psiMethod.getContainingClass();
+    LOG.assertTrue(containingClass != null);
+
+    if (qualifierExpression != null) {
+      boolean isReceiverType = PsiMethodReferenceUtil.isReceiverType(functionalInterfaceType, containingClass, psiMethod);
+      return isReceiverType ? composeReceiverQualifierText(parameters, psiMethod, containingClass, qualifierExpression)
+                            : qualifierExpression.getText();
+    }
+    else {
+      if (psiMethod.hasModifierProperty(PsiModifier.STATIC)) {
+        return getClassReferenceName(containingClass);
+      }
+      else {
+        final PsiClass parentContainingClass = PsiTreeUtil.getParentOfType(methodCall, PsiClass.class);
+        PsiClass treeContainingClass = parentContainingClass;
+        while (treeContainingClass != null && !InheritanceUtil.isInheritorOrSelf(treeContainingClass, containingClass, true)) {
+          treeContainingClass = PsiTreeUtil.getParentOfType(treeContainingClass, PsiClass.class, true);
+        }
+        if (treeContainingClass != null && containingClass != parentContainingClass && treeContainingClass != parentContainingClass) {
+          final String treeContainingClassName = treeContainingClass.getName();
+          if (treeContainingClassName == null) {
+            return null;
+          }
+          return treeContainingClassName + ".this";
+        }
+        else {
+          return "this";
+        }
+      }
+    }
   }
 
   private static String composeReceiverQualifierText(PsiParameter[] parameters,
@@ -298,15 +316,16 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
       return getClassReferenceName(nonAmbiguousContainingClass);
     }
 
-    if (nonAmbiguousContainingClass.isPhysical() && qualifierExpression instanceof PsiReferenceExpression) {
+    if (containingClass.isPhysical() && qualifierExpression instanceof PsiReferenceExpression) {
       final PsiElement resolve = ((PsiReferenceExpression)qualifierExpression).resolve();
-      if (resolve instanceof PsiParameter && ArrayUtil.find(parameters, resolve) > -1 && ((PsiParameter)resolve).getTypeElement() == null) {
-        return getClassReferenceName(nonAmbiguousContainingClass);
+      final boolean parameterWithoutFormalType = resolve instanceof PsiParameter && ((PsiParameter)resolve).getTypeElement() == null;
+      if (parameterWithoutFormalType && ArrayUtil.find(parameters, resolve) > -1) {
+        return getClassReferenceName(containingClass);
       }
     }
 
     final PsiType qualifierExpressionType = qualifierExpression.getType();
-    return qualifierExpressionType != null ? qualifierExpressionType.getCanonicalText() : getClassReferenceName(nonAmbiguousContainingClass);
+    return qualifierExpressionType != null ? qualifierExpressionType.getCanonicalText() : getClassReferenceName(containingClass);
   }
 
   private static String getClassReferenceName(PsiClass containingClass) {
