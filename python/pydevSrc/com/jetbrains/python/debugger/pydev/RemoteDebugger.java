@@ -154,6 +154,13 @@ public class RemoteDebugger implements ProcessDebugger {
     return command.getVariables();
   }
 
+  @Override
+  public Object[][] loadArrayItems(String  threadId, String frameId, PyDebugValue var, int rowOffset, int colOffset, int rows, int cols, String format) throws PyDebuggerException {
+    final GetArrayCommand command = new GetArrayCommand(this, threadId, frameId, var, rowOffset, colOffset, rows, cols, format);
+    command.execute();
+    return command.getArray();
+  }
+
 
   @Override
   public void loadReferrers(final String threadId,
@@ -433,6 +440,16 @@ public class RemoteDebugger implements ProcessDebugger {
       new SetBreakpointCommand(this, typeId, file, line,
                                condition,
                                logExpression);
+    execute(command);
+  }
+
+  @Override
+  public void setBreakpointWithFuncName(String typeId, String file, int line, String condition, String logExpression, String funcName) {
+    final SetBreakpointCommand command =
+      new SetBreakpointCommand(this, typeId, file, line,
+                               condition,
+                               logExpression,
+                               funcName);
     execute(command);
   }
 

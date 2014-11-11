@@ -15,35 +15,63 @@
  */
 package com.intellij.psi.impl.search;
 
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.impl.scopes.ModulesScope;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.LanguageLevelModuleExtension;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.java.stubs.index.JavaMethodParameterTypesIndex;
-import com.intellij.psi.search.EverythingGlobalScope;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.*;
 import com.intellij.psi.search.searches.FunctionalExpressionSearch;
-import com.intellij.psi.search.searches.MethodReferencesSearch;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
+import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.Set;
 
 public class JavaFunctionalExpressionSearcher implements QueryExecutor<PsiFunctionalExpression, FunctionalExpressionSearch.SearchParameters> {
+
+  private static final Logger LOG = Logger.getInstance("#" + JavaFunctionalExpressionSearcher.class.getName());
 
   @Override
   public boolean execute(@NotNull final FunctionalExpressionSearch.SearchParameters queryParameters,
                          @NotNull final Processor<PsiFunctionalExpression> consumer) {
     final PsiClass aClass = queryParameters.getElementToSearch();
+    final Set<Module> highLevelModules = new HashSet<Module>();
     if (ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
       @Override
       public Boolean compute() {
-        return !LambdaUtil.isFunctionalClass(aClass) || !PsiUtil.isLanguageLevel8OrHigher(aClass);
+        if (LambdaUtil.isFunctionalClass(aClass)) {
+          final Project project = aClass.getProject();
+          final boolean projectLevelIsHigh = PsiUtil.getLanguageLevel(project).isAtLeast(LanguageLevel.JDK_1_8);
+
+          for (Module module : ModuleManager.getInstance(project).getModules()) {
+            final LanguageLevelModuleExtension extension = ModuleRootManager.getInstance(module).getModuleExtension(LanguageLevelModuleExtension.class);
+            if (extension != null) {
+              final LanguageLevel level = extension.getLanguageLevel();
+              if (level == null && projectLevelIsHigh || level != null && level.isAtLeast(LanguageLevel.JDK_1_8)) {
+                highLevelModules.add(module);
+              }
+            }
+          }
+          return highLevelModules.isEmpty();
+        }
+        return true;
       }
     })) {
       return true;
@@ -53,12 +81,13 @@ public class JavaFunctionalExpressionSearcher implements QueryExecutor<PsiFuncti
       public SearchScope compute() {
         return queryParameters.getEffectiveSearchScope();
       }
-    }), consumer);
+    }), consumer, highLevelModules);
   }
 
   public static boolean collectFunctionalExpressions(final PsiClass aClass,
                                                      final SearchScope searchScope,
-                                                     final Processor<PsiFunctionalExpression> consumer) {
+                                                     final Processor<PsiFunctionalExpression> consumer, 
+                                                     final Set<Module> highLevelModules) {
     final SearchScope classScope = ApplicationManager.getApplication().runReadAction(new Computable<SearchScope>() {
       @Override
       public SearchScope compute() {
@@ -71,97 +100,74 @@ public class JavaFunctionalExpressionSearcher implements QueryExecutor<PsiFuncti
         return searchScope.intersectWith(classScope);
       }
     });
-    final Project project = PsiUtilCore.getProjectInReadAction(aClass);
-    final GlobalSearchScope scope = useScope instanceof GlobalSearchScope ? (GlobalSearchScope)useScope : new EverythingGlobalScope(project);
-    final Collection<PsiMethod> lambdaCandidates = ApplicationManager.getApplication().runReadAction(new Computable<Collection<PsiMethod>>() {
-      @Override
-      public Collection<PsiMethod> compute() {
-        final String functionalInterfaceName = aClass.getName();
-        final GlobalSearchScope useClassScope = classScope instanceof GlobalSearchScope ? (GlobalSearchScope)classScope : scope;
-        return JavaMethodParameterTypesIndex.getInstance().get(functionalInterfaceName, project, useClassScope);
-      }
-    });
-    for (PsiMethod psiMethod : lambdaCandidates) {
-      for (final PsiReference ref : MethodReferencesSearch.search(psiMethod, scope, false)) {
-        boolean accepted = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-          @Override
-          public Boolean compute() {
-            final PsiElement refElement = ref.getElement();
-            if (refElement != null) {
-              final PsiElement candidateElement = refElement.getParent();
-              if (candidateElement instanceof PsiCallExpression) {
-                final PsiExpressionList argumentList = ((PsiCallExpression)candidateElement).getArgumentList();
-                if (argumentList != null) {
-                  final PsiExpression[] args = argumentList.getExpressions();
-                  for (PsiExpression arg : args) {
-                    if (arg instanceof PsiFunctionalExpression) {
-                      final PsiFunctionalExpression functionalExpression = (PsiFunctionalExpression)arg;
-                      final PsiType functionalType = functionalExpression.getFunctionalInterfaceType();
-                      if (PsiUtil.resolveClassInType(functionalType) == aClass) {
-                        if (!consumer.process(functionalExpression)) return false;
-                      }
-                    }
-                  }
-                }
-              }
-            }
-            return true;
-          }
-        });
-        if (!accepted) return false;
-      }
-    }
 
-    for (final PsiReference reference : ReferencesSearch.search(aClass, scope)) {
-      boolean accepted = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+    final Project project = PsiUtilCore.getProjectInReadAction(aClass);
+    final GlobalSearchScope scope = new ModulesScope(highLevelModules, project)
+      .intersectWith(useScope instanceof GlobalSearchScope ? (GlobalSearchScope)useScope : new EverythingGlobalScope(project));
+   
+    final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
+    final HashSet<VirtualFile> files = new HashSet<VirtualFile>();
+    CommonProcessors.CollectProcessor<VirtualFile> processor = new CommonProcessors.CollectProcessor<VirtualFile>(files) {
+      @Override
+      protected boolean accept(VirtualFile virtualFile) {
+        return scope.contains(virtualFile) && virtualFile.getFileType() == JavaFileType.INSTANCE && index.isInSource(virtualFile);
+      }
+    };
+
+    final PsiSearchHelperImpl helper = (PsiSearchHelperImpl)PsiSearchHelper.SERVICE.getInstance(project);
+    helper.processFilesWithText(scope, UsageSearchContext.IN_CODE, true, "::", processor);
+    helper.processFilesWithText(scope, UsageSearchContext.IN_CODE, true, "->", processor);
+    LOG.info("#files: " + files.size());
+
+    final PsiManager psiManager = PsiManager.getInstance(project);
+    for (final VirtualFile file : files) {
+      if (!ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
         @Override
         public Boolean compute() {
-          final PsiElement element = reference.getElement();
-          if (element != null) {
-            final PsiElement parent = element.getParent();
-            if (parent instanceof PsiTypeElement) {
-              final PsiElement gParent = parent.getParent();
-              if (gParent instanceof PsiVariable) {
-                final PsiExpression initializer = PsiUtil.skipParenthesizedExprDown(((PsiVariable)gParent).getInitializer());
-                if (initializer instanceof PsiFunctionalExpression) {
-                  if (!consumer.process((PsiFunctionalExpression)initializer)) return false;
-                }
-                for (PsiReference varRef : ReferencesSearch.search(parent, scope)) {
-                  final PsiElement varElement = varRef.getElement();
-                  if (varElement != null) {
-                    final PsiElement varElementParent = varElement.getParent();
-                    if (varElementParent instanceof PsiAssignmentExpression &&
-                        ((PsiAssignmentExpression)varElementParent).getLExpression() == varElement) {
-                      final PsiExpression rExpression = PsiUtil.skipParenthesizedExprDown(((PsiAssignmentExpression)varElementParent).getRExpression());
-                      if (rExpression instanceof PsiFunctionalExpression) {
-                        if (!consumer.process((PsiFunctionalExpression)rExpression)) return false;
-                      }
-                    }
-                  }
-                }
-              } else if (gParent instanceof PsiMethod) {
-                final PsiReturnStatement[] returnStatements = ApplicationManager.getApplication().runReadAction(
-                  new Computable<PsiReturnStatement[]>() {
-                    @Override
-                    public PsiReturnStatement[] compute() {
-                      return PsiUtil.findReturnStatements((PsiMethod)gParent);
-                    }
-                  });
-                for (PsiReturnStatement returnStatement : returnStatements) {
-                  final PsiExpression returnValue = returnStatement.getReturnValue();
-                  if (returnValue instanceof PsiFunctionalExpression) {
-                    if (!consumer.process((PsiFunctionalExpression)returnValue)) return false;
-                  }
-                }
-              }
+          return processFileWithFunctionalInterfaces(aClass, consumer, psiManager, file);
+        }
+      })) return false;
+    }
+    return true;
+  }
+
+  private static boolean processFileWithFunctionalInterfaces(final PsiClass aClass,
+                                                             final Processor<PsiFunctionalExpression> consumer,
+                                                             final PsiManager psiManager, VirtualFile file) {
+    final PsiFile psiFile = psiManager.findFile(file);
+    if (psiFile != null) {
+      final Ref<Boolean> ref = new Ref<Boolean>(true);
+      psiFile.accept(new JavaRecursiveElementWalkingVisitor() {
+        @Override
+        public void visitElement(PsiElement element) {
+          if (!ref.get()) {
+            return;
+          }
+          super.visitElement(element);
+        }
+
+        private void visitFunctionalExpression(PsiFunctionalExpression expression) {
+          PsiType functionalInterfaceType = expression.getFunctionalInterfaceType();
+          if (psiManager.areElementsEquivalent(PsiUtil.resolveClassInType(functionalInterfaceType), aClass)) {
+            if (!consumer.process(expression)) {
+              ref.set(false);
             }
           }
+        }
 
-          return true;
+        @Override
+        public void visitLambdaExpression(PsiLambdaExpression expression) {
+          super.visitLambdaExpression(expression);
+          visitFunctionalExpression(expression);
+        }
+
+        @Override
+        public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
+          super.visitMethodReferenceExpression(expression);
+          visitFunctionalExpression(expression);
         }
       });
-      if (!accepted) return false;
-
+      if (!ref.get()) return false;
     }
     return true;
   }

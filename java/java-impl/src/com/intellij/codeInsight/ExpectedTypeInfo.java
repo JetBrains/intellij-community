@@ -28,6 +28,7 @@ public interface ExpectedTypeInfo {
   int TYPE_OR_SUBTYPE = 1;
   int TYPE_OR_SUPERTYPE = 2;
   int TYPE_BETWEEN = 3;
+  int TYPE_SAME_SHAPED = 4;
 
   @MagicConstant(valuesFromClass = ExpectedTypeInfo.class)
   @interface Type {}

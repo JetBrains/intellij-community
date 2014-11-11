@@ -548,7 +548,8 @@ typedef const char* (*GetVersionFunc) ();
 
 static PythonVersion GetPythonVersion() {
     GetVersionFunc versionFunc;
-    *(void**)(&versionFunc) = dlsym(0, "Py_GetVersion");
+    void *main_hndl = dlopen(NULL, 0x2);
+    *(void**)(&versionFunc) = dlsym(main_hndl, "Py_GetVersion");
     if(versionFunc != NULL) {
         const char* version = versionFunc();
         if(version != NULL && strlen(version) >= 3 && version[1] == '.') {

@@ -25,6 +25,7 @@ import com.intellij.ProjectTopics;
 import com.intellij.compiler.impl.javaCompiler.BackendCompiler;
 import com.intellij.compiler.impl.javaCompiler.eclipse.EclipseCompiler;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacCompiler;
+import com.intellij.compiler.server.BuildManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.compiler.CompilerBundle;
@@ -144,7 +145,11 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   }
 
   public void setProjectBytecodeTarget(@Nullable String level) {
+    final String previous = myBytecodeTargetLevel;
     myBytecodeTargetLevel = level;
+    if (!myProject.isDefault() && !Comparing.equal(previous, level)) {
+      BuildManager.getInstance().clearState(myProject);
+    }
   }
 
   @Override
@@ -154,8 +159,12 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   }
 
   public void setModulesBytecodeTargetMap(@NotNull Map<String, String> mapping) {
+    final boolean shouldNotify = !myProject.isDefault() && !myModuleBytecodeTarget.equals(mapping);
     myModuleBytecodeTarget.clear();
     myModuleBytecodeTarget.putAll(mapping);
+    if (shouldNotify) {
+      BuildManager.getInstance().clearState(myProject);
+    }
   }
 
   public Map<String, String> getModulesBytecodeTargetMap() {
@@ -170,11 +179,12 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     else {
       previous = myModuleBytecodeTarget.put(module.getName(), level);
     }
-    // todo: mark module as dirty in order to rebuild it completely with the new target level
-    //if (!Comparing.equal(previous, level)) {
-    //  final Project project = module.getProject();
-    //
-    //}
+    if (!Comparing.equal(previous, level)) {
+      final Project project = module.getProject();
+      if (!project.isDefault()) {
+        BuildManager.getInstance().clearState(project);
+      }
+    }
   }
 
   @Override

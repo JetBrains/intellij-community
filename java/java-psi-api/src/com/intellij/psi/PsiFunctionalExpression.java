@@ -25,4 +25,9 @@ public interface PsiFunctionalExpression extends PsiExpression, Iconable, Naviga
    */
   @Nullable
   PsiType getFunctionalInterfaceType();
+
+  /**
+   * @return true if assignment SAM s = expr is correctly shaped
+   */
+  boolean isAcceptable(PsiType left);
 }

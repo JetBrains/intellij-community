@@ -29,40 +29,36 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-public class LanguageLevelModuleExtension extends ModuleExtension<LanguageLevelModuleExtension> {
+public class LanguageLevelModuleExtensionImpl  extends ModuleExtension<LanguageLevelModuleExtensionImpl> implements LanguageLevelModuleExtension {
   @NonNls private static final String LANGUAGE_LEVEL_ELEMENT_NAME = "LANGUAGE_LEVEL";
   private Module myModule;
   private final boolean myWritable;
-  private static final Logger LOG = Logger.getInstance("#" + LanguageLevelModuleExtension.class.getName());
-
-  public static LanguageLevelModuleExtension getInstance(final Module module) {
-    return ModuleRootManager.getInstance(module).getModuleExtension(LanguageLevelModuleExtension.class);
-  }
+  private static final Logger LOG = Logger.getInstance("#" + LanguageLevelModuleExtensionImpl.class.getName());
 
   private LanguageLevel myLanguageLevel;
-  private final LanguageLevelModuleExtension mySource;
+  private final LanguageLevelModuleExtensionImpl mySource;
 
-  public LanguageLevelModuleExtension(Module module) {
+  public static LanguageLevelModuleExtensionImpl getInstance(final Module module) {
+    return ModuleRootManager.getInstance(module).getModuleExtension(LanguageLevelModuleExtensionImpl.class);
+  }
+  
+  public LanguageLevelModuleExtensionImpl(Module module) {
     myModule = module;
     mySource = null;
     myWritable = false;
   }
 
-  public LanguageLevelModuleExtension(final LanguageLevelModuleExtension source, boolean writable) {
+  public LanguageLevelModuleExtensionImpl(final LanguageLevelModuleExtensionImpl source, boolean writable) {
     myWritable = writable;
     myModule = source.myModule;
     myLanguageLevel = source.myLanguageLevel;
     mySource = source;
   }
 
+  @Override
   public void setLanguageLevel(final LanguageLevel languageLevel) {
     LOG.assertTrue(myWritable, "Writable model can be retrieved from writable ModifiableRootModel");
     myLanguageLevel = languageLevel;
-  }
-
-  @Nullable
-  public LanguageLevel getLanguageLevel() {
-    return myLanguageLevel;
   }
 
   @Override
@@ -90,7 +86,7 @@ public class LanguageLevelModuleExtension extends ModuleExtension<LanguageLevelM
 
   @Override
   public ModuleExtension getModifiableModel(final boolean writable) {
-    return new LanguageLevelModuleExtension(this, writable);
+    return new LanguageLevelModuleExtensionImpl(this, writable);
   }
 
   @Override
@@ -110,5 +106,11 @@ public class LanguageLevelModuleExtension extends ModuleExtension<LanguageLevelM
   public void dispose() {
     myModule = null;
     myLanguageLevel = null;
+  }
+
+  @Nullable
+  @Override
+  public LanguageLevel getLanguageLevel() {
+    return myLanguageLevel;
   }
 }

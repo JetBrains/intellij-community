@@ -17,6 +17,7 @@ package com.intellij.psi.impl.source.resolve.graphInference.constraints;
 
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
+import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
@@ -72,7 +73,12 @@ public class TypeCompatibilityConstraint implements ConstraintFormula {
       final PsiClass sClass = sResult.getElement();
       if (tClass != null && sClass != null) {
         final PsiSubstitutor sSubstitutor = TypeConversionUtil.getClassSubstitutor(tClass, sClass, sResult.getSubstitutor());
-        if (sSubstitutor != null && PsiUtil.isRawSubstitutor(tClass, sSubstitutor)) {
+        if (sSubstitutor != null) {
+          if (PsiUtil.isRawSubstitutor(tClass, sSubstitutor)) {
+            return true;
+          }
+        }
+        else if (tClass instanceof InferenceVariable && ((PsiClassType)s).isRaw() && tClass.isInheritor(sClass, true)) {
           return true;
         }
       }

@@ -325,7 +325,7 @@
 
     <copyPastePostProcessor implementation="com.intellij.codeInsight.editorActions.CopyPasteFoldingProcessor"/>
 
-    <moduleExtension implementation="com.intellij.openapi.roots.LanguageLevelModuleExtension"/>
+    <moduleExtension implementation="com.intellij.openapi.roots.LanguageLevelModuleExtensionImpl"/>
     <moduleExtension implementation="com.intellij.openapi.roots.impl.JavaModuleExternalPathsImpl"/>
 
     <orderRootType implementation="com.intellij.openapi.roots.AnnotationOrderRootType"/>

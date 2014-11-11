@@ -11,7 +11,7 @@ public abstract class IpnbRunCellBaseAction extends AnAction {
     super(AllIcons.General.Run);
   }
 
-  public void runCell(@NotNull final IpnbFilePanel ipnbFilePanel, boolean selectNext) {
+  public static void runCell(@NotNull final IpnbFilePanel ipnbFilePanel, boolean selectNext) {
     final IpnbEditablePanel cell = ipnbFilePanel.getSelectedCell();
     cell.runCell();
     if (selectNext) {
