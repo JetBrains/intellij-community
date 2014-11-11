@@ -28,6 +28,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * @author max
@@ -50,7 +51,7 @@ public class BuildInfo implements Comparable<BuildInfo> {
     String date = node.getAttributeValue("date");
     if (date != null) {
       try {
-        releaseDate = new SimpleDateFormat("dd.MM.yyyy").parse(date);
+        releaseDate = new SimpleDateFormat("dd.MM.yyyy", Locale.US).parse(date);
       }
       catch (ParseException e) {
         LOG.info("Failed to parse build release date " + date);
