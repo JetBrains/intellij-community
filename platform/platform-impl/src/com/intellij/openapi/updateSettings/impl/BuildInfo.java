@@ -37,6 +37,7 @@ public class BuildInfo implements Comparable<BuildInfo> {
   private final BuildNumber myNumber;
   private final String myVersion;
   private final String myMessage;
+  @Nullable
   private final Date myReleaseDate;
   private final List<PatchInfo> myPatches;
   private final List<ButtonInfo> myButtons;
@@ -48,10 +49,10 @@ public class BuildInfo implements Comparable<BuildInfo> {
     myVersion = node.getAttributeValue("version");
 
     Date releaseDate = null;
-    String date = node.getAttributeValue("date");
+    final String date = node.getAttributeValue("releaseDate");
     if (date != null) {
       try {
-        releaseDate = new SimpleDateFormat("dd.MM.yyyy", Locale.US).parse(date);
+        releaseDate = new SimpleDateFormat("yyyyMMdd", Locale.US).parse(date);
       }
       catch (ParseException e) {
         LOG.info("Failed to parse build release date " + date);
@@ -89,6 +90,7 @@ public class BuildInfo implements Comparable<BuildInfo> {
     return myMessage;
   }
 
+  @Nullable
   public Date getReleaseDate() {
     return myReleaseDate;
   }
