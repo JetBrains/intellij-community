@@ -161,30 +161,37 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
   }
 
   @Nullable
-  private static PsiMethod ensureNonAmbiguousMethod(PsiParameter[] parameters, @NotNull PsiMethod psiMethod, boolean isReceiverType) {
+  private static PsiMethod getNonAmbiguousReceiver(PsiParameter[] parameters, @NotNull PsiMethod psiMethod) {
     String methodName = psiMethod.getName();
     PsiClass containingClass = psiMethod.getContainingClass();
     if (containingClass == null) return null;
+
     final PsiMethod[] psiMethods = containingClass.findMethodsByName(methodName, false);
     if (psiMethods.length == 1) return psiMethod;
+
+    final PsiType receiverType = parameters[0].getType();
     for (PsiMethod method : psiMethods) {
-      PsiParameter[] candidateParams = method.getParameterList().getParameters();
-      if (candidateParams.length == parameters.length && isReceiverType) {
-        if (TypeConversionUtil.areTypesConvertible(candidateParams[0].getType(), parameters[0].getType())) {
-          final PsiMethod[] deepestSuperMethods = psiMethod.findDeepestSuperMethods();
-          if (deepestSuperMethods.length > 0) {
-            for (PsiMethod superMethod : deepestSuperMethods) {
-              PsiMethod validSuperMethod = ensureNonAmbiguousMethod(parameters, superMethod, true);
-              if (validSuperMethod != null) return validSuperMethod;
-            }
+      if (isPairedNoReceiver(parameters, receiverType, method)) {
+        final PsiMethod[] deepestSuperMethods = psiMethod.findDeepestSuperMethods();
+        if (deepestSuperMethods.length > 0) {
+          for (PsiMethod superMethod : deepestSuperMethods) {
+            PsiMethod validSuperMethod = getNonAmbiguousReceiver(parameters, superMethod);
+            if (validSuperMethod != null) return validSuperMethod;
           }
         }
-        return null;
-      } else if (!isReceiverType && candidateParams.length + 1 == parameters.length && method.hasModifierProperty(PsiModifier.STATIC)) {
         return null;
       }
     }
     return psiMethod;
+  }
+
+  private static boolean isPairedNoReceiver(PsiParameter[] parameters,
+                                            PsiType receiverType,
+                                            PsiMethod method) {
+    final PsiParameter[] nonReceiverCandidateParams = method.getParameterList().getParameters();
+    return nonReceiverCandidateParams.length == parameters.length &&
+           method.hasModifierProperty(PsiModifier.STATIC) &&
+           TypeConversionUtil.areTypesConvertible(nonReceiverCandidateParams[0].getType(), receiverType);
   }
 
   @Nullable
@@ -208,7 +215,7 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
         if (qualifier == null) {
           return null;
         }
-        methodRefText = qualifier + "::" + ((PsiMethodCallExpression)element).getTypeArgumentList().getText() + methodReferenceName;
+        methodRefText = qualifier;
       }
       else {
         if (psiMethod.hasModifierProperty(PsiModifier.STATIC)) {
@@ -229,8 +236,8 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
             methodRefText = "this";
           }
         }
-        methodRefText += "::" + methodReferenceName;
       }
+      methodRefText += "::" + ((PsiMethodCallExpression)element).getTypeArgumentList().getText() + methodReferenceName;
     }
     else if (element instanceof PsiNewExpression) {
       final PsiMethod constructor = ((PsiNewExpression)element).resolveConstructor();
@@ -252,7 +259,8 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
       final PsiType newExprType = ((PsiNewExpression)element).getType();
       if (containingClass != null) {
         methodRefText = getClassReferenceName(containingClass);
-      } else if (newExprType instanceof PsiArrayType){
+      } 
+      else if (newExprType instanceof PsiArrayType){
         final PsiType deepComponentType = newExprType.getDeepComponentType();
         if (deepComponentType instanceof PsiPrimitiveType) {
           methodRefText = deepComponentType.getCanonicalText();
@@ -266,7 +274,7 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
             methodRefText += "[]";
           }
         }
-        methodRefText += "::new";
+        methodRefText += ((PsiNewExpression)element).getTypeArgumentList().getText() + "::new";
       }
     }
     return methodRefText;
@@ -276,10 +284,15 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
                                                      PsiMethod psiMethod,
                                                      PsiClass containingClass,
                                                      @NotNull PsiExpression qualifierExpression) {
-    final PsiMethod nonAmbiguousMethod = ensureNonAmbiguousMethod(parameters, psiMethod, true);
+    if (psiMethod.hasModifierProperty(PsiModifier.STATIC)) {
+      return null;
+    }
+
+    final PsiMethod nonAmbiguousMethod = getNonAmbiguousReceiver(parameters, psiMethod);
     if (nonAmbiguousMethod == null) {
       return null;
     }
+
     final PsiClass nonAmbiguousContainingClass = nonAmbiguousMethod.getContainingClass();
     if (!containingClass.equals(nonAmbiguousContainingClass)) {
       return getClassReferenceName(nonAmbiguousContainingClass);
