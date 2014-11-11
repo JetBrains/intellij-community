@@ -156,37 +156,8 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
   }
 
   public static PsiCallExpression extractMethodCallFromBlock(PsiElement body) {
-    PsiCallExpression methodCall = null;
-    if (body instanceof PsiCallExpression) {
-      methodCall = (PsiCallExpression)body;
-    }
-    else if (body instanceof PsiCodeBlock) {
-      final PsiStatement[] statements = ((PsiCodeBlock)body).getStatements();
-      if (statements.length == 1) {
-        if (statements[0] instanceof PsiReturnStatement) {
-          final PsiExpression returnValue = ((PsiReturnStatement)statements[0]).getReturnValue();
-          if (returnValue instanceof PsiCallExpression) {
-            methodCall = (PsiCallExpression)returnValue;
-          }
-        }
-        else if (statements[0] instanceof PsiExpressionStatement) {
-          final PsiExpression expr = ((PsiExpressionStatement)statements[0]).getExpression();
-          if (expr instanceof PsiCallExpression) {
-            methodCall = (PsiCallExpression)expr;
-          }
-        }
-      }
-    }
-    else if (body instanceof PsiBlockStatement) {
-      return extractMethodCallFromBlock(((PsiBlockStatement)body).getCodeBlock());
-    }
-    else if (body instanceof PsiExpressionStatement) {
-      final PsiExpression expression = ((PsiExpressionStatement)body).getExpression();
-      if (expression instanceof PsiCallExpression) {
-        methodCall = (PsiCallExpression)expression;
-      }
-    }
-    return methodCall;
+    final PsiExpression expression = LambdaUtil.extractSingleExpressionFromBody(body);
+    return expression instanceof PsiCallExpression ? (PsiCallExpression)expression : null;
   }
 
   @Nullable
