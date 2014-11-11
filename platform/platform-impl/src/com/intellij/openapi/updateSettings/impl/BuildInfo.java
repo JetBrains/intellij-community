@@ -37,6 +37,10 @@ public class BuildInfo implements Comparable<BuildInfo> {
   private final BuildNumber myNumber;
   private final String myVersion;
   private final String myMessage;
+  /**
+   * Initialized from 'releaseDate' attribute in update.xml. 
+   * It is the same date as the 'majorReleaseDate' in ApplicationInfo.xml and in the same format "yyyyMMdd" 
+   */
   @Nullable
   private final Date myReleaseDate;
   private final List<PatchInfo> myPatches;
