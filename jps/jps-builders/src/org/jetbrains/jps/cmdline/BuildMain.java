@@ -275,19 +275,23 @@ public class BuildMain {
               session.cancel();
             }
             else {
+              LOG.info("Build canceled, but no build session is running. Exiting.");
               try {
-                LOG.info("Build canceled, but no build session is running. Exiting.");
-                Thread.interrupted(); // to clear 'interrupted' flag
+                final CmdlineRemoteProto.Message.BuilderMessage canceledEvent = CmdlineProtoUtil
+                  .createBuildCompletedEvent("build completed", CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status.CANCELED);
+                channel.writeAndFlush(CmdlineProtoUtil.toMessage(mySessionId, canceledEvent)).await();
                 channel.close();
-                final PreloadedData preloaded = ourPreloadedData;
-                final ProjectDescriptor pd = preloaded != null? preloaded.getProjectDescriptor() : null;
-                if (pd != null) {
-                  pd.release();
-                }
               }
-              finally {
-                System.exit(0);
+              catch (Throwable e) {
+                LOG.info(e);
               }
+              Thread.interrupted(); // to clear 'interrupted' flag
+              final PreloadedData preloaded = ourPreloadedData;
+              final ProjectDescriptor pd = preloaded != null? preloaded.getProjectDescriptor() : null;
+              if (pd != null) {
+                pd.release();
+              }
+              System.exit(0);
             }
             return;
           }
