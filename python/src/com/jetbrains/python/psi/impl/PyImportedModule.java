@@ -37,6 +37,13 @@ public class PyImportedModule extends LightElement implements NameDefiner {
   @NotNull private final PyFile myContainingFile;
   @NotNull private final QualifiedName myImportedPrefix;
 
+  /**
+   * @param importElement  parental import element, may be {@code null} if we're resolving {@code module} part in {@code from module import ...} statement
+   * @param containingFile file to be used as anchor e.g. to determine relative import position
+   * @param importedPrefix qualified name to resolve
+   *
+   * @see com.jetbrains.python.psi.resolve.ResolveImportUtil
+   */
   public PyImportedModule(@Nullable PyImportElement importElement, @NotNull PyFile containingFile, @NotNull QualifiedName importedPrefix) {
     super(containingFile.getManager(), PythonLanguage.getInstance());
     myImportElement = importElement;
