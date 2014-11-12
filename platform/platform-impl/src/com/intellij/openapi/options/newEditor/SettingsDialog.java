@@ -23,18 +23,11 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.OnePixelDivider;
-import com.intellij.ui.border.CustomLineBorder;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.Action;
-import javax.swing.BorderFactory;
-import javax.swing.JComponent;
-import javax.swing.border.Border;
-import java.awt.AWTEvent;
-import java.awt.Component;
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
@@ -101,22 +94,9 @@ public final class SettingsDialog extends DialogWrapper implements DataProvider 
     return true;
   }
 
-  @Nullable
   @Override
-  protected Border createContentPaneBorder() {
-    return BorderFactory.createEmptyBorder();
-  }
-
-  @Nullable
-  @Override
-  protected JComponent createSouthPanel() {
-    JComponent panel = super.createSouthPanel();
-    if (panel != null) {
-      panel.setBorder(BorderFactory.createCompoundBorder(
-        new CustomLineBorder(OnePixelDivider.BACKGROUND, 1, 0, 0, 0),
-        BorderFactory.createEmptyBorder(8, 12, 8, 12)));
-    }
-    return panel;
+  protected DialogStyle getStyle() {
+    return DialogStyle.COMPACT;
   }
 
   protected JComponent createCenterPanel() {
