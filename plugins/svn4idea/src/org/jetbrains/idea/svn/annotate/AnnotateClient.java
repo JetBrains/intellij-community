@@ -16,7 +16,6 @@ public interface AnnotateClient extends SvnClient {
   void annotate(@NotNull SvnTarget target,
                 @NotNull SVNRevision startRevision,
                 @NotNull SVNRevision endRevision,
-                @Nullable SVNRevision pegRevision,
                 boolean includeMergedRevisions,
                 @Nullable DiffOptions diffOptions,
                 @Nullable AnnotationConsumer handler) throws VcsException;
