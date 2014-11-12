@@ -42,7 +42,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.info.Info;
-import org.tmatesoft.svn.core.*;
+import org.tmatesoft.svn.core.SVNCancelException;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -171,8 +173,10 @@ public class SvnHistoryProvider
 
   @Override
   public void reportAppendableHistory(FilePath path, final VcsAppendableHistorySessionPartner partner) throws VcsException {
-    // we need + 1 rows to be reported to further detect that number of rows exceeded the limit
-    reportAppendableHistory(path, partner, null, null, VcsConfiguration.getInstance(myVcs.getProject()).MAXIMUM_HISTORY_ROWS + 1, null, false);
+    // request MAXIMUM_HISTORY_ROWS + 1 log entries to be able to detect if there are more log entries than it is configured to show -
+    // see LimitHistoryCheck
+    reportAppendableHistory(path, partner, null, null, VcsConfiguration.getInstance(myVcs.getProject()).MAXIMUM_HISTORY_ROWS + 1, null,
+                            false);
   }
 
   public void reportAppendableHistory(FilePath path, final VcsAppendableHistorySessionPartner partner,
@@ -324,7 +328,7 @@ public class SvnHistoryProvider
           target,
           myFrom == null ? SVNRevision.HEAD : myFrom,
           myTo == null ? SVNRevision.create(1) : myTo,
-          false, true, myShowMergeSources && mySupport15, myLimit + 1, null,
+          false, true, myShowMergeSources && mySupport15, myLimit, null,
           new MyLogEntryHandler(myVcs, myUrl, pegRevision, relativeUrl,
                                 createConsumerAdapter(myConsumer),
                                 repoRootURL, myFile.getCharset()));
@@ -404,7 +408,7 @@ public class SvnHistoryProvider
 
         myVcs.getFactory(target).createHistoryClient()
           .doLog(target, operationalFrom, myTo == null ? SVNRevision.create(1) : myTo, false, true, myShowMergeSources && mySupport15,
-                 myLimit + 1, null, handler);
+                 myLimit, null, handler);
       }
       catch (SVNCancelException e) {
         //
