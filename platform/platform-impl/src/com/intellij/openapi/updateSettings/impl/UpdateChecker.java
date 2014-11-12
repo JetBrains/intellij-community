@@ -41,7 +41,10 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.*;
+import com.intellij.util.Function;
+import com.intellij.util.HttpRequests;
+import com.intellij.util.PlatformUtils;
+import com.intellij.util.ThrowableConvertor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.UrlConnectionUtil;
 import com.intellij.util.net.HttpConfigurable;
@@ -472,8 +475,6 @@ public final class UpdateChecker {
     }
 
     return HttpRequests.request(updateUrl.startsWith("file:") ? updateUrl : updateUrl + '?' + prepareUpdateCheckArgs())
-      .connectTimeout(5 * Time.SECOND)
-      .readTimeout(5 * Time.SECOND)
       .get(new ThrowableConvertor<URLConnection, UpdatesInfo, Exception>() {
         @Override
         public UpdatesInfo convert(URLConnection connection) throws Exception {
