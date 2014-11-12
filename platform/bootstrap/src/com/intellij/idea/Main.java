@@ -22,6 +22,7 @@ import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Restarter;
+import com.sun.org.apache.xpath.internal.operations.Bool;
 
 import javax.swing.*;
 import java.awt.*;
@@ -121,11 +122,18 @@ public class Main {
     return args.length > 0 && Comparing.strEqual(args[0], "traverseUI");
   }
 
+  private static boolean copyLib(String fileName, File fileCopy, boolean move ) throws IOException {
+    File file = new File(fileName);
+    if (!file.exists()) return false;
+    copyFile(file, fileCopy, move);
+    return true;
+  }
+
   private static void installPatch() throws IOException {
     String platform = System.getProperty(PLATFORM_PREFIX_PROPERTY, "idea");
-    String patchFileName = ("jetbrains.patch.jar." + platform).toLowerCase(Locale.US);
     String tempDir = System.getProperty("java.io.tmpdir");
 
+    String patchFileName = ("jetbrains.patch.jar." + platform).toLowerCase(Locale.US);
     // always delete previous patch copy
     File patchCopy = new File(tempDir, patchFileName + "_copy");
     File log4jCopy = new File(tempDir, "log4j.jar." + platform + "_copy");
@@ -135,27 +143,16 @@ public class Main {
       throw new IOException("Cannot delete temporary files in " + tempDir);
     }
 
-    File patch = new File(tempDir, patchFileName);
-    if (!patch.exists()) return;
+    if (! copyLib(tempDir + "/" + patchFileName, patchCopy, true)) return;
+    if (! copyLib(PathManager.getLibPath() + "/log4j.jar", log4jCopy, false)) throw new IOException("Log4J is missing: " + "log4j.jar");;
+    if (! copyLib(PathManager.getLibPath() + "/jna-utils.jar", jnaUtilsCopy, false)) throw new IOException("jna-utils.jar is missing: " + "jna-utils.jar");
+    if (! copyLib(PathManager.getLibPath() + "/jna.jar", jnaCopy, false)) throw new IOException("jna is missing: " + "jna.jar");
 
-    File log4j = new File(PathManager.getLibPath(), "log4j.jar");
-    if (!log4j.exists()) throw new IOException("Log4J is missing: " + log4j);
-
-    File jnaUtils = new File(PathManager.getLibPath(), "jna-utils.jar");
-    if (!jnaUtils.exists()) throw new IOException("jna-utils.jar is missing: " + jnaUtils);
-
-    File jna = new File(PathManager.getLibPath(), "jna.jar");
-    if (!jna.exists()) throw new IOException("jna is missing: " + jna);
-
-    copyFile(patch, patchCopy, true);
-    copyFile(log4j, log4jCopy, false);
-    copyFile(jna, jnaCopy, false);
-    copyFile(jnaUtils, jnaUtilsCopy, false);
-    String java;
     int status = 0;
     if (Restarter.isSupported()) {
       List<String> args = new ArrayList<String>();
 
+      String java;
       if (SystemInfoRt.isWindows) {
         File launcher = new File(PathManager.getBinPath(), "VistaLauncher.exe");
         args.add(Restarter.createTempExecutable(launcher).getPath());
