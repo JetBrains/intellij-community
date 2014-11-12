@@ -48,12 +48,8 @@ public class TextBinding extends Binding {
 
   @Override
   @Nullable
-  public Object deserialize(Object context, @NotNull Object... nodes) {
-    assert nodes.length == 1;
-    Object node = nodes[0];
-    assert isBoundTo(node);
-
-    myAccessor.write(context, myBinding.deserialize(context, nodes[0]));
+  public Object deserialize(Object context, @NotNull Object node) {
+    myAccessor.write(context, myBinding.deserialize(context, node));
     return context;
   }
 

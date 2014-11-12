@@ -17,7 +17,6 @@ package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jdom.Content;
@@ -29,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-class TagBinding extends BasePrimitiveBinding {
+class TagBinding extends BasePrimitiveBinding implements MultiNodeBinding {
   private final String myTextIfEmpty;
 
   public TagBinding(@NotNull Accessor accessor, @NotNull Tag tagAnnotation) {
@@ -55,27 +54,41 @@ class TagBinding extends BasePrimitiveBinding {
     return v;
   }
 
-  @Override
   @Nullable
-  public Object deserialize(Object o, @NotNull Object... nodes) {
-    assert nodes.length > 0;
-    List<? extends Content> children;
+  @Override
+  public Object deserializeList(Object context, @NotNull List<?> nodes) {
     boolean isBeanBinding = myBinding instanceof BeanBinding;
-    if (nodes.length == 1) {
-      Element node = (Element)nodes[0];
-      children = isBeanBinding ? node.getChildren() : node.getContent();
+    List<? extends Content> children;
+    if (nodes.size() == 1) {
+      children = getContents(isBeanBinding, (Element)nodes.get(0));
     }
     else {
-      String name = ((Element)nodes[0]).getName();
+      String name = ((Element)nodes.get(0)).getName();
       children = new SmartList<Content>();
       for (Object node : nodes) {
         Element element = (Element)node;
         assert element.getName().equals(name);
         //noinspection unchecked
-        children.addAll(((List)(isBeanBinding ? element.getChildren() : element.getContent())));
+        children.addAll(((List)getContents(isBeanBinding, element)));
       }
     }
+    return deserialize(context, children, isBeanBinding);
+  }
 
+  @Override
+  public boolean isMulti() {
+    return myBinding instanceof MultiNodeBinding && ((MultiNodeBinding)myBinding).isMulti();
+  }
+
+  @Override
+  @Nullable
+  public Object deserialize(Object context, @NotNull Object node) {
+    boolean isBeanBinding = myBinding instanceof BeanBinding;
+    Element element = (Element)node;
+    return deserialize(context, getContents(isBeanBinding, element), isBeanBinding);
+  }
+
+  private Object deserialize(Object o, List<? extends Content> children, boolean isBeanBinding) {
     assert myBinding != null;
     if (isBeanBinding && myAccessor.isFinal()) {
       ((BeanBinding)myBinding).deserializeInto(o, (Element)children.get(0), null);
@@ -85,7 +98,7 @@ class TagBinding extends BasePrimitiveBinding {
         children = Collections.<Content>singletonList(new Text(myTextIfEmpty));
       }
 
-      Object v = myBinding.deserialize(myAccessor.read(o), ArrayUtil.toObjectArray(children));
+      Object v = Binding.deserializeList(myBinding, myAccessor.read(o), children);
       myAccessor.write(o, XmlSerializerImpl.convert(v, myAccessor.getValueClass()));
     }
     return o;
@@ -94,5 +107,10 @@ class TagBinding extends BasePrimitiveBinding {
   @Override
   public boolean isBoundTo(Object node) {
     return node instanceof Element && ((Element)node).getName().equals(myName);
+  }
+
+  @NotNull
+  private static List<? extends Content> getContents(boolean isBeanBinding, Element element) {
+    return isBeanBinding ? element.getChildren() : XmlSerializerImpl.getFilteredContent(element);
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationProviders;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.PsiClassImplUtil;
@@ -105,6 +106,11 @@ public class LightMethod extends LightElement implements PsiMethod {
   @Override
   public boolean hasModifierProperty(@NotNull String name) {
     return myMethod.hasModifierProperty(name);
+  }
+
+  @Override
+  public TextRange getTextRange() {
+    return myMethod.getTextRange();
   }
 
   @Override
@@ -227,6 +233,7 @@ public class LightMethod extends LightElement implements PsiMethod {
     return myContainingClass.getContainingFile();
   }
 
+  @Override
   public String toString() {
     return "PsiMethod:" + getName();
   }

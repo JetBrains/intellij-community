@@ -24,7 +24,9 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.LightColors;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Alarm;
+import com.intellij.util.NotNullProducer;
 import com.intellij.util.ReflectionUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -41,30 +43,48 @@ import java.lang.reflect.Method;
 public class ButtonlessScrollBarUI extends BasicScrollBarUI {
   private static final Logger LOG = Logger.getInstance("#" + ButtonlessScrollBarUI.class.getName());
 
-  public static JBColor getGradientLightColor() {
-    return new JBColor(Gray._251, Gray._95);
+  private JBColor getGradientLightColor() {
+    return jbColor(Gray._251, Gray._95);
   }
 
-  public static JBColor getGradientDarkColor() {
-    return new JBColor(Gray._215, Gray._80);
+  private JBColor getGradientDarkColor() {
+    return jbColor(Gray._215, Gray._80);
   }
 
-  private static JBColor getGradientThumbBorderColor() {
-    return new JBColor(Gray._201, Gray._85);
+  private JBColor getGradientThumbBorderColor() {
+    return jbColor(Gray._201, Gray._85);
   }
 
-  public static JBColor getTrackBackground() {
+  public static JBColor getTrackBackgroundDefault() {
     return new JBColor(LightColors.SLIGHTLY_GRAY, UIUtil.getListBackground());
   }
 
-  public static JBColor getTrackBorderColor() {
+  public static JBColor getTrackBorderColorDefault() {
     return new JBColor(Gray._230, UIUtil.getListBackground());
   }
 
-  private static final BasicStroke BORDER_STROKE = new BasicStroke();
+  private JBColor getTrackBackground() {
+    return jbColor(LightColors.SLIGHTLY_GRAY, UIUtil.getListBackground());
+  }
+  
+  private JBColor getTrackBorderColor() {
+    return jbColor(Gray._230, UIUtil.getListBackground());
+  }
 
-  private static int getAnimationColorShift() {
-    return UIUtil.isUnderDarcula() ? 20 : 40;
+  private static final BasicStroke BORDER_STROKE = new BasicStroke();
+  
+  private JBColor jbColor(final Color regular, final Color dark) {
+    return new JBColor(new NotNullProducer<Color>() {
+      @NotNull
+      @Override
+      public Color produce() {
+        return isDark() ? dark : regular;
+      }
+    });
+  }
+
+  private int getAnimationColorShift() {
+    return isDark() ? 20 : 40;
   }
 
   private final AdjustmentListener myAdjustmentListener;
@@ -119,8 +139,8 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
         if (oldViewportPosition != null) {
           int scrollH = position.x - oldViewportPosition.x;
           int scrollV = position.y - oldViewportPosition.y;
-          scrolled = (vertical && scrollH == 0 && scrollV != 0) || 
-                     (!vertical && scrollV == 0 && scrollH != 0);
+          scrolled = vertical && scrollH == 0 && scrollV != 0 ||
+                     !vertical && scrollV == 0 && scrollH != 0;
         }
         oldViewportPosition = position;
 
@@ -128,7 +148,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
         if (oldViewportDimension != null) {
           int resizedH = dimension.width - oldViewportDimension.width;
           int resizedV = dimension.height - oldViewportDimension.height;
-          resized = (vertical && resizedV != 0) || (!vertical && resizedH != 0);
+          resized = vertical && resizedV != 0 || !vertical && resizedH != 0;
         }
         oldViewportDimension = dimension;
         
@@ -380,7 +400,6 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     return new ButtonlessScrollBarUI();
   }
 
-
   public static BasicScrollBarUI createTransparent() {
     return new ButtonlessScrollBarUI() {
       @Override
@@ -493,7 +512,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
       public void paintNow(int frame, int totalFrames, int cycle) {
         myThumbFadeColorShift = getAnimationColorShift();
         if (frame > DELAY_FRAMES) {
-          myThumbFadeColorShift *= 1 - ((double)(frame - DELAY_FRAMES)) / ((double)(totalFrames - DELAY_FRAMES));
+          myThumbFadeColorShift *= 1 - (double)(frame - DELAY_FRAMES) / (double)(totalFrames - DELAY_FRAMES);
         }
 
         if (scrollbar != null) {
@@ -604,7 +623,6 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     return super.contains(c, x, y);
   }
 
-
   @Override
   protected void paintTrack(Graphics g, JComponent c, Rectangle trackBounds) {
     if (alwaysShowTrack() || myMouseOverScrollbarExpandLevel > 0) {
@@ -681,11 +699,20 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     RenderingHints oldHints = g2d.getRenderingHints();
     g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-    JBColor baseColor = new JBColor(Gray._0, Gray._128);
+    JBColor baseColor = new JBColor(new NotNullProducer<Color>() {
+      @NotNull
+      @Override
+      public Color produce() {
+        return !isDark() ? Gray._0 : Gray._128;
+      }
+    });
+    
     int arc = Math.min(thumbBounds.width, thumbBounds.height);
 
-    if (alwaysShowTrack()) {
-      g2d.setColor(new Color(baseColor.getRed(), baseColor.getGreen(), baseColor.getBlue(), UIUtil.isUnderDarcula() ? 100 : 40));
+    if (alwaysPaintThumb()) {
+      //noinspection UseJBColor
+      g2d.setColor(new Color(baseColor.getRed(), baseColor.getGreen(), baseColor.getBlue(), isDark() ? 100 : 40));
+      //g2d.fillRoundRect(thumbBounds.x, thumbBounds.y, thumbBounds.width, thumbBounds.height, arc, arc);
       g2d.drawRoundRect(thumbBounds.x, thumbBounds.y, thumbBounds.width, thumbBounds.height, arc, arc);
     }
 
@@ -693,8 +720,15 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
       g2d.setColor(adjustColor(baseColor));
       g2d.fillRoundRect(thumbBounds.x, thumbBounds.y, thumbBounds.width, thumbBounds.height, arc, arc);
     }
-    
     g2d.setRenderingHints(oldHints);
+  }
+  
+  protected boolean isDark() {
+    return UIUtil.isUnderDarcula();
+  }
+
+  protected boolean alwaysPaintThumb() {
+    return alwaysShowTrack();
   }
 
   private Rectangle getMacScrollBarBounds(Rectangle baseBounds, boolean thumb) {
@@ -782,12 +816,13 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
 
   protected Color adjustColor(Color c) {
     if (isMacOverlayScrollbar()) {
-      int alpha = (int)((120 + (myMouseOverScrollbarExpandLevel * 20)) * (1 - myMacScrollbarFadeLevel));
+      int alpha = (int)((120 + myMouseOverScrollbarExpandLevel * 20) * (1 - myMacScrollbarFadeLevel));
+      //noinspection UseJBColor
       return new Color(c.getRed(), c.getGreen(), c.getBlue(), alpha);
     }
     else {
       if (myThumbFadeColorShift == 0) return c;
-      final int sign = UIUtil.isUnderDarcula() ? -1 : 1;
+      final int sign = isDark() ? -1 : 1;
       return Gray.get(Math.max(0, Math.min(255, c.getRed() - sign * myThumbFadeColorShift)));
     }
   }
@@ -806,8 +841,12 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     return new EmptyButton();
   }
 
-  public boolean isMacScrollbarHiddenAndDistractionFreeEnabled() {
-    return myMacScrollbarHidden && Registry.is("editor.distraction.free.mode");
+  protected boolean isMacScrollbarHiddenAndDistractionFreeEnabled() {
+    return myMacScrollbarHidden && isMacOverlayScrollbarSupported() && isDistractionFreeMode();
+  }
+
+  protected static boolean isDistractionFreeMode() {
+    return Registry.is("editor.distraction.free.mode");
   }
 
   public void registerRepaintCallback(ScrollbarRepaintCallback callback) {

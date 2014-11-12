@@ -798,6 +798,7 @@ public class XDebugSessionImpl implements XDebugSession {
     mySuspendContext = suspendContext;
     myCurrentExecutionStack = suspendContext.getActiveExecutionStack();
     myCurrentStackFrame = myCurrentExecutionStack != null ? myCurrentExecutionStack.getTopFrame() : null;
+    myIsTopFrame = true;
     myTopFramePosition = myCurrentStackFrame != null ? myCurrentStackFrame.getSourcePosition() : null;
 
     myPaused.set(true);
@@ -857,7 +858,9 @@ public class XDebugSessionImpl implements XDebugSession {
     myCurrentExecutionStack = null;
     myCurrentStackFrame = null;
     mySuspendContext = null;
-    myDebuggerManager.setActiveSession(this, null, false, null);
+    if (myDebuggerManager.getCurrentSession() == this) {
+      myDebuggerManager.updateExecutionPoint(null, false, null);
+    }
     if (breakpointsInitialized) {
       XBreakpointManagerImpl breakpointManager = myDebuggerManager.getBreakpointManager();
       if (myBreakpointListener != null) {

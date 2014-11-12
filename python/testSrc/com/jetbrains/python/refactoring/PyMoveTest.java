@@ -23,6 +23,7 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.SystemProperties;
 import com.jetbrains.python.PythonTestUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
@@ -132,6 +133,42 @@ public class PyMoveTest extends PyTestCase {
   public void testStarImportUsage() {
     doMoveSymbolTest("g", "c.py");
   }
+
+  // PY-13870
+  public void testConditionalImport() {
+    doMoveFileTest("mod2.py", "pkg1");
+  }
+
+  // PY-7378
+  public void testMoveNamespacePackageTest1() {
+    runWithLanguageLevel(LanguageLevel.PYTHON33, new Runnable() {
+      @Override
+      public void run() {
+        doMoveFileTest("nspkg/nssubpkg", "");
+      }
+    });
+  }
+
+  // PY-7378
+  public void testMoveNamespacePackageTest2() {
+    runWithLanguageLevel(LanguageLevel.PYTHON33, new Runnable() {
+      @Override
+      public void run() {
+        doMoveFileTest("nspkg/nssubpkg/a.py", "");
+      }
+    });
+  }
+
+  // PY-7378
+  public void testMoveNamespacePackageTest3() {
+    runWithLanguageLevel(LanguageLevel.PYTHON33, new Runnable() {
+      @Override
+      public void run() {
+        doMoveFileTest("nspkg/nssubpkg/a.py", "nspkg");
+      }
+    });
+  }
+
 
   private void doMoveFileTest(String fileName, String toDirName)  {
     Project project = myFixture.getProject();

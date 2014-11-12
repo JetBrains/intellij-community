@@ -297,13 +297,12 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
     }
 
     @Override
-    protected boolean nonComparable(@NotNull CandidateInfo method, @NotNull CandidateInfo conflict) {
+    protected boolean nonComparable(@NotNull CandidateInfo method, @NotNull CandidateInfo conflict, boolean fixedArity) {
       if (method == conflict) return true;
       PsiElement psiElement = method.getElement();
       PsiElement conflictElement = conflict.getElement();
       if (psiElement instanceof PsiMethod && conflictElement instanceof PsiMethod) {
-        if (((PsiMethod)psiElement).getParameterList().getParametersCount() !=
-            ((PsiMethod)conflictElement).getParameterList().getParametersCount()) {
+        if (fixedArity && ((PsiMethod)psiElement).getParameterList().getParametersCount() != ((PsiMethod)conflictElement).getParameterList().getParametersCount()) {
           return true;
         }
       }

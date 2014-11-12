@@ -35,7 +35,9 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.FocusWatcher;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.PrevNextActionsDescriptor;
+import com.intellij.ui.SideBorder;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.tabs.UiDecorator;
 import com.intellij.util.SmartList;
@@ -350,7 +352,7 @@ public abstract class EditorComposite implements Disposable {
     if (remove) {
       container.remove(component.getParent());
     } else {
-      container.add(new TopBottomComponentWrapper(component));
+      container.add(new TopBottomComponentWrapper(component, top));
     }
     container.revalidate();
   }
@@ -466,17 +468,26 @@ public abstract class EditorComposite implements Disposable {
     @Override
     public Color getBackground() {
       Color color = EditorColorsManager.getInstance().getGlobalScheme().getColor(EditorColors.GUTTER_BACKGROUND);
-      return color == null ? Color.gray : color;
+      return color == null ? EditorColors.GUTTER_BACKGROUND.getDefaultColor() : color;
     }
   }
 
   private static class TopBottomComponentWrapper extends JPanel {
     private final JComponent myWrappee;
 
-    public TopBottomComponentWrapper(JComponent component) {
+    public TopBottomComponentWrapper(JComponent component, boolean top) {
       super(new BorderLayout());
       myWrappee = component;
       setOpaque(false);
+
+      setBorder(new SideBorder(null, top ? SideBorder.BOTTOM : SideBorder.TOP, false) {
+        @Override
+        public Color getLineColor() {
+          Color result = EditorColorsManager.getInstance().getGlobalScheme().getColor(EditorColors.TEARLINE_COLOR);
+          return result == null ? JBColor.BLACK : result;
+        }
+      });
+
       add(component);
     }
 

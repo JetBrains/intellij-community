@@ -22,13 +22,14 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.search.ThrowSearchUtil;
-import com.intellij.psi.search.*;
-import com.intellij.psi.search.searches.*;
+import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.searches.MethodReferencesSearch;
+import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
@@ -41,7 +42,10 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author peter
@@ -94,8 +98,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
   }
 
   @NotNull
-  private static PsiElement[] getParameterElementsToSearch(@NotNull PsiParameter parameter) {
-    final PsiMethod method = (PsiMethod)parameter.getDeclarationScope();
+  private static PsiElement[] getParameterElementsToSearch(@NotNull PsiParameter parameter, @NotNull PsiMethod method) {
     PsiMethod[] overrides = OverridingMethodsSearch.search(method, true).toArray(PsiMethod.EMPTY_ARRAY);
     for (int i = 0; i < overrides.length; i++) {
       final PsiElement navigationElement = overrides[i].getNavigationElement();
@@ -131,7 +134,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
 
           boolean hasOverridden = OverridingMethodsSearch.search(method).findFirst() != null;
           if (hasOverridden && askWhetherShouldSearchForParameterInOverridingMethods(element, parameter)) {
-            return getParameterElementsToSearch(parameter);
+            return getParameterElementsToSearch(parameter, method);
           }
         }
       }
@@ -221,9 +224,8 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
 
   @Override
   protected boolean isSearchForTextOccurencesAvailable(@NotNull PsiElement psiElement, boolean isSingleFile) {
-    if (isSingleFile) return false;
-    return new JavaNonCodeSearchElementDescriptionProvider().getElementDescription(psiElement, NonCodeSearchDescriptionLocation.NON_JAVA) != null;
-
+    return !isSingleFile &&
+           new JavaNonCodeSearchElementDescriptionProvider().getElementDescription(psiElement, NonCodeSearchDescriptionLocation.NON_JAVA) != null;
   }
 
   @NotNull

@@ -47,9 +47,9 @@ import java.util.List;
 import java.util.Set;
 
 public class OfflineProblemDescriptorNode extends ProblemDescriptionNode {
-  public OfflineProblemDescriptorNode(@NotNull OfflineProblemDescriptor descriptor,
-                                      @NotNull LocalInspectionToolWrapper toolWrapper,
-                                      @NotNull InspectionToolPresentation presentation) {
+  OfflineProblemDescriptorNode(@NotNull OfflineProblemDescriptor descriptor,
+                               @NotNull LocalInspectionToolWrapper toolWrapper,
+                               @NotNull InspectionToolPresentation presentation) {
     super(descriptor, toolWrapper, presentation);
   }
 
@@ -141,11 +141,9 @@ public class OfflineProblemDescriptorNode extends ProblemDescriptionNode {
     LocalInspectionToolSession session = new LocalInspectionToolSession(containingFile, startOffset, endOffset);
     final PsiElementVisitor visitor = localTool.buildVisitor(holder, false, session);
     localTool.inspectionStarted(session, false);
-    final PsiElement[] elementsInRange = getElementsIntersectingRange(containingFile,
-                                                                      startOffset,
-                                                                      endOffset);
-    for (PsiElement el : elementsInRange) {
-      el.accept(visitor);
+    final PsiElement[] elementsInRange = getElementsIntersectingRange(containingFile, startOffset, endOffset);
+    for (PsiElement element : elementsInRange) {
+      element.accept(visitor);
     }
     localTool.inspectionFinished(session, holder);
     if (holder.hasResults()) {

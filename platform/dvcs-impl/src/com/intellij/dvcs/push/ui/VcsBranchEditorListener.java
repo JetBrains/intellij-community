@@ -15,6 +15,7 @@
  */
 package com.intellij.dvcs.push.ui;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vcs.changes.issueLinks.LinkMouseListenerBase;
 import com.intellij.ui.CheckboxTree;
 import org.jetbrains.annotations.NotNull;
@@ -26,8 +27,10 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 
 public class VcsBranchEditorListener extends LinkMouseListenerBase {
+
+  private static final Logger LOGGER = Logger.getInstance(VcsBranchEditorListener.class);
   private final CheckboxTree.CheckboxTreeCellRenderer myRenderer;
-  private VcsLinkedTextComponent underlined;
+  private VcsLinkedTextComponent myUnderlined;
 
   public VcsBranchEditorListener(final CheckboxTree.CheckboxTreeCellRenderer renderer) {
     myRenderer = renderer;
@@ -38,15 +41,16 @@ public class VcsBranchEditorListener extends LinkMouseListenerBase {
     Component component = (Component)e.getSource();
     Object tag = getTagAt(e);
     boolean shouldRepaint = false;
-    if (underlined != null) {
-      underlined.setUnderlined(false);
+    if (myUnderlined != null) {
+      myUnderlined.setUnderlined(false);
+      myUnderlined = null;
       shouldRepaint = true;
     }
-    if (tag != null && tag instanceof VcsLinkedTextComponent) {
+    if (tag instanceof VcsLinkedTextComponent) {
       component.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
       VcsLinkedTextComponent linkedText = (VcsLinkedTextComponent)tag;
       linkedText.setUnderlined(true);
-      underlined = linkedText;
+      myUnderlined = linkedText;
       shouldRepaint = true;
     }
     else {
@@ -67,9 +71,12 @@ public class VcsBranchEditorListener extends LinkMouseListenerBase {
     if (tag instanceof VcsLinkedTextComponent) {
       VcsLinkedTextComponent textWithLink = (VcsLinkedTextComponent)tag;
       final TreePath path = myRenderer.getTextRenderer().getTree().getPathForLocation(event.getX(), event.getY());
-      if (path == null) return;
+      if (path == null) return; //path could not be null if tag not null; see com.intellij.dvcs.push.ui.PushLogTreeUtil.getTagAtForRenderer
       Object node = path.getLastPathComponent();
-      if (node == null || (!(node instanceof DefaultMutableTreeNode))) return;
+      if (node == null || (!(node instanceof DefaultMutableTreeNode))) {
+        LOGGER.warn("Incorrect last path component: " + node);
+        return;
+      }
       textWithLink.fireOnClick((DefaultMutableTreeNode)node, event);
     }
     if (tag instanceof Runnable) {

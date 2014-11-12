@@ -31,7 +31,7 @@ import com.intellij.openapi.util.Conditions;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.concurrency.Semaphore;
-import com.intellij.util.containers.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -40,7 +40,8 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -72,6 +73,7 @@ public class LaterInvocator {
       this.callback = callback;
     }
 
+    @Override
     @NonNls
     public String toString() {
       return "[runnable: " + runnable + "; state=" + modalityState + (expired.value(null) ? "; expired" : "")+"] ";
@@ -85,8 +87,7 @@ public class LaterInvocator {
 
   private static final Stack<AWTEvent> ourEventStack = new Stack<AWTEvent>(); // guarded by RUN_LOCK
 
-  private static final EventDispatcher<ModalityStateListener> ourModalityStateMulticaster =
-    EventDispatcher.create(ModalityStateListener.class);
+  private static final EventDispatcher<ModalityStateListener> ourModalityStateMulticaster = EventDispatcher.create(ModalityStateListener.class);
 
   private static final List<RunnableInfo> ourForcedFlushQueue = new ArrayList<RunnableInfo>();
 
@@ -122,25 +123,20 @@ public class LaterInvocator {
   }
 
   @NotNull
-  public static ActionCallback invokeLater(@NotNull Runnable runnable) {
-    return invokeLater(runnable, Conditions.FALSE);
-  }
-
-  @NotNull
-  public static ActionCallback invokeLater(@NotNull Runnable runnable, @NotNull Condition expired) {
+  static ActionCallback invokeLater(@NotNull Runnable runnable, @NotNull Condition expired) {
     ModalityState modalityState = ModalityState.defaultModalityState();
     return invokeLater(runnable, modalityState, expired);
   }
 
   @NotNull
-  public static ActionCallback invokeLater(@NotNull Runnable runnable, @NotNull ModalityState modalityState) {
+  static ActionCallback invokeLater(@NotNull Runnable runnable, @NotNull ModalityState modalityState) {
     return invokeLater(runnable, modalityState, Conditions.FALSE);
   }
 
   @NotNull
-  public static ActionCallback invokeLater(@NotNull Runnable runnable,
-                                           @NotNull ModalityState modalityState,
-                                           @NotNull Condition<Object> expired) {
+  static ActionCallback invokeLater(@NotNull Runnable runnable,
+                                    @NotNull ModalityState modalityState,
+                                    @NotNull Condition<Object> expired) {
     ourFrequentEventDetector.eventHappened();
 
     final ActionCallback callback = new ActionCallback();
@@ -152,8 +148,7 @@ public class LaterInvocator {
     return callback;
   }
 
-
-  public static void invokeAndWait(@NotNull final Runnable runnable, @NotNull ModalityState modalityState) {
+  static void invokeAndWait(@NotNull final Runnable runnable, @NotNull ModalityState modalityState) {
     LOG.assertTrue(!isDispatchThread());
 
     final Semaphore semaphore = new Semaphore();
@@ -169,6 +164,7 @@ public class LaterInvocator {
         }
       }
 
+      @Override
       @NonNls
       public String toString() {
         return "InvokeAndWait[" + runnable + "]";
@@ -339,6 +335,7 @@ public class LaterInvocator {
       }
     }
 
+    @Override
     @NonNls
     public String toString() {
       return "LaterInvocator.FlushQueue" + (myLastInfo == null ? "" : " lastInfo="+myLastInfo);

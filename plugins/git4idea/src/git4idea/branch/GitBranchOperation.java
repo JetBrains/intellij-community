@@ -15,7 +15,7 @@
  */
 package git4idea.branch;
 
-import com.intellij.dvcs.repo.RepositoryUtil;
+import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -392,7 +392,7 @@ abstract class GitBranchOperation {
   @NotNull
   private static MultiMap<String, VirtualFile> groupByBranches(@NotNull Map<GitRepository, String> heads) {
     MultiMap<String, VirtualFile> result = MultiMap.createLinked();
-    List<GitRepository> sortedRepos = RepositoryUtil.sortRepositories(heads.keySet());
+    List<GitRepository> sortedRepos = DvcsUtil.sortRepositories(heads.keySet());
     for (GitRepository repo : sortedRepos) {
       result.putValue(heads.get(repo), repo.getRoot());
     }

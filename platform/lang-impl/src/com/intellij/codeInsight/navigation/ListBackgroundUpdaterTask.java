@@ -23,6 +23,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.List;
 
 /**
@@ -35,12 +36,14 @@ public abstract class ListBackgroundUpdaterTask extends BackgroundUpdaterTask<JB
 
   @Override
   protected void paintBusy(final boolean paintBusy) {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
+    final Runnable runnable = new Runnable() {
       @Override
       public void run() {
         myComponent.setPaintBusy(paintBusy);
       }
-    });
+    };
+    //ensure start/end order 
+    SwingUtilities.invokeLater(runnable);
   }
 
   @Override

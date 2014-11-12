@@ -19,7 +19,9 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-class AccessorBindingWrapper extends Binding {
+import java.util.List;
+
+class AccessorBindingWrapper extends Binding implements MultiNodeBinding {
   private final Binding myBinding;
 
   public AccessorBindingWrapper(@NotNull Accessor accessor, @NotNull Binding binding) {
@@ -40,18 +42,39 @@ class AccessorBindingWrapper extends Binding {
 
   @Override
   @Nullable
-  public Object deserialize(Object context, @NotNull Object... nodes) {
+  public Object deserialize(Object context, @NotNull Object node) {
     Object currentValue = myAccessor.read(context);
     if (myBinding instanceof BeanBinding && myAccessor.isFinal()) {
-      ((BeanBinding)myBinding).deserializeInto(currentValue, (Element)nodes[0], null);
+      ((BeanBinding)myBinding).deserializeInto(currentValue, (Element)node, null);
     }
     else {
-      Object deserializedValue = myBinding.deserialize(currentValue, nodes);
+      Object deserializedValue = myBinding.deserialize(currentValue, node);
       if (currentValue != deserializedValue) {
         myAccessor.write(context, deserializedValue);
       }
     }
     return context;
+  }
+
+  @Nullable
+  @Override
+  public Object deserializeList(Object context, @NotNull List<?> nodes) {
+    Object currentValue = myAccessor.read(context);
+    if (myBinding instanceof BeanBinding && myAccessor.isFinal()) {
+      ((BeanBinding)myBinding).deserializeInto(currentValue, (Element)nodes.get(0), null);
+    }
+    else {
+      Object deserializedValue = Binding.deserializeList(myBinding, currentValue, nodes);
+      if (currentValue != deserializedValue) {
+        myAccessor.write(context, deserializedValue);
+      }
+    }
+    return context;
+  }
+
+  @Override
+  public boolean isMulti() {
+    return myBinding instanceof MultiNodeBinding && ((MultiNodeBinding)myBinding).isMulti();
   }
 
   @Override
@@ -62,9 +85,5 @@ class AccessorBindingWrapper extends Binding {
   @Override
   public Class getBoundNodeType() {
     return myBinding.getBoundNodeType();
-  }
-
-  @Override
-  public void init() {
   }
 }

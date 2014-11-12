@@ -138,25 +138,20 @@ public abstract class HgBaseLogParser<CommitT> implements Function<String, Commi
     if (!includeFiles) {
       return ArrayUtil.toStringArray(templates);
     }
-    List<String> fileTypes = ContainerUtil.newArrayList("{file_adds}", "{file_mods}", "{file_dels}", "{file_copies}");
-    if (currentVersion.isBuiltInFunctionSupported()) {
-      templates.addAll(ContainerUtil.map(fileTypes, new Function<String, String>() {
-        @Override
-        public String fun(String s) {
-          return wrapInJoin(s);
-        }
-      }));
-    }
-    else {
-      templates.addAll(fileTypes);
-    }
+    List<String> fileTemplates = ContainerUtil.newArrayList("file_adds", "file_mods", "file_dels", "file_copies");
+    templates.addAll(wrapIn(fileTemplates, currentVersion));
     return ArrayUtil.toStringArray(templates);
   }
 
   @NotNull
-  private static String wrapInJoin(@NotNull String filesType) {
-    int len = filesType.length();
-    return "{join(" + filesType.substring(1, len - 1) + ",'" + HgChangesetUtil.FILE_SEPARATOR + "')}";
+  private static List<String> wrapIn(@NotNull List<String> fileTemplates, @NotNull HgVersion currentVersion) {
+    final boolean supported = currentVersion.isBuiltInFunctionSupported();
+    return ContainerUtil.map(fileTemplates, new Function<String, String>() {
+      @Override
+      public String fun(String s) {
+        return supported ? "{join(" + s + ",'" + HgChangesetUtil.FILE_SEPARATOR + "')}" : "{" + s + "}";
+      }
+    });
   }
 
   @NotNull

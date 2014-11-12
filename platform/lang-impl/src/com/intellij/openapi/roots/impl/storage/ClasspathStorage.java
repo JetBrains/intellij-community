@@ -16,13 +16,13 @@
 
 package com.intellij.openapi.roots.impl.storage;
 
+import com.intellij.application.options.PathMacrosCollector;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.components.impl.stores.IModuleStore;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.project.impl.ProjectMacrosUtil;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModel;
@@ -35,6 +35,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.tracker.VirtualFileTracker;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
@@ -65,12 +66,15 @@ public class ClasspathStorage implements StateStorage {
 
   @NonNls private static final String COMPONENT_TAG = "component";
   private final ClasspathStorageProvider.ClasspathConverter myConverter;
+  private final TrackingPathMacroSubstitutor myTrackingPathMacroSubstitutor;
 
-  public ClasspathStorage(Module module) {
+  public ClasspathStorage(@NotNull Module module, @NotNull IModuleStore moduleStore) {
     myConverter = getProvider(ClassPathStorageUtil.getStorageType(module)).createConverter(module);
+    myTrackingPathMacroSubstitutor = moduleStore.getStateStorageManager().getMacroSubstitutor();
+
     final VirtualFileTracker virtualFileTracker = ServiceManager.getService(VirtualFileTracker.class);
     if (virtualFileTracker != null) {
-      final ArrayList<VirtualFile> files = new ArrayList<VirtualFile>();
+      List<VirtualFile> files = new SmartList<VirtualFile>();
       try {
         myConverter.getFileSet().listFiles(files);
         for (VirtualFile file : files) {
@@ -102,13 +106,11 @@ public class ClasspathStorage implements StateStorage {
     assert stateClass == ModuleRootManagerImpl.ModuleRootManagerState.class;
 
     try {
-      final Module module = ((ModuleRootManagerImpl)component).getModule();
-      final Element element = new Element(COMPONENT_TAG);
-      final Set<String> macros;
+      Element element = new Element(COMPONENT_TAG);
       ModifiableRootModel model = null;
       try {
         model = ((ModuleRootManagerImpl)component).getModifiableModel();
-        macros = myConverter.getClasspath(model, element);
+        myConverter.getClasspath(model, element);
       }
       finally {
         if (model != null) {
@@ -116,13 +118,11 @@ public class ClasspathStorage implements StateStorage {
         }
       }
 
-      final boolean macrosOk = ProjectMacrosUtil.checkNonIgnoredMacros(module.getProject(), macros);
-      PathMacroManager.getInstance(module).expandPaths(element);
+      myTrackingPathMacroSubstitutor.expandPaths(element);
+      myTrackingPathMacroSubstitutor.addUnknownMacros(componentName, PathMacrosCollector.getMacroNames(element));
+
       ModuleRootManagerImpl.ModuleRootManagerState moduleRootManagerState = new ModuleRootManagerImpl.ModuleRootManagerState();
       moduleRootManagerState.readExternal(element);
-      if (!macrosOk) {
-        throw new StateStorageException(ProjectBundle.message("project.load.undefined.path.variables.error"));
-      }
       //noinspection unchecked
       return (T)moduleRootManagerState;
     }
@@ -196,9 +196,9 @@ public class ClasspathStorage implements StateStorage {
 
   @NotNull
   public static List<ClasspathStorageProvider> getProviders() {
-    final List<ClasspathStorageProvider> list = new ArrayList<ClasspathStorageProvider>();
+    List<ClasspathStorageProvider> list = new ArrayList<ClasspathStorageProvider>();
     list.add(new DefaultStorageProvider());
-    ContainerUtil.addAll(list, Extensions.getExtensions(ClasspathStorageProvider.EXTENSION_POINT_NAME));
+    ContainerUtil.addAll(list, ClasspathStorageProvider.EXTENSION_POINT_NAME.getExtensions());
     return list;
   }
 

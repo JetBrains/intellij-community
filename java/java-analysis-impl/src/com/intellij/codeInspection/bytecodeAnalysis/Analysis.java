@@ -203,13 +203,6 @@ abstract class Analysis<Res> {
   public static final int STEPS_LIMIT = 30000;
   public static final int EQUATION_SIZE_LIMIT = 30;
 
-  protected static final ThreadLocal<State[]> ourPendingStates = new ThreadLocal<State[]>() {
-    @Override
-    protected State[] initialValue() {
-      return new State[STEPS_LIMIT];
-    }
-  };
-
   final RichControlFlow richControlFlow;
   final Direction direction;
   final ControlFlowGraph controlFlow;

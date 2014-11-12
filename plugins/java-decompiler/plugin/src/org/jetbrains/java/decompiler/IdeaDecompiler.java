@@ -26,6 +26,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DefaultProjectFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -82,6 +83,7 @@ public class IdeaDecompiler extends ClassFileDecompilers.Light {
     myOptions.put(IFernflowerPreferences.LITERALS_AS_IS, "1");
     myOptions.put(IFernflowerPreferences.NEW_LINE_SEPARATOR, "1");
     myOptions.put(IFernflowerPreferences.BANNER, BANNER);
+    myOptions.put(IFernflowerPreferences.MAX_PROCESSING_METHOD, 30);
 
     Project project = DefaultProjectFactory.getInstance().getDefaultProject();
     CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(project).getCurrentSettings();
@@ -106,6 +108,10 @@ public class IdeaDecompiler extends ClassFileDecompilers.Light {
           }
         }
       });
+    }
+
+    if (app.isUnitTestMode()) {
+      myOptions.put(IFernflowerPreferences.UNIT_TEST_MODE, "1");
     }
   }
 
@@ -173,6 +179,9 @@ public class IdeaDecompiler extends ClassFileDecompilers.Light {
       file.putUserData(PositionManager.LINE_NUMBERS_MAPPING_KEY, saver.myMapping);
 
       return saver.myResult;
+    }
+    catch (ProcessCanceledException e) {
+      throw e;
     }
     catch (Exception e) {
       if (ApplicationManager.getApplication().isUnitTestMode()) {

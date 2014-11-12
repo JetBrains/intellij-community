@@ -77,6 +77,7 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
     return getID();
   }
 
+  @Override
   @NonNls
   @Nullable
   public String getAlternativeID() {
@@ -178,8 +179,7 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
   @Deprecated()
   public void inspectionFinished(@NotNull LocalInspectionToolSession session) {}
   @NotNull
-  public List<ProblemDescriptor> processFile(@NotNull PsiFile file,
-                                             @NotNull InspectionManager manager) {
+  public List<ProblemDescriptor> processFile(@NotNull PsiFile file, @NotNull InspectionManager manager) {
     final ProblemsHolder holder = new ProblemsHolder(manager, file, false);
     LocalInspectionToolSession session = new LocalInspectionToolSession(file, 0, file.getTextLength());
     final PsiElementVisitor customVisitor = buildVisitor(holder, false, session);
@@ -200,6 +200,4 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
 
     return holder.getResults();
   }
-
-
 }

@@ -39,9 +39,8 @@ import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.ui.treeStructure.treetable.TreeTableModel;
 import com.intellij.ui.treeStructure.treetable.TreeTableTree;
 import com.intellij.util.Alarm;
-import com.intellij.util.NotNullFunction;
 import com.intellij.util.NullableFunction;
-import com.intellij.util.containers.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.TextTransferable;
 import org.jetbrains.annotations.NotNull;
@@ -57,7 +56,6 @@ import java.awt.*;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.*;
 import java.util.*;
-import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -511,7 +509,7 @@ public class InspectionsConfigTreeTable extends TreeTable {
       }
       final Icon icon = state.getLevel().getIcon();
       final String scopeName = state.getScopeName();
-      if (icon instanceof HighlightDisplayLevel.SingleColorIconWithMask) {
+      if (icon instanceof HighlightDisplayLevel.ColoredIcon) {
         final SeverityAndOccurrences severityAndOccurrences = myScopeToAverageSeverityMap.get(scopeName);
         final String inspectionName = state.getTool().getShortName();
         if (severityAndOccurrences == null) {

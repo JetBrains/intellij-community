@@ -90,7 +90,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public class ShowUsagesAction extends AnAction implements PopupAction {
   public static final String ID = "ShowUsages";
   private final boolean showSettingsDialogBefore;
-  private static final int USAGES_PAGE_SIZE = 100;
+  public static final int USAGES_PAGE_SIZE = 100;
 
   static final Usage MORE_USAGES_SEPARATOR = NullUsage.INSTANCE;
   private static final UsageNode MORE_USAGES_SEPARATOR_NODE = UsageViewImpl.NULL_NODE;

@@ -25,7 +25,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -1439,7 +1438,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
               @Override
               public void run() {
 
-                LaterInvocator.invokeLater(new Runnable() {
+                ApplicationManager.getApplication().invokeLater(new Runnable() {
                   @Override
                   public void run() {
                     long currentTime = System.nanoTime();

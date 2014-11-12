@@ -1830,7 +1830,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       super.update(e);
       final Presentation presentation = e.getPresentation();
       AbstractProjectViewPane pane = getCurrentProjectViewPane();
-      presentation.setVisible(pane != null && pane.supportsManualOrder());
+      presentation.setEnabledAndVisible(pane != null && pane.supportsManualOrder());
     }
   }
   
@@ -1876,7 +1876,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     public void update(final AnActionEvent e) {
       super.update(e);
       final Presentation presentation = e.getPresentation();
-      presentation.setVisible(getCurrentProjectViewPane() != null);
+      presentation.setEnabledAndVisible(getCurrentProjectViewPane() != null);
     }
   }
 

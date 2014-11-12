@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,17 +20,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class Encoder {
-
   private final Alphabet alphabet;
   private static final int offset = 0;
   static final UnitBitSet WORD_OF_ENTIRELY_UNKNOWN_LETTERS = new UnitBitSet(new byte[1],new Alphabet());
   private static final Logger LOG = Logger.getInstance("#com.intellij.spellchecker.compress");
 
   public Encoder() {
-    alphabet = new Alphabet();
+    this(new Alphabet());
   }
 
-  public Encoder(Alphabet alphabet) {
+  public Encoder(@NotNull Alphabet alphabet) {
     this.alphabet = alphabet;
   }
 

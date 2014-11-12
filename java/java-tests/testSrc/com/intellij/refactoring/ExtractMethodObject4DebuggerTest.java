@@ -264,6 +264,16 @@ public class ExtractMethodObject4DebuggerTest extends LightRefactoringTestCase {
            "    }");
   }
 
+  public void testOnPrivateField() throws Exception {
+    doTest("   foo()", "int result = new Test().invoke();",
+
+           "public class Test {\n" +
+           "        public int invoke() {\n" +
+           "            return foo();\n" +
+           "        }\n" +
+           "    }");
+  }
+
   @Override
   protected Sdk getProjectJDK() {
     return IdeaTestUtil.getMockJdk18();

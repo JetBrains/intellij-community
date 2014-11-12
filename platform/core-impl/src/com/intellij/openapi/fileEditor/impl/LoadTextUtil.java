@@ -16,10 +16,20 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.lang.properties.charset.Native2AsciiCharset;
-import com.intellij.openapi.fileTypes.*;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationUtil;
+import com.intellij.openapi.fileTypes.BinaryFileDecompiler;
+import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
+import com.intellij.openapi.fileTypes.CharsetUtil;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -27,17 +37,20 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.UnsupportedCharsetException;
+import java.util.concurrent.Callable;
 
 public final class LoadTextUtil {
   @Nls private static final String AUTO_DETECTED_FROM_BOM = "auto-detected from BOM";
@@ -348,7 +361,7 @@ public final class LoadTextUtil {
   }
 
   @NotNull
-  public static CharSequence loadText(@NotNull VirtualFile file) {
+  public static CharSequence loadText(@NotNull final VirtualFile file) {
     if (file instanceof LightVirtualFile) {
       return ((LightVirtualFile)file).getContent();
     }
@@ -361,7 +374,36 @@ public final class LoadTextUtil {
     if (fileType.isBinary()) {
       final BinaryFileDecompiler decompiler = BinaryFileTypeDecompilers.INSTANCE.forFileType(fileType);
       if (decompiler != null) {
-        CharSequence text = decompiler.decompile(file);
+        CharSequence text;
+
+        Application app = ApplicationManager.getApplication();
+        if (app != null && app.isDispatchThread() && !app.isWriteAccessAllowed() && !GraphicsEnvironment.isHeadless()) {
+          final Ref<CharSequence> result = Ref.create(ArrayUtil.EMPTY_CHAR_SEQUENCE);
+          final Ref<Throwable> error = Ref.create();
+          ProgressManager.getInstance().run(new Task.Modal(null, "Decompiling " + file.getName(), true) {
+            @Override
+            public void run(@NotNull ProgressIndicator indicator) {
+              indicator.setIndeterminate(true);
+              try {
+                result.set(ApplicationUtil.runWithCheckCanceled(new Callable<CharSequence>() {
+                  @Override
+                  public CharSequence call() {
+                    return decompiler.decompile(file);
+                  }
+                }));
+              }
+              catch (Throwable t) {
+                error.set(t);
+              }
+            }
+          });
+          ExceptionUtil.rethrowUnchecked(error.get());
+          text = result.get();
+        }
+        else {
+          text = decompiler.decompile(file);
+        }
+
         StringUtil.assertValidSeparators(text);
         return text;
       }
