@@ -16,7 +16,6 @@
 package com.intellij.vcs.log.graph.linearBek;
 
 import com.intellij.util.Function;
-import com.intellij.util.containers.IntStack;
 import com.intellij.vcs.log.graph.api.GraphLayout;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
@@ -26,12 +25,11 @@ import com.intellij.vcs.log.graph.api.printer.PrintElementWithGraphElement;
 import com.intellij.vcs.log.graph.collapsing.GraphAdditionalEdges;
 import com.intellij.vcs.log.graph.impl.facade.BaseLinearGraphController;
 import com.intellij.vcs.log.graph.impl.facade.CascadeLinearGraphController;
+import com.intellij.vcs.log.graph.utils.impl.BitSetFlags;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 import static com.intellij.vcs.log.graph.utils.LinearGraphUtils.*;
 
@@ -47,84 +45,98 @@ public class LinearBekController extends CascadeLinearGraphController {
     final GraphAdditionalEdges missingEdges = createSimpleAdditionalEdges();
     final GraphAdditionalEdges newEdges = createSimpleAdditionalEdges();
 
-    GraphVisitorAlgorithm graphVisitorAlgorithm = new GraphVisitorAlgorithm(false);
-    final IntStack starts = new IntStack();
+    GraphVisitorAlgorithm graphVisitorAlgorithm = new GraphVisitorAlgorithm(true);
 
     graphVisitorAlgorithm.visitGraph(graph, graphLayout, new GraphVisitorAlgorithm.GraphVisitor() {
       @Override
-      public void enterSubtree(int currentNode) {
-        if (canBeStructureEnd(graph, currentNode)) {
-          int start = -1;
-          int currentNodeIndex = graphLayout.getLayoutIndex(currentNode);
-          while (!starts.empty()) {
-            int candidateStart = starts.peek();
-            int candidateIndex = graphLayout.getLayoutIndex(candidateStart);
-
-            if (currentNodeIndex <= candidateIndex) {
-              starts.pop();
-              if (currentNodeIndex == candidateIndex) {
-                start = candidateStart;
-                break;
-              }
-            }
-            else {
-              break;
-            }
-          }
-
-          if (start != -1) {
-            List<Integer> upNodes = getSortedUpNodes(graph, graphLayout, currentNode);
-            int firstChildNode = getDownNodes(graph, start).get(0);
-            if (graphLayout.getLayoutIndex(upNodes.get(0)) == graphLayout.getLayoutIndex(firstChildNode) &&
-                graphLayout.getLayoutIndex(upNodes.get(1)) == graphLayout.getLayoutIndex(getDownNodes(graph, start).get(1))) {
-              if (upNodes.get(0) == start) {
-                // triangle
-                missingEdges.createEdge(getEdge(graph, start, firstChildNode));
-              } else {
-                missingEdges.createEdge(getEdge(graph, start, firstChildNode));
-                missingEdges.createEdge(getEdge(graph, upNodes.get(1), currentNode));
-                newEdges.createEdge(new GraphEdge(upNodes.get(1), firstChildNode, null, GraphEdgeType.DOTTED));
-              }
-            }
-          }
-        }
-
-        if (canBeStructureStart(graph, currentNode)) {
-          starts.push(currentNode);
-        }
+      public void enterSubtree(int currentNodeIndex, BitSetFlags visited) {
       }
 
       @Override
-      public void leaveSubtree(int currentNode) {
-        if (canBeStructureStart(graph, currentNode)) {
-          while (!starts.empty()) {
-            int lastStart = starts.peek();
-            if (lastStart >= currentNode){
-              starts.pop();
-              if (lastStart == currentNode) break;
-            } else {
-              break;
+      public void leaveSubtree(int currentNodeIndex, BitSetFlags visited) {
+        List<Integer> upNodes = getUpNodes(graph, currentNodeIndex);
+        if (upNodes.size() != 1) return;
+        int parent = upNodes.get(0);
+        if (getDownNodes(graph, parent).size() != 2) {
+          return;
+        }
+        int firstChildIndex = getDownNodes(graph, parent).get(0);
+        if (firstChildIndex == currentNodeIndex) return;
+
+        int x = graphLayout.getLayoutIndex(firstChildIndex);
+        int y = graphLayout.getLayoutIndex(currentNodeIndex);
+
+        int k = 1;
+        PriorityQueue<Integer> queue = new PriorityQueue<Integer>();
+        queue.addAll(getDownNodes(graph, currentNodeIndex));
+        while (!queue.isEmpty()) {
+          Integer next = queue.poll();
+          if (next > currentNodeIndex + k || !visited.get(next)) {
+            break;
+          } else if (next < currentNodeIndex + k) {
+            continue;
+          }
+          k++;
+          queue.addAll(getDownNodes(graph, next));
+        }
+
+        List<GraphEdge> edgesToRemove = new ArrayList<GraphEdge>();
+        List<GraphEdge> dottedEdgesToRemove = new ArrayList<GraphEdge>();
+        List<Integer> tails = new ArrayList<Integer>();
+
+        for (int i = currentNodeIndex; i < currentNodeIndex + k; i++) {
+          boolean isTail = true;
+
+          for (int upNode : getUpNodes(graph, i)) {
+            if (upNode >= currentNodeIndex + k || upNode < currentNodeIndex - 1) {
+              return;
             }
           }
+
+          for (int downNode : getDownNodes(graph, i)) {
+            if (!visited.get(downNode)) {
+              int li = graphLayout.getLayoutIndex(downNode);
+              if (li < x || li >= y) {
+                return;
+              }
+              edgesToRemove.add(getEdge(graph, i, downNode));
+            }
+            else {
+              isTail = false;
+            }
+          }
+          if (isTail) {
+            tails.add(i);
+          }
+
+          ArrayList<GraphEdge> dottedEdges = new ArrayList<GraphEdge>();
+          newEdges.appendAdditionalEdges(dottedEdges, i);
+          for (GraphEdge dottedEdge : dottedEdges) {
+            if (dottedEdge.getUpNodeIndex() == i) {
+              int li = graphLayout.getLayoutIndex(dottedEdge.getDownNodeIndex());
+              if (li >= x && li < y) {
+                dottedEdgesToRemove.add(dottedEdge);
+              }
+            }
+          }
+        }
+
+        // replace edges!
+        missingEdges.createEdge(getEdge(graph, parent, firstChildIndex));
+        for (Integer t : tails) {
+          newEdges.createEdge(new GraphEdge(t, firstChildIndex, null, GraphEdgeType.DOTTED));
+        }
+
+        for (GraphEdge edge : edgesToRemove) {
+          missingEdges.createEdge(edge);
+        }
+        for (GraphEdge edge : dottedEdgesToRemove) {
+          newEdges.removeEdge(edge);
         }
       }
     });
 
     return new LinearBekGraph(graph, missingEdges, newEdges);
-  }
-
-  private static List<Integer> getSortedUpNodes(@NotNull final LinearGraph graph, @NotNull GraphLayout layout, int node) {
-    List<Integer> upNodes = getUpNodes(graph, node);
-    Collections.sort(upNodes, new LayoutComparator(layout));
-    return upNodes;
-  }
-
-  private static boolean canBeStructureStart(@NotNull final LinearGraph graph, int node) {
-    return getDownNodes(graph, node).size() == 2; // since order of getUpNodes is unclear to me, we only support collapsing 2 branches
-  }
-
-  private static boolean canBeStructureEnd(@NotNull final LinearGraph graph, int node) {
-    return getUpNodes(graph, node).size() == 2;
   }
 
   @Override
@@ -153,18 +165,5 @@ public class LinearBekController extends CascadeLinearGraphController {
 
   public static GraphAdditionalEdges createSimpleAdditionalEdges() {
     return GraphAdditionalEdges.newInstance(new Function.Self<Integer, Integer>(), new Function.Self<Integer, Integer>());
-  }
-
-  private static class LayoutComparator implements Comparator<Integer> {
-    @NotNull private final GraphLayout myLayout;
-
-    public LayoutComparator(@NotNull GraphLayout layout) {
-      myLayout = layout;
-    }
-
-    @Override
-    public int compare(Integer o1, Integer o2) {
-      return myLayout.getLayoutIndex(o1) - myLayout.getLayoutIndex(o2);
-    }
   }
 }
