@@ -390,7 +390,7 @@ public final class LoadTextUtil {
                   public CharSequence call() {
                     return decompiler.decompile(file);
                   }
-                }, indicator));
+                }));
               }
               catch (Throwable t) {
                 error.set(t);

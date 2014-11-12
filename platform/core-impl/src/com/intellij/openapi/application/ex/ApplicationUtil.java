@@ -17,7 +17,6 @@ package com.intellij.openapi.application.ex;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
@@ -54,30 +53,25 @@ public class ApplicationUtil {
    * Allows to interrupt a process which does not performs checkCancelled() calls by itself.
    * Note that the process may continue to run in background indefinitely - so <b>avoid using this method unless absolutely needed</b>.
    */
-  public static <T> T runWithCheckCanceled(@NotNull final Callable<T> callable, @NotNull final ProgressIndicator indicator) throws Exception {
+  public static <T> T runWithCheckCanceled(@NotNull final Callable<T> callable) throws Exception {
     final Ref<Throwable> error = Ref.create();
 
     Future<T> future = ApplicationManager.getApplication().executeOnPooledThread(new Callable<T>() {
       @Override
       public T call() throws Exception {
-        return ProgressManager.getInstance().runProcess(new Computable<T>() {
-          @Override
-          public T compute() {
-            try {
-              return callable.call();
-            }
-            catch (Throwable t) {
-              error.set(t);
-              return null;
-            }
-          }
-        }, indicator);
+        try {
+          return callable.call();
+        }
+        catch (Throwable t) {
+          error.set(t);
+          return null;
+        }
       }
     });
 
     while (true) {
       try {
-        indicator.checkCanceled();
+        ProgressManager.checkCanceled();
       }
       catch (ProcessCanceledException e) {
         future.cancel(true);
