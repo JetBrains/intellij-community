@@ -1,11 +1,11 @@
 package org.jetbrains.plugins.ipnb.editor;
 
 import com.google.common.collect.Lists;
-import com.intellij.AppTopics;
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
@@ -63,27 +63,15 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
 
 
   public IpnbFileEditor(Project project, final VirtualFile vFile) {
-    project.getMessageBus().connect(this).subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerAdapter() {
-      @Override
-      public void beforeAllDocumentsSaving() {
-        if (!new File(vFile.getPath()).exists()) return;
-        final IpnbFilePanel filePanel = myIpnbFilePanel;
-        if (filePanel != null) {
-          IpnbParser.saveIpnbFile(filePanel);
-          vFile.refresh(false, false);
-        }
-
-      }
-    });
-
     project.getMessageBus().connect(this).subscribe(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER, new FileEditorManagerListener.Before.Adapter() {
       @Override
       public void beforeFileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
         if (!new File(file.getPath()).exists()) return;
         IpnbParser.saveIpnbFile(myIpnbFilePanel);
-          file.refresh(false, false);
+        file.refresh(false, false);
       }
     });
+
     myFile = vFile;
 
     myName = vFile.getName();
@@ -94,7 +82,7 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
     myEditorPanel.setBackground(IpnbEditorUtil.getBackground());
 
     myIpnbFilePanel = createIpnbEditorPanel(project, vFile);
-
+    Disposer.register(this, myIpnbFilePanel);
     final JPanel controlPanel = createControlPanel();
     myEditorPanel.add(controlPanel, BorderLayout.NORTH);
     myScrollPane = ScrollPaneFactory.createScrollPane(myIpnbFilePanel);
@@ -156,7 +144,9 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
       }
     });
     final IpnbPanel selectedCell = myIpnbFilePanel.getSelectedCell();
-    updateCellTypeCombo(selectedCell);
+    if (selectedCell != null) {
+      updateCellTypeCombo(selectedCell);
+    }
     controlPanel.add(myCellTypeCombo);
     final MatteBorder border = BorderFactory.createMatteBorder(0, 0, 1, 0, JBColor.GRAY);
     controlPanel.setBorder(border);
@@ -329,7 +319,7 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
                              });
   }
 
-  private void updateCellTypeCombo(IpnbPanel ipnbPanel) {
+  private void updateCellTypeCombo(@NotNull final IpnbPanel ipnbPanel) {
     if (ipnbPanel instanceof IpnbHeadingPanel) {
       final IpnbHeadingCell cell = ((IpnbHeadingPanel)ipnbPanel).getCell();
       final int level = cell.getLevel();
@@ -370,7 +360,9 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
     final int index = getIpnbFilePanel().getSelectedIndex();
     final IpnbEditablePanel cell = getIpnbFilePanel().getSelectedCell();
     final int top = cell != null ? cell.getTop() : 0;
-    return new IpnbEditorState(-1, index, top);
+    final Document document = FileDocumentManager.getInstance().getCachedDocument(myFile);
+    long modificationStamp = document != null ? document.getModificationStamp() : myFile.getModificationStamp();
+    return new IpnbEditorState(modificationStamp, index, top);
   }
 
   @Override

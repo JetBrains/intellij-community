@@ -15,15 +15,16 @@
  */
 package org.jetbrains.plugins.ipnb.editor.panels.code;
 
-import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.Gray;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
-import org.jetbrains.plugins.ipnb.editor.actions.IpnbRunCellAction;
-import org.jetbrains.plugins.ipnb.editor.actions.IpnbRunCellInplaceAction;
+import org.jetbrains.plugins.ipnb.editor.actions.IpnbRunCellBaseAction;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbEditorPanel;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbFilePanel;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbPanel;
@@ -73,7 +74,12 @@ public class IpnbCodeSourcePanel extends IpnbPanel<JComponent, IpnbCodeCell> imp
     else {
       myEditor = IpnbEditorUtil.createPythonCodeEditor(myProject, this);
     }
-
+    Disposer.register(myParent.getFileEditor(), new Disposable() {
+      @Override
+      public void dispose() {
+        EditorFactory.getInstance().releaseEditor(myEditor);
+      }
+    });
     final JComponent component = myEditor.getComponent();
     final JComponent contentComponent = myEditor.getContentComponent();
 
@@ -100,12 +106,10 @@ public class IpnbCodeSourcePanel extends IpnbPanel<JComponent, IpnbCodeCell> imp
             UIUtil.requestFocus(getIpnbCodePanel().getFileEditor().getIpnbFilePanel());
           }
           else if (keyCode == KeyEvent.VK_ENTER && InputEvent.CTRL_DOWN_MASK == e.getModifiersEx()) {
-            final IpnbRunCellInplaceAction action = (IpnbRunCellInplaceAction)ActionManager.getInstance().getAction("IpnbRunCellInplaceAction");
-            action.runCell(ipnbFilePanel, false);
+            IpnbRunCellBaseAction.runCell(ipnbFilePanel, false);
           }
           else if (keyCode == KeyEvent.VK_ENTER && InputEvent.SHIFT_DOWN_MASK == e.getModifiersEx()) {
-            final IpnbRunCellAction action = (IpnbRunCellAction)ActionManager.getInstance().getAction("IpnbRunCellAction");
-            action.runCell(ipnbFilePanel, true);
+            IpnbRunCellBaseAction.runCell(ipnbFilePanel, true);
           }
         }
 
