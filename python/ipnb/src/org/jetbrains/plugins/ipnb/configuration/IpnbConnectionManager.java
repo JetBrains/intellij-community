@@ -22,6 +22,8 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.PythonHelpersLocator;
+import com.jetbrains.python.packaging.PyPackage;
+import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,7 +64,7 @@ public final class IpnbConnectionManager implements ProjectComponent {
     final String path = virtualFile.getPath();
     if (!myKernels.containsKey(path)) {
       String url = IpnbSettings.getInstance(myProject).getURL();
-      if (url == null) {
+      if (StringUtil.isEmptyOrSpaces(url)) {
         url = DEFAULT_URL;
       }
       if (!isAvailable(url)) {
@@ -75,7 +77,6 @@ public final class IpnbConnectionManager implements ProjectComponent {
           return;
         }
         else {
-          showWarning(fileEditor, "Could not start IPython Notebook");
           return;
         }
       }
@@ -186,6 +187,15 @@ public final class IpnbConnectionManager implements ProjectComponent {
     if (sdk == null) {
       showWarning(fileEditor, "Please check Python Interpreter in Settings->Python Interpreter");
       return false;
+    }
+    try {
+      final PyPackage ipythonPackage = PyPackageManager.getInstance(sdk).findPackage("ipython", false);
+      if (ipythonPackage == null) {
+        showWarning(fileEditor, "Please check ipython installed in Python Interpreter in Settings->Python Interpreter");
+        return false;
+      }
+    }
+    catch (ExecutionException ignored) {
     }
     final Map<String, String> env = ImmutableMap.of("PYCHARM_EP_DIST", "ipython", "PYCHARM_EP_NAME", "ipython");
     try {
