@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.ipnb.editor.panels.code;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.project.Project;
@@ -24,7 +25,9 @@ import com.intellij.ui.Gray;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
+import org.jetbrains.plugins.ipnb.editor.actions.IpnbRunCellAction;
 import org.jetbrains.plugins.ipnb.editor.actions.IpnbRunCellBaseAction;
+import org.jetbrains.plugins.ipnb.editor.actions.IpnbRunCellInplaceAction;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbEditorPanel;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbFilePanel;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbPanel;
@@ -82,6 +85,9 @@ public class IpnbCodeSourcePanel extends IpnbPanel<JComponent, IpnbCodeCell> imp
     });
     final JComponent component = myEditor.getComponent();
     final JComponent contentComponent = myEditor.getContentComponent();
+
+    new IpnbRunCellAction().registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke("shift ENTER")), contentComponent);
+    new IpnbRunCellInplaceAction().registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke("ctrl ENTER")), contentComponent);
 
     contentComponent.addKeyListener(new KeyAdapter() {
       @Override
