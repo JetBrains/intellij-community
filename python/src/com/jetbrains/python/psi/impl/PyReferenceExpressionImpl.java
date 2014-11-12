@@ -36,10 +36,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.references.PyImportReference;
 import com.jetbrains.python.psi.impl.references.PyQualifiedReference;
 import com.jetbrains.python.psi.impl.references.PyReferenceImpl;
-import com.jetbrains.python.psi.resolve.ImplicitResolveResult;
-import com.jetbrains.python.psi.resolve.PyResolveContext;
-import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
-import com.jetbrains.python.psi.resolve.RatedResolveResult;
+import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.refactoring.PyDefUseUtil;
 import org.jetbrains.annotations.NotNull;
@@ -385,19 +382,11 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       if (PyUtil.isPackage(dir, anchor)) {
         final PsiFile containingFile = anchor.getContainingFile();
         if (containingFile instanceof PyFile) {
-          final PyImportElement importElement = PsiTreeUtil.getParentOfType(anchor, PyImportElement.class);
-          final QualifiedName qualifiedName;
-          if (importElement != null) {
-            qualifiedName = anchor.asQualifiedName();
+          final QualifiedName qualifiedName = QualifiedNameFinder.findShortestImportableQName(dir);
+          if (qualifiedName != null) {
+            final PyImportedModule module = new PyImportedModule(null, (PyFile)containingFile, qualifiedName);
+            return new PyImportedModuleType(module);
           }
-          else {
-            qualifiedName = QualifiedName.fromComponents(dir.getName());
-          }
-          if (qualifiedName == null) {
-            return null;
-          }
-          final PyImportedModule module = new PyImportedModule(importElement, (PyFile)containingFile, qualifiedName);
-          return new PyImportedModuleType(module);
         }
       }
     }
