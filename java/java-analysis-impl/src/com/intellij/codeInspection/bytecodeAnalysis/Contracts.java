@@ -41,7 +41,7 @@ class InOutAnalysis extends Analysis<Result<Key, Value>> {
   static final ResultUtil<Key, Value> resultUtil =
     new ResultUtil<Key, Value>(new ELattice<Value>(Value.Bot, Value.Top));
 
-  final private State[] pending = ourPendingStates.get();
+  final private State[] pending;
   private final InOutInterpreter interpreter;
   private final Value inValue;
   private final int generalizeShift;
@@ -49,8 +49,9 @@ class InOutAnalysis extends Analysis<Result<Key, Value>> {
   private int id = 0;
   private int pendingTop = 0;
 
-  protected InOutAnalysis(RichControlFlow richControlFlow, Direction direction, boolean[] resultOrigins, boolean stable) {
+  protected InOutAnalysis(RichControlFlow richControlFlow, Direction direction, boolean[] resultOrigins, boolean stable, State[] pending) {
     super(richControlFlow, direction, stable);
+    this.pending = pending;
     interpreter = new InOutInterpreter(direction, richControlFlow.controlFlow.methodNode.instructions, resultOrigins);
     inValue = direction instanceof InOut ? ((InOut)direction).inValue : null;
     generalizeShift = (methodNode.access & ACC_STATIC) == 0 ? 1 : 0;

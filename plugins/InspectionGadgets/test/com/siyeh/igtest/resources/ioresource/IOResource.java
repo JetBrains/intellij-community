@@ -1,20 +1,20 @@
-package com.siyeh.igtest.resources.io.plain;
+package com.siyeh.igtest.resources.ioresource;
 
 import java.io.*;
 
-public class IOResourceInspection {
+public class IOResource {
     public void foo() throws FileNotFoundException {
-       new FileInputStream("bar");
+       new <warning descr="'FileInputStream' should be opened in front of a 'try' block and closed in the corresponding 'finally' block">FileInputStream</warning>("bar");
     }
 
     public void foo2() throws FileNotFoundException {
-        final FileInputStream str = new FileInputStream("bar");
+        final FileInputStream str = new <warning descr="'FileInputStream' should be opened in front of a 'try' block and closed in the corresponding 'finally' block">FileInputStream</warning>("bar");
 
     }
 
     public void foo25() throws FileNotFoundException {
         try {
-            final FileInputStream str = new FileInputStream("bar");
+            final FileInputStream str = new <warning descr="'FileInputStream' should be opened in front of a 'try' block and closed in the corresponding 'finally' block">FileInputStream</warning>("bar");
         } finally {
         }
 
@@ -54,7 +54,7 @@ public class IOResourceInspection {
     public void foo6() throws IOException {
         FileInputStream str = null;
         try {
-            str = new FileInputStream("bar");
+            str = new <warning descr="'FileInputStream' should be opened in front of a 'try' block and closed in the corresponding 'finally' block">FileInputStream</warning>("bar");
         } finally {
         }
     }
@@ -63,7 +63,7 @@ public class IOResourceInspection {
         FileInputStream str = null;
         BufferedInputStream str2 = null;
         try {
-            str = new FileInputStream("bar");
+            str = new <warning descr="'FileInputStream' should be opened in front of a 'try' block and closed in the corresponding 'finally' block">FileInputStream</warning>("bar");
             str2 = new BufferedInputStream(str);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -91,7 +91,7 @@ public class IOResourceInspection {
         }
     }
     public void interrupting() throws IOException {
-        FileInputStream str = new FileInputStream("xxxx");
+        FileInputStream str = new <warning descr="'FileInputStream' should be opened in front of a 'try' block and closed in the corresponding 'finally' block">FileInputStream</warning>("xxxx");
         str.read();
         try {
             str.read();
@@ -145,11 +145,11 @@ public class IOResourceInspection {
     }
 
     void resourceAsStream() {
-        String.class.getResourceAsStream("bla");
+        String.class.<warning descr="'InputStream' should be opened in front of a 'try' block and closed in the corresponding 'finally' block">getResourceAsStream</warning>("bla");
     }
 
   public static void c() throws IOException {
-    InputStream in = new FileInputStream("");
+    InputStream in = new <warning descr="'FileInputStream' should be opened in front of a 'try' block and closed in the corresponding 'finally' block">FileInputStream</warning>("");
     OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream("asd"));
     try {
       writer.write(0);
@@ -177,5 +177,17 @@ public class IOResourceInspection {
   void escaped5() throws FileNotFoundException {
     InputStream in = new FileInputStream("");
     escaper(in);
+  }
+
+  void insignificant() throws IOException {
+      InputStream in = new FileInputStream("file");
+      Object o;
+      {;;};
+      try {
+          o = in.read();
+      }
+      finally {
+          in.close();
+      }
   }
 }

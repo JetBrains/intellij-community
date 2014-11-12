@@ -25,6 +25,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.TreePath;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author nik
@@ -51,6 +54,25 @@ public abstract class XDebuggerTreeActionBase extends AnAction {
 
   protected boolean isEnabled(final @NotNull XValueNodeImpl node, @NotNull AnActionEvent e) {
     return node.getName() != null;
+  }
+
+  @NotNull
+  public static List<XValueNodeImpl> getSelectedNodes(DataContext dataContext) {
+    XDebuggerTree tree = XDebuggerTree.getTree(dataContext);
+    if (tree == null) return Collections.emptyList();
+
+    TreePath[] paths = tree.getSelectionPaths();
+    if (paths == null || paths.length == 0) {
+      return Collections.emptyList();
+    }
+    List<XValueNodeImpl> nodes = new ArrayList<XValueNodeImpl>(paths.length);
+    for (TreePath path : paths) {
+      Object component = path.getLastPathComponent();
+      if (component instanceof XValueNodeImpl) {
+        nodes.add((XValueNodeImpl) component);
+      }
+    }
+    return nodes;
   }
 
   @Nullable

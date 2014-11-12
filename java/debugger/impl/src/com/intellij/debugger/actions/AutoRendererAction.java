@@ -16,32 +16,30 @@
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.JavaValue;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
-import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
-import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
-import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 public class AutoRendererAction extends AnAction{
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     final DebuggerContextImpl debuggerContext = DebuggerAction.getDebuggerContext(e.getDataContext());
 
     if(debuggerContext != null) {
       final DebugProcessImpl debugProcess = debuggerContext.getDebugProcess();
       if(debugProcess != null) {
-        final DebuggerTreeNodeImpl[] selectedNodes = DebuggerAction.getSelectedNodes(e.getDataContext());
-        if (selectedNodes != null) {
+        final List<JavaValue> selectedValues = ViewAsGroup.getSelectedValues(e);
+        if (!selectedValues.isEmpty()) {
           debugProcess.getManagerThread().schedule(new DebuggerContextCommandImpl(debuggerContext) {
               public void threadAction() {
-                for (DebuggerTreeNodeImpl selectedNode : selectedNodes) {
-                  final NodeDescriptorImpl descriptor = selectedNode.getDescriptor();
-                  if (descriptor instanceof ValueDescriptorImpl) {
-                    ((ValueDescriptorImpl)descriptor).setRenderer(null);
-                    selectedNode.calcRepresentation();
-                  }
+                for (JavaValue selectedValue : selectedValues) {
+                  selectedValue.getDescriptor().setRenderer(null);
                 }
+                DebuggerAction.refreshViews(e);
               }
             });
         }

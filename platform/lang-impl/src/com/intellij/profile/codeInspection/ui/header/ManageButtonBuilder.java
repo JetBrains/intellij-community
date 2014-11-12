@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.reporter;
+package com.intellij.profile.codeInspection.ui.header;
 
-public class ConnectionException extends Exception {
+/**
+ * @author Dmitry Batkovich
+ */
+public interface ManageButtonBuilder {
 
-  public ConnectionException(String message) {
-    super(message);
-  }
+  boolean isSharedToTeamMembers();
 
-  public ConnectionException(Throwable cause) {
-    super(cause);
-  }
+  void setShareToTeamMembers(boolean share);
 
-  public ConnectionException(String message, Throwable cause) {
-    super(message, cause);
-  }
+  void copy();
+
+  boolean canRename();
+
+  void rename();
+
+  boolean canDelete();
+
+  void delete();
+
+  boolean canEditDescription();
+
+  void editDescription();
+
+  void export();
+
+  void doImport();
+
 }

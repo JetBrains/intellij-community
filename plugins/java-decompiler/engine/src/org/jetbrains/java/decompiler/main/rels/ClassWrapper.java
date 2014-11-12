@@ -61,6 +61,7 @@ public class ClassWrapper {
     }
 
     int maxSec = Integer.parseInt(DecompilerContext.getProperty(IFernflowerPreferences.MAX_PROCESSING_METHOD).toString());
+    boolean testMode = DecompilerContext.getOption(IFernflowerPreferences.UNIT_TEST_MODE);
 
     for (StructMethod mt : classStruct.getMethods()) {
       DecompilerContext.getLogger().startMethod(mt.getName() + " " + mt.getDescriptor());
@@ -83,7 +84,7 @@ public class ClassWrapper {
 
       try {
         if (mt.containsCode()) {
-          if (maxSec == 0) {
+          if (maxSec == 0 || testMode) {
             root = MethodProcessorRunnable.codeToJava(mt, varProc);
           }
           else {
