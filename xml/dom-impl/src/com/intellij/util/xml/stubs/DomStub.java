@@ -152,6 +152,8 @@ public abstract class DomStub extends ObjectStubBase<DomStub> {
   public int hashCode() {
     int result = myLocalName.hashCode();
     result = 31 * result + myNamespace.hashCode();
+    result = 31 * result + getIndex();
+    result = 31 * result + (isCustom() ? 1 : 0);
     return result;
   }
 }
