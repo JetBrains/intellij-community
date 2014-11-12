@@ -95,7 +95,7 @@ public class ResolveImportUtil {
       base = base.getOriginalFile(); // just to make sure
       result = base.getContainingDirectory();
       int count = 1;
-      while (result != null && result.findFile(PyNames.INIT_DOT_PY) != null) {
+      while (result != null && PyUtil.isPackage(result, base)) {
         if (count >= depth) return result;
         result = result.getParentDirectory();
         count += 1;
