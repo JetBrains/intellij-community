@@ -190,7 +190,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
   }
 
   private void updateDetailsBorder(@Nullable VcsFullCommitDetails data) {
-    if (data == null) {
+    if (data == null || !myColorManager.isMultipleRoots()) {
       myMainContentPanel.setBorder(BorderFactory.createEmptyBorder());
     }
     else {
@@ -244,8 +244,8 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
         myMainText = null;
       }
       else {
-        String header = (myMultiRoot ? "[" + commit.getRoot().getName() + "] " : "") +
-                        commit.getId().toShortString() + " " + getAuthorText(commit);
+        String header = commit.getId().toShortString() + " " + getAuthorText(commit) +
+                        (myMultiRoot ? " [" + commit.getRoot().getName() + "]" : "");
         String body = getMessageText(commit);
         myMainText = header + "<br/>" + body;
       }

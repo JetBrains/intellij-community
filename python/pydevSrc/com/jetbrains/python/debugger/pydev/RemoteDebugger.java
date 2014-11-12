@@ -622,9 +622,18 @@ public class RemoteDebugger implements ProcessDebugger {
     @Override
     protected void onTextAvailable(@NotNull String text) {
       myTextBuilder.append(text);
-      if (text.endsWith("\n")) {
-        processResponse(myTextBuilder.toString());
+      if (text.contains("\n")) {
+        String[] lines = myTextBuilder.toString().split("\n");
         myTextBuilder = new StringBuilder();
+
+        if (!text.endsWith("\n")) {
+          myTextBuilder.append(lines[lines.length - 1]);
+          lines = Arrays.copyOfRange(lines, 0, lines.length - 1);
+        }
+
+        for (String line : lines) {
+          processResponse(line + "\n");
+        }
       }
     }
   }

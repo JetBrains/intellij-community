@@ -24,7 +24,6 @@ public class SvnKitAnnotateClient extends BaseSvnClient implements AnnotateClien
   public void annotate(@NotNull SvnTarget target,
                        @NotNull SVNRevision startRevision,
                        @NotNull SVNRevision endRevision,
-                       @Nullable SVNRevision pegRevision,
                        boolean includeMergedRevisions,
                        @Nullable DiffOptions diffOptions,
                        @Nullable AnnotationConsumer handler) throws VcsException {
@@ -34,13 +33,13 @@ public class SvnKitAnnotateClient extends BaseSvnClient implements AnnotateClien
       client.setDiffOptions(toDiffOptions(diffOptions));
       if (target.isFile()) {
         client
-          .doAnnotate(target.getFile(), pegRevision, startRevision, endRevision, true, includeMergedRevisions, toAnnotateHandler(handler),
-                      null);
+          .doAnnotate(target.getFile(), target.getPegRevision(), startRevision, endRevision, true, includeMergedRevisions,
+                      toAnnotateHandler(handler), null);
       }
       else {
         client
-          .doAnnotate(target.getURL(), pegRevision, startRevision, endRevision, true, includeMergedRevisions, toAnnotateHandler(handler),
-                      null);
+          .doAnnotate(target.getURL(), target.getPegRevision(), startRevision, endRevision, true, includeMergedRevisions,
+                      toAnnotateHandler(handler), null);
       }
     }
     catch (SVNException e) {
