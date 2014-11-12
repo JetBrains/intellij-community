@@ -167,7 +167,7 @@ public class Main {
       //noinspection SpellCheckingInspection
       Collections.addAll(args,
                          java,
-                         "-Xmx500m",
+                         "-Xmx800m",
                          "-classpath",
                          patchCopy.getPath() + File.pathSeparator + log4jCopy.getPath() + File.pathSeparator + jnaCopy.getPath() + File.pathSeparator + jnaUtilsCopy.getPath(),
                          "-Djava.io.tmpdir=" + tempDir,
