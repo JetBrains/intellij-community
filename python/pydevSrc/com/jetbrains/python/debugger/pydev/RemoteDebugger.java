@@ -632,7 +632,7 @@ public class RemoteDebugger implements ProcessDebugger {
         }
 
         for (String line : lines) {
-          processResponse(line);
+          processResponse(line + "\n");
         }
       }
     }
