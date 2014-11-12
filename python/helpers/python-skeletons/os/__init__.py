@@ -241,10 +241,9 @@ def setreuid(ruid, euid):
     pass
 
 
-def setsid(pid):
+def setsid():
     """Call the system call getsid().
 
-    :type pid: int
     :rtype: None
     """
     pass
@@ -898,11 +897,13 @@ def statvfs(path):
     pass
 
 
-def symlink(source, link_name):
+def symlink(source, link_name, target_is_directory=False, dir_fd=None):
     """Create a symbolic link pointing to source named link_name.
 
     :type source: bytes | unicode
     :type link_name: bytes| unicode
+    :type target_is_directory: bool
+    :type dir_fd: int | None
     :rtype: None
     """
     pass
