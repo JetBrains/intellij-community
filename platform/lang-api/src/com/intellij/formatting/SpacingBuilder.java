@@ -103,6 +103,14 @@ public class SpacingBuilder {
       return SpacingBuilder.this;
     }
 
+    public SpacingBuilder lineBreakOrForceSpace(boolean lbOption, boolean spaceOption) {
+      if (lbOption) {
+        return lineBreakInCode();
+      }
+
+      int count = spaceOption ? 1 : 0;
+      return spacing(count, count, 0, false, 0);
+    }
 
     public SpacingBuilder spacing(int minSpaces, int maxSpaces, int minLF, boolean keepLineBreaks, int keepBlankLines) {
       for (RuleCondition condition : myConditions) {
@@ -148,6 +156,10 @@ public class SpacingBuilder {
     return new RuleBuilder(new RuleCondition(null, TokenSet.create(elementType), null));
   }
 
+  public RuleBuilder after(TokenSet tokenSet) {
+    return new RuleBuilder(new RuleCondition(null, tokenSet, null));
+  }
+
   public RuleBuilder afterInside(IElementType elementType, IElementType parentType) {
     return new RuleBuilder(new RuleCondition(TokenSet.create(parentType), TokenSet.create(elementType), null));
   }
@@ -170,6 +182,10 @@ public class SpacingBuilder {
 
   public RuleBuilder beforeInside(IElementType elementType, IElementType parentType) {
     return new RuleBuilder(new RuleCondition(TokenSet.create(parentType), null, TokenSet.create(elementType)));
+  }
+
+  public RuleBuilder beforeInside(IElementType elementType, TokenSet parentTypes) {
+    return new RuleBuilder(new RuleCondition(parentTypes, null, TokenSet.create(elementType)));
   }
 
   public RuleBuilder between(IElementType left, IElementType right) {
