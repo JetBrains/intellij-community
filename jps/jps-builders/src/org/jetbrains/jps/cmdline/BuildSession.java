@@ -221,6 +221,9 @@ final class BuildSession implements Runnable, CanceledStatus {
         if (storedFsData != null) {
           updateFsStateOnDisk(dataStorageRoot, storedFsData, myInitialFSDelta.getOrdinal());
           LOG.info("No changes found since last build. Exiting.");
+          if (preloadedProject != null) {
+            preloadedProject.release();
+          }
           return;
         }
       }
