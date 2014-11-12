@@ -125,8 +125,15 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
     if (argumentList == null) {
       return false;
     }
-    int offset = parameters.length - psiMethod.getParameterList().getParametersCount();
+
+    final int calledParametersCount = psiMethod.getParameterList().getParametersCount();
     final PsiExpression[] expressions = argumentList.getExpressions();
+
+    final int offset = parameters.length - calledParametersCount;
+    if (expressions.length > calledParametersCount) {
+      return false;
+    }
+
     for (int i = 0; i < expressions.length; i++) {
       if (!resolvesToParameter(expressions[i], parameters[i + offset])) {
         return false;
