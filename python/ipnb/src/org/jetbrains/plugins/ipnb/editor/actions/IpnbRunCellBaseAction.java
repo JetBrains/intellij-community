@@ -2,6 +2,8 @@ package org.jetbrains.plugins.ipnb.editor.actions;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbEditablePanel;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbFilePanel;
@@ -17,11 +19,19 @@ public abstract class IpnbRunCellBaseAction extends AnAction {
     cell.runCell();
     if (selectNext) {
       final int index = ipnbFilePanel.getSelectedIndex();
-      if (ipnbFilePanel.getIpnbPanels().size()-1 == index) {
+      if (ipnbFilePanel.getIpnbPanels().size() - 1 == index) {
         ipnbFilePanel.createAndAddCell(true);
-        ipnbFilePanel.saveToFile();
+        CommandProcessor.getInstance().executeCommand(ipnbFilePanel.getProject(), new Runnable() {
+          public void run() {
+            ApplicationManager.getApplication().runWriteAction(new Runnable() {
+              public void run() {
+                ipnbFilePanel.saveToFile();
+                ipnbFilePanel.selectNext(cell);
+              }
+            });
+          }
+        }, "Ipnb.runCell", new Object());
       }
-      ipnbFilePanel.selectNext(cell);
     }
     ipnbFilePanel.revalidate();
     ipnbFilePanel.repaint();
