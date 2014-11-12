@@ -374,6 +374,7 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
     assertResolvesTo(PyTargetExpression.class, "_private_name");
   }
 
+  // PY-7378
   public void testModuleInDeeplyNestedNamespacePackage() {
     runWithLanguageLevel(LanguageLevel.PYTHON33, new Runnable() {
       @Override
