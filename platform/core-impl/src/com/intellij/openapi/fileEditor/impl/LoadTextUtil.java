@@ -43,6 +43,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
@@ -376,7 +377,7 @@ public final class LoadTextUtil {
         CharSequence text;
 
         Application app = ApplicationManager.getApplication();
-        if (app != null && app.isDispatchThread() && !app.isHeadlessEnvironment() && !app.isWriteAccessAllowed()) {
+        if (app != null && app.isDispatchThread() && !app.isWriteAccessAllowed() && !GraphicsEnvironment.isHeadless()) {
           final Ref<CharSequence> result = Ref.create(ArrayUtil.EMPTY_CHAR_SEQUENCE);
           final Ref<Throwable> error = Ref.create();
           ProgressManager.getInstance().run(new Task.Modal(null, "Decompiling " + file.getName(), true) {
