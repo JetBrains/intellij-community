@@ -256,7 +256,11 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
   }
 
   public void testUncheckedConversionWithRecursiveTypeParams() throws Exception {
-    doTest(false);
+    doTest();
+  }
+
+  public void testIDEA132725() throws Exception {
+    doTest();
   }
 
   private void doTest() throws Exception {
