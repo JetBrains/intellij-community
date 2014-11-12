@@ -69,6 +69,22 @@ public class PsiPolyExpressionUtilTest extends LightCodeInsightFixtureTestCase {
     assertFalse(PsiPolyExpressionUtil.isPolyExpression(psiExpression));
   }
 
+  public void testConditional() throws Exception {
+    myFixture.configureByText("Foo.java", "import java.util.function.Supplier;" +
+                                          "class Foo {" +
+                                          "    private static <R> void map(Supplier<R> fn) {}\n" +
+                                          "    public static void main(String[] args) {\n" +
+                                          "        Runnable r = null;\n" +
+                                          "        map(() -> (true <caret>? r : r));\n" +
+                                          "    }" +
+                                          "}");
+    final PsiElement elementAtCaret = myFixture.getFile().findElementAt(myFixture.getCaretOffset());
+    assertNotNull(elementAtCaret);
+    final PsiExpression psiExpression = PsiTreeUtil.getParentOfType(elementAtCaret, PsiExpression.class);
+    assertInstanceOf(psiExpression, PsiConditionalExpression.class);
+    assertTrue(PsiPolyExpressionUtil.isPolyExpression(psiExpression));
+  }
+
   private PsiExpression findExpression(String textWithExpression) {
     myFixture.configureByText("Foo.java", "import java.util.*;" +
                                           "class Foo {" +
