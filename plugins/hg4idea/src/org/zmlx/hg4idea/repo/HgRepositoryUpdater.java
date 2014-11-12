@@ -15,7 +15,7 @@
  */
 package org.zmlx.hg4idea.repo;
 
-import com.intellij.dvcs.repo.RepositoryUtil;
+import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -48,11 +48,11 @@ final class HgRepositoryUpdater implements Disposable, BulkFileListener {
     VirtualFile hgDir = repository.getHgDir();
     myWatchRequest = LocalFileSystem.getInstance().addRootToWatch(hgDir.getPath(), true);
     myRepositoryFiles = HgRepositoryFiles.getInstance(hgDir);
-    RepositoryUtil.visitVcsDirVfs(hgDir, HgRepositoryFiles.getSubDirRelativePaths());
+    DvcsUtil.visitVcsDirVfs(hgDir, HgRepositoryFiles.getSubDirRelativePaths());
 
     myBranchHeadsDir = VcsUtil.getVirtualFile(myRepositoryFiles.getBranchHeadsDirPath());
     Project project = repository.getProject();
-    myUpdateQueue = new QueueProcessor<Object>(new RepositoryUtil.Updater(repository), project.getDisposed());
+    myUpdateQueue = new QueueProcessor<Object>(new DvcsUtil.Updater(repository), project.getDisposed());
     myUpdateConfigQueue = new QueueProcessor<Object>(new Consumer<Object>() {
       @Override
       public void consume(Object dummy) {
@@ -106,7 +106,7 @@ final class HgRepositoryUpdater implements Disposable, BulkFileListener {
       }
       else if (myRepositoryFiles.isBranchFile(filePath)) {
         branchFileChanged = true;
-        RepositoryUtil.ensureAllChildrenInVfs(myBranchHeadsDir);
+        DvcsUtil.ensureAllChildrenInVfs(myBranchHeadsDir);
       }
       else if (myRepositoryFiles.isDirstateFile(filePath)) {
         dirstateFileChanged = true;

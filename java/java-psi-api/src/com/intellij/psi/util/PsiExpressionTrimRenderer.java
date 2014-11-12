@@ -230,6 +230,10 @@ public class PsiExpressionTrimRenderer extends JavaRecursiveElementWalkingVisito
   public static String render(PsiExpression expression) {
     StringBuilder buf = new StringBuilder();
     expression.accept(new PsiExpressionTrimRenderer(buf));
-    return buf.toString();
+    final String text = buf.toString();
+    int firstNewLinePos = text.indexOf('\n');
+    String trimmedText = text.substring(0, firstNewLinePos != -1 ? firstNewLinePos : Math.min(100, text.length()));
+    if (trimmedText.length() != text.length()) trimmedText += " ...";
+    return trimmedText;
   }
 }

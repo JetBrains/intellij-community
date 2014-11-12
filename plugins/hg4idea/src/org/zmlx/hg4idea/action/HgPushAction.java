@@ -17,6 +17,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.repo.HgRepository;
+import org.zmlx.hg4idea.util.HgUtil;
 
 import java.util.Collection;
 import java.util.List;
@@ -30,6 +31,6 @@ public class HgPushAction extends HgAbstractGlobalAction {
   public void execute(@NotNull final Project project,
                       @NotNull Collection<HgRepository> repositories,
                       @NotNull final List<HgRepository> selectedRepositories) {
-    new VcsPushDialog(project, selectedRepositories).show();
+    new VcsPushDialog(project, selectedRepositories, HgUtil.getCurrentRepository(project)).show();
   }
 }

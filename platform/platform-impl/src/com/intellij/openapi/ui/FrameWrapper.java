@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,7 @@ package com.intellij.openapi.ui;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.impl.MouseGestureManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
@@ -48,7 +47,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.FocusEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.File;
 import java.util.Map;
 
@@ -207,7 +208,6 @@ public class FrameWrapper implements Disposable, DataProvider {
     }
 
     frame.setVisible(false);
-    frame.dispose();
 
     if (frame instanceof JFrame) {
       FocusTrackback.release((JFrame)frame);
@@ -226,22 +226,23 @@ public class FrameWrapper implements Disposable, DataProvider {
   }
 
   private void addCloseOnEsc(final RootPaneContainer frame) {
-    frame.getRootPane().registerKeyboardAction(
-      new ActionListener() {
-        public void actionPerformed(ActionEvent e) {
-          MenuSelectionManager menuSelectionManager = MenuSelectionManager.defaultManager();
-          MenuElement[] selectedPath = menuSelectionManager.getSelectedPath();
-          if (selectedPath.length > 0) { // hide popup menu if any
-            menuSelectionManager.clearSelectedPath();
-          }
-          else {
-            close();
-          }
+    new AnAction() {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        MenuSelectionManager menuSelectionManager = MenuSelectionManager.defaultManager();
+        MenuElement[] selectedPath = menuSelectionManager.getSelectedPath();
+        if (selectedPath.length > 0) { // hide popup menu if any
+          menuSelectionManager.clearSelectedPath();
+        } else {
+          // if you remove this line problems will start happen on Mac OS X
+          // 2 projects opened, call Cmd+D on the second opened project and then Esc.
+          // Weird situation: 2nd IdeFrame will be active, but focus will be somewhere inside the 1st IdeFrame
+          // App is unusable until Cmd+Tab, Cmd+tab
+          FrameWrapper.this.myFrame.setVisible(false);
+          close();
         }
-      },
-      KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0),
-      JComponent.WHEN_IN_FOCUSED_WINDOW
-    );
+      }
+    }.registerCustomShortcutSet(CommonShortcuts.ESCAPE, myComponent, this);
   }
 
   public Window getFrame() {
@@ -375,6 +376,7 @@ public class FrameWrapper implements Disposable, DataProvider {
 
       MouseGestureManager.getInstance().add(this);
       setFocusTraversalPolicy(new LayoutFocusTraversalPolicyExt());
+      setDefaultCloseOperation(DISPOSE_ON_CLOSE);
     }
 
     @Override
@@ -485,6 +487,7 @@ public class FrameWrapper implements Disposable, DataProvider {
       setBackground(UIUtil.getPanelBackground());
       MouseGestureManager.getInstance().add(this);
       setFocusTraversalPolicy(new LayoutFocusTraversalPolicyExt());
+      setDefaultCloseOperation(DISPOSE_ON_CLOSE);
     }
 
     @Override

@@ -67,7 +67,11 @@ public class PyPep8NamingInspectionTest extends PyTestCase {
 
   // PY-13537
   public void testDescendantOfStandardClass() {
-    doTest();
+    myFixture.configureByFile("inspections/PyPep8NamingInspection/" + getTestName(true) + ".py");
+    final PyPep8NamingInspection inspection = new PyPep8NamingInspection();
+    inspection.ignoredBaseClasses.add("collections.OrderedDict");
+    myFixture.enableInspections(inspection);
+    myFixture.checkHighlighting(false, false, true);
   }
 
   public void testTest() {

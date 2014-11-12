@@ -26,15 +26,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.ui.Gray;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.border.CustomLineBorder;
-import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
-import javax.swing.border.Border;
-import javax.swing.border.CompoundBorder;
-import javax.swing.border.EmptyBorder;
 
 public class ShowStructureSettingsAction extends AnAction implements DumbAware {
   @Override
@@ -49,20 +40,9 @@ public class ShowStructureSettingsAction extends AnAction implements DumbAware {
   static void showDialog(Project project) {
     if (Registry.is("ide.new.project.settings")) {
       new SingleConfigurableEditor(project, ProjectStructureConfigurable.getInstance(project), OptionsEditorDialog.DIMENSION_KEY) {
-        @Nullable
         @Override
-        protected Border createContentPaneBorder() {
-          return new EmptyBorder(0,0,0,0);
-        }
-
-        @Nullable
-        @Override
-        protected JComponent createSouthPanel() {
-          JComponent panel = super.createSouthPanel();
-          assert panel != null;
-          CustomLineBorder line = new CustomLineBorder(new JBColor(Gray._153.withAlpha(128), Gray._100.withAlpha(128)), 1, 0, 0, 0);
-          panel.setBorder(new CompoundBorder(line, new EmptyBorder(10, 5, 5, 5)));
-          return panel;
+        protected DialogStyle getStyle() {
+          return DialogStyle.COMPACT;
         }
       }.show();
     }

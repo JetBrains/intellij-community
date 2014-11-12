@@ -1,5 +1,6 @@
 class Test {
-  private int foo, bar;
+  private int foo;
+    private long bar;
   
   public long getFoo() {
     return foo;
@@ -13,7 +14,7 @@ class Test {
     return bar;
   }
   
-  public void setBar(int bar) {
+  public void setBar(long bar) {
     this.bar = bar;
   }
 }

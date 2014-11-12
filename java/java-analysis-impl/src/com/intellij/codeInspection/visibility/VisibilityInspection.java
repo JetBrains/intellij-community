@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.usageView.UsageViewTypeLocation;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -222,7 +221,7 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
 
   @Nullable
   @PsiModifier.ModifierConstant
-  public String getPossibleAccess(@Nullable RefJavaElement refElement) {
+  private String getPossibleAccess(@Nullable RefJavaElement refElement) {
     if (refElement == null) return null;
     String curAccess = refElement.getAccessModifier();
     String weakestAccess = PsiModifier.PRIVATE;
@@ -553,7 +552,7 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
   private static class AcceptSuggestedAccess implements LocalQuickFix{
     private final RefManager myManager;
     @PsiModifier.ModifierConstant private final String myHint;
-    private String myName;
+    private final String myName;
 
     private AcceptSuggestedAccess(final RefManager manager, @PsiModifier.ModifierConstant String hint, String name) {
       myManager = manager;

@@ -144,8 +144,10 @@ public final class XsltRunConfiguration extends LocatableConfigurationBase imple
       if (myOutputType == OutputType.CONSOLE) {
         final HighlightingOutputConsole console = new HighlightingOutputConsole(getProject(), myFileType);
 
-        boolean consoleTabAdded = false;
-        for (XsltRunnerExtension extension : XsltRunnerExtension.getExtensions(this, false /* doesn't matter, xslt debugger uses own flag */)) {
+          XsltCommandLineState state = startedProcess.getUserData(XsltCommandLineState.STATE);
+          boolean debug = state != null && state.isDebugger();
+          boolean consoleTabAdded = false;
+        for (XsltRunnerExtension extension : XsltRunnerExtension.getExtensions(this, debug)) {
           if (extension.createTabs(getProject(), manager, console, startedProcess)) {
             consoleTabAdded = true;
           }

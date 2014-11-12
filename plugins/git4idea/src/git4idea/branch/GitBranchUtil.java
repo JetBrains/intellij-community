@@ -19,7 +19,6 @@ import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
 import com.intellij.dvcs.DvcsUtil;
-import com.intellij.dvcs.repo.RepositoryUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -320,7 +319,7 @@ public class GitBranchUtil {
 
   @Nullable
   public static VirtualFile getVcsRootOrGuess(@NotNull Project project, @Nullable VirtualFile file) {
-    VirtualFile root = RepositoryUtil.getVcsRoot(project, file);
+    VirtualFile root = DvcsUtil.getVcsRoot(project, file);
     return root != null ? root : guessGitRoot(project);
   }
 

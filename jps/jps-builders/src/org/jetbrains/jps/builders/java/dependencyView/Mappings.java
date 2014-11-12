@@ -420,7 +420,7 @@ public class Mappings {
 
     private boolean extendsLibraryClass(final ClassRepr fromClass) {
       for (int superName : fromClass.getSupers()) {
-        if (superName != myObjectClassName) {
+        if (superName == myObjectClassName) {
           continue;
         }
         final ClassRepr superClass = reprByName(superName);

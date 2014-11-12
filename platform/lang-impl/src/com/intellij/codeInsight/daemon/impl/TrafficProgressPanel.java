@@ -41,7 +41,7 @@ import java.util.Map;
 /**
  * User: cdr
  */
-public class TrafficProgressPanel extends JPanel {
+class TrafficProgressPanel extends JPanel {
   static final String MAX_TEXT = "100%";
   private static final String MIN_TEXT = "0%";
 
@@ -58,7 +58,7 @@ public class TrafficProgressPanel extends JPanel {
 
   @NotNull private final HintHint myHintHint;
 
-  public TrafficProgressPanel(@NotNull TrafficLightRenderer trafficLightRenderer, @NotNull Editor editor, @NotNull HintHint hintHint) {
+  TrafficProgressPanel(@NotNull TrafficLightRenderer trafficLightRenderer, @NotNull Editor editor, @NotNull HintHint hintHint) {
     myHintHint = hintHint;
     myTrafficLightRenderer = trafficLightRenderer;
 
@@ -99,7 +99,7 @@ public class TrafficProgressPanel extends JPanel {
     statusLabel.setFont(statusLabel.getFont().deriveFont(Font.BOLD));
   }
 
-  public int getMinWidth() {
+  int getMinWidth() {
     return Math.max(Math.max(Math.max(getLabelMinWidth(statistics), getLabelMinWidth(statusExtraLineLabel)), getLabelMinWidth(statusLabel)), getLabelMinWidth(new JLabel("<html><b>Slow inspections progress report long line</b></html>")));
   }
 
@@ -156,7 +156,7 @@ public class TrafficProgressPanel extends JPanel {
     }
   }
 
-  public void updatePanel(@NotNull TrafficLightRenderer.DaemonCodeAnalyzerStatus status, boolean isFake) {
+  void updatePanel(@NotNull TrafficLightRenderer.DaemonCodeAnalyzerStatus status, boolean isFake) {
     try {
       boolean needRebuild = myTrafficLightRenderer.updatePanel(status, myTrafficLightRenderer.getProject());
       statusLabel.setText(myTrafficLightRenderer.statusLabel);
@@ -181,6 +181,9 @@ public class TrafficProgressPanel extends JPanel {
         Pair<JProgressBar, JLabel> pair = myTrafficLightRenderer.passes.get(pass);
         JProgressBar progressBar = pair.first;
         int percent = (int)Math.round(progress * TrafficLightRenderer.MAX);
+        if (percent == 100 && !pass.isFinished()) {
+          percent = 99;
+        }
         progressBar.setValue(percent);
         JLabel percentage = pair.second;
         percentage.setText(percent + "%");

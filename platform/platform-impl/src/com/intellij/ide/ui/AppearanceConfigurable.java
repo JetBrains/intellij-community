@@ -60,7 +60,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
 
   public JComponent createComponent() {
     initComponent();
-    DefaultComboBoxModel aModel = new DefaultComboBoxModel(UIUtil.getValidFontNames(false));
+    DefaultComboBoxModel aModel = new DefaultComboBoxModel(UIUtil.getValidFontNames(Registry.is("ide.settings.appearance.font.family.only")));
     myComponent.myFontCombo.setModel(aModel);
     myComponent.myFontSizeCombo.setModel(new DefaultComboBoxModel(UIUtil.getStandardFontSizes()));
     myComponent.myPresentationModeFontSize.setModel(new DefaultComboBoxModel(UIUtil.getStandardFontSizes()));

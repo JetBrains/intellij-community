@@ -28,7 +28,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -153,8 +152,10 @@ public class ShowFilePathAction extends AnAction {
     e.getPresentation().setEnabled(getFile(e) != null);
   }
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
     show(getFile(e), new ShowAction() {
+      @Override
       public void show(final ListPopup popup) {
         DataManager.getInstance().getDataContextFromFocus().doWhenDone(new Consumer<DataContext>() {
           @Override
@@ -168,6 +169,7 @@ public class ShowFilePathAction extends AnAction {
 
   public static void show(final VirtualFile file, final MouseEvent e) {
     show(file, new ShowAction() {
+      @Override
       public void show(final ListPopup popup) {
         if (e.getComponent().isShowing()) {
           popup.show(new RelativePoint(e));
@@ -196,6 +198,7 @@ public class ShowFilePathAction extends AnAction {
 
     final ArrayList<Icon> icons = new ArrayList<Icon>();
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      @Override
       public void run() {
         for (String each : fileUrls) {
           final File ioFile = new File(each);
@@ -210,7 +213,8 @@ public class ShowFilePathAction extends AnAction {
           icons.add(eachIcon);
         }
 
-        LaterInvocator.invokeLater(new Runnable() {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
           public void run() {
             show.show(createPopup(files, icons));
           }
@@ -244,6 +248,7 @@ public class ShowFilePathAction extends AnAction {
         final File selectedFile = new File(getPresentableUrl(selectedValue));
         if (selectedFile.exists()) {
           ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+            @Override
             public void run() {
               openFile(selectedFile);
             }
