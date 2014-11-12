@@ -190,7 +190,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
   }
 
   private void updateDetailsBorder(@Nullable VcsFullCommitDetails data) {
-    if (data == null) {
+    if (data == null || !myColorManager.isMultipleRoots()) {
       myMainContentPanel.setBorder(BorderFactory.createEmptyBorder());
     }
     else {
