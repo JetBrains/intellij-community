@@ -166,8 +166,7 @@ projectBuilder.buildInfoPrinter = new TeamCityBuildInfoPrinter()
 projectBuilder.compressJars = false
 
 binding.setVariable("notifyArtifactBuilt", { String artifactPath ->
-  projectBuilder.info("notifyArtifactBuilt pass")
-/*  if (!artifactPath.startsWith(home)) {
+  if (!artifactPath.startsWith(home)) {
     projectBuilder.error("Artifact path $artifactPath should start with $home")
   }
   def relativePath = artifactPath.substring(home.length())
@@ -178,7 +177,7 @@ binding.setVariable("notifyArtifactBuilt", { String artifactPath ->
   if (file.isDirectory()) {
     relativePath += "=>" + file.name
   }
-  projectBuilder.info("##teamcity[publishArtifacts '$relativePath']") */
+  projectBuilder.info("##teamcity[publishArtifacts '$relativePath']")
 })
 
 def suspendUntilDebuggerConnect = System.getProperty("debug.suspend") ?: "n"
@@ -644,6 +643,7 @@ private Map readIdeaProperties(Map args) {
   ideaPropertiesFile.close();
 
   def defaultProperties = ["CVS_PASSFILE": "~/.cvspass",
+                           "JVMVersion": "1.6*",
                            "com.apple.mrj.application.live-resize": "false",
                            "idea.paths.selector": args.system_selector,
                            "java.endorsed.dirs": "",
