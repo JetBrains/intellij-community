@@ -345,18 +345,18 @@ public final class UpdateChecker {
     }
   }
 
-  public static boolean checkPluginsHost(final String host,
-                                         final Map<PluginId, PluginDownloader> downloaded,
-                                         final boolean collectToUpdate,
+  public static boolean checkPluginsHost(String host,
+                                         Map<PluginId, PluginDownloader> downloaded,
+                                         boolean collectToUpdate,
                                          @Nullable ProgressIndicator indicator) throws Exception {
     return checkPluginsHost(host, downloaded, null, collectToUpdate, indicator, null);
   }
 
-  private static boolean checkPluginsHost(final String host,
+  private static boolean checkPluginsHost(String host,
                                           final Map<PluginId, PluginDownloader> downloaded,
                                           final @Nullable Collection<IdeaPluginDescriptor> incompatiblePlugins,
                                           final boolean collectToUpdate,
-                                          final @Nullable ProgressIndicator indicator,
+                                          @Nullable ProgressIndicator indicator,
                                           final BuildNumber buildNumber) throws Exception {
     final Document document;
     try {
@@ -746,12 +746,12 @@ public final class UpdateChecker {
     return "";
   }
 
-  public static boolean install(Collection<PluginDownloader> downloaders) {
+  public static boolean install(@NotNull Collection<PluginDownloader> downloaders, @NotNull ProgressIndicator progressIndicator) {
     boolean installed = false;
     for (PluginDownloader downloader : downloaders) {
       if (getDisabledToUpdatePlugins().contains(downloader.getPluginId())) continue;
       try {
-        if (downloader.prepareToInstall(ProgressManager.getInstance().getProgressIndicator())) {
+        if (downloader.prepareToInstall(progressIndicator)) {
           final IdeaPluginDescriptor descriptor = downloader.getDescriptor();
           if (descriptor != null) {
             InstalledPluginsTableModel.updateExistingPlugin(descriptor, PluginManager.getPlugin(descriptor.getPluginId()));

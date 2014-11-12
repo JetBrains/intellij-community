@@ -23,7 +23,6 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.Pair;
@@ -89,14 +88,8 @@ public class PluginDownloader {
     myBuildNumber = buildNumber;
   }
 
-  @SuppressWarnings("UnusedDeclaration")
-  @Deprecated
-  public boolean prepareToInstall() throws IOException {
-    return prepareToInstall(new ProgressIndicatorBase());
-  }
-
-  public boolean prepareToInstall(ProgressIndicator pi) throws IOException {
-    return prepareToInstall(pi, myBuildNumber);
+  public boolean prepareToInstall(@NotNull ProgressIndicator progressIndicator) throws IOException {
+    return prepareToInstall(progressIndicator, myBuildNumber);
   }
 
   public boolean prepareToInstall(@Nullable ProgressIndicator progressIndicator, @Nullable BuildNumber forBuildNumber) throws IOException {
