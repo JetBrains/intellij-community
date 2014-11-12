@@ -27,6 +27,8 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DefaultProjectFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -47,6 +49,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.java.decompiler.main.decompiler.BaseDecompiler;
 import org.jetbrains.java.decompiler.main.extern.IBytecodeProvider;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
@@ -74,6 +77,7 @@ public class IdeaDecompiler extends ClassFileDecompilers.Light {
   private final IFernflowerLogger myLogger = new IdeaLogger();
   private final Map<String, Object> myOptions = new HashMap<String, Object>();
   private boolean myLegalNoticeAccepted;
+  private volatile ProgressIndicator myProgress;
 
   public IdeaDecompiler() {
     myOptions.put(IFernflowerPreferences.HIDE_DEFAULT_CONSTRUCTOR, "0");
@@ -140,6 +144,8 @@ public class IdeaDecompiler extends ClassFileDecompilers.Light {
       return ClsFileImpl.decompile(file);
     }
 
+    myProgress = ProgressManager.getInstance().getProgressIndicator();
+
     try {
       Map<String, VirtualFile> files = ContainerUtil.newLinkedHashMap();
       files.put(file.getPath(), file);
@@ -193,6 +199,15 @@ public class IdeaDecompiler extends ClassFileDecompilers.Light {
         throw new CannotDecompileException(e);
       }
     }
+    finally {
+      myProgress = null;
+    }
+  }
+
+  @TestOnly
+  @Nullable
+  public ProgressIndicator getProgress() {
+    return myProgress;
   }
 
   private static class MyBytecodeProvider implements IBytecodeProvider {
