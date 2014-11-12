@@ -1,8 +1,8 @@
-package com.siyeh.igtest.resources.io.inside_try;
+package com.siyeh.igtest.resources.ioresource;
 
 import java.io.*;
 
-public class A {
+public class InsideTry {
 
     void foo() throws IOException {
         InputStream in = null;
