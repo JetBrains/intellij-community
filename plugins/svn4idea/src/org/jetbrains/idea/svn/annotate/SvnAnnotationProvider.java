@@ -49,7 +49,10 @@ import org.tmatesoft.svn.core.wc2.SvnTarget;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.*;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
 public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAnnotationProvider {
   private static final Object MERGED_KEY = new Object();
@@ -135,9 +138,8 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
           // TODO: only 2 elements will be in rp and for loop will be executed only once - probably rewrite with Pair
           AnnotateClient annotateClient = myVcs.getFactory(ioFile).createAnnotateClient();
           for (int i = 0; i < rp.size() - 1; i++) {
-            annotateClient.annotate(SvnTarget.fromFile(ioFile), rp.get(i + 1), rp.get(i), ((SvnFileRevision)revision).getPegRevision(),
-                                    calculateMergeinfo,
-                                    getLogClientOptions(myVcs), annotateHandler);
+            annotateClient.annotate(SvnTarget.fromFile(ioFile, ((SvnFileRevision)revision).getPegRevision()), rp.get(i + 1), rp.get(i),
+                                    calculateMergeinfo, getLogClientOptions(myVcs), annotateHandler);
           }
 
           if (rp.get(1).getNumber() > 0) {
@@ -254,8 +256,9 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
     final boolean calculateMergeinfo = SvnConfiguration.getInstance(myVcs.getProject()).isShowMergeSourcesInAnnotate() &&
                                        SvnUtil.checkRepositoryVersion15(myVcs, wasUrl.toString());
     AnnotateClient client = myVcs.getFactory().createAnnotateClient();
-    client.annotate(SvnTarget.fromURL(wasUrl), SVNRevision.create(1), svnRevision, svnRevision, calculateMergeinfo,
-                    getLogClientOptions(myVcs), annotateHandler);
+    client
+      .annotate(SvnTarget.fromURL(wasUrl, svnRevision), SVNRevision.create(1), svnRevision, calculateMergeinfo, getLogClientOptions(myVcs),
+                annotateHandler);
     return result;
   }
 
