@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyCustomMember;
@@ -35,7 +36,6 @@ import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyImportedModule;
-import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.impl.ResolveResultList;
 import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -299,22 +299,19 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
         if (PyUtil.isClassPrivateName(name)) {
           continue;
         }
-        result.add(LookupElementBuilder.create(name).withIcon(member.getIcon()).withTypeText(member.getShortType()));
+        final CompletionVariantsProcessor processor = createCompletionVariantsProcessor(location, suppressParentheses, point);
+        final PsiElement resolved = member.resolve(location);
+        if (resolved != null) {
+          processor.execute(resolved, ResolveState.initial());
+          result.addAll(processor.getResultList());
+        }
+        else {
+          result.add(LookupElementBuilder.create(name).withIcon(member.getIcon()).withTypeText(member.getShortType()));
+        }
       }
     }
-
     if (point == PointInImport.NONE || point == PointInImport.AS_NAME) { // when not imported from, add regular attributes
-      final CompletionVariantsProcessor processor = new CompletionVariantsProcessor(location, new Condition<PsiElement>() {
-        @Override
-        public boolean value(PsiElement psiElement) {
-          return !(psiElement instanceof PyImportElement) ||
-                 PsiTreeUtil.getParentOfType(psiElement, PyImportStatementBase.class) instanceof PyFromImportStatement;
-        }
-      }, null);
-      if (suppressParentheses) {
-        processor.suppressParentheses();
-      }
-      processor.setPlainNamesOnly(point  == PointInImport.AS_NAME); // no parens after imported function names
+      final CompletionVariantsProcessor processor = createCompletionVariantsProcessor(location, suppressParentheses, point);
       myModule.processDeclarations(processor, ResolveState.initial(), null, location);
       if (namesAlready != null) {
         for (LookupElement le : processor.getResultList()) {
@@ -338,6 +335,24 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
       }
     }
     return result;
+  }
+
+  @NotNull
+  private static CompletionVariantsProcessor createCompletionVariantsProcessor(PsiElement location,
+                                                                               boolean suppressParentheses,
+                                                                               PointInImport point) {
+    final CompletionVariantsProcessor processor = new CompletionVariantsProcessor(location, new Condition<PsiElement>() {
+      @Override
+      public boolean value(PsiElement psiElement) {
+        return !(psiElement instanceof PyImportElement) ||
+               PsiTreeUtil.getParentOfType(psiElement, PyImportStatementBase.class) instanceof PyFromImportStatement;
+      }
+    }, null);
+    if (suppressParentheses) {
+      processor.suppressParentheses();
+    }
+    processor.setPlainNamesOnly(point == PointInImport.AS_NAME); // no parens after imported function names
+    return processor;
   }
 
   private void addImportedSubmodules(PsiElement location, Set<String> existingNames, List<LookupElement> result) {
