@@ -46,6 +46,7 @@ import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.evaluate.XValueCompactPresentation;
 import com.intellij.xdebugger.impl.ui.XValueTextProvider;
+import com.intellij.xdebugger.impl.ui.tree.XValueExtendedPresentation;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.sun.jdi.ArrayReference;
 import com.sun.jdi.ArrayType;
@@ -183,7 +184,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
     return value.substring(0, Math.min(value.length(), XValueNode.MAX_VALUE_LENGTH));
   }
 
-  private static class JavaValuePresentation extends XValuePresentation implements XValueCompactPresentation {
+  private static class JavaValuePresentation extends XValueExtendedPresentation implements XValueCompactPresentation {
     private final String myValue;
     private final String myType;
     private final String myError;
@@ -270,6 +271,11 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
         return fullName.substring(name.length()) + " " + DEFAULT_SEPARATOR;
       }
       return DEFAULT_SEPARATOR;
+    }
+
+    @Override
+    public boolean isModified() {
+      return myValueDescriptor.isDirty();
     }
   }
 

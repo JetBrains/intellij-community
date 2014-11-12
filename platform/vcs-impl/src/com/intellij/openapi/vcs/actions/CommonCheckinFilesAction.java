@@ -85,7 +85,7 @@ public class CommonCheckinFilesAction extends AbstractCommonCheckinAction {
 
   private static Collection<LocalChangeList> getChangeListsForRoot(final ChangeListManager changeListManager, final FilePath dirPath) {
     Collection<Change> changes = changeListManager.getChangesIn(dirPath);
-    return ContainerUtil.map(changes, new Function<Change, LocalChangeList>() {
+    return ContainerUtil.map2Set(changes, new Function<Change, LocalChangeList>() {
       @Override
       public LocalChangeList fun(Change change) {
         return changeListManager.getChangeList(change);

@@ -20,15 +20,17 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.TextRevisionNumber;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
-import com.intellij.ui.CheckboxTree;
-import com.intellij.ui.CheckedTreeNode;
-import com.intellij.ui.ColoredTreeCellRenderer;
-import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.ui.*;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -48,6 +50,7 @@ import java.util.List;
 
 public class PushLog extends JPanel implements TypeSafeDataProvider {
 
+  private final static String COMMIT_MENU = "Vcs.Push.ContextMenu";
   private static final String START_EDITING = "startEditing";
   private final ChangesBrowser myChangesBrowser;
   private final CheckboxTree myTree;
@@ -163,6 +166,7 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
 
     myTree.setRowHeight(0);
     ToolTipManager.sharedInstance().registerComponent(myTree);
+    PopupHandler.installPopupHandler(myTree, VcsLogUiImpl.POPUP_ACTION_GROUP, COMMIT_MENU);
 
     myChangesBrowser =
       new ChangesBrowser(project, null, Collections.<Change>emptyList(), null, false, true, null, ChangesBrowser.MyUseCase.LOCAL_CHANGES,
@@ -180,21 +184,18 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
   }
 
   private void updateChangesView() {
-    int[] rows = myTree.getSelectionRows();
-    if (rows != null && rows.length != 0) {
+    List<CommitNode> commitNodes = getSelectedCommitNodes();
+    if (!commitNodes.isEmpty()) {
       myChangesBrowser.getViewer().setEmptyText("No differences");
-      myChangesBrowser.setChangesToDisplay(collectAllChanges(rows));
     }
     else {
       setDefaultEmptyText();
-      myChangesBrowser.setChangesToDisplay(Collections.<Change>emptyList());
     }
+    myChangesBrowser.setChangesToDisplay(collectAllChanges(commitNodes));
   }
 
   @NotNull
-  private List<Change> collectAllChanges(@NotNull int[] selectedRows) {
-    List<DefaultMutableTreeNode> selectedNodes = getNodesForRows(getSortedRows(selectedRows));
-    List<CommitNode> commitNodes = collectSelectedCommitNodes(selectedNodes);
+  private static List<Change> collectAllChanges(@NotNull List<CommitNode> commitNodes) {
     return CommittedChangesTreeBrowser.zipChanges(collectChanges(commitNodes));
   }
 
@@ -241,16 +242,33 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
     myChangesBrowser.getViewer().setEmptyText("No commits selected");
   }
 
-  // Make changes available for diff action
+  // Make changes available for diff action; revisionNumber for create patch and copy revision number actions
   @Override
   public void calcData(DataKey key, DataSink sink) {
-    if (VcsDataKeys.CHANGES.equals(key)) {
-      int[] rows = myTree.getSelectionRows();
-      if (rows != null && rows.length != 0) {
-        Collection<Change> changes = collectAllChanges(rows);
-        sink.put(key, ArrayUtil.toObjectArray(changes, Change.class));
-      }
+    if (VcsDataKeys.CHANGES == key) {
+      List<CommitNode> commitNodes = getSelectedCommitNodes();
+      sink.put(key, ArrayUtil.toObjectArray(collectAllChanges(commitNodes), Change.class));
     }
+    else if (VcsDataKeys.VCS_REVISION_NUMBERS == key) {
+      List<CommitNode> commitNodes = getSelectedCommitNodes();
+      sink.put(key, ArrayUtil.toObjectArray(ContainerUtil.map(commitNodes, new Function<CommitNode, VcsRevisionNumber>() {
+        @Override
+        public VcsRevisionNumber fun(CommitNode commitNode) {
+          Hash hash = commitNode.getUserObject().getId();
+          return new TextRevisionNumber(hash.asString(), hash.toShortString());
+        }
+      }), VcsRevisionNumber.class));
+    }
+  }
+
+  @NotNull
+  private List<CommitNode> getSelectedCommitNodes() {
+    int[] rows = myTree.getSelectionRows();
+    if (rows != null && rows.length != 0) {
+      List<DefaultMutableTreeNode> selectedNodes = getNodesForRows(getSortedRows(rows));
+      return collectSelectedCommitNodes(selectedNodes);
+    }
+    return ContainerUtil.emptyList();
   }
 
   @NotNull

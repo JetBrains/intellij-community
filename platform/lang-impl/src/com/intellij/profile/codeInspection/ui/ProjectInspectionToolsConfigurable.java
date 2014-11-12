@@ -27,6 +27,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProfileManagerImpl;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.profile.codeInspection.ui.header.InspectionToolsConfigurable;
 
 import java.util.Arrays;
 
@@ -45,7 +46,6 @@ public class ProjectInspectionToolsConfigurable extends InspectionToolsConfigura
   public void apply() throws ConfigurationException {
     super.apply();
     final InspectionProfileImpl selectedObject = getSelectedObject();
-    LOG.assertTrue(selectedObject != null);
     final String profileName = selectedObject.getName();
     final SingleInspectionProfilePanel selectedPanel = getSelectedPanel();
     LOG.assertTrue(selectedPanel != null, "selected profile: " + profileName + " panels: " + Arrays.toString(getKnownNames().toArray()));
@@ -61,7 +61,7 @@ public class ProjectInspectionToolsConfigurable extends InspectionToolsConfigura
   @Override
   public boolean isModified() {
     final InspectionProfileImpl selectedObject = getSelectedObject();
-    if (selectedObject != null && !Comparing.strEqual(getCurrentProfile().getName(), selectedObject.getName())) return true;
+    if (!Comparing.strEqual(getCurrentProfile().getName(), selectedObject.getName())) return true;
     return super.isModified();
   }
 }

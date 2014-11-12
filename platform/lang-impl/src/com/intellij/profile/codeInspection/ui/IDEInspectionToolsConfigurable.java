@@ -25,6 +25,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.profile.codeInspection.ui.header.InspectionToolsConfigurable;
 
 public class IDEInspectionToolsConfigurable extends InspectionToolsConfigurable {
   private String myCurrentSelection;
