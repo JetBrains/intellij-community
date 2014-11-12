@@ -134,4 +134,24 @@ public abstract class DomStub extends ObjectStubBase<DomStub> {
   }
 
   public abstract int getIndex();
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    DomStub stub = (DomStub)o;
+    if (stub.getIndex() != getIndex()) return false;
+    if (stub.isCustom() != isCustom()) return false;
+
+    return Comparing.strEqual(stub.getName(), getName()) &&
+           Comparing.strEqual(stub.getNamespaceKey(), getNamespaceKey());
+  }
+
+  @Override
+  public int hashCode() {
+    int result = myLocalName.hashCode();
+    result = 31 * result + myNamespace.hashCode();
+    return result;
+  }
 }
