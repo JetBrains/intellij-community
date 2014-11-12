@@ -176,11 +176,7 @@ public class PluginDownloader {
       if (file.getName().endsWith(".zip")) {
         final File outputDir = FileUtil.createTempDirectory("plugin", "");
         try {
-          ZipUtil.extract(file, outputDir, new FilenameFilter() {
-            public boolean accept(final File dir, final String name) {
-              return true;
-            }
-          });
+          ZipUtil.extract(file, outputDir, null);
           final File[] files = outputDir.listFiles();
           if (files != null && files.length == 1) {
             descriptor = PluginManagerCore.loadDescriptor(files[0], PluginManagerCore.PLUGIN_XML);
@@ -250,7 +246,11 @@ public class PluginDownloader {
 
     URLConnection connection = null;
     try {
-      connection = openConnection(myPluginUrl);
+      Pair<URLConnection, String> result = HttpRequests.openConnection(myPluginUrl, false);
+      if (result.second != null) {
+        myPluginUrl = result.second;
+      }
+      connection = result.first;
 
       final InputStream is = (ApplicationManager.getApplication() != null)
                               ? UrlConnectionUtil.getConnectionInputStream(connection, progressIndicator)
@@ -288,14 +288,6 @@ public class PluginDownloader {
         ((HttpURLConnection)connection).disconnect();
       }
     }
-  }
-
-  private URLConnection openConnection(@NotNull String url) throws IOException {
-    Pair<URLConnection, String> result = HttpRequests.openConnection(url, false);
-    if (result.second != null) {
-      myPluginUrl = result.second;
-    }
-    return result.first;
   }
 
   @NotNull
