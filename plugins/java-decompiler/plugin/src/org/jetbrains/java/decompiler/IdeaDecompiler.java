@@ -109,6 +109,10 @@ public class IdeaDecompiler extends ClassFileDecompilers.Light {
         }
       });
     }
+
+    if (app.isUnitTestMode()) {
+      myOptions.put(IFernflowerPreferences.UNIT_TEST_MODE, "1");
+    }
   }
 
   private void showLegalNotice(final Project project, final VirtualFile file) {

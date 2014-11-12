@@ -243,7 +243,7 @@
           <option name="BACKGROUND"/>
           <option name="EFFECT_COLOR" value="ff0000"/>
           <option name="EFFECT_TYPE" value="2"/>
-          <option name="ERROR_STRIPE_COLOR" value="ff0000" />
+          <option name="ERROR_STRIPE_COLOR" value="CC1B13" />
         </value>
       </option>
       <option name="BLINKING_HIGHLIGHTS_ATTRIBUTES">
@@ -286,7 +286,7 @@
           <option name="BACKGROUND" value="f6ebbc"/>
           <option name="EFFECT_COLOR"/>
           <option name="EFFECT_TYPE" value="1"/>
-          <option name="ERROR_STRIPE_COLOR" value="ffff00" />
+          <option name="ERROR_STRIPE_COLOR" value="F7C600" />
         </value>
       </option>
       <option name="GENERIC_SERVER_ERROR_OR_WARNING">
@@ -357,7 +357,7 @@
           <option name="FOREGROUND"/>
           <option name="BACKGROUND" value="D6D6D6"/>
           <option name="EFFECT_COLOR"/>
-          <option name="ERROR_STRIPE_COLOR" value="cbcbcb"/>
+          <option name="ERROR_STRIPE_COLOR" value="C8C8C8"/>
         </value>
       </option>
 
@@ -366,7 +366,7 @@
           <option name="FOREGROUND"/>
           <option name="BACKGROUND" value="C8F2C8"/>
           <option name="EFFECT_COLOR"/>
-          <option name="ERROR_STRIPE_COLOR" value="baeeba"/>
+          <option name="ERROR_STRIPE_COLOR" value="AADEAA"/>
         </value>
       </option>
 
@@ -375,7 +375,7 @@
           <option name="FOREGROUND"/>
           <option name="BACKGROUND" value="CAD9FA"/>
           <option name="EFFECT_COLOR"/>
-          <option name="ERROR_STRIPE_COLOR" value="bccff9"/>
+          <option name="ERROR_STRIPE_COLOR" value="B8CBF5"/>
         </value>
       </option>
 
@@ -879,7 +879,7 @@
           <option name="FONT_TYPE" value="3" />
           <option name="EFFECT_COLOR" />
           <option name="EFFECT_TYPE" value="0" />
-          <option name="ERROR_STRIPE_COLOR" value="ff" />
+          <option name="ERROR_STRIPE_COLOR" value="295CFF" />
         </value>
       </option>
       <option name="BOOKMARKS_ATTRIBUTES">

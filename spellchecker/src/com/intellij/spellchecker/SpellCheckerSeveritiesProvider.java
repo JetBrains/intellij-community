@@ -20,6 +20,7 @@
  */
 package com.intellij.spellchecker;
 
+import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.SeveritiesProvider;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -41,7 +42,7 @@ public class SpellCheckerSeveritiesProvider extends SeveritiesProvider {
     final TextAttributes attributes = new TextAttributes();
 
     attributes.setEffectType(EffectType.WAVE_UNDERSCORE);
-    attributes.setEffectColor(new Color(0, 128, 0));
+    attributes.setEffectColor(HighlightDisplayLevel.GREEN);
 
     HighlightInfoType typo = new HighlightInfoType.HighlightInfoTypeImpl(TYPO, TextAttributesKey.createTextAttributesKey("TYPO", attributes));
     return Collections.singletonList(typo);
@@ -49,7 +50,7 @@ public class SpellCheckerSeveritiesProvider extends SeveritiesProvider {
 
   @Override
   public Color getTrafficRendererColor(@NotNull TextAttributes textAttributes) {
-    return Color.GREEN;
+    return HighlightDisplayLevel.GREEN;
   }
 
   @Override

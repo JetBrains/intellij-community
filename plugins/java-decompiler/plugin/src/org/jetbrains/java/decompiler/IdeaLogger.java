@@ -44,7 +44,8 @@ public class IdeaLogger extends IFernflowerLogger {
     if (t instanceof InternalException) throw (InternalException)t;
     else if (t instanceof ProcessCanceledException) throw (ProcessCanceledException)t;
     else if (t instanceof InterruptedException) throw new ProcessCanceledException(t);
-    else throw new InternalException(message, t);
+    if (myClass != null) message = message + " [" + myClass + "]";
+    throw new InternalException(message, t);
   }
 
   @Override

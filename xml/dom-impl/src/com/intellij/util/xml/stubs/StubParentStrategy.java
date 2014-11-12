@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.util.xml.stubs;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -139,7 +140,19 @@ public class StubParentStrategy implements DomParentStrategy {
   @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
   @Override
   public boolean equals(Object obj) {
-    return PhysicalDomParentStrategy.strategyEquals(this, obj);
+    if (!(obj instanceof StubParentStrategy)) {
+      return PhysicalDomParentStrategy.strategyEquals(this, obj);
+    }
+
+    if (obj == this) return true;
+
+    StubParentStrategy other = (StubParentStrategy)obj;
+    if (!other.getClass().equals(getClass())) return false;
+
+    if (!other.myStub.equals(myStub)) return false;
+
+    return Comparing.equal(getContainingFile(myStub.getHandler()),
+                           other.getContainingFile(other.myStub.getHandler()));
   }
 
   public static class Empty extends StubParentStrategy {
