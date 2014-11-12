@@ -127,7 +127,10 @@ public class PsiPolyExpressionUtil {
 
   private static boolean isInAssignmentOrInvocationContext(PsiExpression expr) {
     final PsiElement context = PsiUtil.skipParenthesizedExprUp(expr.getParent());
-    return context instanceof PsiExpressionList || context instanceof PsiConditionalExpression || isAssignmentContext(expr, context);
+    return context instanceof PsiExpressionList || 
+           context instanceof PsiArrayInitializerExpression || 
+           context instanceof PsiConditionalExpression || 
+           isAssignmentContext(expr, context);
   }
 
   private static boolean isAssignmentContext(PsiExpression expr, PsiElement context) {
