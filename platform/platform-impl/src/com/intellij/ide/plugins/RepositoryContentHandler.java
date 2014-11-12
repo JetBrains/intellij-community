@@ -16,6 +16,7 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.xml.sax.Attributes;
@@ -24,9 +25,8 @@ import org.xml.sax.helpers.DefaultHandler;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Stack;
 
-class RepositoryContentHandler extends DefaultHandler {
+public class RepositoryContentHandler extends DefaultHandler {
   @NonNls public static final String CATEGORY = "category";
   @NonNls public static final String IDEA_PLUGIN = "idea-plugin";
   @NonNls public static final String NAME = "name";
