@@ -178,4 +178,16 @@ public class IOResource {
     InputStream in = new FileInputStream("");
     escaper(in);
   }
+
+  void insignificant() throws IOException {
+      InputStream in = new FileInputStream("file");
+      Object o;
+      {;;};
+      try {
+          o = in.read();
+      }
+      finally {
+          in.close();
+      }
+  }
 }
