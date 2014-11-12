@@ -402,8 +402,6 @@ public class AllIcons {
     public static final Icon Ellipsis = IconLoader.getIcon("/general/ellipsis.png"); // 9x9
     public static final Icon Error = IconLoader.getIcon("/general/error.png"); // 16x16
     public static final Icon ErrorDialog = IconLoader.getIcon("/general/errorDialog.png"); // 32x32
-    public static final Icon ErrorMask = IconLoader.getIcon("/general/errorMask.png"); // 12x12
-    public static final Icon ErrorsFound = IconLoader.getIcon("/general/errorsFound.png"); // 12x12
     public static final Icon ErrorsInProgress = IconLoader.getIcon("/general/errorsInProgress.png"); // 12x12
     public static final Icon ExclMark = IconLoader.getIcon("/general/exclMark.png"); // 16x16
     public static final Icon ExpandAll = IconLoader.getIcon("/general/expandAll.png"); // 11x16
