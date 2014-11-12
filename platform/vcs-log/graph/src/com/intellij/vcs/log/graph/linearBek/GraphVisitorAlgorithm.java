@@ -50,21 +50,21 @@ public class GraphVisitorAlgorithm {
 
       visited.set(head, true);
       stack.push(head);
-      visitor.enterSubtree(head);
+      visitor.enterSubtree(head, visited);
 
       while (!stack.empty()) {
         int nextNode = nextNode(graph, stack.peek(), visited);
         if (nextNode != NODE_NOT_FOUND) {
           visited.set(nextNode, true);
           stack.push(nextNode);
-          visitor.enterSubtree(nextNode);
+          visitor.enterSubtree(nextNode, visited);
         }
         else {
-          visitor.leaveSubtree(stack.pop());
+          visitor.leaveSubtree(stack.pop(), visited);
         }
       }
 
-      visitor.leaveSubtree(head);
+      visitor.leaveSubtree(head, visited);
     }
 
     if (Boolean.getBoolean("idea.is.internal")) { // do not want to depend on Application here
@@ -101,7 +101,7 @@ public class GraphVisitorAlgorithm {
   }
 
   public interface GraphVisitor {
-    void enterSubtree(int nodeIndex);
-    void leaveSubtree(int nodeIndex);
+    void enterSubtree(int nodeIndex, BitSetFlags visited);
+    void leaveSubtree(int nodeIndex, BitSetFlags visited);
   }
 }
