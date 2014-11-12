@@ -175,8 +175,10 @@ public class SvnHistoryProvider
   public void reportAppendableHistory(FilePath path, final VcsAppendableHistorySessionPartner partner) throws VcsException {
     // request MAXIMUM_HISTORY_ROWS + 1 log entries to be able to detect if there are more log entries than it is configured to show -
     // see LimitHistoryCheck
-    reportAppendableHistory(path, partner, null, null, VcsConfiguration.getInstance(myVcs.getProject()).MAXIMUM_HISTORY_ROWS + 1, null,
-                            false);
+    VcsConfiguration configuration = VcsConfiguration.getInstance(myVcs.getProject());
+    int limit = configuration.LIMIT_HISTORY ? configuration.MAXIMUM_HISTORY_ROWS + 1 : 0;
+
+    reportAppendableHistory(path, partner, null, null, limit, null, false);
   }
 
   public void reportAppendableHistory(FilePath path, final VcsAppendableHistorySessionPartner partner,
