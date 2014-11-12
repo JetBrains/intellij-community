@@ -244,8 +244,8 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
         myMainText = null;
       }
       else {
-        String header = (myMultiRoot ? "[" + commit.getRoot().getName() + "] " : "") +
-                        commit.getId().toShortString() + " " + getAuthorText(commit);
+        String header = commit.getId().toShortString() + " " + getAuthorText(commit) +
+                        (myMultiRoot ? " [" + commit.getRoot().getName() + "]" : "");
         String body = getMessageText(commit);
         myMainText = header + "<br/>" + body;
       }
