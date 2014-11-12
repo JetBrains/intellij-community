@@ -105,7 +105,9 @@ public class IpnbCodeSourcePanel extends IpnbPanel<JComponent, IpnbCodeCell> imp
             getIpnbCodePanel().setEditing(false);
             UIUtil.requestFocus(getIpnbCodePanel().getFileEditor().getIpnbFilePanel());
           }
-          else if (keyCode == KeyEvent.VK_ENTER && InputEvent.CTRL_DOWN_MASK == e.getModifiersEx()) {
+
+
+          else if (keyCode == KeyEvent.VK_ENTER && InputEvent.CTRL_MASK == e.getModifiers()) {
             IpnbRunCellBaseAction.runCell(ipnbFilePanel, false);
           }
           else if (keyCode == KeyEvent.VK_ENTER && InputEvent.SHIFT_DOWN_MASK == e.getModifiersEx()) {

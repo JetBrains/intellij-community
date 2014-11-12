@@ -108,7 +108,10 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
   @Override
   public void switchToEditing() {
     setEditing(true);
-    getParent().repaint();
+    final Container parent = getParent();
+    if (parent != null) {
+      parent.repaint();
+    }
     UIUtil.requestFocus(myCodeSourcePanel.getEditor().getContentComponent());
   }
 
