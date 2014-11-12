@@ -4,8 +4,7 @@ import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.editor.Document;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbEditablePanel;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbFilePanel;
@@ -31,13 +30,13 @@ public class IpnbParser {
   }
 
   @NotNull
-  public static IpnbFile parseIpnbFile(@NotNull String fileText, String path) throws IOException {
-    IpnbFileRaw rawFile = gson.fromJson(fileText, IpnbFileRaw.class);
+  public static IpnbFile parseIpnbFile(@NotNull final CharSequence fileText, String path) throws IOException {
+    IpnbFileRaw rawFile = gson.fromJson(fileText.toString(), IpnbFileRaw.class);
     if (rawFile == null) return new IpnbFile(new IpnbFileRaw(), Lists.<IpnbCell>newArrayList(), path);
     List<IpnbCell> cells = new ArrayList<IpnbCell>();
     final IpnbWorksheet[] worksheets = rawFile.worksheets;
     for (IpnbWorksheet worksheet : worksheets) {
-      final IpnbCellRaw[] rawCells = worksheet.cells;
+      final List<IpnbCellRaw> rawCells = worksheet.cells;
       for (IpnbCellRaw rawCell : rawCells) {
         cells.add(rawCell.createCell());
       }
@@ -46,14 +45,19 @@ public class IpnbParser {
   }
 
   @NotNull
-  public static IpnbFile parseIpnbFile(@NotNull VirtualFile virtualFile) throws IOException {
-    final String fileText = new String(virtualFile.contentsToByteArray(), CharsetToolkit.UTF8);
-    return parseIpnbFile(fileText, virtualFile.getPath());
+  public static IpnbFile parseIpnbFile(@NotNull Document document, @NotNull final String path) throws IOException {
+    return parseIpnbFile(document.getImmutableCharSequence(), path);
   }
 
   public static void saveIpnbFile(@NotNull final IpnbFilePanel ipnbPanel) {
+    final String json = newDocumentText(ipnbPanel);
+    if (json == null) return;
+    writeToFile(ipnbPanel.getIpnbFile().getPath(), json);
+  }
+
+  public static String newDocumentText(@NotNull final IpnbFilePanel ipnbPanel) {
     final IpnbFile ipnbFile = ipnbPanel.getIpnbFile();
-    if (ipnbFile == null) return;
+    if (ipnbFile == null) return null;
     for (IpnbEditablePanel panel : ipnbPanel.getIpnbPanels()) {
       if (panel.isModified()) {
         panel.updateCellSource();
@@ -62,14 +66,14 @@ public class IpnbParser {
 
     final IpnbFileRaw fileRaw = ipnbFile.getRawFile();
     final IpnbWorksheet worksheet = new IpnbWorksheet();
-    final ArrayList<IpnbCellRaw> cellRaws = new ArrayList<IpnbCellRaw>();
     for (IpnbCell cell: ipnbFile.getCells()) {
-      cellRaws.add(IpnbCellRaw.fromCell(cell));
+      worksheet.cells.add(IpnbCellRaw.fromCell(cell));
     }
-    worksheet.cells = cellRaws.toArray(new IpnbCellRaw[cellRaws.size()]);
     fileRaw.worksheets = new IpnbWorksheet[]{worksheet};
-    final String json = gson.toJson(fileRaw);
-    final String path = ipnbFile.getPath();
+    return gson.toJson(fileRaw);
+  }
+
+  private static void writeToFile(@NotNull final String path, @NotNull final String json) {
     final File file = new File(path);
     FileWriter writer = null;
     try {
@@ -96,8 +100,9 @@ public class IpnbParser {
   }
 
   private static class IpnbWorksheet {
-    IpnbCellRaw[] cells;
+    List<IpnbCellRaw> cells = new ArrayList<IpnbCellRaw>();
   }
+
   private static class IpnbCellRaw {
     String cell_type;
     Integer level;
