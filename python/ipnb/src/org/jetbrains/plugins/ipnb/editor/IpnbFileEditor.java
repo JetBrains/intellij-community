@@ -67,6 +67,8 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
       @Override
       public void beforeFileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
         if (!new File(file.getPath()).exists()) return;
+        final Document document = getEditor().getDocument();
+        FileDocumentManager.getInstance().saveDocument(document);
         IpnbParser.saveIpnbFile(myIpnbFilePanel);
         file.refresh(false, false);
       }
