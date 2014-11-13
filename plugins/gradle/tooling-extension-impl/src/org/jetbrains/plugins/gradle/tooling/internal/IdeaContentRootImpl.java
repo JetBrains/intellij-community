@@ -21,10 +21,7 @@ import org.gradle.tooling.model.internal.ImmutableDomainObjectSet;
 import org.jetbrains.plugins.gradle.model.ExtIdeaContentRoot;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Vladislav.Soroka
@@ -62,6 +59,11 @@ public class IdeaContentRootImpl implements ExtIdeaContentRoot {
     mySourceDirectories.add(sourceDirectory);
   }
 
+  @Override
+  public DomainObjectSet<? extends IdeaSourceDirectory> getGeneratedSourceDirectories() {
+    return ImmutableDomainObjectSet.of(Collections.<IdeaSourceDirectory>emptyList());
+  }
+
   public void addTestDirectory(IdeaSourceDirectory testDirectory) {
     myTestDirectories.add(testDirectory);
   }
@@ -81,6 +83,11 @@ public class IdeaContentRootImpl implements ExtIdeaContentRoot {
   @Override
   public DomainObjectSet<? extends IdeaSourceDirectory> getTestDirectories() {
     return ImmutableDomainObjectSet.of(myTestDirectories);
+  }
+
+  @Override
+  public DomainObjectSet<? extends IdeaSourceDirectory> getGeneratedTestDirectories() {
+    return ImmutableDomainObjectSet.of(Collections.<IdeaSourceDirectory>emptyList());
   }
 
   @Override
