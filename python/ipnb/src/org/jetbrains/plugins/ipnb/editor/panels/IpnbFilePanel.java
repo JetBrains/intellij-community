@@ -55,6 +55,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
   private final List<IpnbEditablePanel> myIpnbPanels = Lists.newArrayList();
 
   @Nullable private IpnbEditablePanel mySelectedCell;
+  boolean switchToEditing = false;
   private IpnbEditablePanel myBufferPanel;
   private int myIncrement = 10;
   private int myInitialSelection = 0;
@@ -141,6 +142,10 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
     if (myInitialSelection >= 0 && myIpnbPanels.size() > myInitialSelection) {
       final IpnbEditablePanel toSelect = myIpnbPanels.get(myInitialSelection);
       setSelectedCell(toSelect);
+      if (switchToEditing) {
+        toSelect.switchToEditing();
+        switchToEditing = false;
+      }
       myParent.getScrollPane().getViewport().setViewPosition(new Point(0, myInitialPosition));
     }
     add(createEmptyPanel());
@@ -368,7 +373,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
             }
 
             if (from instanceof IpnbCodePanel) {
-              panel.switchToEditing();
+              switchToEditing = true;
             }
             setSelectedCell(panel);
             saveToFile();
