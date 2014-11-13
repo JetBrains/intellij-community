@@ -1236,12 +1236,13 @@ public class XmlSerializerTest extends TestCase {
     Bean2 bean = new Bean2();
     bean.module = "module";
     bean.ab = "ab";
-    doSerializerTest("<Bean2 ab=\"ab\" module=\"module\" />", bean);
+    doSerializerTest("<Bean2 ab=\"ab\" module=\"module\" />", bean, new SkipDefaultValuesSerializationFilters());
 
     checkSmartSerialization(new Bean2(), "<Bean2 module=\"1\" ab=\"2\" ac=\"32\" />");
     checkSmartSerialization(new Bean2(), "<Bean2 ab=\"2\" module=\"1\" ac=\"32\" />");
     checkSmartSerialization(new Bean2(), "<Bean2 ac=\"2\" module=\"1\" ab=\"32\" />");
     checkSmartSerialization(new Bean2(), "<Bean2 ac=\"2\" ab=\"32\" />");
+    checkSmartSerialization(new Bean2(), "<Bean2 ac=\"2\" ab=\"32\" module=\"\" />");
   }
 
   private static void checkSmartSerialization(@NotNull Bean2 bean, @NotNull String serialized) throws IOException, JDOMException {

@@ -146,7 +146,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
       final List<HgRepository> preselectedRepositories = ContainerUtil.newArrayList(repositoriesMap.keySet());
       UIUtil.invokeLaterIfNeeded(new Runnable() {
         public void run() {
-          new VcsPushDialog(myProject, preselectedRepositories).show();
+          new VcsPushDialog(myProject, preselectedRepositories, HgUtil.getCurrentRepository(myProject)).show();
         }
       });
     }

@@ -33,21 +33,25 @@ import java.util.List;
 
 public class LightStubBuilder implements StubBuilder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.stubs.LightStubBuilder");
+  private LighterAST myForcedLighterAst;
 
   @Override
   public StubElement buildStubTree(@NotNull PsiFile file) {
-    FileType fileType = file.getFileType();
-    if (!(fileType instanceof LanguageFileType)) {
-      LOG.error("File is not of LanguageFileType: " + fileType + ", " + file);
-      return null;
+    LighterAST tree = myForcedLighterAst;
+    if (tree == null) {
+      FileType fileType = file.getFileType();
+      if (!(fileType instanceof LanguageFileType)) {
+        LOG.error("File is not of LanguageFileType: " + fileType + ", " + file);
+        return null;
+      }
+      Language language = ((LanguageFileType)fileType).getLanguage();
+      final IFileElementType contentType = LanguageParserDefinitions.INSTANCE.forLanguage(language).getFileNodeType();
+      if (!(contentType instanceof ILightStubFileElementType)) {
+        LOG.error("File is not of ILightStubFileElementType: " + contentType + ", " + file);
+        return null;
+      }
+      tree = file.getNode().getLighterAST();
     }
-    Language language = ((LanguageFileType)fileType).getLanguage();
-    final IFileElementType contentType = LanguageParserDefinitions.INSTANCE.forLanguage(language).getFileNodeType();
-    if (!(contentType instanceof ILightStubFileElementType)) {
-      LOG.error("File is not of ILightStubFileElementType: " + contentType + ", " + file);
-      return null;
-    }
-    final LighterAST tree = file.getNode().getLighterAST();
     if (tree == null) return null;
 
     final StubElement rootStub = createStubForFile(file, tree);
@@ -153,5 +157,9 @@ public class LightStubBuilder implements StubBuilder {
    */
   protected boolean skipChildProcessingWhenBuildingStubs(@NotNull LighterAST tree, @NotNull LighterASTNode parent, @NotNull LighterASTNode node) {
     return false;
+  }
+
+  public void setForcedLighterAst(LighterAST forcedLighterAst) {
+    myForcedLighterAst = forcedLighterAst;
   }
 }

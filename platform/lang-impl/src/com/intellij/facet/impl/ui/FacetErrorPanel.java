@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.facet.impl.ui;
 
 import com.intellij.facet.ui.FacetConfigurationQuickFix;
@@ -52,9 +51,10 @@ public class FacetErrorPanel {
     myValidatorsManager = new FacetValidatorsManagerImpl();
     myWarningLabel = new JLabel();
     myWarningLabel.setIcon(AllIcons.General.WarningDialog);
+    myWarningLabel.setIconTextGap(5);
     myQuickFixButton.addActionListener(new ActionListener() {
       @Override
-      public void actionPerformed(final ActionEvent e) {
+      public void actionPerformed(@NotNull ActionEvent e) {
         if (myCurrentQuickFix != null) {
           myCurrentQuickFix.run(myQuickFixButton);
           myValidatorsManager.validate();

@@ -115,4 +115,25 @@ public class Py3CompletionTest extends PyTestCase {
   public void testFromQualifiedNamespacePackageImport() {
     doMultiFileTest();
   }
+
+  public void testImportNestedQualifiedNamespacePackage() {
+    doMultiFileTest();
+  }
+
+  // PY-7376
+  public void testRelativeFromImportInNamespacePackage() {
+    doMultiFileTestInsideNamespacePackage();
+  }
+
+  // PY-7376
+  public void testRelativeFromImportInNamespacePackage2() {
+    doMultiFileTestInsideNamespacePackage();
+  }
+
+  private void doMultiFileTestInsideNamespacePackage() {
+    myFixture.copyDirectoryToProject("completion/" + getTestName(true), "");
+    myFixture.configureByFile("nspkg1/a.py");
+    myFixture.completeBasic();
+    myFixture.checkResultByFile("completion/" + getTestName(true) + "/nspkg1/a.after.py");
+  }
 }

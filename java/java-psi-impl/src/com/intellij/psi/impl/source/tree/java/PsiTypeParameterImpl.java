@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,10 +26,8 @@ import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiTypeParameterListStub;
 import com.intellij.psi.impl.java.stubs.PsiTypeParameterStub;
 import com.intellij.psi.impl.light.LightEmptyImplementsList;
-import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.JavaStubPsiElement;
 import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -46,13 +44,6 @@ import java.util.List;
  * @author dsl
  */
 public class PsiTypeParameterImpl extends JavaStubPsiElement<PsiTypeParameterStub> implements PsiTypeParameter {
-  private final LightEmptyImplementsList myLightEmptyImplementsList = new LightEmptyImplementsList(null) {
-    @Override
-    public PsiManager getManager() {
-      return PsiTypeParameterImpl.this.getManager();
-    }
-  };
-
   public PsiTypeParameterImpl(final PsiTypeParameterStub stub) {
     super(stub, JavaStubElementTypes.TYPE_PARAMETER);
   }
@@ -245,7 +236,7 @@ public class PsiTypeParameterImpl extends JavaStubPsiElement<PsiTypeParameterStu
 
   @Override
   public PsiReferenceList getImplementsList() {
-    return myLightEmptyImplementsList;
+    return new LightEmptyImplementsList(getManager());
   }
 
   @Override
@@ -359,13 +350,10 @@ public class PsiTypeParameterImpl extends JavaStubPsiElement<PsiTypeParameterStu
     }
   }
 
+  @Override
   @NonNls
   public String toString() {
     return "PsiTypeParameter:" + getName();
-  }
-
-  public PsiMetaData getMetaData() {
-    return MetaRegistry.getMeta(this);
   }
 
   @Override

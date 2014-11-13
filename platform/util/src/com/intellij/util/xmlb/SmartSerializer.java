@@ -16,6 +16,7 @@
 package com.intellij.util.xmlb;
 
 import com.intellij.util.ThreeState;
+import gnu.trove.TObjectFloatHashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,7 +25,7 @@ import java.util.LinkedHashSet;
 
 public final class SmartSerializer {
   private final LinkedHashSet<String> mySerializedAccessorNameTracker;
-  private Binding[] myOrderedBindings;
+  private TObjectFloatHashMap<String> myOrderedBindings;
   private final SerializationFilter mySerializationFilter;
 
   public SmartSerializer(boolean trackSerializedNames, boolean useSkipEmptySerializationFilter) {
@@ -58,15 +59,24 @@ public final class SmartSerializer {
       myOrderedBindings = null;
     }
 
-    BeanBinding beanBinding = (BeanBinding)XmlSerializerImpl.getBinding(bean.getClass());
+    BeanBinding beanBinding = getBinding(bean);
     beanBinding.deserializeInto(bean, element, mySerializedAccessorNameTracker);
 
     if (mySerializedAccessorNameTracker != null) {
-      myOrderedBindings = beanBinding.computeOrderedBindings(mySerializedAccessorNameTracker);
+      myOrderedBindings = beanBinding.computeBindingWeights(mySerializedAccessorNameTracker);
     }
   }
 
   public void writeExternal(@NotNull Object bean, @NotNull Element element) {
-    ((BeanBinding)XmlSerializerImpl.getBinding(bean.getClass())).serializeInto(bean, element, mySerializationFilter, myOrderedBindings);
+    BeanBinding binding = getBinding(bean);
+    if (myOrderedBindings != null) {
+      binding.sortBindings(myOrderedBindings);
+    }
+    binding.serializeInto(bean, element, mySerializationFilter);
+  }
+
+  @NotNull
+  private static BeanBinding getBinding(@NotNull Object bean) {
+    return (BeanBinding)XmlSerializerImpl.getBinding(bean.getClass());
   }
 }

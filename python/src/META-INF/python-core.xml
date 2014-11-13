@@ -706,6 +706,13 @@
       <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="ProjectViewPopupMenuRefactoringGroup"/>
     </action>
 
+    <action id="PyDebugger.AttachToProcess" class="com.jetbrains.python.debugger.attach.PyAttachToProcessAction"
+            text="Attach to Process..."
+            description="Attach debugger to a Python process">
+
+      <add-to-group group-id="ToolsMenu" anchor="first"/>
+    </action>
+
     <group id="PyPackagingMenu" text="Packaging">
       <action id="CreateSetupPy" class="com.jetbrains.python.packaging.setupPy.CreateSetupPyAction"/>
       <action id="RunSetupPyTask" class="com.jetbrains.python.packaging.setupPy.SetupTaskChooserAction"/>

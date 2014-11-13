@@ -16,6 +16,7 @@
 package org.jetbrains.java.decompiler;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
 
 public class IdeaLogger extends IFernflowerLogger {
@@ -41,7 +42,10 @@ public class IdeaLogger extends IFernflowerLogger {
   @Override
   public void writeMessage(String message, Throwable t) {
     if (t instanceof InternalException) throw (InternalException)t;
-    else throw new InternalException(message, t);
+    else if (t instanceof ProcessCanceledException) throw (ProcessCanceledException)t;
+    else if (t instanceof InterruptedException) throw new ProcessCanceledException(t);
+    if (myClass != null) message = message + " [" + myClass + "]";
+    throw new InternalException(message, t);
   }
 
   @Override

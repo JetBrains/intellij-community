@@ -50,7 +50,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
@@ -65,20 +64,17 @@ import java.util.*;
 import java.util.List;
 
 public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
-  private static final Icon NO_ANALYSIS_ICON = AllIcons.General.NoAnalysis;
-
   private final Project myProject;
   private final Document myDocument;
   private final PsiFile myFile;
   private final DaemonCodeAnalyzerImpl myDaemonCodeAnalyzer;
   private final SeverityRegistrar mySeverityRegistrar;
-  Icon icon;
+  private Icon icon;
   String statistics;
   String statusLabel;
   String statusExtraLine;
   boolean passStatusesVisible;
   final Map<ProgressableTextEditorHighlightingPass, Pair<JProgressBar, JLabel>> passes = ContainerUtil.newLinkedHashMap();
-  final Map<JProgressBar, JLabel> myProgressToText = new HashMap<JProgressBar, JLabel>();
   static final int MAX = 100;
   boolean progressBarsEnabled;
   Boolean progressBarsCompleted;
@@ -132,10 +128,10 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     errorCount = newErrors;
   }
 
-  public static void setOrRefreshErrorStripeRenderer(@NotNull EditorMarkupModel editorMarkupModel,
-                                                     @NotNull Project project,
-                                                     @NotNull Document document,
-                                                     PsiFile file) {
+  static void setOrRefreshErrorStripeRenderer(@NotNull EditorMarkupModel editorMarkupModel,
+                                              @NotNull Project project,
+                                              @NotNull Document document,
+                                              PsiFile file) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (!editorMarkupModel.isErrorStripeVisible() || !DaemonCodeAnalyzer.getInstance(project).isHighlightingAvailable(file)) {
       return;
@@ -296,19 +292,19 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
   }
 
   @NotNull
-  private Icon getIcon(DaemonCodeAnalyzerStatus status) {
+  private Icon getIcon(@NotNull DaemonCodeAnalyzerStatus status) {
     updatePanel(status, getProject());
     Icon icon = this.icon;
-    if (PowerSaveMode.isEnabled() || status.reasonWhySuspended != null || status.reasonWhyDisabled != null) {
+    if (PowerSaveMode.isEnabled() || status.reasonWhySuspended != null || status.reasonWhyDisabled != null || status.errorAnalyzingFinished) {
       return icon;
     }
     double progress = getOverallProgress(status);
     TruncatingIcon trunc = new TruncatingIcon(icon, icon.getIconWidth(), (int)(icon.getIconHeight() * progress));
 
-    return new LayeredIcon(NO_ANALYSIS_ICON, trunc);
+    return new LayeredIcon(trunc, AllIcons.General.InspectionInProgress);
   }
 
-  private static double getOverallProgress(DaemonCodeAnalyzerStatus status) {
+  private static double getOverallProgress(@NotNull DaemonCodeAnalyzerStatus status) {
     long advancement = 0;
     long limit = 0;
     for (ProgressableTextEditorHighlightingPass ps : status.passStati) {
@@ -323,7 +319,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     progressBarsEnabled = false;
     progressBarsCompleted = null;
     statistics = "";
-    passStatusesVisible = (false);
+    passStatusesVisible = false;
     statusLabel = null;
     statusExtraLine = null;
 
@@ -343,7 +339,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     if (status.reasonWhyDisabled != null) {
       statusLabel = "No analysis has been performed";
       statusExtraLine = "(" + status.reasonWhyDisabled + ")";
-      passStatusesVisible = (true);
+      passStatusesVisible = true;
       progressBarsCompleted = Boolean.FALSE;
       icon = AllIcons.General.NoAnalysis;
       return result;
@@ -351,9 +347,9 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     if (status.reasonWhySuspended != null) {
       statusLabel = "Code analysis has been suspended";
       statusExtraLine = "(" + status.reasonWhySuspended + ")";
-      passStatusesVisible = (true);
+      passStatusesVisible = true;
       progressBarsCompleted = Boolean.FALSE;
-      icon = AllIcons.Actions.Pause;
+      icon = AllIcons.Actions.InspectionsPause;
       return result;
     }
 
@@ -366,7 +362,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     }
 
     if (status.errorAnalyzingFinished) {
-      boolean isDumb = DumbService.isDumb(project);
+      boolean isDumb = project != null && DumbService.isDumb(project);
       if (isDumb) {
         statusLabel = "Shallow analysis completed";
         statusExtraLine = "Complete results will be available after indexing";
@@ -413,12 +409,11 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     passes.clear();
     for (ProgressableTextEditorHighlightingPass pass : status.passStati) {
       JProgressBar progressBar = new JProgressBar(0, MAX);
-      progressBar.setMaximum(TrafficLightRenderer.MAX);
+      progressBar.setMaximum(MAX);
       progressBar.putClientProperty("JComponent.sizeVariant", "mini");
       JLabel percLabel = new JLabel();
       percLabel.setText(TrafficProgressPanel.MAX_TEXT);
       passes.put(pass, Pair.create(progressBar, percLabel));
-      myProgressToText.put(progressBar, percLabel);
     }
   }
 }

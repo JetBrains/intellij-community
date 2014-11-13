@@ -40,13 +40,14 @@ public class ToggleToolbarAction extends ToggleAction implements DumbAware {
   @NotNull
   public static ActionGroup createToggleToolbarGroup(@NotNull Project project, @NotNull ToolWindow toolWindow) {
     return new DefaultActionGroup(new OptionsGroup(toolWindow),
-                                  new ToggleToolbarAction(toolWindow, PropertiesComponent.getInstance(project)));
+                                  new ToggleToolbarAction(toolWindow, PropertiesComponent.getInstance(project)),
+                                  Separator.getInstance());
   }
 
   private final PropertiesComponent myPropertiesComponent;
   private final ToolWindow myToolWindow;
 
-  ToggleToolbarAction(@NotNull ToolWindow toolWindow, @NotNull PropertiesComponent propertiesComponent) {
+  private ToggleToolbarAction(@NotNull ToolWindow toolWindow, @NotNull PropertiesComponent propertiesComponent) {
     super("Show Toolbar");
     myPropertiesComponent = propertiesComponent;
     myToolWindow = toolWindow;
@@ -62,6 +63,13 @@ public class ToggleToolbarAction extends ToggleAction implements DumbAware {
         if (contentManager != null) contentManager.addContentManagerListener(this);
       }
     });
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    super.update(e);
+    boolean hasToolbars = iterateToolbars(myToolWindow.getContentManager().getComponent()).iterator().hasNext();
+    e.getPresentation().setVisible(hasToolbars);
   }
 
   @Override
@@ -94,7 +102,7 @@ public class ToggleToolbarAction extends ToggleAction implements DumbAware {
 
   @NotNull
   public static String getShowToolbarProperty(@NotNull ToolWindow window) {
-    return window.getStripeTitle() + ".ShowToolbar";
+    return "ToolWindow" + window.getStripeTitle() + ".ShowToolbar";
   }
 
   @NotNull
@@ -134,12 +142,19 @@ public class ToggleToolbarAction extends ToggleAction implements DumbAware {
       for (final ActionToolbar toolbar : iterateToolbars(contentComponent)) {
         JComponent c = toolbar.getComponent();
         if (c.isVisible() || !c.isValid()) continue;
+        if (!result.isEmpty()) result.add(Separator.getInstance());
+
         List<AnAction> actions = toolbar.getActions(false);
         for (AnAction action : actions) {
-          if (action instanceof Separator && (addSeparator = true) || !(action instanceof ToggleAction)) continue;
-          if (addSeparator && !result.isEmpty()) result.add(Separator.getInstance());
-          result.add(action);
-          addSeparator = false;
+          if (!(action instanceof Separator && (addSeparator = true)) &&
+              action instanceof ToggleAction &&
+              !result.contains(action)) {
+            if (addSeparator && result.size() > 1 && !(result.get(result.size() - 2) instanceof Separator)) {
+              result.add(Separator.getInstance());
+            }
+            result.add(action);
+            addSeparator = false;
+          }
         }
       }
       boolean popup = result.size() > 3;

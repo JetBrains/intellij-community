@@ -59,13 +59,27 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
 
   @Override
   public PyType getReferenceType(@NotNull PsiElement referenceTarget, @NotNull TypeEvalContext context, @Nullable PsiElement anchor) {
-    PyType type = getNamedTupleType(referenceTarget, anchor);
+    PyType type = getBaseStringType(referenceTarget);
+    if (type != null) {
+      return type;
+    }
+    type = getNamedTupleType(referenceTarget, anchor);
     if (type != null) {
       return type;
     }
     type = getEnumType(referenceTarget, context, anchor);
     if (type != null) {
       return type;
+    }
+    return null;
+  }
+
+  @Nullable
+  private static PyType getBaseStringType(@NotNull PsiElement referenceTarget) {
+    final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(referenceTarget);
+    if (referenceTarget instanceof PyElement && builtinCache.isBuiltin(referenceTarget) &&
+        "basestring".equals(((PyElement)referenceTarget).getName())) {
+      return builtinCache.getStringType(LanguageLevel.forElement(referenceTarget));
     }
     return null;
   }

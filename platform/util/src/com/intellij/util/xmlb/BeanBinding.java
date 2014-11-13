@@ -20,14 +20,13 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ConcurrentSoftValueHashMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.xmlb.annotations.*;
-import gnu.trove.TObjectDoubleHashMap;
+import gnu.trove.TObjectFloatHashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -86,12 +85,7 @@ class BeanBinding extends Binding {
 
   @Nullable
   public Element serializeInto(@NotNull Object o, @Nullable Element element, @NotNull SerializationFilter filter) {
-    return serializeInto(o, element, filter, myBindings);
-  }
-
-  @Nullable
-  public Element serializeInto(@NotNull Object o, @Nullable Element element, @NotNull SerializationFilter filter, @Nullable Binding[] bindings) {
-    for (Binding binding : bindings == null ? myBindings : bindings) {
+    for (Binding binding : myBindings) {
       Accessor accessor = binding.getAccessor();
       if (!filter.accepts(accessor, o)) {
         continue;
@@ -122,28 +116,17 @@ class BeanBinding extends Binding {
   }
 
   @Override
-  public Object deserialize(Object o, @NotNull Object... nodes) {
-    Element element = null;
-    for (Object aNode : nodes) {
-      if (!XmlSerializerImpl.isIgnoredNode(aNode)) {
-        element = (Element)aNode;
-        break;
-      }
-    }
-
-    if (element == null) {
-      return o;
-    }
+  public Object deserialize(Object context, @NotNull Object node) {
     Object instance = ReflectionUtil.newInstance(myBeanClass);
-    deserializeInto(instance, element, null);
+    deserializeInto(instance, (Element)node, null);
     return instance;
   }
 
   @NotNull
-  public Binding[] computeOrderedBindings(@NotNull LinkedHashSet<String> accessorNameTracker) {
-    final TObjectDoubleHashMap<String> weights = new TObjectDoubleHashMap<String>(accessorNameTracker.size());
-    double weight = 0;
-    double step = (double)myBindings.length / (double)accessorNameTracker.size();
+  public TObjectFloatHashMap<String> computeBindingWeights(@NotNull LinkedHashSet<String> accessorNameTracker) {
+    TObjectFloatHashMap<String> weights = new TObjectFloatHashMap<String>(accessorNameTracker.size());
+    float weight = 0;
+    float step = (float)myBindings.length / (float)accessorNameTracker.size();
     for (String name : accessorNameTracker) {
       weights.put(name, weight);
       weight += step;
@@ -158,23 +141,24 @@ class BeanBinding extends Binding {
 
       weight++;
     }
+    return weights;
+  }
 
-    Binding[] result = Arrays.copyOf(myBindings, myBindings.length);
-    Arrays.sort(result, new Comparator<Binding>() {
+  public void sortBindings(@NotNull final TObjectFloatHashMap<String> weights) {
+    Arrays.sort(myBindings, new Comparator<Binding>() {
       @Override
       public int compare(@NotNull Binding o1, @NotNull Binding o2) {
         String n1 = o1.getAccessor().getName();
         String n2 = o2.getAccessor().getName();
-        double w1 = weights.get(n1);
-        double w2 = weights.get(n2);
+        float w1 = weights.get(n1);
+        float w2 = weights.get(n2);
         return (int)(w1 - w2);
       }
     });
-    return result;
   }
 
   public void deserializeInto(@NotNull Object result, @NotNull Element element, @Nullable Set<String> accessorNameTracker) {
-    MultiMap<Binding, Object> data = MultiMap.createLinked();
+    MultiMap<Binding, Object> data = null;
     nextNode:
     for (Object child : ContainerUtil.concat(element.getContent(), element.getAttributes())) {
       if (XmlSerializerImpl.isIgnoredNode(child)) {
@@ -183,7 +167,18 @@ class BeanBinding extends Binding {
 
       for (Binding binding : myBindings) {
         if (binding.isBoundTo(child)) {
-          data.putValue(binding, child);
+          if (binding instanceof MultiNodeBinding && ((MultiNodeBinding)binding).isMulti()) {
+            if (data == null) {
+              data = MultiMap.createLinked();
+            }
+            data.putValue(binding, child);
+          }
+          else {
+            if (accessorNameTracker != null) {
+              accessorNameTracker.add(binding.getAccessor().getName());
+            }
+            binding.deserialize(result, child);
+          }
           continue nextNode;
         }
       }
@@ -194,11 +189,13 @@ class BeanBinding extends Binding {
       Logger.getInstance("#" + myBeanClass.getName()).debug(message);
     }
 
-    for (Binding binding : data.keySet()) {
-      if (accessorNameTracker != null) {
-        accessorNameTracker.add(binding.getAccessor().getName());
+    if (data != null) {
+      for (Binding binding : data.keySet()) {
+        if (accessorNameTracker != null) {
+          accessorNameTracker.add(binding.getAccessor().getName());
+        }
+        ((MultiNodeBinding)binding).deserializeList(result, (List<?>)data.get(binding));
       }
-      binding.deserialize(result, ArrayUtil.toObjectArray(data.get(binding)));
     }
   }
 

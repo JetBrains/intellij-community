@@ -138,6 +138,9 @@ public abstract class ResourceInspection extends BaseInspection {
         }
       }
     }
+    while (isInsignificant(nextStatement)) {
+      nextStatement = PsiTreeUtil.getNextSiblingOfType(nextStatement, PsiStatement.class);
+    }
     while (nextStatement == null) {
       statement = PsiTreeUtil.getParentOfType(statement, PsiStatement.class, true);
       if (statement == null) {
@@ -158,6 +161,27 @@ public abstract class ResourceInspection extends BaseInspection {
       return true;
     }
     return isResourceClose(nextStatement, variable);
+  }
+
+  private static boolean isInsignificant(PsiStatement statement) {
+    if (statement == null) {
+      return false;
+    }
+    final boolean[] result = {true};
+    statement.accept(new JavaRecursiveElementWalkingVisitor() {
+      @Override
+      public void visitExpression(PsiExpression expression) {
+        super.visitExpression(expression);
+        result[0] = false;
+      }
+
+      @Override
+      public void visitElement(PsiElement element) {
+        super.visitElement(element);
+        if (!result[0]) stopWalking();
+      }
+    });
+    return result[0];
   }
 
   protected static boolean isResourceClosedInFinally(@NotNull PsiTryStatement tryStatement, @NotNull PsiVariable variable) {

@@ -488,6 +488,36 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myEditorComponent = new EditorComponentImpl(this);
     myScrollPane = new MyScrollPane();
     myVerticalScrollBar = (MyScrollBar)myScrollPane.getVerticalScrollBar();
+    ((MyScrollBar)myScrollPane.getHorizontalScrollBar()).setPersistentUI(new ButtonlessScrollBarUI() {
+      @Override
+      public boolean alwaysShowTrack() {
+        return false;
+      }
+
+      @Override
+      protected boolean isDark() {
+        return isDarkEnough();
+      }
+
+      @Override
+      protected Color adjustColor(Color c) {
+        return isMacOverlayScrollbar() ? super.adjustColor(c) : adjustThumbColor(super.adjustColor(c), isDark());
+      }
+
+      @Override
+      protected void paintThumb(Graphics g, JComponent c, Rectangle thumbBounds) {
+        if (!isMacOverlayScrollbar()) {
+          int half = getThickness() / 2;
+          int shift = half - 1;
+          g.translate(0, shift);
+          super.paintThumb(g, c, thumbBounds);
+          g.translate(0, -shift);
+        }
+        else {
+          super.paintThumb(g, c, thumbBounds);
+        }
+      }
+    });
     myPanel = new JPanel();
 
     UIUtil.putClientProperty(
@@ -548,6 +578,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         }
       });
     }
+  }
+
+  @NotNull
+  static Color adjustThumbColor(@NotNull Color base, boolean dark) {
+    return ColorUtil.withAlpha(ColorUtil.shift(base, dark ? 1.1 : 0.9), dark ? 0.85 : 0.7);
+  }
+
+  boolean isDarkEnough() {
+    return ColorUtil.isDark(getBackgroundColor());
   }
 
   private static void updateCaretVisualPosition(CaretEvent e) {
@@ -6075,6 +6114,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     public void setEditorFontSize(int fontSize) {
       if (fontSize < MIN_FONT_SIZE) fontSize = MIN_FONT_SIZE;
       if (fontSize > myMaxFontSize) fontSize = myMaxFontSize;
+      if (fontSize == myFontSize) return;
       myFontSize = fontSize;
       initFonts();
     }
@@ -6087,8 +6127,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     @Override
     public void setFontPreferences(@NotNull FontPreferences preferences) {
+      if (Comparing.equal(preferences, myFontPreferences)) return;
       preferences.copyTo(myFontPreferences);
-      initFonts();
+      reinitSettings();
     }
 
     @Override
@@ -6101,6 +6142,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     @Override
     public void setEditorFontName(String fontName) {
+      if (Comparing.equal(fontName, myFaceName)) return;
       myFaceName = fontName;
       initFonts();
     }
@@ -6750,37 +6792,19 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     @Override
+    public JScrollBar createHorizontalScrollBar() {
+      return new MyScrollBar(Adjustable.HORIZONTAL);
+    }
+
+    @Override
     protected void setupCorners() {
       super.setupCorners();
-
       setBorder(new TablessBorder());
+    }
 
-      setCorner(getVerticalScrollbarOrientation() == EditorEx.VERTICAL_SCROLLBAR_LEFT ?
-                LOWER_RIGHT_CORNER :
-                LOWER_LEFT_CORNER, new JPanel() {
-        @Override
-        public void paint(@NotNull Graphics g) {
-          if (UISettings.getInstance().PRESENTATION_MODE) {
-            return;
-          }
-
-          final Rectangle bounds = getBounds();
-          int width = bounds.width;
-          int height = bounds.height;
-
-          g.setColor(ButtonlessScrollBarUI.getTrackBackground());
-          g.fillRect(0, 0, width, height);
-
-          int shortner = myGutterComponent.getFoldingAreaWidth() / 2;
-
-          g.setColor(myGutterComponent.getBackground());
-          g.fillRect(0, 0, width - shortner, height);
-
-          g.setColor(ButtonlessScrollBarUI.getTrackBorderColor());
-          g.drawLine(width - 1 - shortner, 0, width - 1 - shortner, height);
-          g.drawLine(0, 0, width - 1, 0);
-        }
-      });
+    protected boolean isOverlaidScrollbar(@Nullable JScrollBar scrollbar) {
+      ScrollBarUI vsbUI = scrollbar == null ? null : scrollbar.getUI();
+      return vsbUI instanceof ButtonlessScrollBarUI && !((ButtonlessScrollBarUI)vsbUI).alwaysShowTrack();
     }
   }
 

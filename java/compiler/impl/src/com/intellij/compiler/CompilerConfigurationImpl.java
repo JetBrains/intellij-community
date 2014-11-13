@@ -25,11 +25,14 @@ import com.intellij.ProjectTopics;
 import com.intellij.compiler.impl.javaCompiler.BackendCompiler;
 import com.intellij.compiler.impl.javaCompiler.eclipse.EclipseCompiler;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacCompiler;
+import com.intellij.compiler.server.BuildManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.compiler.CompilerManager;
+import com.intellij.openapi.compiler.options.ExcludeEntryDescription;
 import com.intellij.openapi.compiler.options.ExcludedEntriesConfiguration;
+import com.intellij.openapi.compiler.options.ExcludesConfiguration;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
@@ -41,10 +44,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -92,7 +92,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   private final List<CompiledPattern> myNegatedCompiledPatterns = new ArrayList<CompiledPattern>();
   private boolean myWildcardPatternsInitialized = false;
   private final Project myProject;
-  private final ExcludedEntriesConfiguration myExcludedEntriesConfiguration;
+  private final ExcludesConfigNotificationsWrapper<ExcludedEntriesConfiguration> myExcludesConfiguration;
 
   private final Collection<BackendCompiler> myRegisteredCompilers = new ArrayList<BackendCompiler>();
   private JavacCompiler JAVAC_EXTERNAL_BACKEND;
@@ -115,8 +115,8 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
 
   public CompilerConfigurationImpl(Project project) {
     myProject = project;
-    myExcludedEntriesConfiguration = new ExcludedEntriesConfiguration();
-    Disposer.register(project, myExcludedEntriesConfiguration);
+    myExcludesConfiguration = new ExcludesConfigNotificationsWrapper<ExcludedEntriesConfiguration>(project, new ExcludedEntriesConfiguration());
+    Disposer.register(project, myExcludesConfiguration.getDelegate());
     MessageBusConnection connection = project.getMessageBus().connect(project);
     connection.subscribe(ProjectTopics.MODULES, new ModuleAdapter() {
       @Override
@@ -155,8 +155,8 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
         JpsJavaCompilerConfigurationSerializer.ENABLED, String.valueOf(myAddNotNullAssertions));
     }
 
-    if (myExcludedEntriesConfiguration.getExcludeEntryDescriptions().length > 0) {
-      myExcludedEntriesConfiguration.writeExternal(addChild(state, JpsJavaCompilerConfigurationSerializer.EXCLUDE_FROM_COMPILE));
+    if (myExcludesConfiguration.getExcludeEntryDescriptions().length > 0) {
+      myExcludesConfiguration.getDelegate().writeExternal(addChild(state, JpsJavaCompilerConfigurationSerializer.EXCLUDE_FROM_COMPILE));
     }
 
     final Element newChild = addChild(state, JpsJavaCompilerConfigurationSerializer.RESOURCE_EXTENSIONS);
@@ -204,7 +204,11 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   }
 
   public void setProjectBytecodeTarget(@Nullable String level) {
+    final String previous = myBytecodeTargetLevel;
     myBytecodeTargetLevel = level;
+    if (!myProject.isDefault() && !Comparing.equal(previous, level)) {
+      BuildManager.getInstance().clearState(myProject);
+    }
   }
 
   @Override
@@ -214,8 +218,12 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   }
 
   public void setModulesBytecodeTargetMap(@NotNull Map<String, String> mapping) {
+    final boolean shouldNotify = !myProject.isDefault() && !myModuleBytecodeTarget.equals(mapping);
     myModuleBytecodeTarget.clear();
     myModuleBytecodeTarget.putAll(mapping);
+    if (shouldNotify) {
+      BuildManager.getInstance().clearState(myProject);
+    }
   }
 
   public Map<String, String> getModulesBytecodeTargetMap() {
@@ -231,11 +239,12 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     else {
       previous = myModuleBytecodeTarget.put(module.getName(), level);
     }
-    // todo: mark module as dirty in order to rebuild it completely with the new target level
-    //if (!Comparing.equal(previous, level)) {
-    //  final Project project = module.getProject();
-    //
-    //}
+    if (!Comparing.equal(previous, level)) {
+      final Project project = module.getProject();
+      if (!project.isDefault()) {
+        BuildManager.getInstance().clearState(project);
+      }
+    }
   }
 
   @Override
@@ -383,13 +392,13 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   }
 
   @Override
-  public ExcludedEntriesConfiguration getExcludedEntriesConfiguration() {
-    return myExcludedEntriesConfiguration;
+  public ExcludesConfiguration getExcludedEntriesConfiguration() {
+    return myExcludesConfiguration;
   }
 
   @Override
   public boolean isExcludedFromCompilation(final VirtualFile virtualFile) {
-    return myExcludedEntriesConfiguration.isExcluded(virtualFile);
+    return myExcludesConfiguration.isExcluded(virtualFile);
   }
 
   @Override
@@ -654,7 +663,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
 
     Element node = parentNode.getChild(JpsJavaCompilerConfigurationSerializer.EXCLUDE_FROM_COMPILE);
     if (node != null) {
-      myExcludedEntriesConfiguration.readExternal(node);
+      myExcludesConfiguration.getDelegate().readExternal(node);
     }
 
     try {
@@ -977,4 +986,64 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     return child;
   }
 
+  private static class ExcludesConfigNotificationsWrapper<T extends ExcludesConfiguration> implements ExcludesConfiguration {
+    private final Project myProject;
+    private final T myDelegate;
+
+    public ExcludesConfigNotificationsWrapper(@NotNull Project project, @NotNull T delegate) {
+      myProject = project;
+      myDelegate = delegate;
+    }
+
+    @NotNull
+    public T getDelegate() {
+      return myDelegate;
+    }
+
+    @Override
+    public ExcludeEntryDescription[] getExcludeEntryDescriptions() {
+      return myDelegate.getExcludeEntryDescriptions();
+    }
+
+    @Override
+    public void addExcludeEntryDescription(ExcludeEntryDescription description) {
+      try {
+        myDelegate.addExcludeEntryDescription(description);
+      }
+      finally {
+        BuildManager.getInstance().clearState(myProject);
+      }
+    }
+
+    @Override
+    public void removeExcludeEntryDescription(ExcludeEntryDescription description) {
+      try {
+        myDelegate.removeExcludeEntryDescription(description);
+      }
+      finally {
+        BuildManager.getInstance().clearState(myProject);
+      }
+    }
+
+    @Override
+    public void removeAllExcludeEntryDescriptions() {
+      try {
+        myDelegate.removeAllExcludeEntryDescriptions();
+      }
+      finally {
+        BuildManager.getInstance().clearState(myProject);
+      }
+    }
+
+    @Override
+    public boolean containsExcludeEntryDescription(ExcludeEntryDescription description) {
+      return myDelegate.containsExcludeEntryDescription(description);
+    }
+
+    @Override
+    public boolean isExcluded(VirtualFile virtualFile) {
+      return myDelegate.isExcluded(virtualFile);
+    }
+  }
+  
 }

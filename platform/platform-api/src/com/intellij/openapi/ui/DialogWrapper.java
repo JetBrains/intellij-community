@@ -38,6 +38,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.*;
+import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBOptionButton;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Alarm;
@@ -54,6 +55,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.UIResource;
 import java.awt.*;
@@ -435,6 +437,9 @@ public abstract class DialogWrapper {
    */
   @Nullable
   protected Border createContentPaneBorder() {
+    if (getStyle() == DialogStyle.COMPACT) {
+      return new EmptyBorder(0,0,0,0);
+    }
     return ourDefaultBorder;
   }
 
@@ -554,9 +559,18 @@ public abstract class DialogWrapper {
       panel = withCB;
     }
 
-    panel.setBorder(IdeBorderFactory.createEmptyBorder(new Insets(8, 0, 0, 0)));
+    if (getStyle() == DialogStyle.COMPACT) {
+      CustomLineBorder line = new CustomLineBorder(new JBColor(Gray._153.withAlpha(128), Gray._100.withAlpha(128)), 1, 0, 0, 0);
+      panel.setBorder(new CompoundBorder(line, BorderFactory.createEmptyBorder(8, 12, 8, 12)));
+    } else {
+      panel.setBorder(IdeBorderFactory.createEmptyBorder(new Insets(8, 0, 0, 0)));
+    }
 
     return panel;
+  }
+
+  protected DialogStyle getStyle() {
+    return DialogStyle.NO_STYLE;
   }
 
   @NotNull
@@ -2112,4 +2126,6 @@ public abstract class DialogWrapper {
   }
 
   private static enum ErrorPaintingType {DOT, SIGN, LINE}
+
+  public enum DialogStyle {NO_STYLE, COMPACT}
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@
 package com.intellij.codeInspection.offlineViewer;
 
 import com.intellij.codeInsight.daemon.impl.CollectHighlightsUtil;
+import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;
@@ -32,6 +33,8 @@ import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.ui.InspectionToolPresentation;
 import com.intellij.codeInspection.ui.ProblemDescriptionNode;
 import com.intellij.lang.Language;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
@@ -44,9 +47,9 @@ import java.util.List;
 import java.util.Set;
 
 public class OfflineProblemDescriptorNode extends ProblemDescriptionNode {
-  public OfflineProblemDescriptorNode(@NotNull OfflineProblemDescriptor descriptor,
-                                      @NotNull LocalInspectionToolWrapper toolWrapper,
-                                      @NotNull InspectionToolPresentation presentation) {
+  OfflineProblemDescriptorNode(@NotNull OfflineProblemDescriptor descriptor,
+                               @NotNull LocalInspectionToolWrapper toolWrapper,
+                               @NotNull InspectionToolPresentation presentation) {
     super(descriptor, toolWrapper, presentation);
   }
 
@@ -90,36 +93,13 @@ public class OfflineProblemDescriptorNode extends ProblemDescriptionNode {
       if (element instanceof RefElement) {
         final PsiElement psiElement = ((RefElement)element).getElement();
         if (psiElement != null) {
-          PsiFile containingFile = psiElement.getContainingFile();
-          final ProblemsHolder holder = new ProblemsHolder(inspectionManager, containingFile, false);
-          final LocalInspectionTool localTool = ((LocalInspectionToolWrapper)myToolWrapper).getTool();
-          final int startOffset = psiElement.getTextRange().getStartOffset();
-          final int endOffset = psiElement.getTextRange().getEndOffset();
-          LocalInspectionToolSession session = new LocalInspectionToolSession(containingFile, startOffset, endOffset);
-          final PsiElementVisitor visitor = localTool.buildVisitor(holder, false, session);
-          localTool.inspectionStarted(session, false);
-          final PsiElement[] elementsInRange = getElementsIntersectingRange(containingFile,
-                                                                            startOffset,
-                                                                            endOffset);
-          for (PsiElement el : elementsInRange) {
-            el.accept(visitor);
-          }
-          localTool.inspectionFinished(session, holder);
-          if (holder.hasResults()) {
-            final List<ProblemDescriptor> list = holder.getResults();
-            final int idx = offlineProblemDescriptor.getProblemIndex();
-            int curIdx = 0;
-            for (ProblemDescriptor descriptor : list) {
-              final PsiNamedElement member = localTool.getProblemElement(descriptor.getPsiElement());
-              if (psiElement instanceof PsiFile || member != null && member.equals(psiElement)) {
-                if (curIdx == idx) {
-                  setUserObject(descriptor);
-                  return descriptor;
-                }
-                curIdx++;
-              }
+          ProblemDescriptor descriptor = ProgressManager.getInstance().runProcess(new Computable<ProblemDescriptor>() {
+            @Override
+            public ProblemDescriptor compute() {
+              return runLocalTool(psiElement, inspectionManager, offlineProblemDescriptor);
             }
-          }
+          }, new DaemonProgressIndicator());
+          if (descriptor != null) return descriptor;
         }
       }
       setUserObject(null);
@@ -148,6 +128,41 @@ public class OfflineProblemDescriptorNode extends ProblemDescriptionNode {
     }
     setUserObject(descriptor);
     return descriptor;
+  }
+
+  private ProblemDescriptor runLocalTool(@NotNull PsiElement psiElement,
+                                         @NotNull InspectionManager inspectionManager,
+                                         @NotNull OfflineProblemDescriptor offlineProblemDescriptor) {
+    PsiFile containingFile = psiElement.getContainingFile();
+    final ProblemsHolder holder = new ProblemsHolder(inspectionManager, containingFile, false);
+    final LocalInspectionTool localTool = ((LocalInspectionToolWrapper)myToolWrapper).getTool();
+    final int startOffset = psiElement.getTextRange().getStartOffset();
+    final int endOffset = psiElement.getTextRange().getEndOffset();
+    LocalInspectionToolSession session = new LocalInspectionToolSession(containingFile, startOffset, endOffset);
+    final PsiElementVisitor visitor = localTool.buildVisitor(holder, false, session);
+    localTool.inspectionStarted(session, false);
+    final PsiElement[] elementsInRange = getElementsIntersectingRange(containingFile, startOffset, endOffset);
+    for (PsiElement element : elementsInRange) {
+      element.accept(visitor);
+    }
+    localTool.inspectionFinished(session, holder);
+    if (holder.hasResults()) {
+      final List<ProblemDescriptor> list = holder.getResults();
+      final int idx = offlineProblemDescriptor.getProblemIndex();
+      int curIdx = 0;
+      for (ProblemDescriptor descriptor : list) {
+        final PsiNamedElement member = localTool.getProblemElement(descriptor.getPsiElement());
+        if (psiElement instanceof PsiFile || member != null && member.equals(psiElement)) {
+          if (curIdx == idx) {
+            setUserObject(descriptor);
+            return descriptor;
+          }
+          curIdx++;
+        }
+      }
+    }
+
+    return null;
   }
 
   @Nullable

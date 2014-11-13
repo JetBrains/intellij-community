@@ -87,7 +87,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
           if (element != null) {
             ShowUsagesAction showUsages = (ShowUsagesAction)ActionManager.getInstance().getAction(ShowUsagesAction.ID);
             RelativePoint popupPosition = JBPopupFactory.getInstance().guessBestPopupLocation(editor);
-            showUsages.startFindUsages(element, popupPosition, editor, 100);
+            showUsages.startFindUsages(element, popupPosition, editor, ShowUsagesAction.USAGES_PAGE_SIZE);
             return;
           }
         }
@@ -181,7 +181,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     return false;
   }
 
-  static Collection<PsiElement> suggestCandidates(final PsiReference reference) {
+  private static Collection<PsiElement> suggestCandidates(final PsiReference reference) {
     if (reference == null) {
       return Collections.emptyList();
     }

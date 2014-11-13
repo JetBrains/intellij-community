@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,10 @@
 package com.intellij.openapi.progress.util;
 
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.application.impl.LaterInvocator;
 
 public class DispatchThreadProgressWindow extends ProgressWindow{
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.progress.util.DispatchThreadProgressWindow");
@@ -58,7 +58,7 @@ public class DispatchThreadProgressWindow extends ProgressWindow{
   @Override
   protected void prepareShowDialog() {
     if (myRunnable != null) {
-      LaterInvocator.invokeLater(myRunnable, getModalityState());
+      ApplicationManager.getApplication().invokeLater(myRunnable, getModalityState());
     }
     showDialog();
   }

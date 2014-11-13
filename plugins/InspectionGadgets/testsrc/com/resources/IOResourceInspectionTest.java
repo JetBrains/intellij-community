@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,32 +15,30 @@
  */
 package com.resources;
 
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
-import com.intellij.pom.java.LanguageLevel;
-import com.intellij.testFramework.IdeaTestUtil;
-import com.siyeh.ig.IGInspectionTestCase;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.ig.LightInspectionTestCase;
 import com.siyeh.ig.resources.IOResourceInspection;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Alexey
  */
-public class IOResourceInspectionTest extends IGInspectionTestCase {
+public class IOResourceInspectionTest extends LightInspectionTestCase {
 
-  @Override
-  protected Sdk getTestProjectSdk() {
-    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_7);
-    return IdeaTestUtil.getMockJdk17();
-  }
-
-  public void test() throws Exception {
-    doTest("com/siyeh/igtest/resources/io/plain", new IOResourceInspection());
+  public void testIOResource() {
+    doTest();
   }
 
   public void testInsideTry() throws Exception {
     final IOResourceInspection inspection = new IOResourceInspection();
     inspection.insideTryAllowed = true;
-    doTest("com/siyeh/igtest/resources/io/inside_try", inspection);
+    myFixture.enableInspections(inspection);
+    doTest();
+  }
+
+  @Nullable
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    return new IOResourceInspection();
   }
 }

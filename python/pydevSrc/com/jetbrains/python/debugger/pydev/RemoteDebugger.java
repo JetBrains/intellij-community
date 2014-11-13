@@ -471,6 +471,7 @@ public class RemoteDebugger implements ProcessDebugger {
 
   private class DebuggerReader extends BaseOutputReader {
     private Reader myReader;
+    private StringBuilder myTextBuilder = new StringBuilder();
 
     private DebuggerReader(final Reader reader) throws IOException {
       super(reader);
@@ -620,7 +621,20 @@ public class RemoteDebugger implements ProcessDebugger {
 
     @Override
     protected void onTextAvailable(@NotNull String text) {
-      processResponse(text);
+      myTextBuilder.append(text);
+      if (text.contains("\n")) {
+        String[] lines = myTextBuilder.toString().split("\n");
+        myTextBuilder = new StringBuilder();
+
+        if (!text.endsWith("\n")) {
+          myTextBuilder.append(lines[lines.length - 1]);
+          lines = Arrays.copyOfRange(lines, 0, lines.length - 1);
+        }
+
+        for (String line : lines) {
+          processResponse(line + "\n");
+        }
+      }
     }
   }
 

@@ -117,7 +117,9 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       // in this case we should remove it from there
       removeFromArray(indexInReal);
     }
-    assertConsistency(ignoreCase, name);
+    if (CHECK) {
+      assertConsistency(ignoreCase, name);
+    }
   }
 
   @Nullable // null if there can't be a child with this name, NULL_VIRTUAL_FILE

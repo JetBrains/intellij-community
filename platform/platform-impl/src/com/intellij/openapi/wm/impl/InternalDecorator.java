@@ -16,6 +16,7 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.actions.ResizeToolWindowAction;
+import com.intellij.ide.actions.ToggleToolbarAction;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -79,6 +80,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
   @NonNls private static final String TOGGLE_CONTENT_UI_TYPE_ACTION_ID = "ToggleContentUiTypeMode";
 
   private ToolWindowHeader myHeader;
+  private ActionGroup myToggleToolbarGroup;
 
   InternalDecorator(final Project project, @NotNull WindowInfoImpl info, final ToolWindowImpl toolWindow) {
     super(new BorderLayout());
@@ -92,6 +94,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     myToggleDockModeAction = new ToggleDockModeAction();
     myToggleAutoHideModeAction = new TogglePinnedModeAction();
     myToggleContentUiTypeAction = new ToggleContentUiTypeAction();
+    myToggleToolbarGroup = ToggleToolbarAction.createToggleToolbarGroup(myProject, myToolWindow);
 
     myHeader = new ToolWindowHeader(toolWindow, info, new Producer<ActionGroup>() {
       @Override
@@ -414,6 +417,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
       addSorted(group, myAdditionalGearActions);
       group.addSeparator();
     }
+    group.addAction(myToggleToolbarGroup).setAsSecondary(true);
     if (myInfo.isDocked()) {
       group.add(myToggleAutoHideModeAction);
       group.add(myToggleDockModeAction);

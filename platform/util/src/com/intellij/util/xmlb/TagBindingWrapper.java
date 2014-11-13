@@ -15,7 +15,6 @@
  */
 package com.intellij.util.xmlb;
 
-import com.intellij.openapi.util.JDOMUtil;
 import org.jdom.Content;
 import org.jdom.Element;
 import org.jdom.Text;
@@ -24,14 +23,14 @@ import org.jetbrains.annotations.Nullable;
 
 //todo: merge with option tag binding
 class TagBindingWrapper extends Binding {
-  private final Binding binding;
+  private final Binding myBinding;
   private final String myTagName;
   private final String myAttributeName;
 
   public TagBindingWrapper(@NotNull Binding binding, final String tagName, final String attributeName) {
     super(binding.myAccessor);
 
-    this.binding = binding;
+    myBinding = binding;
 
     //noinspection unchecked
     assert binding.getBoundNodeType().isAssignableFrom(Text.class);
@@ -43,7 +42,7 @@ class TagBindingWrapper extends Binding {
   @Override
   public Object serialize(Object o, @Nullable Object context, SerializationFilter filter) {
     Element e = new Element(myTagName);
-    Content content = (Content)binding.serialize(o, e, filter);
+    Content content = (Content)myBinding.serialize(o, e, filter);
     if (content != null) {
       if (!myAttributeName.isEmpty()) {
         e.setAttribute(myAttributeName, content.getValue());
@@ -59,19 +58,14 @@ class TagBindingWrapper extends Binding {
   }
 
   @Override
-  public Object deserialize(Object context, @NotNull Object... nodes) {
-    assert nodes.length == 1;
-
-    Element e = (Element)nodes[0];
-    final Object[] childNodes;
-    if (!myAttributeName.isEmpty()) {
-      childNodes = new Object[]{e.getAttribute(myAttributeName)};
+  public Object deserialize(Object context, @NotNull Object node) {
+    Element element = (Element)node;
+    if (myAttributeName.isEmpty()) {
+      return Binding.deserializeList(myBinding, context, XmlSerializerImpl.getFilteredContent(element));
     }
     else {
-      childNodes = JDOMUtil.getContent(e);
+      return myBinding.deserialize(context, element.getAttribute(myAttributeName));
     }
-  
-    return binding.deserialize(context, childNodes);
   }
 
   @Override

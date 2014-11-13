@@ -32,6 +32,8 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LogicalRoot;
 import com.intellij.util.LogicalRootsManager;
@@ -165,7 +167,7 @@ public class JavaQualifiedNameProvider implements QualifiedNameProvider {
       if (toInsert.length() != 0) toInsert += "#";
       toInsert += member.getName();
       if (member instanceof PsiMethod) {
-        toInsert += getParameterString((PsiMethod)member);
+        toInsert += getParameterString((PsiMethod)member, true);
       }
     }
     else if (elementAtCaret == null ||
@@ -178,7 +180,9 @@ public class JavaQualifiedNameProvider implements QualifiedNameProvider {
 
       toInsert = targetElement.getName();
       if (targetElement instanceof PsiMethod) {
-        suffix = "()";
+        if (!fqn.contains("(")) {
+          suffix = "()";
+        }
         if (((PsiMethod)targetElement).isConstructor()) {
           targetElement = targetElement.getContainingClass();
         }
@@ -253,16 +257,24 @@ public class JavaQualifiedNameProvider implements QualifiedNameProvider {
     editor.getCaretModel().moveToOffset(caretOffset);
   }
 
+  private static String getParameterString(PsiMethod method, final boolean erasure) {
+    return "(" + StringUtil.join(method.getParameterList().getParameters(), new Function<PsiParameter, String>() {
+      @Override
+      public String fun(PsiParameter parameter) {
+        PsiType type = parameter.getType();
+        if (erasure) {
+          final PsiType erased = TypeConversionUtil.erasure(type);
+          if (erased != null) {
+            type = erased;
+          }
+        }
+        return type.getCanonicalText();
+      }
+    }, ", ") + ")";
+  }
+
   private static String getParameterString(PsiMethod method) {
-    String toInsert = "(";
-    PsiParameter[] parameters = method.getParameterList().getParameters();
-    for (int i = 0; i < parameters.length; i++) {
-      PsiParameter parameter = parameters[i];
-      if (i != 0) toInsert += ", ";
-      toInsert += parameter.getType().getCanonicalText();
-    }
-    toInsert += ")";
-    return toInsert;
+    return getParameterString(method, false);
   }
 
   private static boolean isReferencedTo(PsiReferenceExpression referenceExpression, PsiMember targetElement) {

@@ -29,7 +29,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
@@ -116,13 +115,15 @@ public class DuplicatesIndex extends FileBasedIndexExtension<Integer, TIntArrayL
       DuplicatesProfile profile = findDuplicatesProfile(type);
       if (profile == null) return Collections.emptyMap();
 
-      PsiFile psiFile = ((FileContentImpl)inputData).getPsiFileAccountingForUnsavedDocument();
+      FileContentImpl fileContent = (FileContentImpl)inputData;
 
       if (profile instanceof LightDuplicateProfile && ourEnabledLightProfiles) {
         final THashMap<Integer, TIntArrayList> result = new THashMap<Integer, TIntArrayList>();
-        ((LightDuplicateProfile)profile).process(psiFile, new LightDuplicateProfile.Callback() {
+        LighterAST ast = fileContent.getLighterAST();
+        assert ast != null;
+        ((LightDuplicateProfile)profile).process(ast, new LightDuplicateProfile.Callback() {
           @Override
-          public void process(LighterAST ast, LighterASTNode node, int hash) {
+          public void process(@NotNull LighterAST ast, @NotNull LighterASTNode node, int hash) {
             TIntArrayList list = result.get(hash);
             if (list == null) { result.put(hash, list = new TIntArrayList(1)); }
             list.add(node.getStartOffset());
@@ -133,7 +134,7 @@ public class DuplicatesIndex extends FileBasedIndexExtension<Integer, TIntArrayL
       MyFragmentsCollector collector = new MyFragmentsCollector(profile, ((LanguageFileType)type).getLanguage());
       DuplocateVisitor visitor = profile.createVisitor(collector, true);
 
-      visitor.visitNode(psiFile);
+      visitor.visitNode(fileContent.getPsiFileAccountingForUnsavedDocument());
 
       return collector.getMap();
     }

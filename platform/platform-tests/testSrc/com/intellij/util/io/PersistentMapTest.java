@@ -414,6 +414,7 @@ public class PersistentMapTest extends TestCase {
 
       map = new PersistentHashMap<String, Integer>(file, stringDescriptor, integerDescriptor);
       if (isSmall) map.compact();
+      else assertTrue(map.isDirty());  // autocompact on open should leave the map dirty
       assertTrue(!map.makesSenseToCompact());
       System.out.println(System.currentTimeMillis() - started);
       for (int i = 0; i < stringsCount; ++i) {

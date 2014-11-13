@@ -23,9 +23,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.BrowserHyperlinkListener;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.util.NotNullProducer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
@@ -44,6 +46,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.CompoundBorder;
+import javax.swing.border.MatteBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.text.DefaultCaret;
@@ -69,10 +73,12 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
   @NotNull private final DataPanel myCommitDetailsPanel;
   @NotNull private final MessagePanel myMessagePanel;
   @NotNull private final JScrollPane myScrollPane;
+  @NotNull private final JPanel myMainContentPanel;
+
   @NotNull private final JBLoadingPanel myLoadingPanel;
+  @NotNull private final VcsLogColorManager myColorManager;
 
   @NotNull private VisiblePack myDataPack;
-
   @Nullable private VcsFullCommitDetails myCurrentCommitDetails;
 
   DetailsPanel(@NotNull VcsLogDataHolder logDataHolder,
@@ -81,13 +87,14 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
                @NotNull VisiblePack initialDataPack) {
     myLogDataHolder = logDataHolder;
     myGraphTable = graphTable;
+    myColorManager = colorManager;
     myDataPack = initialDataPack;
 
-    myRefsPanel = new RefsPanel(colorManager);
-    myCommitDetailsPanel = new DataPanel(logDataHolder.getProject());
+    myRefsPanel = new RefsPanel(myColorManager);
+    myCommitDetailsPanel = new DataPanel(logDataHolder.getProject(), logDataHolder.isMultiRoot());
 
     myScrollPane = new JBScrollPane(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-    JPanel content = new JPanel(new MigLayout("flowy, ins 0, hidemode 3, gapy 0")) {
+    myMainContentPanel = new JPanel(new MigLayout("flowy, ins 0, hidemode 3, gapy 0")) {
       @Override
       public Dimension getPreferredSize() {
         Dimension size = super.getPreferredSize();
@@ -95,12 +102,12 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
         return size;
       }
     };
-    content.setOpaque(false);
+    myMainContentPanel.setOpaque(false);
     myScrollPane.setOpaque(false);
     myScrollPane.getViewport().setOpaque(false);
-    myScrollPane.setViewportView(content);
-    content.add(myRefsPanel, "");
-    content.add(myCommitDetailsPanel, "");
+    myScrollPane.setViewportView(myMainContentPanel);
+    myMainContentPanel.add(myRefsPanel, "");
+    myMainContentPanel.add(myCommitDetailsPanel, "");
 
     myLoadingPanel = new JBLoadingPanel(new BorderLayout(), logDataHolder, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS) {
       @Override
@@ -159,11 +166,13 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
         myLoadingPanel.startLoading();
         myCommitDetailsPanel.setData(null);
         myRefsPanel.setRefs(Collections.<VcsRef>emptyList());
+        updateDetailsBorder(null);
       }
       else {
         myLoadingPanel.stopLoading();
         myCommitDetailsPanel.setData(commitData);
         myRefsPanel.setRefs(sortRefs(hash, commitData.getRoot()));
+        updateDetailsBorder(commitData);
         newCommitDetails = commitData;
       }
 
@@ -177,6 +186,24 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
         myCurrentCommitDetails = newCommitDetails;
         myScrollPane.getVerticalScrollBar().setValue(0);
       }
+    }
+  }
+
+  private void updateDetailsBorder(@Nullable VcsFullCommitDetails data) {
+    if (data == null || !myColorManager.isMultipleRoots()) {
+      myMainContentPanel.setBorder(BorderFactory.createEmptyBorder());
+    }
+    else {
+      JBColor color = VcsLogGraphTable.getRootBackgroundColor(data.getRoot(), myColorManager);
+      myMainContentPanel.setBorder(new CompoundBorder(new MatteBorder(0, VcsLogGraphTable.ROOT_INDICATOR_COLORED_WIDTH, 0, 0, color),
+                                                  new MatteBorder(0, VcsLogGraphTable.ROOT_INDICATOR_WHITE_WIDTH, 0, 0,
+                                                                  new JBColor(new NotNullProducer<Color>() {
+                                                                    @NotNull
+                                                                    @Override
+                                                                    public Color produce() {
+                                                                      return getDetailsBackground();
+                                                                    }
+                                                                  }))));
     }
   }
 
@@ -195,18 +222,20 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
   private static class DataPanel extends JEditorPane {
 
     @NotNull private final Project myProject;
+    private final boolean myMultiRoot;
     @Nullable private String myBranchesText = null;
     private String myMainText;
 
-    DataPanel(@NotNull Project project) {
+    DataPanel(@NotNull Project project, boolean multiRoot) {
       super(UIUtil.HTML_MIME, "");
-      setEditable(false);
       myProject = project;
+      myMultiRoot = multiRoot;
+      setEditable(false);
       addHyperlinkListener(BrowserHyperlinkListener.INSTANCE);
       setOpaque(false);
       putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, Boolean.TRUE);
 
-      final DefaultCaret caret = (DefaultCaret) getCaret();
+      final DefaultCaret caret = (DefaultCaret)getCaret();
       caret.setUpdatePolicy(DefaultCaret.NEVER_UPDATE);
     }
 
@@ -215,8 +244,9 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
         myMainText = null;
       }
       else {
+        String header = commit.getId().toShortString() + " " + getAuthorText(commit) +
+                        (myMultiRoot ? " [" + commit.getRoot().getName() + "]" : "");
         String body = getMessageText(commit);
-        String header = commit.getId().toShortString() + " " + getAuthorText(commit);
         myMainText = header + "<br/>" + body;
       }
       update();

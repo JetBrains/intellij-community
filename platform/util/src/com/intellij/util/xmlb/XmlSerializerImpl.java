@@ -17,8 +17,8 @@ package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ReflectionUtil;
 import org.jdom.*;
+import org.jdom.filter.Filter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,7 +34,28 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author mike
  */
 class XmlSerializerImpl {
+  private static final Filter<Content> CONTENT_FILTER = new Filter<Content>() {
+    @Override
+    public boolean matches(Object obj) {
+      return !isIgnoredNode(obj);
+    }
+  };
+
   private static SoftReference<Map<Pair<Type, Accessor>, Binding>> ourBindings;
+
+  @NotNull
+  static List<Content> getFilteredContent(@NotNull Element element) {
+    List<Content> content = element.getContent();
+    if (content.isEmpty()) {
+      return content;
+    }
+    else if (content.size() == 1) {
+      return isIgnoredNode(content.get(0)) ? Collections.<Content>emptyList() : content;
+    }
+    else {
+      return element.getContent(CONTENT_FILTER);
+    }
+  }
 
   @NotNull
   static Element serialize(@NotNull Object object, @NotNull SerializationFilter filter) throws XmlSerializationException {
@@ -217,28 +238,5 @@ class XmlSerializerImpl {
       }
     }
     return false;
-  }
-
-  public static Content[] getNotIgnoredContent(final Element m) {
-    List<Content> result = new ArrayList<Content>();
-    final List content = m.getContent();
-
-    for (Object o : content) {
-      if (!isIgnoredNode(o)) result.add((Content)o);
-    }
-
-    return result.toArray(new Content[result.size()]);
-  }
-
-  /**
-   * {@link Class#newInstance()} cannot instantiate private classes
-   */
-  static <T> T newInstance(@NotNull Class<T> aClass) {
-    try {
-      return ReflectionUtil.newInstance(aClass);
-    }
-    catch (Exception e) {
-      throw new XmlSerializationException(e);
-    }
   }
 }

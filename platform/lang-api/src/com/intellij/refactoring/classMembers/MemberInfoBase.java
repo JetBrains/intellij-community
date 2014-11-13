@@ -18,6 +18,7 @@ package com.intellij.refactoring.classMembers;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.util.PsiUtilCore;
 
 /**
  * @author Dennis.Ushakov
@@ -66,7 +67,7 @@ public abstract class MemberInfoBase<T extends PsiElement> {
   }
 
   public T getMember() {
-    LOG.assertTrue(myMember.isValid(), myMember.getText() + " is invalid");
+    PsiUtilCore.ensureValid(myMember);
     return myMember;
   }
 

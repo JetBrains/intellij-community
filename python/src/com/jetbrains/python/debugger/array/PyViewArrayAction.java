@@ -45,14 +45,14 @@ public class PyViewArrayAction extends XDebuggerTreeActionBase {
   }
 
   @Nullable
-  private static TreePath[] getSelectedNodes(DataContext dataContext) {
+  private static TreePath[] getSelectedPaths(DataContext dataContext) {
     XDebuggerTree tree = XDebuggerTree.getTree(dataContext);
     return tree == null ? null : tree.getSelectionPaths();
   }
 
   @Override
   public void update(AnActionEvent e) {
-    TreePath[] paths = getSelectedNodes(e.getDataContext());
+    TreePath[] paths = getSelectedPaths(e.getDataContext());
     if (paths != null) {
       if (paths.length > 1) {
         e.getPresentation().setVisible(false);

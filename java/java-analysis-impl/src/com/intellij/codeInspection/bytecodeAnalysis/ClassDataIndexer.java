@@ -77,6 +77,13 @@ public class ClassDataIndexer implements DataIndexer<Bytes, HEquations, FileCont
 
   public static Map<Key, List<Equation<Key, Value>>> processClass(final ClassReader classReader, final String presentableUrl) {
 
+    // It is OK to share pending states, actions and results for analyses.
+    // Analyses are designed in such a way that they first write to states/actions/results and then read only those portion
+    // of states/actions/results which were written by the current pass of the analysis.
+    // Since states/actions/results are quite expensive to create (32K array) for each analysis, we create them once per class analysis.
+    final State[] sharedPendingStates = new State[Analysis.STEPS_LIMIT];
+    final PendingAction[] sharedPendingActions = new PendingAction[Analysis.STEPS_LIMIT];
+    final PResults.PResult[] sharedResults = new PResults.PResult[Analysis.STEPS_LIMIT];
     final Map<Key, List<Equation<Key, Value>>> equations = new HashMap<Key, List<Equation<Key, Value>>>();
 
     classReader.accept(new ClassVisitor(Opcodes.ASM5) {
@@ -215,7 +222,7 @@ public class ClassDataIndexer implements DataIndexer<Bytes, HEquations, FileCont
 
         Equation<Key, Value> outEquation =
           isInterestingResult ?
-          new InOutAnalysis(richControlFlow, Out, origins, stable).analyze() :
+          new InOutAnalysis(richControlFlow, Out, origins, stable, sharedPendingStates).analyze() :
           null;
 
         if (isReferenceResult) {
@@ -229,7 +236,8 @@ public class ClassDataIndexer implements DataIndexer<Bytes, HEquations, FileCont
           if (ASMUtils.isReferenceType(argumentTypes[i])) {
             boolean possibleNPE = false;
             if (leakingParameters[i]) {
-              NonNullInAnalysis notNullInAnalysis = new NonNullInAnalysis(richControlFlow, new In(i, In.NOT_NULL_MASK), stable);
+              NonNullInAnalysis notNullInAnalysis =
+                new NonNullInAnalysis(richControlFlow, new In(i, In.NOT_NULL_MASK), stable, sharedPendingActions, sharedResults);
               Equation<Key, Value> notNullParamEquation = notNullInAnalysis.analyze();
               possibleNPE = notNullInAnalysis.possibleNPE;
               notNullParam = notNullParamEquation.rhs.equals(FINAL_NOT_NULL);
@@ -245,7 +253,7 @@ public class ClassDataIndexer implements DataIndexer<Bytes, HEquations, FileCont
                 result.add(new Equation<Key, Value>(new Key(method, new In(i, In.NULLABLE_MASK), stable), FINAL_TOP));
               }
               else {
-                result.add(new NullableInAnalysis(richControlFlow, new In(i, In.NULLABLE_MASK), stable).analyze());
+                result.add(new NullableInAnalysis(richControlFlow, new In(i, In.NULLABLE_MASK), stable, sharedPendingStates).analyze());
               }
             }
             else {
@@ -260,9 +268,9 @@ public class ClassDataIndexer implements DataIndexer<Bytes, HEquations, FileCont
                 }
                 else {
                   // may be null on some branch, running "null->..." analysis
-                  result.add(new InOutAnalysis(richControlFlow, new InOut(i, Value.Null), origins, stable).analyze());
+                  result.add(new InOutAnalysis(richControlFlow, new InOut(i, Value.Null), origins, stable, sharedPendingStates).analyze());
                 }
-                result.add(new InOutAnalysis(richControlFlow, new InOut(i, Value.NotNull), origins, stable).analyze());
+                result.add(new InOutAnalysis(richControlFlow, new InOut(i, Value.NotNull), origins, stable, sharedPendingStates).analyze());
               }
               else {
                 // parameter is not leaking, so a contract is the same as for the whole method
