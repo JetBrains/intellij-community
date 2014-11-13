@@ -36,8 +36,8 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
 
   private boolean shouldPrintOutput = false;
   private PythonConsoleView myConsoleView;
-  private Semaphore mySemaphore;
-  private Semaphore mySemaphore0;
+  private Semaphore myCommandSemaphore;
+  private Semaphore myConsoleInitSemaphore;
   private PydevConsoleExecuteActionHandler myExecuteHandler;
 
   public PyConsoleTask() {
@@ -122,20 +122,20 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
     PydevConsoleRunner consoleRunner = PydevConsoleRunner.create(project, sdk, PyConsoleType.PYTHON, getWorkingFolder());
     before();
 
-    mySemaphore0 = new Semaphore(0);
+    myConsoleInitSemaphore = new Semaphore(0);
 
     consoleRunner.addConsoleListener(new PydevConsoleRunner.ConsoleListener() {
       @Override
       public void handleConsoleInitialized(LanguageConsoleView consoleView) {
-        mySemaphore0.release();
+        myConsoleInitSemaphore.release();
       }
     });
 
     consoleRunner.run();
 
-    waitFor(mySemaphore0);
+    waitFor(myConsoleInitSemaphore);
 
-    mySemaphore = new Semaphore(0);
+    myCommandSemaphore = new Semaphore(1);
 
     myConsoleView = consoleRunner.getConsoleView();
     myProcessHandler = (PyConsoleProcessHandler)consoleRunner.getProcessHandler();
@@ -147,7 +147,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
     myCommunication.addCommunicationListener(new ConsoleCommunicationListener() {
       @Override
       public void commandExecuted(boolean more) {
-        mySemaphore.release();
+        myCommandSemaphore.release();
       }
 
       @Override
@@ -292,12 +292,15 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
     }
   }
 
-  protected void exec(String command) throws InterruptedException {
+  protected void exec(final String command) throws InterruptedException {
     waitForReady();
-    int p = mySemaphore.availablePermits();
-    myConsoleView.executeInConsole(command);
-    mySemaphore.acquire(p + 1);
-    //waitForOutput(">>> " + command);
+    myCommandSemaphore.acquire(1);
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        myConsoleView.executeInConsole(command);
+      }
+    });
   }
 
   protected boolean hasValue(String varName, String value) throws PyDebuggerException {
@@ -340,7 +343,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
   }
 
   protected void waitForFinish() throws InterruptedException {
-    waitFor(mySemaphore);
+    waitFor(myCommandSemaphore);
   }
 
   protected void execNoWait(final String command) {
