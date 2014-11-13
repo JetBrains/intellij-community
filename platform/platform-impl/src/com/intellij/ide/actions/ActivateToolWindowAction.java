@@ -1,6 +1,6 @@
 
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.impl.ToolWindowImpl;
@@ -121,6 +122,10 @@ public class ActivateToolWindowAction extends DumbAwareAction {
    */
   @NonNls
   public static String getActionIdForToolWindow(String id) {
+    //todo[kb] remove as soon as finish with vcs merging or provide aliasing mechanism
+    if (Registry.is("vcs.merge.toolwindows") && "Version Control".equals(id)) {
+      id = "Changes";
+    }
     return "Activate" + id.replaceAll(" ", "") + "ToolWindow";
   }
 
