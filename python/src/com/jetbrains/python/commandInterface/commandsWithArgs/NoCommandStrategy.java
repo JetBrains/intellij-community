@@ -16,6 +16,7 @@
 package com.jetbrains.python.commandInterface.commandsWithArgs;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 
@@ -55,5 +56,11 @@ class NoCommandStrategy extends Strategy {
 
   private boolean isTextBoxEmpty() {
     return myPresenter.getView().getText().isEmpty();
+  }
+
+  @Nullable
+  @Override
+  CommandExecutionInfo getCommandToExecute() {
+    return null;
   }
 }

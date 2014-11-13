@@ -15,7 +15,9 @@
  */
 package com.jetbrains.python.commandInterface.commandsWithArgs;
 
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -69,6 +71,12 @@ class InCommandStrategy extends Strategy {
     }
     final String lastPart = myPresenter.getLastPart();
     return ((lastPart != null) && !getSuggestionInfo().getSuggestions().contains(lastPart));
+  }
+
+  @Nullable
+  @Override
+  CommandExecutionInfo getCommandToExecute() {
+    return new CommandExecutionInfo(myCommand.getName(), ArrayUtil.toStringArray(myArguments));
   }
 
   @NotNull

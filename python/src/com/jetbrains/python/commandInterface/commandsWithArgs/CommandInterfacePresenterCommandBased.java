@@ -110,12 +110,54 @@ public class CommandInterfacePresenterCommandBased extends CommandInterfacePrese
     }
 
     if (!suggestionInfo.myShowOnlyWhenRequested && !suggestions.isEmpty()) {
+      final SuggestionsBuilder suggestionsBuilder = getBuilderWithHistory();
+      suggestionsBuilder.add(suggestions);
+
       myView
-        .displaySuggestions(new SuggestionsBuilder(suggestions, true), suggestionInfo.myAbsolute, null);
+        .displaySuggestions(suggestionsBuilder, suggestionInfo.myAbsolute, null);
     }
     else {
       myView.removeSuggestions();
     }
+  }
+
+  /**
+   * @return builder that already has history in its prefix group (see {@link com.jetbrains.python.suggestionList.SuggestionsBuilder})
+   */
+  @NotNull
+  private SuggestionsBuilder getBuilderWithHistory() {
+    final SuggestionsBuilder suggestionsBuilder = new SuggestionsBuilder();
+    final List<CommandExecutionInfo> history = getHistory();
+    final Collection<String> historyCommands = new LinkedHashSet<String>();
+    for (final CommandExecutionInfo info : history) {
+      historyCommands.add(info.toString());
+    }
+
+    if (!historyCommands.isEmpty()) {
+      // TODO: Later implement folding by name
+      suggestionsBuilder.changeGroup(false);
+      suggestionsBuilder
+        .add(ArrayUtil.toStringArray(historyCommands));
+      suggestionsBuilder.changeGroup(true);
+    }
+
+    return suggestionsBuilder;
+  }
+
+  /**
+   * @return execution info from history. It is empty by default, child should implement it.
+   */
+  @NotNull
+  protected List<CommandExecutionInfo> getHistory() {
+    return Collections.emptyList();
+  }
+
+  /**
+   * @return command that entered in box, or null of just entered
+   */
+  @Nullable
+  protected CommandExecutionInfo getCommandToExecute() {
+    return myStrategy.getCommandToExecute();
   }
 
   /**
@@ -160,7 +202,9 @@ public class CommandInterfacePresenterCommandBased extends CommandInterfacePrese
     final SuggestionInfo suggestionInfo = myStrategy.getSuggestionInfo();
     final List<String> suggestions = suggestionInfo.getSuggestions();
     if (!suggestions.isEmpty()) {
-      myView.displaySuggestions(new SuggestionsBuilder(suggestions, true), suggestionInfo.myAbsolute, null);
+      final SuggestionsBuilder suggestionsBuilder = getBuilderWithHistory();
+      suggestionsBuilder.add(suggestions);
+      myView.displaySuggestions(suggestionsBuilder, suggestionInfo.myAbsolute, null);
     }
   }
 

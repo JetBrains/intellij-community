@@ -21,41 +21,43 @@ import java.util.*;
 
 /**
  * Builds list of suggestions.
+ * <p/>
  * You may create suggestions from words, you may add new groups and do other useful things.
  * It works like chain pattern, so it returns itself.
+ * <p/>
+ * Builder consists of 2 groups: prefix (first one) and main (second one) group.
+ * Each may be empty.
+ * Use {@link #changeGroup(boolean)} to switch between them
  *
  * @author Ilya.Kazakevich
  */
 public class SuggestionsBuilder {
+  private static final MySuggestionComparator SUGGESTION_COMPARATOR = new MySuggestionComparator();
   @NotNull
-  private final List<List<Suggestion>> myList = new ArrayList<List<Suggestion>>();
+  private final List<Suggestion> myPrefixGroup = new ArrayList<Suggestion>();
+  @NotNull
+  private final List<Suggestion> myMainGroup = new ArrayList<Suggestion>();
+  @NotNull
+  private List<Suggestion> myCurrentGroup = myMainGroup;
 
   public SuggestionsBuilder() {
-    myList.add(new ArrayList<Suggestion>());
+
   }
 
   /**
    * @param words list of words to add (to the first group)
-   * @param sort  sort passed words
    */
-  public SuggestionsBuilder(@NotNull List<String> words, final boolean sort) {
-    this();
-    if (sort) {
-      // No guarantee passed argument is mutable
-      //noinspection AssignmentToMethodParameter
-      words = new ArrayList<String>(words);
-      Collections.sort(words);
-    }
+  public SuggestionsBuilder(@NotNull final List<String> words) {
     add(words);
   }
 
   /**
-   * Creates next group and sets it as default
+   * Switches to the next group and sets it as default
+   *
+   * @param main use main group if true, prefix otherwise
    */
-  public SuggestionsBuilder nextGroup() {
-    if (!getCurrentGroup().isEmpty()) {
-      myList.add(new ArrayList<Suggestion>());
-    }
+  public SuggestionsBuilder changeGroup(final boolean main) {
+    myCurrentGroup = (main ? myMainGroup : myPrefixGroup);
     return this;
   }
 
@@ -81,26 +83,29 @@ public class SuggestionsBuilder {
    * @param strong strong or not
    */
   public SuggestionsBuilder add(@NotNull final String text, final boolean strong) {
-    getCurrentGroup().add(new Suggestion(text, strong));
+    myCurrentGroup.add(new Suggestion(text, strong));
+    Collections.sort(myCurrentGroup, SUGGESTION_COMPARATOR);
     return this;
   }
 
-  /**
-   * @return elements from current group
-   */
-  @NotNull
-  private List<Suggestion> getCurrentGroup() {
-    return myList.get(myList.size() - 1);
-  }
 
   /**
    * @return all suggestions in format [group1[sugg1, sugg2]]
    */
   @NotNull
   List<List<Suggestion>> getList() {
-    return Collections.unmodifiableList(myList);
+    return Collections.unmodifiableList(Arrays.asList(myPrefixGroup, myMainGroup));
   }
 
+
+  @Override
+  public String toString() {
+    return "SuggestionsBuilder{" +
+           "myPrefixGroup=" + myPrefixGroup +
+           ", myMainGroup=" + myMainGroup +
+           ", myCurrentGroup=" + myCurrentGroup +
+           '}';
+  }
 
   @Override
   public boolean equals(Object o) {
@@ -109,20 +114,23 @@ public class SuggestionsBuilder {
 
     SuggestionsBuilder builder = (SuggestionsBuilder)o;
 
-    if (!myList.equals(builder.myList)) return false;
+    if (!myPrefixGroup.equals(builder.myPrefixGroup)) return false;
+    if (!myMainGroup.equals(builder.myMainGroup)) return false;
 
     return true;
   }
 
   @Override
   public int hashCode() {
-    return myList.hashCode();
+    int result = myPrefixGroup.hashCode();
+    result = 31 * result + myMainGroup.hashCode();
+    return result;
   }
 
-  @Override
-  public String toString() {
-    return "SuggestionsBuilder{" +
-           "myList=" + myList +
-           '}';
+  private static class MySuggestionComparator implements Comparator<Suggestion> {
+    @Override
+    public int compare(final Suggestion o1, final Suggestion o2) {
+      return o1.getText().compareTo(o2.getText());
+    }
   }
 }

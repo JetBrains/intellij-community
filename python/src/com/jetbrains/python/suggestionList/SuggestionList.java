@@ -193,10 +193,10 @@ public class SuggestionList {
   private static class MyCellRenderer extends DefaultListCellRenderer {
     @NotNull
     private static final Color ODD_GROUP_SELECTED_BACKGROUND_COLOR =
-      EditorColorsManager.getInstance().getGlobalScheme().getColor(EditorColors.SELECTION_BACKGROUND_COLOR);
+      EditorColorsManager.getInstance().getGlobalScheme().getColor(EditorColors.SELECTED_TEARLINE_COLOR);
     @NotNull
     private static final Color ODD_GROUP_BACKGROUND_COLOR =
-      EditorColorsManager.getInstance().getGlobalScheme().getColor(EditorColors.GUTTER_BACKGROUND);
+      EditorColorsManager.getInstance().getGlobalScheme().getColor(EditorColors.TEARLINE_COLOR);
 
     @Override
     public Component getListCellRendererComponent(final JList list,
@@ -212,6 +212,8 @@ public class SuggestionList {
 
       if (element.myOddGroup) {
         component.setBackground(isSelected ? ODD_GROUP_SELECTED_BACKGROUND_COLOR : ODD_GROUP_BACKGROUND_COLOR);
+        final Font oldFont = component.getFont();
+        component.setFont(new Font(oldFont.getName(), Font.ITALIC, oldFont.getSize()));
       }
 
       if (!(component instanceof JLabel)) {

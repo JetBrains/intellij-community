@@ -16,6 +16,7 @@
 package com.jetbrains.python.commandInterface.commandsWithArgs;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -49,6 +50,13 @@ abstract class Strategy {
    */
   @NotNull
   abstract SuggestionInfo getSuggestionInfo();
+
+
+  /**
+   * @return command that entered in box, or null of just entered
+   */
+  @Nullable
+  abstract CommandExecutionInfo getCommandToExecute();
 
 
   /**
