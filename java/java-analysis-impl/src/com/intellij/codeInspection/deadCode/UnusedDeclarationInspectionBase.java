@@ -37,6 +37,7 @@ import com.intellij.codeInspection.ex.JobDescriptor;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
 import com.intellij.codeInspection.util.RefFilter;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPoint;
@@ -44,12 +45,16 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiClassImplUtil;
+import com.intellij.psi.search.DelegatingGlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiNonJavaFileReferenceProcessor;
 import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
@@ -309,8 +314,9 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
       ProgressManager.getInstance().runProcess(new Runnable() {
         @Override
         public void run() {
-          final PsiSearchHelper helper = PsiSearchHelper.SERVICE.getInstance(globalContext.getRefManager().getProject());
-          globalContext.getRefManager().iterate(new RefJavaVisitor() {
+          final RefManager refManager = globalContext.getRefManager();
+          final PsiSearchHelper helper = PsiSearchHelper.SERVICE.getInstance(refManager.getProject());
+          refManager.iterate(new RefJavaVisitor() {
             @Override
             public void visitElement(@NotNull final RefEntity refEntity) {
               if (refEntity instanceof RefClass && strictUnreferencedFilter.accepts((RefClass)refEntity)) {
@@ -325,18 +331,36 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
             }
 
             private void findExternalClassReferences(final RefClass refElement) {
-              PsiClass psiClass = refElement.getElement();
-              String qualifiedName = psiClass.getQualifiedName();
+              final PsiClass psiClass = refElement.getElement();
+              String qualifiedName = psiClass != null ? psiClass.getQualifiedName() : null;
               if (qualifiedName != null) {
-                helper.processUsagesInNonJavaFiles(qualifiedName,
-                                                   new PsiNonJavaFileReferenceProcessor() {
-                                                     @Override
-                                                     public boolean process(PsiFile file, int startOffset, int endOffset) {
-                                                       getEntryPointsManager().addEntryPoint(refElement, false);
-                                                       return false;
-                                                     }
-                                                   },
-                                                   GlobalSearchScope.projectScope(globalContext.getProject()));
+                final GlobalSearchScope projectScope = GlobalSearchScope.projectScope(globalContext.getProject());
+                final PsiNonJavaFileReferenceProcessor processor = new PsiNonJavaFileReferenceProcessor() {
+                  @Override
+                  public boolean process(PsiFile file, int startOffset, int endOffset) {
+                    getEntryPointsManager().addEntryPoint(refElement, false);
+                    return false;
+                  }
+                };
+                final DelegatingGlobalSearchScope globalSearchScope = new DelegatingGlobalSearchScope(projectScope) {
+                  @Override
+                  public boolean contains(@NotNull VirtualFile file) {
+                    return file.getFileType() != JavaFileType.INSTANCE && super.contains(file);
+                  }
+                };
+
+                if (helper.processUsagesInNonJavaFiles(qualifiedName, processor, globalSearchScope)) {
+                  final PsiReference reference = ReferencesSearch.search(psiClass, globalSearchScope).findFirst();
+                  if (reference != null) {
+                    getEntryPointsManager().addEntryPoint(refElement, false);
+                    for (PsiMethod method : psiClass.getMethods()) {
+                      final RefElement refMethod = refManager.getReference(method);
+                      if (refMethod != null) {
+                        getEntryPointsManager().addEntryPoint(refMethod, false);
+                      }
+                    }
+                  }
+                }
               }
             }
           });
