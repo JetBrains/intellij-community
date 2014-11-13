@@ -85,7 +85,7 @@ public class FileLevelIntentionComponent extends EditorNotificationPanel {
     new ClickListener() {
       @Override
       public boolean onClick(@NotNull MouseEvent e, int clickCount) {
-        IntentionListStep step = new IntentionListStep(null, info, editor, psiFile, project);
+        IntentionListStep step = new IntentionListStep(null, editor, psiFile, project);
         if (intentions != null && !intentions.isEmpty()) {
           HighlightInfo.IntentionActionDescriptor descriptor = intentions.get(0).getFirst();
           IntentionActionWithTextCaching actionWithTextCaching = step.wrapAction(descriptor, psiFile, psiFile, editor);
