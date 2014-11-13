@@ -38,7 +38,7 @@ public class FontEditorPreview implements PreviewPanel{
 
   private final EventDispatcher<ColorAndFontSettingsListener> myDispatcher = EventDispatcher.create(ColorAndFontSettingsListener.class);
 
-  public FontEditorPreview(final ColorAndFontOptions options, boolean editable) {
+  FontEditorPreview(final ColorAndFontOptions options, boolean editable) {
     myOptions = options;
 
     @Nls String text = getIDEDemoText();
@@ -65,7 +65,7 @@ public class FontEditorPreview implements PreviewPanel{
   }
 
   static void installTrafficLights(@NotNull EditorEx editor) {
-    TrafficLightRenderer renderer = new TrafficLightRenderer(null, null,null){
+    TrafficLightRenderer renderer = new TrafficLightRenderer(null, null,null) {
       @NotNull
       @Override
       protected DaemonCodeAnalyzerStatus getDaemonCodeAnalyzerStatus(@NotNull SeverityRegistrar severityRegistrar) {

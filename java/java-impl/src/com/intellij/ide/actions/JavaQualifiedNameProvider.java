@@ -180,7 +180,9 @@ public class JavaQualifiedNameProvider implements QualifiedNameProvider {
 
       toInsert = targetElement.getName();
       if (targetElement instanceof PsiMethod) {
-        suffix = "()";
+        if (!fqn.contains("(")) {
+          suffix = "()";
+        }
         if (((PsiMethod)targetElement).isConstructor()) {
           targetElement = targetElement.getContainingClass();
         }

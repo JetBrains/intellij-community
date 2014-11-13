@@ -22,6 +22,7 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.LimitedPool;
 import com.intellij.util.containers.SLRUCache;
 import org.jetbrains.annotations.NonNls;
@@ -52,6 +53,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
   // Also for certain Value types it is possible to avoid random reads at all: e.g. in case Value is nonnegative integer the value can be stored
   // directly in storage used for offset and in case of btreeenumerator directly in btree leaf.
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.PersistentHashMap");
+  private static final boolean myDoTrace = SystemProperties.getBooleanProperty("idea.trace.persistent.map", false);
   private static final int DEAD_KEY_NUMBER_MASK = 0xFFFFFFFF;
 
   private final File myStorageFile;
@@ -169,6 +171,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
       }
     );
 
+    if(myDoTrace) LOG.info("Opened " + file);
     try {
       myValueExternalizer = valueExternalizer;
       myValueStorage = PersistentHashMapValueStorage.create(getDataFile(file).getPath());
@@ -263,6 +266,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
   }
 
   public void dropMemoryCaches() {
+    if(myDoTrace) LOG.info("Drop memory caches " + myStorageFile);
     synchronized (myEnumerator) {
       myEnumerator.lockStorage();
       try {
@@ -594,6 +598,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
 
   @Override
   public final void force() {
+    if(myDoTrace) LOG.info("Forcing " + myStorageFile);
     synchronized (myEnumerator) {
       doForce();
     }
@@ -621,6 +626,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
 
   @Override
   public final void close() throws IOException {
+    if(myDoTrace) LOG.info("Closed " + myStorageFile);
     synchronized (myEnumerator) {
       doClose();
     }
@@ -710,6 +716,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
       LOG.info("Compacted " + myEnumerator.myFile.getPath() + ":" + sizeBefore + " bytes into " + newSize + " bytes in " + (System.currentTimeMillis() - now) + "ms.");
       myEnumerator.putMetaData(myLiveAndGarbageKeysCounter);
       myEnumerator.putMetaData2( myLargeIndexWatermarkId );
+      if (myDoTrace) LOG.assertTrue(myEnumerator.isDirty());
     }
   }
 

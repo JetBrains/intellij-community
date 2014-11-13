@@ -538,15 +538,21 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
    * @param dirs        directories which paths should be stored at the given content root
    * @throws IllegalArgumentException if specified by {@link ContentRootData#storePath(ExternalSystemSourceType, String)}
    */
-  private static void populateContentRoot(@NotNull ContentRootData contentRoot,
-                                          @NotNull ExternalSystemSourceType type,
-                                          @Nullable Iterable<? extends IdeaSourceDirectory> dirs)
+  private static void populateContentRoot(@NotNull final ContentRootData contentRoot,
+                                          @NotNull final ExternalSystemSourceType type,
+                                          @Nullable final Iterable<? extends IdeaSourceDirectory> dirs)
     throws IllegalArgumentException {
     if (dirs == null) {
       return;
     }
     for (IdeaSourceDirectory dir : dirs) {
-      contentRoot.storePath(type, dir.getDirectory().getAbsolutePath());
+      ExternalSystemSourceType dirSourceType = type;
+      if (dir.isGenerated() && !dirSourceType.isGenerated()) {
+        final ExternalSystemSourceType generatedType =
+          ExternalSystemSourceType.from(dirSourceType.isTest(), dir.isGenerated(), dirSourceType.isResource(), dirSourceType.isExcluded());
+        dirSourceType = generatedType != null ? generatedType : dirSourceType;
+      }
+      contentRoot.storePath(dirSourceType, dir.getDirectory().getAbsolutePath());
     }
   }
 

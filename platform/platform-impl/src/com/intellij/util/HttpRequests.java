@@ -17,25 +17,29 @@ package com.intellij.util;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.ClassLoaderUtil;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.net.HttpConfigurable;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.net.URLConnection;
+import java.util.zip.GZIPInputStream;
 
+/**
+ * GZip supported by default, so, you must use {@link #getInputStream(java.net.URLConnection)} to get connection input stream.
+ */
 public final class HttpRequests {
   public static class HttpRequestBuilder {
     private final String url;
     private int connectTimeout = HttpConfigurable.CONNECTION_TIMEOUT;
     private int readTimeout = HttpConfigurable.CONNECTION_TIMEOUT;
 
-    private boolean supportGzip;
+    private Consumer<String> effectiveUrlConsumer;
+
+    private boolean supportGzip = true;
 
     private HttpRequestBuilder(@NotNull String url) {
       this.url = url;
@@ -47,6 +51,7 @@ public final class HttpRequests {
       return this;
     }
 
+    @SuppressWarnings("unused")
     @NotNull
     public HttpRequestBuilder readTimeout(int value) {
       readTimeout = value;
@@ -59,7 +64,13 @@ public final class HttpRequests {
       return this;
     }
 
-    public <T> T get(@NotNull final ThrowableConvertor<URLConnection, T, Exception> handler) throws Exception {
+    @NotNull
+    public HttpRequestBuilder effectiveUrlConsumer(Consumer<String> value) {
+      effectiveUrlConsumer = value;
+      return this;
+    }
+
+    public <T, E extends Throwable> T get(@NotNull final ThrowableConvertor<URLConnection, T, E> handler) throws E, IOException {
       return loadData(this, handler);
     }
   }
@@ -69,30 +80,46 @@ public final class HttpRequests {
     return new HttpRequestBuilder(url);
   }
 
-  private static <T> T loadData(@NotNull final HttpRequestBuilder requestBuilder, @NotNull final ThrowableConvertor<URLConnection, T, Exception> handler) throws Exception {
-    return ClassLoaderUtil.runWithClassLoader(new URLClassLoader(new URL[0], Thread.currentThread().getContextClassLoader()), new ThrowableComputable<T, Exception>() {
-      @Override
-      public T compute() throws Exception {
-        URLConnection connection = openConnection(requestBuilder.url, requestBuilder.supportGzip).first;
-        try {
-          return handler.convert(connection);
-        }
-        finally {
-          if (connection instanceof HttpURLConnection) {
-            ((HttpURLConnection)connection).disconnect();
-          }
+  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
+  @NotNull
+  public static InputStream getInputStream(@NotNull URLConnection connection) throws IOException {
+    InputStream inputStream = connection.getInputStream();
+    if ("gzip".equalsIgnoreCase(connection.getContentEncoding())) {
+      try {
+        return new GZIPInputStream(inputStream);
+      }
+      catch (IOException e) {
+        inputStream.close();
+        throw e;
+      }
+    }
+    else {
+      return inputStream;
+    }
+  }
+
+  private static <T, E extends Throwable> T loadData(@NotNull HttpRequestBuilder requestBuilder, @NotNull ThrowableConvertor<URLConnection, T, E> handler)
+    throws E, IOException {
+    ClassLoader oldClassLoader = Thread.currentThread().getContextClassLoader();
+    Thread.currentThread().setContextClassLoader(new URLClassLoader(new URL[0], oldClassLoader));
+    try {
+      URLConnection connection = openConnection(requestBuilder);
+      try {
+        return handler.convert(connection);
+      }
+      finally {
+        if (connection instanceof HttpURLConnection) {
+          ((HttpURLConnection)connection).disconnect();
         }
       }
-    });
+    }
+    finally {
+      Thread.currentThread().setContextClassLoader(oldClassLoader);
+    }
   }
 
   @NotNull
-  public static Pair<URLConnection, String> openConnection(@NotNull String initialUrl, boolean supportGzip) throws IOException {
-    return openConnection(request(initialUrl).supportGzip(supportGzip));
-  }
-
-  @NotNull
-  private static Pair<URLConnection, String> openConnection(@NotNull HttpRequestBuilder requestBuilder) throws IOException {
+  private static URLConnection openConnection(@NotNull HttpRequestBuilder requestBuilder) throws IOException {
     int i = 0;
     String url = requestBuilder.url;
     while (i++ < 99) {
@@ -132,7 +159,11 @@ public final class HttpRequests {
           }
         }
       }
-      return Pair.create(connection, url == requestBuilder.url ? null : url);
+
+      if (url != requestBuilder.url && requestBuilder.effectiveUrlConsumer != null) {
+        requestBuilder.effectiveUrlConsumer.consume(url);
+      }
+      return connection;
     }
     throw new IOException("Infinite redirection");
   }

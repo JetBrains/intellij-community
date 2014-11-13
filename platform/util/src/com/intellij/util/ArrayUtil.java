@@ -474,24 +474,6 @@ public class ArrayUtil extends ArrayUtilRt {
   }
 
   @Contract(pure=true)
-  public static <T> int lastIndexOf(@NotNull final T[] src, final T obj) {
-    for (int i = src.length - 1; i >= 0; i--) {
-      final T o = src[i];
-      if (o == null) {
-        if (obj == null) {
-          return i;
-        }
-      }
-      else {
-        if (o.equals(obj)) {
-          return i;
-        }
-      }
-    }
-    return -1;
-  }
-
-  @Contract(pure=true)
   public static int find(@NotNull int[] src, int obj) {
     return indexOf(src, obj);
   }
@@ -739,6 +721,46 @@ public class ArrayUtil extends ArrayUtilRt {
       if (ints[i] == value) return i;
     }
 
+    return -1;
+  }
+
+  @Contract(pure=true)
+  public static <T> int lastIndexOf(@NotNull final T[] src, final T obj) {
+    for (int i = src.length - 1; i >= 0; i--) {
+      final T o = src[i];
+      if (o == null) {
+        if (obj == null) {
+          return i;
+        }
+      }
+      else {
+        if (o.equals(obj)) {
+          return i;
+        }
+      }
+    }
+    return -1;
+  }
+
+  @Contract(pure=true)
+  public static <T> int lastIndexOf(@NotNull final T[] src, final T obj, @NotNull Equality<? super T> comparator) {
+    for (int i = src.length - 1; i >= 0; i--) {
+      final T o = src[i];
+      if (comparator.equals(obj, o)) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
+  @Contract(pure=true)
+  public static <T> int lastIndexOf(@NotNull List<T> src, final T obj, @NotNull Equality<? super T> comparator) {
+    for (int i = src.size() - 1; i >= 0; i--) {
+      final T o = src.get(i);
+      if (comparator.equals(obj, o)) {
+        return i;
+      }
+    }
     return -1;
   }
 

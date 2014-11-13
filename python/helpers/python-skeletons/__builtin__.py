@@ -2168,6 +2168,12 @@ class dict(object):
         """
         pass
 
+    def __iter__(self):
+        """
+        :rtype: collections.Iterator[T]
+        """
+        pass
+
     def __len__(self):
         """Return the number of items in the dictionary d.
 

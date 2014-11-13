@@ -23,7 +23,10 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.util.ExceptionUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.concurrent.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 public class ApplicationUtil {
   // throws exception if can't grab read action right now
@@ -63,7 +66,7 @@ public class ApplicationUtil {
           error.set(t);
           return null;
         }
-      };
+      }
     });
 
     while (true) {

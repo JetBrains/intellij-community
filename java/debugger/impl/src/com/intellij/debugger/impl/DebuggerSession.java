@@ -671,14 +671,15 @@ public class DebuggerSession implements AbstractDebuggerSession {
     @Override
     public void evaluationFinished(final SuspendContextImpl context) {
       myIsEvaluating = false;
-      DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
-        @Override
-        public void run() {
-          if (context != getSuspendContext()) {
-            getContextManager().setState(DebuggerContextUtil.createDebuggerContext(DebuggerSession.this, context), STATE_PAUSED, EVENT_REFRESH, null);
-          }
-        }
-      });
+      // seems to be not required after move to xdebugger
+      //DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
+      //  @Override
+      //  public void run() {
+      //    if (context != getSuspendContext()) {
+      //      getContextManager().setState(DebuggerContextUtil.createDebuggerContext(DebuggerSession.this, context), STATE_PAUSED, EVENT_REFRESH, null);
+      //    }
+      //  }
+      //});
     }
   }
 

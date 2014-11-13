@@ -24,6 +24,7 @@ import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.ui.components.JBTabbedPane;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
@@ -31,6 +32,14 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class UnusedDeclarationInspection extends UnusedDeclarationInspectionBase {
+  @TestOnly
+  public UnusedDeclarationInspection(boolean enabledInEditor) {
+    super(enabledInEditor);
+  }
+
+  public UnusedDeclarationInspection() {
+  }
+
   @Override
   protected UnusedSymbolLocalInspectionBase createUnusedSymbolLocalInspection() {
     return new UnusedSymbolLocalInspection();

@@ -86,30 +86,6 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     setFillsViewportHeight(true);
 
     addMouseListener(new MyMouseListener());
-    getColumnModel().addColumnModelListener(new TableColumnModelListener() {
-      @Override
-      public void columnMarginChanged(ChangeEvent e) {
-        if (cellEditor != null && !(cellEditor instanceof Animated)) {
-          cellEditor.stopCellEditing();
-        }
-      }
-
-      @Override
-      public void columnSelectionChanged(@NotNull ListSelectionEvent e) {
-      }
-
-      @Override
-      public void columnAdded(@NotNull TableColumnModelEvent e) {
-      }
-
-      @Override
-      public void columnMoved(@NotNull TableColumnModelEvent e) {
-      }
-
-      @Override
-      public void columnRemoved(@NotNull TableColumnModelEvent e) {
-      }
-    });
 
     final TableModelListener modelListener = new TableModelListener() {
       @Override

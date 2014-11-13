@@ -98,6 +98,13 @@ public interface FileViewProvider extends Cloneable, UserDataHolder {
   @Nullable
   PsiReference findReferenceAt(int offsetInElement, @NotNull Language language);
 
+  /**
+   * Creates a copy of this view provider linked with the give (typically light) file.
+   * The result provider is required to be NOT event-system-enabled.
+   * 
+   * @see com.intellij.testFramework.LightVirtualFile
+   * @see #isEventSystemEnabled() 
+   */
   @NotNull
   FileViewProvider createCopy(@NotNull VirtualFile copy);
 

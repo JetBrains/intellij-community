@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,22 +16,17 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
 import java.util.ArrayList;
-import java.util.Stack;
+import java.util.List;
 
-/**
- * Created by IntelliJ IDEA.
- * User: stathik
- * Date: Mar 28, 2003
- * Time: 12:57:45 AM
- * To change this template use Options | File Templates.
- */
-class RepositoryContentHandler extends DefaultHandler {
+public class RepositoryContentHandler extends DefaultHandler {
   @NonNls public static final String CATEGORY = "category";
   @NonNls public static final String IDEA_PLUGIN = "idea-plugin";
   @NonNls public static final String NAME = "name";
@@ -59,23 +54,25 @@ class RepositoryContentHandler extends DefaultHandler {
   private Stack<String> categoriesStack;
 
 
+  @Override
   public void startDocument() throws SAXException {
     plugins = new ArrayList<IdeaPluginDescriptor>();
     categoriesStack = new Stack<String>();
   }
 
-  public void startElement(String namespaceURI, String localName, String qName, Attributes atts) throws SAXException {
+  @Override
+  public void startElement(@NotNull String namespaceURI, @NotNull String localName, @NotNull String qName, @NotNull Attributes attributes) throws SAXException {
     if (qName.equals(CATEGORY)) {
-      categoriesStack.push(atts.getValue(NAME));
+      categoriesStack.push(attributes.getValue(NAME));
     }
     else if (qName.equals(IDEA_PLUGIN)) {
       String categoryName = constructCategoryTree();
       currentPlugin = new PluginNode();
       currentPlugin.setCategory(categoryName);
-      currentPlugin.setDownloads(atts.getValue(DOWNLOADS));
-      currentPlugin.setSize(atts.getValue(SIZE));
-      currentPlugin.setUrl(atts.getValue(URL));
-      final String dateString = atts.getValue(DATE);
+      currentPlugin.setDownloads(attributes.getValue(DOWNLOADS));
+      currentPlugin.setSize(attributes.getValue(SIZE));
+      currentPlugin.setUrl(attributes.getValue(URL));
+      final String dateString = attributes.getValue(DATE);
       if (dateString != null) {
         currentPlugin.setDate(dateString);
       }
@@ -83,17 +80,18 @@ class RepositoryContentHandler extends DefaultHandler {
       plugins.add(currentPlugin);
     }
     else if (qName.equals(IDEA_VERSION)) {
-      currentPlugin.setSinceBuild(atts.getValue(SINCE_BUILD));
-      currentPlugin.setUntilBuild(atts.getValue(UNTIL_BUILD));
+      currentPlugin.setSinceBuild(attributes.getValue(SINCE_BUILD));
+      currentPlugin.setUntilBuild(attributes.getValue(UNTIL_BUILD));
     }
     else if (qName.equals(VENDOR)) {
-      currentPlugin.setVendorEmail(atts.getValue(EMAIL));
-      currentPlugin.setVendorUrl(atts.getValue(URL));
+      currentPlugin.setVendorEmail(attributes.getValue(EMAIL));
+      currentPlugin.setVendorUrl(attributes.getValue(URL));
     }
     currentValue.setLength(0);
   }
 
-  public void endElement(String namespaceURI, String localName, String qName) throws SAXException {
+  @Override
+  public void endElement(String namespaceURI, @NotNull String localName, @NotNull String qName) throws SAXException {
     String currentValueString = currentValue.toString();
     currentValue.setLength(0);
 
@@ -129,11 +127,12 @@ class RepositoryContentHandler extends DefaultHandler {
     }
   }
 
+  @Override
   public void characters(char[] ch, int start, int length) throws SAXException {
     currentValue.append(ch, start, length);
   }
 
-  public ArrayList<IdeaPluginDescriptor> getPluginsList() {
+  public List<IdeaPluginDescriptor> getPluginsList() {
     return plugins;
   }
 
