@@ -5,12 +5,14 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.MarkdownUtil;
+import com.intellij.util.ui.UIUtil;
 import com.petebevin.markdown.MarkdownProcessor;
 import net.sourceforge.jeuclid.MathMLParserSupport;
 import net.sourceforge.jeuclid.context.LayoutContextImpl;
 import net.sourceforge.jeuclid.context.Parameter;
 import net.sourceforge.jeuclid.converter.Converter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbTexPackageDefinitions;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
@@ -71,6 +73,7 @@ public class IpnbUtils {
 
   public static JEditorPane createLatexPane(@NotNull final String source) {
     final JEditorPane editorPane = new JEditorPane();
+    editorPane.setBackground(IpnbEditorUtil.getBackground());
     editorPane.setContentType(new HTMLEditorKit().getContentType());
     editorPane.setEditorKit(new HTMLEditorKit());
 
@@ -197,6 +200,7 @@ public class IpnbUtils {
       final String xmlString = session.buildXMLString(options);
       if (xmlString == null) return;
       final LayoutContextImpl context = (LayoutContextImpl)LayoutContextImpl.getDefaultLayoutContext();
+      context.setParameter(Parameter.MATHCOLOR, UIUtil.getTextAreaForeground());
       context.setParameter(Parameter.MATHSIZE, 18);
 
       final Document document = MathMLParserSupport.parseString(xmlString);
