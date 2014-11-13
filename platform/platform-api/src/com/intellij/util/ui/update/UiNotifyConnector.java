@@ -46,7 +46,7 @@ public class UiNotifyConnector implements Disposable, HierarchyListener{
     component.addHierarchyListener(this);
   }
 
-  public void hierarchyChanged(HierarchyEvent e) {
+  public void hierarchyChanged(@NotNull HierarchyEvent e) {
     if (isDisposed()) return;
 
     if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) > 0) {

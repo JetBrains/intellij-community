@@ -82,12 +82,19 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
                     @NotNull Editor editor,
                     @NotNull PsiFile file,
                     @NotNull Project project) {
+    this(intentionHintComponent, editor, file, project);
+    updateActions(intentions);
+  }
+
+  IntentionListStep(@Nullable IntentionHintComponent intentionHintComponent,
+                    @NotNull Editor editor,
+                    @NotNull PsiFile file,
+                    @NotNull Project project) {
     myIntentionHintComponent = intentionHintComponent;
     myEditor = editor;
     myFile = file;
     myProject = project;
     mySettings = IntentionManagerSettings.getInstance();
-    updateActions(intentions);
   }
 
   //true if something changed

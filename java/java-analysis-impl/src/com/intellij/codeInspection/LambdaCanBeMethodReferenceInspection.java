@@ -125,30 +125,37 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
     if (argumentList == null) {
       return false;
     }
-    int offset = parameters.length - psiMethod.getParameterList().getParametersCount();
+
+    final int calledParametersCount = psiMethod.getParameterList().getParametersCount();
     final PsiExpression[] expressions = argumentList.getExpressions();
+
+    final PsiExpression qualifier;
+    if (callExpression instanceof PsiMethodCallExpression) {
+      qualifier = ((PsiMethodCallExpression)callExpression).getMethodExpression().getQualifierExpression();
+    }
+    else if (callExpression instanceof PsiNewExpression) {
+      qualifier = ((PsiNewExpression)callExpression).getQualifier();
+    }
+    else {
+      qualifier = null;
+    }
+
+    if (expressions.length == 0 && parameters.length == 0) {
+      return true;
+    }
+
+    final int offset = parameters.length - calledParametersCount;
+    if (expressions.length > calledParametersCount || offset < 0) {
+      return false;
+    }
+
     for (int i = 0; i < expressions.length; i++) {
       if (!resolvesToParameter(expressions[i], parameters[i + offset])) {
         return false;
       }
     }
-    if (offset > 0) {
-      final PsiExpression qualifier;
-      if (callExpression instanceof PsiMethodCallExpression) {
-        qualifier = ((PsiMethodCallExpression)callExpression).getMethodExpression().getQualifierExpression();
-      } 
-      else if (callExpression instanceof PsiNewExpression) {
-        qualifier = ((PsiNewExpression)callExpression).getQualifier();
-      }
-      else {
-        return false;
-      }
 
-      if (!resolvesToParameter(qualifier, parameters[0])) {
-        return false;
-      }
-    }
-    return true;
+    return offset == 0 || resolvesToParameter(qualifier, parameters[0]);
   }
 
   private static boolean resolvesToParameter(PsiExpression expression, PsiParameter parameter) {

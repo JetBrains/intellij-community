@@ -144,10 +144,10 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
       if (tlr.myFile == null || tlr.myFile.isValid()) return;
       Disposer.dispose(tlr);
     }
-    renderer = new TrafficLightRenderer(project, document, file);
     EditorImpl editor = (EditorImpl)editorMarkupModel.getEditor();
 
     if (!editor.isDisposed()) {
+      renderer = new TrafficLightRenderer(project, document, file);
       Disposer.register(editor.getDisposable(), (Disposable)renderer);
       editorMarkupModel.setErrorStripeRenderer(renderer);
     }
@@ -168,14 +168,16 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     }
   }
 
-  public static class DaemonCodeAnalyzerStatus {
+  protected static class DaemonCodeAnalyzerStatus {
     public boolean errorAnalyzingFinished; // all passes done
-    public List<ProgressableTextEditorHighlightingPass> passStati = Collections.emptyList();
+    List<ProgressableTextEditorHighlightingPass> passStati = Collections.emptyList();
     public int[] errorCount = ArrayUtil.EMPTY_INT_ARRAY;
-    public String reasonWhyDisabled;
-    public String reasonWhySuspended;
+    private String reasonWhyDisabled;
+    private String reasonWhySuspended;
 
-    public int rootsNumber;
+    public DaemonCodeAnalyzerStatus() {
+    }
+
     @Override
     public String toString() {
       @NonNls String s = "DS: finished=" + errorAnalyzingFinished;
@@ -245,7 +247,6 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     }
 
     status.errorCount = errorCount.clone();
-    status.rootsNumber = languages.size();
     fillDaemonCodeAnalyzerErrorsStatus(status, severityRegistrar);
     List<TextEditorHighlightingPass> passes = myDaemonCodeAnalyzer.getPassesToShowProgressFor(myDocument);
     status.passStati = passes.isEmpty() ? Collections.<ProgressableTextEditorHighlightingPass>emptyList() :
@@ -269,7 +270,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
                                                     @NotNull SeverityRegistrar severityRegistrar) {
   }
 
-  public final Project getProject() {
+  protected final Project getProject() {
     return myProject;
   }
 

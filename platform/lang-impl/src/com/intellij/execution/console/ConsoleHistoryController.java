@@ -74,7 +74,7 @@ public class ConsoleHistoryController {
 
   private static final Logger LOG = Logger.getInstance("com.intellij.execution.console.ConsoleHistoryController");
 
-  private final LanguageConsoleImpl myConsole;
+  private final LanguageConsole myConsole;
   private final AnAction myHistoryNext = new MyAction(true, getKeystrokesUpDown(true));
   private final AnAction myHistoryPrev = new MyAction(false, getKeystrokesUpDown(false));
   private final AnAction myBrowseHistory = new MyBrowseAction();
@@ -83,7 +83,7 @@ public class ConsoleHistoryController {
   private long myLastSaveStamp;
 
   public ConsoleHistoryController(@NotNull String type, @Nullable String persistenceId,
-                                  @NotNull LanguageConsoleImpl console, @NotNull ConsoleHistoryModel model) {
+                                  @NotNull LanguageConsole console, @NotNull ConsoleHistoryModel model) {
     myHelper = new ModelHelper(type, StringUtil.isEmpty(persistenceId) ? console.getProject().getPresentableUrl() : persistenceId, model);
     myConsole = console;
   }

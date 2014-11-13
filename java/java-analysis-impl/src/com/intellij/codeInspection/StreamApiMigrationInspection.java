@@ -21,6 +21,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -34,7 +35,7 @@ import com.intellij.util.containers.IntArrayList;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
+import java.util.*;
 
 /**
  * User: anna
@@ -92,26 +93,14 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
                                                PsiBreakStatement.class, PsiReturnStatement.class, PsiThrowStatement.class);
                 if (exitPoints.isEmpty()) {
   
-                  final boolean[] effectivelyFinal = {true};
-                  body.accept(new JavaRecursiveElementWalkingVisitor() {
-                    @Override
-                    public void visitElement(PsiElement element) {
-                      if (!effectivelyFinal[0]) return;
-                      super.visitElement(element);
+                  final List<PsiVariable> usedVariables = ControlFlowUtil.getUsedVariables(controlFlow, startOffset, endOffset);
+                  for (PsiVariable variable : usedVariables) {
+                    if (!HighlightControlFlowUtil.isEffectivelyFinal(variable, body, null)) {
+                      return;
                     }
-  
-                    @Override
-                    public void visitReferenceExpression(PsiReferenceExpression expression) {
-                      if (!effectivelyFinal[0]) return;
-                      super.visitReferenceExpression(expression);
-                      final PsiElement resolve = expression.resolve();
-                      if (resolve instanceof PsiVariable && !(resolve instanceof PsiField)) {
-                        effectivelyFinal[0] = HighlightControlFlowUtil.isEffectivelyFinal((PsiVariable)resolve, body, expression);
-                      }
-                    }
-                  });
-  
-                  if (effectivelyFinal[0] && ExceptionUtil.getThrownCheckedExceptions(new PsiElement[] {body}).isEmpty()) {
+                  }
+
+                  if (ExceptionUtil.getThrownCheckedExceptions(new PsiElement[] {body}).isEmpty()) {
                     if (isCollectCall(body)) {
                       holder.registerProblem(iteratedValue, "Can be replaced with collect call",
                                              ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new ReplaceWithCollectCallFix());
@@ -132,8 +121,8 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
   }
 
   private static boolean isCollectCall(PsiStatement body) {
-    final PsiIfStatement ifStatement = extractIfStatement(body);
-    final PsiMethodCallExpression methodCallExpression = extractAddCall(body);
+    PsiIfStatement ifStatement = extractIfStatement(body);
+    final PsiMethodCallExpression methodCallExpression = extractAddCall(body, ifStatement);
     if (methodCallExpression != null) {
       final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
       final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
@@ -150,9 +139,10 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       if (qualifierClass != null && 
           InheritanceUtil.isInheritor(qualifierClass, false, CommonClassNames.JAVA_UTIL_COLLECTION)) {
 
-        if (ifStatement != null) {
+        while (ifStatement != null && PsiTreeUtil.isAncestor(body, ifStatement, false)) {
           final PsiExpression condition = ifStatement.getCondition();
           if (condition != null && isConditionDependsOnUpdatedCollections(condition, qualifierExpression)) return false;
+          ifStatement = PsiTreeUtil.getParentOfType(ifStatement, PsiIfStatement.class);
         }
 
         final PsiElement resolve = methodExpression.resolve();
@@ -276,16 +266,12 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
           String foreEachText = wrapInBlock(body);
           String iterated = getIteratedValueText(iteratedValue);
           if (ifStmt != null) {
-            final PsiExpression condition = ifStmt.getCondition();
-            if (condition != null) {
-              final PsiStatement thenBranch = ifStmt.getThenBranch();
-              LOG.assertTrue(thenBranch != null);
-              if (InheritanceUtil.isInheritor(iteratedValue.getType(), CommonClassNames.JAVA_UTIL_COLLECTION)) {
-                body = thenBranch;
-                foreEachText = wrapInBlock(thenBranch);
-                iterated += ".stream().filter(" + parameter.getName() + " -> " + condition.getText() +")";
-              }
-            }
+            final PsiStatement thenBranch = ifStmt.getThenBranch();
+            LOG.assertTrue(thenBranch != null);
+            foreEachText = wrapInBlock(thenBranch);
+            iterated += ".stream()";
+            iterated += composeFilters(body, parameter, ifStmt);
+            body = thenBranch;
           }
 
           final PsiParameter[] parameters = {parameter};
@@ -356,16 +342,12 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
         final PsiExpression iteratedValue = foreachStatement.getIteratedValue();
         if (body != null && iteratedValue != null) {
           final PsiParameter parameter = foreachStatement.getIterationParameter();
+          String iteration = getIteratedValueText(iteratedValue) + ".stream()";
 
           final PsiIfStatement ifStatement = extractIfStatement(body);
-          final PsiMethodCallExpression methodCallExpression = extractAddCall(body);
-          String iteration = getIteratedValueText(iteratedValue) + ".stream()";
-          if (ifStatement != null) {
-            final PsiExpression condition = ifStatement.getCondition();
-            if (condition != null) {
-              iteration += ".filter(" + parameter.getName() + " -> " + condition.getText() +")";
-            }
-          }
+          final PsiMethodCallExpression methodCallExpression = extractAddCall(body, ifStatement);
+          iteration += composeFilters(body, parameter, ifStatement);
+
           final PsiExpression mapperCall = methodCallExpression.getArgumentList().getExpressions()[0];
           if (!isIdentityMapping(parameter, mapperCall)) {
             iteration +=".map(";
@@ -443,6 +425,19 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     }
   }
 
+  private static String composeFilters(PsiStatement body, PsiParameter parameter, PsiIfStatement ifStatement) {
+    final List<String> filters = new ArrayList<String>();
+    while (ifStatement != null && PsiTreeUtil.isAncestor(body, ifStatement, false)) {
+      final PsiExpression condition = ifStatement.getCondition();
+      if (condition != null) {
+        filters.add(".filter(" + parameter.getName() + " -> " + condition.getText() +")");
+      }
+      ifStatement = PsiTreeUtil.getParentOfType(ifStatement, PsiIfStatement.class);
+    }
+    Collections.reverse(filters);
+    return StringUtil.join(filters, "");
+  }
+
   private static String getIteratedValueText(PsiExpression iteratedValue) {
     return iteratedValue instanceof PsiCallExpression ||
            iteratedValue instanceof PsiReferenceExpression ||
@@ -450,26 +445,31 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
            iteratedValue instanceof PsiParenthesizedExpression ? iteratedValue.getText() : "(" + iteratedValue.getText() + ")";
   }
 
-  public static PsiIfStatement extractIfStatement(PsiStatement body) {
+  private static PsiIfStatement extractIfStatement(PsiStatement body) {
     PsiIfStatement ifStmt = null;
     if (body instanceof PsiIfStatement) {
       ifStmt = (PsiIfStatement)body;
-    } else if (body instanceof PsiBlockStatement) {
+    }
+    else if (body instanceof PsiBlockStatement) {
       final PsiStatement[] statements = ((PsiBlockStatement)body).getCodeBlock().getStatements();
       if (statements.length == 1 && statements[0] instanceof PsiIfStatement) {
         ifStmt = (PsiIfStatement)statements[0];
       }
     }
-    if (ifStmt != null && ifStmt.getElseBranch() == null && ifStmt.getThenBranch() != null) {
-      return ifStmt;
+    if (ifStmt != null && ifStmt.getElseBranch() == null && ifStmt.getCondition() != null) {
+      final PsiStatement thenBranch = ifStmt.getThenBranch();
+      if (thenBranch != null) {
+        final PsiIfStatement deeperThen = extractIfStatement(thenBranch);
+        return deeperThen != null ? deeperThen : ifStmt;
+      }
     }
     return null;
   }
   
-  private static PsiMethodCallExpression extractAddCall(PsiStatement body) {
-    final PsiIfStatement ifStatement = extractIfStatement(body);
+  private static PsiMethodCallExpression extractAddCall(PsiStatement body, PsiIfStatement ifStatement) {
     if (ifStatement != null) {
-      return extractAddCall(ifStatement.getThenBranch());
+      final PsiStatement thenBranch = ifStatement.getThenBranch();
+      return extractAddCall(thenBranch, null);
     }
     PsiExpressionStatement stmt = null;
     if (body instanceof PsiBlockStatement) {

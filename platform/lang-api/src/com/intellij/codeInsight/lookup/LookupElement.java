@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.util.ClassConditionKey;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveResult;
+import com.intellij.psi.SmartPsiElementPointer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,6 +62,9 @@ public abstract class LookupElement extends UserDataHolderBase {
     }
     if (o instanceof PsiElementNavigationItem) {
       return ((PsiElementNavigationItem)o).getTargetElement();
+    }
+    if (o instanceof SmartPsiElementPointer) {
+      return ((SmartPsiElementPointer)o).getElement();
     }
     return null;
   }

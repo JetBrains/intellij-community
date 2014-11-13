@@ -47,7 +47,7 @@ public final class LanguageConsoleBuilder {
   @Nullable
   private LanguageConsoleView consoleView;
   @Nullable
-  private Condition<LanguageConsoleImpl> executionEnabled = Conditions.alwaysTrue();
+  private Condition<LanguageConsole> executionEnabled = Conditions.alwaysTrue();
 
   @Nullable
   private PairFunction<VirtualFile, Project, PsiFile> psiFileFactory;
@@ -71,13 +71,18 @@ public final class LanguageConsoleBuilder {
   public LanguageConsoleBuilder() {
   }
 
-  public LanguageConsoleBuilder processHandler(@NotNull ProcessHandler processHandler) {
-    //noinspection deprecation
-    executionEnabled = new ProcessBackedExecutionEnabledCondition(processHandler);
+  public LanguageConsoleBuilder processHandler(@NotNull final ProcessHandler processHandler) {
+    executionEnabled = new Condition<LanguageConsole>() {
+
+      @Override
+      public boolean value(LanguageConsole console) {
+        return !processHandler.isProcessTerminated();
+      }
+    };
     return this;
   }
 
-  public LanguageConsoleBuilder executionEnabled(@NotNull Condition<LanguageConsoleImpl> condition) {
+  public LanguageConsoleBuilder executionEnabled(@NotNull Condition<LanguageConsole> condition) {
     executionEnabled = condition;
     return this;
   }
@@ -112,14 +117,14 @@ public final class LanguageConsoleBuilder {
   /**
    * todo This API doesn't look good, but it is much better than force client to know low-level details
    */
-  public static Pair<AnAction, ConsoleHistoryController> registerExecuteAction(@NotNull LanguageConsoleImpl console,
+  public static Pair<AnAction, ConsoleHistoryController> registerExecuteAction(@NotNull LanguageConsole console,
                                                                                @NotNull final Consumer<String> executeActionHandler,
                                                                                @NotNull String historyType,
                                                                                @Nullable String historyPersistenceId,
-                                                                               @Nullable Condition<LanguageConsoleImpl> enabledCondition) {
+                                                                               @Nullable Condition<LanguageConsole> enabledCondition) {
     ConsoleExecuteAction.ConsoleExecuteActionHandler handler = new ConsoleExecuteAction.ConsoleExecuteActionHandler(true) {
       @Override
-      void doExecute(@NotNull String text, @NotNull LanguageConsoleImpl console, @Nullable LanguageConsoleView consoleView) {
+      void doExecute(@NotNull String text, @NotNull LanguageConsole console, @Nullable LanguageConsoleView consoleView) {
         executeActionHandler.consume(text);
       }
     };
@@ -184,24 +189,6 @@ public final class LanguageConsoleBuilder {
 
     console.initComponents();
     return consoleView;
-  }
-
-  @Deprecated
-  /**
-   * @deprecated Don't use it directly!
-   * Will be private in IDEA >13
-   */
-  public static class ProcessBackedExecutionEnabledCondition implements Condition<LanguageConsoleImpl> {
-    private final ProcessHandler myProcessHandler;
-
-    public ProcessBackedExecutionEnabledCondition(ProcessHandler myProcessHandler) {
-      this.myProcessHandler = myProcessHandler;
-    }
-
-    @Override
-    public boolean value(LanguageConsoleImpl console) {
-      return !myProcessHandler.isProcessTerminated();
-    }
   }
 
   private final static class GutteredLanguageConsole extends LanguageConsoleImpl {

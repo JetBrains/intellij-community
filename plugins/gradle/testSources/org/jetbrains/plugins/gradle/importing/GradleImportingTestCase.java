@@ -27,15 +27,23 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.gradle.util.GradleVersion;
 import org.gradle.wrapper.GradleWrapperMain;
+import org.hamcrest.CoreMatchers;
+import org.hamcrest.CustomMatcher;
+import org.hamcrest.Matcher;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
+import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions;
+import org.jetbrains.plugins.gradle.tooling.util.VersionMatcher;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.junit.Rule;
 import org.junit.rules.TestName;
+import org.junit.rules.TestWatcher;
+import org.junit.runner.Description;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
@@ -47,11 +55,10 @@ import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Properties;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static org.jetbrains.plugins.gradle.tooling.builder.AbstractModelBuilderTest.DistributionLocator;
 import static org.jetbrains.plugins.gradle.tooling.builder.AbstractModelBuilderTest.SUPPORTED_GRADLE_VERSIONS;
+import static org.junit.Assume.assumeThat;
 
 /**
  * @author Vladislav.Soroka
@@ -63,6 +70,7 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
   private static final int GRADLE_DAEMON_TTL_MS = 10000;
 
   @Rule public TestName name = new TestName();
+  @Rule public VersionMatcherRule versionMatcherRule = new VersionMatcherRule();
 
   @NotNull
   @org.junit.runners.Parameterized.Parameter(0)
@@ -72,6 +80,7 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
   @Override
   public void setUp() throws Exception {
     super.setUp();
+    assumeThat(gradleVersion, versionMatcherRule.getMatcher());
     myProjectSettings = new GradleProjectSettings();
     GradleSettings.getInstance(myProject).setGradleVmOptions("-Xmx64m -XX:MaxPermSize=64m");
     System.setProperty(ExternalSystemExecutionSettings.REMOTE_PROCESS_IDLE_TTL_IN_MS_KEY, String.valueOf(GRADLE_DAEMON_TTL_MS));
@@ -164,5 +173,29 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
       throw new RuntimeException(String.format("Cannot determine classpath for wrapper JAR from codebase '%s'.", location));
     }
     return new File(location.getPath());
+  }
+
+  private static class VersionMatcherRule extends TestWatcher {
+
+    @Nullable
+    private CustomMatcher myMatcher;
+
+    @NotNull
+    public Matcher getMatcher() {
+      return myMatcher != null ? myMatcher : CoreMatchers.anything();
+    }
+
+    @Override
+    protected void starting(Description d) {
+      final TargetVersions targetVersions = d.getAnnotation(TargetVersions.class);
+      if (targetVersions == null) return;
+
+      myMatcher = new CustomMatcher<String>("Gradle version '" + targetVersions.value() + "'") {
+        @Override
+        public boolean matches(Object item) {
+          return item instanceof String && new VersionMatcher(GradleVersion.version(item.toString())).isVersionMatch(targetVersions);
+        }
+      };
+    }
   }
 }
