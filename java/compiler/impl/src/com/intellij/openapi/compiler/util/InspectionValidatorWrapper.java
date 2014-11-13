@@ -22,7 +22,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.ReadActionProcessor;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.compiler.*;
-import com.intellij.openapi.compiler.options.ExcludedEntriesConfiguration;
+import com.intellij.openapi.compiler.options.ExcludesConfiguration;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -131,7 +131,7 @@ public class InspectionValidatorWrapper implements Validator {
     if (project.isDefault() || !ValidationConfiguration.shouldValidate(this, context)) {
       return ProcessingItem.EMPTY_ARRAY;
     }
-    final ExcludedEntriesConfiguration excludedEntriesConfiguration = ValidationConfiguration.getExcludedEntriesConfiguration(project);
+    final ExcludesConfiguration excludesConfiguration = ValidationConfiguration.getExcludedEntriesConfiguration(project);
     final List<ProcessingItem> items = new ReadAction<List<ProcessingItem>>() {
       @Override
       protected void run(final Result<List<ProcessingItem>> result) {
@@ -148,7 +148,7 @@ public class InspectionValidatorWrapper implements Validator {
             }
 
             if (myCompilerManager.isExcludedFromCompilation(file) ||
-                excludedEntriesConfiguration.isExcluded(file)) {
+                excludesConfiguration.isExcluded(file)) {
               return true;
             }
 
