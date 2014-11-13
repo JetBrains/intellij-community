@@ -15,6 +15,7 @@
 typedef jint (JNICALL *fun_ptr_t_CreateJavaVM)(JavaVM **pvm, void **env, void *args);
 NSBundle *vm;
 NSString *const JVMOptions = @"JVMOptions";
+NSString *JVMVersion = NULL;
 NSString* minRequiredJavaVersion = @"1.6.0_65-b14-466.1";
 NSString* osxVersion = @"10.10";
 BOOL javaUpdateRequired = false;
@@ -128,12 +129,8 @@ void showWarning(NSString* installedJava){
 BOOL isJavaUpdateRequired(NSString *vmVersion, NSString *requiredVersion){
     BOOL needUpdate = false;
     NSString* currentOSXVersion = getOSXVersion();
-    //installedJava = vmVersion;
     if ([osxVersion compare:currentOSXVersion options:NSNumericSearch] <= 0){
-      if ([minRequiredJavaVersion compare:vmVersion options:NSNumericSearch] <= 0){
-        NSLog(@"find Java: %@", vmVersion);
-      }else{
-        //NSLog(@" --- Installed Java is not meet the requirements. Please visit http://support.apple.com/kb/DL1572 and update Java.");
+      if ([minRequiredJavaVersion compare:vmVersion options:NSNumericSearch] > 0){
         NSLog(@"find Java: %@", vmVersion);
         NSLog(@"required JavaVersion: %@", minRequiredJavaVersion);
         needUpdate = true;
@@ -167,13 +164,19 @@ void appendJvmBundlesAt(NSString *path, NSMutableArray *sink) {
 NSArray *allVms() {
     NSMutableArray *jvmBundlePaths = [NSMutableArray array];
 
+    // search java info in user's idea.properties
+    NSDictionary *inConfig = [PropertyFileReader readFile:getPropertiesFilePath()];
+    NSString* userJavaVersion = [inConfig objectForKey:@"JVMVersion"];
+    if (userJavaVersion != nil) JVMVersion = userJavaVersion;
+    NSString *required = requiredJvmVersion();
+
     NSString *explicit = [[[NSProcessInfo processInfo] environment] objectForKey:@"IDEA_JDK"];
 
     if (explicit != nil) {
         // check if IDEA_JDK value corresponds  with JVMVersion from Info.plist
         NSLog(@"value of IDEA_JDK: %@", explicit);
         NSBundle *jdkBundle = [NSBundle bundleWithPath:explicit];
-        NSString *required = requiredJvmVersion();
+        
         if (jdkBundle != nil && required != NULL) {
             if (satisfies(jvmVersion(jdkBundle), required)) {
                 appendBundle(explicit, jvmBundlePaths);
@@ -187,7 +190,7 @@ NSArray *allVms() {
         NSString *appDir = [bundle.bundlePath stringByAppendingPathComponent:@"Contents"];
 
         appendJvmBundlesAt([appDir stringByAppendingPathComponent:@"/jre"], jvmBundlePaths);
-        if (jvmBundlePaths.count > 0) return jvmBundlePaths;
+        if ((jvmBundlePaths.count > 0) && (satisfies(jvmVersion(jvmBundlePaths[jvmBundlePaths.count-1]), required))) return jvmBundlePaths;
 
         appendJvmBundlesAt([NSHomeDirectory() stringByAppendingPathComponent:@"Library/Java/JavaVirtualMachines"], jvmBundlePaths);
         appendJvmBundlesAt(@"/Library/Java/JavaVirtualMachines", jvmBundlePaths);
@@ -204,7 +207,7 @@ NSString *jvmVersion(NSBundle *bundle) {
 }
 
 NSString *requiredJvmVersion() {
-    return [[NSBundle mainBundle].infoDictionary valueForKey:@"JVMVersion" inDictionary: JVMOptions defaultObject:@"1.7*"];
+    return (JVMVersion != NULL) ? JVMVersion : [[NSBundle mainBundle].infoDictionary valueForKey:@"JVMVersion" inDictionary: JVMOptions defaultObject:@"1.7*"];
 }
 
 BOOL satisfies(NSString *vmVersion, NSString *requiredVersion) {
