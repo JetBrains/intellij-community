@@ -1542,7 +1542,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     }
   }
 
-  private VirtualFile getVirtualFile() {
+  public VirtualFile getVirtualFile() {
     return myFilePath.getVirtualFile();
   }
 

@@ -28,6 +28,7 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.console.ConsoleHistoryController;
 import com.intellij.execution.console.LanguageConsoleView;
 import com.intellij.execution.console.ProcessBackedConsoleExecuteActionHandler;
+import com.intellij.execution.process.CommandLineArgumentsProvider;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessOutputTypes;
@@ -45,7 +46,6 @@ import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.editor.actions.SplitLineAction;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.execution.process.CommandLineArgumentsProvider;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -304,6 +304,10 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
         connect(myStatementsToExecute);
       }
     });
+  }
+
+  public void open() {
+    run();
   }
 
   public void run() {

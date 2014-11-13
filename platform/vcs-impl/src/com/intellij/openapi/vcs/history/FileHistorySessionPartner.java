@@ -27,6 +27,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -34,9 +35,12 @@ import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
+import com.intellij.ui.tabs.TabInfo;
+import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.util.BufferedListConsumer;
 import com.intellij.util.Consumer;
 import com.intellij.util.ContentsUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -156,10 +160,23 @@ public class FileHistorySessionPartner implements VcsAppendableHistorySessionPar
           }
 
           final TabbedPaneWrapper wrapper = (TabbedPaneWrapper)history.getComponent().getClientProperty("TabbedPaneWrapper");
-          wrapper.addTab(myPath.getName(), myFileHistoryPanel);
-          wrapper.setSelectedIndex(wrapper.getTabCount() - 1, true);
-
-
+          final JBTabsImpl tabs = UIUtil.findComponentOfType(history.getComponent(), JBTabsImpl.class);
+          assert tabs != null;
+          boolean alreadyContainsHistory = false;
+          final VirtualFile file = myFileHistoryPanel.getVirtualFile();
+          for (TabInfo info : tabs.getTabs()) {
+            final FileHistoryPanelImpl panel = UIUtil.findComponentOfType(info.getComponent(), FileHistoryPanelImpl.class);
+            if (panel != null && file.equals(panel.getVirtualFile())) {
+              alreadyContainsHistory = true;
+              info.setComponent(myFileHistoryPanel);
+              tabs.select(info, true);
+              break;
+            }
+          }
+          if (!alreadyContainsHistory) {
+            wrapper.addTab(myPath.getName(), myFileHistoryPanel);
+            wrapper.setSelectedIndex(wrapper.getTabCount() - 1, true);
+          }
         } else {
           Content content = ContentFactory.SERVICE.getInstance().createContent(myFileHistoryPanel, actionName, true);
           ContentsUtil.addOrReplaceContent(contentManager, content, true);

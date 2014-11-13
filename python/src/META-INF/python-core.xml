@@ -670,12 +670,18 @@
       <reference ref="CompareFileWithEditor"/>
     </group>
 
+    <!-- Console -->
+    <action id="com.jetbrains.python.console.RunPythonConsoleAction"
+            class="com.jetbrains.python.console.RunPythonConsoleAction"
+            text="Python Console..." description="Allows to quickly run Python console">
+      <add-to-group group-id="ToolsMenu" anchor="last"/>
+    </action>
+
     <action id="com.jetbrains.python.console.PyOpenDebugConsoleAction"
             class="com.jetbrains.python.console.PyOpenDebugConsoleAction"
             text="Open Debug Command Line" description="Opens debug command line for running process">
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </action>
-
 
     <action id="ExecuteInPyConsoleAction"
             class="com.jetbrains.python.actions.PyExecuteSelectionAction"
