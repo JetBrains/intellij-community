@@ -28,7 +28,7 @@ public abstract class BaseConsoleExecuteActionHandler extends ConsoleExecuteActi
   }
 
   @Override
-  final void doExecute(@NotNull String text, @NotNull LanguageConsoleImpl console, @Nullable LanguageConsoleView consoleView) {
+  final void doExecute(@NotNull String text, @NotNull LanguageConsole console, @Nullable LanguageConsoleView consoleView) {
     if (consoleView == null) {
       //noinspection deprecation
       execute(text);
