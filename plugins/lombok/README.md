@@ -11,7 +11,7 @@ Twelfth version of plugin released. Bugfixes and initial support for some cool l
 
 Install it automatically from IntelliJ Idea plugin repository.
 
-Tested and supports IntelliJ versions: 11.1.5, 12.1.7, 13.1.4, 14 (Build 138.1696.2 EAP)
+Tested and supports IntelliJ versions: 11.1.5, 12.1.7, 13.1.4, 14 
 
 Support for IntelliJ 10.5.4 by plugin version 0.8.7
 
