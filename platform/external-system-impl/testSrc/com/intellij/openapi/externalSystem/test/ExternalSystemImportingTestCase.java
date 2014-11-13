@@ -103,10 +103,18 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
   }
 
   protected void assertGeneratedSources(String moduleName, String... expectedSources) {
+    assertGeneratedSources(moduleName, JavaSourceRootType.SOURCE, expectedSources);
+  }
+
+  protected void assertGeneratedTestSources(String moduleName, String... expectedSources) {
+    assertGeneratedSources(moduleName, JavaSourceRootType.TEST_SOURCE, expectedSources);
+  }
+
+  private void assertGeneratedSources(String moduleName, JavaSourceRootType type, String... expectedSources) {
     ContentEntry contentRoot = getContentRoot(moduleName);
     List<ContentFolder> folders = new ArrayList<ContentFolder>();
-    for (SourceFolder folder : contentRoot.getSourceFolders(JavaSourceRootType.SOURCE)) {
-      JavaSourceRootProperties properties = folder.getJpsElement().getProperties(JavaSourceRootType.SOURCE);
+    for (SourceFolder folder : contentRoot.getSourceFolders(type)) {
+      JavaSourceRootProperties properties = folder.getJpsElement().getProperties(type);
       assertNotNull(properties);
       if (properties.isForGeneratedSources()) {
         folders.add(folder);
@@ -114,6 +122,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
     }
     doAssertContentFolders(contentRoot, folders, expectedSources);
   }
+
 
   protected void assertResources(String moduleName, String... expectedSources) {
     doAssertContentFolders(moduleName, JavaResourceRootType.RESOURCE, expectedSources);
