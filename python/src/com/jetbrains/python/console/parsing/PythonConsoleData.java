@@ -25,7 +25,7 @@ import java.util.Set;
  */
 public class PythonConsoleData {
   private boolean myIPythonEnabled;
-  private boolean myIPythonAutomagic;
+  private boolean myIPythonAutomagic = true;
   private Set<String> myIPythonMagicCommands = Sets.newHashSet();
   private int myIndentSize = -1;
 
