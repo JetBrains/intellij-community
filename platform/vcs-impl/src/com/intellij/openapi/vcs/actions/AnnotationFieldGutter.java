@@ -143,23 +143,9 @@ public class AnnotationFieldGutter implements ActiveAnnotationGutter {
   @Nullable
   public Color getBgColor(int line, Editor editor) {
     if (myColorScheme == null || !myShowBg) return null;
-    final String s = getLineText(line, editor);
     final VcsRevisionNumber number = myAnnotation.getLineRevisionNumber(line);
-    if (number == null || s == null) return null;
-    final Color bg = myColorScheme.get(number.asString());
-    return bg == null ? findBgColor(s) : bg;
-  }
-
-  @Nullable
-  private Color findBgColor(String s) {
-    if (myColorScheme != null) {
-      for (String key : myColorScheme.keySet()) {
-            if (key.startsWith(s)) {
-              return myColorScheme.get(key);
-            }
-          }
-    }
-    return null;
+    if (number == null) return null;
+    return myColorScheme.get(number.asString());
   }
 
   public void setShowBg(boolean show) {
