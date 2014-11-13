@@ -282,10 +282,10 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     }
   }
 
-  public boolean finishCommit(@NotNull final Document document,
-                              @NotNull final List<Processor<Document>> finishProcessors,
-                              final boolean synchronously,
-                              @NotNull final Object reason) {
+  boolean finishCommit(@NotNull final Document document,
+                       @NotNull final List<Processor<Document>> finishProcessors,
+                       final boolean synchronously,
+                       @NotNull final Object reason) {
     assert !myProject.isDisposed() : "Already disposed";
     final boolean[] ok = {true};
     ApplicationManager.getApplication().runWriteAction(new CommitToPsiFileAction(document, myProject) {
