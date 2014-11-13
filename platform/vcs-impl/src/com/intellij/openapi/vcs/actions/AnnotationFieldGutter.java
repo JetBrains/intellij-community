@@ -162,10 +162,6 @@ public class AnnotationFieldGutter implements ActiveAnnotationGutter {
     return null;
   }
 
-  public void setAspectValueToBgColorMap(Map<String, Color> colorScheme) {
-    myColorScheme = colorScheme;
-  }
-
   public void setShowBg(boolean show) {
     myShowBg = show;
   }

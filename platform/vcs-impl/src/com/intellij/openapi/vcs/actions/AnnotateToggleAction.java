@@ -286,9 +286,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
 
     final LineAnnotationAspect[] aspects = fileAnnotation.getAspects();
     for (LineAnnotationAspect aspect : aspects) {
-      final AnnotationFieldGutter gutter = new AnnotationFieldGutter(fileAnnotation, editor, aspect, presentation, bgColorMap);
-      gutter.setAspectValueToBgColorMap(bgColorMap);
-      gutters.add(gutter);
+      gutters.add(new AnnotationFieldGutter(fileAnnotation, editor, aspect, presentation, bgColorMap));
     }
 
 
