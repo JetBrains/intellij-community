@@ -75,7 +75,7 @@ public final class IpnbConnectionManager implements ProjectComponent {
           waitForIpythonServer();
           boolean connectionStarted = startConnection(codePanel, path, url);
           if (connectionStarted && serverStarted) {
-            final Notification notification = new Notification("IpythonNotebook", "", "<html>Ipython notebook started at <a href=\"" + url +
+            final Notification notification = new Notification("IPythonNotebook", "", "<html>IPython notebook started at <a href=\"" + url +
                                                                                       "\">" + url + "</a></html>", NotificationType.INFORMATION, NotificationListener.URL_OPENING_LISTENER);
             notification.notify(myProject);
             IpnbSettings.getInstance(myProject).setURL(url);
@@ -129,7 +129,7 @@ public final class IpnbConnectionManager implements ProjectComponent {
   }
 
   private static String showDialogUrl(@NotNull final String initialUrl) {
-    final String url = Messages.showInputDialog("Ipython Notebook URL:", "Start Ipython Notebook", null, initialUrl,
+    final String url = Messages.showInputDialog("IPython Notebook URL:", "Start IPython Notebook", null, initialUrl,
                                               new InputValidator() {
                                                 @Override
                                                 public boolean checkInput(String inputString) {
