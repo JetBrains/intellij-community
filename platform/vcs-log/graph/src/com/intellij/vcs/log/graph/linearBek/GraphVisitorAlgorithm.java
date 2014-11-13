@@ -15,6 +15,7 @@
  */
 package com.intellij.vcs.log.graph.linearBek;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.IntStack;
 import com.intellij.vcs.log.graph.api.GraphLayout;
 import com.intellij.vcs.log.graph.api.LinearGraph;
@@ -29,6 +30,8 @@ import static com.intellij.vcs.log.graph.utils.LinearGraphUtils.getUpNodes;
 
 // better DfsUtil, with ... uh ... well ... you know
 public class GraphVisitorAlgorithm {
+  private static final Logger LOG = Logger.getInstance(GraphVisitorAlgorithm.class);
+
   private static final int NODE_NOT_FOUND = -1;
   private final boolean myBackwards;
 
@@ -61,7 +64,15 @@ public class GraphVisitorAlgorithm {
         }
       }
 
-      stack.clear();
+      visitor.leaveSubtree(head);
+    }
+
+    if (Boolean.getBoolean("idea.is.internal")) { // do not want to depend on Application here
+      for (int i = 0; i < visited.size(); i++) {
+        if (!visited.get(i)) {
+          LOG.warn("Missed node " + i);
+        }
+      }
     }
   }
 
