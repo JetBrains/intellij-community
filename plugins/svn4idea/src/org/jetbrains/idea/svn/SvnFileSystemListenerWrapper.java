@@ -16,8 +16,8 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.command.CommandAdapter;
 import com.intellij.openapi.command.CommandEvent;
-import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.LocalFileOperationsHandler;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThrowableConsumer;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -34,19 +35,17 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Map;
 
 public class SvnFileSystemListenerWrapper {
   private final LocalFileOperationsHandler myProxy;
-  private final CommandListener myListener;
+  private final MyCommandListener myListener;
 
   public SvnFileSystemListenerWrapper(final SvnFileSystemListener delegate) {
-    final MyCommandListener listener = new MyCommandListener(delegate);
-    myListener = listener;
-    final MyStorage storage = new MyStorage(listener);
-    myProxy = (LocalFileOperationsHandler) Proxy.newProxyInstance(LocalFileOperationsHandler.class.getClassLoader(),
-                                     new Class<?>[]{LocalFileOperationsHandler.class}, new MyInvoker(storage, delegate));
+    myListener = new MyCommandListener(delegate);
+    myProxy = (LocalFileOperationsHandler)Proxy
+      .newProxyInstance(LocalFileOperationsHandler.class.getClassLoader(), new Class<?>[]{LocalFileOperationsHandler.class},
+                        new MyInvoker(new MyStorage(myListener), delegate));
   }
 
   public void registerSelf() {
@@ -59,7 +58,7 @@ public class SvnFileSystemListenerWrapper {
     CommandProcessor.getInstance().removeCommandListener(myListener);
   }
 
-  private static class MyCommandListener implements CommandListener, MyMarker {
+  private static class MyCommandListener extends CommandAdapter {
     private volatile boolean myInCommand;
     private final SvnFileSystemListener myDelegate;
 
@@ -84,36 +83,19 @@ public class SvnFileSystemListenerWrapper {
       myDelegate.commandStarted(event);
     }
 
-    public void beforeCommandFinished(CommandEvent event) {
-      myDelegate.beforeCommandFinished(event);
-    }
-
     public void commandFinished(CommandEvent event) {
       myInCommand = false;
       myDelegate.commandFinished(event);
     }
-
-    public void undoTransparentActionStarted() {
-      myDelegate.undoTransparentActionStarted();
-    }
-
-    public void undoTransparentActionFinished() {
-      myDelegate.undoTransparentActionFinished();
-    }
-  }
-
-  private interface MyMarker {
-    void start(final Project project);
-    void finish(final Project project);
   }
 
   private static class MyStorage implements InvocationHandler {
-    private final MyMarker myMarker;
+    private final MyCommandListener myListener;
     private final Map<Project, Pair<String, Object[]>> myStarted;
 
-    private MyStorage(final MyMarker marker) {
-      myMarker = marker;
-      myStarted = new HashMap<Project, Pair<String, Object[]>>();
+    private MyStorage(final MyCommandListener listener) {
+      myListener = listener;
+      myStarted = ContainerUtil.newHashMap();
     }
 
     @Nullable
@@ -131,7 +113,7 @@ public class SvnFileSystemListenerWrapper {
       if (project != null) {
         final Pair<String, Object[]> pair = myStarted.get(project);
         if (pair != null && method.getName().equals(pair.getFirst()) && Arrays.equals(args, pair.getSecond())) {
-          myMarker.finish(project);
+          myListener.finish(project);
         }
       }
       //dont return null for auto unboxing to not face NPE 
@@ -143,7 +125,7 @@ public class SvnFileSystemListenerWrapper {
       System.arraycopy(args, 0, newArr, 0, args.length);
       final Project project = getProject(args);
       if (project != null) {
-        myMarker.start(project);
+        myListener.start(project);
         myStarted.put(project, Pair.create(method.getName(), newArr));
         Disposer.register(project, new Disposable() {
           public void dispose() {
