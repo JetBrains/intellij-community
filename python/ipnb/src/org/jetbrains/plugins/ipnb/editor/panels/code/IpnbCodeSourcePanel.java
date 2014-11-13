@@ -131,7 +131,7 @@ public class IpnbCodeSourcePanel extends IpnbPanel<JComponent, IpnbCodeCell> imp
 
     contentComponent.addMouseListener(new MouseAdapter() {
       @Override
-      public void mouseClicked(MouseEvent e) {
+      public void mousePressed(MouseEvent e) {
         if (InputEvent.CTRL_DOWN_MASK == e.getModifiersEx()) return;
         final Container ipnbFilePanel = myParent.getParent();
         if (ipnbFilePanel instanceof IpnbFilePanel) {
