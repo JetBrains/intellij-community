@@ -49,9 +49,7 @@ public class XStackFrameNode extends XValueContainerNode<XStackFrame> {
           evaluator.evaluate(expression, new XDebuggerEvaluator.XEvaluationCallback() {
             @Override
             public void evaluated(@NotNull XValue result) {
-              XValueChildrenList watches = new XValueChildrenList();
-              watches.add(expression.getExpression(), result);
-              addChildren(watches, false);
+              addChildren(XValueChildrenList.singleton(expression.getExpression(), result), false);
             }
 
             @Override

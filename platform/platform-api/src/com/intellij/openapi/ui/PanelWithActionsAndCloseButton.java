@@ -116,7 +116,8 @@ public abstract class PanelWithActionsAndCloseButton extends JPanel implements D
           if (tabs != null && tabs.getSelectedInfo() != null) {
             tabs.removeTab(tabs.getSelectedInfo());
             if (tabs.getTabCount() == 0) {
-              final Content tabbedContent = myContentManager.getContent(tabs);
+              Content tabbedContent = myContentManager.getContent(tabs);
+              if (tabbedContent == null) tabbedContent = myContentManager.getContent(tabs.getComponent()); // one more try for wrappers
               if (tabbedContent != null) {
                 myContentManager.removeContent(tabbedContent, true);
               }

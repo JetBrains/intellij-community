@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.ipnb.editor.panels.code;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbPanel;
 import org.jetbrains.plugins.ipnb.format.cells.output.IpnbOutputCell;
 
@@ -19,6 +20,7 @@ public class IpnbCodeOutputPanel<K extends IpnbOutputCell> extends IpnbPanel<JCo
     JTextArea textArea = new JTextArea(myCell.getSourceAsString());
     textArea.setLineWrap(true);
     textArea.setEditable(false);
+    textArea.setBackground(IpnbEditorUtil.getBackground());
     return textArea;
   }
 }

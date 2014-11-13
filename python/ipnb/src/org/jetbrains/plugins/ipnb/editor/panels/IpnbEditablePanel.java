@@ -2,7 +2,6 @@ package org.jetbrains.plugins.ipnb.editor.panels;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -136,7 +135,7 @@ public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEdit
     textArea.setLineWrap(true);
     textArea.setEditable(true);
     textArea.setBorder(BorderFactory.createLineBorder(JBColor.lightGray));
-    textArea.setBackground(Gray._247);
+    textArea.setBackground(IpnbEditorUtil.getEditablePanelBackground());
     textArea.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent e) {
