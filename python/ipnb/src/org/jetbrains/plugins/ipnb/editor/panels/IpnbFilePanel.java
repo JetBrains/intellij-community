@@ -14,6 +14,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.JBColor;
@@ -326,6 +327,8 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
       if (project.isDisposed()) {
         return;
       }
+      if (Disposer.isDisposed(myParent))
+        return;
       PsiDocumentManager.getInstance(project).commitDocument(myDocument);
       final IpnbEditablePanel selectedCell = getSelectedCell();
       final int index = myIpnbPanels.indexOf(selectedCell);
