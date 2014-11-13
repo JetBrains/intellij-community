@@ -39,6 +39,8 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.Set;
 
+import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isCompileStatic;
+
 /**
  * @author sergey.evdokimov
  */
@@ -56,7 +58,7 @@ public class DefaultCallExpressionTypeCalculator extends GrCallExpressionTypeCal
         PsiType returnType = calculateReturnTypeInner(callExpression, refExpr, resolveResult);
         if (returnType == null) return null;
 
-        PsiType nonVoid = PsiType.VOID.equals(returnType) ? PsiType.NULL : returnType;
+        PsiType nonVoid = PsiType.VOID.equals(returnType) && !isCompileStatic(callExpression) ? PsiType.NULL : returnType;
 
         PsiType normalized = nonVoid instanceof GrLiteralClassType
                              ? nonVoid
@@ -103,6 +105,7 @@ public class DefaultCallExpressionTypeCalculator extends GrCallExpressionTypeCal
     }
     else if (resolved instanceof GrVariable) {
       PsiType refType = refExpr.getType();
+      refType = TypesUtil.boxPrimitiveType(refType, callExpression.getManager(), callExpression.getResolveScope());
       final PsiType type = refType == null ? ((GrVariable)resolved).getTypeGroovy() : refType;
       return extractReturnTypeFromType(type, false, callExpression);
     }

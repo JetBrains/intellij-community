@@ -160,7 +160,7 @@ public class CompleteReferenceExpression {
       if (runtimeQualifier != null) {
         getVariantsFromQualifier(runtimeQualifier);
       }
-      
+
       getBindings();
     }
     else {
@@ -288,7 +288,7 @@ public class CompleteReferenceExpression {
 
   private void getVariantsFromQualifier(@NotNull GrExpression qualifier) {
     Project project = qualifier.getProject();
-    PsiType qualifierType = qualifier.getType();
+    final PsiType qualifierType = TypesUtil.boxPrimitiveType(qualifier.getType(), qualifier.getManager(), qualifier.getResolveScope());
     final ResolveState state = ResolveState.initial();
     if (qualifierType == null || qualifierType == PsiType.VOID) {
       if (qualifier instanceof GrReferenceExpression) {

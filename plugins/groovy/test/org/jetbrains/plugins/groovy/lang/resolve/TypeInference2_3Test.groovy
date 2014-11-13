@@ -92,7 +92,7 @@ class Thing {
     customType { [] }.ad<caret>d(1) // return type is not inferred - fails compile
   }
 }
-''', "java.lang.Boolean")
+''', "boolean")
   }
 
   void testSAMInference2() {
@@ -113,7 +113,7 @@ class Thing {
     first { [[]] }.ad<caret>d(1) // return type is not inferred - fails compile
   }
 }
-''', "java.lang.Boolean")
+''', "boolean")
   }
 
   void testSAMInference3() {

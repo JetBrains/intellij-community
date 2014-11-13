@@ -82,6 +82,15 @@ public class BigDecimal extends Number implements Comparable<BigDecimal> {
 ''')
   }
 
+  protected void addBigInteger() {
+    myFixture.addClass('''\
+package java.math;
+
+public class BigInteger extends Number implements Comparable<BigInteger> {
+}
+''')
+  }
+
   protected void addHashSet() {
     myFixture.addClass('''\
 package java.util;

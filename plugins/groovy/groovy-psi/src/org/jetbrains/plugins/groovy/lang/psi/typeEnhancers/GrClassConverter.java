@@ -15,21 +15,24 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.typeEnhancers;
 
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ConversionResult;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
-/**
- * @author Max Medvedev
- */
-public class GrBooleanTypeConverter extends GrTypeConverter {
+public class GrClassConverter extends GrTypeConverter {
 
   @Override
   public boolean isApplicableTo(@NotNull ApplicableTo position) {
-    return true;
+    switch (position) {
+      case ASSIGNMENT:
+      case RETURN_VALUE:
+        return true;
+      default:
+        return false;
+    }
   }
 
   @Nullable
@@ -38,21 +41,17 @@ public class GrBooleanTypeConverter extends GrTypeConverter {
                                           @NotNull PsiType actualType,
                                           @NotNull GroovyPsiElement context,
                                           @NotNull ApplicableTo currentPosition) {
-    if (PsiType.BOOLEAN != TypesUtil.unboxPrimitiveTypeWrapper(targetType)) return null;
-    if (PsiType.NULL == actualType) {
-      switch (currentPosition) {
-        case METHOD_PARAMETER:
-          return null;
-        case EXPLICIT_CAST:
-        case ASSIGNMENT:
-        case RETURN_VALUE:
-          return ConversionResult.OK;
-        default:
-          return null;
-      }
+    if (!(targetType instanceof PsiClassType) ||
+        !((PsiClassType)targetType).rawType().equalsToText(CommonClassNames.JAVA_LANG_CLASS)) {
+      return null;
     }
-    return currentPosition == ApplicableTo.ASSIGNMENT || currentPosition == ApplicableTo.RETURN_VALUE
-           ? ConversionResult.OK
-           : null;
+    if (actualType == PsiType.NULL) return ConversionResult.OK;
+    final GrLiteral literal = getLiteral(context);
+    final Object value = literal == null ? null : literal.getValue();
+    final String fqn = value == null ? null : value.toString();
+    final PsiClass psiClass = fqn == null ? null : JavaPsiFacade.getInstance(context.getProject()).findClass(
+      fqn, context.getResolveScope()
+    );
+    return psiClass == null ? ConversionResult.WARNING : ConversionResult.OK;
   }
 }

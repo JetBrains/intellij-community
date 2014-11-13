@@ -36,7 +36,7 @@ public class GroovyBundle {
 
   private static Reference<ResourceBundle> ourBundle;
   @NonNls
-  private static final String BUNDLE = "org.jetbrains.plugins.groovy.GroovyBundle";
+  public static final String BUNDLE = "org.jetbrains.plugins.groovy.GroovyBundle";
 
   private static ResourceBundle getBundle() {
     ResourceBundle bundle = com.intellij.reference.SoftReference.dereference(ourBundle);

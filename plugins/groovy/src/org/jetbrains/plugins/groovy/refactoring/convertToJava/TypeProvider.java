@@ -176,6 +176,6 @@ public class TypeProvider {
       return TypesUtil.getJavaLangObject(closure);
     }
 
-    return returnType;
+    return TypesUtil.boxPrimitiveType(returnType, closure.getManager(), closure.getResolveScope());
   }
 }

@@ -28,7 +28,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
  */
 public class GrConstructorInvocationInfo extends ConstructorCallInfoBase<GrConstructorInvocation>
   implements ConstructorCallInfo<GrConstructorInvocation> {
-  protected GrConstructorInvocationInfo(GrConstructorInvocation call) {
+  public GrConstructorInvocationInfo(GrConstructorInvocation call) {
     super(call);
   }
 
