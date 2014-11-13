@@ -201,7 +201,7 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
       }
     });
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
-    myContent = ContentFactory.SERVICE.getInstance().createContent(createChangeViewComponent(), "Local", false);
+    myContent = ContentFactory.SERVICE.getInstance().createContent(createChangeViewComponent(), ChangesViewContentManager.LOCAL_CHANGES, false);
     myContent.setCloseable(false);
     myContentManager.addContent(myContent);
 
