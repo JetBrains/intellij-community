@@ -67,7 +67,11 @@ public class PySdkListCellRenderer extends ListCellRendererWrapper<Object> {
       else {
         name = sdk.getName();
       }
-      if (name.startsWith("Remote")) name = StringUtil.trim(name.substring("Remote".length()));
+      if (name.startsWith("Remote")) {
+        final String trimmedRemote = StringUtil.trim(name.substring("Remote".length()));
+        if (!trimmedRemote.isEmpty())
+          name = trimmedRemote;
+      }
       final String flavorName = flavor == null ? "Python" : flavor.getName();
       if (name.startsWith(flavorName)) name = name.substring(flavorName.length() + 1);
 
