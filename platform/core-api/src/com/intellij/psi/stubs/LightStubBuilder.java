@@ -33,11 +33,11 @@ import java.util.List;
 
 public class LightStubBuilder implements StubBuilder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.stubs.LightStubBuilder");
-  private LighterAST myForcedLighterAst;
+  public static final ThreadLocal<LighterAST> FORCED_AST = new ThreadLocal<LighterAST>();
 
   @Override
   public StubElement buildStubTree(@NotNull PsiFile file) {
-    LighterAST tree = myForcedLighterAst;
+    LighterAST tree = FORCED_AST.get();
     if (tree == null) {
       FileType fileType = file.getFileType();
       if (!(fileType instanceof LanguageFileType)) {
@@ -51,6 +51,8 @@ public class LightStubBuilder implements StubBuilder {
         return null;
       }
       tree = file.getNode().getLighterAST();
+    } else {
+      FORCED_AST.set(null);
     }
     if (tree == null) return null;
 
@@ -157,9 +159,5 @@ public class LightStubBuilder implements StubBuilder {
    */
   protected boolean skipChildProcessingWhenBuildingStubs(@NotNull LighterAST tree, @NotNull LighterASTNode parent, @NotNull LighterASTNode node) {
     return false;
-  }
-
-  public void setForcedLighterAst(LighterAST forcedLighterAst) {
-    myForcedLighterAst = forcedLighterAst;
   }
 }

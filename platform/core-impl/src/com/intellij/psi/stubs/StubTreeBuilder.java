@@ -81,8 +81,8 @@ public class StubTreeBuilder {
           }
           if (stubFileElementType != null) {
             StubBuilder stubBuilder = stubFileElementType.getBuilder();
-            if (stubBuilder instanceof LightStubBuilder) { // each builder is pristine
-              ((LightStubBuilder)stubBuilder).setForcedLighterAst(fileContent.getLighterAST());
+            if (stubBuilder instanceof LightStubBuilder) {
+              LightStubBuilder.FORCED_AST.set(fileContent.getLighterAST());
             }
             data = stubBuilder.buildStubTree(psi);
           }
