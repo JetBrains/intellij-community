@@ -952,12 +952,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
     });
 
-    new UiNotifyConnector(myEditorComponent, new Activatable.Adapter(){
+    UiNotifyConnector connector = new UiNotifyConnector(myEditorComponent, new Activatable.Adapter() {
       @Override
       public void showNotify() {
         myGutterComponent.updateSize();
       }
     });
+    Disposer.register(getDisposable(), connector);
 
     try {
       final DropTarget dropTarget = myEditorComponent.getDropTarget();
