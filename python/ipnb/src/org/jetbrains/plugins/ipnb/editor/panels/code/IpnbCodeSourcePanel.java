@@ -91,6 +91,17 @@ public class IpnbCodeSourcePanel extends IpnbPanel<JComponent, IpnbCodeCell> imp
 
     contentComponent.addKeyListener(new KeyAdapter() {
       @Override
+      public void keyPressed(KeyEvent e) {
+        final int keyCode = e.getKeyCode();
+        final Container parent = myParent.getParent();
+        if (keyCode == KeyEvent.VK_ESCAPE && parent instanceof IpnbFilePanel) {
+          getIpnbCodePanel().setEditing(false);
+          parent.repaint();
+          UIUtil.requestFocus(getIpnbCodePanel().getFileEditor().getIpnbFilePanel());
+        }
+      }
+
+      @Override
       public void keyReleased(KeyEvent e) {
         final int keyCode = e.getKeyCode();
         final Container parent = myParent.getParent();
@@ -107,13 +118,7 @@ public class IpnbCodeSourcePanel extends IpnbPanel<JComponent, IpnbCodeCell> imp
           IpnbFilePanel ipnbFilePanel = (IpnbFilePanel)parent;
           ipnbFilePanel.revalidate();
           ipnbFilePanel.repaint();
-          if (keyCode == KeyEvent.VK_ESCAPE) {
-            getIpnbCodePanel().setEditing(false);
-            UIUtil.requestFocus(getIpnbCodePanel().getFileEditor().getIpnbFilePanel());
-          }
-
-
-          else if (keyCode == KeyEvent.VK_ENTER && InputEvent.CTRL_MASK == e.getModifiers()) {
+          if (keyCode == KeyEvent.VK_ENTER && InputEvent.CTRL_MASK == e.getModifiers()) {
             IpnbRunCellBaseAction.runCell(ipnbFilePanel, false);
           }
           else if (keyCode == KeyEvent.VK_ENTER && InputEvent.SHIFT_DOWN_MASK == e.getModifiersEx()) {
