@@ -79,10 +79,10 @@ public final class FileContentImpl extends UserDataHolderBase implements FileCon
     return psi;
   }
 
-  public @NotNull LighterAST getLighterAST() {
+  public @NotNull LighterAST getLighterASTForPsiDependentIndex() {
     LighterAST lighterAST = getUserData(IndexingDataKeys.LIGHTER_AST_NODE_KEY);
     if (lighterAST == null) {
-      lighterAST = getPsiFileAccountingForUnsavedDocument().getNode().getLighterAST();
+      lighterAST = getPsiFileForPsiDependentIndex().getNode().getLighterAST();
       assert lighterAST != null;
       putUserData(IndexingDataKeys.LIGHTER_AST_NODE_KEY, lighterAST);
     }
@@ -229,7 +229,7 @@ public final class FileContentImpl extends UserDataHolderBase implements FileCon
     myHash = hash;
   }
 
-  public PsiFile getPsiFileAccountingForUnsavedDocument() {
+  public PsiFile getPsiFileForPsiDependentIndex() {
     Document document = FileDocumentManager.getInstance().getCachedDocument(getFile());
     PsiFile psi = null;
     if (document != null) {
