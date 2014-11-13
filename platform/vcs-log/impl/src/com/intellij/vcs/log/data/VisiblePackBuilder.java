@@ -160,25 +160,24 @@ class VisiblePackBuilder {
                                     @NotNull final PermanentGraph<Integer> permanentGraph,
                                     @NotNull List<VcsLogDetailsFilter> detailsFilters,
                                     @Nullable final Set<Integer> matchingHeads) {
-    final int commitIndex = myHashMap.getCommitIndex(commit.getId());
-    return ContainerUtil.and(detailsFilters, new Condition<VcsLogDetailsFilter>() {
+    boolean matchesAllDetails = ContainerUtil.and(detailsFilters, new Condition<VcsLogDetailsFilter>() {
       @Override
       public boolean value(VcsLogDetailsFilter filter) {
-        if (!filter.matches(commit)) {
-          return false;
-        }
-        if (matchingHeads == null) {
-          return true;
-        }
-        Set<Integer> containingBranches = permanentGraph.getContainingBranches(commitIndex);
-        return ContainerUtil.exists(containingBranches, new Condition<Integer>() {
-          @Override
-          public boolean value(Integer integer) {
-            return matchingHeads.contains(integer);
-          }
-        });
+        return filter.matches(commit);
       }
     });
+    return matchesAllDetails && matchesAnyHead(permanentGraph, commit, matchingHeads);
+  }
+
+  private boolean matchesAnyHead(@NotNull PermanentGraph<Integer> permanentGraph,
+                                 @NotNull VcsCommitMetadata commit,
+                                 @Nullable Set<Integer> matchingHeads) {
+    if (matchingHeads == null) {
+      return true;
+    }
+    // TODO O(n^2)
+    int commitIndex = myHashMap.getCommitIndex(commit.getId());
+    return ContainerUtil.intersects(permanentGraph.getContainingBranches(commitIndex), matchingHeads);
   }
 
   @Nullable
