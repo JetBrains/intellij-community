@@ -193,6 +193,9 @@ public class BlockSupportImpl extends BlockSupport {
       lightFile.setOriginalFile(viewProvider.getVirtualFile());
 
       FileViewProvider copy = viewProvider.createCopy(lightFile);
+      if (copy.isEventSystemEnabled()) {
+        throw new AssertionError("Copied view provider must be non-physical for reparse to deliver correct events: " + viewProvider);
+      }
       copy.getLanguages();
       SingleRootFileViewProvider.doNotCheckFileSizeLimit(lightFile); // optimization: do not convert file contents to bytes to determine if we should codeinsight it
       PsiFileImpl newFile = getFileCopy(fileImpl, copy);
@@ -202,7 +205,6 @@ public class BlockSupportImpl extends BlockSupport {
       final FileElement newFileElement = (FileElement)newFile.getNode();
       final FileElement oldFileElement = (FileElement)fileImpl.getNode();
 
-      assert oldFileElement != null && newFileElement != null;
       DiffLog diffLog = mergeTrees(fileImpl, oldFileElement, newFileElement, indicator);
 
       ((PsiManagerEx)fileImpl.getManager()).getFileManager().setViewProvider(lightFile, null);
