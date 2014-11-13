@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.python.run;
+package com.jetbrains.python.console;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -24,8 +24,6 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Pair;
-import com.jetbrains.python.console.PydevConsoleRunner;
-import com.jetbrains.python.console.PythonConsoleRunnerFactory;
 import icons.PythonIcons;
 
 /**
@@ -53,6 +51,6 @@ public class RunPythonConsoleAction extends AnAction implements DumbAware {
 
   public void actionPerformed(final AnActionEvent e) {
     PydevConsoleRunner runner = PythonConsoleRunnerFactory.getInstance().createConsoleRunner(e.getData(CommonDataKeys.PROJECT), e.getData(LangDataKeys.MODULE));
-    runner.run();
+    runner.open();
   }
 }
