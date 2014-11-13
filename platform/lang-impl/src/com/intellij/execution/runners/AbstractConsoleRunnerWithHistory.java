@@ -233,7 +233,7 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
   }
 
   public LanguageConsoleImpl getLanguageConsole() {
-    return myConsoleView.getConsole();
+    return (LanguageConsoleImpl)myConsoleView.getConsole();
   }
 
   @SuppressWarnings("UnusedDeclaration")
