@@ -91,13 +91,17 @@ class VisiblePackBuilder {
     }
 
     VisibleGraph<Integer> visibleGraph;
-    if (((matchingHeads != null) && matchingHeads.isEmpty()) || ((matchingCommits != null) && matchingCommits.isEmpty())) {
+    if (matchesNothing(matchingHeads) || matchesNothing(matchingCommits)) {
       visibleGraph = EmptyVisibleGraph.getInstance();
     }
     else {
       visibleGraph = dataPack.getPermanentGraph().createVisibleGraph(sortType, matchingHeads, getFilterFromCommits(matchingCommits));
     }
     return Pair.create(new VisiblePack(dataPack, visibleGraph, canRequestMore), commitCount);
+  }
+
+  private static <T> boolean matchesNothing(@Nullable Collection<T> matchingSet) {
+    return matchingSet != null && matchingSet.isEmpty();
   }
 
   private VisiblePack applyHashFilter(@NotNull DataPack dataPack,
