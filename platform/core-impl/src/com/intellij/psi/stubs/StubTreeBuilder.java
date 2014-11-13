@@ -58,7 +58,7 @@ public class StubTreeBuilder {
 
         CharSequence contentAsText = inputData.getContentAsText();
         FileContentImpl fileContent = (FileContentImpl)inputData;
-        PsiFile psi = fileContent.getPsiFileAccountingForUnsavedDocument();
+        PsiFile psi = fileContent.getPsiFileForPsiDependentIndex();
         psi = psi.getViewProvider().getStubBindingRoot();
         psi.putUserData(IndexingDataKeys.FILE_TEXT_CONTENT_KEY, contentAsText);
 
@@ -82,7 +82,7 @@ public class StubTreeBuilder {
           if (stubFileElementType != null) {
             StubBuilder stubBuilder = stubFileElementType.getBuilder();
             if (stubBuilder instanceof LightStubBuilder) {
-              LightStubBuilder.FORCED_AST.set(fileContent.getLighterAST());
+              LightStubBuilder.FORCED_AST.set(fileContent.getLighterASTForPsiDependentIndex());
             }
             data = stubBuilder.buildStubTree(psi);
           }
