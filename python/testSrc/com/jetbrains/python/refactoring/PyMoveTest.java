@@ -140,7 +140,7 @@ public class PyMoveTest extends PyTestCase {
   }
 
   // PY-7378
-  public void testMoveNamespacePackageTest1() {
+  public void testMoveNamespacePackage1() {
     runWithLanguageLevel(LanguageLevel.PYTHON33, new Runnable() {
       @Override
       public void run() {
@@ -150,7 +150,7 @@ public class PyMoveTest extends PyTestCase {
   }
 
   // PY-7378
-  public void testMoveNamespacePackageTest2() {
+  public void testMoveNamespacePackage2() {
     runWithLanguageLevel(LanguageLevel.PYTHON33, new Runnable() {
       @Override
       public void run() {
@@ -160,7 +160,7 @@ public class PyMoveTest extends PyTestCase {
   }
 
   // PY-7378
-  public void testMoveNamespacePackageTest3() {
+  public void testMoveNamespacePackage3() {
     runWithLanguageLevel(LanguageLevel.PYTHON33, new Runnable() {
       @Override
       public void run() {
