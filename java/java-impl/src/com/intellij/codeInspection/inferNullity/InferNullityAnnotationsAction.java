@@ -19,6 +19,7 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.BaseAnalysisAction;
 import com.intellij.analysis.BaseAnalysisActionDialog;
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.quickfix.LocateLibraryDialog;
@@ -59,14 +60,12 @@ import com.intellij.usages.*;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import com.intellij.util.SequentialModalProgressTask;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class InferNullityAnnotationsAction extends BaseAnalysisAction {
   @NonNls private static final String INFER_NULLITY_ANNOTATIONS = "Infer Nullity Annotations";
@@ -185,8 +184,6 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
       }
       return;
     }
-    if (scope.checkScopeWritable(project)) return;
-
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     final UsageInfo[] usageInfos = findUsages(project, scope);
     if (usageInfos == null) return;
@@ -258,6 +255,16 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
             protected void run(@NotNull Result result) throws Throwable {
               final UsageInfo[] infos = computable.compute();
               if (infos.length > 0) {
+
+                final Set<PsiElement> elements = new LinkedHashSet<PsiElement>();
+                for (UsageInfo info : infos) {
+                  final PsiElement element = info.getElement();
+                  if (element != null) {
+                    ContainerUtil.addIfNotNull(elements, element.getContainingFile());
+                  }
+                }
+                if (!FileModificationService.getInstance().preparePsiElementsForWrite(elements)) return;
+
                 final SequentialModalProgressTask progressTask = new SequentialModalProgressTask(project, INFER_NULLITY_ANNOTATIONS, false);
                 progressTask.setMinIterationTime(200);
                 progressTask.setTask(new AnnotateTask(project, progressTask, infos));
