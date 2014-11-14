@@ -321,7 +321,7 @@ public final class PyClassRefactoringUtil {
       return AddImportHelper.addImportFrom(file, null, containingQName.toString(), importedName, asName, priority, anchor);
     }
     else {
-      return AddImportHelper.addImportStatement(file, containingQName.append(importedName).toString(), asName, priority);
+      return AddImportHelper.addImportStatement(file, containingQName.append(importedName).toString(), asName, priority, anchor);
     }
   }
 
