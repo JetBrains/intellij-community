@@ -392,17 +392,16 @@ public class ResolveImportUtil {
   /**
    * @param element what we test (identifier, reference, import element, etc)
    * @return the how the element relates to an enclosing import statement, if any
+   * @see com.jetbrains.python.psi.resolve.PointInImport
    */
+  @NotNull
   public static PointInImport getPointInImport(@NotNull PsiElement element) {
-    PsiElement parent = PsiTreeUtil.getNonStrictParentOfType(
-      element,
-      PyImportElement.class, PyFromImportStatement.class
-    );
+    final PsiElement parent = PsiTreeUtil.getNonStrictParentOfType(element, PyImportElement.class, PyFromImportStatement.class);
     if (parent instanceof PyFromImportStatement) {
       return PointInImport.AS_MODULE; // from foo ...
     }
     if (parent instanceof PyImportElement) {
-      PsiElement statement = parent.getParent();
+      final PsiElement statement = parent.getParent();
       if (statement instanceof PyImportStatement) {
         return PointInImport.AS_MODULE; // import foo,...
       }

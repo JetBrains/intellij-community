@@ -31,7 +31,6 @@ import com.intellij.psi.util.QualifiedName;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.CheckBox;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
@@ -39,6 +38,7 @@ import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.inspections.quickfix.PyRenameElementQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
+import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -117,7 +117,7 @@ public class PyPep8NamingInspection extends PyInspection {
       if (!LOWERCASE_REGEX.matcher(name).matches()) {
         final ASTNode nameNode = function.getNameNode();
         if (nameNode != null) {
-          final List<LocalQuickFix> quickFixes = new SmartList<LocalQuickFix>(new PyRenameElementQuickFix());
+          final List<LocalQuickFix> quickFixes = Lists.<LocalQuickFix>newArrayList(new PyRenameElementQuickFix());
           if (containingClass != null) {
             quickFixes.add(new IgnoreBaseClassQuickFix(containingClass, myTypeEvalContext));
           }
@@ -135,8 +135,8 @@ public class PyPep8NamingInspection extends PyInspection {
       if (blackList.contains(pyClass.getQualifiedName())) {
         return true;
       }
-      for (PyClass ancestor : pyClass.getAncestorClasses(myTypeEvalContext)) {
-        if (blackList.contains(ancestor.getQualifiedName())) {
+      for (PyClassLikeType ancestor : pyClass.getAncestorTypes(myTypeEvalContext)) {
+        if (blackList.contains(ancestor.getClassQName())) {
           return true;
         }
       }
