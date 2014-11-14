@@ -2,8 +2,12 @@ package org.jetbrains.settingsRepository.git
 
 import com.intellij.openapi.progress.ProgressIndicator
 import org.eclipse.jgit.lib.ProgressMonitor
+import com.intellij.openapi.progress.EmptyProgressIndicator
+import org.eclipse.jgit.lib.NullProgressMonitor
 
-class JGitProgressMonitor(private val indicator: ProgressIndicator) : ProgressMonitor {
+fun ProgressIndicator.asProgressMonitor() = if (this is EmptyProgressIndicator) NullProgressMonitor.INSTANCE else JGitProgressMonitor(this)
+
+private class JGitProgressMonitor(private val indicator: ProgressIndicator) : ProgressMonitor {
   override fun start(totalTasks: Int) {
   }
 

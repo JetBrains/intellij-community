@@ -2,10 +2,10 @@ package org.jetbrains.settingsRepository
 
 import com.intellij.openapi.progress.ProgressIndicator
 
-import java.io.IOException
 import java.io.InputStream
 import gnu.trove.THashSet
 import java.util.Collections
+import com.intellij.openapi.progress.EmptyProgressIndicator
 
 public trait RepositoryManager {
   public fun createRepositoryIfNeed(): Boolean
@@ -24,10 +24,8 @@ public trait RepositoryManager {
   /**
    * Return error message if failed
    */
-  throws(javaClass<Exception>())
   public fun setUpstream(url: String?, branch: String?)
 
-  throws(javaClass<IOException>())
   public fun read(path: String): InputStream?
 
   /**
@@ -42,15 +40,14 @@ public trait RepositoryManager {
   /**
    * Not all implementations support progress indicator (will not be updated on progress)
    */
-  throws(javaClass<Exception>())
-  public fun commit(indicator: ProgressIndicator)
+  public fun commit(indicator: ProgressIndicator): Boolean
 
   public fun commit(paths: List<String>)
 
-  throws(javaClass<Exception>())
-  public fun push(indicator: ProgressIndicator)
+  public fun push(indicator: ProgressIndicator = EmptyProgressIndicator())
 
-  throws(javaClass<Exception>())
+  public fun fetch(): Updater
+
   public fun pull(indicator: ProgressIndicator): UpdateResult?
 
   public fun has(path: String): Boolean
@@ -60,6 +57,13 @@ public trait RepositoryManager {
   public fun resetToMy(indicator: ProgressIndicator, localRepositoryInitializer: (() -> Unit)?): UpdateResult?
 
   public fun canCommit(): Boolean
+
+  public trait Updater {
+    fun merge(): UpdateResult?
+
+    // valid only if merge was called before
+    val definitelySkipPush: Boolean
+  }
 }
 
 public trait UpdateResult {

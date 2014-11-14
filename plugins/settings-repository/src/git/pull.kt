@@ -59,7 +59,7 @@ open class Pull(val manager: GitRepositoryManager, val indicator: ProgressIndica
   val config = repository.getConfig()
   val remoteConfig = RemoteConfig(config, Constants.DEFAULT_REMOTE_NAME)
 
-  fun pull(mergeStrategy: MergeStrategy = MergeStrategy.RECURSIVE, commitMessage: String? = null): UpdateResult? {
+  fun pull(mergeStrategy: MergeStrategy = MergeStrategy.RECURSIVE, commitMessage: String? = null, prefetchedRefToMerge: Ref? = null): UpdateResult? {
     indicator.checkCanceled()
 
     LOG.debug("Pull")
@@ -70,7 +70,7 @@ open class Pull(val manager: GitRepositoryManager, val indicator: ProgressIndica
       LOG.warn(MessageFormat.format(JGitText.get().cannotPullOnARepoWithState, repositoryState.name()))
     }
 
-    val refToMerge = fetch()
+    val refToMerge = prefetchedRefToMerge ?: fetch()
     if (refToMerge == null) {
       return null
     }
@@ -125,7 +125,7 @@ open class Pull(val manager: GitRepositoryManager, val indicator: ProgressIndica
     val fetchResult: FetchResult
     try {
       transport.setCredentialsProvider(manager.credentialsProvider)
-      fetchResult = transport.fetch(JGitProgressMonitor(indicator), null)
+      fetchResult = transport.fetch(indicator.asProgressMonitor(), null)
     }
     catch (e: TransportException) {
       val message = e.getMessage()!!

@@ -13,22 +13,17 @@ import com.intellij.util.PathUtilRt
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import java.net.InetAddress
 
-fun commit(manager: GitRepositoryManager, indicator: ProgressIndicator) {
+fun commit(manager: GitRepositoryManager, indicator: ProgressIndicator): Boolean {
   indicator.checkCanceled()
 
   val diff = manager.repository.computeIndexDiff()
-  val changed = diff.diff(JGitProgressMonitor(indicator), ProgressMonitor.UNKNOWN, ProgressMonitor.UNKNOWN, "Commit")
-
-  if (LOG.isDebugEnabled()) {
-    LOG.debug("Commit")
-    LOG.debug(indexDiffToString(diff))
-  }
+  val changed = diff.diff(indicator.asProgressMonitor(), ProgressMonitor.UNKNOWN, ProgressMonitor.UNKNOWN, "Commit")
 
   // don't worry about untracked/modified only in the FS files
   if (!changed || (diff.getAdded().isEmpty() && diff.getChanged().isEmpty() && diff.getRemoved().isEmpty())) {
     if (diff.getModified().isEmpty()) {
-      LOG.debug("Skip scheduled commit, nothing to commit")
-      return
+      LOG.debug("Nothing to commit")
+      return false
     }
 
     var edits: MutableList<PathEdit>? = null
@@ -45,6 +40,10 @@ fun commit(manager: GitRepositoryManager, indicator: ProgressIndicator) {
     }
   }
 
+  if (LOG.isDebugEnabled()) {
+    LOG.debug(indexDiffToString(diff))
+  }
+
   indicator.checkCanceled()
 
   val builder = StringBuilder()
@@ -58,6 +57,7 @@ fun commit(manager: GitRepositoryManager, indicator: ProgressIndicator) {
   addCompactList("Delete", diff.getRemoved(), builder)
 
   manager.commit(builder.toString())
+  return true
 }
 
 private fun indexDiffToString(diff: IndexDiff): String {

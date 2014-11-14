@@ -23,6 +23,9 @@ import org.eclipse.jgit.revwalk.RevCommit
 import org.jetbrains.jgit.dirCache.deletePath
 import org.jetbrains.settingsRepository.AuthenticationException
 import kotlin.properties.Delegates
+import com.intellij.openapi.progress.EmptyProgressIndicator
+import org.jetbrains.settingsRepository.RepositoryManager.Updater
+import org.jetbrains.settingsRepository.UpdateResult
 
 class GitRepositoryService : RepositoryService {
   override fun isValidRepository(file: File): Boolean {
@@ -98,9 +101,9 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
     repository.deletePath(path, isFile, false)
   }
 
-  override fun commit(indicator: ProgressIndicator) {
+  override fun commit(indicator: ProgressIndicator): Boolean {
     synchronized (lock) {
-      commit(this, indicator)
+      return commit(this, indicator)
     }
   }
 
@@ -118,11 +121,10 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
       }
     }
 
-    val monitor = JGitProgressMonitor(indicator)
-    for (attempt in 0..1) {
-      for (transport in Transport.openAll(repository, Constants.DEFAULT_REMOTE_NAME, Transport.Operation.PUSH)) {
+    val monitor = indicator.asProgressMonitor()
+    for (transport in Transport.openAll(repository, Constants.DEFAULT_REMOTE_NAME, Transport.Operation.PUSH)) {
+      for (attempt in 0..1) {
         transport.setCredentialsProvider(credentialsProvider)
-
         try {
           val result = transport.push(monitor, transport.findRemoteRefUpdatesFor(refSpecs))
           if (LOG.isDebugEnabled()) {
@@ -149,6 +151,27 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
         }
         finally {
           transport.close()
+        }
+      }
+    }
+  }
+
+  override fun fetch(): Updater {
+    val pullTask = Pull(this, EmptyProgressIndicator())
+    val refToMerge = pullTask.fetch()
+    return object : Updater {
+      override var definitelySkipPush = false
+
+      override fun merge(): UpdateResult? {
+        synchronized (lock) {
+          val committed = commit(pullTask.indicator)
+          if (refToMerge == null && !committed && BranchTrackingStatus.of(repository, repository.getConfig().getRemoteBranchFullName()).getAheadCount() == 0) {
+            definitelySkipPush = true
+            return null
+          }
+          else {
+            return pullTask.pull(prefetchedRefToMerge = refToMerge)
+          }
         }
       }
     }

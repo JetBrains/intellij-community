@@ -4,7 +4,6 @@ import com.intellij.openapi.util.io.FileUtil
 
 import java.io.File
 import java.io.FileInputStream
-import java.io.IOException
 import java.io.InputStream
 import com.intellij.openapi.vcs.merge.MultipleFileMergeDialog
 import com.intellij.openapi.vfs.VirtualFile
@@ -37,11 +36,12 @@ public abstract class BaseRepositoryManager protected() : RepositoryManager {
     FileUtil.delete(dir)
   }
 
-  throws(javaClass<IOException>())
   override fun read(path: String): InputStream? {
-    val file = File(dir, path)
-    //noinspection IOResourceOpenedButNotSafelyClosed
-    return if (file.exists()) FileInputStream(file) else null
+    synchronized (lock) {
+      val file = File(dir, path)
+      //noinspection IOResourceOpenedButNotSafelyClosed
+      return if (file.exists()) FileInputStream(file) else null
+    }
   }
 
   override fun write(path: String, content: ByteArray, size: Int) {
@@ -50,10 +50,10 @@ public abstract class BaseRepositoryManager protected() : RepositoryManager {
     }
 
     try {
-      val file = File(dir, path)
-      FileUtil.writeToFile(file, content, 0, size)
-
       synchronized (lock) {
+        val file = File(dir, path)
+        FileUtil.writeToFile(file, content, 0, size)
+
         addToIndex(file, path, content, size)
       }
     }
@@ -73,16 +73,17 @@ public abstract class BaseRepositoryManager protected() : RepositoryManager {
     }
 
     try {
-      val file = File(dir, path)
-      // delete could be called for non-existent file
-      if (!file.exists()) {
-        return
-      }
-
-      val isFile = file.isFile()
-      removeFileAndParentDirectoryIfEmpty(file, dir, isFile)
-
       synchronized (lock) {
+        val file = File(dir, path)
+        // delete could be called for non-existent file
+        if (!file.exists()) {
+          return
+        }
+
+        val isFile = file.isFile()
+        removeFileAndParentDirectoryIfEmpty(file, dir, isFile)
+
+
         deleteFromIndex(path, isFile)
       }
     }
@@ -91,11 +92,12 @@ public abstract class BaseRepositoryManager protected() : RepositoryManager {
     }
   }
 
-  throws(javaClass<Exception>())
   protected abstract fun deleteFromIndex(path: String, isFile: Boolean)
 
   override fun has(path: String): Boolean {
-    return File(dir, path).exists()
+    synchronized (lock) {
+      return File(dir, path).exists()
+    }
   }
 }
 

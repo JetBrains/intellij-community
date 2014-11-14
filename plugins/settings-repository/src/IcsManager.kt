@@ -41,8 +41,9 @@ import com.intellij.notification.NotificationsAdapter
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.application.ModalityState
-import org.jetbrains.settingsRepository.actions.syncAndNotify
 import com.intellij.openapi.vcs.VcsNotifier
+import java.util.concurrent.Future
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 
 val PLUGIN_NAME: String = "Settings Repository"
 
@@ -119,6 +120,8 @@ public class IcsManager : ApplicationLoadListener {
 
   volatile var repositoryActive = false
 
+  private volatile var autoSyncFuture: Future<*>? = null
+
   private fun scheduleCommit() {
     if (autoCommitEnabled && !ApplicationManager.getApplication()!!.isUnitTestMode()) {
       commitAlarm.cancelAndRequest()
@@ -181,6 +184,23 @@ public class IcsManager : ApplicationLoadListener {
         override fun run(indicator: ProgressIndicator) {
           indicator.setIndeterminate(true)
 
+          val autoFuture = autoSyncFuture
+          if (autoFuture != null) {
+            if (autoFuture.isDone()) {
+              autoSyncFuture = null
+            }
+            else if (autoSyncFuture != null) {
+              LOG.info("Wait for auto sync future")
+              indicator.setText("Wait for auto sync completion")
+              while (!autoFuture.isDone()) {
+                if (indicator.isCanceled()) {
+                  return
+                }
+                Thread.sleep(5)
+              }
+            }
+          }
+
           if (localRepositoryInitializer == null) {
             try {
               // we commit before even if sync "RESET_TO_THEIRS" — preserve history and ability to undo
@@ -188,6 +208,10 @@ public class IcsManager : ApplicationLoadListener {
                 repositoryManager.commit(indicator)
               }
               // well, we cannot commit? No problem, upcoming action must do something smart and solve the situation
+            }
+            catch (e: ProcessCanceledException) {
+              LOG.debug("Canceled")
+              return
             }
             catch (e: Throwable) {
               LOG.error(e)
@@ -227,6 +251,7 @@ public class IcsManager : ApplicationLoadListener {
             }
           }
           catch (e: ProcessCanceledException) {
+            LOG.debug("Canceled")
           }
           catch (e: Throwable) {
             if (e !is AuthenticationException && e !is NoRemoteRepositoryException) {
@@ -309,17 +334,75 @@ public class IcsManager : ApplicationLoadListener {
 
                 else -> false
               }) {
-                ApplicationManager.getApplication().invokeLater({
-                  if (repositoryActive) {
-                    syncAndNotify(SyncType.MERGE, project, false)
-                  }
-                }, ModalityState.NON_MODAL, project.getDisposed())
+                autoSync()
               }
             }
           })
         }
       }
     })
+  }
+
+  private fun autoSync() {
+    if (!repositoryActive) {
+      return
+    }
+
+    var future = autoSyncFuture
+    if (future != null && !future!!.isDone()) {
+      return
+    }
+
+    val app = ApplicationManagerEx.getApplicationEx() as ApplicationImpl
+    future = app.executeOnPooledThread {
+      if (autoSyncFuture == future) {
+        try {
+          // should be first - could take time, so, may be, during this time something will be saved/committed
+          val updater = repositoryManager.fetch()
+
+          cancelAndDisableAutoCommit()
+          // we merge in EDT non-modal to ensure that new settings will be properly applied
+          app.invokeAndWait({
+            try {
+              val updateResult = updater.merge()
+              if (updateResult != null && updateStoragesFromStreamProvider(app.getStateStore(), updateResult)) {
+                // force to avoid saveAll & confirmation
+                app.exit(true, true, true, true)
+              }
+            }
+            catch (e: Throwable) {
+              if (e is AuthenticationException || e is NoRemoteRepositoryException) {
+                LOG.warn(e)
+              }
+              else {
+                LOG.error(e)
+              }
+            }
+            finally {
+              autoCommitEnabled = true
+            }
+          }, ModalityState.NON_MODAL)
+
+          if (!updater.definitelySkipPush) {
+            repositoryManager.push()
+          }
+        }
+        catch (e: ProcessCanceledException) {
+        }
+        catch (e: Throwable) {
+          if (e is AuthenticationException || e is NoRemoteRepositoryException) {
+            LOG.warn(e)
+          }
+          else {
+            LOG.error(e)
+          }
+        }
+        finally {
+          autoSyncFuture = null
+        }
+      }
+    }
+    autoSyncFuture = future
   }
 
   open inner class IcsStreamProvider(protected val projectId: String?) : StreamProvider() {

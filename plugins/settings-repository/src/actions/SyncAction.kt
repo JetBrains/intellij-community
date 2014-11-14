@@ -23,7 +23,7 @@ abstract class SyncAction(private val syncType: SyncType) : DumbAwareAction() {
   }
 }
 
-fun syncAndNotify(syncType: SyncType, project: Project, notifyIfUpToDate: Boolean = true) {
+fun syncAndNotify(syncType: SyncType, project: Project?, notifyIfUpToDate: Boolean = true) {
   try {
     if (IcsManager.getInstance().sync(syncType, project) == null && !notifyIfUpToDate) {
       return
