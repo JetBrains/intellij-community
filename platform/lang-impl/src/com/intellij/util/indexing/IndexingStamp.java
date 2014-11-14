@@ -40,6 +40,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author Eugene Zhuravlev
@@ -62,7 +63,7 @@ public class IndexingStamp {
   private static final long INDEX_DATA_OUTDATED_STAMP = -2L;
 
   private static final int VERSION = 13;
-  private static final ConcurrentHashMap<ID<?, ?>, Long> ourIndexIdToCreationStamp = new ConcurrentHashMap<ID<?, ?>, Long>();
+  private static final ConcurrentMap<ID<?, ?>, Long> ourIndexIdToCreationStamp = new ConcurrentHashMap<ID<?, ?>, Long>();
   static final int INVALID_FILE_ID = 0;
   private static volatile long ourLastStamp; // ensure any file index stamp increases
 

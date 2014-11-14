@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author nik
@@ -59,7 +60,7 @@ public class ProjectFacetManagerImpl extends ProjectFacetManagerEx implements Pe
   private static final Logger LOG = Logger.getInstance("#com.intellij.facet.impl.ProjectFacetManagerImpl");
   private ProjectFacetManagerState myState = new ProjectFacetManagerState();
   private final Project myProject;
-  private final ConcurrentHashMap<FacetTypeId<?>, ParameterizedCachedValue<Boolean,FacetTypeId<?>>> myCachedHasFacets = new ConcurrentHashMap<FacetTypeId<?>, ParameterizedCachedValue<Boolean, FacetTypeId<?>>>();
+  private final ConcurrentMap<FacetTypeId<?>, ParameterizedCachedValue<Boolean,FacetTypeId<?>>> myCachedHasFacets = new ConcurrentHashMap<FacetTypeId<?>, ParameterizedCachedValue<Boolean, FacetTypeId<?>>>();
   private final ParameterizedCachedValueProvider<Boolean,FacetTypeId<?>> myCachedValueProvider;
 
   public ProjectFacetManagerImpl(Project project) {

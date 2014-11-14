@@ -57,6 +57,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author Mike
@@ -148,8 +149,8 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
     return rootTag != null ? rootTag.getNSDescriptor(rootTag.getNamespace(), false) : null;
   }
 
-  private ConcurrentHashMap<String, CachedValue<XmlNSDescriptor>> myDefaultDescriptorsCacheStrict = new ConcurrentHashMap<String, CachedValue<XmlNSDescriptor>>();
-  private ConcurrentHashMap<String, CachedValue<XmlNSDescriptor>> myDefaultDescriptorsCacheNotStrict = new ConcurrentHashMap<String, CachedValue<XmlNSDescriptor>>();
+  private ConcurrentMap<String, CachedValue<XmlNSDescriptor>> myDefaultDescriptorsCacheStrict = new ConcurrentHashMap<String, CachedValue<XmlNSDescriptor>>();
+  private ConcurrentMap<String, CachedValue<XmlNSDescriptor>> myDefaultDescriptorsCacheNotStrict = new ConcurrentHashMap<String, CachedValue<XmlNSDescriptor>>();
 
   @Override
   public void clearCaches() {
@@ -169,7 +170,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
       myExtResourcesModCount = curExtResourcesModCount;
     }
 
-    final ConcurrentHashMap<String, CachedValue<XmlNSDescriptor>> defaultDescriptorsCache;
+    final ConcurrentMap<String, CachedValue<XmlNSDescriptor>> defaultDescriptorsCache;
     if (strict) {
       defaultDescriptorsCache = myDefaultDescriptorsCacheStrict;
     }

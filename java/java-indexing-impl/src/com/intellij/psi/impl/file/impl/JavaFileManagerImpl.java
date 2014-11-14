@@ -39,13 +39,14 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * Author: dmitrylomov
  */
 public class JavaFileManagerImpl implements JavaFileManager, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.file.impl.JavaFileManagerImpl");
-  private final ConcurrentHashMap<GlobalSearchScope, PsiClass> myCachedObjectClassMap = new ConcurrentHashMap<GlobalSearchScope, PsiClass>();
+  private final ConcurrentMap<GlobalSearchScope, PsiClass> myCachedObjectClassMap = new ConcurrentHashMap<GlobalSearchScope, PsiClass>();
   private final PsiManagerEx myManager;
   private volatile Set<String> myNontrivialPackagePrefixes = null;
   private boolean myDisposed = false;

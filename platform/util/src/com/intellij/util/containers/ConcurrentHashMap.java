@@ -219,7 +219,6 @@ import java.util.concurrent.locks.LockSupport;
 // IJ specific:
 // copied from JDK1.8 ConcurrentHashMap except:
 // added hashing strategy argument
-// added cacheOrGet convenience method
 // Null keys are NOT allowed
 // Null values are NOT allowed
 // NOT serializable

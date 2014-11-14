@@ -48,6 +48,7 @@ import java.io.*;
 import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.util.Arrays;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -136,7 +137,7 @@ public class FSRecords implements Forceable {
 
   static class DbConnection {
     private static boolean ourInitialized;
-    private static final ConcurrentHashMap<String, Integer> myAttributeIds = new ConcurrentHashMap<String, Integer>();
+    private static final ConcurrentMap<String, Integer> myAttributeIds = new ConcurrentHashMap<String, Integer>();
 
     private static PersistentStringEnumerator myNames;
     private static Storage myAttributes;

@@ -82,6 +82,7 @@ import java.beans.PropertyChangeListener;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author peter
@@ -127,7 +128,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   private volatile int myCount;
   private volatile boolean myHasPsiElements;
   private boolean myLookupUpdated;
-  private final ConcurrentHashMap<LookupElement, CompletionSorterImpl> myItemSorters =
+  private final ConcurrentMap<LookupElement, CompletionSorterImpl> myItemSorters =
     new ConcurrentHashMap<LookupElement, CompletionSorterImpl>(
       ContainerUtil.<LookupElement>identityStrategy());
   private final PropertyChangeListener myLookupManagerListener;

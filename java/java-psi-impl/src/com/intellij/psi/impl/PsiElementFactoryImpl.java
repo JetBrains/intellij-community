@@ -44,11 +44,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
+import java.util.concurrent.ConcurrentMap;
 
 public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements PsiElementFactory {
   private PsiClass myArrayClass;
   private PsiClass myArrayClass15;
-  private final ConcurrentHashMap<GlobalSearchScope, PsiClassType> myCachedObjectType = new ConcurrentHashMap<GlobalSearchScope, PsiClassType>();
+  private final ConcurrentMap<GlobalSearchScope, PsiClassType> myCachedObjectType = new ConcurrentHashMap<GlobalSearchScope, PsiClassType>();
 
   public PsiElementFactoryImpl(final PsiManagerEx manager) {
     super(manager);
