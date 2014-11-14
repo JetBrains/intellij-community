@@ -20,7 +20,6 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager;
-import com.intellij.util.containers.ConcurrentHashSet;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -56,7 +55,7 @@ public class ExternalSystemProgressNotificationManagerImpl extends RemoteObject
         ids = myListeners.get(listener);
       }
       else {
-        ids = myListeners.putIfAbsent(listener, new ConcurrentHashSet<ExternalSystemTaskId>());
+        ids = myListeners.putIfAbsent(listener, ContainerUtil.<ExternalSystemTaskId>newConcurrentSet());
       }
     }
     return ids.add(taskId);

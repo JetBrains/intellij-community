@@ -47,7 +47,6 @@ import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.Semaphore;
-import com.intellij.util.containers.ConcurrentHashSet;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NonNls;
@@ -67,7 +66,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   protected final Project myProject;
   private final PsiManager myPsiManager;
   private final DocumentCommitProcessor myDocumentCommitProcessor;
-  protected final Set<Document> myUncommittedDocuments = new ConcurrentHashSet<Document>();
+  protected final Set<Document> myUncommittedDocuments = ContainerUtil.newConcurrentSet();
   private final Map<Document, CharSequence> myLastCommittedTexts = ContainerUtil.newConcurrentMap();
 
   private volatile boolean myIsCommitInProgress;

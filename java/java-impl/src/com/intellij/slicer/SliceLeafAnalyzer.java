@@ -33,7 +33,6 @@ import com.intellij.psi.impl.source.tree.AstBufferUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.WalkingState;
-import com.intellij.util.containers.ConcurrentHashSet;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import gnu.trove.TObjectHashingStrategy;
@@ -191,7 +190,7 @@ public class SliceLeafAnalyzer {
 
       @Override
       protected Collection<PsiElement> create(SliceNode key) {
-        return new ConcurrentHashSet<PsiElement>(LEAF_ELEMENT_EQUALITY);
+        return ContainerUtil.newConcurrentSet(LEAF_ELEMENT_EQUALITY);
       }
     };
   }

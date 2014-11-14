@@ -18,7 +18,7 @@ package com.intellij.openapi.vfs.tracker;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.*;
-import com.intellij.util.containers.ConcurrentHashSet;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -178,7 +178,7 @@ public class VirtualFileTrackerImpl implements VirtualFileTracker {
     Set<VirtualFileListener> listeners = map.get(fileUrl);
 
     if (listeners == null) {
-      listeners = new ConcurrentHashSet<VirtualFileListener>();
+      listeners = ContainerUtil.newConcurrentSet();
       map.put(fileUrl, listeners);
     }
     return listeners;

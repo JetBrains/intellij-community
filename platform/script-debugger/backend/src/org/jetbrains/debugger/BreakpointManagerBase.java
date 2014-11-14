@@ -19,7 +19,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ConcurrentHashSet;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +30,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 
 public abstract class BreakpointManagerBase<T extends BreakpointBase<?>> implements BreakpointManager {
-  protected final Set<T> breakpoints = new ConcurrentHashSet<T>();
+  protected final Set<T> breakpoints = ContainerUtil.newConcurrentSet();
   protected final ConcurrentMap<T, T> breakpointDuplicationByTarget =
     ContainerUtil.newConcurrentMap(new TObjectHashingStrategy<T>() {
       @Override
