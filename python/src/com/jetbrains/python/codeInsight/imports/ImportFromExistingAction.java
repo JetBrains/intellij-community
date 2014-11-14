@@ -109,10 +109,12 @@ public class ImportFromExistingAction implements QuestionAction {
 
     final Runnable runnable = new Runnable() {
       public void run() {
-        int index = list.getSelectedIndex();
-        if (index < 0) return;
-        PsiDocumentManager.getInstance(myTarget.getProject()).commitAllDocuments();
-        doWriteAction(mySources.get(index));
+        final Object selected = list.getSelectedValue();
+        if (selected instanceof ImportCandidateHolder) {
+          final ImportCandidateHolder item = (ImportCandidateHolder)selected;
+          PsiDocumentManager.getInstance(myTarget.getProject()).commitAllDocuments();
+          doWriteAction(item);
+        }
       }
     };
 
