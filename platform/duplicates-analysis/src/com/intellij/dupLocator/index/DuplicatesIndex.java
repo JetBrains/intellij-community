@@ -62,7 +62,7 @@ public class DuplicatesIndex extends FileBasedIndexExtension<Integer, TIntArrayL
   }
 
   @NonNls public static final ID<Integer, TIntArrayList> NAME = ID.create("DuplicatesIndex");
-  private static final int myBaseVersion = 12;
+  private static final int myBaseVersion = 13;
 
   private final FileBasedIndex.InputFilter myInputFilter = new FileBasedIndex.InputFilter() {
     @Override
@@ -115,28 +115,34 @@ public class DuplicatesIndex extends FileBasedIndexExtension<Integer, TIntArrayL
       DuplicatesProfile profile = findDuplicatesProfile(type);
       if (profile == null) return Collections.emptyMap();
 
-      FileContentImpl fileContent = (FileContentImpl)inputData;
+      try {
+        FileContentImpl fileContent = (FileContentImpl)inputData;
 
-      if (profile instanceof LightDuplicateProfile && ourEnabledLightProfiles) {
-        final THashMap<Integer, TIntArrayList> result = new THashMap<Integer, TIntArrayList>();
-        LighterAST ast = fileContent.getLighterASTForPsiDependentIndex();
-        assert ast != null;
-        ((LightDuplicateProfile)profile).process(ast, new LightDuplicateProfile.Callback() {
-          @Override
-          public void process(@NotNull LighterAST ast, @NotNull LighterASTNode node, int hash) {
-            TIntArrayList list = result.get(hash);
-            if (list == null) { result.put(hash, list = new TIntArrayList(1)); }
-            list.add(node.getStartOffset());
-          }
-        });
-        return result;
+        if (profile instanceof LightDuplicateProfile && ourEnabledLightProfiles) {
+          final THashMap<Integer, TIntArrayList> result = new THashMap<Integer, TIntArrayList>();
+          LighterAST ast = fileContent.getLighterASTForPsiDependentIndex();
+
+          ((LightDuplicateProfile)profile).process(ast, new LightDuplicateProfile.Callback() {
+            @Override
+            public void process(@NotNull LighterAST ast, @NotNull LighterASTNode node, int hash) {
+              TIntArrayList list = result.get(hash);
+              if (list == null) {
+                result.put(hash, list = new TIntArrayList(1));
+              }
+              list.add(node.getStartOffset());
+            }
+          });
+          return result;
+        }
+        MyFragmentsCollector collector = new MyFragmentsCollector(profile, ((LanguageFileType)type).getLanguage());
+        DuplocateVisitor visitor = profile.createVisitor(collector, true);
+
+        visitor.visitNode(fileContent.getPsiFileForPsiDependentIndex());
+
+        return collector.getMap();
+      } catch (StackOverflowError ae) {
+        return Collections.emptyMap(); // todo Maksim
       }
-      MyFragmentsCollector collector = new MyFragmentsCollector(profile, ((LanguageFileType)type).getLanguage());
-      DuplocateVisitor visitor = profile.createVisitor(collector, true);
-
-      visitor.visitNode(fileContent.getPsiFileForPsiDependentIndex());
-
-      return collector.getMap();
     }
   };
 
@@ -145,7 +151,7 @@ public class DuplicatesIndex extends FileBasedIndexExtension<Integer, TIntArrayL
     if (!(fileType instanceof LanguageFileType)) return null;
     Language language = ((LanguageFileType)fileType).getLanguage();
     DuplicatesProfile profile = DuplicatesProfile.findProfileForLanguage(language);
-    return profile != null && profile.supportIndex() ? profile : null;
+    return profile != null && (profile.supportDuplicatesIndex() || profile instanceof LightDuplicateProfile) ? profile : null;
   }
 
   @Override

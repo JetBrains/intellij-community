@@ -59,6 +59,10 @@ public abstract class DuplicatesProfile {
     return true;
   }
 
+  public boolean supportDuplicatesIndex() {
+    return false;
+  }
+
   private static final int FACTOR = 2;
   private static final int MAX_COST = 7000;
 
