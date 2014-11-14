@@ -1419,6 +1419,8 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     // typed var with instanceof
     assertEquals("typed instanceof",findMatchesCount(s65,s66),1);
 
+    assertEquals("don't throw exception on incomplete instanceof expression", findMatchesCount(s65, "'_T instanceof"), 2);
+
     // typed vars with arrays
     assertEquals("typed pattern with array",findMatchesCount(s23,s24_1),2);
 

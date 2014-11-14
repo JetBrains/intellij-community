@@ -1413,8 +1413,13 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
   @Override
   public void visitInstanceOfExpression(final PsiInstanceOfExpression instanceOf) {
     final PsiInstanceOfExpression instanceOf2 = (PsiInstanceOfExpression)myMatchingVisitor.getElement();
-    myMatchingVisitor.setResult(myMatchingVisitor.match(instanceOf.getOperand(), instanceOf2.getOperand()) &&
-                                matchType(instanceOf.getCheckType(), instanceOf2.getCheckType()));
+    myMatchingVisitor.setResult(myMatchingVisitor.match(instanceOf.getOperand(), instanceOf2.getOperand()));
+    if (myMatchingVisitor.getResult()) {
+      final PsiTypeElement checkType = instanceOf.getCheckType();
+      if (checkType != null) {
+        myMatchingVisitor.setResult(matchType(checkType, instanceOf2.getCheckType()));
+      }
+    }
   }
 
   @Override
