@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.externalSystem.model;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
@@ -41,6 +42,7 @@ import java.util.*;
 public class DataNode<T> implements Serializable {
 
   private static final long serialVersionUID = 1L;
+  private static final Logger LOG = Logger.getInstance(DataNode.class);
 
   @NotNull private final List<DataNode<?>> myChildren = ContainerUtilRt.newArrayList();
 
@@ -270,6 +272,12 @@ public class DataNode<T> implements Serializable {
 
   @Override
   public String toString() {
-    return String.format("%s: %s", myKey, getData());
+    try {
+      return String.format("%s: %s", myKey, getData());
+    }
+    catch (Exception e) {
+      LOG.warn(e);
+    }
+    return String.format("%s: %s", myKey, "failed to load");
   }
 }
