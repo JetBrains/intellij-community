@@ -19,8 +19,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.ConcurrentHashSet;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,27 +32,28 @@ import java.util.concurrent.ConcurrentMap;
 
 public abstract class BreakpointManagerBase<T extends BreakpointBase<?>> implements BreakpointManager {
   protected final Set<T> breakpoints = new ConcurrentHashSet<T>();
-  protected final ConcurrentMap<T, T> breakpointDuplicationByTarget = new ConcurrentHashMap<T, T>(new TObjectHashingStrategy<T>() {
-    @Override
-    public int computeHashCode(T b) {
-      int result = b.getLine();
-      result = 31 * result + b.getColumn();
-      if (b.getCondition() != null) {
-        result = 31 * result + b.getCondition().hashCode();
+  protected final ConcurrentMap<T, T> breakpointDuplicationByTarget =
+    ContainerUtil.newConcurrentMap(new TObjectHashingStrategy<T>() {
+      @Override
+      public int computeHashCode(T b) {
+        int result = b.getLine();
+        result = 31 * result + b.getColumn();
+        if (b.getCondition() != null) {
+          result = 31 * result + b.getCondition().hashCode();
+        }
+        result = 31 * result + b.getTarget().hashCode();
+        return result;
       }
-      result = 31 * result + b.getTarget().hashCode();
-      return result;
-    }
 
-    @Override
-    public boolean equals(T b1, T b2) {
-      return b1.getTarget().getClass() == b2.getTarget().getClass() &&
-             b1.getTarget().equals(b2.getTarget()) &&
-             b1.getLine() == b2.getLine() &&
-             b1.getColumn() == b2.getColumn() &&
-             StringUtil.equals(b1.getCondition(), b2.getCondition());
-    }
-  });
+      @Override
+      public boolean equals(T b1, T b2) {
+        return b1.getTarget().getClass() == b2.getTarget().getClass() &&
+               b1.getTarget().equals(b2.getTarget()) &&
+               b1.getLine() == b2.getLine() &&
+               b1.getColumn() == b2.getColumn() &&
+               StringUtil.equals(b1.getCondition(), b2.getCondition());
+      }
+    });
 
   protected final EventDispatcher<BreakpointListener> dispatcher = EventDispatcher.create(BreakpointListener.class);
 

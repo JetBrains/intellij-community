@@ -16,7 +16,7 @@
 package com.jetbrains.python.packaging;
 
 import com.intellij.openapi.components.*;
-import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 
 import java.util.ArrayList;
@@ -36,7 +36,7 @@ public class PyPackageService implements
                               PersistentStateComponent<PyPackageService> {
   public Map<String, Boolean> sdkToUsersite = new HashMap<String, Boolean>();
   public List<String> additionalRepositories = new ArrayList<String>();
-  public Map<String, String> PY_PACKAGES = new ConcurrentHashMap<java.lang.String, java.lang.String>();
+  public Map<String, String> PY_PACKAGES = ContainerUtil.newConcurrentMap();
   public String virtualEnvBasePath;
   
   public long LAST_TIME_CHECKED = 0;

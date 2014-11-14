@@ -32,7 +32,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Query;
-import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,7 +45,7 @@ import java.util.concurrent.ConcurrentMap;
  */
 public class JavaFileManagerImpl implements JavaFileManager, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.file.impl.JavaFileManagerImpl");
-  private final ConcurrentMap<GlobalSearchScope, PsiClass> myCachedObjectClassMap = new ConcurrentHashMap<GlobalSearchScope, PsiClass>();
+  private final ConcurrentMap<GlobalSearchScope, PsiClass> myCachedObjectClassMap = ContainerUtil.newConcurrentMap();
   private final PsiManagerEx myManager;
   private volatile Set<String> myNontrivialPackagePrefixes = null;
   private boolean myDisposed = false;

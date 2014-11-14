@@ -27,7 +27,6 @@ import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericDomValue;
@@ -143,7 +142,7 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
     SoftReference<ConcurrentMap<ChildrenDescriptionsHolder, ChildrenDescriptionsHolder>> ref = file.getUserData(HOLDERS_CACHE);
     ConcurrentMap<ChildrenDescriptionsHolder, ChildrenDescriptionsHolder> cache = SoftReference.dereference(ref);
     if (cache == null) {
-      cache = new ConcurrentHashMap<ChildrenDescriptionsHolder, ChildrenDescriptionsHolder>();
+      cache = ContainerUtil.newConcurrentMap();
       file.putUserData(HOLDERS_CACHE, new SoftReference<ConcurrentMap<ChildrenDescriptionsHolder, ChildrenDescriptionsHolder>>(cache));
     }
     ChildrenDescriptionsHolder existing = cache.get(holder);

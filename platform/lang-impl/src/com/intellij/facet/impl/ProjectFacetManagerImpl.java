@@ -31,7 +31,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.ParameterizedCachedValue;
 import com.intellij.psi.util.ParameterizedCachedValueProvider;
-import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jdom.Element;
@@ -60,7 +60,8 @@ public class ProjectFacetManagerImpl extends ProjectFacetManagerEx implements Pe
   private static final Logger LOG = Logger.getInstance("#com.intellij.facet.impl.ProjectFacetManagerImpl");
   private ProjectFacetManagerState myState = new ProjectFacetManagerState();
   private final Project myProject;
-  private final ConcurrentMap<FacetTypeId<?>, ParameterizedCachedValue<Boolean,FacetTypeId<?>>> myCachedHasFacets = new ConcurrentHashMap<FacetTypeId<?>, ParameterizedCachedValue<Boolean, FacetTypeId<?>>>();
+  private final ConcurrentMap<FacetTypeId<?>, ParameterizedCachedValue<Boolean, FacetTypeId<?>>> myCachedHasFacets =
+    ContainerUtil.newConcurrentMap();
   private final ParameterizedCachedValueProvider<Boolean,FacetTypeId<?>> myCachedValueProvider;
 
   public ProjectFacetManagerImpl(Project project) {

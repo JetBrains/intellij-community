@@ -46,7 +46,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.MessageBusUtil;
 import com.intellij.util.NotNullFunction;
-import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBus;
@@ -186,7 +185,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
         myConnection.disconnect();
       }
     });
-    myExternallyLoadedChangeLists = new ConcurrentHashMap<String, Pair<Long, List<CommittedChangeList>>>();
+    myExternallyLoadedChangeLists = ContainerUtil.newConcurrentMap();
   }
 
   public MessageBus getMessageBus() {

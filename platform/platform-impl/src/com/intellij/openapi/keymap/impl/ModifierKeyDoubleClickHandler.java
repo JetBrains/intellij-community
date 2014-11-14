@@ -25,7 +25,7 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TIntIntHashMap;
 import gnu.trove.TIntIntProcedure;
 import org.jetbrains.annotations.NotNull;
@@ -55,10 +55,10 @@ public class ModifierKeyDoubleClickHandler {
 
   private static final ModifierKeyDoubleClickHandler INSTANCE = new ModifierKeyDoubleClickHandler();
 
-  private final ConcurrentMap<String, IdeEventQueue.EventDispatcher> myDispatchers = new ConcurrentHashMap<String, IdeEventQueue.EventDispatcher>();
-  
+  private final ConcurrentMap<String, IdeEventQueue.EventDispatcher> myDispatchers =
+    ContainerUtil.newConcurrentMap();
   private boolean myIsRunningAction;
-
+  
   private ModifierKeyDoubleClickHandler() { }
 
   public static ModifierKeyDoubleClickHandler getInstance() {

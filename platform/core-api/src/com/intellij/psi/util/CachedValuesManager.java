@@ -23,7 +23,7 @@ import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ConcurrencyUtil;
-import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.ConcurrentMap;
@@ -125,7 +125,7 @@ public abstract class CachedValuesManager {
     return manager.getCachedValue(psi, manager.<T>getKeyForClass(provider.getClass()), provider, false);
   }
 
-  private final ConcurrentMap<String, Key<CachedValue>> keyForProvider = new ConcurrentHashMap<String, Key<CachedValue>>();
+  private final ConcurrentMap<String, Key<CachedValue>> keyForProvider = ContainerUtil.newConcurrentMap();
   @NotNull
   public <T> Key<CachedValue<T>> getKeyForClass(@NotNull Class<?> providerClass) {
     String name = providerClass.getName();
