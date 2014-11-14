@@ -29,14 +29,14 @@ import java.util.Comparator;
 import java.util.List;
 
 public class LinearBekGraph implements LinearGraph {
-  @NotNull private final LinearGraph myGraph;
-  @NotNull private final GraphAdditionalEdges myHiddenEdges;
-  @NotNull private final GraphAdditionalEdges myNewEdges;
+  @NotNull protected final LinearGraph myGraph;
+  @NotNull protected final GraphAdditionalEdges myHiddenEdges;
+  @NotNull protected final GraphAdditionalEdges myDottedEdges;
 
-  public LinearBekGraph(@NotNull LinearGraph graph, @NotNull GraphAdditionalEdges hiddenEdges, @NotNull GraphAdditionalEdges newEdges) {
+  public LinearBekGraph(@NotNull LinearGraph graph, @NotNull GraphAdditionalEdges hiddenEdges, @NotNull GraphAdditionalEdges dottedEdges) {
     myGraph = graph;
     myHiddenEdges = hiddenEdges;
-    myNewEdges = newEdges;
+    myDottedEdges = dottedEdges;
   }
 
   @Override
@@ -62,7 +62,7 @@ public class LinearBekGraph implements LinearGraph {
     List<GraphEdge> result = new ArrayList<GraphEdge>();
     result.addAll(myGraph.getAdjacentEdges(nodeIndex));
     myHiddenEdges.removeAdditionalEdges(result, nodeIndex);
-    myNewEdges.appendAdditionalEdges(result, nodeIndex);
+    myDottedEdges.appendAdditionalEdges(result, nodeIndex);
 
     Collections.sort(result, new Comparator<GraphEdge>() {
       @Override
