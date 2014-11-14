@@ -113,7 +113,7 @@ public class DuplicatesIndex extends FileBasedIndexExtension<Integer, TIntArrayL
       FileType type = inputData.getFileType();
 
       DuplicatesProfile profile = findDuplicatesProfile(type);
-      if (profile == null) return Collections.emptyMap();
+      if (profile == null || !profile.acceptsContentForIndexing(inputData)) return Collections.emptyMap();
 
       try {
         FileContentImpl fileContent = (FileContentImpl)inputData;

@@ -22,6 +22,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.indexing.FileContent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,6 +62,10 @@ public abstract class DuplicatesProfile {
 
   public boolean supportDuplicatesIndex() {
     return false;
+  }
+
+  public boolean acceptsContentForIndexing(FileContent fileContent) {
+    return true;
   }
 
   private static final int FACTOR = 2;
