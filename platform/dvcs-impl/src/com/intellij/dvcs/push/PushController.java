@@ -118,15 +118,16 @@ public class PushController implements Disposable {
   }
 
   @Nullable
-  public PushTarget hasProhibitedTarget() {
-    for (MyRepoModel model : myView2Model.values()) {
-      PushTarget target = model.getTarget();
-      if (model.isSelected() &&
-          target != null && !model.getSupport().isForcePushAllowed(model.getRepository(), target)) {
-        return target;
+  public PushTarget getProhibitedTarget() {
+    MyRepoModel model = ContainerUtil.find(myView2Model.values(), new Condition<MyRepoModel>() {
+      @Override
+      public boolean value(MyRepoModel model) {
+        PushTarget target = model.getTarget();
+        return model.isSelected() &&
+               target != null && !model.getSupport().isForcePushAllowed(model.getRepository(), target);
       }
-    }
-    return null;
+    });
+    return model != null ? model.getTarget() : null;
   }
 
   private void startLoadingCommits() {

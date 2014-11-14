@@ -108,7 +108,7 @@ public class VcsPushDialog extends DialogWrapper {
   }
 
   private boolean canForcePush() {
-    return myController.isForcePushEnabled() && myController.hasProhibitedTarget() == null;
+    return myController.isForcePushEnabled() && myController.getProhibitedTarget() == null;
   }
 
   @Nullable
@@ -134,7 +134,7 @@ public class VcsPushDialog extends DialogWrapper {
       myForcePushAction.setEnabled(isEnabled && canForcePush);
       String tooltip = null;
       if (!canForcePush) {
-        PushTarget target = myController.hasProhibitedTarget();
+        PushTarget target = myController.getProhibitedTarget();
         tooltip = myController.isForcePushEnabled() && target != null
                   ? "Force push to <b>" + target.getPresentation() + "</b> is prohibited"
                   : "<b>Force Push</b> can be enabled in the Settings";
