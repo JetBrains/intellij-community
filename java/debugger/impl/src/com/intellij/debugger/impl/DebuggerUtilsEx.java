@@ -42,6 +42,8 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.ui.classFilter.ClassFilter;
@@ -631,6 +633,36 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
 
   @Nullable
   public static XSourcePosition toXSourcePosition(@NotNull SourcePosition position) {
-    return XSourcePositionImpl.create(position.getFile().getVirtualFile(), position.getLine());
+    return new JavaXSourcePosition(position);
+  }
+
+  private static class JavaXSourcePosition implements XSourcePosition {
+    private final SourcePosition mySourcePosition;
+
+    public JavaXSourcePosition(@NotNull SourcePosition sourcePosition) {
+      mySourcePosition = sourcePosition;
+    }
+
+    @Override
+    public int getLine() {
+      return mySourcePosition.getLine();
+    }
+
+    @Override
+    public int getOffset() {
+      return mySourcePosition.getOffset();
+    }
+
+    @NotNull
+    @Override
+    public VirtualFile getFile() {
+      return mySourcePosition.getFile().getVirtualFile();
+    }
+
+    @NotNull
+    @Override
+    public Navigatable createNavigatable(@NotNull Project project) {
+      return XSourcePositionImpl.createOpenFileDescriptor(project, this);
+    }
   }
 }
