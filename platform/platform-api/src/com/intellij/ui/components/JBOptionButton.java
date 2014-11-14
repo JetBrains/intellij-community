@@ -284,9 +284,6 @@ public class JBOptionButton extends JButton implements MouseMotionListener, Weig
       eachItem.setMnemonic(info.myMnemonic);
       eachItem.setDisplayedMnemonicIndex(info.myMnemonicIndex);
     }
-    if (info.getToolTipText() != null) {
-      eachItem.setToolTipText(info.getToolTipText());
-    }
     myOptionInfos.add(info);
   }
 
@@ -302,7 +299,6 @@ public class JBOptionButton extends JButton implements MouseMotionListener, Weig
     int myMnemonicIndex;
     JBOptionButton myButton;
     Action myAction;
-    private String myToolTipText;
 
     OptionInfo(String plainText, int mnemonic, int mnemonicIndex, JBOptionButton button, Action action) {
       myPlainText = plainText;
@@ -331,20 +327,10 @@ public class JBOptionButton extends JButton implements MouseMotionListener, Weig
     public Action getAction() {
       return myAction;
     }
-
-    public String getToolTipText() {
-      return myToolTipText;
-    }
-
-    public void setToolTipText(String toolTipText) {
-      myToolTipText = toolTipText;
-    }
   }
   
   private OptionInfo getMenuInfo(Action each) {
     final String text = (String)each.getValue(Action.NAME);
-    final String description = (String)each.getValue(Action.SHORT_DESCRIPTION);
-    final String longDescription = (String)each.getValue(Action.LONG_DESCRIPTION);
     int mnemonic = -1;
     int mnemonicIndex = -1;
     StringBuilder plainText = new StringBuilder();
@@ -360,14 +346,8 @@ public class JBOptionButton extends JButton implements MouseMotionListener, Weig
       }
       plainText.append(ch);
     }
-
-    final OptionInfo info = new OptionInfo(plainText.toString(), mnemonic, mnemonicIndex, this, each);
-    if (longDescription != null) {
-      info.setToolTipText(longDescription);
-    } else if (description != null) {
-      info.setToolTipText(description);
-    }
-    return info;
+    
+    return new OptionInfo(plainText.toString(), mnemonic, mnemonicIndex, this, each);
     
   }
 
