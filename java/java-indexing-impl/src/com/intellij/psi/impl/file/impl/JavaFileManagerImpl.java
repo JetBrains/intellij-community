@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import com.intellij.psi.impl.file.PsiPackageImpl;
 import com.intellij.psi.impl.java.stubs.index.JavaFullClassNameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Query;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.ContainerUtil;
@@ -127,7 +128,7 @@ public class JavaFileManagerImpl implements JavaFileManager, Disposable {
       if (cached == null) {
         cached = findClassInIndex(qName, scope);
         if (cached != null) {
-          cached = myCachedObjectClassMap.cacheOrGet(scope, cached);
+          cached = ConcurrencyUtil.cacheOrGet(myCachedObjectClassMap, scope, cached);
         }
       }
 

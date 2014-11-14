@@ -35,6 +35,7 @@ import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.HashMap;
@@ -408,7 +409,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
       PsiClass aClass = JavaPsiFacade.getInstance(myManager.getProject()).findClass(CommonClassNames.JAVA_LANG_OBJECT, resolveScope);
       if (aClass != null) {
         cachedObjectType = new PsiImmediateClassType(aClass, PsiSubstitutor.EMPTY);
-        cachedObjectType = myCachedObjectType.cacheOrGet(resolveScope, cachedObjectType);
+        cachedObjectType = ConcurrencyUtil.cacheOrGet(myCachedObjectType, resolveScope, cachedObjectType);
         return cachedObjectType;
       }
     }
