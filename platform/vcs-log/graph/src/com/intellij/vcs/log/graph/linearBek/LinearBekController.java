@@ -118,17 +118,13 @@ public class LinearBekController extends CascadeLinearGraphController {
     return workingGraph.createLinearBekGraph();
   }
 
-  private static class WorkingGraph {
-    private final GraphAdditionalEdges myHiddenEdges = createSimpleAdditionalEdges();
-    private final GraphAdditionalEdges myDottedEdges = createSimpleAdditionalEdges();
-    private final LinearGraph myGraph;
-
+  private static class WorkingGraph extends LinearBekGraph {
     private final List<GraphEdge> myToAdd = new ArrayList<GraphEdge>();
     private final List<GraphEdge> myToRemove = new ArrayList<GraphEdge>();
     private final List<GraphEdge> myDottedToRemove = new ArrayList<GraphEdge>();
 
     private WorkingGraph(LinearGraph graph) {
-      myGraph = graph;
+      super(graph, createSimpleAdditionalEdges(), createSimpleAdditionalEdges());
     }
 
     public void addEdge(int from, int to) {
@@ -138,40 +134,10 @@ public class LinearBekController extends CascadeLinearGraphController {
     public void removeEdge(int from, int to) {
       if (myDottedEdges.hasEdge(from, to)) {
         myDottedToRemove.add(new GraphEdge(from, to, null, GraphEdgeType.DOTTED));
-      } else {
+      }
+      else {
         myToRemove.add(LinearGraphUtils.getEdge(myGraph, from, to));
       }
-    }
-
-    public List<Integer> getUpNodes(int index) {
-      List<GraphEdge> edges = getGraphEdges(index);
-
-      List<Integer> result = new ArrayList<Integer>();
-      for (GraphEdge e : edges) {
-        if (e.getUpNodeIndex() != index) {
-          result.add(e.getUpNodeIndex());
-        }
-      }
-      return result;
-    }
-
-    public List<Integer> getDownNodes(int index) {
-      List<GraphEdge> edges = getGraphEdges(index);
-
-      List<Integer> result = new ArrayList<Integer>();
-      for (GraphEdge e : edges) {
-        if (e.getDownNodeIndex() != index) {
-          result.add(e.getDownNodeIndex());
-        }
-      }
-      return result;
-    }
-
-    private List<GraphEdge> getGraphEdges(int index) {
-      List<GraphEdge> edges = myGraph.getAdjacentEdges(index);
-      myHiddenEdges.removeAdditionalEdges(edges, index);
-      myDottedEdges.appendAdditionalEdges(edges, index);
-      return edges;
     }
 
     public void apply() {
