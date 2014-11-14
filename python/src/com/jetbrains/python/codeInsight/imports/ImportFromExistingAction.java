@@ -158,7 +158,7 @@ public class ImportFromExistingAction implements QuestionAction {
       if (myImportLocally) {
         AddImportHelper.addLocalImportStatement(myTarget, myName);
       } else {
-        AddImportHelper.addImportStatement(file, myName, null, priority);
+        AddImportHelper.addImportStatement(file, myName, null, priority, null);
       }
     }
     else {
@@ -172,7 +172,7 @@ public class ImportFromExistingAction implements QuestionAction {
           AddImportHelper.addLocalImportStatement(myTarget, nameToImport);
         }
         else {
-          AddImportHelper.addImportStatement(file, nameToImport, null, priority);
+          AddImportHelper.addImportStatement(file, nameToImport, null, priority, null);
         }
         myTarget.replace(gen.createExpressionFromText(LanguageLevel.forElement(myTarget), qualifiedName + "." + myName));
       }
