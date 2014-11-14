@@ -122,8 +122,9 @@ public class PythonConsoleTest extends PyEnvTestCase {
         
         setValue("x", "2");
 
-        assertTrue("Variable has wrong value",
-                   hasValue("x", "2"));
+        exec("print(x)");
+
+        waitForOutput("2");
       }
     });
   }

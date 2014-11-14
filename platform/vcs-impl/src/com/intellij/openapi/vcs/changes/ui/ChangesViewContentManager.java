@@ -283,7 +283,11 @@ public class ChangesViewContentManager extends AbstractProjectComponent implemen
     }
   }
 
-  private static final String[] ourPresetOrder = {"Local", "Repository", "Incoming", "Shelf"};
+  public static final String LOCAL_CHANGES = Registry.is("vcs.merge.toolwindows") ? "Local Changes" : "Local";
+  public static final String REPOSITORY = "Repository";
+  public static final String INCOMING = "Incoming";
+  public static final String SHELF = "Shelf";
+  private static final String[] ourPresetOrder = {LOCAL_CHANGES, REPOSITORY, INCOMING, SHELF};
   private static List<Content> doPresetOrdering(final List<Content> contents) {
     final List<Content> result = new ArrayList<Content>(contents.size());
     for (final String preset : ourPresetOrder) {

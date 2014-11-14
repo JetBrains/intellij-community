@@ -595,7 +595,8 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
         }
       });
 
-      new UiNotifyConnector(((RootPaneContainer)frame).getContentPane(), myContainer);
+      UiNotifyConnector connector = new UiNotifyConnector(((RootPaneContainer)frame).getContentPane(), myContainer);
+      Disposer.register(myContainer, connector);
     }
   }
 
