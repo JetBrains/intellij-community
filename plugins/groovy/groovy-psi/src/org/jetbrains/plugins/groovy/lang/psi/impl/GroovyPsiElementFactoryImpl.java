@@ -1016,6 +1016,12 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   @NotNull
   @Override
   public GrMethod createMethod(@NotNull @NonNls String name, @Nullable PsiType returnType) throws IncorrectOperationException {
+    return createMethod(name, returnType, null);
+  }
+
+  @NotNull
+  @Override
+  public GrMethod createMethod(@NotNull @NonNls String name, PsiType returnType, PsiElement context) throws IncorrectOperationException {
     StringBuilder builder = StringBuilderSpinAllocator.alloc();
     try {
       builder.append("def <T>");
@@ -1032,7 +1038,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
         builder.append('"');
       }
       builder.append("(){}");
-      GrMethod method = createMethodFromText(builder);
+      GrMethod method = createMethodFromText(builder.toString(), context);
       if (returnType != null) {
         method.getModifierList().setModifierProperty(GrModifier.DEF, false);
       }

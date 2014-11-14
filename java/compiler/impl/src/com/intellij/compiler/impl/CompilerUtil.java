@@ -37,7 +37,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 
 public class CompilerUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.CompilerUtil");
@@ -74,7 +73,7 @@ public class CompilerUtil {
     }
   }
 
-  public static void refreshOutputDirectories(Set<File> outputs, boolean async) {
+  public static void refreshOutputDirectories(Collection<File> outputs, boolean async) {
     LocalFileSystem fileSystem = LocalFileSystem.getInstance();
     List<VirtualFile> toRefresh = new ArrayList<VirtualFile>();
 

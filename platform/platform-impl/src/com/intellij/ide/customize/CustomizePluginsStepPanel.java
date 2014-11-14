@@ -30,6 +30,7 @@ import com.intellij.ui.components.labels.LinkListener;
 
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -60,10 +61,7 @@ public class CustomizePluginsStepPanel extends AbstractCustomizeWizardStep imple
     setLayout(myCardLayout);
     JPanel gridPanel = new JPanel(new GridLayout(0, COLS));
     myCustomizePanel = new IdSetPanel();
-    JBScrollPane scrollPane =
-      new JBScrollPane(gridPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-    scrollPane.getVerticalScrollBar().setUnitIncrement(10);
-    scrollPane.setBorder(null);
+    JBScrollPane scrollPane = createScrollPane(gridPanel);
     add(scrollPane, MAIN);
     add(myCustomizePanel, CUSTOMIZE);
 
@@ -142,6 +140,14 @@ public class CustomizePluginsStepPanel extends AbstractCustomizeWizardStep imple
         }, BorderFactory.createEmptyBorder(SMALL_GAP, GAP, SMALL_GAP, GAP)));
       cursor++;
     }
+  }
+
+  static JBScrollPane createScrollPane(JPanel gridPanel) {
+    JBScrollPane scrollPane =
+      new JBScrollPane(gridPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+    scrollPane.getVerticalScrollBar().setUnitIncrement(10);
+    scrollPane.setBorder(new EmptyBorder(0, 0, 0, 0)); // to disallow resetting border on LaF change
+    return scrollPane;
   }
 
   @Override

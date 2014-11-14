@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.Consumer;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyCustomMembersType;
 import com.jetbrains.python.PyNames;
@@ -436,9 +438,9 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         return;
       }
 
-      final QualifiedName canonicalQName = getCanonicalName(reference, myTypeEvalContext);
-      final String canonicalName = canonicalQName != null ? canonicalQName.toString() : null;
-      if (canonicalName != null) {
+      final List<QualifiedName> qualifiedNames = getCanonicalNames(reference, myTypeEvalContext);
+      for (QualifiedName name: qualifiedNames) {
+        final String canonicalName = name.toString();
         for (String ignored : myIgnoredIdentifiers) {
           if (ignored.endsWith(END_WILDCARD)) {
             final String prefix = ignored.substring(0, ignored.length() - END_WILDCARD.length());
@@ -582,10 +584,11 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           actions.addAll(GenerateBinaryStubsFix.generateFixes(importStatementBase));
         }
       }
-      if (canonicalQName != null) {
-        actions.add(new AddIgnoredIdentifierQuickFix(canonicalQName, false));
-        if (canonicalQName.getComponentCount() > 1) {
-          actions.add(new AddIgnoredIdentifierQuickFix(canonicalQName.removeLastComponent(), true));
+      if (qualifiedNames.size() == 1) {
+        final QualifiedName qualifiedName = qualifiedNames.get(0);
+        actions.add(new AddIgnoredIdentifierQuickFix(qualifiedName, false));
+        if (qualifiedName.getComponentCount() > 1) {
+          actions.add(new AddIgnoredIdentifierQuickFix(qualifiedName.removeLastComponent(), true));
         }
       }
       addPluginQuickFixes(reference, actions);
@@ -621,20 +624,20 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
     }
 
     /**
-     * Return the canonical qualified name for a reference (even for an unresolved one).
+     * Return the canonical qualified names for a reference (even for an unresolved one).
+     * If reference is qualified and its qualifier has union type, all possible canonical names will be returned.
      */
-    @Nullable
-    private static QualifiedName getCanonicalName(@NotNull PsiReference reference, @NotNull TypeEvalContext context) {
+    @NotNull
+    private static List<QualifiedName> getCanonicalNames(@NotNull PsiReference reference, @NotNull TypeEvalContext context) {
       final PsiElement element = reference.getElement();
+      final List<QualifiedName> result = new SmartList<QualifiedName>();
       if (reference instanceof PyOperatorReference && element instanceof PyQualifiedExpression) {
         final PyExpression receiver = ((PyOperatorReference)reference).getReceiver();
         if (receiver != null) {
           final PyType type = context.getType(receiver);
           if (type instanceof PyClassType) {
-            final String name = ((PyClassType)type).getClassQName();
-            if (name != null) {
-              return QualifiedName.fromDottedString(name).append(((PyQualifiedExpression)element).getReferencedName());
-            }
+            final String methodName = ((PyQualifiedExpression)element).getReferencedName();
+            ContainerUtil.addIfNotNull(result, extractAttributeQNameFromClassType(methodName, (PyClassType)type));
           }
         }
       }
@@ -646,16 +649,20 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           if (qualifier != null) {
             final PyType type = context.getType(qualifier);
             if (type instanceof PyClassType) {
-              final String name = ((PyClassType)type).getClassQName();
-              if (name != null) {
-                return QualifiedName.fromDottedString(name).append(exprName);
-              }
+              ContainerUtil.addIfNotNull(result, extractAttributeQNameFromClassType(exprName, (PyClassType)type));
             }
             else if (type instanceof PyModuleType) {
               final PyFile file = ((PyModuleType)type).getModule();
               final QualifiedName name = QualifiedNameFinder.findCanonicalImportPath(file, element);
               if (name != null) {
-                return name.append(exprName);
+                ContainerUtil.addIfNotNull(result, name.append(exprName));
+              }
+            }
+            else if (type instanceof PyUnionType) {
+              for (PyType memberType : ((PyUnionType)type).getMembers()) {
+                if (memberType instanceof PyClassType) {
+                  ContainerUtil.addIfNotNull(result, extractAttributeQNameFromClassType(exprName, (PyClassType)memberType));
+                }
               }
             }
           }
@@ -664,14 +671,14 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
             if (parent instanceof PyImportElement) {
               final PyImportStatementBase importStmt = PsiTreeUtil.getParentOfType(parent, PyImportStatementBase.class);
               if (importStmt instanceof PyImportStatement) {
-                return QualifiedName.fromComponents(exprName);
+                ContainerUtil.addIfNotNull(result, QualifiedName.fromComponents(exprName));
               }
               else if (importStmt instanceof PyFromImportStatement) {
                 final PsiElement resolved = ((PyFromImportStatement)importStmt).resolveImportSource();
                 if (resolved != null) {
                   final QualifiedName path = QualifiedNameFinder.findCanonicalImportPath(resolved, element);
                   if (path != null) {
-                    return path.append(exprName);
+                    ContainerUtil.addIfNotNull(result, path.append(exprName));
                   }
                 }
               }
@@ -679,14 +686,22 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
             else {
               final QualifiedName path = QualifiedNameFinder.findCanonicalImportPath(element, element);
               if (path != null) {
-                return path.append(exprName);
+                ContainerUtil.addIfNotNull(result, path.append(exprName));
               }
             }
           }
         }
       }
       else if (reference instanceof DocStringParameterReference) {
-        return QualifiedName.fromDottedString(reference.getCanonicalText());
+        ContainerUtil.addIfNotNull(result, QualifiedName.fromDottedString(reference.getCanonicalText()));
+      }
+      return result;
+    }
+
+    private static QualifiedName extractAttributeQNameFromClassType(String exprName, PyClassType type) {
+      final String name = type.getClassQName();
+      if (name != null) {
+        return QualifiedName.fromDottedString(name).append(exprName);
       }
       return null;
     }

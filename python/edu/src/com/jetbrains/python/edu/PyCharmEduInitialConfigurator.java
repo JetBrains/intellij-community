@@ -101,6 +101,7 @@ public class PyCharmEduInitialConfigurator {
       GeneralSettings.getInstance().setShowTipsOnStartup(false);
 
       EditorSettingsExternalizable.getInstance().setVirtualSpace(false);
+      EditorSettingsExternalizable.getInstance().getOptions().ARE_LINE_NUMBERS_SHOWN = true;
       final CodeStyleSettings settings = CodeStyleSettingsManager.getInstance().getCurrentSettings();
       settings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
       settings.getCommonSettings(PythonLanguage.getInstance()).ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;

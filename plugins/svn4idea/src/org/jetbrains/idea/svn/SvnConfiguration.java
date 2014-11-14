@@ -66,7 +66,7 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
   private final static long UPGRADE_TO_16_VERSION_ASKED = 125;
 
   private final Project myProject;
-  private SvnConfigurationState myState = new SvnConfigurationState();
+  @NotNull private SvnConfigurationState myState = new SvnConfigurationState();
 
   private ISVNOptions myOptions;
   private SvnAuthenticationManager myAuthManager;
@@ -85,13 +85,14 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
     return UseAcceleration.commandLine.equals(getUseAcceleration());
   }
 
+  @NotNull
   @Override
   public SvnConfigurationState getState() {
     return myState;
   }
 
   @Override
-  public void loadState(SvnConfigurationState state) {
+  public void loadState(@NotNull SvnConfigurationState state) {
     myState = state;
   }
 
@@ -361,7 +362,7 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
     myState.directory.useDefault = useDefault;
   }
 
-  public ISVNOptions getOptions(Project project) {
+  public ISVNOptions getOptions() {
     if (myOptions == null) {
       File path = new File(getConfigurationDirectory());
       myOptions = SVNWCUtil.createDefaultOptions(path.getAbsoluteFile(), true);

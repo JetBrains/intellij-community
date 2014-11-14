@@ -22,6 +22,8 @@ import com.intellij.ui.InplaceButton;
 import com.intellij.ui.TransparentPanel;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.update.MergingUpdateQueue;
+import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -39,6 +41,8 @@ public class PresentationModeProgressPanel {
   private InplaceButton myCancelButton;
   private JLabel myText2;
   private JPanel myRootPanel;
+  private MergingUpdateQueue myUpdateQueue;
+  private Update myUpdate;
 
   public PresentationModeProgressPanel(InlineProgressIndicator progress) {
     myProgress = progress;
@@ -47,14 +51,17 @@ public class PresentationModeProgressPanel {
     myText2.setFont(font);
     myText.setIcon(EmptyIcon.create(1, 16));
     myText2.setIcon(EmptyIcon.create(1, 16));
-  }
-  public void update() {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
+    myUpdateQueue = new MergingUpdateQueue("Presentation Mode Progress", 100, true, null);
+    myUpdate = new Update("Update UI") {
       @Override
       public void run() {
         updateImpl();
       }
-    });
+    };
+  }
+
+  public void update() {
+    myUpdateQueue.queue(myUpdate);
   }
 
   private void updateImpl() {

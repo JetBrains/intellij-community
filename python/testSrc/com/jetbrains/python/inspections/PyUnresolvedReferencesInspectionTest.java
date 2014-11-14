@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.inspections;
 
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -384,6 +385,29 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
   // PY-13585
   public void testUnusedImportBeforeStarDunderAll() {
     doMultiFileTest();
+  }
+
+  // PY-12738
+  public void testNamespacePackageNameDoesntMatchFileName() {
+    doMultiFileTest();
+  }
+
+  // PY-13259
+  public void testNestedNamespacePackageName() {
+    doMultiFileTest();
+  }
+
+  // PY-11956
+  public void testIgnoredUnresolvedReferenceInUnionType() {
+    final String testName = getTestName(true);
+    final String inspectionName = getInspectionClass().getSimpleName();
+    myFixture.configureByFile("inspections/" + inspectionName + "/" + testName + ".py");
+    myFixture.enableInspections(getInspectionClass());
+    final String attrQualifiedName = "inspections." + inspectionName + "." + testName + ".A.foo";
+    final IntentionAction intentionAction = myFixture.findSingleIntention("Ignore unresolved reference '" + attrQualifiedName + "'");
+    assertNotNull(intentionAction);
+    myFixture.launchAction(intentionAction);
+    myFixture.checkHighlighting(isWarning(), isInfo(), isWeakWarning());
   }
 
   @NotNull

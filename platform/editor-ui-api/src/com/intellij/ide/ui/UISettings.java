@@ -16,6 +16,7 @@
 package com.intellij.ide.ui;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.WelcomeWizardUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -128,6 +129,9 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
   public UISettings() {
     tweakPlatformDefaults();
     setSystemFontFaceAndSize();
+
+    Boolean scrollToSource = WelcomeWizardUtil.getAutoScrollToSource();
+    if (scrollToSource != null) DEFAULT_AUTOSCROLL_TO_SOURCE = scrollToSource;
   }
 
   private void tweakPlatformDefaults() {

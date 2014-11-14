@@ -50,6 +50,10 @@ public class TransportServiceWrapper {
     return myTransport.startListening();
   }
 
+  public TransportService.ListenKey startListening(String address) throws IOException {
+    return myTransport.startListening(address);
+  }
+
   public void stopListening(final TransportService.ListenKey address) throws IOException {
     myTransport.stopListening(address);
   }

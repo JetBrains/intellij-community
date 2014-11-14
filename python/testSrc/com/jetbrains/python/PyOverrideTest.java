@@ -121,6 +121,16 @@ public class PyOverrideTest extends PyTestCase {
     myFixture.checkResultByFile("override/" + getTestName(true) + "_after.py", true);
   }
 
+  // PY-11127
+  public void testOverriddenMethodRaisesNotImplementedError() {
+    doTest();
+  }
+
+  // PY-11127
+  public void testOverriddenMethodRaisesNotImplementedErrorNoInstance() {
+    doTest();
+  }
+
   public void testPy3k() {
     doTest3k();
   }

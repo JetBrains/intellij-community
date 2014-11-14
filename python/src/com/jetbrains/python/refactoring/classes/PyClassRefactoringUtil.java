@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -318,7 +318,7 @@ public final class PyClassRefactoringUtil {
     }
     final AddImportHelper.ImportPriority priority = AddImportHelper.getImportPriority(anchor, newFile);
     if (preferFromImport && !containingQName.getComponents().isEmpty()) {
-      return AddImportHelper.addImportFrom(file, null, containingQName.toString(), importedName, asName, priority);
+      return AddImportHelper.addImportFrom(file, null, containingQName.toString(), importedName, asName, priority, anchor);
     }
     else {
       return AddImportHelper.addImportStatement(file, containingQName.append(importedName).toString(), asName, priority);

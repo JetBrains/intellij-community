@@ -242,9 +242,9 @@ public class TabLabel extends JPanel {
     });
 
     final Composite oldComposite = ((Graphics2D)g).getComposite();
-    if (myTabs instanceof JBEditorTabs && !myTabs.isSingleRow() && myTabs.getSelectedInfo() != myInfo) {
-      ((Graphics2D)g).setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.9f));
-    }
+    //if (myTabs instanceof JBEditorTabs && !myTabs.isSingleRow() && myTabs.getSelectedInfo() != myInfo) {
+    //  ((Graphics2D)g).setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.9f));
+    //}
     super.paint(g);
     ((Graphics2D)g).setComposite(oldComposite);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -269,6 +269,16 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
       @Override
       public String getPresentableText() {
         return notNullize(getName(), PyNames.UNNAMED_ELEMENT) + getParameterList().getPresentableText(true);
+      }
+
+      @Nullable
+      @Override
+      public String getLocationString() {
+        final PyClass containingClass = getContainingClass();
+        if (containingClass != null) {
+          return "(" + containingClass.getName() + " in " + getPackageForFile(getContainingFile()) + ")";
+        }
+        return super.getLocationString();
       }
     };
   }

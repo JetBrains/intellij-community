@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.gradle.importing;
 
 import com.intellij.openapi.roots.DependencyScope;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.gradle.util.GradleVersion;
 import org.junit.Test;
 
@@ -59,5 +60,37 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
     assertModuleLibDepScope("project", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.TEST);
     assertModuleLibDepScope("project", "Gradle: junit:junit:4.11", DependencyScope.TEST);
+  }
+
+  @Test
+  public void testDependencyWithDifferentClassifiers() throws Exception {
+    final VirtualFile depJar = createProjectJarSubFile("lib/dep/dep/1.0/dep-1.0.jar");
+    final VirtualFile depTestsJar = createProjectJarSubFile("lib/dep/dep/1.0/dep-1.0-tests.jar");
+
+    importProject(
+      "allprojects {\n" +
+      "  apply plugin: 'java'\n" +
+      "  sourceCompatibility = 1.5\n" +
+      "  version = '1.0'\n" +
+      "\n" +
+      "  repositories {\n" +
+      "    mavenCentral()\n" +
+      "    maven{ url file('lib') }\n" +
+      "  }\n" +
+      "}\n" +
+      "\n" +
+      "dependencies {\n" +
+      "  compile 'dep:dep:1.0'\n" +
+      "  testCompile 'dep:dep:1.0:tests'\n" +
+      "}"
+    );
+
+    assertModules("project");
+
+    assertModuleLibDep("project", "Gradle: dep:dep:1.0", depJar.getUrl());
+    assertModuleLibDepScope("project", "Gradle: dep:dep:1.0", DependencyScope.COMPILE);
+
+    assertModuleLibDep("project", "Gradle: dep:dep:1.0:tests", depTestsJar.getUrl());
+    assertModuleLibDepScope("project", "Gradle: dep:dep:1.0:tests", DependencyScope.TEST);
   }
 }

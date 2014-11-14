@@ -58,7 +58,9 @@ public class JavaFilterLexer extends BaseFilterLexer {
     if (tokenType == JavaTokenType.IDENTIFIER
         || tokenType == JavaTokenType.LONG_LITERAL
         || tokenType == JavaTokenType.INTEGER_LITERAL
-        || tokenType == JavaTokenType.CHARACTER_LITERAL) {
+        || tokenType == JavaTokenType.CHARACTER_LITERAL 
+        || tokenType == JavaTokenType.ARROW 
+        || tokenType == JavaTokenType.DOUBLE_COLON) {
       addOccurrenceInToken(UsageSearchContext.IN_CODE);
     }
     else if (tokenType == JavaTokenType.STRING_LITERAL) {

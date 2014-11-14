@@ -28,6 +28,7 @@ import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.editor.event.EditorMouseMotionListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.Alarm;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import org.jetbrains.annotations.NotNull;
@@ -95,12 +96,14 @@ public class ValueLookupManager implements EditorMouseMotionListener {
   private void requestHint(final QuickEvaluateHandler handler, final Editor editor, final Point point, final ValueHintType type) {
     myAlarm.cancelAllRequests();
     if (type == ValueHintType.MOUSE_OVER_HINT) {
-      myAlarm.addRequest(new Runnable() {
-        @Override
-        public void run() {
-          showHint(handler, editor, point, type);
-        }
-      }, handler.getValueLookupDelay(myProject));
+      if (Registry.is("debugger.valueTooltipAutoShow")) {
+        myAlarm.addRequest(new Runnable() {
+          @Override
+          public void run() {
+            showHint(handler, editor, point, type);
+          }
+        }, handler.getValueLookupDelay(myProject));
+      }
     }
     else {
       showHint(handler, editor, point, type);

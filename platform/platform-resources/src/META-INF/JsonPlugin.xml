@@ -18,6 +18,7 @@
     <fileTypeFactory implementation="com.intellij.json.JsonFileTypeFactory"/>
     <lang.parserDefinition language="JSON" implementationClass="com.intellij.json.JsonParserDefinition"/>
     <lang.syntaxHighlighterFactory key="JSON" implementationClass="com.intellij.json.highlighting.JsonSyntaxHighlighterFactory"/>
+    <psi.treeChangePreprocessor implementation="com.intellij.json.psi.impl.JsonTreeChangePreprocessor"/>
 
     <!-- Code style and formatting -->
     <codeStyleSettingsProvider implementation="com.intellij.json.formatter.JsonCodeStyleSettingsProvider"/>
@@ -56,5 +57,11 @@
     <lang.elementManipulator forClass="com.intellij.json.psi.JsonStringLiteral"
                              implementationClass="com.intellij.json.psi.JsonStringLiteralManipulator"/>
   </extensions>
+
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.json.jsonStandardComplianceProvider"
+                    interface="com.intellij.json.codeinsight.JsonStandardComplianceProvider"/>
+  </extensionPoints>
 
 </idea-plugin>

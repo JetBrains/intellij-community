@@ -274,7 +274,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       @Override
       public Dimension getPreferredSize() {
         final Dimension size = super.getPreferredSize();
-        return new Dimension(Math.min(size.width - 2, POPUP_MAX_WIDTH), size.height);
+        return new Dimension(Math.max(myBalloon.getSize().width, Math.min(size.width - 2, POPUP_MAX_WIDTH)), myList.isEmpty() ? 60 : size.height);
       }
 
       @Override
@@ -716,7 +716,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     topPanel.add(title, BorderLayout.WEST);
     final JPanel controls = new JPanel(new BorderLayout());
     controls.setOpaque(false);
-    final JLabel settings = new JLabel(AllIcons.General.WebSettings);
+    final JLabel settings = new JLabel(AllIcons.General.SearchEverywhereGear);
     new ClickListener(){
       @Override
       public boolean onClick(@NotNull MouseEvent event, int clickCount) {
@@ -2224,7 +2224,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       }
 
     if (popupRect != null) {
-      myPopup.setLocation(new Point(r.x, r.y));
+      myPopup.setLocation(new Point(r.x-1, r.y));
     }
     else {
       if (r.y + d.height > screen.y + screen.height) {

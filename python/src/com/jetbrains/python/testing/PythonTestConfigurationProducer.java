@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,10 +33,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PythonModuleTypeBase;
 import com.jetbrains.python.facet.PythonFacetSettings;
@@ -116,7 +113,10 @@ abstract public class PythonTestConfigurationProducer extends RunConfigurationPr
     if (context == null) return false;
     final Location location = context.getLocation();
     if (location == null || !isAvailable(location)) return false;
-    final PsiElement element = location.getPsiElement();
+    PsiElement element = location.getPsiElement();
+    if (element instanceof PsiWhiteSpace) {
+      element = PyUtil.findNonWhitespaceAtOffset(element.getContainingFile(), element.getTextOffset());
+    }
 
     if (PythonUnitTestRunnableScriptFilter.isIfNameMain(location)) return false;
     final Module module = location.getModule();

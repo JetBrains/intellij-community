@@ -28,6 +28,15 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.ConcurrentMap;
 
+/**
+ * A service used to create and store {@link com.intellij.psi.util.CachedValue} objects.<p/>
+ *
+ * By default cached values are stored in the user data of associated objects implementing {@link com.intellij.openapi.util.UserDataHolder}.
+ *
+ * @see #createCachedValue(CachedValueProvider, boolean)
+ * @see #getCachedValue(com.intellij.psi.PsiElement, CachedValueProvider)
+ * @see #getCachedValue(com.intellij.openapi.util.UserDataHolder, CachedValueProvider)
+ */
 public abstract class CachedValuesManager {
   private static final NotNullLazyKey<CachedValuesManager, Project> INSTANCE_KEY = ServiceManager.createLazyKey(CachedValuesManager.class);
 
@@ -36,7 +45,9 @@ public abstract class CachedValuesManager {
   }
 
   /**
-   * Creates new CachedValue instance with given provider.
+   * Creates new CachedValue instance with given provider. If the return value is marked as trackable, it's treated as
+   * yet another dependency and must comply its specification. See {@link com.intellij.psi.util.CachedValueProvider.Result#getDependencyItems()} for
+   * the details.
    *
    * @param provider computes values.
    * @param trackValue if value tracking required. T should be trackable in this case.
@@ -47,6 +58,10 @@ public abstract class CachedValuesManager {
   @NotNull
   public abstract <T,P> ParameterizedCachedValue<T,P> createParameterizedCachedValue(@NotNull ParameterizedCachedValueProvider<T,P> provider, boolean trackValue);
 
+  /**
+   * Rarely needed because it tracks the return value as a dependency.
+   * @return a CachedValue like in {@link #createCachedValue(CachedValueProvider, boolean)}, with trackable return value.
+   */
   @NotNull
   public <T> CachedValue<T> createCachedValue(@NotNull CachedValueProvider<T> provider) {
     return createCachedValue(provider, true);
@@ -93,9 +108,18 @@ public abstract class CachedValuesManager {
                                                                  @NotNull CachedValueProvider<T> provider,
                                                                  boolean trackValue);
 
+  /**
+   * Create a cached value with the given provider and non-tracked return value, store it in the first argument's user data. If it's already stored, reuse it.
+   * @return The cached value
+   */
   public <T, D extends UserDataHolder> T getCachedValue(@NotNull D dataHolder, @NotNull CachedValueProvider<T> provider) {
     return getCachedValue(dataHolder, this.<T>getKeyForClass(provider.getClass()), provider, false);
   }
+
+  /**
+   * Create a cached value with the given provider and non-tracked return value, store it in PSI element's user data. If it's already stored, reuse it.
+   * @return The cached value
+   */
   public static <T> T getCachedValue(@NotNull PsiElement psi, @NotNull CachedValueProvider<T> provider) {
     CachedValuesManager manager = getManager(psi.getProject());
     return manager.getCachedValue(psi, manager.<T>getKeyForClass(provider.getClass()), provider, false);

@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyCustomMember;
@@ -35,7 +36,6 @@ import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyImportedModule;
-import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.impl.ResolveResultList;
 import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -245,7 +245,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
    *         not suitable for import.
    */
   @NotNull
-  private static List<PsiFileSystemItem> getSubmodulesList(final PsiDirectory directory) {
+  private static List<PsiFileSystemItem> getSubmodulesList(final PsiDirectory directory, @Nullable PsiElement anchor) {
     List<PsiFileSystemItem> result = new ArrayList<PsiFileSystemItem>();
 
     if (directory != null) { // just in case
@@ -259,7 +259,9 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
       }
       // dir modules
       for (PsiDirectory dir : directory.getSubdirectories()) {
-        if (dir.findFile(PyNames.INIT_DOT_PY) instanceof PyFile) result.add(dir);
+        if (PyUtil.isPackage(dir, anchor)) {
+          result.add(dir);
+        }
       }
     }
     return result;
@@ -297,22 +299,19 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
         if (PyUtil.isClassPrivateName(name)) {
           continue;
         }
-        result.add(LookupElementBuilder.create(name).withIcon(member.getIcon()).withTypeText(member.getShortType()));
+        final CompletionVariantsProcessor processor = createCompletionVariantsProcessor(location, suppressParentheses, point);
+        final PsiElement resolved = member.resolve(location);
+        if (resolved != null) {
+          processor.execute(resolved, ResolveState.initial());
+          result.addAll(processor.getResultList());
+        }
+        else {
+          result.add(LookupElementBuilder.create(name).withIcon(member.getIcon()).withTypeText(member.getShortType()));
+        }
       }
     }
-
     if (point == PointInImport.NONE || point == PointInImport.AS_NAME) { // when not imported from, add regular attributes
-      final CompletionVariantsProcessor processor = new CompletionVariantsProcessor(location, new Condition<PsiElement>() {
-        @Override
-        public boolean value(PsiElement psiElement) {
-          return !(psiElement instanceof PyImportElement) ||
-                 PsiTreeUtil.getParentOfType(psiElement, PyImportStatementBase.class) instanceof PyFromImportStatement;
-        }
-      }, null);
-      if (suppressParentheses) {
-        processor.suppressParentheses();
-      }
-      processor.setPlainNamesOnly(point  == PointInImport.AS_NAME); // no parens after imported function names
+      final CompletionVariantsProcessor processor = createCompletionVariantsProcessor(location, suppressParentheses, point);
       myModule.processDeclarations(processor, ResolveState.initial(), null, location);
       if (namesAlready != null) {
         for (LookupElement le : processor.getResultList()) {
@@ -336,6 +335,24 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
       }
     }
     return result;
+  }
+
+  @NotNull
+  private static CompletionVariantsProcessor createCompletionVariantsProcessor(PsiElement location,
+                                                                               boolean suppressParentheses,
+                                                                               PointInImport point) {
+    final CompletionVariantsProcessor processor = new CompletionVariantsProcessor(location, new Condition<PsiElement>() {
+      @Override
+      public boolean value(PsiElement psiElement) {
+        return !(psiElement instanceof PyImportElement) ||
+               PsiTreeUtil.getParentOfType(psiElement, PyImportStatementBase.class) instanceof PyFromImportStatement;
+      }
+    }, null);
+    if (suppressParentheses) {
+      processor.suppressParentheses();
+    }
+    processor.setPlainNamesOnly(point == PointInImport.AS_NAME); // no parens after imported function names
+    return processor;
   }
 
   private void addImportedSubmodules(PsiElement location, Set<String> existingNames, List<LookupElement> result) {
@@ -365,7 +382,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
                                                          PsiElement location,
                                                          Set<String> namesAlready) {
     List<LookupElement> result = new ArrayList<LookupElement>();
-    for (PsiFileSystemItem item : getSubmodulesList(directory)) {
+    for (PsiFileSystemItem item : getSubmodulesList(directory, location)) {
       if (item != location.getContainingFile().getOriginalFile()) {
         LookupElement lookupElement = buildFileLookupElement(item, namesAlready);
         if (lookupElement != null) {

@@ -254,6 +254,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private boolean mySoftWrapsChanged;
 
+  // transient fields used during painting
+  private VisualPosition mySelectionStartPosition;
+  private VisualPosition mySelectionEndPosition;
+
   private Color myLastBackgroundColor    = null;
   private Point myLastBackgroundPosition = null;
   private int myLastBackgroundWidth;
@@ -2241,6 +2245,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     myLastBackgroundPosition = null;
     myLastBackgroundColor = null;
+    mySelectionStartPosition = null;
+    mySelectionEndPosition = null;
 
     int start = clipStartOffset;
 
@@ -2546,6 +2552,23 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     position.x = width;
   }
 
+
+  private VisualPosition getSelectionStartPositionForPaint() {
+    if (mySelectionStartPosition == null) {
+      // We cache the value to avoid repeated invocations of Editor.logicalPositionToOffset which is currently slow for long lines
+      mySelectionStartPosition = getSelectionModel().getSelectionStartPosition();
+    }
+    return mySelectionStartPosition;
+  }
+
+  private VisualPosition getSelectionEndPositionForPaint() {
+    if (mySelectionEndPosition == null) {
+      // We cache the value to avoid repeated invocations of Editor.logicalPositionToOffset which is currently slow for long lines
+      mySelectionEndPosition = getSelectionModel().getSelectionEndPosition();
+    }
+    return mySelectionEndPosition;
+  }
+
   /**
    * End user is allowed to perform selection by visual coordinates (e.g. by dragging mouse with left button hold). There is a possible
    * case that such a move intersects with soft wrap introduced virtual space. We want to draw corresponding selection background
@@ -2567,8 +2590,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                                                             @JdkConstants.FontStyle int fontType) {
     // There is a possible case that the user performed selection at soft wrap virtual space. We need to paint corresponding background
     // there then.
-    VisualPosition selectionStartPosition = getSelectionModel().getSelectionStartPosition();
-    VisualPosition selectionEndPosition = getSelectionModel().getSelectionEndPosition();
+    VisualPosition selectionStartPosition = getSelectionStartPositionForPaint();
+    VisualPosition selectionEndPosition = getSelectionEndPositionForPaint();
     if (selectionStartPosition.equals(selectionEndPosition)) {
       return;
     }
@@ -2628,8 +2651,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                                                              @NotNull SoftWrap softWrap) {
     // There is a possible case that the user performed selection at soft wrap virtual space. We need to paint corresponding background
     // there then.
-    VisualPosition selectionStartPosition = getSelectionModel().getSelectionStartPosition();
-    VisualPosition selectionEndPosition = getSelectionModel().getSelectionEndPosition();
+    VisualPosition selectionStartPosition = getSelectionStartPositionForPaint();
+    VisualPosition selectionEndPosition = getSelectionEndPositionForPaint();
     if (selectionStartPosition.equals(selectionEndPosition)) {
       return;
     }
@@ -6849,15 +6872,20 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   // Strategy, controlled by current editor settings. Usable only for the current line.
   private class LineWhitespacePaintingStrategy implements WhitespacePaintingStrategy {
+    private final boolean myWhitespaceShown = mySettings.isWhitespacesShown();
+    private final boolean myLeadingWhitespaceShown = mySettings.isLeadingWhitespaceShown();
+    private final boolean myInnerWhitespaceShown = mySettings.isInnerWhitespaceShown();
+    private final boolean myTrailingWhitespaceShown = mySettings.isTrailingWhitespaceShown();
+
     // Offsets on current line where leading whitespace ends and trailing whitespace starts correspondingly.
     private int currentLeadingEdge;
     private int currentTrailingEdge;
 
     // Updates the state, to be used for the line, iterator is currently at.
     private void update(CharSequence chars, LineIterator iterator) {
-      if (mySettings.isWhitespacesShown()
-          && (mySettings.isLeadingWhitespaceShown() || mySettings.isInnerWhitespaceShown() || mySettings.isTrailingWhitespaceShown())
-          && !(mySettings.isLeadingWhitespaceShown() && mySettings.isInnerWhitespaceShown() && mySettings.isTrailingWhitespaceShown())) {
+      if (myWhitespaceShown
+          && (myLeadingWhitespaceShown || myInnerWhitespaceShown || myTrailingWhitespaceShown)
+          && !(myLeadingWhitespaceShown && myInnerWhitespaceShown && myTrailingWhitespaceShown)) {
         int lineStart = iterator.getStart();
         int lineEnd = iterator.getEnd() - iterator.getSeparatorLength();
         currentTrailingEdge = CharArrayUtil.shiftBackward(chars, lineStart, lineEnd - 1, WHITESPACE_CHARS) + 1;
@@ -6867,10 +6895,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     @Override
     public boolean showWhitespaceAtOffset(int offset) {
-      return mySettings.isWhitespacesShown()
-             && (offset < currentLeadingEdge ? mySettings.isLeadingWhitespaceShown() :
-                 offset >= currentTrailingEdge ? mySettings.isTrailingWhitespaceShown() :
-                 mySettings.isInnerWhitespaceShown());
+      return myWhitespaceShown
+             && (offset < currentLeadingEdge ? myLeadingWhitespaceShown :
+                 offset >= currentTrailingEdge ? myTrailingWhitespaceShown :
+                 myInnerWhitespaceShown);
     }
   }
 }

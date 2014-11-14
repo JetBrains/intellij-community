@@ -4,6 +4,8 @@ import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -16,6 +18,7 @@ import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorImpl;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -48,8 +51,9 @@ import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.*;
 import java.beans.PropertyChangeListener;
-import java.util.*;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Implementation of StudyEditor which has panel with special buttons and task text
@@ -79,7 +83,14 @@ public class StudyEditor implements TextEditor {
     return myTaskFile;
   }
 
-  private static JButton addButton(@NotNull final JComponent parentComponent, String toolTipText, Icon icon) {
+  private static JButton addButton(@NotNull final JComponent parentComponent, String actionID, Icon icon,
+                                   @Nullable String defaultShortcutString) {
+    AnAction action = ActionManager.getInstance().getAction(actionID);
+    String toolTipText = KeymapUtil.createTooltipText(action.getTemplatePresentation().getText(), action);
+    if (!toolTipText.contains("(") && defaultShortcutString != null) {
+      KeyboardShortcut shortcut = new KeyboardShortcut(KeyStroke.getKeyStroke(defaultShortcutString), null);
+      toolTipText += " (" + KeymapUtil.getShortcutText(shortcut) + ")";
+    }
     JButton newButton = new JButton();
     newButton.setToolTipText(toolTipText);
     newButton.setIcon(icon);
@@ -192,12 +203,13 @@ public class StudyEditor implements TextEditor {
   }
 
   private void initializeButtons(@NotNull final JPanel taskActionsPanel, @NotNull final TaskFile taskFile) {
-    myCheckButton = addButton(taskActionsPanel, "Check task", StudyIcons.Resolve);
-    myPrevTaskButton = addButton(taskActionsPanel, "Prev Task", StudyIcons.Prev);
-    myNextTaskButton = addButton(taskActionsPanel, "Next Task", AllIcons.Actions.Forward);
-    myRefreshButton = addButton(taskActionsPanel, "Start task again", AllIcons.Actions.Refresh);
+    myCheckButton = addButton(taskActionsPanel, StudyCheckAction.ACTION_ID, StudyIcons.Resolve, StudyCheckAction.SHORTCUT);
+    myPrevTaskButton = addButton(taskActionsPanel, StudyPreviousStudyTaskAction.ACTION_ID, StudyIcons.Prev, StudyPreviousStudyTaskAction.SHORTCUT);
+    myNextTaskButton = addButton(taskActionsPanel, StudyNextStudyTaskAction.ACTION_ID, AllIcons.Actions.Forward, StudyNextStudyTaskAction.SHORTCUT);
+    myRefreshButton = addButton(taskActionsPanel, StudyRefreshTaskFileAction.ACTION_ID, AllIcons.Actions.Refresh, StudyRefreshTaskFileAction.SHORTCUT);
+    JButton myShowHintButton = addButton(taskActionsPanel, StudyShowHintAction.ACTION_ID, StudyIcons.ShowHint, StudyShowHintAction.SHORTCUT);
     if (!taskFile.getTask().getUserTests().isEmpty()) {
-      JButton runButton = addButton(taskActionsPanel, "Run", AllIcons.General.Run);
+      JButton runButton = addButton(taskActionsPanel, StudyRunAction.ACTION_ID, AllIcons.General.Run, null);
       runButton.addActionListener(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -205,7 +217,7 @@ public class StudyEditor implements TextEditor {
           studyRunAction.run(myProject);
         }
       });
-      JButton watchInputButton = addButton(taskActionsPanel, "Watch test input", StudyIcons.WatchInput);
+      JButton watchInputButton = addButton(taskActionsPanel, "WatchInputAction", StudyIcons.WatchInput, null);
       watchInputButton.addActionListener(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -242,9 +254,14 @@ public class StudyEditor implements TextEditor {
     myRefreshButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        StudyRefreshTaskFileAction studyRefreshTaskAction =
-          (StudyRefreshTaskFileAction)ActionManager.getInstance().getAction("RefreshTaskAction");
-        studyRefreshTaskAction.refresh(myProject);
+        StudyRefreshTaskFileAction.refresh(myProject);
+      }
+    });
+
+    myShowHintButton.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        StudyShowHintAction.showHint(myProject);
       }
     });
   }

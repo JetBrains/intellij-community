@@ -39,6 +39,7 @@ public class GetVariableCommand extends GetFrameCommand {
       payload.add(myParent.getVariableLocator().getThreadId()).add(myParent.getVariableLocator().getPyDBLocation());
     }
     else if (myVariableName.contains(BY_ID)) {
+      //id instead of frame_id
       payload.add(getThreadId()).add(myVariableName);
     }
     else {

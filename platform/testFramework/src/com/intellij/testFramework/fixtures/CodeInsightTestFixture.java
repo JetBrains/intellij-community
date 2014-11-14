@@ -273,6 +273,8 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * @return duration
    */
   long checkHighlighting(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings);
+  
+  long checkHighlighting(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings, boolean ignoreExtraHighlighting);
 
   long checkHighlighting();
 

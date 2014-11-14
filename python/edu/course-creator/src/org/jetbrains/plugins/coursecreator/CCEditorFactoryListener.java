@@ -48,7 +48,7 @@ public class CCEditorFactoryListener implements EditorFactoryListener {
     editor.getDocument().addDocumentListener(listener);
     EditorActionManager.getInstance()
       .setReadonlyFragmentModificationHandler(editor.getDocument(), new TaskWindowDeleteHandler(editor));
-    CCProjectService.drawTaskWindows(virtualFile, editor, course);
+    CCProjectService.getInstance(project).drawTaskWindows(virtualFile, editor, course);
     editor.getColorsScheme().setColor(EditorColors.READONLY_FRAGMENT_BACKGROUND_COLOR, null);
     taskFile.createGuardedBlocks(editor);
   }
@@ -73,12 +73,6 @@ public class CCEditorFactoryListener implements EditorFactoryListener {
     }
 
     @Override
-    protected void updateTaskWindowLength(CharSequence fragment, TaskWindow taskWindow, int change) {
-        int newLength = taskWindow.getReplacementLength() + change;
-        taskWindow.setReplacementLength(newLength <= 0 ? 0 : newLength);
-    }
-
-    @Override
     protected boolean useLength() {
       return false;
     }
@@ -94,7 +88,7 @@ public class CCEditorFactoryListener implements EditorFactoryListener {
 
     @Override
     public void handle(ReadOnlyFragmentModificationException e) {
-      HintManager.getInstance().showErrorHint(myEditor, "Delete task window before editing its borders");
+      HintManager.getInstance().showErrorHint(myEditor, "Delete answer placeholder before editing its borders");
     }
   }
 }

@@ -69,6 +69,13 @@ public class Py3CompletionTest extends PyTestCase {
     myFixture.checkResultByFile(testName + ".after.py");
   }
 
+  private void doMultiFileTest() {
+    myFixture.copyDirectoryToProject("completion/" + getTestName(true), "");
+    myFixture.configureByFile("a.py");
+    myFixture.completeBasic();
+    myFixture.checkResultByFile("completion/" + getTestName(true) + "/a.after.py");
+  }
+
   private List<String> doTestByText(String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     myFixture.completeBasic();
@@ -92,5 +99,41 @@ public class Py3CompletionTest extends PyTestCase {
     finally {
       setLanguageLevel(null);
     }
+  }
+
+  // PY-7375
+  public void testImportNamespacePackage() {
+    doMultiFileTest();
+  }
+
+  // PY-5422
+  public void testImportQualifiedNamespacePackage() {
+    doMultiFileTest();
+  }
+
+  // PY-6477
+  public void testFromQualifiedNamespacePackageImport() {
+    doMultiFileTest();
+  }
+
+  public void testImportNestedQualifiedNamespacePackage() {
+    doMultiFileTest();
+  }
+
+  // PY-7376
+  public void testRelativeFromImportInNamespacePackage() {
+    doMultiFileTestInsideNamespacePackage();
+  }
+
+  // PY-7376
+  public void testRelativeFromImportInNamespacePackage2() {
+    doMultiFileTestInsideNamespacePackage();
+  }
+
+  private void doMultiFileTestInsideNamespacePackage() {
+    myFixture.copyDirectoryToProject("completion/" + getTestName(true), "");
+    myFixture.configureByFile("nspkg1/a.py");
+    myFixture.completeBasic();
+    myFixture.checkResultByFile("completion/" + getTestName(true) + "/nspkg1/a.after.py");
   }
 }

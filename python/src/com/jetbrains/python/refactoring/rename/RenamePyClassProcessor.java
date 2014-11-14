@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.jetbrains.python.refactoring.rename;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.util.Processor;
 import com.jetbrains.python.PyNames;
@@ -67,7 +68,7 @@ public class RenamePyClassProcessor extends RenamePyElementProcessor {
       if (initMethod != null) {
         final List<PsiReference> allRefs = Collections.synchronizedList(new ArrayList<PsiReference>());
         allRefs.addAll(super.findReferences(element));
-        ReferencesSearch.search(initMethod).forEach(new Processor<PsiReference>() {
+        ReferencesSearch.search(initMethod, GlobalSearchScope.projectScope(element.getProject())).forEach(new Processor<PsiReference>() {
           @Override
           public boolean process(PsiReference psiReference) {
             if (psiReference.getCanonicalText().equals(((PyClass)element).getName())) {

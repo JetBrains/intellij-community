@@ -21,7 +21,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.PsiTreeChangeEventImpl;
 import com.intellij.psi.impl.PsiTreeChangePreprocessorBase;
+import com.intellij.psi.xml.XmlFile;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by fedorkorotkov.
@@ -51,6 +54,12 @@ public class XmlPsiManager extends AbstractProjectComponent {
         // any xml element isn't inside a "code block"
         // cause we display even attributes and tag values in structure view
         return !isXml;
+      }
+
+      @Override
+      public void treeChanged(@NotNull PsiTreeChangeEventImpl event) {
+        if (!(event.getFile() instanceof XmlFile)) return;
+        super.treeChanged(event);
       }
     };
   }

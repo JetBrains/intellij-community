@@ -2,7 +2,7 @@ import types
 
 import pydev_log
 import pydevd_trace_api
-from third_party.pluginbase import PluginBase
+from _pydev_imps._pydev_pluginbase import PluginBase
 from pydevd_constants import *  # @UnusedWildImport
 
 def load_plugins(package):

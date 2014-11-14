@@ -154,6 +154,13 @@ public class RemoteDebugger implements ProcessDebugger {
     return command.getVariables();
   }
 
+  @Override
+  public Object[][] loadArrayItems(String  threadId, String frameId, PyDebugValue var, int rowOffset, int colOffset, int rows, int cols, String format) throws PyDebuggerException {
+    final GetArrayCommand command = new GetArrayCommand(this, threadId, frameId, var, rowOffset, colOffset, rows, cols, format);
+    command.execute();
+    return command.getArray();
+  }
+
 
   @Override
   public void loadReferrers(final String threadId,
@@ -437,6 +444,16 @@ public class RemoteDebugger implements ProcessDebugger {
   }
 
   @Override
+  public void setBreakpointWithFuncName(String typeId, String file, int line, String condition, String logExpression, String funcName) {
+    final SetBreakpointCommand command =
+      new SetBreakpointCommand(this, typeId, file, line,
+                               condition,
+                               logExpression,
+                               funcName);
+    execute(command);
+  }
+
+  @Override
   public void removeBreakpoint(String typeId, String file, int line) {
     final RemoveBreakpointCommand command =
       new RemoveBreakpointCommand(this, typeId, file, line);
@@ -454,6 +471,7 @@ public class RemoteDebugger implements ProcessDebugger {
 
   private class DebuggerReader extends BaseOutputReader {
     private Reader myReader;
+    private StringBuilder myTextBuilder = new StringBuilder();
 
     private DebuggerReader(final Reader reader) throws IOException {
       super(reader);
@@ -603,7 +621,20 @@ public class RemoteDebugger implements ProcessDebugger {
 
     @Override
     protected void onTextAvailable(@NotNull String text) {
-      processResponse(text);
+      myTextBuilder.append(text);
+      if (text.contains("\n")) {
+        String[] lines = myTextBuilder.toString().split("\n");
+        myTextBuilder = new StringBuilder();
+
+        if (!text.endsWith("\n")) {
+          myTextBuilder.append(lines[lines.length - 1]);
+          lines = Arrays.copyOfRange(lines, 0, lines.length - 1);
+        }
+
+        for (String line : lines) {
+          processResponse(line + "\n");
+        }
+      }
     }
   }
 

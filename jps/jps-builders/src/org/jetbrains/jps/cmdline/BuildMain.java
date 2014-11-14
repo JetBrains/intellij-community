@@ -16,6 +16,7 @@
 package org.jetbrains.jps.cmdline;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import io.netty.bootstrap.Bootstrap;
@@ -26,6 +27,8 @@ import io.netty.handler.codec.protobuf.ProtobufDecoder;
 import io.netty.handler.codec.protobuf.ProtobufEncoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
+import io.netty.util.internal.logging.InternalLoggerFactory;
+import io.netty.util.internal.logging.Log4JLoggerFactory;
 import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.xml.DOMConfigurator;
@@ -35,7 +38,14 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.CmdlineProtoUtil;
 import org.jetbrains.jps.api.CmdlineRemoteProto;
 import org.jetbrains.jps.api.GlobalOptions;
+import org.jetbrains.jps.builders.BuildTarget;
+import org.jetbrains.jps.incremental.BuilderRegistry;
+import org.jetbrains.jps.incremental.MessageHandler;
 import org.jetbrains.jps.incremental.Utils;
+import org.jetbrains.jps.incremental.fs.BuildFSState;
+import org.jetbrains.jps.incremental.fs.FSState;
+import org.jetbrains.jps.incremental.messages.BuildMessage;
+import org.jetbrains.jps.incremental.storage.BuildTargetsState;
 import org.jetbrains.jps.service.SharedThreadPool;
 
 import java.io.*;
@@ -49,6 +59,9 @@ import java.util.concurrent.TimeUnit;
  */
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 public class BuildMain {
+  private static final String PRELOAD_PROJECT_PATH = "preload.project.path";
+  private static final String PRELOAD_CONFIG_PATH = "preload.config.path";
+  
   private static final String LOG_CONFIG_FILE_NAME = "build-log.xml";
   private static final String LOG_FILE_NAME = "build.log";
   private static final String DEFAULT_LOGGER_CONFIG = "defaultLogConfig.xml";
@@ -65,8 +78,11 @@ public class BuildMain {
   private static final int SYSTEM_DIR_ARG = SESSION_ID_ARG + 1;
 
   private static NioEventLoopGroup ourEventLoopGroup;
+  @Nullable 
+  private static PreloadedData ourPreloadedData;
 
   public static void main(String[] args){
+    final long processStart = System.currentTimeMillis();
     System.out.println("Build process started. Classpath: " + System.getProperty("java.class.path"));
     final String host = args[HOST_ARG];
     final int port = Integer.parseInt(args[PORT_ARG]);
@@ -112,6 +128,69 @@ public class BuildMain {
     final ChannelFuture future = bootstrap.connect(new InetSocketAddress(host, port)).awaitUninterruptibly();
     final boolean success = future.isSuccess();
     if (success) {
+      final String projectPathToPreload = System.getProperty(PRELOAD_PROJECT_PATH, null);
+      final String globalsPathToPreload = System.getProperty(PRELOAD_CONFIG_PATH, null); 
+      if (projectPathToPreload != null && globalsPathToPreload != null) {
+        final PreloadedData data = new PreloadedData();
+        ourPreloadedData = data;
+        try {
+          FileSystemUtil.getAttributes(projectPathToPreload); // this will pre-load all FS optimizations
+
+          final BuildRunner runner = new BuildRunner(new JpsModelLoaderImpl(projectPathToPreload, globalsPathToPreload, null));
+          data.setRunner(runner);
+
+          final File dataStorageRoot = Utils.getDataStorageRoot(projectPathToPreload);
+          final BuildFSState fsState = new BuildFSState(false);
+          final ProjectDescriptor pd = runner.load(new MessageHandler() {
+            @Override
+            public void processMessage(BuildMessage msg) {
+              data.addMessage(msg);
+            }
+          }, dataStorageRoot, fsState);
+          data.setProjectDescriptor(pd);
+          
+          try {
+            final File fsStateFile = new File(dataStorageRoot, BuildSession.FS_STATE_FILE);
+            final DataInputStream in = new DataInputStream(new BufferedInputStream(new FileInputStream(fsStateFile)));
+            try {
+              final int version = in.readInt();
+              if (version == FSState.VERSION) {
+                final long savedOrdinal = in.readLong();
+                final boolean hasWorkToDo = in.readBoolean();// must skip "has-work-to-do" flag
+                fsState.load(in, pd.getModel(), pd.getBuildRootIndex());
+                data.setFsEventOrdinal(savedOrdinal);
+                data.setHasHasWorkToDo(hasWorkToDo);
+              }
+            }
+            finally {
+              in.close();
+            }
+          }
+          catch (FileNotFoundException ignored) {
+          }
+          catch (IOException e) {
+            LOG.info("Error pre-loading FS state", e);
+            fsState.clearAll();
+          }
+
+          // preloading target configurations
+          final BuildTargetsState targetsState = pd.getTargetsState();
+          for (BuildTarget<?> target : pd.getBuildTargetIndex().getAllTargets()) {
+            targetsState.getTargetConfiguration(target);
+          }
+
+          BuilderRegistry.getInstance();
+
+          LOG.info("Pre-loaded process ready in " + (System.currentTimeMillis() - processStart) + " ms");
+        }
+        catch (Throwable e) {
+          LOG.info("Failed to pre-load project " + projectPathToPreload, e);
+          // just failed to preload the project, the situation will be handled later, when real build starts
+        }
+      }
+      else if (projectPathToPreload != null || globalsPathToPreload != null){
+        LOG.info("Skipping project pre-loading step: both paths to project configuration files and path to global settings must be specified");
+      }
       future.channel().writeAndFlush(CmdlineProtoUtil.toMessage(sessionId, CmdlineProtoUtil.createParamRequest()));
     }
     else {
@@ -148,17 +227,21 @@ public class BuildMain {
           case BUILD_PARAMETERS: {
             if (mySession == null) {
               final CmdlineRemoteProto.Message.ControllerMessage.FSEvent delta = controllerMessage.hasFsEvent()? controllerMessage.getFsEvent() : null;
-              final BuildSession session = new BuildSession(mySessionId, channel, controllerMessage.getParamsMessage(), delta);
+              final BuildSession session = new BuildSession(mySessionId, channel, controllerMessage.getParamsMessage(), delta, ourPreloadedData);
               mySession = session;
               SharedThreadPool.getInstance().executeOnPooledThread(new Runnable() {
                 @Override
                 public void run() {
                   //noinspection finally
                   try {
-                    session.run();
+                    try {
+                      session.run();
+                    }
+                    finally {
+                      channel.close();
+                    }
                   }
                   finally {
-                    channel.close();
                     System.exit(0);
                   }
                 }
@@ -192,8 +275,23 @@ public class BuildMain {
               session.cancel();
             }
             else {
-              LOG.info("Cannot cancel build: no build session is running");
-              channel.close();
+              LOG.info("Build canceled, but no build session is running. Exiting.");
+              try {
+                final CmdlineRemoteProto.Message.BuilderMessage canceledEvent = CmdlineProtoUtil
+                  .createBuildCompletedEvent("build completed", CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status.CANCELED);
+                channel.writeAndFlush(CmdlineProtoUtil.toMessage(mySessionId, canceledEvent)).await();
+                channel.close();
+              }
+              catch (Throwable e) {
+                LOG.info(e);
+              }
+              Thread.interrupted(); // to clear 'interrupted' flag
+              final PreloadedData preloaded = ourPreloadedData;
+              final ProjectDescriptor pd = preloaded != null? preloaded.getProjectDescriptor() : null;
+              if (pd != null) {
+                pd.release();
+              }
+              System.exit(0);
             }
             return;
           }
@@ -243,6 +341,7 @@ public class BuildMain {
     }
 
     Logger.setFactory(MyLoggerFactory.class);
+    InternalLoggerFactory.setDefaultFactory(new Log4JLoggerFactory());
   }
 
   private static void ensureLogConfigExists(final File logConfig) throws IOException {

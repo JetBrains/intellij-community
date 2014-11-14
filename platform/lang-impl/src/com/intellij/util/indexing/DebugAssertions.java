@@ -15,7 +15,6 @@
  */
 package com.intellij.util.indexing;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.SystemProperties;
 
@@ -26,7 +25,7 @@ public class DebugAssertions {
 
   public static final boolean DEBUG = SystemProperties.getBooleanProperty(
     "intellij.idea.indices.debug",
-    ApplicationManager.getApplication().isInternal() || ApplicationManager.getApplication().isEAP()
+    false //ApplicationManager.getApplication().isInternal() || ApplicationManager.getApplication().isEAP()
   );
 
   public static final boolean EXTRA_SANITY_CHECKS = SystemProperties.getBooleanProperty(

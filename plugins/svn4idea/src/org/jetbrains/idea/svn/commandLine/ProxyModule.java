@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.svn.commandLine;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.IdeaSVNConfigFile;
@@ -31,38 +30,29 @@ import java.net.Proxy;
  */
 public class ProxyModule extends BaseCommandRuntimeModule {
 
-  private static final Logger LOG = Logger.getInstance(ProxyModule.class);
-
   public ProxyModule(@NotNull CommandRuntime runtime) {
     super(runtime);
   }
 
   @Override
   public void onStart(@NotNull Command command) throws SvnBindException {
-    if (myAuthenticationService.haveDataForTmpConfig()) {
+    if (myAuthenticationService.haveDataForTmpConfig() && !CommandRuntime.isLocal(command)) {
       setupProxy(command);
     }
   }
 
   private void setupProxy(@NotNull Command command) {
-    // TODO: We assume that if repository url is null - command is local and do not require repository access
-    // TODO: Check if this is correct for all cases
-    SVNURL repositoryUrl = command.getRepositoryUrl();
+    SVNURL repositoryUrl = command.requireRepositoryUrl();
+    Proxy proxy = AuthenticationService.getIdeaDefinedProxy(repositoryUrl);
 
-    if (repositoryUrl != null) {
-      Proxy proxy = AuthenticationService.getIdeaDefinedProxy(repositoryUrl);
+    if (proxy != null) {
+      String hostGroup = ensureGroupForHost(command, repositoryUrl.getHost());
+      InetSocketAddress address = (InetSocketAddress)proxy.address();
 
-      if (proxy != null) {
-        String hostGroup = ensureGroupForHost(command, repositoryUrl.getHost());
-        InetSocketAddress address = (InetSocketAddress)proxy.address();
-
-        command.put("--config-option");
-        command.put(String.format("servers:%s:http-proxy-host=%s", hostGroup, address.getHostName()));
-        command.put("--config-option");
-        command.put(String.format("servers:%s:http-proxy-port=%s", hostGroup, address.getPort()));
-      }
-    } else {
-      LOG.info("Configured proxy should be used, but repository url is null for command - " + command.getText());
+      command.put("--config-option");
+      command.put(String.format("servers:%s:http-proxy-host=%s", hostGroup, address.getHostName()));
+      command.put("--config-option");
+      command.put(String.format("servers:%s:http-proxy-port=%s", hostGroup, address.getPort()));
     }
   }
 

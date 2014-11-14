@@ -20,6 +20,7 @@ import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
@@ -27,7 +28,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.UIUtil;
-import com.jetbrains.python.PythonFileType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.editor.panels.code.IpnbCodeSourcePanel;
 import org.jetbrains.plugins.ipnb.psi.IpnbPyFragment;
@@ -48,20 +48,27 @@ public class IpnbEditorUtil {
   public static Editor createPythonCodeEditor(@NotNull final Project project, @NotNull final IpnbCodeSourcePanel codeSourcePanel) {
     final EditorFactory editorFactory = EditorFactory.getInstance();
     assert editorFactory != null;
-    final Document document = createPythonCodeDocument(project, codeSourcePanel);
+    final String text = codeSourcePanel.getCell().getSourceAsString().trim();
+    final IpnbPyFragment fragment = new IpnbPyFragment(project, text, true, codeSourcePanel);
+
+    final Document document = PsiDocumentManager.getInstance(project).getDocument(fragment);
     assert document != null;
-    EditorEx editor = (EditorEx)editorFactory.createEditor(document, project, PythonFileType.INSTANCE, false);
+    EditorEx editor = (EditorEx)editorFactory.createEditor(document, project, fragment.getVirtualFile(), false);
 
     setupEditor(editor);
     return editor;
   }
 
   private static void setupEditor(@NotNull final EditorEx editor) {
-    if (!UIUtil.isUnderDarcula())
-      editor.setBackgroundColor(Gray._247);
+    editor.setBackgroundColor(getEditablePanelBackground());
     noScrolling(editor);
     editor.getScrollPane().setBorder(null);
     ConsoleViewUtil.setupConsoleEditor(editor, false, false);
+  }
+
+  public static Color getEditablePanelBackground() {
+    return !UIUtil.isUnderDarcula() ? Gray._247 : EditorColorsManager.getInstance().getGlobalScheme().getColor(
+      EditorColors.GUTTER_BACKGROUND);
   }
 
   public static Editor createPlainCodeEditor(@NotNull final Project project, @NotNull final String text) {
@@ -82,13 +89,6 @@ public class IpnbEditorUtil {
     for (MouseWheelListener l : listeners) {
       editor.getScrollPane().removeMouseWheelListener(l);
     }
-  }
-
-  public static Document createPythonCodeDocument(@NotNull final Project project, @NotNull IpnbCodeSourcePanel codeSourcePanel) {
-    final String text = codeSourcePanel.getCell().getSourceAsString().trim();
-    final IpnbPyFragment fragment = new IpnbPyFragment(project, text, true, codeSourcePanel);
-
-    return PsiDocumentManager.getInstance(project).getDocument(fragment);
   }
 
   public static JComponent createPromptComponent(Integer promptNumber, @NotNull final PromptType type) {

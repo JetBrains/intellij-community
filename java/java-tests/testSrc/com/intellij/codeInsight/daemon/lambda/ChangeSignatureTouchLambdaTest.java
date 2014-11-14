@@ -15,11 +15,14 @@
  */
 package com.intellij.codeInsight.daemon.lambda;
 
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiType;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.ChangeSignatureBaseTest;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.refactoring.changeSignature.ThrownExceptionInfo;
+import com.intellij.testFramework.IdeaTestUtil;
 
 public class ChangeSignatureTouchLambdaTest extends ChangeSignatureBaseTest {
  

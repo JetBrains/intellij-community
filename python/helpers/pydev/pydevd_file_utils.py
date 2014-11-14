@@ -119,7 +119,7 @@ def _NormFile(filename):
             if r[ind] == "!":
                 ind+=1
             inner_path = r[ind:]
-            if inner_path.startswith('/'):
+            if inner_path.startswith('/') or inner_path.startswith('\\'):
                 inner_path = inner_path[1:]
             r = zip_path + "/" + inner_path
 
@@ -152,7 +152,7 @@ def exists(file):
                 return None
 
         try:
-            if inner_path.startswith('/'):
+            if inner_path.startswith('/') or inner_path.startswith('\\'):
                 inner_path = inner_path[1:]
 
             info = zip.getinfo(inner_path)

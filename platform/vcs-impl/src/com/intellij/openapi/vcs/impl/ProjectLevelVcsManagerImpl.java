@@ -243,6 +243,12 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
         else {
           myContentManager = ContentFactory.SERVICE.getInstance().createContentManager(true, myProject);
         }
+      }
+    });
+
+    addInitializationRequest(VcsInitObject.AFTER_COMMON, new Runnable() {
+      @Override
+      public void run() {
         if (!ApplicationManager.getApplication().isUnitTestMode()) {
           VcsRootChecker[] checkers = Extensions.getExtensions(VcsRootChecker.EXTENSION_POINT_NAME);
           if (checkers.length != 0) {

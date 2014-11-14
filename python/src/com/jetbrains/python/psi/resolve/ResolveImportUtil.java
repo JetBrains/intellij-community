@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -95,7 +95,7 @@ public class ResolveImportUtil {
       base = base.getOriginalFile(); // just to make sure
       result = base.getContainingDirectory();
       int count = 1;
-      while (result != null && result.findFile(PyNames.INIT_DOT_PY) != null) {
+      while (result != null && PyUtil.isPackage(result, base)) {
         if (count >= depth) return result;
         result = result.getParentDirectory();
         count += 1;

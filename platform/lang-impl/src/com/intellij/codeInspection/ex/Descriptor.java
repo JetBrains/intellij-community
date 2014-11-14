@@ -45,6 +45,7 @@ public class Descriptor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.Descriptor");
   private final ScopeToolState myState;
   private final InspectionProfileImpl myInspectionProfile;
+  private final String myScopeName;
 
   public Descriptor(@NotNull ScopeToolState state, @NotNull InspectionProfileImpl inspectionProfile, @NotNull Project project) {
     myState = state;
@@ -54,6 +55,7 @@ public class Descriptor {
     final String[] groupPath = tool.getGroupPath();
     myGroup = groupPath.length == 0 ? new String[]{InspectionProfileEntry.GENERAL_GROUP_NAME} : groupPath;
     myKey = HighlightDisplayKey.find(tool.getShortName());
+    myScopeName = state.getScopeName();
     myScope = state.getScope(project);
     myLevel = inspectionProfile.getErrorLevel(myKey, myScope, project);
     myEnabled = inspectionProfile.isToolEnabled(myKey, myScope, project);
@@ -135,6 +137,11 @@ public class Descriptor {
 
   public String[] getGroup() {
     return myGroup;
+  }
+
+  @NotNull
+  public String getScopeName() {
+    return myScopeName;
   }
 
   @Nullable

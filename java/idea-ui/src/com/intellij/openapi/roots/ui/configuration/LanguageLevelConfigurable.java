@@ -19,7 +19,7 @@ package com.intellij.openapi.roots.ui.configuration;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.roots.LanguageLevelModuleExtension;
+import com.intellij.openapi.roots.LanguageLevelModuleExtensionImpl;
 import com.intellij.pom.java.LanguageLevel;
 
 import javax.swing.*;
@@ -78,5 +78,5 @@ public abstract class LanguageLevelConfigurable implements UnnamedConfigurable {
     myLanguageLevelCombo = null;
   }
 
-  public abstract LanguageLevelModuleExtension getLanguageLevelExtension();
+  public abstract LanguageLevelModuleExtensionImpl getLanguageLevelExtension();
 }

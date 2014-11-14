@@ -193,8 +193,7 @@ public class Standalone {
 
   public static void runBuild(JpsModelLoader loader, File dataStorageRoot, MessageHandler messageHandler, List<TargetTypeBuildScope> scopes,
                               boolean includeDependenciesToScope) throws Exception {
-    final BuildRunner buildRunner = new BuildRunner(loader, Collections.<String>emptyList(), Collections.<String, String>emptyMap()
-    );
+    final BuildRunner buildRunner = new BuildRunner(loader);
     ProjectDescriptor descriptor = buildRunner.load(messageHandler, dataStorageRoot, new BuildFSState(true));
     try {
       buildRunner.runBuild(descriptor, CanceledStatus.NULL, null, messageHandler, BuildType.BUILD, scopes, includeDependenciesToScope);

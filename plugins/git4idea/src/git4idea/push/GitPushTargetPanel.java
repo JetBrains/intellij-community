@@ -44,7 +44,7 @@ import java.text.ParseException;
 import java.util.Comparator;
 import java.util.List;
 
-class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
+public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
 
   private static final Logger LOG = Logger.getInstance(GitPushTargetPanel.class);
 

@@ -7,6 +7,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.templates.github.GeneratorException;
 import com.intellij.platform.templates.github.GithubTagInfo;
@@ -61,7 +62,7 @@ public abstract class AbstractGithubTagDownloadedProjectGenerator extends WebPro
   public void generateProject(@NotNull final Project project, @NotNull final VirtualFile baseDir,
                               @NotNull GithubTagInfo tag, @NotNull Module module) {
     try {
-      unpackToDir(project, new File(baseDir.getPath()), tag);
+      unpackToDir(project, VfsUtilCore.virtualToIoFile(baseDir), tag);
     }
     catch (GeneratorException e) {
       showErrorMessage(project, e.getMessage());
@@ -89,34 +90,22 @@ public abstract class AbstractGithubTagDownloadedProjectGenerator extends WebPro
                            @NotNull File extractToDir,
                            @NotNull GithubTagInfo tag) throws GeneratorException {
     File zipArchiveFile = getCacheFile(tag);
-    boolean brokenZip = true;
-    boolean unitTestMode = ApplicationManager.getApplication().isUnitTestMode();
-    if (!unitTestMode && zipArchiveFile.isFile()) {
+    String primaryUrl = getPrimaryZipArchiveUrlForDownload(tag);
+    boolean downloaded = false;
+    if (primaryUrl != null) {
       try {
-        ZipUtil.unzipWithProgressSynchronously(project, getTitle(), zipArchiveFile, extractToDir, true);
-        brokenZip = false;
-      }
-      catch (GeneratorException ignored) {
+        downloadAndUnzip(project, primaryUrl, zipArchiveFile, extractToDir, false);
+        downloaded = true;
+      } catch (GeneratorException e) {
+        LOG.info("Can't download " + primaryUrl, e);
+        FileUtil.delete(zipArchiveFile);
       }
     }
-    if (brokenZip) {
-      String primaryUrl = getPrimaryZipArchiveUrlForDownload(tag);
-      boolean downloaded = false;
-      if (primaryUrl != null) {
-        try {
-          downloadAndUnzip(project, primaryUrl, zipArchiveFile, extractToDir, false);
-          downloaded = true;
-        } catch (GeneratorException e) {
-          LOG.info("Can't download " + primaryUrl, e);
-          FileUtil.delete(zipArchiveFile);
-        }
+    if (!downloaded) {
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        throw new GeneratorException("Download " + tag.getZipballUrl() + " is skipped in unit test mode");
       }
-      if (!downloaded) {
-        if (unitTestMode) {
-          throw new GeneratorException("Download " + tag.getZipballUrl() + " is skipped in unit test mode");
-        }
-        downloadAndUnzip(project, tag.getZipballUrl(), zipArchiveFile, extractToDir, true);
-      }
+      downloadAndUnzip(project, tag.getZipballUrl(), zipArchiveFile, extractToDir, true);
     }
   }
 

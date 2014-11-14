@@ -336,7 +336,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
     File commonRoot = new File(context.getProjectDescriptor().dataManager.getDataPaths().getDataStorageRoot(), "groovyStubs");
     for (ModuleBuildTarget target : chunk.getTargets()) {
       File targetRoot = new File(commonRoot, target.getModule().getName() + File.separator + target.getTargetType().getTypeId());
-      if (!FileUtil.delete(targetRoot)) {
+      if (!FileUtil.deleteWithRenaming(targetRoot)) {
         throw new IOException("External make cannot clean " + targetRoot.getPath());
       }
       if (!targetRoot.mkdirs()) {

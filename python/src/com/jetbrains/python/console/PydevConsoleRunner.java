@@ -306,6 +306,10 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     });
   }
 
+  public void open() {
+    run();
+  }
+
   public void run() {
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override

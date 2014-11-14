@@ -374,9 +374,9 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
   @NonNls public String HTML_ELEMENTS_TO_INSERT_NEW_LINE_BEFORE = "body,div,p,form,h1,h2,h3";
   @NonNls public String HTML_ELEMENTS_TO_REMOVE_NEW_LINE_BEFORE = "br";
   @NonNls public String HTML_DO_NOT_INDENT_CHILDREN_OF = "html,body,thead,tbody,tfoot";
-  public int HTML_DO_NOT_ALIGN_CHILDREN_OF_MIN_LINES = 200;
+  public int HTML_DO_NOT_ALIGN_CHILDREN_OF_MIN_LINES = 0;
 
-  @NonNls public String HTML_KEEP_WHITESPACES_INSIDE = "span,pre";
+  @NonNls public String HTML_KEEP_WHITESPACES_INSIDE = "span,pre,textarea";
   @NonNls public String HTML_INLINE_ELEMENTS =
     "a,abbr,acronym,b,basefont,bdo,big,br,cite,cite,code,dfn,em,font,i,img,input,kbd,label,q,s,samp,select,span,strike,strong,sub,sup,textarea,tt,u,var";
   @NonNls public String HTML_DONT_ADD_BREAKS_IF_INLINE_CONTENT = "title,h1,h2,h3,h4,h5,h6,p";

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.ui.popup.PopupFactoryImpl;
 
 import javax.swing.*;
 import java.awt.*;
@@ -92,7 +93,11 @@ public abstract class WelcomePopupAction extends AnAction implements DumbAware {
   protected void showPopup(DataContext context, ListPopup popup, JComponent contextComponent) {
     Component focusedComponent = contextComponent != null ? contextComponent : PlatformDataKeys.CONTEXT_COMPONENT.getData(context);
     if (focusedComponent != null) {
-      popup.showUnderneathOf(focusedComponent);
+      if (popup instanceof PopupFactoryImpl.ActionGroupPopup && focusedComponent instanceof JLabel) {
+        ((PopupFactoryImpl.ActionGroupPopup)popup).showUnderneathOfLabel((JLabel)focusedComponent);
+      } else {
+        popup.showUnderneathOf(focusedComponent);
+      }
     }
     else {
       Rectangle r;

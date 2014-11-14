@@ -63,3 +63,8 @@ class A(object):
   get_foo2 = lambda self: 'foo2'
 
   foo2 = property(get_foo2)
+
+  @property
+  @abstractproperty
+  def abstract_property(self):
+      pass

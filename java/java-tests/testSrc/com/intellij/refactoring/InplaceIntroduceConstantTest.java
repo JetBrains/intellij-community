@@ -78,6 +78,16 @@ public class InplaceIntroduceConstantTest extends AbstractJavaInplaceIntroduceTe
       }
     });
   }
+  
+  public void testReplaceAllWithBrokenIdentifier() throws Exception {
+    doTest(new Pass<AbstractInplaceIntroducer>() {
+      @Override
+      public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {
+        type("A B");
+        inplaceIntroduceFieldPopup.setReplaceAllOccurrences(true);
+      }
+    });
+  }
 
   public void testReplaceAllFromSecondOccurrence() throws Exception {
 

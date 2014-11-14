@@ -352,8 +352,48 @@ class NestedFinallyTest {
     }
 }
 
+class Good0 {
 
+  private final int i;
+  Good0() {
+    while ((i = 1) != 0 && false) {
+    }
+  }
+}
 
+class Good1 {
+  void reachable() {
+    for (;true && true || false; ) {
+      reachable();
+    }
+  }
+}
 
+class Good11 {
+  void good() {
+    for (;true || true;) {
+      good();
+    }
+  }
+}
 
+class Good2 {
 
+  Good2() {
+    boolean b;
+    while (false && (b = false)) {}
+  }
+}
+
+class Good3 {
+  static void main(String[] args) {
+    do {
+    } while (test() || true);
+    System.out.println("2");
+  }
+
+  static boolean test() {
+    System.out.println("1");
+    return false;
+  }
+}

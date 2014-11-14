@@ -125,9 +125,6 @@ public class PythonSkeletonsTest extends PyEnvTestCase {
       protected void runTestOn(@NotNull Sdk sdk) {
         myFixture.configureByText(PythonFileType.INSTANCE,
                                   "expr = slice(1, 2).start\n");
-        final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
-        PsiFile file = myFixture.getFile();
-        final TypeEvalContext context = TypeEvalContext.codeAnalysis(file.getProject(), file);
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           @Override
           public void run() {

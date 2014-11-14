@@ -20,7 +20,7 @@ import com.intellij.openapi.fileEditor.FileEditorStateLevel;
 
 final class IpnbEditorState implements FileEditorState{
   private final transient long myDocumentModificationStamp; // should not be serialized
-  private int mySelectedIndex;
+  private int mySelectedIndex = 0;
   private int mySelectedTop;
 
   public IpnbEditorState(final long modificationStamp, int selectedComponentIndex, int top) {
@@ -34,9 +34,8 @@ final class IpnbEditorState implements FileEditorState{
     if (!(o instanceof IpnbEditorState)) return false;
 
     final IpnbEditorState state = (IpnbEditorState)o;
-
-    return myDocumentModificationStamp == state.myDocumentModificationStamp && mySelectedIndex == state.mySelectedIndex &&
-      mySelectedTop == state.mySelectedTop;
+    if (mySelectedIndex == -1) return true;
+    return myDocumentModificationStamp == state.myDocumentModificationStamp;
   }
 
   public int getSelectedTop() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,10 +31,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -101,7 +98,10 @@ public class PyInlineLocalHandler extends InlineActionHandler {
     invoke(project, editor, (PyTargetExpression)element, refExpr);
   }
 
-  public static void invoke(final Project project, final Editor editor, final PyTargetExpression local, PyReferenceExpression refExpr) {
+  private static void invoke(@NotNull final Project project,
+                            @NotNull final Editor editor,
+                            @NotNull final PyTargetExpression local,
+                            @Nullable PyReferenceExpression refExpr) {
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, local)) return;
 
     final HighlightManager highlightManager = HighlightManager.getInstance(project);
@@ -136,7 +136,7 @@ public class PyInlineLocalHandler extends InlineActionHandler {
     }
 
     final TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
-    if (editor != null && !ApplicationManager.getApplication().isUnitTestMode()) {
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
       highlightManager.addOccurrenceHighlights(editor, refsToInline, attributes, true, null);
       final int occurrencesCount = refsToInline.length;
       final String occurrencesString = RefactoringBundle.message("occurrences.string", occurrencesCount);
@@ -171,13 +171,11 @@ public class PyInlineLocalHandler extends InlineActionHandler {
         isSameDefinition &= isSameDefinition(def, otherDef);
       }
       if (!isSameDefinition) {
-        if (editor != null) {
-          highlightManager.addOccurrenceHighlights(editor, defs, writeAttributes, true, null);
-          highlightManager.addOccurrenceHighlights(editor, new PsiElement[]{ref}, attributes, true, null);
-          final String message = RefactoringBundle.getCannotRefactorMessage(
-            RefactoringBundle.message("variable.is.accessed.for.writing.and.used.with.inlined", localName));
-          CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HELP_ID);
-        }
+        highlightManager.addOccurrenceHighlights(editor, defs, writeAttributes, true, null);
+        highlightManager.addOccurrenceHighlights(editor, new PsiElement[]{ref}, attributes, true, null);
+        final String message = RefactoringBundle.getCannotRefactorMessage(
+          RefactoringBundle.message("variable.is.accessed.for.writing.and.used.with.inlined", localName));
+        CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HELP_ID);
         WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
         return;
       }
@@ -218,9 +216,10 @@ public class PyInlineLocalHandler extends InlineActionHandler {
                 return parentalStatement != null ? parentalStatement.getTextRange() : null;
               }
             });
+            PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
             CodeStyleManager.getInstance(project).reformatText(workingFile, ranges);
 
-            if (editor != null && !ApplicationManager.getApplication().isUnitTestMode()) {
+            if (!ApplicationManager.getApplication().isUnitTestMode()) {
               highlightManager.addOccurrenceHighlights(editor, exprs, attributes, true, null);
               WindowManager.getInstance().getStatusBar(project)
                 .setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
