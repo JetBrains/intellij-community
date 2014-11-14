@@ -136,4 +136,9 @@ public class Py3CompletionTest extends PyTestCase {
     myFixture.completeBasic();
     myFixture.checkResultByFile("completion/" + getTestName(true) + "/nspkg1/a.after.py");
   }
+
+  // PY-14385
+  public void testNotImportedSubmodulesOfNamespacePackage() {
+    doMultiFileTest();
+  }
 }

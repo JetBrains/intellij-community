@@ -77,6 +77,7 @@ import com.jetbrains.python.refactoring.classes.PyDependenciesComparator;
 import com.jetbrains.python.refactoring.classes.extractSuperclass.PyExtractSuperclassHelper;
 import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
 import com.jetbrains.python.sdk.PythonSdkType;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -992,8 +993,9 @@ public class PyUtil {
     } // don't touch non-dirs
   }
 
+  @Contract("null -> null; !null -> !null")
   @Nullable
-  public static PsiElement turnInitIntoDir(PsiElement target) {
+  public static PsiElement turnInitIntoDir(@Nullable PsiElement target) {
     if (target instanceof PyFile && isPackage((PsiFile)target)) {
       return ((PsiFile)target).getContainingDirectory();
     }
