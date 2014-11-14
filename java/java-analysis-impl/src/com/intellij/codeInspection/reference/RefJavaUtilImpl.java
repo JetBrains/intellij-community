@@ -92,6 +92,29 @@ public class RefJavaUtilImpl extends RefJavaUtil{
             }
           }
 
+          @Override
+          public void visitLambdaExpression(PsiLambdaExpression expression) {
+            super.visitLambdaExpression(expression);
+            processFunctionalExpression(expression);
+          }
+
+          @Override
+          public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
+            super.visitMethodReferenceExpression(expression);
+            processFunctionalExpression(expression);
+          }
+
+          private void processFunctionalExpression(PsiFunctionalExpression expression) {
+            final PsiClass aClass = PsiUtil.resolveClassInType(expression.getFunctionalInterfaceType());
+            if (aClass != null) {
+              refFrom.addReference(refFrom.getRefManager().getReference(aClass), aClass, psiFrom, false, true, null);
+              final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(aClass);
+              if (interfaceMethod != null) {
+                refFrom.addReference(refFrom.getRefManager().getReference(interfaceMethod), interfaceMethod, psiFrom, false, true, null);
+              }
+            }
+          }
+
           @Nullable
           private RefMethod processNewLikeConstruct(final PsiMethod psiConstructor, final PsiExpressionList argumentList) {
             if (psiConstructor != null) {
