@@ -17,14 +17,18 @@
 
 package org.jetbrains.idea.svn;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandAdapter;
 import com.intellij.openapi.command.CommandEvent;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Couple;
@@ -60,7 +64,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-public class SvnFileSystemListener implements LocalFileOperationsHandler {
+public class SvnFileSystemListener extends CommandAdapter implements LocalFileOperationsHandler, Disposable {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.SvnFileSystemListener");
   private final LocalFileSystem myLfs;
 
@@ -99,8 +103,20 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler {
   private final List<Couple<File>> myUndoStorageContents = new ArrayList<Couple<File>>();
   private boolean myUndoingMove = false;
 
+  private boolean myIsInCommand;
+  @Nullable private Project myGuessedProject;
+
   public SvnFileSystemListener() {
     myLfs = LocalFileSystem.getInstance();
+
+    myLfs.registerAuxiliaryFileOperationsHandler(this);
+    CommandProcessor.getInstance().addCommandListener(this);
+  }
+
+  @Override
+  public void dispose() {
+    myLfs.unregisterAuxiliaryFileOperationsHandler(this);
+    CommandProcessor.getInstance().removeCommandListener(this);
   }
 
   private void addToMoveExceptions(@NotNull final Project project, @NotNull final Exception e) {
@@ -134,6 +150,8 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler {
 
   @Nullable
   public File copy(final VirtualFile file, final VirtualFile toDir, final String copyName) throws IOException {
+    startOperation(file);
+
     SvnVcs vcs = getVCS(toDir);
     if (vcs == null) {
       vcs = getVCS(file);
@@ -217,6 +235,8 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler {
   }
 
   public boolean move(VirtualFile file, VirtualFile toDir) throws IOException {
+    startOperation(file);
+
     File srcFile = getIOFile(file);
     File dstFile = new File(getIOFile(toDir), file.getName());
 
@@ -243,6 +263,8 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler {
   }
 
   public boolean rename(VirtualFile file, String newName) throws IOException {
+    startOperation(file);
+
     File srcFile = getIOFile(file);
     File dstFile = new File(srcFile.getParentFile(), newName);
     SvnVcs vcs = getVCS(file);
@@ -430,10 +452,14 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler {
 
 
   public boolean createFile(VirtualFile dir, String name) throws IOException {
+    startOperation(dir);
+
     return createItem(dir, name, false, false);
   }
 
   public boolean createDirectory(VirtualFile dir, String name) throws IOException {
+    startOperation(dir);
+
     return createItem(dir, name, true, false);
   }
 
@@ -452,6 +478,8 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler {
    * deleted: do nothing, return true (strange)
    */
   public boolean delete(VirtualFile file) throws IOException {
+    startOperation(file);
+
     final SvnVcs vcs = getVCS(file);
     if (vcs != null && SvnUtil.isAdminDirectory(file)) {
       return true;
@@ -619,25 +647,29 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler {
     return false;
   }
 
-  public void commandStarted(CommandEvent event) {
+  @Override
+  public void commandStarted(@NotNull CommandEvent event) {
+    myIsInCommand = true;
     myUndoingMove = false;
     final Project project = event.getProject();
     if (project == null) return;
     commandStarted(project);
   }
 
-  void commandStarted(final Project project) {
+  void commandStarted(@NotNull Project project) {
     myUndoingMove = false;
     myMoveExceptions.remove(project);
   }
 
-  public void commandFinished(CommandEvent event) {
+  @Override
+  public void commandFinished(@NotNull CommandEvent event) {
+    myIsInCommand = false;
     final Project project = event.getProject();
     if (project == null) return;
     commandFinished(project);
   }
 
-  void commandFinished(final Project project) {
+  void commandFinished(@NotNull Project project) {
     checkOverwrites(project);
     if (myAddedFiles.containsKey(project)) {
       processAddedFiles(project);
@@ -1042,6 +1074,20 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler {
     return UndoManager.getInstance(p).isUndoInProgress();
   }
 
+  public void startOperation(@NotNull VirtualFile file) {
+    if (!myIsInCommand) {
+      // currently actions like "new project", "import project" (probably also others) are not performed under command
+      myGuessedProject = ProjectLocator.getInstance().guessProjectForFile(file);
+      if (myGuessedProject != null) {
+        commandStarted(myGuessedProject);
+      }
+    }
+  }
+
   public void afterDone(final ThrowableConsumer<LocalFileOperationsHandler, IOException> invoker) {
+    if (!myIsInCommand && myGuessedProject != null) {
+      commandFinished(myGuessedProject);
+      myGuessedProject = null;
+    }
   }
 }
