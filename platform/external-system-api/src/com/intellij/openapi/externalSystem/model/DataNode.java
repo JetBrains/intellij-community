@@ -24,7 +24,10 @@ import org.jetbrains.annotations.Nullable;
 import java.io.*;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Proxy;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * This class provides a generic graph infrastructure with ability to store particular data. The main purpose is to 
@@ -272,12 +275,14 @@ public class DataNode<T> implements Serializable {
 
   @Override
   public String toString() {
+    Object dataDescription;
     try {
-      return String.format("%s: %s", myKey, getData());
+      dataDescription = getData();
     }
     catch (Exception e) {
-      LOG.warn(e);
+      dataDescription = "failed to load";
+      LOG.debug(e);
     }
-    return String.format("%s: %s", myKey, "failed to load");
+    return String.format("%s: %s", myKey, dataDescription);
   }
 }
