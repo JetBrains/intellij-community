@@ -40,7 +40,7 @@ import java.util.Hashtable;
 public class IpnbUtils {
   private static final Logger LOG = Logger.getInstance(IpnbUtils.class);
   private static final MarkdownProcessor ourMarkdownProcessor = new MarkdownProcessor();
-  private static final String ourImagePrefix = "http:\\image";
+  private static final String ourImagePrefix = "http://image";
   private static final Font ourFont = new Font(Font.SERIF, Font.PLAIN, 16);
   private static final String ourBodyRule = "body { font-family: \"DejaVu\"; " +
                                          "font-size: " + ourFont.getSize() + "pt;}";
@@ -236,6 +236,6 @@ public class IpnbUtils {
       result.append("<p style = \"text-align:center;\"><img src=\"").append(ourImagePrefix).append(imageIndex).append(".jpg\"/></p>");
     }
     else
-      result.append("<img src=\"").append(ourImagePrefix).append(imageIndex).append(".jpg\">");
+      result.append("<img src=\"").append(ourImagePrefix).append(imageIndex).append(".jpg\"/>");
   }
 }
