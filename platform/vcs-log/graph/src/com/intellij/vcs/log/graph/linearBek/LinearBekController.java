@@ -30,9 +30,7 @@ import com.intellij.vcs.log.graph.utils.impl.BitSetFlags;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.PriorityQueue;
+import java.util.*;
 
 public class LinearBekController extends CascadeLinearGraphController {
   @NotNull private final LinearGraph myCompiledGraph;
@@ -64,6 +62,16 @@ public class LinearBekController extends CascadeLinearGraphController {
         if (firstChildIndex == currentNodeIndex) return;
 
         int x = graphLayout.getLayoutIndex(firstChildIndex);
+        final Map<Integer, Integer> magicMap = new HashMap<Integer, Integer>();
+        new GraphVisitorAlgorithm(false).visitSubgraph(workingGraph, new GraphVisitorAlgorithm.SimpleVisitor() {
+          @Override
+          public void visitNode(int nodeIndex) {
+            int layoutIndex = graphLayout.getLayoutIndex(nodeIndex);
+            if (!magicMap.containsKey(layoutIndex) || magicMap.get(layoutIndex) > nodeIndex) {
+              magicMap.put(layoutIndex, nodeIndex);
+            }
+          }
+        }, firstChildIndex, 10);
         int y = graphLayout.getLayoutIndex(currentNodeIndex);
 
         int k = 1;
@@ -94,8 +102,14 @@ public class LinearBekController extends CascadeLinearGraphController {
           for (int downNode : workingGraph.getDownNodes(i)) {
             if (!visited.get(downNode)) {
               int li = graphLayout.getLayoutIndex(downNode);
-              if (li < x || li >= y) {
+              if (li >= y) {
                 return;
+              }
+              if (li < x) {
+                // magic map will save us here
+                if (!magicMap.containsKey(li) || magicMap.get(li) > downNode) {
+                  return;
+                }
               }
               workingGraph.removeEdge(i, downNode);
             }

@@ -76,6 +76,42 @@ public class GraphVisitorAlgorithm {
     }
   }
 
+  public void visitSubgraph(@NotNull final LinearGraph graph, @NotNull final GraphVisitor visitor, int start, int depth) {
+    final BitSetFlags visited = new BitSetFlags(graph.nodesCount(), false);
+
+    IntStack stack = new IntStack();
+
+    visited.set(start, true);
+    stack.push(start);
+    visitor.enterSubtree(start, visited);
+
+    while (!stack.empty()) {
+      int nextNode = simpleNextNode(graph, stack.peek(), visited);
+      if (nextNode != NODE_NOT_FOUND && stack.size() < depth) {
+        visited.set(nextNode, true);
+        stack.push(nextNode);
+        visitor.enterSubtree(nextNode, visited);
+      }
+      else {
+        visitor.leaveSubtree(stack.pop(), visited);
+      }
+    }
+
+    visitor.leaveSubtree(start, visited);
+  }
+
+  private int simpleNextNode(@NotNull LinearGraph graph, int currentNode, @NotNull BitSetFlags visited) {
+    List<Integer> downNodes = getDownNodes(graph, currentNode);
+    if (myBackwards) Collections.reverse(downNodes);
+
+    for (int downNode : downNodes) {
+      if (!visited.get(downNode)) {
+        return downNode;
+      }
+    }
+    return NODE_NOT_FOUND;
+  }
+
   private int nextNode(@NotNull LinearGraph graph, int currentNode, @NotNull BitSetFlags visited) {
     List<Integer> downNodes = getDownNodes(graph, currentNode);
     if (myBackwards) Collections.reverse(downNodes);
@@ -102,6 +138,20 @@ public class GraphVisitorAlgorithm {
 
   public interface GraphVisitor {
     void enterSubtree(int nodeIndex, BitSetFlags visited);
+
     void leaveSubtree(int nodeIndex, BitSetFlags visited);
+  }
+
+  public abstract static class SimpleVisitor implements GraphVisitor {
+    public abstract void visitNode(int nodeIndex);
+
+    @Override
+    public void enterSubtree(int nodeIndex, BitSetFlags visited) {
+      visitNode(nodeIndex);
+    }
+
+    @Override
+    public void leaveSubtree(int nodeIndex, BitSetFlags visited) {
+    }
   }
 }
