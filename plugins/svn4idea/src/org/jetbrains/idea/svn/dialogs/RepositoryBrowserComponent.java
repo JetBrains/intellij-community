@@ -18,13 +18,13 @@ package org.jetbrains.idea.svn.dialogs;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.vfs.VcsFileSystem;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.NavigatableAdapter;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SpeedSearchComparator;
 import com.intellij.ui.TreeSpeedSearch;
@@ -282,7 +282,18 @@ public class RepositoryBrowserComponent extends JPanel implements Disposable, Da
         return null;
       }
       final VirtualFile vcsFile = getSelectedVcsFile();
-      return vcsFile != null ? new OpenFileDescriptor(project, vcsFile) : null;
+
+      // do not return OpenFileDescriptor instance here as in that case SelectInAction will be enabled and its invocation (using keyboard)
+      // will raise error - see IDEA-104113 - because of the following operations inside SelectInAction.actionPerformed():
+      // - at first VcsVirtualFile content will be loaded which for svn results in showing progress dialog
+      // - then DataContext from SelectInAction will still be accessed which results in error as current event count has already changed
+      // (because of progress dialog)
+      return vcsFile != null ? new NavigatableAdapter() {
+        @Override
+        public void navigate(boolean requestFocus) {
+          navigate(project, vcsFile, requestFocus);
+        }
+      } : null;
     } else if (CommonDataKeys.PROJECT.is(dataId)) {
       return myVCS.getProject();
     }
