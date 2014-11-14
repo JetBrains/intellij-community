@@ -25,7 +25,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -192,6 +191,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
   }
 
   protected JPopupMenu createPopup(boolean toolWindow) {
+    ActionManager actionManager = ActionManager.getInstance();
     DefaultActionGroup group = new DefaultActionGroup();
     DefaultActionGroup newGroup = new DefaultActionGroup("_New", true);
     final RepositoryBrowserComponent browser = getRepositoryBrowser();
@@ -200,7 +200,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     group.add(newGroup);
     group.addSeparator();
     if (toolWindow) {
-      group.add(new OpenAction());
+      group.add(actionManager.getAction(IdeActions.ACTION_EDIT_SOURCE));
       group.add(new HistoryAction());
     }
     group.add(new CheckoutAction());
@@ -218,7 +218,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     group.add(new RefreshAction(browser));
     group.add(new EditLocationAction(browser));
     group.add(new DiscardLocationAction(browser));
-    ActionPopupMenu menu = ActionManager.getInstance().createActionPopupMenu(PLACE_MENU, group);
+    ActionPopupMenu menu = actionManager.createActionPopupMenu(PLACE_MENU, group);
     return menu.getComponent();
   }
 
@@ -925,23 +925,6 @@ public class RepositoryBrowserDialog extends DialogWrapper {
 
     public void update(final AnActionEvent e) {
       e.getPresentation().setEnabled(getRepositoryBrowser().getSelectedNode() != null);
-    }
-  }
-
-  protected class OpenAction extends AnAction {
-    public void update(AnActionEvent e) {
-      e.getPresentation().setEnabled(false);
-      if (myVCS == null) {
-        return;
-      }
-      e.getPresentation().setText("_Open", true);
-      e.getPresentation().setEnabled(getRepositoryBrowser().getSelectedVcsFile() != null);
-    }
-    public void actionPerformed(AnActionEvent e) {
-      VirtualFile vcsVF = getRepositoryBrowser().getSelectedVcsFile();
-      if (vcsVF != null) {
-        FileEditorManager.getInstance(myVCS.getProject()).openFile(vcsVF, true);
-      }
     }
   }
 
