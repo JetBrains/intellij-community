@@ -275,9 +275,9 @@ public class DataNode<T> implements Serializable {
 
   @Override
   public String toString() {
-    Object dataDescription;
+    String dataDescription;
     try {
-      dataDescription = getData();
+      dataDescription = getData().toString();
     }
     catch (Exception e) {
       dataDescription = "failed to load";
