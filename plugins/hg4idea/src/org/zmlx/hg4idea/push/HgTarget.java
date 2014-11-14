@@ -27,6 +27,7 @@ public class HgTarget implements PushTarget {
   }
 
   @NotNull
+  @Override
   public String getPresentation() {
     return HgUtil.removePasswordIfNeeded(myTarget);
   }

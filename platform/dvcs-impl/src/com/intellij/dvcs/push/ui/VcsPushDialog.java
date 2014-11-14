@@ -16,10 +16,7 @@
 package com.intellij.dvcs.push.ui;
 
 import com.intellij.CommonBundle;
-import com.intellij.dvcs.push.PushController;
-import com.intellij.dvcs.push.PushSupport;
-import com.intellij.dvcs.push.VcsPushOptionValue;
-import com.intellij.dvcs.push.VcsPushOptionsPanel;
+import com.intellij.dvcs.push.*;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -100,19 +97,18 @@ public class VcsPushDialog extends DialogWrapper {
   @NotNull
   protected Action[] createActions() {
     final List<Action> actions = new ArrayList<Action>();
-    if (myController.isForcePushEnabled()) {
-      myForcePushAction = new ForcePushAction();
-      myForcePushAction.setEnabled(myController.isForcePushAllowed());
-      myPushAction = new ComplexPushAction(myForcePushAction);
-    }
-    else {
-      myPushAction = new SimplePushAction();
-    }
+    myForcePushAction = new ForcePushAction();
+    myForcePushAction.setEnabled(canForcePush());
+    myPushAction = new ComplexPushAction(myForcePushAction);
     myPushAction.putValue(DEFAULT_ACTION, Boolean.TRUE);
     actions.add(myPushAction);
     actions.add(getCancelAction());
     actions.add(getHelpAction());
     return actions.toArray(new Action[actions.size()]);
+  }
+
+  private boolean canForcePush() {
+    return myController.isForcePushEnabled() && myController.hasProhibitedTarget() == null;
   }
 
   @Nullable
@@ -131,11 +127,19 @@ public class VcsPushDialog extends DialogWrapper {
   protected String getHelpId() {
     return ID;
   }
-
   public void enableOkActions(boolean isEnabled) {
     myPushAction.setEnabled(isEnabled);
     if (myForcePushAction != null) {
-      myForcePushAction.setEnabled(isEnabled && myController.isForcePushAllowed());
+      boolean canForcePush = canForcePush();
+      myForcePushAction.setEnabled(isEnabled && canForcePush);
+      String tooltip = null;
+      if (!canForcePush) {
+        PushTarget target = myController.hasProhibitedTarget();
+        tooltip = myController.isForcePushEnabled() && target != null
+                  ? "Force push to <b>" + target.getPresentation() + "</b> is prohibited"
+                  : "<b>Force Push</b> can be enabled in the Settings";
+      }
+      myForcePushAction.putValue(Action.SHORT_DESCRIPTION, tooltip);
     }
   }
 
@@ -143,17 +147,6 @@ public class VcsPushDialog extends DialogWrapper {
   public VcsPushOptionValue getAdditionalOptionValue(@NotNull PushSupport support) {
     VcsPushOptionsPanel panel = myAdditionalPanels.get(support);
     return panel == null ? null : panel.getValue();
-  }
-
-  private class SimplePushAction extends AbstractAction {
-    SimplePushAction() {
-      super("&Push");
-    }
-    @Override
-    public void actionPerformed(ActionEvent e) {
-      myController.push(false);
-      close(OK_EXIT_CODE);
-    }
   }
 
   private class ForcePushAction extends AbstractAction {
@@ -173,11 +166,18 @@ public class VcsPushDialog extends DialogWrapper {
     }
   }
 
-  private class ComplexPushAction extends SimplePushAction implements OptionAction {
+  private class ComplexPushAction extends AbstractAction implements OptionAction {
     private final Action[] myOptions;
 
     private ComplexPushAction(Action additionalAction) {
-      myOptions = new Action[] { additionalAction };
+      super("&Push");
+      myOptions = new Action[]{additionalAction};
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+      myController.push(false);
+      close(OK_EXIT_CODE);
     }
 
     @Override
@@ -194,5 +194,4 @@ public class VcsPushDialog extends DialogWrapper {
       return myOptions;
     }
   }
-
 }
