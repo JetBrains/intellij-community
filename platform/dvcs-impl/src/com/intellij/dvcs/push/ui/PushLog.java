@@ -29,20 +29,17 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import javax.swing.event.CellEditorListener;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.TreeSelectionEvent;
-import javax.swing.event.TreeSelectionListener;
+import javax.swing.event.*;
 import javax.swing.tree.*;
 import java.awt.*;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EventObject;
@@ -55,6 +52,7 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
   private final ChangesBrowser myChangesBrowser;
   private final CheckboxTree myTree;
   private final MyTreeCellRenderer myTreeCellRenderer;
+  private final JScrollPane myScrollPane;
   private boolean myShouldRepaint = false;
 
   public PushLog(Project project, final CheckedTreeNode root) {
@@ -113,6 +111,7 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
         }
       }
     };
+    myTree.setUI(new MyTreeUi());
     myTree.setBorder(new EmptyBorder(2, 0, 0, 0));  //additional vertical indent
     myTree.setEditable(true);
     myTree.setHorizontalAutoScrollingEnabled(false);
@@ -164,7 +163,6 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
     //override default tree behaviour.
     myTree.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "");
 
-    myTree.setRowHeight(0);
     ToolTipManager.sharedInstance().registerComponent(myTree);
     PopupHandler.installPopupHandler(myTree, VcsLogUiImpl.POPUP_ACTION_GROUP, COMMIT_MENU);
 
@@ -176,11 +174,15 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
     setDefaultEmptyText();
 
     Splitter splitter = new Splitter(false, 0.7f);
-    splitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myTree));
+    myScrollPane = ScrollPaneFactory.createScrollPane(myTree);
+    myScrollPane.setOpaque(false);
+    splitter.setFirstComponent(myScrollPane);
     splitter.setSecondComponent(myChangesBrowser);
 
     setLayout(new BorderLayout());
     add(splitter);
+    myTree.setMinimumSize(new Dimension(200, myTree.getPreferredSize().height));
+    myTree.setRowHeight(0);
   }
 
   private void updateChangesView() {
@@ -431,4 +433,59 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
       }
     }
   }
+
+  private class MyTreeUi extends WideSelectionTreeUI {
+
+    private final ComponentListener myTreeSizeListener = new ComponentAdapter() {
+      @Override
+      public void componentResized(ComponentEvent e) {
+        // invalidate, revalidate etc may have no 'size' effects, you need to manually invalidateSizes before.
+        updateSizes();
+      }
+    };
+
+    private final AncestorListener myTreeAncestorListener = new AncestorListenerAdapter() {
+      @Override
+      public void ancestorMoved(AncestorEvent event) {
+        super.ancestorMoved(event);
+        updateSizes();
+      }
+    };
+
+    private void updateSizes() {
+      treeState.invalidateSizes();
+      tree.repaint();
+    }
+
+    @Override
+    protected void installListeners() {
+      super.installListeners();
+      tree.addComponentListener(myTreeSizeListener);
+      tree.addAncestorListener(myTreeAncestorListener);
+    }
+
+
+    @Override
+    protected void uninstallListeners() {
+      tree.removeComponentListener(myTreeSizeListener);
+      tree.removeAncestorListener(myTreeAncestorListener);
+      super.uninstallListeners();
+    }
+
+    @Override
+    protected AbstractLayoutCache.NodeDimensions createNodeDimensions() {
+      return new NodeDimensionsHandler() {
+        @Override
+        public Rectangle getNodeDimensions(Object value, int row, int depth, boolean expanded, Rectangle size) {
+          Rectangle dimensions = super.getNodeDimensions(value, row, depth, expanded, size);
+          dimensions.width = myScrollPane != null
+                             ? Math.max(myScrollPane.getViewport().getWidth() - getRowX(row, depth), dimensions.width)
+                             : Math.max(myTree.getMinimumSize().width, dimensions.width);
+          return dimensions;
+        }
+      };
+    }
+  }
 }
+
+
