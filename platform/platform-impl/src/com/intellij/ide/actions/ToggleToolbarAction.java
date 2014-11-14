@@ -120,12 +120,6 @@ public class ToggleToolbarAction extends ToggleAction implements DumbAware {
     }
 
     @Override
-    public boolean isPopup() {
-      // configured in getChildren()
-      return super.isPopup();
-    }
-
-    @Override
     public void update(AnActionEvent e) {
       e.getPresentation().setVisible(!ActionGroupUtil.isGroupEmpty(this, e));
     }
@@ -138,22 +132,22 @@ public class ToggleToolbarAction extends ToggleAction implements DumbAware {
       JComponent contentComponent = selectedContent != null ? selectedContent.getComponent() : null;
       if (contentComponent == null) return EMPTY_ARRAY;
       List<AnAction> result = ContainerUtil.newSmartList();
-      boolean addSeparator = false;
       for (final ActionToolbar toolbar : iterateToolbars(contentComponent)) {
         JComponent c = toolbar.getComponent();
         if (c.isVisible() || !c.isValid()) continue;
-        if (!result.isEmpty()) result.add(Separator.getInstance());
+        if (!result.isEmpty() && !(ContainerUtil.getLastItem(result) instanceof Separator)) {
+          result.add(Separator.getInstance());
+        }
 
         List<AnAction> actions = toolbar.getActions(false);
         for (AnAction action : actions) {
-          if (!(action instanceof Separator && (addSeparator = true)) &&
-              action instanceof ToggleAction &&
-              !result.contains(action)) {
-            if (addSeparator && result.size() > 1 && !(result.get(result.size() - 2) instanceof Separator)) {
+          if (action instanceof ToggleAction && !result.contains(action)) {
+            result.add(action);
+          }
+          else if (action instanceof Separator) {
+            if (!result.isEmpty() && !(ContainerUtil.getLastItem(result) instanceof Separator)) {
               result.add(Separator.getInstance());
             }
-            result.add(action);
-            addSeparator = false;
           }
         }
       }
