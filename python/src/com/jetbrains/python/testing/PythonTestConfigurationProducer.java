@@ -134,7 +134,7 @@ abstract public class PythonTestConfigurationProducer extends RunConfigurationPr
     if (pyClass != null && isTestClass(pyClass, configuration)) {
       return setupConfigurationFromClass(pyClass, configuration);
     }
-
+    if (element == null) return false;
     final PsiFile file = element.getContainingFile();
     if (file instanceof PyFile && isTestFile((PyFile)file)) {
       return setupConfigurationFromFile((PyFile)file, configuration);
