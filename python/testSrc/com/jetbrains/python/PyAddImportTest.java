@@ -34,7 +34,7 @@ public class PyAddImportTest extends PyTestCase {
     new WriteCommandAction(myFixture.getProject(), myFixture.getFile()) {
       @Override
       protected void run(Result result) throws Throwable {
-        AddImportHelper.addImportStatement(myFixture.getFile(), "re", null, AddImportHelper.ImportPriority.BUILTIN);
+        AddImportHelper.addImportStatement(myFixture.getFile(), "re", null, AddImportHelper.ImportPriority.BUILTIN, null);
       }
     }.execute();
     myFixture.checkResultByFile("addImport/addBuiltin.after.py");
