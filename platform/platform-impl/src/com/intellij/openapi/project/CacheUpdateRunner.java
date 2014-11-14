@@ -145,7 +145,7 @@ public class CacheUpdateRunner extends DumbModeTask {
   private static boolean processSomeFilesWhileUserIsInactive(@NotNull FileContentQueue queue,
                                                              @NotNull Consumer<VirtualFile> progressUpdater,
                                                              final boolean processInReadAction,
-                                                             @NotNull Project project,
+                                                             @NotNull final Project project,
                                                              @NotNull Consumer<FileContent> fileProcessor) {
     final ProgressIndicatorBase innerIndicator = new ProgressIndicatorBase() {
       @Override
@@ -163,7 +163,7 @@ public class CacheUpdateRunner extends DumbModeTask {
     application.invokeAndWait(new Runnable() {
       @Override
       public void run() {
-        application.addApplicationListener(canceller);
+        application.addApplicationListener(canceller, project);
       }
     }, ModalityState.any());
 
