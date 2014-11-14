@@ -71,7 +71,7 @@ public interface BlockAlignmentProcessor {
     @NotNull public final Map<AbstractBlockWrapper, Set<AbstractBlockWrapper>> alignmentMappings;
     @NotNull public final Map<LeafBlockWrapper, Set<LeafBlockWrapper>>         backwardShiftedAlignedBlocks;
     @NotNull public final CommonCodeStyleSettings.IndentOptions                indentOptions;
-    public int                                                                 maxAlignmentSpaces;
+    public final int                                                           maxAlignmentSpaces;
 
     public Context(@NotNull Document document,
                    @NotNull AlignmentImpl alignment,
