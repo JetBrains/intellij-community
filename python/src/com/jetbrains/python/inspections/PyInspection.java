@@ -18,6 +18,7 @@ package com.jetbrains.python.inspections;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.SuppressQuickFix;
 import com.intellij.codeInspection.SuppressionUtil;
+import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -120,6 +121,10 @@ public abstract class PyInspection extends LocalInspectionTool {
         return true;
       }
       prevSibling = prevSibling.getPrevSibling();
+    }
+    ASTNode lastChild = stmt.getNode().getLastChildNode();
+    if(lastChild instanceof PsiComment && isSuppressedInComment(lastChild.getText().substring(1).trim())) {
+      return true;
     }
     return false;
   }
