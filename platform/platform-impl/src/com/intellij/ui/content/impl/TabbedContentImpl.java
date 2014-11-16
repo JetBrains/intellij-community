@@ -20,6 +20,7 @@ import com.intellij.ui.content.TabbedContent;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -39,10 +40,22 @@ public class TabbedContentImpl extends ContentImpl implements TabbedContent {
 
   @Override
   public void addContent(@NotNull JComponent content, @NotNull String name, boolean selectTab) {
-    myTabs.add(Pair.create(name, content));
-    if (selectTab) {
+    Pair<String, JComponent> tab = Pair.create(name, content);
+    if (!myTabs.contains(tab)) {
+      myTabs.add(tab);
+    }
+    if (selectTab && getComponent() != content) {
       setComponent(content);
     }
+  }
+
+  @Override
+  public void setComponent(JComponent component) {
+    Container parent = getComponent().getParent();
+    parent.remove(getComponent());
+    parent.add(component);
+
+    super.setComponent(component);
   }
 
   @Override
