@@ -26,6 +26,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NotNullComputable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.SearchTextFieldWithStoredHistory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -39,6 +40,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -226,7 +228,19 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
           textFilter.addCurrentTextToHistory();
         }
       });
+      resetFilterOnTextClear(textFilter);
       return textFilter;
+    }
+
+    private void resetFilterOnTextClear(@NotNull SearchTextFieldWithStoredHistory textFilter) {
+      textFilter.addDocumentListener(new DocumentAdapter() {
+        @Override
+        protected void textChanged(DocumentEvent e) {
+          if (e.getDocument().getLength() == 0) {
+            myFilterModel.setFilter(null);
+          }
+        }
+      });
     }
 
     @Override
