@@ -1,5 +1,6 @@
 package com.jetbrains.python.debugger.pydev;
 
+import com.jetbrains.python.debugger.ArrayChunk;
 import com.jetbrains.python.debugger.PyDebugValue;
 import com.jetbrains.python.debugger.PyDebuggerException;
 
@@ -15,7 +16,7 @@ public class GetArrayCommand extends GetFrameCommand {
   private final int myRows;
   private final int myColumns;
   private final String myFormat;
-  private Object[][] myArrayItems;
+  private ArrayChunk myChunk;
 
   public GetArrayCommand(final RemoteDebugger debugger, final String threadId, final String frameId, PyDebugValue var, int rowOffset, int colOffset, int rows, int cols, String format) {
     super(debugger, GET_ARRAY, threadId, frameId);
@@ -54,10 +55,10 @@ public class GetArrayCommand extends GetFrameCommand {
     if (response.getCommand() >= 900 && response.getCommand() < 1000) {
       throw new PyDebuggerException(response.getPayload());
     }
-    myArrayItems = ProtocolParser.parseArrayValues(response.getPayload(), myDebugProcess);
+    myChunk = ProtocolParser.parseArrayValues(response.getPayload(), myDebugProcess);
   }
 
-  public Object[][] getArray(){
-    return myArrayItems;
+  public ArrayChunk getArray(){
+    return myChunk;
   }
 }

@@ -38,14 +38,27 @@ class UserFilterPopupComponent extends MultipleValueFilterPopupComponent<VcsLogU
 
   private static final String ME = "me";
 
-  private final VcsLogDataHolder myDataHolder;
-  private final VcsLogUiProperties myUiProperties;
+  @NotNull private final VcsLogDataHolder myDataHolder;
+  @NotNull private final VcsLogUiProperties myUiProperties;
 
-  UserFilterPopupComponent(@NotNull VcsLogClassicFilterUi filterUi, @NotNull VcsLogDataHolder dataHolder,
-                           @NotNull VcsLogUiProperties uiProperties) {
-    super(filterUi, "User");
+  UserFilterPopupComponent(@NotNull VcsLogUiProperties uiProperties,
+                           @NotNull VcsLogDataHolder dataHolder,
+                           @NotNull FilterModel<VcsLogUserFilter> filterModel) {
+    super("User", uiProperties, filterModel);
     myDataHolder = dataHolder;
     myUiProperties = uiProperties;
+  }
+
+  @NotNull
+  @Override
+  protected String getText(@NotNull VcsLogUserFilter filter) {
+    return displayableText(getValues(filter));
+  }
+
+  @Nullable
+  @Override
+  protected String getToolTip(@NotNull VcsLogUserFilter filter) {
+    return tooltip(getValues(filter));
   }
 
   @Override
@@ -62,17 +75,21 @@ class UserFilterPopupComponent extends MultipleValueFilterPopupComponent<VcsLogU
 
   @NotNull
   @Override
-  protected List<List<String>> getRecentValuesFromSettings() {
-    return myUiProperties.getRecentlyFilteredUserGroups();
+  protected Collection<String> getValues(@Nullable VcsLogUserFilter filter) {
+    if (filter == null) {
+      return Collections.emptySet();
+    }
+    Set<String> result = ContainerUtil.newHashSet();
+    for (VirtualFile root : myFilterModel.getDataPack().getLogProviders().keySet()) {
+      result.addAll(filter.getUserNames(root));
+    }
+    return result;
   }
 
-  @Nullable
+  @NotNull
   @Override
-  protected VcsLogUserFilter getFilter() {
-    if (getSelectedValues() == null) {
-      return null;
-    }
-    return new VcsLogUserFilterImpl(getSelectedValues(), myDataHolder.getCurrentUser());
+  protected List<List<String>> getRecentValuesFromSettings() {
+    return myUiProperties.getRecentlyFilteredUserGroups();
   }
 
   @Override
@@ -89,6 +106,12 @@ class UserFilterPopupComponent extends MultipleValueFilterPopupComponent<VcsLogU
         return user.getName();
       }
     });
+  }
+
+  @NotNull
+  @Override
+  protected VcsLogUserFilter createFilter(@NotNull Collection<String> values) {
+    return new VcsLogUserFilterImpl(values, myDataHolder.getCurrentUser());
   }
 
   private static class VcsLogUserFilterImpl implements VcsLogUserFilter {
@@ -119,6 +142,7 @@ class UserFilterPopupComponent extends MultipleValueFilterPopupComponent<VcsLogU
     @Override
     public boolean matches(@NotNull final VcsCommitMetadata commit) {
       return ContainerUtil.exists(getUserNames(commit.getRoot()), new Condition<String>() {
+        @SuppressWarnings("StringToUpperCaseOrToLowerCaseWithoutLocale")
         @Override
         public boolean value(String user) {
           String lowerUser = user.toLowerCase();

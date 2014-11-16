@@ -179,7 +179,7 @@ public class ProtocolParser {
     return new PyDebugValue(name, type, value, "True".equals(isContainer), "True".equals(isErrorOnEval), frameAccessor);
   }
 
-  public static Object[][] parseArrayValues(final String text, final PyFrameAccessor frameAccessor) throws PyDebuggerException {
+  public static ArrayChunk parseArrayValues(final String text, final PyFrameAccessor frameAccessor) throws PyDebuggerException {
     final XppReader reader = openReader(text, false);
     int cols = 0;
     int rows = 0;
@@ -189,6 +189,17 @@ public class ProtocolParser {
       if (!"array".equals(reader.getNodeName())) {
         throw new PyDebuggerException("Expected <array> at first node, found " + reader.getNodeName());
       }
+      boolean meta = readString(reader, "meta", null).equals("True");
+      if (meta) {
+        String slice = readString(reader, "slice", null);
+        rows = readInt(reader, "rows", null);
+        cols = readInt(reader, "cols", null);
+        String format = "%" + readString(reader, "format", null);
+        String type = readString(reader, "type", null);
+        String max = readString(reader, "max", null);
+        String min = readString(reader, "min", null);
+        return new ArrayChunk(new PyDebugValue(slice, null, null, false, false, frameAccessor), slice, rows, cols, max, min, format, type, null);
+      }
       rows = readInt(reader, "rows", null);
       cols = readInt(reader, "cols", null);
       reader.moveUp();
@@ -197,7 +208,7 @@ public class ProtocolParser {
     return parseArrayValues(reader, frameAccessor, cols, rows);
   }
 
-  public static Object[][] parseArrayValues(final XppReader reader, final PyFrameAccessor frameAccessor, final int cols, final int rows) throws PyDebuggerException {
+  public static ArrayChunk parseArrayValues(final XppReader reader, final PyFrameAccessor frameAccessor, final int cols, final int rows) throws PyDebuggerException {
     if (rows <= 0 || cols <= 0) {
       throw new PyDebuggerException("Array xml: bad rows or columns number: (" + rows + ", " + cols + ")");
     }
@@ -228,7 +239,7 @@ public class ProtocolParser {
       reader.moveUp();
     }
 
-    return values;
+    return new ArrayChunk(new PyDebugValue("", null, null, false, false, frameAccessor), "", rows, cols, null, null, null, null, values);
   }
 
   private static XppReader openReader(final String text, final boolean checkForContent) throws PyDebuggerException {
