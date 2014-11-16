@@ -1174,7 +1174,10 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     final PyClassStub stub = getStub();
     final List<PyClassLikeType> result = new ArrayList<PyClassLikeType>();
     if (stub != null) {
-      final PsiElement parent = stub.getParentStub().getPsi();
+      PsiElement parent = stub.getParentStub().getPsi();
+      while (parent instanceof PyClass) {
+        parent = parent.getParent();
+      }
       if (parent instanceof PyFile) {
         final PyFile file = (PyFile)parent;
         for (QualifiedName name : stub.getSuperClasses()) {
