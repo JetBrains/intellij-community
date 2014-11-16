@@ -388,44 +388,45 @@ def changeAttrExpression(thread_id, frame_id, attr, expression, dbg):
     except Exception:
         traceback.print_exc()
 
-MAXIMUM_ARRAY_SIZE = 300
+MAXIMUM_ARRAY_SIZE = 100
+MAX_SLICE_SIZE = 1000
 
 def array_to_xml(array, roffset, coffset, rows, cols, format):
     xml = ""
     rows = min(rows, MAXIMUM_ARRAY_SIZE)
     cols = min(cols, MAXIMUM_ARRAY_SIZE)
-    if rows == 1 and cols == 1:
-        rows = 1
-        cols = 1
-    elif rows == 1 or cols == 1:
-        is_row = True if (rows == 1) else False
-        if is_row:
-            array = array[roffset:]
-        else:
-            array = array[coffset:]
 
-        if len(array) == 1:
-            array = array[0]
 
-        if is_row:
-            cols = min(cols, len(array))
-        else:
-            rows = min(rows, len(array))
-    else:
+    #there is no obvious rule for slicing (at least 5 choices)
+    if len(array) == 1 and (rows > 1 or cols > 1):
+        array = array[0]
+    if array.size > len(array):
         array = array[roffset:, coffset:]
         rows = min(rows, len(array))
         cols = min(cols, len(array[0]))
-    xml += "<array rows=\"%s\" cols=\"%s\"/>" % (rows, cols)
+        if len(array) == 1:
+            array = array[0]
+    elif array.size == len(array):
+        if roffset == 0 and rows == 1:
+            array = array[coffset:]
+            cols = min(cols, len(array))
+        elif coffset == 0 and cols == 1:
+            array = array[roffset:]
+            rows = min(rows, len(array))
+
+    xml += "<array meta=\"%s\" rows=\"%s\" cols=\"%s\"/>" % (False, rows, cols)
     for row in range(rows):
         xml += "<row index=\"%s\"/>" % to_string(row)
         for col in range(cols):
             value = array
             if rows == 1 or cols == 1:
                 if rows == 1 and cols == 1:
-                    value = array
+                    value = array[0]
                 else:
                     dim = col if (rows == 1) else row
                     value = array[dim]
+                    if "ndarray" in str(type(value)):
+                        value = value[0]
             else:
                 value = array[row][col]
             value = format % value
@@ -433,5 +434,65 @@ def array_to_xml(array, roffset, coffset, rows, cols, format):
     return xml
 
 
+def array_to_meta_xml(array, name, format):
+    type = array.dtype.kind
+    slice = name
+    l = len(array.shape)
+
+    # initial load, compute slice
+    if format == '%':
+        if l > 2:
+            slice += '[0]' * (l - 2)
+            for r in range(l - 2):
+                array = array[0]
+        if type == 'f':
+            format = '.5f'
+        elif type == 'i' or type == 'u':
+            format = 'd'
+        else:
+            format = 's'
+    else:
+        format = format.replace('%', '')
+
+    l = len(array.shape)
+    reslice = ""
+    if l > 2:
+        raise Exception("%s has more than 2 dimensions." % slice)
+    elif l == 1:
+        # special case with 1D arrays arr[i, :] - row, but arr[:, i] - column with equal shape and ndim
+        # http://stackoverflow.com/questions/16837946/numpy-a-2-rows-1-column-file-loadtxt-returns-1row-2-columns
+        # explanation: http://stackoverflow.com/questions/15165170/how-do-i-maintain-row-column-orientation-of-vectors-in-numpy?rq=1
+        # we use kind of a hack - get information about memory from C_CONTIGUOUS
+        is_row = array.flags['C_CONTIGUOUS']
+
+        if is_row:
+            rows = 1
+            cols = min(len(array), MAX_SLICE_SIZE)
+            if cols < len(array):
+                reslice = '[0:%s]' % (cols)
+            array = array[0:cols]
+        else:
+            cols = 1
+            rows = min(len(array), MAX_SLICE_SIZE)
+            if rows < len(array):
+                reslice = '[0:%s]' % (rows)
+            array = array[0:rows]
+    elif l == 2:
+        rows = min(array.shape[-2], MAX_SLICE_SIZE)
+        cols = min(array.shape[-1], MAX_SLICE_SIZE)
+        if cols < array.shape[-1] or  rows < array.shape[-2]:
+            reslice = '[0:%s, 0:%s]' % (rows, cols)
+        array = array[0:rows, 0:cols]
+
+    #avoid slice duplication
+    if not slice.endswith(reslice):
+        slice += reslice
+
+    bounds = (0, 0)
+    if type in "biufc":
+        bounds = (array.min(), array.max())
+    xml = '<array meta=\"%s\" slice=\"%s\" rows=\"%s\" cols=\"%s\" format=\"%s\" type=\"%s\" max=\"%s\" min=\"%s\"/>' % \
+           (True, slice, rows, cols, format, type, bounds[1], bounds[0])
+    return xml
 
 
