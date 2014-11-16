@@ -402,6 +402,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     resize.add(new ResizeToolWindowAction.Right(myToolWindow, this));
     resize.add(new ResizeToolWindowAction.Up(myToolWindow, this));
     resize.add(new ResizeToolWindowAction.Down(myToolWindow, this));
+    resize.add(ActionManager.getInstance().getAction("MaximizeToolWindow"));
 
     group.add(resize);
 

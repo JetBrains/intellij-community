@@ -774,6 +774,9 @@
   <action id="ResizeToolWindowDown">
     <keyboard-shortcut first-keystroke="control shift DOWN"/>
   </action>
+  <action id="MaximizeToolWindow">
+    <keyboard-shortcut first-keystroke="control shift QUOTE"/>
+  </action>
   <action id="HideSideWindows"/>
   <action id="ShowPopupMenu">
     <keyboard-shortcut first-keystroke="CONTEXT_MENU"/>
