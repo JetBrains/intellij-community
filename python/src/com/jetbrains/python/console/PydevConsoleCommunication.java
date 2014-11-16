@@ -548,11 +548,18 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
   }
 
   @Override
-  public Object[][] getArrayItems(PyDebugValue var, int rowOffset, int colOffset, int rows, int cols, String format)
+  public ArrayChunk getArrayItems(PyDebugValue var, int rowOffset, int colOffset, int rows, int cols, String format)
     throws PyDebuggerException {
     if (myClient != null) {
       try {
-        Object ret = myClient.execute(GET_ARRAY, new Object[]{var.getName(), rowOffset, colOffset, rows, cols, format});
+        String fullName = var.getName();
+        PyDebugValue child = var;
+        while (child.getParent() != null) {
+          child = child.getParent();
+          fullName = child.getName() + "\t" + fullName;
+        }
+
+        Object ret = myClient.execute(GET_ARRAY, new Object[]{fullName, rowOffset, colOffset, rows, cols, format});
         if (ret instanceof String) {
           return ProtocolParser.parseArrayValues((String)ret, this);
         }

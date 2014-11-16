@@ -179,7 +179,7 @@ public class MultiProcessDebugger implements ProcessDebugger {
     return debugger(threadId).loadVariable(threadId, frameId, var);
   }
 
-  public Object[][] loadArrayItems(String threadId,
+  public ArrayChunk loadArrayItems(String threadId,
                                    String frameId,
                                    PyDebugValue var,
                                    int rowOffset,
