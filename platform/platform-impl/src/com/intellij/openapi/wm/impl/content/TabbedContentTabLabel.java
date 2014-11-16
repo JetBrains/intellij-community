@@ -15,9 +15,18 @@
  */
 package com.intellij.openapi.wm.impl.content;
 
+import com.intellij.ide.IdeEventQueue;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Pair;
+import com.intellij.ui.ClickListener;
+import com.intellij.ui.components.JBList;
 import com.intellij.ui.content.TabbedContent;
+import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 
 /**
  * @author Konstantin Bulenkov
@@ -39,6 +48,31 @@ public class TabbedContentTabLabel extends ContentTabLabel {
   public TabbedContentTabLabel(TabbedContent content, TabContentLayout layout) {
     super(content, layout);
     myContent = content;
+    new ClickListener() {
+      @Override
+      public boolean onClick(@NotNull MouseEvent event, int clickCount) {
+        showPopup();
+        return true;
+      }
+    }.installOn(this);
+  }
+
+  private void showPopup() {
+    IdeEventQueue.getInstance().getPopupManager().closeAllPopups();
+    ArrayList<String> names = new ArrayList<String>();
+    for (Pair<String, JComponent> tab : myContent.getTabs()) {
+      names.add(tab.first);
+    }
+    final JBList list = new JBList(names);
+    JBPopupFactory.getInstance().createListPopupBuilder(list).setItemChoosenCallback(new Runnable() {
+      @Override
+      public void run() {
+        int index = list.getSelectedIndex();
+        if (index != -1) {
+          myContent.selectContent(index);
+        }
+      }
+    }).createPopup().showUnderneathOf(this);
   }
 
   @Override
