@@ -34,12 +34,12 @@ import java.util.EventObject;
 /**
  * User: cdr
  */
-public class TrafficTooltipRendererImpl extends ComparableObject.Impl implements TrafficTooltipRenderer {
+class TrafficTooltipRendererImpl extends ComparableObject.Impl implements TrafficTooltipRenderer {
   private TrafficProgressPanel myPanel;
   private final Runnable onHide;
   private TrafficLightRenderer myTrafficLightRenderer;
 
-  public TrafficTooltipRendererImpl(@NotNull Runnable onHide, @NotNull Editor editor) {
+  TrafficTooltipRendererImpl(@NotNull Runnable onHide, @NotNull Editor editor) {
     super(editor);
     this.onHide = onHide;
   }

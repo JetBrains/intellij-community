@@ -53,7 +53,10 @@ public class XmlUnusedNamespaceInspection extends XmlSuppressableInspectionTool 
     return new XmlElementVisitor() {
       @Override
       public void visitXmlAttribute(XmlAttribute attribute) {
-        XmlRefCountHolder refCountHolder = XmlRefCountHolder.getRefCountHolder((XmlFile)holder.getFile());
+        PsiFile file = holder.getFile();
+        if (!(file instanceof XmlFile)) return;
+        
+        XmlRefCountHolder refCountHolder = XmlRefCountHolder.getRefCountHolder((XmlFile)file);
         if (refCountHolder == null) return;
         if (!attribute.isNamespaceDeclaration()) {
           checkUnusedLocations(attribute, holder, refCountHolder);

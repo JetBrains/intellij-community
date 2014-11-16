@@ -5,12 +5,14 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.MarkdownUtil;
+import com.intellij.util.ui.UIUtil;
 import com.petebevin.markdown.MarkdownProcessor;
 import net.sourceforge.jeuclid.MathMLParserSupport;
 import net.sourceforge.jeuclid.context.LayoutContextImpl;
 import net.sourceforge.jeuclid.context.Parameter;
 import net.sourceforge.jeuclid.converter.Converter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbTexPackageDefinitions;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
@@ -38,7 +40,7 @@ import java.util.Hashtable;
 public class IpnbUtils {
   private static final Logger LOG = Logger.getInstance(IpnbUtils.class);
   private static final MarkdownProcessor ourMarkdownProcessor = new MarkdownProcessor();
-  private static final String ourImagePrefix = "http:\\image";
+  private static final String ourImagePrefix = "http://image";
   private static final Font ourFont = new Font(Font.SERIF, Font.PLAIN, 16);
   private static final String ourBodyRule = "body { font-family: \"DejaVu\"; " +
                                          "font-size: " + ourFont.getSize() + "pt;}";
@@ -71,6 +73,7 @@ public class IpnbUtils {
 
   public static JEditorPane createLatexPane(@NotNull final String source) {
     final JEditorPane editorPane = new JEditorPane();
+    editorPane.setBackground(IpnbEditorUtil.getBackground());
     editorPane.setContentType(new HTMLEditorKit().getContentType());
     editorPane.setEditorKit(new HTMLEditorKit());
 
@@ -197,6 +200,7 @@ public class IpnbUtils {
       final String xmlString = session.buildXMLString(options);
       if (xmlString == null) return;
       final LayoutContextImpl context = (LayoutContextImpl)LayoutContextImpl.getDefaultLayoutContext();
+      context.setParameter(Parameter.MATHCOLOR, UIUtil.getTextAreaForeground());
       context.setParameter(Parameter.MATHSIZE, 18);
 
       final Document document = MathMLParserSupport.parseString(xmlString);
@@ -232,6 +236,6 @@ public class IpnbUtils {
       result.append("<p style = \"text-align:center;\"><img src=\"").append(ourImagePrefix).append(imageIndex).append(".jpg\"/></p>");
     }
     else
-      result.append("<img src=\"").append(ourImagePrefix).append(imageIndex).append(".jpg\">");
+      result.append("<img src=\"").append(ourImagePrefix).append(imageIndex).append(".jpg\"/>");
   }
 }

@@ -560,7 +560,7 @@ public abstract class DialogWrapper {
     }
 
     if (getStyle() == DialogStyle.COMPACT) {
-      CustomLineBorder line = new CustomLineBorder(new JBColor(Gray._153.withAlpha(128), Gray._100.withAlpha(128)), 1, 0, 0, 0);
+      CustomLineBorder line = new CustomLineBorder(OnePixelDivider.BACKGROUND, 1, 0, 0, 0);
       panel.setBorder(new CompoundBorder(line, BorderFactory.createEmptyBorder(8, 12, 8, 12)));
     } else {
       panel.setBorder(IdeBorderFactory.createEmptyBorder(new Insets(8, 0, 0, 0)));
@@ -569,6 +569,7 @@ public abstract class DialogWrapper {
     return panel;
   }
 
+  @NotNull
   protected DialogStyle getStyle() {
     return DialogStyle.NO_STYLE;
   }

@@ -94,6 +94,7 @@ public final class SettingsDialog extends DialogWrapper implements DataProvider 
     return true;
   }
 
+  @NotNull
   @Override
   protected DialogStyle getStyle() {
     return DialogStyle.COMPACT;

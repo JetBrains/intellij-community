@@ -53,6 +53,7 @@ import com.intellij.psi.tree.ILazyParseableElementType;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.reference.SoftReference;
+import com.intellij.util.FileContentUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PatchedWeakReference;
 import com.intellij.util.containers.ContainerUtil;
@@ -67,6 +68,7 @@ import java.util.*;
 
 public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiFileWithStubSupport, Queryable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiFileImpl");
+  public static final String STUB_PSI_MISMATCH = "stub-psi mismatch";
 
   private IElementType myElementType;
   protected IElementType myContentElementType;
@@ -299,7 +301,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   protected void reportStubAstMismatch(String message, StubTree stubTree, Document cachedDocument) {
     rebuildStub();
-    clearStub("stub-psi mismatch");
+    clearStub(STUB_PSI_MISMATCH);
     scheduleDropCachesWithInvalidStubPsi();
 
     String msg = message;
@@ -757,17 +759,17 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   @Override
   public PsiElement getFirstChild() {
-    return SharedImplUtil.getFirstChild(calcTreeElement());
+    return SharedImplUtil.getFirstChild(getNode());
   }
 
   @Override
   public PsiElement getLastChild() {
-    return SharedImplUtil.getLastChild(calcTreeElement());
+    return SharedImplUtil.getLastChild(getNode());
   }
 
   @Override
   public void acceptChildren(@NotNull PsiElementVisitor visitor) {
-    SharedImplUtil.acceptChildren(visitor, calcTreeElement());
+    SharedImplUtil.acceptChildren(visitor, getNode());
   }
 
   @Override
@@ -1007,21 +1009,23 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   }
 
   private void rebuildStub() {
-    final VirtualFile vFile = getVirtualFile();
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        myManager.dropResolveCaches();
 
-    if (vFile != null && vFile.isValid()) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
+        final VirtualFile vFile = getVirtualFile();
+        if (vFile != null && vFile.isValid()) {
           final Document doc = FileDocumentManager.getInstance().getCachedDocument(vFile);
           if (doc != null) {
             FileDocumentManager.getInstance().saveDocument(doc);
           }
-        }
-      }, ModalityState.NON_MODAL);
 
-      StubTreeLoader.getInstance().rebuildStubTree(vFile);
-    }
+          FileContentUtilCore.reparseFiles(vFile);
+          StubTreeLoader.getInstance().rebuildStubTree(vFile);
+        }
+      }
+    }, ModalityState.NON_MODAL);
   }
 
   @Override

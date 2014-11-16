@@ -190,4 +190,9 @@ public class UnusedDeclarationTest extends InspectionTestCase {
   public void testClassLiteralRef() {
     doTest();
   }
+
+  public void testFunctionalExpressions() {
+    LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(LanguageLevel.JDK_1_8);
+    doTest();
+  }
 }

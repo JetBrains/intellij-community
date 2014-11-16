@@ -52,9 +52,9 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     });
   }
 
-  public void testPydevTests_Debugger() {
-    unittests("tests_python/test_debugger.py");
-  }
+  //public void testPydevTests_Debugger() {
+  //  unittests("tests_python/test_debugger.py");
+  //}
 
   private void unittests(final String script) {
     runPythonTest(new PyUnitTestTask("", script) {

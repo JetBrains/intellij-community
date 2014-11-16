@@ -57,7 +57,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   public static boolean CHECK = ApplicationManager.getApplication().isUnitTestMode();
 
-  static final VirtualDirectoryImpl NULL_VIRTUAL_FILE =
+  private static final VirtualDirectoryImpl NULL_VIRTUAL_FILE =
     new VirtualDirectoryImpl(-42, null, null, null, LocalFileSystem.getInstance()) {
       @Override
       public String toString() {
@@ -282,7 +282,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     final boolean ignoreCase = !delegate.isCaseSensitive();
     synchronized (myData) {
       if (allChildrenLoaded()) {
-        assertConsistency(ignoreCase);
+        assertConsistency(ignoreCase, "");
         return getArraySafely();
       }
 
@@ -331,7 +331,9 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
       if (getId() > 0) {
         myData.myChildrenIds = result;
-        assertConsistency(ignoreCase, childrenIds);
+        if (CHECK) {
+          assertConsistency(ignoreCase, Arrays.asList(childrenIds));
+        }
         setChildrenLoaded();
       }
 
@@ -339,7 +341,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     }
   }
 
-  private void assertConsistency(boolean ignoreCase, @NotNull Object... details) {
+  private void assertConsistency(boolean ignoreCase, @NotNull Object details) {
     if (!CHECK || ApplicationInfoImpl.isInPerformanceTest()) return;
     int[] childrenIds = myData.myChildrenIds;
     for (int i = 1; i < childrenIds.length; i++) {

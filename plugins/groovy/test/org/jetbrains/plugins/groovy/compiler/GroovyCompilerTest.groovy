@@ -33,6 +33,7 @@ import com.intellij.openapi.compiler.CompilerMessage
 import com.intellij.openapi.compiler.CompilerMessageCategory
 import com.intellij.openapi.compiler.options.ExcludeEntryDescription
 import com.intellij.openapi.compiler.options.ExcludedEntriesConfiguration
+import com.intellij.openapi.compiler.options.ExcludesConfiguration
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.Key
@@ -682,8 +683,7 @@ public class Main {
   }
 
   private void excludeFromCompilation(PsiFile foo) {
-    final ExcludedEntriesConfiguration configuration =
-      ((CompilerConfigurationImpl)CompilerConfiguration.getInstance(project)).getExcludedEntriesConfiguration()
+    final ExcludesConfiguration configuration = CompilerConfiguration.getInstance(project).getExcludedEntriesConfiguration()
     configuration.addExcludeEntryDescription(new ExcludeEntryDescription(foo.virtualFile, false, true, testRootDisposable))
   }
 

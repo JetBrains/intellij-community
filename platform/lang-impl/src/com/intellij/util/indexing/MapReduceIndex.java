@@ -567,7 +567,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
 
   private Integer getHashOfContent(FileContent content) throws IOException {
     if (myIsPsiBackedIndex && myHasSnapshotMapping && content instanceof FileContentImpl) {
-      // psi backed index should use existing psi to build index value (FileContentImpl.getPsiFileAccountingForUnsavedDocument())
+      // psi backed index should use existing psi to build index value (FileContentImpl.getPsiFileForPsiDependentIndex())
       // so we should use different bytes to calculate hash(Id)
       Integer previouslyCalculatedUncommittedHashId = content.getUserData(ourSavedUncommittedHashIdKey);
       

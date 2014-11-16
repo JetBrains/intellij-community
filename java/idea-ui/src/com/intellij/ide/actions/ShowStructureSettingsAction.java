@@ -26,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.util.registry.Registry;
+import org.jetbrains.annotations.NotNull;
 
 public class ShowStructureSettingsAction extends AnAction implements DumbAware {
   @Override
@@ -40,6 +41,7 @@ public class ShowStructureSettingsAction extends AnAction implements DumbAware {
   static void showDialog(Project project) {
     if (Registry.is("ide.new.project.settings")) {
       new SingleConfigurableEditor(project, ProjectStructureConfigurable.getInstance(project), OptionsEditorDialog.DIMENSION_KEY) {
+        @NotNull
         @Override
         protected DialogStyle getStyle() {
           return DialogStyle.COMPACT;

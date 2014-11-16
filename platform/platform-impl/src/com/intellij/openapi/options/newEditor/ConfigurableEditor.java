@@ -25,16 +25,13 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.options.*;
+import com.intellij.openapi.options.ex.ConfigurableCardPanel;
 import com.intellij.openapi.options.ex.ConfigurableVisitor;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.RelativeFont;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.components.GradientViewport;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
@@ -45,7 +42,6 @@ import java.awt.event.AWTEventListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import java.util.IdentityHashMap;
 import java.util.ResourceBundle;
 
 import static java.awt.Toolkit.getDefaultToolkit;
@@ -59,9 +55,13 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
   private static final String RESET_NAME = "Reset";
   private static final String RESET_DESCRIPTION = "Rollback changes for this configuration element";
   private final MergingUpdateQueue myQueue = new MergingUpdateQueue("SettingsModification", 1000, false, this, this, this);
-  private final IdentityHashMap<Configurable, JComponent> myConfigurableContent = new IdentityHashMap<Configurable, JComponent>();
-  private final CardLayout myCardLayout = new CardLayout();
-  private final JPanel myCardPanel = new JPanel(myCardLayout);
+  private final ConfigurableCardPanel myCardPanel = new ConfigurableCardPanel() {
+    @Override
+    protected JComponent create(Configurable configurable) {
+      JComponent content = super.create(configurable);
+      return content != null ? content : createDefaultContent(configurable);
+    }
+  };
   private final JLabel myErrorLabel = new JLabel();
   private final AbstractAction myApplyAction = new AbstractAction(CommonBundle.getApplyButtonText()) {
     @Override
@@ -95,18 +95,14 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
     ActionManager.getInstance().addAnActionListener(this, this);
     getDefaultToolkit().addAWTEventListener(this, AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK | AWTEvent.KEY_EVENT_MASK);
     myConfigurable = configurable;
-    setCurrent(configurable, readContent(configurable));
+    myCardPanel.select(configurable, true);
+    updateCurrent(configurable, false);
   }
 
   @Override
   void disposeOnce() {
     getDefaultToolkit().removeAWTEventListener(this);
-    for (Configurable configurable : myConfigurableContent.keySet()) {
-      if (configurable != null) {
-        configurable.disposeUIResources();
-      }
-    }
-    myConfigurableContent.clear();
+    myCardPanel.removeAll();
   }
 
   @Override
@@ -191,15 +187,6 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
     }
   }
 
-  private void setCurrent(Configurable configurable, JComponent content) {
-    if (myCardPanel != content.getParent()) {
-      content.setName(configurable != null ? ConfigurableVisitor.ByID.getID(configurable) + configurable.hashCode() : "null configurable");
-      myCardPanel.add(content, content.getName());
-    }
-    myCardLayout.show(myCardPanel, content.getName());
-    updateCurrent(configurable, false);
-  }
-
   final boolean updateIfCurrent(Configurable configurable) {
     if (myConfigurable != configurable) {
       return false;
@@ -209,27 +196,14 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
   }
 
   final ActionCallback select(final Configurable configurable) {
-    myConfigurable = configurable;
-    JComponent content = myConfigurableContent.get(configurable);
-    if (content != null) {
-      setCurrent(configurable, content);
-      return ActionCallback.DONE;
-    }
-    final ActionCallback callback = new ActionCallback();
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
+    ActionCallback callback = myCardPanel.select(configurable, false);
+    callback.doWhenDone(new Runnable() {
       @Override
       public void run() {
-        if (!myDisposed && myConfigurable == configurable) {
-          JComponent content = readContent(configurable);
-          myConfigurableContent.put(configurable, content);
-          setCurrent(configurable, content);
-          callback.setDone();
-        }
-        else {
-          callback.setRejected();
-        }
+        myConfigurable = configurable;
+        updateCurrent(configurable, false);
       }
-    }, ModalityState.any());
+    });
     return callback;
   }
 
@@ -244,68 +218,41 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
   }
 
   final JComponent getContent(Configurable configurable) {
-    return myConfigurableContent.get(configurable);
+    return myCardPanel.getValue(configurable, false);
   }
 
-  final JComponent readContent(final Configurable configurable) {
-    JComponent content = getContent(configurable);
-    if (content != null) {
-      return content;
-    }
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      @Override
-      public void run() {
-        myConfigurableContent.put(configurable, createContent(configurable));
-      }
-    });
-    return getContent(configurable);
+  final JComponent readContent(Configurable configurable) {
+    return myCardPanel.getValue(configurable, true);
   }
 
-  private JComponent createContent(Configurable configurable) {
-    JComponent content = configurable == null ? null : configurable.createComponent();
-    if (content != null) {
-      configurable.reset();
-      if (ConfigurableWrapper.cast(MasterDetails.class, configurable) == null) {
-        if (ConfigurableWrapper.cast(Configurable.NoMargin.class, configurable) == null) {
-          content.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        }
-        if (ConfigurableWrapper.cast(Configurable.NoScroll.class, configurable) == null) {
-          JScrollPane scroll = ScrollPaneFactory.createScrollPane(null, true);
-          scroll.setViewport(new GradientViewport(content, 5, 0, 0, 0, true));
-          scroll.getVerticalScrollBar().setUnitIncrement(10);
-          content = scroll;
-        }
-      }
+  private JComponent createDefaultContent(Configurable configurable) {
+    JComponent content = new JPanel(new BorderLayout());
+    content.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+    String key = configurable == null ? null : ConfigurableVisitor.ByID.getID(configurable) + ".settings.description";
+    String description = key == null ? null : getString(configurable, key);
+    if (description == null) {
+      description = "Select configuration element in the tree to edit its settings";
+      content.add(BorderLayout.CENTER, new JLabel(description, SwingConstants.CENTER));
+      content.setPreferredSize(new Dimension(800, 600));
     }
     else {
-      content = new JPanel(new BorderLayout());
-      content.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-      String key = configurable == null ? null : ConfigurableVisitor.ByID.getID(configurable) + ".settings.description";
-      String description = key == null ? null : getString(configurable, key);
-      if (description == null) {
-        description = "Select configuration element in the tree to edit its settings";
-        content.add(BorderLayout.CENTER, new JLabel(description, SwingConstants.CENTER));
-        content.setPreferredSize(new Dimension(800, 600));
-      }
-      else {
-        content.add(BorderLayout.NORTH, new JLabel(description));
-        if (configurable instanceof Configurable.Composite) {
-          Configurable.Composite composite = (Configurable.Composite)configurable;
+      content.add(BorderLayout.NORTH, new JLabel(description));
+      if (configurable instanceof Configurable.Composite) {
+        Configurable.Composite composite = (Configurable.Composite)configurable;
 
-          JPanel panel = new JPanel();
-          panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-          content.add(BorderLayout.CENTER, panel);
-          panel.add(Box.createVerticalStrut(10));
-          for (final Configurable current : composite.getConfigurables()) {
-            LinkLabel label = new LinkLabel(current.getDisplayName(), null) {
-              @Override
-              public void doClick() {
-                openLink(current);
-              }
-            };
-            label.setBorder(BorderFactory.createEmptyBorder(1, 17, 3, 1));
-            panel.add(label);
-          }
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        content.add(BorderLayout.CENTER, panel);
+        panel.add(Box.createVerticalStrut(10));
+        for (final Configurable current : composite.getConfigurables()) {
+          LinkLabel label = new LinkLabel(current.getDisplayName(), null) {
+            @Override
+            public void doClick() {
+              openLink(current);
+            }
+          };
+          label.setBorder(BorderFactory.createEmptyBorder(1, 17, 3, 1));
+          panel.add(label);
         }
       }
     }

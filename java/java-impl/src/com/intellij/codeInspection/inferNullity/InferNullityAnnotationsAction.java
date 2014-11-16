@@ -16,9 +16,11 @@
 package com.intellij.codeInspection.inferNullity;
 
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.analysis.BaseAnalysisAction;
 import com.intellij.analysis.BaseAnalysisActionDialog;
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.quickfix.LocateLibraryDialog;
@@ -59,14 +61,12 @@ import com.intellij.usages.*;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import com.intellij.util.SequentialModalProgressTask;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class InferNullityAnnotationsAction extends BaseAnalysisAction {
   @NonNls private static final String INFER_NULLITY_ANNOTATIONS = "Infer Nullity Annotations";
@@ -84,36 +84,33 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
     final ProgressManager progressManager = ProgressManager.getInstance();
     final Set<Module> modulesWithoutAnnotations = new HashSet<Module>();
     final Set<Module> modulesWithLL = new HashSet<Module>();
+    final JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(project);
+    final String defaultNullable = NullableNotNullManager.getInstance(project).getDefaultNullable();
+    final int[] fileCount = new int[] {0};
     if (!progressManager.runProcessWithProgressSynchronously(new Runnable() {
       @Override
       public void run() {
-        final int totalFiles = scope.getFileCount();
-
         scope.accept(new PsiElementVisitor() {
-          private int myFileCount = 0;
           final private Set<Module> processed = new HashSet<Module>();
 
           @Override
           public void visitFile(PsiFile file) {
-            myFileCount++;
+            fileCount[0]++;
             final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
             if (progressIndicator != null) {
               final VirtualFile virtualFile = file.getVirtualFile();
               if (virtualFile != null) {
                 progressIndicator.setText2(ProjectUtil.calcRelativeToProjectPath(virtualFile, project));
               }
-              progressIndicator.setFraction(((double)myFileCount) / totalFiles);
+              progressIndicator.setText(AnalysisScopeBundle.message("scanning.scope.progress.title"));
             }
             final Module module = ModuleUtilCore.findModuleForPsiElement(file);
-            if (module != null && !processed.contains(module)) {
-              processed.add(module);
-              if (JavaPsiFacade.getInstance(project)
-                    .findClass(NullableNotNullManager.getInstance(project).getDefaultNullable(),
-                               GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module)) == null) {
-                modulesWithoutAnnotations.add(module);
-              }
+            if (module != null && processed.add(module)) {
               if (PsiUtil.getLanguageLevel(file).compareTo(LanguageLevel.JDK_1_5) < 0) {
                 modulesWithLL.add(module);
+              }
+              else if (javaPsiFacade.findClass(defaultNullable, GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module)) == null) {
+                modulesWithoutAnnotations.add(module);
               }
             }
           }
@@ -128,8 +125,7 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
       return;
     }
     if (!modulesWithoutAnnotations.isEmpty()) {
-      final Library annotationsLib =
-        LibraryUtil.findLibraryByClass(NullableNotNullManager.getInstance(project).getDefaultNullable(), project);
+      final Library annotationsLib = LibraryUtil.findLibraryByClass(defaultNullable, project);
       if (annotationsLib != null) {
         String message = "Module" + (modulesWithoutAnnotations.size() == 1 ? " " : "s ");
         message += StringUtil.join(modulesWithoutAnnotations, new Function<Module, String>() {
@@ -185,10 +181,8 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
       }
       return;
     }
-    if (scope.checkScopeWritable(project)) return;
-
     PsiDocumentManager.getInstance(project).commitAllDocuments();
-    final UsageInfo[] usageInfos = findUsages(project, scope);
+    final UsageInfo[] usageInfos = findUsages(project, scope, fileCount[0]);
     if (usageInfos == null) return;
 
     if (usageInfos.length < 5) {
@@ -205,13 +199,13 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
   }
 
   private UsageInfo[] findUsages(@NotNull final Project project,
-                                 @NotNull final AnalysisScope scope) {
+                                 @NotNull final AnalysisScope scope, 
+                                          final int fileCount) {
     final NullityInferrer inferrer = new NullityInferrer(myAnnotateLocalVariablesCb.isSelected(), project);
     final PsiManager psiManager = PsiManager.getInstance(project);
     final Runnable searchForUsages = new Runnable() {
       @Override
       public void run() {
-        final int totalFiles = scope.getFileCount();
         scope.accept(new PsiElementVisitor() {
           int myFileCount = 0;
 
@@ -225,7 +219,7 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
             final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
             if (progressIndicator != null) {
               progressIndicator.setText2(ProjectUtil.calcRelativeToProjectPath(virtualFile, project));
-              progressIndicator.setFraction(((double)myFileCount) / totalFiles);
+              progressIndicator.setFraction(((double)myFileCount) / fileCount);
             }
             if (file instanceof PsiJavaFile) {
               inferrer.collect(file);
@@ -258,6 +252,16 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
             protected void run(@NotNull Result result) throws Throwable {
               final UsageInfo[] infos = computable.compute();
               if (infos.length > 0) {
+
+                final Set<PsiElement> elements = new LinkedHashSet<PsiElement>();
+                for (UsageInfo info : infos) {
+                  final PsiElement element = info.getElement();
+                  if (element != null) {
+                    ContainerUtil.addIfNotNull(elements, element.getContainingFile());
+                  }
+                }
+                if (!FileModificationService.getInstance().preparePsiElementsForWrite(elements)) return;
+
                 final SequentialModalProgressTask progressTask = new SequentialModalProgressTask(project, INFER_NULLITY_ANNOTATIONS, false);
                 progressTask.setMinIterationTime(200);
                 progressTask.setTask(new AnnotateTask(project, progressTask, infos));
@@ -332,7 +336,7 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
         return new UsageInfoSearcherAdapter() {
           @Override
           protected UsageInfo[] findUsages() {
-            return InferNullityAnnotationsAction.this.findUsages(project, scope);
+            return InferNullityAnnotationsAction.this.findUsages(project, scope, scope.getFileCount());
           }
 
           @Override

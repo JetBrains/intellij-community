@@ -33,10 +33,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PythonModuleTypeBase;
 import com.jetbrains.python.facet.PythonFacetSettings;
@@ -116,7 +113,10 @@ abstract public class PythonTestConfigurationProducer extends RunConfigurationPr
     if (context == null) return false;
     final Location location = context.getLocation();
     if (location == null || !isAvailable(location)) return false;
-    final PsiElement element = location.getPsiElement();
+    PsiElement element = location.getPsiElement();
+    if (element instanceof PsiWhiteSpace) {
+      element = PyUtil.findNonWhitespaceAtOffset(element.getContainingFile(), element.getTextOffset());
+    }
 
     if (PythonUnitTestRunnableScriptFilter.isIfNameMain(location)) return false;
     final Module module = location.getModule();
@@ -134,7 +134,7 @@ abstract public class PythonTestConfigurationProducer extends RunConfigurationPr
     if (pyClass != null && isTestClass(pyClass, configuration)) {
       return setupConfigurationFromClass(pyClass, configuration);
     }
-
+    if (element == null) return false;
     final PsiFile file = element.getContainingFile();
     if (file instanceof PyFile && isTestFile((PyFile)file)) {
       return setupConfigurationFromFile((PyFile)file, configuration);

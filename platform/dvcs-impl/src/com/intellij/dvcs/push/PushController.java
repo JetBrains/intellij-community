@@ -117,14 +117,17 @@ public class PushController implements Disposable {
     });
   }
 
-  public boolean isForcePushAllowed() {
-    return ContainerUtil.and(myView2Model.values(), new Condition<MyRepoModel>() {
+  @Nullable
+  public PushTarget getProhibitedTarget() {
+    MyRepoModel model = ContainerUtil.find(myView2Model.values(), new Condition<MyRepoModel>() {
       @Override
       public boolean value(MyRepoModel model) {
-        return !model.isSelected() ||
-               (model.getTarget() != null && model.getSupport().isForcePushAllowed(model.getRepository(), model.getTarget()));
+        PushTarget target = model.getTarget();
+        return model.isSelected() &&
+               target != null && !model.getSupport().isForcePushAllowed(model.getRepository(), target);
       }
     });
+    return model != null ? model.getTarget() : null;
   }
 
   private void startLoadingCommits() {

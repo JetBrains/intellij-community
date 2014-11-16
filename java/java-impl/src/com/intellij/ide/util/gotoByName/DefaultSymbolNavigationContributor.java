@@ -30,6 +30,7 @@ import com.intellij.psi.impl.PsiSuperMethodImplUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchScopeUtil;
 import com.intellij.psi.search.PsiShortNamesCache;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
@@ -89,19 +90,24 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
     return member.getContainingFile().getVirtualFile() != null;
   }
 
-  private static boolean hasSuperMethod(PsiMethod method, GlobalSearchScope scope, Condition<PsiMember> qualifiedMatcher) {
-    PsiClass containingClass = method.getContainingClass();
+  private static boolean hasSuperMethod(final PsiMethod method, final GlobalSearchScope scope, final Condition<PsiMember> qualifiedMatcher) {
+    final PsiClass containingClass = method.getContainingClass();
     if (containingClass == null) return false;
 
-    for (PsiMethod candidate : containingClass.findMethodsByName(method.getName(), true)) {
-      if (candidate.getContainingClass() != containingClass &&
-          PsiSearchScopeUtil.isInScope(scope, candidate) &&
-          qualifiedMatcher.value(candidate) &&
-          PsiSuperMethodImplUtil.isSuperMethodSmart(method, candidate)) {
+    // avoid using hierarchical findMethodsByName because we only want to check the given method hierarchy, without its siblings  
+    return !InheritanceUtil.processSupers(containingClass, false, new Processor<PsiClass>() {
+      @Override
+      public boolean process(PsiClass superClass) {
+        if (PsiSearchScopeUtil.isInScope(scope, superClass)) {
+          for (PsiMethod candidate : superClass.findMethodsByName(method.getName(), false)) {
+            if (qualifiedMatcher.value(candidate) && PsiSuperMethodImplUtil.isSuperMethodSmart(method, candidate)) {
+              return false;
+            }
+          }
+        }
         return true;
       }
-    }
-    return false;
+    });
   }
 
   public void processNames(@NotNull Processor<String> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {

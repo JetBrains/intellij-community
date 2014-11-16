@@ -25,6 +25,7 @@ import org.gradle.api.tasks.bundling.Jar;
 import org.gradle.api.tasks.testing.Test;
 import org.gradle.plugins.ide.idea.IdeaPlugin;
 import org.gradle.plugins.ide.idea.model.IdeaModel;
+import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.ExtIdeaContentRoot;
@@ -132,12 +133,13 @@ public class ModuleExtendedModelBuilderImpl implements ModelBuilderService {
 
     final Set<String> ideaSourceDirectories = new HashSet<String>();
     final Set<String> ideaTestDirectories = new HashSet<String>();
+    final Set<String> ideaGeneratedDirectories = new HashSet<String>();
     final Set<String> ideaExtResourceDirectories = new HashSet<String>();
     final Set<String> ideaExtTestResourceDirectories = new HashSet<String>();
     final Set<File> excludeDirectories = new HashSet<File>();
 
     enrichDataFromIdeaPlugin(project, excludeDirectories, ideaSourceDirectories, ideaTestDirectories,
-                             ideaExtResourceDirectories, ideaExtTestResourceDirectories);
+                             ideaExtResourceDirectories, ideaExtTestResourceDirectories, ideaGeneratedDirectories);
 
     if (ideaSourceDirectories.isEmpty()) {
       sourceDirectories.clear();
@@ -165,10 +167,10 @@ public class ModuleExtendedModelBuilderImpl implements ModelBuilderService {
     testResourceDirectories.removeAll(testDirectories);
 
     for (String javaDir : sourceDirectories) {
-      contentRoot.addSourceDirectory(new IdeaSourceDirectoryImpl(new File(javaDir)));
+      contentRoot.addSourceDirectory(new IdeaSourceDirectoryImpl(new File(javaDir), ideaGeneratedDirectories.contains(javaDir)));
     }
     for (String testDir : testDirectories) {
-      contentRoot.addTestDirectory(new IdeaSourceDirectoryImpl(new File(testDir)));
+      contentRoot.addTestDirectory(new IdeaSourceDirectoryImpl(new File(testDir), ideaGeneratedDirectories.contains(testDir)));
     }
     for (String resourceDir : resourceDirectories) {
       contentRoot.addResourceDirectory(new IdeaSourceDirectoryImpl(new File(resourceDir)));
@@ -223,7 +225,8 @@ public class ModuleExtendedModelBuilderImpl implements ModelBuilderService {
                                                Set<String> javaDirectories,
                                                Set<String> testDirectories,
                                                Set<String> ideaExtResourceDirectories,
-                                               Set<String> ideaExtTestResourceDirectories) {
+                                               Set<String> ideaExtTestResourceDirectories,
+                                               Set<String> ideaGeneratedDirectories) {
 
     IdeaPlugin ideaPlugin = project.getPlugins().getPlugin(IdeaPlugin.class);
     if (ideaPlugin == null) return;
@@ -239,6 +242,12 @@ public class ModuleExtendedModelBuilderImpl implements ModelBuilderService {
     }
     for (File file : ideaModel.getModule().getTestSourceDirs()) {
       testDirectories.add(file.getPath());
+    }
+
+    if(GradleVersion.current().compareTo(GradleVersion.version("2.2")) >=0) {
+      for (File file : ideaModel.getModule().getGeneratedSourceDirs()) {
+        ideaGeneratedDirectories.add(file.getPath());
+      }
     }
 
     ideaExtResourceDirectories.addAll(getExtDirs("resourceDirs", ideaModel.getModule()));

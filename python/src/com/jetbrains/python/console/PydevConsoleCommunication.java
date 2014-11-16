@@ -532,6 +532,8 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
   public void changeVariable(PyDebugValue variable, String value) throws PyDebuggerException {
     if (myClient != null) {
       try {
+        // NOTE: The actual change is being scheduled in the exec_queue in main thread
+        // This method is async now
         Object ret = myClient.execute(CHANGE_VARIABLE, new Object[]{variable.getEvaluationExpression(), value});
         checkError(ret);
       }
