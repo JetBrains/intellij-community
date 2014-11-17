@@ -278,14 +278,16 @@ public class FileTypesTest extends PlatformTestCase {
   }
 
   public void testReDetectOnContentsChange() throws IOException {
-    FileType fileType = FileTypeRegistry.getInstance().getFileTypeByFileName("x" + ModuleFileType.DOT_DEFAULT_EXTENSION);
+    final FileTypeRegistry fileTypeManager = FileTypeRegistry.getInstance();
+    assertTrue(fileTypeManager.getClass().getName(), fileTypeManager instanceof FileTypeManagerImpl);
+    FileType fileType = fileTypeManager.getFileTypeByFileName("x" + ModuleFileType.DOT_DEFAULT_EXTENSION);
     assertTrue(fileType.toString(), fileType instanceof ModuleFileType);
-    fileType = FileTypeRegistry.getInstance().getFileTypeByFileName("x" + ProjectFileType.DOT_DEFAULT_EXTENSION);
+    fileType = fileTypeManager.getFileTypeByFileName("x" + ProjectFileType.DOT_DEFAULT_EXTENSION);
     assertTrue(fileType.toString(), fileType instanceof ProjectFileType);
-    FileType module = FileTypeRegistry.getInstance().findFileTypeByName("IDEA_MODULE");
+    FileType module = fileTypeManager.findFileTypeByName("IDEA_MODULE");
     assertNotNull(module);
     assertFalse(module.equals(PlainTextFileType.INSTANCE));
-    FileType project = FileTypeRegistry.getInstance().findFileTypeByName("IDEA_PROJECT");
+    FileType project = fileTypeManager.findFileTypeByName("IDEA_PROJECT");
     assertNotNull(project);
     assertFalse(project.equals(PlainTextFileType.INSTANCE));
 
@@ -296,7 +298,7 @@ public class FileTypesTest extends PlatformTestCase {
       public FileType detect(@NotNull VirtualFile file, @NotNull ByteSequence firstBytes, @Nullable CharSequence firstCharsIfText) {
         detectorCalled.add(file);
         String text = firstCharsIfText.toString();
-        FileType result = text.startsWith("TYPE:") ? FileTypeRegistry.getInstance().findFileTypeByName(StringUtil.trimStart(text, "TYPE:")) : null;
+        FileType result = text.startsWith("TYPE:") ? fileTypeManager.findFileTypeByName(StringUtil.trimStart(text, "TYPE:")) : null;
         System.out.println("T: my detector run for "+file.getName()+"; result: "+(result == null ? null : result.getName()));
         return result;
       }
@@ -308,6 +310,7 @@ public class FileTypesTest extends PlatformTestCase {
     };
     Extensions.getRootArea().getExtensionPoint(FileTypeRegistry.FileTypeDetector.EP_NAME).registerExtension(detector);
     try {
+      System.out.println("T: ------");
       File d = createTempDirectory();
       File f = new File(d, "xx.asfdasdfas");
       FileUtil.writeToFile(f, "akjdhfksdjgf");
@@ -315,13 +318,16 @@ public class FileTypesTest extends PlatformTestCase {
       ensureRedetected(vFile, detectorCalled);
       assertTrue(vFile.getFileType().toString(), vFile.getFileType() instanceof PlainTextFileType);
 
+      System.out.println("T: ------");
       VfsUtil.saveText(vFile, "TYPE:IDEA_MODULE");
       ensureRedetected(vFile, detectorCalled);
       assertTrue(vFile.getFileType().toString(), vFile.getFileType() instanceof ModuleFileType);
 
+      System.out.println("T: ------");
       VfsUtil.saveText(vFile, "TYPE:IDEA_PROJECT");
       ensureRedetected(vFile, detectorCalled);
       assertTrue(vFile.getFileType().toString(), vFile.getFileType() instanceof ProjectFileType);
+      System.out.println("T: ------");
     }
     finally {
       Extensions.getRootArea().getExtensionPoint(FileTypeRegistry.FileTypeDetector.EP_NAME).unregisterExtension(detector);
