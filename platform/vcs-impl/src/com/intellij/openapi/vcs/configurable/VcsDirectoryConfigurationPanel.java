@@ -21,6 +21,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
@@ -30,9 +31,6 @@ import com.intellij.openapi.vcs.roots.VcsRootErrorsFinder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.ui.components.JBScrollPane;
-import com.intellij.ui.components.labels.LinkLabel;
-import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
@@ -45,7 +43,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.CompoundBorder;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
@@ -89,22 +86,34 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
   private VcsCommitMessageMarginConfigurable myCommitMessageMarginConfigurable;
 
   private static class MapInfo {
+
+    static final MapInfo SEPARATOR = new MapInfo(new VcsDirectoryMapping("SEPARATOR", "SEP"), Type.SEPARATOR);
+
     enum Type {
       NORMAL,
       INVALID,
-      UNREGISTERED;
+      UNREGISTERED,
+      SEPARATOR
     }
 
-    @NotNull private final Type type;
-    @NotNull private final VcsDirectoryMapping mapping;
+    private final Type type;
+    private final VcsDirectoryMapping mapping;
 
     MapInfo(@NotNull VcsDirectoryMapping mapping, boolean valid) {
+      this(mapping, valid ? Type.NORMAL : Type.INVALID);
+    }
+
+    MapInfo(@NotNull String path, @NotNull String vcs) {
+      this(new VcsDirectoryMapping(path, vcs), Type.UNREGISTERED);
+    }
+
+    MapInfo(@NotNull VcsDirectoryMapping mapping, @NotNull Type type) {
       this.mapping = mapping;
-      this.type = valid ? Type.NORMAL : Type.INVALID;
+      this.type = type;
     }
   }
 
-  private class MyDirectoryRenderer extends ColoredTableCellRenderer {
+  private static class MyDirectoryRenderer extends ColoredTableCellRenderer {
     private final Project myProject;
 
     public MyDirectoryRenderer(Project project) {
@@ -115,32 +124,61 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
       if (value instanceof MapInfo) {
         MapInfo info = (MapInfo)value;
-        if (info.type == MapInfo.Type.INVALID) { // TODO append with other fg
-          setForeground(Color.RED);
+
+        if (!selected && (info == MapInfo.SEPARATOR || info.type == MapInfo.Type.UNREGISTERED)) {
+          setBackground(getUnregisteredRootBackground());
         }
-        if (info.mapping.isDefaultMapping()) {
-          append(VcsDirectoryMapping.PROJECT_CONSTANT);
+
+        if (info == MapInfo.SEPARATOR) {
+          append("Unregistered roots:", getAttributes(info));
           return;
         }
+
+        if (info.mapping.isDefaultMapping()) {
+          append(VcsDirectoryMapping.PROJECT_CONSTANT, getAttributes(info));
+          return;
+        }
+
         String directory = info.mapping.getDirectory();
         VirtualFile baseDir = myProject.getBaseDir();
         if (baseDir != null) {
           final File directoryFile = new File(StringUtil.trimEnd(UriUtil.trimTrailingSlashes(directory), "\\") + "/");
           File ioBase = new File(baseDir.getPath());
           if (directoryFile.isAbsolute() && !FileUtil.isAncestor(ioBase, directoryFile, false)) {
-            append(new File(directory).getPath());
+            append(new File(directory).getPath(), getAttributes(info));
             return;
           }
           String relativePath = FileUtil.getRelativePath(ioBase, directoryFile);
           if (".".equals(relativePath) || relativePath == null) {
-            append(ioBase.getPath());
+            append(ioBase.getPath(), getAttributes(info));
           }
           else {
-            append(relativePath);
+            append(relativePath, getAttributes(info));
             append(" (" + ioBase + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
           }
         }
       }
+    }
+  }
+
+  @NotNull
+  private static Color getUnregisteredRootBackground() {
+    return new JBColor(UIUtil.getLabelBackground(), new Color(0x45494A));
+  }
+
+  @NotNull
+  private static SimpleTextAttributes getAttributes(@NotNull MapInfo info) {
+    if (info == MapInfo.SEPARATOR) {
+      return new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD | SimpleTextAttributes.STYLE_SMALLER, null);
+    }
+    else if (info.type == MapInfo.Type.INVALID) {
+      return new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.RED);
+    }
+    else if (info.type == MapInfo.Type.UNREGISTERED) {
+      return new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, JBColor.GRAY);
+    }
+    else {
+      return SimpleTextAttributes.REGULAR_ATTRIBUTES;
     }
   }
 
@@ -152,8 +190,8 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
       }
 
       @Override
-      public boolean isCellEditable(final MapInfo o) {
-        return true;
+      public boolean isCellEditable(MapInfo info) {
+        return info != MapInfo.SEPARATOR && info.type != MapInfo.Type.UNREGISTERED;
       }
 
       @Override
@@ -164,11 +202,22 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
       }
 
       @Override
-      public TableCellRenderer getRenderer(final MapInfo p0) {
+      public TableCellRenderer getRenderer(final MapInfo info) {
         return new ColoredTableCellRenderer() {
           @Override
           protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
-            final String vcsName = p0.mapping.getVcs();
+            if (info == MapInfo.SEPARATOR) {
+              if (!selected) {
+                setBackground(getUnregisteredRootBackground());
+              }
+              return;
+            }
+
+            if (info.type == MapInfo.Type.UNREGISTERED && !selected) {
+              setBackground(getUnregisteredRootBackground());
+            }
+
+            final String vcsName = info.mapping.getVcs();
             String text;
             if (vcsName.length() == 0) {
               text = VcsBundle.message("none.vcs.presentation");
@@ -182,7 +231,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
                 text = VcsBundle.message("unknown.vcs.presentation", vcsName);
               }
             }
-            append(text, new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, table.getForeground()));
+            append(text, getAttributes(info));
           }
         };
       }
@@ -238,6 +287,8 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     }
 
     myDirectoryMappingTable = new TableView<MapInfo>();
+    myDirectoryMappingTable.setIntercellSpacing(new Dimension(0, 0));
+
     myBaseRevisionTexts = new JCheckBox("Store on shelf base revision texts for files under DVCS");
     myLimitHistory = new VcsLimitHistoryConfigurable(myProject);
     myScopeFilterConfig = new VcsUpdateInfoScopeFilterConfigurable(myProject, myVcsConfiguration);
@@ -305,6 +356,15 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
       mappings.add(new MapInfo(new VcsDirectoryMapping(mapping.getDirectory(), mapping.getVcs(), mapping.getRootSettings()),
                                isMappingValid(mapping)));
     }
+
+    Collection<VcsRootError> errors = findUnregisteredRoots();
+    if (!errors.isEmpty()) {
+      mappings.add(MapInfo.SEPARATOR);
+      for (VcsRootError error : errors) {
+        mappings.add(new MapInfo(error.getMapping(), error.getVcsKey().getName()));
+      }
+    }
+
     myModel = new ListTableModel<MapInfo>(new ColumnInfo[]{DIRECTORY, VCS_SETTING}, mappings, 0);
     myDirectoryMappingTable.setModelAndUpdateColumns(myModel);
 
@@ -314,6 +374,16 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     myBaseRevisionTexts.setSelected(myVcsConfiguration.INCLUDE_TEXT_INTO_SHELF);
     myShowChangedRecursively.setSelected(myVcsConfiguration.SHOW_DIRTY_RECURSIVELY);
     myCommitMessageMarginConfigurable.reset();
+  }
+
+  @NotNull
+  private Collection<VcsRootError> findUnregisteredRoots() {
+    return ContainerUtil.filter(VcsRootErrorsFinder.getInstance(myProject).find(), new Condition<VcsRootError>() {
+      @Override
+      public boolean value(VcsRootError error) {
+        return error.getType() == VcsRootError.Type.UNREGISTERED_ROOT;
+      }
+    });
   }
 
   private boolean isMappingValid(@NotNull VcsDirectoryMapping mapping) {
@@ -386,7 +456,6 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
 
     panel.add(createMappingsTable(), gb.nextLine().next().fillCell().weighty(1.0));
     panel.add(createProjectMappingDescription(), gb.nextLine().next());
-    panel.add(createErrorList(), gb.nextLine().next());
     panel.add(myLimitHistory.createComponent(), gb.nextLine().next());
     panel.add(createShowRecursivelyDirtyOption(), gb.nextLine().next());
     panel.add(createStoreBaseRevisionOption(), gb.nextLine().next());
@@ -438,49 +507,6 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
       }).disableUpDownActions().createPanel();
     panelForTable.setPreferredSize(new Dimension(-1, 200));
     return panelForTable;
-  }
-
-  private JComponent createErrorList() {
-    final int DEFAULT_HEIGHT = 200;
-    final JComponent errorPanel = Box.createVerticalBox();
-    final JBScrollPane pane = new JBScrollPane(errorPanel);
-
-    Collection<VcsRootError> myErrors = VcsRootErrorsFinder.getInstance(myProject).find();
-    for (final VcsRootError root : myErrors) {
-      if (!VcsRootError.Type.UNREGISTERED_ROOT.equals(root.getType())) {
-        continue;
-      }
-      final VcsKey vcsKey = root.getVcsKey();
-      final VcsDescriptor vcsDescriptor = myAllVcss.get(vcsKey.getName());
-      String displayVcsName = vcsDescriptor.getDisplayName();
-      String title = "Unregistered " + displayVcsName + " root: " + FileUtil.toSystemDependentName(root.getMapping());
-      final VcsRootErrorLabel vcsRootErrorLabel = new VcsRootErrorLabel(title);
-      vcsRootErrorLabel.setAddRootLinkHandler(new Runnable() {
-        @Override
-        public void run() {
-          addMapping(new VcsDirectoryMapping(root.getMapping(), vcsKey.getName()));
-          errorPanel.remove(vcsRootErrorLabel);
-          if (errorPanel.getComponentCount() == 0) {
-            pane.setVisible(false);
-          }
-          pane.setMinimumSize(new Dimension(-1, calcMinHeight(errorPanel, DEFAULT_HEIGHT)));
-          validate();
-        }
-      });
-      errorPanel.add(vcsRootErrorLabel);
-    }
-
-    if (errorPanel.getComponentCount() == 0) {
-      pane.setVisible(false);
-    }
-    pane.setMinimumSize(new Dimension(-1, calcMinHeight(errorPanel, DEFAULT_HEIGHT)));
-    pane.setMaximumSize(new Dimension(-1, DEFAULT_HEIGHT));
-    return pane;
-  }
-
-  private static int calcMinHeight(@NotNull JComponent errorPanel, int defaultHeight) {
-    int height = errorPanel.getPreferredSize().height;
-    return height > defaultHeight ? defaultHeight : height;
   }
 
   private JComponent createProjectMappingDescription() {
@@ -565,10 +591,10 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
 
   @NotNull
   private List<VcsDirectoryMapping> getModelMappings() {
-    return ContainerUtil.map(myModel.getItems(), new Function<MapInfo, VcsDirectoryMapping>() {
+    return ContainerUtil.mapNotNull(myModel.getItems(), new Function<MapInfo, VcsDirectoryMapping>() {
       @Override
       public VcsDirectoryMapping fun(MapInfo info) {
-        return info.mapping;
+        return info == MapInfo.SEPARATOR || info.type == MapInfo.Type.UNREGISTERED ? null : info.mapping;
       }
     });
   }
@@ -620,47 +646,5 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
   public void disposeUIResources() {
     myLimitHistory.disposeUIResources();
     myScopeFilterConfig.disposeUIResources();
-  }
-
-  private static class VcsRootErrorLabel extends JPanel {
-
-    private final LinkLabel myAddLabel;
-
-    VcsRootErrorLabel(String title) {
-      super(new BorderLayout(DEFAULT_HGAP, DEFAULT_VGAP));
-
-      CompoundBorder outsideBorder =
-        BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(5, 0, 5, 0, UIUtil.getPanelBackground()),
-                                           BorderFactory.createLineBorder(UIUtil.getPanelBackground().darker()));
-      setBorder(BorderFactory.createCompoundBorder(outsideBorder, BorderFactory.createEmptyBorder(DEFAULT_VGAP, DEFAULT_HGAP,
-                                                                                                  DEFAULT_VGAP, DEFAULT_HGAP)));
-      setOpaque(true);
-      setBackground(new Color(255, 186, 192));
-
-      JBLabel label = new JBLabel(title);
-      if( UIUtil.isUnderDarcula()) {
-        label.setForeground(UIUtil.getPanelBackground());
-      }
-
-      myAddLabel = new LinkLabel("Add root", null);
-
-      myAddLabel.setOpaque(false);
-
-      JPanel actionsPanel = new JPanel(new BorderLayout(DEFAULT_HGAP, DEFAULT_VGAP));
-      actionsPanel.setOpaque(false);
-      actionsPanel.add(myAddLabel, BorderLayout.CENTER);
-
-      add(label, BorderLayout.CENTER);
-      add(actionsPanel, BorderLayout.EAST);
-    }
-
-    void setAddRootLinkHandler(final Runnable handler) {
-      myAddLabel.setListener(new LinkListener() {
-        @Override
-        public void linkSelected(LinkLabel aSource, Object aLinkData) {
-          handler.run();
-        }
-      }, null);
-    }
   }
 }
