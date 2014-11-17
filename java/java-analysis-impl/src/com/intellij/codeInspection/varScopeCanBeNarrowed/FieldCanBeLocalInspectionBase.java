@@ -31,6 +31,8 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Processor;
@@ -75,6 +77,19 @@ public class FieldCanBeLocalInspectionBase extends BaseJavaBatchLocalInspectionT
 
     for (final PsiField field : candidates) {
       if (usedFields.contains(field) && !hasImplicitReadOrWriteUsage(field, implicitUsageProviders)) {
+        if (!ReferencesSearch.search(field, new LocalSearchScope(aClass)).forEach(new Processor<PsiReference>() {
+          @Override
+          public boolean process(PsiReference reference) {
+            final PsiElement element = reference.getElement();
+            if (element instanceof PsiReferenceExpression) {
+              final PsiElement qualifier = ((PsiReferenceExpression)element).getQualifier();
+              return qualifier == null || qualifier instanceof PsiThisExpression && ((PsiThisExpression)qualifier).getQualifier() == null;
+            }
+            return true;
+          }
+        })) {
+          continue;
+        }
         final String message = InspectionsBundle.message("inspection.field.can.be.local.problem.descriptor");
         final ArrayList<LocalQuickFix> fixes = new ArrayList<LocalQuickFix>();
         SpecialAnnotationsUtilBase.createAddToSpecialAnnotationFixes(field, new Processor<String>() {
