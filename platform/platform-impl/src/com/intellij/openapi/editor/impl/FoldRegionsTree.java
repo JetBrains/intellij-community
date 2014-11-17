@@ -28,7 +28,7 @@ import java.util.*;
 * User: cdr
 */
 abstract class FoldRegionsTree {
-  @NotNull private CachedData myCachedData = new CachedData();
+  @NotNull private volatile CachedData myCachedData = new CachedData();
 
   //sorted using RangeMarker.BY_START_OFFSET comparator
   //i.e., first by start offset, then, if start offsets are equal, by end offset
