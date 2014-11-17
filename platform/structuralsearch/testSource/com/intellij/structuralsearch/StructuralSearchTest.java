@@ -589,6 +589,9 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
       1,
       findMatchesCount(s,s2_2)
     );
+
+    String pattern3 = "\"'String\"";
+    assertEquals("String literal", 1, findMatchesCount(s, pattern3));
   }
 
   public void testCovariantArraySearch() {

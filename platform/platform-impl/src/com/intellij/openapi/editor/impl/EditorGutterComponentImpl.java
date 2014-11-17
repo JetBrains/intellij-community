@@ -207,12 +207,12 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         int firstVisibleOffset = myEditor.logicalPositionToOffset(myEditor.xyToLogicalPosition(new Point(0, clip.y - myEditor.getLineHeight())));
         int lastVisibleOffset = myEditor.logicalPositionToOffset(myEditor.xyToLogicalPosition(new Point(0, clip.y + clip.height + myEditor.getLineHeight())));
         paintFoldingBackground(g, clip);
-        paintFoldingLines((Graphics2D)g, clip);
         paintLineMarkersBackground(g, clip);
         paintBackground(g, clip, getLineMarkerAreaOffset(), getLineMarkerAreaWidth());
         paintEditorBackgrounds(g, clip, firstVisibleOffset, lastVisibleOffset);
         paintAnnotations(g, clip);
         paintLineMarkers(g, firstVisibleOffset, lastVisibleOffset);
+        paintFoldingLines((Graphics2D)g, clip);
         paintFoldingTree(g, clip, firstVisibleOffset, lastVisibleOffset);
         paintLineNumbers(g, clip);
       }

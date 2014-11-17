@@ -25,7 +25,7 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TIntIntHashMap;
 import gnu.trove.TIntIntProcedure;
 import org.jetbrains.annotations.NotNull;
@@ -45,10 +45,20 @@ import java.util.concurrent.atomic.AtomicLong;
  * SearchEverywhere behaviour remains intact.
  */
 public class ModifierKeyDoubleClickHandler {
+  private static final TIntIntHashMap KEY_CODE_TO_MODIFIER_MAP = new TIntIntHashMap();
+  static {
+    KEY_CODE_TO_MODIFIER_MAP.put(KeyEvent.VK_ALT, InputEvent.ALT_MASK);
+    KEY_CODE_TO_MODIFIER_MAP.put(KeyEvent.VK_CONTROL, InputEvent.CTRL_MASK);
+    KEY_CODE_TO_MODIFIER_MAP.put(KeyEvent.VK_META, InputEvent.META_MASK);
+    KEY_CODE_TO_MODIFIER_MAP.put(KeyEvent.VK_SHIFT, InputEvent.SHIFT_MASK);
+  }
+
   private static final ModifierKeyDoubleClickHandler INSTANCE = new ModifierKeyDoubleClickHandler();
 
-  private final ConcurrentMap<String, IdeEventQueue.EventDispatcher> myDispatchers = new ConcurrentHashMap<String, IdeEventQueue.EventDispatcher>();
-
+  private final ConcurrentMap<String, IdeEventQueue.EventDispatcher> myDispatchers =
+    ContainerUtil.newConcurrentMap();
+  private boolean myIsRunningAction;
+  
   private ModifierKeyDoubleClickHandler() { }
 
   public static ModifierKeyDoubleClickHandler getInstance() {
@@ -78,15 +88,11 @@ public class ModifierKeyDoubleClickHandler {
     }
   }
 
-  private static class MyDispatcher implements IdeEventQueue.EventDispatcher {
-    private static final TIntIntHashMap KEY_CODE_TO_MODIFIER_MAP = new TIntIntHashMap();
-    static {
-      KEY_CODE_TO_MODIFIER_MAP.put(KeyEvent.VK_ALT, InputEvent.ALT_MASK);
-      KEY_CODE_TO_MODIFIER_MAP.put(KeyEvent.VK_CONTROL, InputEvent.CTRL_MASK);
-      KEY_CODE_TO_MODIFIER_MAP.put(KeyEvent.VK_META, InputEvent.META_MASK);
-      KEY_CODE_TO_MODIFIER_MAP.put(KeyEvent.VK_SHIFT, InputEvent.SHIFT_MASK);
-    }
+  public boolean isRunningAction() {
+    return myIsRunningAction;
+  }
 
+  private class MyDispatcher implements IdeEventQueue.EventDispatcher {
     private final String myActionId;
     private final int myModifierKeyCode;
     private final int myActionKeyCode;
@@ -196,17 +202,23 @@ public class ModifierKeyDoubleClickHandler {
     }
 
     private void run(KeyEvent event) {
-      final ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
-      final AnAction action = actionManager.getAction(myActionId);
-      final AnActionEvent anActionEvent = new AnActionEvent(event,
-                                                            DataManager.getInstance().getDataContext(IdeFocusManager.findInstance().getFocusOwner()),
-                                                            ActionPlaces.MAIN_MENU,
-                                                            action.getTemplatePresentation(),
-                                                            actionManager,
-                                                            0);
-      actionManager.fireBeforeActionPerformed(action, anActionEvent.getDataContext(), anActionEvent);
-      action.actionPerformed(anActionEvent);
-      actionManager.fireAfterActionPerformed(action, anActionEvent.getDataContext(), anActionEvent);
+      myIsRunningAction = true;
+      try {
+        final ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
+        final AnAction action = actionManager.getAction(myActionId);
+        final AnActionEvent anActionEvent = new AnActionEvent(event,
+                                                              DataManager.getInstance().getDataContext(IdeFocusManager.findInstance().getFocusOwner()),
+                                                              ActionPlaces.MAIN_MENU,
+                                                              action.getTemplatePresentation(),
+                                                              actionManager,
+                                                              0);
+        actionManager.fireBeforeActionPerformed(action, anActionEvent.getDataContext(), anActionEvent);
+        action.actionPerformed(anActionEvent);
+        actionManager.fireAfterActionPerformed(action, anActionEvent.getDataContext(), anActionEvent);
+      }
+      finally {
+        myIsRunningAction = false;
+      }
     }
 
     private boolean isActionBound() {

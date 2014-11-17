@@ -22,7 +22,7 @@ import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen._
 import org.scalacheck.Prop.forAll
 import org.scalacheck._
-import scala.collection.JavaConverters._
+import scala.collection.JavaConversions._
 
 /**
  * Run this class to generate randomized tests for IDEA VFS/document/PSI/index subsystem interaction using ScalaCheck.
@@ -37,11 +37,13 @@ object IndexTestGenerator {
     const(Gc),
     const(Commit),
     const(Save),
-    for (withImport <- arbitrary[Boolean]; viaDocument <- arbitrary[Boolean]) yield TextChange(viaDocument, withImport),
-    for (load <- arbitrary[Boolean]) yield UpdatePsiClassRef(load),
-    for (load <- arbitrary[Boolean]) yield UpdatePsiFileRef(load),
-    for (load <- arbitrary[Boolean]) yield UpdateASTNodeRef(load),
-    for (load <- arbitrary[Boolean]) yield UpdateDocumentRef(load)
+    for (withImport <- arbitrary[Boolean];
+         viaDocument <- arbitrary[Boolean])
+      yield TextChange(viaDocument, withImport),
+    arbitrary[Boolean] map UpdatePsiClassRef,
+    arbitrary[Boolean] map UpdatePsiFileRef,
+    arbitrary[Boolean] map UpdateASTNodeRef,
+    arbitrary[Boolean] map UpdateDocumentRef
   )
   val propIndexTest = forAll(Gen.nonEmptyListOf(genAction)) { actions =>
     new IndexTestSeq(actions).isSuccessful
@@ -56,16 +58,19 @@ case class IndexTestSeq(actions: List[Action]) {
   def printClass: String = {
     val sb = StringBuilder.newBuilder
     sb.append(prefix)
-    sb.append("\n" +
-      "public void \"" + testName + "\"() {\n" +
-      "def vFile =\n  myFixture.addFileToProject(\"Foo.java\", \"class Foo {}\").virtualFile\n" +
-      "def lastPsiName = \"Foo\"\n" +
-      "long counterBefore\n" +
-      "Document document\n" +
-      "PsiFile psiFile\n" +
-      "ASTNode astNode\n" +
-      "PsiClass psiClass\n" +
-      "def scope = GlobalSearchScope.allScope(project)\n")
+    sb.append(
+      s"""
+         |public void "$testName"() {
+         |def vFile =
+         |  myFixture.addFileToProject("Foo.java", "class Foo {}").virtualFile
+         |def lastPsiName = "Foo"
+         |long counterBefore
+         |Document document
+         |PsiFile psiFile
+         |ASTNode astNode
+         |PsiClass psiClass
+         |def scope = GlobalSearchScope.allScope(project)
+         |""".stripMargin)
     var changeId = 0
     var docClassName = "Foo"
     for (action <- actions) {
@@ -74,7 +79,10 @@ case class IndexTestSeq(actions: List[Action]) {
         case Gc =>
           sb.append("PlatformTestUtil.tryGcSoftlyReachableObjects()\n")
         case Commit =>
-          sb.append("PsiDocumentManager.getInstance(project).commitAllDocuments()\nlastPsiName = \"" + docClassName + "\"\n")
+          sb.append(
+            s"""PsiDocumentManager.getInstance(project).commitAllDocuments()
+               |lastPsiName = "$docClassName"
+               |""".stripMargin)
         case Save =>
           sb.append("FileDocumentManager.instance.saveAllDocuments()\n")
         case UpdatePsiClassRef(load) =>
@@ -89,46 +97,60 @@ case class IndexTestSeq(actions: List[Action]) {
         case TextChange(viaDocument, withImport) =>
           changeId += 1
           docClassName = "Foo" + changeId
-          val newText = (if (withImport) "import zoo.Zoo; "  else "") + "class " + docClassName + " {}"
+          val newText = (if (withImport) "import zoo.Zoo; "  else "") + s"class $docClassName {}"
 
-          sb.append("counterBefore =\n  psiManager.modificationTracker.javaStructureModificationCount\n")
+          sb.append(
+            """counterBefore =
+              |  psiManager.modificationTracker.javaStructureModificationCount
+              |                    """.stripMargin)
 
           if (viaDocument) {
-            sb.append("FileDocumentManager.instance.getDocument(vFile).text =\n  \"" + newText + "\"\n")
+            sb.append(
+              s"""FileDocumentManager.instance.getDocument(vFile).text =
+                 |  "$newText"
+                 |""".stripMargin)
           } else {
-            sb.append("//todo remove if statement or replace with its content \n")
-            sb.append("if (FileDocumentManager.instance.unsavedDocuments) {\n  FileDocumentManager.instance.saveAllDocuments()\n}\n")
-            sb.append("VfsUtil.saveText(vFile, \"" + newText + "\")\n")
+            sb.append(
+              s"""//todo remove if statement or replace with its content
+                 |if (FileDocumentManager.instance.unsavedDocuments) {
+                 |  FileDocumentManager.instance.saveAllDocuments()
+                 |}
+                 |VfsUtil.saveText(vFile, "$newText")
+                 |""".stripMargin)
           }
 
           sb.append(
-            "// todo replace if statement with assertions\n" +
-            "if (!PsiDocumentManager.getInstance(project).uncommittedDocuments) {\n" +
-            "  lastPsiName = \"" + docClassName + "\"\n" +
-            "  assert counterBefore !=\n    psiManager.modificationTracker.javaStructureModificationCount\n" +
-            "}\n")
+            s"""// todo replace if statement with assertions
+               |if (!PsiDocumentManager.getInstance(project).uncommittedDocuments) {
+               |  lastPsiName = "$docClassName"
+               |  assert counterBefore !=
+               |    psiManager.modificationTracker.javaStructureModificationCount
+               |}
+               |""".stripMargin)
       }
     }
     sb.append("}\n}")
     sb.toString()
   }
 
-  val prefix = "import com.intellij.lang.ASTNode\n" +
-    "import com.intellij.openapi.command.WriteCommandAction\n" +
-    "import com.intellij.openapi.editor.Document\n" +
-    "import com.intellij.openapi.fileEditor.FileDocumentManager\n" +
-    "import com.intellij.openapi.util.Ref\n" +
-    "import com.intellij.openapi.vfs.VfsUtil\n" +
-    "import com.intellij.psi.*\n" +
-    "import com.intellij.psi.search.GlobalSearchScope\n" +
-    "import com.intellij.testFramework.PlatformTestUtil\n" +
-    "import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase\n" +
-    "import com.intellij.util.ObjectUtils\n" +
-    "import org.jetbrains.annotations.NotNull\n" +
-    "class DummyTest extends JavaCodeInsightFixtureTestCase {\n" +
-    "protected void invokeTestRunnable(Runnable runnable) {\n" +
-    "  WriteCommandAction.runWriteCommandAction(project, runnable)\n" +
-    "}\n"
+  val prefix =
+    s"""import com.intellij.lang.ASTNode
+       |import com.intellij.openapi.command.WriteCommandAction
+       |import com.intellij.openapi.editor.Document
+       |import com.intellij.openapi.fileEditor.FileDocumentManager
+       |import com.intellij.openapi.util.Ref
+       |import com.intellij.openapi.vfs.VfsUtil
+       |import com.intellij.psi.*
+       |import com.intellij.psi.search.GlobalSearchScope
+       |import com.intellij.testFramework.PlatformTestUtil
+       |import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
+       |import com.intellij.util.ObjectUtils
+       |import org.jetbrains.annotations.NotNull
+       |class DummyTest extends JavaCodeInsightFixtureTestCase {
+       |protected void invokeTestRunnable(Runnable runnable) {
+       |  WriteCommandAction.runWriteCommandAction(project, runnable)
+       |}
+       |""".stripMargin
 
   val testName: String = "test please write a meaningful description here"
 
@@ -139,21 +161,20 @@ case class IndexTestSeq(actions: List[Action]) {
     val test = new GroovyClassLoader().parseClass(classText).newInstance().asInstanceOf[TestCase]
     test.setName(testName)
     val result: TestResult = test.run()
-    for (failure <- ContainerUtil.toList(result.failures()).asScala) {
-      println (failure.trace())
-    }
-    for (failure <- ContainerUtil.toList(result.errors()).asScala) {
-      println (failure.trace())
-    }
-    if (!result.wasSuccessful()) {
+    val successful: Boolean = result.wasSuccessful()
+
+    if (!successful) {
+      ContainerUtil.toList(result.failures()).foreach(failure => println(failure.trace()))
+      ContainerUtil.toList(result.errors()).foreach(failure => println(failure.trace()))
       println(classText)
     }
-    result.wasSuccessful()
+
+    successful
   }
 
 }
 
-class Action
+sealed trait Action
 case object Gc extends Action
 case object Commit extends Action
 case object Save extends Action

@@ -15,7 +15,7 @@
  */
 package com.intellij.psi.impl.source.tree.injected;
 
-import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,7 +27,7 @@ import java.util.Map;
 public class ClassMapCachingNulls<T> {
   private final Map<Class, T[]> myBackingMap;
   private final T[] myEmptyArray;
-  private final Map<Class, T[]> myMap = new ConcurrentHashMap<Class, T[]>();
+  private final Map<Class, T[]> myMap = ContainerUtil.newConcurrentMap();
 
   public ClassMapCachingNulls(@NotNull Map<Class, T[]> backingMap, T[] emptyArray) {
     myBackingMap = backingMap;

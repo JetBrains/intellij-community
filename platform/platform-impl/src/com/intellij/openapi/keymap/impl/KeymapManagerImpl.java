@@ -92,6 +92,8 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
       ModifierKeyDoubleClickHandler.getInstance().registerAction(IdeActions.ACTION_EDITOR_CLONE_CARET_BELOW, KeyEvent.VK_CONTROL, KeyEvent.VK_DOWN);
       ModifierKeyDoubleClickHandler.getInstance().registerAction(IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT_WITH_SELECTION, KeyEvent.VK_CONTROL, KeyEvent.VK_LEFT);
       ModifierKeyDoubleClickHandler.getInstance().registerAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT_WITH_SELECTION, KeyEvent.VK_CONTROL, KeyEvent.VK_RIGHT);
+      ModifierKeyDoubleClickHandler.getInstance().registerAction(IdeActions.ACTION_EDITOR_MOVE_LINE_START_WITH_SELECTION, KeyEvent.VK_CONTROL, KeyEvent.VK_HOME);
+      ModifierKeyDoubleClickHandler.getInstance().registerAction(IdeActions.ACTION_EDITOR_MOVE_LINE_END_WITH_SELECTION, KeyEvent.VK_CONTROL, KeyEvent.VK_END);
     }
 
     //noinspection AssignmentToStaticFieldFromInstanceMethod

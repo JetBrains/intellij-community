@@ -25,8 +25,8 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ConstantFunction;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.ConcurrentInstanceMap;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.highlighting.DomElementsAnnotator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -53,7 +53,8 @@ public class DomFileDescription<T> {
   private final Map<Class<? extends DomElement>,Class<? extends DomElement>> myImplementations = new HashMap<Class<? extends DomElement>, Class<? extends DomElement>>();
   private final TypeChooserManager myTypeChooserManager = new TypeChooserManager();
   private final List<DomReferenceInjector> myInjectors = new SmartList<DomReferenceInjector>();
-  private final Map<String, NotNullFunction<XmlTag,List<String>>> myNamespacePolicies = new ConcurrentHashMap<String, NotNullFunction<XmlTag, List<String>>>();
+  private final Map<String, NotNullFunction<XmlTag, List<String>>> myNamespacePolicies =
+    ContainerUtil.newConcurrentMap();
 
   public DomFileDescription(final Class<T> rootElementClass, @NonNls final String rootTagName, @NonNls final String... allPossibleRootTagNamespaces) {
     myRootElementClass = rootElementClass;

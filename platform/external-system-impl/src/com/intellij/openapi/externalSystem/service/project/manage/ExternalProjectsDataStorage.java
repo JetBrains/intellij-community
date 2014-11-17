@@ -25,7 +25,7 @@ import com.intellij.openapi.externalSystem.model.internal.InternalExternalProjec
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,7 +42,7 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent {
   private final Project myProject;
   @NotNull
   private final Map<Pair<ProjectSystemId, String>, InternalExternalProjectInfo> myExternalRootProjects =
-    new ConcurrentHashMap<Pair<ProjectSystemId, String>, InternalExternalProjectInfo>();
+    ContainerUtil.newConcurrentMap();
 
   public static ExternalProjectsDataStorage getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, ExternalProjectsDataStorage.class);

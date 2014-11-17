@@ -26,7 +26,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
@@ -40,7 +39,7 @@ public class KeyedExtensionCollector<T, KeyT> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.KeyedExtensionCollector");
 
   private final Map<String, List<T>> myExplicitExtensions = new THashMap<String, List<T>>();
-  private final ConcurrentMap<String, List<T>> myCache = new ConcurrentHashMap<String, List<T>>();
+  private final ConcurrentMap<String, List<T>> myCache = ContainerUtil.newConcurrentMap();
 
   @NonNls private final String lock;
 
