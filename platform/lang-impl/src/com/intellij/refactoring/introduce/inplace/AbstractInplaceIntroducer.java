@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -473,10 +473,8 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
         final RangeMarker exprMarker = getExprMarker();
         if (exprMarker != null) {
           myExpr = restoreExpression(containingFile, psiField, exprMarker, myExprText);
-          if (myExpr != null && myExpr.isPhysical()) {
-            myExprMarker = createMarker(myExpr);
-          }
         }
+
         if (myLocalMarker != null) {
           final PsiElement refVariableElement = containingFile.findElementAt(myLocalMarker.getStartOffset());
           if (refVariableElement != null) {
@@ -509,6 +507,9 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
           }
         }
 
+        if (myExpr != null && myExpr.isPhysical()) {
+          myExprMarker = createMarker(myExpr);
+        }
         myOccurrenceMarkers = null;
         deleteTemplateField(psiField);
       }
@@ -523,24 +524,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
 
   @Override
   protected boolean performRefactoring() {
-    final String newName = getInputName();
-    if (getLocalVariable() == null && myExpr == null ||
-        newName == null ||
-        getLocalVariable() != null && !getLocalVariable().isValid() ||
-        myExpr != null && !myExpr.isValid()) {
-      super.moveOffsetAfter(false);
-      return false;
-    }
-    if (getLocalVariable() != null) {
-      new WriteCommandAction(myProject, getCommandName(), getCommandName()) {
-        @Override
-        protected void run(Result result) throws Throwable {
-          getLocalVariable().setName(myLocalName);
-        }
-      }.execute();
-    }
-
-    if (!isIdentifier(newName, myExpr != null ? myExpr.getLanguage() : getLocalVariable().getLanguage())) return false;
+    if (!ensureValid()) return false;
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       @Override
       public void run() {
@@ -560,6 +544,28 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
       saveSettings(variable);
     }
     return false;
+  }
+
+  protected boolean ensureValid() {
+    final String newName = getInputName();
+    if (getLocalVariable() == null && myExpr == null ||
+        newName == null ||
+        getLocalVariable() != null && !getLocalVariable().isValid() ||
+        myExpr != null && !myExpr.isValid()) {
+      super.moveOffsetAfter(false);
+      return false;
+    }
+    if (getLocalVariable() != null) {
+      new WriteCommandAction(myProject, getCommandName(), getCommandName()) {
+        @Override
+        protected void run(Result result) throws Throwable {
+          getLocalVariable().setName(myLocalName);
+        }
+      }.execute();
+    }
+
+    if (!isIdentifier(newName, myExpr != null ? myExpr.getLanguage() : getLocalVariable().getLanguage())) return false;
+    return true;
   }
 
   @Override
