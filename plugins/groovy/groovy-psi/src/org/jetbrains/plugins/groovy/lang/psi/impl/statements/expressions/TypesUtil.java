@@ -707,9 +707,9 @@ public class TypesUtil {
   }
 
   @Nullable
-  public static PsiType substituteBoxAndNormalizeType(@Nullable PsiType type,
-                                                      @NotNull PsiSubstitutor substitutor,
-                                                      @Nullable SpreadState state, @NotNull GrExpression expression) {
+  public static PsiType substituteAndNormalizeType(@Nullable PsiType type,
+                                                   @NotNull PsiSubstitutor substitutor,
+                                                   @Nullable SpreadState state, @NotNull GrExpression expression) {
     if (type == null) return null;
     type = substitutor.substitute(type);
     if (type == null) return null;

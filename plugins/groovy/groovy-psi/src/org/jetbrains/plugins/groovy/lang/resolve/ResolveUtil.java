@@ -814,7 +814,8 @@ public class ResolveUtil {
   public static PsiType extractReturnTypeFromCandidate(GroovyResolveResult candidate, GrExpression expression, @Nullable PsiType[] args) {
     final PsiElement element = candidate.getElement();
     if (element instanceof PsiMethod && !candidate.isInvokedOnProperty()) {
-      return TypesUtil.substituteBoxAndNormalizeType(org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.getSmartReturnType((PsiMethod)element), candidate.getSubstitutor(), candidate.getSpreadState(), expression);
+      return TypesUtil.substituteAndNormalizeType(org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.getSmartReturnType((PsiMethod)element),
+                                                  candidate.getSubstitutor(), candidate.getSpreadState(), expression);
     }
 
     final PsiType type;
@@ -830,7 +831,7 @@ public class ResolveUtil {
     if (type instanceof GrClosureType) {
       final GrSignature signature = ((GrClosureType)type).getSignature();
       PsiType returnType = GrClosureSignatureUtil.getReturnType(signature, args, expression);
-      return TypesUtil.substituteBoxAndNormalizeType(returnType, candidate.getSubstitutor(), candidate.getSpreadState(), expression);
+      return TypesUtil.substituteAndNormalizeType(returnType, candidate.getSubstitutor(), candidate.getSpreadState(), expression);
     }
     return null;
   }

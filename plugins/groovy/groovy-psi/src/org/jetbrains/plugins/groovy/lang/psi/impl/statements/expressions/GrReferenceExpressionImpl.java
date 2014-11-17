@@ -581,7 +581,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     PsiType result = getNominalTypeInner(resolved);
     if (result == null) return null;
 
-    result = TypesUtil.substituteBoxAndNormalizeType(result, resolveResult.getSubstitutor(), resolveResult.getSpreadState(), this);
+    result = TypesUtil.substituteAndNormalizeType(result, resolveResult.getSubstitutor(), resolveResult.getSpreadState(), this);
     return result;
   }
 

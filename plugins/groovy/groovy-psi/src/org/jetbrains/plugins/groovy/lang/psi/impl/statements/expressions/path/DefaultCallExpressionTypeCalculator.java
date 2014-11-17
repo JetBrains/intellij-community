@@ -62,7 +62,8 @@ public class DefaultCallExpressionTypeCalculator extends GrCallExpressionTypeCal
 
         PsiType normalized = nonVoid instanceof GrLiteralClassType
                              ? nonVoid
-                             : TypesUtil.substituteBoxAndNormalizeType(nonVoid, resolveResult.getSubstitutor(), resolveResult.getSpreadState(), callExpression);
+                             : TypesUtil.substituteAndNormalizeType(nonVoid, resolveResult.getSubstitutor(), resolveResult.getSpreadState(),
+                                                                    callExpression);
 
         LOG.assertTrue(normalized != null, "return type: " + returnType + "; substitutor: " + resolveResult.getSubstitutor());
 

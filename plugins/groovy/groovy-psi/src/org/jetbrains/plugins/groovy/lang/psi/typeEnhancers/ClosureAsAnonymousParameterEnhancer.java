@@ -72,7 +72,7 @@ public class ClosureAsAnonymousParameterEnhancer extends AbstractClosureParamete
           }
         }
 
-        return TypesUtil.substituteBoxAndNormalizeType(suggestion, PsiSubstitutor.EMPTY, null, closure);
+        return TypesUtil.substituteAndNormalizeType(suggestion, PsiSubstitutor.EMPTY, null, closure);
       }
     }
 

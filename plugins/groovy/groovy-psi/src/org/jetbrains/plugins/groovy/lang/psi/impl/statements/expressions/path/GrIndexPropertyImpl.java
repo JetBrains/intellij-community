@@ -313,7 +313,7 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
       PsiParameter[] parameters = ((PsiMethod)element).getParameterList().getParameters();
       if (parameters.length > 1) {
         PsiParameter last = parameters[parameters.length - 1];
-        return TypesUtil.substituteBoxAndNormalizeType(last.getType(), candidate.getSubstitutor(), candidate.getSpreadState(), this);
+        return TypesUtil.substituteAndNormalizeType(last.getType(), candidate.getSubstitutor(), candidate.getSpreadState(), this);
       }
     }
     return null;
