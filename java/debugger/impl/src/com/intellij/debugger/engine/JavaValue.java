@@ -377,9 +377,16 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
 
   @Override
   public void computeSourcePosition(@NotNull final XNavigatable navigatable) {
+    if (navigatable instanceof XInlineSourcePosition && !(navigatable instanceof XNearestSourcePosition)
+        && !(myValueDescriptor instanceof ThisDescriptorImpl || myValueDescriptor instanceof LocalVariableDescriptor)) {
+      return;
+    }
     myEvaluationContext.getManagerThread().schedule(new SuspendContextCommandImpl(myEvaluationContext.getSuspendContext()) {
       @Override
       public Priority getPriority() {
+        if (navigatable instanceof XInlineSourcePosition) {
+          return Priority.LOW;
+        }
         return Priority.NORMAL;
       }
 

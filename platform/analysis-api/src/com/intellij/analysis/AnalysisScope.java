@@ -597,6 +597,10 @@ public class AnalysisScope {
     return myFilesSet.size();
   }
 
+  /**
+   * scope elements should be checked only when needed
+   */
+  @Deprecated
   public boolean checkScopeWritable(@NotNull Project project) {
     if (myFilesSet == null) initFilesSet();
     return !FileModificationService.getInstance().prepareVirtualFilesForWrite(project, myFilesSet);

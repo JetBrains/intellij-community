@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -112,6 +113,19 @@ public class FoldingModelWindow implements FoldingModelEx{
   public FoldRegion getCollapsedRegionAtOffset(int offset) {
     FoldRegion host = myDelegate.getCollapsedRegionAtOffset(myDocumentWindow.injectedToHost(offset));
     return host; //todo convert to window?
+  }
+
+  @Nullable
+  @Override
+  public FoldRegion getFoldRegion(int startOffset, int endOffset) {
+    TextRange range = new TextRange(startOffset, endOffset);
+    TextRange hostRange = myDocumentWindow.injectedToHost(range);
+    FoldRegion hostRegion = myDelegate.getFoldRegion(hostRange.getStartOffset(), hostRange.getEndOffset());
+    if (hostRegion == null) {
+      return null;
+    }
+    FoldingRegionWindow window = hostRegion.getUserData(FOLD_REGION_WINDOW);
+    return window != null && window.getEditor() == myEditorWindow ? window : null;
   }
 
   @Override

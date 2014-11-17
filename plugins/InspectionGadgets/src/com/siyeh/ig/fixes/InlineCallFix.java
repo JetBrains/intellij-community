@@ -62,8 +62,10 @@ public class InlineCallFix extends InspectionGadgetsFix {
   }
 
   protected void inline(Project project, PsiReferenceExpression methodExpression, PsiMethod method) {
-    new InlineMethodProcessor(project, method, methodExpression, null, true,
-                              JavaRefactoringSettings.getInstance().RENAME_SEARCH_IN_COMMENTS_FOR_METHOD,
-                              JavaRefactoringSettings.getInstance().RENAME_SEARCH_FOR_TEXT_FOR_METHOD).inlineMethodCall(methodExpression);
+    final JavaRefactoringSettings settings = JavaRefactoringSettings.getInstance();
+    final InlineMethodProcessor processor = new InlineMethodProcessor(project, method, methodExpression, null, true,
+                                                                      settings.RENAME_SEARCH_IN_COMMENTS_FOR_METHOD,
+                                                                      settings.RENAME_SEARCH_FOR_TEXT_FOR_METHOD);
+    processor.inlineMethodCall(processor.addBracesWhenNeeded(new PsiReferenceExpression[]{methodExpression})[0]);
   }
 }

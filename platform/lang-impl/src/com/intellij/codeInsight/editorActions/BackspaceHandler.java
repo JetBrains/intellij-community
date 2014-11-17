@@ -23,6 +23,7 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
@@ -36,6 +37,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiUtilBase;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -167,7 +169,7 @@ public class BackspaceHandler extends EditorWriteActionHandler {
     if (editor.getSelectionModel().hasSelection() || editor.getSelectionModel().hasBlockSelection()) return null;
 
     final LogicalPosition caretPos = editor.getCaretModel().getLogicalPosition();
-    if (caretPos.line == 0 || caretPos.column == 0) {
+    if (caretPos.column == 0) {
       return null;
     }
     if (!isWhitespaceBeforeCaret(editor)) {
@@ -175,12 +177,20 @@ public class BackspaceHandler extends EditorWriteActionHandler {
     }
 
     // Decrease column down to indentation * n
-    final int indent = CodeStyleSettingsManager.getSettings(file.getProject()).getIndentSize(file.getFileType());
+    final int indent = CodeStyleSettingsManager.getSettings(file.getProject()).getIndentOptionsByFile(file).INDENT_SIZE;
     int column = (caretPos.column - 1) / indent * indent;
     if (column < 0) {
       column = 0;
     }
     return new LogicalPosition(caretPos.line, column);
+  }
+  
+  public static void deleteToTargetPosition(@NotNull Editor editor, @NotNull LogicalPosition pos) {
+    final int offset = editor.getCaretModel().getOffset();
+    final int targetOffset = editor.logicalPositionToOffset(pos);
+    editor.getSelectionModel().setSelection(targetOffset, offset);
+    EditorModificationUtil.deleteSelectedText(editor);
+    editor.getCaretModel().moveToLogicalPosition(pos);
   }
 
   public static boolean isWhitespaceBeforeCaret(Editor editor) {

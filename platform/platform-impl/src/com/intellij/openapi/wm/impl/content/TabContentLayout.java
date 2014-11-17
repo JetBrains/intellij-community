@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerEvent;
+import com.intellij.ui.content.TabbedContent;
 import com.intellij.util.ui.BaseButtonBehavior;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
@@ -438,9 +439,15 @@ class TabContentLayout extends ContentLayout {
 
   @Override
   public void contentAdded(ContentManagerEvent event) {
-    final ContentTabLabel tab = new ContentTabLabel(event.getContent(), this);
+    final Content content = event.getContent();
+    final ContentTabLabel tab;
+    if (content instanceof TabbedContent) {
+      tab = new TabbedContentTabLabel((TabbedContent)content, this);
+    } else {
+      tab = new ContentTabLabel(content, this);
+    }
     myTabs.add(event.getIndex(), tab);
-    myContent2Tabs.put(event.getContent(), tab);
+    myContent2Tabs.put(content, tab);
     
     myCached.clear();
   }

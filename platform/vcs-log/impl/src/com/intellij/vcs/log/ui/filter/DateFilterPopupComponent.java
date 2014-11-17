@@ -22,6 +22,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.versionBrowser.DateFilterComponent;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.vcs.log.VcsLogDateFilter;
 import com.intellij.vcs.log.data.VcsLogDateFilterImpl;
@@ -33,11 +34,30 @@ import java.util.Date;
 
 class DateFilterPopupComponent extends FilterPopupComponent<VcsLogDateFilter> {
 
-  private Date myAfter;
-  private Date myBefore;
+  public DateFilterPopupComponent(FilterModel<VcsLogDateFilter> filterModel) {
+    super("Date", filterModel);
+  }
 
-  DateFilterPopupComponent(@NotNull VcsLogClassicFilterUi filterUi) {
-    super(filterUi, "Date");
+  @NotNull
+  @Override
+  protected String getText(@NotNull VcsLogDateFilter filter) {
+    Date after = filter.getAfter();
+    Date before = filter.getBefore();
+    if (after != null && before != null) {
+      return DateFormatUtil.formatDate(after) + "-" + DateFormatUtil.formatDate(before);
+    }
+    else if (after != null) {
+      return "Since " + DateFormatUtil.formatDate(after);
+    }
+    else {
+      return "Until " + DateFormatUtil.formatDate(ObjectUtils.assertNotNull(before));
+    }
+  }
+
+  @Nullable
+  @Override
+  protected String getToolTip(@NotNull VcsLogDateFilter filter) {
+    return null;
   }
 
   @Override
@@ -49,48 +69,24 @@ class DateFilterPopupComponent extends FilterPopupComponent<VcsLogDateFilter> {
     cal.add(Calendar.DAY_OF_YEAR, -6);
     Date oneWeekBefore = cal.getTime();
 
-    DumbAwareAction allAction = new DumbAwareAction(ALL) {
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        myAfter = null;
-        myBefore = null;
-        applyFilters();
-        setValue(ALL);
-      }
-    };
-    return new DefaultActionGroup(allAction,
+    return new DefaultActionGroup(createAllAction(),
                                   new DateAction(oneDayBefore, "Last 24 hours"),
                                   new DateAction(oneWeekBefore, "Last 7 days"),
                                   new SelectAction());
   }
 
-  @Nullable
-  @Override
-  protected VcsLogDateFilter getFilter() {
-    return myAfter == null && myBefore == null ? null : new VcsLogDateFilterImpl(myAfter, myBefore);
-  }
-
-  private void setOnlyAfter(Date after) {
-    myAfter = after;
-    myBefore = null;
-  }
-
   private class DateAction extends DumbAwareAction {
 
-    private final Date mySince;
-    private final String myText;
+    @NotNull private final Date mySince;
 
-    DateAction(Date since, String text) {
+    DateAction(@NotNull Date since, @NotNull String text) {
       super(text);
       mySince = since;
-      myText = text;
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
-      setValue(myText);
-      setOnlyAfter(mySince);
-      applyFilters();
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      myFilterModel.setFilter(new VcsLogDateFilterImpl(mySince, null));
     }
   }
 
@@ -101,13 +97,16 @@ class DateFilterPopupComponent extends FilterPopupComponent<VcsLogDateFilter> {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       final DateFilterComponent dateComponent = new DateFilterComponent(false, DateFormatUtil.getDateFormat().getDelegate());
-      if (myBefore != null) {
-        dateComponent.setBefore(myBefore.getTime());
-      }
-      if (myAfter != null) {
-        dateComponent.setAfter(myAfter.getTime());
+      VcsLogDateFilter currentFilter = myFilterModel.getFilter();
+      if (currentFilter != null) {
+        if (currentFilter.getBefore() != null) {
+          dateComponent.setBefore(currentFilter.getBefore().getTime());
+        }
+        if (currentFilter.getAfter() != null) {
+          dateComponent.setAfter(currentFilter.getAfter().getTime());
+        }
       }
 
       DialogBuilder db = new DialogBuilder(DateFilterPopupComponent.this);
@@ -118,20 +117,8 @@ class DateFilterPopupComponent extends FilterPopupComponent<VcsLogDateFilter> {
       if (DialogWrapper.OK_EXIT_CODE == db.show()) {
         long after = dateComponent.getAfter();
         long before = dateComponent.getBefore();
-        myAfter = after > 0 ? new Date(after) : null;
-        myBefore = before > 0 ? new Date(before) : null;
-
-        if (myAfter != null && myBefore != null) {
-          setValue(DateFormatUtil.formatDate(after) + "-" + DateFormatUtil.formatDate(before));
-        }
-        else if (myAfter != null) {
-          setValue("After " + DateFormatUtil.formatDate(after));
-        }
-        else {
-          setValue("Before " + DateFormatUtil.formatDate(before));
-        }
-
-        applyFilters();
+        VcsLogDateFilter filter = new VcsLogDateFilterImpl(after > 0 ? new Date(after) : null, before > 0 ? new Date(before) : null);
+        myFilterModel.setFilter(filter);
       }
     }
   }

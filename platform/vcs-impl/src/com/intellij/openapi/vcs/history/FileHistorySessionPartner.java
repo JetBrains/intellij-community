@@ -27,23 +27,19 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
-import com.intellij.ui.tabs.TabInfo;
-import com.intellij.ui.tabs.impl.JBTabsImpl;
+import com.intellij.ui.content.TabbedContent;
+import com.intellij.ui.content.impl.TabbedContentImpl;
 import com.intellij.util.BufferedListConsumer;
 import com.intellij.util.Consumer;
 import com.intellij.util.ContentsUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.util.List;
 
 /**
@@ -143,7 +139,7 @@ public class FileHistorySessionPartner implements VcsAppendableHistorySessionPar
         if (Registry.is("vcs.merge.toolwindows")) {
           Content history = null;
           for (Content content : toolWindow.getContentManager().getContents()) {
-            if ("History".equals(content.getTabName())) {
+            if (content.getTabName().startsWith("History: ")) {
               history = content;
               break;
             }
@@ -151,31 +147,11 @@ public class FileHistorySessionPartner implements VcsAppendableHistorySessionPar
 
           if (history == null) {
             final Disposable disposable = Disposer.newDisposable();
-            final TabbedPaneWrapper pane = new TabbedPaneWrapper(disposable);
-            final JComponent component = pane.getComponent();
-            component.putClientProperty("TabbedPaneWrapper", pane);
-            history = ContentFactory.SERVICE.getInstance().createContent(component, "History", true);
+            history = new TabbedContentImpl(myFileHistoryPanel, myFileHistoryPanel.getVirtualFile().getName(), true, "History: ");
             ContentsUtil.addOrReplaceContent(contentManager, history, true);
             Disposer.register(history, disposable);
-          }
-
-          final TabbedPaneWrapper wrapper = (TabbedPaneWrapper)history.getComponent().getClientProperty("TabbedPaneWrapper");
-          final JBTabsImpl tabs = UIUtil.findComponentOfType(history.getComponent(), JBTabsImpl.class);
-          assert tabs != null;
-          boolean alreadyContainsHistory = false;
-          final VirtualFile file = myFileHistoryPanel.getVirtualFile();
-          for (TabInfo info : tabs.getTabs()) {
-            final FileHistoryPanelImpl panel = UIUtil.findComponentOfType(info.getComponent(), FileHistoryPanelImpl.class);
-            if (panel != null && file.equals(panel.getVirtualFile())) {
-              alreadyContainsHistory = true;
-              info.setComponent(myFileHistoryPanel);
-              tabs.select(info, true);
-              break;
-            }
-          }
-          if (!alreadyContainsHistory) {
-            wrapper.addTab(myPath.getName(), myFileHistoryPanel);
-            wrapper.setSelectedIndex(wrapper.getTabCount() - 1, true);
+          } else {
+            ((TabbedContent)history).addContent(myFileHistoryPanel, myFileHistoryPanel.getVirtualFile().getName(), true);
           }
         } else {
           Content content = ContentFactory.SERVICE.getInstance().createContent(myFileHistoryPanel, actionName, true);

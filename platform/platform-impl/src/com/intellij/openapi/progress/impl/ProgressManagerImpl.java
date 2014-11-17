@@ -323,7 +323,19 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable {
       if (threads != null) {
         for (Thread thread : threads) {
           ProgressIndicator currentIndicator = getCurrentIndicator(thread);
-          if (currentIndicator == indicator) {
+          boolean underCancelledIndicator = currentIndicator == indicator;
+
+          if (!underCancelledIndicator && currentIndicator instanceof WrappedProgressIndicator) {
+            while(currentIndicator instanceof WrappedProgressIndicator) {
+              ProgressIndicator originalProgressIndicator = ((WrappedProgressIndicator)currentIndicator).getOriginalProgressIndicator();
+              if (originalProgressIndicator == indicator) {
+                underCancelledIndicator = true;
+                break;
+              }
+              currentIndicator = originalProgressIndicator;
+            }
+          }
+          if (underCancelledIndicator) {
             threadsUnderCanceledIndicator.add(thread);
           }
         }

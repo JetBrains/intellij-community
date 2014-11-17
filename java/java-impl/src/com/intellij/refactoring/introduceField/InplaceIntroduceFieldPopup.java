@@ -172,7 +172,7 @@ public class InplaceIntroduceFieldPopup extends AbstractInplaceIntroduceFieldPop
 
   @Override
   protected boolean startsOnTheSameElement(RefactoringActionHandler handler, PsiElement element) {
-    return super.startsOnTheSameElement(handler, element) && handler instanceof IntroduceFieldHandler;
+    return handler instanceof IntroduceFieldHandler && super.startsOnTheSameElement(handler, element);
   }
 
   @Override

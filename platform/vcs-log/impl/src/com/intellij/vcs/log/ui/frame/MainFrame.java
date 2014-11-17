@@ -215,7 +215,7 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
     toolbarGroup.add(ActionManager.getInstance().getAction(VcsLogUiImpl.TOOLBAR_ACTION_GROUP));
 
     DefaultActionGroup mainGroup = new DefaultActionGroup();
-    mainGroup.add(myFilterUi.getActionGroup());
+    mainGroup.add(myFilterUi.createActionGroup());
     mainGroup.addSeparator();
     mainGroup.add(toolbarGroup);
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.CHANGES_VIEW_TOOLBAR, mainGroup, true);
@@ -264,7 +264,8 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
     }
   }
 
-  public Component getToolbar() {
+  @NotNull
+  public JComponent getToolbar() {
     return myToolbar;
   }
 
@@ -382,8 +383,7 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
     @NotNull
     @Override
     protected List<Component> getOrderedComponents() {
-      return ContainerUtil.concat(Arrays.<Component>asList(myGraphTable, myChangesBrowser.getPreferredFocusedComponent()),
-                                  myFilterUi.getComponents());
+      return Arrays.<Component>asList(myGraphTable, myChangesBrowser.getPreferredFocusedComponent());
     }
   }
 

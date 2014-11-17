@@ -84,7 +84,7 @@ class MultilinePopupBuilder {
     popup.setMinimumSize(new Dimension(200, 90));
     AnAction okAction = new DumbAwareAction() {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         unregisterCustomShortcutSet(popup.getContent());
         popup.closeOk(e.getInputEvent());
       }
@@ -131,6 +131,7 @@ class MultilinePopupBuilder {
       return lastPosition;
     }
 
+    @SuppressWarnings("StringToUpperCaseOrToLowerCaseWithoutLocale")
     @Override
     protected void addCompletionVariants(@NotNull String text, int offset, @NotNull String prefix,
                                          @NotNull CompletionResultSet result) {

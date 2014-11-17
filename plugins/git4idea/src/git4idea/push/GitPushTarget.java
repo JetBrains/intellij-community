@@ -55,6 +55,12 @@ public class GitPushTarget implements PushTarget {
     return isNewBranchCreated();
   }
 
+  @NotNull
+  @Override
+  public String getPresentation() {
+    return myRemoteBranch.getName();
+  }
+
   public boolean isNewBranchCreated() {
     return myIsNewBranchCreated;
   }

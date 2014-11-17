@@ -120,6 +120,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   private final FileEditorManager myFileEditorManager;
   private final LafManager myLafManager;
   private final Map<String, Balloon> myWindow2Balloon = new HashMap<String, Balloon>();
+  private Pair<String, Integer> myMaximizedToolwindowSize = null;
 
   private KeyState myCurrentState = KeyState.waiting;
   private final Alarm myWaiterForSecondPress = new Alarm();
@@ -1980,6 +1981,16 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
   public void stretchWidth(ToolWindowImpl toolWindow, int value) {
     myToolWindowsPane.stretchWidth(toolWindow, value);
+  }
+
+  @Override
+  public boolean isMaximized(@NotNull ToolWindow wnd) {
+    return myToolWindowsPane.isMaximized(wnd);
+  }
+
+  @Override
+  public void setMaximized(@NotNull ToolWindow wnd, boolean maximized) {
+    myToolWindowsPane.setMaximized(wnd, maximized);
   }
 
   public void stretchHeight(ToolWindowImpl toolWindow, int value) {

@@ -86,6 +86,20 @@ public class FoldingTest extends AbstractEditorTest {
     });
   }
 
+  public void testIntersectsWithRegionFarInStorageOrder() {
+    myModel.runBatchFoldingOperation(new Runnable() {
+      @Override
+      public void run() {
+        FoldRegion region = myModel.addFoldRegion(0, 10, ".");
+        assertNotNull(region);
+        region = myModel.addFoldRegion(1, 5, ".");
+        assertNotNull(region);
+        region = myModel.addFoldRegion(6, 11, ".");
+        assertNull(region);
+      }
+    });
+  }
+
   public void testAddEmptyRegion() {
     FoldRegion region = null;
     try {
