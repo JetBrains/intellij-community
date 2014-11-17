@@ -427,6 +427,7 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
   private DockWindow createWindowFor(@Nullable String id, DockContainer container) {
     String windowId = id != null ? id : String.valueOf(myWindowIdCounter++);
     DockWindow window = new DockWindow(windowId, myProject, container, container instanceof DockContainer.Dialog);
+    Disposer.register(container, window);
     window.setDimensionKey("dock-window-" + windowId);
     myWindows.put(container, window);
     return window;
