@@ -264,7 +264,7 @@ public class AddImportHelper {
         continue;
       }
       final QualifiedName qName = existingImport.getImportSourceQName();
-      if (qName != null && qName.toString().equals(path)) {
+      if (qName != null && qName.toString().equals(path) && existingImport.getRelativeLevel() == 0) {
         for (PyImportElement el : existingImport.getImportElements()) {
           final QualifiedName importedQName = el.getImportedQName();
           if (importedQName != null && StringUtil.equals(name, importedQName.toString()) && StringUtil.equals(asName, el.getAsName())) {
