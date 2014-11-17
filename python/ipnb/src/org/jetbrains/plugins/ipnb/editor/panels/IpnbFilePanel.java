@@ -78,7 +78,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
         alarm.addRequest(new MySynchronizeRequest(), 10, ModalityState.stateForComponent(IpnbFilePanel.this));
       }
     };
-    myDocument = myParent.getEditor().getDocument();
+    myDocument = myParent.getDocument();
     myDocument.addDocumentListener(myDocumentListener);
 
     alarm.addRequest(new Runnable() {
