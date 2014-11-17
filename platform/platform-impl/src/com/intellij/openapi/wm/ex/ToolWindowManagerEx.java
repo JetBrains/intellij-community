@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.wm.ex;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -35,6 +36,7 @@ public abstract class ToolWindowManagerEx extends ToolWindowManager {
   }
 
   public abstract void addToolWindowManagerListener(@NotNull ToolWindowManagerListener l);
+  public abstract void addToolWindowManagerListener(@NotNull ToolWindowManagerListener l, @NotNull Disposable parentDisposable);
   public abstract void removeToolWindowManagerListener(@NotNull ToolWindowManagerListener l);
 
   /**
