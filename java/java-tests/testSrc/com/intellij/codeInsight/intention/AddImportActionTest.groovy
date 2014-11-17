@@ -289,6 +289,44 @@ class Test {
     assert !myFixture.filterAvailableIntentions("Import Class")
   }
 
+  public void "test allow to add import from javadoc"() {
+    myFixture.configureByText 'a.java', '''
+class Test {
+
+  /**
+   * {@link java.lang.Ma<caret>th}
+   */
+  void run() {
+  }
+}
+'''
+    reimportClass()
+    myFixture.checkResult '''\
+import java.lang.Math;
+
+class Test {
+
+  /**
+   * {@link Math}
+   */
+  void run() {
+  }
+}
+'''
+  }
+
+  public void "test do not allow to add import in package-info file"() {
+    myFixture.configureByText 'package-info.java', '''
+
+/**
+ * {@link java.lang.Ma<caret>th}
+ */
+package com.rocket.test;
+'''
+    assert myFixture.filterAvailableIntentions('Replace qualified name').isEmpty()
+  }
+
+
   private def importClass() {
     myFixture.launchAction(myFixture.findSingleIntention("Import Class"))
   }
