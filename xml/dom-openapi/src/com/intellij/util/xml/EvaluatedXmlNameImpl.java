@@ -23,7 +23,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.xml.*;
 import com.intellij.util.containers.ConcurrentFactoryMap;
-import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -38,7 +38,8 @@ import java.util.Map;
  */
 public class EvaluatedXmlNameImpl implements EvaluatedXmlName {
   private static final Key<CachedValue<FactoryMap<String,List<String>>>> NAMESPACE_PROVIDER_KEY = Key.create("NamespaceProvider");
-  private static final Map<EvaluatedXmlNameImpl,EvaluatedXmlNameImpl> ourInterned = new ConcurrentHashMap<EvaluatedXmlNameImpl,EvaluatedXmlNameImpl>();
+  private static final Map<EvaluatedXmlNameImpl, EvaluatedXmlNameImpl> ourInterned =
+    ContainerUtil.newConcurrentMap();
 
   private final XmlName myXmlName;
   private final String myNamespaceKey;

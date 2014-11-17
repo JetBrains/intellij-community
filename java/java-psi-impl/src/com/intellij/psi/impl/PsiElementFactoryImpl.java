@@ -35,19 +35,22 @@ import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
+import java.util.concurrent.ConcurrentMap;
 
 public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements PsiElementFactory {
   private PsiClass myArrayClass;
   private PsiClass myArrayClass15;
-  private final ConcurrentHashMap<GlobalSearchScope, PsiClassType> myCachedObjectType = new ConcurrentHashMap<GlobalSearchScope, PsiClassType>();
+  private final ConcurrentMap<GlobalSearchScope, PsiClassType> myCachedObjectType =
+    ContainerUtil.newConcurrentMap();
 
   public PsiElementFactoryImpl(final PsiManagerEx manager) {
     super(manager);
@@ -408,7 +411,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
       PsiClass aClass = JavaPsiFacade.getInstance(myManager.getProject()).findClass(CommonClassNames.JAVA_LANG_OBJECT, resolveScope);
       if (aClass != null) {
         cachedObjectType = new PsiImmediateClassType(aClass, PsiSubstitutor.EMPTY);
-        cachedObjectType = myCachedObjectType.cacheOrGet(resolveScope, cachedObjectType);
+        cachedObjectType = ConcurrencyUtil.cacheOrGet(myCachedObjectType, resolveScope, cachedObjectType);
         return cachedObjectType;
       }
     }

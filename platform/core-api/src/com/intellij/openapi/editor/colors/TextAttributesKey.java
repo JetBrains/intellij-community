@@ -19,7 +19,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.*;
 import com.intellij.util.ConcurrencyUtil;
-import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -33,7 +33,7 @@ import java.util.concurrent.ConcurrentMap;
  */
 public final class TextAttributesKey implements Comparable<TextAttributesKey> {
   private static final TextAttributes NULL_ATTRIBUTES = new TextAttributes();
-  private static final ConcurrentMap<String, TextAttributesKey> ourRegistry = new ConcurrentHashMap<String, TextAttributesKey>();
+  private static final ConcurrentMap<String, TextAttributesKey> ourRegistry = ContainerUtil.newConcurrentMap();
   private static final NullableLazyValue<TextAttributeKeyDefaultsProvider> ourDefaultsProvider = new VolatileNullableLazyValue<TextAttributeKeyDefaultsProvider>() {
     @Nullable
     @Override

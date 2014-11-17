@@ -46,6 +46,7 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ProperTextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
@@ -442,9 +443,10 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       errorIconBounds.y = (bounds.height - errorIconBounds.height) / 2 - 1;
       
       try {
-        g.setColor(getEditor().getColorsScheme().getDefaultBackground());
-        g.fillRect(0, 0, bounds.width, bounds.height);
-
+        if (!transparent()) {
+          g.setColor(getEditor().getColorsScheme().getDefaultBackground());
+          g.fillRect(0, 0, bounds.width, bounds.height);
+        }
         if (myErrorStripeRenderer != null) {
           myErrorStripeRenderer.paint(this, g, errorIconBounds);
         }
@@ -458,6 +460,10 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     public Dimension getPreferredSize() {
       return STRIPE_BUTTON_PREFERRED_SIZE;
     }
+  }
+  
+  private boolean transparent() {
+    return Registry.is("editor.transparent.scrollbar", false);
   }
 
   private class MyErrorPanel extends ButtonlessScrollBarUI implements MouseMotionListener, MouseListener, MouseWheelListener, UISettingsListener {
@@ -478,7 +484,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
     @Override
     public boolean alwaysShowTrack() {
-      if (scrollbar.getOrientation() == Adjustable.VERTICAL) return true;
+      if (scrollbar.getOrientation() == Adjustable.VERTICAL) return !transparent();
       return super.alwaysShowTrack();
     }
 
@@ -569,6 +575,16 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
     
     @Override
+    protected void paintTrack(Graphics g, JComponent c, Rectangle trackBounds) {
+      if (transparent()) {
+        doPaintTrack(g, c, trackBounds);
+      }
+      else {
+        super.paintTrack(g, c, trackBounds);
+      }
+    }
+
+    @Override
     protected void doPaintTrack(Graphics g, JComponent c, Rectangle bounds) {
       if (isMacScrollbarHiddenAndDistractionFreeEnabled()) {
         paintTrackBasement(g, bounds);
@@ -607,6 +623,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
 
     private void paintTrackBasement(Graphics g, Rectangle bounds) {
+      if (transparent()) return;
       g.setColor(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
       g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
     }

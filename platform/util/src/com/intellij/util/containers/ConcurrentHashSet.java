@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,16 +24,16 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 
-public class ConcurrentHashSet<K> implements Set<K> {
+class ConcurrentHashSet<K> implements Set<K> {
   private final ConcurrentMap<K, Boolean> map;
 
-  public ConcurrentHashSet(int initialCapacity) {
+  ConcurrentHashSet(int initialCapacity) {
     map = ContainerUtil.newConcurrentMap(initialCapacity);
   }
-  public ConcurrentHashSet() {
+  ConcurrentHashSet() {
     map = ContainerUtil.newConcurrentMap();
   }
-  public ConcurrentHashSet(@NotNull TObjectHashingStrategy<K> hashingStrategy) {
+  ConcurrentHashSet(@NotNull TObjectHashingStrategy<K> hashingStrategy) {
     map = ContainerUtil.newConcurrentMap(hashingStrategy);
   }
 

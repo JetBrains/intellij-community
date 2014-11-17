@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.SdkResolveScopeProvider;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ConcurrencyUtil;
-import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -41,8 +41,9 @@ public class LibraryScopeCache {
   }
 
   private final Project myProject;
-  private final ConcurrentMap<List<Module>, GlobalSearchScope> myLibraryScopes = new ConcurrentHashMap<List<Module>, GlobalSearchScope>();
-  private final ConcurrentMap<String, GlobalSearchScope> mySdkScopes = new ConcurrentHashMap<String, GlobalSearchScope>();
+  private final ConcurrentMap<List<Module>, GlobalSearchScope> myLibraryScopes =
+    ContainerUtil.newConcurrentMap();
+  private final ConcurrentMap<String, GlobalSearchScope> mySdkScopes = ContainerUtil.newConcurrentMap();
 
   public LibraryScopeCache(Project project) {
     myProject = project;

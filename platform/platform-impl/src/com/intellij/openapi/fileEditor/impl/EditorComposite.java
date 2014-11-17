@@ -43,6 +43,7 @@ import com.intellij.ui.tabs.UiDecorator;
 import com.intellij.util.SmartList;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -268,6 +269,7 @@ public abstract class EditorComposite implements Disposable {
    * @return preferred focused component inside myEditor composite. Composite uses FocusWatcher to
    * track focus movement inside the myEditor.
    */
+  @Nullable
   public JComponent getPreferredFocusedComponent(){
     if (mySelectedEditor == null) return null;
 
