@@ -1252,7 +1252,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
 
   private static final Key<String> MARK_KEY = Key.create("");
 
-  private PsiReferenceExpression[] addBracesWhenNeeded(PsiReferenceExpression[] refs) throws IncorrectOperationException {
+  public PsiReferenceExpression[] addBracesWhenNeeded(PsiReferenceExpression[] refs) throws IncorrectOperationException {
     ArrayList<PsiReferenceExpression> refsVector = new ArrayList<PsiReferenceExpression>();
     ArrayList<PsiCodeBlock> addedBracesVector = new ArrayList<PsiCodeBlock>();
     myAddedClassInitializers = new HashMap<PsiField, PsiClassInitializer>();
