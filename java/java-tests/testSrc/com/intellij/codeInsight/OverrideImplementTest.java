@@ -15,17 +15,22 @@
  */
 package com.intellij.codeInsight;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 
 /**
  * @author ven
  */
-public class OverrideImplementTest extends LightCodeInsightTestCase {
+public class OverrideImplementTest extends LightCodeInsightFixtureTestCase {
   private static final String BASE_DIR = "/codeInsight/overrideImplement/";
+
+  @Override
+  protected String getBasePath() {
+    return JavaTestUtil.getRelativeJavaTestDataPath();
+  }
 
   public void testImplementExtensionMethods() { doTest(true); }
   public void testOverrideExtensionMethods() { doTest(false); }
@@ -37,12 +42,11 @@ public class OverrideImplementTest extends LightCodeInsightTestCase {
 
   private void doTest(boolean toImplement) {
     String name = getTestName(false);
-    configureByFile(BASE_DIR + "before" + name + ".java");
-    int offset = getEditor().getCaretModel().getOffset();
-    PsiElement context = getFile().findElementAt(offset);
-    PsiClass psiClass = PsiTreeUtil.getParentOfType(context, PsiClass.class);
+    myFixture.configureByFile(BASE_DIR + "before" + name + ".java");
+    int offset = myFixture.getEditor().getCaretModel().getOffset();
+    PsiClass psiClass = PsiTreeUtil.findElementOfClassAtOffset(myFixture.getFile(), offset, PsiClass.class, false);
     assert psiClass != null;
-    OverrideImplementUtil.chooseAndOverrideOrImplementMethods(getProject(), getEditor(), psiClass, toImplement);
-    checkResultByFile(BASE_DIR + "after" + name + ".java");
+    OverrideImplementUtil.chooseAndOverrideOrImplementMethods(getProject(), myFixture.getEditor(), psiClass, toImplement);
+    myFixture.checkResultByFile(BASE_DIR + "after" + name + ".java");
   }
 }
