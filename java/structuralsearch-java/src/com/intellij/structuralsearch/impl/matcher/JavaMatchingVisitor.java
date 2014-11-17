@@ -1130,18 +1130,23 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
   public void visitLiteralExpression(final PsiLiteralExpression const1) {
     final PsiLiteralExpression const2 = (PsiLiteralExpression)myMatchingVisitor.getElement();
 
-    MatchingHandler handler = (MatchingHandler)const1.getUserData(CompiledPattern.HANDLER_KEY);
-
+    final MatchingHandler handler = (MatchingHandler)const1.getUserData(CompiledPattern.HANDLER_KEY);
     if (handler instanceof SubstitutionHandler) {
-      int offset = 0;
-      int length = const2.getTextLength();
-      final String text = const2.getText();
-
-      if (length > 2 && text.charAt(0) == '"' && text.charAt(length - 1) == '"') {
-        length--;
-        offset++;
+      final PsiType type1 = const1.getType();
+      if (type1 != null && !type1.equals(const2.getType())) {
+        myMatchingVisitor.setResult(false);
       }
-      myMatchingVisitor.setResult(((SubstitutionHandler)handler).handle(const2, offset, length, myMatchingVisitor.getMatchContext()));
+      else {
+        int offset = 0;
+        int length = const2.getTextLength();
+        final String text = const2.getText();
+
+        if (length > 2 && text.charAt(0) == '"' && text.charAt(length - 1) == '"') {
+          length--;
+          offset++;
+        }
+        myMatchingVisitor.setResult(((SubstitutionHandler)handler).handle(const2, offset, length, myMatchingVisitor.getMatchContext()));
+      }
     }
     else if (handler != null) {
       myMatchingVisitor.setResult(handler.match(const1, const2, myMatchingVisitor.getMatchContext()));
