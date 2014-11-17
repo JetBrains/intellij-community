@@ -7,6 +7,7 @@ import com.google.gson.annotations.SerializedName;
 import com.google.gson.stream.JsonWriter;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbEditablePanel;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbFilePanel;
@@ -215,26 +216,57 @@ public class IpnbParser {
     Integer prompt_number;
     String[] text;
     String[] traceback;
-
+    Map<String, Object> metadata;
 
     public static CellOutputRaw fromOutput(@NotNull final IpnbOutputCell outputCell, int nbformat) {
       final CellOutputRaw raw = new CellOutputRaw();
+      if (!(outputCell instanceof IpnbStreamOutputCell) && !(outputCell instanceof IpnbErrorOutputCell)) {
+        raw.metadata = new HashMap<String, Object>();
+      }
 
       if (outputCell instanceof IpnbPngOutputCell) {
-        raw.png = ((IpnbPngOutputCell)outputCell).getBase64String();
+        if (nbformat == 4) {
+          final OutputDataRaw dataRaw = new OutputDataRaw();
+          dataRaw.png = new String[]{((IpnbPngOutputCell)outputCell).getBase64String()};
+          raw.data = dataRaw;
+        }
+        else {
+          raw.png = ((IpnbPngOutputCell)outputCell).getBase64String();
+        }
         raw.text = outputCell.getText();
         raw.output_type = "display_data";
       }
       else if (outputCell instanceof IpnbSvgOutputCell) {
-        raw.svg = ((IpnbSvgOutputCell)outputCell).getSvg();
+        if (nbformat == 4) {
+          final OutputDataRaw dataRaw = new OutputDataRaw();
+          dataRaw.svg = ((IpnbSvgOutputCell)outputCell).getSvg();
+          raw.data = dataRaw;
+        }
+        else {
+          raw.svg = ((IpnbSvgOutputCell)outputCell).getSvg();
+        }
         raw.text = outputCell.getText();
       }
       else if (outputCell instanceof IpnbJpegOutputCell) {
-        raw.jpeg = ((IpnbJpegOutputCell)outputCell).getBase64String();
+        if (nbformat == 4) {
+          final OutputDataRaw dataRaw = new OutputDataRaw();
+          dataRaw.jpeg = new String[]{((IpnbJpegOutputCell)outputCell).getBase64String()};
+          raw.data = dataRaw;
+        }
+        else {
+          raw.jpeg = ((IpnbJpegOutputCell)outputCell).getBase64String();
+        }
         raw.text = outputCell.getText();
       }
       else if (outputCell instanceof IpnbLatexOutputCell) {
-        raw.latex = ((IpnbLatexOutputCell)outputCell).getLatex();
+        if (nbformat == 4) {
+          final OutputDataRaw dataRaw = new OutputDataRaw();
+          dataRaw.latex = ((IpnbLatexOutputCell)outputCell).getLatex();
+          raw.data = dataRaw;
+        }
+        else {
+          raw.latex = ((IpnbLatexOutputCell)outputCell).getLatex();
+        }
         raw.prompt_number = outputCell.getPromptNumber();
         raw.text = outputCell.getText();
       }
@@ -249,11 +281,18 @@ public class IpnbParser {
         raw.text = outputCell.getText();
       }
       else if (outputCell instanceof IpnbHtmlOutputCell) {
-        raw.html = ((IpnbHtmlOutputCell)outputCell).getHtmls();
+        if (nbformat == 4) {
+          final OutputDataRaw dataRaw = new OutputDataRaw();
+          dataRaw.html = ((IpnbHtmlOutputCell)outputCell).getHtmls();
+          raw.data = dataRaw;
+        }
+        else {
+          raw.html = ((IpnbHtmlOutputCell)outputCell).getHtmls();
+        }
         raw.text = outputCell.getText();
       }
       else if (outputCell instanceof IpnbErrorOutputCell) {
-        raw.output_type = "pyerr";
+        raw.output_type = nbformat == 4 ? "error" : "pyerr";
         raw.evalue = ((IpnbErrorOutputCell)outputCell).getEvalue();
         raw.ename = ((IpnbErrorOutputCell)outputCell).getEname();
         raw.traceback = outputCell.getText();
@@ -277,31 +316,31 @@ public class IpnbParser {
 
     public IpnbOutputCell createOutput() {
       final IpnbOutputCell outputCell;
-      if (png != null) {
-        outputCell = new IpnbPngOutputCell(png, text, prompt_number);
+      if (png != null || (data != null && data.png != null)) {
+        outputCell = new IpnbPngOutputCell(png == null ? StringUtil.join(data.png) : png, text, prompt_number);
       }
-      else if (jpeg != null) {
-        outputCell = new IpnbJpegOutputCell(jpeg, text, prompt_number);
+      else if (jpeg != null || (data != null && data.jpeg != null)) {
+        outputCell = new IpnbJpegOutputCell(jpeg == null ? StringUtil.join(data.jpeg) : jpeg, text, prompt_number);
       }
-      else if (svg != null) {
-        outputCell = new IpnbSvgOutputCell(svg, text, prompt_number);
+      else if (svg != null || (data != null && data.svg != null)) {
+        outputCell = new IpnbSvgOutputCell(svg == null ? data.svg : svg, text, prompt_number);
       }
-      else if (latex != null) {
-        outputCell = new IpnbLatexOutputCell(latex, prompt_number, text);
+      else if (latex != null || (data != null && data.latex != null)) {
+        outputCell = new IpnbLatexOutputCell(latex == null ? data.latex : latex, prompt_number, text);
       }
       else if (stream != null || name != null) {
         outputCell = new IpnbStreamOutputCell(stream == null ? name : stream, text, prompt_number);
       }
-      else if (html != null) {
-        outputCell = new IpnbHtmlOutputCell(html, text, prompt_number);
+      else if (html != null || (data != null && data.html != null)) {
+        outputCell = new IpnbHtmlOutputCell(html == null ? data.html : html, text, prompt_number);
       }
-      else if ("pyerr".equals(output_type)) {
+      else if ("pyerr".equals(output_type) || "error".equals(output_type)) {
         outputCell = new IpnbErrorOutputCell(evalue, ename, traceback, prompt_number);
       }
       else if ("pyout".equals(output_type)) {
         outputCell = new IpnbOutOutputCell(text, prompt_number);
       }
-      else if ("execute_result".equals(output_type)) {
+      else if ("execute_result".equals(output_type) && data != null) {
         outputCell = new IpnbOutOutputCell(data.text, execution_count);
       }
       else {
@@ -313,5 +352,10 @@ public class IpnbParser {
 
   private static class OutputDataRaw {
     @SerializedName("text/plain") String[] text;
+    @SerializedName("text/html") String[] html;
+    @SerializedName("image/svg+xml") String[] svg;
+    @SerializedName("image/png") String[] png;
+    @SerializedName("image/jpeg") String[] jpeg;
+    @SerializedName("text/latex") String[] latex;
   }
 }
