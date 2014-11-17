@@ -40,13 +40,48 @@ public class OverrideImplementTest extends LightCodeInsightFixtureTestCase {
   public void testOverrideInInterface() { doTest(false); }
   public void testMultipleInheritedThrows() {doTest(false);}
 
+  public void "test overriding overloaded method"() {
+    myFixture.addClass """package bar;
+interface A {
+    void foo(Foo2 f);
+    void foo(Foo1 f);
+}
+"""
+    myFixture.addClass "package bar; class Foo1 {}"
+    myFixture.addClass "package bar; class Foo2 {}"
+    def file = myFixture.addClass("""package bar;
+class Test implements A {
+    public void foo(Foo1 f) {}
+    <caret>
+}
+""").containingFile.virtualFile
+    myFixture.configureFromExistingVirtualFile(file)
+    
+    invokeAction(true)
+    
+    myFixture.checkResult """package bar;
+class Test implements A {
+    public void foo(Foo1 f) {}
+
+    @Override
+    public void foo(Foo2 f) {
+        <caret>
+    }
+}
+"""
+  }
+
   private void doTest(boolean toImplement) {
     String name = getTestName(false);
     myFixture.configureByFile(BASE_DIR + "before" + name + ".java");
+    invokeAction(toImplement)
+    myFixture.checkResultByFile(BASE_DIR + "after" + name + ".java");
+  }
+
+  private void invokeAction(boolean toImplement) {
     int offset = myFixture.getEditor().getCaretModel().getOffset();
     PsiClass psiClass = PsiTreeUtil.findElementOfClassAtOffset(myFixture.getFile(), offset, PsiClass.class, false);
     assert psiClass != null;
     OverrideImplementUtil.chooseAndOverrideOrImplementMethods(getProject(), myFixture.getEditor(), psiClass, toImplement);
-    myFixture.checkResultByFile(BASE_DIR + "after" + name + ".java");
   }
 }
