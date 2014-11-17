@@ -136,7 +136,7 @@ public class PyPep8NamingInspection extends PyInspection {
         return true;
       }
       for (PyClassLikeType ancestor : pyClass.getAncestorTypes(myTypeEvalContext)) {
-        if (blackList.contains(ancestor.getClassQName())) {
+        if (ancestor != null && blackList.contains(ancestor.getClassQName())) {
           return true;
         }
       }
