@@ -18,6 +18,7 @@ package com.intellij.openapi.editor.textarea;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingModel;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Denis Zhdanov
@@ -52,6 +53,12 @@ public class TextComponentFoldingModel implements FoldingModel {
   
   @Override
   public FoldRegion getCollapsedRegionAtOffset(int offset) {
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public FoldRegion getFoldRegion(int startOffset, int endOffset) {
     return null;
   }
 
