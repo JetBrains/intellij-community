@@ -228,6 +228,14 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
   private final Set<MultiHostInjector> myManualInjectors = Collections.synchronizedSet(new LinkedHashSet<MultiHostInjector>());  
   private volatile ClassMapCachingNulls<MultiHostInjector> cachedInjectors;
 
+  public void processInjectableElements(Collection<PsiElement> in, Processor<PsiElement> processor) {
+    ClassMapCachingNulls<MultiHostInjector> map = getInjectorMap();
+    for (PsiElement element : in) {
+      if (map.get(element.getClass()) != null)
+        processor.process(element);
+    }
+  }
+
   private ClassMapCachingNulls<MultiHostInjector> getInjectorMap() {
     ClassMapCachingNulls<MultiHostInjector> cached = cachedInjectors;
     if (cached != null) {
