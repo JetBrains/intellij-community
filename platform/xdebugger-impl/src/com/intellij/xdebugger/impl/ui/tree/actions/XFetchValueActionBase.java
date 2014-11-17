@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.AppUIUtil;
 import com.intellij.util.SmartList;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
 import com.intellij.xdebugger.impl.ui.XValueTextProvider;
@@ -116,9 +117,14 @@ public abstract class XFetchValueActionBase extends AnAction {
       return index;
     }
 
-    public void evaluationComplete(int index, @NotNull String value, Project project) {
-      values.set(index, value);
-      finish(project);
+    public void evaluationComplete(final int index, @NotNull final String value, final Project project) {
+      AppUIUtil.invokeOnEdt(new Runnable() {
+        @Override
+        public void run() {
+          values.set(index, value);
+          finish(project);
+        }
+      });
     }
   }
 
