@@ -27,6 +27,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
@@ -35,6 +36,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTupleExpression;
+
+import java.util.List;
 
 public class GroovyStaticTypeCheckVisitor extends GroovyTypeCheckVisitor {
 
@@ -85,41 +88,43 @@ public class GroovyStaticTypeCheckVisitor extends GroovyTypeCheckVisitor {
                                @Nullable final LocalQuickFix[] fixes,
                                final ProblemHighlightType highlightType) {
     if (highlightType != ProblemHighlightType.GENERIC_ERROR) return;
-    final Annotation annotation = myHolder.createErrorAnnotation(location, description);
-    if (fixes == null) return;
-    for (final LocalQuickFix fix : fixes) {
-      annotation.registerFix(new IntentionAction() {
-        @NotNull
-        @Override
-        public String getText() {
-          return fix.getName();
-        }
+    final List<IntentionAction> intentions = ContainerUtil.newArrayList();
+    if (fixes != null) {
+      for (final LocalQuickFix fix : fixes) {
+        intentions.add(new IntentionAction() {
+          @NotNull
+          @Override
+          public String getText() {
+            return fix.getName();
+          }
 
-        @NotNull
-        @Override
-        public String getFamilyName() {
-          return fix.getFamilyName();
-        }
+          @NotNull
+          @Override
+          public String getFamilyName() {
+            return fix.getFamilyName();
+          }
 
-        @Override
-        public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-          return true;
-        }
+          @Override
+          public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+            return true;
+          }
 
-        @Override
-        public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-          final InspectionManager manager = InspectionManager.getInstance(project);
-          final ProblemDescriptor descriptor =
-            manager.createProblemDescriptor(location, description, fixes, highlightType, fixes.length == 1, false);
-          fix.applyFix(project, descriptor);
-        }
+          @Override
+          public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+            final InspectionManager manager = InspectionManager.getInstance(project);
+            final ProblemDescriptor descriptor =
+              manager.createProblemDescriptor(location, description, fixes, highlightType, fixes.length == 1, false);
+            fix.applyFix(project, descriptor);
+          }
 
-        @Override
-        public boolean startInWriteAction() {
-          return true;
-        }
-      });
+          @Override
+          public boolean startInWriteAction() {
+            return true;
+          }
+        });
+      }
     }
+    registerError(location, description, intentions.toArray(new IntentionAction[intentions.size()]), highlightType);
   }
 
   protected void registerError(@NotNull final PsiElement location,
