@@ -98,7 +98,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
       }
       else if (usage instanceof OverriderUsageInfo) {
         OverriderUsageInfo info = (OverriderUsageInfo)usage;
-        final PsiMethod method = info.getElement();
+        final PsiMethod method = info.getOverridingMethod();
         final PsiMethod baseMethod = info.getBaseMethod();
         if (info.isOriginalOverrider()) {
           processPrimaryMethod((JavaChangeInfo)changeInfo, method, baseMethod, false);
@@ -925,7 +925,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
       for (UsageInfo usageInfo : usagesSet) {
         final PsiElement element = usageInfo.getElement();
         if (usageInfo instanceof OverriderUsageInfo) {
-          final PsiMethod method = (PsiMethod)element;
+          final PsiMethod method = ((OverriderUsageInfo)usageInfo).getOverridingMethod();
           final PsiMethod baseMethod = ((OverriderUsageInfo)usageInfo).getBaseMethod();
           final int delta = baseMethod.getParameterList().getParametersCount() - method.getParameterList().getParametersCount();
           if (delta > 0) {
