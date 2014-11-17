@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 package com.intellij.compiler.server;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.containers.ConcurrentHashSet;
+import com.intellij.util.containers.ContainerUtil;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
@@ -44,7 +44,7 @@ class BuildMessageDispatcher extends SimpleChannelInboundHandlerAdapter<CmdlineR
   private static final AttributeKey<SessionData> SESSION_DATA = AttributeKey.valueOf("BuildMessageDispatcher.sessionData");
 
   private final Map<UUID, SessionData> mySessionDescriptors = new ConcurrentHashMap<UUID, SessionData>(16, 0.75f, 1);
-  private final Set<UUID> myCanceledSessions = new ConcurrentHashSet<UUID>();
+  private final Set<UUID> myCanceledSessions = ContainerUtil.newConcurrentSet();
 
   public void registerBuildMessageHandler(@NotNull final RequestFuture<? extends BuilderMessageHandler> future, @Nullable CmdlineRemoteProto.Message.ControllerMessage params) {
     final BuilderMessageHandler wrappedHandler = new DelegatingMessageHandler() {

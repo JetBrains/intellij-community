@@ -40,8 +40,10 @@ import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.documentation.DocStringUtil;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
+import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.stubs.PropertyStubStorage;
 import com.jetbrains.python.psi.stubs.PyClassStub;
 import com.jetbrains.python.psi.stubs.PyFunctionStub;
@@ -1174,11 +1176,10 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     final PyClassStub stub = getStub();
     final List<PyClassLikeType> result = new ArrayList<PyClassLikeType>();
     if (stub != null) {
-      final PsiElement parent = stub.getParentStub().getPsi();
-      if (parent instanceof PyFile) {
-        final PyFile file = (PyFile)parent;
+      final PsiFile file = getContainingFile();
+      if (file instanceof PyFile) {
         for (QualifiedName name : stub.getSuperClasses()) {
-          result.add(name != null ? classTypeFromQName(name, file, context) : null);
+          result.add(name != null ? classTypeFromQName(name, (PyFile)file, context) : null);
         }
       }
     }
@@ -1315,47 +1316,67 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   }
 
   @Nullable
-  private static PsiElement getElementQNamed(@NotNull NameDefiner nameDefiner, @NotNull QualifiedName qualifiedName) {
+  private static PsiElement getElementQNamed(@NotNull PyFile file, @NotNull QualifiedName qualifiedName, @NotNull TypeEvalContext context) {
     final int componentCount = qualifiedName.getComponentCount();
     final String fullName = qualifiedName.toString();
+    final PyType type = new PyModuleType(file);
     if (componentCount == 0) {
       return null;
     }
     else if (componentCount == 1) {
-      PsiElement element = nameDefiner.getElementNamed(fullName);
+      PsiElement element = resolveTypeMember(type, fullName, context);
       if (element == null) {
-        element = PyBuiltinCache.getInstance(nameDefiner).getByName(fullName);
+        element = PyBuiltinCache.getInstance(file).getByName(fullName);
       }
       return element;
     }
     else {
       final String name = qualifiedName.getLastComponent();
       final QualifiedName containingQName = qualifiedName.removeLastComponent();
-      NameDefiner definer = nameDefiner;
+      PyType currentType = type;
       for (String component : containingQName.getComponents()) {
-        PsiElement element = PyUtil.turnDirIntoInit(definer.getElementNamed(component));
-        if (element instanceof PyImportElement) {
-          element = ((PyImportElement)element).resolve();
-        }
-        if (element instanceof NameDefiner) {
-          definer = (NameDefiner)element;
-        }
-        else {
-          definer = null;
-          break;
+        currentType = getMemberType(currentType, component, context);
+        if (currentType == null) {
+          return null;
         }
       }
-      if (definer != null) {
-        return definer.getElementNamed(name);
+      if (name != null) {
+        return resolveTypeMember(currentType, name, context);
       }
       return null;
     }
   }
 
   @Nullable
+  private static PyType getMemberType(@NotNull PyType type, @NotNull String name, @NotNull TypeEvalContext context) {
+    final PyType result;
+    PsiElement element = resolveTypeMember(type, name, context);
+    if (element instanceof PyImportedModule) {
+      result = new PyImportedModuleType((PyImportedModule)element);
+    }
+    else if (element instanceof PyTypedElement) {
+      result = context.getType((PyTypedElement)element);
+    }
+    else {
+      return null;
+    }
+    if (result instanceof PyClassLikeType) {
+      return ((PyClassLikeType)result).toInstance();
+    }
+    return result;
+  }
+
+  @Nullable
+  private static PsiElement resolveTypeMember(@NotNull PyType type, @NotNull String name, @NotNull TypeEvalContext context) {
+    final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+    final List<? extends RatedResolveResult> results = type.resolveMember(name, null, AccessDirection.READ, resolveContext);
+    return (results != null && !results.isEmpty()) ? results.get(0).getElement() : null;
+  }
+
+  @Nullable
   private static PyClassLikeType classTypeFromQName(@NotNull QualifiedName qualifiedName, @NotNull PyFile containingFile,
                                                     @NotNull TypeEvalContext context) {
-    final PsiElement element = getElementQNamed(containingFile, qualifiedName);
+    final PsiElement element = getElementQNamed(containingFile, qualifiedName, context);
     if (element instanceof PyTypedElement) {
       final PyType type = context.getType((PyTypedElement)element);
       if (type instanceof PyClassLikeType) {

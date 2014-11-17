@@ -375,6 +375,7 @@ public class PsiSuperMethodImplUtil {
         Project project = aClass == null ? method.getProject() : aClass.getProject();
         // cache Cls method hierarchy until root changed
         Object dependency = method instanceof PsiCompiledElement ? ProjectRootModificationTracker.getInstance(project) :
+                            !method.isPhysical() ? method :
                             PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT;
         return CachedValueProvider.Result.create(result, dependency);
       }

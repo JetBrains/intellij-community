@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,13 +40,12 @@ import java.util.List;
 /**
  * @author ven
  */
-public class OverrideImplementTest extends LightCodeInsightTestCase {
+public class OverrideImplement15Test extends LightCodeInsightTestCase {
   private static final String BASE_DIR = "/codeInsight/overrideImplement/";
 
   @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    setLanguageLevel(LanguageLevel.JDK_1_5);
+  protected LanguageLevel getLanguageLevel() {
+    return LanguageLevel.JDK_1_5;
   }
 
   public void testSimple() { doTest(true); }
@@ -67,15 +66,6 @@ public class OverrideImplementTest extends LightCodeInsightTestCase {
   public void testMultipleInterfaceInheritance() { doTest(false); }
   public void testResolveTypeParamConflict() { doTest(false); }
   public void testRawInheritance() { doTest(false); }
-
-  public void testImplementExtensionMethods() { doTest8(false, true); }
-  public void testOverrideExtensionMethods() { doTest8(false, false); }
-  public void testDoNotImplementExtensionMethods() { doTest8(false, true); }
-  public void testSkipUnknownAnnotations() { doTest8(false, true); }
-
-
-  public void testOverrideInInterface() { doTest8(false, false); }
-  public void testMultipleInheritedThrows() {doTest8(false, false);}
 
   public void testLongFinalParameterList() {
     CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(getProject()).clone();
@@ -148,11 +138,6 @@ public class OverrideImplementTest extends LightCodeInsightTestCase {
   }
 
   private void doTest(boolean copyJavadoc) { doTest(copyJavadoc, null); }
-
-  private void doTest8(boolean copyJavadoc, @Nullable Boolean toImplement) {
-    setLanguageLevel(LanguageLevel.JDK_1_8);
-    doTest(copyJavadoc, toImplement);
-  }
 
   private void doTest(boolean copyJavadoc, @Nullable Boolean toImplement) {
     String name = getTestName(false);

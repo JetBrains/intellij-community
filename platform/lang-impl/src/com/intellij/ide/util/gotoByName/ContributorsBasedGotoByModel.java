@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FindSymbolParameters;
 import com.intellij.util.indexing.IdFilter;
@@ -49,6 +48,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * Contributor-based goto model
@@ -85,7 +85,7 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
     return !ChooseByNameBase.ourLoadNamesEachTime;
   }
 
-  private final ConcurrentHashMap<ChooseByNameContributor, TIntHashSet> myContributorToItsSymbolsMap = new ConcurrentHashMap<ChooseByNameContributor, TIntHashSet>();
+  private final ConcurrentMap<ChooseByNameContributor, TIntHashSet> myContributorToItsSymbolsMap = ContainerUtil.newConcurrentMap();
   private volatile IdFilter myIdFilter;
   private volatile boolean myIdFilterForLibraries;
 

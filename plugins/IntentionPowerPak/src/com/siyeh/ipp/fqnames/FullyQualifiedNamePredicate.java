@@ -15,14 +15,16 @@
  */
 package com.siyeh.ipp.fqnames;
 
+import com.intellij.codeInsight.javadoc.JavaDocUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.psiutils.ImportUtils;
-import com.siyeh.ig.style.UnnecessaryFullyQualifiedNameInspection;
 import com.siyeh.ipp.base.PsiElementPredicate;
+import org.jetbrains.annotations.Nullable;
 
 class FullyQualifiedNamePredicate implements PsiElementPredicate {
 
@@ -43,7 +45,7 @@ class FullyQualifiedNamePredicate implements PsiElementPredicate {
     }
     final Project project = element.getProject();
     final CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(project);
-    if (UnnecessaryFullyQualifiedNameInspection.acceptFullyQualifiedNamesInJavadoc(referenceElement, codeStyleSettings)) {
+    if (isInsideCommentInPackageInfo(referenceElement)) {
       return false;
     }
     final PsiElement qualifier = referenceElement.getQualifier();
@@ -70,5 +72,10 @@ class FullyQualifiedNamePredicate implements PsiElementPredicate {
       return false;
     }
     return ImportUtils.nameCanBeImported(fqName, element);
+  }
+
+  private static boolean isInsideCommentInPackageInfo(@Nullable PsiJavaCodeReferenceElement referenceElement) {
+    PsiDocComment containingComment = PsiTreeUtil.getParentOfType(referenceElement, PsiDocComment.class);
+    return JavaDocUtil.isInsidePackageInfo(containingComment);
   }
 }
