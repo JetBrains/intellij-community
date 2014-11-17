@@ -16,27 +16,34 @@
 package com.intellij.core;
 
 import com.intellij.codeInsight.folding.CodeFoldingSettings;
-import com.intellij.concurrency.*;
+import com.intellij.concurrency.AsyncFuture;
+import com.intellij.concurrency.AsyncUtil;
+import com.intellij.concurrency.Job;
+import com.intellij.concurrency.JobLauncher;
 import com.intellij.lang.*;
 import com.intellij.lang.impl.PsiBuilderFactoryImpl;
 import com.intellij.mock.MockApplication;
 import com.intellij.mock.MockApplicationEx;
-import com.intellij.mock.MockFileDocumentManagerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.impl.CoreCommandProcessor;
 import com.intellij.openapi.components.ExtensionAreas;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.fileTypes.*;
-import com.intellij.openapi.progress.*;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.ClassExtension;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.KeyedExtensionCollector;
+import com.intellij.openapi.util.StaticGetter;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
@@ -57,7 +64,6 @@ import com.intellij.psi.stubs.BinaryFileStubBuilders;
 import com.intellij.psi.stubs.CoreStubTreeLoader;
 import com.intellij.psi.stubs.StubTreeLoader;
 import com.intellij.util.Consumer;
-import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import com.intellij.util.messages.MessageBusFactory;
 import org.jetbrains.annotations.NotNull;
@@ -96,12 +102,7 @@ public class CoreApplicationEnvironment {
     Extensions.registerAreaClass(ExtensionAreas.IDEA_PROJECT, null);
 
     final MutablePicoContainer appContainer = myApplication.getPicoContainer();
-    registerComponentInstance(appContainer, FileDocumentManager.class, new MockFileDocumentManagerImpl(new Function<CharSequence, Document>() {
-      @Override
-      public Document fun(CharSequence charSequence) {
-        return new DocumentImpl(charSequence);
-      }
-    }, null));
+    registerComponentInstance(appContainer, FileDocumentManager.class, new FileDocumentManagerImpl(VirtualFileManager.getInstance(), ProjectManager.getInstance()));
 
     VirtualFileSystem[] fs = {myLocalFileSystem, myJarFileSystem};
     VirtualFileManagerImpl virtualFileManager = new VirtualFileManagerImpl(fs, MessageBusFactory.newMessageBus(myApplication));
