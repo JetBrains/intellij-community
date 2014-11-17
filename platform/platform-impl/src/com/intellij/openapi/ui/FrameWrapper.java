@@ -218,6 +218,8 @@ public class FrameWrapper implements Disposable, DataProvider {
       myStatusBar = null;
     }
 
+    frame.dispose();
+
     myDisposed = true;
   }
 
