@@ -289,15 +289,18 @@ public final class PyClassRefactoringUtil {
     return true;
   }
 
-  public static boolean insertImport(PsiElement anchor, PsiNamedElement element) {
+  public static boolean insertImport(@NotNull PsiElement anchor, @NotNull PsiNamedElement element) {
     return insertImport(anchor, element, null);
   }
 
-  public static boolean insertImport(PsiElement anchor, PsiNamedElement element, @Nullable String asName) {
+  public static boolean insertImport(@NotNull PsiElement anchor, @NotNull PsiNamedElement element, @Nullable String asName) {
     return insertImport(anchor, element, asName, PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT);
   }
 
-  public static boolean insertImport(PsiElement anchor, PsiNamedElement element, @Nullable String asName, boolean preferFromImport) {
+  public static boolean insertImport(@NotNull PsiElement anchor,
+                                     @NotNull PsiNamedElement element,
+                                     @Nullable String asName,
+                                     boolean preferFromImport) {
     if (PyBuiltinCache.getInstance(element).isBuiltin(element)) return false;
     final PsiFile newFile = element.getContainingFile();
     final PsiFile file = anchor.getContainingFile();

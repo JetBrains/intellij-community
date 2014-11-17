@@ -128,8 +128,8 @@ public class PyMoveFileHandler extends MoveFileHandler {
               replaceWithQualifiedExpression(element, newQualifiedName);
             } else {
               final QualifiedName newName = QualifiedName.fromComponents(PyClassRefactoringUtil.getOriginalName(newElement));
-              replaceWithQualifiedExpression(element, newName);
-              PyClassRefactoringUtil.insertImport(element, newElement, null);
+              final PsiElement replaced = replaceWithQualifiedExpression(element, newName);
+              PyClassRefactoringUtil.insertImport(replaced, newElement, null);
             }
           }
         }
@@ -145,15 +145,16 @@ public class PyMoveFileHandler extends MoveFileHandler {
     }
   }
 
-  private static void replaceWithQualifiedExpression(@NotNull PsiElement oldElement,
-                                                     @Nullable QualifiedName newElementName) {
+  @NotNull
+  private static PsiElement replaceWithQualifiedExpression(@NotNull PsiElement oldElement, @Nullable QualifiedName newElementName) {
     if (newElementName != null && PyClassRefactoringUtil.isValidQualifiedName(newElementName)) {
       final PyElementGenerator generator = PyElementGenerator.getInstance(oldElement.getProject());
       final PsiElement newElement = generator.createExpressionFromText(LanguageLevel.forElement(oldElement), newElementName.toString());
       if (newElement != null) {
-        oldElement.replace(newElement);
+        return oldElement.replace(newElement);
       }
     }
+    return oldElement;
   }
 
   @Override
