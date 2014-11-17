@@ -387,9 +387,10 @@ public class BuildManager implements ApplicationComponent{
   }
 
   public void clearState(Project project) {
-    cancelPreloadedBuilds(project);
-    
     final String projectPath = getProjectPath(project);
+    
+    cancelPreloadedBuilds(projectPath);
+    
     synchronized (myProjectDataMap) {
       final ProjectData data = myProjectDataMap.get(projectPath);
       if (data != null) {
@@ -544,8 +545,7 @@ public class BuildManager implements ApplicationComponent{
     return futures;
   }
 
-  private void cancelPreloadedBuilds(Project project) {
-    final String projectPath = getProjectPath(project);
+  private void cancelPreloadedBuilds(final String projectPath) {
     runCommand(new Runnable() {
       @Override
       public void run() {
@@ -632,12 +632,7 @@ public class BuildManager implements ApplicationComponent{
           sessionId = UUID.randomUUID();
         }
 
-        final RequestFuture<? extends BuilderMessageHandler> future = usingPreloadedProcess? preloadedFuture : new RequestFuture<BuilderMessageHandler>(handler, sessionId, new RequestFuture.CancelAction<BuilderMessageHandler>() {
-          @Override
-          public void cancel(RequestFuture<BuilderMessageHandler> future) throws Exception {
-            myMessageDispatcher.cancelSession(future.getRequestID());
-          }
-        });
+        final RequestFuture<? extends BuilderMessageHandler> future = usingPreloadedProcess? preloadedFuture : new RequestFuture<BuilderMessageHandler>(handler, sessionId, new CancelBuildSessionAction<BuilderMessageHandler>());
         _future.setDelegate(future);
 
         if (!usingPreloadedProcess && (future.isCancelled() || project.isDisposed())) {
@@ -833,12 +828,7 @@ public class BuildManager implements ApplicationComponent{
     // launching build process from projectTaskQueue ensures that no other build process for this project is currently running
     return projectTaskQueue.submit(new Callable<Pair<RequestFuture<PreloadedProcessMessageHandler>, OSProcessHandler>>() {
       public Pair<RequestFuture<PreloadedProcessMessageHandler>, OSProcessHandler> call() throws Exception {
-        final RequestFuture<PreloadedProcessMessageHandler> future = new RequestFuture<PreloadedProcessMessageHandler>(new PreloadedProcessMessageHandler(project), UUID.randomUUID(), new RequestFuture.CancelAction<PreloadedProcessMessageHandler>() {
-          @Override
-          public void cancel(RequestFuture<PreloadedProcessMessageHandler> future) throws Exception {
-            myMessageDispatcher.cancelSession(future.getRequestID());
-          }
-        });
+        final RequestFuture<PreloadedProcessMessageHandler> future = new RequestFuture<PreloadedProcessMessageHandler>(new PreloadedProcessMessageHandler(), UUID.randomUUID(), new CancelBuildSessionAction<PreloadedProcessMessageHandler>());
         try {
           myMessageDispatcher.registerBuildMessageHandler(future, null);
           final OSProcessHandler processHandler = launchBuildProcess(project, myListenPort, future.getRequestID(), true);
@@ -1349,6 +1339,7 @@ public class BuildManager implements ApplicationComponent{
       Disposer.register(project, new Disposable() {
         @Override
         public void dispose() {
+          cancelPreloadedBuilds(projectPath);
           myProjectDataMap.remove(projectPath);
         }
       });
@@ -1368,7 +1359,7 @@ public class BuildManager implements ApplicationComponent{
 
     @Override
     public void projectClosing(Project project) {
-      cancelPreloadedBuilds(project);
+      cancelPreloadedBuilds(getProjectPath(project));
       for (TaskFuture future : cancelAutoMakeTasks(project)) {
         future.waitFor(500, TimeUnit.MILLISECONDS);
       }
@@ -1613,4 +1604,10 @@ public class BuildManager implements ApplicationComponent{
     }
   }
 
+  private class CancelBuildSessionAction<T extends BuilderMessageHandler> implements RequestFuture.CancelAction<T> {
+    @Override
+    public void cancel(RequestFuture<T> future) throws Exception {
+      myMessageDispatcher.cancelSession(future.getRequestID());
+    }
+  }
 }
