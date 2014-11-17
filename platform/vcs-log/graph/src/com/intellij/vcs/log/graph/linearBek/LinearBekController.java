@@ -112,6 +112,8 @@ public class LinearBekController extends CascadeLinearGraphController {
                 }
               }
               workingGraph.removeEdge(i, downNode);
+            } else if (downNode >= currentNodeIndex + k) {
+              return; // todo this is case 2450 (commit id 2043c82) "fix" -- just do not collapse it (yet (I hope))
             }
             else {
               isTail = false;
