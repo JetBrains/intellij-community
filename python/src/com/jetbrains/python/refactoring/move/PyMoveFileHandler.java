@@ -29,6 +29,7 @@ import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFileHandler;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.actions.CreatePackageAction;
 import com.jetbrains.python.codeInsight.imports.PyImportOptimizer;
@@ -119,6 +120,7 @@ public class PyMoveFileHandler extends MoveFileHandler {
               continue;
             }
             final QualifiedName newElementName = QualifiedNameFinder.findCanonicalImportPath(newElement, element);
+            removeLeadingDots(element);
             replaceWithQualifiedExpression(element, newElementName);
           }
           else if (element instanceof PyReferenceExpression) {
@@ -155,6 +157,23 @@ public class PyMoveFileHandler extends MoveFileHandler {
       }
     }
     return oldElement;
+  }
+
+  private static void removeLeadingDots(@NotNull PsiElement element) {
+    PsiElement lastDot = null;
+    PsiElement firstDot = null;
+    for (PsiElement prev = element.getPrevSibling(); prev != null; prev = prev.getPrevSibling()) {
+      if (prev.getNode().getElementType() != PyTokenTypes.DOT) {
+        break;
+      }
+      if (lastDot == null) {
+        lastDot = prev;
+      }
+      firstDot = prev;
+    }
+    if (lastDot != null && firstDot != null) {
+      element.getParent().deleteChildRange(firstDot, lastDot);
+    }
   }
 
   @Override

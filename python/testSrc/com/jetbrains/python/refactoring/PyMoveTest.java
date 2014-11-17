@@ -189,6 +189,10 @@ public class PyMoveTest extends PyTestCase {
     doMoveFileTest("nspkg/nssubpkg", "");
   }
 
+  public void testRelativeImportOfNameFromInitPy() {
+    doMoveFileTest("pkg/subpkg2", "");
+  }
+
   private void doMoveFileTest(String fileName, String toDirName)  {
     Project project = myFixture.getProject();
     PsiManager manager = PsiManager.getInstance(project);
