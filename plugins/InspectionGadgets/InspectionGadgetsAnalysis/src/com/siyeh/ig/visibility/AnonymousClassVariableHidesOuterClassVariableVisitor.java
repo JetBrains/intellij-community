@@ -24,14 +24,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-class AnonymousClassVariableHidesOuterClassVariableVisitor
-  extends BaseInspectionVisitor {
+class AnonymousClassVariableHidesOuterClassVariableVisitor extends BaseInspectionVisitor {
 
   @Override
   public void visitAnonymousClass(PsiAnonymousClass aClass) {
     super.visitAnonymousClass(aClass);
-    final PsiCodeBlock codeBlock =
-      PsiTreeUtil.getParentOfType(aClass, PsiCodeBlock.class);
+    final PsiCodeBlock codeBlock = PsiTreeUtil.getParentOfType(aClass, PsiCodeBlock.class);
     if (codeBlock == null) {
       return;
     }
@@ -46,31 +44,27 @@ class AnonymousClassVariableHidesOuterClassVariableVisitor
       if (!(statement instanceof PsiDeclarationStatement)) {
         continue;
       }
-      final PsiDeclarationStatement declarationStatement =
-        (PsiDeclarationStatement)statement;
-      final PsiElement[] declaredElements =
-        declarationStatement.getDeclaredElements();
+      final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)statement;
+      final PsiElement[] declaredElements = declarationStatement.getDeclaredElements();
       for (PsiElement declaredElement : declaredElements) {
         if (!(declaredElement instanceof PsiLocalVariable)) {
           continue;
         }
-        final PsiLocalVariable localVariable =
-          (PsiLocalVariable)declaredElement;
+        final PsiLocalVariable localVariable = (PsiLocalVariable)declaredElement;
         final String name = localVariable.getName();
-        final PsiVariable[] variables =
-          collector.getVariables(name);
+        final PsiVariable[] variables = collector.getVariables(name);
         for (PsiVariable variable : variables) {
           registerVariableError(variable, variable);
         }
       }
     }
-    final PsiMethod containingMethod =
-      PsiTreeUtil.getParentOfType(codeBlock, PsiMethod.class);
+    final PsiElement containingMethod = PsiTreeUtil.getParentOfType(codeBlock, PsiMethod.class, PsiLambdaExpression.class);
     if (containingMethod == null) {
       return;
     }
-    final PsiParameterList parameterList =
-      containingMethod.getParameterList();
+
+    final PsiParameterList parameterList = containingMethod instanceof PsiMethod ? ((PsiMethod)containingMethod).getParameterList() 
+                                                                                 : ((PsiLambdaExpression)containingMethod).getParameterList();
     final PsiParameter[] parameters = parameterList.getParameters();
     for (PsiParameter parameter : parameters) {
       final String name = parameter.getName();
@@ -85,7 +79,7 @@ class AnonymousClassVariableHidesOuterClassVariableVisitor
 
     private static final PsiVariable[] EMPTY_VARIABLE_LIST = {};
 
-    private final Map<String, List<PsiVariable>> variableMap = new HashMap();
+    private final Map<String, List<PsiVariable>> variableMap = new HashMap<String, List<PsiVariable>>();
 
     @Override
     public void visitVariable(PsiVariable variable) {
@@ -93,7 +87,7 @@ class AnonymousClassVariableHidesOuterClassVariableVisitor
       final String name = variable.getName();
       final List<PsiVariable> variableList = variableMap.get(name);
       if (variableList == null) {
-        final List<PsiVariable> list = new ArrayList();
+        final List<PsiVariable> list = new ArrayList<PsiVariable>();
         list.add(variable);
         variableMap.put(name, list);
       }
@@ -113,8 +107,7 @@ class AnonymousClassVariableHidesOuterClassVariableVisitor
         return EMPTY_VARIABLE_LIST;
       }
       else {
-        return variableList.toArray(
-          new PsiVariable[variableList.size()]);
+        return variableList.toArray(new PsiVariable[variableList.size()]);
       }
     }
   }
