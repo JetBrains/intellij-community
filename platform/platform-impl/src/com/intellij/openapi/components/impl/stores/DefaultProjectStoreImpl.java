@@ -17,7 +17,6 @@ package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.components.StateStorage.SaveSession;
-import com.intellij.openapi.options.StreamProvider;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.util.Couple;
@@ -62,8 +61,7 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
     ComponentManager componentManager = getComponentManager();
     final Element element = _d;
     final XmlElementStorage storage = new XmlElementStorage("", RoamingType.DISABLED, PathMacroManager.getInstance(componentManager).createTrackingSubstitutor(),
-                                                            ROOT_TAG_NAME, null,
-                                                            ComponentVersionProvider.EMPTY) {
+                                                            ROOT_TAG_NAME, null) {
       @Override
       @Nullable
       protected Element loadLocalData() {
@@ -164,11 +162,6 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
       @Nullable
       public StateStorage getOldStorage(@NotNull Object component, @NotNull String componentName, @NotNull StateStorageOperation operation) {
         return storage;
-      }
-
-      @Override
-      public void registerStreamProvider(final StreamProvider streamProvider, final RoamingType type) {
-        throw new UnsupportedOperationException("Method registerStreamProvider not implemented in " + getClass());
       }
 
       @Override

@@ -559,15 +559,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
         return;
       }
 
-      Element wrapped = wrap(document, name, description);
-      if (provider instanceof CurrentUserHolder) {
-        wrapped = wrapped.clone();
-        String userName = ((CurrentUserHolder)provider).getCurrentUserName();
-        if (userName != null) {
-          wrapped.setAttribute(USER, userName);
-        }
-      }
-      StorageUtil.sendContent(provider, fileSpec, wrapped, myRoamingType, false);
+      StorageUtil.sendContent(provider, fileSpec, wrap(document, name, description), myRoamingType, false);
     }
   }
 
