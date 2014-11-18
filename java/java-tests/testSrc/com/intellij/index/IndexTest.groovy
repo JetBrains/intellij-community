@@ -13,37 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.index;
-
-import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.command.impl.CurrentEditorProvider;
-import com.intellij.openapi.command.impl.UndoManagerImpl;
-import com.intellij.openapi.command.undo.UndoManager;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileTypes.PlainTextFileType;
-import com.intellij.openapi.util.Factory;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
-import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PsiSearchHelper;
-import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
-import com.intellij.util.indexing.MapIndexStorage;
-import com.intellij.util.indexing.StorageException;
-import com.intellij.util.io.*;
-import org.jetbrains.annotations.NotNull;
-
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.File;
-import java.io.IOException;
-import java.util.*;
-
+package com.intellij.index
+import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.command.impl.CurrentEditorProvider
+import com.intellij.openapi.command.impl.UndoManagerImpl
+import com.intellij.openapi.command.undo.UndoManager
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileTypes.PlainTextFileType
+import com.intellij.openapi.util.Factory
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry
+import com.intellij.psi.*
+import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.search.PsiSearchHelper
+import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
+import com.intellij.util.indexing.MapIndexStorage
+import com.intellij.util.indexing.StorageException
+import com.intellij.util.io.*
+import org.jetbrains.annotations.NotNull
 /**
  * @author Eugene Zhuravlev
  *         Date: Dec 12, 2007
@@ -131,11 +123,11 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
       }
 
       @Override
-      public Collection<String> read(@NotNull DataInput in) throws IOException {
-        final int size = DataInputOutputUtil.readINT(in);
+      public Collection<String> read(@NotNull DataInput _in) throws IOException {
+        final int size = DataInputOutputUtil.readINT(_in);
         final List<String> list = new ArrayList<String>();
         for (int idx = 0; idx < size; idx++) {
-          list.add(in.readUTF());
+          list.add(_in.readUTF());
         }
         return list;
       }
