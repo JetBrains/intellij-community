@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.options;
 
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.components.RoamingType;
@@ -40,12 +39,7 @@ public class SchemesManagerFactoryImpl extends SchemesManagerFactory implements 
   public <T extends Scheme, E extends ExternalizableScheme> SchemesManager<T, E> createSchemesManager(@NotNull String fileSpec,
                                                                                                       @NotNull SchemeProcessor<E> processor,
                                                                                                       @NotNull RoamingType roamingType) {
-    Application application = ApplicationManager.getApplication();
-    if (!(application instanceof ApplicationImpl)) {
-      return null;
-    }
-
-    IApplicationStore applicationStore = ((ApplicationImpl)application).getStateStore();
+    IApplicationStore applicationStore = ((ApplicationImpl)ApplicationManager.getApplication()).getStateStore();
     String baseDirPath = applicationStore.getStateStorageManager().expandMacros(fileSpec);
     StreamProvider provider = applicationStore.getStateStorageManager().getStreamProvider();
     SchemesManagerImpl<T, E> manager = new SchemesManagerImpl<T, E>(fileSpec, processor, roamingType, provider, new File(baseDirPath));

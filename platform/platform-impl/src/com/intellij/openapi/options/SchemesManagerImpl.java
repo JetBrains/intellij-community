@@ -18,7 +18,6 @@ package com.intellij.openapi.options;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.StateStorageException;
@@ -379,7 +378,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
 
       String schemePath = element.getAttributeValue(ORIGINAL_SCHEME_PATH);
 
-      Element sharedElement = loadGlobalScheme(schemePath);
+      Element sharedElement = myProvider != null && myProvider.isEnabled() ? StorageUtil.loadElement(myProvider.loadContent(schemePath, myRoamingType)) : null;
       if (sharedElement != null) {
         E result = readScheme(sharedElement, Collections.<String, E>emptyMap());
         if (result != null) {
@@ -423,12 +422,6 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
       //noinspection deprecation
       return myProcessor.readScheme(new Document(element));
     }
-  }
-
-  @Nullable
-  private Element loadGlobalScheme(@NotNull String schemePath) throws IOException {
-    StreamProvider provider = getProvider();
-    return provider != null && provider.isEnabled() ? StorageUtil.loadElement(provider.loadContent(schemePath, myRoamingType)) : null;
   }
 
   @NotNull
@@ -489,16 +482,15 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
   @Override
   @NotNull
   public Collection<SharedScheme<E>> loadSharedSchemes(Collection<T> currentSchemeList) {
-    StreamProvider provider = getProvider();
-    if (provider == null || !provider.isEnabled()) {
+    if (myProvider == null || !myProvider.isEnabled()) {
       return Collections.emptyList();
     }
 
-    Collection<String> names = new THashSet<String>(getAllSchemeNames(currentSchemeList));
+    Collection<String> names = getAllSchemeNames(currentSchemeList);
     Map<String, SharedScheme<E>> result = new THashMap<String, SharedScheme<E>>();
-    for (String subPath : provider.listSubFiles(myFileSpec, myRoamingType)) {
+    for (String subPath : myProvider.listSubFiles(myFileSpec, myRoamingType)) {
       try {
-        Element element = StorageUtil.loadElement(provider.loadContent(getFileFullPath(subPath), myRoamingType));
+        Element element = StorageUtil.loadElement(myProvider.loadContent(getFileFullPath(subPath), myRoamingType));
         if (element != null) {
           SharedSchemeData original = unwrap(element);
           E scheme = doReadScheme(original.original);
@@ -557,19 +549,18 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
   @SuppressWarnings("deprecation")
   @Override
   public void exportScheme(@NotNull final E scheme, final String name, final String description) throws WriteExternalException, IOException {
-    StreamProvider provider = getProvider();
-    if (provider == null) {
+    if (myProvider == null) {
       return;
     }
 
     Parent document = myProcessor.writeScheme(scheme);
     if (document != null) {
       String fileSpec = getFileFullPath(FileUtil.sanitizeName(scheme.getName())) + mySchemeExtension;
-      if (!provider.isApplicable(fileSpec, myRoamingType)) {
+      if (!myProvider.isApplicable(fileSpec, myRoamingType)) {
         return;
       }
 
-      StorageUtil.sendContent(provider, fileSpec, wrap(document, name, description), myRoamingType, false);
+      StorageUtil.sendContent(myProvider, fileSpec, wrap(document, name, description), myRoamingType, false);
     }
   }
 
@@ -584,13 +575,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
 
   @Override
   public boolean isImportAvailable() {
-    return getProvider() != null;
-  }
-
-  @Nullable
-  private static StreamProvider getProvider() {
-    StreamProvider provider = ((ApplicationImpl)ApplicationManager.getApplication()).getStateStore().getStateStorageManager().getStreamProvider();
-    return provider == null || !provider.isEnabled() ? null : provider;
+    return myProvider != null;
   }
 
   @Override
