@@ -550,7 +550,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
   }
 
   @Override
-  public Object[][] getArrayItems(PyDebugValue var, int rowOffset, int colOffset, int rows, int cols, String format)
+  public ArrayChunk getArrayItems(PyDebugValue var, int rowOffset, int colOffset, int rows, int cols, String format)
     throws PyDebuggerException {
     if (myClient != null) {
       try {

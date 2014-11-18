@@ -4,6 +4,7 @@ import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.parsing.ExpressionParsing;
+import com.jetbrains.python.parsing.FunctionParsing;
 import com.jetbrains.python.parsing.ParsingContext;
 import com.jetbrains.python.parsing.StatementParsing;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -12,6 +13,7 @@ import org.jetbrains.annotations.Nullable;
 public class IpnbPyParsingContext extends ParsingContext {
   private final StatementParsing myStatementParser;
   private final ExpressionParsing myExpressionParser;
+  private final FunctionParsing myFunctionParser;
 
   public IpnbPyParsingContext(final PsiBuilder builder,
                               LanguageLevel languageLevel,
@@ -19,6 +21,7 @@ public class IpnbPyParsingContext extends ParsingContext {
     super(builder, languageLevel, futureFlag);
     myStatementParser = new IpnbPyStatementParsing(this, futureFlag);
     myExpressionParser = new IpnbPyExpressionParsing(this);
+    myFunctionParser = new IpnbPyFunctionParsing(this);
   }
 
   @Override
@@ -29,6 +32,11 @@ public class IpnbPyParsingContext extends ParsingContext {
   @Override
   public StatementParsing getStatementParser() {
     return myStatementParser;
+  }
+
+  @Override
+  public FunctionParsing getFunctionParser() {
+    return myFunctionParser;
   }
 
   private static class IpnbPyExpressionParsing extends ExpressionParsing {
@@ -65,6 +73,16 @@ public class IpnbPyParsingContext extends ParsingContext {
     @Override
     protected IElementType getReferenceType() {
       return IpnbPyTokenTypes.IPNB_REFERENCE;
+    }
+
+  }
+  private static class IpnbPyFunctionParsing extends FunctionParsing {
+
+    public IpnbPyFunctionParsing(ParsingContext context) {
+      super(context);
+    }
+    protected IElementType getFunctionType() {
+      return IpnbPyTokenTypes.IPNB_FUNCTION;
     }
 
   }

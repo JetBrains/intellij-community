@@ -387,9 +387,13 @@ class BaseInterpreterInterface:
 
     def getArray(self, attr, roffset, coffset, rows, cols, format):
         xml = "<xml>"
-        array = pydevd_vars.evalInContext(attr, self.getNamespace(), self.getNamespace())
+        name = attr.split("\t")[-1]
+        array = pydevd_vars.evalInContext(name, self.getNamespace(), self.getNamespace())
 
-        xml += pydevd_vars.array_to_xml(array, roffset, coffset, rows, cols, format)
+        if rows == -1 and cols == -1:
+            xml += pydevd_vars.array_to_meta_xml(array, name, format)
+        else:
+            xml += pydevd_vars.array_to_xml(array, roffset, coffset, rows, cols, format)
 
         xml += "</xml>"
 

@@ -22,6 +22,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListenableFutureTask;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.ui.UIUtil;
+import com.jetbrains.python.debugger.ArrayChunk;
 import com.jetbrains.python.debugger.PyDebugValue;
 
 import javax.swing.table.AbstractTableModel;
@@ -35,26 +36,26 @@ public class AsyncArrayTableModel extends AbstractTableModel {
   private static final int CHUNK_ROW_SIZE = 10;
   public static final String EMPTY_CELL_VALUE = "";
 
-  private final int myRows;
-  private final int myColumns;
+  private int myRows;
+  private int myColumns;
   private final NumpyArrayTable myProvider;
 
 
   private final ExecutorService myExecutorService = Executors.newSingleThreadExecutor();
 
 
-  private LoadingCache<Pair<Integer, Integer>, ListenableFuture<Object[][]>> myChunkCache = CacheBuilder.newBuilder().build(
-    new CacheLoader<Pair<Integer, Integer>, ListenableFuture<Object[][]>>() {
+  private LoadingCache<Pair<Integer, Integer>, ListenableFuture<ArrayChunk>> myChunkCache = CacheBuilder.newBuilder().build(
+    new CacheLoader<Pair<Integer, Integer>, ListenableFuture<ArrayChunk>>() {
       @Override
-      public ListenableFuture<Object[][]> load(final Pair<Integer, Integer> key) throws Exception {
+      public ListenableFuture<ArrayChunk> load(final Pair<Integer, Integer> key) throws Exception {
         final PyDebugValue value = myProvider.getDebugValue();
         final PyDebugValue slicedValue =
           new PyDebugValue(myProvider.getSliceText(), value.getType(), value.getValue(), value.isContainer(), value.isErrorOnEval(),
-                           value.getFrameAccessor());
+                           value.getParent(), value.getFrameAccessor());
 
-        ListenableFutureTask<Object[][]> task = ListenableFutureTask.create(new Callable<Object[][]>() {
+        ListenableFutureTask<ArrayChunk> task = ListenableFutureTask.create(new Callable<ArrayChunk>() {
           @Override
-          public Object[][] call() throws Exception {
+          public ArrayChunk call() throws Exception {
             return value.getFrameAccessor()
               .getArrayItems(slicedValue, key.first, key.second, Math.min(CHUNK_ROW_SIZE, getRowCount() - key.first),
                              Math.min(CHUNK_COL_SIZE, getColumnCount() - key.second),
@@ -91,15 +92,16 @@ public class AsyncArrayTableModel extends AbstractTableModel {
     Pair<Integer, Integer> key = itemToChunkKey(row, col);
 
     try {
-      ListenableFuture<Object[][]> chunk = myChunkCache.get(key);
+      ListenableFuture<ArrayChunk> chunk = myChunkCache.get(key);
 
       if (chunk.isDone()) {
+        Object[][] data = chunk.get().getData();
         int r = row % CHUNK_ROW_SIZE;
         int c = col % CHUNK_COL_SIZE;
 
-        if (r < chunk.get().length) {
-          if (c < chunk.get()[r].length) {
-            return myProvider.correctStringValue(chunk.get()[r][c]);
+        if (r < data.length) {
+          if (c < data[r].length) {
+            return myProvider.correctStringValue(data[r][c]);
           }
         }
       }
@@ -149,17 +151,21 @@ public class AsyncArrayTableModel extends AbstractTableModel {
   }
 
   public void changeValue(int row, int col, Object value) {
-    Future<Object[][]> chunk = myChunkCache.getIfPresent(itemToChunkKey(row, col));
+    Future<ArrayChunk> chunk = myChunkCache.getIfPresent(itemToChunkKey(row, col));
     if (chunk != null && chunk.isDone()) {
       try {
-        chunk.get()[row - getPageRowStart(row)][col - getPageColStart(col)] = value;
+        chunk.get().getData()[row - getPageRowStart(row)][col - getPageColStart(col)] = value;
       }
       catch (Exception e) {
         throw new IllegalStateException(e);
       }
     }
     else {
-      throw new IllegalArgumentException("Forced to change empty cell in " + row + " row and " + col + "column.");
+      throw new IllegalArgumentException("Forced to change empty cell in " + row + " row and " + col + " column.");
     }
+  }
+
+  public void addToCache(ArrayChunk chunk) {
+    //TODO: add preloaded values
   }
 }

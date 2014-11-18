@@ -178,6 +178,7 @@ public final class IpnbConnectionManager implements ProjectComponent {
     }
     catch (IOException e) {
       showWarning(codePanel.getFileEditor(), "IPython Notebook connection refused");
+      LOG.warn("IPython Notebook connection refused: " + e.getMessage());
       return false;
     }
     return true;

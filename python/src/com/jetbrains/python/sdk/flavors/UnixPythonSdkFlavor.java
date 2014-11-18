@@ -31,7 +31,7 @@ public class UnixPythonSdkFlavor extends CPythonSdkFlavor {
   private UnixPythonSdkFlavor() {
   }
 
-  private final static String[] NAMES = new String[]{"python", "jython", "pypy"};
+  private final static String[] NAMES = new String[]{"jython", "pypy"};
 
   public static UnixPythonSdkFlavor INSTANCE = new UnixPythonSdkFlavor();
 
@@ -52,9 +52,9 @@ public class UnixPythonSdkFlavor extends CPythonSdkFlavor {
       VirtualFile[] suspects = rootDir.getChildren();
       for (VirtualFile child : suspects) {
         if (!child.isDirectory()) {
-          final String childName = child.getName();
+          final String childName = child.getName().toLowerCase();
           for (String name : NAMES) {
-            if (childName.startsWith(name)) {
+            if (childName.startsWith(name) || PYTHON_RE.matcher(childName).matches()) {
               String childPath = child.getPath();
               if (FileSystemUtil.isSymLink(childPath)) {
                 childPath = FileSystemUtil.resolveSymLink(childPath);

@@ -109,7 +109,11 @@ public class RemoteDebugger implements ProcessDebugger {
   public String handshake() throws PyDebuggerException {
     final VersionCommand command = new VersionCommand(this, LOCAL_VERSION, SystemInfo.isUnix ? "UNIX" : "WIN");
     command.execute();
-    return command.getRemoteVersion();
+    String version = command.getRemoteVersion();
+    if (version != null) {
+      version = version.trim();
+    }
+    return version;
   }
 
   @Override
@@ -155,7 +159,7 @@ public class RemoteDebugger implements ProcessDebugger {
   }
 
   @Override
-  public Object[][] loadArrayItems(String  threadId, String frameId, PyDebugValue var, int rowOffset, int colOffset, int rows, int cols, String format) throws PyDebuggerException {
+  public ArrayChunk loadArrayItems(String  threadId, String frameId, PyDebugValue var, int rowOffset, int colOffset, int rows, int cols, String format) throws PyDebuggerException {
     final GetArrayCommand command = new GetArrayCommand(this, threadId, frameId, var, rowOffset, colOffset, rows, cols, format);
     command.execute();
     return command.getArray();
