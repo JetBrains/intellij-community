@@ -110,7 +110,7 @@ public class FormsBindingManager extends FormsBuilder {
       // force compilation of all forms, but only once per chunk
       if (!FORMS_REBUILD_FORCED.get(context, Boolean.FALSE)) {
         FORMS_REBUILD_FORCED.set(context, Boolean.TRUE);
-        FSOperations.markDirty(context, chunk, FORM_SOURCES_FILTER);
+        FSOperations.markDirtyForCurrentRound(context, chunk, FORM_SOURCES_FILTER);
       }
     }
 
@@ -138,7 +138,7 @@ public class FormsBindingManager extends FormsBuilder {
         for (File boundSource : sources) {
           if (!excludes.isExcluded(boundSource)) {
             addBinding(boundSource, form, srcToForms);
-            FSOperations.markDirty(context, boundSource);
+            FSOperations.markDirtyForCurrentRound(context, boundSource);
             filesToCompile.put(boundSource, target);
             exitCode = ExitCode.OK;
           }
@@ -156,7 +156,7 @@ public class FormsBindingManager extends FormsBuilder {
             final File formFile = new File(formPath);
             if (!excludes.isExcluded(formFile) && formFile.exists()) {
               addBinding(srcFile, formFile, srcToForms);
-              FSOperations.markDirty(context, formFile);
+              FSOperations.markDirtyForCurrentRound(context, formFile);
               formsToCompile.put(formFile, target);
               exitCode = ExitCode.OK;
             }
