@@ -43,11 +43,11 @@ import java.lang.reflect.Method;
 public class ButtonlessScrollBarUI extends BasicScrollBarUI {
   private static final Logger LOG = Logger.getInstance("#" + ButtonlessScrollBarUI.class.getName());
 
-  private JBColor getGradientLightColor() {
+  protected JBColor getGradientLightColor() {
     return jbColor(Gray._251, Gray._95);
   }
 
-  private JBColor getGradientDarkColor() {
+  protected JBColor getGradientDarkColor() {
     return jbColor(Gray._215, Gray._80);
   }
 
@@ -712,8 +712,8 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     if (alwaysPaintThumb()) {
       //noinspection UseJBColor
       g2d.setColor(new Color(baseColor.getRed(), baseColor.getGreen(), baseColor.getBlue(), isDark() ? 100 : 40));
-      //g2d.fillRoundRect(thumbBounds.x, thumbBounds.y, thumbBounds.width, thumbBounds.height, arc, arc);
-      g2d.drawRoundRect(thumbBounds.x, thumbBounds.y, thumbBounds.width, thumbBounds.height, arc, arc);
+      g2d.fillRoundRect(thumbBounds.x, thumbBounds.y, thumbBounds.width, thumbBounds.height, arc, arc);
+      //g2d.drawRoundRect(thumbBounds.x, thumbBounds.y, thumbBounds.width, thumbBounds.height, arc, arc);
     }
 
     if (!myMacScrollbarHidden) {
@@ -731,7 +731,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     return alwaysShowTrack();
   }
 
-  private Rectangle getMacScrollBarBounds(Rectangle baseBounds, boolean thumb) {
+  protected Rectangle getMacScrollBarBounds(Rectangle baseBounds, boolean thumb) {
     boolean vertical = isVertical();
 
     int borderSize = 2;
@@ -768,12 +768,12 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     return new Rectangle(x, y, width, height);
   }
 
-  private void paintMaxiThumb(Graphics2D g, Rectangle thumbBounds) {
+  protected void paintMaxiThumb(Graphics2D g, Rectangle thumbBounds) {
     final boolean vertical = isVertical();
     int hGap = vertical ? 2 : 1;
     int vGap = vertical ? 1 : 2;
 
-    int w = adjustThumbWidth(thumbBounds.width - hGap * 2);
+    int w = thumbBounds.width - hGap * 2;
     int h = thumbBounds.height - vGap * 2;
 
     // leave one pixel between thumb and right or bottom edge
@@ -808,10 +808,6 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
   @Override
   public boolean getSupportsAbsolutePositioning() {
     return true;
-  }
-
-  protected int adjustThumbWidth(int width) {
-    return width;
   }
 
   protected Color adjustColor(Color c) {

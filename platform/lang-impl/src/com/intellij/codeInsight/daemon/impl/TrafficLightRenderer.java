@@ -47,6 +47,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.ui.ColorUtil;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -64,6 +66,7 @@ import java.util.*;
 import java.util.List;
 
 public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
+  private static final Icon NO_ANALYSIS = HighlightDisplayLevel.createIconByMask(new JBColor(ColorUtil.fromHex("E1E1E1"), ColorUtil.fromHex("757575")));
   private final Project myProject;
   private final Document myDocument;
   private final PsiFile myFile;
@@ -284,12 +287,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
   public void paint(Component c, Graphics g, Rectangle r) {
     DaemonCodeAnalyzerStatus status = getDaemonCodeAnalyzerStatus(mySeverityRegistrar);
     Icon icon = getIcon(status);
-
-    int height = icon.getIconHeight();
-    int width = icon.getIconWidth();
-    int x = r.x + (r.width - width) / 2;
-    int y = r.y + (r.height - height) / 2;
-    icon.paintIcon(c, g, x, y);
+    icon.paintIcon(c, g, r.x, r.y);
   }
 
   @NotNull
@@ -302,7 +300,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     double progress = getOverallProgress(status);
     TruncatingIcon trunc = new TruncatingIcon(icon, icon.getIconWidth(), (int)(icon.getIconHeight() * progress));
 
-    return new LayeredIcon(trunc, AllIcons.General.InspectionInProgress);
+    return new LayeredIcon(trunc, AllIcons.General.Eye);
   }
 
   private static double getOverallProgress(@NotNull DaemonCodeAnalyzerStatus status) {
@@ -334,7 +332,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     if (PowerSaveMode.isEnabled()) {
       statusLabel = "Code analysis is disabled in power save mode";
       status.errorAnalyzingFinished = true;
-      icon = AllIcons.Nodes.Plugin;
+      icon = AllIcons.General.SafeMode;
       return result;
     }
     if (status.reasonWhyDisabled != null) {
@@ -342,7 +340,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
       statusExtraLine = "(" + status.reasonWhyDisabled + ")";
       passStatusesVisible = true;
       progressBarsCompleted = Boolean.FALSE;
-      icon = AllIcons.General.NoAnalysis;
+      icon = NO_ANALYSIS;
       return result;
     }
     if (status.reasonWhySuspended != null) {
@@ -350,7 +348,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
       statusExtraLine = "(" + status.reasonWhySuspended + ")";
       passStatusesVisible = true;
       progressBarsCompleted = Boolean.FALSE;
-      icon = AllIcons.Actions.InspectionsPause;
+      icon = AllIcons.General.InspectionsPause;
       return result;
     }
 

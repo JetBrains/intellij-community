@@ -517,6 +517,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           super.paintThumb(g, c, thumbBounds);
         }
       }
+
+      protected void paintMaxiThumb(Graphics2D g, Rectangle thumbBounds) {
+        int arc = 3;
+        g.setColor(adjustColor(getGradientDarkColor()));
+        g.fillRoundRect(2, 0, thumbBounds.width, thumbBounds.height, arc, arc);
+      }
     });
     myPanel = new JPanel();
 
@@ -582,7 +588,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @NotNull
   static Color adjustThumbColor(@NotNull Color base, boolean dark) {
-    return ColorUtil.withAlpha(ColorUtil.shift(base, dark ? 1.1 : 0.9), dark ? 0.85 : 0.7);
+    return ColorUtil.withAlpha(ColorUtil.shift(base, dark ? 1.3 : 0.9), 0.7);
   }
 
   boolean isDarkEnough() {
