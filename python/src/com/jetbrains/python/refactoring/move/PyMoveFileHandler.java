@@ -23,15 +23,17 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.QualifiedName;
 import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFileHandler;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
+import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.actions.CreatePackageAction;
 import com.jetbrains.python.codeInsight.imports.PyImportOptimizer;
 import com.jetbrains.python.psi.*;
-import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
@@ -64,11 +66,24 @@ public class PyMoveFileHandler extends MoveFileHandler {
         root = root.getParentDirectory();
       }
       final boolean searchForReferences = RefactoringSettings.getInstance().MOVE_SEARCH_FOR_REFERENCES_FOR_FILE;
-      if (moveDestination != root && root != null && searchForReferences) {
+      if (moveDestination != root && root != null && searchForReferences && !probablyNamespacePackage(file, moveDestination, root)) {
         CreatePackageAction.createInitPyInHierarchy(moveDestination, root);
       }
     }
     // TODO: Update relative imports
+  }
+
+  private static boolean probablyNamespacePackage(@NotNull PsiFile anchor, @NotNull PsiDirectory destination, @NotNull PsiDirectory root) {
+    if (!LanguageLevel.forElement(anchor).isAtLeast(LanguageLevel.PYTHON33)) {
+      return false;
+    }
+    while (destination != null && destination != root) {
+      if (destination.findFile(PyNames.INIT_DOT_PY) != null) {
+        return false;
+      }
+      destination = destination.getParent();
+    }
+    return true;
   }
 
   @Override
@@ -105,6 +120,7 @@ public class PyMoveFileHandler extends MoveFileHandler {
               continue;
             }
             final QualifiedName newElementName = QualifiedNameFinder.findCanonicalImportPath(newElement, element);
+            removeLeadingDots(element);
             replaceWithQualifiedExpression(element, newElementName);
           }
           else if (element instanceof PyReferenceExpression) {
@@ -114,8 +130,8 @@ public class PyMoveFileHandler extends MoveFileHandler {
               replaceWithQualifiedExpression(element, newQualifiedName);
             } else {
               final QualifiedName newName = QualifiedName.fromComponents(PyClassRefactoringUtil.getOriginalName(newElement));
-              replaceWithQualifiedExpression(element, newName);
-              PyClassRefactoringUtil.insertImport(element, newElement, null);
+              final PsiElement replaced = replaceWithQualifiedExpression(element, newName);
+              PyClassRefactoringUtil.insertImport(replaced, newElement, null);
             }
           }
         }
@@ -131,14 +147,32 @@ public class PyMoveFileHandler extends MoveFileHandler {
     }
   }
 
-  private static void replaceWithQualifiedExpression(@NotNull PsiElement oldElement,
-                                                     @Nullable QualifiedName newElementName) {
+  @NotNull
+  private static PsiElement replaceWithQualifiedExpression(@NotNull PsiElement oldElement, @Nullable QualifiedName newElementName) {
     if (newElementName != null && PyClassRefactoringUtil.isValidQualifiedName(newElementName)) {
       final PyElementGenerator generator = PyElementGenerator.getInstance(oldElement.getProject());
       final PsiElement newElement = generator.createExpressionFromText(LanguageLevel.forElement(oldElement), newElementName.toString());
       if (newElement != null) {
-        oldElement.replace(newElement);
+        return oldElement.replace(newElement);
       }
+    }
+    return oldElement;
+  }
+
+  private static void removeLeadingDots(@NotNull PsiElement element) {
+    PsiElement lastDot = null;
+    PsiElement firstDot = null;
+    for (PsiElement prev = element.getPrevSibling(); prev != null; prev = prev.getPrevSibling()) {
+      if (prev.getNode().getElementType() != PyTokenTypes.DOT) {
+        break;
+      }
+      if (lastDot == null) {
+        lastDot = prev;
+      }
+      firstDot = prev;
+    }
+    if (lastDot != null && firstDot != null) {
+      element.getParent().deleteChildRange(firstDot, lastDot);
     }
   }
 

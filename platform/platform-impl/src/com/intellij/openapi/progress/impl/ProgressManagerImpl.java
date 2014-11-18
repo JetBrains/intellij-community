@@ -34,7 +34,6 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.psi.PsiLock;
 import com.intellij.ui.SystemNotifications;
-import com.intellij.util.containers.ConcurrentHashSet;
 import com.intellij.util.containers.ConcurrentLongObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SmartHashSet;
@@ -70,7 +69,7 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable {
   // the active indicator for the thread id
   private static final ConcurrentLongObjectMap<ProgressIndicator> currentIndicators = ContainerUtil.createConcurrentLongObjectMap();
   // threads which are running under canceled indicator
-  static final Set<Thread> threadsUnderCanceledIndicator = new ConcurrentHashSet<Thread>();
+  static final Set<Thread> threadsUnderCanceledIndicator = ContainerUtil.newConcurrentSet();
 
   // active (i.e. which have executeProcessUnderProgress() method running) indicators which are not inherited from StandardProgressIndicator.
   // for them an extra processing thread (see myCheckCancelledFuture) has to be run to call their non-standard checkCanceled() method
@@ -323,7 +322,19 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable {
       if (threads != null) {
         for (Thread thread : threads) {
           ProgressIndicator currentIndicator = getCurrentIndicator(thread);
-          if (currentIndicator == indicator) {
+          boolean underCancelledIndicator = currentIndicator == indicator;
+
+          if (!underCancelledIndicator && currentIndicator instanceof WrappedProgressIndicator) {
+            while(currentIndicator instanceof WrappedProgressIndicator) {
+              ProgressIndicator originalProgressIndicator = ((WrappedProgressIndicator)currentIndicator).getOriginalProgressIndicator();
+              if (originalProgressIndicator == indicator) {
+                underCancelledIndicator = true;
+                break;
+              }
+              currentIndicator = originalProgressIndicator;
+            }
+          }
+          if (underCancelledIndicator) {
             threadsUnderCanceledIndicator.add(thread);
           }
         }

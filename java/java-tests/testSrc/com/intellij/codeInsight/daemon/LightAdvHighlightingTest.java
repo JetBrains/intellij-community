@@ -77,9 +77,13 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myUnusedDeclarationInspection = new UnusedDeclarationInspection();
+    myUnusedDeclarationInspection = new UnusedDeclarationInspection(isUnusedInspectionRequired());
     enableInspectionTool(myUnusedDeclarationInspection);
     setLanguageLevel(LanguageLevel.JDK_1_4);
+  }
+
+  private boolean isUnusedInspectionRequired() {
+    return getTestName(false).contains("UnusedInspection");
   }
 
   @NotNull
@@ -226,14 +230,8 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
     }
   }
 
-  public void testUnusedNonPrivateMembers() {
-    try {
-      myUnusedDeclarationInspection.setEnabledInEditor(true);
-      doTest(true, false);
-    }
-    finally {
-      myUnusedDeclarationInspection.setEnabledInEditor(false);
-    }
+  public void testUnusedInspectionNonPrivateMembers() {
+    doTest(true, false);
   }
 
   public void testUnusedNonPrivateMembers2() {
@@ -281,33 +279,27 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
       myUnusedDeclarationInspection = new UnusedDeclarationInspectionBase();
     }
   }
-  public void testUnusedNonPrivateMembersReferencedFromText() {
-    try {
-      myUnusedDeclarationInspection.setEnabledInEditor(true);
-      doTest(true, false);
-      WriteCommandAction.runWriteCommandAction(null, new Runnable() {
-        @Override
-        public void run() {
-          PsiDirectory directory = myFile.getParent();
-          assertNotNull(myFile.toString(), directory);
-          PsiFile txt = directory.createFile("x.txt");
-          VirtualFile vFile = txt.getVirtualFile();
-          assertNotNull(txt.toString(), vFile);
-          try {
-            VfsUtil.saveText(vFile, "XXX");
-          }
-          catch (IOException e) {
-            throw new RuntimeException(e);
-          }
+  public void testUnusedInspectionNonPrivateMembersReferencedFromText() {
+    doTest(true, false);
+    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
+      @Override
+      public void run() {
+        PsiDirectory directory = myFile.getParent();
+        assertNotNull(myFile.toString(), directory);
+        PsiFile txt = directory.createFile("x.txt");
+        VirtualFile vFile = txt.getVirtualFile();
+        assertNotNull(txt.toString(), vFile);
+        try {
+          VfsUtil.saveText(vFile, "XXX");
         }
-      });
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      }
+    });
 
-      List<HighlightInfo> infos = doHighlighting(HighlightSeverity.WARNING);
-      assertEmpty(infos);
-    }
-    finally {
-      myUnusedDeclarationInspection.setEnabledInEditor(false);
-    }
+    List<HighlightInfo> infos = doHighlighting(HighlightSeverity.WARNING);
+    assertEmpty(infos);
   }
 
   public void testNamesHighlighting() {

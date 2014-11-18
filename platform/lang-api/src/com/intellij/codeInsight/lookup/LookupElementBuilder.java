@@ -21,6 +21,7 @@ import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.util.PsiUtilCore;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Contract;
@@ -64,6 +65,12 @@ public final class LookupElementBuilder extends LookupElement {
 
   public static LookupElementBuilder create(@NotNull String lookupString) {
     return new LookupElementBuilder(lookupString, lookupString);
+  }
+  
+  public static LookupElementBuilder createWithSmartPointer(@NotNull String lookupString, @NotNull PsiElement element) {
+    PsiUtilCore.ensureValid(element);
+    return new LookupElementBuilder(lookupString, 
+                                    SmartPointerManager.getInstance(element.getProject()).createSmartPsiElementPointer(element));
   }
 
   public static LookupElementBuilder create(@NotNull PsiNamedElement element) {

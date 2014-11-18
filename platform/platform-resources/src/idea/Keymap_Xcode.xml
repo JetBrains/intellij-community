@@ -252,6 +252,9 @@
     <action id="GotoPreviousError">
       <keyboard-shortcut first-keystroke="shift meta QUOTE" />
     </action>
+    <action id="MaximizeToolWindow">
+      <keyboard-shortcut first-keystroke="shift meta SEMICOLON"/>
+    </action>
     <action id="GotoFile">
       <keyboard-shortcut first-keystroke="meta alt O" />
     </action>

@@ -355,6 +355,7 @@
           <action id="HideAllWindows" class="com.intellij.ide.actions.HideAllToolWindowsAction"/>
           <action id="CloseActiveTab" class="com.intellij.ide.actions.CloseActiveTabAction"/>
           <action id="JumpToLastWindow" class="com.intellij.ide.actions.JumpToLastWindowAction"/>
+          <action id="MaximizeToolWindow" class="com.intellij.openapi.wm.impl.MaximizeToolWindowAction"/>
           <separator/>
           <action id="TogglePinnedMode" class="com.intellij.ide.actions.TogglePinnedModeAction"/>
           <action id="ToggleDockMode" class="com.intellij.ide.actions.ToggleDockModeAction"/>

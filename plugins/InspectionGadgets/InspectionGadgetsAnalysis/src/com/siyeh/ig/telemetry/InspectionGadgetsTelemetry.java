@@ -21,12 +21,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 public class InspectionGadgetsTelemetry {
   private static final InspectionGadgetsTelemetry telemetry = new InspectionGadgetsTelemetry();
   private static volatile boolean telemetryEnabled = false;
 
-  private final ConcurrentHashMap<String, InspectionRunTime> inspectionRunTimes =
+  private final ConcurrentMap<String, InspectionRunTime> inspectionRunTimes =
     new ConcurrentHashMap<String, InspectionRunTime>();
 
   public List<InspectionRunTime> buildList() {

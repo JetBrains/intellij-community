@@ -410,6 +410,16 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
     myFixture.checkHighlighting(isWarning(), isInfo(), isWeakWarning());
   }
 
+  // PY-13554
+  public void testDocstringTypeFromSubModule() {
+    doMultiFileTest();
+  }
+
+  // PY-13969
+  public void testStubsOfNestedClasses() {
+    doMultiFileTest();
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

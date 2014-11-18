@@ -351,6 +351,10 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
     }.execute();
   }
 
+  public boolean hasUpdates() {
+    return !actions.isEmpty();
+  }
+
   private static class CommentRange {
     public CommentRange(PsiElement first, PsiElement last) {
       this.first = first;

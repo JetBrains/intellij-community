@@ -33,7 +33,7 @@ import java.awt.event.MouseEvent;
  * @author Konstantin Bulenkov
  */
 public class OnePixelDivider extends Divider {
-  public static final Color BACKGROUND = new JBColor(0xC5CAD0, 0x494F59);
+  public static final Color BACKGROUND = new JBColor(Gray.xC5, Gray.x51);
 
   private boolean myVertical;
   private Splitter mySplitter;

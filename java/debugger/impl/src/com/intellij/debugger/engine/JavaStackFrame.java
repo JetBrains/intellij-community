@@ -34,19 +34,15 @@ import com.intellij.debugger.ui.tree.render.ClassRenderer;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.Navigatable;
 import com.intellij.ui.ColoredTextContainer;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
-import com.intellij.xdebugger.impl.XSourcePositionImpl;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.settings.XDebuggerSettingsManager;
 import com.sun.jdi.*;
@@ -89,7 +85,7 @@ public class JavaStackFrame extends XStackFrame {
     myEqualityObject = update ? NodeManagerImpl.getContextKeyForFrame(myDescriptor.getFrameProxy()) : null;
     myDebugProcess = ((DebugProcessImpl)descriptor.getDebugProcess());
     myNodeManager = myDebugProcess.getXdebugProcess().getNodeManager();
-    myXSourcePosition = myDescriptor.getSourcePosition() != null ? new JavaXSourcePosition(myDescriptor.getSourcePosition()) : null;
+    myXSourcePosition = myDescriptor.getSourcePosition() != null ? DebuggerUtilsEx.toXSourcePosition(myDescriptor.getSourcePosition()) : null;
   }
 
   @NotNull
@@ -399,36 +395,6 @@ public class JavaStackFrame extends XStackFrame {
     }
     else {
       return "JavaFrame position unknown";
-    }
-  }
-
-  private static class JavaXSourcePosition implements XSourcePosition {
-    private final SourcePosition mySourcePosition;
-
-    public JavaXSourcePosition(@NotNull SourcePosition sourcePosition) {
-      mySourcePosition = sourcePosition;
-    }
-
-    @Override
-    public int getLine() {
-      return mySourcePosition.getLine();
-    }
-
-    @Override
-    public int getOffset() {
-      return mySourcePosition.getOffset();
-    }
-
-    @NotNull
-    @Override
-    public VirtualFile getFile() {
-      return mySourcePosition.getFile().getVirtualFile();
-    }
-
-    @NotNull
-    @Override
-    public Navigatable createNavigatable(@NotNull Project project) {
-      return XSourcePositionImpl.createOpenFileDescriptor(project, this);
     }
   }
 }

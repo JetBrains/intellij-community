@@ -22,20 +22,27 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.ThreeComponentsSplitter;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowType;
-import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.impl.commands.FinalizableCommand;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.FadeInFadeOut;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
@@ -58,6 +65,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements Disposable {
   private final HashMap<StripeButton, WindowInfoImpl> myButton2Info;
   private final HashMap<InternalDecorator, WindowInfoImpl> myDecorator2Info;
   private final HashMap<String, Float> myId2SplitProportion;
+  private Pair<ToolWindow, Integer> myMaximizedProportion = null;
   /**
    * This panel is the layered pane where all sliding tool windows are located. The DEFAULT
    * layer contains splitters. The PALETTE layer contains all sliding tool windows.
@@ -192,6 +200,24 @@ public final class ToolWindowsPane extends JBLayeredPane implements Disposable {
     super.addNotify();
     if (ScreenUtil.isStandardAddRemoveNotify(this)) {
       UISettings.getInstance().addUISettingsListener(myUISettingsListener, myDisposable);
+      IdeGlassPaneUtil.find(this).addMousePreprocessor(new MouseAdapter() {
+        @Override
+        public void mouseClicked(MouseEvent e) {
+          if (SwingUtilities.isLeftMouseButton(e) && e.getClickCount() == 2 && e.getModifiersEx() == 0) {
+            e = SwingUtilities.convertMouseEvent(e.getComponent(), e, ToolWindowsPane.this);
+            Component component = SwingUtilities.getDeepestComponentAt(ToolWindowsPane.this, e.getX(), e.getY());
+            Component header = component == null ? null : UIUtil.findParentByCondition((JComponent)component, new Condition<Component>() {
+              @Override
+              public boolean value(Component component) {
+                return component instanceof ToolWindowHeader;
+              }
+            });
+            if (header instanceof ToolWindowHeader) {
+              ((ToolWindowHeader)header).switchMaximizedState(myFrame.getProject());
+            }
+          }
+        }
+      }, this);
     }
   }
 
@@ -490,7 +516,21 @@ public final class ToolWindowsPane extends JBLayeredPane implements Disposable {
   }
 
   private void stretch(ToolWindow wnd, int value) {
-    if (!wnd.isVisible()) return;
+    Pair<Resizer, Component> pair = findResizerAndComponent(wnd);
+    if (pair == null) return;
+
+    boolean vertical = wnd.getAnchor() == ToolWindowAnchor.TOP || wnd.getAnchor() == ToolWindowAnchor.BOTTOM;
+    int actualSize = (vertical ? pair.second.getHeight() : pair.second.getWidth()) + value;
+    boolean first = wnd.getAnchor() == ToolWindowAnchor.LEFT  || wnd.getAnchor() == ToolWindowAnchor.TOP;
+    int maxValue = vertical ? myVerticalSplitter.getMaxSize(first) : myHorizontalSplitter.getMaxSize(first);
+    int minValue = vertical ? myVerticalSplitter.getMinSize(first) : myHorizontalSplitter.getMinSize(first);;
+
+    pair.first.setSize(Math.max(minValue, Math.min(maxValue, actualSize)));
+  }
+
+  @Nullable
+  private Pair<Resizer, Component> findResizerAndComponent(ToolWindow wnd) {
+    if (!wnd.isVisible()) return null;
 
     Resizer resizer = null;
     Component cmp = null;
@@ -534,26 +574,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements Disposable {
       }
     }
 
-    if (resizer == null) return;
-
-    int currentValue = wnd.getAnchor().isHorizontal() ? cmp.getHeight() : cmp.getWidth();
-
-    int actualSize = currentValue + value;
-
-    int minValue =
-      wnd.getAnchor().isHorizontal() ? ((ToolWindowEx)wnd).getDecorator().getHeaderHeight() : 16 + myHorizontalSplitter.getDividerWidth();
-    int maxValue = wnd.getAnchor().isHorizontal() ? myLayeredPane.getHeight() : myLayeredPane.getWidth();
-
-
-    if (actualSize < minValue) {
-      actualSize = minValue;
-    }
-
-    if (actualSize > maxValue) {
-      actualSize = maxValue;
-    }
-
-    resizer.setSize(actualSize);
+    return resizer != null ? Pair.create(resizer, cmp) : null;
   }
 
   private void updateLayout() {
@@ -596,6 +617,27 @@ public final class ToolWindowsPane extends JBLayeredPane implements Disposable {
       }
       myRightHorizontalSplit = UISettings.getInstance().RIGHT_HORIZONTAL_SPLIT;
     }
+  }
+
+  public boolean isMaximized(@NotNull ToolWindow wnd) {
+      return myMaximizedProportion != null && myMaximizedProportion.first == wnd;
+  }
+
+  public void setMaximized(@NotNull ToolWindow wnd, boolean maximized) {
+    Pair<Resizer, Component> resizerAndComponent = findResizerAndComponent(wnd);
+    if (resizerAndComponent == null) return;
+
+    if (!maximized) {
+      ToolWindow maximizedWindow = myMaximizedProportion.first;
+      assert maximizedWindow == wnd;
+      resizerAndComponent.first.setSize(myMaximizedProportion.second);
+      myMaximizedProportion = null;
+    } else {
+      int size = wnd.getAnchor().isHorizontal() ? resizerAndComponent.second.getHeight() : resizerAndComponent.second.getWidth();
+      stretch(wnd, Short.MAX_VALUE);
+      myMaximizedProportion = Pair.create(wnd, size);
+    }
+    doLayout();
   }
 
 

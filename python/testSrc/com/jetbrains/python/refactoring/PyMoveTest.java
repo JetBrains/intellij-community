@@ -23,6 +23,7 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.SystemProperties;
 import com.jetbrains.python.PythonTestUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
@@ -136,6 +137,60 @@ public class PyMoveTest extends PyTestCase {
   // PY-13870
   public void testConditionalImport() {
     doMoveFileTest("mod2.py", "pkg1");
+  }
+
+  // PY-13870
+  public void testConditionalImportFromPackage() {
+    doMoveFileTest("pkg1/mod2.py", "");
+  }
+
+  // PY-7378
+  public void testMoveNamespacePackage1() {
+    runWithLanguageLevel(LanguageLevel.PYTHON33, new Runnable() {
+      @Override
+      public void run() {
+        doMoveFileTest("nspkg/nssubpkg", "");
+      }
+    });
+  }
+
+  // PY-7378
+  public void testMoveNamespacePackage2() {
+    runWithLanguageLevel(LanguageLevel.PYTHON33, new Runnable() {
+      @Override
+      public void run() {
+        doMoveFileTest("nspkg/nssubpkg/a.py", "");
+      }
+    });
+  }
+
+  // PY-7378
+  public void testMoveNamespacePackage3() {
+    runWithLanguageLevel(LanguageLevel.PYTHON33, new Runnable() {
+      @Override
+      public void run() {
+        doMoveFileTest("nspkg/nssubpkg/a.py", "nspkg");
+      }
+    });
+  }
+
+  // PY-14384
+  public void testRelativeImportInsideNamespacePackage() {
+    runWithLanguageLevel(LanguageLevel.PYTHON33, new Runnable() {
+      @Override
+      public void run() {
+        doMoveFileTest("nspkg/nssubpkg", "");
+      }
+    });
+  }
+
+  // PY-14384
+  public void testRelativeImportInsideNormalPackage() {
+    doMoveFileTest("nspkg/nssubpkg", "");
+  }
+
+  public void testRelativeImportOfNameFromInitPy() {
+    doMoveFileTest("pkg/subpkg2", "");
   }
 
   private void doMoveFileTest(String fileName, String toDirName)  {

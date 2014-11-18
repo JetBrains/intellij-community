@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.externalSystem.model;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
@@ -23,7 +24,10 @@ import org.jetbrains.annotations.Nullable;
 import java.io.*;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Proxy;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * This class provides a generic graph infrastructure with ability to store particular data. The main purpose is to 
@@ -41,6 +45,7 @@ import java.util.*;
 public class DataNode<T> implements Serializable {
 
   private static final long serialVersionUID = 1L;
+  private static final Logger LOG = Logger.getInstance(DataNode.class);
 
   @NotNull private final List<DataNode<?>> myChildren = ContainerUtilRt.newArrayList();
 
@@ -270,6 +275,14 @@ public class DataNode<T> implements Serializable {
 
   @Override
   public String toString() {
-    return String.format("%s: %s", myKey, getData());
+    String dataDescription;
+    try {
+      dataDescription = getData().toString();
+    }
+    catch (Exception e) {
+      dataDescription = "failed to load";
+      LOG.debug(e);
+    }
+    return String.format("%s: %s", myKey, dataDescription);
   }
 }

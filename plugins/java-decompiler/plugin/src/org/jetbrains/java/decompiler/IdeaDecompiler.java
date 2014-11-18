@@ -77,7 +77,7 @@ public class IdeaDecompiler extends ClassFileDecompilers.Light {
   private final IFernflowerLogger myLogger = new IdeaLogger();
   private final Map<String, Object> myOptions = new HashMap<String, Object>();
   private boolean myLegalNoticeAccepted;
-  private volatile ProgressIndicator myProgress;
+  private final Map<VirtualFile, ProgressIndicator> myProgress = ContainerUtil.newConcurrentMap();
 
   public IdeaDecompiler() {
     myOptions.put(IFernflowerPreferences.HIDE_DEFAULT_CONSTRUCTOR, "0");
@@ -144,7 +144,8 @@ public class IdeaDecompiler extends ClassFileDecompilers.Light {
       return ClsFileImpl.decompile(file);
     }
 
-    myProgress = ProgressManager.getInstance().getProgressIndicator();
+    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    if (indicator != null) myProgress.put(file, indicator);
 
     try {
       Map<String, VirtualFile> files = ContainerUtil.newLinkedHashMap();
@@ -200,14 +201,14 @@ public class IdeaDecompiler extends ClassFileDecompilers.Light {
       }
     }
     finally {
-      myProgress = null;
+      myProgress.remove(file);
     }
   }
 
   @TestOnly
   @Nullable
-  public ProgressIndicator getProgress() {
-    return myProgress;
+  public ProgressIndicator getProgress(@NotNull VirtualFile file) {
+    return myProgress.get(file);
   }
 
   private static class MyBytecodeProvider implements IBytecodeProvider {

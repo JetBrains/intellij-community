@@ -64,7 +64,6 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.Semaphore;
-import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -82,6 +81,7 @@ import java.beans.PropertyChangeListener;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author peter
@@ -127,9 +127,8 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   private volatile int myCount;
   private volatile boolean myHasPsiElements;
   private boolean myLookupUpdated;
-  private final ConcurrentHashMap<LookupElement, CompletionSorterImpl> myItemSorters =
-    new ConcurrentHashMap<LookupElement, CompletionSorterImpl>(
-      ContainerUtil.<LookupElement>identityStrategy());
+  private final ConcurrentMap<LookupElement, CompletionSorterImpl> myItemSorters =
+    ContainerUtil.newConcurrentMap(ContainerUtil.<LookupElement>identityStrategy());
   private final PropertyChangeListener myLookupManagerListener;
   private final Queue<Runnable> myAdvertiserChanges = new ConcurrentLinkedQueue<Runnable>();
   private final int myStartCaret;

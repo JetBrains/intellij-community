@@ -532,6 +532,8 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
   public void changeVariable(PyDebugValue variable, String value) throws PyDebuggerException {
     if (myClient != null) {
       try {
+        // NOTE: The actual change is being scheduled in the exec_queue in main thread
+        // This method is async now
         Object ret = myClient.execute(CHANGE_VARIABLE, new Object[]{variable.getEvaluationExpression(), value});
         checkError(ret);
       }
@@ -548,11 +550,18 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
   }
 
   @Override
-  public Object[][] getArrayItems(PyDebugValue var, int rowOffset, int colOffset, int rows, int cols, String format)
+  public ArrayChunk getArrayItems(PyDebugValue var, int rowOffset, int colOffset, int rows, int cols, String format)
     throws PyDebuggerException {
     if (myClient != null) {
       try {
-        Object ret = myClient.execute(GET_ARRAY, new Object[]{var.getName(), rowOffset, colOffset, rows, cols, format});
+        String fullName = var.getName();
+        PyDebugValue child = var;
+        while (child.getParent() != null) {
+          child = child.getParent();
+          fullName = child.getName() + "\t" + fullName;
+        }
+
+        Object ret = myClient.execute(GET_ARRAY, new Object[]{fullName, rowOffset, colOffset, rows, cols, format});
         if (ret instanceof String) {
           return ProtocolParser.parseArrayValues((String)ret, this);
         }

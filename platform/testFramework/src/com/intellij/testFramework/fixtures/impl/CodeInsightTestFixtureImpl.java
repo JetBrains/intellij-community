@@ -180,7 +180,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Override
   public VirtualFile copyFileToProject(@NotNull @NonNls final String sourceFilePath, @NotNull @NonNls final String targetPath) {
     final String testDataPath = getTestDataPath();
-    assert testDataPath != null : "test data path not specified";
 
     File fromFile = new File(testDataPath + "/" + sourceFilePath);
     if (!fromFile.exists()) {
@@ -236,7 +235,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Override
   public VirtualFile copyDirectoryToProject(@NotNull @NonNls final String sourceFilePath, @NotNull @NonNls final String targetPath) {
     final String testDataPath = getTestDataPath();
-    assert testDataPath != null : "test data path not specified";
 
     final File fromFile = new File(testDataPath + "/" + sourceFilePath);
     if (myTempDirFixture instanceof LightTempDirTestFixtureImpl) {
@@ -1276,7 +1274,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
       @Override
       public boolean isToolEnabled(HighlightDisplayKey key, PsiElement element) {
-        return key != null && key.toString() != null && myAvailableTools.containsKey(key.toString()) && !myDisabledInspections.contains(key.toString());
+        return key != null && myAvailableTools.containsKey(key.toString()) && !myDisabledInspections.contains(key.toString());
       }
 
       @Override

@@ -55,20 +55,20 @@ public class ApplicationUtil {
    * Note that the process may continue to run in background indefinitely - so <b>avoid using this method unless absolutely needed</b>.
    */
   public static <T> T runWithCheckCanceled(@NotNull final Callable<T> callable, @NotNull final ProgressIndicator indicator) throws Exception {
+    final Ref<T> result = Ref.create();
     final Ref<Throwable> error = Ref.create();
 
-    Future<T> future = ApplicationManager.getApplication().executeOnPooledThread(new Callable<T>() {
+    Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       @Override
-      public T call() throws Exception {
-        return ProgressManager.getInstance().runProcess(new Computable<T>() {
+      public void run() {
+        ProgressManager.getInstance().executeProcessUnderProgress(new Runnable() {
           @Override
-          public T compute() {
+          public void run() {
             try {
-              return callable.call();
+              result.set(callable.call());
             }
             catch (Throwable t) {
               error.set(t);
-              return null;
             }
           }
         }, indicator);
@@ -85,9 +85,9 @@ public class ApplicationUtil {
       }
 
       try {
-        T result = future.get(200, TimeUnit.MILLISECONDS);
+        future.get(200, TimeUnit.MILLISECONDS);
         ExceptionUtil.rethrowAll(error.get());
-        return result;
+        return result.get();
       }
       catch (TimeoutException ignored) { }
     }

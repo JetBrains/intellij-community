@@ -179,9 +179,11 @@ public class AddImportHelper {
    * @param file   where to operate
    * @param name   which to import (qualified is OK)
    * @param asName optional name for 'as' clause
+   * @param anchor place where the imported name was used
    * @return whether import statement was actually added
    */
-  public static boolean addImportStatement(PsiFile file, String name, @Nullable String asName, ImportPriority priority) {
+  public static boolean addImportStatement(PsiFile file, String name, @Nullable String asName, ImportPriority priority,
+                                           @Nullable PsiElement anchor) {
     if (!(file instanceof PyFile)) {
       return false;
     }
@@ -198,8 +200,11 @@ public class AddImportHelper {
     final PyElementGenerator generator = PyElementGenerator.getInstance(file.getProject());
     final LanguageLevel languageLevel = LanguageLevel.forElement(file);
     final PyImportStatement importNodeToInsert = generator.createImportStatement(languageLevel, name, asName);
+    final PyImportStatementBase importStatement = PsiTreeUtil.getParentOfType(anchor, PyImportStatementBase.class, false);
+    final PsiElement insertParent = importStatement != null && importStatement.getContainingFile() == file ?
+                                    importStatement.getParent() : file;
     try {
-      file.addBefore(importNodeToInsert, getInsertPosition(file, name, priority));
+      insertParent.addBefore(importNodeToInsert, getInsertPosition(insertParent, name, priority));
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
@@ -258,7 +263,7 @@ public class AddImportHelper {
         continue;
       }
       final QualifiedName qName = existingImport.getImportSourceQName();
-      if (qName != null && qName.toString().equals(path)) {
+      if (qName != null && qName.toString().equals(path) && existingImport.getRelativeLevel() == 0) {
         for (PyImportElement el : existingImport.getImportElements()) {
           if (name.equals(el.getVisibleName())) {
             return false;
@@ -283,12 +288,12 @@ public class AddImportHelper {
     if (qName == null) return;
     String path = qName.toString();
     if (target instanceof PsiFileSystemItem && qName.getComponentCount() == 1) {
-      addImportStatement(file, path, null, priority);
+      addImportStatement(file, path, null, priority, element);
     }
     else {
       final QualifiedName toImportQName = QualifiedNameFinder.findCanonicalImportPath(toImport, element);
       if (useQualified) {
-        addImportStatement(file, path, null, priority);
+        addImportStatement(file, path, null, priority, element);
         final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(file.getProject());
         final String targetName = PyUtil.getElementNameWithoutExtension(target);
         element.replace(elementGenerator.createExpressionFromText(LanguageLevel.forElement(target), toImportQName + "." + targetName));

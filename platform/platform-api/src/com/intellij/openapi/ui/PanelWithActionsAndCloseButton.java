@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,9 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerAdapter;
 import com.intellij.ui.content.ContentManagerEvent;
+import com.intellij.ui.tabs.impl.JBTabsImpl;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -110,6 +111,18 @@ public abstract class PanelWithActionsAndCloseButton extends JPanel implements D
         Content content = myContentManager.getContent(PanelWithActionsAndCloseButton.this);
         if (content != null) {
           myContentManager.removeContent(content, true);
+        } else {
+          final JBTabsImpl tabs = UIUtil.getParentOfType(JBTabsImpl.class, PanelWithActionsAndCloseButton.this);
+          if (tabs != null && tabs.getSelectedInfo() != null) {
+            tabs.removeTab(tabs.getSelectedInfo());
+            if (tabs.getTabCount() == 0) {
+              Content tabbedContent = myContentManager.getContent(tabs);
+              if (tabbedContent == null) tabbedContent = myContentManager.getContent(tabs.getComponent()); // one more try for wrappers
+              if (tabbedContent != null) {
+                myContentManager.removeContent(tabbedContent, true);
+              }
+            }
+          }
         }
       }
     }

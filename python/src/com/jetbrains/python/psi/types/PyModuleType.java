@@ -29,7 +29,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
+import com.intellij.util.Function;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyCustomMember;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
@@ -331,7 +333,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
         result.addAll(getSubModuleVariants(myModule.getContainingDirectory(), location, namesAlready));
       }
       else {
-        addImportedSubmodules(location, namesAlready, result);
+        result.addAll(collectImportedSubmodulesAsLookupElements(myModule, location, namesAlready));
       }
     }
     return result;
@@ -355,27 +357,62 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
     return processor;
   }
 
-  private void addImportedSubmodules(PsiElement location, Set<String> existingNames, List<LookupElement> result) {
-    PsiFile file = location.getContainingFile();
-    if (file instanceof PyFile) {
-      PyFile pyFile = (PyFile)file;
-      PsiElement moduleBase = PyUtil.isPackage(myModule) ? myModule.getContainingDirectory() : myModule;
-      for (PyImportElement importElement : pyFile.getImportTargets()) {
-        PsiElement target = PyUtil.turnInitIntoDir(importElement.resolve());
-        if (target != null && PsiTreeUtil.isAncestor(moduleBase, target, true)) {
-          LookupElement element = null;
-          if (target instanceof PsiFileSystemItem) {
-            element = buildFileLookupElement((PsiFileSystemItem) target, existingNames);
-          }
-          else if (target instanceof PsiNamedElement) {
-            element = LookupElementBuilder.createWithIcon((PsiNamedElement)target);
-          }
-          if (element != null) {
-            result.add(element);
-          }
-        }
-      }
+  @NotNull
+  public static List<LookupElement> collectImportedSubmodulesAsLookupElements(@NotNull PsiFileSystemItem pyPackage,
+                                                                              @NotNull PsiElement location,
+                                                                              @Nullable final Set<String> existingNames) {
+
+    return ContainerUtil.mapNotNull(collectImportedSubmodules(pyPackage, location),
+                                    new Function<PsiElement, LookupElement>() {
+                                      @Override
+                                      public LookupElement fun(PsiElement element) {
+                                        if (element instanceof PsiFileSystemItem) {
+                                          return buildFileLookupElement((PsiFileSystemItem)element, existingNames);
+                                        }
+                                        else if (element instanceof PsiNamedElement) {
+                                          return LookupElementBuilder.createWithIcon((PsiNamedElement)element);
+                                        }
+                                        return null;
+                                      }
+                                    });
+  }
+
+  @NotNull
+  public static List<PsiElement> collectImportedSubmodules(@NotNull PsiFileSystemItem pyPackage, @NotNull PsiElement location) {
+    final PsiElement parentAnchor;
+    if (pyPackage instanceof PyFile && PyUtil.isPackage(((PyFile)pyPackage))) {
+      parentAnchor = ((PyFile)pyPackage).getContainingDirectory();
     }
+    else if (pyPackage instanceof PsiDirectory && PyUtil.isPackage(((PsiDirectory)pyPackage), location)) {
+      parentAnchor = pyPackage;
+    }
+    else {
+      throw new IllegalArgumentException("Package argument should be either standard Python package or namespace package");
+    }
+
+    final ScopeOwner scopeOwner = ScopeUtil.getScopeOwner(location);
+    if (scopeOwner == null) {
+      return Collections.emptyList();
+    }
+    final List<PsiElement> result = new ArrayList<PsiElement>();
+    nextImportElement:
+    for (PyImportElement importElement : getVisibleImports(scopeOwner)) {
+      PsiElement resolvedChild = PyUtil.turnInitIntoDir(importElement.resolve());
+      if (resolvedChild == null || !PsiTreeUtil.isAncestor(parentAnchor, resolvedChild, true)) {
+        continue;
+      }
+      QualifiedName importedQName = importElement.getImportedQName();
+      // Looking for strict child of parentAncestor
+      while (resolvedChild != null && resolvedChild.getParent() != parentAnchor) {
+        if (importedQName == null || importedQName.getComponentCount() <= 1) {
+          continue nextImportElement;
+        }
+        importedQName = importedQName.removeTail(1);
+        resolvedChild = PyUtil.turnInitIntoDir(ResolveImportUtil.resolveImportElement(importElement, importedQName));
+      }
+      ContainerUtil.addIfNotNull(result, resolvedChild);
+    }
+    return result;
   }
 
   public static List<LookupElement> getSubModuleVariants(final PsiDirectory directory,

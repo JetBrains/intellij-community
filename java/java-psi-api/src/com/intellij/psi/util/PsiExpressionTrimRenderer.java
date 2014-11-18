@@ -150,6 +150,15 @@ public class PsiExpressionTrimRenderer extends JavaRecursiveElementWalkingVisito
     expr.getArgumentList().accept(this);
   }
 
+  @Override
+  public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
+    final PsiElement qualifier = expression.getQualifier();
+    if (qualifier != null) {
+      qualifier.accept(this);
+    }
+    myBuf.append("::");
+    myBuf.append(expression.getReferenceName());
+  }
 
   @Override
   public void visitArrayInitializerExpression(final PsiArrayInitializerExpression expression) {

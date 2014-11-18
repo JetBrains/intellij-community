@@ -554,7 +554,7 @@ public class PassExecutorService implements Disposable {
     });
   }
 
-  private static final ConcurrentHashMap<Thread, Integer> threads = new ConcurrentHashMap<Thread, Integer>();
+  private static final ConcurrentMap<Thread, Integer> threads = new ConcurrentHashMap<Thread, Integer>();
   private static int getThreadNum() {
     return ConcurrencyUtil.cacheOrGet(threads, Thread.currentThread(), threads.size());
   }

@@ -30,12 +30,11 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.util.PatternUtil;
-import com.intellij.util.containers.ConcurrentHashSet;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
@@ -290,15 +289,16 @@ public class FileTypesTest extends PlatformTestCase {
     assertNotNull(project);
     assertFalse(project.equals(PlainTextFileType.INSTANCE));
 
-    final Set<VirtualFile> detectorCalled = new ConcurrentHashSet<VirtualFile>();
+    final Set<VirtualFile> detectorCalled = ContainerUtil.newConcurrentSet();
     FileTypeRegistry.FileTypeDetector detector = new FileTypeRegistry.FileTypeDetector() {
       @Nullable
       @Override
       public FileType detect(@NotNull VirtualFile file, @NotNull ByteSequence firstBytes, @Nullable CharSequence firstCharsIfText) {
         detectorCalled.add(file);
         String text = firstCharsIfText.toString();
-        if (text.startsWith("TYPE:")) return FileTypeRegistry.getInstance().findFileTypeByName(StringUtil.trimStart(text, "TYPE:"));
-        return null;
+        FileType result = text.startsWith("TYPE:") ? FileTypeRegistry.getInstance().findFileTypeByName(StringUtil.trimStart(text, "TYPE:")) : null;
+        System.out.println("T: my detector run for "+file.getName()+"; result: "+(result == null ? null : result.getName()));
+        return result;
       }
 
       @Override
@@ -312,35 +312,29 @@ public class FileTypesTest extends PlatformTestCase {
       File f = new File(d, "xx.asfdasdfas");
       FileUtil.writeToFile(f, "akjdhfksdjgf");
       VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f);
-      ((NewVirtualFile)vFile).markDirty();
-      vFile.refresh(false, false);
-      UIUtil.dispatchAllInvocationEvents();
-      myFileTypeManager.drainReDetectQueue();
-      UIUtil.dispatchAllInvocationEvents();
+      ensureRedetected(vFile, detectorCalled);
       assertTrue(vFile.getFileType().toString(), vFile.getFileType() instanceof PlainTextFileType);
-      assertTrue(detectorCalled.contains(vFile));
-      detectorCalled.clear();
 
       VfsUtil.saveText(vFile, "TYPE:IDEA_MODULE");
-      PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-      UIUtil.dispatchAllInvocationEvents();
-      myFileTypeManager.drainReDetectQueue();
-      UIUtil.dispatchAllInvocationEvents();
-      assertTrue(detectorCalled.contains(vFile));
-      detectorCalled.clear();
+      ensureRedetected(vFile, detectorCalled);
       assertTrue(vFile.getFileType().toString(), vFile.getFileType() instanceof ModuleFileType);
 
       VfsUtil.saveText(vFile, "TYPE:IDEA_PROJECT");
-      PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-      UIUtil.dispatchAllInvocationEvents();
-      myFileTypeManager.drainReDetectQueue();
-      UIUtil.dispatchAllInvocationEvents();
-      assertTrue(detectorCalled.contains(vFile));
-      detectorCalled.clear();
+      ensureRedetected(vFile, detectorCalled);
       assertTrue(vFile.getFileType().toString(), vFile.getFileType() instanceof ProjectFileType);
     }
     finally {
       Extensions.getRootArea().getExtensionPoint(FileTypeRegistry.FileTypeDetector.EP_NAME).unregisterExtension(detector);
     }
+  }
+
+  private void ensureRedetected(VirtualFile vFile, Set<VirtualFile> detectorCalled) {
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    UIUtil.dispatchAllInvocationEvents();
+    myFileTypeManager.drainReDetectQueue();
+    UIUtil.dispatchAllInvocationEvents();
+    vFile.getFileType();
+    assertTrue(detectorCalled.contains(vFile));
+    detectorCalled.clear();
   }
 }

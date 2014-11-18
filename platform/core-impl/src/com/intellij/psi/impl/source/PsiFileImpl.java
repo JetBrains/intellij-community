@@ -759,17 +759,17 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   @Override
   public PsiElement getFirstChild() {
-    return SharedImplUtil.getFirstChild(calcTreeElement());
+    return SharedImplUtil.getFirstChild(getNode());
   }
 
   @Override
   public PsiElement getLastChild() {
-    return SharedImplUtil.getLastChild(calcTreeElement());
+    return SharedImplUtil.getLastChild(getNode());
   }
 
   @Override
   public void acceptChildren(@NotNull PsiElementVisitor visitor) {
-    SharedImplUtil.acceptChildren(visitor, calcTreeElement());
+    SharedImplUtil.acceptChildren(visitor, getNode());
   }
 
   @Override

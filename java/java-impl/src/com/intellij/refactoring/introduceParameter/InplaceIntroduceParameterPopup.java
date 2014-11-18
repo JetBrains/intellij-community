@@ -174,7 +174,7 @@ public class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroduce
 
   @Override
   protected boolean startsOnTheSameElement(RefactoringActionHandler handler, PsiElement element) {
-    return super.startsOnTheSameElement(handler, element) && handler instanceof IntroduceParameterHandler;
+    return handler instanceof IntroduceParameterHandler && super.startsOnTheSameElement(handler, element);
   }
 
 

@@ -306,10 +306,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
 
   @Override
   public void visitNameValuePair(PsiNameValuePair pair) {
-    final PsiIdentifier nameIdentifier = pair.getNameIdentifier();
-
     final PsiNameValuePair elementNameValuePair = (PsiNameValuePair)myMatchingVisitor.getElement();
-    final PsiIdentifier otherIdentifier = elementNameValuePair.getNameIdentifier();
 
     final PsiAnnotationMemberValue annotationInitializer = pair.getValue();
     if (annotationInitializer != null) {
@@ -323,16 +320,20 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
                                   ));
     }
     if (myMatchingVisitor.getResult()) {
-      final MatchingHandler handler = myMatchingVisitor.getMatchContext().getPattern().getHandler(nameIdentifier);
-
-      if (handler instanceof SubstitutionHandler) {
-        myMatchingVisitor.setResult(((SubstitutionHandler)handler).handle(otherIdentifier, myMatchingVisitor.getMatchContext()));
-      }
-      else if (nameIdentifier != null) {
-        myMatchingVisitor.setResult(myMatchingVisitor.match(nameIdentifier, otherIdentifier));
+      final PsiIdentifier nameIdentifier = pair.getNameIdentifier();
+      final PsiIdentifier otherIdentifier = elementNameValuePair.getNameIdentifier();
+      if (nameIdentifier == null) {
+        myMatchingVisitor.setResult(otherIdentifier == null ||
+                                    otherIdentifier.getText().equals(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME));
       }
       else {
-        myMatchingVisitor.setResult(otherIdentifier == null || otherIdentifier.getText().equals("value"));
+        final MatchingHandler handler = myMatchingVisitor.getMatchContext().getPattern().getHandler(nameIdentifier);
+        if (handler instanceof SubstitutionHandler) {
+          myMatchingVisitor.setResult(((SubstitutionHandler)handler).handle(otherIdentifier, myMatchingVisitor.getMatchContext()));
+        }
+        else {
+          myMatchingVisitor.setResult(myMatchingVisitor.match(nameIdentifier, otherIdentifier));
+        }
       }
     }
   }
@@ -1130,18 +1131,23 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
   public void visitLiteralExpression(final PsiLiteralExpression const1) {
     final PsiLiteralExpression const2 = (PsiLiteralExpression)myMatchingVisitor.getElement();
 
-    MatchingHandler handler = (MatchingHandler)const1.getUserData(CompiledPattern.HANDLER_KEY);
-
+    final MatchingHandler handler = (MatchingHandler)const1.getUserData(CompiledPattern.HANDLER_KEY);
     if (handler instanceof SubstitutionHandler) {
-      int offset = 0;
-      int length = const2.getTextLength();
-      final String text = const2.getText();
-
-      if (length > 2 && text.charAt(0) == '"' && text.charAt(length - 1) == '"') {
-        length--;
-        offset++;
+      final PsiType type1 = const1.getType();
+      if (type1 != null && !type1.equals(const2.getType())) {
+        myMatchingVisitor.setResult(false);
       }
-      myMatchingVisitor.setResult(((SubstitutionHandler)handler).handle(const2, offset, length, myMatchingVisitor.getMatchContext()));
+      else {
+        int offset = 0;
+        int length = const2.getTextLength();
+        final String text = const2.getText();
+
+        if (length > 2 && text.charAt(0) == '"' && text.charAt(length - 1) == '"') {
+          length--;
+          offset++;
+        }
+        myMatchingVisitor.setResult(((SubstitutionHandler)handler).handle(const2, offset, length, myMatchingVisitor.getMatchContext()));
+      }
     }
     else if (handler != null) {
       myMatchingVisitor.setResult(handler.match(const1, const2, myMatchingVisitor.getMatchContext()));
@@ -1412,8 +1418,13 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
   @Override
   public void visitInstanceOfExpression(final PsiInstanceOfExpression instanceOf) {
     final PsiInstanceOfExpression instanceOf2 = (PsiInstanceOfExpression)myMatchingVisitor.getElement();
-    myMatchingVisitor.setResult(myMatchingVisitor.match(instanceOf.getOperand(), instanceOf2.getOperand()) &&
-                                matchType(instanceOf.getCheckType(), instanceOf2.getCheckType()));
+    myMatchingVisitor.setResult(myMatchingVisitor.match(instanceOf.getOperand(), instanceOf2.getOperand()));
+    if (myMatchingVisitor.getResult()) {
+      final PsiTypeElement checkType = instanceOf.getCheckType();
+      if (checkType != null) {
+        myMatchingVisitor.setResult(matchType(checkType, instanceOf2.getCheckType()));
+      }
+    }
   }
 
   @Override

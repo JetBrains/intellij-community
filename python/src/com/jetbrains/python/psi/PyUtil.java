@@ -38,7 +38,6 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -77,6 +76,7 @@ import com.jetbrains.python.refactoring.classes.PyDependenciesComparator;
 import com.jetbrains.python.refactoring.classes.extractSuperclass.PyExtractSuperclassHelper;
 import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
 import com.jetbrains.python.sdk.PythonSdkType;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -93,8 +93,6 @@ import static com.jetbrains.python.psi.PyFunction.Modifier.CLASSMETHOD;
 import static com.jetbrains.python.psi.PyFunction.Modifier.STATICMETHOD;
 
 public class PyUtil {
-
-  private static final Object[] EMPTY_OBJECTS = new Object[0];
 
   private PyUtil() {
   }
@@ -992,8 +990,9 @@ public class PyUtil {
     } // don't touch non-dirs
   }
 
+  @Contract("null -> null; !null -> !null")
   @Nullable
-  public static PsiElement turnInitIntoDir(PsiElement target) {
+  public static PsiElement turnInitIntoDir(@Nullable PsiElement target) {
     if (target instanceof PyFile && isPackage((PsiFile)target)) {
       return ((PsiFile)target).getContainingDirectory();
     }
@@ -1228,23 +1227,6 @@ public class PyUtil {
       if (what.equals(s)) return true;
     }
     return false;
-  }
-
-  public static class UnderscoreFilter implements Condition<String> {
-    private int myAllowed; // how many starting underscores is allowed: 0 is none, 1 is only one, 2 is two and more.
-
-    public UnderscoreFilter(int allowed) {
-      myAllowed = allowed;
-    }
-
-    public boolean value(String name) {
-      if (name == null) return false;
-      if (name.length() < 1) return false; // empty strings make no sense
-      int have_underscores = 0;
-      if (name.charAt(0) == '_') have_underscores = 1;
-      if (have_underscores != 0 && name.length() > 1 && name.charAt(1) == '_') have_underscores = 2;
-      return myAllowed >= have_underscores;
-    }
   }
 
   @Nullable

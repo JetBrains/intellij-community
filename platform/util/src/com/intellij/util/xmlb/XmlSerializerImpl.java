@@ -116,7 +116,12 @@ class XmlSerializerImpl {
     if (binding == null) {
       binding = _getNonCachedClassBinding(aClass, accessor, originalType);
       map.put(key, binding);
-      binding.init();
+      try {
+        binding.init();
+      } catch (XmlSerializationException e) {
+        map.remove(key);
+        throw e;
+      }
     }
     return binding;
   }

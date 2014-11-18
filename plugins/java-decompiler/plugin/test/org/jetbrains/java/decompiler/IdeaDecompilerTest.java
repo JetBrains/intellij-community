@@ -177,7 +177,7 @@ public class IdeaDecompilerTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testCancellation() {
-    VirtualFile file = getTestFile(PlatformTestUtil.getRtJarPath() + "!/javax/swing/JTable.class");
+    final VirtualFile file = getTestFile(PlatformTestUtil.getRtJarPath() + "!/javax/swing/JTable.class");
 
     final IdeaDecompiler decompiler = (IdeaDecompiler)ClassFileDecompilers.find(file);
     assertNotNull(decompiler);
@@ -186,7 +186,7 @@ public class IdeaDecompilerTest extends LightCodeInsightFixtureTestCase {
     alarm.addRequest(new Runnable() {
       @Override
       public void run() {
-        ProgressIndicator progress = decompiler.getProgress();
+        ProgressIndicator progress = decompiler.getProgress(file);
         if (progress != null) {
           progress.cancel();
         }

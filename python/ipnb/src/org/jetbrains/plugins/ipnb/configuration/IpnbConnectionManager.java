@@ -22,6 +22,8 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.PythonHelpersLocator;
+import com.jetbrains.python.packaging.PyPackage;
+import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,20 +64,25 @@ public final class IpnbConnectionManager implements ProjectComponent {
     final String path = virtualFile.getPath();
     if (!myKernels.containsKey(path)) {
       String url = IpnbSettings.getInstance(myProject).getURL();
-      if (url == null) {
+      if (StringUtil.isEmptyOrSpaces(url)) {
         url = DEFAULT_URL;
       }
       if (!isAvailable(url)) {
         url = showDialogUrl(url);
         if (url == null) return;
-        startIpythonServer(url, fileEditor);
+        final boolean serverStarted = startIpythonServer(url, fileEditor);
         if (myProcessHandler != null) {
           waitForIpythonServer();
-          startConnection(codePanel, path, url);
+          boolean connectionStarted = startConnection(codePanel, path, url);
+          if (connectionStarted && serverStarted) {
+            final Notification notification = new Notification("IPythonNotebook", "", "<html>IPython notebook started at <a href=\"" + url +
+                                                                                      "\">" + url + "</a></html>", NotificationType.INFORMATION, NotificationListener.URL_OPENING_LISTENER);
+            notification.notify(myProject);
+            IpnbSettings.getInstance(myProject).setURL(url);
+          }
           return;
         }
         else {
-          showWarning(fileEditor, "Could not start IPython Notebook");
           return;
         }
       }
@@ -121,28 +128,29 @@ public final class IpnbConnectionManager implements ProjectComponent {
     }
   }
 
-  private static String showDialogUrl(@NotNull final String url) {
-    return Messages.showInputDialog("Ipython Notebook URL:", "Start Ipython Notebook", null, url,
-                                   new InputValidator() {
-                                     @Override
-                                     public boolean checkInput(String inputString) {
-                                       try {
-                                         new URL(inputString);
-                                       }
-                                       catch (MalformedURLException e) {
-                                         return false;
-                                       }
-                                       return !inputString.isEmpty();
-                                     }
+  private static String showDialogUrl(@NotNull final String initialUrl) {
+    final String url = Messages.showInputDialog("IPython Notebook URL:", "Start IPython Notebook", null, initialUrl,
+                                              new InputValidator() {
+                                                @Override
+                                                public boolean checkInput(String inputString) {
+                                                  try {
+                                                    new URL(inputString);
+                                                  }
+                                                  catch (MalformedURLException e) {
+                                                    return false;
+                                                  }
+                                                  return !inputString.isEmpty();
+                                                }
 
-                                     @Override
-                                     public boolean canClose(String inputString) {
-                                       return true;
-                                     }
-                                   });
+                                                @Override
+                                                public boolean canClose(String inputString) {
+                                                  return true;
+                                                }
+                                              });
+    return url == null ? null : StringUtil.trimEnd(url, "/");
   }
 
-  private void startConnection(@NotNull final IpnbCodePanel codePanel, @NotNull final String path, @NotNull final String url) {
+  private boolean startConnection(@NotNull final IpnbCodePanel codePanel, @NotNull final String path, @NotNull final String url) {
     try {
       final IpnbConnection connection = new IpnbConnection(new URI(url), new IpnbConnectionListenerBase() {
         @Override
@@ -166,10 +174,14 @@ public final class IpnbConnectionManager implements ProjectComponent {
     }
     catch (URISyntaxException e) {
       showWarning(codePanel.getFileEditor(), "Please, check IPython Notebook URL in Settings->IPython Notebook");
+      return false;
     }
     catch (IOException e) {
       showWarning(codePanel.getFileEditor(), "IPython Notebook connection refused");
+      LOG.warn("IPython Notebook connection refused: " + e.getMessage());
+      return false;
     }
+    return true;
   }
 
   private static void showWarning(@NotNull final IpnbFileEditor fileEditor, @NotNull final String message) {
@@ -187,6 +199,15 @@ public final class IpnbConnectionManager implements ProjectComponent {
       showWarning(fileEditor, "Please check Python Interpreter in Settings->Python Interpreter");
       return false;
     }
+    try {
+      final PyPackage ipythonPackage = PyPackageManager.getInstance(sdk).findPackage("ipython", false);
+      if (ipythonPackage == null) {
+        showWarning(fileEditor, "Please check ipython installed in Python Interpreter in Settings->Python Interpreter");
+        return false;
+      }
+    }
+    catch (ExecutionException ignored) {
+    }
     final Map<String, String> env = ImmutableMap.of("PYCHARM_EP_DIST", "ipython", "PYCHARM_EP_NAME", "ipython");
     try {
       final String ipython = PythonHelpersLocator.getHelperPath("pycharm/pycharm_load_entry_point.py");
@@ -195,10 +216,6 @@ public final class IpnbConnectionManager implements ProjectComponent {
 
       myProcessHandler = new KillableColoredProcessHandler(commandLine);
 
-      IpnbSettings.getInstance(myProject).setURL(url);
-      final Notification notification = new Notification("IpythonNotebook", "", "<html>Ipython notebook started at <a href=\"" + url +
-        "\">" + url + "</a></html>", NotificationType.INFORMATION, NotificationListener.URL_OPENING_LISTENER);
-      notification.notify(myProject);
       return true;
     }
     catch (ExecutionException e) {

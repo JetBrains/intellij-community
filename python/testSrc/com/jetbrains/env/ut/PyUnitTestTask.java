@@ -23,9 +23,13 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.util.Processor;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebuggerTestUtil;
 import com.jetbrains.env.PyExecutionFixtureTestTask;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.flavors.JythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
@@ -34,6 +38,8 @@ import com.jetbrains.python.testing.PythonTestConfigurationType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
+
+import java.io.File;
 
 /**
  * Tasks to run unit test configurations.
@@ -71,6 +77,22 @@ public abstract class PyUnitTestTask extends PyExecutionFixtureTestTask {
     setWorkingFolder(getTestDataPath() + workingFolder);
     setScriptName(scriptName);
     setScriptParameters(scriptParameters);
+    deletePycFiles(new File(getTestDataPath() + workingFolder));
+  }
+
+  private static void deletePycFiles(@NotNull final File directory) {
+    FileUtil.processFilesRecursively(directory, new Processor<File>() {
+      @Override
+      public boolean process(File file) {
+        if (file.getParentFile().getName().equals(PyNames.PYCACHE) ||
+            FileUtilRt.extensionEquals(file.getName(), "pyc") ||
+            FileUtilRt.extensionEquals(file.getName(), "pyo") ||
+            file.getName().endsWith("$py.class")) {
+          FileUtil.delete(file);
+        }
+        return true;
+      }
+    });
   }
 
   public PyUnitTestTask(String workingFolder, String scriptName) {

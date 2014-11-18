@@ -16,7 +16,6 @@
 
 package com.intellij.util.containers;
 
-import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.concurrency.AtomicFieldUpdater;
 import gnu.trove.TObjectHashingStrategy;
 import jsr166e.ForkJoinPool;
@@ -220,7 +219,6 @@ import java.util.concurrent.locks.LockSupport;
 // IJ specific:
 // copied from JDK1.8 ConcurrentHashMap except:
 // added hashing strategy argument
-// added cacheOrGet convenience method
 // Null keys are NOT allowed
 // Null values are NOT allowed
 // NOT serializable
@@ -3824,13 +3822,6 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
   @Override
   public boolean equals(final K o1, final K o2) {
     return o1.equals(o2);
-  }
-
-  /**
-   * @return value if there is no entry in the map, or corresponding value if entry already exists
-   */
-  public V cacheOrGet(final K key, final V value) {
-    return ConcurrencyUtil.cacheOrGet(this, key, value);
   }
 
   private int hash(K key) {

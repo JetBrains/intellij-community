@@ -655,6 +655,15 @@ public class Mock {
     }
 
     @Override
+    public boolean isMaximized(@NotNull ToolWindow wnd) {
+      return false;
+    }
+
+    @Override
+    public void setMaximized(@NotNull ToolWindow wnd, boolean maximized) {
+    }
+
+    @Override
     public void notifyByBalloon(@NotNull final String toolWindowId, @NotNull final MessageType type, @NotNull final String htmlBody) {
     }
   }

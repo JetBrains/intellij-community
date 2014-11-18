@@ -25,9 +25,13 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.util.QualifiedName;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * An immutable holder of information for one auto-import candidate.
@@ -131,15 +135,15 @@ class ImportCandidateHolder implements Comparable<ImportCandidateHolder> {
       sb.append(((PyFunction)myImportable).getParameterList().getPresentableText(false));
     }
     else if (myImportable instanceof PyClass) {
-      final PyClass[] supers = ((PyClass)myImportable).getSuperClasses();
-      if (supers.length > 0) {
+      final List<String> supers = ContainerUtil.mapNotNull(((PyClass)myImportable).getSuperClasses(), new Function<PyClass, String>() {
+          @Override
+          public String fun(PyClass cls) {
+            return PyUtil.isObjectClass(cls) ? null : cls.getName();
+          }
+        });
+      if (!supers.isEmpty()) {
         sb.append("(");
-        // ", ".join(x.getName() for x in getSuperClasses())
-        final String[] superNames = new String[supers.length];
-        for (int i = 0; i < supers.length; i += 1) {
-          superNames[i] = supers[i].getName();
-        }
-        sb.append(StringUtil.join(superNames, ", "));
+        StringUtil.join(supers, ", ", sb);
         sb.append(")");
       }
     }

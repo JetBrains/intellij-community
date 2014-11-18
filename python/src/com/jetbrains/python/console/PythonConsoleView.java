@@ -188,14 +188,13 @@ public class PythonConsoleView extends JPanel implements LanguageConsoleView, Ob
 
   private void showConsole(@NotNull Runnable runnable) {
     PythonConsoleToolWindow toolWindow = PythonConsoleToolWindow.getInstance(myProject);
-    if (toolWindow != null && !ApplicationManager.getApplication().isUnitTestMode()) {
+    if (toolWindow != null && !toolWindow.getToolWindow().isVisible() && !ApplicationManager.getApplication().isUnitTestMode()) {
       toolWindow.getToolWindow().activate(runnable);
     }
     else {
       runnable.run();
     }
   }
-
 
   private void doExecute(String code) {
     String codeFragment = PyConsoleIndentUtil.normalize(code, myExecuteActionHandler.getCurrentIndentSize());

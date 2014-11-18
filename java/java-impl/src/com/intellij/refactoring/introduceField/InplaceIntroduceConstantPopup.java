@@ -230,7 +230,7 @@ public class InplaceIntroduceConstantPopup extends AbstractInplaceIntroduceField
 
   @Override
   protected boolean startsOnTheSameElement(RefactoringActionHandler handler, PsiElement element) {
-    return super.startsOnTheSameElement(handler, element) && handler instanceof IntroduceConstantHandler;
+    return handler instanceof IntroduceConstantHandler && super.startsOnTheSameElement(handler, element);
   }
 
   @Override

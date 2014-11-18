@@ -36,7 +36,6 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.ConcurrentHashSet;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -89,7 +88,7 @@ public class GroovyConstructorUsagesSearcher extends QueryExecutorBase<PsiRefere
     SearchScope onlyGroovy = GroovyScopeUtil.restrictScopeToGroovyFiles(searchScope, GroovyScopeUtil.getEffectiveScope(constructor));
     Set<PsiClass> processed = collector.getSearchSession().getUserData(LITERALLY_CONSTRUCTED_CLASSES);
     if (processed == null) {
-      collector.getSearchSession().putUserData(LITERALLY_CONSTRUCTED_CLASSES, processed = new ConcurrentHashSet<PsiClass>());
+      collector.getSearchSession().putUserData(LITERALLY_CONSTRUCTED_CLASSES, processed = ContainerUtil.newConcurrentSet());
     }
     if (!processed.add(clazz)) return;
 
@@ -143,7 +142,7 @@ public class GroovyConstructorUsagesSearcher extends QueryExecutorBase<PsiRefere
                                               final boolean searchGppCalls,
                                               final Processor<GrNewExpression> newExpressionProcessor,
                                               final LiteralConstructorSearcher literalProcessor) {
-    final Set<PsiAnchor> processedMethods = new ConcurrentHashSet<PsiAnchor>();
+    final Set<PsiAnchor> processedMethods = ContainerUtil.newConcurrentSet();
 
     ReferencesSearch.searchOptimized(clazz, scope, true, collector, true, new PairProcessor<PsiReference, SearchRequestCollector>() {
       @Override

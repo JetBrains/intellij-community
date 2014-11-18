@@ -55,11 +55,18 @@ public class CompoundPositionManager extends PositionManagerEx {
     myPositionManagers.add(0, manager);
   }
 
+  private Cache<Location, SourcePosition> mySourcePositionCache = new Cache<Location, SourcePosition>();
+
   @Override
   public SourcePosition getSourcePosition(Location location) {
+    SourcePosition res = mySourcePositionCache.get(location);
+    if (res != null) return res;
+
     for (PositionManager positionManager : myPositionManagers) {
       try {
-        return positionManager.getSourcePosition(location);
+        res = positionManager.getSourcePosition(location);
+        mySourcePositionCache.put(location, res);
+        return res;
       }
       catch (NoDataException ignored) {
       }
@@ -206,5 +213,22 @@ public class CompoundPositionManager extends PositionManagerEx {
       }
     }
     return ThreeState.UNSURE;
+  }
+
+  private static class Cache<K,V> {
+    private K myKey;
+    private V myValue;
+
+    public V get(@NotNull K key) {
+      if (key.equals(myKey)) {
+        return myValue;
+      }
+      return null;
+    }
+
+    public void put(@NotNull K key, V value) {
+      myKey = key;
+      myValue = value;
+    }
   }
 }

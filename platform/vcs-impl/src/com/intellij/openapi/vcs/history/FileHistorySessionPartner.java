@@ -15,8 +15,11 @@
  */
 package com.intellij.openapi.vcs.history;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -30,6 +33,8 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
+import com.intellij.ui.content.TabbedContent;
+import com.intellij.ui.content.impl.TabbedContentImpl;
 import com.intellij.util.BufferedListConsumer;
 import com.intellij.util.Consumer;
 import com.intellij.util.ContentsUtil;
@@ -128,11 +133,31 @@ public class FileHistorySessionPartner implements VcsAppendableHistorySessionPar
         ContentManager contentManager = ProjectLevelVcsManagerEx.getInstanceEx(myVcs.getProject()).getContentManager();
 
         myFileHistoryPanel = resetHistoryPanel();
-        Content content = ContentFactory.SERVICE.getInstance().createContent(myFileHistoryPanel, actionName, true);
-        ContentsUtil.addOrReplaceContent(contentManager, content, true);
-
         ToolWindow toolWindow = ToolWindowManager.getInstance(myVcs.getProject()).getToolWindow(ToolWindowId.VCS);
         assert toolWindow != null : "Version Control ToolWindow should be available at this point.";
+
+        if (Registry.is("vcs.merge.toolwindows")) {
+          Content history = null;
+          for (Content content : toolWindow.getContentManager().getContents()) {
+            if (content.getTabName().startsWith("History: ")) {
+              history = content;
+              break;
+            }
+          }
+
+          if (history == null) {
+            final Disposable disposable = Disposer.newDisposable();
+            history = new TabbedContentImpl(myFileHistoryPanel, myFileHistoryPanel.getVirtualFile().getName(), true, "History: ");
+            ContentsUtil.addOrReplaceContent(contentManager, history, true);
+            Disposer.register(history, disposable);
+          } else {
+            ((TabbedContent)history).addContent(myFileHistoryPanel, myFileHistoryPanel.getVirtualFile().getName(), true);
+          }
+        } else {
+          Content content = ContentFactory.SERVICE.getInstance().createContent(myFileHistoryPanel, actionName, true);
+          ContentsUtil.addOrReplaceContent(contentManager, content, true);
+        }
+
         if (myRefresherI.isFirstTime()) {
           toolWindow.activate(null);
         }

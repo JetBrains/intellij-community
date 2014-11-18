@@ -32,19 +32,33 @@ import java.util.*;
 
 public class BranchFilterPopupComponent extends MultipleValueFilterPopupComponent<VcsLogBranchFilter> {
 
-  @NotNull private final VcsLogUiProperties myUiProperties;
-
-  @NotNull private VcsLogDataPack myDataPack;
-
-  public BranchFilterPopupComponent(@NotNull VcsLogClassicFilterUi filterUi, @NotNull VcsLogDataPack dataPack,
-                                    @NotNull VcsLogUiProperties uiProperties) {
-    super(filterUi, "Branch");
-    myDataPack = dataPack;
-    myUiProperties = uiProperties;
+  public BranchFilterPopupComponent(@NotNull VcsLogUiProperties uiProperties,
+                                    @NotNull FilterModel<VcsLogBranchFilter> filterModel) {
+    super("Branch", uiProperties, filterModel);
   }
 
-  void updateDataPack(@NotNull VcsLogDataPack dataPack) {
-    myDataPack = dataPack;
+  @NotNull
+  @Override
+  protected String getText(@NotNull VcsLogBranchFilter filter) {
+    return displayableText(filter.getBranchNames());
+  }
+
+  @Nullable
+  @Override
+  protected String getToolTip(@NotNull VcsLogBranchFilter filter) {
+    return tooltip(filter.getBranchNames());
+  }
+
+  @NotNull
+  @Override
+  protected VcsLogBranchFilter createFilter(@NotNull Collection<String> values) {
+    return new VcsLogBranchFilterImpl(values);
+  }
+
+  @Override
+  @NotNull
+  protected Collection<String> getValues(@Nullable VcsLogBranchFilter filter) {
+    return filter == null ? Collections.<String>emptySet() : filter.getBranchNames();
   }
 
   @Override
@@ -54,7 +68,7 @@ public class BranchFilterPopupComponent extends MultipleValueFilterPopupComponen
     actionGroup.add(createAllAction());
     actionGroup.add(createSelectMultipleValuesAction());
 
-    actionGroup.add(constructActionGroup(myDataPack, createRecentItemsActionGroup(), new Function<String, AnAction>() {
+    actionGroup.add(constructActionGroup(myFilterModel.getDataPack(), createRecentItemsActionGroup(), new Function<String, AnAction>() {
       @Override
       public AnAction fun(String name) {
         return createPredefinedValueAction(Collections.singleton(name));
@@ -151,15 +165,6 @@ public class BranchFilterPopupComponent extends MultipleValueFilterPopupComponen
     }
   }
 
-  @Nullable
-  @Override
-  protected VcsLogBranchFilter getFilter() {
-    if (getSelectedValues() == null) {
-      return null;
-    }
-    return new VcsLogBranchFilterImpl(getSelectedValues());
-  }
-
   @NotNull
   @Override
   protected List<List<String>> getRecentValuesFromSettings() {
@@ -176,7 +181,7 @@ public class BranchFilterPopupComponent extends MultipleValueFilterPopupComponen
   @NotNull
   @Override
   protected List<String> getAllValues() {
-    return ContainerUtil.map(myDataPack.getRefs().getBranches(), new Function<VcsRef, String>() {
+    return ContainerUtil.map(myFilterModel.getDataPack().getRefs().getBranches(), new Function<VcsRef, String>() {
       @Override
       public String fun(VcsRef ref) {
         return ref.getName();
