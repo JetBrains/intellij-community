@@ -130,9 +130,6 @@ public class YouTrackRepository extends BaseRepositoryImpl {
   }
 
   private HttpClient login(PostMethod method) throws Exception {
-    if (method.getHostConfiguration().getProtocol() == null) {
-      throw new Exception("Protocol not specified");
-    }
     HttpClient client = getHttpClient();
     client.getState().setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(getUsername(), getPassword()));
     configureHttpMethod(method);

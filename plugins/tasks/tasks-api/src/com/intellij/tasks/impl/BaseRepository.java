@@ -17,6 +17,7 @@ package com.intellij.tasks.impl;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.PasswordUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.TaskRepository;
 import com.intellij.tasks.TaskRepositoryType;
 import com.intellij.util.xmlb.annotations.Tag;
@@ -24,6 +25,8 @@ import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -136,5 +139,26 @@ public abstract class BaseRepository extends TaskRepository {
   public String extractId(@NotNull String taskName) {
     Matcher matcher = PATTERN.matcher(taskName);
     return matcher.find() ? matcher.group() : null;
+  }
+
+  @Override
+  public void setUrl(String url) {
+    super.setUrl(addSchemeIfNoneSpecified(url));
+  }
+
+  @Nullable
+  private static String addSchemeIfNoneSpecified(@Nullable String url) {
+    if (StringUtil.isNotEmpty(url)) {
+      try {
+        final String scheme = new URI(url).getScheme();
+        // For URL like "foo.bar:8080" host name will be parsed as scheme
+        if (scheme == null || !scheme.startsWith("http")) {
+          url = "http://" + url;
+        }
+      }
+      catch (URISyntaxException ignored) {
+      }
+    }
+    return url;
   }
 }
