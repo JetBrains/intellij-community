@@ -164,10 +164,11 @@ public class CompositeElement extends TreeElement {
     while (true) {
       TreeElement child = element.getFirstChildNode();
       TreeElement lastChild = element.getLastChildNode();
-      boolean fwd = lastChild == null || (lastChild.getStartOffset() + lastChild.getTextLength() - child.getStartOffset()) / 2 > offset;
+      int elementTextLength = element.getTextLength();
+      boolean fwd = lastChild == null || elementTextLength / 2 > offset;
       if (!fwd) {
         child = lastChild;
-        offset = element.getTextLength() - offset;
+        offset = elementTextLength - offset;
       }
       while (child != null) {
         final int textLength = child.getTextLength();
@@ -179,7 +180,7 @@ public class CompositeElement extends TreeElement {
             }
             return (LeafElement)child;
           }
-          offset = fwd ? offset : child.getTextLength() - offset;
+          offset = fwd ? offset : textLength - offset;
           element = child;
           continue startFind;
         }
