@@ -36,7 +36,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.util.indexing.MapIndexStorage;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.io.*;
@@ -52,7 +51,6 @@ import java.util.*;
  * @author Eugene Zhuravlev
  *         Date: Dec 12, 2007
  */
-@SkipSlowTestLocally
 public class IndexTest extends CodeInsightTestCase {
 
   public void testUpdate() throws StorageException, IOException {
@@ -241,7 +239,7 @@ public class IndexTest extends CodeInsightTestCase {
     });
   }
   
-  public void _testCollectedPsiWithDocumentChangedCommittedAndChangedAgain() throws IOException {
+  public void testCollectedPsiWithDocumentChangedCommittedAndChangedAgain() throws IOException {
     VirtualFile dir = getVirtualFile(createTempDirectory());
     PsiTestUtil.addSourceContentToRoots(myModule, dir);
 
@@ -267,13 +265,7 @@ public class IndexTest extends CodeInsightTestCase {
         assertNull(((PsiManagerEx)PsiManager.getInstance(getProject())).getFileManager().getCachedPsiFile(vFile));
 
         PsiClass foo = myJavaFacade.findClass("Foo", scope);
-        assertNotNull(foo);
-        assertTrue(foo.isValid());
-        assertEquals("class Foo {}", foo.getText());
-        assertTrue(foo.isValid());
-
-        PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-        assertNull(myJavaFacade.findClass("Foo", scope));
+        assertNull(foo);
       }
     });
   }

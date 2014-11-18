@@ -63,6 +63,11 @@ public class MockPsiDocumentManager extends PsiDocumentManager {
   }
 
   @Override
+  public long getLastCommittedStamp(@NotNull Document document) {
+    return document.getModificationStamp();
+  }
+
+  @Override
   @NotNull
   public Document[] getUncommittedDocuments() {
     throw new UnsupportedOperationException("Method getUncommittedDocuments is not yet implemented in " + getClass().getName());

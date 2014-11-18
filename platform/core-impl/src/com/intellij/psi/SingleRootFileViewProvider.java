@@ -165,7 +165,6 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
 
   @Override
   public void beforeContentsSynchronized() {
-    unsetPsiContent();
   }
 
   @Override
@@ -501,7 +500,20 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
 
     @Override
     public long getModificationStamp() {
-      return getVirtualFile().getModificationStamp();
+      final VirtualFile virtualFile = getVirtualFile();
+      if (virtualFile instanceof LightVirtualFile) {
+        Document doc = getCachedDocument();
+        if (doc != null) return getLastCommittedStamp(doc);
+        return virtualFile.getModificationStamp();
+      }
+
+      final Document document = getDocument();
+      if (document == null) {
+        return virtualFile.getModificationStamp();
+      }
+      else {
+        return getLastCommittedStamp(document);
+      }
     }
 
     @NonNls
@@ -513,6 +525,9 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
 
   private CharSequence getLastCommittedText(Document document) {
     return PsiDocumentManager.getInstance(myManager.getProject()).getLastCommittedText(document);
+  }
+  private long getLastCommittedStamp(Document document) {
+    return PsiDocumentManager.getInstance(myManager.getProject()).getLastCommittedStamp(document);
   }
 
   private class DocumentContent implements Content {
@@ -534,7 +549,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     @Override
     public long getModificationStamp() {
       Document document = com.intellij.reference.SoftReference.dereference(myDocument);
-      if (document != null) return document.getModificationStamp();
+      if (document != null) return getLastCommittedStamp(document);
       return myVirtualFile.getModificationStamp();
     }
   }

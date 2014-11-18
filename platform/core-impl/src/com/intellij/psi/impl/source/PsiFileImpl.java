@@ -389,6 +389,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
         DebugUtil.finishPsiModification();
       }
     }
+    myViewProvider.contentsSynchronized();
   }
 
   private void clearStub(@NotNull String reason) {
