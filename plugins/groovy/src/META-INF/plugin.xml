@@ -1530,6 +1530,8 @@
     <hierarchy.referenceProcessor implementation="org.jetbrains.plugins.groovy.hierarchy.call.GrCallReferenceProcessor"/>
     <structuralsearch.profile implementation="com.intellij.structuralsearch.GroovyStructuralSearchProfile"/>
     <equivalenceDescriptorProvider implementation="com.intellij.structuralsearch.GroovyEquivalenceDescriptorProvider"/>
+
+    <applicationService serviceImplementation="org.jetbrains.plugins.groovy.dsl.DslActivationStatus"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.debugger">
@@ -1671,9 +1673,6 @@
     </component>
     <component>
       <implementation-class>org.jetbrains.plugins.groovy.mvc.MvcPathMacros</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.plugins.groovy.dsl.DslActivationStatus</implementation-class>
     </component>
   </application-components>
 
