@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.*;
@@ -59,8 +58,6 @@ public class QuickChangeCodeStyleSchemeAction extends QuickSwitchSchemeAction {
         ((CodeStyleSchemesImpl)CodeStyleSchemes.getInstance()).getSchemesManager().loadSharedSchemes();
     if (!sharedSchemes.isEmpty()) {
       group.add(Separator.getInstance());
-
-
       for (SharedScheme<CodeStyleSchemeImpl> scheme : sharedSchemes) {
         addScheme(group, manager, currentScheme, scheme.getScheme(), true);
       }
