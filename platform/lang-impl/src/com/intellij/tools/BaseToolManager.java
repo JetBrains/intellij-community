@@ -20,9 +20,12 @@ package com.intellij.tools;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.components.RoamingType;
-import com.intellij.openapi.options.*;
+import com.intellij.openapi.options.SchemeProcessor;
+import com.intellij.openapi.options.SchemesManager;
+import com.intellij.openapi.options.SchemesManagerFactory;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -77,7 +80,7 @@ public abstract class BaseToolManager<T extends Tool> implements ExportableAppli
   }
 
   public List<T> getTools() {
-    ArrayList<T> result = new ArrayList<T>();
+    List<T> result = new SmartList<T>();
     for (ToolsGroup group : mySchemesManager.getAllSchemes()) {
       result.addAll(group.getElements());
     }

@@ -432,10 +432,6 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
   }
 
   @Override
-  public void exportScheme(@NotNull final E scheme, final String name, final String description) throws WriteExternalException, IOException {
-  }
-
-  @Override
   public boolean isImportAvailable() {
     return false;
   }
@@ -632,6 +628,8 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
 
   @Override
   protected void onSchemeDeleted(@NotNull Scheme toDelete) {
+    super.onSchemeDeleted(toDelete);
+
     if (toDelete instanceof ExternalizableScheme) {
       ContainerUtilRt.addIfNotNull(myFilesToDelete, ((ExternalizableScheme)toDelete).getExternalInfo().getCurrentFileName());
     }

@@ -51,8 +51,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
@@ -214,18 +213,17 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
   @NotNull
   @Override
   public EditorColorsScheme[] getAllSchemes() {
-    List<EditorColorsScheme> schemes = new ArrayList<EditorColorsScheme>(mySchemesManager.getAllSchemes());
-    Collections.sort(schemes, new Comparator<EditorColorsScheme>() {
+    List<EditorColorsScheme> schemes = mySchemesManager.getAllSchemes();
+    EditorColorsScheme[] result = schemes.toArray(new EditorColorsScheme[schemes.size()]);
+    Arrays.sort(result, new Comparator<EditorColorsScheme>() {
       @Override
       public int compare(@NotNull EditorColorsScheme s1, @NotNull EditorColorsScheme s2) {
         if (isDefaultScheme(s1) && !isDefaultScheme(s2)) return -1;
         if (!isDefaultScheme(s1) && isDefaultScheme(s2)) return 1;
-
         return s1.getName().compareToIgnoreCase(s2.getName());
       }
     });
-
-    return schemes.toArray(new EditorColorsScheme[schemes.size()]);
+    return result;
   }
 
   @Override

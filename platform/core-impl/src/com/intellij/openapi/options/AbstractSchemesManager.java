@@ -73,15 +73,16 @@ public abstract class AbstractSchemesManager<T extends Scheme, E extends Externa
 
   @Override
   public void clearAllSchemes() {
-    for (T t : getAllSchemes()) {
-      removeScheme(t);
+    for (T myScheme : mySchemes) {
+      onSchemeDeleted(myScheme);
     }
+    mySchemes.clear();
   }
 
   @Override
   @NotNull
   public List<T> getAllSchemes() {
-    return new ArrayList<T>(mySchemes);
+    return Collections.unmodifiableList(mySchemes);
   }
 
   @Override
@@ -112,37 +113,28 @@ public abstract class AbstractSchemesManager<T extends Scheme, E extends Externa
   }
 
   @Override
-  public void removeScheme(final T scheme) {
-    String schemeName = scheme.getName();
-    Scheme toDelete = findSchemeToDelete(schemeName);
+  public void removeScheme(@NotNull T scheme) {
+    for (int i = 0, n = mySchemes.size(); i < n; i++) {
+      T s = mySchemes.get(i);
+      if (scheme.getName().equals(s.getName())) {
+        onSchemeDeleted(s);
+        mySchemes.remove(i);
+        break;
+      }
+    }
+  }
 
-    //noinspection SuspiciousMethodCalls
-    mySchemes.remove(toDelete);
+  protected void onSchemeDeleted(@NotNull Scheme toDelete) {
     if (myCurrentScheme == toDelete) {
       myCurrentScheme = null;
     }
-
-    onSchemeDeleted(toDelete);
-  }
-
-  protected abstract void onSchemeDeleted(@NotNull Scheme toDelete);
-
-  private Scheme findSchemeToDelete(final String schemeName) {
-    for (T scheme : mySchemes) {
-      if (Comparing.equal(schemeName, scheme.getName())) return scheme;
-    }
-    return null;
   }
 
   @Override
   @NotNull
   public Collection<String> getAllSchemeNames() {
-    return getAllSchemeNames(mySchemes);
-  }
-
-  public Collection<String> getAllSchemeNames(@NotNull Collection<T> schemes) {
-    Set<String> names = new THashSet<String>(schemes.size());
-    for (T scheme : schemes) {
+    List<String> names = new ArrayList<String>(mySchemes.size());
+    for (T scheme : mySchemes) {
       names.add(scheme.getName());
     }
     return names;
@@ -179,6 +171,10 @@ public abstract class AbstractSchemesManager<T extends Scheme, E extends Externa
   @Override
   public boolean isExportAvailable() {
     return false;
+  }
+
+  @Override
+  public void exportScheme(@NotNull final E scheme, final String name, final String description) {
   }
 
   protected boolean isExternalizable(final T scheme) {

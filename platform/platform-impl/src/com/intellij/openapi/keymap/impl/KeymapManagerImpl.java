@@ -164,15 +164,18 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
   }
 
   public void removeAllKeymapsExceptUnmodifiable() {
-    for (Keymap keymap : mySchemesManager.getAllSchemes()) {
+    List<Keymap> schemes = mySchemesManager.getAllSchemes();
+    for (int i = schemes.size() - 1; i >= 0; i--) {
+      Keymap keymap = schemes.get(i);
       if (keymap.canModify()) {
         mySchemesManager.removeScheme(keymap);
       }
     }
+
     mySchemesManager.setCurrentSchemeName(null);
 
     Collection<Keymap> keymaps = mySchemesManager.getAllSchemes();
-    if (keymaps.size() > 0) {
+    if (!keymaps.isEmpty()) {
       mySchemesManager.setCurrentSchemeName(keymaps.iterator().next().getName());
     }
   }
