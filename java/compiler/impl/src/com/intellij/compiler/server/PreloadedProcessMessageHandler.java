@@ -15,25 +15,14 @@
  */
 package com.intellij.compiler.server;
 
-import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.NotNull;
-
 /**
 * @author Eugene Zhuravlev
 *         Date: 20-Oct-14
 */
 class PreloadedProcessMessageHandler extends DelegatingMessageHandler {
-  @NotNull 
-  private final Project myProject;
   private volatile BuilderMessageHandler myDelegateHandler;
 
-  public PreloadedProcessMessageHandler(@NotNull Project project) {
-    myProject = project;
-  }
-
-  @NotNull
-  public Project getProject() {
-    return myProject;
+  public PreloadedProcessMessageHandler() {
   }
 
   @Override

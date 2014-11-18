@@ -15,14 +15,11 @@
  */
 package com.intellij.codeInspection.deadCode;
 
-import com.intellij.codeInspection.GlobalInspectionContext;
 import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.ex.EntryPointsManager;
+import com.intellij.codeInspection.ex.EntryPointsManagerImpl;
 import com.intellij.codeInspection.reference.EntryPoint;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.ui.components.JBTabbedPane;
 import org.jetbrains.annotations.TestOnly;
 
@@ -51,17 +48,6 @@ public class UnusedDeclarationInspection extends UnusedDeclarationInspectionBase
     tabs.add("Entry points", new OptionsPanel());
     tabs.add("On the fly editor settings", myLocalInspectionBase.createOptionsPanel());
     return tabs;
-  }
-
-  private Project guessProject() {
-    final GlobalInspectionContext context = getContext();
-    Project project = context == null ? null : context.getProject();
-
-    if (project == null) {
-      Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
-      project = openProjects.length == 0 ? ProjectManager.getInstance().getDefaultProject() : openProjects[0];
-    }
-    return project;
   }
 
   private class OptionsPanel extends JPanel {
@@ -141,8 +127,7 @@ public class UnusedDeclarationInspection extends UnusedDeclarationInspectionBase
       gc.gridy++;
       add(myNonJavaCheckbox, gc);
 
-      Project project = guessProject();
-      JButton configureAnnotations = EntryPointsManager.getInstance(project).createConfigureAnnotationsBtn();
+      JButton configureAnnotations = EntryPointsManagerImpl.createConfigureAnnotationsButton();
       gc.fill = GridBagConstraints.NONE;
       gc.gridy++;
       gc.insets.top = 10;

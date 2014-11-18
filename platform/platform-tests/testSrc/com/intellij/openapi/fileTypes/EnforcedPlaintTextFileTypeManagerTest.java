@@ -19,6 +19,7 @@ import com.intellij.openapi.file.exclude.EnforcedPlainTextFileTypeFactory;
 import com.intellij.openapi.file.exclude.EnforcedPlainTextFileTypeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.util.ui.UIUtil;
 
 /**
  * @author Rustam Vishnyakov
@@ -30,6 +31,7 @@ public class EnforcedPlaintTextFileTypeManagerTest extends LightPlatformCodeInsi
     FileType originalType = file.getFileType();
     assertEquals("JAVA", originalType.getName());
     manager.markAsPlainText(getProject(), file);
+    UIUtil.dispatchAllInvocationEvents(); // reparseFiles in invokeLater
     FileType changedType = file.getFileType();
     assertEquals(EnforcedPlainTextFileTypeFactory.ENFORCED_PLAIN_TEXT, changedType.getName());
     manager.resetOriginalFileType(getProject(), file);

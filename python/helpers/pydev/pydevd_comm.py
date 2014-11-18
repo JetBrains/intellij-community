@@ -974,15 +974,15 @@ class InternalGetArray(InternalThreadCommand):
         self.thread_id = thread_id
         self.frame_id = frame_id
         self.scope = scope
-        self.name = ".".join(attrs.split("\t"))
+        self.name = attrs.split("\t")[-1]
         self.attrs = attrs
         self.roffset = int(roffset)
         self.coffset = int(coffset)
         self.rows = int(rows)
         self.cols = int(cols)
         self.format = format
-        if hasattr(self.format, 'decode'):
-            self.format = self.format.decode('utf-8')
+        if hasattr(self.format, 'encode'):
+            self.format = self.format.encode('utf-8')
 
     def doIt(self, dbg):
         try:

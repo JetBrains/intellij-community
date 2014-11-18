@@ -18,6 +18,7 @@ package com.intellij.ui;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -25,6 +26,7 @@ import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -65,6 +67,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
   private boolean myClearSearchOnNavigateNoMatch = false;
 
   @NonNls protected static final String ENTERED_PREFIX_PROPERTY_NAME = "enteredPrefix";
+  private Disposable myListenerDisposable;
 
   public SpeedSearchBase(Comp component) {
     myComponent = component;
@@ -522,10 +525,9 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       myPopupLayeredPane.validate();
       myPopupLayeredPane.repaint();
       myPopupLayeredPane = null;
-
-      if (project != null) {
-        ((ToolWindowManagerEx)ToolWindowManager.getInstance(project)).removeToolWindowManagerListener(myWindowManagerListener);
-      }
+      
+      Disposer.dispose(myListenerDisposable);
+      myListenerDisposable = null;
     }
     else if (searchPopup != null) {
       FeatureUsageTracker.getInstance().triggerFeatureUsed("ui.tree.speedsearch");
@@ -543,7 +545,9 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     if (mySearchPopup == null || !myComponent.isDisplayable()) return;
 
     if (project != null) {
-      ((ToolWindowManagerEx)ToolWindowManager.getInstance(project)).addToolWindowManagerListener(myWindowManagerListener);
+      myListenerDisposable = Disposer.newDisposable();
+      ToolWindowManagerEx toolWindowManager = (ToolWindowManagerEx)ToolWindowManager.getInstance(project);
+      toolWindowManager.addToolWindowManagerListener(myWindowManagerListener, myListenerDisposable);
     }
     JRootPane rootPane = myComponent.getRootPane();
     if (rootPane != null) {

@@ -317,7 +317,7 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
 
       @Override
       protected boolean isEmpty(JavaFxManifestAttribute element) {
-        return element.getName().isEmpty() && element.getValue().isEmpty();
+        return StringUtil.isEmpty(element.getName()) && StringUtil.isEmpty(element.getValue());
       }
 
       @Override

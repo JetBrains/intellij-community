@@ -51,7 +51,7 @@ public class GenericDebuggerParametersRunnerConfigurable extends SettingsEditor<
     myDebuggerSettings.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        ShowSettingsUtil.getInstance().showSettingsDialog(project, DebuggerConfigurable.DISPLAY_NAME);
+        ShowSettingsUtil.getInstance().showSettingsDialog(project, DebuggerConfigurable.class);
         if (myIsLocal) {
           setTransport(DebuggerSettings.getInstance().DEBUGGER_TRANSPORT);
         }

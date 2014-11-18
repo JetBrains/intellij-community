@@ -218,6 +218,10 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
   }
 
   @Override
+  public void addToolWindowManagerListener(@NotNull ToolWindowManagerListener l, @NotNull Disposable parentDisposable) {
+  }
+
+  @Override
   public void removeToolWindowManagerListener(@NotNull ToolWindowManagerListener l) {
   }
 

@@ -221,7 +221,7 @@ public class CopiesPanel {
           if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
             if (CONFIGURE_BRANCHES.equals(e.getDescription())) {
               if (! checkRoot(root, wcInfo.getPath(), " invoke Configure Branches")) return;
-              BranchConfigurationDialog.configureBranches(myProject, root, true);
+              BranchConfigurationDialog.configureBranches(myProject, root);
             } else if (FIX_DEPTH.equals(e.getDescription())) {
               final int result =
                 Messages.showOkCancelDialog(myVcs.getProject(), "You are going to checkout into '" + wcInfo.getPath() + "' with 'infinity' depth.\n" +

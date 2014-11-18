@@ -22,6 +22,7 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
+import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.progress.util.ReadTask;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
@@ -371,6 +372,34 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
         }
       }
     }).assertTiming();
+  }
+
+  public void testWrapperIndicatorGotCanceledTooWhenInnerIndicatorHas() {
+    final ProgressIndicator progress = new ProgressIndicatorBase(){
+      @Override
+      protected boolean isCancelable() {
+        return true;
+      }
+    };
+    try {
+      ProgressManager.getInstance().executeProcessUnderProgress(new Runnable() {
+        @Override
+        public void run() {
+          assertFalse(ProgressManagerImpl.threadsUnderCanceledIndicator.contains(Thread.currentThread()));
+          assertTrue(!progress.isCanceled());
+          progress.cancel();
+          assertTrue(ProgressManagerImpl.threadsUnderCanceledIndicator.contains(Thread.currentThread()));
+          assertTrue(progress.isCanceled());
+          while (true) { // wait for PCE
+            ProgressManager.checkCanceled();
+          }
+        }
+      }, ProgressWrapper.wrap(progress));
+      fail("PCE must have been thrown");
+    }
+    catch (ProcessCanceledException ignored) {
+
+    }
   }
 
   private static class ProgressIndicatorStub implements ProgressIndicatorEx {

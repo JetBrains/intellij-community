@@ -52,6 +52,7 @@ public class PythonIcons {
     public static final Icon PythonConsole = load("/icons/com/jetbrains/python/pythonConsole.png"); // 16x16
     public static final Icon PythonConsoleToolWindow = load("/icons/com/jetbrains/python/pythonConsoleToolWindow.png"); // 13x13
     public static final Icon PythonTests = load("/icons/com/jetbrains/python/pythonTests.png"); // 16x16
+    public static final Icon RemoteInterpreter = load("/icons/com/jetbrains/python/RemoteInterpreter.png"); // 16x16
     public static final Icon TemplateRoot = load("/icons/com/jetbrains/python/templateRoot.png"); // 16x16
     public static final Icon Virtualenv = load("/icons/com/jetbrains/python/virtualenv.png"); // 16x16
 
