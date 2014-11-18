@@ -20,7 +20,7 @@ import groovy.lang.GroovyClassLoader
 import junit.framework.{TestResult, TestCase}
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen._
-import org.scalacheck.Prop.forAll
+import org.scalacheck.Prop.{forAll, BooleanOperators}
 import org.scalacheck._
 import scala.collection.JavaConversions._
 
@@ -40,6 +40,7 @@ object IndexTestGenerator {
     const(Gc),
     const(Commit),
     const(Save),
+    const(PsiChange),
     for (withImport <- arbitrary[Boolean];
          viaDocument <- arbitrary[Boolean])
       yield TextChange(viaDocument, withImport),
@@ -49,7 +50,13 @@ object IndexTestGenerator {
     arbitrary[Boolean] map UpdateDocumentRef
   )
   val propIndexTest = forAll(Gen.nonEmptyListOf(genAction)) { actions =>
-    new IndexTestSeq(actions).isSuccessful
+    containsChange(actions) ==> new IndexTestSeq(actions).isSuccessful
+  }
+
+  def containsChange(actions: List[Action]) = actions.exists {
+    case TextChange(_, _) => true
+    case PsiChange => true
+    case _ => false
   }
 
   def main(args: Array[String]) {
@@ -62,14 +69,13 @@ case class IndexTestSeq(actions: List[Action]) {
     val sb = StringBuilder.newBuilder
     sb.append(prefix)
     sb.append(
-      s"""
+    s"""
          |public void "$testName"() {
-         |def vFile =
-         |  myFixture.addFileToProject("Foo.java", "class Foo {}").virtualFile
+         |def psiFile = myFixture.addFileToProject("Foo.java", "class Foo {}")
+         |def vFile = psiFile.virtualFile
          |def lastPsiName = "Foo"
          |long counterBefore
          |Document document
-         |PsiFile psiFile
          |ASTNode astNode
          |PsiClass psiClass
          |def scope = GlobalSearchScope.allScope(project)
@@ -85,6 +91,15 @@ case class IndexTestSeq(actions: List[Action]) {
           sb.append(
             s"""PsiDocumentManager.getInstance(project).commitAllDocuments()
                |lastPsiName = "$docClassName"
+               |""".stripMargin)
+        case PsiChange =>
+          sb.append(
+            s"""PsiDocumentManager.getInstance(project).commitAllDocuments()
+               |lastPsiName = "$docClassName"
+               |myFixture.findClass("$docClassName").add(
+               |  elementFactory.createMethod("foo", PsiType.VOID))
+               |PostprocessReformattingAspect.getInstance(getProject()).
+               |  doPostponedFormatting()
                |""".stripMargin)
         case Save =>
           sb.append("FileDocumentManager.instance.saveAllDocuments()\n")
@@ -144,6 +159,7 @@ case class IndexTestSeq(actions: List[Action]) {
        |import com.intellij.openapi.util.Ref
        |import com.intellij.openapi.vfs.VfsUtil
        |import com.intellij.psi.*
+       |import com.intellij.psi.impl.source.*
        |import com.intellij.psi.search.GlobalSearchScope
        |import com.intellij.testFramework.PlatformTestUtil
        |import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
@@ -186,3 +202,4 @@ case class UpdatePsiClassRef(load: Boolean) extends Action
 case class UpdatePsiFileRef(load: Boolean) extends Action
 case class UpdateDocumentRef(load: Boolean) extends Action
 case class UpdateASTNodeRef(load: Boolean) extends Action
+case object PsiChange extends Action
