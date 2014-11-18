@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,7 +73,7 @@ public interface SchemesManager <T extends Scheme, E extends ExternalizableSchem
     }
 
     @Override
-    public Scheme findSchemeByName(final String schemeName) {
+    public Scheme findSchemeByName(String schemeName) {
       return null;
     }
 
@@ -82,8 +82,7 @@ public interface SchemesManager <T extends Scheme, E extends ExternalizableSchem
     }
 
     @Override
-    public void setCurrentSchemeName(final String schemeName) {
-
+    public void setCurrentSchemeName(String schemeName) {
     }
 
     @Override
@@ -92,8 +91,7 @@ public interface SchemesManager <T extends Scheme, E extends ExternalizableSchem
     }
 
     @Override
-    public void removeScheme(final Scheme scheme) {
-
+    public void removeScheme(@NotNull Scheme scheme) {
     }
 
     @Override
@@ -104,7 +102,7 @@ public interface SchemesManager <T extends Scheme, E extends ExternalizableSchem
 
     @Override
     @NotNull
-    public Collection loadSharedSchemes(final Collection currentSchemeList) {
+    public Collection loadSharedSchemes(Collection currentSchemeList) {
       return loadSharedSchemes();
     }
 
@@ -114,7 +112,8 @@ public interface SchemesManager <T extends Scheme, E extends ExternalizableSchem
     }
   };
 
-  @NotNull Collection<E> loadSchemes();
+  @NotNull
+  Collection<E> loadSchemes();
 
   @Deprecated
   @SuppressWarnings({"unused", "deprecation"})
@@ -158,9 +157,10 @@ public interface SchemesManager <T extends Scheme, E extends ExternalizableSchem
   @Nullable
   T getCurrentScheme();
 
-  void removeScheme(final T scheme);
+  void removeScheme(@NotNull T scheme);
 
-  @NotNull Collection<String> getAllSchemeNames();
+  @NotNull
+  Collection<String> getAllSchemeNames();
 
   File getRootDirectory();
 }

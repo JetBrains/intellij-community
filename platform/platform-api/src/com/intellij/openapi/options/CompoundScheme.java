@@ -24,7 +24,6 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-
 public class CompoundScheme<T extends SchemeElement> implements ExternalizableScheme {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.options.CompoundScheme");
@@ -48,8 +47,6 @@ public class CompoundScheme<T extends SchemeElement> implements ExternalizableSc
       myElements.add(i, element);
     }
   }
-
-
 
   public List<T> getElements() {
     return Collections.unmodifiableList(new ArrayList<T>(myElements));

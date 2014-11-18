@@ -193,7 +193,7 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
   @Override
   public void initProfiles() {
     if (myProfilesAreInitialized.getAndSet(true)) {
-      if (mySchemesManager.getAllSchemeNames().isEmpty()) {
+      if (mySchemesManager.getAllSchemes().isEmpty()) {
         createDefaultProfile();
       }
       return;
@@ -201,8 +201,7 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
     if (!LOAD_PROFILES) return;
 
     mySchemesManager.loadSchemes();
-    final Collection<Profile> profiles = mySchemesManager.getAllSchemes();
-
+    Collection<Profile> profiles = mySchemesManager.getAllSchemes();
     if (profiles.isEmpty()) {
       createDefaultProfile();
     }
@@ -337,18 +336,12 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
   @Override
   @NotNull
   public String[] getAvailableProfileNames() {
-    final Collection<String> names = mySchemesManager.getAllSchemeNames();
-    return ArrayUtil.toStringArray(names);
+    return ArrayUtil.toStringArray(mySchemesManager.getAllSchemeNames());
   }
 
   @Override
   public Profile getProfile(@NotNull final String name) {
     return getProfile(name, true);
-  }
-
-  @NotNull
-  public SchemesManager<Profile, InspectionProfileImpl> getSchemesManager() {
-    return mySchemesManager;
   }
 
   public static void onProfilesChanged() {

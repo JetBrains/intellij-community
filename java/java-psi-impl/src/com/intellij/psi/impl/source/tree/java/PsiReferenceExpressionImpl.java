@@ -45,7 +45,6 @@ import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.*;
 import gnu.trove.THashSet;
@@ -191,34 +190,27 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
       CompositeElement treeParent = expression.getTreeParent();
       IElementType parentType = treeParent == null ? null : treeParent.getElementType();
 
-      List<PsiElement> qualifiers = resolveAllQualifiers(expression, containingFile);
-      try {
-        JavaResolveResult[] result = expression.resolve(parentType, containingFile);
+      List<ResolveResult[]> qualifiers = resolveAllQualifiers(expression, containingFile);
+      JavaResolveResult[] result = expression.resolve(parentType, containingFile);
 
-        if (result.length == 0 && incompleteCode && parentType != JavaElementType.REFERENCE_EXPRESSION) {
-          result = expression.resolve(JavaElementType.REFERENCE_EXPRESSION, containingFile);
-        }
-
-        JavaResolveUtil.substituteResults(expression, result);
-
-        return result;
+      if (result.length == 0 && incompleteCode && parentType != JavaElementType.REFERENCE_EXPRESSION) {
+        result = expression.resolve(JavaElementType.REFERENCE_EXPRESSION, containingFile);
       }
-      finally {
-        PsiElement item = qualifiers.isEmpty() ? PsiUtilCore.NULL_PSI_ELEMENT : qualifiers.get(qualifiers.size()-1);
-        qualifiers.clear(); // hold qualifiers list until this moment to avoid psi elements inside to GC
-        if (item == null) {
-          throw new IncorrectOperationException();
-        }
-      }
+
+      JavaResolveUtil.substituteResults(expression, result);
+
+      qualifiers.clear(); // hold qualifier target list until this moment to avoid psi elements inside to GC
+
+      return result;
     }
 
     @NotNull
-    private static List<PsiElement> resolveAllQualifiers(@NotNull PsiReferenceExpressionImpl expression, @NotNull final PsiFile containingFile) {
+    private static List<ResolveResult[]> resolveAllQualifiers(@NotNull PsiReferenceExpressionImpl expression, @NotNull final PsiFile containingFile) {
       // to avoid SOE, resolve all qualifiers starting from the innermost
       PsiElement qualifier = expression.getQualifier();
       if (qualifier == null) return Collections.emptyList();
 
-      final List<PsiElement> qualifiers = new SmartList<PsiElement>();
+      final List<ResolveResult[]> qualifiers = new SmartList<ResolveResult[]>();
       final ResolveCache resolveCache = ResolveCache.getInstance(containingFile.getProject());
       qualifier.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override
@@ -238,7 +230,7 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
           if (!(element instanceof PsiReferenceExpressionImpl)) return;
           PsiReferenceExpressionImpl expression = (PsiReferenceExpressionImpl)element;
           resolveCache.resolveWithCaching(expression, INSTANCE, false, false, containingFile);
-          qualifiers.add(expression);
+          qualifiers.add(resolveCache.resolveWithCaching(expression, INSTANCE, false, false, containingFile));
         }
       });
       return qualifiers;
