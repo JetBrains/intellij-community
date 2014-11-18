@@ -1249,7 +1249,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
         }
       }
       myResult = new ArrayInitializerEvaluator(evaluators);
-      if (!(expression.getParent() instanceof PsiNewExpression)) {
+      if (type != null && !(expression.getParent() instanceof PsiNewExpression)) {
         myResult = new NewArrayInstanceEvaluator(new TypeEvaluator(JVMNameUtil.getJVMQualifiedName(type)),
                                                  null,
                                                  myResult);
