@@ -61,6 +61,6 @@ public class ConfigureBranchesAction extends AnAction implements DumbAware {
       return;
     }
     final SvnChangeList svnList = (SvnChangeList) cls[0];
-    BranchConfigurationDialog.configureBranches(project, svnList.getRoot(), true);
+    BranchConfigurationDialog.configureBranches(project, svnList.getRoot());
   }
 }

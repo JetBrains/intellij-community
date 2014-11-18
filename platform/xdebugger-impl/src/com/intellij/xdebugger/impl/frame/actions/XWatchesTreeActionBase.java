@@ -30,6 +30,7 @@ import java.util.List;
  * @author nik
  */
 public abstract class XWatchesTreeActionBase extends AnAction {
+  @NotNull
   protected static <T extends TreeNode> List<? extends T> getSelectedNodes(final @NotNull XDebuggerTree tree, Class<T> nodeClass) {
     List<T> list = new ArrayList<T>();
     TreePath[] selectionPaths = tree.getSelectionPaths();

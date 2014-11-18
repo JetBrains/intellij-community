@@ -24,6 +24,7 @@ import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
@@ -31,7 +32,10 @@ import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.RootUrlInfo;
+import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.idea.svn.SvnUtil;
+import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.dialogs.SelectLocationDialog;
 import org.tmatesoft.svn.core.SVNURL;
@@ -42,7 +46,6 @@ import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -78,9 +81,10 @@ public class BranchConfigurationDialog extends DialogWrapper {
     myTrunkLocationTextField.setText(configuration.getTrunkUrl());
     myTrunkLocationTextField.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
-        final String selectedUrl = SelectLocationDialog.selectLocation(project, myTrunkLocationTextField.getText());
-        if (selectedUrl != null) {
-          myTrunkLocationTextField.setText(selectedUrl);
+        Pair<String, SVNURL> selectionData = SelectLocationDialog.selectLocation(project, rootUrl);
+
+        if (selectionData != null && selectionData.getFirst() != null) {
+          myTrunkLocationTextField.setText(selectionData.getFirst());
         }
       }
     });
@@ -154,7 +158,6 @@ public class BranchConfigurationDialog extends DialogWrapper {
         boolean isAncestor = SVNURLUtil.isAncestor(myRootUrl, url);
         boolean areNotSame = isAncestor && !url.equals(myRootUrl);
 
-        myTrunkLocationTextField.getButton().setEnabled(isAncestor);
         if (areNotSame) {
           myConfiguration.setTrunkUrl(url.toDecodedString());
         }
@@ -188,34 +191,19 @@ public class BranchConfigurationDialog extends DialogWrapper {
     return "Subversion.BranchConfigurationDialog";
   }
 
-  public static void configureBranches(final Project project, final VirtualFile file) {
-    configureBranches(project, file, false);
-  }
-
-  public static void configureBranches(final Project project, final VirtualFile file, final boolean isRoot) {
-    final VirtualFile vcsRoot = (isRoot) ? file : getRoot(project, file);
-    if (vcsRoot == null) {
+  public static void configureBranches(final Project project, @Nullable VirtualFile file) {
+    if (file == null) {
       return;
     }
 
-    final VirtualFile directory = SvnUtil.correctRoot(project, file);
-    if (directory == null) {
-      return;
-    }
-    final RootUrlInfo wcRoot = SvnVcs.getInstance(project).getSvnFileUrlMapping().getWcRootForFilePath(new File(directory.getPath()));
+    final RootUrlInfo wcRoot = SvnVcs.getInstance(project).getSvnFileUrlMapping().getWcRootForFilePath(VfsUtilCore.virtualToIoFile(file));
     if (wcRoot == null) {
-      return;
-    }
-    final SVNURL rootUrl = wcRoot.getRepositoryUrlUrl();
-    if (rootUrl == null) {
-      Messages.showErrorDialog(project, SvnBundle.message("configure.branches.error.no.connection.title"),
-                               SvnBundle.message("configure.branches.title"));
       return;
     }
 
     SvnBranchConfigurationNew configuration;
     try {
-      configuration = SvnBranchConfigurationManager.getInstance(project).get(vcsRoot);
+      configuration = SvnBranchConfigurationManager.getInstance(project).get(file);
     }
     catch (VcsException ex) {
       Messages.showErrorDialog(project, "Error loading branch configuration: " + ex.getMessage(),
@@ -224,16 +212,12 @@ public class BranchConfigurationDialog extends DialogWrapper {
     }
 
     final SvnBranchConfigurationNew clonedConfiguration = configuration.copy();
-    BranchConfigurationDialog dlg = new BranchConfigurationDialog(project, clonedConfiguration, rootUrl, vcsRoot, wcRoot.getUrl());
+    BranchConfigurationDialog dlg =
+      new BranchConfigurationDialog(project, clonedConfiguration, wcRoot.getRepositoryUrlUrl(), file, wcRoot.getUrl());
     dlg.show();
     if (dlg.isOK()) {
-      SvnBranchConfigurationManager.getInstance(project).setConfiguration(vcsRoot, clonedConfiguration);
+      SvnBranchConfigurationManager.getInstance(project).setConfiguration(file, clonedConfiguration);
     }
-  }
-
-  private static VirtualFile getRoot(Project project, VirtualFile file) {
-    RootUrlInfo path = SvnVcs.getInstance(project).getSvnFileUrlMapping().getWcRootForFilePath(new File(file.getPath()));
-    return path == null ? null : path.getVirtualFile();
   }
 
   private static class MyListModel extends AbstractListModel {

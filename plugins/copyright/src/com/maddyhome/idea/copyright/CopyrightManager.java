@@ -100,13 +100,13 @@ public class CopyrightManager extends AbstractProjectComponent implements Persis
               if (module == null) return;
               if (!newFileTracker.poll(virtualFile)) return;
               if (!fileTypeUtil.isSupportedFile(virtualFile)) return;
-              final PsiFile file = psiManager.findFile(virtualFile);
-              if (file == null) return;
+              if (psiManager.findFile(virtualFile) == null) return;
               application.invokeLater(new Runnable() {
                 @Override
                 public void run() {
-                  if (myProject.isDisposed()) return;
-                  if (file.isValid() && file.isWritable()) {
+                  if (!virtualFile.isValid()) return;
+                  final PsiFile file = psiManager.findFile(virtualFile);
+                  if (file != null && file.isWritable()) {
                     final CopyrightProfile opts = getCopyrightOptions(file);
                     if (opts != null) {
                       new UpdateCopyrightProcessor(myProject, module, file).run();

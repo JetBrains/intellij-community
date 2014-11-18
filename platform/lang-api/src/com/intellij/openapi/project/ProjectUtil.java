@@ -115,16 +115,21 @@ public class ProjectUtil {
   }
 
   @NotNull
-  public static Project guessCurrentProject(JComponent component) {
+  public static Project guessCurrentProject(@Nullable JComponent component) {
     Project project = null;
-    Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
-    if (openProjects.length > 0) project = openProjects[0];
-    if (project == null) {
-      DataContext dataContext = component == null ? DataManager.getInstance().getDataContext() : DataManager.getInstance().getDataContext(component);
-      project = CommonDataKeys.PROJECT.getData(dataContext);
+    if (component != null) {
+      project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(component));
     }
     if (project == null) {
-      project = ProjectManager.getInstance().getDefaultProject();
+      Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
+      if (openProjects.length > 0) project = openProjects[0];
+      if (project == null) {
+        DataContext dataContext = DataManager.getInstance().getDataContext();
+        project = CommonDataKeys.PROJECT.getData(dataContext);
+      }
+      if (project == null) {
+        project = ProjectManager.getInstance().getDefaultProject();
+      }
     }
     return project;
   }

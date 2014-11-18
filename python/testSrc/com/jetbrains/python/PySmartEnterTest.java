@@ -189,4 +189,9 @@ public class PySmartEnterTest extends PyTestCase {
   public void testWithOnlyColonMissing() {
     doTest();
   }
+
+  // PY-9209
+  public void testSpaceInsertedAfterHashSignInComment() {
+    doTest();
+  }
 }

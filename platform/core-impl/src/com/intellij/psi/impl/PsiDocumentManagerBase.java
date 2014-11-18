@@ -34,6 +34,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -67,7 +68,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   private final PsiManager myPsiManager;
   private final DocumentCommitProcessor myDocumentCommitProcessor;
   protected final Set<Document> myUncommittedDocuments = ContainerUtil.newConcurrentSet();
-  private final Map<Document, CharSequence> myLastCommittedTexts = ContainerUtil.newConcurrentMap();
+  private final Map<Document, Pair<CharSequence, Long>> myLastCommittedTexts = ContainerUtil.newConcurrentMap();
 
   private volatile boolean myIsCommitInProgress;
   private final PsiToDocumentSynchronizer mySynchronizer;
@@ -558,8 +559,14 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   @Override
   @NotNull
   public CharSequence getLastCommittedText(@NotNull Document document) {
-    CharSequence text = myLastCommittedTexts.get(document);
-    return text != null ? text : document.getImmutableCharSequence();
+    Pair<CharSequence, Long> pair = myLastCommittedTexts.get(document);
+    return pair != null ? pair.first : document.getImmutableCharSequence();
+  }
+
+  @Override
+  public long getLastCommittedStamp(@NotNull Document document) {
+    Pair<CharSequence, Long> pair = myLastCommittedTexts.get(document);
+    return pair != null ? pair.second : document.getModificationStamp();
   }
 
   @Override
@@ -595,7 +602,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   public void beforeDocumentChange(@NotNull DocumentEvent event) {
     final Document document = event.getDocument();
     if (!(document instanceof DocumentWindow) && !myLastCommittedTexts.containsKey(document)) {
-      myLastCommittedTexts.put(document, document.getImmutableCharSequence());
+      myLastCommittedTexts.put(document, Pair.create(document.getImmutableCharSequence(), document.getModificationStamp()));
     }
 
     VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
@@ -713,14 +720,16 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   }
 
   public void handleCommitWithoutPsi(@NotNull Document document) {
-    final CharSequence prevText = myLastCommittedTexts.remove(document);
-    if (prevText == null) {
+    final Pair<CharSequence, Long> prevPair = myLastCommittedTexts.remove(document);
+    if (prevPair == null) {
       return;
     }
 
     if (!myProject.isInitialized() || myProject.isDisposed()) {
       return;
     }
+    
+    myUncommittedDocuments.remove(document);
 
     VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
     if (virtualFile == null || !FileIndexFacade.getInstance(myProject).isInContent(virtualFile)) {
@@ -738,7 +747,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       public void run() {
         psiFile.getViewProvider().beforeContentsSynchronized();
         synchronized (PsiLock.LOCK) {
-          final int oldLength = prevText.length();
+          final int oldLength = prevPair.first.length();
           PsiManagerImpl manager = (PsiManagerImpl)psiFile.getManager();
           BlockSupportImpl.sendBeforeChildrenChangeEvent(manager, psiFile, true);
           BlockSupportImpl.sendBeforeChildrenChangeEvent(manager, psiFile, false);

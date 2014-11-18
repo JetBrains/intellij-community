@@ -387,7 +387,7 @@ class BaseInterpreterInterface:
 
     def getArray(self, attr, roffset, coffset, rows, cols, format):
         xml = "<xml>"
-        name = ".".join(attr.split("\t"))
+        name = attr.split("\t")[-1]
         array = pydevd_vars.evalInContext(name, self.getNamespace(), self.getNamespace())
 
         if rows == -1 and cols == -1:

@@ -25,8 +25,11 @@ import org.scalacheck._
 import scala.collection.JavaConversions._
 
 /**
- * Run this class to generate randomized tests for IDEA VFS/document/PSI/index subsystem interaction using ScalaCheck.
- * When a test fails, a test method code (in Groovy) is printed which should be copied to a normal test class and debugged there.
+ * Run this class to generate randomized tests for IDEA VFS/document/PSI/index subsystem interaction using ScalaCheck.<p/>
+ *
+ * When a test fails, a test method code (in Groovy) is printed which should be copied to a normal test class (IndexTest)
+ * and debugged there.<p/>
+ *
  * The generated test may contain some excessive declarations and checks that should be corrected manually.
  * After the fix, that generated test should be renamed according to the underlying issue it found and committed to the repository.
  *

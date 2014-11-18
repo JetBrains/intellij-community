@@ -75,7 +75,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   @TestOnly
   public static boolean INIT_INSPECTIONS = false;
   private static Map<String, InspectionElementsMerger> ourMergers = null;
-  final InspectionToolRegistrar myRegistrar;
+  private final InspectionToolRegistrar myRegistrar;
   @NotNull
   private final Map<String, Element> myDeinstalledInspectionsSettings;
   private final ExternalInfo myExternalInfo = new ExternalInfo();
@@ -342,9 +342,9 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
           inspectionElement.setAttribute(CLASS_TAG, toolName);
           toolList.writeExternal(inspectionElement);
 
-          if (areSettingsMerged(toolName, inspectionElement)) continue;
-
-          element.addContent(inspectionElement);
+          if (!areSettingsMerged(toolName, inspectionElement)) {
+            element.addContent(inspectionElement);
+          }
         }
         else {
           element.addContent(toolElement.clone());
@@ -378,13 +378,12 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     if (mainToolId != null) {
       InspectionToolWrapper dependentEntryWrapper = getInspectionTool(mainToolId, project);
 
-      if (dependentEntryWrapper != null) {
-        if (!dependentEntries.add(dependentEntryWrapper)) {
-          collectDependentInspections(dependentEntryWrapper, dependentEntries, project);
-        }
+      if (dependentEntryWrapper == null) {
+        LOG.error("Can't find main tool: '" + mainToolId+"' which was specified in "+toolWrapper);
+        return;
       }
-      else {
-        LOG.error("Can't find main tool: " + mainToolId);
+      if (!dependentEntries.add(dependentEntryWrapper)) {
+        collectDependentInspections(dependentEntryWrapper, dependentEntries, project);
       }
     }
   }
@@ -1015,6 +1014,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     }
   }
 
+  @Override
   @NotNull
   public String toString() {
     return mySource == null ? getName() : getName() + " (copy)";

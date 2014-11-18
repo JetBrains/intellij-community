@@ -277,7 +277,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     MutablePicoContainer container = myPicoContainer;
     if (container == null || myDisposeCompleted) {
       ProgressManager.checkCanceled();
-      throw new AssertionError("Already disposed");
+      throw new AssertionError("Already disposed: "+toString());
     }
     return container;
   }
