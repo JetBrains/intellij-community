@@ -19,6 +19,7 @@
  */
 package com.intellij.find.ngrams;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.ThreadLocalCachedIntArray;
 import com.intellij.openapi.util.text.TrigramBuilder;
@@ -42,7 +43,7 @@ import java.util.Collection;
 import java.util.Map;
 
 public class TrigramIndex extends ScalarIndexExtension<Integer> implements CustomInputsIndexFileBasedIndexExtension<Integer> {
-  public static final boolean ENABLED = SystemProperties.getBooleanProperty("idea.internal.trigramindex.enabled", true);
+  public static final boolean ENABLED = SystemProperties.getBooleanProperty("idea.internal.trigramindex.enabled", ApplicationManager.getApplication().isInternal());
 
   public static final ID<Integer,Void> INDEX_ID = ID.create("Trigram.Index");
 

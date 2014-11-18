@@ -15,27 +15,37 @@
  */
 package com.intellij.psi.autodetect;
 
-import com.intellij.openapi.editor.Document;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import com.intellij.psi.codeStyle.autodetect.*;
-import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
+import com.intellij.psi.codeStyle.autodetect.LineIndentInfo;
+import com.intellij.psi.codeStyle.autodetect.LineIndentInfoBuilder;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
 import java.io.File;
 import java.util.List;
 
-public class IndentAutoDetectionTest extends LightPlatformCodeInsightTestCase {
-  private static final String BASE_PATH = "codeStyle/autodetect/";
+public class IndentAutoDetectionTest extends AbstractIndentAutoDetectionTest {
 
   static {
     PlatformTestCase.initPlatformLangPrefix();
   }
+
+  @NotNull
+  @Override
+  protected String getTestDataPath() {
+    return PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/')
+           + "/platform/platform-tests/testData/"
+           + "codeStyle/autodetect/";
+  }
+
+  @NotNull
+  protected String getFileNameWithExtension() {
+    return getTestName(true) + ".java";
+  }
+
 
   public void testBigFileWithIndent2() {
     doTestIndentSize(2);
@@ -136,84 +146,12 @@ public class IndentAutoDetectionTest extends LightPlatformCodeInsightTestCase {
     );
   }
 
-  public void doTestMaxUsedIndent(int indentExpected, int timesUsedExpected) {
-    IndentUsageInfo maxIndentExpected = new IndentUsageInfo(indentExpected, timesUsedExpected);
-    IndentUsageInfo indentInfo = getMaxUsedIndentInfo();
-    Assert.assertEquals("Indent size mismatch", maxIndentExpected.getIndentSize(), indentInfo.getIndentSize());
-    Assert.assertEquals("Indent size usage number mismatch", maxIndentExpected.getTimesUsed(), indentInfo.getTimesUsed());
-  }
-
-  public void doTestMaxUsedIndent(int indentExpected) {
-    IndentUsageInfo indentInfo = getMaxUsedIndentInfo();
-    Assert.assertEquals("Indent size mismatch", indentExpected, indentInfo.getIndentSize());
-  }
-
-  private void doTestTabsUsed() {
-    doTestTabsUsed(null);
-  }
-
-  private void doTestTabsUsed(@Nullable CommonCodeStyleSettings.IndentOptions defaultIndentOptions) {
-    configureByFile(getTestName(true) + ".java");
-
-    if (defaultIndentOptions != null) {
-      setIndentOptions(defaultIndentOptions);
-    }
-
-    CommonCodeStyleSettings.IndentOptions options = detectIndentOptions();
-    Assert.assertTrue("Tab usage not detected", options.USE_TAB_CHARACTER);
-  }
-
-  private void doTestIndentSize(int expectedIndent) {
-    doTestIndentSize(null, expectedIndent);
-  }
-
-  private void doTestIndentSize(@Nullable CommonCodeStyleSettings.IndentOptions defaultIndentOptions, int expectedIndent) {
-    configureByFile(getTestName(true) + ".java");
-
-    if (defaultIndentOptions != null) {
-      setIndentOptions(defaultIndentOptions);
-    }
-
-    CommonCodeStyleSettings.IndentOptions options = detectIndentOptions();
-    Assert.assertFalse("Tab usage detected: ", options.USE_TAB_CHARACTER);
-    Assert.assertEquals("Indent mismatch", expectedIndent, options.INDENT_SIZE);
-  }
-
-  private static void setIndentOptions(@NotNull CommonCodeStyleSettings.IndentOptions defaultIndentOptions) {
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
-    CommonCodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptions(myFile.getFileType());
-    indentOptions.copyFrom(defaultIndentOptions);
-  }
-
-  @NotNull
-  private static CommonCodeStyleSettings.IndentOptions detectIndentOptions() {
-    IndentOptionsDetector detector = new IndentOptionsDetectorImpl(myFile);
-    return detector.getIndentOptions();
-  }
-
-  @NotNull
-  private IndentUsageInfo getMaxUsedIndentInfo() {
-    configureByFile(getTestName(true) + ".java");
-    Document document = getDocument(myFile);
-    List<LineIndentInfo> lines = new LineIndentInfoBuilder(document.getCharsSequence()).build();
-    IndentUsageStatistics statistics = new IndentUsageStatisticsImpl(lines);
-    return statistics.getKMostUsedIndentInfo(0);
-  }
-
   private static void doTestLineToIndentMapping(@NotNull CharSequence text, int... spacesForLine) {
-    List<LineIndentInfo> list = new LineIndentInfoBuilder(text).build();
+    List<LineIndentInfo> list = new LineIndentInfoBuilder(text, PlainTextLanguage.INSTANCE).build();
     Assert.assertEquals(list.size(), spacesForLine.length);
     for (int i = 0; i < spacesForLine.length; i++) {
       int indentSize = list.get(i).getIndentSize();
       Assert.assertEquals("Mismatch on line " + i, spacesForLine[i], indentSize);
     }
-  }
-
-  @Override
-  @NotNull
-  public String getTestDataPath() {
-    return PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/')
-           + "/platform/platform-tests/testData/"
-           + BASE_PATH;
   }
 }

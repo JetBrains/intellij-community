@@ -19,9 +19,9 @@ import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
 import com.intellij.dvcs.DvcsUtil;
+import com.intellij.dvcs.repo.RepositoryUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
@@ -317,60 +317,8 @@ public class GitBranchUtil {
 
   @Nullable
   public static VirtualFile getVcsRootOrGuess(@NotNull Project project, @Nullable VirtualFile file) {
-    VirtualFile root = null;
-    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    if (file != null) {
-      if (fileIndex.isInLibrarySource(file) || fileIndex.isInLibraryClasses(file)) {
-        LOG.debug("File is in library sources " + file);
-        root = getVcsRootForLibraryFile(project, file);
-      }
-      else {
-        LOG.debug("File is not in library sources " + file);
-        root = ProjectLevelVcsManager.getInstance(project).getVcsRootFor(file);
-      }
-    }
+    VirtualFile root = RepositoryUtil.getVcsRoot(project, file);
     return root != null ? root : guessGitRoot(project);
-  }
-
-  @Nullable
-  private static VirtualFile getVcsRootForLibraryFile(@NotNull Project project, @NotNull VirtualFile file) {
-    ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
-    // for a file inside .jar/.zip consider the .jar/.zip file itself
-    VirtualFile root = vcsManager.getVcsRootFor(VfsUtilCore.getVirtualFileForJar(file));
-    if (root != null) {
-      LOG.debug("Found root for zip/jar file: " + root);
-      return root;
-    }
-
-    // for other libs which don't have jars inside the project dir (such as JDK) take the owner module of the lib
-    List<OrderEntry> entries = ProjectRootManager.getInstance(project).getFileIndex().getOrderEntriesForFile(file);
-    Set<VirtualFile> libraryRoots = new HashSet<VirtualFile>();
-    for (OrderEntry entry : entries) {
-      if (entry instanceof LibraryOrderEntry || entry instanceof JdkOrderEntry) {
-        VirtualFile moduleRoot = vcsManager.getVcsRootFor(entry.getOwnerModule().getModuleFile());
-        if (moduleRoot != null) {
-          libraryRoots.add(moduleRoot);
-        }
-      }
-    }
-
-    if (libraryRoots.size() == 0) {
-      LOG.debug("No library roots");
-      return null;
-    }
-
-    // if the lib is used in several modules, take the top module
-    // (for modules of the same level we can't guess anything => take the first one)
-    Iterator<VirtualFile> libIterator = libraryRoots.iterator();
-    VirtualFile topLibraryRoot = libIterator.next();
-    while (libIterator.hasNext()) {
-      VirtualFile libRoot = libIterator.next();
-      if (VfsUtilCore.isAncestor(libRoot, topLibraryRoot, true)) {
-        topLibraryRoot = libRoot;
-      }
-    }
-    LOG.debug("Several library roots, returning " + topLibraryRoot);
-    return topLibraryRoot;
   }
 
   @Nullable
