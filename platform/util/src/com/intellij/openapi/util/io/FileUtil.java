@@ -1053,6 +1053,19 @@ public class FileUtil extends FileUtilRt {
    */
   @NotNull
   public static String sanitizeFileName(@NotNull String name) {
+    return sanitizeFileName(name, true);
+  }
+
+  /**
+   * Difference - not only letter or digit allowed, but space, @, -
+   */
+  @NotNull
+  public static String sanitizeName(@NotNull String name) {
+    return sanitizeFileName(name, false);
+  }
+
+  @NotNull
+  private static String sanitizeFileName(@NotNull String name, boolean strict) {
     StringBuilder result = null;
     int last = 0;
     int length = name.length();
@@ -1060,7 +1073,7 @@ public class FileUtil extends FileUtilRt {
       char c = name.charAt(i);
       boolean appendReplacement = true;
       if (c > 0 && c < 255) {
-        if (Character.isLetterOrDigit(c) || c == '_') {
+        if (strict ? (Character.isLetterOrDigit(c) || c == '_') : (Character.isJavaIdentifierPart(c) || c == ' ' || c == '@' || c == '-')) {
           continue;
         }
       }

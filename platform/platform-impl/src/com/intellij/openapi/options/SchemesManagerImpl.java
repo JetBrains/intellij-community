@@ -263,7 +263,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
             subPath.length() == (name.length() + mySchemeExtension.length()) &&
             subPath.startsWith(name) &&
             subPath.endsWith(mySchemeExtension)) {
-          return UniqueNameGenerator.generateUniqueName(FileUtil.sanitizeFileName(schemeName), collectAllFileNames());
+          return UniqueNameGenerator.generateUniqueName(FileUtil.sanitizeName(schemeName), collectAllFileNames());
         }
       }
     }
@@ -554,7 +554,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
 
     Parent document = myProcessor.writeScheme(scheme);
     if (document != null) {
-      String fileSpec = getFileFullPath(FileUtil.sanitizeFileName(scheme.getName())) + mySchemeExtension;
+      String fileSpec = getFileFullPath(FileUtil.sanitizeName(scheme.getName())) + mySchemeExtension;
       if (!provider.isApplicable(fileSpec, myRoamingType)) {
         return;
       }
@@ -666,7 +666,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
 
     String fileNameWithoutExtension = currentFileNameWithoutExtension;
     if (fileNameWithoutExtension == null || isRenamed(scheme)) {
-      fileNameWithoutExtension = nameGenerator.generateUniqueName(FileUtil.sanitizeFileName(scheme.getName()));
+      fileNameWithoutExtension = nameGenerator.generateUniqueName(FileUtil.sanitizeName(scheme.getName()));
     }
     String fileName = fileNameWithoutExtension + mySchemeExtension;
 

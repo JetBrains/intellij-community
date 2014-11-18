@@ -17,7 +17,6 @@ package com.intellij.openapi.options;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.util.UniqueFileNamesProvider;
 import com.intellij.util.text.UniqueNameGenerator;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -36,13 +35,13 @@ public abstract class AbstractSchemesManager<T extends Scheme, E extends Externa
   private String myCurrentSchemeName;
 
   @Override
-  public void addNewScheme(@NotNull final T scheme, final boolean replaceExisting) {
+  public void addNewScheme(@NotNull T scheme, boolean replaceExisting) {
     int toReplace = -1;
     boolean newSchemeIsShared = isShared(scheme);
 
     for (int i = 0; i < mySchemes.size(); i++) {
-      T t = mySchemes.get(i);
-      if (Comparing.equal(scheme.getName(), t.getName()) && newSchemeIsShared == isShared(t)) {
+      T existingScheme = mySchemes.get(i);
+      if (existingScheme.getName().equals(scheme.getName()) && newSchemeIsShared == isShared(existingScheme)) {
         toReplace = i;
         break;
       }
@@ -50,15 +49,13 @@ public abstract class AbstractSchemesManager<T extends Scheme, E extends Externa
     if (toReplace == -1) {
       mySchemes.add(scheme);
     }
+    else if (replaceExisting || !isExternalizable(scheme)) {
+      mySchemes.set(toReplace, scheme);
+    }
     else {
-      if (replaceExisting || !isExternalizable(scheme)) {
-        mySchemes.set(toReplace, scheme);
-      }
-      else {
-        //noinspection unchecked
-        renameScheme((E)scheme, generateUniqueName(scheme));
-        mySchemes.add(scheme);
-      }
+      //noinspection unchecked
+      renameScheme((E)scheme, UniqueNameGenerator.generateUniqueName(scheme.getName(), collectExistingNames(mySchemes)));
+      mySchemes.add(scheme);
     }
     onSchemeAdded(scheme);
     checkCurrentScheme(scheme);
@@ -69,11 +66,6 @@ public abstract class AbstractSchemesManager<T extends Scheme, E extends Externa
       //noinspection unchecked
       myCurrentScheme = (T)scheme;
     }
-  }
-
-  @NotNull
-  private String generateUniqueName(@NotNull T scheme) {
-    return UniqueNameGenerator.generateUniqueName(UniqueFileNamesProvider.convertName(scheme.getName()), collectExistingNames(mySchemes));
   }
 
   private Collection<String> collectExistingNames(final Collection<T> schemes) {
@@ -153,8 +145,8 @@ public abstract class AbstractSchemesManager<T extends Scheme, E extends Externa
     return getAllSchemeNames(mySchemes);
   }
 
-  public Collection<String> getAllSchemeNames(Collection<T> schemes) {
-    Set<String> names = new THashSet<String>();
+  public Collection<String> getAllSchemeNames(@NotNull Collection<T> schemes) {
+    Set<String> names = new THashSet<String>(schemes.size());
     for (T scheme : schemes) {
       names.add(scheme.getName());
     }
@@ -164,9 +156,9 @@ public abstract class AbstractSchemesManager<T extends Scheme, E extends Externa
   protected abstract void onSchemeAdded(@NotNull T scheme);
 
   protected void renameScheme(@NotNull E scheme, @NotNull String newName) {
-    if (!Comparing.equal(newName, scheme.getName())) {
+    if (!newName.equals(scheme.getName())) {
       scheme.setName(newName);
-      LOG.assertTrue(Comparing.equal(newName, scheme.getName()));
+      LOG.assertTrue(newName.equals(scheme.getName()));
     }
   }
 
