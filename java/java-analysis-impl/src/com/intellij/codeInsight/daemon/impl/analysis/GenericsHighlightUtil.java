@@ -215,9 +215,9 @@ public class GenericsHighlightUtil {
       expectedType = ((PsiAssignmentExpression)parent).getLExpression().getType();
     }
     else if (parent instanceof PsiReturnStatement) {
-      PsiMethod method = PsiTreeUtil.getParentOfType(parent, PsiMethod.class);
-      if (method != null) {
-        expectedType = method.getReturnType();
+      PsiElement method = PsiTreeUtil.getParentOfType(parent, PsiMethod.class, PsiLambdaExpression.class);
+      if (method instanceof PsiMethod) {
+        expectedType = ((PsiMethod)method).getReturnType();
       }
     }
     else if (parent instanceof PsiExpressionList) {

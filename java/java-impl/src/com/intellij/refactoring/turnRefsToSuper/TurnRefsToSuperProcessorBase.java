@@ -523,9 +523,9 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
 
     final PsiElement parent = element.getParent();
     if (parent instanceof PsiReturnStatement) {
-      final PsiMethod method = PsiTreeUtil.getParentOfType(parent, PsiMethod.class);
-      assert method != null;
-      constrainingType = method.getReturnType();
+      final PsiElement el = PsiTreeUtil.getParentOfType(parent, PsiMethod.class, PsiLambdaExpression.class);
+      constrainingType = el instanceof PsiMethod ? ((PsiMethod)el).getReturnType() 
+                                                 : el instanceof PsiLambdaExpression ? LambdaUtil.getFunctionalInterfaceReturnType((PsiLambdaExpression)el) : null;
     }
     else if (parent instanceof PsiAssignmentExpression) {
       constrainingType = ((PsiAssignmentExpression)parent).getLExpression().getType();
