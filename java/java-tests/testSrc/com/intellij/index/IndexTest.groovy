@@ -25,9 +25,11 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.util.Factory
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry
 import com.intellij.psi.*
+import com.intellij.psi.impl.PsiManagerEx
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiSearchHelper
 import com.intellij.testFramework.PlatformTestUtil
@@ -277,4 +279,27 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
 
     assertNotNull(findClass("Foo"));
   }
+
+  public void "test changing a file without psi makes the document committed and updates index"() {
+    def psiFile = myFixture.addFileToProject("Foo.java", "class Foo {}")
+    def vFile = psiFile.virtualFile
+    def scope = GlobalSearchScope.allScope(project)
+
+    FileDocumentManager.instance.getDocument(vFile).text = "import zoo.Zoo; class Foo1 {}"
+    assert PsiDocumentManager.getInstance(project).uncommittedDocuments
+    psiFile = null
+
+    PlatformTestUtil.tryGcSoftlyReachableObjects()
+
+    assert !((PsiManagerEx) psiManager).fileManager.getCachedPsiFile(vFile)
+
+    FileDocumentManager.instance.saveAllDocuments()
+
+    VfsUtil.saveText(vFile, "class Foo3 {}")
+
+    assert !PsiDocumentManager.getInstance(project).uncommittedDocuments
+
+    assert JavaPsiFacade.getInstance(project).findClass("Foo3", scope)
+  }
+
 }
