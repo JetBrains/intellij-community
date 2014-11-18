@@ -88,17 +88,24 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
   private VcsCommitMessageMarginConfigurable myCommitMessageMarginConfigurable;
 
   private static class MapInfo {
-
     static final MapInfo SEPARATOR = new MapInfo(new VcsDirectoryMapping("SEPARATOR", "SEP"), Type.SEPARATOR);
     static final Comparator<MapInfo> COMPARATOR = new Comparator<MapInfo>() {
       @Override
       public int compare(@NotNull MapInfo o1, @NotNull MapInfo o2) {
-        if ((o1.type.isRegistered() && o2.type.isRegistered()) || (!o1.type.isRegistered() && !o2.type.isRegistered())) {
+        if (o1.type.isRegistered() && o2.type.isRegistered() || o1.type == Type.UNREGISTERED && o2.type == Type.UNREGISTERED) {
           return NewMappings.MAPPINGS_COMPARATOR.compare(o1.mapping, o2.mapping);
         }
         return o1.type.ordinal() - o2.type.ordinal();
       }
     };
+
+    static MapInfo unregistered(@NotNull String path, @NotNull String vcs) {
+      return new MapInfo(new VcsDirectoryMapping(path, vcs), Type.UNREGISTERED);
+    }
+
+    static MapInfo registered(@NotNull VcsDirectoryMapping mapping, boolean valid) {
+      return new MapInfo(mapping, valid ? Type.NORMAL : Type.INVALID);
+    }
 
     enum Type {
       NORMAL,
@@ -114,15 +121,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     private final Type type;
     private final VcsDirectoryMapping mapping;
 
-    MapInfo(@NotNull VcsDirectoryMapping mapping, boolean valid) {
-      this(mapping, valid ? Type.NORMAL : Type.INVALID);
-    }
-
-    MapInfo(@NotNull String path, @NotNull String vcs) {
-      this(new VcsDirectoryMapping(path, vcs), Type.UNREGISTERED);
-    }
-
-    MapInfo(@NotNull VcsDirectoryMapping mapping, @NotNull Type type) {
+    private MapInfo(@NotNull VcsDirectoryMapping mapping, @NotNull Type type) {
       this.mapping = mapping;
       this.type = type;
     }
@@ -368,15 +367,15 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
   private void initializeModel() {
     List<MapInfo> mappings = new ArrayList<MapInfo>();
     for (VcsDirectoryMapping mapping : ProjectLevelVcsManager.getInstance(myProject).getDirectoryMappings()) {
-      mappings.add(new MapInfo(new VcsDirectoryMapping(mapping.getDirectory(), mapping.getVcs(), mapping.getRootSettings()),
-                               isMappingValid(mapping)));
+      mappings.add(MapInfo.registered(new VcsDirectoryMapping(mapping.getDirectory(), mapping.getVcs(), mapping.getRootSettings()),
+                                      isMappingValid(mapping)));
     }
 
     Collection<VcsRootError> errors = findUnregisteredRoots();
     if (!errors.isEmpty()) {
       mappings.add(MapInfo.SEPARATOR);
       for (VcsRootError error : errors) {
-        mappings.add(new MapInfo(error.getMapping(), error.getVcsKey().getName()));
+        mappings.add(MapInfo.unregistered(error.getMapping(), error.getVcsKey().getName()));
       }
     }
 
@@ -429,7 +428,8 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
 
   private void addMapping(VcsDirectoryMapping mapping) {
     List<MapInfo> items = new ArrayList<MapInfo>(myModel.getItems());
-    items.add(new MapInfo(new VcsDirectoryMapping(mapping.getDirectory(), mapping.getVcs(), mapping.getRootSettings()), isMappingValid(mapping)));
+    items.add(MapInfo.registered(new VcsDirectoryMapping(mapping.getDirectory(), mapping.getVcs(), mapping.getRootSettings()),
+                                 isMappingValid(mapping)));
     Collections.sort(items, MapInfo.COMPARATOR);
     myModel.setItems(items);
     checkNotifyListeners(getActiveVcses());
@@ -439,16 +439,15 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     List<MapInfo> items = new ArrayList<MapInfo>(myModel.getItems());
     for (MapInfo info : infos) {
       items.remove(info);
-      items.add(new MapInfo(new VcsDirectoryMapping(info.mapping.getDirectory(), info.mapping.getVcs(), info.mapping.getRootSettings()), isMappingValid(info.mapping)));
+      items.add(MapInfo.registered(info.mapping, isMappingValid(info.mapping)));
     }
-    addOrRemoveSeparator(items);
-    Collections.sort(items, MapInfo.COMPARATOR);
+    sortAndAddSeparatorIfNeeded(items);
     myModel.setItems(items);
     checkNotifyListeners(getActiveVcses());
   }
 
   @Contract(pure = false)
-  private static void addOrRemoveSeparator(@NotNull List<MapInfo> items) {
+  private static void sortAndAddSeparatorIfNeeded(@NotNull List<MapInfo> items) {
     boolean hasUnregistered = false;
     boolean hasSeparator = false;
     for (MapInfo item : items) {
@@ -465,6 +464,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     else if (hasUnregistered && !hasSeparator) {
       items.add(MapInfo.SEPARATOR);
     }
+    Collections.sort(items, MapInfo.COMPARATOR);
   }
 
   private void editMapping() {
@@ -485,6 +485,16 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     int index = myDirectoryMappingTable.getSelectionModel().getMinSelectionIndex();
     Collection<MapInfo> selection = myDirectoryMappingTable.getSelection();
     mappings.removeAll(selection);
+
+    Collection<MapInfo> removedValidRoots = ContainerUtil.mapNotNull(selection, new Function<MapInfo, MapInfo>() {
+      @Override
+      public MapInfo fun(MapInfo info) {
+        return info.type == MapInfo.Type.NORMAL ? MapInfo.unregistered(info.mapping.getDirectory(), info.mapping.getVcs()) : null;
+      }
+    });
+    mappings.addAll(removedValidRoots);
+    sortAndAddSeparatorIfNeeded(mappings);
+
     myModel.setItems(mappings);
     if (mappings.size() > 0) {
       if (index >= mappings.size()) {
