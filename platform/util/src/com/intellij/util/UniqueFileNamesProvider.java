@@ -15,10 +15,13 @@
  */
 package com.intellij.util;
 
+import com.intellij.openapi.util.text.StringUtil;
+
 import java.util.ArrayList;
+import java.util.List;
 
 public class UniqueFileNamesProvider {
-  private final ArrayList<String> myExistingNames;
+  private final List<String> myExistingNames;
 
   public UniqueFileNamesProvider() {
     myExistingNames = new ArrayList<String>();
@@ -50,10 +53,11 @@ public class UniqueFileNamesProvider {
   }
 
   public static String convertName(String s) {
-    if (s == null || s.isEmpty()) {
+    if (StringUtil.isEmpty(s)) {
       return "_";
     }
-    StringBuffer buf = new StringBuffer();
+
+    StringBuilder buf = new StringBuilder();
     for (int i = 0; i < s.length(); i++) {
       char c = s.charAt(i);
       if (Character.isJavaIdentifierPart(c) || c == ' ') {

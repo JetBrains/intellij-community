@@ -86,7 +86,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
       loadSchemesFromBeans();
     }
 
-    loadAllSchemes();
+    mySchemesManager.loadSchemes();
 
     loadAdditionalTextAttributes();
 
@@ -279,10 +279,6 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
   // -------------------------------------------------------------------------
   // Routines responsible for loading & saving colors schemes.
   // -------------------------------------------------------------------------
-
-  private void loadAllSchemes() {
-    mySchemesManager.loadSchemes();
-  }
 
   private static File getColorsDir(boolean create) {
     @NonNls String directoryPath = PathManager.getConfigPath() + File.separator + "colors";

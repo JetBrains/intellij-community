@@ -18,8 +18,8 @@ package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.CommonBundle;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.options.ExternalizableScheme;
 import com.intellij.openapi.options.ExternalInfo;
+import com.intellij.openapi.options.ExternalizableScheme;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
@@ -31,7 +31,6 @@ import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import org.jdom.Document;
 import org.jdom.Element;
-import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -131,7 +130,7 @@ public class CodeStyleSchemeImpl implements JDOMExternalizable, CodeStyleScheme,
     myCodeStyleSettings.readExternal(element);
   }
 
-  public static CodeStyleSchemeImpl readScheme(Document document) throws InvalidDataException, JDOMException, IOException{
+  public static CodeStyleSchemeImpl readScheme(Document document) throws InvalidDataException {
     Element root = document.getRootElement();
     if (root == null){
       throw new InvalidDataException("No root element in code style scheme file");

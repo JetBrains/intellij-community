@@ -99,6 +99,8 @@ public class JDOMUtil {
     return addToHash(0, root);
   }
 
+  @SuppressWarnings("unused")
+  @Deprecated
   public static int getTreeHash(@NotNull Document document) {
     return getTreeHash(document.getRootElement());
   }
@@ -158,6 +160,8 @@ public class JDOMUtil {
     return list.toArray(new Element[list.size()]);
   }
 
+  @Deprecated
+  @SuppressWarnings("unused")
   @NotNull
   public static String concatTextNodesValues(@NotNull final Object[] nodes) {
     StringBuilder result = new StringBuilder();
