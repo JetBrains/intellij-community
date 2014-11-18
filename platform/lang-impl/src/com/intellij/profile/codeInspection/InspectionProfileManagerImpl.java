@@ -66,7 +66,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class InspectionProfileManagerImpl extends InspectionProfileManager implements SeverityProvider, ExportableComponent, JDOMExternalizable,
                                                                                    NamedComponent {
-
   private final InspectionToolRegistrar myRegistrar;
   private final SchemesManager<Profile, InspectionProfileImpl> mySchemesManager;
   private final AtomicBoolean myProfilesAreInitialized = new AtomicBoolean(false);
@@ -86,20 +85,33 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
       @NotNull
       @Override
       public InspectionProfileImpl readScheme(@NotNull Element element) {
-        InspectionProfileImpl profile = new InspectionProfileImpl(InspectionProfileLoadUtil.getProfileName(element), myRegistrar, InspectionProfileManagerImpl.this);
-        read(profile, element);
+        final InspectionProfileImpl profile = new InspectionProfileImpl(InspectionProfileLoadUtil.getProfileName(element), myRegistrar, InspectionProfileManagerImpl.this);
+        try {
+          profile.readExternal(element);
+        }
+        catch (Exception ignored) {
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              Messages.showErrorDialog(InspectionsBundle.message("inspection.error.loading.message", 0, profile.getName()),
+                                       InspectionsBundle.message("inspection.errors.occurred.dialog.title"));
+            }
+          }, ModalityState.NON_MODAL);
+        }
         return profile;
       }
 
       @Override
-      public boolean shouldBeSaved(@NotNull final InspectionProfileImpl scheme) {
-        return scheme.wasInitialized();
+      public boolean shouldBeSaved(@NotNull InspectionProfileImpl scheme) {
+        return !scheme.isLocal() && scheme.wasInitialized();
       }
 
-
       @Override
-      public Element writeScheme(@NotNull final InspectionProfileImpl scheme) throws WriteExternalException {
-        return scheme.saveToDocument();
+      public Element writeScheme(@NotNull InspectionProfileImpl scheme) throws WriteExternalException {
+        Element root = new Element("inspections");
+        root.setAttribute("profile_name", scheme.myName);
+        scheme.writeExternal(root);
+        return root;
       }
 
       @Override
@@ -126,21 +138,6 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
 
     mySchemesManager = schemesManagerFactory.createSchemesManager(FILE_SPEC, processor, RoamingType.PER_USER);
     mySeverityRegistrar = new SeverityRegistrar(messageBus);
-  }
-
-  private static void read(@NotNull final InspectionProfileImpl profile, @NotNull Element element) {
-    try {
-      profile.readExternal(element);
-    }
-    catch (Exception ignored) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          Messages.showErrorDialog(InspectionsBundle.message("inspection.error.loading.message", 0, profile.getName()),
-                                   InspectionsBundle.message("inspection.errors.occurred.dialog.title"));
-        }
-      }, ModalityState.NON_MODAL);
-    }
   }
 
   @NotNull

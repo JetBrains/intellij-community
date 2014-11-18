@@ -67,8 +67,6 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.InspectionProfileImpl");
   @NonNls private static final String VALID_VERSION = "1.0";
   @NonNls private static final String VERSION_TAG = "version";
-  @NonNls private static final String PROFILE_NAME_TAG = "profile_name";
-  @NonNls private static final String ROOT_ELEMENT_TAG = "inspections";
   @NonNls private static final String USED_LEVELS = "used_levels";
   @NonNls private static final String IS_LOCKED = "is_locked";
   @NonNls private static final String DESCRIPTION = "description";
@@ -313,12 +311,12 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
       element.addContent(new Element(DESCRIPTION).addContent(myDescription));
     }
     synchronized (myExternalInfo) {
-    if (!myInitialized) {
+      if (!myInitialized) {
         for (Element el : myDeinstalledInspectionsSettings.values()) {
           element.addContent(el.clone());
         }
-      return;
-    }
+        return;
+      }
     }
 
     Map<String, Boolean> diffMap = getDisplayLevelMap();
@@ -559,7 +557,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     try {
       tools = createTools(project);
     }
-    catch (ProcessCanceledException e) {
+    catch (ProcessCanceledException ignored) {
       return false;
     }
     final Map<String, List<String>> dependencies = new HashMap<String, List<String>>();
@@ -819,19 +817,6 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     }
     setModified(true);
     myDescription = description;
-  }
-
-  public Element saveToDocument() throws WriteExternalException {
-    if (isLocal()) {
-      Element root = new Element(ROOT_ELEMENT_TAG);
-      root.setAttribute(PROFILE_NAME_TAG, myName);
-      writeExternal(root);
-      //myVisibleTreeState.writeExternal(root);
-      return root;
-    }
-    else {
-      return null;
-    }
   }
 
   @Override
