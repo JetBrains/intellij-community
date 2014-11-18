@@ -546,15 +546,7 @@ public class Switcher extends AnAction implements DumbAware {
             changeSelection();
           }
         }.registerCustomShortcutSet(CustomShortcutSet.fromString("TAB"), this, myPopup);
-
         new AnAction(null, null, null) {
-          @Override
-          public void actionPerformed(@NotNull AnActionEvent e) {
-            //suppress all actions to activate a toolwindow : IDEA-71277
-          }
-        }.registerCustomShortcutSet(TW_SHORTCUT, this, myPopup);
-        new AnAction(null, null, null) {
-
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
             if (mySpeedSearch != null && mySpeedSearch.isPopupActive()) {
@@ -564,6 +556,14 @@ public class Switcher extends AnAction implements DumbAware {
             }
           }
         }.registerCustomShortcutSet(CustomShortcutSet.fromString("ESCAPE"), this, myPopup);
+      }
+      else {
+        new AnAction(null, null, null) {
+          @Override
+          public void actionPerformed(@NotNull AnActionEvent e) {
+            //suppress all actions to activate a toolwindow : IDEA-71277
+          }
+        }.registerCustomShortcutSet(TW_SHORTCUT, this, myPopup);
       }
 
       final Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
