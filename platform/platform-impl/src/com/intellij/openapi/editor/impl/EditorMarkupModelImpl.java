@@ -466,8 +466,8 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
   }
   
-  private static boolean transparent() {
-    return Registry.is("editor.transparent.scrollbar", false);
+  private boolean transparent() {
+    return Registry.is("editor.transparent.scrollbar", false) && isRealFileEditor(myEditor);
   }
 
   private class MyErrorPanel extends ButtonlessScrollBarUI implements MouseMotionListener, MouseListener, MouseWheelListener, UISettingsListener {

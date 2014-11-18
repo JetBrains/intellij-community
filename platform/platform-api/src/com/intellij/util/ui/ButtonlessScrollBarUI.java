@@ -218,7 +218,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
         }
 
         if (e.getChanged() == scrollbar.getParent()) {
-          // when scrollpane is shown first time, we 'blink' the scollbars
+          // when scrollpane is shown first time, we 'blink' the scrollbars
           if ((HierarchyEvent.SHOWING_CHANGED & e.getChangeFlags()) != 0) {
             startRegularThumbAnimator();
             startMacScrollbarFadeout();
