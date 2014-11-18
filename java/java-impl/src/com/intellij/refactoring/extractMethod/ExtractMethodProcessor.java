@@ -265,7 +265,8 @@ public class ExtractMethodProcessor implements MatchProvider {
 
     PsiType returnStatementType = null;
     if (myHasReturnStatement) {
-      returnStatementType = myCodeFragmentMember instanceof PsiMethod ? ((PsiMethod)myCodeFragmentMember).getReturnType() : null;
+      returnStatementType = myCodeFragmentMember instanceof PsiMethod ? ((PsiMethod)myCodeFragmentMember).getReturnType() 
+                                                                      : myCodeFragmentMember instanceof PsiLambdaExpression ? LambdaUtil.getFunctionalInterfaceReturnType((PsiLambdaExpression)myCodeFragmentMember) : null;
     }
     myHasReturnStatementOutput = returnStatementType != null && returnStatementType != PsiType.VOID;
 
