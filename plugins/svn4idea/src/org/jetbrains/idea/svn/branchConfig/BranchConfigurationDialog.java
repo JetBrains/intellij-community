@@ -81,9 +81,10 @@ public class BranchConfigurationDialog extends DialogWrapper {
     myTrunkLocationTextField.setText(configuration.getTrunkUrl());
     myTrunkLocationTextField.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
-        final String selectedUrl = SelectLocationDialog.selectLocation(project, myTrunkLocationTextField.getText());
-        if (selectedUrl != null) {
-          myTrunkLocationTextField.setText(selectedUrl);
+        Pair<String, SVNURL> selectionData = SelectLocationDialog.selectLocation(project, rootUrl);
+
+        if (selectionData != null && selectionData.getFirst() != null) {
+          myTrunkLocationTextField.setText(selectionData.getFirst());
         }
       }
     });
