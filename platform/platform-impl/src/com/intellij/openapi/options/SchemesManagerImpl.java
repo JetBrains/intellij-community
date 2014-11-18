@@ -332,7 +332,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
     try {
       Element element;
       try {
-        element = JDOMUtil.loadDocument(file.getInputStream()).detachRootElement();
+        element = JDOMUtil.load(file.getInputStream());
       }
       catch (JDOMException e) {
         try {
@@ -395,14 +395,14 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
           return null;
         }
         else {
-          E scheme = myProcessor.readScheme(new Document(localCopyElement.getChildren().get(0).clone()));
+          E scheme = doReadScheme(localCopyElement.getChildren().get(0).clone());
           return filter.containsKey(scheme.getName()) ? null : scheme;
         }
       }
     }
     else if (element.getName().equals(SHARED_SCHEME_ORIGINAL)) {
       SharedSchemeData schemeData = unwrap(element);
-      E scheme = myProcessor.readScheme(new Document(schemeData.original));
+      E scheme = doReadScheme(schemeData.original);
       if (scheme == null || filter.containsKey(scheme.getName())) {
         return null;
       }
@@ -410,8 +410,18 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
       return scheme;
     }
     else {
-      E scheme = myProcessor.readScheme(new Document(element));
+      E scheme = doReadScheme(element);
       return filter.containsKey(scheme.getName()) ? null : scheme;
+    }
+  }
+
+  private E doReadScheme(Element element) throws InvalidDataException, IOException, JDOMException {
+    if (myProcessor instanceof BaseSchemeProcessor) {
+      return ((BaseSchemeProcessor<E>)myProcessor).readScheme(element);
+    }
+    else {
+      //noinspection deprecation
+      return myProcessor.readScheme(new Document(element));
     }
   }
 
@@ -491,7 +501,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
         Element element = StorageUtil.loadElement(provider.loadContent(getFileFullPath(subPath), myRoamingType));
         if (element != null) {
           SharedSchemeData original = unwrap(element);
-          E scheme = myProcessor.readScheme(new Document(original.original));
+          E scheme = doReadScheme(original.original);
           if (!alreadyShared(subPath, currentSchemeList)) {
             String schemeName = original.name;
             String uniqueName = UniqueNameGenerator.generateUniqueName("[shared] " + schemeName, names);

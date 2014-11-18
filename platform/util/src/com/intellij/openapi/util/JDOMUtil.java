@@ -34,6 +34,7 @@ import org.jdom.input.SAXBuilder;
 import org.jdom.output.DOMOutputter;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -378,6 +379,16 @@ public class JDOMUtil {
     }
   }
 
+  @Contract("null -> null; !null -> !null")
+  public static Element load(InputStream stream) throws JDOMException, IOException {
+    try {
+      return loadDocument(stream).detachRootElement();
+    }
+    finally {
+      stream.close();
+    }
+  }
+
   @NotNull
   public static Document loadDocument(@NotNull Class clazz, String resource) throws JDOMException, IOException {
     InputStream stream = clazz.getResourceAsStream(resource);
@@ -455,7 +466,7 @@ public class JDOMUtil {
       writeDocument(document, writer, lineSeparator);
       return writer.toString();
     }
-    catch (IOException e) {
+    catch (IOException ignored) {
       // Can't be
       return "";
     }
@@ -468,8 +479,8 @@ public class JDOMUtil {
       writeParent(element, writer, lineSeparator);
       return writer.toString();
     }
-    catch (IOException ignored) {
-      throw new RuntimeException(ignored);
+    catch (IOException e) {
+      throw new RuntimeException(e);
     }
   }
 
@@ -504,8 +515,8 @@ public class JDOMUtil {
       writeElement(element, writer, lineSeparator);
       return writer.toString();
     }
-    catch (IOException ignored) {
-      throw new RuntimeException(ignored);
+    catch (IOException e) {
+      throw new RuntimeException(e);
     }
   }
 
@@ -608,6 +619,8 @@ public class JDOMUtil {
     return buffer == null ? text : buffer.toString();
   }
 
+  @SuppressWarnings("unused")
+  @Deprecated
   @NotNull
   public static List<Element> getChildrenFromAllNamespaces(@NotNull final Element element, @NotNull @NonNls final String name) {
     List<Element> result = new SmartList<Element>();
@@ -723,6 +736,8 @@ public class JDOMUtil {
     public boolean hasNullAttributes = false;
   }
 
+  @SuppressWarnings("unused")
+  @Deprecated
   public static org.w3c.dom.Element convertToDOM(@NotNull Element e) {
     try {
       final Document d = new Document();
@@ -744,6 +759,8 @@ public class JDOMUtil {
     }
   }
 
+  @SuppressWarnings("unused")
+  @Deprecated
   public static Element convertFromDOM(org.w3c.dom.Element e) {
     return new DOMBuilder().build(e);
   }
@@ -762,7 +779,9 @@ public class JDOMUtil {
     }
   }
 
+  @SuppressWarnings("unused")
   @Nullable
+  @Deprecated
   public static Element cloneElement(@NotNull Element element, @NotNull ElementFilter elementFilter) {
     Element result = new Element(element.getName(), element.getNamespace());
     List<Attribute> attributes = element.getAttributes();

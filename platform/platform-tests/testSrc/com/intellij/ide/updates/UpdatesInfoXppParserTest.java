@@ -90,7 +90,7 @@ public class UpdatesInfoXppParserTest extends TestCase {
     public static UpdatesInfo read(String fileName)  {
       final InputStream stream = UpdatesInfoXppParserTest.class.getResourceAsStream(fileName);
       try {
-        return new UpdatesInfo(JDOMUtil.loadDocument(stream).getRootElement());
+        return new UpdatesInfo(JDOMUtil.load(stream));
       }
       catch (Exception e) {
         throw new RuntimeException(e);

@@ -50,7 +50,6 @@ import com.intellij.profile.Profile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.ui.UIUtil;
-import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
@@ -85,9 +84,9 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
 
     SchemeProcessor<InspectionProfileImpl> processor = new BaseSchemeProcessor<InspectionProfileImpl>() {
       @Override
-      public InspectionProfileImpl readScheme(@NotNull final Document document) {
-        InspectionProfileImpl profile = new InspectionProfileImpl(InspectionProfileLoadUtil.getProfileName(document), myRegistrar, InspectionProfileManagerImpl.this);
-        read(profile, document.getRootElement());
+      public InspectionProfileImpl readScheme(@NotNull Element element) {
+        InspectionProfileImpl profile = new InspectionProfileImpl(InspectionProfileLoadUtil.getProfileName(element), myRegistrar, InspectionProfileManagerImpl.this);
+        read(profile, element);
         return profile;
       }
 
@@ -132,7 +131,7 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
     try {
       profile.readExternal(element);
     }
-    catch (Exception e) {
+    catch (Exception ignored) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         @Override
         public void run() {
@@ -233,7 +232,7 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
       catch (JDOMException e) {
         throw e;
       }
-      catch (Exception e) {
+      catch (Exception ignored) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
           public void run() {

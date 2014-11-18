@@ -30,10 +30,8 @@ import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
@@ -111,8 +109,7 @@ public abstract class XmlElementStorage extends StateStorageBase<StorageData> {
   @Nullable
   protected final Element loadDataFromStreamProvider() throws IOException, JDOMException {
     assert myStreamProvider != null;
-    InputStream inputStream = myStreamProvider.loadContent(myFileSpec, myRoamingType);
-    return inputStream == null ? null : JDOMUtil.loadDocument(inputStream).detachRootElement();
+    return JDOMUtil.load(myStreamProvider.loadContent(myFileSpec, myRoamingType));
   }
 
   protected final void loadState(@NotNull StorageData result, @NotNull Element element) {
@@ -259,10 +256,5 @@ public abstract class XmlElementStorage extends StateStorageBase<StorageData> {
         myStreamProvider.saveContent(myFileSpec, content.getInternalBuffer(), content.size(), myRoamingType, true);
       }
     }
-  }
-
-  @TestOnly
-  public void resetData() {
-    myLoadedData = null;
   }
 }

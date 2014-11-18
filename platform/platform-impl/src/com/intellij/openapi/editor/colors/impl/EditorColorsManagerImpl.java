@@ -42,7 +42,6 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.UIUtil;
-import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
@@ -140,9 +139,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
       }
       try {
         InputStream inputStream = attributesEP.getLoaderForClass().getResourceAsStream(attributesEP.file);
-        Document document = JDOMUtil.loadDocument(inputStream);
-
-        ((AbstractColorsScheme)editorColorsScheme).readAttributes(document.getRootElement());
+        ((AbstractColorsScheme)editorColorsScheme).readAttributes(JDOMUtil.load(inputStream));
       }
       catch (Exception e1) {
         LOG.error(e1);
@@ -159,34 +156,29 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
       return null;
     }
 
-    final Document document;
+    Element element;
     try {
-      document = JDOMUtil.loadDocument(inputStream);
+      element = JDOMUtil.load(inputStream);
     }
     catch (JDOMException e) {
       LOG.info("Error reading scheme from  " + schemePath + ": " + e.getLocalizedMessage());
       throw e;
     }
-    return loadSchemeFromDocument(document, false);
+    return loadSchemeFromDocument(element, false);
   }
 
   @NotNull
-  private static EditorColorsSchemeImpl loadSchemeFromDocument(final Document document,
-                                                               final boolean isEditable)
-    throws InvalidDataException {
-
-    final Element root = document.getRootElement();
-
-    if (root == null || !SCHEME_NODE_NAME.equals(root.getName())) {
+  private static EditorColorsSchemeImpl loadSchemeFromDocument(@NotNull Element element, boolean isEditable) throws InvalidDataException {
+    if (!SCHEME_NODE_NAME.equals(element.getName())) {
       throw new InvalidDataException();
     }
 
     final EditorColorsSchemeImpl scheme = isEditable
-       // editable scheme
-       ? new EditorColorsSchemeImpl(null, DefaultColorSchemesManager.getInstance())
-       //not editable scheme
-       : new ReadOnlyColorsSchemeImpl(null, DefaultColorSchemesManager.getInstance());
-    scheme.readExternal(root);
+                                          // editable scheme
+                                          ? new EditorColorsSchemeImpl(null, DefaultColorSchemesManager.getInstance())
+                                          //not editable scheme
+                                          : new ReadOnlyColorsSchemeImpl(null, DefaultColorSchemesManager.getInstance());
+    scheme.readExternal(element);
     return scheme;
   }
 
@@ -224,7 +216,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
     ArrayList<EditorColorsScheme> schemes = new ArrayList<EditorColorsScheme>(mySchemesManager.getAllSchemes());
     Collections.sort(schemes, new Comparator<EditorColorsScheme>() {
       @Override
-      public int compare(EditorColorsScheme s1, EditorColorsScheme s2) {
+      public int compare(@NotNull EditorColorsScheme s1, @NotNull EditorColorsScheme s2) {
         if (isDefaultScheme(s1) && !isDefaultScheme(s2)) return -1;
         if (!isDefaultScheme(s1) && isDefaultScheme(s2)) return 1;
 
@@ -379,10 +371,10 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
 
   private final class MySchemeProcessor extends BaseSchemeProcessor<EditorColorsSchemeImpl> implements SchemeExtensionProvider {
     @Override
-    public EditorColorsSchemeImpl readScheme(@NotNull final Document document)
+    public EditorColorsSchemeImpl readScheme(@NotNull Element element)
       throws InvalidDataException {
 
-      return loadSchemeFromDocument(document, true);
+      return loadSchemeFromDocument(element, true);
     }
 
     @Override

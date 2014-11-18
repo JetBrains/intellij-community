@@ -55,7 +55,6 @@ import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
-import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -183,11 +182,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     myMessageBus = bus;
     mySchemesManager = schemesManagerFactory.createSchemesManager(FILE_SPEC, new BaseSchemeProcessor<AbstractFileType>() {
       @Override
-      public AbstractFileType readScheme(@NotNull final Document document) throws InvalidDataException {
-        Element root = document.getRootElement();
-        if (!ELEMENT_FILETYPE.equals(root.getName())) {
-          throw new InvalidDataException();
-        }
+      public AbstractFileType readScheme(@NotNull Element root) {
         Element element = root.getChild(AbstractFileType.ELEMENT_HIGHLIGHTING);
         if (element != null) {
           final SyntaxTable table = AbstractFileType.readSyntaxTable(element);

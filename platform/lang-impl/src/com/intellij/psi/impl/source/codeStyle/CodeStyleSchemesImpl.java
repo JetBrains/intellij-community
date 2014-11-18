@@ -27,13 +27,10 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiBundle;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
-import org.jdom.Document;
 import org.jdom.Element;
-import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
 import java.util.Collection;
 
 /**
@@ -53,8 +50,8 @@ public abstract class CodeStyleSchemesImpl extends CodeStyleSchemes implements E
   public CodeStyleSchemesImpl(SchemesManagerFactory schemesManagerFactory) {
     SchemeProcessor<CodeStyleSchemeImpl> processor = new BaseSchemeProcessor<CodeStyleSchemeImpl>() {
       @Override
-      public CodeStyleSchemeImpl readScheme(@NotNull final Document schemeContent) throws IOException, JDOMException, InvalidDataException {
-        return CodeStyleSchemeImpl.readScheme(schemeContent);
+      public CodeStyleSchemeImpl readScheme(@NotNull Element element) throws InvalidDataException {
+        return CodeStyleSchemeImpl.readScheme(element);
       }
 
       @Override

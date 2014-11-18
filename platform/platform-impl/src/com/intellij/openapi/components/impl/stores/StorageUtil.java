@@ -188,7 +188,7 @@ public class StorageUtil {
     try {
       virtualFile.delete(requestor);
     }
-    catch (FileNotFoundException e) {
+    catch (FileNotFoundException ignored) {
       throw new ReadOnlyModificationException(virtualFile);
     }
     finally {
@@ -279,36 +279,14 @@ public class StorageUtil {
   }
 
   @Nullable
-  public static Document loadDocument(final byte[] bytes) {
-    try {
-      return bytes == null || bytes.length == 0 ? null : JDOMUtil.loadDocument(new ByteArrayInputStream(bytes));
-    }
-    catch (JDOMException e) {
-      return null;
-    }
-    catch (IOException e) {
-      return null;
-    }
-  }
-
-  @Nullable
   public static Element loadElement(@Nullable InputStream stream) {
-    if (stream == null) {
-      return null;
-    }
-
     try {
-      try {
-        return JDOMUtil.loadDocument(stream).detachRootElement();
-      }
-      finally {
-        stream.close();
-      }
+      return JDOMUtil.load(stream);
     }
-    catch (JDOMException e) {
+    catch (JDOMException ignored) {
       return null;
     }
-    catch (IOException e) {
+    catch (IOException ignored) {
       return null;
     }
   }

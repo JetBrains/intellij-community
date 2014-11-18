@@ -510,7 +510,7 @@ public class PluginManagerCore {
     final Comparator<PluginId> idComparator = builder.comparator();
     return new Comparator<IdeaPluginDescriptor>() {
       @Override
-      public int compare(IdeaPluginDescriptor o1, IdeaPluginDescriptor o2) {
+      public int compare(@NotNull IdeaPluginDescriptor o1, @NotNull IdeaPluginDescriptor o2) {
         final PluginId pluginId1 = o1.getPluginId();
         final PluginId pluginId2 = o2.getPluginId();
         if (pluginId1.getIdString().equals(CORE_PLUGIN_ID)) return -1;
@@ -526,7 +526,7 @@ public class PluginManagerCore {
     // needed to make sure that extensions are always in the same order
     Collections.sort(ids, new Comparator<PluginId>() {
       @Override
-      public int compare(PluginId o1, PluginId o2) {
+      public int compare(@NotNull PluginId o1, @NotNull PluginId o2) {
         return o2.getIdString().compareTo(o1.getIdString());
       }
     });
@@ -635,7 +635,7 @@ public class PluginManagerCore {
        }
        Arrays.sort(files, new Comparator<File>() {
          @Override
-         public int compare(File o1, File o2) {
+         public int compare(@NotNull File o1, @NotNull File o2) {
            if (o2.getName().startsWith(file.getName())) return Integer.MAX_VALUE;
            if (o1.getName().startsWith(file.getName())) return -Integer.MAX_VALUE;
            if (o2.getName().startsWith("resources")) return -Integer.MAX_VALUE;
@@ -1161,7 +1161,7 @@ public class PluginManagerCore {
     // sort descriptors according to plugin dependencies
     Collections.sort(result, new Comparator<IdeaPluginDescriptor>() {
       @Override
-      public int compare(IdeaPluginDescriptor o1, IdeaPluginDescriptor o2) {
+      public int compare(@NotNull IdeaPluginDescriptor o1, @NotNull IdeaPluginDescriptor o2) {
         return idComparator.compare(o1.getPluginId(), o2.getPluginId());
       }
     });

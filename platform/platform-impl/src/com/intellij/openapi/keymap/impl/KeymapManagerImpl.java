@@ -27,7 +27,6 @@ import com.intellij.openapi.options.SchemesManagerFactory;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.ContainerUtil;
-import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -48,7 +47,6 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
   private String myActiveKeymapName;
   private final Map<String, String> myBoundShortcuts = new HashMap<String, String>();
 
-  @NonNls private static final String KEYMAP = "keymap";
   @NonNls private static final String ACTIVE_KEYMAP = "active_keymap";
   @NonNls private static final String NAME_ATTRIBUTE = "name";
   private final SchemesManager<Keymap, KeymapImpl> mySchemesManager;
@@ -59,8 +57,10 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
     mySchemesManager = factory.createSchemesManager(KEYMAPS_DIR_PATH,
                                                     new BaseSchemeProcessor<KeymapImpl>() {
                                                       @Override
-                                                      public KeymapImpl readScheme(@NotNull final Document schemeContent) throws InvalidDataException {
-                                                        return readKeymap(schemeContent);
+                                                      public KeymapImpl readScheme(@NotNull Element element) throws InvalidDataException {
+                                                        KeymapImpl keymap = new KeymapImpl();
+                                                        keymap.readExternal(element, getAllIncludingDefaultsKeymaps());
+                                                        return keymap;
                                                       }
 
                                                       @Override
@@ -81,7 +81,7 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
                                  : defaultKeymap.getDefaultKeymapName();
     for (Keymap keymap : keymaps) {
       addKeymap(keymap);
-      if (systemDefaultKeymap.equals(keymap.getName())) {
+      if (keymap.getName().equals(systemDefaultKeymap)) {
         setActiveKeymap(keymap);
       }
     }
@@ -203,18 +203,6 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
         setActiveKeymap(keymap);
       }
     }
-  }
-
-  @NotNull
-  private KeymapImpl readKeymap(Document document) throws InvalidDataException {
-    if (document == null) throw new InvalidDataException();
-    Element root = document.getRootElement();
-    if (!KEYMAP.equals(root.getName())) {
-      throw new InvalidDataException();
-    }
-    KeymapImpl keymap = new KeymapImpl();
-    keymap.readExternal(root, getAllIncludingDefaultsKeymaps());
-    return keymap;
   }
 
   private void fireActiveKeymapChanged() {
