@@ -41,6 +41,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
@@ -209,7 +210,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements Disposable {
             Component header = component == null ? null : UIUtil.findParentByCondition((JComponent)component, new Condition<Component>() {
               @Override
               public boolean value(Component component) {
-                return component instanceof ToolWindowHeader;
+                return component instanceof ToolWindowHeader || component instanceof ActionListener;
               }
             });
             if (header instanceof ToolWindowHeader) {
