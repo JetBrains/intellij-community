@@ -42,7 +42,6 @@ import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.tracker.VirtualFileTracker;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.text.UniqueNameGenerator;
-import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -59,14 +58,7 @@ import java.util.*;
 public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme> extends AbstractSchemesManager<T, E> {
   private static final Logger LOG = Logger.getInstance(SchemesManagerFactoryImpl.class);
 
-  private static final String DESCRIPTION = "description";
-  private static final String USER = "user";
-
-  private static final String SHARED_SCHEME = "shared-scheme";
-  private static final String SHARED_SCHEME_ORIGINAL = "shared-scheme-original";
   private static final String NAME = "name";
-  private static final String ORIGINAL_SCHEME_PATH = "original-scheme-path";
-  private static final String SCHEME_LOCAL_COPY = "scheme-local-copy";
 
   private final String myFileSpec;
   private final SchemeProcessor<E> myProcessor;
@@ -242,7 +234,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
           deleteServerFile(subPath);
         }
 
-        loadScheme(scheme, false, fileName, element);
+        loadScheme(scheme, false, fileName);
         scheme.getExternalInfo().markRemote();
         result.put(scheme.getName(), scheme);
       }
@@ -283,7 +275,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
     return result;
   }
 
-  private void loadScheme(@NotNull E scheme, boolean forceAdd, @NotNull CharSequence fileName, @NotNull Element element) {
+  private void loadScheme(@NotNull E scheme, boolean forceAdd, @NotNull CharSequence fileName) {
     String fileNameWithoutExtension = createFileName(fileName);
     if (!forceAdd && myFilesToDelete.contains(fileNameWithoutExtension)) {
       return;
@@ -305,7 +297,6 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
 
     //noinspection unchecked
     addNewScheme((T)scheme, true);
-    scheme.getExternalInfo().setHash(JDOMUtil.getTreeHash(element));
     scheme.getExternalInfo().setPreviouslySavedName(scheme.getName());
     scheme.getExternalInfo().setCurrentFileName(fileNameWithoutExtension);
   }
@@ -349,7 +340,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
 
       E scheme = readScheme(element, filter);
       if (scheme != null) {
-        loadScheme(scheme, forceAdd, file.getNameSequence(), element);
+        loadScheme(scheme, forceAdd, file.getNameSequence());
         return scheme;
       }
     }
@@ -370,58 +361,55 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
 
   @Nullable
   private E readScheme(@NotNull Element element, @NotNull Map<String, E> filter) throws InvalidDataException, IOException, JDOMException {
-    if (element.getName().equals(SHARED_SCHEME)) {
+    if (element.getName().equals("shared-scheme")) {
       String schemeName = element.getAttributeValue(NAME);
       if (filter.containsKey(schemeName)) {
         return null;
       }
 
-      String schemePath = element.getAttributeValue(ORIGINAL_SCHEME_PATH);
-
+      String schemePath = element.getAttributeValue("original-scheme-path");
       Element sharedElement = myProvider != null && myProvider.isEnabled() ? StorageUtil.loadElement(myProvider.loadContent(schemePath, myRoamingType)) : null;
-      if (sharedElement != null) {
+      if (sharedElement == null) {
+        Element localCopyElement = element.getChild("scheme-local-copy");
+        E scheme = localCopyElement == null ? null : doReadScheme(localCopyElement.getChildren().get(0));
+        return scheme == null || filter.containsKey(scheme.getName()) ? null : scheme;
+      }
+      else {
         E result = readScheme(sharedElement, Collections.<String, E>emptyMap());
         if (result != null) {
           renameScheme(result, schemeName);
-          result.getExternalInfo().setOriginalPath(schemePath);
-          result.getExternalInfo().setIsImported(true);
         }
         return result;
       }
-      else {
-        Element localCopyElement = element.getChild(SCHEME_LOCAL_COPY);
-        if (localCopyElement == null) {
-          return null;
-        }
-        else {
-          E scheme = doReadScheme(localCopyElement.getChildren().get(0).clone());
-          return filter.containsKey(scheme.getName()) ? null : scheme;
-        }
-      }
     }
-    else if (element.getName().equals(SHARED_SCHEME_ORIGINAL)) {
-      SharedSchemeData schemeData = unwrap(element);
-      E scheme = doReadScheme(schemeData.original);
+    else if (element.getName().equals("shared-scheme-original")) {
+      E scheme = doReadScheme(element.getChildren().get(0));
       if (scheme == null || filter.containsKey(scheme.getName())) {
         return null;
       }
-      renameScheme(scheme, schemeData.name);
+      renameScheme(scheme, element.getAttributeValue(NAME));
       return scheme;
     }
     else {
       E scheme = doReadScheme(element);
-      return filter.containsKey(scheme.getName()) ? null : scheme;
+      return scheme == null || filter.containsKey(scheme.getName()) ? null : scheme;
     }
   }
 
+  @Nullable
   private E doReadScheme(Element element) throws InvalidDataException, IOException, JDOMException {
+    E scheme;
     if (myProcessor instanceof BaseSchemeProcessor) {
-      return ((BaseSchemeProcessor<E>)myProcessor).readScheme(element);
+      scheme = ((BaseSchemeProcessor<E>)myProcessor).readScheme(element);
     }
     else {
       //noinspection deprecation
-      return myProcessor.readScheme(new Document(element));
+      scheme = myProcessor.readScheme(new Document((Element)element.detach()));
     }
+    if (scheme != null) {
+      scheme.getExternalInfo().setHash(JDOMUtil.getTreeHash(element));
+    }
+    return scheme;
   }
 
   @NotNull
@@ -435,157 +423,21 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
     return fileName.toString();
   }
 
-  @Nullable
-  private Parent writeSchemeToDocument(@NotNull E scheme) throws WriteExternalException {
-    if (isShared(scheme)) {
-      String originalPath = scheme.getExternalInfo().getOriginalPath();
-      if (originalPath != null) {
-        Element root = new Element(SHARED_SCHEME);
-        root.setAttribute(NAME, scheme.getName());
-        root.setAttribute(ORIGINAL_SCHEME_PATH, originalPath);
-
-        Parent child = myProcessor.writeScheme(scheme);
-        root.addContent(new Element(SCHEME_LOCAL_COPY).addContent(child instanceof Element ? (Element)child : ((Document)child).detachRootElement()));
-        return root;
-      }
-      else {
-        return null;
-      }
-    }
-    else {
-      return myProcessor.writeScheme(scheme);
-    }
-  }
-
-  @NotNull
-  private static Element getClone(@NotNull Parent result) {
-    return (result instanceof Element ? (Element)result : ((Document)result).getRootElement()).clone();
-  }
-
   public void updateConfigFilesFromStreamProviders() {
-  }
-
-  private static class SharedSchemeData {
-    @NotNull private final Element original;
-    @NotNull private final String name;
-    private final String user;
-    private final String description;
-
-    private SharedSchemeData(@NotNull Element original, @NotNull String name, String user, String description) {
-      this.original = original;
-      this.name = name;
-      this.user = user;
-      this.description = description;
-    }
-  }
-
-  @Override
-  @NotNull
-  public Collection<SharedScheme<E>> loadSharedSchemes(Collection<T> currentSchemeList) {
-    if (myProvider == null || !myProvider.isEnabled()) {
-      return Collections.emptyList();
-    }
-
-    Collection<String> names = getAllSchemeNames(currentSchemeList);
-    Map<String, SharedScheme<E>> result = new THashMap<String, SharedScheme<E>>();
-    for (String subPath : myProvider.listSubFiles(myFileSpec, myRoamingType)) {
-      try {
-        Element element = StorageUtil.loadElement(myProvider.loadContent(getFileFullPath(subPath), myRoamingType));
-        if (element != null) {
-          SharedSchemeData original = unwrap(element);
-          E scheme = doReadScheme(original.original);
-          if (!alreadyShared(subPath, currentSchemeList)) {
-            String schemeName = original.name;
-            String uniqueName = UniqueNameGenerator.generateUniqueName("[shared] " + schemeName, names);
-            renameScheme(scheme, uniqueName);
-            schemeName = uniqueName;
-            scheme.getExternalInfo().setOriginalPath(getFileFullPath(subPath));
-            scheme.getExternalInfo().setIsImported(true);
-            result.put(schemeName, new SharedScheme<E>(original.user == null ? "unknown" : original.user, original.description, scheme));
-          }
-        }
-      }
-      catch (Exception e) {
-        LOG.debug("Cannot load data from IDEAServer: " + e.getLocalizedMessage());
-      }
-    }
-
-    for (SharedScheme<E> t : result.values()) {
-      myProcessor.initScheme(t.getScheme());
-    }
-
-    return result.values();
-  }
-
-  @NotNull
-  private static SharedSchemeData unwrap(@NotNull Element element) {
-    String name = element.getAttributeValue(NAME);
-    if (element.getName().equals(SHARED_SCHEME_ORIGINAL)) {
-      return new SharedSchemeData(element.getChildren().get(0).clone(), name, element.getAttributeValue(USER), element.getAttributeValue(DESCRIPTION));
-    }
-    else {
-      return new SharedSchemeData(element, name, null, null);
-    }
-  }
-
-  private boolean alreadyShared(final String subPath, final Collection<T> currentSchemeList) {
-    for (T t : currentSchemeList) {
-      if (t instanceof ExternalizableScheme) {
-        ExternalInfo info = ((ExternalizableScheme)t).getExternalInfo();
-        if (info.isIsImported()) {
-          if (getFileFullPath(subPath).equals(info.getOriginalPath())) {
-            return true;
-          }
-        }
-      }
-    }
-    return false;
+    // todo
   }
 
   private String getFileFullPath(@NotNull String subPath) {
     return myFileSpec + '/' + subPath;
   }
 
-  @SuppressWarnings("deprecation")
   @Override
   public void exportScheme(@NotNull final E scheme, final String name, final String description) throws WriteExternalException, IOException {
-    if (myProvider == null) {
-      return;
-    }
-
-    Parent document = myProcessor.writeScheme(scheme);
-    if (document != null) {
-      String fileSpec = getFileFullPath(FileUtil.sanitizeName(scheme.getName())) + mySchemeExtension;
-      if (!myProvider.isApplicable(fileSpec, myRoamingType)) {
-        return;
-      }
-
-      StorageUtil.sendContent(myProvider, fileSpec, wrap(document, name, description), myRoamingType, false);
-    }
-  }
-
-  @NotNull
-  private static Element wrap(@NotNull Parent original, @NotNull String name, @NotNull String description) {
-    Element sharedElement = new Element(SHARED_SCHEME_ORIGINAL);
-    sharedElement.setAttribute(NAME, name);
-    sharedElement.setAttribute(DESCRIPTION, description);
-    sharedElement.addContent(getClone(original));
-    return sharedElement;
   }
 
   @Override
   public boolean isImportAvailable() {
-    return myProvider != null;
-  }
-
-  @Override
-  public boolean isExportAvailable() {
     return false;
-  }
-
-  @Override
-  public boolean isShared(@NotNull final Scheme scheme) {
-    return scheme instanceof ExternalizableScheme && ((ExternalizableScheme)scheme).getExternalInfo().isIsImported();
   }
 
   @Override
@@ -652,7 +504,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
   private void saveScheme(@NotNull E scheme, @NotNull UniqueNameGenerator nameGenerator) throws WriteExternalException, IOException {
     ExternalInfo externalInfo = scheme.getExternalInfo();
     String currentFileNameWithoutExtension = externalInfo.getCurrentFileName();
-    Parent parent = writeSchemeToDocument(scheme);
+    Parent parent = myProcessor.writeScheme(scheme);
     Element element = parent == null || parent instanceof Element ? (Element)parent : ((Document)parent).detachRootElement();
     if (JDOMUtil.isEmpty(element)) {
       ContainerUtilRt.addIfNotNull(myFilesToDelete, currentFileNameWithoutExtension);

@@ -130,15 +130,9 @@ public class CodeStyleSchemeImpl implements JDOMExternalizable, CodeStyleScheme,
     myCodeStyleSettings.readExternal(element);
   }
 
-  public static CodeStyleSchemeImpl readScheme(@NotNull Element element) throws InvalidDataException {
-    String schemeName = element.getAttributeValue(NAME);
-    String parentName = element.getAttributeValue(PARENT);
-
-    if (schemeName == null) {
-      throw new InvalidDataException("Name attribute missing in code style scheme file");
-    }
-
-    return new CodeStyleSchemeImpl(schemeName, parentName, element);
+  @NotNull
+  public static CodeStyleSchemeImpl readScheme(@NotNull Element element) {
+    return new CodeStyleSchemeImpl(element.getAttributeValue(NAME), element.getAttributeValue(PARENT), element);
   }
 
   public void save(File dir) throws WriteExternalException{

@@ -22,7 +22,6 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInsight.daemon.impl.SeverityUtil;
 import com.intellij.codeInsight.hint.HintUtil;
-import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ModifiableModel;
 import com.intellij.codeInspection.ex.*;
@@ -51,7 +50,6 @@ import com.intellij.profile.ApplicationProfileManager;
 import com.intellij.profile.DefaultProjectProfileManager;
 import com.intellij.profile.ProfileManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
-import com.intellij.profile.codeInspection.InspectionProfileManagerImpl;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.profile.codeInspection.SeverityProvider;
 import com.intellij.profile.codeInspection.ui.filter.InspectionFilterAction;
@@ -77,6 +75,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.FocusManager;
 import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeExpansionListener;
@@ -216,10 +215,10 @@ public class SingleInspectionProfilePanel extends JPanel {
     return StringUtil.capitalizeWords(severity.getName().toLowerCase(), true);
   }
 
-  private static void updateUpHierarchy(final InspectionConfigTreeNode node, final InspectionConfigTreeNode parent) {
+  private static void updateUpHierarchy(final InspectionConfigTreeNode parent) {
     if (parent != null) {
       parent.dropCache();
-      updateUpHierarchy(parent, (InspectionConfigTreeNode)parent.getParent());
+      updateUpHierarchy((InspectionConfigTreeNode)parent.getParent());
     }
   }
 
@@ -458,7 +457,7 @@ public class SingleInspectionProfilePanel extends JPanel {
             }
           }, 300);
           node.dropCache();
-          updateUpHierarchy(node, (InspectionConfigTreeNode)node.getParent());
+          updateUpHierarchy((InspectionConfigTreeNode)node.getParent());
         }
       }
     }
@@ -618,7 +617,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     myTreeTable = InspectionsConfigTreeTable.create(new InspectionsConfigTreeTable.InspectionsConfigTreeTableSettings(myRoot, myProjectProfileManager.getProject()) {
       @Override
       protected void onChanged(final InspectionConfigTreeNode node) {
-        updateUpHierarchy(node, (InspectionConfigTreeNode)node.getParent());
+        updateUpHierarchy((InspectionConfigTreeNode)node.getParent());
       }
 
       @Override
@@ -1152,14 +1151,6 @@ public class SingleInspectionProfilePanel extends JPanel {
       copyUsedSeveritiesIfUndefined(selectedProfile, profileManager);
       selectedProfile.setProfileManager(profileManager);
     }
-    final InspectionProfile parentProfile = selectedProfile.getParentProfile();
-
-    if (((InspectionProfileManagerImpl)InspectionProfileManager.getInstance()).getSchemesManager().isShared(selectedProfile)) {
-      if (descriptorsAreChanged()) {
-        throw new ConfigurationException("Shared profile cannot be modified. Please do \"Save As...\" first.");
-      }
-
-    }
 
     try {
       selectedProfile.commit();
@@ -1167,7 +1158,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     catch (IOException e) {
       throw new ConfigurationException(e.getMessage());
     }
-    setSelectedProfile(parentProfile.getModifiableModel());
+    setSelectedProfile(selectedProfile.getParentProfile().getModifiableModel());
     setSelectedProfileModified(false);
     myModified = false;
   }
@@ -1233,11 +1224,11 @@ public class SingleInspectionProfilePanel extends JPanel {
       final Object userObject = node.getUserObject();
       if (userObject instanceof ToolDescriptors && (node.getScopeName() != null || node.isLeaf())) {
         updateErrorLevel(node, showOptionsAndDescriptorPanels, level);
-        updateUpHierarchy(node, parent);
+        updateUpHierarchy(parent);
       }
       else {
         updateErrorLevelUpInHierarchy(level, showOptionsAndDescriptorPanels, node);
-        updateUpHierarchy(node, parent);
+        updateUpHierarchy(parent);
       }
     }
     if (rows != null) {

@@ -15,16 +15,13 @@
  */
 package com.intellij.psi.impl.source.codeStyle;
 
-import com.intellij.openapi.components.ExportableComponent;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.options.BaseSchemeProcessor;
 import com.intellij.openapi.options.SchemeProcessor;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.options.SchemesManagerFactory;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.psi.PsiBundle;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import org.jdom.Element;
@@ -33,24 +30,22 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-/**
- * @author MYakovlev
- *         Date: Jul 16, 2002
- */
-public abstract class CodeStyleSchemesImpl extends CodeStyleSchemes implements ExportableComponent {
+public abstract class CodeStyleSchemesImpl extends CodeStyleSchemes {
   @NonNls public static final String DEFAULT_SCHEME_NAME = "Default";
+
+  @SuppressWarnings("SpellCheckingInspection")
+  static final String CODE_STYLES_DIR_PATH = StoragePathMacros.ROOT_CONFIG + "/codestyles";
 
   public String CURRENT_SCHEME_NAME = DEFAULT_SCHEME_NAME;
   private boolean myIsInitialized = false;
-  @NonNls static final String CODE_STYLES_DIRECTORY = "codestyles";
 
   private final SchemesManager<CodeStyleScheme, CodeStyleSchemeImpl> mySchemesManager;
-  @NonNls private static final String FILE_SPEC = StoragePathMacros.ROOT_CONFIG + "/" + CODE_STYLES_DIRECTORY;
 
   public CodeStyleSchemesImpl(SchemesManagerFactory schemesManagerFactory) {
     SchemeProcessor<CodeStyleSchemeImpl> processor = new BaseSchemeProcessor<CodeStyleSchemeImpl>() {
+      @NotNull
       @Override
-      public CodeStyleSchemeImpl readScheme(@NotNull Element element) throws InvalidDataException {
+      public CodeStyleSchemeImpl readScheme(@NotNull Element element) {
         return CodeStyleSchemeImpl.readScheme(element);
       }
 
@@ -70,7 +65,7 @@ public abstract class CodeStyleSchemesImpl extends CodeStyleSchemes implements E
       }
     };
 
-    mySchemesManager = schemesManagerFactory.createSchemesManager(FILE_SPEC, processor, RoamingType.PER_USER);
+    mySchemesManager = schemesManagerFactory.createSchemesManager(CODE_STYLES_DIR_PATH, processor, RoamingType.PER_USER);
 
     init();
     addScheme(new CodeStyleSchemeImpl(DEFAULT_SCHEME_NAME, true, null));
@@ -79,7 +74,7 @@ public abstract class CodeStyleSchemesImpl extends CodeStyleSchemes implements E
 
   @Override
   public CodeStyleScheme[] getSchemes() {
-    final Collection<CodeStyleScheme> schemes = mySchemesManager.getAllSchemes();
+    Collection<CodeStyleScheme> schemes = mySchemesManager.getAllSchemes();
     return schemes.toArray(new CodeStyleScheme[schemes.size()]);
   }
 
@@ -157,12 +152,6 @@ public abstract class CodeStyleSchemesImpl extends CodeStyleSchemes implements E
     if (myIsInitialized) return;
     myIsInitialized = true;
     mySchemesManager.loadSchemes();
-  }
-
-  @Override
-  @NotNull
-  public String getPresentableName() {
-    return PsiBundle.message("codestyle.export.display.name");
   }
 
   public SchemesManager<CodeStyleScheme, CodeStyleSchemeImpl> getSchemesManager() {

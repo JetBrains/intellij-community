@@ -56,6 +56,7 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
   KeymapManagerImpl(DefaultKeymap defaultKeymap, SchemesManagerFactory factory) {
     mySchemesManager = factory.createSchemesManager(KEYMAPS_DIR_PATH,
                                                     new BaseSchemeProcessor<KeymapImpl>() {
+                                                      @NotNull
                                                       @Override
                                                       public KeymapImpl readScheme(@NotNull Element element) throws InvalidDataException {
                                                         KeymapImpl keymap = new KeymapImpl();

@@ -22,10 +22,7 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public abstract class AbstractSchemesManager<T extends Scheme, E extends ExternalizableScheme> implements SchemesManager<T, E> {
   private static final Logger LOG = Logger.getInstance(AbstractSchemesManager.class);
@@ -37,11 +34,9 @@ public abstract class AbstractSchemesManager<T extends Scheme, E extends Externa
   @Override
   public void addNewScheme(@NotNull T scheme, boolean replaceExisting) {
     int toReplace = -1;
-    boolean newSchemeIsShared = isShared(scheme);
-
     for (int i = 0; i < mySchemes.size(); i++) {
       T existingScheme = mySchemes.get(i);
-      if (existingScheme.getName().equals(scheme.getName()) && newSchemeIsShared == isShared(existingScheme)) {
+      if (existingScheme.getName().equals(scheme.getName())) {
         toReplace = i;
         break;
       }
@@ -162,10 +157,28 @@ public abstract class AbstractSchemesManager<T extends Scheme, E extends Externa
     }
   }
 
+  @SuppressWarnings("deprecation")
+  @NotNull
+  @Override
+  public Collection<SharedScheme<E>> loadSharedSchemes(Collection<T> currentSchemeList) {
+    return Collections.emptyList();
+  }
+
+  @SuppressWarnings("deprecation")
   @Override
   @NotNull
   public Collection<SharedScheme<E>> loadSharedSchemes() {
-    return loadSharedSchemes(getAllSchemes());
+    return Collections.emptyList();
+  }
+
+  @Override
+  public boolean isShared(@NotNull Scheme scheme) {
+    return false;
+  }
+
+  @Override
+  public boolean isExportAvailable() {
+    return false;
   }
 
   protected boolean isExternalizable(final T scheme) {

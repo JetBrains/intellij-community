@@ -16,14 +16,10 @@
 package com.intellij.openapi.options;
 
 import com.intellij.openapi.components.RoamingType;
-import com.intellij.openapi.components.ServiceBean;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class SchemesManagerFactory {
-  public static final ExtensionPointName<ServiceBean> SCHEME_OWNER = ExtensionPointName.create("com.intellij.schemeOwner");
-
   @NotNull
   public abstract <T extends Scheme, E extends ExternalizableScheme> SchemesManager<T, E> createSchemesManager(@NotNull String fileSpec,
                                                                                                                @NotNull SchemeProcessor<E> processor, @NotNull RoamingType roamingType);
@@ -31,7 +27,6 @@ public abstract class SchemesManagerFactory {
   public static SchemesManagerFactory getInstance() {
     return ServiceManager.getService(SchemesManagerFactory.class);
   }
-
 
   public abstract void updateConfigFilesFromStreamProviders();
 }

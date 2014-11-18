@@ -18,9 +18,8 @@ package com.intellij.openapi.options;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.components.RoamingType;
-import com.intellij.openapi.components.ServiceBean;
 import com.intellij.openapi.components.SettingsSavingComponent;
-import com.intellij.openapi.components.impl.stores.IApplicationStore;
+import com.intellij.openapi.components.impl.stores.StateStorageManager;
 import com.intellij.openapi.components.impl.stores.StreamProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.ContainerUtil;
@@ -29,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.util.List;
 
-public class SchemesManagerFactoryImpl extends SchemesManagerFactory implements SettingsSavingComponent {
+final class SchemesManagerFactoryImpl extends SchemesManagerFactory implements SettingsSavingComponent {
   private static final Logger LOG = Logger.getInstance(SchemesManagerFactoryImpl.class);
 
   private final List<SchemesManagerImpl> myRegisteredManagers = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -39,9 +38,9 @@ public class SchemesManagerFactoryImpl extends SchemesManagerFactory implements 
   public <T extends Scheme, E extends ExternalizableScheme> SchemesManager<T, E> createSchemesManager(@NotNull String fileSpec,
                                                                                                       @NotNull SchemeProcessor<E> processor,
                                                                                                       @NotNull RoamingType roamingType) {
-    IApplicationStore applicationStore = ((ApplicationImpl)ApplicationManager.getApplication()).getStateStore();
-    String baseDirPath = applicationStore.getStateStorageManager().expandMacros(fileSpec);
-    StreamProvider provider = applicationStore.getStateStorageManager().getStreamProvider();
+    StateStorageManager storageManager = ((ApplicationImpl)ApplicationManager.getApplication()).getStateStore().getStateStorageManager();
+    String baseDirPath = storageManager.expandMacros(fileSpec);
+    StreamProvider provider = storageManager.getStreamProvider();
     SchemesManagerImpl<T, E> manager = new SchemesManagerImpl<T, E>(fileSpec, processor, roamingType, provider, new File(baseDirPath));
     myRegisteredManagers.add(manager);
     return manager;
@@ -49,26 +48,24 @@ public class SchemesManagerFactoryImpl extends SchemesManagerFactory implements 
 
   @Override
   public void updateConfigFilesFromStreamProviders() {
-    ServiceBean.loadServicesFromBeans(SCHEME_OWNER, Object.class);
     for (SchemesManagerImpl registeredManager : myRegisteredManagers) {
       try {
         registeredManager.updateConfigFilesFromStreamProviders();
       }
       catch (Throwable e) {
-        LOG.info("Cannot save settings for " + registeredManager.getClass().getName(), e);
+        LOG.error("Cannot reload settings for " + registeredManager.getClass().getName(), e);
       }
     }
   }
 
   @Override
   public void save() {
-    ServiceBean.loadServicesFromBeans(SCHEME_OWNER, Object.class);
     for (SchemesManager registeredManager : myRegisteredManagers) {
       try {
         registeredManager.save();
       }
       catch (Throwable e) {
-        LOG.info("Cannot save settings for " + registeredManager.getClass().getName(), e);
+        LOG.error("Cannot save settings for " + registeredManager.getClass().getName(), e);
       }
     }
   }

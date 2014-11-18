@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.application.options.codeStyle;
 
 import com.intellij.openapi.options.SchemesManager;
@@ -31,9 +30,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-
 public class CodeStyleSchemesModel {
-
   private final List<CodeStyleScheme> mySchemes = new ArrayList<CodeStyleScheme>();
   private CodeStyleScheme myGlobalSelected;
   private final CodeStyleSchemeImpl myProjectScheme;
@@ -198,7 +195,7 @@ public class CodeStyleSchemesModel {
   }
 
   public static boolean cannotBeModified(final CodeStyleScheme currentScheme) {
-    return currentScheme.isDefault() || getSchemesManager().isShared(currentScheme);
+    return currentScheme.isDefault();
   }
 
   public static boolean cannotBeDeleted(final CodeStyleScheme currentScheme) {

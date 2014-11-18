@@ -19,31 +19,34 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class ExternalInfo {
-  private boolean myIsImported;
-  private String myOriginalPath;
-
   // we keep it to detect rename
   private String myPreviouslySavedName;
   private String myCurrentFileName;
 
-  private int mySavedHash;
+  private int myContentHash;
 
   private boolean myRemote;
 
-  public void setIsImported(final boolean isImported) {
-    myIsImported = isImported;
+  @SuppressWarnings({"UnusedParameters", "unused"})
+  @Deprecated
+  public void setIsImported(boolean isImported) {
   }
 
-  public void setOriginalPath(final String originalPath) {
-    myOriginalPath = originalPath;
+  @SuppressWarnings("unused")
+  @Deprecated
+  public void setOriginalPath(String originalPath) {
   }
 
+  @SuppressWarnings("unused")
+  @Deprecated
   public boolean isIsImported() {
-    return myIsImported;
+    return false;
   }
 
+  @SuppressWarnings("unused")
+  @Deprecated
   public String getOriginalPath() {
-    return myOriginalPath;
+    return null;
   }
 
   public String getCurrentFileName() {
@@ -56,8 +59,6 @@ public final class ExternalInfo {
 
   public void copy(@NotNull ExternalInfo externalInfo) {
     myCurrentFileName = externalInfo.myCurrentFileName;
-    myIsImported = externalInfo.isIsImported();
-    myOriginalPath = externalInfo.myOriginalPath;
   }
 
   public String getPreviouslySavedName() {
@@ -69,11 +70,11 @@ public final class ExternalInfo {
   }
 
   public int getHash() {
-    return mySavedHash;
+    return myContentHash;
   }
 
   public void setHash(int newHash) {
-    mySavedHash = newHash;
+    myContentHash = newHash;
   }
 
   public boolean isRemote() {

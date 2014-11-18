@@ -16,8 +16,6 @@
 package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.CommonBundle;
-import com.intellij.application.options.ExportSchemeAction;
-import com.intellij.application.options.SchemesToImportPopup;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DataManager;
@@ -76,11 +74,12 @@ import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class KeymapPanel extends JPanel implements SearchableConfigurable, Configurable.NoScroll, KeymapListener, Disposable {
-
   private JComboBox myKeymapList;
 
   private final DefaultComboBoxModel myKeymapListModel = new DefaultComboBoxModel();
@@ -200,17 +199,15 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     Keymap parent = mySelectedKeymap.getParent();
     if (parent != null && mySelectedKeymap.canModify()) {
       myBaseKeymapLabel.setText(KeyMapBundle.message("based.on.keymap.label", parent.getPresentableName()));
-      if (mySelectedKeymap.canModify() && mySelectedKeymap.getOwnActionIds().length > 0){
+      if (mySelectedKeymap.canModify() && mySelectedKeymap.getOwnActionIds().length > 0) {
         myResetToDefault.setEnabled(true);
       }
     }
-    if(mySelectedKeymap.canModify()) {
+    if (mySelectedKeymap.canModify()) {
       myDeleteButton.setEnabled(true);
 
-      if (!getSchemesManager().isShared(mySelectedKeymap)) {
-        if (myExportButton != null) {
-          myExportButton.setEnabled(true);
-        }
+      if (myExportButton != null) {
+        myExportButton.setEnabled(true);
       }
     }
 
@@ -230,7 +227,6 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     return result;
   }
 
-
   private JPanel createKeymapButtonsPanel() {
     final JPanel panel = new JPanel();
     panel.setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 0));
@@ -247,55 +243,6 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     myDeleteButton.setMargin(insets);
     gc.weightx = 1;
     panel.add(myDeleteButton, gc);
-
-    final SchemesManager<Keymap, KeymapImpl> schemesManager = getSchemesManager();
-    if (schemesManager.isExportAvailable()) {
-      myExportButton = new JButton("Share...");
-      myExportButton.setMnemonic('S');
-      myExportButton.addActionListener(new ActionListener(){
-        @Override
-        public void actionPerformed(@NotNull ActionEvent e) {
-          KeymapImpl selected = getSelectedKeymap();
-          ExportSchemeAction.doExport(selected, schemesManager);
-        }
-      });
-      myExportButton.setMargin(insets);
-
-
-      panel.add(myExportButton, gc);
-
-
-    }
-
-    if (schemesManager.isImportAvailable()) {
-      JButton importButton = new JButton("Import Shared...");
-      importButton.setMnemonic('I');
-      importButton.addActionListener(new ActionListener(){
-        @Override
-        public void actionPerformed(@NotNull final ActionEvent e) {
-          SchemesToImportPopup<Keymap, KeymapImpl> popup = new SchemesToImportPopup<Keymap, KeymapImpl>(panel){
-            @Override
-            protected void onSchemeSelected(final KeymapImpl scheme) {
-              if (scheme != null) {
-                scheme.setCanModify(true);
-                myKeymapListModel.addElement(scheme);
-                myKeymapList.setSelectedItem(scheme);
-                processCurrentKeymapChanged(getCurrentQuickListIds());
-
-              }
-
-            }
-          };
-          popup.show(schemesManager, collectKeymaps(myKeymapListModel));
-
-        }
-      });
-
-      importButton.setMargin(insets);
-      panel.add(importButton,gc);
-
-    }
-
 
     myCopyButton.addActionListener(
       new ActionListener() {
@@ -324,15 +271,6 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     );
 
     return panel;
-  }
-
-  private static Collection<Keymap> collectKeymaps(final DefaultComboBoxModel list) {
-    HashSet<Keymap> names = new HashSet<Keymap>();
-    for (int i = 0; i < list.getSize(); i++) {
-      names.add((Keymap)list.getElementAt(i));
-
-    }
-    return names;
   }
 
   private static SchemesManager<Keymap,KeymapImpl> getSchemesManager() {
