@@ -16,18 +16,17 @@
 package org.jetbrains.plugins.groovy.dsl;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.ModificationTracker;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -44,10 +43,9 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.reference.SoftReference;
-import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
-import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ConcurrentMultiMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -68,10 +66,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.*;
 import java.util.regex.Pattern;
 
 /**
@@ -89,10 +84,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
   private static final MultiMap<String, LinkedBlockingQueue<Pair<VirtualFile, GroovyDslExecutor>>> filesInProcessing =
     new ConcurrentMultiMap<String, LinkedBlockingQueue<Pair<VirtualFile, GroovyDslExecutor>>>();
 
-  private static final ThreadPoolExecutor ourPool = new ThreadPoolExecutor(0, 1, 10, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(), ConcurrencyUtil.newNamedThreadFactory("Groovy DSL File Index Executor"));
-
   private final EnumeratorStringDescriptor myKeyDescriptor = new EnumeratorStringDescriptor();
-  private static final byte[] ENABLED_FLAG = new byte[]{(byte)239};
 
   public GroovyDslFileIndex() {
     VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileAdapter() {
@@ -296,6 +288,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
     return SoftReference.dereference(ourStandardScripts);
   }
 
+  @Nullable
   private static List<Pair<File, GroovyDslExecutor>> getStandardScripts() {
     List<Pair<File, GroovyDslExecutor>> result = derefStandardScripts();
     if (result != null) {
@@ -303,28 +296,17 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
     }
 
     final GroovyFrameworkConfigNotification[] extensions = GroovyFrameworkConfigNotification.EP_NAME.getExtensions();
-
-    final Semaphore semaphore = new Semaphore();
-    semaphore.down();
-    final AtomicReference<List<Pair<File, GroovyDslExecutor>>> ref = new AtomicReference<List<Pair<File, GroovyDslExecutor>>>();
-
-    if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
-      // If this method is called with write lock acquired, then the background computation shouldn't acquire read lock.
-      // Otherwise, we'll get a deadlock: this method will wait for the result of the background computation holding the write lock
-      // and the background computation won't finish because of waiting for the read lock.
-      // Dirty workaround: currently the background computation acquires read lock to only initialize GroovyDslExecutor,
-      //                   so, preventive GroovyDslExecutor initialization should help
-      GroovyDslExecutor.getIdeaVersion();
-    }
-    ourPool.execute(new Runnable() {
-      @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
+    Callable<List<Pair<File, GroovyDslExecutor>>> action = new Callable<List<Pair<File, GroovyDslExecutor>>>() {
       @Override
-      public void run() {
+      public List<Pair<File, GroovyDslExecutor>> call() throws Exception {
+        if (GdslUtil.ourGdslStopped) {
+          return null;
+        }
+
         try {
           List<Pair<File, GroovyDslExecutor>> pairs = derefStandardScripts();
           if (pairs != null) {
-            ref.set(pairs);
-            return;
+            return pairs;
           }
 
           Set<Class> classes = new HashSet<Class>(ContainerUtil.map2Set(extensions, new Function<GroovyFrameworkConfigNotification, Class>() {
@@ -365,32 +347,31 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
               }
             }
           }
+          //noinspection AssignmentToStaticFieldFromInstanceMethod
           ourStandardScripts = new SoftReference<List<Pair<File, GroovyDslExecutor>>>(executors);
-          ref.set(executors);
+          return executors;
         }
         catch (Throwable e) {
-          ref.set(new ArrayList<Pair<File, GroovyDslExecutor>>());
           //noinspection InstanceofCatchParameter
           if (e instanceof Error) {
             GdslUtil.stopGdsl();
           }
           LOG.error(e);
-        }
-        finally {
-          semaphore.up();
+          return null;
         }
       }
-    });
+    };
 
-    while (true) {
-      ProgressManager.checkCanceled();
-
-      if (GdslUtil.ourGdslStopped) {
-        return Collections.emptyList();
+    try {
+      if (ApplicationManager.getApplication().isDispatchThread()) {
+        return action.call();
       }
-      if (ref.get() != null || semaphore.waitFor(20)) {
-        return ref.get();
-      }
+      return ApplicationUtil.runWithCheckCanceled(action, new EmptyProgressIndicator());
+    }
+    catch (Exception e) {
+      ExceptionUtil.rethrowUnchecked(e);
+      LOG.error(e);
+      return null;
     }
   }
 
@@ -409,9 +390,10 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
         List<GroovyDslScript> result = new ArrayList<GroovyDslScript>();
 
         List<Pair<File, GroovyDslExecutor>> standardScripts = getStandardScripts();
-        assert standardScripts != null;
-        for (Pair<File, GroovyDslExecutor> pair : standardScripts) {
-          result.add(new GroovyDslScript(project, null, pair.second, pair.first.getPath()));
+        if (standardScripts != null) {
+          for (Pair<File, GroovyDslExecutor> pair : standardScripts) {
+            result.add(new GroovyDslScript(project, null, pair.second, pair.first.getPath()));
+          }
         }
 
         final LinkedBlockingQueue<Pair<VirtualFile, GroovyDslExecutor>> queue =
@@ -521,8 +503,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
       final boolean isNewRequest = !filesInProcessing.containsKey(fileUrl);
       filesInProcessing.putValue(fileUrl, queue);
       if (isNewRequest) {
-        ourPool.execute(parseScript); //todo bring back multi-threading when Groovy team fixes http://jira.codehaus.org/browse/GROOVY-4292
-        //ApplicationManager.getApplication().executeOnPooledThread(parseScript);
+        ApplicationManager.getApplication().executeOnPooledThread(parseScript);
       }
     }
   }
