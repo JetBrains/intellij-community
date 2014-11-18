@@ -81,7 +81,7 @@ public class TabbedContentImpl extends ContentImpl implements TabbedContent {
   public String getTabName() {
     String selected = findTabNameByComponent(getComponent());
     if (myPrefix != null) {
-      selected = myPrefix + selected;
+      selected = myPrefix + ": " + selected;
     }
     return selected;
   }
