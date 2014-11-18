@@ -158,7 +158,6 @@ public class BranchConfigurationDialog extends DialogWrapper {
         boolean isAncestor = SVNURLUtil.isAncestor(myRootUrl, url);
         boolean areNotSame = isAncestor && !url.equals(myRootUrl);
 
-        myTrunkLocationTextField.getButton().setEnabled(isAncestor);
         if (areNotSame) {
           myConfiguration.setTrunkUrl(url.toDecodedString());
         }
