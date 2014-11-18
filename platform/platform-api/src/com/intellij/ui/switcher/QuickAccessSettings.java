@@ -50,14 +50,17 @@ public class QuickAccessSettings implements ApplicationComponent, KeymapManagerL
   @NonNls public static final String SWITCH_APPLY = "SwitchApply";
   private RegistryValue myModifiersValue;
 
+  @Override
   @NotNull
   public String getComponentName() {
     return "QuickAccess";
   }
 
+  @Override
   public void initComponent() {
     myModifiersValue = Registry.get("actionSystem.quickAccessModifiers");
     myModifiersValue.addListener(new RegistryValueListener.Adapter() {
+      @Override
       public void afterValueChanged(RegistryValue value) {
         applyModifiersFromRegistry();
       }
@@ -71,14 +74,17 @@ public class QuickAccessSettings implements ApplicationComponent, KeymapManagerL
     applyModifiersFromRegistry();
   }
       
+  @Override
   public void disposeComponent() {
     KeymapManager.getInstance().removeKeymapManagerListener(this);
     Disposer.dispose(this);
   }
 
+  @Override
   public void dispose() {
   }
 
+  @Override
   public void activeKeymapChanged(Keymap keymap) {
     KeymapManager mgr = KeymapManager.getInstance();
     myKeymap = mgr.getActiveKeymap();
@@ -89,7 +95,7 @@ public class QuickAccessSettings implements ApplicationComponent, KeymapManagerL
   }
 
   void saveModifiersToRegistry(Set<String> codeTexts) {
-    StringBuffer value = new StringBuffer();
+    StringBuilder value = new StringBuilder();
     for (String each : codeTexts) {
       if (value.length() > 0) {
         value.append(" ");
@@ -109,7 +115,7 @@ public class QuickAccessSettings implements ApplicationComponent, KeymapManagerL
     HashSet<String> vksSet = new HashSet<String>();
     ContainerUtil.addAll(vksSet, vks);
     myModifierVks.clear();
-    int mask = getModiferMask(vksSet);
+    int mask = getModifierMask(vksSet);
     myModifierVks.addAll(getModifiersVKs(mask));
 
     reassignActionShortcut(SWITCH_UP, mask, KeyEvent.VK_UP);
@@ -147,7 +153,7 @@ public class QuickAccessSettings implements ApplicationComponent, KeymapManagerL
   }
 
   @JdkConstants.InputEventMask
-  int getModiferMask(Set<String> codeTexts) {
+  int getModifierMask(Set<String> codeTexts) {
     int mask = 0;
     for (String each : codeTexts) {
       if ("control".equals(each)) {
