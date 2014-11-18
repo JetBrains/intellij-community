@@ -15,10 +15,8 @@
  */
 package com.siyeh.ig.inheritance;
 
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiJavaCodeReferenceElement;
-import com.intellij.psi.PsiReferenceList;
+import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -59,14 +57,21 @@ public class ExtendsAnnotationInspection extends BaseInspection {
     return new ExtendsAnnotationVisitor();
   }
 
+  @NotNull
+  @Override
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+    if (!PsiUtil.isLanguageLevel5OrHigher(holder.getFile())) {
+      return new PsiElementVisitor() { };
+    }
+
+    return super.buildVisitor(holder, isOnTheFly);
+  }
+
   private static class ExtendsAnnotationVisitor
     extends BaseInspectionVisitor {
 
     @Override
     public void visitClass(@NotNull PsiClass aClass) {
-      if (!PsiUtil.isLanguageLevel5OrHigher(aClass)) {
-        return;
-      }
       if (aClass.isAnnotationType()) {
         return;
       }

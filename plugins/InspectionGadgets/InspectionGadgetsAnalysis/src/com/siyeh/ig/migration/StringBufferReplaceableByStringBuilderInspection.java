@@ -16,6 +16,7 @@
 package com.siyeh.ig.migration;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -150,6 +151,16 @@ public class StringBufferReplaceableByStringBuilderInspection extends BaseInspec
     return new StringBufferReplaceableByStringBuilderVisitor();
   }
 
+  @NotNull
+  @Override
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+    if (!PsiUtil.isLanguageLevel5OrHigher(holder.getFile())) {
+      return new PsiElementVisitor() { };
+    }
+
+    return super.buildVisitor(holder, isOnTheFly);
+  }
+
   private static class StringBufferReplaceableByStringBuilderVisitor extends BaseInspectionVisitor {
 
     private static final Set<String> excludes = ContainerUtil.newHashSet(CommonClassNames.JAVA_LANG_STRING_BUILDER,
@@ -157,9 +168,6 @@ public class StringBufferReplaceableByStringBuilderInspection extends BaseInspec
 
     @Override
     public void visitDeclarationStatement(PsiDeclarationStatement statement) {
-      if (!PsiUtil.isLanguageLevel5OrHigher(statement)) {
-        return;
-      }
       super.visitDeclarationStatement(statement);
       final PsiElement[] declaredElements = statement.getDeclaredElements();
       if (declaredElements.length == 0) {
