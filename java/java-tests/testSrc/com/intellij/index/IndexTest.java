@@ -15,7 +15,6 @@
  */
 package com.intellij.index;
 
-import com.intellij.codeInsight.CodeInsightTestCase;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.impl.CurrentEditorProvider;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
@@ -27,15 +26,13 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.util.indexing.MapIndexStorage;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.io.*;
@@ -51,7 +48,15 @@ import java.util.*;
  * @author Eugene Zhuravlev
  *         Date: Dec 12, 2007
  */
-public class IndexTest extends CodeInsightTestCase {
+public class IndexTest extends JavaCodeInsightFixtureTestCase {
+  @Override
+  protected void invokeTestRunnable(@NotNull Runnable runnable) throws Exception {
+    if ("testUndoToFileContentForUnsavedCommittedDocument".equals(getName())) {
+      super.invokeTestRunnable(runnable);
+    } else {
+      WriteCommandAction.runWriteCommandAction(getProject(), runnable);
+    }
+  }
 
   public void testUpdate() throws StorageException, IOException {
     final File storageFile = FileUtil.createTempFile("indextest", "storage");
@@ -115,7 +120,7 @@ public class IndexTest extends CodeInsightTestCase {
     }
   }
 
-  private PersistentHashMap<Integer, Collection<String>> createMetaIndex(File metaIndexFile) throws IOException {
+  private static PersistentHashMap<Integer, Collection<String>> createMetaIndex(File metaIndexFile) throws IOException {
     return new PersistentHashMap<Integer, Collection<String>>(metaIndexFile, new EnumeratorIntegerDescriptor(), new DataExternalizer<Collection<String>>() {
       @Override
       public void save(@NotNull DataOutput out, Collection<String> value) throws IOException {
@@ -137,233 +142,136 @@ public class IndexTest extends CodeInsightTestCase {
     });
   }
 
-  /*
-  public void testStubIndexUnsavedDocumentsIndexing() throws IncorrectOperationException, IOException, StorageException {
-    IdeaTestUtil.registerExtension(StubIndexExtension.EP_NAME, new TextStubIndexExtension(), getTestRootDisposable());
-    IdeaTestUtil.registerExtension(StubIndexExtension.EP_NAME, new ClassNameStubIndexExtension(), getTestRootDisposable());
-    FileTypeManager.getInstance().registerFileType(TestFileType.INSTANCE, "fff");
-    final FFFLangParserDefinition parserDefinition = new FFFLangParserDefinition();
-    LanguageParserDefinitions.INSTANCE.addExplicitExtension(FFFLanguage.INSTANCE, parserDefinition);
-
-    final TestStubElementType stubType = new TestStubElementType();
-    SerializationManager.getInstance().registerSerializer(TestStubElement.class, stubType);
-
-    final File fffFile = new File(FileUtil.createTempDirectory("testing", "stubindex"), "MyClass.fff");
-    fffFile.createNewFile();
-
-    final VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(fffFile);
-
-    assertNotNull(vFile);
-    assertEquals(TestFileType.INSTANCE, vFile.getFileType());
-
-    try {
-      final MockPsiFile psiFile = new MockPsiFile(vFile, MockPsiManager.getInstance(myProject));
-
-      final MockPsiClass cls = new MockPsiClass("com.company.MyClass");
-      psiFile.add(cls);
-
-      final MockPsiMethod aaaMethod = new MockPsiMethod("aaa");
-      cls.addMethod(aaaMethod);
-      final MockPsiMethod bbbMethod = new MockPsiMethod("bbb");
-      cls.addMethod(bbbMethod);
-
-      final PsiFileStubImpl fileStub = new PsiFileStubImpl(psiFile);
-      final TestStubElement clsStub = stubType.createStub(cls, fileStub);
-      stubType.createStub(aaaMethod, clsStub);
-      stubType.createStub(bbbMethod, clsStub);
-
-      final ByteArrayOutputStream arrayStream = new ByteArrayOutputStream();
-      SerializationManager.getInstance().serialize(fileStub, new DataOutputStream(arrayStream));
-
-      final FileBasedIndex fbi = FileBasedIndex.getInstance();
-      final UpdatableIndex<Integer, SerializedStubTree, FileContent> stubUpdatingIndex = fbi.getIndex(StubUpdatingIndex.INDEX_ID);
-      final MemoryIndexStorage storage = (MemoryIndexStorage)((MapReduceIndex)stubUpdatingIndex).getStorage();
-
-      // initial
-      final int fileId = FileBasedIndex.getFileId(vFile);
-      final byte[] bytes = arrayStream.toByteArray();
-      stubUpdatingIndex.update(fileId, new FileContent(vFile, bytes), null);
-
-      final ValueContainer<SerializedStubTree> data = stubUpdatingIndex.getData(fileId);
-      final List<SerializedStubTree> trees = data.toValueList();
-
-      final SerializedStubTree tree = assertOneElement(trees);
-
-      assertTrue(Comparing.equal(bytes, tree.getBytes()));
-
-      final StubElement deserialized = tree.getStub();
-    }
-    finally {
-      LanguageParserDefinitions.INSTANCE.removeExplicitExtension(FFFLanguage.INSTANCE, parserDefinition);
-    }
-
-  }
-  */
-
   private static <T> void assertDataEquals(List<T> actual, T... expected) {
     assertTrue(new HashSet<T>(Arrays.asList(expected)).equals(new HashSet<T>(actual)));
   }
 
   public void testCollectedPsiWithChangedDocument() throws IOException {
-    VirtualFile dir = getVirtualFile(createTempDirectory());
-    PsiTestUtil.addSourceContentToRoots(myModule, dir);
+    final VirtualFile vFile = myFixture.addClass("class Foo {}").getContainingFile().getVirtualFile();
 
-    final VirtualFile vFile = createChildData(dir, "Foo.java");
-    VfsUtil.saveText(vFile, "class Foo {}");
+    assertNotNull(findClass("Foo"));
+    PsiFile psiFile = getPsiManager().findFile(vFile);
+    assertNotNull(psiFile);
 
-    final GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
-    assertNotNull(myJavaFacade.findClass("Foo", scope));
-    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
-      @Override
-      public void run() {
-        PsiFile psiFile = PsiManager.getInstance(getProject()).findFile(vFile);
-        assertNotNull(psiFile);
+    Document document = FileDocumentManager.getInstance().getDocument(vFile);
+    document.deleteString(0, document.getTextLength());
+    assertNotNull(findClass("Foo"));
 
-        Document document = FileDocumentManager.getInstance().getDocument(vFile);
-        document.deleteString(0, document.getTextLength());
-        assertNotNull(myJavaFacade.findClass("Foo", scope));
+    psiFile = null;
+    PlatformTestUtil.tryGcSoftlyReachableObjects();
+    assertNull(getPsiManager().getFileManager().getCachedPsiFile(vFile));
 
-        psiFile = null;
-        PlatformTestUtil.tryGcSoftlyReachableObjects();
-        assertNull(((PsiManagerEx)PsiManager.getInstance(getProject())).getFileManager().getCachedPsiFile(vFile));
+    PsiClass foo = findClass("Foo");
+    assertNotNull(foo);
+    assertTrue(foo.isValid());
+    assertEquals("class Foo {}", foo.getText());
+    assertTrue(foo.isValid());
 
-        PsiClass foo = myJavaFacade.findClass("Foo", scope);
-        assertNotNull(foo);
-        assertTrue(foo.isValid());
-        assertEquals("class Foo {}", foo.getText());
-        assertTrue(foo.isValid());
-
-        PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-        assertNull(myJavaFacade.findClass("Foo", scope));
-      }
-    });
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    assertNull(findClass("Foo"));
   }
   
   public void testCollectedPsiWithDocumentChangedCommittedAndChangedAgain() throws IOException {
-    VirtualFile dir = getVirtualFile(createTempDirectory());
-    PsiTestUtil.addSourceContentToRoots(myModule, dir);
+    final VirtualFile vFile = myFixture.addClass("class Foo {}").getContainingFile().getVirtualFile();
 
-    final VirtualFile vFile = createChildData(dir, "Foo.java");
-    VfsUtil.saveText(vFile, "class Foo {}");
+    assertNotNull(findClass("Foo"));
+    PsiFile psiFile = getPsiManager().findFile(vFile);
+    assertNotNull(psiFile);
 
-    final GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
-    assertNotNull(myJavaFacade.findClass("Foo", scope));
-    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
-      @Override
-      public void run() {
-        PsiFile psiFile = PsiManager.getInstance(getProject()).findFile(vFile);
-        assertNotNull(psiFile);
+    Document document = FileDocumentManager.getInstance().getDocument(vFile);
+    document.deleteString(0, document.getTextLength());
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    document.insertString(0, " ");
+    //assertNotNull(myJavaFacade.findClass("Foo", scope));
 
-        Document document = FileDocumentManager.getInstance().getDocument(vFile);
-        document.deleteString(0, document.getTextLength());
-        PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-        document.insertString(0, " ");
-        //assertNotNull(myJavaFacade.findClass("Foo", scope));
+    psiFile = null;
+    PlatformTestUtil.tryGcSoftlyReachableObjects();
+    assertNull(getPsiManager().getFileManager().getCachedPsiFile(vFile));
 
-        psiFile = null;
-        PlatformTestUtil.tryGcSoftlyReachableObjects();
-        assertNull(((PsiManagerEx)PsiManager.getInstance(getProject())).getFileManager().getCachedPsiFile(vFile));
+    PsiClass foo = findClass("Foo");
+    assertNull(foo);
+  }
 
-        PsiClass foo = myJavaFacade.findClass("Foo", scope);
-        assertNull(foo);
-      }
-    });
+  private PsiClass findClass(String name) {
+    return JavaPsiFacade.getInstance(getProject()).findClass(name, GlobalSearchScope.allScope(getProject()));
   }
 
   public void testSavedUncommittedDocument() throws IOException {
-    VirtualFile dir = getVirtualFile(createTempDirectory());
-    PsiTestUtil.addSourceContentToRoots(myModule, dir);
+    final VirtualFile vFile = myFixture.addFileToProject("Foo.java", "").getVirtualFile();
 
-    final VirtualFile vFile = createChildData(dir, "Foo.java");
-    VfsUtil.saveText(vFile, "");
+    assertNull(findClass("Foo"));
+    PsiFile psiFile = getPsiManager().findFile(vFile);
+    assertNotNull(psiFile);
 
-    final GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
-    assertNull(myJavaFacade.findClass("Foo", scope));
-    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
-      @Override
-      public void run() {
-        PsiFile psiFile = PsiManager.getInstance(getProject()).findFile(vFile);
-        assertNotNull(psiFile);
+    long count = getPsiManager().getModificationTracker().getModificationCount();
 
-        long count = PsiManager.getInstance(myProject).getModificationTracker().getModificationCount();
+    Document document = FileDocumentManager.getInstance().getDocument(vFile);
+    document.insertString(0, "class Foo {}");
+    FileDocumentManager.getInstance().saveDocument(document);
 
-        Document document = FileDocumentManager.getInstance().getDocument(vFile);
-        document.insertString(0, "class Foo {}");
-        FileDocumentManager.getInstance().saveDocument(document);
+    assertTrue(count == getPsiManager().getModificationTracker().getModificationCount());
+    assertNull(findClass("Foo"));
 
-        assertTrue(count == PsiManager.getInstance(myProject).getModificationTracker().getModificationCount());
-        assertNull(myJavaFacade.findClass("Foo", scope));
-
-        PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-        assertNotNull(myJavaFacade.findClass("Foo", scope));
-        assertNotNull(myJavaFacade.findClass("Foo", scope).getText());
-        // if Foo exists now, mod count should be different
-        assertTrue(count != PsiManager.getInstance(myProject).getModificationTracker().getModificationCount());
-      }
-    });
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    assertNotNull(findClass("Foo"));
+    assertNotNull(findClass("Foo").getText());
+    // if Foo exists now, mod count should be different
+    assertTrue(count != getPsiManager().getModificationTracker().getModificationCount());
   }
 
   public void testSkipUnknownFileTypes() throws IOException {
-    VirtualFile dir = getVirtualFile(createTempDirectory());
-    PsiTestUtil.addSourceContentToRoots(myModule, dir);
-
-    final VirtualFile vFile = createChildData(dir, "Foo.test");
-    VfsUtil.saveText(vFile, "Foo");
+    final VirtualFile vFile = myFixture.addFileToProject("Foo.test", "Foo").getVirtualFile();
     assertEquals(PlainTextFileType.INSTANCE, vFile.getFileType());
-    assertOneElement(PsiSearchHelper.SERVICE.getInstance(myProject).findFilesWithPlainTextWords("Foo"));
+    final PsiSearchHelper helper = PsiSearchHelper.SERVICE.getInstance(getProject());
+    assertOneElement(helper.findFilesWithPlainTextWords("Foo"));
 
     final Document document = FileDocumentManager.getInstance().getDocument(vFile);
     //todo should file type be changed silently without events?
     //assertEquals(UnknownFileType.INSTANCE, vFile.getFileType());
 
-    final PsiFile file = getPsiFile(document);
+    final PsiFile file = PsiDocumentManager.getInstance(getProject()).getPsiFile(document);
     assertInstanceOf(file, PsiPlainTextFile.class);
     assertEquals("Foo", file.getText());
 
-    assertOneElement(PsiSearchHelper.SERVICE.getInstance(myProject).findFilesWithPlainTextWords("Foo"));
+    assertOneElement(helper.findFilesWithPlainTextWords("Foo"));
 
-    WriteCommandAction.runWriteCommandAction(myProject, new Runnable() {
+    WriteCommandAction.runWriteCommandAction(getProject(), new Runnable() {
       @Override
       public void run() {
         document.insertString(0, " ");
         assertEquals("Foo", file.getText());
-        assertOneElement(PsiSearchHelper.SERVICE.getInstance(myProject).findFilesWithPlainTextWords("Foo"));
+        assertOneElement(helper.findFilesWithPlainTextWords("Foo"));
 
         FileDocumentManager.getInstance().saveDocument(document);
         assertEquals("Foo", file.getText());
-        assertOneElement(PsiSearchHelper.SERVICE.getInstance(myProject).findFilesWithPlainTextWords("Foo"));
+        assertOneElement(helper.findFilesWithPlainTextWords("Foo"));
 
-        PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+        PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
         assertEquals(" Foo", file.getText());
-        assertOneElement(PsiSearchHelper.SERVICE.getInstance(myProject).findFilesWithPlainTextWords("Foo"));
+        assertOneElement(helper.findFilesWithPlainTextWords("Foo"));
       }
     });
   }
 
   public void testUndoToFileContentForUnsavedCommittedDocument() throws IOException {
-    VirtualFile dir = getVirtualFile(createTempDirectory());
-    PsiTestUtil.addSourceContentToRoots(myModule, dir);
-
-    final VirtualFile vFile = createChildData(dir, "Foo.java");
-    VfsUtil.saveText(vFile, "class Foo {}");
+    final VirtualFile vFile = myFixture.addClass("class Foo {}").getContainingFile().getVirtualFile();
     ((VirtualFileSystemEntry)vFile).setModificationStamp(0); // as unchanged file
 
     final Document document = FileDocumentManager.getInstance().getDocument(vFile);
     assertTrue(document != null && document.getModificationStamp() == 0);
-    final GlobalSearchScope scope = GlobalSearchScope.projectScope(myProject);
-    assertNotNull(myJavaFacade.findClass("Foo", scope));
+    assertNotNull(findClass("Foo"));
 
-    WriteCommandAction.runWriteCommandAction(myProject, new Runnable() {
+    WriteCommandAction.runWriteCommandAction(getProject(), new Runnable() {
       @Override
       public void run() {
         document.insertString(0, "import Bar;\n");
-        PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-        assertNotNull(myJavaFacade.findClass("Foo", scope));
+        PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+        assertNotNull(findClass("Foo"));
       }
     });
 
     final UndoManager undoManager = UndoManager.getInstance(getProject());
-    final FileEditor selectedEditor = FileEditorManager.getInstance(myProject).openFile(vFile, false)[0];
+    final FileEditor selectedEditor = FileEditorManager.getInstance(getProject()).openFile(vFile, false)[0];
     ((UndoManagerImpl)undoManager).setEditorProvider(new CurrentEditorProvider() {
       @Override
       public FileEditor getCurrentEditor() {
@@ -375,6 +283,6 @@ public class IndexTest extends CodeInsightTestCase {
     FileDocumentManager.getInstance().saveDocument(document);
     undoManager.undo(selectedEditor);
 
-    assertNotNull(myJavaFacade.findClass("Foo", scope));
+    assertNotNull(findClass("Foo"));
   }
 }
