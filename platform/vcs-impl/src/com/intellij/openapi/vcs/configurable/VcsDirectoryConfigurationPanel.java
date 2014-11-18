@@ -492,7 +492,9 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     Collection<MapInfo> removedValidRoots = ContainerUtil.mapNotNull(selection, new Function<MapInfo, MapInfo>() {
       @Override
       public MapInfo fun(MapInfo info) {
-        return info.type == MapInfo.Type.NORMAL ? MapInfo.unregistered(info.mapping.getDirectory(), info.mapping.getVcs()) : null;
+        return info.type == MapInfo.Type.NORMAL && myCheckers.get(info.mapping.getVcs()) != null ?
+               MapInfo.unregistered(info.mapping.getDirectory(), info.mapping.getVcs()) :
+               null;
       }
     });
     mappings.addAll(removedValidRoots);
