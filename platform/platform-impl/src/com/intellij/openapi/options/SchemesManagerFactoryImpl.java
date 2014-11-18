@@ -35,6 +35,7 @@ public class SchemesManagerFactoryImpl extends SchemesManagerFactory implements 
 
   private final List<SchemesManagerImpl> myRegisteredManagers = ContainerUtil.createLockFreeCopyOnWriteList();
 
+  @NotNull
   @Override
   public <T extends Scheme, E extends ExternalizableScheme> SchemesManager<T, E> createSchemesManager(@NotNull String fileSpec,
                                                                                                       @NotNull SchemeProcessor<E> processor,

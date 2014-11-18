@@ -599,7 +599,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
   }
 
   @Override
-  public boolean isShared(final Scheme scheme) {
+  public boolean isShared(@NotNull final Scheme scheme) {
     return scheme instanceof ExternalizableScheme && ((ExternalizableScheme)scheme).getExternalInfo().isIsImported();
   }
 

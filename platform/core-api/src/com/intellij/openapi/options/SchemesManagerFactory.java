@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 public abstract class SchemesManagerFactory {
   public static final ExtensionPointName<ServiceBean> SCHEME_OWNER = ExtensionPointName.create("com.intellij.schemeOwner");
 
+  @NotNull
   public abstract <T extends Scheme, E extends ExternalizableScheme> SchemesManager<T, E> createSchemesManager(@NotNull String fileSpec,
                                                                                                                @NotNull SchemeProcessor<E> processor, @NotNull RoamingType roamingType);
   @NotNull

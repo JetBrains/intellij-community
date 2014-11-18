@@ -54,7 +54,7 @@ public interface SchemesManager <T extends Scheme, E extends ExternalizableSchem
     }
 
     @Override
-    public boolean isShared(final Scheme scheme) {
+    public boolean isShared(@NotNull final Scheme scheme) {
       return false;
     }
 
@@ -126,7 +126,7 @@ public interface SchemesManager <T extends Scheme, E extends ExternalizableSchem
 
   boolean isExportAvailable();
 
-  boolean isShared(final Scheme scheme);
+  boolean isShared(@NotNull Scheme scheme);
 
   void addNewScheme(@NotNull T scheme, final boolean replaceExisting);
 
