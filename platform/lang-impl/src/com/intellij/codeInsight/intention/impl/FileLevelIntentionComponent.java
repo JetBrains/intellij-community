@@ -80,26 +80,27 @@ public class FileLevelIntentionComponent extends EditorNotificationPanel {
     if (gutterMark != null) {
       myLabel.setIcon(gutterMark.getIcon());
     }
-    myGearLabel.setIcon(AllIcons.General.Gear);
 
-    new ClickListener() {
-      @Override
-      public boolean onClick(@NotNull MouseEvent e, int clickCount) {
-        IntentionListStep step = new IntentionListStep(null, editor, psiFile, project);
-        if (intentions != null && !intentions.isEmpty()) {
+    if (intentions != null && !intentions.isEmpty()) {
+      myGearLabel.setIcon(AllIcons.General.Gear);
+
+      new ClickListener() {
+        @Override
+        public boolean onClick(@NotNull MouseEvent e, int clickCount) {
+          IntentionListStep step = new IntentionListStep(null, editor, psiFile, project);
           HighlightInfo.IntentionActionDescriptor descriptor = intentions.get(0).getFirst();
           IntentionActionWithTextCaching actionWithTextCaching = step.wrapAction(descriptor, psiFile, psiFile, editor);
           if (step.hasSubstep(actionWithTextCaching)) {
             step = step.getSubStep(actionWithTextCaching, null);
           }
+          ListPopup popup = JBPopupFactory.getInstance().createListPopup(step);
+          Dimension dimension = popup.getContent().getPreferredSize();
+          Point at = new Point(-dimension.width + myGearLabel.getWidth(), FileLevelIntentionComponent.this.getHeight());
+          popup.show(new RelativePoint(e.getComponent(), at));
+          return true;
         }
-        ListPopup popup = JBPopupFactory.getInstance().createListPopup(step);
-        Dimension dimension = popup.getContent().getPreferredSize();
-        Point at = new Point(-dimension.width + myGearLabel.getWidth(), FileLevelIntentionComponent.this.getHeight());
-        popup.show(new RelativePoint(e.getComponent(), at));
-        return true;
-      }
-    }.installOn(myGearLabel);
+      }.installOn(myGearLabel);
+    }
   }
 
   @Override
