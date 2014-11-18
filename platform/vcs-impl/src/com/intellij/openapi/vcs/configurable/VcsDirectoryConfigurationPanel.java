@@ -16,6 +16,7 @@
 
 package com.intellij.openapi.vcs.configurable;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.Configurable;
@@ -127,17 +128,15 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     }
   }
 
-  private static class MyDirectoryRenderer extends ColoredTableCellRenderer {
-    private final Project myProject;
-
-    public MyDirectoryRenderer(Project project) {
-      myProject = project;
-    }
-
+  private class MyDirectoryRenderer extends ColoredTableCellRenderer {
     @Override
     protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
       if (value instanceof MapInfo) {
         MapInfo info = (MapInfo)value;
+
+        if (!myVcsConfiguration.SHOW_UNREGISTERED_ROOTS_IN_SETTINGS && !info.type.isRegistered()) {
+          return;
+        }
 
         if (!selected && (info == MapInfo.SEPARATOR || info.type == MapInfo.Type.UNREGISTERED)) {
           setBackground(getUnregisteredRootBackground());
@@ -220,6 +219,10 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
         return new ColoredTableCellRenderer() {
           @Override
           protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
+            if (!myVcsConfiguration.SHOW_UNREGISTERED_ROOTS_IN_SETTINGS && !info.type.isRegistered()) {
+              return;
+            }
+
             if (info == MapInfo.SEPARATOR) {
               if (!selected) {
                 setBackground(getUnregisteredRootBackground());
@@ -313,7 +316,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     setLayout(new BorderLayout());
     add(createMainComponent());
 
-    myDirectoryRenderer = new MyDirectoryRenderer(myProject);
+    myDirectoryRenderer = new MyDirectoryRenderer();
     DIRECTORY = new ColumnInfo<MapInfo, MapInfo>(VcsBundle.message("column.info.configure.vcses.directory")) {
       @Override
       public MapInfo valueOf(final MapInfo mapping) {
@@ -565,7 +568,18 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
         public boolean isEnabled(AnActionEvent e) {
           return !myIsDisabled && onlyRegisteredRootsInSelection();
         }
-      }).disableUpDownActions().createPanel();
+      }).disableUpDownActions().addExtraAction(new ToggleActionButton("Show unregistered roots", AllIcons.General.Filter) {
+        @Override
+        public boolean isSelected(AnActionEvent e) {
+          return myVcsConfiguration.SHOW_UNREGISTERED_ROOTS_IN_SETTINGS;
+        }
+
+        @Override
+        public void setSelected(AnActionEvent e, boolean state) {
+          myVcsConfiguration.SHOW_UNREGISTERED_ROOTS_IN_SETTINGS = state;
+          myDirectoryMappingTable.repaint();
+        }
+      }).createPanel();
     panelForTable.setPreferredSize(new Dimension(-1, 200));
     return panelForTable;
   }
