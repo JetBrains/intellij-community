@@ -38,4 +38,14 @@ public class ReturnOfDateField
     private Date hidden() {
         return m_foo;
     }
+
+    interface A {
+        Date d();
+    }
+    
+    private void p(){
+        A a = () -> {
+            return m_foo;
+        };
+    }
 }
