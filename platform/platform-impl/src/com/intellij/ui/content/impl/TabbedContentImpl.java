@@ -67,7 +67,12 @@ public class TabbedContentImpl extends ContentImpl implements TabbedContent {
         break;
       }
     }
-    myTabs.remove(toRemove);
+    int index = myTabs.indexOf(toRemove);
+    if (index != -1) {
+      myTabs.remove(index);
+      index = index > 0 ? index-1 : index;
+      selectContent(index);
+    }
   }
 
   @Override
