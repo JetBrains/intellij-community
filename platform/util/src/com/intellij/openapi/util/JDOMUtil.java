@@ -381,6 +381,10 @@ public class JDOMUtil {
 
   @Contract("null -> null; !null -> !null")
   public static Element load(InputStream stream) throws JDOMException, IOException {
+    if (stream == null) {
+      return null;
+    }
+
     try {
       return loadDocument(stream).detachRootElement();
     }
