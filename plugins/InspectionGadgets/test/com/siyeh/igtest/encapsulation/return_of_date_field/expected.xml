@@ -13,4 +13,12 @@
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Return of Date or Calendar field</problem_class>
     <description>Return of 'java.util.Date' field &lt;code&gt;m_foo&lt;/code&gt; #loc</description>
   </problem>
+
+  <problem>
+    <file>ReturnOfDateField.java</file>
+    <line>48</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Return of Date or Calendar field</problem_class>
+    <description>Return of 'java.util.Date' field &lt;code&gt;m_foo&lt;/code&gt; #loc</description>
+  </problem>
+
 </problems>
