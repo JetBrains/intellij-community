@@ -4095,7 +4095,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     // and, in the case of the positive answer, clear selection. Please note that there is a possible case that mouse click
     // is performed inside selection but it triggers context menu. We don't want to drop the selection then.
     if (myMousePressedEvent != null && myMousePressedEvent.getClickCount() == 1 && myMousePressedInsideSelection
-        && !myMousePressedEvent.isShiftDown() && !myMousePressedEvent.isPopupTrigger()
+        && !myMousePressedEvent.isShiftDown() 
+        && !myMousePressedEvent.isPopupTrigger()
+        && !isToggleCaretEvent(myMousePressedEvent)
         && !isCreateRectangularSelectionEvent(myMousePressedEvent)) {
       getSelectionModel().removeSelection();
     }
