@@ -186,8 +186,8 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
 
   public TemplateSettings(SchemesManagerFactory schemesManagerFactory) {
     mySchemesManager = schemesManagerFactory.createSchemesManager(TEMPLATES_DIR_PATH, new BaseSchemeProcessor<TemplateGroup>() {
-      @Override
       @Nullable
+      @Override
       public TemplateGroup readScheme(@NotNull Element element) throws InvalidDataException {
         return readTemplateFile(element, element.getAttributeValue("group"), false, false,
                                 getClass().getClassLoader());
@@ -523,7 +523,6 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
     }
 
     return result.isEmpty() ? null : result;
-
   }
 
   private TemplateImpl readTemplateFromElement(final boolean isDefault,

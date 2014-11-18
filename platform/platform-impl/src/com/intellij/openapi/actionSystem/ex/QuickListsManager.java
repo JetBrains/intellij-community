@@ -62,6 +62,7 @@ public class QuickListsManager implements ExportableApplicationComponent, NamedJ
     myActionManager = actionManagerEx;
     mySchemesManager = schemesManagerFactory.createSchemesManager(StoragePathMacros.ROOT_CONFIG + "/quicklists",
                                                                   new BaseSchemeProcessor<QuickList>() {
+                                                                    @NotNull
                                                                     @Override
                                                                     public QuickList readScheme(@NotNull Element element) {
                                                                       return loadListFromDocument(element);
@@ -86,6 +87,7 @@ public class QuickListsManager implements ExportableApplicationComponent, NamedJ
     registerActions();
   }
 
+  @NotNull
   private static QuickList loadListFromDocument(@NotNull Element element) {
     QuickList list = new QuickList();
     list.readExternal(element);

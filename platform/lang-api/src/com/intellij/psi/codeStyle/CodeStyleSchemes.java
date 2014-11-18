@@ -23,7 +23,6 @@ import org.jetbrains.annotations.Nullable;
  * Date: Jul 19, 2002
  */
 public abstract class CodeStyleSchemes {
-
   public static CodeStyleSchemes getInstance(){
     CodeStyleSchemes schemes = ServiceManager.getService(CodeStyleSchemes.class);
     if (!schemes.isLoaded()) {

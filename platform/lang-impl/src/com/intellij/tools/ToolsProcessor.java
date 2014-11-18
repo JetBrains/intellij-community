@@ -54,6 +54,7 @@ abstract public class ToolsProcessor<T extends Tool> extends BaseSchemeProcessor
   @NonNls private static final String ELEMENT_OPTION = "option";
   @NonNls private static final String ATTRIBUTE_VALUE = "value";
 
+  @NotNull
   @Override
   public ToolsGroup<T> readScheme(@NotNull Element root) throws InvalidDataException, IOException, JDOMException {
     if (!TOOL_SET.equals(root.getName())) {

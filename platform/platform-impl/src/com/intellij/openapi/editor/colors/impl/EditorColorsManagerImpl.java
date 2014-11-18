@@ -54,6 +54,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 
 public class EditorColorsManagerImpl extends EditorColorsManager implements NamedJDOMExternalizable, ExportableComponent, NamedComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl");
@@ -213,7 +214,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
   @NotNull
   @Override
   public EditorColorsScheme[] getAllSchemes() {
-    ArrayList<EditorColorsScheme> schemes = new ArrayList<EditorColorsScheme>(mySchemesManager.getAllSchemes());
+    List<EditorColorsScheme> schemes = new ArrayList<EditorColorsScheme>(mySchemesManager.getAllSchemes());
     Collections.sort(schemes, new Comparator<EditorColorsScheme>() {
       @Override
       public int compare(@NotNull EditorColorsScheme s1, @NotNull EditorColorsScheme s2) {
@@ -370,10 +371,9 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
   }
 
   private final class MySchemeProcessor extends BaseSchemeProcessor<EditorColorsSchemeImpl> implements SchemeExtensionProvider {
+    @NotNull
     @Override
-    public EditorColorsSchemeImpl readScheme(@NotNull Element element)
-      throws InvalidDataException {
-
+    public EditorColorsSchemeImpl readScheme(@NotNull Element element) throws InvalidDataException {
       return loadSchemeFromDocument(element, true);
     }
 

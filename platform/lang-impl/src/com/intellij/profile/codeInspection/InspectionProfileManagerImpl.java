@@ -83,6 +83,7 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
     registerProvidedSeverities();
 
     SchemeProcessor<InspectionProfileImpl> processor = new BaseSchemeProcessor<InspectionProfileImpl>() {
+      @NotNull
       @Override
       public InspectionProfileImpl readScheme(@NotNull Element element) {
         InspectionProfileImpl profile = new InspectionProfileImpl(InspectionProfileLoadUtil.getProfileName(element), myRegistrar, InspectionProfileManagerImpl.this);
