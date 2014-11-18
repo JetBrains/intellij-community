@@ -38,6 +38,7 @@ import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
@@ -229,9 +230,9 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
     } else if (key == MISSING_FILES_DATA_KEY) {
       sink.put(MISSING_FILES_DATA_KEY, getSelectedMissingFiles());
     } else if (VcsDataKeys.HAVE_LOCALLY_DELETED == key) {
-      sink.put(VcsDataKeys.HAVE_LOCALLY_DELETED, haveLocallyDeleted());
+      sink.put(VcsDataKeys.HAVE_LOCALLY_DELETED, !getSelectedMissingFiles().isEmpty());
     } else if (VcsDataKeys.HAVE_MODIFIED_WITHOUT_EDITING == key) {
-      sink.put(VcsDataKeys.HAVE_MODIFIED_WITHOUT_EDITING, haveLocallyModified());
+      sink.put(VcsDataKeys.HAVE_MODIFIED_WITHOUT_EDITING, !getSelectedModifiedWithoutEditing().isEmpty());
     } else if (VcsDataKeys.HAVE_SELECTED_CHANGES == key) {
       sink.put(VcsDataKeys.HAVE_SELECTED_CHANGES, haveSelectedChanges());
     } else if (key == HELP_ID_DATA_KEY) {
@@ -253,6 +254,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
     return getSelectedVirtualFiles(ChangesBrowserNode.UNVERSIONED_FILES_TAG);
   }
 
+  @NotNull
   private List<VirtualFile> getSelectedModifiedWithoutEditing() {
     return getSelectedVirtualFiles(ChangesBrowserNode.MODIFIED_WITHOUT_EDITING_TAG);
   }
@@ -261,7 +263,8 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
     return getSelectedVirtualFiles(ChangesBrowserNode.IGNORED_FILES_TAG);
   }
 
-  private List<VirtualFile> getSelectedVirtualFiles(final Object tag) {
+  @NotNull
+  private List<VirtualFile> getSelectedVirtualFiles(@Nullable Object tag) {
     Set<VirtualFile> files = new HashSet<VirtualFile>();
     final TreePath[] paths = getSelectionPaths();
     if (paths != null) {
@@ -275,10 +278,11 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
         }
       }
     }
-    return new ArrayList<VirtualFile>(files);
+    return ContainerUtil.newArrayList(files);
   }
 
-  private List<FilePath> getSelectedFilePaths(final Object tag) {
+  @NotNull
+  private List<FilePath> getSelectedFilePaths(@Nullable Object tag) {
     Set<FilePath> files = new HashSet<FilePath>();
     final TreePath[] paths = getSelectionPaths();
     if (paths != null) {
@@ -292,7 +296,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
         }
       }
     }
-    return new ArrayList<FilePath>(files);
+    return ContainerUtil.newArrayList(files);
   }
 
   private List<LocallyDeletedChange> getSelectedLocallyDeletedChanges() {
@@ -313,6 +317,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
     return new ArrayList<LocallyDeletedChange>(files);
   }
 
+  @NotNull
   private List<FilePath> getSelectedMissingFiles() {
     return getSelectedFilePaths(TreeModelBuilder.LOCALLY_DELETED_NODE);
   }
@@ -333,29 +338,6 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
     files.addAll(getSelectedVirtualFiles(null));
 
     return VfsUtilCore.toVirtualFileArray(files);
-  }
-
-  protected boolean haveSelectedFileType(final Object tag) {
-    final TreePath[] paths = getSelectionPaths();
-    if (paths != null) {
-      for (TreePath path : paths) {
-        if (path.getPathCount() > 1) {
-          ChangesBrowserNode firstNode = (ChangesBrowserNode)path.getPathComponent(1);
-          if ((tag == null || firstNode.getUserObject() == tag) && path.getPathCount() > 2) {
-            return true;
-          }
-        }
-      }
-    }
-    return false;
-  }
-
-  public boolean haveLocallyDeleted() {
-    return haveSelectedFileType(TreeModelBuilder.LOCALLY_DELETED_NODE);
-  }
-
-  public boolean haveLocallyModified() {
-    return haveSelectedFileType(ChangesBrowserNode.MODIFIED_WITHOUT_EDITING_TAG);
   }
 
   private Boolean haveSelectedChanges() {
