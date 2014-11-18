@@ -40,6 +40,14 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class NewMappings {
+
+  public static Comparator<VcsDirectoryMapping> MAPPINGS_COMPARATOR = new Comparator<VcsDirectoryMapping>() {
+    @Override
+    public int compare(@NotNull VcsDirectoryMapping o1, @NotNull VcsDirectoryMapping o2) {
+      return o1.getDirectory().compareTo(o2.getDirectory());
+    }
+  };
+
   private final static Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.impl.projectlevelman.NewMappings");
   private final Object myLock;
 
@@ -460,7 +468,7 @@ public class NewMappings {
       list.addAll(mappingList);
     }
     mySortedMappings = list.toArray(new VcsDirectoryMapping[list.size()]);
-    Arrays.sort(mySortedMappings, MyMappingsComparator.getInstance());
+    Arrays.sort(mySortedMappings, MAPPINGS_COMPARATOR);
   }
 
   private void migrateVcs(String activeVcsName, VcsDirectoryMapping mapping, String oldVcs) {
@@ -491,18 +499,6 @@ public class NewMappings {
       myVcsToPaths.put(activeVcsName, newList);
     }
     return newList;
-  }
-
-  private static class MyMappingsComparator implements Comparator<VcsDirectoryMapping> {
-    private static final MyMappingsComparator ourInstance = new MyMappingsComparator();
-
-    public static MyMappingsComparator getInstance() {
-      return ourInstance;
-    }
-
-    public int compare(@NotNull VcsDirectoryMapping m1, @NotNull VcsDirectoryMapping m2) {
-      return m1.getDirectory().compareTo(m2.getDirectory());
-    }
   }
 
   private static class MyVcsActivator {

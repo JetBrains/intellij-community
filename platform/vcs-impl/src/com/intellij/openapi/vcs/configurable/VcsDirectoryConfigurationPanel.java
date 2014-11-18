@@ -27,6 +27,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy;
 import com.intellij.openapi.vcs.impl.VcsDescriptor;
+import com.intellij.openapi.vcs.impl.projectlevelman.NewMappings;
 import com.intellij.openapi.vcs.roots.VcsRootErrorsFinder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
@@ -38,6 +39,7 @@ import com.intellij.util.UriUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -88,12 +90,25 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
   private static class MapInfo {
 
     static final MapInfo SEPARATOR = new MapInfo(new VcsDirectoryMapping("SEPARATOR", "SEP"), Type.SEPARATOR);
+    static final Comparator<MapInfo> COMPARATOR = new Comparator<MapInfo>() {
+      @Override
+      public int compare(@NotNull MapInfo o1, @NotNull MapInfo o2) {
+        if ((o1.type.isRegistered() && o2.type.isRegistered()) || (!o1.type.isRegistered() && !o2.type.isRegistered())) {
+          return NewMappings.MAPPINGS_COMPARATOR.compare(o1.mapping, o2.mapping);
+        }
+        return o1.type.ordinal() - o2.type.ordinal();
+      }
+    };
 
     enum Type {
       NORMAL,
       INVALID,
-      UNREGISTERED,
-      SEPARATOR
+      SEPARATOR,
+      UNREGISTERED;
+
+      boolean isRegistered() {
+        return this == NORMAL || this == INVALID;
+      }
     }
 
     private final Type type;
@@ -415,8 +430,41 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
   private void addMapping(VcsDirectoryMapping mapping) {
     List<MapInfo> items = new ArrayList<MapInfo>(myModel.getItems());
     items.add(new MapInfo(new VcsDirectoryMapping(mapping.getDirectory(), mapping.getVcs(), mapping.getRootSettings()), isMappingValid(mapping)));
+    Collections.sort(items, MapInfo.COMPARATOR);
     myModel.setItems(items);
     checkNotifyListeners(getActiveVcses());
+  }
+
+  private void addSelectedUnregisteredMappings(List<MapInfo> infos) {
+    List<MapInfo> items = new ArrayList<MapInfo>(myModel.getItems());
+    for (MapInfo info : infos) {
+      items.remove(info);
+      items.add(new MapInfo(new VcsDirectoryMapping(info.mapping.getDirectory(), info.mapping.getVcs(), info.mapping.getRootSettings()), isMappingValid(info.mapping)));
+    }
+    addOrRemoveSeparator(items);
+    Collections.sort(items, MapInfo.COMPARATOR);
+    myModel.setItems(items);
+    checkNotifyListeners(getActiveVcses());
+  }
+
+  @Contract(pure = false)
+  private static void addOrRemoveSeparator(@NotNull List<MapInfo> items) {
+    boolean hasUnregistered = false;
+    boolean hasSeparator = false;
+    for (MapInfo item : items) {
+      if (item.type == MapInfo.Type.UNREGISTERED) {
+        hasUnregistered = true;
+      }
+      else if (item.type == MapInfo.Type.SEPARATOR) {
+        hasSeparator = true;
+      }
+    }
+    if (!hasUnregistered && hasSeparator) {
+      items.remove(MapInfo.SEPARATOR);
+    }
+    else if (hasUnregistered && !hasSeparator) {
+      items.add(MapInfo.SEPARATOR);
+    }
   }
 
   private void editMapping() {
@@ -472,7 +520,12 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
       .setAddAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
-          addMapping();
+          if (onlyRegisteredRootsInSelection()) {
+            addMapping();
+          }
+          else {
+            addSelectedUnregisteredMappings(getSelectedUnregisteredRoots());
+          }
           updateRootCheckers();
         }
       }).setEditAction(new AnActionButtonRunnable() {
@@ -490,23 +543,58 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
       }).setAddActionUpdater(new AnActionButtonUpdater() {
         @Override
         public boolean isEnabled(AnActionEvent e) {
-          return !myIsDisabled;
+          return !myIsDisabled && rootsOfOneKindInSelection();
         }
       }).setEditActionUpdater(new AnActionButtonUpdater() {
         @Override
         public boolean isEnabled(AnActionEvent e) {
-          final boolean hasSelection = myDirectoryMappingTable.getSelectedObject() != null;
-          return (!myIsDisabled) && hasSelection;
+          return !myIsDisabled && onlyRegisteredRootsInSelection();
         }
       }).setRemoveActionUpdater(new AnActionButtonUpdater() {
         @Override
         public boolean isEnabled(AnActionEvent e) {
-          final boolean hasSelection = myDirectoryMappingTable.getSelectedObject() != null;
-          return (!myIsDisabled) && hasSelection;
+          return !myIsDisabled && onlyRegisteredRootsInSelection();
         }
       }).disableUpDownActions().createPanel();
     panelForTable.setPreferredSize(new Dimension(-1, 200));
     return panelForTable;
+  }
+
+  @NotNull
+  private List<MapInfo> getSelectedUnregisteredRoots() {
+    return ContainerUtil.filter(myDirectoryMappingTable.getSelection(), new Condition<MapInfo>() {
+      @Override
+      public boolean value(MapInfo info) {
+        return info.type == MapInfo.Type.UNREGISTERED;
+      }
+    });
+  }
+
+  private boolean rootsOfOneKindInSelection() {
+    Collection<MapInfo> selection = myDirectoryMappingTable.getSelection();
+    if (selection.isEmpty()) {
+      return true;
+    }
+    if (selection.size() == 1 && selection.iterator().next().type == MapInfo.Type.SEPARATOR) {
+      return false;
+    }
+    List<MapInfo> selectedRegisteredRoots = getSelectedRegisteredRoots();
+    return selectedRegisteredRoots.size() == selection.size() || selectedRegisteredRoots.size() == 0;
+  }
+
+  @NotNull
+  private List<MapInfo> getSelectedRegisteredRoots() {
+    Collection<MapInfo> selection = myDirectoryMappingTable.getSelection();
+    return ContainerUtil.filter(selection, new Condition<MapInfo>() {
+      @Override
+      public boolean value(MapInfo info) {
+        return info.type == MapInfo.Type.NORMAL || info.type == MapInfo.Type.INVALID;
+      }
+    });
+  }
+
+  private boolean onlyRegisteredRootsInSelection() {
+    return getSelectedRegisteredRoots().size() == myDirectoryMappingTable.getSelection().size();
   }
 
   private JComponent createProjectMappingDescription() {
