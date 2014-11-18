@@ -941,7 +941,7 @@ public class GenericsHighlightUtil {
   }
 
   @Nullable
-  public static HighlightInfo checkSafeVarargsAnnotation(PsiMethod method) {
+  public static HighlightInfo checkSafeVarargsAnnotation(PsiMethod method, LanguageLevel languageLevel) {
     PsiModifierList list = method.getModifierList();
     final PsiAnnotation safeVarargsAnnotation = list.findAnnotation("java.lang.SafeVarargs");
     if (safeVarargsAnnotation == null) {
@@ -952,7 +952,7 @@ public class GenericsHighlightUtil {
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(safeVarargsAnnotation).descriptionAndTooltip(
           "@SafeVarargs is not allowed on methods with fixed arity").create();
       }
-      if (!method.hasModifierProperty(PsiModifier.STATIC) && !method.hasModifierProperty(PsiModifier.FINAL) && !method.isConstructor()) {
+      if (!isSafeVarargsNoOverridingCondition(method, languageLevel)) {
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(safeVarargsAnnotation).descriptionAndTooltip(
           "@SafeVarargs is not allowed on non-final instance methods").create();
       }
@@ -981,6 +981,13 @@ public class GenericsHighlightUtil {
     catch (IndexNotReadyException e) {
       return null;
     }
+  }
+
+  public static boolean isSafeVarargsNoOverridingCondition(PsiMethod method, LanguageLevel languageLevel) {
+    return method.hasModifierProperty(PsiModifier.FINAL) ||
+           method.hasModifierProperty(PsiModifier.STATIC) ||
+           method.isConstructor() ||
+           method.hasModifierProperty(PsiModifier.PRIVATE) && languageLevel.isAtLeast(LanguageLevel.JDK_1_9);
   }
 
   static void checkEnumConstantForConstructorProblems(@NotNull PsiEnumConstant enumConstant,
