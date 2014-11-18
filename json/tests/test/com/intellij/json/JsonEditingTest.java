@@ -42,8 +42,8 @@ public class JsonEditingTest extends JsonTestCase {
 
   // WEB-13675
   public void testIndentWithTabsWhenSmartTabEnabled() {
-    CommonCodeStyleSettings.IndentOptions indentOptions = getIndentOptions();
-    CommonCodeStyleSettings.IndentOptions oldSettings = (CommonCodeStyleSettings.IndentOptions)indentOptions.clone();
+    final CommonCodeStyleSettings.IndentOptions indentOptions = getIndentOptions();
+    final CommonCodeStyleSettings.IndentOptions oldSettings = (CommonCodeStyleSettings.IndentOptions)indentOptions.clone();
     indentOptions.TAB_SIZE = 4;
     indentOptions.INDENT_SIZE = 4;
     indentOptions.USE_TAB_CHARACTER = true;
@@ -72,9 +72,9 @@ public class JsonEditingTest extends JsonTestCase {
     final JsonCodeStyleSettings settings = getCustomCodeStyleSettings();
     final CommonCodeStyleSettings.IndentOptions indentOptions = getIndentOptions();
 
-    JsonCodeStyleSettings.PropertyAlignment oldPropertyAlignment = settings.PROPERTY_ALIGNMENT;
-    int oldIndentSize = indentOptions.INDENT_SIZE;
-    settings.PROPERTY_ALIGNMENT = JsonCodeStyleSettings.PropertyAlignment.ALIGN_ON_VALUE;
+    final int oldPropertyAlignment = settings.PROPERTY_ALIGNMENT;
+    final int oldIndentSize = indentOptions.INDENT_SIZE;
+    settings.PROPERTY_ALIGNMENT = JsonCodeStyleSettings.ALIGN_PROPERTY_ON_VALUE;
     indentOptions.INDENT_SIZE = 4;
     try {
       doTest("\n");
