@@ -19,8 +19,6 @@
  */
 package com.intellij.ui;
 
-import com.intellij.concurrency.Job;
-import com.intellij.concurrency.JobLauncher;
 import com.intellij.ide.PowerSaveMode;
 import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ApplicationManager;
@@ -102,7 +100,7 @@ public class DeferredIconImpl<T> implements DeferredIcon {
     final Component paintingParent = SwingUtilities.getAncestorOfClass(PaintingParent.class, c);
     final Rectangle paintingParentRec = paintingParent == null ? null : ((PaintingParent)paintingParent).getChildRec(c);
 
-    JobLauncher.getInstance().submitToJobThread(Job.DEFAULT_PRIORITY, new Runnable() {
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       @Override
       public void run() {
         int oldWidth = myDelegateIcon.getIconWidth();
@@ -158,7 +156,9 @@ public class DeferredIconImpl<T> implements DeferredIcon {
               }
             }, progress);
             if (cancelled.get() == Boolean.TRUE) return;
-          } catch(ProcessCanceledException e) {}
+          }
+          catch (ProcessCanceledException e) {
+          }
           finally {
             ApplicationManager.getApplication().removeApplicationListener(listener);
           }
