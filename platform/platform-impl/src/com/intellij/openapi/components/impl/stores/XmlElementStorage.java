@@ -28,7 +28,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectLongHashMap;
-import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jdom.filter.ElementFilter;
@@ -277,7 +276,7 @@ public abstract class XmlElementStorage extends StateStorageBase<StorageData> {
 
     private void doSaveForProvider(@NotNull Element element, @NotNull RoamingType roamingType, @Nullable BufferExposingByteArrayOutputStream content) throws IOException {
       if (content == null) {
-        StorageUtil.doSendContent(myStreamProvider, myFileSpec, element, roamingType, true);
+        StorageUtil.sendContent(myStreamProvider, myFileSpec, element, roamingType, true);
       }
       else {
         myStreamProvider.saveContent(myFileSpec, content.getInternalBuffer(), content.size(), myRoamingType, true);
@@ -287,7 +286,7 @@ public abstract class XmlElementStorage extends StateStorageBase<StorageData> {
         TObjectLongHashMap<String> versions = loadVersions(element.getChildren(StorageData.COMPONENT));
         if (!versions.isEmpty()) {
           Element versionDoc = StateStorageManagerImpl.createComponentVersionsXml(versions);
-          StorageUtil.doSendContent(myStreamProvider, myFileSpec + VERSION_FILE_SUFFIX, versionDoc, roamingType, true);
+          StorageUtil.sendContent(myStreamProvider, myFileSpec + VERSION_FILE_SUFFIX, versionDoc, roamingType, true);
         }
       }
     }
@@ -366,9 +365,9 @@ public abstract class XmlElementStorage extends StateStorageBase<StorageData> {
       myProviderVersions = new TObjectLongHashMap<String>();
       for (RoamingType type : RoamingType.values()) {
         try {
-          Document doc = StorageUtil.loadDocument(myStreamProvider.loadContent(myFileSpec + VERSION_FILE_SUFFIX, type));
-          if (doc != null) {
-            StateStorageManagerImpl.loadComponentVersions(myProviderVersions, doc);
+          Element element = StorageUtil.loadElement(myStreamProvider.loadContent(myFileSpec + VERSION_FILE_SUFFIX, type));
+          if (element != null) {
+            StateStorageManagerImpl.loadComponentVersions(myProviderVersions, element);
           }
         }
         catch (IOException e) {

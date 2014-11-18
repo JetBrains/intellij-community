@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,20 @@
  */
 package com.intellij.openapi.options;
 
-public class ExternalInfo {
-  private boolean myIsImported = false;
-  private String myOriginalPath = null;
-  private String myCurrentFileName = null;
-  private String myPreviouslySavedName = null;
-  private Long mySavedHash = null;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+public final class ExternalInfo {
+  private boolean myIsImported;
+  private String myOriginalPath;
+
+  // we keep it to detect rename
+  private String myPreviouslySavedName;
+  private String myCurrentFileName;
+
+  private int mySavedHash;
+
+  private boolean myRemote;
 
   public void setIsImported(final boolean isImported) {
     myIsImported = isImported;
@@ -42,30 +50,42 @@ public class ExternalInfo {
     return myCurrentFileName;
   }
 
-  public String getPreviouslySavedName() {
-    return myPreviouslySavedName;
+  public void setCurrentFileName(@Nullable String currentFileName) {
+    myCurrentFileName = currentFileName;
   }
 
-  public void setCurrentFileName(final String currentFileName) {
-    myCurrentFileName = currentFileName;
+  public void copy(@NotNull ExternalInfo externalInfo) {
+    myCurrentFileName = externalInfo.myCurrentFileName;
+    myIsImported = externalInfo.isIsImported();
+    myOriginalPath = externalInfo.myOriginalPath;
+  }
+
+  public String getPreviouslySavedName() {
+    return myPreviouslySavedName;
   }
 
   public void setPreviouslySavedName(final String previouslySavedName) {
     myPreviouslySavedName = previouslySavedName;
   }
 
-  public void copy(final ExternalInfo externalInfo) {
-    myCurrentFileName = externalInfo.myCurrentFileName;
-    myIsImported = externalInfo.isIsImported();
-    myOriginalPath = externalInfo.myOriginalPath;
-    myPreviouslySavedName = externalInfo.myPreviouslySavedName;
-  }
-
-  public Long getHash() {
+  public int getHash() {
     return mySavedHash;
   }
 
-  public void setHash(final long newHash) {
+  public void setHash(int newHash) {
     mySavedHash = newHash;
+  }
+
+  public boolean isRemote() {
+    return myRemote;
+  }
+
+  public void markRemote() {
+    myRemote = true;
+  }
+
+  @Override
+  public String toString() {
+    return "file: " + myCurrentFileName + (myRemote ? ", remote" : "");
   }
 }

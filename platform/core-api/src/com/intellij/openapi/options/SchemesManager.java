@@ -138,7 +138,7 @@ public interface SchemesManager <T extends Scheme, E extends ExternalizableSchem
   @Nullable
   T findSchemeByName(final String schemeName);
 
-  void save() throws WriteExternalException;
+  void save();
 
   void setCurrentSchemeName(final String schemeName);
 

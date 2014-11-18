@@ -35,7 +35,6 @@ import com.intellij.util.SmartList;
 import com.intellij.util.messages.MessageBus;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectLongHashMap;
-import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
@@ -317,7 +316,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     String filePath = getNotNullVersionsFilePath();
     if (filePath != null) {
       try {
-        loadComponentVersions(result, JDOMUtil.loadDocument(new File(filePath)));
+        loadComponentVersions(result, JDOMUtil.loadDocument(new File(filePath)).getRootElement());
       }
       catch (JDOMException e) {
         LOG.debug(e);
@@ -337,8 +336,8 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     return myVersionsFilePath;
   }
 
-  public static void loadComponentVersions(TObjectLongHashMap<String> result, Document document) {
-    List<Element> componentObjects = document.getRootElement().getChildren("component");
+  public static void loadComponentVersions(@NotNull TObjectLongHashMap<String> result, @NotNull Element element) {
+    List<Element> componentObjects = element.getChildren("component");
     result.ensureCapacity(componentObjects.size());
     for (Element component : componentObjects) {
       String name = component.getAttributeValue("name");

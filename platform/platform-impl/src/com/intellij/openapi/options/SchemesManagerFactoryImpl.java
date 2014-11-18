@@ -39,10 +39,11 @@ public class SchemesManagerFactoryImpl extends SchemesManagerFactory implements 
   public <T extends Scheme, E extends ExternalizableScheme> SchemesManager<T, E> createSchemesManager(@NotNull String fileSpec,
                                                                                                       @NotNull SchemeProcessor<E> processor,
                                                                                                       @NotNull RoamingType roamingType) {
-    final Application application = ApplicationManager.getApplication();
+    Application application = ApplicationManager.getApplication();
     if (!(application instanceof ApplicationImpl)) {
       return null;
     }
+
     IApplicationStore applicationStore = ((ApplicationImpl)application).getStateStore();
     String baseDirPath = applicationStore.getStateStorageManager().expandMacros(fileSpec);
     StreamProvider provider = applicationStore.getStateStorageManager().getStreamProvider();

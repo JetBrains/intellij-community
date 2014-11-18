@@ -292,14 +292,14 @@ public class StorageUtil {
   }
 
   @Nullable
-  public static Document loadDocument(@Nullable InputStream stream) {
+  public static Element loadElement(@Nullable InputStream stream) {
     if (stream == null) {
       return null;
     }
 
     try {
       try {
-        return JDOMUtil.loadDocument(stream);
+        return JDOMUtil.loadDocument(stream).detachRootElement();
       }
       finally {
         stream.close();
@@ -313,24 +313,6 @@ public class StorageUtil {
     }
   }
 
-  @NotNull
-  public static BufferExposingByteArrayOutputStream elementToBytes(@NotNull Parent element, boolean useSystemLineSeparator) throws IOException {
-    return writeToBytes(element, useSystemLineSeparator ? SystemProperties.getLineSeparator() : "\n");
-  }
-
-  public static void sendContent(@NotNull StreamProvider provider, @NotNull String fileSpec, @NotNull Parent element, @NotNull RoamingType type, boolean async) {
-    if (!provider.isApplicable(fileSpec, type)) {
-      return;
-    }
-
-    try {
-      doSendContent(provider, fileSpec, element, type, async);
-    }
-    catch (IOException e) {
-      LOG.warn(e);
-    }
-  }
-
   public static void delete(@NotNull StreamProvider provider, @NotNull String fileSpec, @NotNull RoamingType type) {
     if (provider.isApplicable(fileSpec, type)) {
       provider.delete(fileSpec, type);
@@ -340,9 +322,9 @@ public class StorageUtil {
   /**
    * You must call {@link StreamProvider#isApplicable(String, com.intellij.openapi.components.RoamingType)} before
    */
-  public static void doSendContent(@NotNull StreamProvider provider, @NotNull String fileSpec, @NotNull Parent element, @NotNull RoamingType type, boolean async) throws IOException {
+  public static void sendContent(@NotNull StreamProvider provider, @NotNull String fileSpec, @NotNull Element element, @NotNull RoamingType type, boolean async) throws IOException {
     // we should use standard line-separator (\n) - stream provider can share file content on any OS
-    BufferExposingByteArrayOutputStream content = elementToBytes(element, false);
+    BufferExposingByteArrayOutputStream content = writeToBytes(element, "\n");
     provider.saveContent(fileSpec, content.getInternalBuffer(), content.size(), type, async);
   }
 
