@@ -111,6 +111,14 @@ public class JavaEditorTextProviderImpl implements EditorTextProvider {
     else if (parent instanceof PsiThisExpression) {
       expression = parent;
     }
+    else if (parent instanceof PsiArrayInitializerExpression) {
+      if (allowMethodCalls) {
+        PsiNewExpression newExpr = PsiTreeUtil.getParentOfType(element, PsiNewExpression.class);
+        if (newExpr != null) {
+          expression = newExpr;
+        }
+      }
+    }
     else if (parent instanceof PsiExpression && !(parent instanceof PsiNewExpression)) {
       if (allowMethodCalls || !DebuggerUtils.hasSideEffects(parent)) {
         expression = parent;
