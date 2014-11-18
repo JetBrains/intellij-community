@@ -121,7 +121,7 @@ public class Switcher extends AnAction implements DumbAware {
             if (event.getID() == KEY_RELEASED && keyEvent.getKeyCode() == CTRL_KEY) {
               SwingUtilities.invokeLater(CHECKER);
             }
-            else if (event.getID() == KEY_PRESSED
+            else if (event.getID() == KEY_PRESSED && event != INIT_EVENT
                      && (tw = SWITCHER.twShortcuts.get(String.valueOf((char)keyEvent.getKeyCode()))) != null) {
               SWITCHER.myPopup.closeOk(null);
               tw.activate(null, true, true);
@@ -134,6 +134,7 @@ public class Switcher extends AnAction implements DumbAware {
   }
 
   @NonNls private static final String SWITCHER_TITLE = "Switcher";
+  @NonNls private static InputEvent INIT_EVENT;
 
   public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
@@ -141,6 +142,7 @@ public class Switcher extends AnAction implements DumbAware {
 
     boolean isNewSwitcher = false;
       synchronized (Switcher.class) {
+        INIT_EVENT = e.getInputEvent();
         if (SWITCHER != null && SWITCHER.isPinnedMode()) {
           SWITCHER.cancel();
           SWITCHER = null;
