@@ -109,7 +109,11 @@ public class RemoteDebugger implements ProcessDebugger {
   public String handshake() throws PyDebuggerException {
     final VersionCommand command = new VersionCommand(this, LOCAL_VERSION, SystemInfo.isUnix ? "UNIX" : "WIN");
     command.execute();
-    return command.getRemoteVersion();
+    String version = command.getRemoteVersion();
+    if (version != null) {
+      version = version.trim();
+    }
+    return version;
   }
 
   @Override
