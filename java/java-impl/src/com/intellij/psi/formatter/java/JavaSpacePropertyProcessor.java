@@ -43,7 +43,7 @@ import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.java.IJavaElementType;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -1683,7 +1683,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
   }
 
   private static final Map<Pair<IElementType, IElementType>, Boolean> myCanStickJavaTokensMatrix =
-    new ConcurrentHashMap<Pair<IElementType, IElementType>, Boolean>();
+    ContainerUtil.newConcurrentMap();
 
   public static boolean canStickChildrenTogether(final ASTNode child1, final ASTNode child2) {
     if (child1 == null || child2 == null) return true;

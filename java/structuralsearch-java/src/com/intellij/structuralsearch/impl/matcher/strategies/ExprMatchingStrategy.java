@@ -6,6 +6,27 @@ import com.intellij.psi.*;
  * Expression matching strategy
  */
 public class ExprMatchingStrategy extends MatchingStrategyBase {
+
+  @Override public void visitAnnotation(final PsiAnnotation annotation) {
+    result = true;
+  }
+
+  @Override public void visitAnnotationParameterList(final PsiAnnotationParameterList list) {
+    result = true;
+  }
+
+  @Override public void visitModifierList(final PsiModifierList list) {
+    result = true;
+  }
+
+  @Override public void visitNameValuePair(final PsiNameValuePair pair) {
+    result = true;
+  }
+
+  @Override public void visitAnnotationArrayInitializer(PsiArrayInitializerMemberValue initializer) {
+    result = true;
+  }
+
   @Override public void visitExpression(final PsiExpression expr) {
     result = true;
   }

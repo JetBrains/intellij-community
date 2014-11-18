@@ -110,6 +110,15 @@ public abstract class PsiDocumentManager {
   public abstract CharSequence getLastCommittedText(@NotNull Document document);
 
   /**
+   * @return for uncommitted documents, the last stamp before the document change: the same stamp that current PSI should have.
+   * For committed documents, just their stamp.
+   *
+   * @see Document#getModificationStamp()
+   * @see FileViewProvider#getModificationStamp()
+   */
+  public abstract long getLastCommittedStamp(@NotNull Document document);
+
+  /**
    * Returns the list of documents which have been modified but not committed.
    *
    * @return the list of uncommitted documents.

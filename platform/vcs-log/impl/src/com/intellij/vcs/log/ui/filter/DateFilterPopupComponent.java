@@ -22,7 +22,6 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.versionBrowser.DateFilterComponent;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.vcs.log.VcsLogDateFilter;
 import com.intellij.vcs.log.data.VcsLogDateFilterImpl;
@@ -49,8 +48,11 @@ class DateFilterPopupComponent extends FilterPopupComponent<VcsLogDateFilter> {
     else if (after != null) {
       return "Since " + DateFormatUtil.formatDate(after);
     }
+    else if (before != null) {
+      return "Until " + DateFormatUtil.formatDate(before);
+    }
     else {
-      return "Until " + DateFormatUtil.formatDate(ObjectUtils.assertNotNull(before));
+      return ALL;
     }
   }
 

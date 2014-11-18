@@ -29,6 +29,7 @@ import org.jetbrains.idea.svn.commandLine.CommandExecutor;
 import org.jetbrains.idea.svn.commandLine.CommandUtil;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.commandLine.SvnCommandName;
+import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.lock.Lock;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
@@ -62,9 +63,10 @@ public class CmdBrowseClient extends BaseSvnClient implements BrowseClient {
     parameters.add("--xml");
 
     CommandExecutor command = execute(myVcs, target, SvnCommandName.list, parameters, null);
+    Info info = myFactory.createInfoClient().doInfo(target.getURL(), target.getPegRevision(), revision);
 
     try {
-      parseOutput(target.getURL(), command, handler);
+      parseOutput(target.getURL(), command, handler, info != null ? info.getRepositoryRootURL() : null);
     }
     catch (SVNException e) {
       throw new SvnBindException(e);
@@ -89,15 +91,18 @@ public class CmdBrowseClient extends BaseSvnClient implements BrowseClient {
     return listener.getCommittedRevision();
   }
 
-  private static void parseOutput(@NotNull SVNURL url, @NotNull CommandExecutor command, @Nullable DirectoryEntryConsumer handler)
-  throws VcsException, SVNException {
+  private static void parseOutput(@NotNull SVNURL url,
+                                  @NotNull CommandExecutor command,
+                                  @Nullable DirectoryEntryConsumer handler,
+                                  @Nullable SVNURL repositoryUrl)
+    throws VcsException, SVNException {
     try {
       TargetLists lists = CommandUtil.parse(command.getOutput(), TargetLists.class);
 
       if (handler != null && lists != null) {
         for (TargetList list : lists.lists) {
           for (Entry entry : list.entries) {
-            handler.consume(entry.toDirectoryEntry(url));
+            handler.consume(entry.toDirectoryEntry(url, repositoryUrl));
           }
         }
       }
@@ -140,9 +145,8 @@ public class CmdBrowseClient extends BaseSvnClient implements BrowseClient {
     public Lock.Builder lock;
 
     @NotNull
-    public DirectoryEntry toDirectoryEntry(@NotNull SVNURL url) throws SVNException {
-      // TODO: repository is not used for now
-      return new DirectoryEntry(url.appendPath(name, false), null, PathUtil.getFileName(name), kind,
+    public DirectoryEntry toDirectoryEntry(@NotNull SVNURL url, @Nullable SVNURL repositoryUrl) throws SVNException {
+      return new DirectoryEntry(url.appendPath(name, false), repositoryUrl, PathUtil.getFileName(name), kind,
                                 commit != null ? commit.build() : null, name);
     }
   }

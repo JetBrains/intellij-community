@@ -86,6 +86,12 @@ public interface FoldingModel {
   FoldRegion getCollapsedRegionAtOffset(int offset);
 
   /**
+   * Returns fold region with given boundaries, if it exists, or <code>null</code> otherwise. 
+   */
+  @Nullable
+  FoldRegion getFoldRegion(int startOffset, int endOffset);
+
+  /**
    * Runs an operation which is allowed to modify fold regions in the editor by calling
    * {@link #addFoldRegion(int, int, String)} and {@link #removeFoldRegion(FoldRegion)}.
    *

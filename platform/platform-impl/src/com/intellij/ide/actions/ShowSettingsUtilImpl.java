@@ -125,21 +125,11 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
 
     ConfigurableGroup[] groups = getConfigurableGroups(project, true);
 
-    Configurable config = findByClass(getConfigurables(groups, true), configurableClass);
+    Configurable config = new ConfigurableVisitor.ByType(configurableClass).find(groups);
 
     assert config != null : "Cannot find configurable: " + configurableClass.getName();
 
     getDialog(project, groups, config).show();
-  }
-
-  @Nullable
-  private static Configurable findByClass(Configurable[] configurables, Class configurableClass) {
-    for (Configurable configurable : configurables) {
-      if (configurableClass.isInstance(configurable)) {
-        return configurable;
-      }
-    }
-    return null;
   }
 
   @Override

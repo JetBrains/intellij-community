@@ -60,13 +60,13 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.content.*;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.SequentialModalProgressTask;
 import com.intellij.util.TripleFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -78,7 +78,9 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.lang.reflect.Constructor;
 import java.util.*;
+import java.util.concurrent.ConcurrentMap;
 
 public class GlobalInspectionContextImpl extends GlobalInspectionContextBase implements GlobalInspectionContext {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.GlobalInspectionContextImpl");
@@ -592,7 +594,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     }
   }
 
-  private final Map<InspectionToolWrapper, InspectionToolPresentation> myPresentationMap = new THashMap<InspectionToolWrapper, InspectionToolPresentation>();
+  private final ConcurrentMap<InspectionToolWrapper, InspectionToolPresentation> myPresentationMap = ContainerUtil.newConcurrentMap();
   @NotNull
   public InspectionToolPresentation getPresentation(@NotNull InspectionToolWrapper toolWrapper) {
     InspectionToolPresentation presentation = myPresentationMap.get(toolWrapper);
@@ -601,12 +603,15 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
       DefaultInspectionToolPresentation.class.getName());
 
       try {
-        presentation = (InspectionToolPresentation)Class.forName(presentationClass).getConstructor(InspectionToolWrapper.class, GlobalInspectionContextImpl.class).newInstance(toolWrapper, this);
+        Constructor<?> constructor =
+          Class.forName(presentationClass).getConstructor(InspectionToolWrapper.class, GlobalInspectionContextImpl.class);
+        presentation = (InspectionToolPresentation)constructor.newInstance(toolWrapper, this);
       }
       catch (Exception e) {
         LOG.error(e);
+        throw new RuntimeException(e);
       }
-      myPresentationMap.put(toolWrapper, presentation);
+      presentation = ConcurrencyUtil.cacheOrGet(myPresentationMap, toolWrapper, presentation);
     }
     return presentation;
   }

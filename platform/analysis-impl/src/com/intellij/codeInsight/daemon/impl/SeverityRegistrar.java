@@ -29,7 +29,6 @@ import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.concurrency.AtomicFieldUpdater;
-import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.Topic;
@@ -53,8 +52,8 @@ import java.util.List;
 public class SeverityRegistrar implements JDOMExternalizable, Comparator<HighlightSeverity> {
   @NonNls private static final String INFO_TAG = "info";
   @NonNls private static final String COLOR_ATTRIBUTE = "color";
-  private final Map<String, SeverityBasedTextAttributes> myMap = new ConcurrentHashMap<String, SeverityBasedTextAttributes>();
-  private final Map<String, Color> myRendererColors = new ConcurrentHashMap<String, Color>();
+  private final Map<String, SeverityBasedTextAttributes> myMap = ContainerUtil.newConcurrentMap();
+  private final Map<String, Color> myRendererColors = ContainerUtil.newConcurrentMap();
   public static final Topic<Runnable> SEVERITIES_CHANGED_TOPIC =
     Topic.create("SEVERITIES_CHANGED_TOPIC", Runnable.class, Topic.BroadcastDirection.TO_PARENT);
   @NotNull private final MessageBus myMessageBus;
@@ -62,7 +61,7 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
   private volatile OrderMap myOrderMap;
   private JDOMExternalizableStringList myReadOrder;
 
-  private static final Map<String, HighlightInfoType> STANDARD_SEVERITIES = new ConcurrentHashMap<String, HighlightInfoType>();
+  private static final Map<String, HighlightInfoType> STANDARD_SEVERITIES = ContainerUtil.newConcurrentMap();
 
   public SeverityRegistrar(@NotNull MessageBus messageBus) {
     myMessageBus = messageBus;

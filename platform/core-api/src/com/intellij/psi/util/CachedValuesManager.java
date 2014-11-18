@@ -22,9 +22,11 @@ import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ConcurrencyUtil;
-import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.ConcurrentMap;
 
@@ -120,12 +122,22 @@ public abstract class CachedValuesManager {
    * Create a cached value with the given provider and non-tracked return value, store it in PSI element's user data. If it's already stored, reuse it.
    * @return The cached value
    */
-  public static <T> T getCachedValue(@NotNull PsiElement psi, @NotNull CachedValueProvider<T> provider) {
+  public static <T> T getCachedValue(@NotNull final PsiElement psi, @NotNull final CachedValueProvider<T> provider) {
     CachedValuesManager manager = getManager(psi.getProject());
-    return manager.getCachedValue(psi, manager.<T>getKeyForClass(provider.getClass()), provider, false);
+    return manager.getCachedValue(psi, manager.<T>getKeyForClass(provider.getClass()), new CachedValueProvider<T>() {
+      @Nullable
+      @Override
+      public Result<T> compute() {
+        Result<T> result = provider.compute();
+        if (result != null && !psi.isPhysical()) {
+          return Result.create(result.getValue(), ArrayUtil.append(result.getDependencyItems(), psi));
+        }
+        return result;
+      }
+    }, false);
   }
 
-  private final ConcurrentMap<String, Key<CachedValue>> keyForProvider = new ConcurrentHashMap<String, Key<CachedValue>>();
+  private final ConcurrentMap<String, Key<CachedValue>> keyForProvider = ContainerUtil.newConcurrentMap();
   @NotNull
   public <T> Key<CachedValue<T>> getKeyForClass(@NotNull Class<?> providerClass) {
     String name = providerClass.getName();

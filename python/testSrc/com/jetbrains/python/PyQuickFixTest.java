@@ -50,6 +50,16 @@ public class PyQuickFixTest extends PyTestCase {
                      PyUnresolvedReferencesInspection.class, "Import 'importFromModule.foo.baz'", true, true);
   }
 
+  // PY-14365
+  public void testObjectBaseIsNotShownInAutoImportQuickfix() {
+    myFixture.copyDirectoryToProject("objectBaseIsNotShownInAutoImportQuickfix", "");
+    myFixture.configureByFile("main.py");
+    myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
+    final IntentionAction intention = myFixture.findSingleIntention("Import");
+    assertNotNull(intention);
+    assertEquals("Import 'module.MyOldStyleClass'", intention.getText());
+  }
+
   public void testImportFromModuleStar() {  // PY-6302
     myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
     myFixture.copyDirectoryToProject("importFromModuleStar", "");

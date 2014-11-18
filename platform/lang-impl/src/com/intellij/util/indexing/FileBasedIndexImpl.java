@@ -69,7 +69,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.SerializationManagerEx;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.Semaphore;
-import com.intellij.util.containers.ConcurrentHashSet;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.*;
 import com.intellij.util.io.DataOutputStream;
@@ -129,7 +128,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   private final FileDocumentManager myFileDocumentManager;
   private final FileTypeManagerImpl myFileTypeManager;
   private final SerializationManagerEx mySerializationManagerEx;
-  private final ConcurrentHashSet<ID<?, ?>> myUpToDateIndicesForUnsavedOrTransactedDocuments = new ConcurrentHashSet<ID<?, ?>>();
+  private final Set<ID<?, ?>> myUpToDateIndicesForUnsavedOrTransactedDocuments = ContainerUtil.newConcurrentSet();
   private volatile SmartFMap<Document, PsiFile> myTransactionMap = SmartFMap.emptyMap();
 
   @Nullable private final String myConfigPath;
@@ -139,7 +138,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   private volatile int myLocalModCount;
   private volatile int myFilesModCount;
   private final AtomicInteger myUpdatingFiles = new AtomicInteger();
-  private final ConcurrentHashSet<Project> myProjectsBeingUpdated = new ConcurrentHashSet<Project>();
+  private final Set<Project> myProjectsBeingUpdated = ContainerUtil.newConcurrentSet();
 
   @SuppressWarnings({"FieldCanBeLocal", "UnusedDeclaration"}) private volatile boolean myInitialized;
     // need this variable for memory barrier
@@ -1350,9 +1349,6 @@ public class FileBasedIndexImpl extends FileBasedIndex {
         boolean allDocsProcessed = true;
         try {
           for (Document document : documents) {
-            if (psiBasedIndex && project != null && PsiDocumentManager.getInstance(project).isUncommited(document)) {
-              continue;
-            }
             allDocsProcessed &= indexUnsavedDocument(document, indexId, project, filter, restrictedFile);
             ProgressManager.checkCanceled();
           }
@@ -1452,7 +1448,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       return false;
     }
 
-    final PsiFile dominantContentFile = findDominantPsiForDocument(document, project);
+    final PsiFile dominantContentFile = project == null ? null : findLatestKnownPsiForUncomittedDocument(document, project);
 
     final DocumentContent content;
     if (dominantContentFile != null && dominantContentFile.getViewProvider().getModificationStamp() != document.getModificationStamp()) {
@@ -1462,7 +1458,9 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       content = new AuthenticContent(document);
     }
 
-    final long currentDocStamp = content.getModificationStamp();
+    boolean psiBasedIndex = myPsiDependentIndices.contains(requestedIndexId);
+
+    final long currentDocStamp = psiBasedIndex ? PsiDocumentManager.getInstance(project).getLastCommittedStamp(document) : content.getModificationStamp();
     final long previousDocStamp = myLastIndexedDocStamps.getAndSet(document, requestedIndexId, currentDocStamp);
     if (currentDocStamp != previousDocStamp) {
       final CharSequence contentText = content.getText();
@@ -1509,14 +1507,6 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   }
 
   private final TaskQueue myContentlessIndicesUpdateQueue = new TaskQueue(10000);
-
-  @Nullable
-  private PsiFile findDominantPsiForDocument(@NotNull Document document, @Nullable Project project) {
-    PsiFile psiFile = myTransactionMap.get(document);
-    if (psiFile != null) return psiFile;
-
-    return project == null ? null : findLatestKnownPsiForUncomittedDocument(document, project);
-  }
 
   private final StorageGuard myStorageLock = new StorageGuard();
   private volatile boolean myPreviousDataBufferingState;
@@ -1874,7 +1864,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   }
 
   private final class ChangedFilesCollector extends VirtualFileAdapter implements BulkFileListener {
-    private final Set<VirtualFile> myFilesToUpdate = new ConcurrentHashSet<VirtualFile>();
+    private final Set<VirtualFile> myFilesToUpdate = ContainerUtil.newConcurrentSet();
     private final Queue<InvalidationTask> myFutureInvalidations = new ConcurrentLinkedQueue<InvalidationTask>();
 
     private final ManagingFS myManagingFS = ManagingFS.getInstance();

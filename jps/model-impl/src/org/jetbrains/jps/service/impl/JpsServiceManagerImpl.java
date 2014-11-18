@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,13 +20,14 @@ import org.jetbrains.jps.service.JpsServiceManager;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author nik
  */
 public class JpsServiceManagerImpl extends JpsServiceManager {
-  private final ConcurrentHashMap<Class, Object> myServices = new ConcurrentHashMap<Class, Object>(16, 0.75f, 1);
-  private final ConcurrentHashMap<Class, List<?>> myExtensions = new ConcurrentHashMap<Class, List<?>>(16, 0.75f, 1);
+  private final ConcurrentMap<Class, Object> myServices = new ConcurrentHashMap<Class, Object>(16, 0.75f, 1);
+  private final ConcurrentMap<Class, List<?>> myExtensions = new ConcurrentHashMap<Class, List<?>>(16, 0.75f, 1);
 
   @Override
   public <T> T getService(Class<T> serviceClass) {

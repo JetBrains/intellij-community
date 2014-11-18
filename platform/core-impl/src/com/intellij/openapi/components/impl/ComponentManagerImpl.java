@@ -21,7 +21,10 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.components.ex.ComponentManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
-import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
@@ -29,7 +32,7 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusFactory;
 import com.intellij.util.pico.ConstructorInjectionComponentAdapter;
@@ -53,7 +56,7 @@ import java.util.Map;
 public abstract class ComponentManagerImpl extends UserDataHolderBase implements ComponentManagerEx, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.components.ComponentManager");
 
-  private final Map<Class, Object> myInitializedComponents = new ConcurrentHashMap<Class, Object>();
+  private final Map<Class, Object> myInitializedComponents = ContainerUtil.newConcurrentMap();
 
   private boolean myComponentsCreated = false;
 
@@ -274,7 +277,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     MutablePicoContainer container = myPicoContainer;
     if (container == null || myDisposeCompleted) {
       ProgressManager.checkCanceled();
-      throw new AssertionError("Already disposed");
+      throw new AssertionError("Already disposed: "+toString());
     }
     return container;
   }

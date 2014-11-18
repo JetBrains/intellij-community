@@ -365,6 +365,18 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   @Contract(pure=true)
+  public static <T> Set<T> newConcurrentSet() {
+    return new ConcurrentHashSet<T>();
+  }
+
+  @NotNull
+  @Contract(pure=true)
+  public static <T> Set<T> newConcurrentSet(@NotNull TObjectHashingStrategy<T> hashStrategy) {
+    return new ConcurrentHashSet<T>(hashStrategy);
+  }
+
+  @NotNull
+  @Contract(pure=true)
   public static <K, V> ConcurrentMap<K, V> newConcurrentMap() {
     return CHM_FACTORY.createMap();
   }

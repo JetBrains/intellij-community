@@ -18,4 +18,11 @@ public class IpnbPyTokenSetContributor extends PythonDialectsTokenSetContributor
   public TokenSet getReferenceExpressionTokens() {
     return IPNB_REFERENCE_EXPRESSIONS;
   }
+
+
+  @NotNull
+  @Override
+  public TokenSet getFunctionDeclarationTokens() {
+    return TokenSet.create(IpnbPyTokenTypes.IPNB_FUNCTION);
+  }
 }
