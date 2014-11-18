@@ -36,7 +36,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.util.indexing.MapIndexStorage;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.io.*;
@@ -52,7 +51,6 @@ import java.util.*;
  * @author Eugene Zhuravlev
  *         Date: Dec 12, 2007
  */
-@SkipSlowTestLocally
 public class IndexTest extends CodeInsightTestCase {
 
   public void testUpdate() throws StorageException, IOException {
@@ -237,6 +235,37 @@ public class IndexTest extends CodeInsightTestCase {
 
         PsiDocumentManager.getInstance(myProject).commitAllDocuments();
         assertNull(myJavaFacade.findClass("Foo", scope));
+      }
+    });
+  }
+  
+  public void testCollectedPsiWithDocumentChangedCommittedAndChangedAgain() throws IOException {
+    VirtualFile dir = getVirtualFile(createTempDirectory());
+    PsiTestUtil.addSourceContentToRoots(myModule, dir);
+
+    final VirtualFile vFile = createChildData(dir, "Foo.java");
+    VfsUtil.saveText(vFile, "class Foo {}");
+
+    final GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
+    assertNotNull(myJavaFacade.findClass("Foo", scope));
+    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
+      @Override
+      public void run() {
+        PsiFile psiFile = PsiManager.getInstance(getProject()).findFile(vFile);
+        assertNotNull(psiFile);
+
+        Document document = FileDocumentManager.getInstance().getDocument(vFile);
+        document.deleteString(0, document.getTextLength());
+        PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+        document.insertString(0, " ");
+        //assertNotNull(myJavaFacade.findClass("Foo", scope));
+
+        psiFile = null;
+        PlatformTestUtil.tryGcSoftlyReachableObjects();
+        assertNull(((PsiManagerEx)PsiManager.getInstance(getProject())).getFileManager().getCachedPsiFile(vFile));
+
+        PsiClass foo = myJavaFacade.findClass("Foo", scope);
+        assertNull(foo);
       }
     });
   }

@@ -1350,9 +1350,6 @@ public class FileBasedIndexImpl extends FileBasedIndex {
         boolean allDocsProcessed = true;
         try {
           for (Document document : documents) {
-            if (psiBasedIndex && project != null && PsiDocumentManager.getInstance(project).isUncommited(document)) {
-              continue;
-            }
             allDocsProcessed &= indexUnsavedDocument(document, indexId, project, filter, restrictedFile);
             ProgressManager.checkCanceled();
           }
@@ -1452,7 +1449,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       return false;
     }
 
-    final PsiFile dominantContentFile = findDominantPsiForDocument(document, project);
+    final PsiFile dominantContentFile = project == null ? null : findLatestKnownPsiForUncomittedDocument(document, project);
 
     final DocumentContent content;
     if (dominantContentFile != null && dominantContentFile.getViewProvider().getModificationStamp() != document.getModificationStamp()) {
@@ -1462,7 +1459,9 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       content = new AuthenticContent(document);
     }
 
-    final long currentDocStamp = content.getModificationStamp();
+    boolean psiBasedIndex = myPsiDependentIndices.contains(requestedIndexId);
+
+    final long currentDocStamp = psiBasedIndex ? PsiDocumentManager.getInstance(project).getLastCommittedStamp(document) : content.getModificationStamp();
     final long previousDocStamp = myLastIndexedDocStamps.getAndSet(document, requestedIndexId, currentDocStamp);
     if (currentDocStamp != previousDocStamp) {
       final CharSequence contentText = content.getText();
@@ -1509,14 +1508,6 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   }
 
   private final TaskQueue myContentlessIndicesUpdateQueue = new TaskQueue(10000);
-
-  @Nullable
-  private PsiFile findDominantPsiForDocument(@NotNull Document document, @Nullable Project project) {
-    PsiFile psiFile = myTransactionMap.get(document);
-    if (psiFile != null) return psiFile;
-
-    return project == null ? null : findLatestKnownPsiForUncomittedDocument(document, project);
-  }
 
   private final StorageGuard myStorageLock = new StorageGuard();
   private volatile boolean myPreviousDataBufferingState;
