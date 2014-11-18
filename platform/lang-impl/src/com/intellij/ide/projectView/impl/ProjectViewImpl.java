@@ -21,7 +21,6 @@ import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.*;
-import com.intellij.ide.actions.CollapseAllToolbarAction;
 import com.intellij.ide.impl.ProjectViewSelectInTarget;
 import com.intellij.ide.projectView.HelpID;
 import com.intellij.ide.projectView.ProjectView;
@@ -86,6 +85,7 @@ import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -501,7 +501,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     myViewContentPanel.revalidate();
     myViewContentPanel.repaint();
     createToolbarActions();
-    updateTitleActions();
 
     myAutoScrollToSourceHandler.install(newPane.myTree);
 
@@ -537,26 +536,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       }
     }
     myAutoScrollToSourceHandler.onMouseClicked(newPane.myTree);
-  }
-
-  private void updateTitleActions() {
-    final ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow("Project");
-    if (!(window instanceof ToolWindowEx)) return;
-    ScrollFromSourceAction scrollAction = null;
-    CollapseAllToolbarAction collapseAction = null;
-    for (AnAction action : myActionGroup.getChildren(null)) {
-      if (action instanceof ScrollFromSourceAction) {
-        scrollAction = (ScrollFromSourceAction)action;
-        myActionGroup.remove(scrollAction);
-      }
-      if (action instanceof CollapseAllToolbarAction) {
-        collapseAction = (CollapseAllToolbarAction)action;
-        collapseAction.getTemplatePresentation().setIcon(AllIcons.General.CollapseAll);
-        collapseAction.getTemplatePresentation().setHoveredIcon(AllIcons.General.CollapseAllHover);
-        myActionGroup.remove(collapseAction);
-      }
-    }
-    ((ToolWindowEx)window).setTitleActions(scrollAction, collapseAction);
   }
 
   // public for tests
@@ -639,6 +618,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   }
 
   private void createToolbarActions() {
+    List<AnAction> titleActions = ContainerUtil.newSmartList();
     myActionGroup.removeAll();
     if (ProjectViewDirectoryHelper.getInstance(myProject).supportsFlattenPackages()) {
       myActionGroup.addAction(new PaneOptionAction(myFlattenPackages, IdeBundle.message("action.flatten.packages"),
@@ -710,7 +690,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     myActionGroup.addAction(new FoldersAlwaysOnTopAction()).setAsSecondary(true);
 
     if (!myAutoScrollFromSourceHandler.isAutoScrollEnabled()) {
-      myActionGroup.addAction(new ScrollFromSourceAction());
+      titleActions.add(new ScrollFromSourceAction());
     }
     AnAction collapseAllAction = CommonActionsManager.getInstance().createCollapseAllAction(new TreeExpander() {
       @Override
@@ -737,8 +717,15 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         return true;
       }
     }, getComponent());
-    myActionGroup.add(collapseAllAction);
+    collapseAllAction.getTemplatePresentation().setIcon(AllIcons.General.CollapseAll);
+    collapseAllAction.getTemplatePresentation().setHoveredIcon(AllIcons.General.CollapseAllHover);
+    titleActions.add(collapseAllAction);
     getCurrentProjectViewPane().addToolbarActions(myActionGroup);
+
+    ToolWindowEx window = (ToolWindowEx)ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.PROJECT_VIEW);
+    if (window != null) {
+      window.setTitleActions(titleActions.toArray(new AnAction[titleActions.size()]));
+    }
   }
 
   protected boolean isShowMembersOptionSupported() {
@@ -1725,7 +1712,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         }
       }
       createToolbarActions();
-      updateTitleActions();
     }
 
     private class MySelectInContext implements SelectInContext {
