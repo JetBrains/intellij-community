@@ -749,8 +749,8 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
     }
   }
 
-  private void assertIsDispatchThread() {
-    myEditor.assertIsDispatchThread();
+  private static void assertIsDispatchThread() {
+    EditorImpl.assertIsDispatchThread();
   }
 
   private void validateCallContext() {
