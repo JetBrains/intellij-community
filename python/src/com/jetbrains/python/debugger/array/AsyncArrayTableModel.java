@@ -51,7 +51,7 @@ public class AsyncArrayTableModel extends AbstractTableModel {
         final PyDebugValue value = myProvider.getDebugValue();
         final PyDebugValue slicedValue =
           new PyDebugValue(myProvider.getSliceText(), value.getType(), value.getValue(), value.isContainer(), value.isErrorOnEval(),
-                           value.getFrameAccessor());
+                           value.getParent(), value.getFrameAccessor());
 
         ListenableFutureTask<ArrayChunk> task = ListenableFutureTask.create(new Callable<ArrayChunk>() {
           @Override

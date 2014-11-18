@@ -167,7 +167,7 @@ public class NumpyArrayTable {
   }
 
   public void init() {
-    init(myValue.getName(), false);
+    init(getDebugValue().getEvaluationExpression(), false);
   }
 
   public void init(final String slice, final boolean inPlace) {
@@ -181,14 +181,8 @@ public class NumpyArrayTable {
       public void run() {
         final PyDebugValue value = getDebugValue();
         PyDebugValue parent = value.getParent();
-        String sl = slice;
-
-        if (slice.contains(".")) {
-          sl = slice.substring(slice.lastIndexOf(".") + 1);
-        }
-
         final PyDebugValue slicedValue =
-          new PyDebugValue(sl, value.getType(), value.getValue(), value.isContainer(), value.isErrorOnEval(),
+          new PyDebugValue(slice, value.getType(), value.getValue(), value.isContainer(), value.isErrorOnEval(),
                            parent, value.getFrameAccessor());
 
         final String format = getFormat().isEmpty() ? "%" : getFormat();
@@ -433,14 +427,7 @@ public class NumpyArrayTable {
   }
 
   public String getNodeFullName() {
-    String fullName = getDebugValue().getName();
-    PyDebugValue child = getDebugValue();
-    while (child.getParent() != null) {
-      child = child.getParent();
-      fullName = child.getName() + "." + fullName;
-    }
-
-    return fullName;
+    return getDebugValue().getEvaluationExpression();
   }
 
   public String getFormat() {
