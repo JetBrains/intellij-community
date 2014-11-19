@@ -120,6 +120,10 @@ public class TypedAction {
 
     @Override
     public void run() {
+      if (!FileDocumentManager.getInstance().requestWriting(myEditor.getDocument(), myEditor.getProject())) {
+        return;
+      }
+
       ApplicationManager.getApplication().runWriteAction(new DocumentRunnable(myEditor.getDocument(), myEditor.getProject()) {
         @Override
         public void run() {
