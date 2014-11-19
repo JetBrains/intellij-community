@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,10 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 
 import javax.swing.*;
@@ -86,6 +88,13 @@ public class BreakpointEditor {
         super.update(e);
         boolean lookup = LookupManager.getInstance(getEventProject(e)).getActiveLookup() != null;
         Editor editor = e.getData(CommonDataKeys.EDITOR);
+        final Component owner = IdeFocusManager.findInstance().getFocusOwner();
+        if (owner != null) {
+          final JComboBox comboBox = UIUtil.getParentOfType(JComboBox.class, owner);
+          if (comboBox != null && comboBox.isPopupVisible()) {
+            lookup = true;
+          }
+        }
         e.getPresentation().setEnabled(!lookup && (editor == null || StringUtil.isEmpty(editor.getSelectionModel().getSelectedText())) );
       }
 
