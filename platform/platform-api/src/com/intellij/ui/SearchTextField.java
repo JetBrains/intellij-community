@@ -136,6 +136,13 @@ public class SearchTextField extends JPanel {
 
     if (isSearchControlUISupported() || UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) {
       myTextField.putClientProperty("JTextField.variant", "search");
+      myTextField.putClientProperty("JTextField.Search.CancelAction", new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          myTextField.setText("");
+          onFieldCleared();
+        }
+      });
     }
     if (isSearchControlUISupported()) {
       if (historyEnabled) {
