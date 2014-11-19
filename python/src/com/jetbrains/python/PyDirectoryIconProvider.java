@@ -16,12 +16,13 @@
 package com.jetbrains.python;
 
 import com.intellij.ide.IconProvider;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.PlatformIcons;
+import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -34,14 +35,17 @@ public class PyDirectoryIconProvider extends IconProvider {
   public Icon getIcon(@NotNull PsiElement element, int flags) {
     if (element instanceof PsiDirectory) {
       final PsiDirectory directory = (PsiDirectory)element;
-      if (directory.findFile(PyNames.INIT_DOT_PY) != null) {
-        final VirtualFile vFile = directory.getVirtualFile();
-        final VirtualFile root = ProjectRootManager.getInstance(directory.getProject()).getFileIndex().getSourceRootForFile(vFile);
-        if (!Comparing.equal(root, vFile)) {
-          return PlatformIcons.PACKAGE_ICON;
-        }
+      if (PyUtil.isPackage(directory, null) && !isSpecialDirectory(directory)) {
+        return PlatformIcons.PACKAGE_ICON;
       }
     }
     return null;
+  }
+
+  private static boolean isSpecialDirectory(@NotNull PsiDirectory directory) {
+    final Module module = ModuleUtilCore.findModuleForPsiElement(directory);
+    final VirtualFile vFile = directory.getVirtualFile();
+    // If module is null, directory is probably excluded
+    return module == null || PyUtil.getSourceRoots(module).contains(vFile);
   }
 }
