@@ -423,7 +423,10 @@ def array_to_xml(array, roffset, coffset, rows, cols, format):
                 if rows == 1 and cols == 1:
                     value = array[0]
                 else:
-                    dim = col if (rows == 1) else row
+                    if rows == 1:
+                        dim = col
+                    else:
+                        dim = row
                     value = array[dim]
                     if "ndarray" in str(type(value)):
                         value = value[0]
