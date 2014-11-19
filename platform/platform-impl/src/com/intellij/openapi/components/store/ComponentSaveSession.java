@@ -25,6 +25,4 @@ import java.util.List;
 public interface ComponentSaveSession {
   @NotNull
   ComponentSaveSession save(@NotNull List<Pair<StateStorage.SaveSession, VirtualFile>> readonlyFiles);
-
-  void finishSave();
 }

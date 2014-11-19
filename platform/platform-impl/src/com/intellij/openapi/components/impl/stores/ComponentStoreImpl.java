@@ -346,13 +346,6 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
       }
       return this;
     }
-
-    @Override
-    public void finishSave() {
-      if (myStorageManagerSaveSession != null) {
-        getStateStorageManager().finishSave(myStorageManagerSaveSession);
-      }
-    }
   }
 
   @Override

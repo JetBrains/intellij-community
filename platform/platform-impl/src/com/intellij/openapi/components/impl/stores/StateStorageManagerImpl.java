@@ -344,10 +344,6 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     return new StateStorageManagerExternalizationSession();
   }
 
-  @Override
-  public void finishSave(@NotNull SaveSession saveSession) {
-  }
-
   private final class StateStorageManagerExternalizationSession implements ExternalizationSession {
     final Map<StateStorage, StateStorage.ExternalizationSession> mySessions = new LinkedHashMap<StateStorage, StateStorage.ExternalizationSession>();
 

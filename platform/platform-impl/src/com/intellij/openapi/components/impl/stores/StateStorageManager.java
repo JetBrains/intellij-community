@@ -57,8 +57,6 @@ public interface StateStorageManager {
   @Nullable
   ExternalizationSession startExternalization();
 
-  void finishSave(@NotNull StateStorage.SaveSession saveSession);
-
   @Nullable
   StateStorage getOldStorage(@NotNull Object component, @NotNull String componentName, @NotNull StateStorageOperation operation);
 
