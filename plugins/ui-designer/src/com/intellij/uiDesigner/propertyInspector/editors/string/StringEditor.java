@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -187,14 +187,13 @@ public final class StringEditor extends PropertyEditor<StringDescriptor> {
             if (!guiEditor.ensureEditable()) {
               return;
             }
-            dialog.show();
-            if(!dialog.isOK()){
+            if (!dialog.showAndGet()) {
               return;
             }
 
             // 2. Apply new value
             final StringDescriptor descriptor = dialog.getDescriptor();
-            if(descriptor == null){
+            if (descriptor == null) {
               return;
             }
             setValue(descriptor);

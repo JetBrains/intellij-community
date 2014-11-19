@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,7 +77,8 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
     PsiLocalVariable localVariable = null;
     if (anchorElement instanceof PsiLocalVariable) {
       localVariable = (PsiLocalVariable)anchorElement;
-    } else if (expr instanceof PsiReferenceExpression) {
+    }
+    else if (expr instanceof PsiReferenceExpression) {
       PsiElement ref = ((PsiReferenceExpression)expr).resolve();
       if (ref instanceof PsiLocalVariable) {
         localVariable = (PsiLocalVariable)ref;
@@ -111,7 +112,8 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
     }
     int occurrencesNumber = occurrences.length;
     final boolean currentMethodConstructor = containingMethod != null && containingMethod.isConstructor();
-    final boolean allowInitInMethod = (!currentMethodConstructor || !isInSuperOrThis) && (anchorElement instanceof PsiLocalVariable || anchorElement instanceof PsiStatement);
+    final boolean allowInitInMethod = (!currentMethodConstructor || !isInSuperOrThis) &&
+                                      (anchorElement instanceof PsiLocalVariable || anchorElement instanceof PsiStatement);
     final boolean allowInitInMethodIfAll = (!currentMethodConstructor || !isInSuperOrThis) && anchorElementIfAll instanceof PsiStatement;
 
     if (editor != null && editor.getSettings().isVariableInplaceRenameEnabled() &&
@@ -135,9 +137,7 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
       enteredName
     );
     dialog.setReplaceAllOccurrences(replaceAll);
-    dialog.show();
-
-    if (!dialog.isOK()) {
+    if (!dialog.showAndGet()) {
       if (occurrencesNumber > 1) {
         WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
       }
@@ -150,10 +150,10 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
 
 
     return new Settings(dialog.getEnteredName(), expr, occurrences, dialog.isReplaceAllOccurrences(),
-                                           declareStatic, dialog.isDeclareFinal(),
-                                           dialog.getInitializerPlace(), dialog.getFieldVisibility(),
-                                           localVariable,
-                                           dialog.getFieldType(), localVariable != null, (TargetDestination)null, false, false);
+                        declareStatic, dialog.isDeclareFinal(),
+                        dialog.getInitializerPlace(), dialog.getFieldVisibility(),
+                        localVariable,
+                        dialog.getFieldType(), localVariable != null, (TargetDestination)null, false, false);
   }
 
   @Override

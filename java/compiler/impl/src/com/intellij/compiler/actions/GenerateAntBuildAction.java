@@ -50,8 +50,7 @@ public class GenerateAntBuildAction extends CompileActionBase {
   protected void doAction(DataContext dataContext, final Project project) {
     ((CompilerConfigurationImpl)CompilerConfiguration.getInstance(project)).convertPatterns();
     final GenerateAntBuildDialog dialog = new GenerateAntBuildDialog(project);
-    dialog.show();
-    if (dialog.isOK()) {
+    if (dialog.showAndGet()) {
       final String[] names = dialog.getRepresentativeModuleNames();
       final GenerationOptionsImpl[] genOptions = new GenerationOptionsImpl[1];
       if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
@@ -61,8 +60,8 @@ public class GenerateAntBuildAction extends CompileActionBase {
             @Override
             public GenerationOptionsImpl compute() {
               return new GenerationOptionsImpl(project, dialog.isGenerateSingleFileBuild(), dialog.isFormsCompilationEnabled(),
-                                          dialog.isBackupFiles(), dialog.isForceTargetJdk(), dialog.isRuntimeClasspathInlined(),
-                                          dialog.isIdeaHomeGenerated(), names, dialog.getOutputFileName());
+                                               dialog.isBackupFiles(), dialog.isForceTargetJdk(), dialog.isRuntimeClasspathInlined(),
+                                               dialog.isIdeaHomeGenerated(), names, dialog.getOutputFileName());
             }
           });
         }

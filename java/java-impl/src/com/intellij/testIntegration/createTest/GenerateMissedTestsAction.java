@@ -102,8 +102,7 @@ public class GenerateMissedTestsAction extends PsiElementBaseIntentionAction {
         final Project project = testClass.getProject();
         final Editor editor = CodeInsightUtil.positionCursor(project, testClass.getContainingFile(), testClass.getLBrace());
         final MissedTestsDialog dialog = new MissedTestsDialog(project, srcClass, testClass, framework);
-        dialog.show();
-        if (dialog.isOK()) {
+        if (dialog.showAndGet()) {
           WriteCommandAction.runWriteCommandAction(project, new Runnable() {
             @Override
             public void run() {

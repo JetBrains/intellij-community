@@ -71,8 +71,7 @@ public class CreateDesktopEntryAction extends DumbAwareAction {
 
     final Project project = event.getProject();
     final CreateDesktopEntryDialog dialog = new CreateDesktopEntryDialog(project);
-    dialog.show();
-    if (!dialog.isOK()) {
+    if (!dialog.showAndGet()) {
       return;
     }
 

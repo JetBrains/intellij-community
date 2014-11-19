@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1344,7 +1344,8 @@ public class ExtractMethodProcessor implements MatchProvider {
   private void showMultipleOutputMessage(PsiType expressionType) {
     if (myShowErrorDialogs) {
       StringBuilder buffer = new StringBuilder();
-      buffer.append(RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("there.are.multiple.output.values.for.the.selected.code.fragment")));
+      buffer.append(RefactoringBundle.getCannotRefactorMessage(
+        RefactoringBundle.message("there.are.multiple.output.values.for.the.selected.code.fragment")));
       buffer.append("\n");
       if (myHasExpressionOutput) {
         buffer.append("    ").append(RefactoringBundle.message("expression.result")).append(": ");
@@ -1375,9 +1376,9 @@ public class ExtractMethodProcessor implements MatchProvider {
       if (ApplicationManager.getApplication().isUnitTestMode()) throw new RuntimeException(message);
       RefactoringMessageDialog dialog = new RefactoringMessageDialog(myRefactoringName, message, myHelpId, "OptionPane.errorIcon", true,
                                                                      myProject);
-      dialog.show();
-      if (dialog.isOK()) {
-        new ExtractMethodObjectHandler().invoke(myProject, myEditor, myTargetClass.getContainingFile(), DataManager.getInstance().getDataContext());
+      if (dialog.showAndGet()) {
+        new ExtractMethodObjectHandler()
+          .invoke(myProject, myEditor, myTargetClass.getContainingFile(), DataManager.getInstance().getDataContext());
       }
     }
   }

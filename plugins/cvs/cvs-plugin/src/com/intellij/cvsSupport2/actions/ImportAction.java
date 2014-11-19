@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,8 +56,9 @@ public class ImportAction extends ActionOnSelectedElement {
   protected CvsHandler getCvsHandler(CvsContext context) {
     final VirtualFile selectedFile = context.getSelectedFile();
     final ImportWizard importWizard = new ImportWizard(context.getProject(), selectedFile);
-    importWizard.show();
-    if (!importWizard.isOK()) return CvsHandler.NULL;
+    if (!importWizard.showAndGet()) {
+      return CvsHandler.NULL;
+    }
 
     myImportDetails = importWizard.createImportDetails();
     if (myImportDetails == null) return CvsHandler.NULL;

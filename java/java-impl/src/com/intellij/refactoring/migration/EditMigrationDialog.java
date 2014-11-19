@@ -1,6 +1,5 @@
-
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -135,8 +134,7 @@ public class EditMigrationDialog extends DialogWrapper{
       return;
     MigrationMapEntry entry = myMigrationMap.getEntryAt(selected);
     dialog.setEntry(entry);
-    dialog.show();
-    if (!dialog.isOK()){
+    if (!dialog.showAndGet()) {
       return;
     }
     dialog.updateEntry(entry);
@@ -148,8 +146,7 @@ public class EditMigrationDialog extends DialogWrapper{
     EditMigrationEntryDialog dialog = new EditMigrationEntryDialog(myProject);
     MigrationMapEntry entry = new MigrationMapEntry();
     dialog.setEntry(entry);
-    dialog.show();
-    if (!dialog.isOK()){
+    if (!dialog.showAndGet()) {
       return;
     }
     dialog.updateEntry(entry);

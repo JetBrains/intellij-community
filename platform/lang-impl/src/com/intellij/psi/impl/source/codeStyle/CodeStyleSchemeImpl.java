@@ -13,40 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.psi.impl.source.codeStyle;
 
-import com.intellij.CommonBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ExternalInfo;
 import com.intellij.openapi.options.ExternalizableScheme;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.psi.PsiBundle;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import org.jdom.Document;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.io.IOException;
-
-/**
- * @author MYakovlev
- * Date: Jul 17, 2002
- */
 public class CodeStyleSchemeImpl implements JDOMExternalizable, CodeStyleScheme, ExternalizableScheme {
-  @NonNls private static final String CODE_SCHEME = "code_scheme";
-  @NonNls private static final String NAME = "name";
-  @NonNls private static final String PARENT = "parent";
-  @NonNls private static final String XML_EXTENSION = ".xml";
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.codeStyle.CodeStyleSchemeImpl");
+  private static final Logger LOG = Logger.getInstance(CodeStyleSchemeImpl.class);
+
+  private static final String NAME = "name";
+  private static final String PARENT = "parent";
 
   private String myName;
   private Element myRootElement;
@@ -70,19 +56,19 @@ public class CodeStyleSchemeImpl implements JDOMExternalizable, CodeStyleScheme,
 
   public void init(@NotNull CodeStyleSchemes schemesManager) {
     LOG.assertTrue(myCodeStyleSettings == null, "Already initialized");
-    init(schemesManager.findSchemeByName(myParentSchemeName), myRootElement);
+    init(myParentSchemeName == null ? null : schemesManager.findSchemeByName(myParentSchemeName), myRootElement);
     myParentSchemeName = null;
     myRootElement = null;
   }
 
-  private void init(CodeStyleScheme parentScheme, Element root) {
-    CodeStyleSettings parentSettings = parentScheme == null ? null : parentScheme.getCodeStyleSettings();
-    if (parentSettings == null){
+  private void init(@Nullable CodeStyleScheme parentScheme, Element root) {
+    if (parentScheme == null) {
       myCodeStyleSettings = new CodeStyleSettings();
     }
-    else{
+    else {
+      CodeStyleSettings parentSettings = parentScheme.getCodeStyleSettings();
       myCodeStyleSettings = parentSettings.clone();
-      while(parentSettings.getParentSettings() != null){
+      while (parentSettings.getParentSettings() != null) {
         parentSettings = parentSettings.getParentSettings();
       }
       myCodeStyleSettings.setParentSettings(parentSettings);
@@ -90,7 +76,8 @@ public class CodeStyleSchemeImpl implements JDOMExternalizable, CodeStyleScheme,
     if (root != null) {
       try {
         readExternal(root);
-      } catch (InvalidDataException e) {
+      }
+      catch (InvalidDataException e) {
         LOG.error(e);
       }
     }
@@ -135,22 +122,8 @@ public class CodeStyleSchemeImpl implements JDOMExternalizable, CodeStyleScheme,
     return new CodeStyleSchemeImpl(element.getAttributeValue(NAME), element.getAttributeValue(PARENT), element);
   }
 
-  public void save(File dir) throws WriteExternalException{
-    Element newElement = new Element(CODE_SCHEME);
-    newElement.setAttribute(NAME, getName());
-    (this).writeExternal(newElement);
-
-    String filePath = dir.getAbsolutePath() + File.separator + getName() + XML_EXTENSION;
-    try {
-      JDOMUtil.writeDocument(new Document(newElement), filePath, getCodeStyleSettings().getLineSeparator());
-    }
-    catch (IOException e) {
-      Messages.showErrorDialog(PsiBundle.message("codestyle.cannot.save.scheme.file", filePath, e.getLocalizedMessage()), CommonBundle.getErrorTitle());
-    }
-  }
-
   public Element saveToDocument() throws WriteExternalException {
-    Element newElement = new Element(CODE_SCHEME);
+    Element newElement = new Element("code_scheme");
     newElement.setAttribute(NAME, getName());
     writeExternal(newElement);
     return newElement;

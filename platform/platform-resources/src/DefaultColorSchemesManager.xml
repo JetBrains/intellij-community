@@ -652,6 +652,12 @@
         </value>
       </option>
 
+      <option name="NOT_TOP_FRAME_ATTRIBUTES">
+        <value>
+          <option name="BACKGROUND" value="e1ebf7"/>
+        </value>
+      </option>
+
       <option name="UNMATCHED_BRACE_ATTRIBUTES">
         <value>
           <option name="FOREGROUND"/>

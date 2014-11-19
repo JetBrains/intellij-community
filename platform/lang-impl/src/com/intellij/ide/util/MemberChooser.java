@@ -267,16 +267,22 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
   @Override
   @NotNull
   protected Action[] createActions() {
+    final List<Action> actions = new ArrayList<Action>();
+    actions.add(getOKAction());
     if (myAllowEmptySelection) {
-      return new Action[]{getOKAction(), new SelectNoneAction(), getCancelAction()};
+      actions.add(new SelectNoneAction());
     }
-    else {
-      return new Action[]{getOKAction(), getCancelAction()};
+    actions.add(getCancelAction());
+    if (getHelpId() != null) {
+      actions.add(getHelpAction());
     }
+    return actions.toArray(new Action[actions.size()]);
   }
 
   @Override
   protected void doHelpAction() {
+    if (getHelpId() == null) return;
+    super.doHelpAction();
   }
 
   protected void customizeOptionsPanel() {

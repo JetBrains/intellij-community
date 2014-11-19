@@ -160,8 +160,7 @@ public class ChangeSignatureProcessor extends ChangeSignatureProcessorBase {
       }
       if (myPrepareSuccessfulSwingThreadCallback != null) {
         ConflictsDialog dialog = prepareConflictsDialog(conflictDescriptions, usagesIn);
-        dialog.show();
-        if (!dialog.isOK()) {
+        if (!dialog.showAndGet()) {
           if (dialog.isShowConflicts()) prepareSuccessful();
           return false;
         }

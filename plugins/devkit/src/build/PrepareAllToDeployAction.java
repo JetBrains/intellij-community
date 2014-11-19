@@ -32,7 +32,7 @@ public class PrepareAllToDeployAction extends PrepareToDeployAction {
 
   public void actionPerformed(final AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
-    if ( project == null ) return;
+    if (project == null) return;
 
     List<Module> pluginModules = new ArrayList<Module>();
     for (Module aModule : ModuleManager.getInstance(project).getModules()) {
@@ -45,8 +45,7 @@ public class PrepareAllToDeployAction extends PrepareToDeployAction {
                                                          pluginModules,
                                                          DevKitBundle.message("select.plugin.modules.title"),
                                                          DevKitBundle.message("select.plugin.modules.description"));
-    dialog.show();
-    if (dialog.isOK()) {
+    if (dialog.showAndGet()) {
       doPrepare(dialog.getChosenElements(), project);
     }
   }

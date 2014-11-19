@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,13 +58,12 @@ public abstract class I18nizeFormQuickFix extends QuickFix {
       return;
     }
     String initialValue = StringUtil.escapeStringCharacters(descriptor.getValue());
-    final JavaI18nizeQuickFixDialog dialog = new JavaI18nizeQuickFixDialog(project, psiFile, null, initialValue, null, false, false){
+    final JavaI18nizeQuickFixDialog dialog = new JavaI18nizeQuickFixDialog(project, psiFile, null, initialValue, null, false, false) {
       protected String getDimensionServiceKey() {
         return "#com.intellij.codeInsight.i18n.I18nizeQuickFixDialog_Form";
       }
     };
-    dialog.show();
-    if (!dialog.isOK()) {
+    if (!dialog.showAndGet()) {
       return;
     }
 
@@ -80,9 +79,9 @@ public abstract class I18nizeFormQuickFix extends QuickFix {
       }
     }
 
-    CommandProcessor.getInstance().executeCommand(project, new Runnable(){
+    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
       public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable(){
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
             try {
               JavaI18nUtil.createProperty(project, propertiesFiles, dialog.getKey(), dialog.getValue());
@@ -93,10 +92,10 @@ public abstract class I18nizeFormQuickFix extends QuickFix {
           }
         });
       }
-    }, CodeInsightBundle.message("quickfix.i18n.command.name"),project);
+    }, CodeInsightBundle.message("quickfix.i18n.command.name"), project);
 
     // saving files is necessary to ensure correct reload of properties files by UI Designer
-    for(PropertiesFile file: propertiesFiles) {
+    for (PropertiesFile file : propertiesFiles) {
       FileDocumentManager.getInstance().saveDocument(PsiDocumentManager.getInstance(project).getDocument(file.getContainingFile()));
     }
 

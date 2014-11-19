@@ -325,8 +325,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
         return null;
       }
     });
-    dialog.show();
-    if (dialog.isOK()) {
+    if (dialog.showAndGet()) {
       final boolean pathChanged = !Comparing.equal(currentSdk.getHomePath(), dialog.getHomePath());
       if (!currentSdk.getName().equals(dialog.getName()) || pathChanged || dialog.isAssociateChanged()) {
         myModifiedModificators.add(modificator);
@@ -455,9 +454,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
 
       PythonPathDialog dialog = new PythonPathDialog(myProject, pathEditor);
       pathEditor.reset(sdk != null ? sdkModificator : null);
-      dialog.show();
-
-      if (dialog.isOK()) {
+      if (dialog.showAndGet()) {
         if (pathEditor.isModified()) {
           pathEditor.apply(sdkModificator);
           myModifiedModificators.add(sdkModificator);

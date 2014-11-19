@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,8 +48,7 @@ public class HgCheckoutProvider implements CheckoutProvider {
     });
 
     final HgCloneDialog dialog = new HgCloneDialog(project);
-    dialog.show();
-    if (!dialog.isOK()) {
+    if (!dialog.showAndGet()) {
       return;
     }
     dialog.rememberSettings();
@@ -61,7 +60,8 @@ public class HgCheckoutProvider implements CheckoutProvider {
 
     final String sourceRepositoryURL = dialog.getSourceRepositoryURL();
     new Task.Backgroundable(project, HgVcsMessages.message("hg4idea.clone.progress", sourceRepositoryURL), true) {
-      @Override public void run(@NotNull ProgressIndicator indicator) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
         // clone
         HgCloneCommand clone = new HgCloneCommand(project);
         clone.setRepositoryURL(sourceRepositoryURL);
@@ -87,7 +87,6 @@ public class HgCheckoutProvider implements CheckoutProvider {
         }
       }
     }.queue();
-
   }
 
   /**

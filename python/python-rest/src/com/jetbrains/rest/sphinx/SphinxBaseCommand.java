@@ -61,9 +61,9 @@ public class SphinxBaseCommand {
     String workDir = service.getWorkdir();
     if (workDir.isEmpty()) {
       AskForWorkDir dialog = new AskForWorkDir(module.getProject());
-      dialog.show();
-      if(!dialog.isOK())
+      if (!dialog.showAndGet()) {
         return false;
+      }
       service.setWorkdir(dialog.getInputFile());
     }
     return true;

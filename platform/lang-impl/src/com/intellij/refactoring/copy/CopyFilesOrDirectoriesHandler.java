@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -109,8 +109,7 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
     }
     else {
       CopyFilesOrDirectoriesDialog dialog = new CopyFilesOrDirectoriesDialog(elements, defaultTargetDirectory, project, false);
-      dialog.show();
-      if (dialog.isOK()) {
+      if (dialog.showAndGet()) {
         newName = elements.length == 1 ? dialog.getNewName() : null;
         targetDirectory = dialog.getTargetDirectory();
         openInEditor = dialog.openInEditor();
@@ -145,7 +144,7 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
     if (element instanceof PsiDirectory) {
       targetDirectory = ((PsiDirectory)element).getParentDirectory();
     }
-    else  {
+    else {
       targetDirectory = PlatformPackageUtil.getDirectory(element);
     }
     targetDirectory = tryNotNullizeDirectory(element.getProject(), targetDirectory);
@@ -153,8 +152,7 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
 
     PsiElement[] elements = {element};
     CopyFilesOrDirectoriesDialog dialog = new CopyFilesOrDirectoriesDialog(elements, null, element.getProject(), true);
-    dialog.show();
-    if (dialog.isOK()) {
+    if (dialog.showAndGet()) {
       String newName = dialog.getNewName();
       copyImpl(elements, newName, targetDirectory, true, true);
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,11 +54,12 @@ public class SliceForwardHandler extends SliceHandler {
         return form.getComponent();
       }
     };
-    dialog.show();
-    if (!dialog.isOK()) return null;
+    if (!dialog.showAndGet()) {
+      return null;
+    }
 
     storedSettingsBean.analysisUIOptions.save(analysisUIOptions);
-    storedSettingsBean.showDereferences  = form.isToShowDerefs();
+    storedSettingsBean.showDereferences = form.isToShowDerefs();
 
     AnalysisScope scope = dialog.getScope(analysisUIOptions, analysisScope, myProject, module);
 

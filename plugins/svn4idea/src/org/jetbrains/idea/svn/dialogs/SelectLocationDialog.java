@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,8 @@ import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import java.awt.*;
 
+import static com.intellij.openapi.util.Pair.create;
+
 /**
  * @author alex
  */
@@ -70,9 +72,7 @@ public class SelectLocationDialog extends DialogWrapper {
   @Nullable
   public static Pair<String, SVNURL> selectLocation(Project project, @NotNull SVNURL url) {
     SelectLocationDialog dialog = new SelectLocationDialog(project, url, null, null, true, true);
-    dialog.show();
-
-    return dialog.isOK() ? Pair.create(dialog.getSelectedURL(), dialog.getRootUrl()) : null;
+    return dialog.showAndGet() ? create(dialog.getSelectedURL(), dialog.getRootUrl()) : null;
   }
 
   @Nullable

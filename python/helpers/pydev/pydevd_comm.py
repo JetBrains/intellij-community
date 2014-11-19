@@ -966,8 +966,6 @@ class InternalGetVariable(InternalThreadCommand):
 #=======================================================================================================================
 # InternalGetArray
 #=======================================================================================================================
-from pydevd_vars import getVariable
-
 class InternalGetArray(InternalThreadCommand):
     def __init__(self, seq, roffset, coffset, rows, cols, format, thread_id, frame_id, scope, attrs):
         self.sequence = seq
@@ -981,8 +979,6 @@ class InternalGetArray(InternalThreadCommand):
         self.rows = int(rows)
         self.cols = int(cols)
         self.format = format
-        if hasattr(self.format, 'encode'):
-            self.format = self.format.encode('utf-8')
 
     def doIt(self, dbg):
         try:
@@ -991,11 +987,13 @@ class InternalGetArray(InternalThreadCommand):
 
             xml = "<xml>"
 
-            # need metadata
+            var, metaxml, rows, cols, format = pydevd_vars.array_to_meta_xml(var, self.name, self.format)
+            xml += metaxml
+            self.format = '%' + format
             if self.rows == -1 and self.cols == -1:
-                xml += pydevd_vars.array_to_meta_xml(var, self.name, self.format)
-            else:
-                xml += pydevd_vars.array_to_xml(var, self.roffset, self.coffset, self.rows, self.cols, self.format)
+                self.rows = rows
+                self.cols = cols
+            xml += pydevd_vars.array_to_xml(var, self.roffset, self.coffset, self.rows, self.cols, self.format)
             xml += "</xml>"
             cmd = dbg.cmdFactory.makeGetArrayMessage(self.sequence, xml)
             dbg.writer.addCommand(cmd)

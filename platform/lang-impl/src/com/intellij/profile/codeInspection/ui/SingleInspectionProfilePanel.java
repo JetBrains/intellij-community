@@ -22,6 +22,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInsight.daemon.impl.SeverityUtil;
 import com.intellij.codeInsight.hint.HintUtil;
+import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ModifiableModel;
 import com.intellij.codeInspection.ex.*;
@@ -1152,13 +1153,14 @@ public class SingleInspectionProfilePanel extends JPanel {
       selectedProfile.setProfileManager(profileManager);
     }
 
+    final InspectionProfile parentProfile = selectedProfile.getParentProfile();
     try {
       selectedProfile.commit();
     }
     catch (IOException e) {
       throw new ConfigurationException(e.getMessage());
     }
-    setSelectedProfile(selectedProfile.getParentProfile().getModifiableModel());
+    setSelectedProfile(parentProfile.getModifiableModel());
     setSelectedProfileModified(false);
     myModified = false;
   }

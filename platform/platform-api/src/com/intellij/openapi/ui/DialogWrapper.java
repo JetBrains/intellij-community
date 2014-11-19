@@ -1550,6 +1550,9 @@ public abstract class DialogWrapper {
   }
 
   public boolean showAndGet() {
+    if (!isModal()) {
+      throw new IllegalStateException("The showAndGet() method is for modal dialogs only");
+    }
     show();
     return isOK();
   }

@@ -26,6 +26,8 @@ import com.jetbrains.python.debugger.ArrayChunk;
 import com.jetbrains.python.debugger.PyDebugValue;
 
 import javax.swing.table.AbstractTableModel;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.*;
 
 /**
@@ -165,7 +167,51 @@ public class AsyncArrayTableModel extends AbstractTableModel {
     }
   }
 
-  public void addToCache(ArrayChunk chunk) {
-    //TODO: add preloaded values
+  public void addToCache(final ArrayChunk chunk) {
+    Object[][] data = chunk.getData();
+    int cols = data.length;
+    int rows = data[0].length;
+    for (int roffset = 0; roffset < rows / CHUNK_ROW_SIZE; roffset++) {
+      for (int coffset = 0; coffset < cols / CHUNK_COL_SIZE; coffset++) {
+        Pair<Integer, Integer> key = itemToChunkKey(roffset * CHUNK_ROW_SIZE, coffset * CHUNK_COL_SIZE);
+        final Object[][] chunkData = new Object[CHUNK_ROW_SIZE][CHUNK_COL_SIZE];
+        for (int r = 0; r < CHUNK_ROW_SIZE; r++) {
+          for (int c = 0; c < CHUNK_COL_SIZE; c++) {
+            chunkData[r][c] = data[roffset * CHUNK_ROW_SIZE + r][coffset * CHUNK_COL_SIZE + c];
+          }
+        }
+        myChunkCache.put(key, new ListenableFuture<ArrayChunk>() {
+          @Override
+          public void addListener(Runnable listener, Executor executor) {
+
+          }
+
+          @Override
+          public boolean cancel(boolean mayInterruptIfRunning) {
+            return false;
+          }
+
+          @Override
+          public boolean isCancelled() {
+            return false;
+          }
+
+          @Override
+          public boolean isDone() {
+            return true;
+          }
+
+          @Override
+          public ArrayChunk get() throws InterruptedException, ExecutionException {
+            return new ArrayChunk(chunk.getValue(), null, 0, 0, null, null, null, null, chunkData);
+          }
+
+          @Override
+          public ArrayChunk get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+            return new ArrayChunk(chunk.getValue(), null, 0, 0, null, null, null, null, chunkData);
+          }
+        });
+      }
+    }
   }
 }

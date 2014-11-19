@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -588,8 +588,7 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> implem
         return null;
       }
       final MethodListDlg dlg = new MethodListDlg(testClass, new JUnitUtil.TestMethodFilter(testClass), getField());
-      dlg.show();
-      if (dlg.isOK()) {
+      if (dlg.showAndGet()) {
         final PsiMethod method = dlg.getSelected();
         if (method != null) {
           return method.getName();

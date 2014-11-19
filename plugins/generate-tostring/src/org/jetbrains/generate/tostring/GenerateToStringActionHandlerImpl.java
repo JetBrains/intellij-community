@@ -83,32 +83,35 @@ public class GenerateToStringActionHandlerImpl extends EditorWriteActionHandler 
 
         final PsiElementClassMember[] dialogMembers = buildMembersToShow(clazz);
 
-        final MemberChooserBuilder<PsiElementClassMember> builder = new MemberChooserBuilder<PsiElementClassMember>(project);
         final MemberChooserHeaderPanel header = new MemberChooserHeaderPanel(clazz);
-        builder.setHeaderPanel(header);
-        builder.allowEmptySelection(true);
-        builder.overrideAnnotationVisible(PsiUtil.isLanguageLevel5OrHigher(clazz));
-        builder.setTitle("Generate toString()");
-
         logger.debug("Displaying member chooser dialog");
         ApplicationManager.getApplication().invokeLater(new Runnable() {
             public void run() {
               if (project.isDisposed()) return;
-              final MemberChooser<PsiElementClassMember> dialog = builder.createBuilder(dialogMembers);
-              dialog.setCopyJavadocVisible(false);
-              dialog.selectElements(dialogMembers);
-              header.setChooser(dialog);
-                dialog.show();
+                final MemberChooser<PsiElementClassMember> chooser =
+                    new MemberChooser<PsiElementClassMember>(dialogMembers, true, true, project, PsiUtil.isLanguageLevel5OrHigher(clazz), header) {
+                        @Nullable
+                        @Override
+                        protected String getHelpId() {
+                            return "editing.altInsert.tostring";
+                        }
+                    };
+                chooser.setTitle("Generate toString()");
 
-                if (DialogWrapper.OK_EXIT_CODE == dialog.getExitCode()) {
-                    Collection<PsiMember> selectedMembers = GenerationUtil.convertClassMembersToPsiMembers(dialog.getSelectedElements());
+                chooser.setCopyJavadocVisible(false);
+                chooser.selectElements(dialogMembers);
+                header.setChooser(chooser);
+                chooser.show();
+
+                if (DialogWrapper.OK_EXIT_CODE == chooser.getExitCode()) {
+                    Collection<PsiMember> selectedMembers = GenerationUtil.convertClassMembersToPsiMembers(chooser.getSelectedElements());
 
                     final TemplateResource template = header.getSelectedTemplate();
                     TemplatesManager.getInstance().setDefaultTemplate(template);
 
                     if (template.isValidTemplate()) {
                         GenerateToStringWorker.executeGenerateActionLater(clazz, editor, selectedMembers, template,
-                                                                          dialog.isInsertOverrideAnnotation());
+                                                                          chooser.isInsertOverrideAnnotation());
                     }
                     else {
                         HintManager.getInstance().showErrorHint(editor, "toString() template '" + template.getFileName() + "' is invalid");
@@ -201,7 +204,7 @@ public class GenerateToStringActionHandlerImpl extends EditorWriteActionHandler 
                         }
 
                         public String getHelpTopic() {
-                            return null; // TODO:
+                            return "editing.altInsert.tostring.settings";
                         }
 
                         @Override

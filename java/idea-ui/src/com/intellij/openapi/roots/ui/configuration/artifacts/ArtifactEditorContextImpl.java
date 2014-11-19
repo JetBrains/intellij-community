@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -149,8 +149,7 @@ public class ArtifactEditorContextImpl implements ArtifactEditorContext {
   @Override
   public List<Artifact> chooseArtifacts(final List<? extends Artifact> artifacts, final String title) {
     ChooseArtifactsDialog dialog = new ChooseArtifactsDialog(getProject(), artifacts, title, null);
-    dialog.show();
-    return dialog.isOK() ? dialog.getChosenElements() : Collections.<Artifact>emptyList();
+    return dialog.showAndGet() ? dialog.getChosenElements() : Collections.<Artifact>emptyList();
   }
 
 
@@ -202,8 +201,7 @@ public class ArtifactEditorContextImpl implements ArtifactEditorContext {
   @Override
   public List<Library> chooseLibraries(final String title) {
     final ChooseLibrariesFromTablesDialog dialog = ChooseLibrariesFromTablesDialog.createDialog(title, getProject(), false);
-    dialog.show();
-    return dialog.isOK() ? dialog.getSelectedLibraries() : Collections.<Library>emptyList();
+    return dialog.showAndGet() ? dialog.getSelectedLibraries() : Collections.<Library>emptyList();
   }
 
   @Override

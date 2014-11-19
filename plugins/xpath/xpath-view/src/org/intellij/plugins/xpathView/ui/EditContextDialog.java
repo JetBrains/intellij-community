@@ -20,7 +20,6 @@ import com.intellij.ide.DataManager;
 import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -142,8 +141,7 @@ public class EditContextDialog extends DialogWrapper {
           final DataContext dataContext = DataManager.getInstance().getDataContext(myNamespaceTable);
           final Project project = CommonDataKeys.PROJECT.getData(dataContext);
           final AddNamespaceDialog dlg = new AddNamespaceDialog(project, myUnresolvedPrefixes, allURIs, AddNamespaceDialog.Mode.EDITABLE);
-          dlg.show();
-          if (dlg.isOK()) {
+          if (dlg.showAndGet()) {
             myNamespaceTableModel.addNamespace(new Namespace(dlg.getPrefix(), dlg.getURI()));
           }
         }

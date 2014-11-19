@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,8 +52,9 @@ public class RelocateAction extends BasicAction {
     Info info = activeVcs.getInfo(file);
     assert info != null;
     RelocateDialog dlg = new RelocateDialog(project, info.getURL());
-    dlg.show();
-    if (!dlg.isOK()) return;
+    if (!dlg.showAndGet()) {
+      return;
+    }
     final String beforeURL = dlg.getBeforeURL();
     final String afterURL = dlg.getAfterURL();
     if (beforeURL.equals(afterURL)) return;

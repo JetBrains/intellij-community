@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,26 +35,25 @@ public class ExtractClassUtil {
     final PsiElement classElement = classPointer.getElement();
     final PsiElement interfaceElement = interfacePointer.getElement();
     if (classElement instanceof PsiClass && classElement.isValid() && interfaceElement instanceof PsiClass && interfaceElement.isValid()) {
-      final PsiClass superClass = (PsiClass) interfaceElement;
+      final PsiClass superClass = (PsiClass)interfaceElement;
       String superClassName = superClass.getName();
-      String className = ((PsiClass) classElement).getName();
+      String className = ((PsiClass)classElement).getName();
       String createdString = superClass.isInterface() ?
                              RefactoringBundle.message("interface.has.been.successfully.created", superClassName) :
                              RefactoringBundle.message("class.has.been.successfully.created", superClassName);
       String message = createdString + "\n" +
                        RefactoringBundle.message("use.super.references.prompt",
-                         ApplicationNamesInfo.getInstance().getProductName(), className, superClassName);
+                                                 ApplicationNamesInfo.getInstance().getProductName(), className, superClassName);
       YesNoPreviewUsagesDialog dialog = new YesNoPreviewUsagesDialog(
         RefactoringBundle.message("analyze.and.replace.usages"),
         message,
         JavaRefactoringSettings.getInstance().EXTRACT_INTERFACE_PREVIEW_USAGES,
         /*HelpID.TURN_REFS_TO_SUPER*/null, project);
-      dialog.show();
-      if (dialog.isOK()) {
+      if (dialog.showAndGet()) {
         final boolean isPreviewUsages = dialog.isPreviewUsages();
         JavaRefactoringSettings.getInstance().EXTRACT_INTERFACE_PREVIEW_USAGES = isPreviewUsages;
         TurnRefsToSuperProcessor processor =
-                new TurnRefsToSuperProcessor(project, (PsiClass) classElement, superClass, true);
+          new TurnRefsToSuperProcessor(project, (PsiClass)classElement, superClass, true);
         processor.setPreviewUsages(isPreviewUsages);
         processor.run();
       }

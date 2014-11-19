@@ -181,34 +181,42 @@ public class ProtocolParser {
 
   public static ArrayChunk parseArrayValues(final String text, final PyFrameAccessor frameAccessor) throws PyDebuggerException {
     final XppReader reader = openReader(text, false);
-    int cols = 0;
-    int rows = 0;
-
+    ArrayChunk result = null;
     if (reader.hasMoreChildren()) {
       reader.moveDown();
       if (!"array".equals(reader.getNodeName())) {
         throw new PyDebuggerException("Expected <array> at first node, found " + reader.getNodeName());
       }
-      boolean meta = readString(reader, "meta", null).equals("True");
-      if (meta) {
-        String slice = readString(reader, "slice", null);
-        rows = readInt(reader, "rows", null);
-        cols = readInt(reader, "cols", null);
-        String format = "%" + readString(reader, "format", null);
-        String type = readString(reader, "type", null);
-        String max = readString(reader, "max", null);
-        String min = readString(reader, "min", null);
-        return new ArrayChunk(new PyDebugValue(slice, null, null, false, false, frameAccessor), slice, rows, cols, max, min, format, type, null);
+      String slice = readString(reader, "slice", null);
+      int rows = readInt(reader, "rows", null);
+      int cols = readInt(reader, "cols", null);
+      String format = "%" + readString(reader, "format", null);
+      String type = readString(reader, "type", null);
+      String max = readString(reader, "max", null);
+      String min = readString(reader, "min", null);
+      result =
+        new ArrayChunk(new PyDebugValue(slice, null, null, false, false, frameAccessor), slice, rows, cols, max, min, format, type, null);
+      reader.moveUp();
+    }
+
+    Object[][] data = parseArrayValues(reader, frameAccessor);
+    return new ArrayChunk(result.getValue(), result.getSlicePresentation(), result.getRows(), result.getColumns(), result.getMax(),
+                          result.getMin(), result.getFormat(), result.getType(), data);
+  }
+
+  public static Object[][] parseArrayValues(final XppReader reader, final PyFrameAccessor frameAccessor) throws PyDebuggerException {
+    int rows = -1;
+    int cols = -1;
+    if (reader.hasMoreChildren()) {
+      reader.moveDown();
+      if (!"arraydata".equals(reader.getNodeName())) {
+        throw new PyDebuggerException("Expected <arraydata> at second node, found " + reader.getNodeName());
       }
       rows = readInt(reader, "rows", null);
       cols = readInt(reader, "cols", null);
       reader.moveUp();
     }
 
-    return parseArrayValues(reader, frameAccessor, cols, rows);
-  }
-
-  public static ArrayChunk parseArrayValues(final XppReader reader, final PyFrameAccessor frameAccessor, final int cols, final int rows) throws PyDebuggerException {
     if (rows <= 0 || cols <= 0) {
       throw new PyDebuggerException("Array xml: bad rows or columns number: (" + rows + ", " + cols + ")");
     }
@@ -231,15 +239,16 @@ public class ProtocolParser {
         }
         currRow += 1;
         currCol = 0;
-      } else {
+      }
+      else {
         PyDebugValue value = parseValue(reader, frameAccessor);
-        values[currRow-1][currCol] = value.getValue();
+        values[currRow - 1][currCol] = value.getValue();
         currCol += 1;
       }
       reader.moveUp();
     }
 
-    return new ArrayChunk(new PyDebugValue("", null, null, false, false, frameAccessor), "", rows, cols, null, null, null, null, values);
+    return values;
   }
 
   private static XppReader openReader(final String text, final boolean checkForContent) throws PyDebuggerException {

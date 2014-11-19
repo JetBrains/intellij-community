@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,10 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.ResourceBundleManager;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -122,8 +125,9 @@ public class I18nizeAction extends AnAction {
 
     final JavaI18nizeQuickFixDialog dialog = handler.createDialog(project, editor, psiFile);
     if (dialog == null) return;
-    dialog.show();
-    if (!dialog.isOK()) return;
+    if (!dialog.showAndGet()) {
+      return;
+    }
 
     if (!FileModificationService.getInstance().prepareFileForWrite(psiFile)) return;
     final Collection<PropertiesFile> propertiesFiles = dialog.getAllPropertiesFiles();
@@ -131,14 +135,15 @@ public class I18nizeAction extends AnAction {
       if (!FileModificationService.getInstance().prepareFileForWrite(file.getContainingFile())) return;
     }
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable(){
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
-        CommandProcessor.getInstance().executeCommand(project, new Runnable(){
+        CommandProcessor.getInstance().executeCommand(project, new Runnable() {
           @Override
           public void run() {
             try {
-              handler.performI18nization(psiFile, editor, dialog.getLiteralExpression(), propertiesFiles, dialog.getKey(), StringUtil.unescapeStringCharacters(dialog.getValue()),
+              handler.performI18nization(psiFile, editor, dialog.getLiteralExpression(), propertiesFiles, dialog.getKey(),
+                                         StringUtil.unescapeStringCharacters(dialog.getValue()),
                                          dialog.getI18nizedText(), dialog.getParameters(),
                                          dialog.getPropertyCreationHandler());
             }
@@ -146,7 +151,7 @@ public class I18nizeAction extends AnAction {
               LOG.error(e);
             }
           }
-        }, CodeInsightBundle.message("quickfix.i18n.command.name"),project);
+        }, CodeInsightBundle.message("quickfix.i18n.command.name"), project);
       }
     });
   }

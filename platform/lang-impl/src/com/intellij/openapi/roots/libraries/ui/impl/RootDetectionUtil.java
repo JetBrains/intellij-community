@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -98,8 +98,7 @@ public class RootDetectionUtil {
       final DetectedRootsChooserDialog dialog = parentComponent != null
                                                 ? new DetectedRootsChooserDialog(parentComponent, suggestedRoots)
                                                 : new DetectedRootsChooserDialog(project, suggestedRoots);
-      dialog.show();
-      if (!dialog.isOK()) {
+      if (!dialog.showAndGet()) {
         return Collections.emptyList();
       }
       for (SuggestedChildRootInfo rootInfo : dialog.getChosenRoots()) {

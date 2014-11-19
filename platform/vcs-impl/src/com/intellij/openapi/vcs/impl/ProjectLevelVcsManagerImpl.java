@@ -375,7 +375,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   public ContentManager getContentManager() {
     if (myContentManager == null && Registry.is("vcs.merge.toolwindows")) {
       final ToolWindow changes = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.VCS);
-      myContentManager = changes.getContentManager();
+      myContentManager = changes == null ? null : changes.getContentManager();
     }
     return myContentManager;
   }

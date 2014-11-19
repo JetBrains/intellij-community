@@ -17,6 +17,7 @@
 package com.siyeh.ig.migration;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -164,6 +165,15 @@ public class IndexOfReplaceableByContainsInspection
   public BaseInspectionVisitor buildVisitor() {
     return new IndexOfReplaceableByContainsVisitor();
   }
+  @NotNull
+  @Override
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+    if (!PsiUtil.isLanguageLevel5OrHigher(holder.getFile())) {
+      return new PsiElementVisitor() { };
+    }
+
+    return super.buildVisitor(holder, isOnTheFly);
+  }
 
   private static class IndexOfReplaceableByContainsVisitor
     extends BaseInspectionVisitor {
@@ -171,9 +181,6 @@ public class IndexOfReplaceableByContainsInspection
     @Override
     public void visitBinaryExpression(
       PsiBinaryExpression expression) {
-      if (!PsiUtil.isLanguageLevel5OrHigher(expression)) {
-        return;
-      }
       super.visitBinaryExpression(expression);
       final PsiExpression rhs = expression.getROperand();
       if (rhs == null) {

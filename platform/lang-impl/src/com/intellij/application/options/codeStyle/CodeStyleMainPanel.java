@@ -98,7 +98,7 @@ public class CodeStyleMainPanel extends JPanel implements LanguageSelectorListen
     addWaitCard();
 
     JComponent schemes = mySchemesPanel.getPanel();
-    if (ApplicationManager.getApplication().isInternal() && Registry.is("ide.new.settings.view")) {
+    if (Registry.is("ide.new.settings.view")) {
       schemes.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
     }
     add(schemes, BorderLayout.NORTH);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,7 +70,8 @@ public class ExportEclipseProjectsAction extends AnAction implements DumbAware {
     for (Module module : ModuleManager.getInstance(project).getModules()) {
       if (!JpsEclipseClasspathSerializer.CLASSPATH_STORAGE_ID.equals(ClassPathStorageUtil.getStorageType(module))) {
         try {
-          ClasspathStorage.getProvider(JpsEclipseClasspathSerializer.CLASSPATH_STORAGE_ID).assertCompatible(ModuleRootManager.getInstance(module));
+          ClasspathStorage.getProvider(JpsEclipseClasspathSerializer.CLASSPATH_STORAGE_ID)
+            .assertCompatible(ModuleRootManager.getInstance(module));
           modules.add(module);
         }
         catch (ConfigurationException e1) {
@@ -100,8 +101,7 @@ public class ExportEclipseProjectsAction extends AnAction implements DumbAware {
 
     modules.addAll(incompatibleModules);
     final ExportEclipseProjectsDialog dialog = new ExportEclipseProjectsDialog(project, modules);
-    dialog.show();
-    if (dialog.isOK()) {
+    if (dialog.showAndGet()) {
       if (dialog.isLink()) {
         for (Module module : dialog.getSelectedModules()) {
           ClasspathStorage.setStorageType(ModuleRootManager.getInstance(module), JpsEclipseClasspathSerializer.CLASSPATH_STORAGE_ID);

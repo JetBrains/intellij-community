@@ -113,8 +113,7 @@ public class ExtractClosureFromMethodProcessor extends ExtractClosureProcessorBa
 
     if (!conflicts.isEmpty()) {
       final ConflictsDialog conflictsDialog = prepareConflictsDialog(conflicts, usagesIn);
-      conflictsDialog.show();
-      if (!conflictsDialog.isOK()) {
+      if (!conflictsDialog.showAndGet()) {
         if (conflictsDialog.isShowConflicts()) prepareSuccessful();
         return false;
       }

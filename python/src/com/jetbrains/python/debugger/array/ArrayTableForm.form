@@ -69,19 +69,11 @@
       </grid>
       <component id="fd814" class="com.intellij.ui.EditorTextField" binding="mySliceTextField" custom-create="true">
         <constraints>
-          <grid row="1" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+          <grid row="1" column="0" row-span="1" col-span="3" vsize-policy="0" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
           <toolTipText value="Current slice."/>
         </properties>
-      </component>
-      <component id="a8664" class="com.intellij.ui.table.JBTable" binding="myBusyTable" custom-create="true">
-        <constraints>
-          <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="0" indent="0" use-parent-layout="false">
-            <preferred-size width="18" height="18"/>
-          </grid>
-        </constraints>
-        <properties/>
       </component>
     </children>
   </grid>

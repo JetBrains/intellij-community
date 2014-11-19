@@ -17,6 +17,7 @@ package com.siyeh.ig.inheritance;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -112,15 +113,20 @@ public class TypeParameterExtendsFinalClassInspection extends BaseInspection {
   public BaseInspectionVisitor buildVisitor() {
     return new TypeParameterExtendsFinalClassVisitor();
   }
+  @NotNull
+  @Override
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+    if (!PsiUtil.isLanguageLevel5OrHigher(holder.getFile())) {
+      return new PsiElementVisitor() { };
+    }
+
+    return super.buildVisitor(holder, isOnTheFly);
+  }
 
   private static class TypeParameterExtendsFinalClassVisitor extends BaseInspectionVisitor {
-
     @Override
     public void visitTypeParameter(PsiTypeParameter classParameter) {
       super.visitTypeParameter(classParameter);
-      if (!PsiUtil.isLanguageLevel5OrHigher(classParameter)) {
-        return;
-      }
       final PsiClassType[] extendsListTypes = classParameter.getExtendsListTypes();
       if (extendsListTypes.length < 1) {
         return;
@@ -138,9 +144,6 @@ public class TypeParameterExtendsFinalClassInspection extends BaseInspection {
 
     @Override
     public void visitTypeElement(PsiTypeElement typeElement) {
-      if (!PsiUtil.isLanguageLevel5OrHigher(typeElement)) {
-        return;
-      }
       super.visitTypeElement(typeElement);
       final PsiType type = typeElement.getType();
       if (!(type instanceof PsiWildcardType)) {

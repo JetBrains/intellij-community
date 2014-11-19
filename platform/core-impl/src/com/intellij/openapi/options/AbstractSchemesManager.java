@@ -16,7 +16,6 @@
 package com.intellij.openapi.options;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.util.text.UniqueNameGenerator;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -87,9 +86,9 @@ public abstract class AbstractSchemesManager<T extends Scheme, E extends Externa
 
   @Override
   @Nullable
-  public T findSchemeByName(final String schemeName) {
+  public T findSchemeByName(@NotNull String schemeName) {
     for (T scheme : mySchemes) {
-      if (Comparing.equal(scheme.getName(), schemeName)) {
+      if (scheme.getName().equals(schemeName)) {
         return scheme;
       }
     }
@@ -106,10 +105,7 @@ public abstract class AbstractSchemesManager<T extends Scheme, E extends Externa
   @Nullable
   public T getCurrentScheme() {
     T currentScheme = myCurrentScheme;
-    if (currentScheme == null) {
-      return null;
-    }
-    return findSchemeByName(currentScheme.getName());
+    return currentScheme == null ? null : findSchemeByName(currentScheme.getName());
   }
 
   @Override

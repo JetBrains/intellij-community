@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -242,7 +242,8 @@ public class FrameworkDetectionManager extends AbstractProjectComponent implemen
       descriptions = getValidDetectedFrameworks();
     }
     catch (IndexNotReadyException e) {
-      DumbService.getInstance(myProject).showDumbModeNotification("Information about detected frameworks is not available until indices are built");
+      DumbService.getInstance(myProject)
+        .showDumbModeNotification("Information about detected frameworks is not available until indices are built");
       return;
     }
 
@@ -251,8 +252,7 @@ public class FrameworkDetectionManager extends AbstractProjectComponent implemen
       return;
     }
     final ConfigureDetectedFrameworksDialog dialog = new ConfigureDetectedFrameworksDialog(myProject, descriptions);
-    dialog.show();
-    if (dialog.isOK()) {
+    if (dialog.showAndGet()) {
       notification.expire();
       List<DetectedFrameworkDescription> selected = dialog.getSelectedFrameworks();
       FrameworkDetectionUtil.setupFrameworks(selected, new PlatformModifiableModelsProvider(), new DefaultModulesProvider(myProject));
@@ -260,6 +260,7 @@ public class FrameworkDetectionManager extends AbstractProjectComponent implemen
         final int detectorId = FrameworkDetectorRegistry.getInstance().getDetectorId(description.getDetector());
         myDetectedFrameworksData.putExistentFrameworkFiles(detectorId, description.getRelatedFiles());
       }
+      ;
     }
   }
 

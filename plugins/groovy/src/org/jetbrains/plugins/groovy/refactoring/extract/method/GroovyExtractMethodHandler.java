@@ -232,8 +232,9 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
   @Nullable
   protected ExtractMethodInfoHelper getSettings(@NotNull InitialInfo initialInfo, PsiClass owner) {
     GroovyExtractMethodDialog dialog = new GroovyExtractMethodDialog(initialInfo, owner);
-    dialog.show();
-    if (!dialog.isOK()) return null;
+    if (!dialog.showAndGet()) {
+      return null;
+    }
 
     return dialog.getHelper();
   }

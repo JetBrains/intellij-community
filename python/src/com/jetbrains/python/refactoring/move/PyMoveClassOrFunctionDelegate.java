@@ -69,8 +69,7 @@ public class PyMoveClassOrFunctionDelegate extends MoveHandlerDelegate {
       }
     }
     final PyMoveClassOrFunctionDialog dialog = PyMoveClassOrFunctionDialog.getInstance(project, elementsToMove, initialDestination);
-    dialog.show();
-    if (!dialog.isOK()) {
+    if (!dialog.showAndGet()) {
       return;
     }
     final String destination = dialog.getTargetPath();

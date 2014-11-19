@@ -57,8 +57,7 @@ public class GrIntroduceValidatorEngine implements GrIntroduceHandlerBase.Valida
 
   private static boolean reportConflicts(final MultiMap<PsiElement, String> conflicts, final Project project) {
     ConflictsDialog conflictsDialog = new ConflictsDialog(project, conflicts);
-    conflictsDialog.show();
-    return conflictsDialog.isOK();
+    return conflictsDialog.showAndGet();
   }
 
   private MultiMap<PsiElement, String> isOKImpl(String varName, boolean replaceAllOccurrences) {

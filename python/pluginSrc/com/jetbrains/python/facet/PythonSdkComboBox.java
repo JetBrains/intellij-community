@@ -42,8 +42,7 @@ public class PythonSdkComboBox extends ComboboxWithBrowseButton {
         Sdk selectedSdk = getSelectedSdk();
         final Project project = myProject != null ? myProject : ProjectManager.getInstance().getDefaultProject();
         ProjectJdksEditor editor = new ProjectJdksEditor(selectedSdk, project, PythonSdkComboBox.this);
-        editor.show();
-        if (editor.isOK()) {
+        if (editor.showAndGet()) {
           selectedSdk = editor.getSelectedJdk();
           updateSdkList(selectedSdk, false);
         }

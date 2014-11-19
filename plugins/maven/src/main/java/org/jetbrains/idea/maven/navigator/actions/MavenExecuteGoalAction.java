@@ -69,8 +69,7 @@ public class MavenExecuteGoalAction extends DumbAwareAction {
       dialog.setGoals(historyService.getCanceledCommand());
     }
 
-    dialog.show();
-    if (!dialog.isOK()) {
+    if (!dialog.showAndGet()) {
       historyService.setCanceledCommand(dialog.getGoals());
       return;
     }
@@ -98,7 +97,8 @@ public class MavenExecuteGoalAction extends DumbAwareAction {
                                                      @Override
                                                      protected void hyperlinkActivated(@NotNull Notification notification,
                                                                                        @NotNull HyperlinkEvent e) {
-                                                       ShowSettingsUtil.getInstance().showSettingsDialog(project, MavenSettings.DISPLAY_NAME);
+                                                       ShowSettingsUtil.getInstance()
+                                                         .showSettingsDialog(project, MavenSettings.DISPLAY_NAME);
                                                      }
                                                    });
 
@@ -106,7 +106,8 @@ public class MavenExecuteGoalAction extends DumbAwareAction {
       return;
     }
 
-    MavenRunnerParameters parameters = new MavenRunnerParameters(true, workDirectory, Arrays.asList(ParametersList.parse(goals)), Collections.<String>emptyList());
+    MavenRunnerParameters parameters =
+      new MavenRunnerParameters(true, workDirectory, Arrays.asList(ParametersList.parse(goals)), Collections.<String>emptyList());
 
     MavenGeneralSettings generalSettings = new MavenGeneralSettings();
     generalSettings.setMavenHome(mavenHome.getPath());

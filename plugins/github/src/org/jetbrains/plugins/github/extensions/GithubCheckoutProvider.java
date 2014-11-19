@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,8 +31,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.GithubApiUtil;
 import org.jetbrains.plugins.github.api.GithubConnection;
 import org.jetbrains.plugins.github.api.GithubRepo;
-import org.jetbrains.plugins.github.exceptions.GithubOperationCanceledException;
-import org.jetbrains.plugins.github.util.GithubAuthData;
 import org.jetbrains.plugins.github.util.GithubAuthDataHolder;
 import org.jetbrains.plugins.github.util.GithubNotifications;
 import org.jetbrains.plugins.github.util.GithubUtil;
@@ -89,11 +87,10 @@ public class GithubCheckoutProvider implements CheckoutProvider {
     final GitCloneDialog dialog = new GitCloneDialog(project);
     // Add predefined repositories to history
     dialog.prependToHistory("-----------------------------------------------");
-    for (int i = availableRepos.size() - 1; i>=0; i--){
+    for (int i = availableRepos.size() - 1; i >= 0; i--) {
       dialog.prependToHistory(availableRepos.get(i).getCloneUrl());
     }
-    dialog.show();
-    if (!dialog.isOK()) {
+    if (!dialog.showAndGet()) {
       return;
     }
     dialog.rememberSettings();

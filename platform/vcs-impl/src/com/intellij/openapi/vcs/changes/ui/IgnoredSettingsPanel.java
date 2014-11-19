@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,8 +77,7 @@ public class IgnoredSettingsPanel implements SearchableConfigurable, Configurabl
 
   private void addItem() {
     IgnoreUnversionedDialog dlg = new IgnoreUnversionedDialog(myProject);
-    dlg.show();
-    if (dlg.isOK()) {
+    if (dlg.showAndGet()) {
       final IgnoredFileBean[] ignoredFiles = dlg.getSelectedIgnoredFiles();
       for (IgnoredFileBean bean : ignoredFiles) {
         myModel.addElement(bean);
@@ -91,8 +90,7 @@ public class IgnoredSettingsPanel implements SearchableConfigurable, Configurabl
     if (bean == null) return;
     IgnoreUnversionedDialog dlg = new IgnoreUnversionedDialog(myProject);
     dlg.setIgnoredFile(bean);
-    dlg.show();
-    if (dlg.isOK()) {
+    if (dlg.showAndGet()) {
       IgnoredFileBean[] beans = dlg.getSelectedIgnoredFiles();
       assert beans.length == 1;
       int selectedIndex = myList.getSelectedIndex();

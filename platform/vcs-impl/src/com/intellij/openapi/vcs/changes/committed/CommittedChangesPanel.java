@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -332,8 +332,7 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
 
   public void setChangesFilter() {
     CommittedChangesFilterDialog filterDialog = new CommittedChangesFilterDialog(myProject, myProvider.createFilterUI(true), mySettings);
-    filterDialog.show();
-    if (filterDialog.isOK()) {
+    if (filterDialog.showAndGet()) {
       mySettings = filterDialog.getSettings();
       refreshChanges(false);
     }

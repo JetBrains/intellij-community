@@ -111,8 +111,9 @@ public class ExtractSuperclassHandler implements RefactoringActionHandler, Extra
 
     final ExtractSuperclassDialog dialog =
       new ExtractSuperclassDialog(project, mySubclass, memberInfos, this);
-    dialog.show();
-    if (!dialog.isOK() || !dialog.isExtractSuperclass()) return;
+    if (!dialog.showAndGet() || !dialog.isExtractSuperclass()) {
+      return;
+    }
 
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       @Override
@@ -126,7 +127,6 @@ public class ExtractSuperclassHandler implements RefactoringActionHandler, Extra
         ApplicationManager.getApplication().runWriteAction(action);
       }
     }, REFACTORING_NAME, null);
-
   }
 
   @Override
