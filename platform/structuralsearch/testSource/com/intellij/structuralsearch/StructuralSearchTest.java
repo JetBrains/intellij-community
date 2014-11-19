@@ -2996,4 +2996,21 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     String pattern = "new Foo.Bar();";
     assertEquals("should find qualified with outer class", 1, findMatchesCount(source, pattern));
   }
+
+  public void testFindCommentsEverywhere() {
+    String source = "abstract class A<T/*1*/> implements java.util.List<T/*2*/>, /*3*/java.io.Serializable {" +
+                    "  @SuppressWarnings({\"one\",/*10*/ \"two\"})" +
+                    "  public /*11*/ static void m(/*12*/) {" +
+                    "    System./*4*/out.println(/*5*/);" +
+                    "    A<String/*6*/> a1 = new A(){};" +
+                    "    int i = 1 + /*7*/ + 2;" +
+                    "    int i = 1 + /*7*/ + 2;" +
+                    "    try (java.io.FileInputStream /*8*/in = new java.io.FileInputStream(\"name\")) {" +
+                    "    } catch (java.lang./*9*/Exception e) {" +
+                    "    }" +
+                    "  }" +
+                    "}";
+    String pattern = "/*$Text$*/";
+    assertEquals("should find comments in all the right places", 12, findMatchesCount(source, pattern));
+  }
 }
