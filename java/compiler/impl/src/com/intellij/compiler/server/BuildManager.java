@@ -104,7 +104,8 @@ import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.model.serialization.JpsGlobalLoader;
 
-import javax.tools.*;
+import javax.tools.JavaCompiler;
+import javax.tools.ToolProvider;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -1041,7 +1042,7 @@ public class BuildManager implements ApplicationComponent{
     cmdLine.addParameter(classpathToString(cp));
 
     cmdLine.addParameter(BuildMain.class.getName());
-    cmdLine.addParameter("127.0.0.1");
+    cmdLine.addParameter(Boolean.valueOf(System.getProperty("java.net.preferIPv6Addresses", "false"))? "::1" : "127.0.0.1");
     cmdLine.addParameter(Integer.toString(port));
     cmdLine.addParameter(sessionId.toString());
 
