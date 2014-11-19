@@ -21,8 +21,6 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.JBColor;
 import com.intellij.util.containers.HashMap;
@@ -114,17 +112,7 @@ public class HighlightDisplayLevel {
   private static final int EMPTY_ICON_DIM = 13;
 
   public static Icon createIconByKey(@NotNull TextAttributesKey key) {
-    for (IconCreator creator : Extensions.getExtensions(IconCreator.EXTENSION_POINT_NAME)) {
-      Icon icon = creator.createIcon(key);
-      if (icon != null) return icon;
-    }
     return new SingleColorIcon(key);
-  }
-
-  public interface IconCreator {
-    ExtensionPointName<IconCreator> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.codeHighlighting.iconCreator");
-
-    Icon createIcon(@NotNull TextAttributesKey key);
   }
 
   @NotNull
