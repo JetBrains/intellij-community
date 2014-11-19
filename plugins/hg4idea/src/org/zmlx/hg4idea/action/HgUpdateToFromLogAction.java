@@ -16,14 +16,12 @@
 package org.zmlx.hg4idea.action;
 
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import org.jetbrains.annotations.NotNull;
-import org.zmlx.hg4idea.HgVcsMessages;
+import org.zmlx.hg4idea.command.HgUpdateCommand;
 import org.zmlx.hg4idea.repo.HgRepository;
 
 public class HgUpdateToFromLogAction extends HgLogSingleCommitAction {
@@ -33,11 +31,6 @@ public class HgUpdateToFromLogAction extends HgLogSingleCommitAction {
     final Project project = repository.getProject();
     final VirtualFile root = repository.getRoot();
     FileDocumentManager.getInstance().saveAllDocuments();
-    new Task.Backgroundable(project, HgVcsMessages.message("hg4idea.progress.updatingTo", revisionHash.toShortString())) {
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        HgUpdateToAction.updateTo(project, root, revisionHash.asString(), false);
-      }
-    }.queue();
+    HgUpdateCommand.updateRepoTo(project, root, revisionHash.asString(), null);
   }
 }
