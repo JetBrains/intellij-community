@@ -87,9 +87,7 @@ abstract class AbstractRegisterFix implements LocalQuickFix, DescriptorUtil.Patc
             List<Module> modules = PluginModuleType.getCandidateModules(module);
             if (modules.size() > 1) {
               final ChooseModulesDialog dialog = new ChooseModulesDialog(project, modules, getName());
-              dialog.show();
-
-              if (!dialog.isOK()) {
+              if (!dialog.showAndGet()) {
                 return;
               }
               modules = dialog.getSelectedModules();

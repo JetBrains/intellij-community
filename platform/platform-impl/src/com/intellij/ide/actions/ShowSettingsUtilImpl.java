@@ -18,7 +18,10 @@ package com.intellij.ide.actions;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.options.*;
+import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.ConfigurableGroup;
+import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.options.TabbedConfigurable;
 import com.intellij.openapi.options.ex.*;
 import com.intellij.openapi.options.newEditor.IdeSettingsDialog;
 import com.intellij.openapi.options.newEditor.OptionsEditor;
@@ -260,8 +263,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
         }
       });
     }
-    editor.show();
-    return editor.isOK();
+    return editor.showAndGet();
   }
 
   @NotNull

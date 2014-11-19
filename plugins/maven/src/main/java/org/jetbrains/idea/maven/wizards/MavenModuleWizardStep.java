@@ -124,8 +124,9 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
     assert myProjectOrNull != null : "must not be called when creating a new project";
 
     SelectMavenProjectDialog d = new SelectMavenProjectDialog(myProjectOrNull, current);
-    d.show();
-    if (!d.isOK()) return current;
+    if (!d.showAndGet()) {
+      return current;
+    }
     return d.getResult();
   }
 

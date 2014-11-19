@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,8 +41,7 @@ public class HgMerge extends HgAbstractGlobalSingleRepoAction {
                       @NotNull final Collection<HgRepository> repos,
                       @Nullable final HgRepository selectedRepo) {
     final HgMergeDialog mergeDialog = new HgMergeDialog(project, repos, selectedRepo);
-    mergeDialog.show();
-    if (mergeDialog.isOK()) {
+    if (mergeDialog.showAndGet()) {
       final String targetValue = StringUtil.escapeBackSlashes(mergeDialog.getTargetValue());
       final VirtualFile repoRoot = mergeDialog.getRepository().getRoot();
       new Task.Backgroundable(project, "Merging changes...") {

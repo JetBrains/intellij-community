@@ -146,7 +146,7 @@ public class GroovyInlineLocalHandler extends InlineActionHandler {
         while (initializer == null);
       }
     }
-    else  {
+    else {
       flow = ControlFlowUtils.findControlFlowOwner(variable).getControlFlow();
       initializer = variable.getInitializerGroovy();
       writeInstr = ContainerUtil.find(flow, new Condition<Instruction>() {
@@ -169,9 +169,9 @@ public class GroovyInlineLocalHandler extends InlineActionHandler {
     }
 
     final String question = GroovyRefactoringBundle.message("inline.local.variable.prompt.0.1", localName);
-    RefactoringMessageDialog dialog = new RefactoringMessageDialog(INLINE_VARIABLE, question, HelpID.INLINE_VARIABLE, "OptionPane.questionIcon", true, project);
-    dialog.show();
-    if (dialog.isOK()) {
+    RefactoringMessageDialog dialog =
+      new RefactoringMessageDialog(INLINE_VARIABLE, question, HelpID.INLINE_VARIABLE, "OptionPane.questionIcon", true, project);
+    if (dialog.showAndGet()) {
       return new InlineLocalVarSettings(initializer, writeInstructionNumber, flow);
     }
 

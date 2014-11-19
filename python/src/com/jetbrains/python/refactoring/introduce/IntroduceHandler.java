@@ -482,8 +482,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
     final Project project = operation.getProject();
     if (operation.getName() == null) {
       PyIntroduceDialog dialog = new PyIntroduceDialog(project, myDialogTitle, myValidator, getHelpId(), operation);
-      dialog.show();
-      if (!dialog.isOK()) {
+      if (!dialog.showAndGet()) {
         return;
       }
       operation.setName(dialog.getName());

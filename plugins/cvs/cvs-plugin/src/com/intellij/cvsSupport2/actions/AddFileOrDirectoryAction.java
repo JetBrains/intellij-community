@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -100,10 +100,11 @@ public class AddFileOrDirectoryAction extends ActionOnSelectedElement {
       LOG.error(filesToAdd);
     }
 
-    if (showDialog){
+    if (showDialog) {
       final AbstractAddOptionsDialog dialog = AbstractAddOptionsDialog.createDialog(project, roots, dialogOptions);
-      dialog.show();
-      if (!dialog.isOK()) return CvsHandler.NULL;
+      if (!dialog.showAndGet()) {
+        return CvsHandler.NULL;
+      }
     }
 
     return CommandCvsHandler.createAddFilesHandler(project, roots);

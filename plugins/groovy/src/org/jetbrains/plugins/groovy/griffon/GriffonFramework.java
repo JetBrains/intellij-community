@@ -97,8 +97,7 @@ public class GriffonFramework extends MvcFramework {
   @Override
   protected GeneralCommandLine getCreationCommandLine(Module module) {
     GriffonCreateProjectDialog dialog = new GriffonCreateProjectDialog(module);
-    dialog.show();
-    if (!dialog.isOK()) {
+    if (!dialog.showAndGet()) {
       return null;
     }
 

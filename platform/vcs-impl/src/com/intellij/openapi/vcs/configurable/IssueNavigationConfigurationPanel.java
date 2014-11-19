@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,8 +76,7 @@ public class IssueNavigationConfigurationPanel extends JPanel implements Searcha
           public void run(AnActionButton button) {
             IssueLinkConfigurationDialog dlg = new IssueLinkConfigurationDialog(myProject);
             dlg.setTitle(VcsBundle.message("issue.link.add.title"));
-            dlg.show();
-            if (dlg.isOK()) {
+            if (dlg.showAndGet()) {
               myLinks.add(dlg.getLink());
               myModel.fireTableDataChanged();
             }
@@ -105,8 +104,7 @@ public class IssueNavigationConfigurationPanel extends JPanel implements Searcha
           IssueLinkConfigurationDialog dlg = new IssueLinkConfigurationDialog(myProject);
           dlg.setTitle(VcsBundle.message("issue.link.edit.title"));
           dlg.setLink(link);
-          dlg.show();
-          if (dlg.isOK()) {
+          if (dlg.showAndGet()) {
             final IssueNavigationLink editedLink = dlg.getLink();
             link.setIssueRegexp(editedLink.getIssueRegexp());
             link.setLinkRegexp(editedLink.getLinkRegexp());

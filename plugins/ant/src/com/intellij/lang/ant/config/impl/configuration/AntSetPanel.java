@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,11 +56,10 @@ public class AntSetPanel {
   @Nullable
   public AntInstallation showDialog(JComponent parent) {
     final DialogWrapper dialog = new MyDialog(parent);
-    dialog.show();
-    if (!dialog.isOK()) {
+    if (!dialog.showAndGet()) {
       return null;
     }
-    
+
     apply();
     return myForm.getSelectedAnt();
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,30 +68,32 @@ public class GenerateEqualsHandler extends GenerateMembersHandlerBase {
                                    CodeInsightBundle.message("generate.equals.and.hashcode.already.defined.title"),
                                    Messages.getQuestionIcon()) == Messages.YES) {
         if (!ApplicationManager.getApplication().runWriteAction(new Computable<Boolean>() {
-            @Override
-            public Boolean compute() {
-              try {
-                equalsMethod.delete();
-                hashCodeMethod.delete();
-                return Boolean.TRUE;
-              }
-              catch (IncorrectOperationException e) {
-                LOG.error(e);
-                return Boolean.FALSE;
-              }
+          @Override
+          public Boolean compute() {
+            try {
+              equalsMethod.delete();
+              hashCodeMethod.delete();
+              return Boolean.TRUE;
             }
-          }).booleanValue()) {
+            catch (IncorrectOperationException e) {
+              LOG.error(e);
+              return Boolean.FALSE;
+            }
+          }
+        }).booleanValue()) {
           return null;
-        } else {
+        }
+        else {
           needEquals = needHashCode = true;
         }
-      } else {
+      }
+      else {
         return null;
       }
     }
     boolean hasNonStaticFields = false;
     for (PsiField field : aClass.getFields()) {
-      if (!field.hasModifierProperty(PsiModifier.STATIC)){
+      if (!field.hasModifierProperty(PsiModifier.STATIC)) {
         hasNonStaticFields = true;
         break;
       }
@@ -102,8 +104,9 @@ public class GenerateEqualsHandler extends GenerateMembersHandlerBase {
     }
 
     GenerateEqualsWizard wizard = new GenerateEqualsWizard(project, aClass, needEquals, needHashCode);
-    wizard.show();
-    if (!wizard.isOK()) return null;
+    if (!wizard.showAndGet()) {
+      return null;
+    }
     myEqualsFields = wizard.getEqualsFields();
     myHashCodeFields = wizard.getHashCodeFields();
     myNonNullFields = wizard.getNonNullFields();

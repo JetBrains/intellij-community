@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -248,8 +248,7 @@ public class IgnoreUnversionedDialog extends DialogWrapper {
   public static void ignoreSelectedFiles(final Project project, final List<VirtualFile> files) {
     IgnoreUnversionedDialog dlg = new IgnoreUnversionedDialog(project);
     dlg.setFilesToIgnore(files);
-    dlg.show();
-    if (!dlg.isOK()) {
+    if (!dlg.showAndGet()) {
       return;
     }
     final IgnoredFileBean[] ignoredFiles = dlg.getSelectedIgnoredFiles();

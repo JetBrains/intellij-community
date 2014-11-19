@@ -38,8 +38,7 @@ public class HgUpdateToAction extends HgAbstractGlobalSingleRepoAction {
                          @NotNull final Collection<HgRepository> repositories,
                          @Nullable HgRepository selectedRepo) {
     final HgUpdateToDialog dialog = new HgUpdateToDialog(project, repositories, selectedRepo);
-    dialog.show();
-    if (dialog.isOK()) {
+    if (dialog.showAndGet()) {
       FileDocumentManager.getInstance().saveAllDocuments();
       final String updateToValue = StringUtil.escapeBackSlashes(dialog.getTargetValue());
       final boolean clean = dialog.isRemoveLocalChanges();

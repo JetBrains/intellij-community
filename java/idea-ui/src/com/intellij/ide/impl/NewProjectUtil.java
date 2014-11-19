@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,8 +67,7 @@ public class NewProjectUtil {
       }
     }, ProjectBundle.message("project.new.wizard.progress.title"), true, null);
     if (!proceed) return;
-    wizard.show();
-    if (!wizard.isOK()) {
+    if (!wizard.showAndGet()) {
       return;
     }
 

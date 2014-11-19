@@ -28,7 +28,10 @@ import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.ui.popup.ListSeparator;
+import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.NullableConsumer;
@@ -204,8 +207,7 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
     else {
       dialog = new CreateVirtualEnvDialog(myOwnerComponent, allSdks, null);
     }
-    dialog.show();
-    if (dialog.isOK()) {
+    if (dialog.showAndGet()) {
       dialog.createVirtualEnv(allSdks, callback);
     }
   }

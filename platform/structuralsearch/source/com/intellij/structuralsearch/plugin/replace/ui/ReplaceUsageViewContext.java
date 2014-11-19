@@ -129,8 +129,7 @@ class ReplaceUsageViewContext extends UsageViewContext {
       ReplacementPreviewDialog wrapper =
         new ReplacementPreviewDialog(mySearchContext.getProject(), info.getUsageInfo(), replacementInfo.getReplacement());
 
-      wrapper.show();
-      approved = wrapper.isOK();
+      approved = wrapper.showAndGet();
     }
     else {
       approved = true;

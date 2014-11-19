@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,34 +52,34 @@ class ExportToHTMLManager {
   public static void executeExport(final DataContext dataContext) throws FileNotFoundException {
     PsiDirectory psiDirectory = null;
     PsiElement psiElement = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
-    if(psiElement instanceof PsiDirectory) {
+    if (psiElement instanceof PsiDirectory) {
       psiDirectory = (PsiDirectory)psiElement;
     }
     final PsiFile psiFile = CommonDataKeys.PSI_FILE.getData(dataContext);
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     String shortFileName = null;
     String directoryName = null;
-    if(psiFile != null || psiDirectory != null) {
-      if(psiFile != null) {
+    if (psiFile != null || psiDirectory != null) {
+      if (psiFile != null) {
         shortFileName = psiFile.getVirtualFile().getName();
-        if(psiDirectory == null) {
+        if (psiDirectory == null) {
           psiDirectory = psiFile.getContainingDirectory();
         }
       }
-      if(psiDirectory != null) {
+      if (psiDirectory != null) {
         directoryName = psiDirectory.getVirtualFile().getPresentableUrl();
       }
     }
 
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     boolean isSelectedTextEnabled = false;
-    if(editor != null && editor.getSelectionModel().hasSelection()) {
+    if (editor != null && editor.getSelectionModel().hasSelection()) {
       isSelectedTextEnabled = true;
     }
     ExportToHTMLDialog exportToHTMLDialog = new ExportToHTMLDialog(shortFileName, directoryName, isSelectedTextEnabled, project);
 
     ExportToHTMLSettings exportToHTMLSettings = ExportToHTMLSettings.getInstance(project);
-    if(exportToHTMLSettings.OUTPUT_DIRECTORY == null) {
+    if (exportToHTMLSettings.OUTPUT_DIRECTORY == null) {
       final VirtualFile baseDir = project.getBaseDir();
 
       if (baseDir != null) {
@@ -90,8 +90,7 @@ class ExportToHTMLManager {
       }
     }
     exportToHTMLDialog.reset();
-    exportToHTMLDialog.show();
-    if(!exportToHTMLDialog.isOK()) {
+    if (!exportToHTMLDialog.showAndGet()) {
       return;
     }
     try {
@@ -103,13 +102,15 @@ class ExportToHTMLManager {
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     final String outputDirectoryName = exportToHTMLSettings.OUTPUT_DIRECTORY;
-    if(exportToHTMLSettings.getPrintScope() != PrintSettings.PRINT_DIRECTORY) {
-      if(psiFile == null || psiFile.getText() == null) {
+    if (exportToHTMLSettings.getPrintScope() != PrintSettings.PRINT_DIRECTORY) {
+      if (psiFile == null || psiFile.getText() == null) {
         return;
       }
       final String dirName = constructOutputDirectory(psiFile, outputDirectoryName);
       HTMLTextPainter textPainter = new HTMLTextPainter(psiFile, project, dirName, exportToHTMLSettings.PRINT_LINE_NUMBERS);
-      if(exportToHTMLSettings.getPrintScope() == PrintSettings.PRINT_SELECTED_TEXT && editor != null && editor.getSelectionModel().hasSelection()) {
+      if (exportToHTMLSettings.getPrintScope() == PrintSettings.PRINT_SELECTED_TEXT &&
+          editor != null &&
+          editor.getSelectionModel().hasSelection()) {
         int firstLine = editor.getDocument().getLineNumber(editor.getSelectionModel().getSelectionStart());
         textPainter.setSegment(editor.getSelectionModel().getSelectionStart(), editor.getSelectionModel().getSelectionEnd(), firstLine);
       }
@@ -121,7 +122,8 @@ class ExportToHTMLManager {
     else {
       myLastException = null;
       ExportRunnable exportRunnable = new ExportRunnable(exportToHTMLSettings, psiDirectory, outputDirectoryName, project);
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(exportRunnable, CodeEditorBundle.message("export.to.html.title"), true, project);
+      ProgressManager.getInstance()
+        .runProcessWithProgressSynchronously(exportRunnable, CodeEditorBundle.message("export.to.html.title"), true, project);
       if (myLastException != null) {
         throw myLastException;
       }

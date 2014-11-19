@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -201,8 +201,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
     UserFileType ftToEdit = myOriginalToEditedMap.get(fileType);
     if (ftToEdit == null) ftToEdit = ((UserFileType)fileType).clone();
     TypeEditor editor = new TypeEditor(myRecognizedFileType.myFileTypesList, ftToEdit, FileTypesBundle.message("filetype.edit.existing.title"));
-    editor.show();
-    if (editor.isOK()) {
+    if (editor.showAndGet()) {
       myOriginalToEditedMap.put((UserFileType)fileType, ftToEdit);
     }
   }
@@ -228,8 +227,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
     AbstractFileType type = new AbstractFileType(new SyntaxTable());
     TypeEditor<AbstractFileType> editor =
       new TypeEditor<AbstractFileType>(myRecognizedFileType.myFileTypesList, type, FileTypesBundle.message("filetype.edit.new.title"));
-    editor.show();
-    if (editor.isOK()) {
+    if (editor.showAndGet()) {
       myTempFileTypes.add(type);
       updateFileTypeList();
       updateExtensionList();

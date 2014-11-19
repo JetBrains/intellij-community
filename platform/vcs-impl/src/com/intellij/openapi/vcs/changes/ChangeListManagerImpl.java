@@ -239,8 +239,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         return true;
       }
     }, question, "&Remember my choice");
-    dialog.show();
-    return dialog.isOK();
+    return dialog.showAndGet();
   }
 
   @Override

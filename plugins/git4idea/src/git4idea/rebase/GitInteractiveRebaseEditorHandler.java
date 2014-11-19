@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -105,8 +105,7 @@ public class GitInteractiveRebaseEditorHandler implements Closeable, GitRebaseEd
         try {
           if (myRebaseEditorShown) {
             GitRebaseUnstructuredEditor editor = new GitRebaseUnstructuredEditor(myProject, myRoot, path);
-            editor.show();
-            if (editor.isOK()) {
+            if (editor.showAndGet()) {
               editor.save();
               isSuccess.set(true);
               return;
@@ -118,8 +117,7 @@ public class GitInteractiveRebaseEditorHandler implements Closeable, GitRebaseEd
           else {
             setRebaseEditorShown();
             GitRebaseEditor editor = new GitRebaseEditor(myProject, myRoot, path);
-            editor.show();
-            if (editor.isOK()) {
+            if (editor.showAndGet()) {
               editor.save();
               isSuccess.set(true);
               return;

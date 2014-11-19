@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,8 +55,7 @@ public class GitCheckoutProvider implements CheckoutProvider {
   public void doCheckout(@NotNull final Project project, @Nullable final Listener listener) {
     BasicAction.saveAll();
     GitCloneDialog dialog = new GitCloneDialog(project);
-    dialog.show();
-    if (!dialog.isOK()) {
+    if (!dialog.showAndGet()) {
       return;
     }
     dialog.rememberSettings();

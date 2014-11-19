@@ -99,8 +99,7 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
       exportToHTMLSettings.OUTPUT_DIRECTORY = PathManager.getHomePath() + File.separator + "inspections";
     }
     exportToHTMLDialog.reset();
-    exportToHTMLDialog.show();
-    if (!exportToHTMLDialog.isOK()) {
+    if (!exportToHTMLDialog.showAndGet()) {
       return;
     }
     exportToHTMLDialog.apply();
@@ -114,7 +113,8 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
           public void run() {
             if (!exportToHTML) {
               dupm2XML(outputDirectoryName);
-            } else {
+            }
+            else {
               final HTMLExportFrameMaker maker = new HTMLExportFrameMaker(outputDirectoryName, myView.getProject());
               maker.start();
               try {
@@ -139,8 +139,11 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
         };
 
         if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(exportRunnable,
-            exportToHTML ? InspectionsBundle.message("inspection.generating.html.progress.title")
-            : InspectionsBundle.message("inspection.generating.xml.progress.title"), true, myView.getProject())) {
+                                                                               exportToHTML ? InspectionsBundle
+                                                                                 .message("inspection.generating.html.progress.title")
+                                                                                            : InspectionsBundle
+                                                                                 .message("inspection.generating.xml.progress.title"), true,
+                                                                               myView.getProject())) {
           return;
         }
 

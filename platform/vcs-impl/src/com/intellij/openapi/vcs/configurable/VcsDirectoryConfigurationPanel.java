@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -316,8 +316,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     VcsMappingConfigurationDialog dlg = new VcsMappingConfigurationDialog(myProject, VcsBundle.message("directory.mapping.add.title"));
     // due to wonderful UI designer bug
     dlg.initProjectMessage();
-    dlg.show();
-    if (dlg.isOK()) {
+    if (dlg.showAndGet()) {
       VcsDirectoryMapping mapping = new VcsDirectoryMapping();
       dlg.saveToMapping(mapping);
       addMapping(mapping);
@@ -336,8 +335,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     VcsMappingConfigurationDialog dlg = new VcsMappingConfigurationDialog(myProject, VcsBundle.message("directory.mapping.remove.title"));
     final VcsDirectoryMapping mapping = myDirectoryMappingTable.getSelectedObject();
     dlg.setMapping(mapping);
-    dlg.show();
-    if (dlg.isOK()) {
+    if (dlg.showAndGet()) {
       dlg.saveToMapping(mapping);
       myModel.fireTableDataChanged();
       checkNotifyListeners(activeVcses);

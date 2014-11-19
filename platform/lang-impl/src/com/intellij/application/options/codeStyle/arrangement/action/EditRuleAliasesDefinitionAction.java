@@ -52,8 +52,7 @@ public class EditRuleAliasesDefinitionAction extends AnAction {
 
     control.hideEditor();
     final ArrangementRuleAliasDialog dialog = control.createRuleAliasEditDialog();
-    dialog.show();
-    if (dialog.isOK() && dialog.isModified()) {
+    if (dialog.showAndGet() && dialog.isModified()) {
       control.setRulesAliases(dialog.getRuleAliases());
     }
   }

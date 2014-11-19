@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -297,8 +297,7 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
 
   protected void addPatternFilter() {
     ClassFilterEditorAddDialog dialog = new ClassFilterEditorAddDialog(myProject, myPatternsHelpId);
-    dialog.show();
-    if (dialog.isOK()) {
+    if (dialog.showAndGet()) {
       String pattern = dialog.getPattern();
       if (pattern != null) {
         com.intellij.ui.classFilter.ClassFilter filter = createFilter(pattern);

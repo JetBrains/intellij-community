@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,6 @@ package com.intellij.uiDesigner.palette;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.WindowManager;
@@ -52,7 +50,7 @@ public class AddComponentAction extends AnAction {
     PsiElement elementToAdd = (psiFile != null) ? findElementToAdd(psiFile) : null;
     String className = "";
     if (elementToAdd instanceof PsiClass) {
-      className = ((PsiClass) elementToAdd).getQualifiedName();
+      className = ((PsiClass)elementToAdd).getQualifiedName();
       assert className != null;
     }
     else if (elementToAdd instanceof PsiFile) {
@@ -80,14 +78,13 @@ public class AddComponentAction extends AnAction {
     final ComponentItemDialog dialog = new ComponentItemDialog(project, parentWindow, itemToBeAdded, false);
     dialog.setTitle(UIDesignerBundle.message("title.add.component"));
     dialog.showGroupChooser(groupItem);
-    dialog.show();
-    if(!dialog.isOK()){
+    if (!dialog.showAndGet()) {
       return;
     }
 
     groupItem = dialog.getSelectedGroup();
     // If the itemToBeAdded is already in palette do nothing
-    if(groupItem.containsItemClass(itemToBeAdded.getClassName())){
+    if (groupItem.containsItemClass(itemToBeAdded.getClassName())) {
       return;
     }
 

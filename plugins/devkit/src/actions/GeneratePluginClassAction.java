@@ -146,8 +146,7 @@ public abstract class GeneratePluginClassAction extends CreateElementActionBase 
         }
         else {
           final ChooseModulesDialog dialog = new ChooseModulesDialog(project, candidateModules, getTemplatePresentation().getDescription());
-          dialog.show();
-          if (!dialog.isOK()) {
+          if (!dialog.showAndGet()) {
             // create() should return CANCELED now
             return CANCELED;
           }

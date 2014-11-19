@@ -850,7 +850,8 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
       @Override
       protected void createDefaultActions() {
         super.createDefaultActions();
-        myOKAction.putValue(Action.NAME, UIBundle.message(myOnClose ? "cannot.save.files.dialog.ignore.changes" : "cannot.save.files.dialog.revert.changes"));
+        myOKAction.putValue(Action.NAME, UIBundle
+          .message(myOnClose ? "cannot.save.files.dialog.ignore.changes" : "cannot.save.files.dialog.revert.changes"));
         myOKAction.putValue(DEFAULT_ACTION, null);
 
         if (!myOnClose) {
@@ -868,15 +869,14 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
         area.setText(text);
         area.setEditable(false);
         area.setMinimumSize(new Dimension(area.getMinimumSize().width, 50));
-        panel.add(new JBScrollPane(area, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER), BorderLayout.CENTER);
+        panel.add(new JBScrollPane(area, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER),
+                  BorderLayout.CENTER);
 
         return panel;
       }
     };
 
-    dialog.show();
-
-    if (dialog.isOK()) {
+    if (dialog.showAndGet()) {
       for (Document document : failures.keySet()) {
         reloadFromDisk(document);
       }
