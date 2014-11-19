@@ -1270,7 +1270,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     else {
       final PyTargetExpression attribute = findClassAttribute(PyNames.DUNDER_METACLASS, false);
       if (attribute != null) {
-        return attribute;
+        return attribute.findAssignedValue();
       }
     }
     return null;
