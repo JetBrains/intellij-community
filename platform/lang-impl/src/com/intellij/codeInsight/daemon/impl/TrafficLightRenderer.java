@@ -53,6 +53,7 @@ import com.intellij.ui.LayeredIcon;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import gnu.trove.TIntArrayList;
@@ -66,7 +67,7 @@ import java.util.*;
 import java.util.List;
 
 public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
-  private static final Icon NO_ANALYSIS = HighlightDisplayLevel.createIconByMask(new JBColor(ColorUtil.fromHex("E1E1E1"), ColorUtil.fromHex("757575")));
+  private static final Icon NO_ANALYSIS = new SemiBorderIcon();
   private final Project myProject;
   private final Document myDocument;
   private final PsiFile myFile;
@@ -413,6 +414,19 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
       JLabel percLabel = new JLabel();
       percLabel.setText(TrafficProgressPanel.MAX_TEXT);
       passes.put(pass, Pair.create(progressBar, percLabel));
+    }
+  }
+
+  public static class SemiBorderIcon extends EmptyIcon {
+    public SemiBorderIcon() {
+      super(HighlightDisplayLevel.EMPTY_ICON_DIM, HighlightDisplayLevel.EMPTY_ICON_DIM);
+    }
+
+    @Override
+    public void paintIcon(Component component, Graphics g, int x, int y) {
+      g.setColor(new JBColor(ColorUtil.fromHex("d3d3d3"), ColorUtil.fromHex("4a4a4b")));
+      g.fillRect(x, y, 1, getIconHeight());
+      g.fillRect(x, y + getIconHeight() - 1, getIconWidth(), 1);
     }
   }
 }

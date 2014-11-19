@@ -111,7 +111,7 @@ public class HighlightDisplayLevel {
     }
   }
 
-  private static final int EMPTY_ICON_DIM = 13;
+  public static final int EMPTY_ICON_DIM = 13;
 
   public static Icon createIconByKey(@NotNull TextAttributesKey key) {
     return new SingleColorIcon(key);
