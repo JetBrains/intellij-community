@@ -174,9 +174,6 @@ public class NumpyArrayTable {
     initComponent();
 
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-
-      final ExecutorService myExecutorService = Executors.newSingleThreadExecutor();
-
       @Override
       public void run() {
         final PyDebugValue value = getDebugValue();
@@ -187,35 +184,18 @@ public class NumpyArrayTable {
 
         final String format = getFormat().isEmpty() ? "%" : getFormat();
 
-        final ListenableFutureTask<ArrayChunk> task = ListenableFutureTask.create(new Callable<ArrayChunk>() {
-          @Override
-          public ArrayChunk call() throws Exception {
-            return value.getFrameAccessor()
-              .getArrayItems(slicedValue, 0, 0, -1, -1, format);
-          }
-        });
-
-        task.addListener(new Runnable() {
-          @Override
-          public void run() {
-            if (task.isDone()) {
-              try {
-                initUi(task.get(), inPlace);
-              }
-              catch (Exception e) {
-                showError(e.getMessage());
-              }
-            }
-          }
-        }, myExecutorService);
-
-        myExecutorService.execute(task);
+        try {
+          initUi(value.getFrameAccessor()
+                   .getArrayItems(slicedValue, 0, 0, -1, -1, format), inPlace);
+        }
+        catch (PyDebuggerException e) {
+          showError(e.getMessage());
+        }
       }
     });
   }
 
   private void initUi(@NotNull final ArrayChunk chunk, final boolean inPlace) {
-    if (chunk.containsMeta()) {
       myPagingModel = new AsyncArrayTableModel(Math.min(chunk.getRows(), ROWS_IN_DEFAULT_VIEW),
                                                Math.min(chunk.getColumns(), COLUMNS_IN_DEFAULT_VIEW), this);
       myPagingModel.addToCache(chunk);
@@ -249,10 +229,6 @@ public class NumpyArrayTable {
           }
         }
       });
-    }
-    else {
-      showError("Bad metadata for array " + chunk.getValue());
-    }
   }
 
   private static String getTitlePresentation(String slice) {
