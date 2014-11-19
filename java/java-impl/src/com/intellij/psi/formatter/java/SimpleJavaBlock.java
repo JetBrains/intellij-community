@@ -127,7 +127,7 @@ public class SimpleJavaBlock extends AbstractJavaBlock {
   }
 
   @Override
-  protected void setReservedWrap(final Wrap reservedWrap, final IElementType operationType) {
+  public void setReservedWrap(final Wrap reservedWrap, final IElementType operationType) {
     myReservedWrap.put(operationType, reservedWrap);
   }
 

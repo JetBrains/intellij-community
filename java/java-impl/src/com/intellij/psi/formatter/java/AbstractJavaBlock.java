@@ -39,6 +39,7 @@ import com.intellij.psi.impl.source.tree.java.ClassElement;
 import com.intellij.psi.jsp.JspElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -90,6 +91,8 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
 
   private final JavaWrapManager myWrapManager;
   private final AlignmentInColumnsHelper myAlignmentInColumnsHelper;
+  private Map<IElementType, Wrap> myPreferredWraps;
+  private AbstractJavaBlock myParentBlock;
 
   protected AbstractJavaBlock(@NotNull final ASTNode node,
                               final Wrap wrap,
@@ -505,12 +508,9 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
                                   mySettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS);
       }
       else if (childType == JavaTokenType.LPARENTH && nodeType == JavaElementType.PARAMETER_LIST) {
-        // There is a possible case that particular annotated method definition is too long. We may wrap either after annotation
-        // or after opening lbrace then. Our strategy is to wrap after annotation whenever possible.
-        Wrap wrap = Wrap.createWrap(getWrapType(mySettings.METHOD_PARAMETERS_WRAP), false);
-        child = processParenthesisBlock(result, child,
-                                  WrappingStrategy.createDoNotWrapCommaStrategy(wrap),
-                                  mySettings.ALIGN_MULTILINE_PARAMETERS);
+        Wrap wrapToUse = getMethodParametersWrap();
+        WrappingStrategy wrapStrategy = WrappingStrategy.createDoNotWrapCommaStrategy(wrapToUse);
+        child = processParenthesisBlock(result, child, wrapStrategy, mySettings.ALIGN_MULTILINE_PARAMETERS);
       }
       else if (childType == JavaTokenType.LPARENTH && nodeType == JavaElementType.RESOURCE_LIST) {
         Wrap wrap = Wrap.createWrap(getWrapType(mySettings.RESOURCE_LIST_WRAP), false);
@@ -570,6 +570,25 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     }
 
     return child;
+  }
+
+  @NotNull
+  private Wrap getMethodParametersWrap() {
+    Wrap preferredWrap = getModifierListWrap();
+    if (preferredWrap == null) {
+      return Wrap.createWrap(getWrapType(mySettings.METHOD_PARAMETERS_WRAP), false);
+    } else {
+      return Wrap.createChildWrap(preferredWrap, getWrapType(mySettings.METHOD_PARAMETERS_WRAP), false);
+    }
+  }
+
+  @Nullable
+  private Wrap getModifierListWrap() {
+    AbstractJavaBlock parentBlock = getParentBlock();
+    if (parentBlock != null) {
+      return parentBlock.getReservedWrap(JavaElementType.MODIFIER_LIST);
+    }
+    return null;
   }
 
   private ASTNode processField(@NotNull final List<Block> result,
@@ -1135,7 +1154,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   @Nullable
   @Override
   public Wrap getReservedWrap(IElementType elementType) {
-    return null;
+    return myPreferredWraps != null ? myPreferredWraps.get(elementType) : null;
   }
 
   /**
@@ -1150,7 +1169,11 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
    * @param reservedWrap    reserved wrap instance
    * @param operationType   target operation type to associate with the given wrap instance
    */
-  protected void setReservedWrap(final Wrap reservedWrap, final IElementType operationType) {
+  public void setReservedWrap(final Wrap reservedWrap, final IElementType operationType) {
+    if (myPreferredWraps == null) {
+      myPreferredWraps = ContainerUtil.newHashMap();
+    }
+    myPreferredWraps.put(operationType, reservedWrap);
   }
 
   @Nullable
@@ -1260,6 +1283,14 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     }
     result.add(createCodeBlockBlock(localResult, indent, childrenIndent));
     return null;
+  }
+
+  public AbstractJavaBlock getParentBlock() {
+    return myParentBlock;
+  }
+
+  public void setParentBlock(@NotNull AbstractJavaBlock parentBlock) {
+    myParentBlock = parentBlock;
   }
 
   /**

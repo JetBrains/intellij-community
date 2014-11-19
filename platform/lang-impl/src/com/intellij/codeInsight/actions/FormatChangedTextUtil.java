@@ -86,15 +86,7 @@ public class FormatChangedTextUtil {
       return false;
     }
     final List<Range> ranges = lineStatusTracker.getRanges();
-    if (ranges == null || ranges.isEmpty()) {
-      return false;
-    } 
-    for (Range range : ranges) {
-      if (range.getType() != Range.DELETED) {
-        return true;
-      }
-    }
-    return false;
+    return !ranges.isEmpty();
   }
 
   /**
