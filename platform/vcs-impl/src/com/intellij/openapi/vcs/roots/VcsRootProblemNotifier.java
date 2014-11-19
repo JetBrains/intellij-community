@@ -33,6 +33,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,7 +55,7 @@ public class VcsRootProblemNotifier {
   @NotNull private final VcsConfiguration mySettings;
   @NotNull private final ChangeListManager myChangeListManager;
 
-  @NotNull private final Set<VcsRootError> myReportedUnregisteredRoots = ContainerUtil.newHashSet();
+  @NotNull private final Set<String> myReportedUnregisteredRoots;
 
   @Nullable private Notification myNotification;
   @NotNull private final Object NOTIFICATION_LOCK = new Object();
@@ -67,6 +68,7 @@ public class VcsRootProblemNotifier {
     myProject = project;
     mySettings = VcsConfiguration.getInstance(myProject);
     myChangeListManager = ChangeListManager.getInstance(project);
+    myReportedUnregisteredRoots = new HashSet<String>(mySettings.IGNORED_UNREGISTERED_ROOTS);
   }
 
   public void rescanAndNotifyIfNeeded() {
@@ -85,17 +87,23 @@ public class VcsRootProblemNotifier {
     Collection<VcsRootError> importantUnregisteredRoots = getImportantUnregisteredMappings(errors);
     Collection<VcsRootError> invalidRoots = getInvalidRoots(errors);
 
-    if (invalidRoots.isEmpty() && (importantUnregisteredRoots.isEmpty() || myReportedUnregisteredRoots.containsAll(importantUnregisteredRoots))) {
+    List<String> unregRootPaths = ContainerUtil.map(importantUnregisteredRoots, new Function<VcsRootError, String>() {
+      @Override
+      public String fun(@NotNull VcsRootError error) {
+        return error.getMapping();
+      }
+    });
+    if (invalidRoots.isEmpty() && (importantUnregisteredRoots.isEmpty() || myReportedUnregisteredRoots.containsAll(unregRootPaths))) {
       return;
     }
-    myReportedUnregisteredRoots.addAll(importantUnregisteredRoots);
+    myReportedUnregisteredRoots.addAll(unregRootPaths);
 
     String title = makeTitle(importantUnregisteredRoots, invalidRoots);
     String description = makeDescription(importantUnregisteredRoots, invalidRoots);
 
     synchronized (NOTIFICATION_LOCK) {
       expireNotification();
-      NotificationListener listener = new MyNotificationListener(myProject, mySettings);
+      NotificationListener listener = new MyNotificationListener(myProject, mySettings, unregRootPaths);
       VcsNotifier notifier = VcsNotifier.getInstance(myProject);
       myNotification = invalidRoots.isEmpty()
                        ? notifier.notifyMinorInfo(title, description, listener)
@@ -176,7 +184,7 @@ public class VcsRootProblemNotifier {
       description.append("<br/>");
     }
 
-    description.append("<a href='configure'>Configure</a>&nbsp;&nbsp;<a href='ignore'>Ignore VCS root errors</a>");
+    description.append("<a href='configure'>Configure</a>&nbsp;&nbsp;<a href='ignore'>Ignore</a>");
 
     return description.toString();
   }
@@ -221,10 +229,14 @@ public class VcsRootProblemNotifier {
 
     @NotNull private final Project myProject;
     @NotNull private final VcsConfiguration mySettings;
+    @NotNull private final List<String> myImportantUnregisteredRoots;
 
-    private MyNotificationListener(@NotNull Project project, @NotNull VcsConfiguration settings) {
+    private MyNotificationListener(@NotNull Project project,
+                                   @NotNull VcsConfiguration settings,
+                                   @NotNull List<String> importantUnregisteredRoots) {
       myProject = project;
       mySettings = settings;
+      myImportantUnregisteredRoots = importantUnregisteredRoots;
     }
 
     @Override
@@ -238,7 +250,7 @@ public class VcsRootProblemNotifier {
           }
         }
         else if (event.getDescription().equals("ignore")) {
-          mySettings.SHOW_VCS_ERROR_NOTIFICATIONS = false;
+          mySettings.addIgnoredUnregisteredRoots(myImportantUnregisteredRoots);
           notification.expire();
         }
       }

@@ -25,17 +25,16 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import com.intellij.util.xmlb.annotations.Property;
+import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * author: lesya
@@ -81,7 +80,13 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   public boolean INCLUDE_TEXT_INTO_SHELF = false;
   public Boolean SHOW_PATCH_IN_EXPLORER = null;
   public boolean SHOW_FILE_HISTORY_DETAILS = true;
+
+  /**
+   * To remove in IDEA 15
+   */
+  @Deprecated
   public boolean SHOW_VCS_ERROR_NOTIFICATIONS = true;
+
   public boolean SHOW_DIRTY_RECURSIVELY = false;
   public boolean LIMIT_HISTORY = true;
   public int MAXIMUM_HISTORY_ROWS = 1000;
@@ -90,6 +95,10 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   public int COMMIT_MESSAGE_MARGIN_SIZE = 72;
   public boolean WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN = false;
   public boolean SHOW_UNREGISTERED_ROOTS_IN_SETTINGS = true;
+
+  @AbstractCollection(surroundWithTag = false, elementTag = "path")
+  @Tag("ignored-roots")
+  public List<String> IGNORED_UNREGISTERED_ROOTS = ContainerUtil.newArrayList();
 
   public enum StandardOption {
     ADD(VcsBundle.message("vcs.command.name.add")),
@@ -288,4 +297,15 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   public boolean isChangedOnServerEnabled() {
     return CHECK_LOCALLY_CHANGED_CONFLICTS_IN_BACKGROUND;
   }
+
+  public void addIgnoredUnregisteredRoots(@NotNull Collection<String> roots) {
+    List<String> unregisteredRoots = new ArrayList<String>(IGNORED_UNREGISTERED_ROOTS);
+    for (String root : roots) {
+      if (!unregisteredRoots.contains(root)) {
+        unregisteredRoots.add(root);
+      }
+    }
+    IGNORED_UNREGISTERED_ROOTS = unregisteredRoots;
+  }
+
 }
