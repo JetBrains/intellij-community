@@ -30,7 +30,7 @@ public class HgBranchUtil {
    * Only common hg heavy branches
    */
   @NotNull
-  public static Collection<String> getCommonBranches(@NotNull Collection<HgRepository> repositories) {
+  public static List<String> getCommonBranches(@NotNull Collection<HgRepository> repositories) {
     Collection<String> commonBranches = null;
     for (HgRepository repository : repositories) {
       Map<String, Set<Hash>> branchesWithHashes = repository.getBranches();
@@ -53,7 +53,7 @@ public class HgBranchUtil {
   }
 
   @NotNull
-  public static Collection<String> getCommonBookmarks(@NotNull Collection<HgRepository> repositories) {
+  public static List<String> getCommonBookmarks(@NotNull Collection<HgRepository> repositories) {
     Collection<String> commonBookmarkNames = null;
     for (HgRepository repository : repositories) {
       Collection<HgNameWithHashInfo> bookmarksInfo = repository.getBookmarks();
