@@ -47,7 +47,6 @@ public class ArrayTableForm {
   private JPanel myFormatPanel;
   private JPanel myMainPanel;
   private JTable myTable;
-  private JBTable myBusyTable;
   private final Project myProject;
   private KeyListener myResliceCallback;
   private KeyListener myReformatCallback;
@@ -84,11 +83,6 @@ public class ArrayTableForm {
         return editor;
       }
     };
-
-    myBusyTable = new JBTable(new DefaultTableModel());
-    myBusyTable.getEmptyText().setText("");
-    myBusyTable.setBackground(myBusyTable.getTableHeader().getBackground());
-    myBusyTable.setBorder(BorderFactory.createEmptyBorder());
   }
 
   public EditorTextField getSliceTextField() {
@@ -123,10 +117,6 @@ public class ArrayTableForm {
 
   public JBScrollPane getScrollPane() {
     return myScrollPane;
-  }
-
-  public void setBusy(boolean busy) {
-    myBusyTable.setPaintBusy(busy);
   }
 
   public static class ColumnHeaderRenderer extends DefaultTableHeaderCellRenderer {

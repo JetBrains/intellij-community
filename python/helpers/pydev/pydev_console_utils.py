@@ -390,7 +390,7 @@ class BaseInterpreterInterface:
         name = attr.split("\t")[-1]
         array = pydevd_vars.evalInContext(name, self.getNamespace(), self.getNamespace())
 
-        metaxml, r, c, f = pydevd_vars.array_to_meta_xml(array, name, format)
+        array, metaxml, r, c, f = pydevd_vars.array_to_meta_xml(array, name, format)
         xml += metaxml
         format = '%' + f
         if rows == -1 and cols == -1:

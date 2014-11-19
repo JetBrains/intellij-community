@@ -991,7 +991,7 @@ class InternalGetArray(InternalThreadCommand):
 
             xml = "<xml>"
 
-            metaxml, rows, cols, format = pydevd_vars.array_to_meta_xml(var, self.name, self.format)
+            var, metaxml, rows, cols, format = pydevd_vars.array_to_meta_xml(var, self.name, self.format)
             xml += metaxml
             self.format = '%' + format
             if self.rows == -1 and self.cols == -1:
