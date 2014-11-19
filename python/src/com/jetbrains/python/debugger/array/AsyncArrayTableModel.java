@@ -173,11 +173,11 @@ public class AsyncArrayTableModel extends AbstractTableModel {
     int rows = data[0].length;
     for (int roffset = 0; roffset < rows / CHUNK_ROW_SIZE; roffset++) {
       for (int coffset = 0; coffset < cols / CHUNK_COL_SIZE; coffset++) {
-        Pair<Integer, Integer> key = itemToChunkKey(roffset * CHUNK_ROW_SIZE, coffset * CHUNK_COL_SIZE);
+        Pair<Integer, Integer> key = itemToChunkKey(roffset * CHUNK_ROW_SIZE, roffset * CHUNK_ROW_SIZE);
         final Object[][] chunkData = new Object[CHUNK_ROW_SIZE][CHUNK_COL_SIZE];
         for (int r = 0; r < CHUNK_ROW_SIZE; r++) {
           for (int c = 0; c < CHUNK_COL_SIZE; c++) {
-            chunkData[r][c] = data[roffset + r][coffset + c];
+            chunkData[r][c] = data[roffset * CHUNK_ROW_SIZE + r][roffset * CHUNK_ROW_SIZE + c];
           }
         }
         myChunkCache.put(key, new ListenableFuture<ArrayChunk>() {
