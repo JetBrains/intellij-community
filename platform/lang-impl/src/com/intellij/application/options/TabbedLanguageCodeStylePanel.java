@@ -34,8 +34,7 @@ import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.components.JBTabbedPane;
-import com.intellij.util.containers.hash.*;
+import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.util.containers.hash.HashSet;
 import com.intellij.util.ui.GraphicsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -58,7 +57,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
   private CodeStyleAbstractPanel myActiveTab;
   private List<CodeStyleAbstractPanel> myTabs;
   private JPanel myPanel;
-  private JTabbedPane myTabbedPane;
+  private TabbedPaneWrapper myTabbedPane;
   private final PredefinedCodeStyle[] myPredefinedCodeStyles;
   private JPopupMenu myCopyFromMenu;
 
@@ -121,20 +120,17 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
     if (myTabs == null) {
       myPanel = new JPanel();
       myPanel.setLayout(new BorderLayout());
-      myTabbedPane = new JBTabbedPane();
+      myTabbedPane = new TabbedPaneWrapper(this);
       myTabs = new ArrayList<CodeStyleAbstractPanel>();
-      myPanel.add(myTabbedPane);
+      myPanel.add(myTabbedPane.getComponent());
       initTabs(getSettings());
     }
     assert !myTabs.isEmpty();
   }
 
-  public void showSetFrom(Object e) {
-    final Container component = (Container)e;
-    final Component[] components = component.getComponents();
-    final Component last = components[components.length - 1];
+  public void showSetFrom(Component component) {
     initCopyFromMenu();
-    myCopyFromMenu.show(last, 0, last.getHeight() + 3);
+    myCopyFromMenu.show(component, 0, component.getHeight());
   }
 
   private void initCopyFromMenu() {

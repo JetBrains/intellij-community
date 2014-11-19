@@ -85,8 +85,8 @@ public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPane
                      new GridBagConstraints(0, 2, 1, 1, 0, 1, GridBagConstraints.NORTH, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0,
                                             0));
 
-    JScrollPane scroll = ScrollPaneFactory.createScrollPane(optionsPanel);
-    scroll.setBorder(null);
+    JScrollPane scroll = ScrollPaneFactory.createScrollPane(optionsPanel, true);
+    scroll.getVerticalScrollBar().setUnitIncrement(10);
     scroll.setMinimumSize(new Dimension(optionsPanel.getPreferredSize().width + scroll.getVerticalScrollBar().getPreferredSize().width + 5, -1));
     scroll.setPreferredSize(scroll.getMinimumSize());
 
