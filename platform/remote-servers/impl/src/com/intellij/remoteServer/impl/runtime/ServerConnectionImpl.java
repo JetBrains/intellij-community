@@ -117,6 +117,9 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
         myRuntimeInstance = null;
       }
       setStatus(ConnectionStatus.DISCONNECTED);
+      for (DeploymentLogManagerImpl logManager : myLogManagers.values()) {
+        logManager.disposeLogs();
+      }
     }
   }
 
@@ -266,7 +269,7 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
             }
           }
         }
-        myLogManagers.remove(deploymentName);
+        myLogManagers.remove(deploymentName).disposeLogs();
         myEventDispatcher.queueDeploymentsChanged(ServerConnectionImpl.this);
         computeDeployments(myRuntimeInstance, EmptyRunnable.INSTANCE);
       }
