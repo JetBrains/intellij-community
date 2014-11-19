@@ -21,6 +21,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -265,14 +266,15 @@ public class AddImportHelper {
       final QualifiedName qName = existingImport.getImportSourceQName();
       if (qName != null && qName.toString().equals(path)) {
         for (PyImportElement el : existingImport.getImportElements()) {
-          if (name.equals(el.getVisibleName())) {
+          final QualifiedName importedQName = el.getImportedQName();
+          if (importedQName != null && StringUtil.equals(name, importedQName.toString()) && StringUtil.equals(asName, el.getAsName())) {
             return false;
           }
         }
         final PyElementGenerator generator = PyElementGenerator.getInstance(file.getProject());
         final PyImportElement importElement = generator.createImportElement(LanguageLevel.forElement(file), name);
         existingImport.add(importElement);
-        return true;
+        return false;
       }
     }
     addImportFromStatement(file, path, name, asName, priority, anchor);
