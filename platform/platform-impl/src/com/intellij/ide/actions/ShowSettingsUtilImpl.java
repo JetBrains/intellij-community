@@ -58,7 +58,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
     project = getProject(project);
     final ConfigurableGroup[] filteredGroups = filterEmptyGroups(groups);
     if (Registry.is("ide.new.settings.dialog")) {
-      return ApplicationManager.getApplication().isInternal() && Registry.is("ide.new.settings.view")
+      return Registry.is("ide.new.settings.view")
              ? new SettingsDialog(project, filteredGroups, toSelect, null)
              : new IdeSettingsDialog(project, filteredGroups, toSelect);
     }
@@ -156,7 +156,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
     group = filterEmptyGroups(group);
     final Configurable configurable2Select = id2Select == null ? null : new ConfigurableVisitor.ByID(id2Select).find(group);
 
-    if (ApplicationManager.getApplication().isInternal() && Registry.is("ide.new.settings.view")) {
+    if (Registry.is("ide.new.settings.view")) {
       new SettingsDialog(getProject(project), group, configurable2Select, filter).show();
       return;
     }
@@ -244,12 +244,12 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
                                           boolean showApplyButton) {
     final DialogWrapper editor;
     if (parent == null) {
-      editor = ApplicationManager.getApplication().isInternal() && Registry.is("ide.new.settings.view")
+      editor = Registry.is("ide.new.settings.view")
                ? new SettingsDialog(project, dimensionKey, configurable, showApplyButton)
                : new SingleConfigurableEditor(project, configurable, dimensionKey, showApplyButton);
     }
     else {
-      editor = ApplicationManager.getApplication().isInternal() && Registry.is("ide.new.settings.view")
+      editor = Registry.is("ide.new.settings.view")
                ? new SettingsDialog(parent, dimensionKey, configurable, showApplyButton)
                : new SingleConfigurableEditor(parent, configurable, dimensionKey, showApplyButton);
     }

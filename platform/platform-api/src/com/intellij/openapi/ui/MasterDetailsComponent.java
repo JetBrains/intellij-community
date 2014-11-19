@@ -155,7 +155,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   }
 
   private boolean isNewSettingsView() {
-    return ApplicationManager.getApplication().isInternal() && Registry.is("ide.new.settings.view");
+    return Registry.is("ide.new.settings.view");
   }
 
   protected void reInitWholePanelIfNeeded() {
