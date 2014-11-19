@@ -229,7 +229,6 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
         protected void elementFinished(@NotNull PsiElement element) {
           if (!(element instanceof PsiReferenceExpressionImpl)) return;
           PsiReferenceExpressionImpl expression = (PsiReferenceExpressionImpl)element;
-          resolveCache.resolveWithCaching(expression, INSTANCE, false, false, containingFile);
           qualifiers.add(resolveCache.resolveWithCaching(expression, INSTANCE, false, false, containingFile));
         }
       });
