@@ -145,7 +145,7 @@ public class LowLevelSearchUtil {
     TreeElement leafNode;
     int offsetR = offset;
     if (last !=null) {
-      offsetR -= last.getStartOffset() + last.getTextLength();
+      offsetR -= (last.getStartOffset() - scopeNode.getStartOffset()) + last.getTextLength();
       out:
       while (offsetR >= 0) {
         TreeElement next = last.getTreeNext();
