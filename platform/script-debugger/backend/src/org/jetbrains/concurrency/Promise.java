@@ -12,6 +12,10 @@ public abstract class Promise<T> {
   public static final Promise<Void> DONE = new DonePromise<Void>(null);
   public static final Promise<Void> REJECTED = new RejectedPromise<Void>(null);
 
+  public enum State {
+    PENDING, FULFILLED, REJECTED
+  }
+
   public static <T> Promise<T> resolve(T result) {
     if (result == null) {
       //noinspection unchecked
@@ -129,9 +133,8 @@ public abstract class Promise<T> {
   @NotNull
   public abstract <SUB_RESULT> Promise<SUB_RESULT> then(@NotNull AsyncFunction<T, SUB_RESULT> done);
 
-  public abstract boolean isProcessed();
-
-  public abstract boolean isRejected();
+  @NotNull
+  public abstract State getState();
 
   public final void notify(@NotNull final AsyncResult<T> result) {
     done(new Consumer<T>() {
