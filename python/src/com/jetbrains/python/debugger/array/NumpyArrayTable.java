@@ -342,15 +342,6 @@ public class NumpyArrayTable {
     initTableModel(true);
   }
 
-  public void setBusy(final boolean busy) {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        myComponent.setBusy(busy);
-      }
-    });
-  }
-
   /**
    * @return double presentation from [0:1] range
    */

@@ -493,7 +493,7 @@ def array_to_meta_xml(array, name, format):
         bounds = (array.min(), array.max())
     xml = '<array slice=\"%s\" rows=\"%s\" cols=\"%s\" format=\"%s\" type=\"%s\" max=\"%s\" min=\"%s\"/>' % \
            (slice, rows, cols, format, type, bounds[1], bounds[0])
-    return xml, rows, cols, format
+    return array, xml, rows, cols, format
 
 
 
