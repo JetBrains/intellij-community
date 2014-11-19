@@ -109,10 +109,12 @@ public class ImportFromExistingAction implements QuestionAction {
 
     final Runnable runnable = new Runnable() {
       public void run() {
-        int index = list.getSelectedIndex();
-        if (index < 0) return;
-        PsiDocumentManager.getInstance(myTarget.getProject()).commitAllDocuments();
-        doWriteAction(mySources.get(index));
+        final Object selected = list.getSelectedValue();
+        if (selected instanceof ImportCandidateHolder) {
+          final ImportCandidateHolder item = (ImportCandidateHolder)selected;
+          PsiDocumentManager.getInstance(myTarget.getProject()).commitAllDocuments();
+          doWriteAction(item);
+        }
       }
     };
 
@@ -158,7 +160,7 @@ public class ImportFromExistingAction implements QuestionAction {
       if (myImportLocally) {
         AddImportHelper.addLocalImportStatement(myTarget, myName);
       } else {
-        AddImportHelper.addImportStatement(file, myName, null, priority);
+        AddImportHelper.addImportStatement(file, myName, null, priority, null);
       }
     }
     else {
@@ -172,7 +174,7 @@ public class ImportFromExistingAction implements QuestionAction {
           AddImportHelper.addLocalImportStatement(myTarget, nameToImport);
         }
         else {
-          AddImportHelper.addImportStatement(file, nameToImport, null, priority);
+          AddImportHelper.addImportStatement(file, nameToImport, null, priority, null);
         }
         myTarget.replace(gen.createExpressionFromText(LanguageLevel.forElement(myTarget), qualifiedName + "." + myName));
       }
@@ -181,7 +183,7 @@ public class ImportFromExistingAction implements QuestionAction {
           AddImportHelper.addLocalFromImportStatement(myTarget, qualifiedName, myName);
         }
         else {
-          AddImportHelper.addImportFromStatement(file, qualifiedName, myName, null, priority);
+          AddImportHelper.addImportFromStatement(file, qualifiedName, myName, null, priority, null);
         }
       }
     }

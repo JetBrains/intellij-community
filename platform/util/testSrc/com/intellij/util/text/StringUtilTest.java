@@ -281,4 +281,11 @@ public class StringUtilTest extends TestCase {
     assertFalse(Comparing.equal(StringUtil.stringHashCodeIgnoreWhitespaces("xyx"), StringUtil.stringHashCodeIgnoreWhitespaces("xxx")));
     assertFalse(Comparing.equal(StringUtil.stringHashCodeIgnoreWhitespaces("xyx"), StringUtil.stringHashCodeIgnoreWhitespaces("xYx")));
   }
+
+  public void testContains() {
+    assertTrue(StringUtil.contains("1", "1"));
+    assertFalse(StringUtil.contains("1", "12"));
+    assertTrue(StringUtil.contains("12", "1"));
+    assertTrue(StringUtil.contains("12", "2"));
+  }
 }

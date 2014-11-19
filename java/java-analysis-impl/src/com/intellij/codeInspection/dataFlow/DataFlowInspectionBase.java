@@ -470,7 +470,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
                             ? InspectionsBundle.message("dataflow.message.return.null.from.notnullable", presentableNullable)
                             : InspectionsBundle.message("dataflow.message.return.nullable.from.notnullable", presentableNullable);
         final LocalQuickFix[] fixes =
-          PsiTreeUtil.skipParentsOfType(expr, PsiCodeBlock.class, PsiReturnStatement.class) instanceof PsiLambdaExpression
+          PsiTreeUtil.getParentOfType(expr, PsiMethod.class, PsiLambdaExpression.class) instanceof PsiLambdaExpression
           ? LocalQuickFix.EMPTY_ARRAY
           : new LocalQuickFix[]{ new AnnotateMethodFix(defaultNullable, ArrayUtil.toStringArray(manager.getNotNulls())) {
             @Override

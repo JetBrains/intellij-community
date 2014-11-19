@@ -17,13 +17,16 @@ package com.intellij.codeHighlighting;
 
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.util.ImageLoader;
+import com.intellij.ui.JBColor;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.ui.ColorIcon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,10 +38,11 @@ public class HighlightDisplayLevel {
   private static final Map<HighlightSeverity, HighlightDisplayLevel> ourMap = new HashMap<HighlightSeverity, HighlightDisplayLevel>();
 
   public static final HighlightDisplayLevel GENERIC_SERVER_ERROR_OR_WARNING = new HighlightDisplayLevel(HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING,
-                                                                                                        createIconByMask(CodeInsightColors.GENERIC_SERVER_ERROR_OR_WARNING));
-  public static final HighlightDisplayLevel ERROR = new HighlightDisplayLevel(HighlightSeverity.ERROR, createIconByMask(CodeInsightColors.ERRORS_ATTRIBUTES));
-  public static final HighlightDisplayLevel WARNING = new HighlightDisplayLevel(HighlightSeverity.WARNING, createIconByMask(CodeInsightColors.WARNINGS_ATTRIBUTES));
-  public static final HighlightDisplayLevel DO_NOT_SHOW = new HighlightDisplayLevel(HighlightSeverity.INFORMATION, createIconByMask(new Color(30, 160, 0)));
+                                                                                                        createIconByKey(CodeInsightColors.GENERIC_SERVER_ERROR_OR_WARNING));
+  public static final HighlightDisplayLevel ERROR = new HighlightDisplayLevel(HighlightSeverity.ERROR, createIconByKey(CodeInsightColors.ERRORS_ATTRIBUTES));
+  public static final HighlightDisplayLevel WARNING = new HighlightDisplayLevel(HighlightSeverity.WARNING, createIconByKey(CodeInsightColors.WARNINGS_ATTRIBUTES));
+  public static final Color GREEN = new JBColor(new Color(30, 160, 0), new Color(30, 160, 0));
+  public static final HighlightDisplayLevel DO_NOT_SHOW = new HighlightDisplayLevel(HighlightSeverity.INFORMATION, createIconByMask(GREEN));
   /**
    * use #WEAK_WARNING instead
    */
@@ -107,19 +111,14 @@ public class HighlightDisplayLevel {
     }
   }
 
-  public static class ImageHolder {
-    public static final Image ourErrorMaskImage = ImageLoader.loadFromResource("/general/errorMask.png");
-  }
+  private static final int EMPTY_ICON_DIM = 13;
 
-  private static final int EMPTY_ICON_DIM = 12;
-
-  @NotNull
-  private static Icon createIconByMask(@NotNull TextAttributesKey key) {
-    Icon icon = createIconByMaskFromExtensions(key);
-    if (icon != null) return icon;
-    TextAttributes defaultAttributes = key.getDefaultAttributes();
-    if (defaultAttributes == null) defaultAttributes = TextAttributes.ERASE_MARKER;
-    return createIconByMask(defaultAttributes.getErrorStripeColor());
+  public static Icon createIconByKey(@NotNull TextAttributesKey key) {
+    for (IconCreator creator : Extensions.getExtensions(IconCreator.EXTENSION_POINT_NAME)) {
+      Icon icon = creator.createIcon(key);
+      if (icon != null) return icon;
+    }
+    return new SingleColorIcon(key);
   }
 
   public interface IconCreator {
@@ -128,35 +127,49 @@ public class HighlightDisplayLevel {
     Icon createIcon(@NotNull TextAttributesKey key);
   }
 
-  public static Icon createIconByMaskFromExtensions(@NotNull TextAttributesKey key) {
-    for (IconCreator creator : Extensions.getExtensions(IconCreator.EXTENSION_POINT_NAME)) {
-      Icon icon = creator.createIcon(key);
-      if (icon != null) return icon;
-    }
-    return null;
-  }
-
   @NotNull
   public static Icon createIconByMask(final Color renderColor) {
-    return new SingleColorIconWithMask(renderColor);
+    return new MyColorIcon(EMPTY_ICON_DIM, renderColor);
   }
 
-  public static class SingleColorIconWithMask implements Icon {
+  private static class MyColorIcon extends ColorIcon implements ColoredIcon {
+    public MyColorIcon(int size, @NotNull Color color) {
+      super(size, color);
+    }
 
-    private final Color myColor;
+    @Override
+    public Color getColor() {
+      return getIconColor();
+    }
+  } 
+  
+  public interface ColoredIcon {
+    Color getColor();
+  }
+  
+  public static class SingleColorIcon implements Icon, ColoredIcon {
+    private final TextAttributesKey myKey;
 
-    public SingleColorIconWithMask(final Color color) {
-      myColor = color;
+    public SingleColorIcon(final TextAttributesKey key) {
+      myKey = key;
     }
 
     public Color getColor() {
-      return myColor;
+      final EditorColorsManager manager = EditorColorsManager.getInstance();
+      if (manager != null) {
+        final EditorColorsScheme globalScheme = manager.getGlobalScheme();
+        return globalScheme.getAttributes(myKey).getErrorStripeColor();
+      }
+      TextAttributes defaultAttributes = myKey.getDefaultAttributes();
+      if (defaultAttributes == null) defaultAttributes = TextAttributes.ERASE_MARKER;
+      return  defaultAttributes.getErrorStripeColor();
     }
 
     @Override
     public void paintIcon(final Component c, final Graphics g, final int x, final int y) {
       final Graphics2D g2 = (Graphics2D)g;
-      g2.drawImage(ImageHolder.ourErrorMaskImage, x, y, myColor, null);
+      g2.setColor(getColor());
+      g2.fillRect(x, y, EMPTY_ICON_DIM, EMPTY_ICON_DIM);
     }
 
     @Override

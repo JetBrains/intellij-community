@@ -22,6 +22,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LanguageLevelModuleExtension;
+import com.intellij.openapi.roots.LanguageLevelModuleExtensionImpl;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.Function;
@@ -46,7 +47,7 @@ public class LanguageLevelUsagesCollector extends AbstractApplicationUsagesColle
 
     final Set<String> languageLevels = new HashSet<String>();
     for (Module module : ModuleManager.getInstance(project).getModules()) {
-      final LanguageLevelModuleExtension instance = LanguageLevelModuleExtension.getInstance(module);
+      final LanguageLevelModuleExtension instance = LanguageLevelModuleExtensionImpl.getInstance(module);
       final LanguageLevel languageLevel = instance.getLanguageLevel();
       if (languageLevel != null) {
         languageLevels.add(languageLevel.toString());

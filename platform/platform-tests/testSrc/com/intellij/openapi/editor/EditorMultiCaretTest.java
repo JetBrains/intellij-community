@@ -23,8 +23,10 @@ import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.TestFileType;
+import com.intellij.util.ThrowableRunnable;
 
 import java.awt.event.InputEvent;
+import java.io.IOException;
 
 public class EditorMultiCaretTest extends AbstractEditorTest {
   private boolean myStoredVirtualSpaceSetting;
@@ -70,19 +72,27 @@ public class EditorMultiCaretTest extends AbstractEditorTest {
                       "another line");
   }
 
-  public void testCustomShortcut() throws Exception {
-    Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
-    MouseShortcut shortcut = new MouseShortcut(1, InputEvent.ALT_DOWN_MASK, 1);
-    try {
-      keymap.addShortcut(IdeActions.ACTION_EDITOR_ADD_OR_REMOVE_CARET, shortcut);
-
-      init("<caret>text", TestFileType.TEXT);
-      mouse().alt().clickAt(0, 2);
-      checkResultByText("<caret>te<caret>xt");
-    }
-    finally {
-      keymap.removeShortcut(IdeActions.ACTION_EDITOR_ADD_OR_REMOVE_CARET, shortcut);
-    }
+  public void testCustomShortcut() throws Throwable {
+    doWithAltClickShortcut(new ThrowableRunnable() {
+      @Override
+      public void run() throws IOException {
+        init("<caret>text", TestFileType.TEXT);
+        mouse().alt().clickAt(0, 2);
+        checkResultByText("<caret>te<caret>xt");
+      }
+    });
+  }
+  
+  public void testCaretRemovalWithCustomShortcutDoesntAffectOtherSelections() throws Throwable {
+    doWithAltClickShortcut(new ThrowableRunnable() {
+      @Override
+      public void run() throws IOException {
+        init("<selection>some<caret></selection> text", TestFileType.TEXT);
+        mouse().alt().clickAt(0, 6);
+        mouse().alt().clickAt(0, 6);
+        checkResultByText("<selection>some<caret></selection> text");
+      }
+    });
   }
 
   public void testAltDragStartingFromWithinLine() throws Exception {
@@ -366,5 +376,18 @@ public class EditorMultiCaretTest extends AbstractEditorTest {
                       "<selection>ve<caret></selection>ry long line\n" +
                       "long line\n" +
                       "line");
+  }
+
+  private static void doWithAltClickShortcut(ThrowableRunnable runnable) throws Throwable {
+    Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
+    MouseShortcut shortcut = new MouseShortcut(1, InputEvent.ALT_DOWN_MASK, 1);
+    try {
+      keymap.addShortcut(IdeActions.ACTION_EDITOR_ADD_OR_REMOVE_CARET, shortcut);
+
+      runnable.run();
+    }
+    finally {
+      keymap.removeShortcut(IdeActions.ACTION_EDITOR_ADD_OR_REMOVE_CARET, shortcut);
+    }
   }
 }

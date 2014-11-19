@@ -18,7 +18,6 @@ package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.pom.PomManager;
 import com.intellij.pom.PomModel;
@@ -43,16 +42,13 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Map;
 
 public class ChangeUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.ChangeUtil");
-
-  private ChangeUtil() { }
 
   public static void encodeInformation(TreeElement element) {
     encodeInformation(element, element);
   }
 
   private static void encodeInformation(TreeElement element, ASTNode original) {
-    DebugUtil.startPsiModification("encodeInformation");
+    DebugUtil.startPsiModification(null);
     try {
       encodeInformation(element, original, new HashMap<Object, Object>());
     }
@@ -78,7 +74,7 @@ public class ChangeUtil {
   }
 
   public static TreeElement decodeInformation(TreeElement element) {
-    DebugUtil.startPsiModification("decodeInformation");
+    DebugUtil.startPsiModification(null);
     try {
       return decodeInformation(element, new HashMap<Object, Object>());
     }

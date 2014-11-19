@@ -18,14 +18,16 @@ package com.intellij.dupLocator.index;
 import com.intellij.dupLocator.DuplicatesProfile;
 import com.intellij.dupLocator.DuplocateVisitor;
 import com.intellij.dupLocator.DuplocatorState;
+import com.intellij.dupLocator.LightDuplicateProfile;
 import com.intellij.dupLocator.treeHash.FragmentsCollector;
 import com.intellij.dupLocator.util.PsiFragment;
 import com.intellij.lang.Language;
+import com.intellij.lang.LighterAST;
+import com.intellij.lang.LighterASTNode;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.indexing.*;
@@ -52,6 +54,7 @@ import java.util.Map;
 public class DuplicatesIndex extends FileBasedIndexExtension<Integer, TIntArrayList> implements PsiDependentIndex {
   static boolean ourEnabled = SystemProperties.getBooleanProperty("idea.enable.duplicates.online.calculation",
                                                                   isEnabledByDefault());
+  static boolean ourEnabledLightProfiles = true;
 
   private static boolean isEnabledByDefault() {
     Application application = ApplicationManager.getApplication();
@@ -59,7 +62,7 @@ public class DuplicatesIndex extends FileBasedIndexExtension<Integer, TIntArrayL
   }
 
   @NonNls public static final ID<Integer, TIntArrayList> NAME = ID.create("DuplicatesIndex");
-  private static final int myBaseVersion = 10;
+  private static final int myBaseVersion = 13;
 
   private final FileBasedIndex.InputFilter myInputFilter = new FileBasedIndex.InputFilter() {
     @Override
@@ -107,21 +110,39 @@ public class DuplicatesIndex extends FileBasedIndexExtension<Integer, TIntArrayL
     @Override
     @NotNull
     public Map<Integer, TIntArrayList> map(@NotNull final FileContent inputData) {
-      return ApplicationManager.getApplication().runReadAction(new Computable<Map<Integer, TIntArrayList>>() {
-        @Override
-        public Map<Integer, TIntArrayList> compute() {
-          FileType type = inputData.getFileType();
+      FileType type = inputData.getFileType();
 
-          DuplicatesProfile profile = findDuplicatesProfile(type);
-          if (profile == null) return Collections.emptyMap();
+      DuplicatesProfile profile = findDuplicatesProfile(type);
+      if (profile == null || !profile.acceptsContentForIndexing(inputData)) return Collections.emptyMap();
 
-          MyFragmentsCollector collector = new MyFragmentsCollector(profile, ((LanguageFileType)type).getLanguage());
-          DuplocateVisitor visitor = profile.createVisitor(collector, true);
-          visitor.visitNode(((FileContentImpl)inputData).getPsiFileAccountingForUnsavedDocument());
+      try {
+        FileContentImpl fileContent = (FileContentImpl)inputData;
 
-          return collector.getMap();
+        if (profile instanceof LightDuplicateProfile && ourEnabledLightProfiles) {
+          final THashMap<Integer, TIntArrayList> result = new THashMap<Integer, TIntArrayList>();
+          LighterAST ast = fileContent.getLighterASTForPsiDependentIndex();
+
+          ((LightDuplicateProfile)profile).process(ast, new LightDuplicateProfile.Callback() {
+            @Override
+            public void process(@NotNull LighterAST ast, @NotNull LighterASTNode node, int hash) {
+              TIntArrayList list = result.get(hash);
+              if (list == null) {
+                result.put(hash, list = new TIntArrayList(1));
+              }
+              list.add(node.getStartOffset());
+            }
+          });
+          return result;
         }
-      });
+        MyFragmentsCollector collector = new MyFragmentsCollector(profile, ((LanguageFileType)type).getLanguage());
+        DuplocateVisitor visitor = profile.createVisitor(collector, true);
+
+        visitor.visitNode(fileContent.getPsiFileForPsiDependentIndex());
+
+        return collector.getMap();
+      } catch (StackOverflowError ae) {
+        return Collections.emptyMap(); // todo Maksim
+      }
     }
   };
 
@@ -130,12 +151,12 @@ public class DuplicatesIndex extends FileBasedIndexExtension<Integer, TIntArrayL
     if (!(fileType instanceof LanguageFileType)) return null;
     Language language = ((LanguageFileType)fileType).getLanguage();
     DuplicatesProfile profile = DuplicatesProfile.findProfileForLanguage(language);
-    return profile != null && profile.supportIndex() ? profile : null;
+    return profile != null && (profile.supportDuplicatesIndex() || profile instanceof LightDuplicateProfile) ? profile : null;
   }
 
   @Override
   public int getVersion() {
-    return myBaseVersion + (ourEnabled ? 0xFF : 0);
+    return myBaseVersion + (ourEnabled ? 0xFF : 0) + (ourEnabledLightProfiles ? 0x7F : 0);
   }
 
   @Override

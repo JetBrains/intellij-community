@@ -156,7 +156,7 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
         } else {
           PsiTestUtil.addContentRoot(dep, depRoot);
         }
-        IdeaTestUtil.setModuleLanguageLevel(dep, LanguageLevelModuleExtension.getInstance(myModule).getLanguageLevel());
+        IdeaTestUtil.setModuleLanguageLevel(dep, LanguageLevelModuleExtensionImpl.getInstance(myModule).getLanguageLevel());
 
         result.setResult(dep);
       }

@@ -150,6 +150,15 @@ public class PsiExpressionTrimRenderer extends JavaRecursiveElementWalkingVisito
     expr.getArgumentList().accept(this);
   }
 
+  @Override
+  public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
+    final PsiElement qualifier = expression.getQualifier();
+    if (qualifier != null) {
+      qualifier.accept(this);
+    }
+    myBuf.append("::");
+    myBuf.append(expression.getReferenceName());
+  }
 
   @Override
   public void visitArrayInitializerExpression(final PsiArrayInitializerExpression expression) {
@@ -230,6 +239,10 @@ public class PsiExpressionTrimRenderer extends JavaRecursiveElementWalkingVisito
   public static String render(PsiExpression expression) {
     StringBuilder buf = new StringBuilder();
     expression.accept(new PsiExpressionTrimRenderer(buf));
-    return buf.toString();
+    final String text = buf.toString();
+    int firstNewLinePos = text.indexOf('\n');
+    String trimmedText = text.substring(0, firstNewLinePos != -1 ? firstNewLinePos : Math.min(100, text.length()));
+    if (trimmedText.length() != text.length()) trimmedText += " ...";
+    return trimmedText;
   }
 }

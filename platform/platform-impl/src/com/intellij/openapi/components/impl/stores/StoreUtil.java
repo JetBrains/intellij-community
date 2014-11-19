@@ -17,6 +17,9 @@ package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.diagnostic.IdeErrorsDialog;
 import com.intellij.diagnostic.PluginException;
+import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.StateStorage.SaveSession;
 import com.intellij.openapi.components.StateStorageException;
 import com.intellij.openapi.components.store.ComponentSaveSession;
@@ -26,6 +29,7 @@ import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -70,5 +74,32 @@ public class StoreUtil {
         ShutDownTracker.getInstance().unregisterStopperThread(Thread.currentThread());
       }
     }
+  }
+
+  @NotNull
+  public static <T> State getStateSpec(@NotNull PersistentStateComponent<T> persistentStateComponent) {
+    Class<? extends PersistentStateComponent> componentClass = persistentStateComponent.getClass();
+    State spec = getStateSpec(componentClass);
+    if (spec != null) {
+      return spec;
+    }
+
+    PluginId pluginId = PluginManagerCore.getPluginByClassName(componentClass.getName());
+    if (pluginId != null) {
+      throw new PluginException("No @State annotation found in " + componentClass, pluginId);
+    }
+    throw new RuntimeException("No @State annotation found in " + componentClass);
+  }
+
+  @Nullable
+  public static State getStateSpec(@NotNull Class<?> aClass) {
+    do {
+      State stateSpec = aClass.getAnnotation(State.class);
+      if (stateSpec != null) {
+        return stateSpec;
+      }
+    }
+    while ((aClass = aClass.getSuperclass()) != null);
+    return null;
   }
 }

@@ -38,6 +38,8 @@ public interface RegExpTT {
     IElementType CLASS_BEGIN = new RegExpElementType("CLASS_BEGIN");
     IElementType CLASS_END = new RegExpElementType("CLASS_END");
     IElementType ANDAND = new RegExpElementType("ANDAND");
+    IElementType BRACKET_EXPRESSION_BEGIN = new RegExpElementType("BRACKET_EXPRESSION_BEGIN");
+    IElementType BRACKET_EXPRESSION_END = new RegExpElementType("BRACKET_EXPRESSION_END");
 
     IElementType GROUP_BEGIN = new RegExpElementType("GROUP_BEGIN");
     IElementType GROUP_END = new RegExpElementType("GROUP_END");
@@ -87,6 +89,8 @@ public interface RegExpTT {
     IElementType CTRL = new RegExpElementType("CTRL");
     // "\\p" | "\\P"
     IElementType PROPERTY = new RegExpElementType("PROPERTY");
+    // "L" | "M" | "Z" | "S" | "N" | "P" | "C" after a property escape
+    IElementType CATEGORY_SHORT_HAND = new RegExpElementType("CATEGORY_SHORT_HAND");
 
     // e.g. "\\#" but also "\\q" which is not a valid escape actually
     IElementType REDUNDANT_ESCAPE = new RegExpElementType("REDUNDANT_ESCAPE");
@@ -111,9 +115,13 @@ public interface RegExpTT {
   
     // (?<name>...
     IElementType RUBY_NAMED_GROUP = new RegExpElementType("RUBY_NAMED_GROUP");
+    // \k<name>
+    IElementType RUBY_NAMED_GROUP_REF = new RegExpElementType("RUBY_NAMED_GROUP_REF");
 
     // (?'name'...
     IElementType RUBY_QUOTED_NAMED_GROUP = new RegExpElementType("RUBY_QUOTED_NAMED_GROUP");
+    // \k'name'
+    IElementType RUBY_QUOTED_NAMED_GROUP_REF = new RegExpElementType("RUBY_QUOTED_NAMED_GROUP_REF");
 
     TokenSet KEYWORDS = TokenSet.create(DOT, STAR, QUEST, PLUS);
 

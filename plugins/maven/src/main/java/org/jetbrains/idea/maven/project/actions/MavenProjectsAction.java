@@ -17,6 +17,7 @@ package org.jetbrains.idea.maven.project.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.actions.MavenAction;
@@ -31,10 +32,12 @@ public abstract class MavenProjectsAction extends MavenAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final DataContext context = e.getDataContext();
-    perform(MavenActionUtil.getProjectsManager(context), MavenActionUtil.getMavenProjects(context), e);
+    final MavenProjectsManager projectsManager = MavenActionUtil.getProjectsManager(context);
+    if(projectsManager == null) return;
+    perform(projectsManager, MavenActionUtil.getMavenProjects(context), e);
   }
 
-  protected abstract void perform(MavenProjectsManager manager, List<MavenProject> mavenProjects, AnActionEvent e);
+  protected abstract void perform(@NotNull MavenProjectsManager manager, List<MavenProject> mavenProjects, AnActionEvent e);
 }

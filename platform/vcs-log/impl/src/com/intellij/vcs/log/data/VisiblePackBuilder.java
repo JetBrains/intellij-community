@@ -63,12 +63,13 @@ class VisiblePackBuilder {
       return Pair.create(applyHashFilter(dataPack, hashFilter.getHashes(), sortType), commitCount);
     }
 
+    Set<Integer> matchingHeads = getMatchingHeads(dataPack.getRefs(), filters);
     List<VcsLogDetailsFilter> detailsFilters = filters.getDetailsFilters();
     List<Hash> matchingCommits = null;
     boolean canRequestMore = false;
     if (!detailsFilters.isEmpty()) {
       if (commitCount == CommitCountStage.INITIAL) {
-        matchingCommits = filterInMemory(dataPack.getPermanentGraph(), detailsFilters);
+        matchingCommits = filterInMemory(dataPack.getPermanentGraph(), detailsFilters, matchingHeads);
         if (matchingCommits.size() < commitCount.getCount()) {
           commitCount = commitCount.next();
           matchingCommits = null;
@@ -90,14 +91,17 @@ class VisiblePackBuilder {
     }
 
     VisibleGraph<Integer> visibleGraph;
-    if (matchingCommits != null && matchingCommits.isEmpty()) {
+    if (matchesNothing(matchingHeads) || matchesNothing(matchingCommits)) {
       visibleGraph = EmptyVisibleGraph.getInstance();
     }
     else {
-      visibleGraph = dataPack.getPermanentGraph().createVisibleGraph(sortType, getMatchingHeads(dataPack.getRefs(), filters),
-                                                                     getFilterFromCommits(matchingCommits));
+      visibleGraph = dataPack.getPermanentGraph().createVisibleGraph(sortType, matchingHeads, getFilterFromCommits(matchingCommits));
     }
     return Pair.create(new VisiblePack(dataPack, visibleGraph, canRequestMore), commitCount);
+  }
+
+  private static <T> boolean matchesNothing(@Nullable Collection<T> matchingSet) {
+    return matchingSet != null && matchingSet.isEmpty();
   }
 
   private VisiblePack applyHashFilter(@NotNull DataPack dataPack,
@@ -139,7 +143,9 @@ class VisiblePackBuilder {
   }
 
   @NotNull
-  private List<Hash> filterInMemory(@NotNull PermanentGraph<Integer> permanentGraph, @NotNull List<VcsLogDetailsFilter> detailsFilters) {
+  private List<Hash> filterInMemory(@NotNull PermanentGraph<Integer> permanentGraph,
+                                    @NotNull List<VcsLogDetailsFilter> detailsFilters,
+                                    @Nullable Set<Integer> matchingHeads) {
     List<Hash> result = ContainerUtil.newArrayList();
     for (GraphCommit<Integer> commit : permanentGraph.getAllCommits()) {
       VcsCommitMetadata data = getDetailsFromCache(commit.getId());
@@ -147,20 +153,35 @@ class VisiblePackBuilder {
         // no more continuous details in the cache
         break;
       }
-      if (matchesAllFilters(data, detailsFilters)) {
+      if (matchesAllFilters(data, permanentGraph, detailsFilters, matchingHeads)) {
         result.add(data.getId());
       }
     }
     return result;
   }
 
-  private static boolean matchesAllFilters(@NotNull final VcsCommitMetadata commit, @NotNull List<VcsLogDetailsFilter> detailsFilters) {
-    return ContainerUtil.and(detailsFilters, new Condition<VcsLogDetailsFilter>() {
+  private boolean matchesAllFilters(@NotNull final VcsCommitMetadata commit,
+                                    @NotNull final PermanentGraph<Integer> permanentGraph,
+                                    @NotNull List<VcsLogDetailsFilter> detailsFilters,
+                                    @Nullable final Set<Integer> matchingHeads) {
+    boolean matchesAllDetails = ContainerUtil.and(detailsFilters, new Condition<VcsLogDetailsFilter>() {
       @Override
       public boolean value(VcsLogDetailsFilter filter) {
         return filter.matches(commit);
       }
     });
+    return matchesAllDetails && matchesAnyHead(permanentGraph, commit, matchingHeads);
+  }
+
+  private boolean matchesAnyHead(@NotNull PermanentGraph<Integer> permanentGraph,
+                                 @NotNull VcsCommitMetadata commit,
+                                 @Nullable Set<Integer> matchingHeads) {
+    if (matchingHeads == null) {
+      return true;
+    }
+    // TODO O(n^2)
+    int commitIndex = myHashMap.getCommitIndex(commit.getId());
+    return ContainerUtil.intersects(permanentGraph.getContainingBranches(commitIndex), matchingHeads);
   }
 
   @Nullable

@@ -30,9 +30,17 @@ import java.util.List;
  * @since 12-Aug-2008
  */
 public class CommandLineWrapper {
+
+  /**
+   * The VM property is needed to workaround incorrect escaped URLs handling in WebSphere,
+   * see <a href="https://youtrack.jetbrains.com/issue/IDEA-126859#comment=27-778948">IDEA-126859</a> for additional details
+   */
+  public static final String PROPERTY_DO_NOT_ESCAPE_CLASSPATH_URL = "idea.do.not.escape.classpath.url";
+
   private static final String PREFIX = "-D";
 
   public static void main(String[] args) throws Exception {
+    final boolean notEscapeClasspathUrl = Boolean.valueOf(System.getProperty(PROPERTY_DO_NOT_ESCAPE_CLASSPATH_URL)).booleanValue();
     final List urls = new ArrayList();
     final File file = new File(args[0]);
     final StringBuffer buf = new StringBuffer();
@@ -44,13 +52,14 @@ public class CommandLineWrapper {
           buf.append(File.pathSeparator);
         }
         buf.append(fileName);
+        File classpathElement = new File(fileName);
         try {
-          //noinspection Since15
-          urls.add(new File(fileName).toURI().toURL());
+          //noinspection Since15, deprecation
+          urls.add(notEscapeClasspathUrl ? classpathElement.toURL() : classpathElement.toURI().toURL());
         }
         catch (NoSuchMethodError e) {
           //noinspection deprecation
-          urls.add(new File(fileName).toURL());
+          urls.add(classpathElement.toURL());
         }
       }
     }

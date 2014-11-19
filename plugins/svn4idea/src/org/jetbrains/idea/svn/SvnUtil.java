@@ -510,15 +510,6 @@ public class SvnUtil {
     }
   }
 
-  @Nullable
-  public static VirtualFile correctRoot(final Project project, final VirtualFile file) {
-    if (file.getPath().length() == 0) {
-      // project root
-      return project.getBaseDir();
-    }
-    return file;
-  }
-
   public static boolean checkRepositoryVersion15(@NotNull SvnVcs vcs, @NotNull String url) {
     // Merge info tracking is supported in repositories since svn 1.5 (June 2008) - see http://subversion.apache.org/docs/release-notes/.
     // But still some users use 1.4 repositories and currently we need to know if repository supports merge info for some code flows.

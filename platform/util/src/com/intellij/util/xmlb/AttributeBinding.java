@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.util.xmlb;
 
 import com.intellij.util.xmlb.annotations.Attribute;
@@ -53,17 +52,16 @@ public class AttributeBinding extends BasePrimitiveBinding {
 
   @Override
   @Nullable
-  public Object deserialize(Object context, @NotNull Object... nodes) {
-    assert nodes.length == 1;
-    org.jdom.Attribute node = (org.jdom.Attribute)nodes[0];
-    assert isBoundTo(node);
+  public Object deserialize(Object context, @NotNull Object node) {
+    org.jdom.Attribute attribute = (org.jdom.Attribute)node;
+    assert isBoundTo(attribute);
     Object value;
     if (myConverter != null) {
-      value = myConverter.fromString(node.getValue());
+      value = myConverter.fromString(attribute.getValue());
     }
     else {
       assert myBinding != null;
-      value = myBinding.deserialize(context, new Text(node.getValue()));
+      value = myBinding.deserialize(context, new Text(attribute.getValue()));
     }
     myAccessor.write(context, value);
     return context;
@@ -85,5 +83,9 @@ public class AttributeBinding extends BasePrimitiveBinding {
     if (myBinding != null && !Text.class.isAssignableFrom(myBinding.getBoundNodeType())) {
       throw new XmlSerializationException("Can't use attribute binding for non-text content: " + myAccessor);
     }
+  }
+
+  public String toString() {
+    return "AttributeBinding[" + myName + ", binding=" + myBinding + "]";
   }
 }

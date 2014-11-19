@@ -89,6 +89,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
   private final ASTNode myOriginalTree;
   private final MyTreeStructure myParentLightTree;
+  private final int myOffset;
 
   private static TokenSet ourAnyLanguageWhitespaceTokens = TokenSet.EMPTY;
 
@@ -132,7 +133,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
                         @Nullable ASTNode originalTree,
                         @Nullable MyTreeStructure parentLightTree) {
     this(project, containingFile, parserDefinition.getWhitespaceTokens(), parserDefinition.getCommentTokens(), lexer, charTable, text,
-         originalTree, parentLightTree);
+         originalTree, parentLightTree, 0);
   }
 
   public PsiBuilderImpl(Project project,
@@ -144,6 +145,19 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
                         @NotNull final CharSequence text,
                         @Nullable ASTNode originalTree,
                         @Nullable MyTreeStructure parentLightTree) {
+    this(project, containingFile, whiteSpaces, comments, lexer, charTable, text, originalTree, parentLightTree, 0);
+  }
+
+  private PsiBuilderImpl(Project project,
+                        PsiFile containingFile,
+                        @NotNull TokenSet whiteSpaces,
+                        @NotNull TokenSet comments,
+                        @NotNull Lexer lexer,
+                        CharTable charTable,
+                        @NotNull final CharSequence text,
+                        @Nullable ASTNode originalTree,
+                        @Nullable MyTreeStructure parentLightTree,
+                        int offset) {
     myProject = project;
     myFile = containingFile;
 
@@ -156,6 +170,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     myCharTable = charTable;
     myOriginalTree = originalTree;
     myParentLightTree = parentLightTree;
+    myOffset = offset;
 
     cacheLexemes();
   }
@@ -174,8 +189,8 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
                         @NotNull final Lexer lexer,
                         @NotNull final LighterLazyParseableNode chameleon,
                         @NotNull final CharSequence text) {
-    this(project, chameleon.getContainingFile(), parserDefinition, lexer, chameleon.getCharTable(), text,
-         null, ((LazyParseableToken)chameleon).myParent);
+    this(project, chameleon.getContainingFile(), parserDefinition.getWhitespaceTokens(), parserDefinition.getCommentTokens(), lexer,
+         chameleon.getCharTable(), text, null, ((LazyParseableToken)chameleon).myParent, chameleon.getStartOffset());
   }
 
   private void cacheLexemes() {
@@ -335,12 +350,12 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
     @Override
     public int getStartOffset() {
-      return myBuilder.myLexStarts[myLexemeIndex];
+      return myBuilder.myLexStarts[myLexemeIndex] + myBuilder.myOffset;
     }
 
     @Override
     public int getEndOffset() {
-      return myBuilder.myLexStarts[myDoneMarker.myLexemeIndex];
+      return myBuilder.myLexStarts[myDoneMarker.myLexemeIndex] + myBuilder.myOffset;
     }
 
     @Override
@@ -487,12 +502,12 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
     @Override
     public int getEndOffset() {
-      return myTokenEnd;
+      return myTokenEnd + myBuilder.myOffset;
     }
 
     @Override
     public int getStartOffset() {
-      return myTokenStart;
+      return myTokenStart + myBuilder.myOffset;
     }
 
     public CharSequence getText() {
@@ -636,12 +651,12 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
     @Override
     public int getEndOffset() {
-      return myBuilder.myLexStarts[myLexemeIndex];
+      return myBuilder.myLexStarts[myLexemeIndex] + myBuilder.myOffset;
     }
 
     @Override
     public int getStartOffset() {
-      return myBuilder.myLexStarts[myLexemeIndex];
+      return myBuilder.myLexStarts[myLexemeIndex] + myBuilder.myOffset;
     }
 
     @Override
@@ -1474,6 +1489,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     private final LimitedPool<Token> myPool;
     private final LimitedPool<LazyParseableToken> myLazyPool;
     private final StartMarker myRoot;
+    private final int myOffset;
 
     public MyTreeStructure(@NotNull StartMarker root, @Nullable final MyTreeStructure parentTree) {
       if (parentTree == null) {
@@ -1499,10 +1515,12 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
             return new LazyParseableToken();
           }
         });
+        myOffset = 0;
       }
       else {
         myPool = parentTree.myPool;
         myLazyPool = parentTree.myLazyPool;
+        myOffset = parentTree.getRoot().getStartOffset();
       }
       myRoot = root;
     }
@@ -1563,7 +1581,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       }
 
       insertLeaves(lexIndex, marker.myDoneMarker.myLexemeIndex, marker.myBuilder);
-      into.set(nodes);
+      into.set(nodes == null ? LighterASTNode.EMPTY_ARRAY : nodes);
       nodes = null;
 
       return count;

@@ -16,6 +16,7 @@
 
 package com.intellij.ide.impl;
 
+import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
@@ -365,13 +366,13 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
   }
 
   private void updateHeaderActions(StructureView structureView) {
-    ActionGroup gearActions = null;
     AnAction[] titleActions = AnAction.EMPTY_ARRAY;
     if (structureView instanceof StructureViewComponent) {
-      gearActions = ((StructureViewComponent)structureView).getGearActions();
-      titleActions = ((StructureViewComponent)structureView).getTitleActions();
+      JTree tree = ((StructureViewComponent)structureView).getTree();
+      titleActions = new AnAction[]{
+        CommonActionsManager.getInstance().createExpandAllHeaderAction(tree),
+        CommonActionsManager.getInstance().createCollapseAllHeaderAction(tree)};
     }
-    myToolWindow.setAdditionalGearActions(gearActions);
     myToolWindow.setTitleActions(titleActions);
   }
 

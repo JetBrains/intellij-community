@@ -109,7 +109,11 @@ public class RemoteDebugger implements ProcessDebugger {
   public String handshake() throws PyDebuggerException {
     final VersionCommand command = new VersionCommand(this, LOCAL_VERSION, SystemInfo.isUnix ? "UNIX" : "WIN");
     command.execute();
-    return command.getRemoteVersion();
+    String version = command.getRemoteVersion();
+    if (version != null) {
+      version = version.trim();
+    }
+    return version;
   }
 
   @Override
@@ -152,6 +156,13 @@ public class RemoteDebugger implements ProcessDebugger {
     final GetVariableCommand command = new GetVariableCommand(this, threadId, frameId, var);
     command.execute();
     return command.getVariables();
+  }
+
+  @Override
+  public ArrayChunk loadArrayItems(String  threadId, String frameId, PyDebugValue var, int rowOffset, int colOffset, int rows, int cols, String format) throws PyDebuggerException {
+    final GetArrayCommand command = new GetArrayCommand(this, threadId, frameId, var, rowOffset, colOffset, rows, cols, format);
+    command.execute();
+    return command.getArray();
   }
 
 
@@ -437,6 +448,16 @@ public class RemoteDebugger implements ProcessDebugger {
   }
 
   @Override
+  public void setBreakpointWithFuncName(String typeId, String file, int line, String condition, String logExpression, String funcName) {
+    final SetBreakpointCommand command =
+      new SetBreakpointCommand(this, typeId, file, line,
+                               condition,
+                               logExpression,
+                               funcName);
+    execute(command);
+  }
+
+  @Override
   public void removeBreakpoint(String typeId, String file, int line) {
     final RemoveBreakpointCommand command =
       new RemoveBreakpointCommand(this, typeId, file, line);
@@ -454,6 +475,7 @@ public class RemoteDebugger implements ProcessDebugger {
 
   private class DebuggerReader extends BaseOutputReader {
     private Reader myReader;
+    private StringBuilder myTextBuilder = new StringBuilder();
 
     private DebuggerReader(final Reader reader) throws IOException {
       super(reader);
@@ -603,7 +625,20 @@ public class RemoteDebugger implements ProcessDebugger {
 
     @Override
     protected void onTextAvailable(@NotNull String text) {
-      processResponse(text);
+      myTextBuilder.append(text);
+      if (text.contains("\n")) {
+        String[] lines = myTextBuilder.toString().split("\n");
+        myTextBuilder = new StringBuilder();
+
+        if (!text.endsWith("\n")) {
+          myTextBuilder.append(lines[lines.length - 1]);
+          lines = Arrays.copyOfRange(lines, 0, lines.length - 1);
+        }
+
+        for (String line : lines) {
+          processResponse(line + "\n");
+        }
+      }
     }
   }
 

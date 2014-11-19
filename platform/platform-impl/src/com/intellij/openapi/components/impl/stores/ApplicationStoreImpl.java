@@ -21,7 +21,9 @@ import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NamedJDOMExternalizable;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -65,11 +67,6 @@ class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationSto
       }
 
       @Override
-      protected String getVersionsFilePath() {
-        return getConfigPath() + "/options/appComponentVersions.xml";
-      }
-
-      @Override
       protected TrackingPathMacroSubstitutor getMacroSubstitutor(@NotNull final String fileSpec) {
         if (fileSpec.equals(StoragePathMacros.APP_CONFIG + "/" + PathMacrosImpl.EXT_FILE_NAME + XML_EXTENSION)) return null;
         return super.getMacroSubstitutor(fileSpec);
@@ -86,13 +83,7 @@ class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationSto
           try {
             VirtualFile configDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(getConfigPath());
             if (configDir != null) {
-              VfsUtilCore.visitChildrenRecursively(configDir, new VirtualFileVisitor() {
-                @Override
-                public boolean visitFile(@NotNull VirtualFile file) {
-                  return !"componentVersions".equals(file.getName());
-                }
-              });
-              VfsUtil.markDirtyAndRefresh(false, true, false, configDir);
+              VfsUtil.markDirtyAndRefresh(false, true, true, configDir);
             }
           }
           finally {

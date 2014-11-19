@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ public class MergingCharSequence implements CharSequence {
   private final CharSequence s1;
   private final CharSequence s2;
 
-  public MergingCharSequence(final CharSequence s1, final CharSequence s2) {
+  public MergingCharSequence(@NotNull CharSequence s1, @NotNull CharSequence s2) {
     this.s1 = s1;
     this.s2 = s2;
   }
@@ -47,6 +47,7 @@ public class MergingCharSequence implements CharSequence {
     return new MergingCharSequence(s1.subSequence(start, s1.length()), s2.subSequence(0, end - s1.length()));
   }
 
+  @Override
   @NotNull
   public String toString() {
     return s1.toString() + s2.toString();

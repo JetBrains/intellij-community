@@ -184,7 +184,7 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
     });
     myBranchTagBaseComboBox.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        BranchConfigurationDialog.configureBranches(project, mySrcVirtualFile, true);
+        BranchConfigurationDialog.configureBranches(project, mySrcVirtualFile);
         updateBranchTagBases();
         updateControls();
       }

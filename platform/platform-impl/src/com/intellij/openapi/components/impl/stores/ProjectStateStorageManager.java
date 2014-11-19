@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.components.impl.stores;
 
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import org.jdom.Element;
@@ -62,11 +61,6 @@ class ProjectStateStorageManager extends StateStorageManagerImpl {
       fileSpec = StoragePathMacros.PROJECT_FILE;
     }
     return fileSpec;
-  }
-
-  @Override
-  protected String getVersionsFilePath() {
-    return PathManager.getConfigPath() + "/componentVersions/" + "project" + myProject.getLocationHash() + ".xml";
   }
 
   private static boolean isWorkspace(final Map options) {

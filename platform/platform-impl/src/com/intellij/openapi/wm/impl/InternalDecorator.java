@@ -16,12 +16,10 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.actions.ResizeToolWindowAction;
+import com.intellij.ide.actions.ToggleToolbarAction;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.keymap.Keymap;
-import com.intellij.openapi.keymap.KeymapManagerListener;
-import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Queryable;
@@ -54,7 +52,7 @@ import java.util.Map;
  * @author Eugene Belyaev
  * @author Vladimir Kondratyev
  */
-public final class InternalDecorator extends JPanel implements Queryable, TypeSafeDataProvider {
+public final class InternalDecorator extends JPanel implements Queryable, DataProvider {
 
   private Project myProject;
   private WindowInfoImpl myInfo;
@@ -74,7 +72,6 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
   /**
    * Catches all event from tool window and modifies decorator's appearance.
    */
-  private final MyKeymapManagerListener myWeakKeymapManagerListener;
   @NonNls private static final String HIDE_ACTIVE_WINDOW_ACTION_ID = "HideActiveWindow";
   @NonNls public static final String TOGGLE_PINNED_MODE_ACTION_ID = "TogglePinnedMode";
   @NonNls public static final String TOGGLE_DOCK_MODE_ACTION_ID = "ToggleDockMode";
@@ -83,6 +80,7 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
   @NonNls private static final String TOGGLE_CONTENT_UI_TYPE_ACTION_ID = "ToggleContentUiTypeMode";
 
   private ToolWindowHeader myHeader;
+  private ActionGroup myToggleToolbarGroup;
 
   InternalDecorator(final Project project, @NotNull WindowInfoImpl info, final ToolWindowImpl toolWindow) {
     super(new BorderLayout());
@@ -96,6 +94,7 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
     myToggleDockModeAction = new ToggleDockModeAction();
     myToggleAutoHideModeAction = new TogglePinnedModeAction();
     myToggleContentUiTypeAction = new ToggleContentUiTypeAction();
+    myToggleToolbarGroup = ToggleToolbarAction.createToggleToolbarGroup(myProject, myToolWindow);
 
     myHeader = new ToolWindowHeader(toolWindow, info, new Producer<ActionGroup>() {
       @Override
@@ -123,11 +122,6 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
         fireHiddenSide();
       }
     };
-
-    MyKeymapManagerListener keymapManagerListener = new MyKeymapManagerListener();
-    final KeymapManagerEx keymapManager = KeymapManagerEx.getInstanceEx();
-    myWeakKeymapManagerListener = keymapManagerListener;
-    keymapManager.addWeakListener(keymapManagerListener);
 
     init();
 
@@ -192,11 +186,13 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
     setBorder(new InnerPanelBorder(myToolWindow));
   }
 
+  @Nullable
   @Override
-  public void calcData(DataKey key, DataSink sink) {
-    if (PlatformDataKeys.TOOL_WINDOW.equals(key)) {
-      sink.put(PlatformDataKeys.TOOL_WINDOW, myToolWindow);
+  public Object getData(@NonNls String dataId) {
+    if (PlatformDataKeys.TOOL_WINDOW.is(dataId)) {
+      return myToolWindow;
     }
+    return null;
   }
 
   final void addInternalDecoratorListener(InternalDecoratorListener l) {
@@ -209,7 +205,6 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
 
   final void dispose() {
     removeAll();
-    KeymapManagerEx.getInstanceEx().removeWeakListener(myWeakKeymapManagerListener);
 
     Disposer.dispose(myHeader);
     myHeader = null;
@@ -407,6 +402,7 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
     resize.add(new ResizeToolWindowAction.Right(myToolWindow, this));
     resize.add(new ResizeToolWindowAction.Up(myToolWindow, this));
     resize.add(new ResizeToolWindowAction.Down(myToolWindow, this));
+    resize.add(ActionManager.getInstance().getAction("MaximizeToolWindow"));
 
     group.add(resize);
 
@@ -422,6 +418,7 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
       addSorted(group, myAdditionalGearActions);
       group.addSeparator();
     }
+    group.addAction(myToggleToolbarGroup).setAsSecondary(true);
     if (myInfo.isDocked()) {
       group.add(myToggleAutoHideModeAction);
       group.add(myToggleDockModeAction);
@@ -502,7 +499,7 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
     }
 
     @Override
-    public final void actionPerformed(final AnActionEvent e) {
+    public final void actionPerformed(@NotNull final AnActionEvent e) {
       fireAnchorChanged(myAnchor);
     }
   }
@@ -581,7 +578,7 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
     }
 
     @Override
-    public void update(final AnActionEvent e) {
+    public void update(@NotNull final AnActionEvent e) {
       super.update(e);
     }
   }
@@ -595,12 +592,12 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
     }
 
     @Override
-    public final void actionPerformed(final AnActionEvent e) {
+    public final void actionPerformed(@NotNull final AnActionEvent e) {
       fireHidden();
     }
 
     @Override
-    public final void update(final AnActionEvent event) {
+    public final void update(@NotNull final AnActionEvent event) {
       final Presentation presentation = event.getPresentation();
       presentation.setEnabled(myInfo.isVisible());
     }
@@ -714,22 +711,11 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
       }
     }
 
+    @NotNull
     @Override
     public Cursor getCursor() {
       final boolean isVerticalCursor = myInfo.isDocked() ? myInfo.getAnchor().isSplitVertically() : myInfo.getAnchor().isHorizontal();
       return isVerticalCursor ? Cursor.getPredefinedCursor(Cursor.S_RESIZE_CURSOR) : Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR);
-    }
-  }
-
-  /**
-   * Updates tooltips.
-   */
-  private final class MyKeymapManagerListener implements KeymapManagerListener {
-    @Override
-    public final void activeKeymapChanged(final Keymap keymap) {
-      if (myHeader != null) {
-        myHeader.updateTooltips();
-      }
     }
   }
 

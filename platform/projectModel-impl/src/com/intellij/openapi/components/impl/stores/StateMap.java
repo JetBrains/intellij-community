@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SystemProperties;
 import gnu.trove.THashMap;
@@ -28,13 +29,14 @@ import org.iq80.snappy.SnappyInputStream;
 import org.iq80.snappy.SnappyOutputStream;
 import org.jdom.Element;
 import org.jdom.JDOMException;
+import org.jdom.output.Format;
+import org.jdom.output.XMLOutputter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
@@ -43,6 +45,11 @@ import java.util.Set;
 @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
 final class StateMap {
   private static final Logger LOG = Logger.getInstance(StateMap.class);
+
+  private static final Format XML_FORMAT = Format.getRawFormat().
+    setTextMode(Format.TextMode.TRIM).
+    setOmitEncoding(true).
+    setOmitDeclaration(true);
 
   private final THashMap<String, Object> states;
 
@@ -159,16 +166,15 @@ final class StateMap {
   @NotNull
   private static byte[] archiveState(@NotNull Element state) {
     BufferExposingByteArrayOutputStream byteOut = new BufferExposingByteArrayOutputStream();
-    OutputStream out = null;
     try {
+      OutputStreamWriter writer = new OutputStreamWriter(new SnappyOutputStream(byteOut), CharsetToolkit.UTF8_CHARSET);
       try {
-        out = new SnappyOutputStream(byteOut);
-        JDOMUtil.writeParent(state, out, "\n");
+        XMLOutputter xmlOutputter = new JDOMUtil.MyXMLOutputter();
+        xmlOutputter.setFormat(XML_FORMAT);
+        xmlOutputter.output(state, writer);
       }
       finally {
-        if (out != null) {
-          out.close();
-        }
+        writer.close();
       }
     }
     catch (IOException e) {
@@ -190,18 +196,8 @@ final class StateMap {
 
   @NotNull
   public static Element unarchiveState(@NotNull byte[] state) {
-    InputStream in = null;
     try {
-      try {
-        in = new SnappyInputStream(new ByteArrayInputStream(state));
-        //noinspection ConstantConditions
-        return JDOMUtil.loadDocument(in).detachRootElement();
-      }
-      finally {
-        if (in != null) {
-          in.close();
-        }
-      }
+      return JDOMUtil.load(new SnappyInputStream(new ByteArrayInputStream(state)));
     }
     catch (IOException e) {
       throw new StateStorageException(e);

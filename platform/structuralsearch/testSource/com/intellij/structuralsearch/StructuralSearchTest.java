@@ -589,6 +589,15 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
       1,
       findMatchesCount(s,s2_2)
     );
+
+    String pattern3 = "\"'String\"";
+    assertEquals("String literal", 1, findMatchesCount(s, pattern3));
+
+    String pattern4 = "\"test\"";
+    String source = "@SuppressWarnings(\"test\") class A {" +
+                    "  @SuppressWarnings({\"other\", \"test\"}) String field;" +
+                    "}";
+    assertEquals("String literal in annotation", 2, findMatchesCount(source, pattern4));
   }
 
   public void testCovariantArraySearch() {
@@ -1418,6 +1427,8 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     // typed var with instanceof
     assertEquals("typed instanceof",findMatchesCount(s65,s66),1);
+
+    assertEquals("don't throw exception on incomplete instanceof expression", findMatchesCount(s65, "'_T instanceof"), 2);
 
     // typed vars with arrays
     assertEquals("typed pattern with array",findMatchesCount(s23,s24_1),2);

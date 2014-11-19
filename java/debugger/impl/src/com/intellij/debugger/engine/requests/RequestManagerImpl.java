@@ -29,6 +29,7 @@ import com.intellij.debugger.requests.Requestor;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.breakpoints.FilteredRequestor;
+import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -37,7 +38,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiClass;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.containers.HashMap;
-import com.intellij.xdebugger.XDebugSession;
 import com.sun.jdi.*;
 import com.sun.jdi.event.ClassPrepareEvent;
 import com.sun.jdi.request.*;
@@ -287,7 +287,11 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
             }
           }
         }
-        myEventRequestManager.deleteEventRequest(request);
+        try {
+          myEventRequestManager.deleteEventRequest(request);
+        } catch (Exception e) {
+          LOG.error("Exception in EventRequestManager.deleteEventRequest", e, ThreadDumper.dumpThreadsToString());
+        }
       }
       catch (InvalidRequestStateException ignored) {
         // request is already deleted

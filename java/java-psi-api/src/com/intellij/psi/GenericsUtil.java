@@ -255,40 +255,54 @@ public class GenericsUtil {
                                                                                 final PsiSubstitutor substitutor,
                                                                                 final PsiElement context,
                                                                                 final boolean allowUncheckedConversion) {
-    nextTypeParam:
     for (PsiTypeParameter typeParameter : typeParams) {
-      PsiType substituted = substitutor.substitute(typeParameter);
-      if (substituted == null) return null;
-      if (context != null) {
-        substituted = PsiUtil.captureToplevelWildcards(substituted, context);
+      PsiType boundError = findTypeParameterBoundError(typeParameter, typeParameter.getExtendsListTypes(),
+                                                       substitutor, context, allowUncheckedConversion);
+      if (boundError != null) {
+        return Pair.create(typeParameter, boundError);
       }
+    }
+    return null;
+  }
 
-      PsiClassType[] extendsTypes = typeParameter.getExtendsListTypes();
-      for (PsiClassType type : extendsTypes) {
-        PsiType extendsType = substitutor.substitute(type);
-        if (substituted instanceof PsiWildcardType) {
-          if (((PsiWildcardType)substituted).isSuper()) {
-            continue;
-          }
-          final PsiType extendsBound = ((PsiWildcardType)substituted).getExtendsBound();
-          if (acceptExtendsBound(extendsType, extendsBound)) {
-            continue nextTypeParam;
-          }
+  public static PsiType findTypeParameterBoundError(PsiTypeParameter typeParameter,
+                                                    PsiType[] extendsTypes,
+                                                    PsiSubstitutor substitutor,
+                                                    PsiElement context,
+                                                    boolean allowUncheckedConversion) {
+    PsiType substituted = substitutor.substitute(typeParameter);
+    if (substituted == null) return null;
+    if (context != null) {
+      substituted = PsiUtil.captureToplevelWildcards(substituted, context);
+    }
+
+    if (substituted instanceof PsiWildcardType) {
+      if (((PsiWildcardType)substituted).isSuper()) {
+        return null;
+      }
+    }
+
+    for (PsiType type : extendsTypes) {
+      PsiType extendsType = substitutor.substitute(type);
+      if (substituted instanceof PsiWildcardType) {
+        final PsiType extendsBound = ((PsiWildcardType)substituted).getExtendsBound();
+        if (acceptExtendsBound(extendsType, extendsBound)) {
+          return null;
         }
-        else if (substituted instanceof PsiIntersectionType) {
-          for (PsiType extendsBound : ((PsiIntersectionType)substituted).getConjuncts()) {
-            if (acceptExtendsBound(extendsType, extendsBound)) continue nextTypeParam;
-          }
+      }
+      else if (substituted instanceof PsiIntersectionType) {
+        for (PsiType extendsBound : ((PsiIntersectionType)substituted).getConjuncts()) {
+          if (acceptExtendsBound(extendsType, extendsBound)) return null;
         }
-        else if (substituted instanceof PsiCapturedWildcardType) {
-          final PsiType extendsBound = ((PsiCapturedWildcardType)substituted).getUpperBound();
-          if (acceptExtendsBound(extendsType, extendsBound)) {
-            continue nextTypeParam;
-          }
+      }
+      else if (substituted instanceof PsiCapturedWildcardType) {
+        final PsiType extendsBound = ((PsiCapturedWildcardType)substituted).getUpperBound();
+        if (acceptExtendsBound(extendsType, extendsBound)) {
+          return null;
         }
-        if (extendsType != null && !TypeConversionUtil.isAssignable(extendsType, substituted, allowUncheckedConversion)) {
-          return Pair.create(typeParameter, extendsType);
-        }
+      }
+      if (extendsType != null && !TypeConversionUtil.isAssignable(extendsType, substituted, allowUncheckedConversion)) {
+        return extendsType;
       }
     }
     return null;

@@ -22,7 +22,6 @@ import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.HighlighterColors;
@@ -39,9 +38,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.impl.source.tree.injected.Place;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -52,7 +53,6 @@ import java.util.*;
 import java.util.List;
 
 public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass implements DumbAware {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.InjectedGeneralHighlightingPass");
   private static final String PRESENTABLE_NAME = "Injected fragments";
 
   InjectedGeneralHighlightingPass(@NotNull Project project,
@@ -82,6 +82,7 @@ public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass imp
     final List<PsiElement> outside = new ArrayList<PsiElement>();
     List<ProperTextRange> insideRanges = new ArrayList<ProperTextRange>();
     List<ProperTextRange> outsideRanges = new ArrayList<ProperTextRange>();
+    //TODO: this thing is just called TWICE with same arguments eating CPU on huge files :(
     Divider.divideInsideAndOutside(myFile, myStartOffset, myEndOffset, myPriorityRange, inside, insideRanges, outside,
                                    outsideRanges, false, FILE_FILTER);
 
@@ -150,7 +151,7 @@ public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass imp
     final Set<PsiFile> outInjected = new THashSet<PsiFile>();
 
     List<DocumentWindow> injected = InjectedLanguageUtil.getCachedInjectedDocuments(myFile);
-    Collection<PsiElement> hosts = new THashSet<PsiElement>(elements1.size() + elements2.size() + injected.size());
+    final Collection<PsiElement> hosts = new THashSet<PsiElement>(elements1.size() + elements2.size() + injected.size());
 
     //rehighlight all injected PSI regardless the range,
     //since change in one place can lead to invalidation of injected PSI in (completely) other place.
@@ -167,8 +168,10 @@ public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass imp
         hosts.add(context);
       }
     }
-    hosts.addAll(elements1);
-    hosts.addAll(elements2);
+    InjectedLanguageManagerImpl injectedLanguageManager = InjectedLanguageManagerImpl.getInstanceImpl(myProject);
+    Processor<PsiElement> collectInjectableProcessor = new CommonProcessors.CollectProcessor<PsiElement>(hosts);
+    injectedLanguageManager.processInjectableElements(elements1, collectInjectableProcessor);
+    injectedLanguageManager.processInjectableElements(elements2, collectInjectableProcessor);
 
     final PsiLanguageInjectionHost.InjectedPsiVisitor visitor = new PsiLanguageInjectionHost.InjectedPsiVisitor() {
       @Override
@@ -182,6 +185,7 @@ public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass imp
                                                                    new Processor<PsiElement>() {
                                                                      @Override
                                                                      public boolean process(PsiElement element) {
+                                                                       ApplicationManager.getApplication().assertReadAccessAllowed();
                                                                        progress.checkCanceled();
                                                                        InjectedLanguageUtil.enumerate(element, myFile, false, visitor);
                                                                        return true;

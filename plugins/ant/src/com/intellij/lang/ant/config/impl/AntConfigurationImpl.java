@@ -32,6 +32,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -804,7 +805,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
                   public void run() {
                     myEventDispatcher.getMulticaster().configurationLoaded();
                   }
-                });
+                }, ModalityState.any());
               }
             }
           });

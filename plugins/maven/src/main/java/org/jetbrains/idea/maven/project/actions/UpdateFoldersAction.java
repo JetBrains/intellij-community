@@ -15,11 +15,12 @@
  */
 package org.jetbrains.idea.maven.project.actions;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
 public class UpdateFoldersAction extends MavenProjectsManagerAction {
   @Override
-  protected void perform(MavenProjectsManager manager) {
+  protected void perform(@NotNull MavenProjectsManager manager) {
     manager.scheduleFoldersResolveForAllProjects();
   }
 }

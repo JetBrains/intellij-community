@@ -20,9 +20,6 @@ import git4idea.branch.GitBranchUtil;
 import git4idea.repo.GitRemote;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Kirill Likhodedov
- */
 public class GitStandardRemoteBranch extends GitRemoteBranch {
 
   @NotNull private final GitRemote myRemote;
@@ -52,12 +49,24 @@ public class GitStandardRemoteBranch extends GitRemoteBranch {
 
   @Override
   public boolean equals(Object o) {
-    return super.equals(o);
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    if (!super.equals(o)) return false;
+
+    GitStandardRemoteBranch branch = (GitStandardRemoteBranch)o;
+
+    if (!myNameAtRemote.equals(branch.myNameAtRemote)) return false;
+    if (!myRemote.equals(branch.myRemote)) return false;
+
+    return true;
   }
 
   @Override
   public int hashCode() {
-    return super.hashCode();
+    int result = super.hashCode();
+    result = 31 * result + myRemote.hashCode();
+    result = 31 * result + myNameAtRemote.hashCode();
+    return result;
   }
 
   @Override

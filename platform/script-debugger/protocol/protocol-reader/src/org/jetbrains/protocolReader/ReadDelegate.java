@@ -23,7 +23,7 @@ class ReadDelegate {
     paramNames = hasNextNameParam ? STATIC_METHOD_PARAM_NAME_LIST2 : STATIC_METHOD_PARAM_NAME_LIST;
   }
 
-  void write(ClassScope scope, Method method, TextOutput out) {
+  void write(@NotNull ClassScope scope, @NotNull Method method, @NotNull TextOutput out) {
     MethodHandler.writeMethodDeclarationJava(out, method, paramNames);
     out.openBlock();
     out.append("return ");

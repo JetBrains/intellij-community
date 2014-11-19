@@ -18,6 +18,8 @@ package org.jetbrains.idea.maven.project.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.project.MavenIgnoredFilesConfigurable;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
@@ -35,6 +37,7 @@ public class ToggleIgnoredProjectsAction extends MavenAction {
 
     final DataContext context = e.getDataContext();
     MavenProjectsManager projectsManager = MavenActionUtil.getProjectsManager(context);
+    if(projectsManager == null) return;
     List<MavenProject> projects = MavenActionUtil.getMavenProjects(context);
 
     if (isIgnoredInSettings(projectsManager, projects)) {
@@ -54,6 +57,7 @@ public class ToggleIgnoredProjectsAction extends MavenAction {
 
     final DataContext context = e.getDataContext();
     MavenProjectsManager projectsManager = MavenActionUtil.getProjectsManager(context);
+    if(projectsManager == null) return false;
     List<MavenProject> projects = MavenActionUtil.getMavenProjects(context);
 
     if (projects == null || projects.isEmpty()) return false;
@@ -74,23 +78,27 @@ public class ToggleIgnoredProjectsAction extends MavenAction {
            (ignoredStatesCount == 0 || ignoredStatesCount == projects.size());
   }
 
-  private static boolean isIgnored(MavenProjectsManager projectsManager, List<MavenProject> projects) {
+  private static boolean isIgnored(@NotNull MavenProjectsManager projectsManager, List<MavenProject> projects) {
     return projectsManager.getIgnoredState(projects.get(0));
   }
 
-  private static boolean isIgnoredInSettings(MavenProjectsManager projectsManager, List<MavenProject> projects) {
+  private static boolean isIgnoredInSettings(@NotNull MavenProjectsManager projectsManager, List<MavenProject> projects) {
     return projectsManager.isIgnored(projects.get(0)) && !isIgnored(projectsManager, projects);
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final DataContext context = e.getDataContext();
     MavenProjectsManager projectsManager = MavenActionUtil.getProjectsManager(context);
+    if(projectsManager == null) return;
     List<MavenProject> projects = MavenActionUtil.getMavenProjects(context);
+
+    final Project project = MavenActionUtil.getProject(context);
+    if(project == null) return;
 
     if (isIgnoredInSettings(projectsManager, projects)) {
       ShowSettingsUtil.getInstance()
-        .editConfigurable(MavenActionUtil.getProject(context), new MavenIgnoredFilesConfigurable(MavenActionUtil.getProject(context)));
+        .editConfigurable(project, new MavenIgnoredFilesConfigurable(project));
     }
     else {
       projectsManager.setIgnoredState(projects, !isIgnored(projectsManager, projects));

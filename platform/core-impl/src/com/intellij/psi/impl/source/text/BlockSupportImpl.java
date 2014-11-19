@@ -27,6 +27,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -58,7 +59,7 @@ public class BlockSupportImpl extends BlockSupport {
     project.getMessageBus().connect().subscribe(DocumentBulkUpdateListener.TOPIC, new DocumentBulkUpdateListener.Adapter() {
       @Override
       public void updateStarted(@NotNull final Document doc) {
-        doc.putUserData(DO_NOT_REPARSE_INCREMENTALLY,  Boolean.TRUE);
+        doc.putUserData(DO_NOT_REPARSE_INCREMENTALLY, Boolean.TRUE);
       }
     });
   }
@@ -80,22 +81,34 @@ public class BlockSupportImpl extends BlockSupport {
                               @NotNull final CharSequence newFileText,
                               @NotNull final ProgressIndicator indicator) {
     final PsiFileImpl fileImpl = (PsiFileImpl)file;
-    Project project = fileImpl.getProject();
-    final FileElement treeFileElement = fileImpl.getTreeElement();
-    final CharTable charTable = treeFileElement.getCharTable();
+    
+    final Couple<ASTNode> reparseableRoots = findReparseableRoots(fileImpl, changedPsiRange, newFileText);
+    return reparseableRoots != null
+           ? mergeTrees(fileImpl, reparseableRoots.first, reparseableRoots.second, indicator)
+           : makeFullParse(fileImpl.getTreeElement(), newFileText, newFileText.length(), fileImpl, indicator);
+  }
 
+  /**
+   * This method searches ast node that could be reparsed incrementally and returns pair of target reparseable node and new replacement node.
+   * Returns null if there is no any chance to make incremental parsing.
+   */
+  @Nullable
+  public Couple<ASTNode> findReparseableRoots(@NotNull PsiFileImpl file,
+                                              @NotNull TextRange changedPsiRange,
+                                              @NotNull CharSequence newFileText) {
+    Project project = file.getProject();
+    final FileElement fileElement = file.getTreeElement();
+    final CharTable charTable = fileElement.getCharTable();
+    int lengthShift = newFileText.length() - fileElement.getTextLength();
 
-    final int textLength = newFileText.length();
-    int lengthShift = textLength - treeFileElement.getTextLength();
-
-    if (treeFileElement.getElementType() instanceof ITemplateDataElementType || isTooDeep(file)) {
+    if (fileElement.getElementType() instanceof ITemplateDataElementType || isTooDeep(file)) {
       // unable to perform incremental reparse for template data in JSP, or in exceptionally deep trees
-      return makeFullParse(treeFileElement, newFileText, textLength, fileImpl, indicator);
+      return null;
     }
 
-    final ASTNode leafAtStart = treeFileElement.findLeafElementAt(Math.max(0, changedPsiRange.getStartOffset() - 1));
-    final ASTNode leafAtEnd = treeFileElement.findLeafElementAt(changedPsiRange.getEndOffset());
-    ASTNode node = leafAtStart != null && leafAtEnd != null ? TreeUtil.findCommonParent(leafAtStart, leafAtEnd) : treeFileElement;
+    final ASTNode leafAtStart = fileElement.findLeafElementAt(Math.max(0, changedPsiRange.getStartOffset() - 1));
+    final ASTNode leafAtEnd = fileElement.findLeafElementAt(Math.min(changedPsiRange.getEndOffset(), fileElement.getTextLength() - 1));
+    ASTNode node = leafAtStart != null && leafAtEnd != null ? TreeUtil.findCommonParent(leafAtStart, leafAtEnd) : fileElement;
     Language baseLanguage = file.getViewProvider().getBaseLanguage();
 
     while (node != null && !(node instanceof FileElement)) {
@@ -117,25 +130,24 @@ public class BlockSupportImpl extends BlockSupport {
           if (reparseable.isParsable(node.getTreeParent(), newTextStr, baseLanguage, project)) {
             ASTNode chameleon = reparseable.createNode(newTextStr);
             if (chameleon != null) {
-              DummyHolder holder = DummyHolderFactory.createHolder(fileImpl.getManager(), null, node.getPsi(), charTable);
+              DummyHolder holder = DummyHolderFactory.createHolder(file.getManager(), null, node.getPsi(), charTable);
               holder.getTreeElement().rawAddChildren((TreeElement)chameleon);
 
               if (holder.getTextLength() != newTextStr.length()) {
                 String details = ApplicationManager.getApplication().isInternal()
-                           ? "text=" + newTextStr + "; treeText=" + holder.getText() + ";"
-                           : "";
+                                 ? "text=" + newTextStr + "; treeText=" + holder.getText() + ";"
+                                 : "";
                 LOG.error("Inconsistent reparse: " + details + " type=" + elementType);
               }
 
-              return mergeTrees(fileImpl, node, chameleon, indicator);
+              return Couple.of(node, chameleon);
             }
           }
         }
       }
       node = node.getTreeParent();
     }
-
-    return makeFullParse(node, newFileText, textLength, fileImpl, indicator);
+    return null;
   }
 
   private static void reportInconsistentLength(PsiFile file, CharSequence newFileText, ASTNode node, int start, int end) {
@@ -181,6 +193,9 @@ public class BlockSupportImpl extends BlockSupport {
       lightFile.setOriginalFile(viewProvider.getVirtualFile());
 
       FileViewProvider copy = viewProvider.createCopy(lightFile);
+      if (copy.isEventSystemEnabled()) {
+        throw new AssertionError("Copied view provider must be non-physical for reparse to deliver correct events: " + viewProvider);
+      }
       copy.getLanguages();
       SingleRootFileViewProvider.doNotCheckFileSizeLimit(lightFile); // optimization: do not convert file contents to bytes to determine if we should codeinsight it
       PsiFileImpl newFile = getFileCopy(fileImpl, copy);
@@ -190,7 +205,6 @@ public class BlockSupportImpl extends BlockSupport {
       final FileElement newFileElement = (FileElement)newFile.getNode();
       final FileElement oldFileElement = (FileElement)fileImpl.getNode();
 
-      assert oldFileElement != null && newFileElement != null;
       DiffLog diffLog = mergeTrees(fileImpl, oldFileElement, newFileElement, indicator);
 
       ((PsiManagerEx)fileImpl.getManager()).getFileManager().setViewProvider(lightFile, null);
@@ -288,7 +302,7 @@ public class BlockSupportImpl extends BlockSupport {
     };
   }
 
-  private static boolean isReplaceWholeNode(@NotNull PsiFileImpl fileImpl, @NotNull ASTNode newRoot) throws ReparsedSuccessfullyException{
+  private static boolean isReplaceWholeNode(@NotNull PsiFileImpl fileImpl, @NotNull ASTNode newRoot) throws ReparsedSuccessfullyException {
     final Boolean data = fileImpl.getUserData(DO_NOT_REPARSE_INCREMENTALLY);
     if (data != null) fileImpl.putUserData(DO_NOT_REPARSE_INCREMENTALLY, null);
 
@@ -308,7 +322,7 @@ public class BlockSupportImpl extends BlockSupport {
   }
 
   public static void sendBeforeChildrenChangeEvent(@NotNull PsiManagerImpl manager, @NotNull PsiElement scope, boolean isGenericChange) {
-    if(!scope.isPhysical()) {
+    if (!scope.isPhysical()) {
       manager.beforeChange(false);
       return;
     }
@@ -318,7 +332,7 @@ public class BlockSupportImpl extends BlockSupport {
     TextRange range = scope.getTextRange();
     event.setOffset(range == null ? 0 : range.getStartOffset());
     event.setOldLength(scope.getTextLength());
-      // the "generic" event is being sent on every PSI change. It does not carry any specific info except the fact that "something has changed"
+    // the "generic" event is being sent on every PSI change. It does not carry any specific info except the fact that "something has changed"
     event.setGenericChange(isGenericChange);
     manager.beforeChildrenChange(event);
   }
@@ -327,7 +341,7 @@ public class BlockSupportImpl extends BlockSupport {
                                                    @NotNull PsiFile scope,
                                                    int oldLength,
                                                    boolean isGenericChange) {
-    if(!scope.isPhysical()) {
+    if (!scope.isPhysical()) {
       manager.afterChange(false);
       return;
     }

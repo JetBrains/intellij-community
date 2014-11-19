@@ -31,7 +31,6 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.xmlb.Converter;
 import com.intellij.util.xmlb.annotations.OptionTag;
-import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
@@ -187,10 +186,10 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
 
   public TemplateSettings(SchemesManagerFactory schemesManagerFactory) {
     mySchemesManager = schemesManagerFactory.createSchemesManager(TEMPLATES_DIR_PATH, new BaseSchemeProcessor<TemplateGroup>() {
-      @Override
       @Nullable
-      public TemplateGroup readScheme(@NotNull final Document schemeContent) throws InvalidDataException {
-        return readTemplateFile(schemeContent, schemeContent.getRootElement().getAttributeValue("group"), false, false,
+      @Override
+      public TemplateGroup readScheme(@NotNull Element element) throws InvalidDataException {
+        return readTemplateFile(element, element.getAttributeValue("group"), false, false,
                                 getClass().getClassLoader());
       }
 
@@ -458,7 +457,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
     String templateName = getDefaultTemplateName(defTemplate);
     InputStream inputStream = DecodeDefaultsUtil.getDefaultsInputStream(provider, defTemplate);
     if (inputStream != null) {
-      TemplateGroup group = readTemplateFile(JDOMUtil.loadDocument(inputStream), templateName, true, registerTemplate, provider.getClass().getClassLoader());
+      TemplateGroup group = readTemplateFile(JDOMUtil.load(inputStream), templateName, true, registerTemplate, provider.getClass().getClassLoader());
       if (group != null && group.getReplace() != null) {
         for (TemplateImpl template : myTemplates.get(group.getReplace())) {
           removeTemplate(template);
@@ -472,26 +471,20 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
   }
 
   @Nullable
-  private TemplateGroup readTemplateFile(Document document, @NonNls String defGroupName, boolean isDefault, boolean registerTemplate, ClassLoader classLoader) throws InvalidDataException {
-    if (document == null) {
-      throw new InvalidDataException();
-    }
-    Element root = document.getRootElement();
-    if (!TEMPLATE_SET.equals(root.getName())) {
+  private TemplateGroup readTemplateFile(@NotNull Element element, @NonNls String defGroupName, boolean isDefault, boolean registerTemplate, ClassLoader classLoader) throws InvalidDataException {
+    if (!TEMPLATE_SET.equals(element.getName())) {
       throw new InvalidDataException();
     }
 
-    String groupName = root.getAttributeValue(GROUP);
+    String groupName = element.getAttributeValue(GROUP);
     if (groupName == null || groupName.isEmpty()) groupName = defGroupName;
 
-    TemplateGroup result = new TemplateGroup(groupName, root.getAttributeValue("REPLACE"));
+    TemplateGroup result = new TemplateGroup(groupName, element.getAttributeValue("REPLACE"));
 
     Map<String, TemplateImpl> created = new LinkedHashMap<String,  TemplateImpl>();
 
-    for (final Object o1 : root.getChildren(TEMPLATE)) {
-      Element element = (Element)o1;
-
-      TemplateImpl template = readTemplateFromElement(isDefault, groupName, element, classLoader);
+    for (Element child : element.getChildren(TEMPLATE)) {
+      TemplateImpl template = readTemplateFromElement(isDefault, groupName, child, classLoader);
       TemplateImpl existing = getTemplate(template.getKey(), template.getGroupName());
       boolean defaultTemplateModified = isDefault && (myState.deletedKeys.contains(TemplateKey.keyOf(template)) ||
                                                       myTemplatesById.containsKey(template.getId()) ||
@@ -530,7 +523,6 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
     }
 
     return result.isEmpty() ? null : result;
-
   }
 
   private TemplateImpl readTemplateFromElement(final boolean isDefault,

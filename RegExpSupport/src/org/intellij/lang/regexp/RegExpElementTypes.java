@@ -36,11 +36,12 @@ public interface RegExpElementTypes {
     IElementType SET_OPTIONS = new RegExpElementType("SET_OPTIONS");
     IElementType BACKREF = new RegExpElementType("BACKREF");
     IElementType BOUNDARY = new RegExpElementType("BOUNDARY");
-    IElementType PY_NAMED_GROUP_REF = new RegExpElementType("PY_NAMED_GROUP_REF");
+    IElementType NAMED_GROUP_REF = new RegExpElementType("NAMED_GROUP_REF");
     IElementType PY_COND_REF = new RegExpElementType("PY_COND_REF");
+    IElementType POSIX_BRACKET_EXPRESSION = new RegExpElementType("POSIX_BRACKET_EXPRESSION");
 
     TokenSet ATOMS = TokenSet.create(CLOSURE, BOUNDARY,
-            SIMPLE_CLASS, CLASS, CHAR, GROUP, PROPERTY, SET_OPTIONS, BACKREF, PY_NAMED_GROUP_REF);
+            SIMPLE_CLASS, CLASS, CHAR, GROUP, PROPERTY, SET_OPTIONS, BACKREF, NAMED_GROUP_REF);
 
     TokenSet CLASS_ELEMENTS = TokenSet.create(CHAR, CHAR_RANGE,
             SIMPLE_CLASS, CLASS, INTERSECTION, PROPERTY);

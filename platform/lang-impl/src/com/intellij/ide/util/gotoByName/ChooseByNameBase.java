@@ -32,7 +32,6 @@ import com.intellij.ide.ui.laf.darcula.ui.DarculaTextFieldUI;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -43,11 +42,12 @@ import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
+import com.intellij.openapi.progress.util.ReadTask;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.*;
@@ -789,16 +789,13 @@ public abstract class ChooseByNameBase {
   }
 
   protected void cancelListUpdater() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    if (checkDisposed()) return;
+
     final CalcElementsThread calcElementsThread = myCalcElementsThread;
-    if (calcElementsThread != null && calcElementsThread.cancel()) {
-      UIUtil.invokeLaterIfNeeded(new Runnable() {
-        @Override
-        public void run() {
-          if (!checkDisposed() && calcElementsThread == myCalcElementsThread) {
-            backgroundCalculationFinished(Collections.emptyList(), 0);
-          }
-        }
-      });
+    if (calcElementsThread != null) {
+      calcElementsThread.cancel();
+      backgroundCalculationFinished(Collections.emptyList(), 0);
     }
     myListUpdater.cancelAll();
   }
@@ -960,7 +957,7 @@ public abstract class ChooseByNameBase {
       }, delay, ModalityState.stateForComponent(myTextField));
       return;
     }
-    
+
     myListUpdater.cancelAll();
 
     final CalcElementsThread calcElementsThread = myCalcElementsThread;
@@ -992,9 +989,6 @@ public abstract class ChooseByNameBase {
       @Override
       public void consume(Set<?> elements) {
         ApplicationManager.getApplication().assertIsDispatchThread();
-        if (checkDisposed()) {
-          return;
-        }
         backgroundCalculationFinished(elements, pos);
 
         if (postRunnable != null) {
@@ -1019,13 +1013,7 @@ public abstract class ChooseByNameBase {
                                    boolean checkboxState,
                                    ModalityState modalityState,
                                    Consumer<Set<?>> callback) {
-    scheduleCalcElements(new CalcElementsThread(text, checkboxState, callback, modalityState, false));
-  }
-
-  private void scheduleCalcElements(final CalcElementsThread thread) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    myCalcElementsThread = thread;
-    ApplicationManager.getApplication().executeOnPooledThread(thread);
+    new CalcElementsThread(text, checkboxState, callback, modalityState, false).scheduleThread();
   }
 
   private boolean isShowListAfterCompletionKeyStroke() {
@@ -1202,6 +1190,10 @@ public abstract class ChooseByNameBase {
     }
 
     myPostponedOkAction = null;
+  }
+
+  public boolean hasPostponedAction() {
+    return myPostponedOkAction != null;
   }
 
   protected abstract void showList();
@@ -1476,14 +1468,14 @@ public abstract class ChooseByNameBase {
     return panel;
   }
 
-  private class CalcElementsThread implements Runnable {
+  private class CalcElementsThread implements ReadTask {
     private final String myPattern;
     private volatile boolean myCheckboxState;
     private volatile boolean myScopeExpanded;
     private final Consumer<Set<?>> myCallback;
     private final ModalityState myModalityState;
 
-    private final ProgressIndicator myCancelled = new ProgressIndicatorBase();
+    private final ProgressIndicator myProgress = new ProgressIndicatorBase();
 
     CalcElementsThread(String pattern,
                        boolean checkboxState,
@@ -1499,80 +1491,54 @@ public abstract class ChooseByNameBase {
 
     private final Alarm myShowCardAlarm = new Alarm();
 
-    private void scheduleRestart() {
-      scheduleCalcElements(new CalcElementsThread(myPattern, myCheckboxState, myCallback, myModalityState, myScopeExpanded));
+    void scheduleThread() {
+      ApplicationManager.getApplication().assertIsDispatchThread();
+      myCalcElementsThread = this;
+      showCard(SEARCHING_CARD, 200);
+      ProgressIndicatorUtils.scheduleWithWriteActionPriority(myProgress, this);
     }
 
     @Override
-    public void run() {
-      showCard(SEARCHING_CARD, 200);
+    public void computeInReadAction(@NotNull ProgressIndicator indicator) {
+      if (myProject != null && myProject.isDisposed()) return;
 
-      ProgressManager.getInstance().runProcess(new Runnable() {
+      final Set<Object> elements = new LinkedHashSet<Object>();
+
+      if (!ourLoadNamesEachTime) ensureNamesLoaded(myCheckboxState);
+      addElementsByPattern(myPattern, elements, myProgress, myCheckboxState);
+
+      if (myProgress.isCanceled()) {
+        myShowCardAlarm.cancelAllRequests();
+        return;
+      }
+
+      if (elements.isEmpty() && !myCheckboxState) {
+        myScopeExpanded = true;
+        myCheckboxState = true;
+        if (!ourLoadNamesEachTime) ensureNamesLoaded(true);
+        addElementsByPattern(myPattern, elements, myProgress, true);
+      }
+      final String cardToShow = elements.isEmpty() ? NOT_FOUND_CARD : myScopeExpanded ? NOT_FOUND_IN_PROJECT_CARD : CHECK_BOX_CARD;
+      showCard(cardToShow, 0);
+
+      final boolean edt = myModel instanceof EdtSortingModel;
+      final Set<Object> filtered = !edt ? filter(elements) : Collections.emptySet();
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
         @Override
         public void run() {
-          final Set<Object> elements = new LinkedHashSet<Object>();
-          Runnable calculation = new Runnable() {
-            public void run() {
-              ApplicationManager.getApplication().runReadAction(new Runnable() {
-                @Override
-                public void run() {
-                  if (myProject != null && myProject.isDisposed()) return;
-
-                  ApplicationAdapter listener = new ApplicationAdapter() {
-                    @Override
-                    public void beforeWriteActionStart(Object action) {
-                      if (cancel()) {
-                        scheduleRestart(); //don't restart if already canceled explicitly
-                      }
-                      ApplicationManager.getApplication().removeApplicationListener(this);
-                    }
-                  };
-                  ApplicationManager.getApplication().addApplicationListener(listener);
-                  try {
-                    boolean everywhere = myCheckboxState;
-                    if (!ourLoadNamesEachTime) ensureNamesLoaded(everywhere);
-                    addElementsByPattern(myPattern, elements, myCancelled, everywhere);
-                  }
-                  catch (ProcessCanceledException e) {
-                    //OK
-                  }
-                  finally {
-                    ApplicationManager.getApplication().removeApplicationListener(listener);
-                  }
-                }
-              });
-            }
-          };
-          calculation.run();
-
-          if (myCancelled.isCanceled()) {
-            myShowCardAlarm.cancelAllRequests();
-            return;
+          if (!checkDisposed() && !myProgress.isCanceled()) {
+            CalcElementsThread currentBgProcess = myCalcElementsThread;
+            LOG.assertTrue(currentBgProcess == CalcElementsThread.this, currentBgProcess);
+            myCallback.consume(edt ? filter(elements) : filtered);
           }
-
-          if (elements.isEmpty() && !myCheckboxState) {
-            myScopeExpanded = true;
-            myCheckboxState = true;
-            calculation.run();
-          }
-          final String cardToShow = elements.isEmpty() ? NOT_FOUND_CARD : myScopeExpanded ? NOT_FOUND_IN_PROJECT_CARD : CHECK_BOX_CARD;
-          showCard(cardToShow, 0);
-
-          final boolean edt = myModel instanceof EdtSortingModel;
-          final Set<Object> filtered = !edt ? filter(elements) : Collections.emptySet();
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              if (!myCancelled.isCanceled()) {
-                CalcElementsThread currentBgProcess = myCalcElementsThread;
-                LOG.assertTrue(currentBgProcess == CalcElementsThread.this, currentBgProcess);
-                myCallback.consume(edt ? filter(elements) : filtered);
-              }
-            }
-          }, myModalityState);
         }
-      }, myCancelled);
+      }, myModalityState);
+    }
 
+    @Override
+    public void onCanceled(@NotNull ProgressIndicator indicator) {
+      LOG.assertTrue(myCalcElementsThread == this, myCalcElementsThread);
+      new CalcElementsThread(myPattern, myCheckboxState, myCallback, myModalityState, myScopeExpanded).scheduleThread();
     }
 
     public void addElementsByPattern(@NotNull String pattern,
@@ -1612,7 +1578,7 @@ public abstract class ChooseByNameBase {
       myShowCardAlarm.addRequest(new Runnable() {
         @Override
         public void run() {
-          if (!myCancelled.isCanceled()) {
+          if (!myProgress.isCanceled()) {
             myCard.show(myCardContainer, card);
           }
         }
@@ -1623,13 +1589,9 @@ public abstract class ChooseByNameBase {
       return elementsArray.size() >= myMaximumListSizeLimit;
     }
 
-    private boolean cancel() {
+    private void cancel() {
       ApplicationManager.getApplication().assertIsDispatchThread();
-      if (myCancelled.isCanceled()) {
-        return false;
-      }
-      myCancelled.cancel();
-      return true;
+      myProgress.cancel();
     }
 
   }

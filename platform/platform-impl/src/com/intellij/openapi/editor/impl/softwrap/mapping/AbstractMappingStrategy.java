@@ -16,9 +16,9 @@
 package com.intellij.openapi.editor.impl.softwrap.mapping;
 
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapsStorage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,7 +37,7 @@ import java.util.List;
  */
 abstract class AbstractMappingStrategy<T> implements MappingStrategy<T> {
   
-  protected final Editor myEditor;
+  protected final EditorEx myEditor;
   protected final SoftWrapsStorage myStorage;
   protected final List<CacheEntry> myCache;
 
@@ -46,7 +46,7 @@ abstract class AbstractMappingStrategy<T> implements MappingStrategy<T> {
   private T myEagerMatch;
   private int myLastEntryOffset;
 
-  AbstractMappingStrategy(@NotNull Editor editor,
+  AbstractMappingStrategy(@NotNull EditorEx editor,
                           @NotNull SoftWrapsStorage storage,
                           @NotNull List<CacheEntry> cache)
   {
@@ -154,7 +154,11 @@ abstract class AbstractMappingStrategy<T> implements MappingStrategy<T> {
     if (result != null) {
       return result;
     }
+    advancePositionOnFolding(position, foldRegion);
+    return null;
+  }
 
+  protected void advancePositionOnFolding(@NotNull EditorPosition position, @NotNull FoldRegion foldRegion) {
     Document document = myEditor.getDocument();
     int endOffsetLogicalLine = document.getLineNumber(foldRegion.getEndOffset());
     if (position.logicalLine != endOffsetLogicalLine) {
@@ -171,7 +175,6 @@ abstract class AbstractMappingStrategy<T> implements MappingStrategy<T> {
     }
 
     position.advance(foldRegion, collapsedSymbolsWidthInColumns);
-    return null;
   }
 
   @Nullable

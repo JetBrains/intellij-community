@@ -61,9 +61,7 @@ public class LambdaUtil {
 
   public static PsiMethod getFunctionalInterfaceMethod(@Nullable PsiElement element) {
     if (element instanceof PsiFunctionalExpression) {
-      final PsiType samType = element instanceof PsiLambdaExpression
-                              ? ((PsiLambdaExpression)element).getFunctionalInterfaceType()
-                              : ((PsiMethodReferenceExpression)element).getFunctionalInterfaceType();
+      final PsiType samType = ((PsiFunctionalExpression)element).getFunctionalInterfaceType();
       return getFunctionalInterfaceMethod(samType);
     }
     return null;
@@ -466,6 +464,33 @@ public class LambdaUtil {
            body instanceof PsiPostfixExpression ||
            body instanceof PsiCallExpression ||
            body instanceof PsiReferenceExpression && !body.isPhysical();
+  }
+
+  public static PsiExpression extractSingleExpressionFromBody(PsiElement body) {
+    PsiExpression expression = null;
+    if (body instanceof PsiExpression) {
+      expression = (PsiExpression)body;
+    }
+    else if (body instanceof PsiCodeBlock) {
+      final PsiStatement[] statements = ((PsiCodeBlock)body).getStatements();
+      if (statements.length == 1) {
+        if (statements[0] instanceof PsiReturnStatement) {
+          expression = ((PsiReturnStatement)statements[0]).getReturnValue();
+        }
+        else if (statements[0] instanceof PsiExpressionStatement) {
+          expression = ((PsiExpressionStatement)statements[0]).getExpression();
+        } else if (statements[0] instanceof PsiBlockStatement) {
+          return extractSingleExpressionFromBody(((PsiBlockStatement)statements[0]).getCodeBlock());
+        }
+      }
+    }
+    else if (body instanceof PsiBlockStatement) {
+      return extractSingleExpressionFromBody(((PsiBlockStatement)body).getCodeBlock());
+    }
+    else if (body instanceof PsiExpressionStatement) {
+      expression = ((PsiExpressionStatement)body).getExpression();
+    }
+    return expression;
   }
 
   public static class TypeParamsChecker extends PsiTypeVisitor<Boolean> {

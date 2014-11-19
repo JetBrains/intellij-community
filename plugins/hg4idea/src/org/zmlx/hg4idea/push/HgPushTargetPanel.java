@@ -19,6 +19,7 @@ import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.push.PushTargetPanel;
 import com.intellij.dvcs.push.VcsError;
 import com.intellij.dvcs.push.ui.PushTargetTextField;
+import com.intellij.dvcs.push.ui.VcsEditableTextComponent;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColoredTreeCellRenderer;
@@ -37,25 +38,27 @@ public class HgPushTargetPanel extends PushTargetPanel<HgTarget> {
   private final static String ENTER_REMOTE = "Enter Remote";
   private final HgRepository myRepository;
   private final TextFieldWithAutoCompletion<String> myDestTargetPanel;
-  private String myOldText;
+  private final VcsEditableTextComponent myTargetRenderedComponent;
 
   public HgPushTargetPanel(@NotNull HgRepository repository, @Nullable HgTarget defaultTarget) {
     setLayout(new BorderLayout());
     setOpaque(false);
     myRepository = repository;
     final List<String> targetVariants = HgUtil.getTargetNames(repository);
-    myOldText = defaultTarget != null ? defaultTarget.getPresentation() : "";
-    myDestTargetPanel = new PushTargetTextField(repository.getProject(), targetVariants, myOldText);
+    String defaultText = defaultTarget != null ? defaultTarget.getPresentation() : "";
+    myTargetRenderedComponent = new VcsEditableTextComponent("<a href=''>" + defaultText + "</a>", null);
+    myDestTargetPanel = new PushTargetTextField(repository.getProject(), targetVariants, defaultText);
     add(myDestTargetPanel, BorderLayout.CENTER);
   }
 
   @Override
-  public void render(@NotNull ColoredTreeCellRenderer renderer) {
+  public void render(@NotNull ColoredTreeCellRenderer renderer, boolean isSelected) {
     String targetText = myDestTargetPanel.getText();
     if (StringUtil.isEmptyOrSpaces(targetText)) {
       renderer.append(ENTER_REMOTE, SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES, this);
     }
-    renderer.append(targetText, SimpleTextAttributes.SYNTHETIC_ATTRIBUTES, this);
+    myTargetRenderedComponent.setSelected(isSelected);
+    myTargetRenderedComponent.render(renderer);
   }
 
   @Override
@@ -71,12 +74,12 @@ public class HgPushTargetPanel extends PushTargetPanel<HgTarget> {
 
   @Override
   public void fireOnCancel() {
-    myDestTargetPanel.setText(myOldText);
+    myDestTargetPanel.setText(myTargetRenderedComponent.getText());
   }
 
   @Override
   public void fireOnChange() {
-    myOldText = myDestTargetPanel.getText();
+    myTargetRenderedComponent.updateLinkText(myDestTargetPanel.getText());
   }
 
   @Nullable

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,12 +29,14 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsListener;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
+import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.*;
 import com.intellij.util.Alarm;
@@ -51,7 +53,7 @@ import java.util.concurrent.CountDownLatch;
  * @author yole
  */
 public class ChangesViewContentManager extends AbstractProjectComponent implements ChangesViewContentI {
-  public static final String TOOLWINDOW_ID = VcsBundle.message("changes.toolwindow.name");
+  public static final String TOOLWINDOW_ID = Registry.is("vcs.merge.toolwindows") ? ToolWindowId.VCS : VcsBundle.message("changes.toolwindow.name");
   private static final Key<ChangesViewContentEP> myEPKey = Key.create("ChangesViewContentEP");
   private static final Logger LOG = Logger.getInstance(ChangesViewContentManager.class);
 
@@ -83,6 +85,7 @@ public class ChangesViewContentManager extends AbstractProjectComponent implemen
         if (toolWindowManager != null) {
           myToolWindow = toolWindowManager.registerToolWindow(TOOLWINDOW_ID, true, ToolWindowAnchor.BOTTOM, myProject, true);
           myToolWindow.setIcon(AllIcons.Toolwindows.ToolWindowChanges);
+
           updateToolWindowAvailability();
           final ContentManager contentManager = myToolWindow.getContentManager();
           myContentManagerListener = new MyContentManagerListener();
@@ -280,7 +283,11 @@ public class ChangesViewContentManager extends AbstractProjectComponent implemen
     }
   }
 
-  private static final String[] ourPresetOrder = {"Local", "Repository", "Incoming", "Shelf"};
+  public static final String LOCAL_CHANGES = Registry.is("vcs.merge.toolwindows") ? "Local Changes" : "Local";
+  public static final String REPOSITORY = "Repository";
+  public static final String INCOMING = "Incoming";
+  public static final String SHELF = "Shelf";
+  private static final String[] ourPresetOrder = {LOCAL_CHANGES, REPOSITORY, INCOMING, SHELF};
   private static List<Content> doPresetOrdering(final List<Content> contents) {
     final List<Content> result = new ArrayList<Content>(contents.size());
     for (final String preset : ourPresetOrder) {

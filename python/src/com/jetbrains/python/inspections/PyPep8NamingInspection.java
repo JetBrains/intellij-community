@@ -15,52 +15,63 @@
  */
 package com.jetbrains.python.inspections;
 
-import com.intellij.codeInspection.LocalInspectionToolSession;
-import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
+import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.ui.ListEditForm;
+import com.intellij.ide.DataManager;
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
-import com.intellij.util.containers.hash.HashMap;
+import com.intellij.ui.components.JBList;
+import com.intellij.util.Consumer;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.CheckBox;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.inspections.quickfix.PyRenameElementQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
-import com.jetbrains.python.testing.pytest.PyTestUtil;
+import com.jetbrains.python.psi.types.PyClassLikeType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Map;
+import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 import java.util.regex.Pattern;
 
+import static com.intellij.util.containers.ContainerUtilRt.addIfNotNull;
+
 /**
- *
  * User : ktisha
  */
 public class PyPep8NamingInspection extends PyInspection {
+  private static final Pattern LOWERCASE_REGEX = Pattern.compile("[_\\p{javaLowerCase}][_\\p{javaLowerCase}0-9]*");
+  private static final Pattern UPPERCASE_REGEX = Pattern.compile("[_\\p{javaUpperCase}][_\\p{javaUpperCase}0-9]*");
+  private static final Pattern MIXEDCASE_REGEX = Pattern.compile("_?[\\p{javaUpperCase}][\\p{javaLowerCase}\\p{javaUpperCase}0-9]*");
+
   public boolean ignoreOverriddenFunctions = true;
-  public boolean ignoreTestFunctions = false;
-  private static Pattern LOWERCASE_REGEX = Pattern.compile("[_\\p{javaLowerCase}][_\\p{javaLowerCase}0-9]*");
-  private static Pattern UPPERCASE_REGEX = Pattern.compile("[_\\p{javaUpperCase}][_\\p{javaUpperCase}0-9]*");
-  private static Pattern MIXEDCASE_REGEX = Pattern.compile("_?[\\p{javaUpperCase}][\\p{javaLowerCase}\\p{javaUpperCase}0-9]*");
+  public List<String> ignoredBaseClasses = Lists.newArrayList("unittest.TestCase", "unittest.case.TestCase");
 
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
                                         boolean isOnTheFly,
                                         @NotNull LocalInspectionToolSession session) {
-    if (ApplicationManager.getApplication().isUnitTestMode())
-      ignoreTestFunctions = true;
     return new Visitor(holder, session);
   }
 
   public class Visitor extends PyInspectionVisitor {
-    private final Map<PyFunction, Boolean> myHasSupers = new HashMap<PyFunction, Boolean>();
-
     public Visitor(@NotNull final ProblemsHolder holder, LocalInspectionToolSession session) {
       super(holder, session);
     }
@@ -95,20 +106,41 @@ public class PyPep8NamingInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyFunction(PyFunction node) {
-      final PyClass containingClass = node.getContainingClass();
-      if (hasSupers(node) && ignoreOverriddenFunctions) return;
-      if(containingClass != null && PyTestUtil.isPyTestClass(containingClass) && ignoreTestFunctions) return;
-      final String name = node.getName();
+    public void visitPyFunction(PyFunction function) {
+      final PyClass containingClass = function.getContainingClass();
+      if (ignoreOverriddenFunctions && isOverriddenMethod(function)) return;
+      final String name = function.getName();
       if (name == null) return;
-      if (containingClass != null && name.startsWith("__") && name.endsWith("__")) {
+      if (containingClass != null && (PyUtil.isSpecialName(name) || isIgnoredOrHasIgnoredAncestor(containingClass))) {
         return;
       }
       if (!LOWERCASE_REGEX.matcher(name).matches()) {
-        final ASTNode nameNode = node.getNameNode();
-        if (nameNode != null)
-          registerProblem(nameNode.getPsi(), "Function name should be lowercase", new PyRenameElementQuickFix());
+        final ASTNode nameNode = function.getNameNode();
+        if (nameNode != null) {
+          final List<LocalQuickFix> quickFixes = Lists.<LocalQuickFix>newArrayList(new PyRenameElementQuickFix());
+          if (containingClass != null) {
+            quickFixes.add(new IgnoreBaseClassQuickFix(containingClass, myTypeEvalContext));
+          }
+          registerProblem(nameNode.getPsi(), "Function name should be lowercase", quickFixes.toArray(new LocalQuickFix[quickFixes.size()]));
+        }
       }
+    }
+
+    private boolean isOverriddenMethod(@NotNull PyFunction function) {
+      return PySuperMethodsSearch.search(function).findFirst() != null;
+    }
+
+    private boolean isIgnoredOrHasIgnoredAncestor(@NotNull PyClass pyClass) {
+      final Set<String> blackList = Sets.newHashSet(ignoredBaseClasses);
+      if (blackList.contains(pyClass.getQualifiedName())) {
+        return true;
+      }
+      for (PyClassLikeType ancestor : pyClass.getAncestorTypes(myTypeEvalContext)) {
+        if (ancestor != null && blackList.contains(ancestor.getClassQName())) {
+          return true;
+        }
+      }
+      return false;
     }
 
     @Override
@@ -117,8 +149,9 @@ public class PyPep8NamingInspection extends PyInspection {
       if (name == null) return;
       if (!MIXEDCASE_REGEX.matcher(name).matches()) {
         final ASTNode nameNode = node.getNameNode();
-        if (nameNode != null)
+        if (nameNode != null) {
           registerProblem(nameNode.getPsi(), "Class names should use CamelCase convention", new PyRenameElementQuickFix());
+        }
       }
     }
 
@@ -147,24 +180,73 @@ public class PyPep8NamingInspection extends PyInspection {
         registerProblem(node.getAsNameElement(), "CamelCase variable imported as constant", new PyRenameElementQuickFix());
       }
     }
+  }
 
-    private boolean hasSupers(@NotNull PyFunction function) {
-      final Boolean cached = myHasSupers.get(function);
-      if (cached != null) {
-        return cached;
+  private static class IgnoreBaseClassQuickFix implements LocalQuickFix {
+    final List<String> myBaseClassNames;
+
+    public IgnoreBaseClassQuickFix(@NotNull PyClass baseClass, @NotNull TypeEvalContext context) {
+      myBaseClassNames = new ArrayList<String>();
+      ContainerUtil.addIfNotNull(myBaseClassNames, baseClass.getQualifiedName());
+      for (PyClass ancestor : baseClass.getAncestorClasses(context)) {
+        ContainerUtil.addIfNotNull(myBaseClassNames, ancestor.getQualifiedName());
       }
-      final boolean result = PySuperMethodsSearch.search(function).findFirst() != null;
-      myHasSupers.put(function, result);
-      return result;
+    }
+
+    @NotNull
+    @Override
+    public String getName() {
+      return "Ignore method names for descendants of class";
+    }
+
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return getName();
+    }
+
+    @Override
+    public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
+      final JBList list = new JBList(myBaseClassNames);
+      final Runnable updateBlackList = new Runnable() {
+        @Override
+        public void run() {
+          final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
+          profile.modifyProfile(new Consumer<ModifiableModel>() {
+            @Override
+            public void consume(ModifiableModel model) {
+              final PyPep8NamingInspection inspection = (PyPep8NamingInspection)model
+                .getUnwrappedTool(PyPep8NamingInspection.class.getSimpleName(), descriptor.getPsiElement());
+              addIfNotNull(inspection.ignoredBaseClasses, (String)list.getSelectedValue());
+            }
+          });
+        }
+      };
+      DataManager.getInstance().getDataContextFromFocus().doWhenDone(new Consumer<DataContext>() {
+        @Override
+        public void consume(DataContext dataContext) {
+          new PopupChooserBuilder(list)
+            .setTitle("Ignore base class")
+            .setItemChoosenCallback(updateBlackList)
+            .setFilteringEnabled(new Function<Object, String>() {
+              @Override
+              public String fun(Object o) {
+                return (String)o;
+              }
+            })
+            .createPopup()
+            .showInBestPositionFor(dataContext);
+        }
+      });
     }
   }
 
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
-    MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox("Ignore overridden functions", "ignoreOverriddenFunctions");
-    panel.addCheckbox("Ignore test functions", "ignoreTestFunctions");
-    return panel;
+    final JPanel rootPanel = new JPanel(new BorderLayout());
+    rootPanel.add(new CheckBox("Ignore overridden functions", this, "ignoreOverriddenFunctions"), BorderLayout.NORTH);
+    rootPanel.add(new ListEditForm("Excluded base classes", ignoredBaseClasses).getContentPanel(), BorderLayout.CENTER);
+    return rootPanel;
   }
 }

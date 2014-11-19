@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.diagnostic.Dumpable;
+import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -62,6 +63,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
 
   private static final Logger LOG = Logger.getInstance("#" + SoftWrapModelImpl.class.getName());
 
+  private final LogicalPositionToOffsetTask   myLogicalToOffsetTask   = new LogicalPositionToOffsetTask();
   private final OffsetToLogicalTask   myOffsetToLogicalTask   = new OffsetToLogicalTask();
   private final VisualToLogicalTask   myVisualToLogicalTask   = new VisualToLogicalTask();
   private final LogicalToVisualTask   myLogicalToVisualTask   = new LogicalToVisualTask();
@@ -148,8 +150,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
         }
       }
     });
-    EditorSettings settings = myEditor.getSettings();
-    myUseSoftWraps = settings.isUseSoftWraps();
+    myUseSoftWraps = areSoftWrapsEnabledInEditor();
     myFontPreferences = myEditor.getColorsScheme().getFontPreferences();
     
     editor.addPropertyChangeListener(this);
@@ -157,13 +158,16 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
     myApplianceManager.addListener(myDataMapper);
   }
 
+  private boolean areSoftWrapsEnabledInEditor() {
+    return !(myEditor instanceof EditorWindow) && myEditor.getSettings().isUseSoftWraps();
+  }
+
   /**
    * Called on editor settings change. Current model is expected to drop all cached information about the settings if any.
    */
   public void reinitSettings() {
     boolean softWrapsUsedBefore = myUseSoftWraps;
-    EditorSettings settings = myEditor.getSettings();
-    myUseSoftWraps = settings.isUseSoftWraps();
+    myUseSoftWraps = areSoftWrapsEnabledInEditor();
 
     int tabWidthBefore = myTabWidth;
     myTabWidth = EditorUtil.getTabSize(myEditor);
@@ -367,6 +371,21 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
       myOffsetToLogicalTask.input = offset;
       executeSafely(myOffsetToLogicalTask);
       return myOffsetToLogicalTask.output;
+    } finally {
+      myActive--;
+    }
+  }
+
+  @Override
+  public int logicalPositionToOffset(@NotNull LogicalPosition logicalPosition) {
+    if (myBulkUpdateInProgress || myUpdateInProgress || !prepareToMapping()) {
+      return myEditor.logicalPositionToOffset(logicalPosition, false);
+    }
+    myActive++;
+    try {
+      myLogicalToOffsetTask.input = logicalPosition;
+      executeSafely(myLogicalToOffsetTask);
+      return myLogicalToOffsetTask.output;
     } finally {
       myActive--;
     }
@@ -788,6 +807,22 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
     }
   }
   
+  private class LogicalPositionToOffsetTask implements SoftWrapAwareTask {
+
+    public LogicalPosition input;
+    public int output;
+
+    @Override
+    public void run(boolean softWrapAware) throws IllegalStateException {
+      output = softWrapAware ? myDataMapper.logicalPositionToOffset(input) : myEditor.logicalPositionToOffset(input, false);
+    }
+
+    @Override
+    public String toString() {
+      return "mapping from logical position (" + input + ") to offset";
+    }
+  }
+
   private class FoldProcessingEndTask implements SoftWrapAwareTask {
     @Override
     public void run(boolean softWrapAware) {

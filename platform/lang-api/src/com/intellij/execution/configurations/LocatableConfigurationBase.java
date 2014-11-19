@@ -18,6 +18,7 @@ package com.intellij.execution.configurations;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,6 +40,7 @@ public abstract class LocatableConfigurationBase extends RunConfigurationBase im
   }
 
   @Override
+  @Transient
   public boolean isGeneratedName() {
     return suggestedName() != null && myNameIsGenerated;
   }

@@ -54,9 +54,8 @@ public class FileBasedStorage extends XmlElementStorage {
                           @NotNull String rootElementName,
                           @NotNull Disposable parentDisposable,
                           @Nullable final Listener listener,
-                          @Nullable StreamProvider streamProvider,
-                          ComponentVersionProvider componentVersionProvider) {
-    super(fileSpec, roamingType, pathMacroManager, rootElementName, streamProvider, componentVersionProvider);
+                          @Nullable StreamProvider streamProvider) {
+    super(fileSpec, roamingType, pathMacroManager, rootElementName, streamProvider);
 
     myFilePath = filePath;
     myFile = new File(filePath);
@@ -82,7 +81,6 @@ public class FileBasedStorage extends XmlElementStorage {
 
           @Override
           public void contentsChanged(@NotNull final VirtualFileEvent event) {
-            assert listener != null;
             listener.storageFileChanged(event, FileBasedStorage.this);
           }
         }, false, parentDisposable);
@@ -262,8 +260,6 @@ public class FileBasedStorage extends XmlElementStorage {
       // storage roaming was changed to DISABLED, but settings repository has old state
       return;
     }
-
-    resetProviderCache();
 
     try {
       Element newElement = deleted ? null : loadDataFromStreamProvider();

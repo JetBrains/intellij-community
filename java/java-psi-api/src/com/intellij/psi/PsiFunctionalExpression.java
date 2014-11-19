@@ -19,10 +19,16 @@ import com.intellij.openapi.util.Iconable;
 import org.jetbrains.annotations.Nullable;
 
 public interface PsiFunctionalExpression extends PsiExpression, Iconable, NavigatablePsiElement {
+  PsiFunctionalExpression[] EMPTY_ARRAY = new PsiFunctionalExpression[0];
   /**
    * @return SAM type the lambda expression corresponds to
    *         null when no SAM type could be found
    */
   @Nullable
   PsiType getFunctionalInterfaceType();
+
+  /**
+   * @return true if assignment SAM s = expr is correctly shaped
+   */
+  boolean isAcceptable(PsiType left);
 }

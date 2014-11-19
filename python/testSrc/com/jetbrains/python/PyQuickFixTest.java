@@ -50,6 +50,16 @@ public class PyQuickFixTest extends PyTestCase {
                      PyUnresolvedReferencesInspection.class, "Import 'importFromModule.foo.baz'", true, true);
   }
 
+  // PY-14365
+  public void testObjectBaseIsNotShownInAutoImportQuickfix() {
+    myFixture.copyDirectoryToProject("objectBaseIsNotShownInAutoImportQuickfix", "");
+    myFixture.configureByFile("main.py");
+    myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
+    final IntentionAction intention = myFixture.findSingleIntention("Import");
+    assertNotNull(intention);
+    assertEquals("Import 'module.MyOldStyleClass'", intention.getText());
+  }
+
   public void testImportFromModuleStar() {  // PY-6302
     myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
     myFixture.copyDirectoryToProject("importFromModuleStar", "");
@@ -349,8 +359,15 @@ public class PyQuickFixTest extends PyTestCase {
                      PyBundle.message("QFIX.add.super"), true, true);
   }
 
-  public void testAddEncoding() {                      //PY-491
+  //PY-491, PY-13297
+  public void testAddEncoding() {
     doInspectionTest("AddEncoding.py", PyMandatoryEncodingInspection.class,
+                     PyBundle.message("QFIX.add.encoding"), true, true);
+  }
+
+  // PY-13297
+  public void testAddEncodingAtLastLine() {
+    doInspectionTest("AddEncodingAtLastLine.py", PyMandatoryEncodingInspection.class,
                      PyBundle.message("QFIX.add.encoding"), true, true);
   }
 

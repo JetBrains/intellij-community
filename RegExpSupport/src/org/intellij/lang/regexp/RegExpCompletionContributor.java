@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,11 +20,15 @@ import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.TailTypeDecorator;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.ui.EmptyIcon;
+import org.intellij.lang.regexp.psi.RegExpClass;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -47,6 +51,9 @@ public final class RegExpCompletionContributor extends CompletionContributor {
 
       final ElementPattern<PsiElement> propertyNamePattern = psiElement().afterLeaf(psiElement().withText("{").afterLeaf(propertyPattern));
       extend(CompletionType.BASIC, propertyNamePattern, new PropertyNameCompletionProvider());
+
+      final ElementPattern<PsiElement> bracketExpressionPattern = psiElement().afterLeaf(psiElement(RegExpTT.BRACKET_EXPRESSION_BEGIN));
+      extend(CompletionType.BASIC, bracketExpressionPattern, new BracketExpressionCompletionProvider());
     }
 
     {
@@ -83,6 +90,34 @@ public final class RegExpCompletionContributor extends CompletionContributor {
 
   private static LookupElement createLookupElement(String name, String type, Icon icon) {
     return LookupElementBuilder.create(name).withTypeText(type).withIcon(icon);
+  }
+
+  private static class BracketExpressionCompletionProvider extends CompletionProvider<CompletionParameters> {
+
+    @Override
+    protected void addCompletions(@NotNull CompletionParameters parameters,
+                                  ProcessingContext context,
+                                  @NotNull CompletionResultSet result) {
+
+      for (String[] completion : RegExpLanguageHosts.getInstance().getPosixCharacterClasses(parameters.getPosition())) {
+        result.addElement(
+          LookupElementBuilder.create(completion[0]).withTypeText((completion.length > 1) ? completion[1] : null).withIcon(emptyIcon)
+            .withInsertHandler(new InsertHandler<LookupElement>() {
+              @Override
+              public void handleInsert(InsertionContext context, LookupElement item) {
+                context.setAddCompletionChar(false);
+                final Editor editor = context.getEditor();
+                final Document document = editor.getDocument();
+                final int tailOffset = context.getTailOffset();
+                if (document.getTextLength() < tailOffset + 2 ||
+                    !document.getText(new TextRange(tailOffset, tailOffset + 2)).equals(":]")) {
+                  document.insertString(tailOffset, ":]");
+                }
+                editor.getCaretModel().moveCaretRelatively(2, 0, false, false, true);
+              }
+            }));
+      }
+    }
   }
 
   private static class PropertyNameCompletionProvider extends CompletionProvider<CompletionParameters> {

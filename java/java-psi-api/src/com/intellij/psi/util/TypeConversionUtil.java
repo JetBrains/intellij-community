@@ -24,7 +24,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.ConcurrentHashSet;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.THashMap;
@@ -384,7 +383,7 @@ public class TypeConversionUtil {
     return aClass != null &&
            bClass != null &&
            aClass.getManager().areElementsEquivalent(aClass, bClass) &&
-           areSameArgumentTypes(aClass, resolveResult1.getSubstitutor(), resolveResult2.getSubstitutor());
+           areSameArgumentTypes(aClass, resolveResult1.getSubstitutor(), resolveResult2.getSubstitutor(), 1);
   }
 
   private static boolean areSameArgumentTypes(@NotNull PsiClass aClass, @NotNull PsiSubstitutor substitutor1, @NotNull PsiSubstitutor substitutor2) {
@@ -1043,7 +1042,7 @@ public class TypeConversionUtil {
     return getMaybeSuperClassSubstitutor(superClassCandidate, derivedClassCandidate, derivedSubstitutor, null);
   }
 
-  private static final Set<String> ourReportedSuperClassSubstitutorExceptions = new ConcurrentHashSet<String>();
+  private static final Set<String> ourReportedSuperClassSubstitutorExceptions = ContainerUtil.newConcurrentSet();
 
   /**
    * Calculates substitutor that binds type parameters in <code>superClass</code> with

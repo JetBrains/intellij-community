@@ -25,11 +25,14 @@ import com.intellij.ProjectTopics;
 import com.intellij.compiler.impl.javaCompiler.BackendCompiler;
 import com.intellij.compiler.impl.javaCompiler.eclipse.EclipseCompiler;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacCompiler;
+import com.intellij.compiler.server.BuildManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.compiler.CompilerManager;
+import com.intellij.openapi.compiler.options.ExcludeEntryDescription;
 import com.intellij.openapi.compiler.options.ExcludedEntriesConfiguration;
+import com.intellij.openapi.compiler.options.ExcludesConfiguration;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
@@ -50,11 +53,15 @@ import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.impl.artifacts.ArtifactBySourceFileFinder;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.xmlb.Accessor;
+import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
+import com.intellij.util.xmlb.XmlSerializer;
 import org.apache.oro.text.regex.*;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.compiler.JavaCompilers;
 import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
 import org.jetbrains.jps.model.java.impl.compiler.ProcessorConfigProfileImpl;
 import org.jetbrains.jps.model.serialization.java.compiler.AnnotationProcessorProfileSerializer;
@@ -74,8 +81,8 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.CompilerConfiguration");
   @NonNls public static final String TESTS_EXTERNAL_COMPILER_HOME_PROPERTY_NAME = "tests.external.compiler.home";
 
-  @SuppressWarnings({"WeakerAccess"}) public String DEFAULT_COMPILER;
-  @NotNull private BackendCompiler myDefaultJavaCompiler;
+  private BackendCompiler myDefaultJavaCompiler;
+  private State myState = new State();
 
   // extensions of the files considered as resource files
   private final List<Pattern> myRegexpResourcePatterns = new ArrayList<Pattern>();
@@ -85,7 +92,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   private final List<CompiledPattern> myNegatedCompiledPatterns = new ArrayList<CompiledPattern>();
   private boolean myWildcardPatternsInitialized = false;
   private final Project myProject;
-  private final ExcludedEntriesConfiguration myExcludedEntriesConfiguration;
+  private final ExcludesConfigNotificationsWrapper<ExcludedEntriesConfiguration> myExcludesConfiguration;
 
   private final Collection<BackendCompiler> myRegisteredCompilers = new ArrayList<BackendCompiler>();
   private JavacCompiler JAVAC_EXTERNAL_BACKEND;
@@ -104,47 +111,104 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
 
   @Nullable
   private String myBytecodeTargetLevel = null;  // null means compiler default
-  private final Map<String, String> myModuleBytecodeTarget = new java.util.HashMap<String, String>();
+  private final Map<String, String> myModuleBytecodeTarget = new HashMap<String, String>();
 
   public CompilerConfigurationImpl(Project project) {
     myProject = project;
-    myExcludedEntriesConfiguration = new ExcludedEntriesConfiguration();
-    Disposer.register(project, myExcludedEntriesConfiguration);
+    myExcludesConfiguration = new ExcludesConfigNotificationsWrapper<ExcludedEntriesConfiguration>(project, new ExcludedEntriesConfiguration());
+    Disposer.register(project, myExcludesConfiguration.getDelegate());
     MessageBusConnection connection = project.getMessageBus().connect(project);
     connection.subscribe(ProjectTopics.MODULES, new ModuleAdapter() {
+      @Override
       public void beforeModuleRemoved(Project project, Module module) {
         getAnnotationProcessingConfiguration(module).removeModuleName(module.getName());
       }
 
+      @Override
       public void moduleAdded(Project project, Module module) {
         myProcessorsProfilesMap = null; // clear cache
       }
     });
   }
 
-  public Element getState() {
-    try {
-      @NonNls final Element e = new Element("state");
-      writeExternal(e);
-      return e;
-    }
-    catch (WriteExternalException e1) {
-      LOG.error(e1);
-      return null;
-    }
+  private static class State {
+    public String DEFAULT_COMPILER = JavaCompilers.JAVAC_ID;
+
+    private boolean compilerWasSpecified;
   }
 
+  @Override
+  public Element getState() {
+    Element state = new Element("state");
+    XmlSerializer.serializeInto(myState, state, new SkipDefaultValuesSerializationFilters() {
+      @Override
+      protected boolean accepts(@NotNull Accessor accessor, @NotNull Object bean, @Nullable Object beanValue) {
+        if (myState.compilerWasSpecified && "DEFAULT_COMPILER".equals(accessor.getName())) {
+          return true;
+        }
+        return super.accepts(accessor, bean, beanValue);
+      }
+    });
+
+    if (!myAddNotNullAssertions) {
+      addChild(state, JpsJavaCompilerConfigurationSerializer.ADD_NOTNULL_ASSERTIONS).setAttribute(
+        JpsJavaCompilerConfigurationSerializer.ENABLED, String.valueOf(myAddNotNullAssertions));
+    }
+
+    if (myExcludesConfiguration.getExcludeEntryDescriptions().length > 0) {
+      myExcludesConfiguration.getDelegate().writeExternal(addChild(state, JpsJavaCompilerConfigurationSerializer.EXCLUDE_FROM_COMPILE));
+    }
+
+    final Element newChild = addChild(state, JpsJavaCompilerConfigurationSerializer.RESOURCE_EXTENSIONS);
+    for (final String pattern : getRegexpPatterns()) {
+      addChild(newChild, JpsJavaCompilerConfigurationSerializer.ENTRY).setAttribute(JpsJavaCompilerConfigurationSerializer.NAME, pattern);
+    }
+
+    if (myWildcardPatternsInitialized || !myWildcardPatterns.isEmpty()) {
+      final Element wildcardPatterns = addChild(state, JpsJavaCompilerConfigurationSerializer.WILDCARD_RESOURCE_PATTERNS);
+      for (final String wildcardPattern : myWildcardPatterns) {
+        addChild(wildcardPatterns, JpsJavaCompilerConfigurationSerializer.ENTRY).setAttribute(JpsJavaCompilerConfigurationSerializer.NAME, wildcardPattern);
+      }
+    }
+
+    final Element annotationProcessingSettings = addChild(state, JpsJavaCompilerConfigurationSerializer.ANNOTATION_PROCESSING);
+    final Element defaultProfileElem = addChild(annotationProcessingSettings, "profile").setAttribute("default", "true");
+    AnnotationProcessorProfileSerializer.writeExternal(myDefaultProcessorsProfile, defaultProfileElem);
+    for (ProcessorConfigProfile profile : myModuleProcessorProfiles) {
+      final Element profileElem = addChild(annotationProcessingSettings, "profile").setAttribute("default", "false");
+      AnnotationProcessorProfileSerializer.writeExternal(profile, profileElem);
+    }
+
+    if (!StringUtil.isEmpty(myBytecodeTargetLevel) || !myModuleBytecodeTarget.isEmpty()) {
+      final Element bytecodeTarget = addChild(state, JpsJavaCompilerConfigurationSerializer.BYTECODE_TARGET_LEVEL);
+      if (!StringUtil.isEmpty(myBytecodeTargetLevel)) {
+        bytecodeTarget.setAttribute(JpsJavaCompilerConfigurationSerializer.TARGET_ATTRIBUTE, myBytecodeTargetLevel);
+      }
+      if (!myModuleBytecodeTarget.isEmpty()) {
+        final List<String> moduleNames = new ArrayList<String>(myModuleBytecodeTarget.keySet());
+        Collections.sort(moduleNames, String.CASE_INSENSITIVE_ORDER);
+        for (String name : moduleNames) {
+          final Element moduleElement = addChild(bytecodeTarget, JpsJavaCompilerConfigurationSerializer.MODULE);
+          moduleElement.setAttribute(JpsJavaCompilerConfigurationSerializer.NAME, name);
+          final String value = myModuleBytecodeTarget.get(name);
+          moduleElement.setAttribute(JpsJavaCompilerConfigurationSerializer.TARGET_ATTRIBUTE, value != null ? value : "");
+        }
+      }
+    }
+    return state;
+  }
+
+  @Override
   public void loadState(Element state) {
-    try {
-      readExternal(state);
-    }
-    catch (InvalidDataException e) {
-      LOG.error(e);
-    }
+    readExternal(state);
   }
 
   public void setProjectBytecodeTarget(@Nullable String level) {
+    final String previous = myBytecodeTargetLevel;
     myBytecodeTargetLevel = level;
+    if (!myProject.isDefault() && !Comparing.equal(previous, level)) {
+      BuildManager.getInstance().clearState(myProject);
+    }
   }
 
   @Override
@@ -154,14 +218,19 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   }
 
   public void setModulesBytecodeTargetMap(@NotNull Map<String, String> mapping) {
+    final boolean shouldNotify = !myProject.isDefault() && !myModuleBytecodeTarget.equals(mapping);
     myModuleBytecodeTarget.clear();
     myModuleBytecodeTarget.putAll(mapping);
+    if (shouldNotify) {
+      BuildManager.getInstance().clearState(myProject);
+    }
   }
 
   public Map<String, String> getModulesBytecodeTargetMap() {
     return myModuleBytecodeTarget;
   }
 
+  @Override
   public void setBytecodeTargetLevel(Module module, String level) {
     final String previous;
     if (StringUtil.isEmpty(level)) {
@@ -170,11 +239,12 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     else {
       previous = myModuleBytecodeTarget.put(module.getName(), level);
     }
-    // todo: mark module as dirty in order to rebuild it completely with the new target level
-    //if (!Comparing.equal(previous, level)) {
-    //  final Project project = module.getProject();
-    //
-    //}
+    if (!Comparing.equal(previous, level)) {
+      final Project project = module.getProject();
+      if (!project.isDefault()) {
+        BuildManager.getInstance().clearState(project);
+      }
+    }
   }
 
   @Override
@@ -229,11 +299,14 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     }
   }
 
+  @Override
   public void disposeComponent() {
   }
 
+  @Override
   public void initComponent() { }
 
+  @Override
   public void projectClosed() {
   }
 
@@ -242,6 +315,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     return JAVAC_EXTERNAL_BACKEND;
   }
 
+  @Override
   public void projectOpened() {
     createCompilers();
   }
@@ -271,15 +345,15 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     for (FileType type : types) {
       compilerManager.addCompilableFileType(type);
     }
-    
+
     myDefaultJavaCompiler = JAVAC_EXTERNAL_BACKEND;
     for (BackendCompiler compiler : myRegisteredCompilers) {
-      if (compiler.getId().equals(DEFAULT_COMPILER)) {
+      if (compiler.getId().equals(myState.DEFAULT_COMPILER)) {
         myDefaultJavaCompiler = compiler;
         break;
       }
     }
-    DEFAULT_COMPILER = myDefaultJavaCompiler.getId();
+    myState.DEFAULT_COMPILER = myDefaultJavaCompiler.getId();
   }
 
   public Collection<BackendCompiler> getRegisteredJavaCompilers() {
@@ -304,6 +378,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     return ArrayUtil.toStringArray(myWildcardPatterns);
   }
 
+  @Override
   public void addResourceFilePattern(String namePattern) throws MalformedPatternException {
     addWildcardResourcePattern(namePattern);
   }
@@ -317,12 +392,13 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   }
 
   @Override
-  public ExcludedEntriesConfiguration getExcludedEntriesConfiguration() {
-    return myExcludedEntriesConfiguration;
+  public ExcludesConfiguration getExcludedEntriesConfiguration() {
+    return myExcludesConfiguration;
   }
 
+  @Override
   public boolean isExcludedFromCompilation(final VirtualFile virtualFile) {
-    return myExcludedEntriesConfiguration.isExcluded(virtualFile);
+    return myExcludesConfiguration.isExcluded(virtualFile);
   }
 
   @Override
@@ -505,6 +581,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     return wildcardPattern.length() > 1 && wildcardPattern.charAt(0) == '!';
   }
 
+  @Override
   public boolean isResourceFile(String name) {
     return isResourceFile(name, null);
   }
@@ -572,8 +649,12 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   }
 
 
-  public void readExternal(Element parentNode) throws InvalidDataException {
-    DefaultJDOMExternalizer.readExternal(this, parentNode);
+  public void readExternal(Element parentNode)  {
+    myState = XmlSerializer.deserialize(parentNode, State.class);
+    Element option = parentNode.getChild("option");
+    if (!myProject.isDefault()) {
+      myState.compilerWasSpecified = option != null && "DEFAULT_COMPILER".equals(option.getAttributeValue("name"));
+    }
 
     final Element notNullAssertions = parentNode.getChild(JpsJavaCompilerConfigurationSerializer.ADD_NOTNULL_ASSERTIONS);
     if (notNullAssertions != null) {
@@ -582,7 +663,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
 
     Element node = parentNode.getChild(JpsJavaCompilerConfigurationSerializer.EXCLUDE_FROM_COMPILE);
     if (node != null) {
-      myExcludedEntriesConfiguration.readExternal(node);
+      myExcludesConfiguration.getDelegate().readExternal(node);
     }
 
     try {
@@ -612,7 +693,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
       }
     }
     catch (MalformedPatternException e) {
-      throw new InvalidDataException(e);
+      LOG.error(e);
     }
 
 
@@ -647,7 +728,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     final Element bytecodeTargetElement = parentNode.getChild(JpsJavaCompilerConfigurationSerializer.BYTECODE_TARGET_LEVEL);
     if (bytecodeTargetElement != null) {
       myBytecodeTargetLevel = bytecodeTargetElement.getAttributeValue(JpsJavaCompilerConfigurationSerializer.TARGET_ATTRIBUTE);
-      for (Element elem : (Collection<Element>)bytecodeTargetElement.getChildren(JpsJavaCompilerConfigurationSerializer.MODULE)) {
+      for (Element elem : bytecodeTargetElement.getChildren(JpsJavaCompilerConfigurationSerializer.MODULE)) {
         final String name = elem.getAttributeValue(JpsJavaCompilerConfigurationSerializer.NAME);
         if (name == null) {
           continue;
@@ -746,56 +827,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     }
   }
 
-  private void writeExternal(Element parentNode) throws WriteExternalException {
-    DefaultJDOMExternalizer.writeExternal(this, parentNode);
-
-    if (myAddNotNullAssertions != true) {
-      addChild(parentNode, JpsJavaCompilerConfigurationSerializer.ADD_NOTNULL_ASSERTIONS).setAttribute(
-        JpsJavaCompilerConfigurationSerializer.ENABLED, String.valueOf(myAddNotNullAssertions));
-    }
-
-    if(myExcludedEntriesConfiguration.getExcludeEntryDescriptions().length > 0) {
-      myExcludedEntriesConfiguration.writeExternal(addChild(parentNode, JpsJavaCompilerConfigurationSerializer.EXCLUDE_FROM_COMPILE));
-    }
-
-    final Element newChild = addChild(parentNode, JpsJavaCompilerConfigurationSerializer.RESOURCE_EXTENSIONS);
-    for (final String pattern : getRegexpPatterns()) {
-      addChild(newChild, JpsJavaCompilerConfigurationSerializer.ENTRY).setAttribute(JpsJavaCompilerConfigurationSerializer.NAME, pattern);
-    }
-
-    if (myWildcardPatternsInitialized || !myWildcardPatterns.isEmpty()) {
-      final Element wildcardPatterns = addChild(parentNode, JpsJavaCompilerConfigurationSerializer.WILDCARD_RESOURCE_PATTERNS);
-      for (final String wildcardPattern : myWildcardPatterns) {
-        addChild(wildcardPatterns, JpsJavaCompilerConfigurationSerializer.ENTRY).setAttribute(JpsJavaCompilerConfigurationSerializer.NAME, wildcardPattern);
-      }
-    }
-
-    final Element annotationProcessingSettings = addChild(parentNode, JpsJavaCompilerConfigurationSerializer.ANNOTATION_PROCESSING);
-    final Element defaultProfileElem = addChild(annotationProcessingSettings, "profile").setAttribute("default", "true");
-    AnnotationProcessorProfileSerializer.writeExternal(myDefaultProcessorsProfile, defaultProfileElem);
-    for (ProcessorConfigProfile profile : myModuleProcessorProfiles) {
-      final Element profileElem = addChild(annotationProcessingSettings, "profile").setAttribute("default", "false");
-      AnnotationProcessorProfileSerializer.writeExternal(profile, profileElem);
-    }
-
-    if (!StringUtil.isEmpty(myBytecodeTargetLevel) || !myModuleBytecodeTarget.isEmpty()) {
-      final Element bytecodeTarget = addChild(parentNode, JpsJavaCompilerConfigurationSerializer.BYTECODE_TARGET_LEVEL);
-      if (!StringUtil.isEmpty(myBytecodeTargetLevel)) {
-        bytecodeTarget.setAttribute(JpsJavaCompilerConfigurationSerializer.TARGET_ATTRIBUTE, myBytecodeTargetLevel);
-      }
-      if (!myModuleBytecodeTarget.isEmpty()) {
-        final List<String> moduleNames = new ArrayList<String>(myModuleBytecodeTarget.keySet());
-        Collections.sort(moduleNames, String.CASE_INSENSITIVE_ORDER);
-        for (String name : moduleNames) {
-          final Element moduleElement = addChild(bytecodeTarget, JpsJavaCompilerConfigurationSerializer.MODULE);
-          moduleElement.setAttribute(JpsJavaCompilerConfigurationSerializer.NAME, name);
-          final String value = myModuleBytecodeTarget.get(name);
-          moduleElement.setAttribute(JpsJavaCompilerConfigurationSerializer.TARGET_ATTRIBUTE, value != null? value : "");
-        }
-      }
-    }
-  }
-
+  @Override
   @NotNull @NonNls
   public String getComponentName() {
     return "CompilerConfiguration";
@@ -813,7 +845,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
    */
   public void setDefaultCompiler(BackendCompiler defaultCompiler) {
     myDefaultJavaCompiler = defaultCompiler;
-    DEFAULT_COMPILER = defaultCompiler.getId();
+    myState.DEFAULT_COMPILER = defaultCompiler.getId();
   }
 
   public void convertPatterns() {
@@ -825,7 +857,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
       try {
         ok = doConvertPatterns();
       }
-      catch (MalformedPatternException e) {
+      catch (MalformedPatternException ignored) {
         ok = false;
       }
       if (!ok) {
@@ -839,9 +871,11 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
         );
         final String wildcardPatterns = Messages.showInputDialog(
           myProject, message, CompilerBundle.message("pattern.conversion.dialog.title"), Messages.getWarningIcon(), initialPatternString, new InputValidator() {
+          @Override
           public boolean checkInput(String inputString) {
             return true;
           }
+          @Override
           public boolean canClose(String inputString) {
             final StringTokenizer tokenizer = new StringTokenizer(inputString, ";", false);
             StringBuilder malformedPatterns = new StringBuilder();
@@ -925,6 +959,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     return extensionsString.toString();
   }
 
+  @Override
   public boolean isCompilableResourceFile(final Project project, final VirtualFile file) {
     if (!isResourceFile(file)) {
       return false;
@@ -938,7 +973,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     @Nullable final Pattern dir;
     @Nullable final Pattern srcRoot;
 
-    private CompiledPattern(Pattern fileName, Pattern dir, Pattern srcRoot) {
+    private CompiledPattern(@NotNull Pattern fileName, @Nullable Pattern dir, @Nullable Pattern srcRoot) {
       this.fileName = fileName;
       this.dir = dir;
       this.srcRoot = srcRoot;
@@ -951,4 +986,64 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     return child;
   }
 
+  private static class ExcludesConfigNotificationsWrapper<T extends ExcludesConfiguration> implements ExcludesConfiguration {
+    private final Project myProject;
+    private final T myDelegate;
+
+    public ExcludesConfigNotificationsWrapper(@NotNull Project project, @NotNull T delegate) {
+      myProject = project;
+      myDelegate = delegate;
+    }
+
+    @NotNull
+    public T getDelegate() {
+      return myDelegate;
+    }
+
+    @Override
+    public ExcludeEntryDescription[] getExcludeEntryDescriptions() {
+      return myDelegate.getExcludeEntryDescriptions();
+    }
+
+    @Override
+    public void addExcludeEntryDescription(ExcludeEntryDescription description) {
+      try {
+        myDelegate.addExcludeEntryDescription(description);
+      }
+      finally {
+        BuildManager.getInstance().clearState(myProject);
+      }
+    }
+
+    @Override
+    public void removeExcludeEntryDescription(ExcludeEntryDescription description) {
+      try {
+        myDelegate.removeExcludeEntryDescription(description);
+      }
+      finally {
+        BuildManager.getInstance().clearState(myProject);
+      }
+    }
+
+    @Override
+    public void removeAllExcludeEntryDescriptions() {
+      try {
+        myDelegate.removeAllExcludeEntryDescriptions();
+      }
+      finally {
+        BuildManager.getInstance().clearState(myProject);
+      }
+    }
+
+    @Override
+    public boolean containsExcludeEntryDescription(ExcludeEntryDescription description) {
+      return myDelegate.containsExcludeEntryDescription(description);
+    }
+
+    @Override
+    public boolean isExcluded(VirtualFile virtualFile) {
+      return myDelegate.isExcluded(virtualFile);
+    }
+  }
+  
 }

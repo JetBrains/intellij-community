@@ -54,6 +54,7 @@ import com.intellij.util.concurrency.SwingWorker;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import com.intellij.xml.util.XmlStringUtil;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -213,6 +214,7 @@ public abstract class PluginManagerMain implements Disposable {
 
   protected abstract JScrollPane createTable();
 
+  @Override
   public void dispose() {
     myDisposed = true;
   }
@@ -227,6 +229,7 @@ public abstract class PluginManagerMain implements Disposable {
 
   public void reset() {
     UiNotifyConnector.doWhenFirstShown(getPluginTable(), new Runnable() {
+      @Override
       public void run() {
         requireShutdown = false;
         TableUtil.ensureSelectionExists(getPluginTable());
@@ -245,6 +248,7 @@ public abstract class PluginManagerMain implements Disposable {
 
   protected void installTableActions() {
     pluginTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+      @Override
       public void valueChanged(ListSelectionEvent e) {
         refresh();
       }
@@ -306,6 +310,7 @@ public abstract class PluginManagerMain implements Disposable {
       List<IdeaPluginDescriptor> list = null;
       List<String> errorMessages = new ArrayList<String>();
 
+      @Override
       public Object construct() {
         try {
           list = RepositoryHelper.loadPluginsFromRepository(null);
@@ -325,8 +330,10 @@ public abstract class PluginManagerMain implements Disposable {
       }
 
       void processPluginHost(@NotNull String host, boolean builtIn) {
-        if (!acceptHost(host)) return;
-        final Map<PluginId, PluginDownloader> downloaded = new HashMap<PluginId, PluginDownloader>();
+        if (!acceptHost(host)) {
+          return;
+        }
+        Map<PluginId, PluginDownloader> downloaded = new THashMap<PluginId, PluginDownloader>();
         try {
           UpdateChecker.checkPluginsHost(host, downloaded, false, null);
           for (PluginDownloader downloader : downloaded.values()) {
@@ -353,8 +360,10 @@ public abstract class PluginManagerMain implements Disposable {
         }
       }
 
+      @Override
       public void finished() {
         UIUtil.invokeLaterIfNeeded(new Runnable() {
+          @Override
           public void run() {
             setDownloadStatus(false);
             if (list != null) {
@@ -383,7 +392,7 @@ public abstract class PluginManagerMain implements Disposable {
   }
 
   protected void loadAvailablePlugins() {
-    ArrayList<IdeaPluginDescriptor> list;
+    List<IdeaPluginDescriptor> list;
     try {
       //  If we already have a file with downloaded plugins from the last time,
       //  then read it, load into the list and start the updating process.
@@ -546,6 +555,7 @@ public abstract class PluginManagerMain implements Disposable {
   }
 
   public static class MyHyperlinkListener implements HyperlinkListener {
+    @Override
     public void hyperlinkUpdate(HyperlinkEvent e) {
       if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
         JEditorPane pane = (JEditorPane)e.getSource();
@@ -574,18 +584,22 @@ public abstract class PluginManagerMain implements Disposable {
       return getComponent().convertRowIndexToModel(viewIndex);
     }
 
+    @Override
     public int getSelectedIndex() {
       return myComponent.getSelectedRow();
     }
 
+    @Override
     public Object[] getAllElements() {
       return myComponent.getElements();
     }
 
+    @Override
     public String getElementText(Object element) {
       return ((IdeaPluginDescriptor)element).getName();
     }
 
+    @Override
     public void selectElement(Object element, String selectedText) {
       for (int i = 0; i < myComponent.getRowCount(); i++) {
         if (myComponent.getObjectAt(i).getName().equals(((IdeaPluginDescriptor)element).getName())) {
@@ -678,6 +692,7 @@ public abstract class PluginManagerMain implements Disposable {
       super("PLUGIN_FILTER", 5);
     }
 
+    @Override
     public void filter() {
       getPluginTable().putClientProperty(SpeedSearchSupply.SEARCH_QUERY_KEY, getFilter());
       pluginsModel.filter(getFilter().toLowerCase());

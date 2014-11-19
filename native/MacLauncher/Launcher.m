@@ -10,11 +10,16 @@
 #import "PropertyFileReader.h"
 #import "utils.h"
 #import <dlfcn.h>
+@class NSAlert;
 
 typedef jint (JNICALL *fun_ptr_t_CreateJavaVM)(JavaVM **pvm, void **env, void *args);
+NSBundle *vm;
+NSString *const JVMOptions = @"JVMOptions";
+NSString *JVMVersion = NULL;
+NSString* minRequiredJavaVersion = @"1.6.0_65-b14-466.1";
+NSString* osxVersion = @"10.10";
+BOOL javaUpdateRequired = false;
 
-
-static NSString *const JVMOptions = @"JVMOptions";
 
 @interface NSString (CustomReplacements)
 - (NSString *)replaceAll:(NSString *)pattern to:(NSString *)replacement;
@@ -65,6 +70,76 @@ static NSString *const JVMOptions = @"JVMOptions";
     return self;
 }
 
+NSString* getOSXVersion(){
+  NSString *versionString;
+  NSDictionary * sv = [NSDictionary dictionaryWithContentsOfFile:@"/System/Library/CoreServices/SystemVersion.plist"];
+  versionString = [sv objectForKey:@"ProductVersion"];
+  //NSLog(@"OS X: %@", versionString);
+  return versionString;
+}
+
+void openUrl(){
+    CFURLRef url = (__bridge CFURLRef)[NSURL URLWithString:@"http://support.apple.com/kb/DL1572"];
+    NSString *fileString =  @"/Applications/Safari.app/";
+    
+    FSRef appFSURL;
+    OSStatus stat2=FSPathMakeRef((const UInt8 *)[fileString UTF8String], &appFSURL, NULL);
+    if (stat2<0) {
+        NSLog(@"can't create FSRef of Safari");
+    }
+    
+    //create the application parameters structure
+    LSApplicationParameters appParam;
+    appParam.version = 0;       //should always be zero
+    appParam.flags = kLSLaunchDefaults; //use the default launch options
+    appParam.application = &appFSURL; //pass in the reference of applications FSRef
+    appParam.argv = NULL;
+    appParam.environment = NULL;
+    appParam.asyncLaunchRefCon = NULL;
+    appParam.initialEvent = NULL;
+    
+    //array of urls. now with a single object array
+    CFArrayRef array = (__bridge CFArrayRef)[NSArray arrayWithObject:(__bridge id)url];
+    
+    //open the url with the application
+    OSStatus stat = LSOpenURLsWithRole(array, kLSRolesAll, NULL, &appParam, NULL, 0);
+    //kLSRolesAll - the role with which the applicaiton is to be opened (kLSRolesAll accepts any)
+    
+    if (stat<0) {
+        NSLog(@"Can not open the url (http://support.apple.com/kb/DL1572) with the Safari");
+    }
+}
+
+void showWarning(NSString* installedJava){
+   NSAlert* alert = [[NSAlert alloc] init];
+   [alert addButtonWithTitle:@"Update"];
+   [alert addButtonWithTitle:@"Cancel"];
+    NSString* message_description = [NSString stringWithFormat:@"%@%@%@",@"Java version: ", installedJava, @" which is installed on your Mac is obsolete."];
+   NSString* message_suggestion  = @"Would you like to update Java?";
+   NSString* informativeText =[NSString stringWithFormat:@"%@\n%@",message_description,message_suggestion];
+   [alert setMessageText:@"Java Update"];
+   [alert setInformativeText:informativeText ];
+   [alert setAlertStyle:NSWarningAlertStyle];
+    if ([alert runModal] == NSAlertFirstButtonReturn){
+        openUrl();
+    }
+    [alert release];
+}
+
+BOOL isJavaUpdateRequired(NSString *vmVersion, NSString *requiredVersion){
+    BOOL needUpdate = false;
+    NSString* currentOSXVersion = getOSXVersion();
+    if ([osxVersion compare:currentOSXVersion options:NSNumericSearch] <= 0){
+      if ([minRequiredJavaVersion compare:vmVersion options:NSNumericSearch] > 0){
+        NSLog(@"find Java: %@", vmVersion);
+        NSLog(@"required JavaVersion: %@", minRequiredJavaVersion);
+        needUpdate = true;
+        showWarning(vmVersion);
+      }
+    }
+    return needUpdate;
+}
+
 
 void appendBundle(NSString *path, NSMutableArray *sink) {
     if ([path hasSuffix:@"jdk"] || [path hasSuffix:@".jre"]) {
@@ -89,13 +164,19 @@ void appendJvmBundlesAt(NSString *path, NSMutableArray *sink) {
 NSArray *allVms() {
     NSMutableArray *jvmBundlePaths = [NSMutableArray array];
 
+    // search java info in user's idea.properties
+    NSDictionary *inConfig = [PropertyFileReader readFile:getPropertiesFilePath()];
+    NSString* userJavaVersion = [inConfig objectForKey:@"JVMVersion"];
+    if (userJavaVersion != nil) JVMVersion = userJavaVersion;
+    NSString *required = requiredJvmVersion();
+
     NSString *explicit = [[[NSProcessInfo processInfo] environment] objectForKey:@"IDEA_JDK"];
 
     if (explicit != nil) {
         // check if IDEA_JDK value corresponds  with JVMVersion from Info.plist
         NSLog(@"value of IDEA_JDK: %@", explicit);
         NSBundle *jdkBundle = [NSBundle bundleWithPath:explicit];
-        NSString *required = requiredJvmVersion();
+        
         if (jdkBundle != nil && required != NULL) {
             if (satisfies(jvmVersion(jdkBundle), required)) {
                 appendBundle(explicit, jvmBundlePaths);
@@ -109,7 +190,7 @@ NSArray *allVms() {
         NSString *appDir = [bundle.bundlePath stringByAppendingPathComponent:@"Contents"];
 
         appendJvmBundlesAt([appDir stringByAppendingPathComponent:@"/jre"], jvmBundlePaths);
-        if (jvmBundlePaths.count > 0) return jvmBundlePaths;
+        if ((jvmBundlePaths.count > 0) && (satisfies(jvmVersion(jvmBundlePaths[jvmBundlePaths.count-1]), required))) return jvmBundlePaths;
 
         appendJvmBundlesAt([NSHomeDirectory() stringByAppendingPathComponent:@"Library/Java/JavaVirtualMachines"], jvmBundlePaths);
         appendJvmBundlesAt(@"/Library/Java/JavaVirtualMachines", jvmBundlePaths);
@@ -120,23 +201,29 @@ NSArray *allVms() {
 }
 
 NSString *jvmVersion(NSBundle *bundle) {
-    return [bundle.infoDictionary valueForKey:@"JVMVersion" inDictionary:@"JavaVM" defaultObject:@"0"];
+    NSString* javaVersion = [bundle.infoDictionary valueForKey:@"JVMVersion" inDictionary:@"JavaVM" defaultObject:@"0"];
+    //NSLog(@"jvmVersion: %@", javaVersion);
+    return javaVersion;
 }
 
 NSString *requiredJvmVersion() {
-    return [[NSBundle mainBundle].infoDictionary valueForKey:@"JVMVersion" inDictionary: JVMOptions defaultObject:@"1.7*"];
+    return (JVMVersion != NULL) ? JVMVersion : [[NSBundle mainBundle].infoDictionary valueForKey:@"JVMVersion" inDictionary: JVMOptions defaultObject:@"1.7*"];
 }
 
 BOOL satisfies(NSString *vmVersion, NSString *requiredVersion) {
+    if (!javaUpdateRequired){
+      javaUpdateRequired = isJavaUpdateRequired(vmVersion, requiredVersion);
+    }
+    if (javaUpdateRequired){
+      return !javaUpdateRequired;
+    }
     if ([requiredVersion hasSuffix:@"+"]) {
-        requiredVersion = [requiredVersion substringToIndex:[requiredVersion length] - 1];
-        return [requiredVersion compare:vmVersion options:NSNumericSearch] <= 0;
+      requiredVersion = [requiredVersion substringToIndex:[requiredVersion length] - 1];
+      return [requiredVersion compare:vmVersion options:NSNumericSearch] <= 0;
     }
-
     if ([requiredVersion hasSuffix:@"*"]) {
-        requiredVersion = [requiredVersion substringToIndex:[requiredVersion length] - 1];
+      requiredVersion = [requiredVersion substringToIndex:[requiredVersion length] - 1];
     }
-
     return [vmVersion hasPrefix:requiredVersion];
 }
 
@@ -158,13 +245,13 @@ NSBundle *findMatchingVm() {
     debugLog([NSString stringWithFormat:@"Required VM: %@", required]);
 
     if (required != nil && required != NULL) {
-	  for (NSBundle *vm in vmBundles) {
+      for (NSBundle *vm in vmBundles) {
         if (satisfies(jvmVersion(vm), required)) {
             debugLog(@"Chosen VM:");
             debugLog([vm bundlePath]);
             return vm;
         }
-  	  }
+      }
     } else {
         NSLog(@"Info.plist is corrupted, Absent JVMOptios key.");
         exit(-1);
@@ -331,10 +418,18 @@ NSDictionary *parseProperties() {
     }
 }
 
+BOOL validationJavaVersion(){
+    vm = findMatchingVm();
+    if (javaUpdateRequired) {
+        NSLog(@"update Java is required");
+        return false;
+    }
+    return true;
+}
+
 - (void)launch {
     NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
 
-    NSBundle *vm = findMatchingVm();
     if (vm == nil) {
         NSString *old_launcher = [self expandMacros:@"$APP_PACKAGE/Contents/MacOS/idea_appLauncher"];
         execv([old_launcher fileSystemRepresentation], self->argv);

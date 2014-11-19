@@ -27,6 +27,8 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
+import com.intellij.psi.PsiCompiledElement;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.ui.*;
@@ -265,16 +267,22 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
   @Override
   @NotNull
   protected Action[] createActions() {
+    final List<Action> actions = new ArrayList<Action>();
+    actions.add(getOKAction());
     if (myAllowEmptySelection) {
-      return new Action[]{getOKAction(), new SelectNoneAction(), getCancelAction()};
+      actions.add(new SelectNoneAction());
     }
-    else {
-      return new Action[]{getOKAction(), getCancelAction()};
+    actions.add(getCancelAction());
+    if (getHelpId() != null) {
+      actions.add(getHelpAction());
     }
+    return actions.toArray(new Action[actions.size()]);
   }
 
   @Override
   protected void doHelpAction() {
+    if (getHelpId() == null) return;
+    super.doHelpAction();
   }
 
   protected void customizeOptionsPanel() {
@@ -454,7 +462,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
   protected void fillToolbarActions(DefaultActionGroup group) {
     final boolean alphabeticallySorted = PropertiesComponent.getInstance().isTrueValue(PROP_SORTED);
     if (alphabeticallySorted) {
-      setSortComparator(new OrderComparator());
+      setSortComparator(new AlphaComparator());
     }
     myAlphabeticallySorted = alphabeticallySorted;
     group.add(mySortAction);
@@ -904,8 +912,11 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     @Override
     public int compare(ElementNode n1, ElementNode n2) {
       if (n1.getDelegate() instanceof ClassMemberWithElement && n2.getDelegate() instanceof ClassMemberWithElement) {
-        return ((ClassMemberWithElement)n1.getDelegate()).getElement().getTextOffset() -
-               ((ClassMemberWithElement)n2.getDelegate()).getElement().getTextOffset();
+        PsiElement element1 = ((ClassMemberWithElement)n1.getDelegate()).getElement();
+        PsiElement element2 = ((ClassMemberWithElement)n2.getDelegate()).getElement();
+        if (!(element1 instanceof PsiCompiledElement) && !(element2 instanceof PsiCompiledElement)) {
+          return element1.getTextOffset() - element2.getTextOffset();
+        }
       }
       return n1.getOrder() - n2.getOrder();
     }

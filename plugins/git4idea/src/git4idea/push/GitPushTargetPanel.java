@@ -16,8 +16,10 @@
 package git4idea.push;
 
 import com.intellij.dvcs.push.PushTargetPanel;
-import com.intellij.dvcs.push.ui.ExtraEditControl;
 import com.intellij.dvcs.push.ui.PushTargetTextField;
+import com.intellij.dvcs.push.ui.VcsEditableTextComponent;
+import com.intellij.dvcs.push.ui.VcsLinkListener;
+import com.intellij.dvcs.push.ui.VcsLinkedTextComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -38,13 +40,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.text.ParseException;
 import java.util.Comparator;
 import java.util.List;
 
-class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
+public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
 
   private static final Logger LOG = Logger.getInstance(GitPushTargetPanel.class);
 
@@ -52,9 +55,9 @@ class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
   private static final String SEPARATOR = " : ";
 
   @NotNull private final GitRepository myRepository;
+  @NotNull private final VcsEditableTextComponent myTargetRenderedComponent;
   @NotNull private final PushTargetTextField myTargetTextField;
-  @NotNull private final JLabel myRemoteLabel;
-  @NotNull private final ExtraEditControl myEditRemoteControl;
+  @NotNull private final VcsLinkedTextComponent myRemoteRenderedComponent;
 
   @Nullable private GitPushTarget myCurrentTarget;
   @Nullable private String myError;
@@ -85,22 +88,20 @@ class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
       initialBranch = getTextFieldText(defaultTarget);
       initialRemote = defaultTarget.getBranch().getRemote().getName();
     }
-
-    myEditRemoteControl = new ExtraEditControl() {
+    myTargetRenderedComponent = new VcsEditableTextComponent("<a href=''>" + initialBranch + "</a>", null);
+    myTargetTextField = new PushTargetTextField(repository.getProject(), getTargetNames(myRepository), initialBranch);
+    myRemoteRenderedComponent = new VcsLinkedTextComponent("<a href=''>" + initialRemote + "</a>", new VcsLinkListener() {
       @Override
-      public void click(@NotNull MouseEvent event) {
+      public void hyperlinkActivated(@NotNull DefaultMutableTreeNode sourceNode, @NotNull MouseEvent event) {
         showRemoteSelector(event);
       }
-    };
-
-    myTargetTextField = new PushTargetTextField(repository.getProject(), getTargetNames(myRepository), initialBranch);
-    myRemoteLabel = new JBLabel(initialRemote);
+    });
 
     setLayout(new BorderLayout());
     setOpaque(false);
     JPanel remoteAndSeparator = new JPanel(new BorderLayout());
     remoteAndSeparator.setOpaque(false);
-    remoteAndSeparator.add(myRemoteLabel, BorderLayout.CENTER);
+    remoteAndSeparator.add(myRemoteRenderedComponent, BorderLayout.CENTER);
     remoteAndSeparator.add(new JBLabel(SEPARATOR), BorderLayout.EAST);
 
     add(remoteAndSeparator, BorderLayout.WEST);
@@ -121,7 +122,7 @@ class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
     ListPopup popup = JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<String>(null, remotes) {
       @Override
       public PopupStep onChosen(String selectedValue, boolean finalChoice) {
-        myRemoteLabel.setText(selectedValue);
+        myRemoteRenderedComponent.updateLinkText(selectedValue);
         if (myFireOnChangeAction != null) {
           myFireOnChangeAction.run();
         }
@@ -142,14 +143,15 @@ class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
   }
 
   @Override
-  public void render(@NotNull final ColoredTreeCellRenderer renderer) {
+  public void render(@NotNull ColoredTreeCellRenderer renderer, boolean isSelected) {
     if (myError != null) {
       renderer.append(myError, SimpleTextAttributes.ERROR_ATTRIBUTES);
     }
     else {
-      String currentRemote = myRemoteLabel.getText();
+      String currentRemote = myRemoteRenderedComponent.getText();
       if (getRemotes().size() > 1) {
-        renderer.append(currentRemote, SimpleTextAttributes.SYNTHETIC_ATTRIBUTES, myEditRemoteControl);
+        myRemoteRenderedComponent.setSelected(isSelected);
+        myRemoteRenderedComponent.render(renderer);
       }
       else {
         renderer.append(currentRemote, SimpleTextAttributes.REGULAR_ATTRIBUTES);
@@ -160,7 +162,8 @@ class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
       if (target.isNewBranchCreated()) {
         renderer.append("+", SimpleTextAttributes.SYNTHETIC_ATTRIBUTES, this);
       }
-      renderer.append(target.getBranch().getNameForRemoteOperations(), SimpleTextAttributes.SYNTHETIC_ATTRIBUTES, this);
+      myTargetRenderedComponent.setSelected(isSelected);
+      myTargetRenderedComponent.render(renderer);
     }
   }
 
@@ -185,10 +188,11 @@ class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
     if (myError != null) {
       return;
     }
-    String remoteName = myRemoteLabel.getText();
+    String remoteName = myRemoteRenderedComponent.getText();
     String branchName = myTargetTextField.getText();
     try {
       myCurrentTarget = GitPushTarget.parse(myRepository, remoteName, branchName);
+      myTargetRenderedComponent.updateLinkText(branchName);
     }
     catch (ParseException e) {
       LOG.error("Invalid remote name shouldn't be allowed. [" + remoteName + ", " + branchName + "]", e);
@@ -202,7 +206,7 @@ class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
       return new ValidationInfo(myError, myTargetTextField);
     }
     try {
-      GitPushTarget.parse(myRepository, myRemoteLabel.getText(), myTargetTextField.getText());
+      GitPushTarget.parse(myRepository, myRemoteRenderedComponent.getText(), myTargetTextField.getText());
       return null;
     }
     catch (ParseException e) {

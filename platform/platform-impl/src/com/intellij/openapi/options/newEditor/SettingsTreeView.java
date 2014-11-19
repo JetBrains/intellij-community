@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.*;
+import com.intellij.ui.components.GradientViewport;
 import com.intellij.ui.treeStructure.CachingSimpleNode;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.ui.treeStructure.SimpleTree;
@@ -79,7 +80,6 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
   private final SettingsFilter myFilter;
   private final MyRoot myRoot;
   private final JScrollPane myScroller;
-  private JLabel mySeparator;
   private final IdentityHashMap<Configurable, MyNode> myConfigurableToNodeMap = new IdentityHashMap<Configurable, MyNode>();
   private final IdentityHashMap<UnnamedConfigurable, ConfigurableWrapper> myConfigurableToWrapperMap
     = new IdentityHashMap<UnnamedConfigurable, ConfigurableWrapper>();
@@ -107,17 +107,37 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
     myTree.setExpandableItemsEnabled(false);
     RelativeFont.BOLD.install(myTree);
 
-    myScroller = ScrollPaneFactory.createScrollPane(myTree, true);
+    myScroller = ScrollPaneFactory.createScrollPane(null, true);
+    myScroller.setViewport(new GradientViewport(myTree, 5, 0, 0, 0, true) {
+      private JLabel myHeader;
+
+      @Override
+      protected Component getHeader() {
+        if (0 == myTree.getY()) {
+          return null; // separator is not needed without scrolling
+        }
+        if (myHeader == null) {
+          myHeader = new JLabel();
+          myHeader.setForeground(FOREGROUND);
+          myHeader.setIconTextGap(ICON_GAP);
+          myHeader.setBorder(BorderFactory.createEmptyBorder(1, 10 + getLeftMargin(0), 0, 0));
+        }
+        myHeader.setFont(myTree.getFont());
+        myHeader.setIcon(myTree.getEmptyHandle());
+        int height = myHeader.getPreferredSize().height;
+        String group = findGroupNameAt(0, height + 3);
+        if (group == null || !group.equals(findGroupNameAt(0, 0))) {
+          return null; // do not show separator over another group
+        }
+        myHeader.setText(group);
+        return myHeader;
+      }
+    });
     myScroller.getVerticalScrollBar().setUI(ButtonlessScrollBarUI.createTransparent());
     myScroller.setBackground(BACKGROUND);
     myScroller.getViewport().setBackground(BACKGROUND);
     myScroller.getVerticalScrollBar().setBackground(BACKGROUND);
     add(myScroller);
-
-    mySeparator = new JLabel();
-    mySeparator.setForeground(FOREGROUND);
-    mySeparator.setIconTextGap(ICON_GAP);
-    mySeparator.setBorder(BorderFactory.createEmptyBorder(1, 10 + getLeftMargin(0), 0, 0));
 
     myTree.addComponentListener(new ComponentAdapter() {
       @Override
@@ -269,39 +289,6 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
   @Override
   public void doLayout() {
     myScroller.setBounds(0, 0, getWidth(), getHeight());
-  }
-
-  @Override
-  public void paint(Graphics g) {
-    super.paint(g);
-
-    if (0 == myTree.getY()) {
-      return; // separator is not needed without scrolling
-    }
-    mySeparator.setFont(myTree.getFont());
-    mySeparator.setIcon(myTree.getEmptyHandle());
-    int height = mySeparator.getPreferredSize().height;
-    String group = findGroupNameAt(0, height + 3);
-    if (group != null && group.equals(findGroupNameAt(0, 0))) {
-      mySeparator.setText(group);
-
-      Rectangle bounds = myScroller.getViewport().getBounds();
-      if (bounds.height > height) {
-        bounds.height = height;
-      }
-      g.setColor(myTree.getBackground());
-      g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
-      if (g instanceof Graphics2D) {
-        int h = 6; // gradient height
-        int y = bounds.y + bounds.height;
-        ((Graphics2D)g).setPaint(UIUtil.getGradientPaint(
-          0, y, g.getColor(),
-          0, y + h, ColorUtil.toAlpha(g.getColor(), 0)));
-        g.fillRect(bounds.x, y, bounds.width, h);
-      }
-      mySeparator.setBounds(bounds);
-      mySeparator.paint(g);
-    }
   }
 
   void selectFirst() {

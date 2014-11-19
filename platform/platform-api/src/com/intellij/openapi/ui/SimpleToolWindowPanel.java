@@ -74,6 +74,10 @@ public class SimpleToolWindowPanel extends JPanel implements QuickActionProvider
     });
   }
 
+  public boolean isToolbarVisible() {
+    return myToolbar != null && myToolbar.isVisible();
+  }
+
   public void setToolbar(@Nullable JComponent c) {
     if (c == null) {
       remove(myToolbar);

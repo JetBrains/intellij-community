@@ -41,7 +41,7 @@ public class JavaRunConfigurationModule extends RunConfigurationModule {
 
   private final boolean myClassesInLibraries;
 
-  public JavaRunConfigurationModule(final Project project, final boolean classesInLibs) {
+  public JavaRunConfigurationModule(@NotNull Project project, boolean classesInLibs) {
     super(project);
 
     myClassesInLibraries = classesInLibs;

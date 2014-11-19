@@ -17,6 +17,7 @@ package com.jetbrains.python.debugger.array;
 
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
@@ -36,56 +37,53 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.table.TableCellEditor;
 import java.awt.*;
-import java.awt.event.ActionEvent;
+import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 
 /**
  * @author amarch
  */
-class ArrayTableCellEditor extends AbstractCellEditor implements TableCellEditor {
-  MyTableEditor myEditor;
-  Project myProject;
-  Object lastValue;
+public class ArrayTableCellEditor extends AbstractCellEditor implements TableCellEditor {
+  private MyTableEditor myEditor;
+  private final Project myProject;
+  private Object myLastValue;
+
+  private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.debugger.array.ArrayTableCellEditor");
 
   public ArrayTableCellEditor(Project project) {
-    super();
     myProject = project;
   }
 
   public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected,
                                                final int rowIndex, final int vColIndex) {
     myEditor = new MyTableEditor(myProject, new PyDebuggerEditorsProvider(), "numpy.array.table.view", null,
-                                 new XExpressionImpl(value.toString(), PythonLanguage.getInstance(), "", EvaluationMode.CODE_FRAGMENT));
-    lastValue = value;
-    JComponent editorComponent = myEditor.getComponent();
-
-    editorComponent.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
-      .put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "strokeEnter");
-    editorComponent.getActionMap().put("strokeEnter", new AbstractAction() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        doOKAction(rowIndex, vColIndex);
-      }
-    });
-    editorComponent.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
-      .put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "escapeStroke");
-    editorComponent.getActionMap().put("escapeStroke", new AbstractAction() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        cancelEditing();
-      }
-    });
-
-    return editorComponent;
+                                 new XExpressionImpl(value.toString(), PythonLanguage.getInstance(), "", EvaluationMode.CODE_FRAGMENT),
+                                 getActionsAdapter(rowIndex, vColIndex));
+    myLastValue = value;
+    return myEditor.getComponent();
   }
 
+  @Nullable
   public Object getCellEditorValue() {
     if (myEditor.getEditor() != null) {
       return myEditor.getEditor().getDocument().getText();
     }
-    else {
-      return null;
-    }
+    return null;
+  }
+
+  @NotNull
+  private KeyAdapter getActionsAdapter(final int rowIndex, final int vColIndex) {
+    return new KeyAdapter() {
+      @Override
+      public void keyPressed(KeyEvent e) {
+        if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+          doOKAction(rowIndex, vColIndex);
+        }
+        else if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
+          cancelEditing();
+        }
+      }
+    };
   }
 
   public void doOKAction(int rowIndex, int vColIndex) {
@@ -95,7 +93,7 @@ class ArrayTableCellEditor extends AbstractCellEditor implements TableCellEditor
     new WriteCommandAction(null) {
       protected void run(@NotNull Result result) throws Throwable {
         if (myEditor.getEditor() != null) {
-          myEditor.getEditor().getDocument().setText(lastValue.toString());
+          myEditor.getEditor().getDocument().setText(myLastValue.toString());
         }
       }
     }.execute();
@@ -103,14 +101,22 @@ class ArrayTableCellEditor extends AbstractCellEditor implements TableCellEditor
     stopCellEditing();
   }
 
-  public class MyTableEditor extends XDebuggerEditorBase {
+  public MyTableEditor getEditor() {
+    return myEditor;
+  }
+
+  public void setLastValue(Object lastValue) {
+    myLastValue = lastValue;
+  }
+
+  public static class MyTableEditor extends XDebuggerEditorBase {
     private final EditorTextField myEditorTextField;
-    private XExpression myExpression;
+    private final XExpression myExpression;
 
     public MyTableEditor(Project project,
                          XDebuggerEditorsProvider debuggerEditorsProvider,
                          @Nullable @NonNls String historyId,
-                         @Nullable XSourcePosition sourcePosition, @NotNull XExpression text) {
+                         @Nullable XSourcePosition sourcePosition, @NotNull XExpression text, @NotNull final KeyAdapter actionAdapter) {
       super(project, debuggerEditorsProvider, EvaluationMode.CODE_FRAGMENT, historyId, sourcePosition);
       myExpression = XExpressionImpl.changeMode(text, getMode());
       myEditorTextField = new EditorTextField(createDocument(myExpression), project, debuggerEditorsProvider.getFileType()) {
@@ -119,6 +125,7 @@ class ArrayTableCellEditor extends AbstractCellEditor implements TableCellEditor
           final EditorEx editor = super.createEditor();
           editor.setVerticalScrollbarVisible(false);
           editor.setOneLineMode(true);
+          editor.getContentComponent().addKeyListener(actionAdapter);
           return editor;
         }
 

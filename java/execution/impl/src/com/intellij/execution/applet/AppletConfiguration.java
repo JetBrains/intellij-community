@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,9 +26,8 @@ import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
+import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
@@ -36,6 +35,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
+import com.intellij.util.SmartList;
+import com.intellij.util.xmlb.SmartSerializer;
+import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -45,13 +47,10 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 
 public class AppletConfiguration extends ModuleBasedConfiguration<JavaRunConfigurationModule> implements SingleClassConfiguration, RefactoringListenerProvider {
-
   public String MAIN_CLASS_NAME;
   public String HTML_FILE_NAME;
   public boolean HTML_USED;
@@ -62,6 +61,7 @@ public class AppletConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
   private AppletParameter[] myAppletParameters;
   public boolean ALTERNATIVE_JRE_PATH_ENABLED;
   public String ALTERNATIVE_JRE_PATH;
+
   @NonNls
   protected static final String NAME_ATTR = "name";
   @NonNls
@@ -69,10 +69,15 @@ public class AppletConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
   @NonNls
   protected static final String PARAMETER_ELEMENT_NAME = "parameter";
 
-  public AppletConfiguration(final Project project, ConfigurationFactory factory) {
+  private final SmartSerializer mySerializer;
+
+  public AppletConfiguration(@NotNull Project project, ConfigurationFactory factory) {
     super(new JavaRunConfigurationModule(project, false), factory);
+
+    mySerializer = new SmartSerializer(!project.isDefault(), true);
   }
 
+  @Override
   public void setMainClass(final PsiClass psiClass) {
     final Module originalModule = getConfigurationModule().getModule();
     setMainClassName(JavaExecutionUtil.getRuntimeQualifiedName(psiClass));
@@ -80,10 +85,12 @@ public class AppletConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
     restoreOriginalModule(originalModule);
   }
 
+  @Override
   public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
     return new JavaCommandLineState(env) {
       private AppletHtmlFile myHtmlURL = null;
 
+      @Override
       protected JavaParameters createJavaParameters() throws ExecutionException {
         final JavaParameters params = new JavaParameters();
         myHtmlURL = getHtmlURL();
@@ -102,12 +109,14 @@ public class AppletConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
         return params;
       }
 
+      @Override
       @NotNull
       protected OSProcessHandler startProcess() throws ExecutionException {
         final OSProcessHandler handler = super.startProcess();
         final AppletHtmlFile htmlUrl = myHtmlURL;
         if (htmlUrl != null) {
           handler.addProcessListener(new ProcessAdapter() {
+            @Override
             public void processTerminated(ProcessEvent event) {
               htmlUrl.deleteFile();
             }
@@ -118,6 +127,7 @@ public class AppletConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
     };
   }
 
+  @Override
   @NotNull
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
     return new AppletConfigurable(getProject());
@@ -130,12 +140,13 @@ public class AppletConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
     return null;
   }
 
-  public void setPolicyFile(final String localPath) {
-    POLICY_FILE = ExternalizablePath.urlValue(localPath);
-  }
-
+  @Transient
   public String getPolicyFile() {
     return ExternalizablePath.localPathValue(POLICY_FILE);
+  }
+
+  public void setPolicyFile(final String localPath) {
+    POLICY_FILE = ExternalizablePath.urlValue(localPath);
   }
 
   public static class AppletParameter {
@@ -174,60 +185,75 @@ public class AppletConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
     }
   }
 
+  @Override
   public Collection<Module> getValidModules() {
     return JavaRunConfigurationModule.getModulesForClass(getProject(), MAIN_CLASS_NAME);
   }
 
+  @Override
   public void readExternal(final Element parentNode) throws InvalidDataException {
-    DefaultJDOMExternalizer.readExternal(this, parentNode);
-    readModule(parentNode);
-    final ArrayList<AppletParameter> parameters = new ArrayList<AppletParameter>();
-    for (
-      Iterator iterator = parentNode.getChildren(PARAMETER_ELEMENT_NAME).iterator(); iterator.hasNext();) {
-      final Element element = (Element)iterator.next();
-      final String name = element.getAttributeValue(NAME_ATTR);
-      final String value = element.getAttributeValue(VALUE_ATTR);
-      parameters.add(new AppletParameter(name, value));
+    mySerializer.readExternal(this, parentNode);
+
+    List<Element> paramList = parentNode.getChildren(PARAMETER_ELEMENT_NAME);
+    if (paramList.isEmpty()) {
+      myAppletParameters = null;
     }
-    myAppletParameters = parameters.toArray(new AppletParameter[parameters.size()]);
+    else {
+      List<AppletParameter> parameters = new SmartList<AppletParameter>();
+      for (Element element : paramList) {
+        parameters.add(new AppletParameter(element.getAttributeValue(NAME_ATTR), element.getAttributeValue(VALUE_ATTR)));
+      }
+      myAppletParameters = parameters.toArray(new AppletParameter[parameters.size()]);
+    }
   }
 
+  @Override
+  protected boolean isNewSerializationUsed() {
+    return true;
+  }
+
+  @Override
   public void writeExternal(final Element parentNode) throws WriteExternalException {
-    writeModule(parentNode);
-    DefaultJDOMExternalizer.writeExternal(this, parentNode);
+    mySerializer.writeExternal(this, parentNode);
     if (myAppletParameters != null) {
-      for (int i = 0; i < myAppletParameters.length; i++) {
+      for (AppletParameter myAppletParameter : myAppletParameters) {
         final Element element = new Element(PARAMETER_ELEMENT_NAME);
         parentNode.addContent(element);
-        element.setAttribute(NAME_ATTR, myAppletParameters[i].getName());
-        element.setAttribute(VALUE_ATTR, myAppletParameters[i].getValue());
+        element.setAttribute(NAME_ATTR, myAppletParameter.getName());
+        element.setAttribute(VALUE_ATTR, myAppletParameter.getValue());
       }
     }
   }
 
+  @Override
   public RefactoringElementListener getRefactoringElementListener(final PsiElement element) {
     if (HTML_USED) return null;
     return RefactoringListeners.getClassOrPackageListener(element, new RefactoringListeners.SingleClassConfigurationAccessor(this));
   }
 
+  @Override
+  @Transient
   public PsiClass getMainClass() {
     return getConfigurationModule().findClass(MAIN_CLASS_NAME);
   }
 
+  @Override
   public String suggestedName() {
     if (MAIN_CLASS_NAME == null) return null;
     return ProgramRunnerUtil.shortenName(JavaExecutionUtil.getShortClassName(MAIN_CLASS_NAME), 0);
   }
 
+  @Override
   public void setMainClassName(final String qualifiedName) {
     MAIN_CLASS_NAME = qualifiedName;
   }
 
+  @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
     if (ALTERNATIVE_JRE_PATH_ENABLED){
       if (ALTERNATIVE_JRE_PATH == null ||
           ALTERNATIVE_JRE_PATH.length() == 0 ||
-          !JavaSdkImpl.checkForJre(ALTERNATIVE_JRE_PATH)){
+          !JavaSdk.checkForJre(ALTERNATIVE_JRE_PATH)){
         throw new RuntimeConfigurationWarning(ExecutionBundle.message("jre.not.valid.error.message", ALTERNATIVE_JRE_PATH));
       }
     }
@@ -255,11 +281,12 @@ public class AppletConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
     throw new RuntimeConfigurationWarning("URL " + HTML_FILE_NAME + " is not valid: " + ex.getLocalizedMessage());
   }
 
+  @Transient
   public AppletParameter[] getAppletParameters() {
     return myAppletParameters;
   }
 
-  public void setAppletParameters(final AppletParameter[] appletParameters) {
+  public void setAppletParameters(AppletParameter[] appletParameters) {
     myAppletParameters = appletParameters;
   }
 
@@ -283,7 +310,7 @@ public class AppletConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
       try {
         return generateAppletTempPage();
       }
-      catch (IOException e) {
+      catch (IOException ignored) {
         throw new CantRunException(ExecutionBundle.message("failed.to.generate.wrapper.error.message"));
       }
     }
@@ -314,8 +341,7 @@ public class AppletConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
     finally {
       writer.close();
     }
-    final String htmlFile = tempFile.getAbsolutePath();
-    return new AppletHtmlFile(htmlFile, tempFile);
+    return new AppletHtmlFile(tempFile.getAbsolutePath(), tempFile);
   }
 
   private static class AppletHtmlFile {
@@ -338,7 +364,7 @@ public class AppletConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
         try {
           return new File(myHtmlFile).toURL().toString();
         }
-        catch (MalformedURLException ex) {
+        catch (MalformedURLException ignored) {
         }
       }
       return myHtmlFile;

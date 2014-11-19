@@ -46,6 +46,7 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtilCore;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.TextRange;
@@ -59,12 +60,13 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.content.*;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.SequentialModalProgressTask;
 import com.intellij.util.TripleFunction;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -76,7 +78,9 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.lang.reflect.Constructor;
 import java.util.*;
+import java.util.concurrent.ConcurrentMap;
 
 public class GlobalInspectionContextImpl extends GlobalInspectionContextBase implements GlobalInspectionContext {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.GlobalInspectionContextImpl");
@@ -337,7 +341,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
       @Override
       public void visitFile(final PsiFile file) {
         final VirtualFile virtualFile = file.getVirtualFile();
-        if (virtualFile == null) return;
+        if (virtualFile == null || isBinary(file)) return;
 
         if (myView == null && !headlessEnvironment) {
           throw new ProcessCanceledException();
@@ -354,7 +358,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
 
         final FileViewProvider viewProvider = psiManager.findViewProvider(virtualFile);
         final com.intellij.openapi.editor.Document document = viewProvider == null ? null : viewProvider.getDocument();
-        if (document == null || isBinary(file)) return; //do not inspect binary files
+        if (document == null) return;
         final LocalInspectionsPass pass = new LocalInspectionsPass(file, document, 0,
                                                                    file.getTextLength(), LocalInspectionsPass.EMPTY_PRIORITY_RANGE, true,
                                                                    HighlightInfoProcessor.getEmpty());
@@ -590,7 +594,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     }
   }
 
-  private final Map<InspectionToolWrapper, InspectionToolPresentation> myPresentationMap = new THashMap<InspectionToolWrapper, InspectionToolPresentation>();
+  private final ConcurrentMap<InspectionToolWrapper, InspectionToolPresentation> myPresentationMap = ContainerUtil.newConcurrentMap();
   @NotNull
   public InspectionToolPresentation getPresentation(@NotNull InspectionToolWrapper toolWrapper) {
     InspectionToolPresentation presentation = myPresentationMap.get(toolWrapper);
@@ -599,12 +603,15 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
       DefaultInspectionToolPresentation.class.getName());
 
       try {
-        presentation = (InspectionToolPresentation)Class.forName(presentationClass).getConstructor(InspectionToolWrapper.class, GlobalInspectionContextImpl.class).newInstance(toolWrapper, this);
+        Constructor<?> constructor =
+          Class.forName(presentationClass).getConstructor(InspectionToolWrapper.class, GlobalInspectionContextImpl.class);
+        presentation = (InspectionToolPresentation)constructor.newInstance(toolWrapper, this);
       }
       catch (Exception e) {
         LOG.error(e);
+        throw new RuntimeException(e);
       }
-      myPresentationMap.put(toolWrapper, presentation);
+      presentation = ConcurrencyUtil.cacheOrGet(myPresentationMap, toolWrapper, presentation);
     }
     return presentation;
   }
@@ -655,6 +662,13 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     else {
       range = null;
     }
+    final Iterable<Tools> inspectionTools = ContainerUtil.filter(profile.getAllEnabledInspectionTools(project), new Condition<Tools>() {
+      @Override
+      public boolean value(Tools tools) {
+        assert tools != null;
+        return tools.getTool().getTool() instanceof CleanupLocalInspectionTool;
+      }
+    });
     scope.accept(new PsiElementVisitor() {
       private int myCount = 0;
       @Override
@@ -663,13 +677,11 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
           progressIndicator.setFraction(((double)++ myCount)/fileCount);
         }
         if (isBinary(file)) return;
-        for (final Tools tools : profile.getAllEnabledInspectionTools(project)) {
-          if (tools.getTool().getTool() instanceof CleanupLocalInspectionTool) {
-            final InspectionToolWrapper tool = tools.getEnabledTool(file);
-            if (tool instanceof LocalInspectionToolWrapper) {
-              lTools.add((LocalInspectionToolWrapper)tool);
-              tool.initialize(GlobalInspectionContextImpl.this);
-            }
+        for (final Tools tools : inspectionTools) {
+          final InspectionToolWrapper tool = tools.getEnabledTool(file);
+          if (tool instanceof LocalInspectionToolWrapper) {
+            lTools.add((LocalInspectionToolWrapper)tool);
+            tool.initialize(GlobalInspectionContextImpl.this);
           }
         }
 

@@ -16,10 +16,6 @@
 package com.intellij.openapi.options;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.util.UniqueFileNamesProvider;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.text.UniqueNameGenerator;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -27,8 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-
-public abstract class AbstractSchemesManager<T extends Scheme, E extends ExternalizableScheme> implements SchemesManager<T,E> {
+public abstract class AbstractSchemesManager<T extends Scheme, E extends ExternalizableScheme> implements SchemesManager<T, E> {
   private static final Logger LOG = Logger.getInstance(AbstractSchemesManager.class);
 
   protected final List<T> mySchemes = new ArrayList<T>();
@@ -36,13 +31,11 @@ public abstract class AbstractSchemesManager<T extends Scheme, E extends Externa
   private String myCurrentSchemeName;
 
   @Override
-  public void addNewScheme(@NotNull final T scheme, final boolean replaceExisting) {
+  public void addNewScheme(@NotNull T scheme, boolean replaceExisting) {
     int toReplace = -1;
-    boolean newSchemeIsShared = isShared(scheme);
-
     for (int i = 0; i < mySchemes.size(); i++) {
-      T t = mySchemes.get(i);
-      if (Comparing.equal(scheme.getName(),t.getName()) && newSchemeIsShared == isShared(t)) {
+      T existingScheme = mySchemes.get(i);
+      if (existingScheme.getName().equals(scheme.getName())) {
         toReplace = i;
         break;
       }
@@ -50,14 +43,13 @@ public abstract class AbstractSchemesManager<T extends Scheme, E extends Externa
     if (toReplace == -1) {
       mySchemes.add(scheme);
     }
+    else if (replaceExisting || !isExternalizable(scheme)) {
+      mySchemes.set(toReplace, scheme);
+    }
     else {
-      if (replaceExisting || !isExternalizable(scheme)) {
-        mySchemes.set(toReplace, scheme);
-      }
-      else {
-        renameScheme((E)scheme, generateUniqueName(scheme));
-        mySchemes.add(scheme);
-      }
+      //noinspection unchecked
+      renameScheme((E)scheme, UniqueNameGenerator.generateUniqueName(scheme.getName(), collectExistingNames(mySchemes)));
+      mySchemes.add(scheme);
     }
     onSchemeAdded(scheme);
     checkCurrentScheme(scheme);
@@ -65,17 +57,13 @@ public abstract class AbstractSchemesManager<T extends Scheme, E extends Externa
 
   protected void checkCurrentScheme(final Scheme scheme) {
     if (myCurrentScheme == null && myCurrentSchemeName != null && myCurrentSchemeName.equals(scheme.getName())) {
+      //noinspection unchecked
       myCurrentScheme = (T)scheme;
     }
   }
 
-  @NotNull
-  private String generateUniqueName(final T scheme) {
-    return UniqueNameGenerator.generateUniqueName(UniqueFileNamesProvider.convertName(scheme.getName()), collectExistingNames(mySchemes));
-  }
-
   private Collection<String> collectExistingNames(final Collection<T> schemes) {
-    HashSet<String> result = new HashSet<String>();
+    Set<String> result = new THashSet<String>();
     for (T scheme : schemes) {
       result.add(scheme.getName());
     }
@@ -84,31 +72,28 @@ public abstract class AbstractSchemesManager<T extends Scheme, E extends Externa
 
   @Override
   public void clearAllSchemes() {
-    for (T t : getAllSchemes()) {
-      removeScheme(t);
+    for (T myScheme : mySchemes) {
+      onSchemeDeleted(myScheme);
     }
+    mySchemes.clear();
   }
 
   @Override
   @NotNull
   public List<T> getAllSchemes() {
-    return Collections.unmodifiableList(new ArrayList<T>(mySchemes));
+    return Collections.unmodifiableList(mySchemes);
   }
 
   @Override
   @Nullable
-  public T findSchemeByName(final String schemeName) {
+  public T findSchemeByName(@NotNull String schemeName) {
     for (T scheme : mySchemes) {
-      if (Comparing.equal(scheme.getName(),schemeName)) {
+      if (scheme.getName().equals(schemeName)) {
         return scheme;
       }
     }
-
     return null;
   }
-
-  @Override
-  public abstract void save() throws WriteExternalException;
 
   @Override
   public void setCurrentSchemeName(final String schemeName) {
@@ -120,64 +105,72 @@ public abstract class AbstractSchemesManager<T extends Scheme, E extends Externa
   @Nullable
   public T getCurrentScheme() {
     T currentScheme = myCurrentScheme;
-    if (currentScheme == null) {
-      return null;
-    }
-    return findSchemeByName(currentScheme.getName());
+    return currentScheme == null ? null : findSchemeByName(currentScheme.getName());
   }
 
   @Override
-  public void removeScheme(final T scheme) {
-    String schemeName = scheme.getName();
-    Scheme toDelete = findSchemeToDelete(schemeName);
+  public void removeScheme(@NotNull T scheme) {
+    for (int i = 0, n = mySchemes.size(); i < n; i++) {
+      T s = mySchemes.get(i);
+      if (scheme.getName().equals(s.getName())) {
+        onSchemeDeleted(s);
+        mySchemes.remove(i);
+        break;
+      }
+    }
+  }
 
-    //noinspection SuspiciousMethodCalls
-    mySchemes.remove(toDelete);
+  protected void onSchemeDeleted(@NotNull Scheme toDelete) {
     if (myCurrentScheme == toDelete) {
       myCurrentScheme = null;
     }
-
-    onSchemeDeleted(toDelete);
   }
-
-  protected abstract void onSchemeDeleted(final Scheme toDelete);
-
-  private Scheme findSchemeToDelete(final String schemeName) {
-    for (T scheme : mySchemes) {
-      if (Comparing.equal(schemeName,scheme.getName())) return scheme;
-    }
-
-    return null;
-  }
-
 
   @Override
   @NotNull
   public Collection<String> getAllSchemeNames() {
-    return getAllSchemeNames(mySchemes);
-  }
-
-  public Collection<String> getAllSchemeNames(Collection<T> schemes) {
-    Set<String> names = new THashSet<String>();
-    for (T scheme : schemes) {
+    List<String> names = new ArrayList<String>(mySchemes.size());
+    for (T scheme : mySchemes) {
       names.add(scheme.getName());
     }
     return names;
   }
 
-  protected abstract void onSchemeAdded(final T scheme);
+  protected abstract void onSchemeAdded(@NotNull T scheme);
 
-  protected void renameScheme(final E scheme, @NotNull String newName){
-    if (!Comparing.equal(newName,scheme.getName())) {
+  protected void renameScheme(@NotNull E scheme, @NotNull String newName) {
+    if (!newName.equals(scheme.getName())) {
       scheme.setName(newName);
-      LOG.assertTrue(Comparing.equal(newName,scheme.getName()));
+      LOG.assertTrue(newName.equals(scheme.getName()));
     }
   }
 
+  @SuppressWarnings("deprecation")
+  @NotNull
+  @Override
+  public Collection<SharedScheme<E>> loadSharedSchemes(Collection<T> currentSchemeList) {
+    return Collections.emptyList();
+  }
+
+  @SuppressWarnings("deprecation")
   @Override
   @NotNull
   public Collection<SharedScheme<E>> loadSharedSchemes() {
-    return loadSharedSchemes(getAllSchemes());
+    return Collections.emptyList();
+  }
+
+  @Override
+  public boolean isShared(@NotNull Scheme scheme) {
+    return false;
+  }
+
+  @Override
+  public boolean isExportAvailable() {
+    return false;
+  }
+
+  @Override
+  public void exportScheme(@NotNull final E scheme, final String name, final String description) {
   }
 
   protected boolean isExternalizable(final T scheme) {

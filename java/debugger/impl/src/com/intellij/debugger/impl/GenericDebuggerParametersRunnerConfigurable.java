@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,7 +51,7 @@ public class GenericDebuggerParametersRunnerConfigurable extends SettingsEditor<
     myDebuggerSettings.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        ShowSettingsUtil.getInstance().showSettingsDialog(project, DebuggerConfigurable.DISPLAY_NAME);
+        ShowSettingsUtil.getInstance().showSettingsDialog(project, DebuggerConfigurable.class);
         if (myIsLocal) {
           setTransport(DebuggerSettings.getInstance().DEBUGGER_TRANSPORT);
         }
@@ -132,7 +132,7 @@ public class GenericDebuggerParametersRunnerConfigurable extends SettingsEditor<
   }
 
   private int getTransport() {
-    if(myIsLocal) {
+    if (myIsLocal) {
       return DebuggerSettings.getInstance().DEBUGGER_TRANSPORT;
     }
     else {

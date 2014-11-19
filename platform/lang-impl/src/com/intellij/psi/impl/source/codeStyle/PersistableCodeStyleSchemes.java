@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.impl.source.codeStyle;
 
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.options.SchemesManagerFactory;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
@@ -27,18 +26,15 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-
 /**
  * @author Rustam Vishnyakov
  */
 @State(
   name = "CodeStyleSchemeSettings",
-  storages = {@Storage(
-    file = StoragePathMacros.APP_CONFIG + "/" + PersistableCodeStyleSchemes.CODE_STYLE_SCHEMES_FILE
-  )}
+  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/" + PersistableCodeStyleSchemes.CODE_STYLE_SCHEMES_FILE),
+  additionalExportFile = CodeStyleSchemesImpl.CODE_STYLES_DIR_PATH
 )
-public class PersistableCodeStyleSchemes extends CodeStyleSchemesImpl implements PersistentStateComponent<Element>, NamedComponent {
+public class PersistableCodeStyleSchemes extends CodeStyleSchemesImpl implements PersistentStateComponent<Element> {
   @NonNls static final String CODE_STYLE_SCHEMES_FILE = "code.style.schemes.xml";
 
   private boolean isLoaded;
@@ -52,7 +48,7 @@ public class PersistableCodeStyleSchemes extends CodeStyleSchemesImpl implements
   public Element getState() {
     return XmlSerializer.serialize(this, new SerializationFilter() {
       @Override
-      public boolean accepts(Accessor accessor, Object bean) {
+      public boolean accepts(@NotNull Accessor accessor, Object bean) {
         return accessor.getValueClass().equals(String.class);
       }
     });
@@ -64,12 +60,6 @@ public class PersistableCodeStyleSchemes extends CodeStyleSchemesImpl implements
     XmlSerializer.deserializeInto(this, state);
     isLoaded = true;
     updateCurrentScheme();
-  }
-
-  @NotNull
-  @Override
-  public String getComponentName() {
-    return "CodeStyleSchemeSettings";
   }
 
   @Override
@@ -89,15 +79,10 @@ public class PersistableCodeStyleSchemes extends CodeStyleSchemesImpl implements
   }
 
   private void updateCurrentScheme() {
-    CodeStyleScheme current = findSchemeByName(CURRENT_SCHEME_NAME);
-    if (current == null) current = getDefaultScheme();
+    CodeStyleScheme current = CURRENT_SCHEME_NAME == null ? null : findSchemeByName(CURRENT_SCHEME_NAME);
+    if (current == null) {
+      current = getDefaultScheme();
+    }
     setCurrentScheme(current);
-  }
-
-  @Override
-  @NotNull
-  public File[] getExportFiles() {
-    return new File[]{new File(PathManager.getConfigPath() + File.separator + CODE_STYLES_DIRECTORY),
-      new File(PathManager.getOptionsPath() + File.separator + CODE_STYLE_SCHEMES_FILE)};
   }
 }

@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.components.impl.stores.StateStorageManager;
+import com.intellij.openapi.components.impl.stores.StoreUtil;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -68,7 +69,7 @@ public class CompilerTestUtil {
     try {
       final File file;
       String componentName;
-      State state = appComponent.getClass().getAnnotation(State.class);
+      State state = StoreUtil.getStateSpec(appComponent.getClass());
       if (state != null) {
         componentName = state.name();
         Storage lastStorage = state.storages()[state.storages().length - 1];
@@ -95,6 +96,7 @@ public class CompilerTestUtil {
       root.addContent(element);
       Assert.assertTrue("Cannot create " + file, FileUtil.createIfDoesntExist(file));
       new WriteAction() {
+        @Override
         protected void run(@NotNull final Result result) throws IOException {
           VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
           Assert.assertNotNull(file.getAbsolutePath(), virtualFile);
@@ -116,6 +118,7 @@ public class CompilerTestUtil {
 
   public static void enableExternalCompiler() {
     new WriteAction() {
+      @Override
       protected void run(final Result result) {
         ApplicationManagerEx.getApplicationEx().doNotSave(false);
         JavaAwareProjectJdkTableImpl table = JavaAwareProjectJdkTableImpl.getInstanceEx();
@@ -126,6 +129,7 @@ public class CompilerTestUtil {
 
   public static void disableExternalCompiler(final Project project) {
     new WriteAction() {
+      @Override
       protected void run(final Result result) {
         ApplicationManagerEx.getApplicationEx().doNotSave(true);
         Module[] modules = ModuleManager.getInstance(project).getModules();

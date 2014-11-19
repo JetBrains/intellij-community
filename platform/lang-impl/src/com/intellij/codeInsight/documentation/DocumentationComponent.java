@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
@@ -54,6 +55,7 @@ import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.io.URLUtil;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -66,8 +68,11 @@ import javax.swing.event.ChangeListener;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.text.*;
+import javax.swing.text.html.HTMLDocument;
+import javax.swing.text.html.HTMLEditorKit;
 import java.awt.*;
 import java.awt.event.*;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
 import java.util.List;
@@ -105,6 +110,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   private final MyDictionary<String, Image> myImageProvider = new MyDictionary<String, Image>() {
     @Override
     public Image get(Object key) {
+      if (myManager == null || key == null) return null;
       PsiElement element = getElement();
       if (element == null) return null;
       URL url = (URL)key;
@@ -154,6 +160,11 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     myIsShown = false;
 
     myEditorPane = new JEditorPane(UIUtil.HTML_MIME, "") {
+      @Override
+      public EditorKit getEditorKit() {
+        return new HTMLEditorKit();
+      }
+
       @Override
       public Dimension getPreferredScrollableViewportSize() {
         if (getWidth() == 0 || getHeight() == 0) {
@@ -528,7 +539,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   }
 
   private void setDataInternal(SmartPsiElementPointer element, String text, final Rectangle viewRect, boolean skip) {
-
     myElement = element;
 
     boolean justShown = false;
@@ -546,6 +556,21 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
     if (!skip) {
       myText = text;
+    }
+
+    Document document = myEditorPane.getDocument();
+    if (document instanceof HTMLDocument && element != null) {
+       // set base URL for this javadoc to resolve relative images correctly
+      VirtualFile virtualFile = element.getVirtualFile();
+      VirtualFile directory = virtualFile == null ? null : virtualFile.getParent();
+      String path = directory == null ? "" : directory.getPath()+"/";
+
+      try {
+        URL url = new URL(URLUtil.FILE_PROTOCOL, null, path);
+        ((HTMLDocument)document).setBase(url);
+      }
+      catch (MalformedURLException ignored) {
+      }
     }
 
     //noinspection SSBasedInspection

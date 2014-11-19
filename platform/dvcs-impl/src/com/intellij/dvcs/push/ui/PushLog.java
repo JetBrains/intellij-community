@@ -15,38 +15,31 @@
  */
 package com.intellij.dvcs.push.ui;
 
-import com.intellij.dvcs.push.PushTargetPanel;
-import com.intellij.icons.AllIcons;
-import com.intellij.ide.actions.EditSourceAction;
-import com.intellij.idea.ActionsBundle;
-import com.intellij.openapi.actionSystem.CommonShortcuts;
-import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.actionSystem.DataSink;
-import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.TextRevisionNumber;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
-import com.intellij.ui.CheckboxTree;
-import com.intellij.ui.CheckedTreeNode;
-import com.intellij.ui.ColoredTreeCellRenderer;
-import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.ui.*;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.util.ui.tree.WideSelectionTreeUI;
+import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.event.CellEditorListener;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.TreeSelectionEvent;
-import javax.swing.event.TreeSelectionListener;
+import javax.swing.border.EmptyBorder;
+import javax.swing.event.*;
 import javax.swing.tree.*;
 import java.awt.*;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EventObject;
@@ -54,10 +47,12 @@ import java.util.List;
 
 public class PushLog extends JPanel implements TypeSafeDataProvider {
 
+  private final static String COMMIT_MENU = "Vcs.Push.ContextMenu";
   private static final String START_EDITING = "startEditing";
   private final ChangesBrowser myChangesBrowser;
   private final CheckboxTree myTree;
   private final MyTreeCellRenderer myTreeCellRenderer;
+  private final JScrollPane myScrollPane;
   private boolean myShouldRepaint = false;
 
   public PushLog(Project project, final CheckedTreeNode root) {
@@ -116,7 +111,10 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
         }
       }
     };
+    myTree.setUI(new MyTreeUi());
+    myTree.setBorder(new EmptyBorder(2, 0, 0, 0));  //additional vertical indent
     myTree.setEditable(true);
+    myTree.setHorizontalAutoScrollingEnabled(false);
     myTree.setShowsRootHandles(root.getChildCount() > 1);
     MyTreeCellEditor treeCellEditor = new MyTreeCellEditor();
     myTree.setCellEditor(treeCellEditor);
@@ -125,7 +123,15 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
       public void editingStopped(ChangeEvent e) {
         DefaultMutableTreeNode node = (DefaultMutableTreeNode)myTree.getLastSelectedPathComponent();
         if (node != null && node instanceof EditableTreeNode) {
-          ((EditableTreeNode)node).fireOnChange();
+          JComponent editedComponent = (JComponent)node.getUserObject();
+          InputVerifier verifier = editedComponent.getInputVerifier();
+          if (verifier != null && !verifier.verify(editedComponent)) {
+            // if invalid and interrupted, then revert
+            ((EditableTreeNode)node).fireOnCancel();
+          }
+          else {
+            ((EditableTreeNode)node).fireOnChange();
+          }
         }
         myTree.firePropertyChange(PushLogTreeUtil.EDIT_MODE_PROP, true, false);
       }
@@ -139,6 +145,8 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
         myTree.firePropertyChange(PushLogTreeUtil.EDIT_MODE_PROP, true, false);
       }
     });
+    // complete editing when interrupt
+    myTree.setInvokesStopCellEditing(true);
     myTree.setRootVisible(false);
     TreeUtil.collapseAll(myTree, 1);
     final VcsBranchEditorListener linkMouseListener = new VcsBranchEditorListener(myTreeCellRenderer);
@@ -155,50 +163,41 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
     //override default tree behaviour.
     myTree.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "");
 
-    myTree.setRowHeight(0);
     ToolTipManager.sharedInstance().registerComponent(myTree);
+    PopupHandler.installPopupHandler(myTree, VcsLogUiImpl.POPUP_ACTION_GROUP, COMMIT_MENU);
 
     myChangesBrowser =
       new ChangesBrowser(project, null, Collections.<Change>emptyList(), null, false, true, null, ChangesBrowser.MyUseCase.LOCAL_CHANGES,
                          null);
     myChangesBrowser.getDiffAction().registerCustomShortcutSet(CommonShortcuts.getDiff(), myTree);
-    myChangesBrowser.addToolbarAction(createEditSourceAction());
+    myChangesBrowser.addToolbarAction(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE));
     setDefaultEmptyText();
 
     Splitter splitter = new Splitter(false, 0.7f);
-    splitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myTree));
+    myScrollPane = ScrollPaneFactory.createScrollPane(myTree);
+    myScrollPane.setOpaque(false);
+    splitter.setFirstComponent(myScrollPane);
     splitter.setSecondComponent(myChangesBrowser);
 
     setLayout(new BorderLayout());
     add(splitter);
-  }
-
-  @NotNull
-  private EditSourceAction createEditSourceAction() {
-    final EditSourceAction editAction = new EditSourceAction();
-    editAction.registerCustomShortcutSet(CommonShortcuts.getEditSource(), myChangesBrowser.getViewer());
-    editAction.getTemplatePresentation().setIcon(AllIcons.Actions.EditSource);
-    editAction.getTemplatePresentation().setText("Edit Source");
-    editAction.getTemplatePresentation().setDescription(ActionsBundle.actionText("EditSource"));
-    return editAction;
+    myTree.setMinimumSize(new Dimension(200, myTree.getPreferredSize().height));
+    myTree.setRowHeight(0);
   }
 
   private void updateChangesView() {
-    int[] rows = myTree.getSelectionRows();
-    if (rows != null && rows.length != 0) {
+    List<CommitNode> commitNodes = getSelectedCommitNodes();
+    if (!commitNodes.isEmpty()) {
       myChangesBrowser.getViewer().setEmptyText("No differences");
-      myChangesBrowser.setChangesToDisplay(collectAllChanges(rows));
     }
     else {
       setDefaultEmptyText();
-      myChangesBrowser.setChangesToDisplay(Collections.<Change>emptyList());
     }
+    myChangesBrowser.setChangesToDisplay(collectAllChanges(commitNodes));
   }
 
   @NotNull
-  private List<Change> collectAllChanges(@NotNull int[] selectedRows) {
-    List<DefaultMutableTreeNode> selectedNodes = getNodesForRows(getSortedRows(selectedRows));
-    List<CommitNode> commitNodes = collectSelectedCommitNodes(selectedNodes);
+  private static List<Change> collectAllChanges(@NotNull List<CommitNode> commitNodes) {
     return CommittedChangesTreeBrowser.zipChanges(collectChanges(commitNodes));
   }
 
@@ -245,16 +244,33 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
     myChangesBrowser.getViewer().setEmptyText("No commits selected");
   }
 
-  // Make changes available for diff action
+  // Make changes available for diff action; revisionNumber for create patch and copy revision number actions
   @Override
   public void calcData(DataKey key, DataSink sink) {
-    if (VcsDataKeys.CHANGES.equals(key)) {
-      int[] rows = myTree.getSelectionRows();
-      if (rows != null && rows.length != 0) {
-        Collection<Change> changes = collectAllChanges(rows);
-        sink.put(key, ArrayUtil.toObjectArray(changes, Change.class));
-      }
+    if (VcsDataKeys.CHANGES == key) {
+      List<CommitNode> commitNodes = getSelectedCommitNodes();
+      sink.put(key, ArrayUtil.toObjectArray(collectAllChanges(commitNodes), Change.class));
     }
+    else if (VcsDataKeys.VCS_REVISION_NUMBERS == key) {
+      List<CommitNode> commitNodes = getSelectedCommitNodes();
+      sink.put(key, ArrayUtil.toObjectArray(ContainerUtil.map(commitNodes, new Function<CommitNode, VcsRevisionNumber>() {
+        @Override
+        public VcsRevisionNumber fun(CommitNode commitNode) {
+          Hash hash = commitNode.getUserObject().getId();
+          return new TextRevisionNumber(hash.asString(), hash.toShortString());
+        }
+      }), VcsRevisionNumber.class));
+    }
+  }
+
+  @NotNull
+  private List<CommitNode> getSelectedCommitNodes() {
+    int[] rows = myTree.getSelectionRows();
+    if (rows != null && rows.length != 0) {
+      List<DefaultMutableTreeNode> selectedNodes = getNodesForRows(getSortedRows(rows));
+      return collectSelectedCommitNodes(selectedNodes);
+    }
+    return ContainerUtil.emptyList();
   }
 
   @NotNull
@@ -334,7 +350,7 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
         Object tag = me.getClickCount() >= 1
                      ? PushLogTreeUtil.getTagAtForRenderer(myTreeCellRenderer, me)
                      : null;
-        return tag instanceof PushTargetPanel;
+        return tag instanceof VcsEditableComponent;
       }
       //if keyboard event - then anEvent will be null =( See BasicTreeUi
       TreePath treePath = myTree.getAnchorSelectionPath();
@@ -417,4 +433,59 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
       }
     }
   }
+
+  private class MyTreeUi extends WideSelectionTreeUI {
+
+    private final ComponentListener myTreeSizeListener = new ComponentAdapter() {
+      @Override
+      public void componentResized(ComponentEvent e) {
+        // invalidate, revalidate etc may have no 'size' effects, you need to manually invalidateSizes before.
+        updateSizes();
+      }
+    };
+
+    private final AncestorListener myTreeAncestorListener = new AncestorListenerAdapter() {
+      @Override
+      public void ancestorMoved(AncestorEvent event) {
+        super.ancestorMoved(event);
+        updateSizes();
+      }
+    };
+
+    private void updateSizes() {
+      treeState.invalidateSizes();
+      tree.repaint();
+    }
+
+    @Override
+    protected void installListeners() {
+      super.installListeners();
+      tree.addComponentListener(myTreeSizeListener);
+      tree.addAncestorListener(myTreeAncestorListener);
+    }
+
+
+    @Override
+    protected void uninstallListeners() {
+      tree.removeComponentListener(myTreeSizeListener);
+      tree.removeAncestorListener(myTreeAncestorListener);
+      super.uninstallListeners();
+    }
+
+    @Override
+    protected AbstractLayoutCache.NodeDimensions createNodeDimensions() {
+      return new NodeDimensionsHandler() {
+        @Override
+        public Rectangle getNodeDimensions(Object value, int row, int depth, boolean expanded, Rectangle size) {
+          Rectangle dimensions = super.getNodeDimensions(value, row, depth, expanded, size);
+          dimensions.width = myScrollPane != null
+                             ? Math.max(myScrollPane.getViewport().getWidth() - getRowX(row, depth), dimensions.width)
+                             : Math.max(myTree.getMinimumSize().width, dimensions.width);
+          return dimensions;
+        }
+      };
+    }
+  }
 }
+
+

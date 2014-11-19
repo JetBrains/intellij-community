@@ -54,7 +54,7 @@ public class ClassWithOnlyPrivateConstructorsInspectionBase extends BaseInspecti
     @Override
     public void visitClass(PsiClass aClass) {
       super.visitClass(aClass);
-      if (aClass.isEnum()) {
+      if (aClass.isEnum() || aClass.hasModifierProperty(PsiModifier.FINAL)) {
         return;
       }
       final PsiMethod[] constructors = aClass.getConstructors();

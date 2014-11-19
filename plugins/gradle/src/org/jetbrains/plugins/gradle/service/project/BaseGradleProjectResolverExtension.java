@@ -68,6 +68,8 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.net.URL;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * {@link BaseGradleProjectResolverExtension} provides base implementation of Gradle project resolver.
@@ -536,15 +538,21 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
    * @param dirs        directories which paths should be stored at the given content root
    * @throws IllegalArgumentException if specified by {@link ContentRootData#storePath(ExternalSystemSourceType, String)}
    */
-  private static void populateContentRoot(@NotNull ContentRootData contentRoot,
-                                          @NotNull ExternalSystemSourceType type,
-                                          @Nullable Iterable<? extends IdeaSourceDirectory> dirs)
+  private static void populateContentRoot(@NotNull final ContentRootData contentRoot,
+                                          @NotNull final ExternalSystemSourceType type,
+                                          @Nullable final Iterable<? extends IdeaSourceDirectory> dirs)
     throws IllegalArgumentException {
     if (dirs == null) {
       return;
     }
     for (IdeaSourceDirectory dir : dirs) {
-      contentRoot.storePath(type, dir.getDirectory().getAbsolutePath());
+      ExternalSystemSourceType dirSourceType = type;
+      if (dir.isGenerated() && !dirSourceType.isGenerated()) {
+        final ExternalSystemSourceType generatedType =
+          ExternalSystemSourceType.from(dirSourceType.isTest(), dir.isGenerated(), dirSourceType.isResource(), dirSourceType.isExcluded());
+        dirSourceType = generatedType != null ? generatedType : dirSourceType;
+      }
+      contentRoot.storePath(dirSourceType, dir.getDirectory().getAbsolutePath());
     }
   }
 
@@ -651,6 +659,18 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
     else {
       level = LibraryLevel.PROJECT;
       libraryName = String.format("%s:%s:%s", moduleVersion.getGroup(), moduleVersion.getName(), moduleVersion.getVersion());
+      if (binaryPath.isFile()) {
+        String libraryFileName = FileUtil.getNameWithoutExtension(binaryPath);
+        final String mavenLibraryFileName = String.format("%s-%s", moduleVersion.getName(), moduleVersion.getVersion());
+        if (!mavenLibraryFileName.equals(libraryFileName)) {
+          Pattern pattern = Pattern.compile(moduleVersion.getName() + "-" + moduleVersion.getVersion() + "-(.*)");
+          Matcher matcher = pattern.matcher(libraryFileName);
+          if (matcher.matches()) {
+            final String classifier = matcher.group(1);
+            libraryName += (":" + classifier);
+          }
+        }
+      }
     }
 
     final LibraryData library = new LibraryData(GradleConstants.SYSTEM_ID, libraryName, unresolved);

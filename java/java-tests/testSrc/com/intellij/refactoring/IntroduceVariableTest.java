@@ -18,6 +18,7 @@ package com.intellij.refactoring;
 import com.intellij.JavaTestUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
@@ -27,6 +28,7 @@ import com.intellij.refactoring.introduceVariable.InputValidator;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableSettings;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -430,10 +432,30 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
     doTest(new MockIntroduceVariableHandler("c", false, false, false, "SAM<java.lang.Integer>"));
   }
 
+  public void testLambdaNotInContext() {
+    doTest(new MockIntroduceVariableHandler("l", false, false, false, CommonClassNames.JAVA_LANG_RUNNABLE));
+  }
+
+  public void testMethodRefNotInContext() {
+    doTest(new MockIntroduceVariableHandler("l", false, false, false, "java.util.function.IntConsumer", true));
+  }
+
+  public void testMethodRefNotInContextInferred() {
+    doTest(new MockIntroduceVariableHandler("l", false, false, false, "java.util.function.Consumer<java.lang.Integer>", true));
+  }
+
   public void testOneLineLambdaVoidCompatible() {
     doTest(new MockIntroduceVariableHandler("c", false, false, false, CommonClassNames.JAVA_LANG_STRING));
   }
   public void testOneLineLambdaValueCompatible() {
+    doTest(new MockIntroduceVariableHandler("c", false, false, false, "int"));
+  }
+
+  public void testPutInLambdaBody() {
+    doTest(new MockIntroduceVariableHandler("c", false, false, false, "int"));
+  }
+
+  public void testPutInLambdaBodyVoidValueConflict() {
     doTest(new MockIntroduceVariableHandler("c", false, false, false, "int"));
   }
 
@@ -463,5 +485,10 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
     configureByFile(baseName + ".java");
     testMe.invoke(getProject(), getEditor(), getFile(), null);
     checkResultByFile(baseName + ".after.java");
+  }
+
+  @Override
+  protected Sdk getProjectJDK() {
+    return IdeaTestUtil.getMockJdk18();
   }
 }

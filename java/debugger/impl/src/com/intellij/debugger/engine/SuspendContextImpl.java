@@ -126,6 +126,10 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
     return myDebugProcess;
   }
 
+  public DebugProcessImpl getDebugProcessNoAssert() {
+    return myDebugProcess;
+  }
+
   @Override
   public StackFrameProxyImpl getFrameProxy() {
     assertNotResumed();

@@ -117,7 +117,7 @@ class StudyEditorFactoryListener implements EditorFactoryListener {
 
     @Override
     public void handle(ReadOnlyFragmentModificationException e) {
-      HintManager.getInstance().showErrorHint(myEditor, "It's not allowed to delete task windows");
+      HintManager.getInstance().showErrorHint(myEditor, "It's not allowed to delete answer placeholders");
     }
   }
 }

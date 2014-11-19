@@ -113,6 +113,23 @@ public final class DefaultRegExpPropertiesProvider {
     {"e", "escape character ('\\u001B')"}
   };
 
+  private final String[][] myPosixCharacterClasses = {
+    {"alnum", "Alphanumeric characters"},
+    {"alpha", "Alphabetic characters"},
+    {"ascii", "ASCII characters"},
+    {"blank", "Space and tab"},
+    {"cntrl", "Control characters"},
+    {"digit", "Digits"},
+    {"graph", "Visible characters"},
+    {"lower", "Lowercase letters"},
+    {"print", "Visible characters and spaces"},
+    {"punct", "Punctuation and symbols"},
+    {"space", "All whitespace characters, including line breaks"},
+    {"upper", "Uppercase letters"},
+    {"word",  "Word characters (letters, numbers and underscores)"},
+    {"xdigit","Hexadecimal digits"},
+  };
+
   private DefaultRegExpPropertiesProvider() {
   }
 
@@ -156,5 +173,10 @@ public final class DefaultRegExpPropertiesProvider {
   @NotNull
   public String[][] getKnownCharacterClasses() {
     return myCharacterClasses;
+  }
+
+  @NotNull
+  public String[][] getPosixCharacterClasses() {
+    return myPosixCharacterClasses;
   }
 }

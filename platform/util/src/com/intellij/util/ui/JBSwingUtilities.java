@@ -15,13 +15,25 @@
  */
 package com.intellij.util.ui;
 
+import com.intellij.openapi.util.Key;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.TreeTraverser;
+import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
+import java.util.Arrays;
+import java.util.Collections;
 
 /**
  * @author gregsh
  */
 public class JBSwingUtilities {
+
+  public static final Key<Iterable<? extends Component>> NOT_IN_HIERARCHY_COMPONENTS = Key.create("NOT_IN_HIERARCHY_COMPONENTS");
+
   /**
    * Replaces SwingUtilities#isLeftMouseButton() for consistency with other button-related methods
    *
@@ -49,5 +61,33 @@ public class JBSwingUtilities {
    */
   public static boolean isRightMouseButton(MouseEvent anEvent) {
     return (anEvent.getModifiersEx() & InputEvent.BUTTON3_DOWN_MASK) > 0;
+  }
+
+  @NotNull
+  public static TreeTraverser<Component> uiTraverser() {
+    return new TreeTraverser<Component>() {
+      @Override
+      public Iterable<Component> children(Component c) {
+        Iterable<Component> result = ContainerUtil.emptyIterable();
+        if (c instanceof JMenu) {
+          result = Arrays.asList(((JMenu)c).getMenuComponents());
+        }
+        else if (c instanceof Container) {
+          result = Arrays.asList(((Container)c).getComponents());
+        }
+        if (c instanceof JComponent) {
+          JComponent jc = (JComponent)c;
+          Iterable<? extends Component> orphans = UIUtil.getClientProperty(jc, NOT_IN_HIERARCHY_COMPONENTS);
+          if (orphans != null) {
+            result = ContainerUtil.concat(result, orphans);
+          }
+          JPopupMenu jpm = jc.getComponentPopupMenu();
+          if (jpm != null && jpm.isVisible() && jpm.getInvoker() == jc) {
+            result = ContainerUtil.concat(result, Collections.singletonList(jpm));
+          }
+        }
+        return result;
+      }
+    };
   }
 }

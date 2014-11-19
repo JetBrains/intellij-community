@@ -40,6 +40,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReference;
+import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.HighlightTestInfo;
 import com.intellij.testFramework.TestDataFile;
 import com.intellij.usageView.UsageInfo;
@@ -59,7 +60,7 @@ import java.util.List;
  */
 public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
-  @NonNls String CARET_MARKER = "<caret>";
+  @NonNls String CARET_MARKER = EditorTestUtil.CARET_TAG;
 
   @NonNls String ERROR_MARKER = "error";
   @NonNls String WARNING_MARKER = "warning";
@@ -273,6 +274,8 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * @return duration
    */
   long checkHighlighting(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings);
+  
+  long checkHighlighting(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings, boolean ignoreExtraHighlighting);
 
   long checkHighlighting();
 

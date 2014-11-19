@@ -15,6 +15,7 @@
  */
 package com.intellij.platform;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.RecentProjectsManager;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.internal.statistic.UsageTrigger;
@@ -33,6 +34,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.impl.welcomeScreen.NewWelcomeScreen;
 import com.intellij.projectImport.ProjectOpenedCallback;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -110,5 +112,12 @@ public class NewDirectoryProjectAction extends AnAction implements DumbAware {
 
   protected Object showSettings(DirectoryProjectGenerator generator, VirtualFile baseDir) throws ProcessCanceledException {
     return generator.showGenerationSettings(baseDir);
+  }
+  
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    if (NewWelcomeScreen.isNewWelcomeScreen(e)) {
+      e.getPresentation().setIcon(AllIcons.Welcome.CreateNewProject);
+    }
   }
 }

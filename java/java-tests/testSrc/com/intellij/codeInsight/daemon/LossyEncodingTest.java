@@ -64,7 +64,9 @@ public class LossyEncodingTest extends DaemonAnalyzerTestCase {
     doTest("Text.txt");
     Charset ascii = CharsetToolkit.forName("US-ASCII");
     VirtualFile myVFile = myFile.getVirtualFile();
+    FileDocumentManager.getInstance().saveAllDocuments();
     EncodingManager.getInstance().setEncoding(myVFile, ascii);
+    UIUtil.dispatchAllInvocationEvents(); // wait for reload requests to bubble up
     assertEquals(ascii, myVFile.getCharset());
     int start = myEditor.getCaretModel().getOffset();
     type((char)0x445);
@@ -126,6 +128,7 @@ public class LossyEncodingTest extends DaemonAnalyzerTestCase {
 
   public void testNativeEncoding() throws Exception {
     EncodingManager.getInstance().setNative2AsciiForPropertiesFiles(null, true);
+    UIUtil.dispatchAllInvocationEvents();
     configureByFile(BASE_PATH + "/" + "NativeEncoding.properties");
 
     doDoTest(true, false);

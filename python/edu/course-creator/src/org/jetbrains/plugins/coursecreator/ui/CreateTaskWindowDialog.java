@@ -18,7 +18,7 @@ import java.io.*;
 
 public class CreateTaskWindowDialog extends DialogWrapper {
 
-  public static final String TITLE = "New Task Window";
+  public static final String TITLE = "Add Answer Placeholder";
   private static final Logger LOG = Logger.getInstance(CreateTaskWindowDialog.class.getName());
   private final TaskWindow myTaskWindow;
   private final CreateTaskWindowPanel myPanel;
@@ -95,6 +95,10 @@ public class CreateTaskWindowDialog extends DialogWrapper {
       myTaskWindow.setHint(hintName);
       String hintText = myPanel.getHintText();
       createHint(hintName, hintText);
+    } else {
+      if (myTaskWindow.getHintName() != null) {
+        deleteHint();
+      }
     }
     super.doOKAction();
   }

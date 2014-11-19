@@ -30,6 +30,7 @@ import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.reference.SoftReference;
@@ -493,7 +494,9 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       throwGuardedFragment(marker, offset, null, s.toString());
     }
 
-    updateText(myText.insert(offset, ImmutableText.valueOf(s)), offset, null, s, false, LocalTimeCounter.currentTime());
+    myText = myText.ensureChunked();
+    ImmutableText newText = myText.insert(offset, ImmutableText.valueOf(s));
+    updateText(newText, offset, null, newText.subtext(offset, offset + s.length()), false, LocalTimeCounter.currentTime());
     trimToSize();
   }
 
@@ -511,14 +514,13 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     if (!isWritable()) throw new ReadOnlyModificationException(this);
     if (startOffset == endOffset) return;
 
-    CharSequence sToDelete = myText.subSequence(startOffset, endOffset);
-
     RangeMarker marker = getRangeGuard(startOffset, endOffset);
     if (marker != null) {
-      throwGuardedFragment(marker, startOffset, sToDelete.toString(), null);
+      throwGuardedFragment(marker, startOffset, myText.subSequence(startOffset, endOffset).toString(), null);
     }
 
-    updateText(myText.delete(startOffset, endOffset), startOffset, sToDelete, null, false, LocalTimeCounter.currentTime());
+    myText = myText.ensureChunked();
+    updateText(myText.delete(startOffset, endOffset), startOffset, myText.subtext(startOffset, endOffset), null, false, LocalTimeCounter.currentTime());
   }
 
   @Override
@@ -582,7 +584,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     }
 
     CharSequence changedPart = s.subSequence(newStartInString, newEndInString);
-    CharSequence sToDelete = myText.subSequence(startOffset, endOffset);
+    CharSequence sToDelete = myText.subtext(startOffset, endOffset);
     RangeMarker guard = getRangeGuard(startOffset, endOffset);
     if (guard != null) {
       throwGuardedFragment(guard, startOffset, sToDelete.toString(), changedPart.toString());
@@ -593,7 +595,9 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       newText = (ImmutableText)s;
     }
     else {
+      myText = myText.ensureChunked();
       newText = myText.delete(startOffset, endOffset).insert(startOffset, changedPart);
+      changedPart = newText.subtext(startOffset, startOffset + changedPart.length());
     }
     updateText(newText, startOffset, sToDelete, changedPart, wholeTextReplaced, newModificationStamp);
     trimToSize();
@@ -653,7 +657,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
    */
   private void assertNotNestedModification() throws IllegalStateException {
     if (myChangeInProgress) {
-      throw new IllegalStateException("Detected nested request for document modification from 'before change' callback!");
+      throw new IllegalStateException("Detected document modification from DocumentListener");
     }
   }
 
@@ -705,17 +709,27 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
                           boolean wholeTextReplaced,
                           long newModificationStamp) {
     assertNotNestedModification();
+    boolean enableRecursiveModifications = Registry.is("enable.recursive.document.changes"); // temporary property, to remove in IDEA 16
     myChangeInProgress = true;
     final DocumentEvent event;
     try {
-      event = doBeforeChangedUpdate(offset, oldString, newString, wholeTextReplaced);
+      try {
+        event = doBeforeChangedUpdate(offset, oldString, newString, wholeTextReplaced);
+      }
+      finally {
+        if (enableRecursiveModifications) {
+          myChangeInProgress = false;
+        }
+      }
+      myTextString = null;
+      myText = newText;
+      changedUpdate(event, newModificationStamp);
     }
     finally {
-      myChangeInProgress = false;
+      if (!enableRecursiveModifications) {
+        myChangeInProgress = false;
+      }
     }
-    myTextString = null;
-    myText = newText;
-    changedUpdate(event, newModificationStamp);
   }
 
   @NotNull

@@ -12,7 +12,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -23,8 +22,8 @@ import java.util.List;
 
 import static com.intellij.json.JsonElementTypes.*;
 import static com.intellij.json.JsonParserDefinition.*;
-import static com.intellij.json.formatter.JsonCodeStyleSettings.PropertyAlignment.ALIGN_ON_COLON;
-import static com.intellij.json.formatter.JsonCodeStyleSettings.PropertyAlignment.ALIGN_ON_VALUE;
+import static com.intellij.json.formatter.JsonCodeStyleSettings.ALIGN_PROPERTY_ON_COLON;
+import static com.intellij.json.formatter.JsonCodeStyleSettings.ALIGN_PROPERTY_ON_VALUE;
 import static com.intellij.json.psi.JsonPsiUtil.hasElementType;
 
 /**
@@ -120,7 +119,7 @@ public class JsonBlock implements ASTBlock {
         indent = Indent.getNormalIndent();
       }
       else if (hasElementType(childNode, JSON_OPEN_BRACES)) {
-        if (JsonPsiUtil.isPropertyValue(myPsiElement) && customSettings.PROPERTY_ALIGNMENT == ALIGN_ON_VALUE) {
+        if (JsonPsiUtil.isPropertyValue(myPsiElement) && customSettings.PROPERTY_ALIGNMENT == ALIGN_PROPERTY_ON_VALUE) {
           // WEB-13587 Align compound values on opening brace/bracket, not the whole block
           assert myParent != null && myParent.myParent != null && myParent.myParent.myPropertyValueAlignment != null;
           alignment = myParent.myParent.myPropertyValueAlignment;
@@ -130,10 +129,10 @@ public class JsonBlock implements ASTBlock {
     // Handle properties alignment
     else if (hasElementType(myNode, PROPERTY) ) {
       assert myParent != null && myParent.myPropertyValueAlignment != null;
-      if (hasElementType(childNode, COLON) && customSettings.PROPERTY_ALIGNMENT == ALIGN_ON_COLON) {
+      if (hasElementType(childNode, COLON) && customSettings.PROPERTY_ALIGNMENT == ALIGN_PROPERTY_ON_COLON) {
         alignment = myParent.myPropertyValueAlignment;
       }
-      else if (JsonPsiUtil.isPropertyValue(childNode.getPsi()) && customSettings.PROPERTY_ALIGNMENT == ALIGN_ON_VALUE) {
+      else if (JsonPsiUtil.isPropertyValue(childNode.getPsi()) && customSettings.PROPERTY_ALIGNMENT == ALIGN_PROPERTY_ON_VALUE) {
         if (!hasElementType(childNode, JSON_CONTAINERS)) {
           alignment = myParent.myPropertyValueAlignment;
         }

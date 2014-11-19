@@ -15,8 +15,11 @@
  */
 package com.intellij.navigation
 import com.intellij.ide.util.gotoByName.*
+import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -223,6 +226,12 @@ class Intf {
     assert getPopupElements(new GotoClassModel2(project), 'goo.baz.Bar') == [bar2]
   }
 
+  private static filterJavaItems(List<Object> items) {
+    return ApplicationManager.application.runReadAction ({
+      return items.findAll { it instanceof PsiElement && it.language == JavaLanguage.INSTANCE }
+    } as Computable)
+  }
+
   public void "test super method in jdk"() {
     def ourRun = myFixture.addClass("package foo.bar; class Goo implements Runnable { public void run() {} }").methods[0]
     def sdkRun
@@ -230,13 +239,21 @@ class Intf {
       sdkRun = ourRun.containingClass.interfaces[0].methods[0]
     }
 
-    def withLibs = getPopupElements(new GotoSymbolModel2(project), 'run ', true)
-    assert withLibs[0] == sdkRun
+    def withLibs = filterJavaItems(getPopupElements(new GotoSymbolModel2(project), 'run ', true))
+    assert withLibs == [sdkRun]
     assert !(ourRun in withLibs)
 
-    def noLibs = getPopupElements(new GotoSymbolModel2(project), 'run ', false)
-    assert noLibs[0] == ourRun
+    def noLibs = filterJavaItems(getPopupElements(new GotoSymbolModel2(project), 'run ', false))
+    assert noLibs == [ourRun]
     assert !(sdkRun in noLibs)
+  }
+
+  public void "test super method not matching query qualifier"() {
+    def base = myFixture.addClass("class Base { void xpaint() {} }").methods[0]
+    def sub = myFixture.addClass("class Sub extends Base { void xpaint() {} }").methods[0]
+
+    assert getPopupElements(new GotoSymbolModel2(project), 'Ba.xpai', false) == [base]
+    assert getPopupElements(new GotoSymbolModel2(project), 'Su.xpai', false) == [sub]
   }
 
   private List<Object> getPopupElements(ChooseByNameModel model, String text, boolean checkboxState = false) {

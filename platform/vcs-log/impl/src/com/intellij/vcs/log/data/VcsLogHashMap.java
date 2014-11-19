@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.CommonProcessors;
@@ -52,36 +53,55 @@ import java.util.Map;
  */
 public class VcsLogHashMap implements Disposable {
 
-  private static final File LOG_CACHE_APP_DIR = new File(PathManager.getSystemPath(), "vcs-log");
+  private static final File LOG_CACHE_APP_DIR = new File(new File(PathManager.getSystemPath(), "vcs-log"), "hashes");
   private static final Logger LOG = Logger.getInstance(VcsLogHashMap.class);
+  private static final int VERSION = 1;
 
   private final PersistentEnumerator<Hash> myPersistentEnumerator;
 
   VcsLogHashMap(@NotNull Project project, @NotNull Map<VirtualFile, VcsLogProvider> logProviders) throws IOException {
-    final File myMapFile = new File(LOG_CACHE_APP_DIR, calcLogId(project, logProviders));
+    cleanupOldNaming(project, logProviders);
+    String logId = calcLogId(project, logProviders);
+    final File mapFile = new File(LOG_CACHE_APP_DIR, logId + "." + VERSION);
+    if (!mapFile.exists()) {
+      IOUtil.deleteAllFilesStartingWith(new File(LOG_CACHE_APP_DIR, logId));
+    }
+
     Disposer.register(project, this);
     myPersistentEnumerator = IOUtil.openCleanOrResetBroken(new ThrowableComputable<PersistentEnumerator<Hash>, IOException>() {
       @Override
       public PersistentEnumerator<Hash> compute() throws IOException {
-        return new PersistentEnumerator<Hash>(myMapFile, new MyHashKeyDescriptor(), Page.PAGE_SIZE);
+        return new PersistentEnumerator<Hash>(mapFile, new MyHashKeyDescriptor(), Page.PAGE_SIZE);
       }
-    }, myMapFile);
+    }, mapFile);
   }
 
   @NotNull
   private static String calcLogId(@NotNull Project project, @NotNull final Map<VirtualFile, VcsLogProvider> logProviders) {
+    int hashcode = calcLogProvidersHash(logProviders);
+    return project.getLocationHash() + "." + Integer.toHexString(hashcode);
+  }
+
+  // TODO remove in IDEA 15
+  private static void cleanupOldNaming(@NotNull Project project, @NotNull Map<VirtualFile, VcsLogProvider> providers) {
+    int hashcode = calcLogProvidersHash(providers);
+    String oldLogId = project.getName() + "." + hashcode;
+    FileUtil.delete(new File(new File(PathManager.getSystemPath(), "vcs-log"), oldLogId));
+  }
+
+  private static int calcLogProvidersHash(@NotNull final Map<VirtualFile, VcsLogProvider> logProviders) {
     List<VirtualFile> sortedRoots = ContainerUtil.sorted(logProviders.keySet(), new Comparator<VirtualFile>() {
       @Override
-      public int compare(VirtualFile o1, VirtualFile o2) {
+      public int compare(@NotNull VirtualFile o1, @NotNull VirtualFile o2) {
         return o1.getPath().compareTo(o2.getPath());
       }
     });
-    return project.getName() + "." + StringUtil.join(sortedRoots, new Function<VirtualFile, String>() {
+    return StringUtil.join(sortedRoots, new Function<VirtualFile, String>() {
       @Override
       public String fun(VirtualFile root) {
-        return root.getPath().hashCode() + "." + logProviders.get(root).getSupportedVcs().hashCode();
+        return root.getPath() + "." + logProviders.get(root).getSupportedVcs().getName();
       }
-    }, ".");
+    }, ".").hashCode();
   }
 
   @Nullable
@@ -188,12 +208,12 @@ public class VcsLogHashMap implements Disposable {
   private static class MyHashKeyDescriptor implements KeyDescriptor<Hash> {
     @Override
     public void save(@NotNull DataOutput out, Hash value) throws IOException {
-      out.writeUTF(value.asString());
+      ((HashImpl)value).write(out);
     }
 
     @Override
     public Hash read(@NotNull DataInput in) throws IOException {
-      return HashImpl.build(in.readUTF());
+      return HashImpl.read(in);
     }
 
     @Override

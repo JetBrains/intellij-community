@@ -3,9 +3,7 @@ package org.jetbrains.idea.svn.api;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.util.Version;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.svn.SvnApplicationSettings;
 import org.jetbrains.idea.svn.commandLine.Command;
-import org.jetbrains.idea.svn.commandLine.CommandExecutor;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.commandLine.SvnCommandName;
 
@@ -18,30 +16,29 @@ import java.util.regex.Pattern;
 public class CmdVersionClient extends BaseSvnClient implements VersionClient {
 
   private static final Pattern VERSION = Pattern.compile("^(\\d+)\\.(\\d+)\\.(\\d+)");
+  private static final int COMMAND_TIMEOUT = 30 * 1000;
 
   @NotNull
   @Override
   public Version getVersion() throws SvnBindException {
-    return parseVersion(runCommand());
+    return parseVersion(runCommand(true));
   }
 
-  private static ProcessOutput runCommand() throws SvnBindException {
-    // TODO: Seems CommandRuntime should be used here when its api is more robust (to specify timeout or so).
+  @NotNull
+  public ProcessOutput runCommand(boolean quiet) throws SvnBindException {
     Command command = new Command(SvnCommandName.version);
+    if (quiet) {
     command.put("--quiet");
+    }
 
-    SvnApplicationSettings settings = SvnApplicationSettings.getInstance();
-    CommandExecutor executor = new CommandExecutor(settings.getCommandLinePath(), settings.getExecutableLocale(), command);
-    executor.run(30 * 1000);
-
-    return executor.getProcessOutput();
+    return newRuntime(myVcs).runLocal(command, COMMAND_TIMEOUT).getProcessOutput();
   }
 
   @NotNull
   private static Version parseVersion(@NotNull ProcessOutput output) throws SvnBindException {
-    if (output.isTimeout() || (output.getExitCode() != 0) || !output.getStderr().isEmpty()) {
-      throw new SvnBindException(
-        String.format("Exit code: %d, Error: %s, Timeout: %b", output.getExitCode(), output.getStderr(), output.isTimeout()));
+    // TODO: This or similar check should likely go to CommandRuntime - to be applied for all commands
+    if (output.isTimeout()) {
+      throw new SvnBindException(String.format("Exit code: %d, Error: %s", output.getExitCode(), output.getStderr()));
     }
 
     return parseVersion(output.getStdout());

@@ -265,7 +265,8 @@ public class ExtractMethodProcessor implements MatchProvider {
 
     PsiType returnStatementType = null;
     if (myHasReturnStatement) {
-      returnStatementType = myCodeFragmentMember instanceof PsiMethod ? ((PsiMethod)myCodeFragmentMember).getReturnType() : null;
+      returnStatementType = myCodeFragmentMember instanceof PsiMethod ? ((PsiMethod)myCodeFragmentMember).getReturnType() 
+                                                                      : myCodeFragmentMember instanceof PsiLambdaExpression ? LambdaUtil.getFunctionalInterfaceReturnType((PsiLambdaExpression)myCodeFragmentMember) : null;
     }
     myHasReturnStatementOutput = returnStatementType != null && returnStatementType != PsiType.VOID;
 
@@ -712,11 +713,21 @@ public class ExtractMethodProcessor implements MatchProvider {
             (PsiMethodCallExpression)((PsiAssignmentExpression)assignmentExpression.getExpression()).getRExpression().replace(myMethodCall);
         }
         declareNecessaryVariablesAfterCall(myOutputVariable);
-        PsiIfStatement ifStatement =
-          (PsiIfStatement)myElementFactory.createStatementFromText(myHasReturnStatementOutput || (myGenerateConditionalExit && myFirstExitStatementCopy instanceof PsiReturnStatement &&
-                                                                                                  ((PsiReturnStatement)myFirstExitStatementCopy).getReturnValue() != null)
-                                                                   ? "if (" + varName + "==null) return null;"
-                                                                   : "if (" + varName + "==null) return;", null);
+        PsiIfStatement ifStatement;
+        if (myHasReturnStatementOutput) {
+          ifStatement = (PsiIfStatement)myElementFactory.createStatementFromText("if (" + varName + "==null) return null;", null);
+        }
+        else if (myGenerateConditionalExit) {
+          if (myFirstExitStatementCopy instanceof PsiReturnStatement && ((PsiReturnStatement)myFirstExitStatementCopy).getReturnValue() != null) {
+            ifStatement = (PsiIfStatement)myElementFactory.createStatementFromText("if (" + varName + "==null) return null;", null);
+          } 
+          else {
+            ifStatement = (PsiIfStatement)myElementFactory.createStatementFromText("if (" + varName + "==null) " + myFirstExitStatementCopy.getText(), null);
+          }
+        }
+        else {
+          ifStatement = (PsiIfStatement)myElementFactory.createStatementFromText("if (" + varName + "==null) return;", null);
+        }
         ifStatement = (PsiIfStatement)addToMethodCallLocation(ifStatement);
         CodeStyleManager.getInstance(myProject).reformat(ifStatement);
       }

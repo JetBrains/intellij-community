@@ -15,8 +15,8 @@
  */
 package git4idea.actions;
 
+import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.push.ui.VcsPushDialog;
-import com.intellij.dvcs.repo.RepositoryUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -38,15 +38,15 @@ public class GitPushAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
-    Collection<GitRepository> repositories = collectRepositories(project, e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY));
-    new VcsPushDialog(project, RepositoryUtil.sortRepositories(repositories)).show();
+    Collection<GitRepository> repositories = e.getData(CommonDataKeys.EDITOR) != null
+                                             ? ContainerUtil.<GitRepository>emptyList()
+                                             : collectRepositories(project, e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY));
+    new VcsPushDialog(project, DvcsUtil.sortRepositories(repositories), GitBranchUtil.getCurrentRepository(project)).show();
   }
 
   @NotNull
   private static Collection<GitRepository> collectRepositories(@NotNull Project project, @Nullable VirtualFile[] files) {
-    if (files == null) {
-      return Collections.singletonList(GitBranchUtil.getCurrentRepository(project));
-    }
+    if (files == null) return Collections.emptyList();
     GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
     Collection<GitRepository> repositories = ContainerUtil.newHashSet();
     for (VirtualFile file : files) {

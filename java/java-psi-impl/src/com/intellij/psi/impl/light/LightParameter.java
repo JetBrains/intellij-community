@@ -23,16 +23,14 @@ import org.jetbrains.annotations.NotNull;
  * @author peter
  */
 public class LightParameter extends LightVariableBuilder<LightVariableBuilder> implements PsiParameter {
-  public static final LightParameter[] EMPTY_ARRAY = new LightParameter[0];
-
   private final PsiElement myDeclarationScope;
   private final boolean myVarArgs;
 
-  public LightParameter(@NotNull String name, @NotNull PsiType type, PsiElement declarationScope, Language language) {
+  public LightParameter(@NotNull String name, @NotNull PsiType type, @NotNull PsiElement declarationScope, @NotNull Language language) {
     this(name, type, declarationScope, language, type instanceof PsiEllipsisType);
   }
 
-  public LightParameter(@NotNull String name, @NotNull PsiType type, PsiElement declarationScope, Language language, boolean isVarArgs) {
+  public LightParameter(@NotNull String name, @NotNull PsiType type, @NotNull PsiElement declarationScope, @NotNull Language language, boolean isVarArgs) {
     super(declarationScope.getManager(), name, type, language);
     myDeclarationScope = declarationScope;
     myVarArgs = isVarArgs;
@@ -51,6 +49,7 @@ public class LightParameter extends LightVariableBuilder<LightVariableBuilder> i
     }
   }
 
+  @Override
   public String toString() {
     return "Light Parameter";
   }

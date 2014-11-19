@@ -19,6 +19,8 @@ import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.DocumentReferenceManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.WeakList;
 import gnu.trove.THashSet;
@@ -32,8 +34,11 @@ class UndoRedoStacksHolder {
   private final boolean myUndo;
 
   private final LinkedList<UndoableGroup> myGlobalStack = new LinkedList<UndoableGroup>();
+  // strongly reference local files for which we can undo file removal
+  // document without files and nonlocal files are stored without strong reference
   private final Map<DocumentReference, LinkedList<UndoableGroup>> myDocumentStacks = new HashMap<DocumentReference, LinkedList<UndoableGroup>>();
-  private final List<Document> myDocumentsWithStacks = new WeakList<Document>();
+  private final WeakList<Document> myDocumentsWithStacks = new WeakList<Document>();
+  private final WeakList<VirtualFile> myNonlocalVirtualFilesWithStacks = new WeakList<VirtualFile>();
 
   public UndoRedoStacksHolder(boolean isUndo) {
     myUndo = isUndo;
@@ -46,11 +51,20 @@ class UndoRedoStacksHolder {
 
   @NotNull
   private LinkedList<UndoableGroup> doGetStackForFile(@NotNull DocumentReference r) {
-    LinkedList<UndoableGroup> result = myDocumentStacks.get(r);
-    if (result == null) {
-      result = new LinkedList<UndoableGroup>();
-      myDocumentStacks.put(r, result);
+    LinkedList<UndoableGroup> result;
+    VirtualFile file = r.getFile();
+
+    if (!file.isInLocalFileSystem()) {
+      result = addWeaklyTrackedEmptyStack(file, myNonlocalVirtualFilesWithStacks);
     }
+    else {
+      result = myDocumentStacks.get(r);
+      if (result == null) {
+        result = new LinkedList<UndoableGroup>();
+        myDocumentStacks.put(r, result);
+      }
+    }
+
     return result;
   }
 
@@ -60,12 +74,15 @@ class UndoRedoStacksHolder {
     // itself to avoid memory leaks caused by holding stacks of all documents, ever created, here.
     // And to know, what documents do exist now, we have to maintain weak reference list of them.
 
-    Document d = r.getDocument();
-    LinkedList<UndoableGroup> result = d.getUserData(STACK_IN_DOCUMENT_KEY);
+    return addWeaklyTrackedEmptyStack(r.getDocument(), myDocumentsWithStacks);
+  }
+
+  private <T extends UserDataHolder> LinkedList<UndoableGroup> addWeaklyTrackedEmptyStack(T holder, WeakList<T> allHolders) {
+    LinkedList<UndoableGroup> result;
+    result = holder.getUserData(STACK_IN_DOCUMENT_KEY);
     if (result == null) {
-      result = new LinkedList<UndoableGroup>();
-      d.putUserData(STACK_IN_DOCUMENT_KEY, result);
-      myDocumentsWithStacks.add(d);
+      holder.putUserData(STACK_IN_DOCUMENT_KEY, result = new LinkedList<UndoableGroup>());
+      allHolders.add(holder);
     }
     return result;
   }
@@ -161,15 +178,20 @@ class UndoRedoStacksHolder {
     }
 
 
-    Set<Document> docsToDrop = new THashSet<Document>();
-    for (Document each : myDocumentsWithStacks) {
-      LinkedList<UndoableGroup> stack = each.getUserData(STACK_IN_DOCUMENT_KEY);
+    cleanWeaklyTrackedEmptyStacks(myDocumentsWithStacks);
+    cleanWeaklyTrackedEmptyStacks(myNonlocalVirtualFilesWithStacks);
+  }
+
+  private <T extends UserDataHolder> void cleanWeaklyTrackedEmptyStacks(WeakList<T> stackHolders) {
+    Set<T> holdersToDrop = new THashSet<T>();
+    for (T holder : stackHolders) {
+      LinkedList<UndoableGroup> stack = holder.getUserData(STACK_IN_DOCUMENT_KEY);
       if (stack != null && stack.isEmpty()) {
-        each.putUserData(STACK_IN_DOCUMENT_KEY, null);
-        docsToDrop.add(each);
+        holder.putUserData(STACK_IN_DOCUMENT_KEY, null);
+        holdersToDrop.add(holder);
       }
     }
-    myDocumentsWithStacks.removeAll(docsToDrop);
+    stackHolders.removeAll(holdersToDrop);
   }
 
   private void clearStacksFrom(@NotNull UndoableGroup from) {
@@ -214,8 +236,13 @@ class UndoRedoStacksHolder {
 
   private void collectLocalAffectedDocuments(@NotNull Collection<DocumentReference> result) {
     result.addAll(myDocumentStacks.keySet());
+    DocumentReferenceManager documentReferenceManager = DocumentReferenceManager.getInstance();
+
     for (Document each : myDocumentsWithStacks) {
-      result.add(DocumentReferenceManager.getInstance().create(each));
+      result.add(documentReferenceManager.create(each));
+    }
+    for (VirtualFile each : myNonlocalVirtualFilesWithStacks) {
+      result.add(documentReferenceManager.create(each));
     }
   }
 

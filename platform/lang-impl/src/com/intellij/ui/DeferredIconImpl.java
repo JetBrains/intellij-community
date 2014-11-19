@@ -19,13 +19,16 @@
  */
 package com.intellij.ui;
 
-import com.intellij.concurrency.Job;
-import com.intellij.concurrency.JobLauncher;
 import com.intellij.ide.PowerSaveMode;
+import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.tabs.impl.TabLabel;
 import com.intellij.util.Alarm;
@@ -97,7 +100,7 @@ public class DeferredIconImpl<T> implements DeferredIcon {
     final Component paintingParent = SwingUtilities.getAncestorOfClass(PaintingParent.class, c);
     final Rectangle paintingParentRec = paintingParent == null ? null : ((PaintingParent)paintingParent).getChildRec(c);
 
-    JobLauncher.getInstance().submitToJobThread(Job.DEFAULT_PRIORITY, new Runnable() {
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       @Override
       public void run() {
         int oldWidth = myDelegateIcon.getIconWidth();
@@ -119,18 +122,45 @@ public class DeferredIconImpl<T> implements DeferredIcon {
 
         final long startTime = System.currentTimeMillis();
         if (myNeedReadAction) {
-          if (!ApplicationManagerEx.getApplicationEx().tryRunReadAction(new Runnable() {
+          final ProgressIndicatorBase progress = new ProgressIndicatorBase();
+          final ApplicationAdapter listener = new ApplicationAdapter() {
+            @Override
+            public void beforeWriteActionStart(Object action) {
+              progress.cancel();
+            }
+          };
+          ApplicationManager.getApplication().invokeAndWait(new Runnable() {
             @Override
             public void run() {
-              IconDeferrerImpl.evaluateDeferred(evalRunnable);
-              if (myAutoUpdatable) {
-                myLastCalcTime = System.currentTimeMillis();
-                myLastTimeSpent = myLastCalcTime - startTime;
-              }
+              ApplicationManager.getApplication().addApplicationListener(listener);
             }
-          })) {
-            myIsScheduled = false;
-            return;
+          }, ModalityState.any());
+          try {
+            final Ref<Boolean> cancelled = new Ref<Boolean>();
+            ProgressManager.getInstance().runProcess(new Runnable() {
+              @Override
+              public void run() {
+                if (!ApplicationManagerEx.getApplicationEx().tryRunReadAction(new Runnable() {
+                  @Override
+                  public void run() {
+                    IconDeferrerImpl.evaluateDeferred(evalRunnable);
+                    if (myAutoUpdatable) {
+                      myLastCalcTime = System.currentTimeMillis();
+                      myLastTimeSpent = myLastCalcTime - startTime;
+                    }
+                  }
+                })) {
+                  myIsScheduled = false;
+                  cancelled.set(Boolean.TRUE);
+                }
+              }
+            }, progress);
+            if (cancelled.get() == Boolean.TRUE) return;
+          }
+          catch (ProcessCanceledException e) {
+          }
+          finally {
+            ApplicationManager.getApplication().removeApplicationListener(listener);
           }
         }
         else {

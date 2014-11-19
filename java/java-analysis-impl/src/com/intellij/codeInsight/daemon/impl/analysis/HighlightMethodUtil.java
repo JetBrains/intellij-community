@@ -381,8 +381,10 @@ public class HighlightMethodUtil {
           else {
             toolTip = description;
           }
-          highlightInfo = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(elementToHighlight.get())
-            .description(description).escapedToolTip(toolTip).navigationShift(+1).create();
+          PsiElement element = elementToHighlight.get();
+          int navigationShift = element instanceof PsiExpressionList ? +1 : 0; // argument list starts with paren which there is no need to highlight
+          highlightInfo = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element)
+            .description(description).escapedToolTip(toolTip).navigationShift(navigationShift).create();
           if (highlightInfo != null) {
             registerMethodCallIntentions(highlightInfo, methodCall, list, resolveHelper);
           }
@@ -390,7 +392,7 @@ public class HighlightMethodUtil {
         else {
           PsiReferenceExpression methodExpression = methodCall.getMethodExpression();
           PsiReferenceParameterList typeArgumentList = methodCall.getTypeArgumentList();
-          if (typeArgumentList.getTypeArguments().length == 0 && resolvedMethod != null && resolvedMethod.hasTypeParameters()) {
+          if (typeArgumentList.getTypeArguments().length == 0 && resolvedMethod.hasTypeParameters()) {
             highlightInfo = GenericsHighlightUtil.checkInferredTypeArguments(resolvedMethod, methodCall, substitutor);
           }
           else {
@@ -420,9 +422,9 @@ public class HighlightMethodUtil {
     return highlightInfo;
   }
 
-  private static String buildOneLineMismatchDescription(final PsiExpressionList list,
-                                                        final MethodCandidateInfo candidateInfo,
-                                                        final Ref<PsiElement> elementToHighlight) {
+  private static String buildOneLineMismatchDescription(@NotNull PsiExpressionList list,
+                                                        @NotNull MethodCandidateInfo candidateInfo,
+                                                        @NotNull Ref<PsiElement> elementToHighlight) {
     final PsiExpression[] expressions = list.getExpressions();
     final PsiMethod resolvedMethod = candidateInfo.getElement();
     final PsiSubstitutor substitutor = candidateInfo.getSubstitutor();
@@ -915,7 +917,8 @@ public class HighlightMethodUtil {
     PsiType paramType = i < parameters.length && parameters[i] != null
                         ? substitutor.substitute(parameters[i].getType())
                         : null;
-    return paramType != null && TypeConversionUtil.areTypesAssignmentCompatible(paramType, expression);
+    PsiType expressionType = expression.getType();
+    return paramType != null && expressionType != null && TypeConversionUtil.isAssignable(paramType, expressionType);
   }
 
 
@@ -1331,7 +1334,7 @@ public class HighlightMethodUtil {
   }
 
 
-  static HighlightInfo checkRecursiveConstructorInvocation(PsiMethod method) {
+  static HighlightInfo checkRecursiveConstructorInvocation(@NotNull PsiMethod method) {
     if (HighlightControlFlowUtil.isRecursivelyCalledConstructor(method)) {
       TextRange textRange = HighlightNamesUtil.getMethodDeclarationTextRange(method);
       String description = JavaErrorMessages.message("recursive.constructor.invocation");

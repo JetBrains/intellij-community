@@ -82,20 +82,20 @@ public class PyPropertyDefinitionInspection extends PyInspection {
       // save us continuous checks for level, module, stc
       myLevel = LanguageLevel.forElement(psiFile);
       // string classes
-      final List<PyClass> string_classes = new ArrayList<PyClass>(2);
+      final List<PyClass> stringClasses = new ArrayList<PyClass>(2);
       final PyBuiltinCache builtins = PyBuiltinCache.getInstance(psiFile);
       PyClass cls = builtins.getClass("str");
-      if (cls != null) string_classes.add(cls);
+      if (cls != null) stringClasses.add(cls);
       cls = builtins.getClass("unicode");
-      if (cls != null) string_classes.add(cls);
-      myStringClasses = string_classes;
+      if (cls != null) stringClasses.add(cls);
+      myStringClasses = stringClasses;
       // reference signatures
-      PyClass object_class = builtins.getClass("object");
-      if (object_class != null) {
-        final PyFunction method_repr = object_class.findMethodByName("__repr__", false);
-        if (method_repr != null) myOneParamFunction = method_repr;
-        final PyFunction method_delattr = object_class.findMethodByName("__delattr__", false);
-        if (method_delattr != null) myTwoParamFunction = method_delattr;
+      PyClass objectClass = builtins.getClass("object");
+      if (objectClass != null) {
+        final PyFunction methodRepr = objectClass.findMethodByName("__repr__", false);
+        if (methodRepr != null) myOneParamFunction = methodRepr;
+        final PyFunction methodDelattr = objectClass.findMethodByName("__delattr__", false);
+        if (methodDelattr != null) myTwoParamFunction = methodDelattr;
       }
     }
 
@@ -121,10 +121,10 @@ public class PyPropertyDefinitionInspection extends PyInspection {
             assert arglist != null : "Property call has null arglist";
             CallArgumentsMapping analysis = arglist.analyzeCall(getResolveContext());
             // we assume fget, fset, fdel, doc names
-            for (Map.Entry<PyExpression, PyNamedParameter> entry: analysis.getPlainMappedParams().entrySet()) {
-              final String param_name = entry.getValue().getName();
+            for (Map.Entry<PyExpression, PyNamedParameter> entry : analysis.getPlainMappedParams().entrySet()) {
+              final String paramName = entry.getValue().getName();
               PyExpression argument = PyUtil.peelArgument(entry.getKey());
-              checkPropertyCallArgument(param_name, argument, node.getContainingFile());
+              checkPropertyCallArgument(paramName, argument, node.getContainingFile());
             }
           }
           else {
@@ -137,40 +137,45 @@ public class PyPropertyDefinitionInspection extends PyInspection {
           }
           return false;  // always want more
         }
-
       }, false);
     }
 
-    private void checkPropertyCallArgument(String param_name, PyExpression argument, PsiFile containingFile) {
+    private void checkPropertyCallArgument(String paramName, PyExpression argument, PsiFile containingFile) {
       assert argument != null : "Parameter mapped to null argument";
       Callable callable = null;
       if (argument instanceof PyReferenceExpression) {
         final PsiPolyVariantReference reference = ((PyReferenceExpression)argument).getReference(getResolveContext());
-        if (reference != null) {
-          PsiElement resolved = reference.resolve();
-          if (resolved instanceof Callable) {
-            callable = (Callable)resolved;
-          }
-          else {
-            reportNonCallableArg(resolved, argument);
-            return;
-          }
+        PsiElement resolved = reference.resolve();
+        if (resolved instanceof Callable) {
+          callable = (Callable)resolved;
+        }
+        else {
+          reportNonCallableArg(resolved, argument);
+          return;
         }
       }
-      else if (argument instanceof PyLambdaExpression) callable = (PyLambdaExpression)argument;
-      else if (! "doc".equals(param_name)) {
+      else if (argument instanceof PyLambdaExpression) {
+        callable = (PyLambdaExpression)argument;
+      }
+      else if (!"doc".equals(paramName)) {
         reportNonCallableArg(argument, argument);
         return;
       }
       if (callable != null && callable.getContainingFile() != containingFile) {
         return;
       }
-      if ("fget".equals(param_name)) checkGetter(callable, argument);
-      else if ("fset".equals(param_name)) checkSetter(callable, argument);
-      else if ("fdel".equals(param_name)) checkDeleter(callable, argument);
-      else if ("doc".equals(param_name)) {
+      if ("fget".equals(paramName)) {
+        checkGetter(callable, argument);
+      }
+      else if ("fset".equals(paramName)) {
+        checkSetter(callable, argument);
+      }
+      else if ("fdel".equals(paramName)) {
+        checkDeleter(callable, argument);
+      }
+      else if ("doc".equals(paramName)) {
         PyType type = myTypeEvalContext.getType(argument);
-        if (! (type instanceof PyClassType && myStringClasses.contains(((PyClassType)type).getPyClass()))) {
+        if (!(type instanceof PyClassType && myStringClasses.contains(((PyClassType)type).getPyClass()))) {
           registerProblem(argument, PyBundle.message("INSP.doc.param.should.be.str"));
         }
       }
@@ -203,17 +208,21 @@ public class PyPropertyDefinitionInspection extends PyInspection {
           if (decos != null) {
             String name = node.getName();
             for (PyDecorator deco : decos.getDecorators()) {
-              final QualifiedName q_name = deco.getQualifiedName();
-              if (q_name != null) {
-                List<String> name_parts = q_name.getComponents();
-                if (name_parts.size() == 2) {
-                  final int suffix_index = SUFFIXES.indexOf(name_parts.get(1));
-                  if (suffix_index >= 0) {
-                    if (Comparing.equal(name, name_parts.get(0))) {
+              final QualifiedName qName = deco.getQualifiedName();
+              if (qName != null) {
+                List<String> nameParts = qName.getComponents();
+                if (nameParts.size() == 2) {
+                  final int suffixIndex = SUFFIXES.indexOf(nameParts.get(1));
+                  if (suffixIndex >= 0) {
+                    if (Comparing.equal(name, nameParts.get(0))) {
                       // names are ok, what about signatures?
                       PsiElement markable = getFunctionMarkingElement(node);
-                      if (suffix_index == 0) checkSetter(node, markable);
-                      else checkDeleter(node, markable);
+                      if (suffixIndex == 0) {
+                        checkSetter(node, markable);
+                      }
+                      else {
+                        checkDeleter(node, markable);
+                      }
                     }
                     else {
                       registerProblem(deco, PyBundle.message("INSP.func.property.name.mismatch"));
@@ -230,37 +239,37 @@ public class PyPropertyDefinitionInspection extends PyInspection {
     @Nullable
     private static PsiElement getFunctionMarkingElement(PyFunction node) {
       if (node == null) return null;
-      final ASTNode name_node = node.getNameNode();
+      final ASTNode nameNode = node.getNameNode();
       PsiElement markable = node;
-      if (name_node != null) markable = name_node.getPsi();
+      if (nameNode != null) markable = nameNode.getPsi();
       return markable;
     }
 
 
-    private void checkGetter(Callable callable, PsiElement being_checked) {
+    private void checkGetter(Callable callable, PsiElement beingChecked) {
       if (callable != null) {
-        checkOneParameter(callable, being_checked, true);
-        checkReturnValueAllowed(callable, being_checked, true, PyBundle.message("INSP.getter.return.smth"));
+        checkOneParameter(callable, beingChecked, true);
+        checkReturnValueAllowed(callable, beingChecked, true, PyBundle.message("INSP.getter.return.smth"));
       }
     }
 
-    private void checkSetter(Callable callable, PsiElement being_checked) {
+    private void checkSetter(Callable callable, PsiElement beingChecked) {
       if (callable != null) {
         // signature: at least two params, more optionals ok; first arg 'self'
-        final PyParameterList param_list = callable.getParameterList();
+        final PyParameterList paramList = callable.getParameterList();
         if (myTwoParamFunction != null && !PyUtil.isSignatureCompatibleTo(callable, myTwoParamFunction, myTypeEvalContext)) {
-          registerProblem(being_checked, PyBundle.message("INSP.setter.signature.advice"), new PyUpdatePropertySignatureQuickFix(true));
+          registerProblem(beingChecked, PyBundle.message("INSP.setter.signature.advice"), new PyUpdatePropertySignatureQuickFix(true));
         }
-        checkForSelf(param_list);
+        checkForSelf(paramList);
         // no explicit return type
-        checkReturnValueAllowed(callable, being_checked, false, PyBundle.message("INSP.setter.should.not.return"));
+        checkReturnValueAllowed(callable, beingChecked, false, PyBundle.message("INSP.setter.should.not.return"));
       }
     }
 
-    private void checkDeleter(Callable callable, PsiElement being_checked) {
+    private void checkDeleter(Callable callable, PsiElement beingChecked) {
       if (callable != null) {
-        checkOneParameter(callable, being_checked, false);
-        checkReturnValueAllowed(callable, being_checked, false, PyBundle.message("INSP.deleter.should.not.return"));
+        checkOneParameter(callable, beingChecked, false);
+        checkReturnValueAllowed(callable, beingChecked, false, PyBundle.message("INSP.deleter.should.not.return"));
       }
     }
 
@@ -278,25 +287,26 @@ public class PyPropertyDefinitionInspection extends PyInspection {
       checkForSelf(parameterList);
     }
 
-    private void checkForSelf(PyParameterList param_list) {
-      PyParameter[] parameters = param_list.getParameters();
-      final PyClass cls = PsiTreeUtil.getParentOfType(param_list, PyClass.class);
+    private void checkForSelf(PyParameterList paramList) {
+      PyParameter[] parameters = paramList.getParameters();
+      final PyClass cls = PsiTreeUtil.getParentOfType(paramList, PyClass.class);
       if (cls != null && cls.isSubclass("type")) return;
-      if (parameters.length > 0 && ! PyNames.CANONICAL_SELF.equals(parameters[0].getName())) {
+      if (parameters.length > 0 && !PyNames.CANONICAL_SELF.equals(parameters[0].getName())) {
         registerProblem(
-          parameters[0], PyBundle.message("INSP.accessor.first.param.is.$0", PyNames.CANONICAL_SELF), ProblemHighlightType.WEAK_WARNING, null,
+          parameters[0], PyBundle.message("INSP.accessor.first.param.is.$0", PyNames.CANONICAL_SELF), ProblemHighlightType.WEAK_WARNING,
+          null,
           new RenameParameterQuickFix(PyNames.CANONICAL_SELF));
       }
     }
 
-    private void checkReturnValueAllowed(Callable callable, PsiElement being_checked, boolean allowed, String message) {
+    private void checkReturnValueAllowed(Callable callable, PsiElement beingChecked, boolean allowed, String message) {
       // TODO: use a real flow analysis to check all exit points
       boolean hasReturns;
       if (callable instanceof PyFunction) {
         final PsiElement[] returnStatements = PsiTreeUtil.collectElements(callable, new PsiElementFilter() {
           @Override
           public boolean isAccepted(PsiElement element) {
-            return (element instanceof PyReturnStatement && ((PyReturnStatement) element).getExpression() != null) ||
+            return (element instanceof PyReturnStatement && ((PyReturnStatement)element).getExpression() != null) ||
                    (element instanceof PyYieldExpression);
           }
         });
@@ -308,6 +318,9 @@ public class PyPropertyDefinitionInspection extends PyInspection {
       }
       if (allowed ^ hasReturns) {
         if (allowed && callable instanceof PyFunction) {
+          if (PyUtil.isDecoratedAsAbstract(((PyFunction)callable))) {
+            return;
+          }
           // one last chance: maybe there's no return but a 'raise' statement, see PY-4043, PY-5048
           PyStatementList statementList = ((PyFunction)callable).getStatementList();
           for (PyStatement stmt : statementList.getStatements()) {
@@ -316,9 +329,8 @@ public class PyPropertyDefinitionInspection extends PyInspection {
             }
           }
         }
-        registerProblem(being_checked, message);
+        registerProblem(beingChecked, message);
       }
     }
   }
-
 }

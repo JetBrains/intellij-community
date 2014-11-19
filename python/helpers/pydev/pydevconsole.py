@@ -39,10 +39,13 @@ from pydev_console_utils import BaseInterpreterInterface, BaseStdIn
 from pydev_console_utils import CodeFragment
 
 IS_PYTHON_3K = False
+IS_PY24 = False
 
 try:
     if sys.version_info[0] == 3:
         IS_PYTHON_3K = True
+    elif sys.version_info[0] == 2 and sys.version_info[1] == 4:
+        IS_PY24 = True
 except:
     #That's OK, not all versions of python have sys.version_info
     pass
@@ -171,6 +174,12 @@ def process_exec_queue(interpreter):
 
     set_return_control_callback(return_control)
 
+    from pydev_import_hook import import_hook_manager
+    from pydev_ipython.matplotlibtools import activate_matplotlib, activate_pylab, activate_pyplot
+    import_hook_manager.add_module_name("matplotlib", activate_matplotlib(interpreter))
+    import_hook_manager.add_module_name("pylab", activate_pylab)
+    import_hook_manager.add_module_name("pyplot", activate_pyplot)
+
     while 1:
         # Running the request may have changed the inputhook in use
         inputhook = get_inputhook()
@@ -266,7 +275,10 @@ def start_server(host, port, interpreter):
     from pydev_imports import SimpleXMLRPCServer as XMLRPCServer  #@Reimport
 
     try:
-        server = XMLRPCServer((host, port), logRequests=False, allow_none=True)
+        if IS_PY24:
+            server = XMLRPCServer((host, port), logRequests=False)
+        else:
+            server = XMLRPCServer((host, port), logRequests=False, allow_none=True)
 
     except:
         sys.stderr.write('Error starting server with host: %s, port: %s, client_port: %s\n' % (host, port, client_port))
@@ -287,6 +299,8 @@ def start_server(host, port, interpreter):
     server.register_function(handshake)
     server.register_function(interpreter.connectToDebugger)
     server.register_function(interpreter.hello)
+    server.register_function(interpreter.getArray)
+    server.register_function(interpreter.evaluate)
 
     # Functions for GUI main loop integration
     server.register_function(interpreter.enableGui)
@@ -322,6 +336,10 @@ def get_interpreter():
     try:
         interpreterInterface = getattr(__builtin__, 'interpreter')
     except AttributeError:
+        # fake return_controll_callback function just to prevent exception in PyCharm bebug console
+        from pydev_ipython.inputhook import set_return_control_callback
+        set_return_control_callback(lambda x: True)
+
         interpreterInterface = InterpreterInterface(None, None, threading.currentThread())
         setattr(__builtin__, 'interpreter', interpreterInterface)
 

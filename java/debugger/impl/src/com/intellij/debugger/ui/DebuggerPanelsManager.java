@@ -35,7 +35,10 @@ import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.execution.ui.*;
+import com.intellij.execution.ui.ExecutionConsole;
+import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.execution.ui.RunContentManager;
+import com.intellij.execution.ui.RunContentWithExecutorListener;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -142,7 +145,7 @@ public class DebuggerPanelsManager implements ProjectComponent {
         @Override
         @NotNull
         public XDebugProcess start(@NotNull XDebugSession session) {
-          return new JavaDebugProcess(session, debuggerSession);
+          return JavaDebugProcess.create(session, debuggerSession);
         }
       });
     return debugSession.getRunContentDescriptor();

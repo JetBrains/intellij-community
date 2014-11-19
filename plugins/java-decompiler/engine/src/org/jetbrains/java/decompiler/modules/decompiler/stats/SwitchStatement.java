@@ -135,7 +135,7 @@ public class SwitchStatement extends Statement {
         }
         else {
           ConstExprent value = (ConstExprent)values.get(j).copy();
-          value.setConsttype(switch_type);
+          value.setConstType(switch_type);
 
           buf.appendIndent(indent).append("case ").append(value.toJava(indent, tracer)).append(":").appendLineSeparator();
           tracer.incrementCurrentSourceLine();

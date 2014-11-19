@@ -15,10 +15,6 @@
  */
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
@@ -26,68 +22,51 @@ import org.jetbrains.java.decompiler.main.TextBuffer;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.main.rels.MethodWrapper;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
-import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPaar;
-import org.jetbrains.java.decompiler.struct.StructClass;
+import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
 import org.jetbrains.java.decompiler.struct.consts.LinkConstant;
 import org.jetbrains.java.decompiler.struct.gen.FieldDescriptor;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
+import org.jetbrains.java.decompiler.util.TextUtil;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 public class FieldExprent extends Exprent {
 
-  private String name;
-
-  private String classname;
-
-  private boolean isStatic;
-
+  private final String name;
+  private final String classname;
+  private final boolean isStatic;
   private Exprent instance;
+  private final FieldDescriptor descriptor;
 
-  private FieldDescriptor descriptor;
-
-  {
-    this.type = EXPRENT_FIELD;
+  public FieldExprent(LinkConstant cn, Exprent instance, Set<Integer> bytecodeOffsets) {
+    this(cn.elementname, cn.classname, instance == null, instance, FieldDescriptor.parseDescriptor(cn.descriptor), bytecodeOffsets);
   }
 
-  public FieldExprent(LinkConstant cn, Exprent instance, Set<Integer> bytecode_offsets) {
-
-    this.instance = instance;
-
-    if (instance == null) {
-      isStatic = true;
-    }
-
-    classname = cn.classname;
-    name = cn.elementname;
-    descriptor = FieldDescriptor.parseDescriptor(cn.descriptor);
-
-    addBytecodeOffsets(bytecode_offsets);
-  }
-
-  public FieldExprent(String name, String classname, boolean isStatic, Exprent instance, FieldDescriptor descriptor, Set<Integer> bytecode_offsets) {
+  public FieldExprent(String name, String classname, boolean isStatic, Exprent instance, FieldDescriptor descriptor, Set<Integer> bytecodeOffsets) {
+    super(EXPRENT_FIELD);
     this.name = name;
     this.classname = classname;
     this.isStatic = isStatic;
     this.instance = instance;
     this.descriptor = descriptor;
 
-    addBytecodeOffsets(bytecode_offsets);
+    addBytecodeOffsets(bytecodeOffsets);
   }
 
+  @Override
   public VarType getExprType() {
     return descriptor.type;
   }
 
+  @Override
   public int getExprentUse() {
-    if (instance == null) {
-      return Exprent.MULTIPLE_USES;
-    }
-    else {
-      return instance.getExprentUse() & Exprent.MULTIPLE_USES;
-    }
+    return instance == null ? Exprent.MULTIPLE_USES : instance.getExprentUse() & Exprent.MULTIPLE_USES;
   }
 
+  @Override
   public List<Exprent> getAllExprents() {
     List<Exprent> lst = new ArrayList<Exprent>();
     if (instance != null) {
@@ -105,7 +84,6 @@ public class FieldExprent extends Exprent {
   public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
     TextBuffer buf = new TextBuffer();
 
-
     if (isStatic) {
       ClassNode node = (ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS_NODE);
       if (node == null || !classname.equals(node.classStruct.qualifiedName)) {
@@ -114,17 +92,16 @@ public class FieldExprent extends Exprent {
       }
     }
     else {
-
       String super_qualifier = null;
 
       if (instance != null && instance.type == Exprent.EXPRENT_VAR) {
-        VarExprent instvar = (VarExprent)instance;
-        VarVersionPaar varpaar = new VarVersionPaar(instvar);
+        VarExprent instVar = (VarExprent)instance;
+        VarVersionPair pair = new VarVersionPair(instVar);
 
-        MethodWrapper current_meth = (MethodWrapper)DecompilerContext.getProperty(DecompilerContext.CURRENT_METHOD_WRAPPER);
+        MethodWrapper currentMethod = (MethodWrapper)DecompilerContext.getProperty(DecompilerContext.CURRENT_METHOD_WRAPPER);
 
-        if (current_meth != null) { // FIXME: remove
-          String this_classname = current_meth.varproc.getThisvars().get(varpaar);
+        if (currentMethod != null) { // FIXME: remove
+          String this_classname = currentMethod.varproc.getThisVars().get(pair);
 
           if (this_classname != null) {
             if (!classname.equals(this_classname)) { // TODO: direct comparison to the super class?
@@ -135,13 +112,7 @@ public class FieldExprent extends Exprent {
       }
 
       if (super_qualifier != null) {
-        StructClass current_class = ((ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS_NODE)).classStruct;
-
-        if (!super_qualifier.equals(current_class.qualifiedName)) {
-          buf.append(DecompilerContext.getImportCollector().getShortName(ExprProcessor.buildJavaClassName(super_qualifier)));
-          buf.append(".");
-        }
-        buf.append("super");
+        TextUtil.writeQualifiedSuper(buf, super_qualifier);
       }
       else {
         TextBuffer buff = new TextBuffer();
@@ -171,6 +142,14 @@ public class FieldExprent extends Exprent {
     return buf;
   }
 
+  @Override
+  public void replaceExprent(Exprent oldExpr, Exprent newExpr) {
+    if (oldExpr == instance) {
+      instance = newExpr;
+    }
+  }
+
+  @Override
   public boolean equals(Object o) {
     if (o == this) return true;
     if (o == null || !(o instanceof FieldExprent)) return false;
@@ -181,12 +160,6 @@ public class FieldExprent extends Exprent {
            isStatic == ft.isStatic() &&
            InterpreterUtil.equalObjects(instance, ft.getInstance()) &&
            InterpreterUtil.equalObjects(descriptor, ft.getDescriptor());
-  }
-
-  public void replaceExprent(Exprent oldexpr, Exprent newexpr) {
-    if (oldexpr == instance) {
-      instance = newexpr;
-    }
   }
 
   public String getClassname() {

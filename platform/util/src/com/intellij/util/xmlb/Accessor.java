@@ -39,4 +39,6 @@ public interface Accessor {
   Class<?> getValueClass();
 
   Type getGenericType();
+
+  boolean isFinal();
 }

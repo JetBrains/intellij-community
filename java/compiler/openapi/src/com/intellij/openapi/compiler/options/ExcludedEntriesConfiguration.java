@@ -31,7 +31,8 @@ import java.util.LinkedHashSet;
 /**
  * @author nik
  */
-public class ExcludedEntriesConfiguration implements PersistentStateComponent<ExcludedEntriesConfiguration>, JDOMExternalizable, Disposable {
+public class ExcludedEntriesConfiguration implements PersistentStateComponent<ExcludedEntriesConfiguration>, JDOMExternalizable, Disposable,
+                                                     ExcludesConfiguration {
   @NonNls private static final String FILE = "file";
   @NonNls private static final String DIRECTORY = "directory";
   @NonNls private static final String URL = "url";
@@ -39,6 +40,7 @@ public class ExcludedEntriesConfiguration implements PersistentStateComponent<Ex
   private final Collection<ExcludeEntryDescription> myExcludeEntryDescriptions = new LinkedHashSet<ExcludeEntryDescription>();
   private ExcludeEntryDescription[] myCachedDescriptions = null;
 
+  @Override
   public synchronized ExcludeEntryDescription[] getExcludeEntryDescriptions() {
     if (myCachedDescriptions == null) {
       myCachedDescriptions = myExcludeEntryDescriptions.toArray(new ExcludeEntryDescription[myExcludeEntryDescriptions.size()]);
@@ -46,21 +48,25 @@ public class ExcludedEntriesConfiguration implements PersistentStateComponent<Ex
     return myCachedDescriptions;
   }
 
+  @Override
   public synchronized void addExcludeEntryDescription(ExcludeEntryDescription description) {
     myExcludeEntryDescriptions.add(description);
     myCachedDescriptions = null;
   }
 
+  @Override
   public synchronized void removeExcludeEntryDescription(ExcludeEntryDescription description) {
     myExcludeEntryDescriptions.remove(description);
     myCachedDescriptions = null;
   }
 
+  @Override
   public synchronized void removeAllExcludeEntryDescriptions() {
     myExcludeEntryDescriptions.clear();
     myCachedDescriptions = null;
   }
 
+  @Override
   public synchronized boolean containsExcludeEntryDescription(ExcludeEntryDescription description) {
     return myExcludeEntryDescriptions.contains(description);
   }
@@ -98,6 +104,7 @@ public class ExcludedEntriesConfiguration implements PersistentStateComponent<Ex
     }
   }
 
+  @Override
   public boolean isExcluded(VirtualFile virtualFile) {
     for (final ExcludeEntryDescription entryDescription : getExcludeEntryDescriptions()) {
       VirtualFile descriptionFile = entryDescription.getVirtualFile();

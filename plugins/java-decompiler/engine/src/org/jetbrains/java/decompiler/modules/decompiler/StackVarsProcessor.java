@@ -23,7 +23,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionEdge;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionNode;
-import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPaar;
+import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionsGraph;
 import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.StructMethod;
@@ -151,15 +151,15 @@ public class StackVarsProcessor {
 
     HashSet<DirectNode> setVisited = new HashSet<DirectNode>();
     LinkedList<DirectNode> stack = new LinkedList<DirectNode>();
-    LinkedList<HashMap<VarVersionPaar, Exprent>> stackMaps = new LinkedList<HashMap<VarVersionPaar, Exprent>>();
+    LinkedList<HashMap<VarVersionPair, Exprent>> stackMaps = new LinkedList<HashMap<VarVersionPair, Exprent>>();
 
     stack.add(dgraph.first);
-    stackMaps.add(new HashMap<VarVersionPaar, Exprent>());
+    stackMaps.add(new HashMap<VarVersionPair, Exprent>());
 
     while (!stack.isEmpty()) {
 
       DirectNode nd = stack.removeFirst();
-      HashMap<VarVersionPaar, Exprent> mapVarValues = stackMaps.removeFirst();
+      HashMap<VarVersionPair, Exprent> mapVarValues = stackMaps.removeFirst();
 
       if (setVisited.contains(nd)) {
         continue;
@@ -211,7 +211,7 @@ public class StackVarsProcessor {
 
       for (DirectNode ndx : nd.succs) {
         stack.add(ndx);
-        stackMaps.add(new HashMap<VarVersionPaar, Exprent>(mapVarValues));
+        stackMaps.add(new HashMap<VarVersionPair, Exprent>(mapVarValues));
       }
 
       // make sure the 3 special exprent lists in a loop (init, condition, increment) are not empty
@@ -236,13 +236,13 @@ public class StackVarsProcessor {
   }
 
 
-  private static Exprent isReplaceableVar(Exprent exprent, HashMap<VarVersionPaar, Exprent> mapVarValues, SSAUConstructorSparseEx ssau) {
+  private static Exprent isReplaceableVar(Exprent exprent, HashMap<VarVersionPair, Exprent> mapVarValues, SSAUConstructorSparseEx ssau) {
 
     Exprent dest = null;
 
     if (exprent.type == Exprent.EXPRENT_VAR) {
       VarExprent var = (VarExprent)exprent;
-      dest = mapVarValues.get(new VarVersionPaar(var));
+      dest = mapVarValues.get(new VarVersionPair(var));
     }
 
     return dest;
@@ -253,10 +253,10 @@ public class StackVarsProcessor {
     parent.replaceExprent(var, dest);
 
     // live sets
-    SFormsFastMapDirect livemap = ssau.getLiveVarVersionsMap(new VarVersionPaar(var));
-    HashSet<VarVersionPaar> setVars = getAllVersions(dest);
+    SFormsFastMapDirect livemap = ssau.getLiveVarVersionsMap(new VarVersionPair(var));
+    HashSet<VarVersionPair> setVars = getAllVersions(dest);
 
-    for (VarVersionPaar varpaar : setVars) {
+    for (VarVersionPair varpaar : setVars) {
       VarVersionNode node = ssau.getSsuversions().nodes.getWithKey(varpaar);
 
       for (Iterator<Entry<Integer, FastSparseSet<Integer>>> itent = node.live.entryList().iterator(); itent.hasNext(); ) {
@@ -279,7 +279,7 @@ public class StackVarsProcessor {
     }
   }
 
-  private int[] iterateExprent(List<Exprent> lstExprents, int index, Exprent next, HashMap<VarVersionPaar,
+  private int[] iterateExprent(List<Exprent> lstExprents, int index, Exprent next, HashMap<VarVersionPair,
     Exprent> mapVarValues, SSAUConstructorSparseEx ssau) {
 
     Exprent exprent = lstExprents.get(index);
@@ -327,7 +327,7 @@ public class StackVarsProcessor {
       return new int[]{-1, changed};
     }
 
-    VarVersionPaar leftpaar = new VarVersionPaar(left);
+    VarVersionPair leftpaar = new VarVersionPair(left);
 
     List<VarVersionNode> usedVers = new ArrayList<VarVersionNode>();
     boolean notdom = getUsedVersions(ssau, leftpaar, usedVers);
@@ -338,8 +338,8 @@ public class StackVarsProcessor {
         if (right.type == Exprent.EXPRENT_NEW) {
           // new Object(); permitted
           NewExprent nexpr = (NewExprent)right;
-          if (nexpr.isAnonymous() || nexpr.getNewtype().arraydim > 0
-              || nexpr.getNewtype().type != CodeConstants.TYPE_OBJECT) {
+          if (nexpr.isAnonymous() || nexpr.getNewType().arrayDim > 0
+              || nexpr.getNewType().type != CodeConstants.TYPE_OBJECT) {
             return new int[]{-1, changed};
           }
         }
@@ -368,14 +368,14 @@ public class StackVarsProcessor {
       return new int[]{-1, changed};
     }
 
-    HashMap<Integer, HashSet<VarVersionPaar>> mapVars = getAllVarVersions(leftpaar, right, ssau);
+    HashMap<Integer, HashSet<VarVersionPair>> mapVars = getAllVarVersions(leftpaar, right, ssau);
 
     boolean isSelfReference = mapVars.containsKey(leftpaar.var);
     if (isSelfReference && notdom) {
       return new int[]{-1, changed};
     }
 
-    HashSet<VarVersionPaar> setNextVars = next == null ? null : getAllVersions(next);
+    HashSet<VarVersionPair> setNextVars = next == null ? null : getAllVersions(next);
 
     // FIXME: fix the entire method!
     if (right.type != Exprent.EXPRENT_CONST &&
@@ -383,7 +383,7 @@ public class StackVarsProcessor {
         setNextVars != null &&
         mapVars.containsKey(leftpaar.var)) {
       for (VarVersionNode usedvar : usedVers) {
-        if (!setNextVars.contains(new VarVersionPaar(usedvar.var, usedvar.version))) {
+        if (!setNextVars.contains(new VarVersionPair(usedvar.var, usedvar.version))) {
           return new int[]{-1, changed};
         }
       }
@@ -395,10 +395,10 @@ public class StackVarsProcessor {
     boolean verreplaced = false;
 
 
-    HashSet<VarVersionPaar> setTempUsedVers = new HashSet<VarVersionPaar>();
+    HashSet<VarVersionPair> setTempUsedVers = new HashSet<VarVersionPair>();
 
     for (VarVersionNode usedvar : usedVers) {
-      VarVersionPaar usedver = new VarVersionPaar(usedvar.var, usedvar.version);
+      VarVersionPair usedver = new VarVersionPair(usedvar.var, usedvar.version);
       if (isVersionToBeReplaced(usedver, mapVars, ssau, leftpaar) &&
           (right.type == Exprent.EXPRENT_CONST || right.type == Exprent.EXPRENT_VAR || right.type == Exprent.EXPRENT_FIELD
            || setNextVars == null || setNextVars.contains(usedver))) {
@@ -415,7 +415,7 @@ public class StackVarsProcessor {
       return new int[]{-1, changed};
     }
     else {
-      for (VarVersionPaar usedver : setTempUsedVers) {
+      for (VarVersionPair usedver : setTempUsedVers) {
         Exprent copy = right.copy();
         if (right.type == Exprent.EXPRENT_FIELD && ssau.getMapFieldVars().containsKey(right.id)) {
           ssau.getMapFieldVars().put(copy.id, ssau.getMapFieldVars().get(right.id));
@@ -438,9 +438,9 @@ public class StackVarsProcessor {
     }
   }
 
-  private static HashSet<VarVersionPaar> getAllVersions(Exprent exprent) {
+  private static HashSet<VarVersionPair> getAllVersions(Exprent exprent) {
 
-    HashSet<VarVersionPaar> res = new HashSet<VarVersionPaar>();
+    HashSet<VarVersionPair> res = new HashSet<VarVersionPair>();
 
     List<Exprent> listTemp = new ArrayList<Exprent>(exprent.getAllExprents(true));
     listTemp.add(exprent);
@@ -448,7 +448,7 @@ public class StackVarsProcessor {
     for (Exprent expr : listTemp) {
       if (expr.type == Exprent.EXPRENT_VAR) {
         VarExprent var = (VarExprent)expr;
-        res.add(new VarVersionPaar(var));
+        res.add(new VarVersionPair(var));
       }
     }
 
@@ -458,7 +458,7 @@ public class StackVarsProcessor {
   private static Object[] iterateChildExprent(Exprent exprent,
                                               Exprent parent,
                                               Exprent next,
-                                              HashMap<VarVersionPaar, Exprent> mapVarValues,
+                                              HashMap<VarVersionPair, Exprent> mapVarValues,
                                               SSAUConstructorSparseEx ssau) {
 
     boolean changed = false;
@@ -511,7 +511,7 @@ public class StackVarsProcessor {
     boolean isHeadSynchronized = false;
     if (next == null && parent.type == Exprent.EXPRENT_MONITOR) {
       MonitorExprent monexpr = (MonitorExprent)parent;
-      if (monexpr.getMontype() == MonitorExprent.MONITOR_ENTER && exprent.equals(monexpr.getValue())) {
+      if (monexpr.getMonType() == MonitorExprent.MONITOR_ENTER && exprent.equals(monexpr.getValue())) {
         isHeadSynchronized = true;
       }
     }
@@ -521,7 +521,7 @@ public class StackVarsProcessor {
       return new Object[]{null, changed, false};
     }
 
-    VarVersionPaar leftpaar = new VarVersionPaar(left);
+    VarVersionPair leftpaar = new VarVersionPair(left);
 
     List<VarVersionNode> usedVers = new ArrayList<VarVersionNode>();
     boolean notdom = getUsedVersions(ssau, leftpaar, usedVers);
@@ -541,7 +541,7 @@ public class StackVarsProcessor {
       return new Object[]{null, changed, false};
     }
 
-    HashMap<Integer, HashSet<VarVersionPaar>> mapVars = getAllVarVersions(leftpaar, right, ssau);
+    HashMap<Integer, HashSet<VarVersionPair>> mapVars = getAllVarVersions(leftpaar, right, ssau);
 
     if (mapVars.containsKey(leftpaar.var) && notdom) {
       return new Object[]{null, changed, false};
@@ -550,17 +550,17 @@ public class StackVarsProcessor {
 
     mapVars.remove(leftpaar.var);
 
-    HashSet<VarVersionPaar> setAllowedVars = getAllVersions(parent);
+    HashSet<VarVersionPair> setAllowedVars = getAllVersions(parent);
     if (next != null) {
       setAllowedVars.addAll(getAllVersions(next));
     }
 
     boolean vernotreplaced = false;
 
-    HashSet<VarVersionPaar> setTempUsedVers = new HashSet<VarVersionPaar>();
+    HashSet<VarVersionPair> setTempUsedVers = new HashSet<VarVersionPair>();
 
     for (VarVersionNode usedvar : usedVers) {
-      VarVersionPaar usedver = new VarVersionPaar(usedvar.var, usedvar.version);
+      VarVersionPair usedver = new VarVersionPair(usedvar.var, usedvar.version);
       if (isVersionToBeReplaced(usedver, mapVars, ssau, leftpaar) &&
           (right.type == Exprent.EXPRENT_VAR || setAllowedVars.contains(usedver))) {
 
@@ -573,7 +573,7 @@ public class StackVarsProcessor {
 
     if (!notdom && !vernotreplaced) {
 
-      for (VarVersionPaar usedver : setTempUsedVers) {
+      for (VarVersionPair usedver : setTempUsedVers) {
         Exprent copy = right.copy();
         if (right.type == Exprent.EXPRENT_FIELD && ssau.getMapFieldVars().containsKey(right.id)) {
           ssau.getMapFieldVars().put(copy.id, ssau.getMapFieldVars().get(right.id));
@@ -589,7 +589,7 @@ public class StackVarsProcessor {
     return new Object[]{null, changed, false};
   }
 
-  private static boolean getUsedVersions(SSAUConstructorSparseEx ssa, VarVersionPaar var, List<VarVersionNode> res) {
+  private static boolean getUsedVersions(SSAUConstructorSparseEx ssa, VarVersionPair var, List<VarVersionNode> res) {
 
     VarVersionsGraph ssuversions = ssa.getSsuversions();
     VarVersionNode varnode = ssuversions.nodes.getWithKey(var);
@@ -638,10 +638,10 @@ public class StackVarsProcessor {
     return !setNotDoms.isEmpty();
   }
 
-  private static boolean isVersionToBeReplaced(VarVersionPaar usedvar,
-                                               HashMap<Integer, HashSet<VarVersionPaar>> mapVars,
+  private static boolean isVersionToBeReplaced(VarVersionPair usedvar,
+                                               HashMap<Integer, HashSet<VarVersionPair>> mapVars,
                                                SSAUConstructorSparseEx ssau,
-                                               VarVersionPaar leftpaar) {
+                                               VarVersionPair leftpaar) {
 
     VarVersionsGraph ssuversions = ssau.getSsuversions();
 
@@ -657,21 +657,21 @@ public class StackVarsProcessor {
       return false;
     }
 
-    for (Entry<Integer, HashSet<VarVersionPaar>> ent : mapVars.entrySet()) {
+    for (Entry<Integer, HashSet<VarVersionPair>> ent : mapVars.entrySet()) {
       FastSparseSet<Integer> liveverset = mapLiveVars.get(ent.getKey());
       if (liveverset == null) {
         return false;
       }
 
       HashSet<VarVersionNode> domset = new HashSet<VarVersionNode>();
-      for (VarVersionPaar verpaar : ent.getValue()) {
+      for (VarVersionPair verpaar : ent.getValue()) {
         domset.add(ssuversions.nodes.getWithKey(verpaar));
       }
 
       boolean isdom = false;
 
       for (Integer livever : liveverset) {
-        VarVersionNode node = ssuversions.nodes.getWithKey(new VarVersionPaar(ent.getKey().intValue(), livever.intValue()));
+        VarVersionNode node = ssuversions.nodes.getWithKey(new VarVersionPair(ent.getKey().intValue(), livever.intValue()));
 
         if (ssuversions.isDominatorSet(node, domset)) {
           isdom = true;
@@ -687,11 +687,11 @@ public class StackVarsProcessor {
     return true;
   }
 
-  private static HashMap<Integer, HashSet<VarVersionPaar>> getAllVarVersions(VarVersionPaar leftvar,
+  private static HashMap<Integer, HashSet<VarVersionPair>> getAllVarVersions(VarVersionPair leftvar,
                                                                              Exprent exprent,
                                                                              SSAUConstructorSparseEx ssau) {
 
-    HashMap<Integer, HashSet<VarVersionPaar>> map = new HashMap<Integer, HashSet<VarVersionPaar>>();
+    HashMap<Integer, HashSet<VarVersionPair>> map = new HashMap<Integer, HashSet<VarVersionPair>>();
     SFormsFastMapDirect mapLiveVars = ssau.getLiveVarVersionsMap(leftvar);
 
     List<Exprent> lst = exprent.getAllExprents(true);
@@ -702,9 +702,9 @@ public class StackVarsProcessor {
         int varindex = ((VarExprent)expr).getIndex();
         if (leftvar.var != varindex) {
           if (mapLiveVars.containsKey(varindex)) {
-            HashSet<VarVersionPaar> verset = new HashSet<VarVersionPaar>();
+            HashSet<VarVersionPair> verset = new HashSet<VarVersionPair>();
             for (Integer vers : mapLiveVars.get(varindex)) {
-              verset.add(new VarVersionPaar(varindex, vers.intValue()));
+              verset.add(new VarVersionPair(varindex, vers.intValue()));
             }
             map.put(varindex, verset);
           }
@@ -720,9 +720,9 @@ public class StackVarsProcessor {
         if (ssau.getMapFieldVars().containsKey(expr.id)) {
           int varindex = ssau.getMapFieldVars().get(expr.id);
           if (mapLiveVars.containsKey(varindex)) {
-            HashSet<VarVersionPaar> verset = new HashSet<VarVersionPaar>();
+            HashSet<VarVersionPair> verset = new HashSet<VarVersionPair>();
             for (Integer vers : mapLiveVars.get(varindex)) {
-              verset.add(new VarVersionPaar(varindex, vers.intValue()));
+              verset.add(new VarVersionPair(varindex, vers.intValue()));
             }
             map.put(varindex, verset);
           }

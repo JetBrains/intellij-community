@@ -18,7 +18,6 @@ package com.intellij.ide.actions;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.ProjectUtil;
-import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -36,10 +35,10 @@ import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.impl.welcomeScreen.NewWelcomeScreen;
 import com.intellij.platform.PlatformProjectOpenProcessor;
 import com.intellij.projectImport.ProjectAttachProcessor;
 import com.intellij.util.Consumer;
@@ -50,7 +49,7 @@ import java.util.List;
 
 public class OpenFileAction extends AnAction implements DumbAware {
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getProject();
     final boolean showFiles = project != null || PlatformProjectOpenProcessor.getInstanceIfItExists() != null;
     final FileChooserDescriptor descriptor = showFiles ? new ProjectOrFileChooserDescriptor() : new ProjectOnlyFileChooserDescriptor();
@@ -73,7 +72,7 @@ public class OpenFileAction extends AnAction implements DumbAware {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    if (e.getPlace() == ActionPlaces.WELCOME_SCREEN && Registry.is("ide.new.welcome.screen")) {
+    if (NewWelcomeScreen.isNewWelcomeScreen(e)) {
       e.getPresentation().setIcon(AllIcons.Welcome.OpenProject);
     }
   }
@@ -142,7 +141,7 @@ public class OpenFileAction extends AnAction implements DumbAware {
     }
   }
 
-  // vanilla OpenProjectFileChooserDescriptor only accepts project files; this on is overridden to accept any files
+  // vanilla OpenProjectFileChooserDescriptor only accepts project files; this one is overridden to accept any files
   private static class ProjectOrFileChooserDescriptor extends OpenProjectFileChooserDescriptor {
     private final FileChooserDescriptor myStandardDescriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor();
 
@@ -158,7 +157,7 @@ public class OpenFileAction extends AnAction implements DumbAware {
 
     @Override
     public boolean isFileSelectable(VirtualFile file) {
-      return file.isDirectory() ? super.isFileSelectable(file) :  myStandardDescriptor.isFileSelectable(file);
+      return file.isDirectory() ? super.isFileSelectable(file) : myStandardDescriptor.isFileSelectable(file);
     }
 
     @Override

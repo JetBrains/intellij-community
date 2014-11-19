@@ -39,6 +39,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.LightColors;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.components.GradientViewport;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
@@ -712,11 +713,9 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
       if (c != null) {
         if (scrollable) {
-          JScrollPane scroll = ScrollPaneFactory.createScrollPane(c);
-          scroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-          scroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+          JScrollPane scroll = ScrollPaneFactory.createScrollPane(null, true);
+          scroll.setViewport(new GradientViewport(c, 5, 5, 5, 5, false));
           scroll.getVerticalScrollBar().setUnitIncrement(10);
-          scroll.setBorder(null);
           add(scroll, BorderLayout.CENTER);
         }
         else {

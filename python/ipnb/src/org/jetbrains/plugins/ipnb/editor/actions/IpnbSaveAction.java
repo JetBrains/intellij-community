@@ -14,11 +14,11 @@ import org.jetbrains.plugins.ipnb.format.IpnbParser;
 
 public class IpnbSaveAction extends AnAction {
   public IpnbSaveAction() {
-    super(AllIcons.General.Run);
+    super(AllIcons.Actions.Menu_saveall);
   }
 
   @Override
-  public void actionPerformed(AnActionEvent event) {
+  public void actionPerformed(@NotNull AnActionEvent event) {
     final DataContext context = event.getDataContext();
     final FileEditor editor = PlatformDataKeys.FILE_EDITOR.getData(context);
     if (editor instanceof IpnbFileEditor) {
@@ -26,7 +26,7 @@ public class IpnbSaveAction extends AnAction {
     }
   }
 
-  public void saveAndCheckpoint(@NotNull final IpnbFileEditor editor) {
+  public static void saveAndCheckpoint(@NotNull final IpnbFileEditor editor) {
     final IpnbFilePanel filePanel = editor.getIpnbFilePanel();
     IpnbParser.saveIpnbFile(filePanel);
     final VirtualFile file = editor.getVirtualFile();

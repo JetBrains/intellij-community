@@ -26,7 +26,7 @@ import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.dsl.holders.CustomMembersHolder;
@@ -48,7 +48,8 @@ public class FactorTree extends UserDataHolderBase {
       @Nullable
       @Override
       public Result<Map> compute() {
-        return new Result<Map>(new ConcurrentHashMap(), PsiModificationTracker.MODIFICATION_COUNT, ProjectRootManager.getInstance(project));
+        return new Result<Map>(ContainerUtil.newConcurrentMap(), PsiModificationTracker.MODIFICATION_COUNT,
+                               ProjectRootManager.getInstance(project));
       }
     };
     myTopLevelCache = CachedValuesManager.getManager(project).createCachedValue(myProvider, false);
@@ -76,7 +77,7 @@ public class FactorTree extends UserDataHolderBase {
       Map next = (Map)current.get(key);
       if (next == null) {
         //noinspection unchecked
-        current.put(key, next = new ConcurrentHashMap());
+        current.put(key, next = ContainerUtil.newConcurrentMap());
       }
       current = next;
     }

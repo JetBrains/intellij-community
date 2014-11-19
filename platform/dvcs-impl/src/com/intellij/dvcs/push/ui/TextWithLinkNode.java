@@ -16,37 +16,24 @@
 package com.intellij.dvcs.push.ui;
 
 
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColoredTreeCellRenderer;
-import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.TreeNode;
 
 public class TextWithLinkNode extends DefaultMutableTreeNode implements CustomRenderedTreeNode {
 
-  @NotNull protected VcsLinkedText myLinkedText;
+  @NotNull protected VcsLinkedTextComponent myLinkedText;
 
-  public TextWithLinkNode(@NotNull VcsLinkedText linkedText) {
+  public TextWithLinkNode(@NotNull VcsLinkedTextComponent linkedText) {
     myLinkedText = linkedText;
-  }
-
-  public void fireOnClick(@NotNull TextWithLinkNode relatedNode) {
-    TreeNode parent = relatedNode.getParent();
-    if (parent instanceof RepositoryNode) {
-      myLinkedText.hyperLinkActivate((RepositoryNode)parent);
-    }
   }
 
   @Override
   public void render(@NotNull ColoredTreeCellRenderer renderer) {
-    renderer.append(myLinkedText.getTextBefore(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-    String linkedText = myLinkedText.getLinkText();
-    if (!StringUtil.isEmptyOrSpaces(linkedText)) {
-      renderer.append(" ");
-      renderer.append(myLinkedText.getLinkText(), SimpleTextAttributes.SYNTHETIC_ATTRIBUTES, this);
-    }
-    renderer.append(myLinkedText.getTextAfter(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    renderer.append("   ");
+    myLinkedText.setSelected(renderer.getTree().isPathSelected(TreeUtil.getPathFromRoot(this)));
+    myLinkedText.render(renderer);
   }
 }

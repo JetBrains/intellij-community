@@ -82,6 +82,7 @@ public class LambdaMethodFilter implements BreakpointStepMethodFilter{
     return method.name().startsWith(LAMBDA_METHOD_PREFIX) && (!vm.canGetSyntheticAttribute() || method.isSynthetic());
   }
 
+  @Nullable
   @Override
   public Range<Integer> getCallingExpressionLines() {
     return myCallingExpressionLines;

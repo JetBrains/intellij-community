@@ -16,6 +16,8 @@
 package org.jetbrains.idea.maven.project.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.model.MavenProfileKind;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
@@ -33,6 +35,7 @@ public class ToggleProfileAction extends MavenAction {
     if (!isAvailable(e)) return;
 
     MavenProfileKind targetState = getTargetState(e);
+    if(targetState == null) return;
     String text;
     switch (targetState) {
       case NONE:
@@ -56,15 +59,18 @@ public class ToggleProfileAction extends MavenAction {
     return getTargetState(e) != null;
   }
 
+  @Nullable
   private static MavenProfileKind getTargetState(AnActionEvent e) {
     Map<String, MavenProfileKind> selectedProfiles = e.getData(MavenDataKeys.MAVEN_PROFILES);
     if (selectedProfiles == null || selectedProfiles.isEmpty()) return null;
 
     MavenProjectsManager projectsManager = MavenActionUtil.getProjectsManager(e.getDataContext());
+    if(projectsManager == null) return null;
     return getTargetState(projectsManager, selectedProfiles);
   }
 
-  private static MavenProfileKind getTargetState(MavenProjectsManager projectsManager, Map<String, MavenProfileKind> profiles) {
+  @Nullable
+  private static MavenProfileKind getTargetState(@NotNull MavenProjectsManager projectsManager, Map<String, MavenProfileKind> profiles) {
     MavenExplicitProfiles explicitProfiles = projectsManager.getExplicitProfiles();
     MavenProfileKind targetState = null;
     // all profiles should target to the same state
@@ -106,12 +112,17 @@ public class ToggleProfileAction extends MavenAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     MavenProjectsManager manager = MavenActionUtil.getProjectsManager(e.getDataContext());
+    if(manager == null) return;
     Map<String, MavenProfileKind> selectedProfiles = e.getData(MavenDataKeys.MAVEN_PROFILES);
+    if(selectedProfiles == null) return;
+
     Set<String> selectedProfileIds = selectedProfiles.keySet();
 
     MavenProfileKind targetState = getTargetState(manager, selectedProfiles);
+    if(targetState == null) return;
+
     MavenExplicitProfiles newExplicitProfiles = manager.getExplicitProfiles().clone();
     switch (targetState) {
       case NONE:

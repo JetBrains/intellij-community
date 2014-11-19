@@ -18,7 +18,7 @@ package org.jetbrains.idea.svn;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.util.Disposer;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 
@@ -36,7 +36,7 @@ import java.util.List;
     )}
 )
 public class SvnApplicationSettings implements PersistentStateComponent<SvnApplicationSettings.ConfigurationBean> {
-  private SvnFileSystemListenerWrapper myVFSHandler;
+  private SvnFileSystemListener myVFSHandler;
   private int mySvnProjectCount;
   private LimitedStringsList myLimitedStringsList;
 
@@ -44,7 +44,6 @@ public class SvnApplicationSettings implements PersistentStateComponent<SvnAppli
     public List<String> myCheckoutURLs = new ArrayList<String>();
     public List<String> myTypedURLs = new ArrayList<String>();
     public String mySvnCommandLine = "svn";
-    public String myExecutableLocale = SvnConfigurable.EN_US_LOCALE;
   }
 
   private ConfigurationBean myConfigurationBean;
@@ -67,22 +66,13 @@ public class SvnApplicationSettings implements PersistentStateComponent<SvnAppli
     myConfigurationBean = object;
     getTypedList();
   }
-  
+
   public void setCommandLinePath(final String path) {
     myConfigurationBean.mySvnCommandLine = path;
   }
-  
+
   public String getCommandLinePath() {
     return myConfigurationBean.mySvnCommandLine;
-  }
-
-  @NotNull
-  public String getExecutableLocale() {
-    return myConfigurationBean.myExecutableLocale;
-  }
-
-  public void setExecutableLocale(@NotNull String locale) {
-    myConfigurationBean.myExecutableLocale = locale;
   }
 
   private LimitedStringsList getTypedList() {
@@ -101,8 +91,7 @@ public class SvnApplicationSettings implements PersistentStateComponent<SvnAppli
 
   public void svnActivated() {
     if (myVFSHandler == null) {
-      myVFSHandler = new SvnFileSystemListenerWrapper(new SvnFileSystemListener());
-      myVFSHandler.registerSelf();
+      myVFSHandler = new SvnFileSystemListener();
     }
     mySvnProjectCount++;
   }
@@ -110,7 +99,7 @@ public class SvnApplicationSettings implements PersistentStateComponent<SvnAppli
   public void svnDeactivated() {
     mySvnProjectCount--;
     if (mySvnProjectCount == 0) {
-      myVFSHandler.unregisterSelf();
+      Disposer.dispose(myVFSHandler);
       myVFSHandler = null;
       // todo what should be done instead?
       //SVNSSHSession.shutdown();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,22 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.openapi.keymap.impl.ui;
 
-import com.intellij.application.options.ExportSchemeAction;
-import com.intellij.application.options.ImportSchemeAction;
-import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.actionSystem.ex.QuickListsManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.*;
@@ -45,8 +37,6 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
 
 /**
  * User: anna
@@ -69,6 +59,7 @@ public class QuickListsPanel extends JPanel implements SearchableConfigurable, C
     add(splitter, BorderLayout.CENTER);
   }
 
+  @Override
   public void reset() {
     myQuickListsModel.removeAllElements();
     QuickList[] allQuickLists = QuickListsManager.getInstance().getAllQuickLists();
@@ -77,6 +68,7 @@ public class QuickListsPanel extends JPanel implements SearchableConfigurable, C
     }
 
     SwingUtilities.invokeLater(new Runnable() {
+      @Override
       public void run() {
         if (myQuickListsModel.size() > 0) {
           myQuickListsList.setSelectedIndex(0);
@@ -85,12 +77,14 @@ public class QuickListsPanel extends JPanel implements SearchableConfigurable, C
     });
   }
 
+  @Override
   public boolean isModified() {
     QuickList[] storedLists = QuickListsManager.getInstance().getAllQuickLists();
     QuickList[] modelLists = getCurrentQuickListIds();
     return !Comparing.equal(storedLists, modelLists);
   }
 
+  @Override
   public void apply() {
     QuickListsManager.getInstance().removeAllQuickLists();
     final QuickList[] currentQuickLists = getCurrentQuickListIds();
@@ -105,6 +99,7 @@ public class QuickListsPanel extends JPanel implements SearchableConfigurable, C
     myQuickListsList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myQuickListsList.setCellRenderer(new MyQuickListCellRenderer());
     myQuickListsList.addListSelectionListener(new ListSelectionListener() {
+      @Override
       public void valueChanged(ListSelectionEvent e) {
         myRightPanel.removeAll();
         final Object selectedValue = myQuickListsList.getSelectedValue();
@@ -139,35 +134,6 @@ public class QuickListsPanel extends JPanel implements SearchableConfigurable, C
         myKeymapListener.processCurrentKeymapChanged(getCurrentQuickListIds());
       }
     }).disableUpDownActions();
-
-    SchemesManager<QuickList, QuickList> schemesManager = QuickListsManager.getInstance().getSchemesManager();
-    if (schemesManager.isExportAvailable()) {
-      toolbarDecorator.addExtraAction(AnActionButton.fromAction(new ExportSchemeAction<QuickList, QuickList>(schemesManager) {
-        protected QuickList getSelectedScheme() {
-          return (QuickList)myQuickListsList.getSelectedValue();
-        }
-      }));
-    }
-
-    if (schemesManager.isImportAvailable()) {
-      toolbarDecorator.addExtraAction(
-        AnActionButton.fromAction(new ImportSchemeAction<QuickList, QuickList>(QuickListsManager.getInstance().getSchemesManager()) {
-          protected Collection<QuickList> collectCurrentSchemes() {
-            return collectElements();
-          }
-
-          protected Component getPanel() {
-            return myQuickListsList;
-          }
-
-          protected void importScheme(final QuickList scheme) {
-            myQuickListsModel.addElement(scheme);
-            myQuickListsList.clearSelection();
-            ListScrollingUtil.selectItem(myQuickListsList, scheme);
-          }
-        }));
-    }
-
     return toolbarDecorator.createPanel();
   }
 
@@ -177,15 +143,6 @@ public class QuickListsPanel extends JPanel implements SearchableConfigurable, C
                  " and to assign keyboard shortcuts to such groups.</html>");
     descLabel.setBorder(new EmptyBorder(0, 25, 0, 25));
     myRightPanel.add(descLabel, BorderLayout.CENTER);
-  }
-
-
-  private Collection<QuickList> collectElements() {
-    HashSet<QuickList> result = new HashSet<QuickList>();
-    for (int i = 0; i < myQuickListsModel.getSize(); i++) {
-      result.add((QuickList)myQuickListsModel.getElementAt(i));
-    }
-    return result;
   }
 
   private String createUniqueName() {
@@ -208,9 +165,9 @@ public class QuickListsPanel extends JPanel implements SearchableConfigurable, C
       updateList(myCurrentIndex);
       myKeymapListener.processCurrentKeymapChanged(getCurrentQuickListIds());
     }
-    Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(this));
-    myQuickListPanel = new QuickListPanel(quickList, getCurrentQuickListIds(), project);
+    myQuickListPanel = new QuickListPanel(quickList, getCurrentQuickListIds());
     final DocumentAdapter documentAdapter = new DocumentAdapter() {
+      @Override
       protected void textChanged(DocumentEvent e) {
         updateList(index);
       }
@@ -245,10 +202,8 @@ public class QuickListsPanel extends JPanel implements SearchableConfigurable, C
     for (int i = 0; i < size; i++) {
       ids[i] = (String)model.getElementAt(i);
     }
-    QuickList newQuickList = new QuickList(myQuickListPanel.getDisplayName(), myQuickListPanel.getDescription(), ids, false);
-    return newQuickList;
+    return new QuickList(myQuickListPanel.getDisplayName(), myQuickListPanel.getDescription(), ids, false);
   }
-
 
   public QuickList[] getCurrentQuickListIds() {
     if (myCurrentIndex > -1 && myQuickListsModel.getSize() > myCurrentIndex) {
@@ -262,11 +217,13 @@ public class QuickListsPanel extends JPanel implements SearchableConfigurable, C
     return lists;
   }
 
+  @Override
   @NotNull
   public String getId() {
     return getHelpTopic();
   }
 
+  @Override
   public Runnable enableSearch(String option) {
     return null;
   }
@@ -280,19 +237,23 @@ public class QuickListsPanel extends JPanel implements SearchableConfigurable, C
     }
   }
 
+  @Override
   @Nls
   public String getDisplayName() {
     return "Quick Lists";
   }
 
+  @Override
   public String getHelpTopic() {
     return "reference.idesettings.quicklists";
   }
 
+  @Override
   public JComponent createComponent() {
     return this;
   }
 
+  @Override
   public void disposeUIResources() {
   }
 }

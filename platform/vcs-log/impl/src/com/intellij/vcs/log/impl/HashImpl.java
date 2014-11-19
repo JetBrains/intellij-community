@@ -15,9 +15,13 @@
  */
 package com.intellij.vcs.log.impl;
 
+import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.vcs.log.Hash;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 import java.util.Arrays;
 
 /**
@@ -38,19 +42,33 @@ public class HashImpl implements Hash {
   }
 
   @NotNull
+  public static Hash read(@NotNull DataInput in) throws IOException {
+    int length = DataInputOutputUtil.readINT(in);
+    byte[] buf = new byte[length];
+    in.readFully(buf);
+    return new HashImpl(buf);
+  }
+
+  public void write(@NotNull DataOutput out) throws IOException {
+    DataInputOutputUtil.writeINT(out, myData.length);
+    out.write(myData);
+  }
+
+  @NotNull
   private static byte[] buildData(@NotNull String inputStr) {
     // if length == 5, need 3 byte + 1 signal byte
     int length = inputStr.length();
     byte even = (byte)(length % 2);
     byte[] data = new byte[length / 2 + 1 + even];
+    final int base = 16;
     data[0] = even;
     try {
       for (int i = 0; i < length / 2; i++) {
-        int k = Integer.parseInt(inputStr.substring(2 * i, 2 * i + 2), 16);
+        int k = Character.digit(inputStr.charAt(2 * i), base) * base + Character.digit(inputStr.charAt(2 * i + 1), base);
         data[i + 1] = (byte)(k - 128);
       }
       if (even == 1) {
-        int k = Integer.parseInt(inputStr.substring(length - 1), 16);
+        int k = Character.digit(inputStr.charAt(length - 1), base);
         data[length / 2 + 1] = (byte)(k - 128);
       }
     }

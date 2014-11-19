@@ -136,7 +136,7 @@ CMD_IGNORE_THROWN_EXCEPTION_AT = 140
 CMD_ENABLE_DONT_TRACE = 141
 CMD_SHOW_CONSOLE = 142
 
-
+CMD_GET_ARRAY = 143
 
 CMD_VERSION = 501
 CMD_RETURN = 502
@@ -189,6 +189,8 @@ ID_TO_MEANING = {
     '501':'CMD_VERSION',
     '502':'CMD_RETURN',
     '901':'CMD_ERROR',
+
+    '143':'CMD_GET_ARRAY',
     }
 
 MAX_IO_MSG_SIZE = 1000  #if the io is too big, we'll not send all (could make the debugger too non-responsive)
@@ -692,6 +694,13 @@ class NetCommandFactory:
         except Exception:
             return self.makeErrorMessage(seq, GetExceptionTracebackStr())
 
+
+    def makeGetArrayMessage(self, seq, payload):
+        try:
+            return NetCommand(CMD_GET_ARRAY, seq, payload)
+        except Exception:
+            return self.makeErrorMessage(seq, GetExceptionTracebackStr())
+
     def makeGetFrameMessage(self, seq, payload):
         try:
             return NetCommand(CMD_GET_FRAME, seq, payload)
@@ -953,6 +962,46 @@ class InternalGetVariable(InternalThreadCommand):
             cmd = dbg.cmdFactory.makeErrorMessage(self.sequence, "Error resolving variables " + GetExceptionTracebackStr())
             dbg.writer.addCommand(cmd)
 
+
+#=======================================================================================================================
+# InternalGetArray
+#=======================================================================================================================
+from pydevd_vars import getVariable
+
+class InternalGetArray(InternalThreadCommand):
+    def __init__(self, seq, roffset, coffset, rows, cols, format, thread_id, frame_id, scope, attrs):
+        self.sequence = seq
+        self.thread_id = thread_id
+        self.frame_id = frame_id
+        self.scope = scope
+        self.name = attrs.split("\t")[-1]
+        self.attrs = attrs
+        self.roffset = int(roffset)
+        self.coffset = int(coffset)
+        self.rows = int(rows)
+        self.cols = int(cols)
+        self.format = format
+
+    def doIt(self, dbg):
+        try:
+            frame = pydevd_vars.findFrame(self.thread_id, self.frame_id)
+            var = pydevd_vars.evalInContext(self.name, frame.f_globals, frame.f_locals)
+
+            xml = "<xml>"
+
+            var, metaxml, rows, cols, format = pydevd_vars.array_to_meta_xml(var, self.name, self.format)
+            xml += metaxml
+            self.format = '%' + format
+            if self.rows == -1 and self.cols == -1:
+                self.rows = rows
+                self.cols = cols
+            xml += pydevd_vars.array_to_xml(var, self.roffset, self.coffset, self.rows, self.cols, self.format)
+            xml += "</xml>"
+            cmd = dbg.cmdFactory.makeGetArrayMessage(self.sequence, xml)
+            dbg.writer.addCommand(cmd)
+        except:
+            cmd = dbg.cmdFactory.makeErrorMessage(self.sequence, "Error resolving array: " + GetExceptionTracebackStr())
+            dbg.writer.addCommand(cmd)
 
 #=======================================================================================================================
 # InternalChangeVariable

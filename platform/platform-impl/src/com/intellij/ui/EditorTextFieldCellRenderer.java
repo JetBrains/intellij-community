@@ -31,10 +31,7 @@ import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.FileTypes;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
@@ -74,7 +71,7 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
   public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
     MyPanel panel = getEditorPanel(table);
     EditorEx editor = panel.myEditor;
-    updateFonts(editor.getColorsScheme(), getColorScheme(), table.getFont().getSize());
+    editor.getColorsScheme().setEditorFontSize(table.getFont().getSize());
     String text = getText(((EditorImpl)editor).getFontMetrics(Font.PLAIN), table, value, row, column);
     TextAttributes textAttributes = getTextAttributes(value, isSelected, row, column);
     panel.setText(text, textAttributes);
@@ -84,17 +81,11 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
     editor.getColorsScheme().setColor(EditorColors.SELECTION_BACKGROUND_COLOR, table.getSelectionBackground());
     editor.getColorsScheme().setColor(EditorColors.SELECTION_FOREGROUND_COLOR, table.getSelectionForeground());
     editor.setBackgroundColor(getCellBackgroundColor(getColorScheme(), table, isSelected, row));
+    panel.setOpaque(!Comparing.equal(editor.getBackgroundColor(), table.getBackground()));
 
     panel.setBorder(null); // prevents double border painting when ExtendedItemRendererComponentWrapper is used
 
     return panel;
-  }
-
-  private static void updateFonts(EditorColorsScheme target, EditorColorsScheme source, int fontSize) {
-    target.setEditorFontName(source.getEditorFontName());
-    target.setEditorFontSize(fontSize);
-    target.setLineSpacing(source.getLineSpacing());
-    target.setFontPreferences(source.getFontPreferences());
   }
 
   public static Color getCellBackgroundColor(EditorColorsScheme colorsScheme, JTable table, boolean isSelected, int row) {
@@ -107,10 +98,8 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
   private MyPanel getEditorPanel(JTable table) {
     MyPanel panel = UIUtil.getClientProperty(table, MY_PANEL_PROPERTY);
     if (panel != null) {
-      EditorColorsScheme scheme = panel.myEditor.getColorsScheme();
-      if (scheme instanceof DelegateColorScheme) {
-        ((DelegateColorScheme)scheme).setDelegate(getColorScheme());
-      }
+      DelegateColorScheme scheme = (DelegateColorScheme)panel.myEditor.getColorsScheme();
+      scheme.setDelegate(getColorScheme());
       return panel;
     }
 
@@ -154,6 +143,13 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
       this.myEditor = editor;
     }
 
+    @Override
+    public void setOpaque(boolean isOpaque) {
+      if (myEditor != null) {
+        myEditor.getContentComponent().setOpaque(isOpaque);
+      }
+    }
+
     public void setText(String text, @Nullable TextAttributes textAttributes) {
       myRawText = text;
       myTextAttributes = textAttributes;
@@ -167,7 +163,8 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
 
     @Override
     protected void paintComponent(Graphics g) {
-      if (getBorder() == null) return;
+      if (getBorder() == null || !myEditor.getContentComponent().isOpaque()) return;
+
       Color oldColor = g.getColor();
       g.setColor(myEditor.getBackgroundColor());
       Insets insets = getInsets();

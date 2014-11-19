@@ -23,6 +23,8 @@ public class IpnbConnection {
   private static final String API_URL = "/api";
   private static final String KERNELS_URL = API_URL + "/kernels";
   private static final String HTTP_POST = "POST";
+  // TODO: Serialize cookies for the authentication message
+  private static final String authMessage = "{\"header\":{\"msg_id\":\"\", \"msg_type\":\"connect_request\"}, \"parent_header\":\"\", \"metadata\":{}}";
   public static final String HTTP_DELETE = "DELETE";
 
   @NotNull private final URI myURI;
@@ -45,8 +47,6 @@ public class IpnbConnection {
     myKernelId = startKernel();
 
     final Draft draft = new Draft17WithOrigin();
-    // TODO: Serialize cookies for the authentication message
-    final String authMessage = "identity:foo";
 
     myShellClient = new WebSocketClient(getShellURI(), draft) {
       @Override
@@ -92,7 +92,7 @@ public class IpnbConnection {
           final PyOutContent content = gson.fromJson(msg.getContent(), PyOutContent.class);
           addCellOutput(content, myOutput);
         }
-        else if ("pyerr".equals(messageType)) {
+        else if ("pyerr".equals(messageType) || "error".equals(messageType)) {
           final PyErrContent content = gson.fromJson(msg.getContent(), PyErrContent.class);
           addCellOutput(content, myOutput);
         }
@@ -100,7 +100,7 @@ public class IpnbConnection {
           final PyStreamContent content = gson.fromJson(msg.getContent(), PyStreamContent.class);
           addCellOutput(content, myOutput);
         }
-        else if ("pyin".equals(messageType)) {
+        else if ("pyin".equals(messageType) || "execute_input".equals(messageType)) {
           final JsonElement executionCount = msg.getContent().get("execution_count");
           if (executionCount != null) {
             myExecCount = executionCount.getAsInt();
@@ -396,11 +396,12 @@ public class IpnbConnection {
 
   @SuppressWarnings("UnusedDeclaration")
   private static class PyStreamContent implements PyContent {
+    private String text;
     private String data;
     private String name;
 
     public String getData() {
-      return data;
+      return data == null ? text : data;
     }
 
     public String getName() {

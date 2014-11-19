@@ -6,6 +6,7 @@ package com.intellij.codeInsight.completion
 import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.generation.OverrideImplementExploreUtil
 import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.openapi.application.ApplicationManager
@@ -18,14 +19,17 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.SourceFolder
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
+import com.intellij.ui.JBColor
 import org.jetbrains.annotations.NotNull
 
 /**
@@ -169,6 +173,35 @@ public class Test {
     assert !myFixture.completeBasic()
     assert !myFixture.completeBasic()
     assert oldCount == tracker.javaStructureModificationCount
+  }
+
+  public void testForbiddenApiVariants() {
+    IdeaTestUtil.setModuleLanguageLevel(myModule, LanguageLevel.JDK_1_4)
+    myFixture.addClass("""\
+package java.nio.channels;
+public class SocketChannel {
+  public SocketChannel shutdownInput() {}
+  public boolean isConnected();
+}""")
+    myFixture.addClass("package java.nio.channels; public class AsynchronousServerSocketChannel { }")
+
+    myFixture.configureByText 'a.java', 'class Foo {{ new SocketChanne<caret>x }}'
+    myFixture.completeBasic()
+    def p = LookupElementPresentation.renderElement(myFixture.lookup.items[0])
+    assert p.itemText == 'SocketChannel'
+    assert p.itemTextForeground == JBColor.foreground()
+
+    p = LookupElementPresentation.renderElement(myFixture.lookup.items.find { it.lookupString == 'AsynchronousServerSocketChannel' })
+    assert p.itemTextForeground == JBColor.RED
+
+    myFixture.type('\n.s')
+    myFixture.completeBasic()
+    p = LookupElementPresentation.renderElement(myFixture.lookup.items[0])
+    assert p.itemText == 'shutdownInput'
+    assert p.itemTextForeground == JBColor.RED
+
+    p = LookupElementPresentation.renderElement(myFixture.lookup.items.find { it.lookupString == 'isConnected' })
+    assert p.itemTextForeground == JBColor.foreground()
   }
 
 }

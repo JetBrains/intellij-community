@@ -16,6 +16,7 @@
 package com.intellij.util.indexing;
 
 import com.intellij.lang.Language;
+import com.intellij.lang.LighterAST;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
@@ -76,6 +77,16 @@ public final class FileContentImpl extends UserDataHolderBase implements FileCon
       putUserData(CACHED_PSI, psi);
     }
     return psi;
+  }
+
+  public @NotNull LighterAST getLighterASTForPsiDependentIndex() {
+    LighterAST lighterAST = getUserData(IndexingDataKeys.LIGHTER_AST_NODE_KEY);
+    if (lighterAST == null) {
+      lighterAST = getPsiFileForPsiDependentIndex().getNode().getLighterAST();
+      assert lighterAST != null;
+      putUserData(IndexingDataKeys.LIGHTER_AST_NODE_KEY, lighterAST);
+    }
+    return lighterAST;
   }
 
   public PsiFile createFileFromText(@NotNull CharSequence text) {
@@ -218,7 +229,7 @@ public final class FileContentImpl extends UserDataHolderBase implements FileCon
     myHash = hash;
   }
 
-  public PsiFile getPsiFileAccountingForUnsavedDocument() {
+  public PsiFile getPsiFileForPsiDependentIndex() {
     Document document = FileDocumentManager.getInstance().getCachedDocument(getFile());
     PsiFile psi = null;
     if (document != null) {

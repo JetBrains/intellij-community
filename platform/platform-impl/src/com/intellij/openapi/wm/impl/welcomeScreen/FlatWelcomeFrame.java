@@ -17,7 +17,8 @@ package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.RecentProjectsManager;
+import com.intellij.ide.RecentProjectsManagerBase;
+import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
@@ -46,6 +47,8 @@ import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.labels.ActionLink;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.ui.popup.PopupFactoryImpl;
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -86,11 +89,12 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
     setTitle("Welcome to " + ApplicationNamesInfo.getInstance().getFullProductName());
     AppUIUtil.updateWindowIcon(this);
     //Rectangle bounds = ScreenUtil.getMainScreenBounds();
-    if (RecentProjectsManager.getInstance().getRecentProjectsActions(false).length > 0) {
+    if (RecentProjectsManagerBase.getInstance().getRecentProjectsActions(false).length > 0) {
       setSize(666, 460);
     } else {
       setSize(555, 460);
     }
+    setResizable(false);
     //int x = bounds.x + (bounds.width - getWidth()) / 2;
     //int y = bounds.y + (bounds.height - getHeight()) / 2;
     Point location = DimensionService.getInstance().getLocation(WelcomeFrame.DIMENSION_KEY, null);
@@ -163,31 +167,43 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
   public StatusBar getStatusBar() {
     return null;
   }
-  
+
   public static Color getMainBackground() {
-    return new JBColor(new Color(0xf5f6f8), new Color(0x3c3f41));
+    return new JBColor(0xf7f7f7, 0x45474a);
   }
-  
-  public static Color getProjectsBackGround() {
-    return new JBColor(Gray.xFF, new Color(58, 61, 63));
+
+  public static Color getProjectsBackground() {
+    return new JBColor(Gray.xFF, Gray.x39);
   }
-  
+
   public static Color getLinkNormalColor() {
     return new JBColor(Gray._0, Gray.xBB);
   }
-  
+
+  public static Color getListSelectionColor(boolean hasFocus) {
+    return hasFocus ? new JBColor(0x3875d6, 0x4b6eaf) : new JBColor(Gray.xDD, Gray.x45);
+  }
+
+  public static Color getActionLinkSelectionColor() {
+    return new JBColor(0xdbe5f5, 0x485875);
+  }
+
+  public static JBColor getSeparatorColor() {
+    return new JBColor(Gray.xEC, new Color(72, 75, 78));
+  }
+
   private class FlatWelcomeScreen extends JPanel implements WelcomeScreen {
     public FlatWelcomeScreen() {
       super(new BorderLayout());
       setBackground(getMainBackground());
-      if (RecentProjectsManager.getInstance().getRecentProjectsActions(false).length > 0) {
+      if (RecentProjectsManagerBase.getInstance().getRecentProjectsActions(false).length > 0) {
         final JComponent recentProjects = createRecentProjects();
         add(recentProjects, BorderLayout.WEST);
         final JList projectsList = UIUtil.findComponentOfType(recentProjects, JList.class);
         if (projectsList != null) {
           projectsList.getModel().addListDataListener(new ListDataListener() {
             @Override
-            public void intervalAdded(ListDataEvent e) {             
+            public void intervalAdded(ListDataEvent e) {
             }
 
             @Override
@@ -196,7 +212,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
             }
 
             private void removeIfNeeded() {
-              if (projectsList.getModel().getSize() == 0) {
+              if (RecentProjectsManagerBase.getInstance().getRecentProjectsActions(false).length == 0) {
                 FlatWelcomeScreen.this.remove(recentProjects);
                 FlatWelcomeScreen.this.revalidate();
                 FlatWelcomeScreen.this.repaint();
@@ -206,6 +222,17 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
             @Override
             public void contentsChanged(ListDataEvent e) {
               removeIfNeeded();
+            }
+          });
+          projectsList.addFocusListener(new FocusListener() {
+            @Override
+            public void focusGained(FocusEvent e) {
+              projectsList.repaint();
+            }
+
+            @Override
+            public void focusLost(FocusEvent e) {
+              projectsList.repaint();
             }
           });
         }
@@ -234,7 +261,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
       if (register != null) {
         Presentation presentation = register.getTemplatePresentation();
         register.update(new AnActionEvent(null, DataManager.getInstance().getDataContext(this),
-                                        ActionPlaces.WELCOME_SCREEN, presentation, ActionManager.getInstance(), 0));
+                                          ActionPlaces.WELCOME_SCREEN, presentation, ActionManager.getInstance(), 0));
         if (presentation.isEnabled()) {
           ActionLink registerLink = new ActionLink("Register", register);
           registerLink.setNormalColor(getLinkNormalColor());
@@ -251,43 +278,43 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
       }
 
       toolbar.setLayout(new BoxLayout(toolbar, BoxLayout.X_AXIS));
-      toolbar.add(createActionLink("Configure", IdeActions.GROUP_WELCOME_SCREEN_CONFIGURE, AllIcons.General.Settings, !registeredVisible));
+      toolbar.add(createActionLink("Configure", IdeActions.GROUP_WELCOME_SCREEN_CONFIGURE, AllIcons.General.GearPlain, !registeredVisible));
       toolbar.add(createActionLink("Get Help", IdeActions.GROUP_WELCOME_SCREEN_DOC, null, false));
-      
-      panel.add(toolbar, BorderLayout.EAST);
-      
 
-      panel.setBorder(new EmptyBorder(0,0,8,21));
+      panel.add(toolbar, BorderLayout.EAST);
+
+
+      panel.setBorder(new EmptyBorder(0,0,8,11));
       return panel;
     }
-    
+
     private JComponent createActionLink(final String text, final String groupId, Icon icon, boolean focusListOnLeft) {
-      final Ref<ActionLink> settings = new Ref<ActionLink>(null);
+      final Ref<ActionLink> ref = new Ref<ActionLink>(null);
       AnAction action = new AnAction() {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           ActionGroup configureGroup = (ActionGroup)ActionManager.getInstance().getAction(groupId);
-          JBPopupFactory.getInstance()
-            .createActionGroupPopup(text, new IconsFreeActionGroup(configureGroup), e.getDataContext(), false, false, false, null,
-                                    10, null)
-            .showUnderneathOf(settings.get());
+          final PopupFactoryImpl.ActionGroupPopup popup = (PopupFactoryImpl.ActionGroupPopup)JBPopupFactory.getInstance()
+            .createActionGroupPopup(null, new IconsFreeActionGroup(configureGroup), e.getDataContext(), JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false,
+                                    ActionPlaces.WELCOME_SCREEN);
+          popup.showUnderneathOfLabel(ref.get());
+          UsageTrigger.trigger("welcome.screen." + groupId);
         }
       };
-      settings.set(new ActionLink(text, icon, action));
-      settings.get().setPaintUnderline(false);
-      settings.get().setNormalColor(getLinkNormalColor());
+      ref.set(new ActionLink(text, icon, action));
+      ref.get().setPaintUnderline(false);
+      ref.get().setNormalColor(getLinkNormalColor());
       NonOpaquePanel panel = new NonOpaquePanel(new BorderLayout());
-      panel.setBorder(new EmptyBorder(4, 10, 4, 10));
-      panel.add(settings.get());
-      JLabel arrow = new JLabel(AllIcons.General.Combo2);
-      arrow.setVerticalAlignment(SwingConstants.BOTTOM);
-      panel.add(arrow, BorderLayout.EAST);
+      panel.setBorder(new EmptyBorder(4, 6, 4, 6));
+      panel.add(ref.get());
+      panel.add(createArrow(ref.get()), BorderLayout.EAST);
       installFocusable(panel, action, KeyEvent.VK_UP, KeyEvent.VK_DOWN, focusListOnLeft);
       return panel;
     }
 
     private JComponent createActionPanel() {
       JPanel actions = new NonOpaquePanel();
+      actions.setBorder(new EmptyBorder(0, 10, 0, 0));
       actions.setLayout(new BoxLayout(actions, BoxLayout.Y_AXIS));
       ActionManager actionManager = ActionManager.getInstance();
       ActionGroup quickStart = (ActionGroup)actionManager.getAction(IdeActions.GROUP_WELCOME_SCREEN_QUICKSTART);
@@ -302,16 +329,26 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
         action.update(new AnActionEvent(null, DataManager.getInstance().getDataContext(this),
                                         ActionPlaces.WELCOME_SCREEN, presentation, ActionManager.getInstance(), 0));
         if (presentation.isVisible()) {
-          ActionLink link = new ActionLink(presentation.getText(), presentation.getIcon(), action);
+          String text = presentation.getText();
+          if (text.endsWith("...")) {
+            text = text.substring(0, text.length() - 3);
+          }
+          Icon icon = presentation.getIcon();
+          if (icon.getIconHeight() != 16 || icon.getIconWidth() != 16) {
+            icon = EmptyIcon.ICON_16;
+          }
+          ActionLink link = new ActionLink(text, icon, action, createUsageTracker(action));
           link.setPaintUnderline(false);
           link.setNormalColor(getLinkNormalColor());
-          installFocusable(button, action, KeyEvent.VK_UP, KeyEvent.VK_DOWN, true);
           button.add(link);
+          if (action instanceof WelcomePopupAction) {
+            button.add(createArrow(link), BorderLayout.EAST);
+          }
+          installFocusable(button, action, KeyEvent.VK_UP, KeyEvent.VK_DOWN, true);
           actions.add(button);
         }
       }
 
-      actions.setBorder(new EmptyBorder(0, 0, 0, 0));
       WelcomeScreenActionsPanel panel = new WelcomeScreenActionsPanel();
       panel.actions.add(actions);
       return panel.root;
@@ -329,7 +366,9 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
 
     private JComponent createLogo() {
       NonOpaquePanel panel = new NonOpaquePanel(new BorderLayout());
-      JLabel logo = new JLabel(IconLoader.getIcon(ApplicationInfoEx.getInstanceEx().getWelcomeScreenLogoUrl()));
+      ApplicationInfoEx app = ApplicationInfoEx.getInstanceEx();
+      JLabel logo = new JLabel(IconLoader.getIcon(app.getWelcomeScreenLogoUrl()));
+      logo.setBorder(new EmptyBorder(30,0,10,0));
       logo.setHorizontalAlignment(SwingConstants.CENTER);
       panel.add(logo, BorderLayout.NORTH);
       JLabel appName = new JLabel(ApplicationNamesInfo.getInstance().getFullProductName());
@@ -337,23 +376,29 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
       appName.setForeground(JBColor.foreground());
       appName.setFont(font.deriveFont(36f).deriveFont(Font.PLAIN));
       appName.setHorizontalAlignment(SwingConstants.CENTER);
-      JLabel version = new JLabel("Version " + ApplicationInfoEx.getInstanceEx().getFullVersion());
-      version.setFont(font.deriveFont(16f).deriveFont(Font.PLAIN));
+      String appVersion = "Version " + app.getFullVersion();
+
+      if (app.isEAP() && app.getBuild().getBuildNumber() < Integer.MAX_VALUE) {
+        appVersion += " (" + app.getBuild().asString() + ")";
+      }
+
+      JLabel version = new JLabel(appVersion);
+      version.setFont(getProductFont().deriveFont(16f));
       version.setHorizontalAlignment(SwingConstants.CENTER);
       version.setForeground(Gray._128);
-      
+
       panel.add(appName);
       panel.add(version, BorderLayout.SOUTH);
-      panel.setBorder(new EmptyBorder(20, 10, 30, 10));
+      panel.setBorder(new EmptyBorder(0, 0, 20, 0));
       return panel;
     }
 
     private Font getProductFont() {
       String name = "/fonts/Roboto-Light.ttf";
       URL url = AppUIUtil.class.getResource(name);
-        if (url == null) {
-          Logger.getInstance(AppUIUtil.class).warn("Resource missing: " + name);
-        } else {
+      if (url == null) {
+        Logger.getInstance(AppUIUtil.class).warn("Resource missing: " + name);
+      } else {
 
         try {
           InputStream is = url.openStream();
@@ -374,8 +419,8 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
     private JComponent createRecentProjects() {
       JPanel panel = new JPanel(new BorderLayout());
       panel.add(new NewRecentProjectPanel(this), BorderLayout.CENTER);
-      panel.setBackground(getProjectsBackGround());
-      panel.setBorder(new CustomLineBorder(new JBColor(Gray.xEC, new Color(0x3c3f41)), 0,0,0,1));
+      panel.setBackground(getProjectsBackground());
+      panel.setBorder(new CustomLineBorder(getSeparatorColor(), 0,0,0,1));
       return panel;
     }
 
@@ -387,7 +432,14 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
         public void keyPressed(KeyEvent e) {
           final JList list = UIUtil.findComponentOfType(FlatWelcomeFrame.this.getComponent(), JList.class);
           if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-            action.actionPerformed(new AnActionEvent(e,
+            InputEvent event = e;
+            if (e.getComponent() instanceof JComponent) {
+              ActionLink link = UIUtil.findComponentOfType((JComponent)e.getComponent(), ActionLink.class);
+              if (link != null) {
+                event = new MouseEvent(link, MouseEvent.MOUSE_CLICKED, e.getWhen(), e.getModifiers(), 0, 0, 1, false, MouseEvent.BUTTON1);
+              }
+            }
+            action.actionPerformed(new AnActionEvent(event,
                                                      DataManager.getInstance().getDataContext(),
                                                      ActionPlaces.WELCOME_SCREEN,
                                                      action.getTemplatePresentation().clone(),
@@ -401,7 +453,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
             if (focusListOnLeft) {
               if (list != null) {
                 list.requestFocus();
-              }  
+              }
             } else {
               focusPrev(comp);
             }
@@ -414,7 +466,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
         @Override
         public void focusGained(FocusEvent e) {
           comp.setOpaque(true);
-          comp.setBackground(new JBColor(new Color(0xd2e1f0), new Color(0x455565)));
+          comp.setBackground(getActionLinkSelectionColor());
         }
 
         @Override
@@ -460,7 +512,13 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
       private final ActionGroup myGroup;
 
       public IconsFreeActionGroup(ActionGroup group) {
+        super(group.getTemplatePresentation().getText(), group.getTemplatePresentation().getDescription(), null);
         myGroup = group;
+      }
+
+      @Override
+      public boolean isPopup() {
+        return myGroup.isPopup();
       }
 
       @NotNull
@@ -478,14 +536,15 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
         if (child instanceof ActionGroup) {
           return new IconsFreeActionGroup((ActionGroup)child);
         }
-        
-          Presentation presentation = child.getTemplatePresentation();
+
+        Presentation presentation = child.getTemplatePresentation();
         return new AnAction(presentation.getText(),
                             presentation.getDescription(),
                             null) {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
             child.actionPerformed(e);
+            UsageTrigger.trigger("welcome.screen." + e.getActionManager().getId(child));
           }
 
           @Override
@@ -501,6 +560,31 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
         };
       }
     }
+  }
+
+  private static Runnable createUsageTracker(final AnAction action) {
+    return new Runnable() {
+      @Override
+      public void run() {
+        UsageTrigger.trigger("welcome.screen." + ActionManager.getInstance().getId(action));
+      }
+    };
+  }
+
+  private static JLabel createArrow(final ActionLink link) {
+    JLabel arrow = new JLabel(AllIcons.General.Combo3);
+    arrow.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+    arrow.setVerticalAlignment(SwingConstants.BOTTOM);
+    new ClickListener() {
+      @Override
+      public boolean onClick(@NotNull MouseEvent e, int clickCount) {
+        final MouseEvent newEvent = new MouseEvent(link, e.getID(), e.getWhen(), e.getModifiers(), e.getX(), e.getY(), e.getClickCount(),
+                                                   e.isPopupTrigger(), e.getButton());
+        link.doClick(newEvent);
+        return true;
+      }
+    }.installOn(arrow);
+    return arrow;
   }
 
   @Override
@@ -542,7 +626,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
   public static void notifyFrameClosed(JFrame frame) {
     saveLocation(frame.getBounds());
   }
-  
+
   public static class WelcomeScreenActionsPanel {
     private JPanel root;
     private JPanel actions;

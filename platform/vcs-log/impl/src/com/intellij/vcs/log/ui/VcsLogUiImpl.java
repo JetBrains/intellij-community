@@ -279,7 +279,7 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
   }
 
   private void commitNotFound(@NotNull String commitHash) {
-    if (getFilters().isEmpty()) {
+    if (myMainFrame.getFilterUi().getFilters().isEmpty()) {
       showMessage(MessageType.WARNING, "Commit " + commitHash + " not found");
     }
     else {
@@ -315,17 +315,12 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
   }
 
   public void applyFiltersAndUpdateUi() {
-    myFilterer.onFiltersChange(getFilters());
+    myFilterer.onFiltersChange(myMainFrame.getFilterUi().getFilters());
   }
 
   @NotNull
   public VcsLogFilterer getFilterer() {
     return myFilterer;
-  }
-
-  @NotNull
-  public VcsLogFilterCollection getFilters() {
-    return myMainFrame.getFilterUi().getFilters();
   }
 
   public VcsLogGraphTable getTable() {

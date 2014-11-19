@@ -43,7 +43,7 @@ import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.java.IJavaElementType;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -425,13 +425,8 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
         myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
       }
       else if (myRole1 == ChildRole.FIELD) {
-        int lines = Math.max(getLinesAroundField(), getLinesAroundMethod()) + 1;
-        // IJ has been keeping initialization block which starts at the same line as a field for a while.
-        // However, it's not convenient for a situation when particular code is created via PSI - it's easier to not bothering
-        // with whitespace elements when inserting, say, new initialization blocks. That's why we don't enforce new line
-        // only during explicit reformatting ('Reformat' action).
-        //int minLineFeeds = FormatterUtil.isFormatterCalledExplicitly() ? 0 : 1;
-        myResult = Spacing.createSpacing(0, mySettings.SPACE_BEFORE_CLASS_LBRACE ? 1 : 0, 1, true, mySettings.KEEP_BLANK_LINES_BEFORE_RBRACE, lines);
+        int blankLines = myJavaSettings.BLANK_LINES_AROUND_INITIALIZER + 1;
+        myResult = Spacing.createSpacing(0, mySettings.SPACE_BEFORE_CLASS_LBRACE ? 1 : 0, blankLines, true, mySettings.KEEP_BLANK_LINES_BEFORE_RBRACE);
       }
       else if (myRole1 == ChildRole.CLASS) {
         setAroundClassSpacing();
@@ -450,7 +445,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
         setAroundClassSpacing();
       }
       else {
-        final int blankLines = getLinesAroundMethod() + 1;
+        final int blankLines = myJavaSettings.BLANK_LINES_AROUND_INITIALIZER + 1;
         myResult = Spacing.createSpacing(0, Integer.MAX_VALUE, blankLines, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
       }
     }
@@ -1688,7 +1683,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
   }
 
   private static final Map<Pair<IElementType, IElementType>, Boolean> myCanStickJavaTokensMatrix =
-    new ConcurrentHashMap<Pair<IElementType, IElementType>, Boolean>();
+    ContainerUtil.newConcurrentMap();
 
   public static boolean canStickChildrenTogether(final ASTNode child1, final ASTNode child2) {
     if (child1 == null || child2 == null) return true;

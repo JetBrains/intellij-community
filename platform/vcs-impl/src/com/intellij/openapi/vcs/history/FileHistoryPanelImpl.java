@@ -773,8 +773,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     else {
       diffAction.registerCustomShortcutSet(CommonShortcuts.getDiff(), this);
     }
-    final MyShowDiffWithLocalAction showDiffWithLocalAction = new MyShowDiffWithLocalAction();
-    result.add(showDiffWithLocalAction);
+    result.add(ActionManager.getInstance().getAction("Vcs.ShowDiffWithLocal"));
 
     final AnAction diffGroup = ActionManager.getInstance().getAction(VCS_HISTORY_ACTIONS_GROUP);
     if (diffGroup != null) result.add(diffGroup);    
@@ -855,7 +854,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
 
       int selectionSize = sel.size();
       if (selectionSize > 1) {
-        myDiffHandler.showDiffForTwo(myFilePath, sel.get(0).getRevision(), sel.get(sel.size() - 1).getRevision());
+        myDiffHandler.showDiffForTwo(e.getRequiredData(CommonDataKeys.PROJECT), myFilePath, sel.get(0).getRevision(), sel.get(sel.size() - 1).getRevision());
       }
       else if (selectionSize == 1) {
         final TableView<TreeNodeOnVcsRevision> flatView = myDualView.getFlatView();
@@ -871,7 +870,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
         }
 
         if (revision != null) {
-          myDiffHandler.showDiffForOne(e, myFilePath, previousRevision, revision);
+          myDiffHandler.showDiffForOne(e, e.getRequiredData(CommonDataKeys.PROJECT), myFilePath, previousRevision, revision);
         }
       }
     }
@@ -897,38 +896,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     private boolean isDiffEnabled() {
       List<TreeNodeOnVcsRevision> sel = getSelection();
       return myHistorySession.isContentAvailable(sel.get(0)) && myHistorySession.isContentAvailable(sel.get(sel.size() - 1));
-    }
-  }
-
-  private class MyShowDiffWithLocalAction extends AbstractActionForSomeSelection {
-    private MyShowDiffWithLocalAction() {
-      super(VcsBundle.message("action.name.compare.with.local"), VcsBundle.message("action.description.compare.with.local"), "diffWithCurrent", 1,
-                  FileHistoryPanelImpl.this);
-    }
-
-    @Override
-    protected void executeAction(AnActionEvent e) {
-      final List<TreeNodeOnVcsRevision> selection = getSelection();
-      if (selection.size() != 1) return;
-      if (ChangeListManager.getInstance(myVcs.getProject()).isFreezedWithNotification(null)) return;
-      final VcsRevisionNumber currentRevisionNumber = myHistorySession.getCurrentRevisionNumber();
-      VcsFileRevision selectedRevision = getFirstSelectedRevision();
-      if (currentRevisionNumber != null && selectedRevision != null) {
-        myDiffHandler.showDiffForTwo(myFilePath, selectedRevision, new CurrentRevision(myFilePath.getVirtualFile(), currentRevisionNumber));
-      }
-    }
-
-    private boolean isDiffWithCurrentEnabled() {
-      if (myHistorySession.getCurrentRevisionNumber() == null) return false;
-      if (myFilePath.getVirtualFile() == null) return false;
-      if (!myHistorySession.isContentAvailable(getFirstSelectedRevision())) return false;
-      return true;
-    }
-
-    @Override
-    public boolean isEnabled() {
-      final int size = getSelection().size();
-      return size == 1 && isDiffWithCurrentEnabled();
     }
   }
 
@@ -1245,6 +1212,12 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     }
     else if (VcsDataKeys.FILE_HISTORY_PANEL.is(dataId)) {
       return this;
+    }
+    else if (VcsDataKeys.HISTORY_SESSION.is(dataId)) {
+      return myHistorySession;
+    }
+    else if (VcsDataKeys.HISTORY_PROVIDER.is(dataId)) {
+      return myProvider;
     }
     else {
       return super.getData(dataId);
@@ -1569,7 +1542,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     }
   }
 
-  private VirtualFile getVirtualFile() {
+  public VirtualFile getVirtualFile() {
     return myFilePath.getVirtualFile();
   }
 
@@ -1798,23 +1771,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
         enabled = selectionSize == 1 && getSelection().get(0).getChangedRepositoryPath() != null;
       }
       e.getPresentation().setEnabled(enabled);
-    }
-  }
-
-  /**
-   * @author Kirill Likhodedov
-   */
-  private class StandardDiffFromHistoryHandler implements DiffFromHistoryHandler {
-
-    @Override
-    public void showDiffForOne(@NotNull AnActionEvent e, @NotNull FilePath filePath,
-                               @NotNull VcsFileRevision previousRevision, @NotNull VcsFileRevision revision) {
-      VcsHistoryUtil.showDifferencesInBackground(myVcs.getProject(), myFilePath, previousRevision, revision, true);
-    }
-
-    @Override
-    public void showDiffForTwo(@NotNull FilePath filePath, @NotNull VcsFileRevision revision1, @NotNull VcsFileRevision revision2) {
-      VcsHistoryUtil.showDifferencesInBackground(myProject, myFilePath, revision1, revision2, true);
     }
   }
 

@@ -3,7 +3,7 @@ package com.intellij.openapi.util;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class Version implements Comparable<Version> {
+public class Version {
   public final int major;
   public final int minor;
   public final int bugfix;

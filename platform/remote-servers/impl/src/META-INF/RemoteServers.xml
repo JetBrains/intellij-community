@@ -38,14 +38,16 @@
 
   <actions>
     <group id="RemoteServersViewToolbar">
-      <action id="RemoteServers.RunServer" class="com.intellij.remoteServer.impl.runtime.ui.tree.actions.RunServerAction"/>
-      <action id="RemoteServers.DebugServer" class="com.intellij.remoteServer.impl.runtime.ui.tree.actions.DebugServerAction"/>
-      <action id="RemoteServers.StopServer" class="com.intellij.remoteServer.impl.runtime.ui.tree.actions.StopServerAction"/>
-      <action id="RemoteServers.EditServer" class="com.intellij.remoteServer.impl.runtime.ui.tree.actions.EditConfigurationAction"/>
-      <separator/>
-      <action id="RemoteServers.DeployAll" class="com.intellij.remoteServer.impl.runtime.ui.tree.actions.DeployAllAction"/>
+      <action id="RemoteServers.ConnectServer" class="com.intellij.remoteServer.impl.runtime.ui.tree.actions.RemoteServerConnectAction"/>
+      <action id="RemoteServers.DisconnectServer" class="com.intellij.remoteServer.impl.runtime.ui.tree.actions.RemoteServerDisconnectAction"/>
+      <action id="RemoteServers.EditServerConfig" class="com.intellij.remoteServer.impl.runtime.ui.tree.actions.RemoteServerConfigAction"/>
+      <action id="RemoteServers.ChooseServerDeployment" class="com.intellij.remoteServer.impl.runtime.ui.tree.actions.ChooseDeploymentAction"/>
+      <action id="RemoteServers.ChooseServerDeploymentWithDebug" class="com.intellij.remoteServer.impl.runtime.ui.tree.actions.ChooseDeploymentWithDebugAction"/>
+
       <action id="Servers.Deploy" class="com.intellij.remoteServer.impl.runtime.ui.tree.actions.DeployAction"/>
       <action id="Servers.Undeploy" class="com.intellij.remoteServer.impl.runtime.ui.tree.actions.UndeployAction"/>
+      <action id="Servers.DeployWithDebug" class="com.intellij.remoteServer.impl.runtime.ui.tree.actions.DeployWithDebugAction"/>
+      <action id="RemoteServers.EditDeploymentConfig" class="com.intellij.remoteServer.impl.runtime.ui.tree.actions.DeploymentConfigAction"/>
     </group>
   </actions>
 </idea-plugin>

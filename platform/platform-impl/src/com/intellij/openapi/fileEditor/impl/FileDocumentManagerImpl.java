@@ -67,8 +67,8 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Function;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.ThrowableRunnable;
-import com.intellij.util.containers.ConcurrentHashSet;
 import com.intellij.util.containers.ConcurrentWeakValueHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -79,6 +79,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
 import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.*;
@@ -93,7 +94,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
   private static final Key<VirtualFile> FILE_KEY = Key.create("FILE_KEY");
   private static final Key<Boolean> MUST_RECOMPUTE_FILE_TYPE = Key.create("Must recompute file type");
 
-  private final Set<Document> myUnsavedDocuments = new ConcurrentHashSet<Document>();
+  private final Set<Document> myUnsavedDocuments = ContainerUtil.newConcurrentSet();
   private final Map<VirtualFile, Document> myDocuments = new ConcurrentWeakValueHashMap<VirtualFile, Document>();
 
   private final MessageBus myBus;
@@ -122,6 +123,16 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
     myMultiCaster = (FileDocumentManagerListener)Proxy.newProxyInstance(loader, new Class[]{FileDocumentManagerListener.class}, handler);
   }
 
+  private static void unwrapAndRethrow(Exception e) {
+    Throwable unwrapped = e;
+    if (e instanceof InvocationTargetException) {
+      unwrapped = e.getCause() == null ? e : e.getCause();
+    }
+    if (unwrapped instanceof Error) throw (Error)unwrapped;
+    if (unwrapped instanceof RuntimeException) throw (RuntimeException)unwrapped;
+    LOG.error(unwrapped);
+  }
+
   @SuppressWarnings("OverlyBroadCatchBlock")
   private void multiCast(@NotNull Method method, Object[] args) {
     try {
@@ -131,7 +142,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
       LOG.error("Arguments: "+ Arrays.toString(args), e);
     }
     catch (Exception e) {
-      LOG.error(e);
+      unwrapAndRethrow(e);
     }
 
     // Allows pre-save document modification
@@ -140,7 +151,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
         method.invoke(listener, args);
       }
       catch (Exception e) {
-        LOG.error(e);
+        unwrapAndRethrow(e);
       }
     }
 
@@ -149,7 +160,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
       method.invoke(myTrailingSpacesStripper, args);
     }
     catch (Exception e) {
-      LOG.error(e);
+      unwrapAndRethrow(e);
     }
   }
 

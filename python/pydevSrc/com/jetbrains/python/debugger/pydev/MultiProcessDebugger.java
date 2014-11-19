@@ -1,5 +1,7 @@
 package com.jetbrains.python.debugger.pydev;
 
+import com.google.common.base.Function;
+import com.google.common.collect.Collections2;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -179,6 +181,17 @@ public class MultiProcessDebugger implements ProcessDebugger {
     return debugger(threadId).loadVariable(threadId, frameId, var);
   }
 
+  public ArrayChunk loadArrayItems(String threadId,
+                                   String frameId,
+                                   PyDebugValue var,
+                                   int rowOffset,
+                                   int colOffset,
+                                   int rows,
+                                   int cols,
+                                   String format) throws PyDebuggerException {
+    return debugger(threadId).loadArrayItems(threadId, frameId, var, rowOffset, colOffset, rows, cols, format);
+  }
+
   @Override
   public void loadReferrers(String threadId, String frameId, PyReferringObjectsValue var, PyDebugCallback<XValueChildrenList> callback) {
     debugger(threadId).loadReferrers(threadId, frameId, var, callback);
@@ -191,6 +204,17 @@ public class MultiProcessDebugger implements ProcessDebugger {
       return debugger;
     }
     else {
+      // thread is not found in registry - lets search for it in attached debuggers
+
+      for (ProcessDebugger d : myOtherDebuggers) {
+        for (PyThreadInfo thread : d.getThreads()) {
+          if (threadId.equals(thread.getId())) {
+            return d;
+          }
+        }
+      }
+
+      //if not found then return main debugger
       return myMainDebugger;
     }
   }
@@ -229,36 +253,47 @@ public class MultiProcessDebugger implements ProcessDebugger {
 
   @Override
   public Collection<PyThreadInfo> getThreads() {
-    List<PyThreadInfo> threads = Lists.newArrayList(myMainDebugger.getThreads());
-
-    List<PyThreadInfo> result = Lists.newArrayList();
-
     cleanOtherDebuggers();
 
-    collectAndRegisterOtherDebuggersThreads(threads); //we don't register mainDebugger as it is default if there is no mapping
-
+    List<PyThreadInfo> threads = collectAllThreads();
 
     if (myOtherDebuggers.size() > 0) {
       //here we add process id to thread name in case there are more then one process
-      threads = addProcessIdToThreadName(threads, result);
+      return Collections.unmodifiableCollection(Collections2.transform(threads, new Function<PyThreadInfo, PyThreadInfo>() {
+        @Override
+        public PyThreadInfo apply(PyThreadInfo t) {
+          String threadName = ThreadRegistry.threadName(t.getName(), t.getId());
+          PyThreadInfo newThread =
+            new PyThreadInfo(t.getId(), threadName, t.getFrames(),
+                             t.getStopReason(),
+                             t.getMessage());
+          newThread.updateState(t.getState(), t.getFrames());
+          return newThread;
+        }
+      }));
     }
-
-    return Collections.unmodifiableCollection(threads);
+    else {
+      return Collections.unmodifiableCollection(threads);
+    }
   }
 
-  private static List<PyThreadInfo> addProcessIdToThreadName(List<PyThreadInfo> threads, List<PyThreadInfo> result) {
-    for (PyThreadInfo t : threads) {
-      String threadName = ThreadRegistry.threadName(t.getName(), t.getId());
-      PyThreadInfo newThread =
-        new PyThreadInfo(t.getId(), threadName, t.getFrames(),
-                         t.getStopReason(),
-                         t.getMessage());
-      newThread.updateState(t.getState(), t.getFrames());
-      result.add(newThread);
+  private List<PyThreadInfo> collectAllThreads() {
+    List<PyThreadInfo> result = Lists.newArrayList();
+
+    result.addAll(myMainDebugger.getThreads());
+
+    //collect threads and add them to registry to faster access
+    //we don't register mainDebugger as it is default if there is no mapping
+    for (RemoteDebugger d : myOtherDebuggers) {
+      result.addAll(d.getThreads());
+      for (PyThreadInfo t : d.getThreads()) {
+        myThreadRegistry.register(t.getId(), d);
+      }
     }
-    threads = result;
-    return threads;
+
+    return result;
   }
+
 
   private void cleanOtherDebuggers() {
     synchronized (myOtherDebuggers) {
@@ -284,15 +319,6 @@ public class MultiProcessDebugger implements ProcessDebugger {
       synchronized (myOtherDebuggers) {
         myOtherDebuggers.clear();
         myOtherDebuggers.addAll(newList);
-      }
-    }
-  }
-
-  private void collectAndRegisterOtherDebuggersThreads(List<PyThreadInfo> threads) {
-    for (RemoteDebugger d : getOtherDebuggers()) {
-      threads.addAll(d.getThreads());
-      for (PyThreadInfo t : d.getThreads()) {
-        myThreadRegistry.register(t.getId(), d);
       }
     }
   }
@@ -356,6 +382,13 @@ public class MultiProcessDebugger implements ProcessDebugger {
   public void setBreakpoint(String typeId, String file, int line, String condition, String logExpression) {
     for (ProcessDebugger d : allDebuggers()) {
       d.setBreakpoint(typeId, file, line, condition, logExpression);
+    }
+  }
+
+  @Override
+  public void setBreakpointWithFuncName(String typeId, String file, int line, String condition, String logExpression, String funcName) {
+    for (ProcessDebugger d : allDebuggers()) {
+      d.setBreakpointWithFuncName(typeId, file, line, condition, logExpression, funcName);
     }
   }
 

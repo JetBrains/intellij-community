@@ -23,7 +23,7 @@ import org.jetbrains.java.decompiler.main.rels.MethodWrapper;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.*;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
-import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPaar;
+import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
 import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.StructField;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
@@ -260,8 +260,8 @@ public class InitializerProcessor {
     for (Exprent expr : lst) {
       switch (expr.type) {
         case Exprent.EXPRENT_VAR:
-          VarVersionPaar varpaar = new VarVersionPaar((VarExprent)expr);
-          if (!meth.varproc.getExternvars().contains(varpaar)) {
+          VarVersionPair varpaar = new VarVersionPair((VarExprent)expr);
+          if (!meth.varproc.getExternalVars().contains(varpaar)) {
             String varname = meth.varproc.getVarName(varpaar);
 
             if (!varname.equals("this") && !varname.endsWith(".this")) { // FIXME: remove direct comparison with strings
@@ -306,9 +306,9 @@ public class InitializerProcessor {
     if (inv.getFunctype() == InvocationExprent.TYP_INIT) {
       if (inv.getInstance().type == Exprent.EXPRENT_VAR) {
         VarExprent instvar = (VarExprent)inv.getInstance();
-        VarVersionPaar varpaar = new VarVersionPaar(instvar);
+        VarVersionPair varpaar = new VarVersionPair(instvar);
 
-        String classname = meth.varproc.getThisvars().get(varpaar);
+        String classname = meth.varproc.getThisVars().get(varpaar);
 
         if (classname != null) { // any this instance. TODO: Restrict to current class?
           if (withThis || !wrapper.getClassStruct().qualifiedName.equals(inv.getClassname())) {

@@ -273,6 +273,7 @@ public class NewMappings {
     return FileUtil.startsWith(systemIndependentPath, mapping.systemIndependentPath());
   }
 
+  @NotNull
   public List<VirtualFile> getMappingsAsFilesUnderVcs(@NotNull AbstractVcs vcs) {
     final List<VirtualFile> result = new ArrayList<VirtualFile>();
     final String vcsName = vcs.getName();

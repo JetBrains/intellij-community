@@ -199,6 +199,15 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
   }
 
   @Override
+  public boolean isMaximized(@NotNull ToolWindow wnd) {
+    return false;
+  }
+
+  @Override
+  public void setMaximized(@NotNull ToolWindow wnd, boolean maximized) {
+  }
+
+  @Override
   public void initToolWindow(@NotNull ToolWindowEP bean) {
 
   }
@@ -206,6 +215,10 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
   @Override
   public void addToolWindowManagerListener(@NotNull ToolWindowManagerListener l) {
 
+  }
+
+  @Override
+  public void addToolWindowManagerListener(@NotNull ToolWindowManagerListener l, @NotNull Disposable parentDisposable) {
   }
 
   @Override

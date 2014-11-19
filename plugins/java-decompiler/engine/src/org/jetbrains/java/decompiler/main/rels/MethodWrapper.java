@@ -20,7 +20,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.sforms.DirectGraph;
 import org.jetbrains.java.decompiler.modules.decompiler.sforms.FlattenStatementsHelper;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
-import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPaar;
+import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
 import org.jetbrains.java.decompiler.struct.StructMethod;
 
 import java.util.HashSet;
@@ -39,7 +39,7 @@ public class MethodWrapper {
 
   public DirectGraph graph;
 
-  public List<VarVersionPaar> signatureFields;
+  public List<VarVersionPair> signatureFields;
 
   public boolean decompiledWithErrors;
 

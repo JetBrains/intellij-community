@@ -37,6 +37,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.AllOverridingMethodsSearch;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
+import com.intellij.psi.search.searches.FunctionalExpressionSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiUtil;
@@ -179,8 +180,7 @@ public class JavaLineMarkerProvider implements LineMarkerProvider, DumbAware {
     }
     if (CommonClassNames.JAVA_LANG_OBJECT.equals(aClass.getQualifiedName())) return; // It's useless to have overridden markers for object.
 
-    PsiClass inheritor = ClassInheritorsSearch.search(aClass, false).findFirst();
-    if (inheritor != null) {
+    if (ClassInheritorsSearch.search(aClass, false).findFirst() != null || FunctionalExpressionSearch.search(aClass).findFirst() != null) {
       final Icon icon = aClass.isInterface() ? AllIcons.Gutter.ImplementedMethod : AllIcons.Gutter.OverridenMethod;
       PsiElement range = aClass.getNameIdentifier();
       if (range == null) range = aClass;
@@ -217,6 +217,17 @@ public class JavaLineMarkerProvider implements LineMarkerProvider, DumbAware {
           return !methods.isEmpty();
         }
       });
+    }
+
+    if (!methods.isEmpty()) {
+      for (PsiClass aClass : classes) {
+        final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(aClass);
+        if (interfaceMethod != null) {
+          if (FunctionalExpressionSearch.search(aClass).findFirst() != null) {
+            overridden.add(interfaceMethod);
+          }
+        }
+      }
     }
 
     for (PsiMethod method : overridden) {

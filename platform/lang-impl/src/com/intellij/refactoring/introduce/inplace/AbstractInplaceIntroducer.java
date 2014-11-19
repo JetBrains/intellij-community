@@ -318,14 +318,19 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
           myEditor.putUserData(INTRODUCE_RESTART, true);
           try {
             final TextRange range = templateState.getCurrentVariableRange();
-            if (range != null && range.isEmpty()) {
-              final String[] names = suggestNames(isReplaceAllOccurrences(), getLocalVariable());
-              ApplicationManager.getApplication().runWriteAction(new Runnable() {
-                @Override
-                public void run() {
-                  myEditor.getDocument().insertString(myEditor.getCaretModel().getOffset(), names[0]);
-                }
-              });
+            if (range != null) {
+              final TextResult inputText = templateState.getVariableValue(PRIMARY_VARIABLE_NAME);
+              final String inputName = inputText != null ? inputText.getText() : null;
+              final V variable = getVariable();
+              if (inputName == null || variable == null || !isIdentifier(inputName, variable.getLanguage())) {
+                final String[] names = suggestNames(isReplaceAllOccurrences(), getLocalVariable());
+                ApplicationManager.getApplication().runWriteAction(new Runnable() {
+                  @Override
+                  public void run() {
+                    myEditor.getDocument().replaceString(range.getStartOffset(), range.getEndOffset(), names[0]);
+                  }
+                });
+              }
             }
             templateState.gotoEnd(true);
             try {
@@ -468,10 +473,8 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
         final RangeMarker exprMarker = getExprMarker();
         if (exprMarker != null) {
           myExpr = restoreExpression(containingFile, psiField, exprMarker, myExprText);
-          if (myExpr != null && myExpr.isPhysical()) {
-            myExprMarker = createMarker(myExpr);
-          }
         }
+
         if (myLocalMarker != null) {
           final PsiElement refVariableElement = containingFile.findElementAt(myLocalMarker.getStartOffset());
           if (refVariableElement != null) {
@@ -504,6 +507,9 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
           }
         }
 
+        if (myExpr != null && myExpr.isPhysical()) {
+          myExprMarker = createMarker(myExpr);
+        }
         myOccurrenceMarkers = null;
         deleteTemplateField(psiField);
       }
@@ -518,24 +524,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
 
   @Override
   protected boolean performRefactoring() {
-    final String newName = getInputName();
-    if (getLocalVariable() == null && myExpr == null ||
-        newName == null ||
-        getLocalVariable() != null && !getLocalVariable().isValid() ||
-        myExpr != null && !myExpr.isValid()) {
-      super.moveOffsetAfter(false);
-      return false;
-    }
-    if (getLocalVariable() != null) {
-      new WriteCommandAction(myProject, getCommandName(), getCommandName()) {
-        @Override
-        protected void run(Result result) throws Throwable {
-          getLocalVariable().setName(myLocalName);
-        }
-      }.execute();
-    }
-
-    if (!isIdentifier(newName, myExpr != null ? myExpr.getLanguage() : getLocalVariable().getLanguage())) return false;
+    if (!ensureValid()) return false;
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       @Override
       public void run() {
@@ -555,6 +544,28 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
       saveSettings(variable);
     }
     return false;
+  }
+
+  protected boolean ensureValid() {
+    final String newName = getInputName();
+    if (getLocalVariable() == null && myExpr == null ||
+        newName == null ||
+        getLocalVariable() != null && !getLocalVariable().isValid() ||
+        myExpr != null && !myExpr.isValid()) {
+      super.moveOffsetAfter(false);
+      return false;
+    }
+    if (getLocalVariable() != null) {
+      new WriteCommandAction(myProject, getCommandName(), getCommandName()) {
+        @Override
+        protected void run(Result result) throws Throwable {
+          getLocalVariable().setName(myLocalName);
+        }
+      }.execute();
+    }
+
+    if (!isIdentifier(newName, myExpr != null ? myExpr.getLanguage() : getLocalVariable().getLanguage())) return false;
+    return true;
   }
 
   @Override

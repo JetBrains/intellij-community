@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,8 @@ package com.intellij.openapi.ui;
 
 import com.intellij.ide.actions.CloseTabToolbarAction;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.ui.content.Content;
-import com.intellij.ui.content.ContentManager;
-import com.intellij.ui.content.ContentManagerAdapter;
-import com.intellij.ui.content.ContentManagerEvent;
+import com.intellij.ui.content.*;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -109,7 +105,14 @@ public abstract class PanelWithActionsAndCloseButton extends JPanel implements D
       if (myContentManager != null) {
         Content content = myContentManager.getContent(PanelWithActionsAndCloseButton.this);
         if (content != null) {
-          myContentManager.removeContent(content, true);
+          if (content instanceof TabbedContent && ((TabbedContent)content).getTabs().size() > 1) {
+            final TabbedContent tabbedContent = (TabbedContent)content;
+            final JComponent component = content.getComponent();
+            tabbedContent.removeContent(component);
+            myContentManager.setSelectedContent(content, true, true); //we should request focus here
+          } else {
+            myContentManager.removeContent(content, true);
+          }
         }
       }
     }

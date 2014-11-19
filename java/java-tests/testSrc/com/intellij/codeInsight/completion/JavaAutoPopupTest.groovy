@@ -248,7 +248,7 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
   }
 
 
-  public void testFocusInJavadoc() {
+  public void "test popup in javadoc reference"() {
     myFixture.configureByText("a.java", """
     /**
     * {@link AIO<caret>}
@@ -256,8 +256,18 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
       class Foo {}
     """)
     type 'O'
-    assert lookup.focused
+    assert lookup
+  }
 
+  public void "test autopopup in javadoc tag name"() {
+    myFixture.configureByText("a.java", """
+    /**
+    * @a<caret>
+    */
+      class Foo {}
+    """)
+    type 'u'
+    assert lookup
   }
 
   public void "test no autopopup in javadoc parameter descriptions"() {
@@ -648,6 +658,47 @@ public interface Test {
       edt { myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT) }
     }
     assert !lookup
+  }
+
+  public void testMulticaretLeftRightMovements() {
+    myFixture.configureByText("a.java", """
+      class Foo {
+        void foo(String iterable) {
+          <caret>ter   x
+          <caret>ter   x
+        }
+      }
+    """)
+    type('i')
+    assert lookup
+
+    edt { myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT) }
+    myFixture.checkResult """
+      class Foo {
+        void foo(String iterable) {
+          it<caret>er   x
+          it<caret>er   x
+        }
+      }
+    """
+    joinAutopopup()
+    joinCompletion()
+    assert lookup
+    assert !lookup.calculating
+
+    edt { myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT) }
+    myFixture.checkResult """
+      class Foo {
+        void foo(String iterable) {
+          i<caret>ter   x
+          i<caret>ter   x
+        }
+      }
+    """
+    joinAutopopup()
+    joinCompletion()
+    assert lookup
+    assert !lookup.calculating
   }
 
   public void testTypingInAnotherEditor() {

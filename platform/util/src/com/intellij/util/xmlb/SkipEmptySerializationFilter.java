@@ -35,8 +35,9 @@ public class SkipEmptySerializationFilter extends SerializationFilterBase {
     }
 
     if (Boolean.FALSE.equals(beanValue) ||
-        (beanValue instanceof Map && ((Map)beanValue).isEmpty()) ||
-        (beanValue instanceof Collection && ((Collection)beanValue).isEmpty())) {
+        (beanValue instanceof String && ((String)beanValue).isEmpty()) ||
+        beanValue instanceof Collection && ((Collection)beanValue).isEmpty() ||
+        (beanValue instanceof Map && ((Map)beanValue).isEmpty())) {
       return false;
     }
 

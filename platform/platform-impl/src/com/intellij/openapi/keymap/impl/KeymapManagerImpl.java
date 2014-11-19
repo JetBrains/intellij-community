@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.keymap.impl;
 
+import com.intellij.ide.WelcomeWizardUtil;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.keymap.Keymap;
@@ -26,7 +27,6 @@ import com.intellij.openapi.options.SchemesManagerFactory;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.ContainerUtil;
-import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -47,7 +47,6 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
   private String myActiveKeymapName;
   private final Map<String, String> myBoundShortcuts = new HashMap<String, String>();
 
-  @NonNls private static final String KEYMAP = "keymap";
   @NonNls private static final String ACTIVE_KEYMAP = "active_keymap";
   @NonNls private static final String NAME_ATTRIBUTE = "name";
   private final SchemesManager<Keymap, KeymapImpl> mySchemesManager;
@@ -57,9 +56,12 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
   KeymapManagerImpl(DefaultKeymap defaultKeymap, SchemesManagerFactory factory) {
     mySchemesManager = factory.createSchemesManager(KEYMAPS_DIR_PATH,
                                                     new BaseSchemeProcessor<KeymapImpl>() {
+                                                      @NotNull
                                                       @Override
-                                                      public KeymapImpl readScheme(@NotNull final Document schemeContent) throws InvalidDataException {
-                                                        return readKeymap(schemeContent);
+                                                      public KeymapImpl readScheme(@NotNull Element element) throws InvalidDataException {
+                                                        KeymapImpl keymap = new KeymapImpl();
+                                                        keymap.readExternal(element, getAllIncludingDefaultsKeymaps());
+                                                        return keymap;
                                                       }
 
                                                       @Override
@@ -75,10 +77,12 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
                                                     RoamingType.PER_USER);
 
     Keymap[] keymaps = defaultKeymap.getKeymaps();
-    String systemDefaultKeymap = defaultKeymap.getDefaultKeymapName();
+    String systemDefaultKeymap = WelcomeWizardUtil.getWizardMacKeymap() != null
+                                 ? WelcomeWizardUtil.getWizardMacKeymap()
+                                 : defaultKeymap.getDefaultKeymapName();
     for (Keymap keymap : keymaps) {
       addKeymap(keymap);
-      if (systemDefaultKeymap.equals(keymap.getName())) {
+      if (keymap.getName().equals(systemDefaultKeymap)) {
         setActiveKeymap(keymap);
       }
     }
@@ -89,6 +93,8 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
       ModifierKeyDoubleClickHandler.getInstance().registerAction(IdeActions.ACTION_EDITOR_CLONE_CARET_BELOW, KeyEvent.VK_CONTROL, KeyEvent.VK_DOWN);
       ModifierKeyDoubleClickHandler.getInstance().registerAction(IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT_WITH_SELECTION, KeyEvent.VK_CONTROL, KeyEvent.VK_LEFT);
       ModifierKeyDoubleClickHandler.getInstance().registerAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT_WITH_SELECTION, KeyEvent.VK_CONTROL, KeyEvent.VK_RIGHT);
+      ModifierKeyDoubleClickHandler.getInstance().registerAction(IdeActions.ACTION_EDITOR_MOVE_LINE_START_WITH_SELECTION, KeyEvent.VK_CONTROL, KeyEvent.VK_HOME);
+      ModifierKeyDoubleClickHandler.getInstance().registerAction(IdeActions.ACTION_EDITOR_MOVE_LINE_END_WITH_SELECTION, KeyEvent.VK_CONTROL, KeyEvent.VK_END);
     }
 
     //noinspection AssignmentToStaticFieldFromInstanceMethod
@@ -113,7 +119,7 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
 
   @Override
   @Nullable
-  public Keymap getKeymap(String name) {
+  public Keymap getKeymap(@NotNull String name) {
     return mySchemesManager.findSchemeByName(name);
   }
 
@@ -158,15 +164,18 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
   }
 
   public void removeAllKeymapsExceptUnmodifiable() {
-    for (Keymap keymap : mySchemesManager.getAllSchemes()) {
+    List<Keymap> schemes = mySchemesManager.getAllSchemes();
+    for (int i = schemes.size() - 1; i >= 0; i--) {
+      Keymap keymap = schemes.get(i);
       if (keymap.canModify()) {
         mySchemesManager.removeScheme(keymap);
       }
     }
+
     mySchemesManager.setCurrentSchemeName(null);
 
     Collection<Keymap> keymaps = mySchemesManager.getAllSchemes();
-    if (keymaps.size() > 0) {
+    if (!keymaps.isEmpty()) {
       mySchemesManager.setCurrentSchemeName(keymaps.iterator().next().getName());
     }
   }
@@ -198,18 +207,6 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
         setActiveKeymap(keymap);
       }
     }
-  }
-
-  @NotNull
-  private KeymapImpl readKeymap(Document document) throws InvalidDataException {
-    if (document == null) throw new InvalidDataException();
-    Element root = document.getRootElement();
-    if (!KEYMAP.equals(root.getName())) {
-      throw new InvalidDataException();
-    }
-    KeymapImpl keymap = new KeymapImpl();
-    keymap.readExternal(root, getAllIncludingDefaultsKeymaps());
-    return keymap;
   }
 
   private void fireActiveKeymapChanged() {

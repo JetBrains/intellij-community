@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,10 @@ import com.intellij.psi.impl.PsiElementBase;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
-import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.impl.source.tree.ChangeUtil;
+import com.intellij.psi.impl.source.tree.CompositeElement;
+import com.intellij.psi.impl.source.tree.SharedImplUtil;
+import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtilCore;
@@ -334,9 +337,9 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
       CheckUtil.checkWritable(this);
       ((ASTDelegatePsiElement)parent).deleteChildInternal(getNode());
     }
-    else if (parent instanceof CompositePsiElement) {
+    else if (parent instanceof CompositeElement) {
       CheckUtil.checkWritable(this);
-      ((CompositePsiElement)parent).deleteChildInternal(getNode());
+      ((CompositeElement)parent).deleteChildInternal(getNode());
     }
     else if (parent instanceof PsiFile) {
       CheckUtil.checkWritable(this);

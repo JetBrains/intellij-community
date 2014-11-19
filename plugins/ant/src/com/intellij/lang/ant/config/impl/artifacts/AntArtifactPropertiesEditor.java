@@ -16,8 +16,10 @@
 package com.intellij.lang.ant.config.impl.artifacts;
 
 import com.intellij.lang.ant.AntBundle;
+import com.intellij.lang.ant.config.AntBuildFile;
 import com.intellij.lang.ant.config.AntBuildTarget;
 import com.intellij.lang.ant.config.AntConfiguration;
+import com.intellij.lang.ant.config.AntConfigurationListener;
 import com.intellij.lang.ant.config.impl.BuildFileProperty;
 import com.intellij.lang.ant.config.impl.TargetChooserDialog;
 import com.intellij.lang.ant.config.impl.configuration.UIPropertyBinding;
@@ -85,6 +87,7 @@ public class AntArtifactPropertiesEditor extends ArtifactPropertiesEditor {
   };
   private final AntArtifactProperties myProperties;
   private final ArtifactEditorContext myContext;
+  private final AntConfigurationListener myAntConfigurationListener;
   private JPanel myMainPanel;
   private JCheckBox myRunTargetCheckBox;
   private FixedSizeButton mySelectTargetButton;
@@ -167,6 +170,29 @@ public class AntArtifactPropertiesEditor extends ArtifactPropertiesEditor {
           return enable;
         }
       }).disableUpDownActions().createPanel(), BorderLayout.CENTER);
+    final AntConfiguration antConfiguration = AntConfiguration.getInstance(context.getProject());
+    myAntConfigurationListener = new AntConfigurationListener() {
+      @Override
+      public void configurationLoaded() {
+        if (myTarget == null) {
+          myTarget = myProperties.findTarget(antConfiguration);
+          updatePanel();
+        }
+      }
+
+      @Override
+      public void buildFileChanged(AntBuildFile buildFile) {
+      }
+
+      @Override
+      public void buildFileAdded(AntBuildFile buildFile) {
+      }
+
+      @Override
+      public void buildFileRemoved(AntBuildFile buildFile) {
+      }
+    };
+    antConfiguration.addAntConfigurationListener(myAntConfigurationListener);
   }
 
   private void selectTarget() {
@@ -246,5 +272,6 @@ public class AntArtifactPropertiesEditor extends ArtifactPropertiesEditor {
   }
 
   public void disposeUIResources() {
+    AntConfiguration.getInstance(myContext.getProject()).removeAntConfigurationListener(myAntConfigurationListener);
   }
 }

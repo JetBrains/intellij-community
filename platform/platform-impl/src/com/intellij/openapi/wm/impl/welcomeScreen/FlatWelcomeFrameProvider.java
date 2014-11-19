@@ -26,10 +26,11 @@ import com.intellij.util.PlatformUtils;
 public class FlatWelcomeFrameProvider implements WelcomeFrameProvider {
   @Override
   public IdeFrame createFrame() {
-    if (Registry.is("ide.new.welcome.screen") 
-        && (PlatformUtils.isIntelliJ() || PlatformUtils.isCidr())) {
-      return new FlatWelcomeFrame();
-    }
-    return null;
+    return isAvailable() ? new FlatWelcomeFrame() : null;
+  }
+
+  public static boolean isAvailable() {
+    return Registry.is("ide.new.welcome.screen")
+            && (PlatformUtils.isIntelliJ() || PlatformUtils.isCidr() || PlatformUtils.isWebStorm());
   }
 }

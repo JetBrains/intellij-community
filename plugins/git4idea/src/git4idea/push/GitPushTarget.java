@@ -22,7 +22,6 @@ import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitBranch;
 import git4idea.GitRemoteBranch;
 import git4idea.GitStandardRemoteBranch;
-import git4idea.branch.GitBranchUtil;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.validators.GitRefNameValidator;
@@ -32,20 +31,22 @@ import org.jetbrains.annotations.Nullable;
 import java.text.ParseException;
 import java.util.Collection;
 
-class GitPushTarget implements PushTarget {
+import static git4idea.GitUtil.findRemoteBranch;
+
+public class GitPushTarget implements PushTarget {
 
   private static final Logger LOG = Logger.getInstance(GitPushTarget.class);
 
   @NotNull private final GitRemoteBranch myRemoteBranch;
   private final boolean myIsNewBranchCreated;
 
-  GitPushTarget(@NotNull GitRemoteBranch remoteBranch, boolean isNewBranchCreated) {
+  public GitPushTarget(@NotNull GitRemoteBranch remoteBranch, boolean isNewBranchCreated) {
     myRemoteBranch = remoteBranch;
     myIsNewBranchCreated = isNewBranchCreated;
   }
 
   @NotNull
-  GitRemoteBranch getBranch() {
+  public GitRemoteBranch getBranch() {
     return myRemoteBranch;
   }
 
@@ -54,12 +55,18 @@ class GitPushTarget implements PushTarget {
     return isNewBranchCreated();
   }
 
-  boolean isNewBranchCreated() {
+  @NotNull
+  @Override
+  public String getPresentation() {
+    return myRemoteBranch.getName();
+  }
+
+  public boolean isNewBranchCreated() {
     return myIsNewBranchCreated;
   }
 
   @NotNull
-  static GitPushTarget parse(@NotNull GitRepository repository, @Nullable String remoteName, @NotNull String branchName) throws
+  public static GitPushTarget parse(@NotNull GitRepository repository, @Nullable String remoteName, @NotNull String branchName) throws
                                                                                                                         ParseException {
     if (remoteName == null) {
       throw new ParseException("No remotes defined", -1);
@@ -93,16 +100,6 @@ class GitPushTarget implements PushTarget {
     });
   }
 
-  @Nullable
-  static GitRemoteBranch findRemoteBranch(@NotNull GitRepository repository, @NotNull final GitRemote remote,
-                                          @NotNull final String nameAtRemote) {
-    return ContainerUtil.find(repository.getBranches().getRemoteBranches(), new Condition<GitRemoteBranch>() {
-      @Override
-      public boolean value(GitRemoteBranch remoteBranch) {
-        return remoteBranch.getRemote().equals(remote) &&
-               remoteBranch.getNameForRemoteOperations().equals(GitBranchUtil.stripRefsPrefix(nameAtRemote));
-      }
-    });
-  }
+
 
 }

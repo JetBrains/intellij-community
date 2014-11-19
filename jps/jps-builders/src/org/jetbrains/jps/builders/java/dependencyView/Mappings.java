@@ -400,16 +400,31 @@ public class Mappings {
 
     private boolean hasOverriddenMethods(final ClassRepr fromClass, final MethodRepr.Predicate predicate) {
       for (int superName : fromClass.getSupers()) {
-        final ClassRepr superClass = reprByName(superName);
-        if (superClass == null) {
-          return true; // assumption
+        if (superName == myObjectClassName) {
+          continue;
         }
-        for (MethodRepr mm : superClass.findMethods(predicate)) {
-          if (isVisibleIn(superClass, mm, fromClass)) {
+        final ClassRepr superClass = reprByName(superName);
+        if (superClass != null) {
+          for (MethodRepr mm : superClass.findMethods(predicate)) {
+            if (isVisibleIn(superClass, mm, fromClass)) {
+              return true;
+            }
+          }
+          if (hasOverriddenMethods(superClass, predicate)) {
             return true;
           }
         }
-        if (hasOverriddenMethods(superClass, predicate)) {
+      }
+      return false;
+    }
+
+    private boolean extendsLibraryClass(final ClassRepr fromClass) {
+      for (int superName : fromClass.getSupers()) {
+        if (superName == myObjectClassName) {
+          continue;
+        }
+        final ClassRepr superClass = reprByName(superName);
+        if (superClass == null || extendsLibraryClass(superClass)) {
           return true;
         }
       }
@@ -440,6 +455,9 @@ public class Mappings {
 
     void addOverriddenFields(final FieldRepr f, final ClassRepr fromClass, final Collection<Pair<FieldRepr, ClassRepr>> container) {
       for (int supername : fromClass.getSupers()) {
+        if (supername == myObjectClassName) {
+          continue;
+        }
         final ClassRepr superClass = reprByName(supername);
         if (superClass != null) {
           final FieldRepr ff = superClass.findField(f.name);
@@ -455,6 +473,9 @@ public class Mappings {
 
     boolean hasOverriddenFields(final FieldRepr f, final ClassRepr fromClass) {
       for (int supername : fromClass.getSupers()) {
+        if (supername == myObjectClassName) {
+          continue;
+        }
         final ClassRepr superClass = reprByName(supername);
         if (superClass != null) {
           final FieldRepr ff = superClass.findField(f.name);
@@ -534,15 +555,8 @@ public class Mappings {
       return Boolean.FALSE;
     }
 
-    boolean isMethodVisible(final int className, final MethodRepr m) {
-      final ClassRepr r = reprByName(className);
-      if (r != null) {
-        if (r.findMethods(MethodRepr.equalByJavaRules(m)).size() > 0) {
-          return true;
-        }
-        return hasOverriddenMethods(r, MethodRepr.equalByJavaRules(m));
-      }
-      return false;
+    boolean isMethodVisible(final ClassRepr classRepr, final MethodRepr m) {
+      return classRepr.findMethods(MethodRepr.equalByJavaRules(m)).size() > 0 || hasOverriddenMethods(classRepr, MethodRepr.equalByJavaRules(m));
     }
 
     boolean isFieldVisible(final int className, final FieldRepr field) {
@@ -708,22 +722,37 @@ public class Mappings {
     }
   }
 
-  void affectAll(final int className, @NotNull final File sourceFile, final Collection<File> affectedFiles, @Nullable final DependentFilesFilter filter) {
+  void affectAll(final int className, @NotNull final File sourceFile, final Collection<File> affectedFiles, final Collection<File> alreadyCompiledFiles, @Nullable final DependentFilesFilter filter) {
     final TIntHashSet dependants = myClassToClassDependency.get(className);
     if (dependants != null) {
       dependants.forEach(new TIntProcedure() {
         @Override
         public boolean execute(int depClass) {
           final Collection<File> allSources = myClassToSourceFile.get(depClass);
-          if (allSources != null) {
+          if (allSources == null || allSources.isEmpty()) {
+            return true;
+          }
+
+          boolean shouldAffect = false;
+          for (File depFile : allSources) {
+            if (FileUtil.filesEqual(depFile, sourceFile)) {
+              continue;  // skipping self-dependencies
+            }
+            if (!alreadyCompiledFiles.contains(depFile) && (filter == null || filter.accept(depFile))) {
+              // if at least one of the source files associated with the class is affected, all other associated sources should be affected as well
+              shouldAffect = true;
+              break;
+            }
+          }
+
+          if (shouldAffect) {
             for (File depFile : allSources) {
               if (!FileUtil.filesEqual(depFile, sourceFile)) {
-                if (filter == null || filter.accept(depFile)) {
-                  affectedFiles.add(depFile);
-                }
+                affectedFiles.add(depFile);
               }
             }
           }
+
           return true;
         }
       });
@@ -1048,7 +1077,7 @@ public class Mappings {
             if (classes != null) {
               for (ClassRepr c : classes) {
                 debug("Affecting usages of removed class ", c.name);
-                affectAll(c.name, sourceFile, myAffectedFiles, myFilter);
+                affectAll(c.name, sourceFile, myAffectedFiles, myCompiledFiles, myFilter);
               }
             }
           }
@@ -1082,10 +1111,7 @@ public class Mappings {
           }
           final ClassRepr oldIt = oldItRef.get();
 
-          if (oldIt != null && myPresent.hasOverriddenMethods(oldIt, MethodRepr.equalByJavaRules(m))) {
-
-          }
-          else {
+          if (oldIt == null || !myPresent.hasOverriddenMethods(oldIt, MethodRepr.equalByJavaRules(m))) {
             if (m.myArgumentTypes.length > 0) {
               propagated = myFuture.propagateMethodAccess(m, it.name);
               debug("Conservative case on overriding methods, affecting method usages");
@@ -1170,10 +1196,13 @@ public class Mappings {
               final Collection<File> sourceFileNames = myClassToSourceFile.get(subClass);
               if (sourceFileNames != null && !myCompiledFiles.containsAll(sourceFileNames)) {
                 final int outerClass = r.getOuterClassName();
-                if (!isEmpty(outerClass) && myFuture.isMethodVisible(outerClass, m)) {
-                  myAffectedFiles.addAll(sourceFileNames);
-                  for (File sourceFileName : sourceFileNames) {
-                    debug("Affecting file due to local overriding: ", sourceFileName);
+                if (!isEmpty(outerClass)) {
+                  final ClassRepr outerClassRepr = myFuture.reprByName(outerClass);
+                  if (outerClassRepr != null && (myFuture.isMethodVisible(outerClassRepr, m) || myFuture.extendsLibraryClass(outerClassRepr))) {
+                    myAffectedFiles.addAll(sourceFileNames);
+                    for (File sourceFileName : sourceFileNames) {
+                      debug("Affecting file due to local overriding: ", sourceFileName);
+                    }
                   }
                 }
               }
@@ -1814,7 +1843,7 @@ public class Mappings {
           debug("Adding usages of class ", c.name);
           state.myAffectedUsages.add(c.createUsage());
           debug("Affecting usages of removed class ", c.name);
-          affectAll(c.name, fileName, myAffectedFiles, myFilter);
+          affectAll(c.name, fileName, myAffectedFiles, myCompiledFiles, myFilter);
         }
       }
       debug("End of removed classes processing.");
@@ -2344,6 +2373,13 @@ public class Mappings {
   public Set<ClassRepr> getClasses(final String sourceFileName) {
     synchronized (myLock) {
       return (Set<ClassRepr>)mySourceFileToClasses.get(new File(sourceFileName));
+    }
+  }
+
+  @Nullable
+  public Collection<File> getClassSources(int className) {
+    synchronized (myLock) {
+      return myClassToSourceFile.get(className);
     }
   }
 

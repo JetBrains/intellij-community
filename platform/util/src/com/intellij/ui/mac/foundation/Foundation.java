@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -95,7 +95,7 @@ public class Foundation {
    *
    * @param cls The class to which to add a method.
    * @param selectorName A selector that specifies the name of the method being added.
-   * @param impl A function which is the implementation of the new method. The function must take at least two arguments—self and _cmd.
+   * @param impl A function which is the implementation of the new method. The function must take at least two arguments-self and _cmd.
    * @param types An array of characters that describe the types of the arguments to the method.
    *              See <a href="https://developer.apple.com/library/IOs/documentation/Cocoa/Conceptual/ObjCRuntimeGuide/Articles/ocrtTypeEncodings.html#//apple_ref/doc/uid/TP40008048-CH100"></a>
    * @return true if the method was added successfully, otherwise false (for example, the class already contains a method implementation with that name).

@@ -27,13 +27,14 @@ public class HgTarget implements PushTarget {
   }
 
   @NotNull
+  @Override
   public String getPresentation() {
     return HgUtil.removePasswordIfNeeded(myTarget);
   }
 
   @Override
   public boolean hasSomethingToPush() {
-    return false;
+    // push is always allowed except invalid target
+    return true;
   }
-
 }

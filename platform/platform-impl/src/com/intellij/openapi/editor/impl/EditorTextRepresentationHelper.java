@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.openapi.editor.impl;
 
 import org.intellij.lang.annotations.JdkConstants;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * Strategy interface for various utility methods used for representing document text at the editor.
@@ -37,13 +36,12 @@ public interface EditorTextRepresentationHelper {
    * Allows to answer how many visual columns is necessary for representing target fragment of the given text assuming
    * that it belongs to the single visual line and should be shown at given <code>'x'</code> offset from the visual line start.
    *
-   * @param text    target text holder
    * @param start   start offset of the target text sub-sequence (inclusive)
    * @param end     end offset of the target text sub-sequence (exclusive)
    * @param x       <code>'x'</code> offset from the visual line start
    * @return        number of visual columns necessary for the target text sub-sequence representation
    */
-  int toVisualColumnSymbolsNumber(@NotNull CharSequence text, int start, int end, int x);
+  int toVisualColumnSymbolsNumber(int start, int end, int x);
 
   /**
    * Allows to retrieve width (in pixels) necessary to represent given region (<code>[start; end)</code>) starting
@@ -52,17 +50,16 @@ public interface EditorTextRepresentationHelper {
    * <b>Note:</b> target region is allows to contain line feeds, the width is calculated as a difference between <code>'x'</code>
    * coordinates of the last and first symbols.
    *
-   * @param text        target text holder
    * @param start       start offset of the target text sub-sequence (inclusive)
    * @param end         end offset of the target text sub-sequence (exclusive)
    * @param fontType    font type used for the given substring representation
    * @param x           <code>'x'</code> offset from the visual line start
    * @return            width in pixels necessary for the target text sub-sequence representation
    */
-  int textWidth(@NotNull CharSequence text, int start, int end, @JdkConstants.FontStyle int fontType, int x);
+  int textWidth(int start, int end, @JdkConstants.FontStyle int fontType, int x);
 
   /**
-   * This is specification of {@link #textWidth(CharSequence, int, int, int, int)} in case of the single character
+   * This is specification of {@link #textWidth(int, int, int, int)} in case of the single character
    * (in comparison with the situation when we need to calculate width of particular text).
    * <p/>
    * <b>Note:</b> it's assumed that given symbols is a regular one (non-tabulation, non-line feed etc). 
@@ -72,4 +69,16 @@ public interface EditorTextRepresentationHelper {
    * @return            width in pixels necessary for the target char representation
    */
   int charWidth(char c, @JdkConstants.FontStyle int fontType);
+
+  /**
+   * Translates column number to offset in the given document interval (which is assumed not to contain line breaks or soft wraps).
+   *
+   * @param startOffset interval start offset
+   * @param endOffset interval end offset
+   * @param startColumn interval start column
+   * @param column target column
+   * @param startX interval start visual coordinate
+   * @return offset, corresponding to the given column, in the range [startOffset; endOffset), or -1 if such offset doesn't exist
+   */
+  int calcSoftWrapUnawareOffset(int startOffset, int endOffset, int startColumn, int column, int startX);
 }

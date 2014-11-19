@@ -19,6 +19,7 @@ from pydevd_comm import  CMD_CHANGE_VARIABLE, \
                          CMD_GET_COMPLETIONS, \
                          CMD_GET_FRAME, \
                          CMD_GET_VARIABLE, \
+                         CMD_GET_ARRAY, \
                          CMD_LIST_THREADS, \
                          CMD_REMOVE_BREAK, \
                          CMD_RUN, \
@@ -47,6 +48,7 @@ from pydevd_comm import  CMD_CHANGE_VARIABLE, \
                          InternalConsoleExec, \
                          InternalGetFrame, \
                          InternalGetVariable, \
+                         InternalGetArray, \
                          InternalTerminateThread, \
                          InternalRunThread, \
                          InternalStepThread, \
@@ -116,9 +118,10 @@ DONT_TRACE = {
               'threading.py':1,
 
               # thirs party libs that we don't want to trace
-              'pluginbase.py':1,
-              'pkgutil_old.py':1,
-              'uuid_old.py':1,
+              '_pydev_pluginbase.py':1,
+              '_pydev_pkgutil_old.py':1,
+              '_pydev_uuid_old.py':1,
+
 
               #things from pydev that we don't want to trace
               '_pydev_execfile.py':1,
@@ -785,6 +788,23 @@ class PyDB:
                             scope, attrs = (scopeattrs, None)
 
                         int_cmd = InternalGetVariable(seq, thread_id, frame_id, scope, attrs)
+                        self.postInternalCommand(int_cmd, thread_id)
+
+                    except:
+                        traceback.print_exc()
+
+                elif cmd_id == CMD_GET_ARRAY:
+                    # we received some command to get an array variable
+                    # the text is: thread_id\tframe_id\tFRAME|GLOBAL\tname\ttemp\troffs\tcoffs\trows\tcols\tformat
+                    try:
+                        roffset, coffset, rows, cols, format, thread_id, frame_id, scopeattrs  = text.split('\t', 7)
+
+                        if scopeattrs.find('\t') != -1:  # there are attributes beyond scope
+                            scope, attrs = scopeattrs.split('\t', 1)
+                        else:
+                            scope, attrs = (scopeattrs, None)
+
+                        int_cmd = InternalGetArray(seq, roffset, coffset, rows, cols, format, thread_id, frame_id, scope, attrs)
                         self.postInternalCommand(int_cmd, thread_id)
 
                     except:
@@ -1857,7 +1877,7 @@ def _locked_settrace(
         
         #Suspend as the last thing after all tracing is in place.
         if suspend:
-            debugger.setSuspend(t, CMD_SET_BREAK)
+            debugger.setSuspend(t, CMD_THREAD_SUSPEND)
 
         PyDBCommandThread(debugger).start()
         PyDBCheckAliveThread(debugger).start()
@@ -1883,7 +1903,7 @@ def _locked_settrace(
 
 
         if suspend:
-            debugger.setSuspend(t, CMD_SET_BREAK)
+            debugger.setSuspend(t, CMD_THREAD_SUSPEND)
 
 
 def stoptrace():

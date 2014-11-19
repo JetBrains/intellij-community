@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,9 @@
  */
 package org.intellij.lang.regexp;
 
+import org.intellij.lang.regexp.psi.RegExpChar;
 import org.intellij.lang.regexp.psi.RegExpGroup;
+import org.intellij.lang.regexp.psi.RegExpNamedGroupRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,6 +30,8 @@ public interface RegExpLanguageHost {
   boolean supportsPossessiveQuantifiers();
   boolean supportsPythonConditionalRefs();
   boolean supportsNamedGroupSyntax(RegExpGroup group);
+  boolean supportsNamedGroupRefSyntax(RegExpNamedGroupRef ref);
+  boolean supportsExtendedHexCharacter(RegExpChar regExpChar);
 
   boolean isValidCategory(@NotNull String category);
   @NotNull

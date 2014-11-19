@@ -76,7 +76,6 @@ class MultilinePopupBuilder {
     ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, myTextField)
       .setCancelOnClickOutside(true)
       .setAdText(KeymapUtil.getShortcutsText(CommonShortcuts.CTRL_ENTER.getShortcuts()) + " to finish")
-      .setMovable(true)
       .setRequestFocus(true)
       .setResizable(true)
       .setMayBeParent(true);
@@ -85,7 +84,7 @@ class MultilinePopupBuilder {
     popup.setMinimumSize(new Dimension(200, 90));
     AnAction okAction = new DumbAwareAction() {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         unregisterCustomShortcutSet(popup.getContent());
         popup.closeOk(e.getInputEvent());
       }
@@ -132,6 +131,7 @@ class MultilinePopupBuilder {
       return lastPosition;
     }
 
+    @SuppressWarnings("StringToUpperCaseOrToLowerCaseWithoutLocale")
     @Override
     protected void addCompletionVariants(@NotNull String text, int offset, @NotNull String prefix,
                                          @NotNull CompletionResultSet result) {

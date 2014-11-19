@@ -252,6 +252,9 @@
       min-usage-count="10"
       first-show="2"
       successive-show="3"/>
+    <feature
+      id="editing.add.carets.using.double.ctrl"
+      tip-file="Multicursor.html"/>
   </group>
 
   <group id="codeassists">

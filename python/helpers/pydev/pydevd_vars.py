@@ -19,6 +19,7 @@ import _pydev_threading as threading
 import traceback
 import pydevd_save_locals
 from pydev_imports import Exec, quote, execfile
+from pydevd_utils import to_string
 
 try:
     import types
@@ -276,6 +277,43 @@ def customOperation(thread_id, frame_id, scope, attrs, style, code_or_file, oper
         traceback.print_exc()
 
 
+def evalInContext(expression, globals, locals):
+    result = None
+    try:
+        result = eval(expression, globals, locals)
+    except Exception:
+        s = StringIO()
+        traceback.print_exc(file=s)
+        result = s.getvalue()
+
+        try:
+            try:
+                etype, value, tb = sys.exc_info()
+                result = value
+            finally:
+                etype = value = tb = None
+        except:
+            pass
+
+        result = ExceptionOnEvaluate(result)
+
+        # Ok, we have the initial error message, but let's see if we're dealing with a name mangling error...
+        try:
+            if '__' in expression:
+                # Try to handle '__' name mangling...
+                split = expression.split('.')
+                curr = locals.get(split[0])
+                for entry in split[1:]:
+                    if entry.startswith('__') and not hasattr(curr, entry):
+                        entry = '_%s%s' % (curr.__class__.__name__, entry)
+                    curr = getattr(curr, entry)
+
+                result = curr
+        except:
+            pass
+    return result
+
+
 def evaluateExpression(thread_id, frame_id, expression, doExec):
     '''returns the result of the evaluated expression
     @param doExec: determines if we should do an exec or an eval
@@ -283,9 +321,6 @@ def evaluateExpression(thread_id, frame_id, expression, doExec):
     frame = findFrame(thread_id, frame_id)
     if frame is None:
         return
-
-    expression = str(expression.replace('@LINE@', '\n'))
-
 
     #Not using frame.f_globals because of https://sourceforge.net/tracker2/?func=detail&aid=2541355&group_id=85796&atid=577329
     #(Names not resolved in generator expression in method)
@@ -295,6 +330,7 @@ def evaluateExpression(thread_id, frame_id, expression, doExec):
     updated_globals.update(frame.f_locals)  #locals later because it has precedence over the actual globals
 
     try:
+        expression = str(expression.replace('@LINE@', '\n'))
 
         if doExec:
             try:
@@ -311,42 +347,7 @@ def evaluateExpression(thread_id, frame_id, expression, doExec):
             return
 
         else:
-            result = None
-            try:
-                result = eval(expression, updated_globals, frame.f_locals)
-            except Exception:
-                s = StringIO()
-                traceback.print_exc(file=s)
-                result = s.getvalue()
-
-                try:
-                    try:
-                        etype, value, tb = sys.exc_info()
-                        result = value
-                    finally:
-                        etype = value = tb = None
-                except:
-                    pass
-
-                result = ExceptionOnEvaluate(result)
-
-                # Ok, we have the initial error message, but let's see if we're dealing with a name mangling error...
-                try:
-                    if '__' in expression:
-                        # Try to handle '__' name mangling...
-                        split = expression.split('.')
-                        curr = frame.f_locals.get(split[0])
-                        for entry in split[1:]:
-                            if entry.startswith('__') and not hasattr(curr, entry):
-                                entry = '_%s%s' % (curr.__class__.__name__, entry)
-                            curr = getattr(curr, entry)
-
-                        result = curr
-                except:
-                    pass
-
-
-            return result
+            return evalInContext(expression, updated_globals, frame.f_locals)
     finally:
         #Should not be kept alive if an exception happens and this frame is kept in the stack.
         del updated_globals
@@ -387,7 +388,115 @@ def changeAttrExpression(thread_id, frame_id, attr, expression, dbg):
     except Exception:
         traceback.print_exc()
 
+MAXIMUM_ARRAY_SIZE = 100
+MAX_SLICE_SIZE = 1000
 
+def array_to_xml(array, roffset, coffset, rows, cols, format):
+    xml = ""
+    rows = min(rows, MAXIMUM_ARRAY_SIZE)
+    cols = min(cols, MAXIMUM_ARRAY_SIZE)
+
+
+    #there is no obvious rule for slicing (at least 5 choices)
+    if len(array) == 1 and (rows > 1 or cols > 1):
+        array = array[0]
+    if array.size > len(array):
+        array = array[roffset:, coffset:]
+        rows = min(rows, len(array))
+        cols = min(cols, len(array[0]))
+        if len(array) == 1:
+            array = array[0]
+    elif array.size == len(array):
+        if roffset == 0 and rows == 1:
+            array = array[coffset:]
+            cols = min(cols, len(array))
+        elif coffset == 0 and cols == 1:
+            array = array[roffset:]
+            rows = min(rows, len(array))
+
+    xml += "<arraydata rows=\"%s\" cols=\"%s\"/>" % (rows, cols)
+    for row in range(rows):
+        xml += "<row index=\"%s\"/>" % to_string(row)
+        for col in range(cols):
+            value = array
+            if rows == 1 or cols == 1:
+                if rows == 1 and cols == 1:
+                    value = array[0]
+                else:
+                    if rows == 1:
+                        dim = col
+                    else:
+                        dim = row
+                    value = array[dim]
+                    if "ndarray" in str(type(value)):
+                        value = value[0]
+            else:
+                value = array[row][col]
+            value = format % value
+            xml += varToXML(value, '')
+    return xml
+
+
+def array_to_meta_xml(array, name, format):
+    type = array.dtype.kind
+    slice = name
+    l = len(array.shape)
+
+    # initial load, compute slice
+    if format == '%':
+        if l > 2:
+            slice += '[0]' * (l - 2)
+            for r in range(l - 2):
+                array = array[0]
+        if type == 'f':
+            format = '.5f'
+        elif type == 'i' or type == 'u':
+            format = 'd'
+        else:
+            format = 's'
+    else:
+        format = format.replace('%', '')
+
+    l = len(array.shape)
+    reslice = ""
+    if l > 2:
+        raise Exception("%s has more than 2 dimensions." % slice)
+    elif l == 1:
+        # special case with 1D arrays arr[i, :] - row, but arr[:, i] - column with equal shape and ndim
+        # http://stackoverflow.com/questions/16837946/numpy-a-2-rows-1-column-file-loadtxt-returns-1row-2-columns
+        # explanation: http://stackoverflow.com/questions/15165170/how-do-i-maintain-row-column-orientation-of-vectors-in-numpy?rq=1
+        # we use kind of a hack - get information about memory from C_CONTIGUOUS
+        is_row = array.flags['C_CONTIGUOUS']
+
+        if is_row:
+            rows = 1
+            cols = min(len(array), MAX_SLICE_SIZE)
+            if cols < len(array):
+                reslice = '[0:%s]' % (cols)
+            array = array[0:cols]
+        else:
+            cols = 1
+            rows = min(len(array), MAX_SLICE_SIZE)
+            if rows < len(array):
+                reslice = '[0:%s]' % (rows)
+            array = array[0:rows]
+    elif l == 2:
+        rows = min(array.shape[-2], MAX_SLICE_SIZE)
+        cols = min(array.shape[-1], MAX_SLICE_SIZE)
+        if cols < array.shape[-1] or  rows < array.shape[-2]:
+            reslice = '[0:%s, 0:%s]' % (rows, cols)
+        array = array[0:rows, 0:cols]
+
+    #avoid slice duplication
+    if not slice.endswith(reslice):
+        slice += reslice
+
+    bounds = (0, 0)
+    if type in "biufc":
+        bounds = (array.min(), array.max())
+    xml = '<array slice=\"%s\" rows=\"%s\" cols=\"%s\" format=\"%s\" type=\"%s\" max=\"%s\" min=\"%s\"/>' % \
+           (slice, rows, cols, format, type, bounds[1], bounds[0])
+    return array, xml, rows, cols, format
 
 
 

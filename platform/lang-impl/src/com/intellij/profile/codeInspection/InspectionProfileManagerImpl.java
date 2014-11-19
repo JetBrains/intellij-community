@@ -28,32 +28,31 @@ import com.intellij.codeInspection.ex.InspectionToolRegistrar;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.components.ExportableComponent;
-import com.intellij.openapi.components.NamedComponent;
-import com.intellij.openapi.components.RoamingType;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.options.*;
+import com.intellij.openapi.options.BaseSchemeProcessor;
+import com.intellij.openapi.options.Scheme;
+import com.intellij.openapi.options.SchemesManager;
+import com.intellij.openapi.options.SchemesManagerFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.profile.Profile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.ui.UIUtil;
-import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
@@ -61,13 +60,16 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/**
- * User: anna
- * Date: 29-Nov-2005
- */
-public class InspectionProfileManagerImpl extends InspectionProfileManager implements SeverityProvider, ExportableComponent, JDOMExternalizable,
-                                                                                   NamedComponent {
-
+@State(
+  name = "InspectionProfileManager",
+  storages = {
+    @Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml"),
+    @Storage(file = StoragePathMacros.APP_CONFIG + "/editor.xml")
+  },
+  storageChooser = LastStorageChooserForWrite.ElementStateLastStorageChooserForWrite.class,
+  additionalExportFile = InspectionProfileManager.FILE_SPEC
+)
+public class InspectionProfileManagerImpl extends InspectionProfileManager implements SeverityProvider, PersistentStateComponent<Element> {
   private final InspectionToolRegistrar myRegistrar;
   private final SchemesManager<Profile, InspectionProfileImpl> mySchemesManager;
   private final AtomicBoolean myProfilesAreInitialized = new AtomicBoolean(false);
@@ -83,23 +85,37 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
     myRegistrar = registrar;
     registerProvidedSeverities();
 
-    SchemeProcessor<InspectionProfileImpl> processor = new BaseSchemeProcessor<InspectionProfileImpl>() {
+    mySchemesManager = schemesManagerFactory.createSchemesManager(FILE_SPEC, new BaseSchemeProcessor<InspectionProfileImpl>() {
+      @NotNull
       @Override
-      public InspectionProfileImpl readScheme(@NotNull final Document document) {
-        InspectionProfileImpl profile = new InspectionProfileImpl(InspectionProfileLoadUtil.getProfileName(document), myRegistrar, InspectionProfileManagerImpl.this);
-        read(profile, document.getRootElement());
+      public InspectionProfileImpl readScheme(@NotNull Element element) {
+        final InspectionProfileImpl profile = new InspectionProfileImpl(InspectionProfileLoadUtil.getProfileName(element), myRegistrar, InspectionProfileManagerImpl.this);
+        try {
+          profile.readExternal(element);
+        }
+        catch (Exception ignored) {
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              Messages.showErrorDialog(InspectionsBundle.message("inspection.error.loading.message", 0, profile.getName()),
+                                       InspectionsBundle.message("inspection.errors.occurred.dialog.title"));
+            }
+          }, ModalityState.NON_MODAL);
+        }
         return profile;
       }
 
       @Override
-      public boolean shouldBeSaved(@NotNull final InspectionProfileImpl scheme) {
-        return scheme.wasInitialized();
+      public boolean shouldBeSaved(@NotNull InspectionProfileImpl scheme) {
+        return !scheme.isLocal() && scheme.wasInitialized();
       }
 
-
       @Override
-      public Element writeScheme(@NotNull final InspectionProfileImpl scheme) throws WriteExternalException {
-        return scheme.saveToDocument();
+      public Element writeScheme(@NotNull InspectionProfileImpl scheme) throws WriteExternalException {
+        Element root = new Element("inspections");
+        root.setAttribute("profile_name", scheme.myName);
+        scheme.writeExternal(root);
+        return root;
       }
 
       @Override
@@ -122,25 +138,8 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
         }
         onProfilesChanged();
       }
-    };
-
-    mySchemesManager = schemesManagerFactory.createSchemesManager(FILE_SPEC, processor, RoamingType.PER_USER);
+    }, RoamingType.PER_USER);
     mySeverityRegistrar = new SeverityRegistrar(messageBus);
-  }
-
-  private static void read(@NotNull final InspectionProfileImpl profile, @NotNull Element element) {
-    try {
-      profile.readExternal(element);
-    }
-    catch (Exception e) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          Messages.showErrorDialog(InspectionsBundle.message("inspection.error.loading.message", 0, profile.getName()),
-                                   InspectionsBundle.message("inspection.errors.occurred.dialog.title"));
-        }
-      }, ModalityState.NON_MODAL);
-    }
   }
 
   @NotNull
@@ -166,18 +165,6 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
 
   @Override
   @NotNull
-  public File[] getExportFiles() {
-    return new File[]{getProfileDirectory()};
-  }
-
-  @Override
-  @NotNull
-  public String getPresentableName() {
-    return InspectionsBundle.message("inspection.profiles.presentable.name");
-  }
-
-  @Override
-  @NotNull
   public Collection<Profile> getProfiles() {
     initProfiles();
     return mySchemesManager.getAllSchemes();
@@ -193,7 +180,7 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
   @Override
   public void initProfiles() {
     if (myProfilesAreInitialized.getAndSet(true)) {
-      if (mySchemesManager.getAllSchemeNames().isEmpty()) {
+      if (mySchemesManager.getAllSchemes().isEmpty()) {
         createDefaultProfile();
       }
       return;
@@ -201,8 +188,7 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
     if (!LOAD_PROFILES) return;
 
     mySchemesManager.loadSchemes();
-    final Collection<Profile> profiles = mySchemesManager.getAllSchemes();
-
+    Collection<Profile> profiles = mySchemesManager.getAllSchemes();
     if (profiles.isEmpty()) {
       createDefaultProfile();
     }
@@ -223,7 +209,7 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
   @Override
   public Profile loadProfile(@NotNull String path) throws IOException, JDOMException {
     final File file = new File(path);
-    if (file.exists()){
+    if (file.exists()) {
       try {
         return InspectionProfileLoadUtil.load(file, myRegistrar, this);
       }
@@ -233,7 +219,7 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
       catch (JDOMException e) {
         throw e;
       }
-      catch (Exception e) {
+      catch (Exception ignored) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
           public void run() {
@@ -253,8 +239,7 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
   }
 
   private static void updateProfileImpl(@NotNull Profile profile) {
-    final Project[] projects = ProjectManager.getInstance().getOpenProjects();
-    for (Project project : projects) {
+    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
       InspectionProjectProfileManager.getInstance(project).initProfileWrapper(profile);
     }
   }
@@ -271,14 +256,27 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
     return mySeverityRegistrar;
   }
 
+  @Nullable
   @Override
-  public void readExternal(final Element element) throws InvalidDataException {
-    mySeverityRegistrar.readExternal(element);
+  public Element getState() {
+    Element state = new Element("state");
+    try {
+      mySeverityRegistrar.writeExternal(state);
+    }
+    catch (WriteExternalException e) {
+      throw new RuntimeException(e);
+    }
+    return state;
   }
 
   @Override
-  public void writeExternal(final Element element) throws WriteExternalException {
-    mySeverityRegistrar.writeExternal(element);
+  public void loadState(Element state) {
+    try {
+      mySeverityRegistrar.readExternal(state);
+    }
+    catch (InvalidDataException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public InspectionProfileConvertor getConverter() {
@@ -298,7 +296,6 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
     }
     mySchemesManager.setCurrentSchemeName(rootProfile);
   }
-
 
   @Override
   public Profile getProfile(@NotNull final String name, boolean returnRootProfileIfNamedIsAbsent) {
@@ -322,7 +319,7 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
   }
 
   @Override
-  public void deleteProfile(final String profile) {
+  public void deleteProfile(@NotNull final String profile) {
     Profile found = mySchemesManager.findSchemeByName(profile);
     if (found != null) {
       mySchemesManager.removeScheme(found);
@@ -337,8 +334,7 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
   @Override
   @NotNull
   public String[] getAvailableProfileNames() {
-    final Collection<String> names = mySchemesManager.getAllSchemeNames();
-    return ArrayUtil.toStringArray(names);
+    return ArrayUtil.toStringArray(mySchemesManager.getAllSchemeNames());
   }
 
   @Override
@@ -346,14 +342,10 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
     return getProfile(name, true);
   }
 
-  @NotNull
-  public SchemesManager<Profile, InspectionProfileImpl> getSchemesManager() {
-    return mySchemesManager;
-  }
-
   public static void onProfilesChanged() {
     //cleanup caches blindly for all projects in case ide profile was modified
     for (final Project project : ProjectManager.getInstance().getOpenProjects()) {
+      //noinspection EmptySynchronizedStatement
       synchronized (HighlightingSettingsPerFile.getInstance(project)) {
       }
 

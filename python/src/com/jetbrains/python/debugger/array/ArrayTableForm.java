@@ -15,12 +15,16 @@
  */
 package com.jetbrains.python.debugger.array;
 
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.table.JBTable;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.jetbrains.python.PythonFileType;
+import com.jetbrains.python.debugger.PyDebugValue;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -29,6 +33,7 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
 import java.awt.*;
+import java.awt.event.KeyListener;
 
 /**
  * @author amarch
@@ -41,68 +46,43 @@ public class ArrayTableForm {
   private JLabel myFormatLabel;
   private JPanel myFormatPanel;
   private JPanel myMainPanel;
-  public JBTable myTable;
-  private JBTable myBusyTable;
-  private Project myProject;
+  private JTable myTable;
+  private final Project myProject;
+  private KeyListener myResliceCallback;
+  private KeyListener myReformatCallback;
 
 
   private static final String DATA_LOADING_IN_PROCESS = "Please wait, load array data.";
   private static final String NOT_APPLICABLE = "View not applicable for ";
 
-  public ArrayTableForm(Project project) {
+  public ArrayTableForm(@NotNull Project project, KeyListener resliceCallback, KeyListener reformatCallback) {
     myProject = project;
+    myResliceCallback = resliceCallback;
+    myReformatCallback = reformatCallback;
   }
 
   private void createUIComponents() {
-    myTable = new JBTableWithRows();
-    myTable.setAutoResizeMode(JTable.AUTO_RESIZE_SUBSEQUENT_COLUMNS);
-    myTable.setRowSelectionAllowed(false);
-    myTable.setTableHeader(new CustomTableHeader(myTable));
-    myTable.getTableHeader().setDefaultRenderer(new ColumnHeaderRenderer());
-    myTable.getTableHeader().setReorderingAllowed(false);
+    mySliceTextField = new EditorTextField("", myProject, PythonFileType.INSTANCE) {
+      @Override
+      protected EditorEx createEditor() {
+        EditorEx editor = super.createEditor();
+        editor.getContentComponent().addKeyListener(myResliceCallback);
+        return editor;
+      }
+    };
 
-    myScrollPane = PagingTableModel.LazyViewport.createLazyScrollPaneFor(myTable);
-    JTable rowTable = new RowHeaderTable(myTable);
-    myScrollPane.setRowHeaderView(rowTable);
-    myScrollPane.setCorner(ScrollPaneConstants.UPPER_LEFT_CORNER,
-                           rowTable.getTableHeader());
+    myTable = new JBTableWithRowHeaders();
 
-    mySliceTextField = new EditorTextField("", myProject, PythonFileType.INSTANCE);
+    myScrollPane = ((JBTableWithRowHeaders)myTable).getScrollPane();
 
-    ((JBTableWithRows)myTable).setRowHeaderTable((RowHeaderTable)rowTable);
-    ((JBTableWithRows)myTable).setSliceField(mySliceTextField);
-
-    myFormatTextField = new EditorTextField("", myProject, PythonFileType.INSTANCE);
-
-    myBusyTable = new JBTable(new DefaultTableModel());
-    myBusyTable.getEmptyText().setText("");
-    myBusyTable.setBackground(myBusyTable.getTableHeader().getBackground());
-    myBusyTable.setBorder(BorderFactory.createEmptyBorder());
-  }
-
-  public static class JBTableWithRows extends JBTable {
-    private RowHeaderTable myRowHeaderTable;
-    private EditorTextField mySliceField;
-
-    public boolean getScrollableTracksViewportWidth() {
-      return getPreferredSize().width < getParent().getWidth();
-    }
-
-    public RowHeaderTable getRowHeaderTable() {
-      return myRowHeaderTable;
-    }
-
-    public void setRowHeaderTable(RowHeaderTable rowHeaderTable) {
-      myRowHeaderTable = rowHeaderTable;
-    }
-
-    public EditorTextField getSliceField() {
-      return mySliceField;
-    }
-
-    public void setSliceField(EditorTextField sliceField) {
-      mySliceField = sliceField;
-    }
+    myFormatTextField = new EditorTextField("", myProject, PythonFileType.INSTANCE) {
+      @Override
+      protected EditorEx createEditor() {
+        EditorEx editor = super.createEditor();
+        editor.getContentComponent().addKeyListener(myReformatCallback);
+        return editor;
+      }
+    };
   }
 
   public EditorTextField getSliceTextField() {
@@ -113,7 +93,7 @@ public class ArrayTableForm {
     return myFormatTextField;
   }
 
-  public JBTable getTable() {
+  public JTable getTable() {
     return myTable;
   }
 
@@ -121,15 +101,15 @@ public class ArrayTableForm {
     return myColoredCheckbox;
   }
 
-  public void setDefaultStatus() {
-    if (myTable != null) {
-      myTable.getEmptyText().setText(DATA_LOADING_IN_PROCESS);
-    }
-  }
+  //public void setDefaultStatus() {
+  //  if (myTable != null) {
+      //myTable.getEmptyText().setText(DATA_LOADING_IN_PROCESS);
+    //}
+  //}
 
-  public void setNotApplicableStatus(XValueNodeImpl node) {
-    myTable.getEmptyText().setText(NOT_APPLICABLE + node.getName());
-  }
+  //public void setNotApplicableStatus(PyDebugValue node) {
+  //  myTable.getEmptyText().setText(NOT_APPLICABLE + node.getName());
+  //}
 
   public JComponent getMainPanel() {
     return myMainPanel;
@@ -137,29 +117,6 @@ public class ArrayTableForm {
 
   public JBScrollPane getScrollPane() {
     return myScrollPane;
-  }
-
-  public void setBusy(boolean busy) {
-    myBusyTable.setPaintBusy(busy);
-  }
-
-  public static class CustomTableHeader extends JTableHeader {
-
-    public CustomTableHeader(JTable table) {
-      super();
-      setColumnModel(table.getColumnModel());
-      table.getColumnModel().getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-        @Override
-        public void valueChanged(ListSelectionEvent e) {
-          repaint();
-        }
-      });
-    }
-
-    @Override
-    public void columnSelectionChanged(ListSelectionEvent e) {
-      repaint();
-    }
   }
 
   public static class ColumnHeaderRenderer extends DefaultTableHeaderCellRenderer {

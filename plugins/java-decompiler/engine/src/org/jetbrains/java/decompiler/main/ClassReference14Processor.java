@@ -190,7 +190,7 @@ public class ClassReference14Processor {
           CatchStatement cst = (CatchStatement)root.getFirst();
           if (cst.getStats().size() == 2 && cst.getFirst().type == Statement.TYPE_BASICBLOCK &&
               cst.getStats().get(1).type == Statement.TYPE_BASICBLOCK &&
-              cst.getVars().get(0).getVartype().equals(new VarType(CodeConstants.TYPE_OBJECT, 0, "java/lang/ClassNotFoundException"))) {
+              cst.getVars().get(0).getVarType().equals(new VarType(CodeConstants.TYPE_OBJECT, 0, "java/lang/ClassNotFoundException"))) {
 
             BasicBlockStatement body = (BasicBlockStatement)cst.getFirst();
             BasicBlockStatement handler = (BasicBlockStatement)cst.getStats().get(1);
@@ -247,13 +247,13 @@ public class ClassReference14Processor {
 
     if (exprent.type == Exprent.EXPRENT_FUNCTION) {
       FunctionExprent fexpr = (FunctionExprent)exprent;
-      if (fexpr.getFunctype() == FunctionExprent.FUNCTION_IIF) {
+      if (fexpr.getFuncType() == FunctionExprent.FUNCTION_IIF) {
         if (fexpr.getLstOperands().get(0).type == Exprent.EXPRENT_FUNCTION) {
           FunctionExprent headexpr = (FunctionExprent)fexpr.getLstOperands().get(0);
-          if (headexpr.getFunctype() == FunctionExprent.FUNCTION_EQ) {
+          if (headexpr.getFuncType() == FunctionExprent.FUNCTION_EQ) {
             if (headexpr.getLstOperands().get(0).type == Exprent.EXPRENT_FIELD &&
                 headexpr.getLstOperands().get(1).type == Exprent.EXPRENT_CONST &&
-                ((ConstExprent)headexpr.getLstOperands().get(1)).getConsttype().equals(VarType.VARTYPE_NULL)) {
+                ((ConstExprent)headexpr.getLstOperands().get(1)).getConstType().equals(VarType.VARTYPE_NULL)) {
 
               FieldExprent field = (FieldExprent)headexpr.getLstOperands().get(0);
               ClassNode fieldnode = DecompilerContext.getClassProcessor().getMapRootClasses().get(field.getClassname());

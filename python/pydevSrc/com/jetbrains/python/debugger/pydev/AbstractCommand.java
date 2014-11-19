@@ -52,6 +52,7 @@ public abstract class AbstractCommand<T> {
   public static final String NEW_LINE_CHAR = "@_@NEW_LINE_CHAR@_@";
   public static final String TAB_CHAR = "@_@TAB_CHAR@_@";
 
+  public static final int GET_ARRAY = 143;
 
   @NotNull private final RemoteDebugger myDebugger;
   private final int myCommandCode;

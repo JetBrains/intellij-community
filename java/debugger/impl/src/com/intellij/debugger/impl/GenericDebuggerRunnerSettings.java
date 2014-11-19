@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,22 +18,32 @@ package com.intellij.debugger.impl;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.execution.configurations.DebuggingRunnerData;
 import com.intellij.execution.configurations.RunnerSettings;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.util.xmlb.SmartSerializer;
+import com.intellij.util.xmlb.annotations.OptionTag;
+import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
 
-public class GenericDebuggerRunnerSettings implements RunnerSettings, DebuggingRunnerData {
+public class GenericDebuggerRunnerSettings implements DebuggingRunnerData, RunnerSettings {
+  private final SmartSerializer mySerializer = new SmartSerializer();
+
+  @Transient
+  @Deprecated
   public String DEBUG_PORT = "";
+
   public int TRANSPORT = DebuggerSettings.SOCKET_TRANSPORT;
   public boolean LOCAL = true;
 
-  public GenericDebuggerRunnerSettings() {
+  @Override
+  @OptionTag("DEBUG_PORT")
+  public String getDebugPort() {
+    //noinspection deprecation
+    return DEBUG_PORT;
   }
 
   @Override
-  public String getDebugPort() {
-    return DEBUG_PORT;
+  public void setDebugPort(String port) {
+    //noinspection deprecation
+    DEBUG_PORT = port;
   }
 
   @Override
@@ -46,9 +56,9 @@ public class GenericDebuggerRunnerSettings implements RunnerSettings, DebuggingR
     LOCAL = isLocal;
   }
 
-  @Override
-  public void setDebugPort(String port) {
-    DEBUG_PORT = port;
+  @Transient
+  public int getTransport() {
+    return LOCAL ? DebuggerSettings.getInstance().DEBUGGER_TRANSPORT : TRANSPORT;
   }
 
   public void setTransport(int transport) {
@@ -56,21 +66,12 @@ public class GenericDebuggerRunnerSettings implements RunnerSettings, DebuggingR
   }
 
   @Override
-  public void readExternal(Element element) throws InvalidDataException {
-    DefaultJDOMExternalizer.readExternal(this, element);
+  public void readExternal(Element element) {
+    mySerializer.readExternal(this, element);
   }
 
   @Override
-  public void writeExternal(Element element) throws WriteExternalException {
-    DefaultJDOMExternalizer.writeExternal(this, element);
-  }
-
-  public int getTransport() {
-    if (LOCAL) {
-      return DebuggerSettings.getInstance().DEBUGGER_TRANSPORT;
-    }
-    else {
-      return TRANSPORT;
-    }
+  public void writeExternal(Element element) {
+    mySerializer.writeExternal(this, element);
   }
 }

@@ -181,7 +181,7 @@ public class LazyParseableElement extends CompositeElement {
         if (rawFirstChild() != null) {
           LOG.error("Reentrant parsing?");
         }
-  
+
         myText = null;
   
         if (parsedNode == null) return;

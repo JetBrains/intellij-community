@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,9 +25,10 @@ import java.io.File;
 @State(
   name = "UsageViewSettings",
   storages = {
-    @Storage(
-      file = StoragePathMacros.APP_CONFIG + "/other.xml"
-    )}
+    @Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml"),
+    @Storage(file = StoragePathMacros.APP_CONFIG + "/usageView.xml")
+  },
+  storageChooser = LastStorageChooserForWrite.class
 )
 public class UsageViewSettings implements PersistentStateComponent<UsageViewSettings> {
   @NonNls public String EXPORT_FILE_NAME = "report.txt";

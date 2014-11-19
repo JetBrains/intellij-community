@@ -21,6 +21,7 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 
@@ -32,12 +33,15 @@ public abstract class PsiAugmentProvider {
 
   @NotNull
   public static <Psi extends PsiElement> List<Psi> collectAugments(@NotNull final PsiElement element, @NotNull final Class<Psi> type) {
-    final List<Psi> augments = new ArrayList<Psi>();
+    List<Psi> result = Collections.emptyList();
     for (PsiAugmentProvider provider : Extensions.getExtensions(EP_NAME)) {
-      final List<Psi> list = provider.getAugments(element, type);
-      augments.addAll(list);
+      List<Psi> augments = provider.getAugments(element, type);
+      if (!augments.isEmpty()) {
+        if (result.isEmpty()) result = new ArrayList<Psi>(augments.size());
+        result.addAll(augments);
+      }
     }
 
-    return augments;
+    return result;
   }
 }

@@ -129,7 +129,7 @@ public class ObsoleteCollectionInspection extends BaseInspection {
       registerNewExpressionError(newExpression);
     }
 
-    private boolean isObsoleteCollectionType(PsiType type) {
+    private boolean isObsoleteCollectionType(@Nullable PsiType type) {
       if (type == null) {
         return false;
       }
@@ -166,8 +166,7 @@ public class ObsoleteCollectionInspection extends BaseInspection {
       return false;
     }
 
-    private boolean isRequiredObsoleteCollectionElement(
-      PsiElement element) {
+    private boolean isRequiredObsoleteCollectionElement(PsiElement element) {
       final PsiElement parent = element.getParent();
       if (parent instanceof PsiVariable) {
         final PsiVariable variable = (PsiVariable)parent;
@@ -177,13 +176,19 @@ public class ObsoleteCollectionInspection extends BaseInspection {
         }
       }
       else if (parent instanceof PsiReturnStatement) {
-        final PsiMethod method = PsiTreeUtil.getParentOfType(parent,
-                                                             PsiMethod.class);
-        if (method != null) {
-          final PsiType returnType = method.getReturnType();
-          if (isObsoleteCollectionType(returnType)) {
-            return true;
-          }
+        final PsiElement container = PsiTreeUtil.getParentOfType(parent, PsiMethod.class, PsiLambdaExpression.class);
+        final PsiType returnType;
+        if (container instanceof PsiMethod) {
+          returnType = ((PsiMethod)container).getReturnType();
+        } 
+        else if (container instanceof PsiLambdaExpression) {
+          returnType = LambdaUtil.getFunctionalInterfaceReturnType((PsiLambdaExpression)container);
+        }
+        else {
+          returnType = null;
+        }
+        if (isObsoleteCollectionType(returnType)) {
+          return true;
         }
       }
       else if (parent instanceof PsiAssignmentExpression) {

@@ -252,7 +252,7 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
         if (!(object instanceof PsiClass)) {
           int priority = assignPriority(lookupElement, qualifierType);
           lookupElement = JavaCompletionUtil.highlightIfNeeded(qualifierType,
-                                                               PrioritizedLookupElement.withPriority(lookupElement, priority), object);
+                                                               PrioritizedLookupElement.withPriority(lookupElement, priority), object, reference);
         }
 
         if ((object instanceof PsiMethod || object instanceof PsiField) &&

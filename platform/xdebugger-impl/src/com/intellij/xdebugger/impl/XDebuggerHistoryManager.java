@@ -51,7 +51,7 @@ public class XDebuggerHistoryManager {
       list.removeLast();
     }
 
-    XExpression trimmedExpression = new XExpressionImpl(expression.getExpression().trim(), expression.getLanguage(), expression.getCustomInfo());
+    XExpression trimmedExpression = new XExpressionImpl(expression.getExpression().trim(), expression.getLanguage(), expression.getCustomInfo(), expression.getMode());
     list.remove(trimmedExpression);
     list.addFirst(trimmedExpression);
     return true;

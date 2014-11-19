@@ -16,9 +16,9 @@
 package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.openapi.actionSystem.ex.QuickList;
+import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.keymap.KeyMapBundle;
 
 import javax.swing.*;
 
@@ -38,7 +38,7 @@ public class EditQuickListDialog extends DialogWrapper {
   }
 
   protected JComponent createCenterPanel() {
-    myPanel = new QuickListPanel(myList, myAllQuickLists, myProject);
+    myPanel = new QuickListPanel(myList, myAllQuickLists);
     return myPanel.getPanel();
   }
 

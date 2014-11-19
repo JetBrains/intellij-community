@@ -15,8 +15,6 @@
  */
 package com.intellij.openapi.components.impl.stores;
 
-import com.intellij.diagnostic.PluginException;
-import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -30,7 +28,6 @@ import com.intellij.openapi.components.store.ComponentSaveSession;
 import com.intellij.openapi.components.store.ReadOnlyModificationException;
 import com.intellij.openapi.components.store.StateStorageBase;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.ui.Messages;
@@ -121,7 +118,7 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
                                              @NotNull ExternalizationSession session) {
     T state = persistentStateComponent.getState();
     if (state != null) {
-      Storage[] storageSpecs = getComponentStorageSpecs(persistentStateComponent, StateStorageOperation.WRITE);
+      Storage[] storageSpecs = getComponentStorageSpecs(persistentStateComponent, StoreUtil.getStateSpec(persistentStateComponent), StateStorageOperation.WRITE);
       session.setState(storageSpecs, persistentStateComponent, getComponentName(persistentStateComponent), state);
     }
   }
@@ -212,7 +209,8 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
   }
 
   private <T> String initPersistentComponent(@NotNull PersistentStateComponent<T> component, @Nullable Set<StateStorage> changedStorages, boolean reloadData) {
-    String name = getStateSpec(component).name();
+    State stateSpec = StoreUtil.getStateSpec(component);
+    String name = stateSpec.name();
     if (changedStorages == null || !reloadData) {
       doAddComponent(name, component);
     }
@@ -228,7 +226,7 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
       state = defaultsStorage.getState(component, name, stateClass, null);
     }
 
-    Storage[] storageSpecs = getComponentStorageSpecs(component, StateStorageOperation.READ);
+    Storage[] storageSpecs = getComponentStorageSpecs(component, stateSpec, StateStorageOperation.READ);
     for (Storage storageSpec : storageSpecs) {
       StateStorage stateStorage = getStateStorageManager().getStateStorage(storageSpec);
       if (stateStorage != null && (stateStorage.hasState(component, name, stateClass, reloadData) ||
@@ -277,34 +275,20 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
 
   @NotNull
   public static String getComponentName(@NotNull PersistentStateComponent<?> persistentStateComponent) {
-    return getStateSpec(persistentStateComponent).name();
-  }
-
-  @NotNull
-  private static <T> State getStateSpec(@NotNull final PersistentStateComponent<T> persistentStateComponent) {
-    final Class<? extends PersistentStateComponent> aClass = persistentStateComponent.getClass();
-    final State stateSpec = aClass.getAnnotation(State.class);
-    if (stateSpec == null) {
-      final PluginId pluginId = PluginManagerCore.getPluginByClassName(aClass.getName());
-      if (pluginId != null) {
-        throw new PluginException("No @State annotation found in " + aClass, pluginId);
-      }
-      throw new RuntimeException("No @State annotation found in " + aClass);
-    }
-    return stateSpec;
+    return StoreUtil.getStateSpec(persistentStateComponent).name();
   }
 
   @NotNull
   private <T> Storage[] getComponentStorageSpecs(@NotNull PersistentStateComponent<T> persistentStateComponent,
+                                                 @NotNull State stateSpec,
                                                  @NotNull StateStorageOperation operation) {
-    final State stateSpec = getStateSpec(persistentStateComponent);
-    final Storage[] storages = stateSpec.storages();
+    Storage[] storages = stateSpec.storages();
     if (storages.length == 1) {
       return storages;
     }
     assert storages.length > 0;
 
-    final Class<? extends StateStorageChooser> storageChooserClass = stateSpec.storageChooser();
+    Class<? extends StateStorageChooser> storageChooserClass = stateSpec.storageChooser();
     if (storageChooserClass == StateStorageChooser.class) {
       StateStorageChooser<PersistentStateComponent<?>> defaultStateStorageChooser = getDefaultStateStorageChooser();
       assert defaultStateStorageChooser != null : "State chooser not specified for: " + persistentStateComponent.getClass();
@@ -375,7 +359,7 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
   public boolean isReloadPossible(@NotNull final Set<String> componentNames) {
     for (String componentName : componentNames) {
       final Object component = myComponents.get(componentName);
-      if (component != null && (!(component instanceof PersistentStateComponent) || !getStateSpec((PersistentStateComponent<?>)component).reloadable())) {
+      if (component != null && (!(component instanceof PersistentStateComponent) || !StoreUtil.getStateSpec((PersistentStateComponent<?>)component).reloadable())) {
         return false;
       }
     }
@@ -389,7 +373,7 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
     Set<String> notReloadableComponents = null;
     for (String componentName : componentNames) {
       Object component = myComponents.get(componentName);
-      if (component != null && (!(component instanceof PersistentStateComponent) || !getStateSpec((PersistentStateComponent<?>)component).reloadable())) {
+      if (component != null && (!(component instanceof PersistentStateComponent) || !StoreUtil.getStateSpec((PersistentStateComponent<?>)component).reloadable())) {
         if (notReloadableComponents == null) {
           notReloadableComponents = new LinkedHashSet<String>();
         }

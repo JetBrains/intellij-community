@@ -35,6 +35,21 @@ public class ImageSerializer {
     return baos.toByteArray();
   }
 
+  public static byte[] iconToBytesPreview(Icon icon, int maxSize) throws IOException {
+    if (icon.getIconHeight() <= maxSize && icon.getIconWidth() <= maxSize) {
+      return imageToBytes(toImage(icon));
+    }
+    return null;
+  }
+
+  public static byte[] iconToBytesPreviewNormal(Icon icon) throws IOException {
+    return iconToBytesPreview(icon, 16);
+  }
+
+  public static byte[] iconToBytesPreviewRetina(Icon icon) throws IOException {
+    return iconToBytesPreview(icon, 32);
+  }
+
   public static byte[] iconToBytes(Icon icon) throws IOException {
     return imageToBytes(toImage(icon));
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,21 +15,42 @@
  */
 package com.intellij.openapi.options;
 
+import com.intellij.openapi.util.InvalidDataException;
+import org.jdom.Document;
+import org.jdom.Element;
+import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.io.IOException;
 
 /**
  * @author yole
  */
 public abstract class BaseSchemeProcessor<T extends ExternalizableScheme> implements SchemeProcessor<T> {
+  @Override
   public void initScheme(@NotNull T scheme) {
   }
 
+  @Override
   public void onSchemeAdded(@NotNull final T scheme) {
   }
 
+  @Override
   public void onSchemeDeleted(@NotNull final T scheme) {
   }
 
+  @Override
   public void onCurrentSchemeChanged(final Scheme newCurrentScheme) {
+  }
+
+  @Nullable
+  public T readScheme(@NotNull Element element) throws InvalidDataException, IOException, JDOMException {
+    return readScheme(new Document((Element)element.detach()));
+  }
+
+  @Override
+  public T readScheme(@NotNull Document schemeContent) throws InvalidDataException, IOException, JDOMException {
+    throw new AbstractMethodError();
   }
 }

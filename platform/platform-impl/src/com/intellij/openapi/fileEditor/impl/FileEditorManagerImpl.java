@@ -25,7 +25,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -43,6 +42,7 @@ import com.intellij.openapi.fileTypes.FileTypeEvent;
 import com.intellij.openapi.fileTypes.FileTypeListener;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.preview.PreviewManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.PossiblyDumbAware;
@@ -774,10 +774,16 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
           builders[i] = ApplicationManager.getApplication().runReadAction(new Computable<AsyncFileEditorProvider.Builder>() {
             @Override
             public AsyncFileEditorProvider.Builder compute() {
+              if (myProject.isDisposed() || !file.isValid()) {
+                return null;
+              }
               LOG.assertTrue(provider.accept(myProject, file), "Provider " + provider + " doesn't accept file " + file);
               return provider instanceof AsyncFileEditorProvider ? ((AsyncFileEditorProvider)provider).createEditorAsync(myProject, file) : null;
             }
           });
+        }
+        catch (ProcessCanceledException e) {
+          throw e;
         }
         catch (Exception e) {
           LOG.error(e);
@@ -1432,7 +1438,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
               @Override
               public void run() {
 
-                LaterInvocator.invokeLater(new Runnable() {
+                ApplicationManager.getApplication().invokeLater(new Runnable() {
                   @Override
                   public void run() {
                     long currentTime = System.nanoTime();

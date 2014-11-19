@@ -112,8 +112,8 @@ class MethodRepr extends ProtoMember {
   public void updateClassUsages(final DependencyContext context, final int owner, final Set<UsageRepr.Usage> s) {
     myType.updateClassUsages(context, owner, s);
 
-    for (int i = 0; i < myArgumentTypes.length; i++) {
-      myArgumentTypes[i].updateClassUsages(context, owner, s);
+    for (final TypeRepr.AbstractType argType : myArgumentTypes) {
+      argType.updateClassUsages(context, owner, s);
     }
 
     if (myExceptions != null) {
@@ -124,17 +124,17 @@ class MethodRepr extends ProtoMember {
   }
 
   public MethodRepr(final DependencyContext context,
-                    final int a,
-                    final int n,
-                    final int s,
-                    final String d,
-                    final String[] e,
-                    final Object value) {
-    super(a, s, n, TypeRepr.getType(context, Type.getReturnType(d)), value);
+                    final int accessFlags,
+                    final int name,
+                    final int signature,
+                    final String descriptor,
+                    final String[] exceptions,
+                    final Object defaultValue) {
+    super(accessFlags, signature, name, TypeRepr.getType(context, Type.getReturnType(descriptor)), defaultValue);
     Set<TypeRepr.AbstractType> typeCollection =
-      e != null ? new THashSet<TypeRepr.AbstractType>(e.length) : Collections.<TypeRepr.AbstractType>emptySet();
-    myExceptions = (Set<TypeRepr.AbstractType>)TypeRepr.createClassType(context, e, typeCollection);
-    myArgumentTypes = TypeRepr.getType(context, Type.getArgumentTypes(d));
+      exceptions != null ? new THashSet<TypeRepr.AbstractType>(exceptions.length) : Collections.<TypeRepr.AbstractType>emptySet();
+    myExceptions = (Set<TypeRepr.AbstractType>)TypeRepr.createClassType(context, exceptions, typeCollection);
+    myArgumentTypes = TypeRepr.getType(context, Type.getArgumentTypes(descriptor));
   }
 
   public MethodRepr(final DependencyContext context, final DataInput in) {
@@ -216,7 +216,7 @@ class MethodRepr extends ProtoMember {
   }
 
   public UsageRepr.Usage createMetaUsage(final DependencyContext context, final int owner) {
-    return UsageRepr.createMetaMethodUsage(context, name, owner, getDescr(context));
+    return UsageRepr.createMetaMethodUsage(context, name, owner);
   }
 
   @Override

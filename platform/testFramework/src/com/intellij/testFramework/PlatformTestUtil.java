@@ -65,6 +65,7 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.InvocationEvent;
 import java.io.*;
+import java.lang.ref.ReferenceQueue;
 import java.lang.ref.SoftReference;
 import java.nio.charset.Charset;
 import java.text.DecimalFormat;
@@ -821,10 +822,20 @@ public class PlatformTestUtil {
   }
 
   public static void tryGcSoftlyReachableObjects() {
-    List<Object> list = ContainerUtil.newArrayList();
+    ReferenceQueue<Object> q = new ReferenceQueue<Object>();
+    SoftReference<Object> ref = new SoftReference<Object>(new Object(), q);
+    List<Object> list = ContainerUtil.newArrayListWithCapacity(100 + useReference(ref));
     for (int i = 0; i < 100; i++) {
+      if (q.poll() != null) {
+        break;
+      }
       list.add(new SoftReference<byte[]>(new byte[(int)Runtime.getRuntime().freeMemory() / 2]));
     }
+  }
+
+  private static int useReference(SoftReference<Object> ref) {
+    Object o = ref.get();
+    return o == null ? 0 : Math.abs(o.hashCode()) % 10;
   }
 
   public static void withEncoding(@NotNull String encoding, @NotNull final Runnable r) {

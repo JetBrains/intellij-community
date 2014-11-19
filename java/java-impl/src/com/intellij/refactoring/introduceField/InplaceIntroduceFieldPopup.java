@@ -86,7 +86,7 @@ public class InplaceIntroduceFieldPopup extends AbstractInplaceIntroduceFieldPop
     return ApplicationManager.getApplication().runWriteAction(new Computable<PsiField>() {
       @Override
       public PsiField compute() {
-        PsiField field = elementFactory.createField(getInputName() != null ? getInputName() : names[0], defaultType);
+        PsiField field = elementFactory.createField(chooseName(names, myParentClass.getLanguage()), defaultType);
         field = (PsiField)myParentClass.add(field);
         if (myExprText != null) {
           updateInitializer(elementFactory, field);
@@ -172,7 +172,7 @@ public class InplaceIntroduceFieldPopup extends AbstractInplaceIntroduceFieldPop
 
   @Override
   protected boolean startsOnTheSameElement(RefactoringActionHandler handler, PsiElement element) {
-    return super.startsOnTheSameElement(handler, element) && handler instanceof IntroduceFieldHandler;
+    return handler instanceof IntroduceFieldHandler && super.startsOnTheSameElement(handler, element);
   }
 
   @Override

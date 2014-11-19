@@ -28,6 +28,7 @@ import com.intellij.openapi.vcs.annotate.ShowAllAffectedGenericAction;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.history.*;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcs.history.VcsHistoryProviderEx;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
@@ -52,7 +53,7 @@ import java.util.List;
 /**
  * Git history provider implementation
  */
-public class GitHistoryProvider implements VcsHistoryProvider, VcsCacheableHistorySessionFactory<Boolean, VcsAbstractHistorySession>,
+public class GitHistoryProvider implements VcsHistoryProviderEx, VcsCacheableHistorySessionFactory<Boolean, VcsAbstractHistorySession>,
                                            VcsBaseRevisionAdviser {
   private static final Logger log = Logger.getInstance(GitHistoryProvider.class.getName());
 
@@ -137,6 +138,14 @@ public class GitHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
         return createSession(filePath, getRevisionList(), getCurrentRevisionNumber());
       }
     };
+  }
+
+  @Nullable
+  @Override
+  public VcsFileRevision getLastRevision(FilePath filePath) throws VcsException {
+    List<VcsFileRevision> history = GitHistoryUtils.history(myProject, filePath, "--max-count=1");
+    if (history == null || history.isEmpty()) return null;
+    return history.get(0);
   }
 
   @Override

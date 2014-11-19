@@ -234,15 +234,22 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
       public void run() {
         ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
         if (toolWindowManager != null) { // Can be null in tests
-          ToolWindow toolWindow =
-            toolWindowManager.registerToolWindow(ToolWindowId.VCS, true, ToolWindowAnchor.BOTTOM, myProject, true);
-          myContentManager = toolWindow.getContentManager();
-          toolWindow.setIcon(AllIcons.Toolwindows.VcsSmallTab);
-          toolWindow.installWatcher(myContentManager);
+          if (!Registry.is("vcs.merge.toolwindows")) {
+            ToolWindow toolWindow = toolWindowManager.registerToolWindow(ToolWindowId.VCS, true, ToolWindowAnchor.BOTTOM, myProject, true);
+            myContentManager = toolWindow.getContentManager();
+            toolWindow.setIcon(AllIcons.Toolwindows.VcsSmallTab);
+            toolWindow.installWatcher(myContentManager);
+          }
         }
         else {
           myContentManager = ContentFactory.SERVICE.getInstance().createContentManager(true, myProject);
         }
+      }
+    });
+
+    addInitializationRequest(VcsInitObject.AFTER_COMMON, new Runnable() {
+      @Override
+      public void run() {
         if (!ApplicationManager.getApplication().isUnitTestMode()) {
           VcsRootChecker[] checkers = Extensions.getExtensions(VcsRootChecker.EXTENSION_POINT_NAME);
           if (checkers.length != 0) {
@@ -366,6 +373,10 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   @Override
   public ContentManager getContentManager() {
+    if (myContentManager == null && Registry.is("vcs.merge.toolwindows")) {
+      final ToolWindow changes = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.VCS);
+      myContentManager = changes == null ? null : changes.getContentManager();
+    }
     return myContentManager;
   }
 

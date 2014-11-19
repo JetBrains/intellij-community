@@ -29,7 +29,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.NewExprent;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarTypeProcessor;
-import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPaar;
+import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
 import org.jetbrains.java.decompiler.modules.renamer.PoolInterceptor;
 import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.StructField;
@@ -130,13 +130,13 @@ public class ClassWriter {
                 buffer.append(", ");
               }
 
-              String parameterName = methodWrapper.varproc.getVarName(new VarVersionPaar(index, 0));
+              String parameterName = methodWrapper.varproc.getVarName(new VarVersionPair(index, 0));
               buffer.append(parameterName == null ? "param" + index : parameterName); // null iff decompiled with errors
 
               firstParameter = false;
             }
 
-            index += md_content.params[i].stack_size;
+            index += md_content.params[i].stackSize;
           }
 
           buffer.append(") ->");
@@ -440,7 +440,7 @@ public class ClassWriter {
     if (initializer != null) {
       if (isEnum && initializer.type == Exprent.EXPRENT_NEW) {
         NewExprent nexpr = (NewExprent)initializer;
-        nexpr.setEnumconst(true);
+        nexpr.setEnumConst(true);
         buffer.append(nexpr.toJava(indent, tracer));
       }
       else {
@@ -506,13 +506,13 @@ public class ClassWriter {
             buffer.append(typeName);
             buffer.append(" ");
 
-            String parameterName = methodWrapper.varproc.getVarName(new VarVersionPaar(index, 0));
+            String parameterName = methodWrapper.varproc.getVarName(new VarVersionPair(index, 0));
             buffer.append(parameterName == null ? "param" + index : parameterName); // null iff decompiled with errors
 
             firstParameter = false;
           }
 
-          index += md_content.params[i].stack_size;
+          index += md_content.params[i].stackSize;
         }
 
         buffer.append(") {").appendLineSeparator();
@@ -671,7 +671,7 @@ public class ClassWriter {
         buffer.append('(');
 
         // parameters
-        List<VarVersionPaar> signFields = methodWrapper.signatureFields;
+        List<VarVersionPair> signFields = methodWrapper.signatureFields;
 
         int lastVisibleParameterIndex = -1;
         for (int i = 0; i < md.params.length; i++) {
@@ -692,16 +692,16 @@ public class ClassWriter {
 
             appendParameterAnnotations(buffer, mt, paramCount);
 
-            if (methodWrapper.varproc.getVarFinal(new VarVersionPaar(index, 0)) == VarTypeProcessor.VAR_FINALEXPLICIT) {
+            if (methodWrapper.varproc.getVarFinal(new VarVersionPair(index, 0)) == VarTypeProcessor.VAR_EXPLICIT_FINAL) {
               buffer.append("final ");
             }
 
             if (descriptor != null) {
               GenericType parameterType = descriptor.params.get(i);
 
-              boolean isVarArg = (i == lastVisibleParameterIndex && mt.hasModifier(CodeConstants.ACC_VARARGS) && parameterType.arraydim > 0);
+              boolean isVarArg = (i == lastVisibleParameterIndex && mt.hasModifier(CodeConstants.ACC_VARARGS) && parameterType.arrayDim > 0);
               if (isVarArg) {
-                parameterType.arraydim--;
+                parameterType = parameterType.decreaseArrayDim();
               }
 
               String typeName = GenericMain.getGenericCastTypeName(parameterType);
@@ -717,11 +717,11 @@ public class ClassWriter {
               }
             }
             else {
-              VarType parameterType = md.params[i].copy();
+              VarType parameterType = md.params[i];
 
-              boolean isVarArg = (i == lastVisibleParameterIndex && mt.hasModifier(CodeConstants.ACC_VARARGS) && parameterType.arraydim > 0);
+              boolean isVarArg = (i == lastVisibleParameterIndex && mt.hasModifier(CodeConstants.ACC_VARARGS) && parameterType.arrayDim > 0);
               if (isVarArg) {
-                parameterType.decArrayDim();
+                parameterType = parameterType.decreaseArrayDim();
               }
 
               String typeName = ExprProcessor.getCastTypeName(parameterType);
@@ -738,14 +738,14 @@ public class ClassWriter {
             }
 
             buffer.append(' ');
-            String parameterName = methodWrapper.varproc.getVarName(new VarVersionPaar(index, 0));
+            String parameterName = methodWrapper.varproc.getVarName(new VarVersionPair(index, 0));
             buffer.append(parameterName == null ? "param" + index : parameterName); // null iff decompiled with errors
 
             firstParameter = false;
             paramCount++;
           }
 
-          index += md.params[i].stack_size;
+          index += md.params[i].stackSize;
         }
 
         buffer.append(')');
@@ -839,7 +839,7 @@ public class ClassWriter {
     return !hideMethod;
   }
 
-  private void mapLines(TextBuffer code, StructLineNumberTableAttribute table, BytecodeMappingTracer tracer, int startLine) {
+  private static void mapLines(TextBuffer code, StructLineNumberTableAttribute table, BytecodeMappingTracer tracer, int startLine) {
     // build line start offsets map
     HashMap<Integer, Set<Integer>> lineStartOffsets = new HashMap<Integer, Set<Integer>>();
     for (Map.Entry<Integer, Integer> entry : tracer.getMapping().entrySet()) {

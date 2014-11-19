@@ -1,24 +1,20 @@
 package org.jetbrains.plugins.ipnb.editor;
 
 import com.google.common.collect.Lists;
-import com.intellij.AppTopics;
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.structureView.StructureViewBuilder;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.*;
-import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.Navigatable;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ipnb.editor.actions.*;
 import org.jetbrains.plugins.ipnb.editor.panels.*;
 import org.jetbrains.plugins.ipnb.editor.panels.code.IpnbCodePanel;
@@ -41,15 +37,15 @@ import java.util.List;
 /**
  * @author traff
  */
-public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, TextEditor {
+public class IpnbFileEditor extends UserDataHolderBase implements FileEditor {
   private final VirtualFile myFile;
 
   private final String myName;
 
   private final JComponent myEditorPanel;
 
-  private final TextEditor myEditor;
   private final IpnbFilePanel myIpnbFilePanel;
+  private final Document myDocument;
   private ComboBox myCellTypeCombo;
   private static final String codeCellType = "Code";
   private static final String markdownCellType = "Markdown";
@@ -63,44 +59,48 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
 
 
   public IpnbFileEditor(Project project, final VirtualFile vFile) {
-    project.getMessageBus().connect(this).subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerAdapter() {
-      @Override
-      public void beforeAllDocumentsSaving() {
-        if (!new File(vFile.getPath()).exists()) return;
-        final IpnbFilePanel filePanel = myIpnbFilePanel;
-        if (filePanel != null) {
-          IpnbParser.saveIpnbFile(filePanel);
-          vFile.refresh(false, false);
-        }
-
-      }
-    });
-
+    myDocument = FileDocumentManager.getInstance().getDocument(vFile);
     project.getMessageBus().connect(this).subscribe(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER, new FileEditorManagerListener.Before.Adapter() {
       @Override
       public void beforeFileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
         if (!new File(file.getPath()).exists()) return;
+
+        if (myDocument == null) return;
+        FileDocumentManager.getInstance().saveDocument(myDocument);
         IpnbParser.saveIpnbFile(myIpnbFilePanel);
-          file.refresh(false, false);
+        file.refresh(false, false);
       }
     });
+
     myFile = vFile;
 
     myName = vFile.getName();
-
-    myEditor = createEditor(project, vFile);
 
     myEditorPanel = new JPanel(new BorderLayout());
     myEditorPanel.setBackground(IpnbEditorUtil.getBackground());
 
     myIpnbFilePanel = createIpnbEditorPanel(project, vFile);
-
+    Disposer.register(this, myIpnbFilePanel);
     final JPanel controlPanel = createControlPanel();
     myEditorPanel.add(controlPanel, BorderLayout.NORTH);
     myScrollPane = ScrollPaneFactory.createScrollPane(myIpnbFilePanel);
     myScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 
     myEditorPanel.add(myScrollPane, BorderLayout.CENTER);
+    registerHeadingActions();
+  }
+
+  public Document getDocument() {
+    return myDocument;
+  }
+
+  private void registerHeadingActions() {
+    new IpnbHeading1CellAction().registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke("ctrl shift 1")), myIpnbFilePanel);
+    new IpnbHeading2CellAction().registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke("ctrl shift 2")), myIpnbFilePanel);
+    new IpnbHeading3CellAction().registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke("ctrl shift 3")), myIpnbFilePanel);
+    new IpnbHeading4CellAction().registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke("ctrl shift 4")), myIpnbFilePanel);
+    new IpnbHeading5CellAction().registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke("ctrl shift 5")), myIpnbFilePanel);
+    new IpnbHeading6CellAction().registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke("ctrl shift 6")), myIpnbFilePanel);
   }
 
   public JScrollPane getScrollPane() {
@@ -146,7 +146,9 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
       }
     });
     final IpnbPanel selectedCell = myIpnbFilePanel.getSelectedCell();
-    updateCellTypeCombo(selectedCell);
+    if (selectedCell != null) {
+      updateCellTypeCombo(selectedCell);
+    }
     controlPanel.add(myCellTypeCombo);
     final MatteBorder border = BorderFactory.createMatteBorder(0, 0, 1, 0, JBColor.GRAY);
     controlPanel.setBorder(border);
@@ -161,8 +163,7 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
     myRunCellButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        final IpnbRunCellAction action = (IpnbRunCellAction)ActionManager.getInstance().getAction("IpnbRunCellAction");
-        action.runCell(myIpnbFilePanel, true);
+        IpnbRunCellBaseAction.runCell(myIpnbFilePanel, true);
       }
     });
     myRunCellButton.setToolTipText("Run Cell");
@@ -173,8 +174,7 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
     addButton(controlPanel, new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        final IpnbSaveAction action = (IpnbSaveAction)ActionManager.getInstance().getAction("IpnbSaveAction");
-        action.saveAndCheckpoint(IpnbFileEditor.this);
+        IpnbSaveAction.saveAndCheckpoint(IpnbFileEditor.this);
       }
     }, AllIcons.Actions.Menu_saveall, "Save and Checkpoint");
   }
@@ -183,8 +183,7 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
     addButton(controlPanel, new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        final IpnbCutCellAction action = (IpnbCutCellAction)ActionManager.getInstance().getAction("IpnbCutCellAction");
-        action.cutCell(myIpnbFilePanel);
+        IpnbCutCellAction.cutCell(myIpnbFilePanel);
       }
     }, AllIcons.Actions.Menu_cut, "Cut Cell");
   }
@@ -193,8 +192,7 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
     addButton(controlPanel, new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        final IpnbCopyCellAction action = (IpnbCopyCellAction)ActionManager.getInstance().getAction("IpnbCopyCellAction");
-        action.copyCell(myIpnbFilePanel);
+        IpnbCopyCellAction.copyCell(myIpnbFilePanel);
       }
     }, AllIcons.Actions.Copy, "Copy Cell");
   }
@@ -203,8 +201,7 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
     addButton(controlPanel, new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        final IpnbPasteCellAction action = (IpnbPasteCellAction)ActionManager.getInstance().getAction("IpnbPasteCellAction");
-        action.pasteCell(myIpnbFilePanel);
+        IpnbPasteCellAction.pasteCell(myIpnbFilePanel);
       }
     }, AllIcons.Actions.Menu_paste, "Paste Cell Below");
   }
@@ -226,8 +223,7 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
     addButton(controlPanel, new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        final IpnbAddCellAction action = (IpnbAddCellAction)ActionManager.getInstance().getAction("IpnbAddCellAction");
-        action.addCell(myIpnbFilePanel);
+        IpnbAddCellBelowAction.addCell(myIpnbFilePanel);
       }
     }, AllIcons.General.Add, "Insert Cell Below");
   }
@@ -325,7 +321,7 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
                              });
   }
 
-  private void updateCellTypeCombo(IpnbPanel ipnbPanel) {
+  private void updateCellTypeCombo(@NotNull final IpnbPanel ipnbPanel) {
     if (ipnbPanel instanceof IpnbHeadingPanel) {
       final IpnbHeadingCell cell = ((IpnbHeadingPanel)ipnbPanel).getCell();
       final int level = cell.getLevel();
@@ -366,7 +362,9 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
     final int index = getIpnbFilePanel().getSelectedIndex();
     final IpnbEditablePanel cell = getIpnbFilePanel().getSelectedCell();
     final int top = cell != null ? cell.getTop() : 0;
-    return new IpnbEditorState(-1, index, top);
+    final Document document = FileDocumentManager.getInstance().getCachedDocument(myFile);
+    long modificationStamp = document != null ? document.getModificationStamp() : myFile.getModificationStamp();
+    return new IpnbEditorState(modificationStamp, index, top);
   }
 
   @Override
@@ -419,46 +417,6 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
 
   @Override
   public void dispose() {
-    Disposer.dispose(myEditor);
-  }
-
-  @NotNull
-  @Override
-  public Editor getEditor() {
-    return myEditor.getEditor();
-  }
-
-  @Override
-  public boolean canNavigateTo(@NotNull Navigatable navigatable) {
-    return true;
-  }
-
-  @Override
-  public void navigateTo(@NotNull Navigatable navigatable) {
-  }
-
-  @Nullable
-  private static TextEditor createEditor(@NotNull Project project, @NotNull VirtualFile vFile) {
-    FileEditorProvider provider = getProvider(project, vFile);
-
-    if (provider != null) {
-      FileEditor editor = provider.createEditor(project, vFile);
-      if (editor instanceof TextEditor) {
-        return (TextEditor)editor;
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  private static FileEditorProvider getProvider(Project project, VirtualFile vFile) {
-    FileEditorProvider[] providers = FileEditorProviderManager.getInstance().getProviders(project, vFile);
-    for (FileEditorProvider provider : providers) {
-      if (!(provider instanceof IpnbEditorProvider)) {
-        return provider;
-      }
-    }
-    return null;
   }
 
   public abstract static class CellSelectionListener {

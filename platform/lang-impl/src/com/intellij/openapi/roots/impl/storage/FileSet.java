@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,22 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.openapi.roots.impl.storage;
 
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.io.fs.IFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.List;
 
 public interface FileSet {
-  void listFiles(List<VirtualFile> list);
+  void listFiles(@NotNull List<VirtualFile> list);
 
   boolean hasChanged();
 
   void commit() throws IOException;
-
-  void listModifiedFiles(List<VirtualFile> list);
 }

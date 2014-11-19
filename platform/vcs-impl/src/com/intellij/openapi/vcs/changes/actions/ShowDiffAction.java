@@ -21,13 +21,17 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.*;
 import com.intellij.openapi.diff.impl.external.BinaryDiffTool;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsDataKeys;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.BeforeAfter;
@@ -42,6 +46,8 @@ import java.util.*;
  * @author max
  */
 public class ShowDiffAction extends AnAction implements DumbAware {
+  private static final Logger LOG = Logger.getInstance(ShowDiffAction.class);
+
   private static final String ourText = ActionsBundle.actionText("ChangesView.Diff");
 
   public ShowDiffAction() {
@@ -238,6 +244,7 @@ public class ShowDiffAction extends AnAction implements DumbAware {
     }
     catch (VcsException e) {
       Messages.showWarningDialog(e.getMessage(), "Show Diff");
+      LOG.info(e);
     }
   }
 
@@ -274,6 +281,7 @@ public class ShowDiffAction extends AnAction implements DumbAware {
     }
     catch (VcsException e) {
       Messages.showWarningDialog(e.getMessage(), "Show Diff");
+      LOG.info(e);
       return;
     }
 

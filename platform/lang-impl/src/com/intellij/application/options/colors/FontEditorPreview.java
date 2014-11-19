@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ public class FontEditorPreview implements PreviewPanel{
 
   private final EventDispatcher<ColorAndFontSettingsListener> myDispatcher = EventDispatcher.create(ColorAndFontSettingsListener.class);
 
-  public FontEditorPreview(final ColorAndFontOptions options, boolean editable) {
+  FontEditorPreview(final ColorAndFontOptions options, boolean editable) {
     myOptions = options;
 
     @Nls String text = getIDEDemoText();
@@ -65,9 +65,10 @@ public class FontEditorPreview implements PreviewPanel{
   }
 
   static void installTrafficLights(@NotNull EditorEx editor) {
-    TrafficLightRenderer renderer = new TrafficLightRenderer(null, null,null){
+    TrafficLightRenderer renderer = new TrafficLightRenderer(null, null,null) {
+      @NotNull
       @Override
-      protected DaemonCodeAnalyzerStatus getDaemonCodeAnalyzerStatus(boolean fillErrorsCount, SeverityRegistrar severityRegistrar) {
+      protected DaemonCodeAnalyzerStatus getDaemonCodeAnalyzerStatus(@NotNull SeverityRegistrar severityRegistrar) {
         DaemonCodeAnalyzerStatus status = new DaemonCodeAnalyzerStatus();
         status.errorAnalyzingFinished = true;
         status.errorCount = new int[]{1, 2};

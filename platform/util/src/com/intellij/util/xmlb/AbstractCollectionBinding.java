@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.util.xmlb;
 
 import com.intellij.util.SmartList;
@@ -29,19 +28,24 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-abstract class AbstractCollectionBinding implements Binding {
+abstract class AbstractCollectionBinding extends Binding implements MultiNodeBinding {
   private Map<Class, Binding> myElementBindings;
 
   private final Class myElementType;
   private final String myTagName;
-  @Nullable protected final Accessor myAccessor;
   private final AbstractCollection myAnnotation;
 
   public AbstractCollectionBinding(Class elementType, String tagName, @Nullable Accessor accessor) {
+    super(accessor);
+
     myElementType = elementType;
     myTagName = tagName;
-    myAccessor = accessor;
     myAnnotation = accessor == null ? null : accessor.getAnnotation(AbstractCollection.class);
+  }
+
+  @Override
+  public boolean isMulti() {
+    return true;
   }
 
   @Override
@@ -63,7 +67,7 @@ abstract class AbstractCollectionBinding implements Binding {
     }
   }
 
-  protected Binding getElementBinding(Class<?> elementClass) {
+  protected Binding getElementBinding(@NotNull Class<?> elementClass) {
     final Binding binding = getElementBindings().get(elementClass);
     return binding == null ? XmlSerializerImpl.getBinding(elementClass) : binding;
   }
@@ -89,8 +93,9 @@ abstract class AbstractCollectionBinding implements Binding {
     throw new XmlSerializationException("Node " + node + " is not bound");
   }
 
-  private Binding getBinding(final Class type) {
+  private Binding getBinding(@NotNull Class type) {
     Binding binding = XmlSerializerImpl.getBinding(type);
+    //noinspection unchecked
     return binding.getBoundNodeType().isAssignableFrom(Element.class) ? binding : createElementTagWrapper(binding);
   }
 
@@ -142,12 +147,13 @@ abstract class AbstractCollectionBinding implements Binding {
     }
   }
 
+  @Nullable
   @Override
-  public Object deserialize(Object o, @NotNull Object... nodes) {
+  public Object deserializeList(Object context, @NotNull List<?> nodes) {
     Collection result;
-    if (getTagName(o) == null) {
-      if (o instanceof Collection) {
-        result = (Collection)o;
+    if (getTagName(context) == null) {
+      if (context instanceof Collection) {
+        result = (Collection)context;
         result.clear();
       }
       else {
@@ -156,26 +162,57 @@ abstract class AbstractCollectionBinding implements Binding {
       for (Object node : nodes) {
         if (!XmlSerializerImpl.isIgnoredNode(node)) {
           //noinspection unchecked
-          result.add(getElementBinding(node).deserialize(o, node));
+          result.add(getElementBinding(node).deserialize(context, node));
         }
       }
 
-      if (result == o) {
+      if (result == context) {
         return result;
       }
     }
     else {
-      assert nodes.length == 1;
-      Element e = (Element)nodes[0];
-      result = createCollection(e.getName());
-      for (Content child : e.getContent()) {
-        if (!XmlSerializerImpl.isIgnoredNode(child)) {
-          //noinspection unchecked
-          result.add(getElementBinding(child).deserialize(o, child));
-        }
+      assert nodes.size() == 1;
+      result = processSingle(context, (Element)nodes.get(0));
+    }
+    return processResult(result, context);
+  }
+
+  @Override
+  public Object deserialize(Object context, @NotNull Object node) {
+    Collection result;
+    if (getTagName(context) == null) {
+      if (context instanceof Collection) {
+        result = (Collection)context;
+        result.clear();
+      }
+      else {
+        result = new SmartList();
+      }
+      if (!XmlSerializerImpl.isIgnoredNode(node)) {
+        //noinspection unchecked
+        result.add(getElementBinding(node).deserialize(context, node));
+      }
+
+      if (result == context) {
+        return result;
       }
     }
-    return processResult(result, o);
+    else {
+      result = processSingle(context, (Element)node);
+    }
+    return processResult(result, context);
+  }
+
+  @NotNull
+  private Collection processSingle(Object context, @NotNull Element node) {
+    Collection result = createCollection(node.getName());
+    for (Content child : node.getContent()) {
+      if (!XmlSerializerImpl.isIgnoredNode(child)) {
+        //noinspection unchecked
+        result.add(getElementBinding(child).deserialize(context, child));
+      }
+    }
+    return result;
   }
 
   protected Collection createCollection(@NotNull String tagName) {

@@ -86,7 +86,7 @@ public class JavaEditorTextProviderImpl implements EditorTextProvider {
   public Pair<PsiElement, TextRange> findExpression(PsiElement element, boolean allowMethodCalls) {
     PsiElement expression = null;
     PsiElement parent = element.getParent();
-    if (parent instanceof PsiLiteralExpression) {
+    if (parent instanceof PsiLiteralExpression || parent instanceof PsiLambdaExpression) {
       element = parent;
       parent = parent.getParent();
     }
@@ -95,7 +95,7 @@ public class JavaEditorTextProviderImpl implements EditorTextProvider {
     }
     else if (parent instanceof PsiReferenceExpression) {
       final PsiElement pparent = parent.getParent();
-      if (pparent instanceof PsiCallExpression) {
+      if (parent instanceof PsiMethodReferenceExpression || pparent instanceof PsiCallExpression) {
         parent = pparent;
       }
       else if (pparent instanceof PsiReferenceExpression) {
@@ -111,16 +111,32 @@ public class JavaEditorTextProviderImpl implements EditorTextProvider {
     else if (parent instanceof PsiThisExpression) {
       expression = parent;
     }
+    else if (parent instanceof PsiArrayInitializerExpression) {
+      if (allowMethodCalls) {
+        PsiNewExpression newExpr = PsiTreeUtil.getParentOfType(element, PsiNewExpression.class);
+        if (newExpr != null) {
+          expression = newExpr;
+        }
+      }
+    }
     else if (parent instanceof PsiExpression && !(parent instanceof PsiNewExpression)) {
       if (allowMethodCalls || !DebuggerUtils.hasSideEffects(parent)) {
         expression = parent;
       }
     }
-    else if (allowMethodCalls) {
-      PsiElement e = PsiTreeUtil.getParentOfType(element, PsiVariable.class, PsiExpression.class, PsiMethod.class);
-      if (e instanceof PsiNewExpression) {
-        if (((PsiNewExpression)e).getAnonymousClass() == null) {
-          expression = e;
+    else {
+      PsiElement castExpr = PsiTreeUtil.getParentOfType(element, PsiTypeCastExpression.class);
+      if (castExpr != null) {
+        if (allowMethodCalls || !DebuggerUtils.hasSideEffects(castExpr)) {
+          expression = castExpr;
+        }
+      }
+      else if (allowMethodCalls) {
+        PsiElement e = PsiTreeUtil.getParentOfType(element, PsiVariable.class, PsiExpression.class, PsiMethod.class);
+        if (e instanceof PsiNewExpression) {
+          if (((PsiNewExpression)e).getAnonymousClass() == null) {
+            expression = e;
+          }
         }
       }
     }

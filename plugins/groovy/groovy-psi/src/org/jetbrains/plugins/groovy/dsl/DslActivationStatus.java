@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.dsl;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -29,16 +28,14 @@ import java.util.Map;
 
 @State(
   name = "DslActivationStatus",
-  storages = {
-    @Storage(file = StoragePathMacros.APP_CONFIG + "/dslActivation.xml")
-  }
+  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/dslActivation.xml", roamingType = RoamingType.DISABLED)
 )
-public class DslActivationStatus implements ApplicationComponent, PersistentStateComponent<Element> {
+public class DslActivationStatus implements PersistentStateComponent<Element> {
   private final Map<VirtualFile, String> myStatus = new THashMap<VirtualFile, String>();
   private static final String ENABLED = "enabled";
 
   public static DslActivationStatus getInstance() {
-    return ApplicationManager.getApplication().getComponent(DslActivationStatus.class);
+    return ServiceManager.getService(DslActivationStatus.class);
   }
 
   public void activateUntilModification(@NotNull VirtualFile vfile) {
@@ -57,12 +54,6 @@ public class DslActivationStatus implements ApplicationComponent, PersistentStat
 
   public boolean isActivated(VirtualFile file) {
     return myStatus.get(file) == ENABLED;
-  }
-
-  @NotNull
-  @Override
-  public String getComponentName() {
-    return "DslActivationStatus";
   }
 
   @Nullable
@@ -91,15 +82,5 @@ public class DslActivationStatus implements ApplicationComponent, PersistentStat
         myStatus.put(file, status);
       }
     }
-  }
-
-  @Override
-  public void initComponent() {
-
-  }
-
-  @Override
-  public void disposeComponent() {
-
   }
 }

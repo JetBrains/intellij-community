@@ -16,11 +16,8 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.DaemonBundle;
-import com.intellij.ide.PowerSaveMode;
-import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -32,10 +29,7 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.VerticalBox;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.containers.HashMap;
-import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.ui.AwtVisitor;
-import com.intellij.xml.util.XmlStringUtil;
-import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,17 +41,15 @@ import java.util.Map;
 /**
  * User: cdr
  */
-public class TrafficProgressPanel extends JPanel {
-  private static final int MAX = 100;
-  private static final String MAX_TEXT = "100%";
+class TrafficProgressPanel extends JPanel {
+  static final String MAX_TEXT = "100%";
   private static final String MIN_TEXT = "0%";
 
   private final JLabel statistics = new JLabel();
-  private final Map<ProgressableTextEditorHighlightingPass, Pair<JProgressBar, JLabel>> passes = new LinkedHashMap<ProgressableTextEditorHighlightingPass, Pair<JProgressBar, JLabel>>();
   private final Map<JProgressBar, JLabel> myProgressToText = new HashMap<JProgressBar, JLabel>();
 
   private final JLabel statusLabel = new JLabel();
-  private final JLabel dumbLabel = new JLabel("Complete results will be available after indexing");
+  private final JLabel statusExtraLineLabel = new JLabel();
   @NotNull private final TrafficLightRenderer myTrafficLightRenderer;
 
   private final JPanel myPassStatuses = new JPanel();
@@ -66,17 +58,17 @@ public class TrafficProgressPanel extends JPanel {
 
   @NotNull private final HintHint myHintHint;
 
-  public TrafficProgressPanel(@NotNull TrafficLightRenderer trafficLightRenderer, @NotNull Editor editor, @NotNull HintHint hintHint) {
+  TrafficProgressPanel(@NotNull TrafficLightRenderer trafficLightRenderer, @NotNull Editor editor, @NotNull HintHint hintHint) {
     myHintHint = hintHint;
     myTrafficLightRenderer = trafficLightRenderer;
 
     setLayout(new BorderLayout());
 
     VerticalBox center = new VerticalBox();
-    add(center, BorderLayout.NORTH);
 
+    add(center, BorderLayout.NORTH);
     center.add(statusLabel);
-    center.add(dumbLabel);
+    center.add(statusExtraLineLabel);
     center.add(new Separator());
     center.add(Box.createVerticalStrut(6));
 
@@ -98,19 +90,46 @@ public class TrafficProgressPanel extends JPanel {
           }
         });
     }
-    rebuildPassesPanel(fakeStatusLargeEnough);
-    for (Pair<JProgressBar, JLabel> pair : passes.values()) {
-      JProgressBar bar = pair.first;
-      bar.setMaximum(MAX);
-      JLabel label = pair.second;
-      label.setText(MAX_TEXT);
-    }
     center.add(myPassStatusesContainer);
 
     add(statistics, BorderLayout.SOUTH);
     updatePanel(fakeStatusLargeEnough, true);
 
     hintHint.initStyle(this, true);
+    statusLabel.setFont(statusLabel.getFont().deriveFont(Font.BOLD));
+  }
+
+  int getMinWidth() {
+    return Math.max(Math.max(Math.max(getLabelMinWidth(statistics), getLabelMinWidth(statusExtraLineLabel)), getLabelMinWidth(statusLabel)), getLabelMinWidth(new JLabel("<html><b>Slow inspections progress report long line</b></html>")));
+  }
+
+  private int getLabelMinWidth(@NotNull JLabel label) {
+    String text = label.getText();
+    Icon icon = label.isEnabled() ? label.getIcon() : label.getDisabledIcon();
+
+    if ((icon == null) && (StringUtil.isEmpty(text))) {
+      return 0;
+    }
+
+    Rectangle paintIconR = new Rectangle();
+    Rectangle paintTextR = new Rectangle();
+    Rectangle paintViewR = new Rectangle(10000, 10000);
+
+    SwingUtilities.layoutCompoundLabel(
+      label,
+      getFontMetrics(getFont()),
+      text,
+      icon,
+      label.getVerticalAlignment(),
+      label.getHorizontalAlignment(),
+      label.getVerticalTextPosition(),
+      label.getHorizontalTextPosition(),
+      paintViewR,
+      paintIconR,
+      paintTextR,
+      label.getIconTextGap());
+
+    return paintTextR.width;
   }
 
   private class Separator extends NonOpaquePanel {
@@ -137,115 +156,37 @@ public class TrafficProgressPanel extends JPanel {
     }
   }
 
-  private void rebuildPassesPanel(@Nullable TrafficLightRenderer.DaemonCodeAnalyzerStatus status) {
-    myPassStatuses.removeAll();
-    myPassStatuses.setLayout(new GridBagLayout());
-    passes.clear();
-    GridBagConstraints c = new GridBagConstraints();
-    c.gridy = 0;
-    c.fill = GridBagConstraints.HORIZONTAL;
-    if (status != null) {
-      for (ProgressableTextEditorHighlightingPass pass : status.passStati) {
-        JLabel label = new JLabel(pass.getPresentableName() + ": ");
-        label.setHorizontalTextPosition(SwingConstants.RIGHT);
-
-        JProgressBar progressBar = new JProgressBar(0, MAX);
-        progressBar.putClientProperty("JComponent.sizeVariant", "mini");
-        JLabel percLabel = new JLabel();
-        passes.put(pass, Pair.create(progressBar, percLabel));
-        myProgressToText.put(progressBar, percLabel);
-        c.gridx = 0;
-        myPassStatuses.add(label, c);
-        c.gridx = 1;
-        myPassStatuses.add(progressBar, c);
-        c.gridx = 2;
-        c.weightx = 1;
-        myPassStatuses.add(percLabel, c);
-
-        c.gridy++;
-      }
-    }
-
-    myHintHint.initStyle(myPassStatuses, true);
-    statusLabel.setFont(statusLabel.getFont().deriveFont(Font.BOLD));
-  }
-
-  public void updatePanel(@Nullable TrafficLightRenderer.DaemonCodeAnalyzerStatus status, boolean isFake) {
-    boolean isDumb = DumbService.isDumb(myTrafficLightRenderer.getProject());
-    dumbLabel.setVisible(isDumb);
+  void updatePanel(@NotNull TrafficLightRenderer.DaemonCodeAnalyzerStatus status, boolean isFake) {
     try {
-      if (PowerSaveMode.isEnabled()) {
-        statusLabel.setText("Code analysis is disabled in power save mode");
-        myPassStatuses.setVisible(false);
-        statistics.setText("");
-      }
-      else if (status == null || status.noHighlightingRoots != null && status.noHighlightingRoots.length == status.rootsNumber) {
-        statusLabel.setText(DaemonBundle.message("analysis.hasnot.been.run"));
-        myPassStatuses.setVisible(true);
-        setPassesEnabled(false, Boolean.FALSE);
-        statistics.setText("");
-      }
-      else if (status.errorAnalyzingFinished) {
-        if (isDumb) {
-          statusLabel.setText("Shallow analysis completed");
-        }
-        else {
-          statusLabel.setText(DaemonBundle.message("analysis.completed"));
-        }
-        myPassStatuses.setVisible(true);
-        setPassesEnabled(false, Boolean.TRUE);
-      }
-      else if (!status.enabled) {
-        statusLabel.setText("Code analysis has been suspended");
-        myPassStatuses.setVisible(true);
-        setPassesEnabled(false, Boolean.FALSE);
-        statistics.setText("");
+      boolean needRebuild = myTrafficLightRenderer.updatePanel(status, myTrafficLightRenderer.getProject());
+      statusLabel.setText(myTrafficLightRenderer.statusLabel);
+      if (myTrafficLightRenderer.statusExtraLine == null) {
+        statusExtraLineLabel.setVisible(false);
       }
       else {
-        statusLabel.setText(DaemonBundle.message("performing.code.analysis"));
-        myPassStatuses.setVisible(true);
-        setPassesEnabled(true, null);
+        statusExtraLineLabel.setText(myTrafficLightRenderer.statusExtraLine);
+        statusExtraLineLabel.setVisible(true);
       }
+      myPassStatuses.setVisible(myTrafficLightRenderer.passStatusesVisible);
+      statistics.setText(myTrafficLightRenderer.statistics);
+      resetProgressBars(myTrafficLightRenderer.progressBarsEnabled, myTrafficLightRenderer.progressBarsCompleted);
 
-
-      if (status == null ||
-          !status.passStati.equals(new ArrayList<ProgressableTextEditorHighlightingPass>(passes.keySet()))) {
+      if (needRebuild) {
         // passes set has changed
-        rebuildPassesPanel(status);
+        rebuildPassesProgress(status);
       }
 
-      if (status != null) {
-        for (ProgressableTextEditorHighlightingPass pass : status.passStati) {
-          double progress = pass.getProgress();
-          Pair<JProgressBar, JLabel> pair = passes.get(pass);
-          JProgressBar progressBar = pair.first;
-          int percent = (int)Math.round(progress * MAX);
-          progressBar.setValue(percent);
-          JLabel percentage = pair.second;
-          percentage.setText(percent + "%");
+      for (ProgressableTextEditorHighlightingPass pass : status.passStati) {
+        double progress = pass.getProgress();
+        Pair<JProgressBar, JLabel> pair = myTrafficLightRenderer.passes.get(pass);
+        JProgressBar progressBar = pair.first;
+        int percent = (int)Math.round(progress * TrafficLightRenderer.MAX);
+        if (percent == 100 && !pass.isFinished()) {
+          percent = 99;
         }
-
-        int currentSeverityErrors = 0;
-        @Language("HTML")
-        String text = "";
-        for (int i = status.errorCount.length - 1; i >= 0; i--) {
-          if (status.errorCount[i] > 0) {
-            final HighlightSeverity severity = SeverityRegistrar.getSeverityRegistrar(myTrafficLightRenderer.getProject()).getSeverityByIndex(i);
-            String name =
-              status.errorCount[i] > 1 ? StringUtil.pluralize(severity.getName().toLowerCase()) : severity.getName().toLowerCase();
-            text += status.errorAnalyzingFinished
-                    ? DaemonBundle.message("errors.found", status.errorCount[i], name)
-                    : DaemonBundle.message("errors.found.so.far", status.errorCount[i], name);
-            text += "<br>";
-            currentSeverityErrors += status.errorCount[i];
-          }
-        }
-        if (currentSeverityErrors == 0) {
-          text += status.errorAnalyzingFinished
-                  ? DaemonBundle.message("no.errors.or.warnings.found")
-                  : DaemonBundle.message("no.errors.or.warnings.found.so.far") + "<br>";
-        }
-        statistics.setText(XmlStringUtil.wrapInHtml(text));
+        progressBar.setValue(percent);
+        JLabel percentage = pair.second;
+        percentage.setText(percent + "%");
       }
     }
     finally {
@@ -259,7 +200,7 @@ public class TrafficProgressPanel extends JPanel {
     }
   }
 
-  private void setPassesEnabled(final boolean enabled, @Nullable final Boolean completed) {
+  private void resetProgressBars(final boolean enabled, @Nullable final Boolean completed) {
     new AwtVisitor(myPassStatuses) {
       @Override
       public boolean visit(Component component) {
@@ -268,7 +209,7 @@ public class TrafficProgressPanel extends JPanel {
           progress.setEnabled(enabled);
           if (completed != null) {
             if (completed) {
-              progress.setValue(MAX);
+              progress.setValue(TrafficLightRenderer.MAX);
               myProgressToText.get(progress).setText(MAX_TEXT);
             }
             else {
@@ -280,5 +221,34 @@ public class TrafficProgressPanel extends JPanel {
         return false;
       }
     };
+  }
+
+  private void rebuildPassesProgress(@NotNull TrafficLightRenderer.DaemonCodeAnalyzerStatus status) {
+    myPassStatuses.removeAll();
+    myPassStatuses.setLayout(new GridBagLayout());
+    GridBagConstraints c = new GridBagConstraints();
+    c.gridy = 0;
+    c.fill = GridBagConstraints.HORIZONTAL;
+    for (ProgressableTextEditorHighlightingPass pass : status.passStati) {
+      JLabel label = new JLabel(pass.getPresentableName() + ": ");
+      label.setHorizontalTextPosition(SwingConstants.RIGHT);
+
+      Pair<JProgressBar, JLabel> pair = myTrafficLightRenderer.passes.get(pass);
+      JProgressBar progressBar = pair.getFirst();
+      progressBar.putClientProperty("JComponent.sizeVariant", "mini");
+      JLabel percLabel = pair.getSecond();
+      myProgressToText.put(progressBar, percLabel);
+      c.gridx = 0;
+      myPassStatuses.add(label, c);
+      c.gridx = 1;
+      myPassStatuses.add(progressBar, c);
+      c.gridx = 2;
+      c.weightx = 1;
+      myPassStatuses.add(percLabel, c);
+
+      c.gridy++;
+    }
+
+    myHintHint.initStyle(myPassStatuses, true);
   }
 }

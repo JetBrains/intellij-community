@@ -114,6 +114,7 @@ public class RegExpHighlighter extends SyntaxHighlighterBase {
         keys1.put(RegExpTT.BOUNDARY, ESC_CHARACTER);
         keys1.put(RegExpTT.CTRL, ESC_CHARACTER);
         keys1.put(RegExpTT.ESC_CTRL_CHARACTER, ESC_CHARACTER);
+        keys1.put(RegExpTT.CATEGORY_SHORT_HAND, ESC_CHARACTER);
 
         keys1.put(RegExpTT.REDUNDANT_ESCAPE, REDUNDANT_ESCAPE);
 

@@ -22,6 +22,8 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitBranch;
 import git4idea.GitRemoteBranch;
 import git4idea.GitUtil;
@@ -170,11 +172,13 @@ public class GitPullDialog extends DialogWrapper {
     String currentRemoteBranch = trackInfo == null ? null : trackInfo.getRemoteBranch().getNameForLocalOperations();
     List<GitRemoteBranch> remoteBranches = new ArrayList<GitRemoteBranch>(repository.getBranches().getRemoteBranches());
     Collections.sort(remoteBranches);
-    for (GitBranch remoteBranch : remoteBranches) {
-      if (belongsToRemote(remoteBranch, selectedRemote)) {
-        myBranchChooser.addElement(remoteBranch.getName(), remoteBranch.getName().equals(currentRemoteBranch));
+    myBranchChooser.setElements(ContainerUtil.map(remoteBranches, new Function<GitRemoteBranch, String>() {
+      @Override
+      public String fun(GitRemoteBranch branch) {
+        return branch.getName();
       }
-    }
+    }), false);
+    myBranchChooser.setElementMarked(currentRemoteBranch, true);
 
     validateDialog();
   }

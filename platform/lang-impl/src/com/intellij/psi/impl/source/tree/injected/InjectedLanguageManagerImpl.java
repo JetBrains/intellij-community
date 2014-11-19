@@ -113,6 +113,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
 
   @Override
   public void dispose() {
+    myProgress.cancel();
     EditorWindowImpl.disposeInvalidEditors();
   }
 
@@ -226,6 +227,14 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
   // used only from tests => no need for complex synchronization
   private final Set<MultiHostInjector> myManualInjectors = Collections.synchronizedSet(new LinkedHashSet<MultiHostInjector>());  
   private volatile ClassMapCachingNulls<MultiHostInjector> cachedInjectors;
+
+  public void processInjectableElements(Collection<PsiElement> in, Processor<PsiElement> processor) {
+    ClassMapCachingNulls<MultiHostInjector> map = getInjectorMap();
+    for (PsiElement element : in) {
+      if (map.get(element.getClass()) != null)
+        processor.process(element);
+    }
+  }
 
   private ClassMapCachingNulls<MultiHostInjector> getInjectorMap() {
     ClassMapCachingNulls<MultiHostInjector> cached = cachedInjectors;

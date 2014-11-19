@@ -35,6 +35,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.ZipUtil;
@@ -80,10 +81,10 @@ public class ImportSettingsAction extends AnAction implements DumbAware {
         return;
       }
 
-      MultiMap<File, ExportableComponent> filesToComponents = ExportSettingsAction.getExportableComponentsMap(false);
-      List<ExportableComponent> components = getComponentsStored(saveFile, filesToComponents.values());
-      filesToComponents.values().retainAll(components);
-      final ChooseComponentsToExportDialog dialog = new ChooseComponentsToExportDialog(filesToComponents, false,
+      MultiMap<File, ExportableComponent> fileToComponents = ExportSettingsAction.getExportableComponentsMap(false, true);
+      List<ExportableComponent> components = getComponentsStored(saveFile, fileToComponents.values());
+      fileToComponents.values().retainAll(components);
+      final ChooseComponentsToExportDialog dialog = new ChooseComponentsToExportDialog(fileToComponents, false,
                                                                                        IdeBundle.message("title.select.components.to.import"),
                                                                                        IdeBundle.message("prompt.check.components.to.import"));
       if (!dialog.showAndGet()) {
@@ -150,13 +151,13 @@ public class ImportSettingsAction extends AnAction implements DumbAware {
   @NotNull
   private static List<ExportableComponent> getComponentsStored(@NotNull File zipFile,
                                                                @NotNull Collection<? extends ExportableComponent> registeredComponents) throws IOException {
-    final File configPath = new File(PathManager.getConfigPath());
-    final ArrayList<ExportableComponent> components = new ArrayList<ExportableComponent>();
+    File configPath = new File(PathManager.getConfigPath());
+    List<ExportableComponent> components = new ArrayList<ExportableComponent>();
     for (ExportableComponent component : registeredComponents) {
       for (File exportFile : component.getExportFiles()) {
-        final String rPath = FileUtil.getRelativePath(configPath, exportFile);
+        String rPath = FileUtilRt.getRelativePath(configPath, exportFile);
         assert rPath != null;
-        String relativePath = FileUtil.toSystemIndependentName(rPath);
+        String relativePath = FileUtilRt.toSystemIndependentName(rPath);
         if (exportFile.isDirectory()) {
           relativePath += '/';
         }

@@ -1,15 +1,15 @@
 package org.jetbrains.debugger;
 
-import com.intellij.openapi.util.ActionCallback;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
 
 import java.util.EventListener;
 
 public interface BreakpointManager {
   Breakpoint setBreakpoint(@NotNull BreakpointTarget target, int line, int column, @Nullable String condition, int ignoreCount, boolean enabled);
 
-  ActionCallback remove(@NotNull Breakpoint breakpoint);
+  Promise<Void> remove(@NotNull Breakpoint breakpoint);
 
   @Nullable
   FunctionSupport getFunctionSupport();
@@ -23,7 +23,7 @@ public interface BreakpointManager {
   Iterable<? extends Breakpoint> getBreakpoints();
 
   @NotNull
-  ActionCallback removeAll();
+  Promise<Void> removeAll();
 
   interface BreakpointListener extends EventListener {
     void resolved(@NotNull Breakpoint breakpoint);

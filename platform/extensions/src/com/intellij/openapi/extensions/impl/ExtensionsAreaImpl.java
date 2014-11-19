@@ -16,7 +16,7 @@
 package com.intellij.openapi.extensions.impl;
 
 import com.intellij.openapi.extensions.*;
-import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.pico.ConstructorInjectionComponentAdapter;
 import gnu.trove.THashMap;
@@ -46,7 +46,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
 
   private final AreaPicoContainerImpl myPicoContainer;
   private final Throwable myCreationTrace;
-  private final Map<String,ExtensionPointImpl> myExtensionPoints = new ConcurrentHashMap<String, ExtensionPointImpl>();
+  private final Map<String, ExtensionPointImpl> myExtensionPoints = ContainerUtil.newConcurrentMap();
   private final Map<String,Throwable> myEPTraces = DEBUG_REGISTRATION ? new THashMap<String, Throwable>():null;
   private final MultiMap<String, ExtensionPointAvailabilityListener> myAvailabilityListeners = new MultiMap<String, ExtensionPointAvailabilityListener>();
   private final List<Runnable> mySuspendedListenerActions = new ArrayList<Runnable>();

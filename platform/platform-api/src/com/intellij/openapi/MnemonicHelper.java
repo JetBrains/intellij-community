@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi;
 
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
@@ -25,10 +26,13 @@ import com.intellij.util.ui.DialogUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
+import javax.swing.text.JTextComponent;
 import java.awt.*;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -65,28 +69,48 @@ public class MnemonicHelper extends ComponentTreeWatcher {
       abstractButton.addPropertyChangeListener(AbstractButton.TEXT_CHANGED_PROPERTY, TEXT_LISTENER);
       DialogUtil.registerMnemonic(abstractButton);
       checkForDuplicateMnemonics(abstractButton);
+      fixMacMnemonicKeyStroke(abstractButton, null);
+    } else if (parentComponent instanceof JTextComponent) {
+      if (SystemInfo.isMac) {
+        parentComponent.enableInputMethods(UISettings.getShadowInstance().DISABLE_MNEMONICS_IN_CONTROLS);
+      }
     } else if (parentComponent instanceof JLabel) {
       final JLabel jLabel = ((JLabel)parentComponent);
       jLabel.addPropertyChangeListener(TEXT_CHANGED_PROPERTY, TEXT_LISTENER);
       DialogUtil.registerMnemonic(jLabel, null);
       checkForDuplicateMnemonics(jLabel);
-      if (SystemInfo.isMac) {
-        // hack to make Labels mnemonic work for ALT+KEY_CODE on Macs.
-        // Default implementation uses ALT+CTRL+KEY_CODE (see BasicLabelUI).
-        final InputMap inputMap = jLabel.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
-        if (inputMap != null) {
-          final KeyStroke[] strokes = inputMap.allKeys();
-          if (strokes != null) {
-            for (KeyStroke stroke : strokes) {
-              final int m = stroke.getModifiers();
-              // to be sure if default mnemonic exist
-              if (((m & KeyEvent.ALT_MASK) == KeyEvent.ALT_MASK) && ((m & KeyEvent.CTRL_MASK) == KeyEvent.CTRL_MASK)) {
-                inputMap.put(KeyStroke.getKeyStroke(stroke.getKeyCode(), KeyEvent.ALT_MASK), "release"); // "release" only is OK
-              }
+      fixMacMnemonicKeyStroke(jLabel, "release"); // "release" only is OK for labels
+    }
+  }
+
+  private static void fixMacMnemonicKeyStroke(JComponent component, String type) {
+    if (SystemInfo.isMac) {
+      // hack to make component's mnemonic work for ALT+KEY_CODE on Macs.
+      // Default implementation uses ALT+CTRL+KEY_CODE (see BasicLabelUI).
+      InputMap inputMap = component.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+      if (inputMap != null) {
+        KeyStroke[] strokes = inputMap.allKeys();
+        if (strokes != null) {
+          int mask = KeyEvent.ALT_MASK | KeyEvent.CTRL_MASK;
+          for (KeyStroke stroke : strokes) {
+            if (mask == (mask & stroke.getModifiers())) {
+              inputMap.put(getKeyStrokeWithoutCtrlModifier(stroke), type != null ? type : inputMap.get(stroke));
             }
           }
         }
       }
+    }
+  }
+
+  private static KeyStroke getKeyStrokeWithoutCtrlModifier(KeyStroke stroke) {
+    try {
+      Method method = AWTKeyStroke.class.getDeclaredMethod("getCachedStroke", char.class, int.class, int.class, boolean.class);
+      method.setAccessible(true);
+      int modifiers = stroke.getModifiers() & ~InputEvent.CTRL_MASK & ~InputEvent.CTRL_DOWN_MASK;
+      return (KeyStroke)method.invoke(null, stroke.getKeyChar(), stroke.getKeyCode(), modifiers, stroke.isOnKeyRelease());
+    }
+    catch (Exception exception) {
+      throw new IllegalStateException(exception);
     }
   }
 

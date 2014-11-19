@@ -18,6 +18,7 @@ package org.jetbrains.idea.svn.commandLine;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -51,7 +52,7 @@ public class CommandRuntime {
 
     SvnApplicationSettings settings = SvnApplicationSettings.getInstance();
     exePath = settings.getCommandLinePath();
-    executableLocale = settings.getExecutableLocale();
+    executableLocale = Registry.stringValue(SvnExecutableChecker.SVN_EXECUTABLE_LOCALE_REGISTRY_KEY);
 
     myModules = ContainerUtil.newArrayList();
     myModules.add(new CommandParametersResolutionModule(this));
@@ -75,6 +76,16 @@ public class CommandRuntime {
     } finally {
       onFinish();
     }
+  }
+
+  @NotNull
+  public CommandExecutor runLocal(@NotNull Command command, int timeout) throws SvnBindException {
+    CommandExecutor executor = newExecutor(command);
+
+    executor.run(timeout);
+    onAfterCommand(executor, command);
+
+    return executor;
   }
 
   private void onStart(@NotNull Command command) throws SvnBindException {

@@ -355,29 +355,31 @@ public class Java15APIUsageInspectionBase extends BaseJavaBatchLocalInspectionTo
   }
 
   @Nullable
-  public static String getSignature(PsiMember member) {
+  private static String getSignature(@Nullable PsiMember member) {
     if (member instanceof PsiClass) {
       return ((PsiClass)member).getQualifiedName();
     }
     if (member instanceof PsiField) {
-      return getSignature(member.getContainingClass()) + "#" + member.getName();
+      String containingClass = getSignature(member.getContainingClass());
+      return containingClass == null ? null : containingClass + "#" + member.getName();
     }
     if (member instanceof PsiMethod) {
       final PsiMethod method = (PsiMethod)member;
+      String containingClass = getSignature(member.getContainingClass());
+      if (containingClass == null) return null;
+
       StringBuilder buf = new StringBuilder();
-      buf.append(getSignature(method.getContainingClass()));
+      buf.append(containingClass);
       buf.append('#');
       buf.append(method.getName());
       buf.append('(');
-      final PsiType[] params = method.getSignature(PsiSubstitutor.EMPTY).getParameterTypes();
-      for (PsiType type : params) {
+      for (PsiType type : method.getSignature(PsiSubstitutor.EMPTY).getParameterTypes()) {
         buf.append(type.getCanonicalText());
         buf.append(";");
       }
       buf.append(')');
       return buf.toString();
     }
-    assert false;
     return null;
   }
 }

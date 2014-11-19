@@ -44,8 +44,9 @@ import java.util.Set;
 public class BuildFSState extends FSState {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.fs.BuildFSState");
   private static final Key<Set<? extends BuildTarget<?>>> CONTEXT_TARGETS_KEY = Key.create("_fssfate_context_targets_");
-  private static final Key<FilesDelta> CURRENT_ROUND_DELTA_KEY = Key.create("_current_round_delta_");
-  private static final Key<FilesDelta> LAST_ROUND_DELTA_KEY = Key.create("_last_round_delta_");
+  private static final Key<Key<FilesDelta>> DELTA_KEY_SELECTOR = Key.create("_round_delta_key_selector_");
+  private static final Key<FilesDelta> NEXT_ROUND_DELTA_KEY = Key.create("_current_round_delta_");
+  private static final Key<FilesDelta> CURRENT_ROUND_DELTA_KEY = Key.create("_last_round_delta_");
 
   // when true, will always determine dirty files by scanning FS and comparing timestamps
   // alternatively, when false, after first scan will rely on external notifications about changes
@@ -55,6 +56,17 @@ public class BuildFSState extends FSState {
     myAlwaysScanFS = alwaysScanFS;
   }
 
+  public enum CompilationRound {CURRENT, NEXT}
+  
+  public CompilationRound selectTargetRound(CompileContext context, CompilationRound targetRound) {
+    final Key<FilesDelta> previous = DELTA_KEY_SELECTOR.get(context);
+    DELTA_KEY_SELECTOR.set(context, targetRound == CompilationRound.CURRENT? CURRENT_ROUND_DELTA_KEY : null);
+    if (previous == null) {
+      return CompilationRound.NEXT; 
+    }
+    return previous == NEXT_ROUND_DELTA_KEY? CompilationRound.NEXT : CompilationRound.CURRENT;
+  }
+  
   @Override
   public boolean isInitialScanPerformed(BuildTarget<?> target) {
     return !myAlwaysScanFS && super.isInitialScanPerformed(target);
@@ -64,7 +76,7 @@ public class BuildFSState extends FSState {
   public Map<BuildRootDescriptor, Set<File>> getSourcesToRecompile(@NotNull CompileContext context, BuildTarget<?> target) {
     if (target instanceof ModuleBuildTarget) {
       // multiple compilation rounds are applicable to ModuleBuildTarget only
-      final FilesDelta lastRoundDelta = getRoundDelta(LAST_ROUND_DELTA_KEY, context);
+      final FilesDelta lastRoundDelta = getRoundDelta(CURRENT_ROUND_DELTA_KEY, context);
       if (lastRoundDelta != null) {
         return lastRoundDelta.getSourcesToRecompile();
       }
@@ -73,7 +85,7 @@ public class BuildFSState extends FSState {
   }
 
   public boolean isMarkedForRecompilation(@Nullable CompileContext context, BuildRootDescriptor rd, File file) {
-    FilesDelta delta = getRoundDelta(LAST_ROUND_DELTA_KEY, context);
+    FilesDelta delta = getRoundDelta(CURRENT_ROUND_DELTA_KEY, context);
     if (delta == null) {
       delta = getDelta(rd.getTarget());
     }
@@ -92,7 +104,8 @@ public class BuildFSState extends FSState {
    */
   @Override
   public boolean markDirty(@Nullable CompileContext context, File file, final BuildRootDescriptor rd, @Nullable Timestamps tsStorage, boolean saveEventStamp) throws IOException {
-    final FilesDelta roundDelta = getRoundDelta(CURRENT_ROUND_DELTA_KEY, context);
+    final Key<FilesDelta> deltaKey = DELTA_KEY_SELECTOR.get(context, NEXT_ROUND_DELTA_KEY);
+    final FilesDelta roundDelta = getRoundDelta(deltaKey, context);
     if (roundDelta != null && isInCurrentContextTargets(context, rd)) {
       roundDelta.markRecompile(rd, file);
     }
@@ -111,7 +124,8 @@ public class BuildFSState extends FSState {
   public boolean markDirtyIfNotDeleted(@Nullable CompileContext context, File file, final BuildRootDescriptor rd, @Nullable Timestamps tsStorage) throws IOException {
     final boolean marked = super.markDirtyIfNotDeleted(context, file, rd, tsStorage);
     if (marked) {
-      final FilesDelta roundDelta = getRoundDelta(CURRENT_ROUND_DELTA_KEY, context);
+      final Key<FilesDelta> deltaKey = DELTA_KEY_SELECTOR.get(context, NEXT_ROUND_DELTA_KEY);
+      final FilesDelta roundDelta = getRoundDelta(deltaKey, context);
       if (roundDelta != null) {
         if (isInCurrentContextTargets(context, rd)) {
           roundDelta.markRecompile(rd, file);
@@ -128,8 +142,8 @@ public class BuildFSState extends FSState {
   }
 
   public void clearContextRoundData(@Nullable CompileContext context) {
+    setRoundDelta(NEXT_ROUND_DELTA_KEY, context, null);
     setRoundDelta(CURRENT_ROUND_DELTA_KEY, context, null);
-    setRoundDelta(LAST_ROUND_DELTA_KEY, context, null);
   }
 
   public void clearContextChunk(@Nullable CompileContext context) {
@@ -141,8 +155,18 @@ public class BuildFSState extends FSState {
   }
 
   public void beforeNextRoundStart(@NotNull CompileContext context, ModuleChunk chunk) {
-    setRoundDelta(LAST_ROUND_DELTA_KEY, context, getRoundDelta(CURRENT_ROUND_DELTA_KEY, context));
-    setRoundDelta(CURRENT_ROUND_DELTA_KEY, context, new FilesDelta());
+    FilesDelta currentDelta = getRoundDelta(NEXT_ROUND_DELTA_KEY, context);
+    if (currentDelta == null) {
+      // this is the initial round.
+      // Need to make a snapshot of the FS state so that all builders in the chain see the same picture
+      currentDelta = new FilesDelta();
+      for (ModuleBuildTarget target : chunk.getTargets()) {
+        final FilesDelta targetDelta = getDelta(target);
+        currentDelta.addAll(targetDelta);
+      }
+    }
+    setRoundDelta(CURRENT_ROUND_DELTA_KEY, context, currentDelta);
+    setRoundDelta(NEXT_ROUND_DELTA_KEY, context, new FilesDelta());
   }
 
   public <R extends BuildRootDescriptor, T extends BuildTarget<R>> boolean processFilesToRecompile(CompileContext context, final @NotNull T target, final FileProcessor<R, T> processor) throws IOException {

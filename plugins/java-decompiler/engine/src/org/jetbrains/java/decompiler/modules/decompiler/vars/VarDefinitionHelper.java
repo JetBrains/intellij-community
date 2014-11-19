@@ -68,26 +68,26 @@ public class VarDefinitionHelper {
     int varindex = 0;
     for (int i = 0; i < paramcount; i++) {
       implDefVars.add(varindex);
-      varproc.setVarName(new VarVersionPaar(varindex, 0), vc.getFreeName(varindex));
+      varproc.setVarName(new VarVersionPair(varindex, 0), vc.getFreeName(varindex));
 
       if (thisvar) {
         if (i == 0) {
           varindex++;
         }
         else {
-          varindex += md.params[i - 1].stack_size;
+          varindex += md.params[i - 1].stackSize;
         }
       }
       else {
-        varindex += md.params[i].stack_size;
+        varindex += md.params[i].stackSize;
       }
     }
 
     if (thisvar) {
       StructClass current_class = (StructClass)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS);
 
-      varproc.getThisvars().put(new VarVersionPaar(0, 0), current_class.qualifiedName);
-      varproc.setVarName(new VarVersionPaar(0, 0), "this");
+      varproc.getThisVars().put(new VarVersionPair(0, 0), current_class.qualifiedName);
+      varproc.setVarName(new VarVersionPair(0, 0), "this");
       vc.addName("this");
     }
 
@@ -109,7 +109,7 @@ public class VarDefinitionHelper {
       if (lstVars != null) {
         for (VarExprent var : lstVars) {
           implDefVars.add(var.getIndex());
-          varproc.setVarName(new VarVersionPaar(var), vc.getFreeName(var.getIndex()));
+          varproc.setVarName(new VarVersionPair(var), vc.getFreeName(var.getIndex()));
           var.setDefinition(true);
         }
       }
@@ -134,7 +134,7 @@ public class VarDefinitionHelper {
         continue;
       }
 
-      varproc.setVarName(new VarVersionPaar(index.intValue(), 0), vc.getFreeName(index));
+      varproc.setVarName(new VarVersionPair(index.intValue(), 0), vc.getFreeName(index));
 
       // special case for
       if (stat.type == Statement.TYPE_DO) {
@@ -196,7 +196,7 @@ public class VarDefinitionHelper {
       }
 
       if (!defset) {
-        VarExprent var = new VarExprent(index.intValue(), varproc.getVarType(new VarVersionPaar(index.intValue(), 0)), varproc);
+        VarExprent var = new VarExprent(index.intValue(), varproc.getVarType(new VarVersionPair(index.intValue(), 0)), varproc);
         var.setDefinition(true);
 
         lst.add(addindex, var);

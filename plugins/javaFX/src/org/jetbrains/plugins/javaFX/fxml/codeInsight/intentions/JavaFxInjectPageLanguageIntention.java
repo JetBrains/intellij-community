@@ -52,7 +52,7 @@ import java.util.TreeSet;
 public class JavaFxInjectPageLanguageIntention extends PsiElementBaseIntentionAction {
   public static final Logger LOG = Logger.getInstance("#" + JavaFxInjectPageLanguageIntention.class.getName());
 
-  private static Set<String> getAvailableLanguages(Project project) {
+  public static Set<String> getAvailableLanguages() {
     final List<ScriptEngineFactory> engineFactories = new ScriptEngineManager().getEngineFactories();
 
     final Set<String> availableNames = new TreeSet<String>();
@@ -68,8 +68,8 @@ public class JavaFxInjectPageLanguageIntention extends PsiElementBaseIntentionAc
     if (!FileModificationService.getInstance().preparePsiElementsForWrite(element)) return;
     final XmlFile containingFile = (XmlFile)element.getContainingFile();
 
-    final Set<String> availableLanguages = getAvailableLanguages(project);
-    if (availableLanguages.size() == 1 || ApplicationManager.getApplication().isUnitTestMode()) {
+    final Set<String> availableLanguages = getAvailableLanguages();
+    if (availableLanguages.size() == 1) {
       registerPageLanguage(project, containingFile, availableLanguages.iterator().next());
     } else {
       final JBList list = new JBList(availableLanguages);
@@ -83,7 +83,7 @@ public class JavaFxInjectPageLanguageIntention extends PsiElementBaseIntentionAc
     }
   }
 
-  private void registerPageLanguage(final Project project, final XmlFile containingFile, final String languageName) {
+  public void registerPageLanguage(final Project project, final XmlFile containingFile, final String languageName) {
     new WriteCommandAction.Simple(project, getFamilyName()) {
       @Override
       protected void run() {
@@ -110,7 +110,7 @@ public class JavaFxInjectPageLanguageIntention extends PsiElementBaseIntentionAc
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
-    if (ContainerUtil.isEmpty(getAvailableLanguages(project))) {
+    if (ContainerUtil.isEmpty(getAvailableLanguages())) {
       return false;
     }
     setText(getFamilyName());

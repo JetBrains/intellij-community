@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,71 +71,37 @@ public class LineStatusTrackerDrawing {
 
   private static void paintGutterFragment(final Editor editor, final Graphics g, final Rectangle r, final Range range) {
     final EditorGutterComponentEx gutter = ((EditorEx)editor).getGutterComponentEx();
-    Color stripeColor = getDiffGutterColor(range);
+    Color gutterColor = getDiffGutterColor(range);
+    Color borderColor = getDiffGutterBorderColor();
 
-    if (range.getInnerRanges() == null) { // legacy painter
-      g.setColor(stripeColor);
+    final int x = r.x + r.width - 3;
+    final int endX = gutter.getWhitespaceSeparatorOffset();
 
-      final int endX = gutter.getWhitespaceSeparatorOffset();
-      final int x = r.x + r.width - 5;
-      final int width = endX - x;
+    if (range.getInnerRanges() == null) { // actual painter
       if (r.height > 0) {
-        g.fillRect(x, r.y, width, r.height);
-        g.setColor(gutter.getOutlineColor(false));
-        UIUtil.drawLine(g, x, r.y, x + width, r.y);
-        UIUtil.drawLine(g, x, r.y, x, r.y + r.height - 1);
-        UIUtil.drawLine(g, x, r.y + r.height - 1, x + width, r.y + r.height - 1);
+        paintRect(g, gutterColor, borderColor, x, r.y, endX, r.y + r.height);
       }
       else {
-        final int[] xPoints = new int[]{x,
-          x,
-          x + width - 1};
-        final int[] yPoints = new int[]{r.y - 4,
-          r.y + 4,
-          r.y};
-        g.fillPolygon(xPoints, yPoints, 3);
-
-        g.setColor(gutter.getOutlineColor(false));
-        g.drawPolygon(xPoints, yPoints, 3);
+        paintTriangle(g, gutterColor, borderColor, x, endX, r.y);
       }
     }
-    else {
-      final int x = gutter.getLineMarkerAreaOffset() + gutter.getIconsAreaWidth();
-      final int endX = gutter.getWhitespaceSeparatorOffset();
-      final int width = endX - x;
-
+    else { // registry: diff.status.tracker.smart
       if (range.getType() == Range.DELETED) {
         final int y = lineToY(editor, range.getLine1());
-
-        final int[] xPoints = new int[]{
-          x,
-          x,
-          endX - 1};
-        final int[] yPoints = new int[]{
-          y - 4,
-          y + 4,
-          y};
-
-        g.setColor(stripeColor);
-        g.fillPolygon(xPoints, yPoints, 3);
-
-        g.setColor(gutter.getOutlineColor(false));
-        g.drawPolygon(xPoints, yPoints, 3);
+        paintTriangle(g, gutterColor, borderColor, x, endX, y);
       }
       else {
-        int y = lineToY(editor, range.getLine1());
+        final int y = lineToY(editor, range.getLine1());
         int endY = lineToY(editor, range.getLine2());
 
         List<Range.InnerRange> innerRanges = range.getInnerRanges();
-        for (int i = 0; i < innerRanges.size(); i++) {
-          Range.InnerRange innerRange = innerRanges.get(i);
+        for (Range.InnerRange innerRange : innerRanges) {
           if (innerRange.getType() == Range.DELETED) continue;
 
           int start = lineToY(editor, innerRange.getLine1());
           int end = lineToY(editor, innerRange.getLine2());
 
-          g.setColor(getDiffColor(innerRange));
-          g.fillRect(x, start, width, end - start);
+          paintRect(g, getDiffColor(innerRange), null, x, start, endX, end);
         }
 
         for (int i = 0; i < innerRanges.size(); i++) {
@@ -158,14 +124,10 @@ public class LineStatusTrackerDrawing {
             end = lineToY(editor, innerRange.getLine2()) + 3;
           }
 
-          g.setColor(getDiffColor(innerRange));
-          g.fillRect(x, start, width, end - start);
+          paintRect(g, getDiffColor(innerRange), null, x, start, endX, end);
         }
 
-        g.setColor(gutter.getOutlineColor(false));
-        UIUtil.drawLine(g, x, y, endX - 1, y);
-        UIUtil.drawLine(g, x, y, x, endY - 1);
-        UIUtil.drawLine(g, x, endY - 1, endX - 1, endY - 1);
+        paintRect(g, null, borderColor, x, y, endX, endY);
       }
     }
   }
@@ -179,26 +141,33 @@ public class LineStatusTrackerDrawing {
     return editor.logicalPositionToXY(editor.offsetToLogicalPosition(document.getLineStartOffset(line))).y;
   }
 
-  @Nullable
-  private static Color brighter(final Color color) {
-    if (color == null) {
-      return null;
+  private static void paintRect(@NotNull Graphics g, @Nullable Color color, @Nullable Color borderColor, int x1, int y1, int x2, int y2) {
+    if (color != null) {
+      g.setColor(color);
+      g.fillRect(x1, y1, x2 - x1, y2 - y1);
     }
-
-    final float[] hsbStripeColor = Color.RGBtoHSB(color.getRed(), color.getGreen(), color.getBlue(), null);
-
-    if (hsbStripeColor[1] < 0.02f) {
-      // color is grey
-      hsbStripeColor[2] = Math.min(1.0f, hsbStripeColor[2] * 1.3f);
+    if (borderColor != null) {
+      g.setColor(borderColor);
+      UIUtil.drawLine(g, x1, y1, x2 - 1, y1);
+      UIUtil.drawLine(g, x1, y1, x1, y2 - 1);
+      UIUtil.drawLine(g, x1, y2 - 1, x2 - 1, y2 - 1);
     }
-    else {
-      // let's decrease color saturation
-      hsbStripeColor[1] *= 0.3;
+  }
 
-      // max brightness
-      hsbStripeColor[2] = 1.0f;
+  private static void paintTriangle(@NotNull Graphics g, @Nullable Color color, @Nullable Color borderColor, int x1, int x2, int y) {
+    int size = 4;
+
+    final int[] xPoints = new int[]{x1, x1, x2};
+    final int[] yPoints = new int[]{y - size, y + size, y};
+
+    if (color != null) {
+      g.setColor(color);
+      g.fillPolygon(xPoints, yPoints, xPoints.length);
     }
-    return Color.getHSBColor(hsbStripeColor[0], hsbStripeColor[1], hsbStripeColor[2]);
+    if (borderColor != null) {
+      g.setColor(borderColor);
+      g.drawPolygon(xPoints, yPoints, xPoints.length);
+    }
   }
 
   public static LineMarkerRenderer createRenderer(final Range range, final LineStatusTracker tracker) {
@@ -254,7 +223,7 @@ public class LineStatusTrackerDrawing {
     toolbar.setBackground(background);
 
     toolbar
-      .setBorder(new ColoredSideBorder(foreground, foreground, (range.getType() != Range.INSERTED) ? null : foreground, foreground, 1));
+      .setBorder(new ColoredSideBorder(foreground, foreground, range.getType() != Range.INSERTED ? null : foreground, foreground, 1));
 
     final JPanel component = new JPanel(new BorderLayout());
     component.setOpaque(false);
@@ -347,8 +316,9 @@ public class LineStatusTrackerDrawing {
     });
   }
 
-  @NotNull
+  @Nullable
   private static Color getDiffColor(@NotNull Range.InnerRange range) {
+    // TODO: we should move color settings from Colors-General to Colors-Diff
     final EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
     switch (range.getType()) {
       case Range.INSERTED:
@@ -381,7 +351,7 @@ public class LineStatusTrackerDrawing {
     }
   }
 
-  @NotNull
+  @Nullable
   private static Color getDiffGutterColor(@NotNull Range range) {
     final EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
     switch (range.getType()) {
@@ -395,5 +365,11 @@ public class LineStatusTrackerDrawing {
         assert false;
         return null;
     }
+  }
+
+  @Nullable
+  private static Color getDiffGutterBorderColor() {
+    final EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
+    return globalScheme.getColor(EditorColors.BORDER_LINES_COLOR);
   }
 }

@@ -5,16 +5,13 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.coursecreator.CCProjectService;
-import org.jetbrains.plugins.coursecreator.format.Course;
-import org.jetbrains.plugins.coursecreator.format.Lesson;
-import org.jetbrains.plugins.coursecreator.format.Task;
-import org.jetbrains.plugins.coursecreator.format.TaskFile;
+import org.jetbrains.plugins.coursecreator.format.*;
 import org.jetbrains.plugins.coursecreator.ui.CreateTaskWindowDialog;
 
 public class CCShowTaskWindowDetails extends CCTaskWindowAction {
 
   public CCShowTaskWindowDetails() {
-    super("Show task window details", "Show task windows details", null);
+    super("Edit Answer Placeholder", "Edit answer placeholder", null);
   }
 
   @Override
@@ -29,9 +26,11 @@ public class CCShowTaskWindowDetails extends CCTaskWindowAction {
     final Lesson lesson = course.getLesson(lessonDir.getName());
     final Task task = lesson.getTask(taskDir.getName());
     final TaskFile taskFile = state.getTaskFile();
-    CreateTaskWindowDialog dlg = new CreateTaskWindowDialog(project, state.getTaskWindow(), lesson.getIndex(), task.getIndex(),
+    TaskWindow taskWindow = state.getTaskWindow();
+    CreateTaskWindowDialog dlg = new CreateTaskWindowDialog(project, taskWindow, lesson.getIndex(), task.getIndex(),
                                                             file.getVirtualFile().getNameWithoutExtension(),
                                                             taskFile.getTaskWindows().size() + 1);
+    dlg.setTitle("Edit Answer Placeholder");
     dlg.show();
   }
 }

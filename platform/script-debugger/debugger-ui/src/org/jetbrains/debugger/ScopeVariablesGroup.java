@@ -1,6 +1,5 @@
 package org.jetbrains.debugger;
 
-import com.intellij.openapi.util.ActionCallback;
 import com.intellij.util.Consumer;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.frame.XCompositeNode;
@@ -9,6 +8,8 @@ import com.intellij.xdebugger.frame.XValueGroup;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.concurrency.ConsumerRunnable;
+import org.jetbrains.concurrency.Promise;
 
 import java.util.List;
 
@@ -87,31 +88,33 @@ public class ScopeVariablesGroup extends XValueGroup {
 
   @Override
   public void computeChildren(final @NotNull XCompositeNode node) {
-    ActionCallback callback = callFrame == null ? null : new ActionCallback().doWhenDone(new Runnable() {
-      @Override
-      public void run() {
-        if (node.isObsolete()) {
-          return;
-        }
+    Promise<Void> promise = Variables.processScopeVariables(scope, node, context, callFrame == null);
+    if (callFrame != null) {
+      promise.done(new ConsumerRunnable() {
+        @Override
+        public void run() {
+          if (node.isObsolete()) {
+            return;
+          }
 
-        callFrame.getReceiverVariable().doWhenDone(new Consumer<Variable>() {
-          @Override
-          public void consume(Variable variable) {
-            if (!node.isObsolete()) {
-              node.addChildren(variable == null ? XValueChildrenList.EMPTY : XValueChildrenList.singleton(CallFrameBase.RECEIVER_NAME, new VariableView(variable, context)), true);
+          callFrame.getReceiverVariable().doWhenDone(new Consumer<Variable>() {
+            @Override
+            public void consume(Variable variable) {
+              if (!node.isObsolete()) {
+                node.addChildren(variable == null ? XValueChildrenList.EMPTY : XValueChildrenList.singleton(CallFrameBase.RECEIVER_NAME, new VariableView(variable, context)), true);
+              }
             }
-          }
-        }).doWhenRejected(new Consumer<String>() {
-          @Override
-          public void consume(@Nullable String error) {
-            if (!node.isObsolete()) {
-              node.addChildren(XValueChildrenList.EMPTY, true);
+          }).doWhenRejected(new Consumer<String>() {
+            @Override
+            public void consume(@Nullable String error) {
+              if (!node.isObsolete()) {
+                node.addChildren(XValueChildrenList.EMPTY, true);
+              }
             }
-          }
-        });
-      }
-    });
-    Variables.processScopeVariables(scope, node, context, callback);
+          });
+        }
+      });
+    }
   }
 
   private static final class ParentlessVariableContext extends VariableContextWrapper {

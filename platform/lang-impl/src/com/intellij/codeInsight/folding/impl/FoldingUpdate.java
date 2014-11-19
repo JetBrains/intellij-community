@@ -59,11 +59,11 @@ public class FoldingUpdate {
   private static final Key<ParameterizedCachedValue<Runnable, Couple<Boolean>>> CODE_FOLDING_KEY = Key.create("code folding");
   private static final Key<String> CODE_FOLDING_FILE_EXTENSION_KEY = Key.create("code folding file extension");
 
-  private static final Comparator<PsiElement> COMPARE_BY_OFFSET = new Comparator<PsiElement>() {
+  private static final Comparator<PsiElement> COMPARE_BY_OFFSET_REVERSED = new Comparator<PsiElement>() {
     @Override
     public int compare(PsiElement element, PsiElement element1) {
-      int startOffsetDiff = element.getTextRange().getStartOffset() - element1.getTextRange().getStartOffset();
-      return startOffsetDiff == 0 ? element.getTextRange().getEndOffset() - element1.getTextRange().getEndOffset() : startOffsetDiff;
+      int startOffsetDiff = element1.getTextRange().getStartOffset() - element.getTextRange().getStartOffset();
+      return startOffsetDiff == 0 ? element1.getTextRange().getEndOffset() - element.getTextRange().getEndOffset() : startOffsetDiff;
     }
   };
 
@@ -284,7 +284,7 @@ public class FoldingUpdate {
     @NotNull
     @Override
     protected Map<PsiElement, Collection<FoldingDescriptor>> createMap() {
-      return new TreeMap<PsiElement, Collection<FoldingDescriptor>>(COMPARE_BY_OFFSET);
+      return new TreeMap<PsiElement, Collection<FoldingDescriptor>>(COMPARE_BY_OFFSET_REVERSED);
     }
 
     @NotNull

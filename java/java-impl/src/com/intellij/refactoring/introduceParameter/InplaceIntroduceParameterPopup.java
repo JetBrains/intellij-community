@@ -116,10 +116,9 @@ public class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroduce
     return ApplicationManager.getApplication().runWriteAction(new Computable<PsiParameter>() {
       @Override
       public PsiParameter compute() {
-        final String name = getInputName() != null ? getInputName() : names[0];
         final PsiParameter anchor = JavaIntroduceParameterMethodUsagesProcessor.getAnchorParameter(myMethod);
         final PsiParameter psiParameter = (PsiParameter)myMethod.getParameterList()
-          .addAfter(elementFactory.createParameter(name, defaultType), anchor);
+          .addAfter(elementFactory.createParameter(chooseName(names, myMethod.getLanguage()), defaultType), anchor);
         PsiUtil.setModifierProperty(psiParameter, PsiModifier.FINAL, myPanel.hasFinalModifier());
         myParameterIndex = myMethod.getParameterList().getParameterIndex(psiParameter);
         return psiParameter;
@@ -175,7 +174,7 @@ public class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroduce
 
   @Override
   protected boolean startsOnTheSameElement(RefactoringActionHandler handler, PsiElement element) {
-    return super.startsOnTheSameElement(handler, element) && handler instanceof IntroduceParameterHandler;
+    return handler instanceof IntroduceParameterHandler && super.startsOnTheSameElement(handler, element);
   }
 
 

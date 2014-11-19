@@ -26,6 +26,7 @@ import com.intellij.openapi.options.ExternalInfo;
 import com.intellij.openapi.options.ExternalizableScheme;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.util.*;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.text.StringTokenizer;
 import org.jdom.Element;
 import org.jdom.output.XMLOutputter;
@@ -92,10 +93,12 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
     mySyntaxTable = syntaxTable;
   }
 
+  @Override
   public AbstractFileType clone() {
     return (AbstractFileType)super.clone();
   }
 
+  @Override
   public void copyFrom(UserFileType newType) {
     super.copyFrom(newType);
     if (newType instanceof AbstractFileType) {
@@ -104,10 +107,12 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
     }
   }
 
+  @Override
   public boolean isBinary() {
     return false;
   }
 
+  @Override
   public void readExternal(final Element typeElement) throws InvalidDataException {
     Element element = typeElement.getChild(ELEMENT_HIGHLIGHTING);
     if (element != null) {
@@ -118,12 +123,11 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
     }
   }
 
-  public static SyntaxTable readSyntaxTable(Element root) {
+  @NotNull
+  public static SyntaxTable readSyntaxTable(@NotNull Element root) {
     SyntaxTable table = new SyntaxTable();
 
-    for (final Object o : root.getChildren()) {
-      Element element = (Element)o;
-
+    for (Element element : root.getChildren()) {
       if (ELEMENT_OPTIONS.equals(element.getName())) {
         for (final Object o1 : element.getChildren(ELEMENT_OPTION)) {
           Element e = (Element)o1;
@@ -155,7 +159,8 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
           }
           else if (VALUE_HAS_PARENS.equals(name)) {
             table.setHasParens(Boolean.valueOf(value).booleanValue());
-          } else if (VALUE_HAS_STRING_ESCAPES.equals(name)) {
+          }
+          else if (VALUE_HAS_STRING_ESCAPES.equals(name)) {
             table.setHasStringEscapes(Boolean.valueOf(value).booleanValue());
           }
         }
@@ -183,7 +188,9 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
       XMLOutputter outputter = JDOMUtil.createOutputter("\n");
       try {
         outputter.output((Element)element.getContent().get(0), System.out);
-      } catch (IOException ex) {}
+      }
+      catch (IOException ignored) {
+      }
     }
     return table;
   }
@@ -202,9 +209,9 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
     }
   }
 
+  @Override
   public void writeExternal(final Element element) throws WriteExternalException {
-    SyntaxTable table = getSyntaxTable();
-    writeTable(element, table);
+    writeTable(element, getSyntaxTable());
   }
 
   private static void writeTable(Element element, SyntaxTable table) {
@@ -269,22 +276,25 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
   }
 
   private static void addElementOption(final Element optionsElement, final String valueHasParens, final boolean hasParens) {
-    if (!hasParens) return;
+    if (!hasParens) {
+      return;
+    }
+
     Element supportParens = new Element(ELEMENT_OPTION);
     supportParens.setAttribute(ATTRIBUTE_NAME, valueHasParens);
-    supportParens.setAttribute(ATTRIBUTE_VALUE, String.valueOf(hasParens));
+    supportParens.setAttribute(ATTRIBUTE_VALUE, String.valueOf(true));
     optionsElement.addContent(supportParens);
   }
 
   private static Element writeKeywords(Set<String> keywords, String tagName, Element highlightingElement) {
     if (keywords.size() == 0 && !ELEMENT_KEYWORDS.equals(tagName)) return null;
     Element keywordsElement = new Element(tagName);
-    String[] strings = keywords.toArray(new String[keywords.size()]);
+    String[] strings = ArrayUtil.toStringArray(keywords);
     Arrays.sort(strings);
     StringBuilder keywordsAttribute = new StringBuilder();
 
     for (final String keyword : strings) {
-      if (keyword.indexOf(SEMICOLON) == -1) {
+      if (!keyword.contains(SEMICOLON)) {
         if (keywordsAttribute.length() != 0) keywordsAttribute.append(SEMICOLON);
         keywordsAttribute.append(keyword);
       } else {
@@ -300,10 +310,12 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
     return keywordsElement;
   }
 
+  @Override
   public void markDefaultSettings() {
     myDefaultSyntaxTable = mySyntaxTable;
   }
 
+  @Override
   public boolean isModified() {
     return !Comparing.equal(myDefaultSyntaxTable, getSyntaxTable());
   }
@@ -398,6 +410,7 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
     return mapping;
   }
 
+  @Override
   public SettingsEditor<AbstractFileType> getEditor() {
     return new CustomFileTypeEditor();
   }
@@ -406,6 +419,7 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
     myCommenter = commenter;
   }
 
+  @Override
   @NotNull
   public ExternalInfo getExternalInfo() {
     return myExternalInfo;

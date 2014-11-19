@@ -39,7 +39,9 @@ class SurrounderOrderTest extends LightCodeInsightFixtureTestCase {
                         "(expr)",
                         "!(expr)",
                         "((Type) expr)",
-                        "with () {...}"
+                        "with () {...}",
+                        "<editor-fold...> Comments",
+                        "region...endregion Comments"
   }
 
   public void testStatementWithSemicolon() throws Exception {
@@ -50,7 +52,9 @@ class SurrounderOrderTest extends LightCodeInsightFixtureTestCase {
                         "{}",
                         "for", "try / catch", "try / finally", "try / catch / finally",
                         "shouldFail () {...}",
-                        "with () {...}"
+                        "with () {...}",
+                        "<editor-fold...> Comments",
+                        "region...endregion Comments"
   }
 
   public void testStatementsWithComments() throws Exception {
@@ -64,7 +68,9 @@ println c /*also important */
                         "{}",
                         "for", "try / catch", "try / finally", "try / catch / finally",
                         "shouldFail () {...}",
-                        "with () {...}"
+                        "with () {...}",
+                        "<editor-fold...> Comments",
+                        "region...endregion Comments"
   }
 
   public void testInnerExpressionSurrounders() {

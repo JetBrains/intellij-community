@@ -16,12 +16,15 @@
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.ui.popup.IconButton;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.TransparentPanel;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.update.MergingUpdateQueue;
+import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -39,6 +42,8 @@ public class PresentationModeProgressPanel {
   private InplaceButton myCancelButton;
   private JLabel myText2;
   private JPanel myRootPanel;
+  private MergingUpdateQueue myUpdateQueue;
+  private Update myUpdate;
 
   public PresentationModeProgressPanel(InlineProgressIndicator progress) {
     myProgress = progress;
@@ -47,17 +52,28 @@ public class PresentationModeProgressPanel {
     myText2.setFont(font);
     myText.setIcon(EmptyIcon.create(1, 16));
     myText2.setIcon(EmptyIcon.create(1, 16));
-  }
-  public void update() {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
+    myUpdateQueue = new MergingUpdateQueue("Presentation Mode Progress", 100, true, null);
+    myUpdate = new Update("Update UI") {
       @Override
       public void run() {
         updateImpl();
       }
-    });
+    };
+  }
+
+  public void update() {
+    myUpdateQueue.queue(myUpdate);
+  }
+
+  @NotNull
+  public Color getTextForeground() {
+    return EditorColorsManager.getInstance().getGlobalScheme().getDefaultForeground();
   }
 
   private void updateImpl() {
+    myText.setForeground(getTextForeground());
+    myText2.setForeground(getTextForeground());
+
     if (!StringUtil.equals(myText.getText(), myProgress.getText())) {
       myText.setText(myProgress.getText());
     }
@@ -74,7 +90,8 @@ public class PresentationModeProgressPanel {
     }
   }
 
-  public JPanel getRootPanel() {
+  @NotNull
+  public JComponent getProgressPanel() {
     return myRootPanel;
   }
 

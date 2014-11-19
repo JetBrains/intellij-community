@@ -1,16 +1,14 @@
 package org.jetbrains.debugger;
 
-import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.PairConsumer;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.xdebugger.ObsolescentAsyncResults;
 import com.intellij.xdebugger.frame.XCompositeNode;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.AsyncFunction;
+import org.jetbrains.concurrency.Promise;
 import org.jetbrains.debugger.values.Value;
 import org.jetbrains.debugger.values.ValueType;
 
@@ -27,14 +25,19 @@ public final class Variables {
     }
   };
 
-  public static void processScopeVariables(@NotNull Scope scope,
-                                           @NotNull XCompositeNode node,
-                                           @NotNull final VariableContext context,
-                                           @Nullable final ActionCallback compoundActionCallback) {
-    final boolean isLast = compoundActionCallback == null;
-    AsyncResult<?> result = ObsolescentAsyncResults.consume(scope.getVariables(), node, new PairConsumer<List<Variable>, XCompositeNode>() {
+  @NotNull
+  public static Promise<Void> processScopeVariables(@NotNull Scope scope,
+                                                    @NotNull final XCompositeNode node,
+                                                    @NotNull final VariableContext context,
+                                                    final boolean isLast) {
+    return scope.getVariables().then(new AsyncFunction<List<Variable>, Void>() {
+      @NotNull
       @Override
-      public void consume(List<Variable> variables, XCompositeNode node) {
+      public Promise<Void> fun(List<Variable> variables) {
+        if (node.isObsolete()) {
+          return Promise.REJECTED;
+        }
+
         final MemberFilter memberFilter = context.createMemberFilter();
         Collection<Variable> additionalVariables = memberFilter.getAdditionalVariables();
         List<Variable> properties = new ArrayList<Variable>(variables.size() + additionalVariables.size());
@@ -59,7 +62,7 @@ public final class Variables {
           public int compare(@NotNull Variable o1, @NotNull Variable o2) {
             return naturalCompare(memberFilter.getName(o1), memberFilter.getName(o2));
           }
-        } :  NATURAL_NAME_COMPARATOR);
+        } : NATURAL_NAME_COMPARATOR);
         sort(functions);
 
         addAditionalVariables(variables, additionalVariables, properties, memberFilter);
@@ -75,14 +78,9 @@ public final class Variables {
           node.addChildren(XValueChildrenList.EMPTY, true);
         }
 
-        if (!isLast) {
-          compoundActionCallback.setDone();
-        }
+        return Promise.DONE;
       }
     });
-    if (!isLast) {
-      result.notifyWhenRejected(compoundActionCallback);
-    }
   }
 
   @Nullable

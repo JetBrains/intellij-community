@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.jdk;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.lang.java.JavaLanguage;
@@ -33,10 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class AutoBoxingInspection extends BaseInspection {
 
@@ -304,8 +302,20 @@ public class AutoBoxingInspection extends BaseInspection {
     }
 
     private void checkExpression(@NotNull PsiExpression expression) {
-      if (expression.getParent() instanceof PsiParenthesizedExpression) {
+      final PsiElement parent = expression.getParent();
+      if (parent instanceof PsiParenthesizedExpression) {
         return;
+      }
+      if (parent instanceof PsiExpressionList) {
+        final PsiElement grandParent = parent.getParent();
+        if (grandParent instanceof PsiMethodCallExpression) {
+          final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
+          final PsiMethod method = methodCallExpression.resolveMethod();
+          if (method != null &&
+              AnnotationUtil.isAnnotated(method, Collections.singletonList("java.lang.invoke.MethodHandle.PolymorphicSignature"))) {
+            return;
+          }
+        }
       }
       final PsiType expressionType = expression.getType();
       if (expressionType == null || expressionType.equals(PsiType.VOID) || !TypeConversionUtil.isPrimitiveAndNotNull(expressionType)) {

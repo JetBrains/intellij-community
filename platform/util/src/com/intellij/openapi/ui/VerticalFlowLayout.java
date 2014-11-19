@@ -165,7 +165,7 @@ public class VerticalFlowLayout extends FlowLayout implements Serializable {
       Dimension dimension1 = component.getPreferredSize();
       dimension.width = Math.max(dimension.width, dimension1.width);
       if (i > 0){
-        dimension.height += hGap;
+        dimension.height += vGap;
       }
       dimension.height += dimension1.height;
     }

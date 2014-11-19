@@ -502,7 +502,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       myIsFiringLoadingEvent = false;
     }
 
-    HeavyProcessLatch.INSTANCE.processStarted("Loading application components");
+    AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("Loading application components");
     try {
       store.load();
     }
@@ -510,7 +510,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       throw new IOException(e.getMessage());
     }
     finally {
-      HeavyProcessLatch.INSTANCE.processFinished();
+      token.finish();
     }
     myLoaded = true;
 

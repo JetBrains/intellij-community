@@ -102,7 +102,7 @@ public abstract class AbstractUpdateDialog extends DialogWrapper {
 
 
   protected void configureMessageArea(@NotNull JEditorPane area) {
-    configureMessageArea(area, IdeBundle.message("updates.configure.label", ShowSettingsUtil.getSettingsMenuName()), null, null);
+    configureMessageArea(area, myEnableLink ? IdeBundle.message("updates.configure.label", ShowSettingsUtil.getSettingsMenuName()) : "", null, null);
   }
 
   protected void configureMessageArea(final @NotNull JEditorPane area,
@@ -113,7 +113,7 @@ public abstract class AbstractUpdateDialog extends DialogWrapper {
                  UIUtil.getCssFontDeclaration(UIUtil.getLabelFont(), fontColor, null, null) +
                  "<style>body {background: #" + ColorUtil.toHex(UIUtil.getPanelBackground()) + ";}</style>" +
                  "</head><body>" +
-                 (myEnableLink ? messageBody : "") +
+                 messageBody +
                  "</body></html>";
 
     area.setBackground(UIUtil.getPanelBackground());

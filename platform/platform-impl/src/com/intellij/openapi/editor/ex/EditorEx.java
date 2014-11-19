@@ -48,6 +48,7 @@ public interface EditorEx extends Editor {
   @NonNls String PROP_COLUMN_MODE = "columnMode";
   @NonNls String PROP_FONT_SIZE = "fontSize";
   Key<TextRange> LAST_PASTED_REGION = Key.create("LAST_PASTED_REGION");
+  Key<Boolean> SHOW_PLACEHOLDER_WHEN_FOCUSED = Key.create("SHOW_PLACEHOLDER_WHEN_FOCUSED");
 
   @NotNull
   @Override
@@ -177,6 +178,8 @@ public interface EditorEx extends Editor {
   @NotNull
   VisualPosition logicalToVisualPosition(@NotNull LogicalPosition logicalPos, boolean softWrapAware);
 
+  int logicalPositionToOffset(@NotNull LogicalPosition logicalPos, boolean softWrapAware);
+
   /**
    * Creates color scheme delegate which is bound to current editor. E.g. all schema changes will update editor state.
    * @param customGlobalScheme
@@ -197,6 +200,8 @@ public interface EditorEx extends Editor {
   /**
    * Allows to define <code>'placeholder text'</code> for the current editor, i.e. virtual text that will be represented until
    * any user data is entered and current editor is not focused.
+   * <p/>
+   * If {@link EditorEx#SHOW_PLACEHOLDER_WHEN_FOCUSED} is set to <code>'true'</code>, the placeholder is shown in focused editor as well.
    * <p/>
    * Feel free to see the detailed feature
    * definition <a href="http://dev.w3.org/html5/spec/Overview.html#the-placeholder-attribute">here</a>.

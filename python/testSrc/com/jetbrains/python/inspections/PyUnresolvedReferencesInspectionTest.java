@@ -15,9 +15,12 @@
  */
 package com.jetbrains.python.inspections;
 
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.openapi.util.JDOMUtil;
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
 import com.jetbrains.python.psi.LanguageLevel;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -384,6 +387,48 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
   // PY-13585
   public void testUnusedImportBeforeStarDunderAll() {
     doMultiFileTest();
+  }
+
+  // PY-12738
+  public void testNamespacePackageNameDoesntMatchFileName() {
+    doMultiFileTest();
+  }
+
+  // PY-13259
+  public void testNestedNamespacePackageName() {
+    doMultiFileTest();
+  }
+
+  // PY-11956
+  public void testIgnoredUnresolvedReferenceInUnionType() {
+    final String testName = getTestName(true);
+    final String inspectionName = getInspectionClass().getSimpleName();
+    myFixture.configureByFile("inspections/" + inspectionName + "/" + testName + ".py");
+    myFixture.enableInspections(getInspectionClass());
+    final String attrQualifiedName = "inspections." + inspectionName + "." + testName + ".A.foo";
+    final IntentionAction intentionAction = myFixture.findSingleIntention("Ignore unresolved reference '" + attrQualifiedName + "'");
+    assertNotNull(intentionAction);
+    myFixture.launchAction(intentionAction);
+    myFixture.checkHighlighting(isWarning(), isInfo(), isWeakWarning());
+  }
+
+  // PY-13554
+  public void testDocstringTypeFromSubModule() {
+    doMultiFileTest();
+  }
+
+  // PY-13969
+  public void testStubsOfNestedClasses() {
+    doMultiFileTest();
+  }
+
+  // PY-14359, PY-14158
+  public void testInspectionSettingsSerializable() throws Exception {
+    final PyUnresolvedReferencesInspection inspection = new PyUnresolvedReferencesInspection();
+    inspection.ignoredIdentifiers.add("foo.Bar.*");
+    final Element serialized = new Element("tmp");
+    inspection.writeSettings(serialized);
+    assertTrue(JDOMUtil.writeElement(serialized).contains("foo.Bar.*"));
   }
 
   @NotNull

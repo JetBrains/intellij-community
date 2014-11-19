@@ -25,28 +25,22 @@ import org.jetbrains.java.decompiler.struct.StructField;
 import org.jetbrains.java.decompiler.struct.StructMethod;
 import org.jetbrains.java.decompiler.struct.gen.FieldDescriptor;
 import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
-import org.jetbrains.java.decompiler.struct.gen.VarType;
+import org.jetbrains.java.decompiler.struct.gen.NewClassNameBuilder;
 import org.jetbrains.java.decompiler.util.VBStyleCollection;
 
 import java.io.IOException;
 import java.util.*;
 
-public class IdentifierConverter {
+public class IdentifierConverter implements NewClassNameBuilder {
 
   private StructContext context;
-
   private IIdentifierRenamer helper;
-
   private PoolInterceptor interceptor;
-
   private List<ClassWrapperNode> rootClasses = new ArrayList<ClassWrapperNode>();
-
   private List<ClassWrapperNode> rootInterfaces = new ArrayList<ClassWrapperNode>();
-
-  private HashMap<String, HashMap<String, String>> interfaceNameMaps = new HashMap<String, HashMap<String, String>>();
+  private Map<String, Map<String, String>> interfaceNameMaps = new HashMap<String, Map<String, String>>();
 
   public void rename(StructContext context) {
-
     try {
       this.context = context;
 
@@ -55,9 +49,7 @@ public class IdentifierConverter {
         try {
           helper = (IIdentifierRenamer)IdentifierConverter.class.getClassLoader().loadClass(user_class).newInstance();
         }
-        catch (Exception ex) {
-          // ignore errors
-        }
+        catch (Exception ignored) { }
       }
 
       if (helper == null) {
@@ -83,32 +75,29 @@ public class IdentifierConverter {
   }
 
   private void renameClasses() {
-
     List<ClassWrapperNode> lstClasses = getReversePostOrderListIterative(rootClasses);
-
-    HashMap<String, HashMap<String, String>> classNameMaps = new HashMap<String, HashMap<String, String>>();
+    Map<String, Map<String, String>> classNameMaps = new HashMap<String, Map<String, String>>();
 
     for (ClassWrapperNode node : lstClasses) {
-
       StructClass cl = node.getClassStruct();
-      HashMap<String, String> names = new HashMap<String, String>();
+      Map<String, String> names = new HashMap<String, String>();
 
-      // merge informations on super class
+      // merge information on super class
       if (cl.superClass != null) {
-        HashMap<String, String> mapClass = classNameMaps.get(cl.superClass.getString());
+        Map<String, String> mapClass = classNameMaps.get(cl.superClass.getString());
         if (mapClass != null) {
           names.putAll(mapClass);
         }
       }
 
-      // merge informations on interfaces
-      for (String intrName : cl.getInterfaceNames()) {
-        HashMap<String, String> mapInt = interfaceNameMaps.get(intrName);
+      // merge information on interfaces
+      for (String ifName : cl.getInterfaceNames()) {
+        Map<String, String> mapInt = interfaceNameMaps.get(ifName);
         if (mapInt != null) {
           names.putAll(mapInt);
         }
         else {
-          StructClass clintr = context.getClass(intrName);
+          StructClass clintr = context.getClass(ifName);
           if (clintr != null) {
             names.putAll(processExternalInterface(clintr));
           }
@@ -123,18 +112,16 @@ public class IdentifierConverter {
     }
   }
 
-  private HashMap<String, String> processExternalInterface(StructClass cl) {
+  private Map<String, String> processExternalInterface(StructClass cl) {
+    Map<String, String> names = new HashMap<String, String>();
 
-    HashMap<String, String> names = new HashMap<String, String>();
-
-    for (String intrName : cl.getInterfaceNames()) {
-
-      HashMap<String, String> mapInt = interfaceNameMaps.get(intrName);
+    for (String ifName : cl.getInterfaceNames()) {
+      Map<String, String> mapInt = interfaceNameMaps.get(ifName);
       if (mapInt != null) {
         names.putAll(mapInt);
       }
       else {
-        StructClass clintr = context.getClass(intrName);
+        StructClass clintr = context.getClass(ifName);
         if (clintr != null) {
           names.putAll(processExternalInterface(clintr));
         }
@@ -147,20 +134,18 @@ public class IdentifierConverter {
   }
 
   private void renameInterfaces() {
-
     List<ClassWrapperNode> lstInterfaces = getReversePostOrderListIterative(rootInterfaces);
-
-    HashMap<String, HashMap<String, String>> interfaceNameMaps = new HashMap<String, HashMap<String, String>>();
+    Map<String, Map<String, String>> interfaceNameMaps = new HashMap<String, Map<String, String>>();
 
     // rename methods and fields
     for (ClassWrapperNode node : lstInterfaces) {
 
       StructClass cl = node.getClassStruct();
-      HashMap<String, String> names = new HashMap<String, String>();
+      Map<String, String> names = new HashMap<String, String>();
 
-      // merge informations on super interfaces
-      for (String intrName : cl.getInterfaceNames()) {
-        HashMap<String, String> mapInt = interfaceNameMaps.get(intrName);
+      // merge information on super interfaces
+      for (String ifName : cl.getInterfaceNames()) {
+        Map<String, String> mapInt = interfaceNameMaps.get(ifName);
         if (mapInt != null) {
           names.putAll(mapInt);
         }
@@ -175,7 +160,6 @@ public class IdentifierConverter {
   }
 
   private void renameAllClasses() {
-
     // order not important
     List<ClassWrapperNode> lstAllClasses = new ArrayList<ClassWrapperNode>(getReversePostOrderListIterative(rootInterfaces));
     lstAllClasses.addAll(getReversePostOrderListIterative(rootClasses));
@@ -195,14 +179,13 @@ public class IdentifierConverter {
     String classOldFullName = cl.qualifiedName;
 
     // TODO: rename packages
-    String clsimplename = ConverterHelper.getSimpleClassName(classOldFullName);
-    if (helper.toBeRenamed(IIdentifierRenamer.ELEMENT_CLASS, clsimplename, null, null)) {
+    String clSimpleName = ConverterHelper.getSimpleClassName(classOldFullName);
+    if (helper.toBeRenamed(IIdentifierRenamer.Type.ELEMENT_CLASS, clSimpleName, null, null)) {
       String classNewFullName;
 
       do {
-        classNewFullName = ConverterHelper.replaceSimpleClassName(classOldFullName,
-                                                                  helper.getNextClassname(classOldFullName, ConverterHelper
-                                                                    .getSimpleClassName(classOldFullName)));
+        String classname = helper.getNextClassName(classOldFullName, ConverterHelper.getSimpleClassName(classOldFullName));
+        classNewFullName = ConverterHelper.replaceSimpleClassName(classOldFullName, classname);
       }
       while (context.getClasses().containsKey(classNewFullName));
 
@@ -210,8 +193,7 @@ public class IdentifierConverter {
     }
   }
 
-  private void renameClassIdentifiers(StructClass cl, HashMap<String, String> names) {
-
+  private void renameClassIdentifiers(StructClass cl, Map<String, String> names) {
     // all classes are already renamed
     String classOldFullName = cl.qualifiedName;
     String classNewFullName = interceptor.getName(classOldFullName);
@@ -241,10 +223,10 @@ public class IdentifierConverter {
           names.put(key, name);
         }
       }
-      else if (helper.toBeRenamed(IIdentifierRenamer.ELEMENT_METHOD, classOldFullName, name, mt.getDescriptor())) {
+      else if (helper.toBeRenamed(IIdentifierRenamer.Type.ELEMENT_METHOD, classOldFullName, name, mt.getDescriptor())) {
         if (isPrivate || !names.containsKey(key)) {
           do {
-            name = helper.getNextMethodname(classOldFullName, name, mt.getDescriptor());
+            name = helper.getNextMethodName(classOldFullName, name, mt.getDescriptor());
           }
           while (setMethodNames.contains(name));
 
@@ -274,79 +256,42 @@ public class IdentifierConverter {
     }
 
     for (StructField fd : cl.getFields()) {
-      if (helper.toBeRenamed(IIdentifierRenamer.ELEMENT_FIELD, classOldFullName, fd.getName(), fd.getDescriptor())) {
-        String newname;
-
+      if (helper.toBeRenamed(IIdentifierRenamer.Type.ELEMENT_FIELD, classOldFullName, fd.getName(), fd.getDescriptor())) {
+        String newName;
         do {
-          newname = helper.getNextFieldname(classOldFullName, fd.getName(), fd.getDescriptor());
+          newName = helper.getNextFieldName(classOldFullName, fd.getName(), fd.getDescriptor());
         }
-        while (setFieldNames.contains(newname));
+        while (setFieldNames.contains(newName));
 
         interceptor.addName(classOldFullName + " " + fd.getName() + " " + fd.getDescriptor(),
-                            classNewFullName + " " + newname + " " + buildNewDescriptor(true, fd.getDescriptor()));
+                            classNewFullName + " " + newName + " " + buildNewDescriptor(true, fd.getDescriptor()));
       }
     }
+  }
+
+  @Override
+  public String buildNewClassname(String className) {
+    return interceptor.getName(className);
   }
 
   private String buildNewDescriptor(boolean isField, String descriptor) {
-
-    boolean updated = false;
-
+    String newDescriptor;
     if (isField) {
-      FieldDescriptor fd = FieldDescriptor.parseDescriptor(descriptor);
-
-      VarType ftype = fd.type;
-      if (ftype.type == CodeConstants.TYPE_OBJECT) {
-        String newclname = interceptor.getName(ftype.value);
-        if (newclname != null) {
-          ftype.value = newclname;
-          updated = true;
-        }
-      }
-
-      if (updated) {
-        return fd.getDescriptor();
-      }
+      newDescriptor = FieldDescriptor.parseDescriptor(descriptor).buildNewDescriptor(this);
     }
     else {
-
-      MethodDescriptor md = MethodDescriptor.parseDescriptor(descriptor);
-      // params
-      for (VarType partype : md.params) {
-        if (partype.type == CodeConstants.TYPE_OBJECT) {
-          String newclname = interceptor.getName(partype.value);
-          if (newclname != null) {
-            partype.value = newclname;
-            updated = true;
-          }
-        }
-      }
-
-      // return value
-      if (md.ret.type == CodeConstants.TYPE_OBJECT) {
-        String newclname = interceptor.getName(md.ret.value);
-        if (newclname != null) {
-          md.ret.value = newclname;
-          updated = true;
-        }
-      }
-
-      if (updated) {
-        return md.getDescriptor();
-      }
+      newDescriptor = MethodDescriptor.parseDescriptor(descriptor).buildNewDescriptor(this);
     }
-
-    return descriptor;
+    return newDescriptor != null ? newDescriptor : descriptor;
   }
 
   private static List<ClassWrapperNode> getReversePostOrderListIterative(List<ClassWrapperNode> roots) {
-
     List<ClassWrapperNode> res = new ArrayList<ClassWrapperNode>();
 
     LinkedList<ClassWrapperNode> stackNode = new LinkedList<ClassWrapperNode>();
     LinkedList<Integer> stackIndex = new LinkedList<Integer>();
 
-    HashSet<ClassWrapperNode> setVisited = new HashSet<ClassWrapperNode>();
+    Set<ClassWrapperNode> setVisited = new HashSet<ClassWrapperNode>();
 
     for (ClassWrapperNode root : roots) {
       stackNode.add(root);
@@ -354,7 +299,6 @@ public class IdentifierConverter {
     }
 
     while (!stackNode.isEmpty()) {
-
       ClassWrapperNode node = stackNode.getLast();
       int index = stackIndex.removeLast();
 
@@ -366,17 +310,14 @@ public class IdentifierConverter {
         ClassWrapperNode sub = lstSubs.get(index);
         if (!setVisited.contains(sub)) {
           stackIndex.add(index + 1);
-
           stackNode.add(sub);
           stackIndex.add(0);
-
           break;
         }
       }
 
       if (index == lstSubs.size()) {
         res.add(0, node);
-
         stackNode.removeLast();
       }
     }
@@ -384,9 +325,7 @@ public class IdentifierConverter {
     return res;
   }
 
-
   private void buildInheritanceTree() {
-
     Map<String, ClassWrapperNode> nodes = new HashMap<String, ClassWrapperNode>();
     Map<String, StructClass> classes = context.getClasses();
 
@@ -394,29 +333,28 @@ public class IdentifierConverter {
     List<ClassWrapperNode> rootInterfaces = new ArrayList<ClassWrapperNode>();
 
     for (StructClass cl : classes.values()) {
-
       if (!cl.isOwn()) {
         continue;
       }
 
       LinkedList<StructClass> stack = new LinkedList<StructClass>();
-      LinkedList<ClassWrapperNode> stackSubnodes = new LinkedList<ClassWrapperNode>();
+      LinkedList<ClassWrapperNode> stackSubNodes = new LinkedList<ClassWrapperNode>();
 
       stack.add(cl);
-      stackSubnodes.add(null);
+      stackSubNodes.add(null);
 
       while (!stack.isEmpty()) {
+        StructClass clStr = stack.removeFirst();
+        ClassWrapperNode child = stackSubNodes.removeFirst();
 
-        StructClass clstr = stack.removeFirst();
-        ClassWrapperNode child = stackSubnodes.removeFirst();
-
-        ClassWrapperNode node = nodes.get(clstr.qualifiedName);
+        ClassWrapperNode node = nodes.get(clStr.qualifiedName);
         boolean isNewNode = (node == null);
 
         if (isNewNode) {
-          nodes.put(clstr.qualifiedName, node = new ClassWrapperNode(clstr));
+          nodes.put(clStr.qualifiedName, node = new ClassWrapperNode(clStr));
         }
 
+        //noinspection ConstantConditions
         if (child != null) {
           node.addSubclass(child);
         }
@@ -425,28 +363,25 @@ public class IdentifierConverter {
           break;
         }
         else {
-          boolean isInterface = clstr.hasModifier(CodeConstants.ACC_INTERFACE);
+          boolean isInterface = clStr.hasModifier(CodeConstants.ACC_INTERFACE);
           boolean found_parent = false;
 
           if (isInterface) {
-            for (String intrName : clstr.getInterfaceNames()) {
-              StructClass clparent = classes.get(intrName);
-              if (clparent != null) {
-                stack.add(clparent);
-                stackSubnodes.add(node);
+            for (String ifName : clStr.getInterfaceNames()) {
+              StructClass clParent = classes.get(ifName);
+              if (clParent != null) {
+                stack.add(clParent);
+                stackSubNodes.add(node);
                 found_parent = true;
               }
             }
           }
-          else {
-            if (clstr.superClass != null) { // null iff java/lang/Object
-              StructClass clparent = classes.get(clstr.superClass.getString());
-
-              if (clparent != null) {
-                stack.add(clparent);
-                stackSubnodes.add(node);
-                found_parent = true;
-              }
+          else if (clStr.superClass != null) { // null iff java/lang/Object
+            StructClass clParent = classes.get(clStr.superClass.getString());
+            if (clParent != null) {
+              stack.add(clParent);
+              stackSubNodes.add(node);
+              found_parent = true;
             }
           }
 

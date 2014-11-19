@@ -38,6 +38,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.*;
+import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBOptionButton;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Alarm;
@@ -54,6 +55,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.UIResource;
 import java.awt.*;
@@ -435,6 +437,9 @@ public abstract class DialogWrapper {
    */
   @Nullable
   protected Border createContentPaneBorder() {
+    if (getStyle() == DialogStyle.COMPACT) {
+      return new EmptyBorder(0,0,0,0);
+    }
     return ourDefaultBorder;
   }
 
@@ -554,9 +559,19 @@ public abstract class DialogWrapper {
       panel = withCB;
     }
 
-    panel.setBorder(IdeBorderFactory.createEmptyBorder(new Insets(8, 0, 0, 0)));
+    if (getStyle() == DialogStyle.COMPACT) {
+      CustomLineBorder line = new CustomLineBorder(OnePixelDivider.BACKGROUND, 1, 0, 0, 0);
+      panel.setBorder(new CompoundBorder(line, BorderFactory.createEmptyBorder(8, 12, 8, 12)));
+    } else {
+      panel.setBorder(IdeBorderFactory.createEmptyBorder(new Insets(8, 0, 0, 0)));
+    }
 
     return panel;
+  }
+
+  @NotNull
+  protected DialogStyle getStyle() {
+    return DialogStyle.NO_STYLE;
   }
 
   @NotNull
@@ -1161,9 +1176,7 @@ public abstract class DialogWrapper {
   }
 
   protected void init() {
-    if (!SwingUtilities.isEventDispatchThread()) {
-      LOG.error("Dialog must be init in EDT only: "+Thread.currentThread());
-    }
+    ensureEventDispatchThread();
     myErrorText = new ErrorText();
     myErrorText.setVisible(false);
 
@@ -1182,7 +1195,7 @@ public abstract class DialogWrapper {
     final CustomShortcutSet sc = new CustomShortcutSet(SHOW_OPTION_KEYSTROKE);
     final AnAction toggleShowOptions = new AnAction() {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         expandNextOptionButton();
       }
     };
@@ -1533,7 +1546,7 @@ public abstract class DialogWrapper {
    * @throws IllegalStateException if the dialog is invoked not on the event dispatch thread
    */
   public void show() {
-    showAndGetOk();
+    invokeShow();
   }
 
   public boolean showAndGet() {
@@ -1544,15 +1557,22 @@ public abstract class DialogWrapper {
   /**
    * You need this method ONLY for NON-MODAL dialogs. Otherwise, use {@link #show()} or {@link #showAndGet()}.
    *
-   * @return result callback
+   * @return result callback which set to "Done" on dialog close, and then its {@code getResult()} will contain {@code isOK()}
    */
   @NotNull
   public AsyncResult<Boolean> showAndGetOk() {
+    if (isModal()) {
+      throw new IllegalStateException("The showAndGetOk() method is for modeless dialogs only");
+    }
+    return invokeShow();
+  }
+
+  @NotNull
+  private AsyncResult<Boolean> invokeShow() {
     final AsyncResult<Boolean> result = new AsyncResult<Boolean>();
 
     ensureEventDispatchThread();
     registerKeyboardShortcuts();
-
 
     final Disposable uiParent = Disposer.get("ui");
     if (uiParent != null) { // may be null if no app yet (license agreement)
@@ -1585,7 +1605,6 @@ public abstract class DialogWrapper {
   }
 
   private void registerKeyboardShortcuts() {
-
     final JRootPane rootPane = getRootPane();
 
     if (rootPane == null) return;
@@ -1995,7 +2014,7 @@ public abstract class DialogWrapper {
    */
   private static void ensureEventDispatchThread() {
     if (!EventQueue.isDispatchThread()) {
-      throw new IllegalStateException("The DialogWrapper can be used only on event dispatch thread.");
+      throw new IllegalStateException("The DialogWrapper can be used only in event dispatch thread. Current thread: "+Thread.currentThread());
     }
   }
 
@@ -2106,10 +2125,12 @@ public abstract class DialogWrapper {
       return true;
     }
 
-    public void setValidationInfo(@Nullable ValidationInfo info) {
+    private void setValidationInfo(@Nullable ValidationInfo info) {
       myInfo = info;
     }
   }
 
   private static enum ErrorPaintingType {DOT, SIGN, LINE}
+
+  public enum DialogStyle {NO_STYLE, COMPACT}
 }

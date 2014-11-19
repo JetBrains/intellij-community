@@ -74,6 +74,8 @@ public class ExpectedHighlightingData {
   private final PsiFile myFile;
   @NonNls private static final String ANY_TEXT = "*";
   private final String myText;
+  
+  private boolean myIgnoreExtraHighlighting; 
 
   public static class ExpectedHighlightingSet {
     private final HighlightSeverity severity;
@@ -149,7 +151,17 @@ public class ExpectedHighlightingData {
                                   final boolean checkWeakWarnings,
                                   final boolean checkInfos,
                                   @Nullable final PsiFile file) {
+    this(document, checkWarnings, checkWeakWarnings, checkInfos, false, file);
+  }
+
+  public ExpectedHighlightingData(@NotNull final Document document,
+                                  final boolean checkWarnings,
+                                  final boolean checkWeakWarnings,
+                                  final boolean checkInfos,
+                                  final boolean ignoreExtraHighlighting,
+                                  @Nullable final PsiFile file) {
     this(document, file);
+    myIgnoreExtraHighlighting = ignoreExtraHighlighting;
     if (checkWarnings) checkWarnings();
     if (checkWeakWarnings) checkWeakWarnings();
     if (checkInfos) checkInfos();
@@ -423,7 +435,7 @@ public class ExpectedHighlightingData {
     String failMessage = "";
 
     for (HighlightInfo info : reverseCollection(infos)) {
-      if (!expectedInfosContainsInfo(info)) {
+      if (!expectedInfosContainsInfo(info) && !myIgnoreExtraHighlighting) {
         final int startOffset = info.startOffset;
         final int endOffset = info.endOffset;
         String s = text.substring(startOffset, endOffset);
@@ -507,6 +519,16 @@ public class ExpectedHighlightingData {
       }
     });
 
+    boolean showAttributesKeys = false;
+    for (ExpectedHighlightingSet eachSet : types.values()) {
+      for (HighlightInfo eachInfo : eachSet.infos) {
+        if (eachInfo.forcedTextAttributesKey != null) {
+          showAttributesKeys = true;
+          break;
+        }
+      }
+    }
+
     // sort filtered highlighting data by end offset in descending order
     Collections.sort(list, new Comparator<Pair<String, HighlightInfo>>() {
       @Override
@@ -535,14 +557,14 @@ public class ExpectedHighlightingData {
 
     // combine highlighting data with original text
     StringBuilder sb = new StringBuilder();
-    Couple<Integer> result = composeText(sb, list, 0, text, text.length(), 0);
+    Couple<Integer> result = composeText(sb, list, 0, text, text.length(), 0, showAttributesKeys);
     sb.insert(0, text.substring(0, result.second));
     return sb.toString();
   }
 
   private static Couple<Integer> composeText(StringBuilder sb,
                                              List<Pair<String, HighlightInfo>> list, int index,
-                                             String text, int endPos, int startPos) {
+                                             String text, int endPos, int startPos, boolean showAttributesKeys) {
     int i = index;
     while (i < list.size()) {
       Pair<String, HighlightInfo> pair = list.get(i);
@@ -558,12 +580,16 @@ public class ExpectedHighlightingData {
       sb.insert(0, "</" + severity + ">");
       endPos = info.endOffset;
       if (prev != null && prev.endOffset > info.startOffset) {
-        Couple<Integer> result = composeText(sb, list, i + 1, text, endPos, info.startOffset);
+        Couple<Integer> result = composeText(sb, list, i + 1, text, endPos, info.startOffset, showAttributesKeys);
         i = result.first - 1;
         endPos = result.second;
       }
       sb.insert(0, text.substring(info.startOffset, endPos));
-      sb.insert(0, "<" + severity + " descr=\"" + info.getDescription() + "\">");
+
+      String str = "<" + severity + " descr=\"" + info.getDescription() + "\"";
+      if (showAttributesKeys) str += " textAttributesKey=\"" + info.forcedTextAttributesKey + "\"";
+      str += ">";
+      sb.insert(0, str);
 
       endPos = info.startOffset;
       i++;

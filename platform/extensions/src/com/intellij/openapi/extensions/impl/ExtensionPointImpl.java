@@ -199,9 +199,13 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
           result = myExtensions.toArray(a);
 
           for (int i = result.length - 1; i >= 0; i--) {
-            T t = result[i];
-            if (i > 0 && result[i] == result[i - 1]) {
-              LOG.error("Duplicate extension found: " + t + "; " +
+            T extension = result[i];
+            if (extension == null) {
+              LOG.error(" null extension: " + myExtensions + ";\n" +
+                " getExtensionClass(): " + extensionClass + ";\n" );
+            }
+            if (i > 0 && extension == result[i - 1]) {
+              LOG.error("Duplicate extension found: " + extension + "; " +
                         " Result:      " + Arrays.toString(result) + ";\n" +
                         " extensions: " + myExtensions + ";\n" +
                         " getExtensionClass(): " + extensionClass + ";\n" +

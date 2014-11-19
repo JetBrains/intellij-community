@@ -263,7 +263,7 @@ public class XmlEmmetParser extends EmmetParser {
       final List<Couple<String>> attrList = parseSelector();
       if (attrList == null) {
         if (classAttrPosition != -1) {
-          result.set(classAttrPosition, Couple.of(CLASS, classAttrBuilder.toString()));
+          result.set(classAttrPosition, Couple.of(getClassAttributeName(), classAttrBuilder.toString()));
         }
         if (idAttrPosition != -1) {
           result.set(idAttrPosition, Couple.of(ID, idAttrBuilder.toString()));
@@ -272,7 +272,7 @@ public class XmlEmmetParser extends EmmetParser {
       }
 
       for (Couple<String> attr : attrList) {
-        if (CLASS.equals(attr.first)) {
+        if (getClassAttributeName().equals(attr.first)) {
           if (classAttrBuilder.length() > 0) {
             classAttrBuilder.append(' ');
           }
@@ -313,7 +313,7 @@ public class XmlEmmetParser extends EmmetParser {
     }
 
     if (token == ZenCodingTokens.DOT || token == ZenCodingTokens.SHARP) {
-      final String name = token == ZenCodingTokens.DOT ? CLASS : ID;
+      final String name = token == ZenCodingTokens.DOT ? getClassAttributeName() : ID;
       advance();
       token = getToken();
       final String value = getAttributeValueByToken(token);
@@ -324,6 +324,11 @@ public class XmlEmmetParser extends EmmetParser {
     }
 
     return null;
+  }
+
+  @NotNull
+  protected String getClassAttributeName() {
+    return CLASS;
   }
 
   @Nullable
