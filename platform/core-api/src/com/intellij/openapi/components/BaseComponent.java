@@ -24,6 +24,7 @@ package com.intellij.openapi.components;
 public interface BaseComponent extends NamedComponent {
   /**
    * Component should perform initialization and communication with other components in this method.
+   * This is called after {@link com.intellij.openapi.components.PersistentStateComponent#loadState(Object)}.
    */
   void initComponent();
 
