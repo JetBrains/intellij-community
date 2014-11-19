@@ -139,8 +139,8 @@ public class JavaCompilersTab implements SearchableConfigurable, Configurable.No
     myCompilerConfiguration.setProjectBytecodeTarget(myTargetLevelComponent.getProjectBytecodeTarget());
     myCompilerConfiguration.setModulesBytecodeTargetMap(myTargetLevelComponent.getModulesBytecodeTargetMap());
 
-    myCompilerConfiguration.setProjectBytecodeTarget(myTargetLevelComponent.getProjectBytecodeTarget());
-    myCompilerConfiguration.setModulesBytecodeTargetMap(myCompilerConfiguration.getModulesBytecodeTargetMap());
+    myTargetLevelComponent.setProjectBytecodeTargetLevel(myCompilerConfiguration.getProjectBytecodeTarget());
+    myTargetLevelComponent.setModuleTargetLevels(myCompilerConfiguration.getModulesBytecodeTargetMap());
   }
 
   public void reset() {
