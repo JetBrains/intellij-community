@@ -981,8 +981,6 @@ class InternalGetArray(InternalThreadCommand):
         self.rows = int(rows)
         self.cols = int(cols)
         self.format = format
-        if hasattr(self.format, 'encode'):
-            self.format = self.format.encode('utf-8')
 
     def doIt(self, dbg):
         try:
