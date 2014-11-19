@@ -414,7 +414,7 @@ def array_to_xml(array, roffset, coffset, rows, cols, format):
             array = array[roffset:]
             rows = min(rows, len(array))
 
-    xml += "<array meta=\"%s\" rows=\"%s\" cols=\"%s\"/>" % (False, rows, cols)
+    xml += "<arraydata rows=\"%s\" cols=\"%s\"/>" % (rows, cols)
     for row in range(rows):
         xml += "<row index=\"%s\"/>" % to_string(row)
         for col in range(cols):
@@ -491,9 +491,9 @@ def array_to_meta_xml(array, name, format):
     bounds = (0, 0)
     if type in "biufc":
         bounds = (array.min(), array.max())
-    xml = '<array meta=\"%s\" slice=\"%s\" rows=\"%s\" cols=\"%s\" format=\"%s\" type=\"%s\" max=\"%s\" min=\"%s\"/>' % \
-           (True, slice, rows, cols, format, type, bounds[1], bounds[0])
-    return xml
+    xml = '<array slice=\"%s\" rows=\"%s\" cols=\"%s\" format=\"%s\" type=\"%s\" max=\"%s\" min=\"%s\"/>' % \
+           (slice, rows, cols, format, type, bounds[1], bounds[0])
+    return xml, rows, cols, format
 
 
 
