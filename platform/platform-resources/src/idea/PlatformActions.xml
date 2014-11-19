@@ -613,7 +613,7 @@
       </group>
       <separator/>
       <action internal="true" id="ReloadProjectAction" class="com.intellij.internal.ReloadProjectAction"/>
-      <action id="DumbMode" internal="true" class="com.intellij.internal.ToggleDumbModeAction" text="Dumb mode"/>
+      <action id="DumbMode" internal="true" class="com.intellij.internal.ToggleDumbModeAction" text="Dumb Mode"/>
       <action id="LaggingMode" internal="true" class="com.intellij.internal.ToggleLaggingModeAction" text="Lagging mode"/>
       <separator/>
       <group id="Internal.UI" popup="true" text="&amp;UI">

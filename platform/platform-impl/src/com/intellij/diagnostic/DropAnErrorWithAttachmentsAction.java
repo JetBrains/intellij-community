@@ -25,7 +25,7 @@ import java.awt.event.InputEvent;
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class DropAnErrorWithAttachmentsAction extends DumbAwareAction {
   public DropAnErrorWithAttachmentsAction() {
-    super("Drop an error with attachments", "Hold down SHIFT for multiple attachments", null);
+    super("Drop An Error With Attachments", "Hold down SHIFT for multiple attachments", null);
   }
 
   public void actionPerformed(AnActionEvent e) {

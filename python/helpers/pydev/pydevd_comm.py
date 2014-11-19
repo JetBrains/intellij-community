@@ -989,11 +989,13 @@ class InternalGetArray(InternalThreadCommand):
 
             xml = "<xml>"
 
-            # need metadata
+            var, metaxml, rows, cols, format = pydevd_vars.array_to_meta_xml(var, self.name, self.format)
+            xml += metaxml
+            self.format = '%' + format
             if self.rows == -1 and self.cols == -1:
-                xml += pydevd_vars.array_to_meta_xml(var, self.name, self.format)
-            else:
-                xml += pydevd_vars.array_to_xml(var, self.roffset, self.coffset, self.rows, self.cols, self.format)
+                self.rows = rows
+                self.cols = cols
+            xml += pydevd_vars.array_to_xml(var, self.roffset, self.coffset, self.rows, self.cols, self.format)
             xml += "</xml>"
             cmd = dbg.cmdFactory.makeGetArrayMessage(self.sequence, xml)
             dbg.writer.addCommand(cmd)
