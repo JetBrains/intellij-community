@@ -431,6 +431,10 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
     assertTrue(JDOMUtil.writeElement(serialized).contains("foo.Bar.*"));
   }
 
+  public void testMetaClassMembers() {
+    doTest();
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {
