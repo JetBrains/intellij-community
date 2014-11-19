@@ -18,6 +18,7 @@ package com.intellij.ui.table;
 import com.intellij.Patches;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.ExpirableRunnable;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBViewport;
@@ -302,8 +303,6 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       final KeyboardFocusManager keyboardFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
       //noinspection HardCodedStringLiteral
       keyboardFocusManager.removePropertyChangeListener("permanentFocusOwner", myEditorRemover);
-      //noinspection HardCodedStringLiteral
-      keyboardFocusManager.removePropertyChangeListener("focusOwner", myEditorRemover);
       super.removeNotify();
       if (myBusyIcon != null) {
         remove(myBusyIcon);
@@ -426,8 +425,6 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       final KeyboardFocusManager keyboardFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
       myEditorRemover = new MyCellEditorRemover();
       //noinspection HardCodedStringLiteral
-      keyboardFocusManager.addPropertyChangeListener("focusOwner", myEditorRemover);
-      //noinspection HardCodedStringLiteral
       keyboardFocusManager.addPropertyChangeListener("permanentFocusOwner", myEditorRemover);
     }
 
@@ -531,13 +528,19 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
         return;
       }
 
-      myFocusManager.doWhenFocusSettlesDown(new Runnable() {
+      myFocusManager.doWhenFocusSettlesDown(new ExpirableRunnable() {
+        @Override
+        public boolean isExpired() {
+          return !isEditing();
+        }
+
         @Override
         public void run() {
-          if (!isEditing()) {
+          Component c = myFocusManager.getFocusOwner();
+          if (UIUtil.isMeaninglessFocusOwner(c)) {
+            // this allows using popup menus and menu bar without stopping cell editing
             return;
           }
-          Component c = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
           while (c != null) {
             if (c instanceof JPopupMenu) {
               c = ((JPopupMenu)c).getInvoker();
