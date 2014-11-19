@@ -84,7 +84,7 @@ public class IcsManager : ApplicationLoadListener {
 
   public val repositoryService: RepositoryService = GitRepositoryService()
 
-  private val settings = IcsSettings()
+  val settings = IcsSettings()
 
   val repositoryManager: RepositoryManager = GitRepositoryManager(object : AtomicNotNullLazyValue<CredentialsStore>() {
     override fun compute(): CredentialsStore {
@@ -164,10 +164,6 @@ public class IcsManager : ApplicationLoadListener {
       }
       return settings.shareProjectWorkspace || fileSpec != StoragePathMacros.WORKSPACE_FILE
     }
-  }
-
-  public fun getSettings(): IcsSettings {
-    return settings
   }
 
   public fun sync(syncType: SyncType, project: Project?, localRepositoryInitializer: (() -> Unit)? = null): UpdateResult? {

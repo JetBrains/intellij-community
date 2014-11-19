@@ -67,7 +67,7 @@ class CommitToIcsAction : CommonCheckinFilesAction() {
 
     val changes = context.getSelectedChanges()
     val collectConsumer = ProjectChangeCollectConsumer(project)
-    if (changes != null && changes.size > 0) {
+    if (changes != null && changes.isNotEmpty()) {
       for (change in changes) {
         collectConsumer.consume(change)
       }
@@ -105,11 +105,11 @@ private fun getProjectId(project: Project): String? {
   if (projectId.uid == null) {
     if (MessageDialogBuilder.yesNo("Settings Server Project Mapping", "Project is not mapped on Settings Server. Would you like to map?").project(project).doNotAsk(object : DialogWrapper.PropertyDoNotAskOption("") {
       override fun setToBeShown(value: Boolean, exitCode: Int) {
-        IcsManager.getInstance().getSettings().doNoAskMapProject = !value
+        IcsManager.getInstance().settings.doNoAskMapProject = !value
       }
 
       override fun isToBeShown(): Boolean {
-        return !IcsManager.getInstance().getSettings().doNoAskMapProject
+        return !IcsManager.getInstance().settings.doNoAskMapProject
       }
 
       override fun canBeHidden(): Boolean {
