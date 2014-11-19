@@ -19,6 +19,7 @@ import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
@@ -180,8 +181,12 @@ public class BlockContainingJavaBlock extends AbstractJavaBlock{
     if (state == BEFORE_FIRST) {
       return getCodeBlockExternalIndent();
     }
-    if (child.getElementType() == JavaTokenType.ELSE_KEYWORD)
+    if (child.getElementType() == JavaTokenType.ELSE_KEYWORD) {
       return getCodeBlockExternalIndent();
+    }
+    if (child.getPsi() instanceof PsiTypeElement) {
+      return Indent.getNoneIndent();
+    }
 
     return Indent.getContinuationIndent(myIndentSettings.USE_RELATIVE_INDENTS);
   }
