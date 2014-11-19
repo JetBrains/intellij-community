@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 class GitBekParentFixer {
@@ -32,6 +33,8 @@ class GitBekParentFixer {
   @NotNull private static final String MAGIC_REGEXP_FOR_COMMAND_LINE_PULLS = "^Merge branch .* of [^ ]*$";
   @NotNull private static final VcsLogFilterCollection MAGIC_IDEA_PULLS_FILTER = createIdeaPullFilterCollection();
   @NotNull private static final VcsLogFilterCollection MAGIC_COMMAND_LINE_PULLS_FILTER = createCommandLinePullFilterCollection();
+  @NotNull private static final Pattern NAME_WITH_DOT = Pattern.compile("(\\w*)\\.(\\w*)");
+  @NotNull private static final Pattern NAME_WITH_SPACE = Pattern.compile("(\\w*) (\\w*)");
 
   @NotNull private final Set<Hash> myWrongCommits;
 
@@ -76,21 +79,24 @@ class GitBekParentFixer {
 
       ArrayList<String> hashes = new ArrayList<String>(3);
       hashes.add(candidate.getId().asString());
-      for (Hash parent: parents) {
+      for (Hash parent : parents) {
         hashes.add(parent.asString());
       }
       List<? extends VcsShortCommitDetails> shortDetails = provider.readShortDetails(root, hashes);
-      VcsUser mergeCommitter = null;
-      VcsUser firstParentCommitter = null;
+      String mergeCommitter = null;
+      String firstParentCommitter = null;
       for (VcsShortCommitDetails detail : shortDetails) {
         if (detail.getId().equals(candidate.getId())) {
-          mergeCommitter = detail.getCommitter();
-        } else if (detail.getId().equals(parents.get(0))) {
-          firstParentCommitter = detail.getCommitter();
+          mergeCommitter = detail.getCommitter().getName();
+        }
+        else if (detail.getId().equals(parents.get(0))) {
+          firstParentCommitter = detail.getCommitter().getName();
         }
       }
 
-      if (mergeCommitter != null && mergeCommitter.equals(firstParentCommitter)) {
+      if (mergeCommitter != null &&
+          firstParentCommitter != null &&
+          getNameInStandardForm(mergeCommitter).equals(getNameInStandardForm(firstParentCommitter))) {
         // actually, even that does not work all the time
         // a person can make a commit and then merge someones pull-request
         commandLinePulls.add(candidate.getId());
@@ -99,6 +105,19 @@ class GitBekParentFixer {
 
     result.addAll(commandLinePulls);
     return result;
+  }
+
+  @NotNull
+  private static String getNameInStandardForm(@NotNull String name) {
+    Matcher nameWithDotMatcher = NAME_WITH_DOT.matcher(name);
+    if (nameWithDotMatcher.matches()) {
+      return nameWithDotMatcher.group(1).toLowerCase() + " " + nameWithDotMatcher.group(2).toLowerCase();
+    }
+    Matcher nameWithSpaceMatcher = NAME_WITH_SPACE.matcher(name);
+    if (nameWithSpaceMatcher.matches()) {
+      return nameWithSpaceMatcher.group(1).toLowerCase() + " " + nameWithSpaceMatcher.group(2).toLowerCase();
+    }
+    return name.toLowerCase();
   }
 
   @NotNull
@@ -143,6 +162,7 @@ class GitBekParentFixer {
   private static VcsLogFilterCollection createCommandLinePullFilterCollection() {
     final VcsLogTextFilter textFilter = new VcsLogTextFilter() {
       private final Pattern myPattern = Pattern.compile(MAGIC_REGEXP_FOR_COMMAND_LINE_PULLS, Pattern.MULTILINE);
+
       @NotNull
       @Override
       public String getText() {
