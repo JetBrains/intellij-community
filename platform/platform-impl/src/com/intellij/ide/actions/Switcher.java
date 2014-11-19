@@ -31,6 +31,7 @@ import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
 import com.intellij.openapi.fileEditor.impl.EditorTabbedContainer;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
+import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.GraphicsConfig;
@@ -102,35 +103,36 @@ public class Switcher extends AnAction implements DumbAware {
   private static final CustomShortcutSet TW_SHORTCUT;
 
   static {
+    Shortcut recentFiles = ArrayUtil.getFirstElement(KeymapManager.getInstance().getActiveKeymap().getShortcuts("RecentFiles"));
     List<Shortcut> shortcuts = ContainerUtil.newArrayList();
     for (char ch = '0'; ch <= '9'; ch++) {
       shortcuts.add(CustomShortcutSet.fromString("control " + ch).getShortcuts()[0]);
     }
     for (char ch = 'A'; ch <= 'Z'; ch++) {
-      shortcuts.add(CustomShortcutSet.fromString("control " + ch).getShortcuts()[0]);
+      Shortcut shortcut = CustomShortcutSet.fromString("control " + ch).getShortcuts()[0];
+      if (shortcut.equals(recentFiles)) continue;
+      shortcuts.add(shortcut);
     }
     TW_SHORTCUT = new CustomShortcutSet(shortcuts.toArray(new Shortcut[shortcuts.size()]));
 
-
-      IdeEventQueue.getInstance().addPostprocessor(new IdeEventQueue.EventDispatcher() {
-        @Override
-        public boolean dispatch(AWTEvent event) {
-          ToolWindow tw;
-          if (SWITCHER != null && event instanceof KeyEvent && !SWITCHER.isPinnedMode()) {
-            final KeyEvent keyEvent = (KeyEvent)event;
-            if (event.getID() == KEY_RELEASED && keyEvent.getKeyCode() == CTRL_KEY) {
-              SwingUtilities.invokeLater(CHECKER);
-            }
-            else if (event.getID() == KEY_PRESSED && event != INIT_EVENT
-                     && (tw = SWITCHER.twShortcuts.get(String.valueOf((char)keyEvent.getKeyCode()))) != null) {
-              SWITCHER.myPopup.closeOk(null);
-              tw.activate(null, true, true);
-            }
+    IdeEventQueue.getInstance().addPostprocessor(new IdeEventQueue.EventDispatcher() {
+      @Override
+      public boolean dispatch(AWTEvent event) {
+        ToolWindow tw;
+        if (SWITCHER != null && event instanceof KeyEvent && !SWITCHER.isPinnedMode()) {
+          final KeyEvent keyEvent = (KeyEvent)event;
+          if (event.getID() == KEY_RELEASED && keyEvent.getKeyCode() == CTRL_KEY) {
+            SwingUtilities.invokeLater(CHECKER);
           }
-          return false;
+          else if (event.getID() == KEY_PRESSED && event != INIT_EVENT
+                   && (tw = SWITCHER.twShortcuts.get(String.valueOf((char)keyEvent.getKeyCode()))) != null) {
+            SWITCHER.myPopup.closeOk(null);
+            tw.activate(null, true, true);
+          }
         }
-      }, null);
-
+        return false;
+      }
+    }, null);
   }
 
   @NonNls private static final String SWITCHER_TITLE = "Switcher";
@@ -557,14 +559,12 @@ public class Switcher extends AnAction implements DumbAware {
           }
         }.registerCustomShortcutSet(CustomShortcutSet.fromString("ESCAPE"), this, myPopup);
       }
-      else {
-        new AnAction(null, null, null) {
-          @Override
-          public void actionPerformed(@NotNull AnActionEvent e) {
-            //suppress all actions to activate a toolwindow : IDEA-71277
-          }
-        }.registerCustomShortcutSet(TW_SHORTCUT, this, myPopup);
-      }
+      new AnAction(null, null, null) {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e) {
+          //suppress all actions to activate a toolwindow : IDEA-71277
+        }
+      }.registerCustomShortcutSet(TW_SHORTCUT, this, myPopup);
 
       final Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
       myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, myPopup);
