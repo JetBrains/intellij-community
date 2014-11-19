@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.bugs;
 
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -49,6 +50,15 @@ public class NullArgumentToVariableArgMethodInspection
   public BaseInspectionVisitor buildVisitor() {
     return new NullArgumentToVariableArgVisitor();
   }
+  @NotNull
+  @Override
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+    if (!PsiUtil.isLanguageLevel5OrHigher(holder.getFile())) {
+      return new PsiElementVisitor() { };
+    }
+
+    return super.buildVisitor(holder, isOnTheFly);
+  }
 
   private static class NullArgumentToVariableArgVisitor
     extends BaseInspectionVisitor {
@@ -58,9 +68,6 @@ public class NullArgumentToVariableArgMethodInspection
       @NotNull PsiMethodCallExpression call) {
       super.visitMethodCallExpression(call);
 
-      if (!PsiUtil.isLanguageLevel5OrHigher(call)) {
-        return;
-      }
       final PsiExpressionList argumentList = call.getArgumentList();
       final PsiExpression[] args = argumentList.getExpressions();
       if (args.length == 0) {

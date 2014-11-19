@@ -173,8 +173,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
             public void run() {
               final LocateLibraryDialog dialog = new LocateLibraryDialog(currentModule, PathManager.getLibPath(), "annotations.jar",
                                                                          QuickFixBundle.message("add.library.annotations.description"));
-              dialog.show();
-              if (dialog.isOK()) {
+              if (dialog.showAndGet()) {
                 new WriteCommandAction(project) {
                   @Override
                   protected void run(final Result result) throws Throwable {
@@ -361,8 +360,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
     final LocateLibraryDialog dialog = new LocateLibraryDialog(
       module, PathManager.getLibPath(), "annotations.jar",
       QuickFixBundle.message("add.library.annotations.description"));
-    dialog.show();
-    if (dialog.isOK()) {
+    if (dialog.showAndGet()) {
       new WriteCommandAction(module.getProject()) {
         @Override
         protected void run(final Result result) throws Throwable {

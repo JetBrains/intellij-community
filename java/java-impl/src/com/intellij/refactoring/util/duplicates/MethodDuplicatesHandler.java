@@ -73,12 +73,12 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
 
     final AnalysisScope scope = new AnalysisScope(file);
     final Module module = ModuleUtilCore.findModuleForPsiElement(file);
-    final BaseAnalysisActionDialog dlg = new BaseAnalysisActionDialog(RefactoringBundle.message("replace.method.duplicates.scope.chooser.title", REFACTORING_NAME),
-                                                                RefactoringBundle.message("replace.method.duplicates.scope.chooser.message"),
-                                                                project, scope, module != null ? module.getName() : null, false,
-                                                                AnalysisUIOptions.getInstance(project), element);
-    dlg.show();
-    if (dlg.isOK()) {
+    final BaseAnalysisActionDialog dlg =
+      new BaseAnalysisActionDialog(RefactoringBundle.message("replace.method.duplicates.scope.chooser.title", REFACTORING_NAME),
+                                   RefactoringBundle.message("replace.method.duplicates.scope.chooser.message"),
+                                   project, scope, module != null ? module.getName() : null, false,
+                                   AnalysisUIOptions.getInstance(project), element);
+    if (dlg.showAndGet()) {
       ProgressManager.getInstance().run(new Task.Backgroundable(project, "Locate duplicates", true) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,8 +79,9 @@ public class OptimizeImportsAction extends AnAction {
           text = CodeInsightBundle.message("process.scope.project", projectContext.getPresentableUrl());
         }
         DialogWrapper dialog = new OptimizeOnModuleDialog(project, text);
-        dialog.show();
-        if (!dialog.isOK()) return;
+        if (!dialog.showAndGet()) {
+          return;
+        }
         if (moduleContext != null) {
           new OptimizeImportsProcessor(project, moduleContext).run();
         }
@@ -115,9 +116,11 @@ public class OptimizeImportsAction extends AnAction {
       includeSubdirectories = processDirectory = false;
     }
     else {
-      final LayoutCodeDialog dialog = new LayoutCodeDialog(project, CodeInsightBundle.message("process.optimize.imports"), file, dir, null, HELP_ID);
-      dialog.show();
-      if (!dialog.isOK()) return;
+      final LayoutCodeDialog dialog =
+        new LayoutCodeDialog(project, CodeInsightBundle.message("process.optimize.imports"), file, dir, null, HELP_ID);
+      if (!dialog.showAndGet()) {
+        return;
+      }
       EditorSettingsExternalizable.getInstance().getOptions().SHOW_OPIMIZE_IMPORTS_DIALOG = !dialog.isDoNotAskMe();
       ReformatCodeAction.updateShowDialogSetting(dialog, "\"Optimize Imports\" dialog disabled");
       processDirectory = dialog.isProcessDirectory();

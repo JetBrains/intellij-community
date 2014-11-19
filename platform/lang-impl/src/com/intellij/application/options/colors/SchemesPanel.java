@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -136,8 +136,7 @@ public class SchemesPanel extends JPanel implements SkipSelfSearchComponent {
     List<String> names = ContainerUtil.newArrayList(myOptions.getSchemeNames());
     String selectedName = myOptions.getSelectedScheme().getName();
     SaveSchemeDialog dialog = new SaveSchemeDialog(this, ApplicationBundle.message("title.save.color.scheme.as"), names, selectedName);
-    dialog.show();
-    if (dialog.isOK()) {
+    if (dialog.showAndGet()) {
       myOptions.saveSchemeAs(dialog.getSchemeName());
     }
   }

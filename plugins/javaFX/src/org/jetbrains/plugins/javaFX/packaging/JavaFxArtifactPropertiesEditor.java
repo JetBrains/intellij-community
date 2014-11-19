@@ -91,8 +91,7 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
       @Override
       public void actionPerformed(ActionEvent e) {
         myManifestAttributesDialog = new CustomManifestAttributesDialog(myWholePanel, myCustomManifestAttributes);
-        myManifestAttributesDialog.show();
-        if (myManifestAttributesDialog.isOK()) {
+        if (myManifestAttributesDialog.showAndGet()) {
           myCustomManifestAttributes = myManifestAttributesDialog.getAttrs();
         }
       }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.migration;
 
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -66,15 +67,21 @@ public class WhileCanBeForeachInspectionBase extends BaseInspection {
   public BaseInspectionVisitor buildVisitor() {
     return new WhileCanBeForeachVisitor();
   }
+  @NotNull
+  @Override
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+    if (!PsiUtil.isLanguageLevel5OrHigher(holder.getFile())) {
+      return new PsiElementVisitor() { };
+    }
+
+    return super.buildVisitor(holder, isOnTheFly);
+  }
 
   private static class WhileCanBeForeachVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitWhileStatement(@NotNull PsiWhileStatement whileStatement) {
       super.visitWhileStatement(whileStatement);
-      if (!PsiUtil.isLanguageLevel5OrHigher(whileStatement)) {
-        return;
-      }
       if (!isCollectionLoopStatement(whileStatement)) {
         return;
       }

@@ -72,12 +72,12 @@ public class GroovyGenerateEqualsHandler extends GenerateMembersHandlerBase {
     boolean needHashCode = hashCodeMethod == null;
     if (!needEquals && !needHashCode) {
       String text = aClass instanceof PsiAnonymousClass
-          ? GroovyCodeInsightBundle.message("generate.equals.and.hashcode.already.defined.warning.anonymous")
-          : GroovyCodeInsightBundle.message("generate.equals.and.hashcode.already.defined.warning", aClass.getQualifiedName());
+                    ? GroovyCodeInsightBundle.message("generate.equals.and.hashcode.already.defined.warning.anonymous")
+                    : GroovyCodeInsightBundle.message("generate.equals.and.hashcode.already.defined.warning", aClass.getQualifiedName());
 
       if (Messages.showYesNoDialog(project, text,
-          GroovyCodeInsightBundle.message("generate.equals.and.hashcode.already.defined.title"),
-          Messages.getQuestionIcon()) == Messages.YES) {
+                                   GroovyCodeInsightBundle.message("generate.equals.and.hashcode.already.defined.title"),
+                                   Messages.getQuestionIcon()) == Messages.YES) {
         if (!ApplicationManager.getApplication().runWriteAction(new Computable<Boolean>() {
           @Override
           public Boolean compute() {
@@ -93,17 +93,20 @@ public class GroovyGenerateEqualsHandler extends GenerateMembersHandlerBase {
           }
         }).booleanValue()) {
           return null;
-        } else {
+        }
+        else {
           needEquals = needHashCode = true;
         }
-      } else {
+      }
+      else {
         return null;
       }
     }
 
     GenerateEqualsWizard wizard = new GenerateEqualsWizard(project, aClass, needEquals, needHashCode);
-    wizard.show();
-    if (!wizard.isOK()) return null;
+    if (!wizard.showAndGet()) {
+      return null;
+    }
     myEqualsFields = wizard.getEqualsFields();
     myHashCodeFields = wizard.getHashCodeFields();
     myNonNullFields = wizard.getNonNullFields();

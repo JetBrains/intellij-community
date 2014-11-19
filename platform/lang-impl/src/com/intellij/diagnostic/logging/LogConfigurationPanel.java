@@ -289,8 +289,7 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
   private static boolean showEditorDialog(@NotNull LogFileOptions options) {
     EditLogPatternDialog dialog = new EditLogPatternDialog();
     dialog.init(options.getName(), options.getPathPattern(), options.isShowAll());
-    dialog.show();
-    if (dialog.isOK()) {
+    if (dialog.showAndGet()) {
       options.setName(dialog.getName());
       options.setPathPattern(dialog.getLogPattern());
       options.setShowAll(dialog.isShowAllFiles());

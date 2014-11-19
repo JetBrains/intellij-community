@@ -16,12 +16,12 @@
 package com.siyeh.ig.migration;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -89,6 +89,16 @@ public class UnnecessaryUnboxingInspection extends BaseInspection {
     return new UnnecessaryUnboxingVisitor();
   }
 
+  @NotNull
+  @Override
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+    if (!PsiUtil.isLanguageLevel5OrHigher(holder.getFile())) {
+      return new PsiElementVisitor() { };
+    }
+
+    return super.buildVisitor(holder, isOnTheFly);
+  }
+
   @Override
   public InspectionGadgetsFix buildFix(Object... infos) {
     return new UnnecessaryUnboxingFix();
@@ -147,13 +157,9 @@ public class UnnecessaryUnboxingInspection extends BaseInspection {
   }
 
   private class UnnecessaryUnboxingVisitor extends BaseInspectionVisitor {
-
     @Override
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
-      if (!PsiUtil.isLanguageLevel5OrHigher(expression)) {
-        return;
-      }
       if (!isUnboxingExpression(expression)) {
         return;
       }

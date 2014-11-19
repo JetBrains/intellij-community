@@ -51,9 +51,7 @@ public class MvcConfigureNotification extends GroovyFrameworkConfigNotification 
     final GroovyLibraryDescription description = framework.createLibraryDescription();
     final AddCustomLibraryDialog dialog = AddCustomLibraryDialog.createDialog(description, module, null);
     dialog.setTitle("Change " + framework.getDisplayName() + " SDK version");
-    dialog.show();
-
-    if (dialog.isOK()) {
+    if (dialog.showAndGet()) {
       module.putUserData(MvcFramework.UPGRADE, Boolean.TRUE);
     }
   }

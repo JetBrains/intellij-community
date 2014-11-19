@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,8 +30,9 @@ public class SshConnectionUtil {
 
       if (password == null) {
         SshPasswordDialog sshPasswordDialog = new SshPasswordDialog(CvsBundle.message("prompt.text.enter.password.for.cvs.root", cvsRoot));
-        sshPasswordDialog.show();
-        if (!sshPasswordDialog.isOK()) return false;
+        if (!sshPasswordDialog.showAndGet()) {
+          return false;
+        }
         password = sshPasswordDialog.getPassword();
         sshPasswordProvider.storePasswordForCvsRoot(cvsRoot, password, sshPasswordDialog.saveThisPassword());
       }
@@ -42,10 +43,12 @@ public class SshConnectionUtil {
       String password = sshPasswordProvider.getPPKPasswordForCvsRoot(cvsRoot);
 
       if (password == null) {
-        SshPasswordDialog sshPasswordDialog = new SshPasswordDialog(CvsBundle.message("prompt.text.enter.private.key.password.for", cvsRoot));
+        SshPasswordDialog sshPasswordDialog =
+          new SshPasswordDialog(CvsBundle.message("prompt.text.enter.private.key.password.for", cvsRoot));
         sshPasswordDialog.setAdditionalText(CvsBundle.message("prompt.path.to.private.key", settings.PATH_TO_PPK));
-        sshPasswordDialog.show();
-        if (!sshPasswordDialog.isOK()) return false;
+        if (!sshPasswordDialog.showAndGet()) {
+          return false;
+        }
         password = sshPasswordDialog.getPassword();
         sshPasswordProvider.storePPKPasswordForCvsRoot(cvsRoot, password, sshPasswordDialog.saveThisPassword());
       }

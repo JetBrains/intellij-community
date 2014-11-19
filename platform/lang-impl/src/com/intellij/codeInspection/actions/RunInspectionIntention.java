@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,8 @@ import com.intellij.analysis.BaseAnalysisActionDialog;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
@@ -82,14 +83,16 @@ public class RunInspectionIntention implements IntentionAction, HighPriorityActi
     if (file.isPhysical() || virtualFile == null || !virtualFile.isInLocalFileSystem()) {
       analysisScope = new AnalysisScope(project);
     }
-    final BaseAnalysisActionDialog dlg = new BaseAnalysisActionDialog(AnalysisScopeBundle.message("specify.analysis.scope", InspectionsBundle.message("inspection.action.title")),
-                                                                      AnalysisScopeBundle.message("analysis.scope.title", InspectionsBundle.message("inspection.action.noun")),
-                                                                      project,
-                                                                      analysisScope,
-                                                                      module != null ? module.getName() : null,
-                                                                      true, AnalysisUIOptions.getInstance(project), file);
-    dlg.show();
-    if (!dlg.isOK()) return;
+    final BaseAnalysisActionDialog dlg = new BaseAnalysisActionDialog(
+      AnalysisScopeBundle.message("specify.analysis.scope", InspectionsBundle.message("inspection.action.title")),
+      AnalysisScopeBundle.message("analysis.scope.title", InspectionsBundle.message("inspection.action.noun")),
+      project,
+      analysisScope,
+      module != null ? module.getName() : null,
+      true, AnalysisUIOptions.getInstance(project), file);
+    if (!dlg.showAndGet()) {
+      return;
+    }
     final AnalysisUIOptions uiOptions = AnalysisUIOptions.getInstance(project);
     analysisScope = dlg.getScope(uiOptions, analysisScope, project, module);
     rerunInspection(LocalInspectionToolWrapper.findTool2RunInBatch(project, file, myShortName), managerEx, analysisScope, file);

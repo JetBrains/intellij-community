@@ -92,11 +92,11 @@ public class InlinePropertyHandler extends JavaInlineActionHandler {
 
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       String occurrencesString = RefactoringBundle.message("occurrences.string", occurrences.size());
-      String question = PropertiesBundle.message("inline.property.confirmation", property.getName(), propertyValue) + " " + occurrencesString;
+      String question =
+        PropertiesBundle.message("inline.property.confirmation", property.getName(), propertyValue) + " " + occurrencesString;
       RefactoringMessageDialog dialog = new RefactoringMessageDialog(REFACTORING_NAME, question, HelpID.INLINE_VARIABLE,
                                                                      "OptionPane.questionIcon", true, project);
-      dialog.show();
-      if (!dialog.isOK()) {
+      if (!dialog.showAndGet()) {
         return;
       }
     }

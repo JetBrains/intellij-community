@@ -19,7 +19,10 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.Lists;
 import com.intellij.execution.ExecutionException;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -58,7 +61,7 @@ public class PyAttachToProcessAction extends AnAction {
     Sdk sdk = PythonSdkType.findPythonSdk(module);
 
     if (sdk == null) {
-      for (Sdk s: PythonSdkType.getAllSdks()) {
+      for (Sdk s : PythonSdkType.getAllSdks()) {
         sdk = s;
         break;
       }
@@ -71,8 +74,7 @@ public class PyAttachToProcessAction extends AnAction {
           return info.getPid() + " " + info.getArgs();
         }
       }, "Select Python Process", ListSelectionModel.SINGLE_SELECTION);
-    selectDialog.show();
-    if (selectDialog.isOK()) {
+    if (selectDialog.showAndGet()) {
       PyProcessInfo process = (PyProcessInfo)selectDialog.getSelection()[0];
 
       PyAttachToProcessDebugRunner runner =
@@ -84,6 +86,7 @@ public class PyAttachToProcessAction extends AnAction {
       catch (ExecutionException e1) {
         Messages.showErrorDialog(project, e1.getMessage(), "Error Attaching Debugger");
       }
+      ;
     }
   }
 

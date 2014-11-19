@@ -524,8 +524,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     KeyboardShortcut selectedKeyboardShortcut = shortcut instanceof KeyboardShortcut ? (KeyboardShortcut)shortcut : null;
 
     dialog.setData(mySelectedKeymap, selectedKeyboardShortcut);
-    dialog.show();
-    if (!dialog.isOK()){
+    if (!dialog.showAndGet()) {
       return;
     }
 
@@ -536,17 +535,17 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     }
 
     HashMap<String, ArrayList<KeyboardShortcut>> conflicts = mySelectedKeymap.getConflicts(actionId, keyboardShortcut);
-    if(conflicts.size() > 0) {
+    if (conflicts.size() > 0) {
       int result = Messages.showYesNoCancelDialog(
         this,
         KeyMapBundle.message("conflict.shortcut.dialog.message"),
         KeyMapBundle.message("conflict.shortcut.dialog.title"),
         KeyMapBundle.message("conflict.shortcut.dialog.remove.button"),
-          KeyMapBundle.message("conflict.shortcut.dialog.leave.button"),
-          KeyMapBundle.message("conflict.shortcut.dialog.cancel.button"),
+        KeyMapBundle.message("conflict.shortcut.dialog.leave.button"),
+        KeyMapBundle.message("conflict.shortcut.dialog.cancel.button"),
         Messages.getWarningIcon());
 
-      if(result == Messages.YES) {
+      if (result == Messages.YES) {
         for (String id : conflicts.keySet()) {
           for (KeyboardShortcut s : conflicts.get(id)) {
             mySelectedKeymap.removeShortcut(id, s);
@@ -579,7 +578,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     return myQuickLists;
   }
 
-  private void addMouseShortcut(Shortcut shortcut, ShortcutRestrictions restrictions){
+  private void addMouseShortcut(Shortcut shortcut, ShortcutRestrictions restrictions) {
     String actionId = myActionsTree.getSelectedActionId();
     if (actionId == null) {
       return;
@@ -597,29 +596,28 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       myActionsTree.getMainGroup(),
       restrictions
     );
-    dialog.show();
-    if (!dialog.isOK()){
+    if (!dialog.showAndGet()) {
       return;
     }
 
     mouseShortcut = dialog.getMouseShortcut();
 
-    if (mouseShortcut == null){
+    if (mouseShortcut == null) {
       return;
     }
 
     String[] actionIds = mySelectedKeymap.getActionIds(mouseShortcut);
-    if(actionIds.length > 1 || (actionIds.length == 1 && !actionId.equals(actionIds[0]))) {
+    if (actionIds.length > 1 || (actionIds.length == 1 && !actionId.equals(actionIds[0]))) {
       int result = Messages.showYesNoCancelDialog(
         this,
         KeyMapBundle.message("conflict.shortcut.dialog.message"),
         KeyMapBundle.message("conflict.shortcut.dialog.title"),
         KeyMapBundle.message("conflict.shortcut.dialog.remove.button"),
-          KeyMapBundle.message("conflict.shortcut.dialog.leave.button"),
-          KeyMapBundle.message("conflict.shortcut.dialog.cancel.button"),
+        KeyMapBundle.message("conflict.shortcut.dialog.leave.button"),
+        KeyMapBundle.message("conflict.shortcut.dialog.cancel.button"),
         Messages.getWarningIcon());
 
-      if(result == Messages.YES) {
+      if (result == Messages.YES) {
         for (String id : actionIds) {
           mySelectedKeymap.removeShortcut(id, mouseShortcut);
         }

@@ -93,8 +93,7 @@ public class RemoveInvalidElementsDialog extends DialogWrapper {
     }
 
     RemoveInvalidElementsDialog dialog = new RemoveInvalidElementsDialog(title, type, invalidElements, project, errors);
-    dialog.show();
-    if (dialog.isOK()) {
+    if (dialog.showAndGet()) {
       for (ConfigurationErrorDescription errorDescription : dialog.getSelectedItems()) {
         errorDescription.ignoreInvalidElement();
       }

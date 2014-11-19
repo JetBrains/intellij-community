@@ -163,8 +163,7 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
             final LocateLibraryDialog dialog =
               new LocateLibraryDialog(modulesWithoutAnnotations.iterator().next(), PathManager.getLibPath(), "annotations.jar",
                                       QuickFixBundle.message("add.library.annotations.description"));
-            dialog.show();
-            if (dialog.isOK()) {
+            if (dialog.showAndGet()) {
               final String path = dialog.getResultingLibraryPath();
               new WriteCommandAction(project) {
                 @Override

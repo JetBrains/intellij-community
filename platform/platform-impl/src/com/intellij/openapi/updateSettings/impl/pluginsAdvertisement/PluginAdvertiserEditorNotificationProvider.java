@@ -131,9 +131,9 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
 
             @Override
             public void onSuccess() {
-              final PluginsAdvertiserDialog advertiserDialog = new PluginsAdvertiserDialog(null, myPlugins.toArray(new PluginDownloader[myPlugins.size()]), myAllPlugins);
-              advertiserDialog.show();
-              if (advertiserDialog.isOK()) {
+              final PluginsAdvertiserDialog advertiserDialog =
+                new PluginsAdvertiserDialog(null, myPlugins.toArray(new PluginDownloader[myPlugins.size()]), myAllPlugins);
+              if (advertiserDialog.showAndGet()) {
                 myEnabledExtensions.add(extension);
                 myNotifications.updateAllNotifications();
               }

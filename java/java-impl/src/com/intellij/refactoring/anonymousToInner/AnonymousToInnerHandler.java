@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.refactoring.anonymousToInner;
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -30,6 +29,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.FileTypeUtils;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
@@ -38,7 +38,6 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.classMembers.ElementNeedsThis;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.psi.util.FileTypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -144,12 +143,11 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
     final boolean anInterface = myTargetClass.isInterface();
     final boolean needsThis = needsThis() || PsiUtil.isInnerClass(myTargetClass);
     final AnonymousToInnerDialog dialog = new AnonymousToInnerDialog(
-        myProject,
-        myAnonClass,
-        myVariableInfos,
-        needsThis || anInterface);
-    dialog.show();
-    if (!dialog.isOK()) {
+      myProject,
+      myAnonClass,
+      myVariableInfos,
+      needsThis || anInterface);
+    if (!dialog.showAndGet()) {
       return false;
     }
     myNewClassName = dialog.getClassName();

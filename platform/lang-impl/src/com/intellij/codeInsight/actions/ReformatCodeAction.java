@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -227,8 +227,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
     dialog.setEnabledIncludeSubdirsCb(enableIncludeDirectoriesCb);
     dialog.setSelectedIncludeSubdirsCb(enableIncludeDirectoriesCb);
 
-    dialog.show();
-    if (dialog.isOK()) {
+    if (dialog.showAndGet()) {
       return dialog;
     }
     return null;
@@ -432,8 +431,9 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
       return myTestOptions;
     }
     ReformatFilesDialog dialog = new ReformatFilesDialog(project, files);
-    dialog.show();
-    if (!dialog.isOK()) return null;
+    if (!dialog.showAndGet()) {
+      return null;
+    }
     return dialog;
   }
 
@@ -449,9 +449,11 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
     final boolean enableOnlyVCSChangedRegions = module != null ? FormatChangedTextUtil.hasChanges(module)
                                                                : FormatChangedTextUtil.hasChanges(project);
 
-    LayoutProjectCodeDialog dialog = new LayoutProjectCodeDialog(project, CodeInsightBundle.message("process.reformat.code"), text, enableOnlyVCSChangedRegions);
-    dialog.show();
-    if (!dialog.isOK()) return null;
+    LayoutProjectCodeDialog dialog =
+      new LayoutProjectCodeDialog(project, CodeInsightBundle.message("process.reformat.code"), text, enableOnlyVCSChangedRegions);
+    if (!dialog.showAndGet()) {
+      return null;
+    }
     return dialog;
   }
 
@@ -459,15 +461,15 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
   private static LayoutCodeOptions getLayoutCodeOptions(@NotNull Project project,
                                                  @Nullable PsiFile file,
                                                  @Nullable PsiDirectory dir,
-                                                 boolean hasSelection)
-  {
+                                                 boolean hasSelection) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return (LayoutCodeOptions)myTestOptions;
     }
     LayoutCodeDialog dialog = new LayoutCodeDialog(project, CodeInsightBundle.message("process.reformat.code"),
                                                    file, dir, hasSelection ? Boolean.TRUE : Boolean.FALSE, HELP_ID);
-    dialog.show();
-    if (!dialog.isOK()) return null;
+    if (!dialog.showAndGet()) {
+      return null;
+    }
     EditorSettingsExternalizable.getInstance().getOptions().SHOW_REFORMAT_DIALOG = !dialog.isDoNotAskMe();
     updateShowDialogSetting(dialog, "\"Reformat Code\" dialog disabled");
     return dialog;

@@ -260,8 +260,9 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
       }
       else {
         OverridingMethodsDialog dialog = new OverridingMethodsDialog(project, overridingMethods);
-        dialog.show();
-        if(!dialog.isOK()) return null;
+        if (!dialog.showAndGet()) {
+          return null;
+        }
         result.addAll(dialog.getSelected());
       }
     }

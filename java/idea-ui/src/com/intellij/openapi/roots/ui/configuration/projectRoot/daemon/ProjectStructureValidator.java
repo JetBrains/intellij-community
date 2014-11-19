@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,14 +63,14 @@ public abstract class ProjectStructureValidator {
     }
 
     final ModuleStructureConfigurable moduleStructureConfigurable = ModuleStructureConfigurable.getInstance(project);
-    final List<Module> modules = LibraryEditingUtil.getSuitableModules(moduleStructureConfigurable, ((LibraryEx)library).getKind(), library);
+    final List<Module> modules =
+      LibraryEditingUtil.getSuitableModules(moduleStructureConfigurable, ((LibraryEx)library).getKind(), library);
     if (modules.isEmpty()) return;
     final ChooseModulesDialog
       dlg = new ChooseModulesDialog(moduleStructureConfigurable.getProject(), modules, ProjectBundle.message("choose.modules.dialog.title"),
                                     ProjectBundle
                                       .message("choose.modules.dialog.description", library.getName()));
-    dlg.show();
-    if (dlg.isOK()) {
+    if (dlg.showAndGet()) {
       final List<Module> chosenModules = dlg.getChosenElements();
       for (Module module : chosenModules) {
         moduleStructureConfigurable.addLibraryOrderEntry(module, library);

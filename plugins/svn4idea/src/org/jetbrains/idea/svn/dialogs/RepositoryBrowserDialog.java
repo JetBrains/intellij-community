@@ -552,7 +552,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
         return;
       }
       while (node.getSVNDirEntry() != null) {
-        node = (RepositoryTreeNode) node.getParent();
+        node = (RepositoryTreeNode)node.getParent();
       }
       root = node.getURL();
       final RepositoryTreeNode selectedNode = getSelectedNode();
@@ -561,8 +561,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       }
       SVNURL sourceURL = selectedNode.getURL();
       DiffOptionsDialog dialog = new DiffOptionsDialog(myProject, root, sourceURL);
-      dialog.show();
-      if (dialog.isOK()) {
+      if (dialog.showAndGet()) {
         SVNURL targetURL = dialog.getTargetURL();
         if (dialog.isReverseDiff()) {
           targetURL = sourceURL;
@@ -583,7 +582,8 @@ public class RepositoryBrowserDialog extends DialogWrapper {
             }
           };
           cancelable = false;
-        } else {
+        }
+        else {
           command = new Runnable() {
             public void run() {
               try {
@@ -877,10 +877,9 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       }
       Project p = e.getData(CommonDataKeys.PROJECT);
       ExportOptionsDialog dialog = new ExportOptionsDialog(p, url, dir);
-      dialog.show();
-      if (dialog.isOK()) {
+      if (dialog.showAndGet()) {
         SvnCheckoutProvider.doExport(myProject, dir, url, dialog.getDepth(),
-                dialog.isIgnoreExternals(), dialog.isForce(), dialog.getEOLStyle());
+                                     dialog.isIgnoreExternals(), dialog.isForce(), dialog.getEOLStyle());
       }
     }
   }

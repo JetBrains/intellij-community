@@ -141,9 +141,9 @@ public class PyInlineLocalHandler extends InlineActionHandler {
       final int occurrencesCount = refsToInline.length;
       final String occurrencesString = RefactoringBundle.message("occurrences.string", occurrencesCount);
       final String question = RefactoringBundle.message("inline.local.variable.prompt", localName) + " " + occurrencesString;
-      final RefactoringMessageDialog dialog = new RefactoringMessageDialog(REFACTORING_NAME, question, HELP_ID, "OptionPane.questionIcon", true, project);
-      dialog.show();
-      if (!dialog.isOK()){
+      final RefactoringMessageDialog dialog =
+        new RefactoringMessageDialog(REFACTORING_NAME, question, HELP_ID, "OptionPane.questionIcon", true, project);
+      if (!dialog.showAndGet()) {
         WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
         return;
       }

@@ -16,6 +16,7 @@
 package com.siyeh.ig.javadoc;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -106,15 +107,21 @@ public class MissingDeprecatedAnnotationInspection extends BaseInspection {
   public BaseInspectionVisitor buildVisitor() {
     return new MissingDeprecatedAnnotationVisitor();
   }
+  @NotNull
+  @Override
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+    if (!PsiUtil.isLanguageLevel5OrHigher(holder.getFile())) {
+      return new PsiElementVisitor() { };
+    }
+
+    return super.buildVisitor(holder, isOnTheFly);
+  }
 
   private class MissingDeprecatedAnnotationVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitClass(@NotNull PsiClass aClass) {
       super.visitClass(aClass);
-      if (!PsiUtil.isLanguageLevel5OrHigher(aClass)) {
-        return;
-      }
       if (hasDeprecatedAnnotation(aClass)) {
         if (warnOnMissingJavadoc && !hasDeprecatedComment(aClass, true)) {
           registerClassError(aClass, Boolean.FALSE);
@@ -127,9 +134,6 @@ public class MissingDeprecatedAnnotationInspection extends BaseInspection {
 
     @Override
     public void visitMethod(@NotNull PsiMethod method) {
-      if (!PsiUtil.isLanguageLevel5OrHigher(method)) {
-        return;
-      }
       if (method.getNameIdentifier() == null) {
         return;
       }
@@ -145,9 +149,6 @@ public class MissingDeprecatedAnnotationInspection extends BaseInspection {
 
     @Override
     public void visitField(@NotNull PsiField field) {
-      if (!PsiUtil.isLanguageLevel5OrHigher(field)) {
-        return;
-      }
       if (hasDeprecatedAnnotation(field)) {
         if (warnOnMissingJavadoc && !hasDeprecatedComment(field, true)) {
           registerFieldError(field, Boolean.FALSE);

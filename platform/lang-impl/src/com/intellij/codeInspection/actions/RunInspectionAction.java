@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -119,10 +119,11 @@ public class RunInspectionAction extends GotoActionBase {
     final FileFilterPanel fileFilterPanel = new FileFilterPanel();
     fileFilterPanel.init();
 
-    final BaseAnalysisActionDialog dialog = new BaseAnalysisActionDialog(AnalysisScopeBundle.message("specify.analysis.scope", InspectionsBundle.message("inspection.action.title")),
-                                                                         AnalysisScopeBundle.message("analysis.scope.title", InspectionsBundle.message("inspection.action.noun")), 
-                                                                         project, analysisScope, module != null ? module.getName() : null, 
-                                                                         true, AnalysisUIOptions.getInstance(project), psiElement) {
+    final BaseAnalysisActionDialog dialog = new BaseAnalysisActionDialog(
+      AnalysisScopeBundle.message("specify.analysis.scope", InspectionsBundle.message("inspection.action.title")),
+      AnalysisScopeBundle.message("analysis.scope.title", InspectionsBundle.message("inspection.action.noun")),
+      project, analysisScope, module != null ? module.getName() : null,
+      true, AnalysisUIOptions.getInstance(project), psiElement) {
 
       @Override
       protected JComponent getAdditionalActionSettings(Project project) {
@@ -145,8 +146,9 @@ public class RunInspectionAction extends GotoActionBase {
       }
     };
 
-    dialog.show();
-    if (!dialog.isOK()) return;
+    if (!dialog.showAndGet()) {
+      return;
+    }
     final AnalysisUIOptions uiOptions = AnalysisUIOptions.getInstance(project);
     AnalysisScope scope = dialog.getScope(uiOptions, analysisScope, project, module);
     PsiElement element = psiFile == null ? psiElement : psiFile;

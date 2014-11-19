@@ -239,8 +239,7 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
       }
 
       GitUserNameNotDefinedDialog dialog = new GitUserNameNotDefinedDialog(project, notDefined, affectedRoots, defined);
-      dialog.show();
-      if (dialog.isOK()) {
+      if (dialog.showAndGet()) {
         try {
           if (dialog.isGlobal()) {
             GitConfigUtil.setValue(project, notDefined.iterator().next(), GitConfigUtil.USER_NAME, dialog.getUserName(), "--global");

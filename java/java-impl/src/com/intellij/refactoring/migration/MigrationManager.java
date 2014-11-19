@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +27,7 @@ public class MigrationManager {
 
   public void showMigrationDialog() {
     final MigrationDialog migrationDialog = new MigrationDialog(myProject, myMigrationMapSet);
-    migrationDialog.show();
-    if (!migrationDialog.isOK()) {
+    if (!migrationDialog.showAndGet()) {
       return;
     }
     MigrationMap migrationMap = migrationDialog.getMigrationMap();

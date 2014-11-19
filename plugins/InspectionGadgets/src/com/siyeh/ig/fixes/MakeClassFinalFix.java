@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.siyeh.ig.fixes;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -34,6 +33,10 @@ import com.intellij.util.containers.MultiMap;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
+
+import static com.intellij.openapi.application.WriteAction.start;
+import static com.intellij.psi.PsiModifier.ABSTRACT;
+import static com.intellij.psi.PsiModifier.FINAL;
 
 /**
 * @author Bas Leijdekkers
@@ -94,18 +97,17 @@ public class MakeClassFinalFix extends InspectionGadgetsFix {
       final ConflictsDialog conflictsDialog = new ConflictsDialog(element.getProject(), conflicts, new Runnable() {
         @Override
         public void run() {
-          final AccessToken token = WriteAction.start();
+          final AccessToken token = start();
           try {
-            modifierList.setModifierProperty(PsiModifier.FINAL, true);
-            modifierList.setModifierProperty(PsiModifier.ABSTRACT, false);
+            modifierList.setModifierProperty(FINAL, true);
+            modifierList.setModifierProperty(ABSTRACT, false);
           }
           finally {
             token.finish();
           }
         }
       });
-      conflictsDialog.show();
-      conflictsDialogOK = conflictsDialog.isOK();
+      conflictsDialogOK = conflictsDialog.showAndGet();
     } else {
       conflictsDialogOK = true;
     }

@@ -47,7 +47,6 @@ public class HgRunConflictResolverAction extends HgAbstractGlobalSingleRepoActio
   private static HgRepository letUserSelectRepository(@NotNull Project project, @NotNull Collection<HgRepository> repositories,
                                                       @Nullable HgRepository selectedRepo) {
     HgRunConflictResolverDialog dialog = new HgRunConflictResolverDialog(project, repositories, selectedRepo);
-    dialog.show();
-    return dialog.isOK() ? dialog.getRepository() : null;
+    return dialog.showAndGet() ? dialog.getRepository() : null;
   }
 }

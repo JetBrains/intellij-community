@@ -46,13 +46,13 @@ public class ConfirmationDialog extends OptionsMessageDialog {
                                                @Nullable String cancelActionName) {
     if (option.getValue() == VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY) return false;
     final ConfirmationDialog dialog = new ConfirmationDialog(project, message, title, icon, option, okActionName, cancelActionName);
-    if (! option.isPersistent()) {
+    if (!option.isPersistent()) {
       dialog.setDoNotAskOption(null);
-    } else {
+    }
+    else {
       dialog.setDoNotShowAgainMessage(CommonBundle.message("dialog.options.do.not.ask"));
     }
-    dialog.show();
-    return dialog.isOK();
+    return dialog.showAndGet();
   }
 
   public ConfirmationDialog(Project project, final String message, String title, final Icon icon, final VcsShowConfirmationOption option) {

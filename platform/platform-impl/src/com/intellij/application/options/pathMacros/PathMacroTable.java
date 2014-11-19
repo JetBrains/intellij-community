@@ -87,8 +87,7 @@ public class PathMacroTable extends Table {
   public void addMacro() {
     final String title = ApplicationBundle.message("title.add.variable");
     final PathMacroEditor macroEditor = new PathMacroEditor(title, "", "", new AddValidator(title));
-    macroEditor.show();
-    if (macroEditor.isOK()) {
+    if (macroEditor.showAndGet()) {
       final String name = macroEditor.getName();
       myMacros.add(Couple.of(name, macroEditor.getValue()));
       Collections.sort(myMacros, MACRO_COMPARATOR);
@@ -191,8 +190,7 @@ public class PathMacroTable extends Table {
     final String title = ApplicationBundle.message("title.edit.variable");
     final String macroName = pair.getFirst();
     final PathMacroEditor macroEditor = new PathMacroEditor(title, macroName, pair.getSecond(), new EditValidator());
-    macroEditor.show();
-    if (macroEditor.isOK()) {
+    if (macroEditor.showAndGet()) {
       myMacros.remove(selectedRow);
       myMacros.add(Couple.of(macroEditor.getName(), macroEditor.getValue()));
       Collections.sort(myMacros, MACRO_COMPARATOR);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,16 +82,16 @@ public class MarkResolvedAction extends BasicAction {
     ApplicationManager.getApplication().saveAll();
     Collection<String> paths = collectResolvablePaths(vcs, files);
     if (paths.isEmpty()) {
-      Messages.showInfoMessage(project, SvnBundle.message("message.text.no.conflicts.found"), SvnBundle.message("message.title.no.conflicts.found"));
+      Messages.showInfoMessage(project, SvnBundle.message("message.text.no.conflicts.found"),
+                               SvnBundle.message("message.title.no.conflicts.found"));
       return;
     }
     String[] pathsArray = ArrayUtil.toStringArray(paths);
     SelectFilesDialog dialog = new SelectFilesDialog(project, SvnBundle.message("label.select.files.and.directories.to.mark.resolved"),
                                                      SvnBundle.message("dialog.title.mark.resolved"),
                                                      SvnBundle.message("action.name.mark.resolved"), pathsArray, "vcs.subversion.resolve"
-                                                     );
-    dialog.show();
-    if (!dialog.isOK()) {
+    );
+    if (!dialog.showAndGet()) {
       return;
     }
     pathsArray = dialog.getSelectedPaths();
@@ -112,7 +112,6 @@ public class MarkResolvedAction extends BasicAction {
           file.getParent().refresh(true, false);
         }
       }
-
     }
   }
 

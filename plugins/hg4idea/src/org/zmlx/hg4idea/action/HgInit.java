@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.zmlx.hg4idea.action;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -42,8 +57,7 @@ public class HgInit extends DumbAwareAction {
 
     // provide window to select the root directory
     final HgInitDialog hgInitDialog = new HgInitDialog(myProject);
-    hgInitDialog.show();
-    if (!hgInitDialog.isOK()) {
+    if (!hgInitDialog.showAndGet()) {
       return;
     }
     final VirtualFile selectedRoot = hgInitDialog.getSelectedFolder();
@@ -57,24 +71,27 @@ public class HgInit extends DumbAwareAction {
     boolean needToCreateRepo = false;
     if (vcsRoot != null) {
       final HgInitAlreadyUnderHgDialog dialog = new HgInitAlreadyUnderHgDialog(myProject,
-                                                   selectedRoot.getPresentableUrl(), vcsRoot.getPresentableUrl());
-      dialog.show();
-      if (!dialog.isOK()) {
+                                                                               selectedRoot.getPresentableUrl(),
+                                                                               vcsRoot.getPresentableUrl());
+      if (!dialog.showAndGet()) {
         return;
       }
 
       if (dialog.getAnswer() == HgInitAlreadyUnderHgDialog.Answer.USE_PARENT_REPO) {
         mapRoot = vcsRoot;
-      } else if (dialog.getAnswer() == HgInitAlreadyUnderHgDialog.Answer.CREATE_REPO_HERE) {
+      }
+      else if (dialog.getAnswer() == HgInitAlreadyUnderHgDialog.Answer.CREATE_REPO_HERE) {
         needToCreateRepo = true;
       }
-    } else { // no parent repository => creating the repository here.
+    }
+    else { // no parent repository => creating the repository here.
       needToCreateRepo = true;
     }
 
     if (needToCreateRepo) {
-      createRepository(selectedRoot, mapRoot); 
-    } else {
+      createRepository(selectedRoot, mapRoot);
+    }
+    else {
       updateDirectoryMappings(mapRoot);
     }
   }

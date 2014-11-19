@@ -19,7 +19,6 @@ import com.google.common.base.Preconditions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Pair;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.util.containers.MultiMap;
@@ -93,10 +92,10 @@ public abstract class MembersBasedViewSwingImpl<P extends MembersBasedPresenter,
   @Override
   public boolean showConflictsDialog(@NotNull final MultiMap<PyClass, PyMemberInfo<?>> duplicatesConflict,
                                      @NotNull final Collection<PyMemberInfo<?>> dependenciesConflicts) {
-    Preconditions.checkArgument(!(duplicatesConflict.isEmpty() && dependenciesConflicts.isEmpty()), "Can't show dialog for empty conflicts");
+    Preconditions
+      .checkArgument(!(duplicatesConflict.isEmpty() && dependenciesConflicts.isEmpty()), "Can't show dialog for empty conflicts");
     final DialogWrapper conflictsDialog = new MembersConflictDialog(myProject, duplicatesConflict, dependenciesConflicts);
-    conflictsDialog.show();
-    return conflictsDialog.isOK();
+    return conflictsDialog.showAndGet();
   }
 
   @Override

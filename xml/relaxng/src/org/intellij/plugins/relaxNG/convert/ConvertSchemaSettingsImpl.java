@@ -253,8 +253,7 @@ public class ConvertSchemaSettingsImpl implements ConvertSchemaSettings {
     final AdvancedOptionsDialog dialog = new AdvancedOptionsDialog(myProject, myInputType, getOutputType());
     dialog.setOptions(myInputOptions, myOutputOptions);
 
-    dialog.show();
-    if (dialog.isOK()) {
+    if (dialog.showAndGet()) {
       myInputOptions = dialog.getInputOptions();
       myOutputOptions = dialog.getOutputOptions();
     }

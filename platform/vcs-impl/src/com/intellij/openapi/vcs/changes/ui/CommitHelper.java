@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -473,8 +473,7 @@ public class CommitHelper {
                     }
                   } else if (ChangeListsModificationAfterCommit.MOVE_OTHERS.equals(myAfterVcsRefreshModification)) {
                     ChangelistMoveOfferDialog dialog = new ChangelistMoveOfferDialog(myConfiguration);
-                    dialog.show();
-                    if (dialog.isOK()) {
+                    if (dialog.showAndGet()) {
                       final Collection<Change> changes = clManager.getDefaultChangeList().getChanges();
                       MoveChangesToAnotherListAction.askAndMove(myProject, changes, null);
                     }

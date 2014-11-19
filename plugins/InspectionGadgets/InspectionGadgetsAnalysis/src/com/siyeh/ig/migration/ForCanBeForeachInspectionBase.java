@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.migration;
 
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
@@ -570,6 +571,15 @@ public class ForCanBeForeachInspectionBase extends BaseInspection {
   public BaseInspectionVisitor buildVisitor() {
     return new ForCanBeForeachVisitor();
   }
+  @NotNull
+  @Override
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+    if (!PsiUtil.isLanguageLevel5OrHigher(holder.getFile())) {
+      return new PsiElementVisitor() { };
+    }
+
+    return super.buildVisitor(holder, isOnTheFly);
+  }
 
   private static class NumCallsToIteratorNextVisitor
     extends JavaRecursiveElementVisitor {
@@ -906,9 +916,6 @@ public class ForCanBeForeachInspectionBase extends BaseInspection {
     @Override
     public void visitForStatement(@NotNull PsiForStatement forStatement) {
       super.visitForStatement(forStatement);
-      if (!PsiUtil.isLanguageLevel5OrHigher(forStatement)) {
-        return;
-      }
       if (isArrayLoopStatement(forStatement) || isCollectionLoopStatement(forStatement, ignoreUntypedCollections) ||
           REPORT_INDEXED_LOOP && isIndexedListLoopStatement(forStatement, ignoreUntypedCollections)) {
         registerStatementError(forStatement);

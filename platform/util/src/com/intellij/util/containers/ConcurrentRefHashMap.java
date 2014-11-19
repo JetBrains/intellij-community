@@ -81,16 +81,16 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
   }
 
   public ConcurrentRefHashMap(Map<? extends K, ? extends V> t) {
-    this(Math.max(2 * t.size(), 11), ConcurrentHashMap.DEFAULT_LOAD_FACTOR);
+    this(Math.max(2 * t.size(), 11), ConcurrentHashMap.LOAD_FACTOR);
     putAll(t);
   }
 
   public ConcurrentRefHashMap() {
-    this(ConcurrentHashMap.DEFAULT_INITIAL_CAPACITY);
+    this(ConcurrentHashMap.DEFAULT_CAPACITY);
   }
 
   public ConcurrentRefHashMap(int initialCapacity) {
-    this(initialCapacity, ConcurrentHashMap.DEFAULT_LOAD_FACTOR);
+    this(initialCapacity, ConcurrentHashMap.LOAD_FACTOR);
   }
 
   private static final TObjectHashingStrategy THIS = new TObjectHashingStrategy() {
@@ -109,7 +109,7 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
   }
 
   public ConcurrentRefHashMap(@NotNull final TObjectHashingStrategy<K> hashingStrategy) {
-    this(ConcurrentHashMap.DEFAULT_INITIAL_CAPACITY, ConcurrentHashMap.DEFAULT_LOAD_FACTOR, 2, hashingStrategy);
+    this(ConcurrentHashMap.DEFAULT_CAPACITY, ConcurrentHashMap.LOAD_FACTOR, 2, hashingStrategy);
   }
 
   public ConcurrentRefHashMap(int initialCapacity,

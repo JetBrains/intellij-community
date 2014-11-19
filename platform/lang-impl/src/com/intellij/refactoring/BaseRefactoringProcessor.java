@@ -606,11 +606,11 @@ public abstract class BaseRefactoringProcessor implements Runnable {
       if (refactoringId != null) {
         RefactoringEventData conflictUsages = new RefactoringEventData();
         conflictUsages.putUserData(RefactoringEventData.CONFLICTS_KEY, conflicts.values());
-        myProject.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).conflictsDetected(refactoringId, conflictUsages);
+        myProject.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC)
+          .conflictsDetected(refactoringId, conflictUsages);
       }
       final ConflictsDialog conflictsDialog = prepareConflictsDialog(conflicts, usages);
-      conflictsDialog.show();
-      if (!conflictsDialog.isOK()) {
+      if (!conflictsDialog.showAndGet()) {
         if (conflictsDialog.isShowConflicts()) prepareSuccessful();
         return false;
       }

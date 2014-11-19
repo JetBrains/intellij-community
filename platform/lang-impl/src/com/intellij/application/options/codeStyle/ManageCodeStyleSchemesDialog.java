@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -135,8 +135,7 @@ public class ManageCodeStyleSchemesDialog extends DialogWrapper {
   private void chooseAndImport() {
     ImportSourceChooserDialog<CodeStyleScheme> importSourceChooserDialog =
       new ImportSourceChooserDialog<CodeStyleScheme>(myContentPane, CodeStyleScheme.class);
-    importSourceChooserDialog.show();
-    if (importSourceChooserDialog.isOK()) {
+    if (importSourceChooserDialog.showAndGet()) {
       if (importSourceChooserDialog.isImportFromSharedSelected()) {
         new SchemesToImportPopup<CodeStyleScheme>(myContentPane) {
           @Override
@@ -213,8 +212,7 @@ public class ManageCodeStyleSchemesDialog extends DialogWrapper {
           CodeStyleScheme currScheme = myModel.getSelectedScheme();
           ImportSchemeChooserDialog schemeChooserDialog =
             new ImportSchemeChooserDialog(myContentPane, schemeNames, !currScheme.isDefault() ? currScheme.getName() : null);
-          schemeChooserDialog.show();
-          if (schemeChooserDialog.isOK()) {
+          if (schemeChooserDialog.showAndGet()) {
             String schemeName = schemeChooserDialog.getSelectedName();
             String targetName = schemeChooserDialog.getTargetName();
             CodeStyleScheme targetScheme = null;
@@ -464,9 +462,9 @@ public class ManageCodeStyleSchemesDialog extends DialogWrapper {
         names.add(scheme.getName());
       }
       String selectedName = getSelectedScheme().getName();
-      SaveSchemeDialog saveDialog = new SaveSchemeDialog(myParent, ApplicationBundle.message("title.save.code.style.scheme.as"), names, selectedName);
-      saveDialog.show();
-      if (saveDialog.isOK()) {
+      SaveSchemeDialog saveDialog =
+        new SaveSchemeDialog(myParent, ApplicationBundle.message("title.save.code.style.scheme.as"), names, selectedName);
+      if (saveDialog.showAndGet()) {
         int row = mySchemesTableModel.createNewScheme(getSelectedScheme(), saveDialog.getSchemeName());
         mySchemesTable.getSelectionModel().setSelectionInterval(row, row);
       }

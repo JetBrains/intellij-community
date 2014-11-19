@@ -24,7 +24,11 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Function;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.hash.LinkedHashMap;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class RenameInputValidatorRegistry {
   private RenameInputValidatorRegistry() {
@@ -32,34 +36,47 @@ public class RenameInputValidatorRegistry {
 
   @Nullable
   public static Condition<String> getInputValidator(final PsiElement element) {
+    final LinkedHashMap<RenameInputValidator, ProcessingContext> acceptedValidators = new LinkedHashMap<RenameInputValidator, ProcessingContext>();
     for(final RenameInputValidator validator: Extensions.getExtensions(RenameInputValidator.EP_NAME)) {
       final ProcessingContext context = new ProcessingContext();
       if (validator.getPattern().accepts(element, context)) {
-        return new Condition<String>() {
-          @Override
-          public boolean value(final String s) {
-            return validator.isInputValid(s, element, context);
-          }
-        };
+        acceptedValidators.put(validator, context);
       }
     }
-    return null;
+    return acceptedValidators.isEmpty() ? null : new Condition<String>() {
+      @Override
+      public boolean value(final String s) {
+        for (RenameInputValidator validator : acceptedValidators.keySet()) {
+          if (!validator.isInputValid(s, element, acceptedValidators.get(validator))) {
+            return false;
+          }
+        }
+        return true;
+      }
+    };
   }
 
   @Nullable
   public static Function<String, String> getInputErrorValidator(final PsiElement element) {
+    final LinkedHashMap<RenameInputValidatorEx, ProcessingContext> acceptedValidators = new LinkedHashMap<RenameInputValidatorEx, ProcessingContext>();
     for(final RenameInputValidator validator: Extensions.getExtensions(RenameInputValidator.EP_NAME)) {
-      if (!(validator instanceof RenameInputValidatorEx)) continue;
       final ProcessingContext context = new ProcessingContext();
-      if (validator.getPattern().accepts(element, context)) {
-        return new Function<String, String>() {
-          @Override
-          public String fun(String newName) {
-            return ((RenameInputValidatorEx)validator).getErrorMessage(newName, element.getProject());
-          }
-        };
+      if (validator instanceof RenameInputValidatorEx && validator.getPattern().accepts(element, context)) {
+        acceptedValidators.put((RenameInputValidatorEx)validator, context);
       }
     }
-    return null;
+
+    return acceptedValidators.isEmpty() ? null : new Function<String, String>() {
+      @Override
+      public String fun(String newName) {
+        for (RenameInputValidatorEx validator : acceptedValidators.keySet()) {
+          final String message = validator.getErrorMessage(newName, element.getProject());
+          if (message != null) {
+            return message;
+          }
+        }
+        return null;
+      }
+    };
   }
 }

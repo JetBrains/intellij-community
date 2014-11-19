@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,8 +50,7 @@ public class DefineParamsDefaultValueAction extends DelegateWithDefaultParamValu
     final MemberChooser<ParameterClassMember> chooser = new MemberChooser<ParameterClassMember>(members, false, true, element.getProject());
     chooser.selectElements(members);
     chooser.setTitle("Choose " + (method.isConstructor() ? "Constructor" : "Method") + " Parameters");
-    chooser.show();
-    if (chooser.isOK()) {
+    if (chooser.showAndGet()) {
       final List<ParameterClassMember> elements = chooser.getSelectedElements();
       if (elements != null) {
         PsiParameter[] params = new PsiParameter[elements.size()];

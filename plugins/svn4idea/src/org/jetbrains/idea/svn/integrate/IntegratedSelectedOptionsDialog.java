@@ -31,7 +31,10 @@ import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.idea.svn.SvnConfiguration;
+import org.jetbrains.idea.svn.SvnUtil;
+import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchMapperManager;
 import org.jetbrains.idea.svn.info.Info;
 import org.tmatesoft.svn.core.SVNURL;
@@ -260,7 +263,7 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
                                                                 final boolean showIntegrationParameters,
                                                                 final String selectedLocalBranchPath, final String dialogTitle) {
     final IntegratedSelectedOptionsDialog dialog = new IntegratedSelectedOptionsDialog(project, currentBranch, targetBranch);
-    if (! showIntegrationParameters) {
+    if (!showIntegrationParameters) {
       dialog.selectWcopyRootOnly();
     }
     if (selectedLocalBranchPath != null) {
@@ -269,16 +272,14 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
     if (dialogTitle != null) {
       dialog.setTitle(dialogTitle);
     }
-    dialog.show();
-
-    if (dialog.isOK()) {
+    if (dialog.showAndGet()) {
       ApplicationManager.getApplication().saveAll();
       dialog.saveOptions();
 
       final WorkingCopyInfo info = dialog.getSelectedWc();
       if (info != null) {
         final File file = new File(info.getLocalPath());
-        if ((! file.exists()) || (! file.isDirectory())) {
+        if ((!file.exists()) || (!file.isDirectory())) {
           Messages.showErrorDialog(SvnBundle.message("action.Subversion.integrate.changes.error.target.not.dir.text"),
                                    SvnBundle.message("action.Subversion.integrate.changes.messages.title"));
           return null;

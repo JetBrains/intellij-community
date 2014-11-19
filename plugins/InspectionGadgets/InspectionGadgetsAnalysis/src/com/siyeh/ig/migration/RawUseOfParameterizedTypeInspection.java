@@ -15,8 +15,8 @@
  */
 package com.siyeh.ig.migration;
 
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
-import com.intellij.lang.java.JavaLanguage;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -75,14 +75,20 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
   public BaseInspectionVisitor buildVisitor() {
     return new RawUseOfParameterizedTypeVisitor();
   }
+  @NotNull
+  @Override
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+    if (!PsiUtil.isLanguageLevel5OrHigher(holder.getFile())) {
+      return new PsiElementVisitor() { };
+    }
+
+    return super.buildVisitor(holder, isOnTheFly);
+  }
 
   private class RawUseOfParameterizedTypeVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitNewExpression(@NotNull PsiNewExpression expression) {
-      if (!hasNeededLanguageLevel(expression)) {
-        return;
-      }
       super.visitNewExpression(expression);
       if (ignoreObjectConstruction) {
         return;
@@ -97,9 +103,6 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
 
     @Override
     public void visitTypeElement(@NotNull PsiTypeElement typeElement) {
-      if (!hasNeededLanguageLevel(typeElement)) {
-        return;
-      }
       final PsiType type = typeElement.getType();
       if (!(type instanceof PsiClassType)) {
         return;
@@ -140,9 +143,6 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
 
     @Override
     public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
-      if (!hasNeededLanguageLevel(reference)) {
-        return;
-      }
       super.visitReferenceElement(reference);
       final PsiElement referenceParent = reference.getParent();
       if (!(referenceParent instanceof PsiReferenceList)) {
@@ -180,10 +180,6 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
         return;
       }
       registerError(reference);
-    }
-
-    private boolean hasNeededLanguageLevel(PsiElement element) {
-      return element.getLanguage().isKindOf(JavaLanguage.INSTANCE) && PsiUtil.isLanguageLevel5OrHigher(element);
     }
   }
 }

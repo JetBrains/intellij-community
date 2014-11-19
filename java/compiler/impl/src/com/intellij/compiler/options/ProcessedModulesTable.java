@@ -299,14 +299,14 @@ public class ProcessedModulesTable extends JPanel {
     public void addRow() {
       final Set<Module> projectModules = new HashSet<Module>(Arrays.asList(ModuleManager.getInstance(myProject).getModules()));
       projectModules.removeAll(getAllModules());
-      final ChooseModulesDialog chooser = new ChooseModulesDialog(ProcessedModulesTable.this, new ArrayList<Module>(projectModules), "ChooseModule");
-      chooser.show();
-      if (chooser.isOK()) {
+      final ChooseModulesDialog chooser =
+        new ChooseModulesDialog(ProcessedModulesTable.this, new ArrayList<Module>(projectModules), "ChooseModule");
+      if (chooser.showAndGet()) {
         final List<Module> chosen = chooser.getChosenElements();
         for (Module module : chosen) {
           addElement(module, null);
         }
-      }      
+      }
     }
 
     public void removeRow(int idx) {

@@ -376,8 +376,7 @@ public class ToolEditorDialog extends DialogWrapper {
     @Override
     public void actionPerformed(ActionEvent e) {
       MacrosDialog dialog = new MacrosDialog(myProject);
-      dialog.show();
-      if (dialog.isOK() && dialog.getSelectedMacro() != null) {
+      if (dialog.showAndGet() && dialog.getSelectedMacro() != null) {
         String macro = dialog.getSelectedMacro().getName();
         int position = myTextField.getCaretPosition();
         try {
@@ -386,6 +385,7 @@ public class ToolEditorDialog extends DialogWrapper {
         }
         catch (BadLocationException ignored) {
         }
+        ;
       }
       IdeFocusManager.findInstance().requestFocus(myTextField, true);
     }
@@ -396,8 +396,7 @@ public class ToolEditorDialog extends DialogWrapper {
       @Override
       public void actionPerformed(ActionEvent e) {
         OutputFiltersDialog dialog = new OutputFiltersDialog(myOutputFiltersButton, getData().getOutputFilters());
-        dialog.show();
-        if (dialog.isOK()) {
+        if (dialog.showAndGet()) {
           myOutputFilters = dialog.getData();
         }
       }

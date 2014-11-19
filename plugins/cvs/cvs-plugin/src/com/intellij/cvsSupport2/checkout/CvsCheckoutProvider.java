@@ -38,8 +38,9 @@ public class CvsCheckoutProvider implements CheckoutProvider {
   public void doCheckout(@NotNull final Project project, final CheckoutProvider.Listener listener) {
 
     final CheckoutWizard checkoutWizard = new CheckoutWizard(project);
-    checkoutWizard.show();
-    if (!checkoutWizard.isOK()) return;
+    if (!checkoutWizard.showAndGet()) {
+      return;
+    }
     final boolean useAlternateCheckoutPath = checkoutWizard.useAlternativeCheckoutLocation();
     final File checkoutDirectory = checkoutWizard.getCheckoutDirectory();
 
@@ -49,7 +50,8 @@ public class CvsCheckoutProvider implements CheckoutProvider {
       collectCheckoutPaths(selectedElements),
       checkoutDirectory,
       useAlternateCheckoutPath,
-      CvsApplicationLevelConfiguration.getInstance().MAKE_CHECKED_OUT_FILES_READONLY, VcsConfiguration.getInstance(project).getCheckoutOption());
+      CvsApplicationLevelConfiguration.getInstance().MAKE_CHECKED_OUT_FILES_READONLY,
+      VcsConfiguration.getInstance(project).getCheckoutOption());
 
     final CvsOperationExecutor executor = new CvsOperationExecutor(null);
     executor.performActionSync(checkoutHandler, new CvsOperationExecutorCallback() {
@@ -61,8 +63,10 @@ public class CvsCheckoutProvider implements CheckoutProvider {
 
         refreshAfterCheckout(listener, selectedElements, checkoutDirectory, useAlternateCheckoutPath);
       }
+
       public void executionFinishedSuccessfully() {
       }
+
       public void executeInProgressAfterAction(ModalityContext modaityContext) {
       }
     });

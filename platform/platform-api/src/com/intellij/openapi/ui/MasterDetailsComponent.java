@@ -17,7 +17,6 @@ package com.intellij.openapi.ui;
 
 import com.intellij.CommonBundle;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
@@ -155,7 +154,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   }
 
   private boolean isNewSettingsView() {
-    return ApplicationManager.getApplication().isInternal() && Registry.is("ide.new.settings.view");
+    return Registry.is("ide.new.settings.view");
   }
 
   protected void reInitWholePanelIfNeeded() {
