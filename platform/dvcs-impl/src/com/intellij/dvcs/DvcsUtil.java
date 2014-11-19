@@ -50,6 +50,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.vcs.log.TimedVcsCommit;
+import com.intellij.vcsUtil.VcsUtil;
 import org.intellij.images.editor.ImageFileEditor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -278,6 +279,13 @@ public class DvcsUtil {
     if (dir != null) {
       //noinspection unchecked
       VfsUtilCore.processFilesRecursively(dir, Processor.TRUE);
+    }
+  }
+
+  public static void addMappingIfSubRoot(@NotNull Project project, @NotNull String newRepositoryPath, @NotNull String vcsName) {
+    if (FileUtil.isAncestor(project.getBasePath(), newRepositoryPath, true)) {
+      ProjectLevelVcsManager manager = ProjectLevelVcsManager.getInstance(project);
+      manager.setDirectoryMappings(VcsUtil.addMapping(manager.getDirectoryMappings(), newRepositoryPath, vcsName));
     }
   }
 

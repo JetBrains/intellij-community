@@ -15,6 +15,7 @@
  */
 package org.zmlx.hg4idea.provider;
 
+import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -67,9 +68,12 @@ public class HgCheckoutProvider implements CheckoutProvider {
           new HgCommandResultNotifier(project).notifyError(cloneResult.get(), "Clone failed",
                                                            "Clone from " + sourceRepositoryURL + " failed.");
         }
-        else if (listener != null) {
-          listener.directoryCheckedOut(new File(dialog.getParentDirectory(), dialog.getDirectoryName()), HgVcs.getKey());
-          listener.checkoutCompleted();
+        else {
+          DvcsUtil.addMappingIfSubRoot(project, targetDir, HgVcs.VCS_NAME);
+          if (listener != null) {
+            listener.directoryCheckedOut(new File(dialog.getParentDirectory(), dialog.getDirectoryName()), HgVcs.getKey());
+            listener.checkoutCompleted();
+          }
         }
       }
     }.queue();
