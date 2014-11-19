@@ -37,7 +37,7 @@ import java.util.*;
 
 public class ComputeVirtualFileNameStatAction extends AnAction implements DumbAware {
   public ComputeVirtualFileNameStatAction() {
-    super("Compute VF name statistics");
+    super("Compute VF Name Statistics");
   }
 
   public static void main(String[] args) {
