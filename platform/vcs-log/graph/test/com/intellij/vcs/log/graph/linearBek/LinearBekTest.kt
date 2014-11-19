@@ -361,6 +361,20 @@ class LinearBekTest {
     5()
   })
 
+  /*
+  0
+  |\
+  | 1
+  2 |\
+  |/ |
+  3  |
+  |\ |
+  | \|
+  | 4
+  5 |
+  |/
+  6
+   */
   Test fun hiddenIncomingEdges() = runTest({
     0(2, 1)
     1(3, 4)
