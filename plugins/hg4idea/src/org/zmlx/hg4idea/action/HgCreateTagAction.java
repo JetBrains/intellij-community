@@ -45,7 +45,7 @@ public class HgCreateTagAction extends HgAbstractGlobalSingleRepoAction {
         });
       }
       catch (HgCommandException e) {
-        handleException(project, e);
+        HgErrorUtil.handleException(project, e);
       }
     }
   }

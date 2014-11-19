@@ -35,7 +35,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgNameWithHashInfo;
 import org.zmlx.hg4idea.HgRevisionNumber;
-import org.zmlx.hg4idea.action.HgAbstractGlobalAction;
 import org.zmlx.hg4idea.action.HgCommandResultNotifier;
 import org.zmlx.hg4idea.command.HgBookmarkCommand;
 import org.zmlx.hg4idea.command.HgBranchCreateCommand;
@@ -125,7 +124,7 @@ public class HgBranchPopupActions {
           });
         }
         catch (HgCommandException exception) {
-          HgAbstractGlobalAction.handleException(myProject, "Can't create new branch: ", exception);
+          HgErrorUtil.handleException(myProject, "Can't create new branch: ", exception);
         }
       }
     }
@@ -162,7 +161,7 @@ public class HgBranchPopupActions {
             new HgBookmarkCommand(myProject, repository.getRoot(), name).createBookmark(bookmarkDialog.isActive());
           }
           catch (HgCommandException exception) {
-            HgAbstractGlobalAction.handleException(myProject, exception);
+            HgErrorUtil.handleException(myProject, exception);
           }
         }
       }
@@ -264,7 +263,7 @@ public class HgBranchPopupActions {
             new HgBookmarkCommand(myProject, repository.getRoot(), myBranchName).deleteBookmark();
           }
           catch (HgCommandException exception) {
-            HgAbstractGlobalAction.handleException(myProject, exception);
+            HgErrorUtil.handleException(myProject, exception);
           }
         }
       }

@@ -70,7 +70,7 @@ public class HgUpdateToAction extends HgAbstractGlobalSingleRepoAction {
       new VcsNotifier(project)
         .notifyImportantWarning("Unresolved conflicts.", HgVcsMessages.message("hg4idea.update.warning.merge.conflicts", root.getPath()));
     }
-    markDirtyAndHandleErrors(project, root);
+    HgErrorUtil.markDirtyAndHandleErrors(project, root);
     return success;
   }
 }

@@ -16,19 +16,16 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.repo.HgRepositoryManager;
 import org.zmlx.hg4idea.util.HgUtil;
 
 import javax.swing.*;
-import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -42,9 +39,7 @@ public abstract class HgAbstractGlobalAction extends AnAction {
   protected HgAbstractGlobalAction() {
   }
 
-  private static final Logger LOG = Logger.getInstance(HgAbstractGlobalAction.class.getName());
-
-  public void actionPerformed(AnActionEvent event) {
+  public void actionPerformed(@NotNull AnActionEvent event) {
     final DataContext dataContext = event.getDataContext();
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
@@ -74,27 +69,6 @@ public abstract class HgAbstractGlobalAction extends AnAction {
   protected abstract void execute(@NotNull Project project,
                                   @NotNull Collection<HgRepository> repositories,
                                   @NotNull List<HgRepository> selectedRepositories);
-
-  public static void handleException(@Nullable Project project, @NotNull Exception e) {
-    handleException(project, "Error", e);
-  }
-
-  public static void handleException(@Nullable Project project, @NotNull String title, @NotNull Exception e) {
-    LOG.info(e);
-    new HgCommandResultNotifier(project).notifyError(null, title, e.getMessage());
-  }
-
-  static void markDirtyAndHandleErrors(Project project, VirtualFile repository) {
-    try {
-      HgUtil.markDirectoryDirty(project, repository);
-    }
-    catch (InvocationTargetException e) {
-      handleException(project, e);
-    }
-    catch (InterruptedException e) {
-      handleException(project, e);
-    }
-  }
 
   public boolean isEnabled(AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);

@@ -21,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.command.HgPullCommand;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.ui.HgPullDialog;
+import org.zmlx.hg4idea.util.HgErrorUtil;
 
 import java.util.Collection;
 
@@ -40,7 +41,7 @@ public class HgPullAction extends HgAbstractGlobalSingleRepoAction {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           executePull(project, hgRepository, source);
-          markDirtyAndHandleErrors(project, hgRepository.getRoot());
+          HgErrorUtil.markDirtyAndHandleErrors(project, hgRepository.getRoot());
         }
       }.queue();
     }

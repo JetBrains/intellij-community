@@ -43,7 +43,7 @@ public class HgContinueRebaseAction extends HgProcessRebaseAction {
           if (HgErrorUtil.isAbort(result)) {
             new HgCommandResultNotifier(project).notifyError(result, "Hg Error", "Couldn't continue rebasing");
           }
-          markDirtyAndHandleErrors(project, selectedRepo.getRoot());
+          HgErrorUtil.markDirtyAndHandleErrors(project, selectedRepo.getRoot());
         }
       }
     }.queue();

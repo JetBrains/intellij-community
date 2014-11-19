@@ -30,7 +30,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.HgVcsMessages;
-import org.zmlx.hg4idea.action.HgAbstractGlobalAction;
 import org.zmlx.hg4idea.action.HgCommandResultNotifier;
 import org.zmlx.hg4idea.command.HgMergeCommand;
 import org.zmlx.hg4idea.command.HgUpdateCommand;
@@ -100,7 +99,7 @@ public class HgCommonBranchActions extends ActionGroup {
               }
             }
             catch (Exception e1) {
-              HgAbstractGlobalAction.handleException(myProject, e1);
+              HgErrorUtil.handleException(myProject, e1);
             }
           }
         }.queue();

@@ -14,20 +14,26 @@ package org.zmlx.hg4idea.util;
 
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.action.HgCommandResultNotifier;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 
 import javax.swing.event.HyperlinkEvent;
+import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public final class HgErrorUtil {
+
+  private static final Logger LOG = Logger.getInstance(HgErrorUtil.class.getName());
 
   public static final String SETTINGS_LINK = "settings";
   public static final String MAPPING_ERROR_MESSAGE = String.format(
@@ -35,7 +41,8 @@ public final class HgErrorUtil {
     SETTINGS_LINK +
     "'>directory mappings panel</a>.");
 
-  private HgErrorUtil() { }
+  private HgErrorUtil() {
+  }
 
   public static boolean isAbort(@Nullable HgCommandResult result) {
     if (result == null) {
@@ -131,5 +138,26 @@ public final class HgErrorUtil {
 
   public static boolean isAbortLine(String line) {
     return !StringUtil.isEmptyOrSpaces(line) && line.trim().startsWith("abort:");
+  }
+
+  public static void handleException(@Nullable Project project, @NotNull Exception e) {
+    handleException(project, "Error", e);
+  }
+
+  public static void handleException(@Nullable Project project, @NotNull String title, @NotNull Exception e) {
+    LOG.info(e);
+    new HgCommandResultNotifier(project).notifyError(null, title, e.getMessage());
+  }
+
+  public static void markDirtyAndHandleErrors(Project project, VirtualFile repository) {
+    try {
+      HgUtil.markDirectoryDirty(project, repository);
+    }
+    catch (InvocationTargetException e) {
+      handleException(project, e);
+    }
+    catch (InterruptedException e) {
+      handleException(project, e);
+    }
   }
 }

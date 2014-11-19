@@ -31,6 +31,7 @@ import org.zmlx.hg4idea.provider.update.HgConflictResolver;
 import org.zmlx.hg4idea.provider.update.HgHeadMerger;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.ui.HgMergeDialog;
+import org.zmlx.hg4idea.util.HgErrorUtil;
 
 import java.util.Collection;
 
@@ -49,10 +50,10 @@ public class HgMerge extends HgAbstractGlobalSingleRepoAction {
         public void run(@NotNull ProgressIndicator indicator) {
           try {
             executeMerge(project, repoRoot, targetValue);
-            markDirtyAndHandleErrors(project, repoRoot);
+            HgErrorUtil.markDirtyAndHandleErrors(project, repoRoot);
           }
           catch (HgCommandException e) {
-            handleException(project, e);
+            HgErrorUtil.handleException(project, e);
           }
         }
       }.queue();
