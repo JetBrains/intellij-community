@@ -26,16 +26,14 @@ import com.jetbrains.python.debugger.ArrayChunk;
 import com.jetbrains.python.debugger.PyDebugValue;
 
 import javax.swing.table.AbstractTableModel;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.*;
 
 /**
  * @author traff
  */
 public class AsyncArrayTableModel extends AbstractTableModel {
-  private static final int CHUNK_COL_SIZE = 10;
-  private static final int CHUNK_ROW_SIZE = 10;
+  private static final int CHUNK_COL_SIZE = 30;
+  private static final int CHUNK_ROW_SIZE = 30;
   public static final String EMPTY_CELL_VALUE = "";
 
   private int myRows;
