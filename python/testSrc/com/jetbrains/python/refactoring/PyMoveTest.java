@@ -144,6 +144,11 @@ public class PyMoveTest extends PyTestCase {
     doMoveFileTest("pkg1/mod2.py", "");
   }
 
+  // PY-14439
+  public void testConditionalImportFromPackageToPackage() {
+    doMoveFileTest("pkg1", "pkg2");
+  }
+
   // PY-7378
   public void testMoveNamespacePackage1() {
     runWithLanguageLevel(LanguageLevel.PYTHON33, new Runnable() {
