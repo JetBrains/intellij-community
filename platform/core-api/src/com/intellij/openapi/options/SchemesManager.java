@@ -73,7 +73,7 @@ public interface SchemesManager <T extends Scheme, E extends ExternalizableSchem
     }
 
     @Override
-    public Scheme findSchemeByName(String schemeName) {
+    public Scheme findSchemeByName(@NotNull String schemeName) {
       return null;
     }
 
@@ -148,7 +148,7 @@ public interface SchemesManager <T extends Scheme, E extends ExternalizableSchem
   List<T> getAllSchemes();
 
   @Nullable
-  T findSchemeByName(final String schemeName);
+  T findSchemeByName(@NotNull String schemeName);
 
   void save();
 

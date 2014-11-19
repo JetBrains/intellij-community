@@ -28,6 +28,7 @@ import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.util.Consumer;
+import com.intellij.util.SmartList;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,7 +36,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -44,16 +44,13 @@ import java.util.List;
  *         Date: 06.08.12
  */
 public class ExternalToolsCheckinHandlerFactory extends CheckinHandlerFactory {
-
   public static final Object NONE_TOOL = new Object();
 
   @NotNull
   @Override
   public CheckinHandler createHandler(@NotNull final CheckinProjectPanel panel, @NotNull CommitContext commitContext) {
     final ToolsProjectConfig config = ToolsProjectConfig.getInstance(panel.getProject());
-
     return new CheckinHandler() {
-
       @Override
       public RefreshableOnComponent getAfterCheckinConfigurationPanel(Disposable parentDisposable) {
         final JLabel label = new JLabel(ToolsBundle.message("tools.after.commit.description"));
@@ -150,7 +147,6 @@ public class ExternalToolsCheckinHandlerFactory extends CheckinHandlerFactory {
           @Override
           public void consume(final DataContext context) {
             UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-
               @Override
               public void run() {
                 ToolAction.runTool(id, context);
@@ -163,7 +159,7 @@ public class ExternalToolsCheckinHandlerFactory extends CheckinHandlerFactory {
   }
 
   private static List<Object> getComboBoxElements() {
-    List<Object> result = new ArrayList<Object>();
+    List<Object> result = new SmartList<Object>();
     ToolManager manager = ToolManager.getInstance();
     result.add(NONE_TOOL);//for empty selection
     for (ToolsGroup group : manager.getGroups()) {

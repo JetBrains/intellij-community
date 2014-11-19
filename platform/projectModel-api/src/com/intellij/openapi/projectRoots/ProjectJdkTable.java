@@ -43,6 +43,7 @@ public abstract class ProjectJdkTable {
   @Nullable
   public Sdk findMostRecentSdkOfType(final SdkTypeId type) {
     return findMostRecentSdk(new Condition<Sdk>() {
+      @Override
       public boolean value(Sdk sdk) {
         return sdk.getSdkType() == type;
       }

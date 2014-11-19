@@ -119,7 +119,7 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
 
   @Override
   @Nullable
-  public Keymap getKeymap(String name) {
+  public Keymap getKeymap(@NotNull String name) {
     return mySchemesManager.findSchemeByName(name);
   }
 

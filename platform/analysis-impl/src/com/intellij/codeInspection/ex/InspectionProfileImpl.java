@@ -49,7 +49,6 @@ import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.GraphGenerator;
 import gnu.trove.THashMap;
 import org.jdom.Element;
-import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -75,7 +74,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   private static Map<String, InspectionElementsMerger> ourMergers = null;
   private final InspectionToolRegistrar myRegistrar;
   @NotNull
-  private final Map<String, Element> myDeinstalledInspectionsSettings;
+  private final Map<String, Element> myUninstalledInspectionsSettings;
   private final ExternalInfo myExternalInfo = new ExternalInfo();
   protected InspectionProfileImpl mySource;
   private Map<String, ToolsImpl> myTools = new THashMap<String, ToolsImpl>();
@@ -92,7 +91,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     super(inspectionProfile.getName());
 
     myRegistrar = inspectionProfile.myRegistrar;
-    myDeinstalledInspectionsSettings = new LinkedHashMap<String, Element>(inspectionProfile.myDeinstalledInspectionsSettings);
+    myUninstalledInspectionsSettings = new LinkedHashMap<String, Element>(inspectionProfile.myUninstalledInspectionsSettings);
 
     myBaseProfile = inspectionProfile.myBaseProfile;
     myLocal = inspectionProfile.myLocal;
@@ -109,14 +108,14 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     myRegistrar = registrar;
     myBaseProfile = getDefaultProfile();
     setProfileManager(profileManager);
-    myDeinstalledInspectionsSettings = new TreeMap<String, Element>();
+    myUninstalledInspectionsSettings = new TreeMap<String, Element>();
   }
 
   public InspectionProfileImpl(@NotNull @NonNls String profileName) {
     super(profileName);
     myRegistrar = InspectionToolRegistrar.getInstance();
     setProfileManager(InspectionProfileManager.getInstance());
-    myDeinstalledInspectionsSettings = new TreeMap<String, Element>();
+    myUninstalledInspectionsSettings = new TreeMap<String, Element>();
   }
 
   private static synchronized Map<String, InspectionElementsMerger> getMergers() {
@@ -260,15 +259,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     }
     final String version = element.getAttributeValue(VERSION_TAG);
     if (version == null || !version.equals(VALID_VERSION)) {
-      try {
-        element = InspectionProfileConvertor.convertToNewFormat(element, this);
-      }
-      catch (IOException e) {
-        LOG.error(e);
-      }
-      catch (JDOMException e) {
-        LOG.error(e);
-      }
+      element = InspectionProfileConvertor.convertToNewFormat(element, this);
     }
 
     final Element highlightElement = element.getChild(USED_LEVELS);
@@ -281,7 +272,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
       // make clone to avoid retaining memory via o.parent pointers
       toolElement = toolElement.clone();
       JDOMUtil.internElement(toolElement, interner);
-      myDeinstalledInspectionsSettings.put(toolElement.getAttributeValue(CLASS_TAG), toolElement);
+      myUninstalledInspectionsSettings.put(toolElement.getAttributeValue(CLASS_TAG), toolElement);
     }
 
     final Element descriptionElement = element.getChild(DESCRIPTION);
@@ -312,7 +303,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     }
     synchronized (myExternalInfo) {
       if (!myInitialized) {
-        for (Element el : myDeinstalledInspectionsSettings.values()) {
+        for (Element el : myUninstalledInspectionsSettings.values()) {
           element.addContent(el.clone());
         }
         return;
@@ -323,7 +314,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     if (diffMap != null) {
 
       diffMap = new TreeMap<String, Boolean>(diffMap);
-      for (String toolName : myDeinstalledInspectionsSettings.keySet()) {
+      for (String toolName : myUninstalledInspectionsSettings.keySet()) {
         diffMap.put(toolName, false);
       }
 
@@ -332,7 +323,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
           markSettingsMerged(toolName, element);
           continue;
         }
-        final Element toolElement = myDeinstalledInspectionsSettings.get(toolName);
+        final Element toolElement = myUninstalledInspectionsSettings.get(toolName);
         if (toolElement == null) {
           final ToolsImpl toolList = myTools.get(toolName);
           LOG.assertTrue(toolList != null);
@@ -354,9 +345,9 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   private void markSettingsMerged(String toolName, Element element) {
     //add marker if already merged but result is now default (-> empty node)
     final String mergedName = InspectionElementsMerger.getMergedMarkerName(toolName);
-    if (!myDeinstalledInspectionsSettings.containsKey(mergedName)) {
+    if (!myUninstalledInspectionsSettings.containsKey(mergedName)) {
       final InspectionElementsMerger merger = getMergers().get(toolName);
-      if (merger != null && merger.markSettingsMerged(myDeinstalledInspectionsSettings)) {
+      if (merger != null && merger.markSettingsMerged(myUninstalledInspectionsSettings)) {
         element.addContent(new Element(INSPECTION_TOOL_TAG).setAttribute(CLASS_TAG, mergedName));
       }
     }
@@ -365,7 +356,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   private boolean areSettingsMerged(String toolName, Element inspectionElement) {
     //skip merged settings as they could be restored from already provided data
     final InspectionElementsMerger merger = getMergers().get(toolName);
-    return merger != null && merger.areSettingsMerged(myDeinstalledInspectionsSettings, inspectionElement);
+    return merger != null && merger.areSettingsMerged(myUninstalledInspectionsSettings, inspectionElement);
   }
 
   public void collectDependentInspections(@NotNull InspectionToolWrapper toolWrapper,
@@ -585,15 +576,15 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
       HighlightDisplayLevel level = myBaseProfile != null ? myBaseProfile.getErrorLevel(key, project) : toolWrapper.getDefaultLevel();
       boolean enabled = myBaseProfile != null ? myBaseProfile.isToolEnabled(key) : toolWrapper.isEnabledByDefault();
       final ToolsImpl toolsList = new ToolsImpl(toolWrapper, level, !myLockedProfile && enabled, enabled);
-      final Element element = myDeinstalledInspectionsSettings.remove(shortName);
+      final Element element = myUninstalledInspectionsSettings.remove(shortName);
       try {
         if (element != null) {
           toolsList.readExternal(element, this, dependencies);
         }
-        else if (!myDeinstalledInspectionsSettings.containsKey(InspectionElementsMerger.getMergedMarkerName(shortName))) {
+        else if (!myUninstalledInspectionsSettings.containsKey(InspectionElementsMerger.getMergedMarkerName(shortName))) {
           final InspectionElementsMerger merger = getMergers().get(shortName);
           if (merger != null) {
-            final Element merged = merger.merge(myDeinstalledInspectionsSettings);
+            final Element merged = merger.merge(myUninstalledInspectionsSettings);
             if (merged != null) {
               toolsList.readExternal(merged, this, dependencies);
             }
@@ -669,8 +660,8 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   @Override
   public void copyFrom(@NotNull InspectionProfile profile) {
     super.copyFrom(profile);
-    final InspectionProfileImpl inspectionProfile = (InspectionProfileImpl)profile;
-    myBaseProfile = inspectionProfile.myBaseProfile;
+
+    myBaseProfile = ((InspectionProfileImpl)profile).myBaseProfile;
   }
 
   private void copyToolsConfigurations(@NotNull InspectionProfileImpl profile, @Nullable Project project) {
@@ -1013,5 +1004,4 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   private static class InspectionProfileImplHolder {
     private static final InspectionProfileImpl DEFAULT_PROFILE = new InspectionProfileImpl("Default");
   }
-
 }

@@ -259,7 +259,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
   }
 
   @Override
-  public EditorColorsScheme getScheme(String schemeName) {
+  public EditorColorsScheme getScheme(@NotNull String schemeName) {
     return mySchemesManager.findSchemeByName(schemeName);
   }
 

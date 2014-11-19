@@ -39,7 +39,7 @@ public abstract class EditorColorsManager {
   @NotNull
   public abstract EditorColorsScheme getGlobalScheme();
 
-  public abstract EditorColorsScheme getScheme(@NonNls String schemeName);
+  public abstract EditorColorsScheme getScheme(@NotNull String schemeName);
 
   public abstract boolean isDefaultScheme(EditorColorsScheme scheme);
 

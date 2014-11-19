@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -29,14 +28,16 @@ import org.jetbrains.annotations.NotNull;
  * Date: 01-Dec-2005
  */
 public abstract class ProfileEx implements Profile {
+  private static final Logger LOG = Logger.getInstance(ProfileEx.class);
+
+  public static final String SCOPE = "scope";
+  public static final String NAME = "name";
+
   // public for JDOMExternalizable
   @NotNull
   public String myName;
-  private static final Logger LOG = Logger.getInstance("com.intellij.profile.ProfileEx");
   public boolean myLocal = true;
   protected ProfileManager myProfileManager;
-  @NonNls public static final String SCOPE = "scope";
-  public static final String NAME = "name";
 
   public ProfileEx(@NotNull String name) {
     setName(name);
@@ -51,7 +52,7 @@ public abstract class ProfileEx implements Profile {
   @Override
   public void copyFrom(@NotNull Profile profile) {
     try {
-      @NonNls final Element config = new Element("config");
+      Element config = new Element("config");
       profile.writeExternal(config);
       readExternal(config);
     }
@@ -118,7 +119,7 @@ public abstract class ProfileEx implements Profile {
 
   @Override
   public int compareTo(final Object o) {
-    if (o instanceof Profile){
+    if (o instanceof Profile) {
       return getName().compareToIgnoreCase(((Profile)o).getName());
     }
     return 0;

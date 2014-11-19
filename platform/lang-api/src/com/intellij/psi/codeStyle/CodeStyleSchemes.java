@@ -16,6 +16,7 @@
 package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.components.ServiceManager;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -41,7 +42,8 @@ public abstract class CodeStyleSchemes {
 
   public abstract void deleteScheme(CodeStyleScheme scheme);
 
-  public abstract CodeStyleScheme findSchemeByName(String name);
+  @Nullable
+  public abstract CodeStyleScheme findSchemeByName(@NotNull String name);
 
   /**
    * Attempts to find a scheme with a given name or an alternative suitable scheme.

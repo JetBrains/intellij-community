@@ -27,6 +27,7 @@ import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -138,8 +139,9 @@ public abstract class CodeStyleSchemesImpl extends CodeStyleSchemes {
     return findSchemeByName(DEFAULT_SCHEME_NAME);
   }
 
+  @Nullable
   @Override
-  public CodeStyleScheme findSchemeByName(String name) {
+  public CodeStyleScheme findSchemeByName(@NotNull String name) {
     return mySchemesManager.findSchemeByName(name);
   }
 

@@ -119,7 +119,6 @@ public class StorageUtil {
     return notified;
   }
 
-
   public static boolean isEmpty(@Nullable Parent element) {
     if (element == null) {
       return true;

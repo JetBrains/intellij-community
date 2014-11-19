@@ -79,8 +79,10 @@ public class PersistableCodeStyleSchemes extends CodeStyleSchemesImpl implements
   }
 
   private void updateCurrentScheme() {
-    CodeStyleScheme current = findSchemeByName(CURRENT_SCHEME_NAME);
-    if (current == null) current = getDefaultScheme();
+    CodeStyleScheme current = CURRENT_SCHEME_NAME == null ? null : findSchemeByName(CURRENT_SCHEME_NAME);
+    if (current == null) {
+      current = getDefaultScheme();
+    }
     setCurrentScheme(current);
   }
 }
