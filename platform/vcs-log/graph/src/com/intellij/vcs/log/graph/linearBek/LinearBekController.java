@@ -79,7 +79,10 @@ public class LinearBekController extends CascadeLinearGraphController {
         queue.addAll(workingGraph.getDownNodes(currentNodeIndex));
         while (!queue.isEmpty()) {
           Integer next = queue.poll();
-          if (next > currentNodeIndex + k || !visited.get(next)) {
+          if (next == firstChildIndex) {
+            break;
+          }
+          else if (next > currentNodeIndex + k || !visited.get(next)) {
             break;
           }
           else if (next < currentNodeIndex + k) {
@@ -112,7 +115,7 @@ public class LinearBekController extends CascadeLinearGraphController {
                 }
               }
               workingGraph.removeEdge(i, downNode);
-            } else if (downNode >= currentNodeIndex + k) {
+            } else if (downNode > currentNodeIndex + k) {
               return; // settling case 2450 as "not collapsing at all"
             }
             else {
