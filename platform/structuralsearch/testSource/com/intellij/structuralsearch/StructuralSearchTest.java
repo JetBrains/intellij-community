@@ -3004,7 +3004,6 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                     "    System./*4*/out.println(/*5*/);" +
                     "    A<String/*6*/> a1 = new A(){};" +
                     "    int i = 1 + /*7*/ + 2;" +
-                    "    int i = 1 + /*7*/ + 2;" +
                     "    try (java.io.FileInputStream /*8*/in = new java.io.FileInputStream(\"name\")) {" +
                     "    } catch (java.lang./*9*/Exception e) {" +
                     "    }" +
