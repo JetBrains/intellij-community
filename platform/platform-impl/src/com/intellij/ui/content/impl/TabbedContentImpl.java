@@ -51,9 +51,12 @@ public class TabbedContentImpl extends ContentImpl implements TabbedContent {
 
   @Override
   public void setComponent(JComponent component) {
-    Container parent = getComponent().getParent();
-    parent.remove(getComponent());
-    parent.add(component);
+    JComponent currentComponent = getComponent();
+    Container parent = currentComponent == null ? null : currentComponent.getParent();
+    if (parent != null) {
+      parent.remove(currentComponent);
+      parent.add(component);
+    }
 
     super.setComponent(component);
   }
