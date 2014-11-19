@@ -244,12 +244,12 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
     final DialogWrapper editor;
     if (parent == null) {
       editor = Registry.is("ide.new.settings.view")
-               ? new SettingsDialog(project, dimensionKey, configurable, showApplyButton)
+               ? new SettingsDialog(project, dimensionKey, configurable, showApplyButton, false)
                : new SingleConfigurableEditor(project, configurable, dimensionKey, showApplyButton);
     }
     else {
       editor = Registry.is("ide.new.settings.view")
-               ? new SettingsDialog(parent, dimensionKey, configurable, showApplyButton)
+               ? new SettingsDialog(parent, dimensionKey, configurable, showApplyButton, false)
                : new SingleConfigurableEditor(parent, configurable, dimensionKey, showApplyButton);
     }
     if (advancedInitialization != null) {
