@@ -39,7 +39,9 @@ public class HighlightDisplayLevel {
                                                                                                         createIconByKey(CodeInsightColors.GENERIC_SERVER_ERROR_OR_WARNING));
   public static final HighlightDisplayLevel ERROR = new HighlightDisplayLevel(HighlightSeverity.ERROR, createIconByKey(CodeInsightColors.ERRORS_ATTRIBUTES));
   public static final HighlightDisplayLevel WARNING = new HighlightDisplayLevel(HighlightSeverity.WARNING, createIconByKey(CodeInsightColors.WARNINGS_ATTRIBUTES));
-  public static final Color GREEN = new JBColor(new Color(30, 160, 0), new Color(30, 160, 0));
+  // todo: move to color schemas  
+  public static final Color GREEN = new JBColor(new Color(113, 178, 98), new Color(30, 160, 0)); 
+  public static final Color TYPO = new JBColor(new Color(176, 209, 171), new Color(30, 160, 0));
   public static final HighlightDisplayLevel DO_NOT_SHOW = new HighlightDisplayLevel(HighlightSeverity.INFORMATION, createIconByMask(GREEN));
   /**
    * use #WEAK_WARNING instead

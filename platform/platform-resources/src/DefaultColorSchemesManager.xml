@@ -6,7 +6,7 @@
     <colors>
 
       <option name="SELECTION_BACKGROUND" value="526da5"/>
-      <option name="CARET_ROW_COLOR" value="ffffd7"/>
+      <option name="CARET_ROW_COLOR" value="fffae3"/>
       <option name="METHOD_SEPARATORS_COLOR" value="c0c0c0"/>
       <option name="WHITESPACES" value="c5c5c5"/>
       <option name="INDENT_GUIDE" value="e6e6e6"/>
@@ -243,7 +243,7 @@
           <option name="BACKGROUND"/>
           <option name="EFFECT_COLOR" value="ff0000"/>
           <option name="EFFECT_TYPE" value="2"/>
-          <option name="ERROR_STRIPE_COLOR" value="CC1B13" />
+          <option name="ERROR_STRIPE_COLOR" value="cf5b56" />
         </value>
       </option>
       <option name="BLINKING_HIGHLIGHTS_ATTRIBUTES">
@@ -286,7 +286,7 @@
           <option name="BACKGROUND" value="f6ebbc"/>
           <option name="EFFECT_COLOR"/>
           <option name="EFFECT_TYPE" value="1"/>
-          <option name="ERROR_STRIPE_COLOR" value="F7C600" />
+          <option name="ERROR_STRIPE_COLOR" value="f5d800" />
         </value>
       </option>
       <option name="GENERIC_SERVER_ERROR_OR_WARNING">
@@ -295,7 +295,7 @@
           <option name="BACKGROUND"/>
           <option name="EFFECT_COLOR" value="f49810"/>
           <option name="EFFECT_TYPE" value="2"/>
-          <option name="ERROR_STRIPE_COLOR" value="f49810" />
+          <option name="ERROR_STRIPE_COLOR" value="edaa48" />
         </value>
       </option>
       <option name="DUPLICATE_FROM_SERVER">
@@ -313,7 +313,7 @@
           <option name="BACKGROUND"/>
           <option name="EFFECT_COLOR" value="cccccc"/>
           <option name="EFFECT_TYPE" value="2"/>
-          <option name="ERROR_STRIPE_COLOR" value="ffffcc" />
+          <option name="ERROR_STRIPE_COLOR" value="e3d9b6" />
         </value>
       </option>
       <option name="EJB_ERROR_ATTRIBUTES">
@@ -599,7 +599,7 @@
         <value>
           <option name="FOREGROUND"/>
           <option name="BACKGROUND" value="e4e4ff"/>
-          <option name="ERROR_STRIPE_COLOR" value="ccccff"/>
+          <option name="ERROR_STRIPE_COLOR" value="b8b8e5"/>
           <option name="EFFECT_COLOR"/>
         </value>
       </option>
@@ -608,7 +608,7 @@
         <value>
           <option name="FOREGROUND"/>
           <option name="BACKGROUND" value="ffe4ff"/>
-          <option name="ERROR_STRIPE_COLOR" value="ffcdff"/>
+          <option name="ERROR_STRIPE_COLOR" value="e0b4e0"/>
           <option name="EFFECT_COLOR"/>
         </value>
       </option>
@@ -620,7 +620,7 @@
           <option name="FONT_TYPE" value="0"/>
           <option name="EFFECT_COLOR"/>
           <option name="EFFECT_TYPE" value="0"/>
-          <option name="ERROR_STRIPE_COLOR" value="00ff00"/>
+          <option name="ERROR_STRIPE_COLOR" value="71b362"/>
         </value>
       </option>
 
@@ -645,10 +645,10 @@
 
       <option name="EXECUTIONPOINT_ATTRIBUTES">
         <value>
-          <option name="BACKGROUND" value="ff"/>
+          <option name="BACKGROUND" value="3763b0"/>
           <option name="FOREGROUND" value="ffffff"/>
           <option name="EFFECT_COLOR"/>
-          <option name="ERROR_STRIPE_COLOR" value="ff" />
+          <option name="ERROR_STRIPE_COLOR" value="3763b0" />
         </value>
       </option>
 
@@ -675,7 +675,7 @@
       <option name="BREAKPOINT_ATTRIBUTES">
         <value>
           <option name="FOREGROUND"/>
-          <option name="BACKGROUND" value="ffc8c8"/>
+          <option name="BACKGROUND" value="faeae6"/>
           <option name="EFFECT_COLOR"/>
           <option name="ERROR_STRIPE_COLOR" value="ffc8c8" />
         </value>
