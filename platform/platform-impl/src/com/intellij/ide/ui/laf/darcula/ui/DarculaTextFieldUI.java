@@ -85,6 +85,10 @@ public class DarculaTextFieldUI extends BasicTextFieldUI {
                 ui.showSearchPopup();
                 break;
               case CLEAR:
+                Object listener = c.getClientProperty("JTextField.Search.CancelAction");
+                if (listener instanceof ActionListener) {
+                  ((ActionListener)listener).actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "action"));
+                }
                 ((JTextField)c).setText("");
                 break;
             }
