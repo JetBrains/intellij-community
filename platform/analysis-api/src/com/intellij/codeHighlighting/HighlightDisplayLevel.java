@@ -111,7 +111,7 @@ public class HighlightDisplayLevel {
     }
   }
 
-  private static final int EMPTY_ICON_DIM = 12;
+  private static final int EMPTY_ICON_DIM = 13;
 
   public static Icon createIconByKey(@NotNull TextAttributesKey key) {
     for (IconCreator creator : Extensions.getExtensions(IconCreator.EXTENSION_POINT_NAME)) {

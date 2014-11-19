@@ -16,9 +16,11 @@
 package com.jetbrains.python.inspections;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.openapi.util.JDOMUtil;
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
 import com.jetbrains.python.psi.LanguageLevel;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -418,6 +420,15 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
   // PY-13969
   public void testStubsOfNestedClasses() {
     doMultiFileTest();
+  }
+
+  // PY-14359, PY-14158
+  public void testInspectionSettingsSerializable() throws Exception {
+    final PyUnresolvedReferencesInspection inspection = new PyUnresolvedReferencesInspection();
+    inspection.ignoredIdentifiers.add("foo.Bar.*");
+    final Element serialized = new Element("tmp");
+    inspection.writeSettings(serialized);
+    assertTrue(JDOMUtil.writeElement(serialized).contains("foo.Bar.*"));
   }
 
   @NotNull

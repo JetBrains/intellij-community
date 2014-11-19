@@ -61,9 +61,7 @@ public class LambdaUtil {
 
   public static PsiMethod getFunctionalInterfaceMethod(@Nullable PsiElement element) {
     if (element instanceof PsiFunctionalExpression) {
-      final PsiType samType = element instanceof PsiLambdaExpression
-                              ? ((PsiLambdaExpression)element).getFunctionalInterfaceType()
-                              : ((PsiMethodReferenceExpression)element).getFunctionalInterfaceType();
+      final PsiType samType = ((PsiFunctionalExpression)element).getFunctionalInterfaceType();
       return getFunctionalInterfaceMethod(samType);
     }
     return null;

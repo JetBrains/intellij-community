@@ -17,6 +17,7 @@ package com.intellij.openapi.options;
 
 import org.jetbrains.annotations.NotNull;
 
+@Deprecated
 public class SharedScheme<E extends ExternalizableScheme> {
   private final String myUserName;
   private final String myDescription;

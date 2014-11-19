@@ -576,7 +576,7 @@ public class FormatterImpl extends FormatterEx
     );
     final LeafBlockWrapper blockAfterOffset = processor.getBlockAfter(offset);
 
-    if (blockAfterOffset != null) {
+    if (blockAfterOffset != null && !blockAfterOffset.contains(offset)) {
       final WhiteSpace whiteSpace = blockAfterOffset.getWhiteSpace();
       final IndentInfo indent = calcIndent(offset, documentModel, processor, whiteSpace);
 

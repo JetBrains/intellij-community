@@ -112,8 +112,9 @@ public class ReturnOfDateFieldInspection extends BaseInspection {
       if (!(returnValue instanceof PsiReferenceExpression)) {
         return;
       }
-      final PsiMethod method = PsiTreeUtil.getParentOfType(statement, PsiMethod.class, true, PsiClass.class);
-      if (method == null || (ignorePrivateMethods && method.hasModifierProperty(PsiModifier.PRIVATE))) {
+      final PsiElement containingElement = PsiTreeUtil.getParentOfType(statement, PsiMethod.class, PsiLambdaExpression.class, PsiClass.class);
+      if (containingElement == null || containingElement instanceof PsiClass || 
+          (containingElement instanceof PsiMethod && ignorePrivateMethods && ((PsiMethod)containingElement).hasModifierProperty(PsiModifier.PRIVATE))) {
         return;
       }
       final PsiReferenceExpression fieldReference = (PsiReferenceExpression)returnValue;

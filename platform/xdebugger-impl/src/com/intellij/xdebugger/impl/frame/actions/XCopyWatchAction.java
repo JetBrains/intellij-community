@@ -25,9 +25,9 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 /**
- * @author 1
+ * @author egor
  */
-public class XDuplicateWatchAction extends XWatchesTreeActionBase {
+public class XCopyWatchAction extends XWatchesTreeActionBase {
 
   protected boolean isEnabled(@NotNull final AnActionEvent e, @NotNull XDebuggerTree tree) {
     return !getSelectedNodes(tree, WatchNode.class).isEmpty();

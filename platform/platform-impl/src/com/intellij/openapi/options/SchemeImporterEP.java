@@ -30,8 +30,7 @@ import java.util.List;
  * @author Rustam Vishnyakov
  */
 public class SchemeImporterEP <S extends Scheme> extends AbstractExtensionPointBean {
-  
-  public static ExtensionPointName<SchemeImporterEP> EP_NAME = ExtensionPointName.create("com.intellij.schemeImporter");
+  public static final ExtensionPointName<SchemeImporterEP> EP_NAME = ExtensionPointName.create("com.intellij.schemeImporter");
 
   @Attribute("name")
   public String name;

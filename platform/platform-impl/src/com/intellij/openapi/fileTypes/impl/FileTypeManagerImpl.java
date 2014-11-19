@@ -55,7 +55,6 @@ import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
-import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -182,28 +181,15 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   public FileTypeManagerImpl(MessageBus bus, SchemesManagerFactory schemesManagerFactory) {
     myMessageBus = bus;
     mySchemesManager = schemesManagerFactory.createSchemesManager(FILE_SPEC, new BaseSchemeProcessor<AbstractFileType>() {
+      @NotNull
       @Override
-      public AbstractFileType readScheme(@NotNull final Document document) throws InvalidDataException {
-        Element root = document.getRootElement();
-        if (!ELEMENT_FILETYPE.equals(root.getName())) {
-          throw new InvalidDataException();
-        }
-        Element element = root.getChild(AbstractFileType.ELEMENT_HIGHLIGHTING);
-        if (element != null) {
-          final SyntaxTable table = AbstractFileType.readSyntaxTable(element);
-          if (table != null) {
-            ReadFileType type = new ReadFileType(table, root);
-            String fileTypeName = root.getAttributeValue(ATTRIBUTE_NAME);
-            String fileTypeDescr = root.getAttributeValue(ATTRIBUTE_DESCRIPTION);
-            String iconPath = root.getAttributeValue(ATTRIBUTE_ICON);
-
-            setFileTypeAttributes(fileTypeName, fileTypeDescr, iconPath, type);
-
-            return type;
-          }
-        }
-
-        return null;
+      public AbstractFileType readScheme(@NotNull Element root) {
+        ReadFileType type = new ReadFileType(AbstractFileType.readSyntaxTable(root.getChild(AbstractFileType.ELEMENT_HIGHLIGHTING)), root);
+        String fileTypeName = root.getAttributeValue(ATTRIBUTE_NAME);
+        String fileTypeDescr = root.getAttributeValue(ATTRIBUTE_DESCRIPTION);
+        String iconPath = root.getAttributeValue(ATTRIBUTE_ICON);
+        setFileTypeAttributes(fileTypeName, fileTypeDescr, iconPath, type);
+        return type;
       }
 
       @Override
@@ -215,7 +201,10 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
       public Element writeScheme(@NotNull final AbstractFileType fileType) throws WriteExternalException {
         Element root = new Element(ELEMENT_FILETYPE);
 
-        writeHeader(root, fileType);
+        root.setAttribute(ATTRIBUTE_BINARY, String.valueOf(fileType.isBinary()));
+        root.setAttribute(ATTRIBUTE_DEFAULT_EXTENSION, fileType.getDefaultExtension());
+        root.setAttribute(ATTRIBUTE_DESCRIPTION, fileType.getDescription());
+        root.setAttribute(ATTRIBUTE_NAME, fileType.getName());
 
         fileType.writeExternal(root);
 
@@ -228,7 +217,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
         else {
           writeExtensionsMap(map, fileType, false);
         }
-
         return root;
       }
 
@@ -626,7 +614,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
 
       return fileType;
     }
-    catch (IOException e) {
+    catch (IOException ignored) {
       return UnknownFileType.INSTANCE; // return unknown, do not cache
     }
   }
@@ -1119,8 +1107,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   }
 
   private FileType loadFileType(@NotNull ReadFileType readFileType) {
-    ExternalInfo info = mySchemesManager.isShared(readFileType) ? readFileType.getExternalInfo() : null;
-    return loadFileType(readFileType.getElement(), false, info,
+    return loadFileType(readFileType.getElement(), false, readFileType.getExternalInfo(),
                         true, readFileType.getExternalInfo().getCurrentFileName());
   }
 
@@ -1256,13 +1243,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
 
   private static boolean shouldSave(FileType fileType) {
     return fileType != FileTypes.UNKNOWN && !fileType.isReadOnly();
-  }
-
-  private static void writeHeader(Element root, FileType fileType) {
-    root.setAttribute(ATTRIBUTE_BINARY, String.valueOf(fileType.isBinary()));
-    root.setAttribute(ATTRIBUTE_DEFAULT_EXTENSION, fileType.getDefaultExtension());
-    root.setAttribute(ATTRIBUTE_DESCRIPTION, fileType.getDescription());
-    root.setAttribute(ATTRIBUTE_NAME, fileType.getName());
   }
 
   // -------------------------------------------------------------------------

@@ -33,6 +33,7 @@ import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.components.impl.ServiceManagerImpl;
 import com.intellij.openapi.components.impl.stores.StateStorageManager;
+import com.intellij.openapi.components.impl.stores.StoreUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.options.OptionsBundle;
@@ -137,6 +138,7 @@ public class ExportSettingsAction extends AnAction implements DumbAware {
 
   @NotNull
   public static MultiMap<File, ExportableComponent> getExportableComponentsMap(final boolean onlyExisting, final boolean computePresentableNames) {
+    @SuppressWarnings("deprecation")
     ExportableApplicationComponent[] components1 = ApplicationManager.getApplication().getComponents(ExportableApplicationComponent.class);
     List<ExportableComponent> components2 = ServiceBean.loadServicesFromBeans(ExportableComponent.EXTENSION_POINT, ExportableComponent.class);
     final MultiMap<File, ExportableComponent> result = MultiMap.createLinkedSet();
@@ -159,7 +161,7 @@ public class ExportSettingsAction extends AnAction implements DumbAware {
     ServiceManagerImpl.processAllImplementationClasses(application, new PairProcessor<Class<?>, PluginDescriptor>() {
       @Override
       public boolean process(@NotNull Class<?> aClass, @Nullable PluginDescriptor pluginDescriptor) {
-        State stateAnnotation = aClass.getAnnotation(State.class);
+        State stateAnnotation = StoreUtil.getStateSpec(aClass);
         if (stateAnnotation != null && !StringUtil.isEmpty(stateAnnotation.name())) {
           if (ExportableComponent.class.isAssignableFrom(aClass)) {
             return true;

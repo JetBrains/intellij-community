@@ -18,6 +18,7 @@ package com.intellij.codeInspection;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.GroupNames;
+import com.intellij.codeInsight.daemon.impl.analysis.GenericsHighlightUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.openapi.diagnostic.Logger;
@@ -74,9 +75,7 @@ public class PossibleHeapPollutionVarargsInspection extends BaseJavaBatchLocalIn
       @Override
       protected void registerProblem(PsiMethod method, PsiIdentifier nameIdentifier) {
         final LocalQuickFix quickFix;
-        if (method.hasModifierProperty(PsiModifier.FINAL) ||
-            method.hasModifierProperty(PsiModifier.STATIC) ||
-            method.isConstructor()) {
+        if (GenericsHighlightUtil.isSafeVarargsNoOverridingCondition(method, PsiUtil.getLanguageLevel(method))) {
           quickFix = new AnnotateAsSafeVarargsQuickFix();
         }
         else {

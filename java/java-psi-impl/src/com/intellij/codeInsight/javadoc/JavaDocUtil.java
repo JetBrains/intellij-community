@@ -231,8 +231,8 @@ public class JavaDocUtil {
       return buffer.toString();
     }
     else if (element instanceof PsiParameter) {
-      final PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
-      if (method != null) {
+      final PsiElement method = ((PsiParameter)element).getDeclarationScope();
+      if (method instanceof PsiMethod) {
         return getReferenceText(project, method) +
                "#"+
                ((PsiParameterList)element.getParent()).getParameterIndex((PsiParameter)element);

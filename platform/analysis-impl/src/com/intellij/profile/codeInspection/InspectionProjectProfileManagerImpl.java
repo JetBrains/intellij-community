@@ -102,7 +102,7 @@ public class InspectionProjectProfileManagerImpl extends InspectionProjectProfil
   }
 
   @Override
-  public void deleteProfile(String name) {
+  public void deleteProfile(@NotNull String name) {
     super.deleteProfile(name);
     final InspectionProfileWrapper profileWrapper = myName2Profile.remove(name);
     if (profileWrapper != null) {

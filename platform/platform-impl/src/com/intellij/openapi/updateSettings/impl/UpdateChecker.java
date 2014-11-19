@@ -44,7 +44,6 @@ import com.intellij.util.io.UrlConnectionUtil;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.net.NetUtils;
 import com.intellij.util.ui.UIUtil;
-import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.Contract;
@@ -195,7 +194,7 @@ public final class UpdateChecker {
       try {
         checkPluginsHost(host, downloaded, incompatiblePlugins, true, indicator, buildNumber);
       }
-      catch (ProcessCanceledException e) {
+      catch (ProcessCanceledException ignored) {
         return null;
       }
       catch (Exception e) {
@@ -334,7 +333,7 @@ public final class UpdateChecker {
     try {
       return checkPluginsHost(host, downloaded, null, true, progressIndicator, null);
     }
-    catch (ProcessCanceledException e) {
+    catch (ProcessCanceledException ignored) {
       return false;
     }
   }
@@ -382,11 +381,11 @@ public final class UpdateChecker {
       });
 
     ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes.getInternalBuffer(), 0, bytes.size());
-    final Document document;
+    Element element;
     try {
-      document = JDOMUtil.loadDocument(inputStream);
+      element = JDOMUtil.load(inputStream);
     }
-    catch (JDOMException e) {
+    catch (JDOMException ignored) {
       return false;
     }
     finally {
@@ -404,7 +403,7 @@ public final class UpdateChecker {
     }
 
     boolean success = true;
-    for (Element pluginElement : document.getRootElement().getChildren("plugin")) {
+    for (Element pluginElement : element.getChildren("plugin")) {
       final String pluginId = pluginElement.getAttributeValue("id");
       String pluginUrl = pluginElement.getAttributeValue("url");
       final String pluginVersion = pluginElement.getAttributeValue("version");
@@ -506,15 +505,12 @@ public final class UpdateChecker {
         public UpdatesInfo convert(URLConnection connection) throws Exception {
           InputStream inputStream = HttpRequests.getInputStream(connection);
           try {
-            return new UpdatesInfo(JDOMUtil.loadDocument(inputStream).getRootElement());
+            return new UpdatesInfo(JDOMUtil.load(inputStream));
           }
           catch (JDOMException e) {
             // Broken xml downloaded. Don't bother telling user.
             LOG.info(e);
             return null;
-          }
-          finally {
-            inputStream.close();
           }
         }
       });
@@ -664,7 +660,7 @@ public final class UpdateChecker {
 
       return args.toString();
     }
-    catch (UnsupportedEncodingException e) {
+    catch (UnsupportedEncodingException ignored) {
       return ""; // Can't be anyway
     }
   }

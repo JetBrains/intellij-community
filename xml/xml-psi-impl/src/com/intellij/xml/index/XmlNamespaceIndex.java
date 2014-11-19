@@ -28,6 +28,8 @@ import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileContent;
 import com.intellij.util.indexing.ID;
 import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.io.DataInputOutputUtil;
+import com.intellij.util.io.IOUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
@@ -113,11 +115,11 @@ public class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
     return new DataExternalizer<XsdNamespaceBuilder>() {
       @Override
       public void save(@NotNull DataOutput out, XsdNamespaceBuilder value) throws IOException {
-        out.writeUTF(value.getNamespace() == null ? "" : value.getNamespace());
-        out.writeUTF(value.getVersion() == null ? "" : value.getVersion());
-        out.writeInt(value.getTags().size());
+        IOUtil.writeUTF(out, value.getNamespace() == null ? "" : value.getNamespace());
+        IOUtil.writeUTF(out, value.getVersion() == null ? "" : value.getVersion());
+        DataInputOutputUtil.writeINT(out, value.getTags().size());
         for (String s : value.getTags()) {
-          out.writeUTF(s);
+          IOUtil.writeUTF(out, s);
         }
       }
 
@@ -125,9 +127,10 @@ public class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
       public XsdNamespaceBuilder read(@NotNull DataInput in) throws IOException {
 
         int count;
-        XsdNamespaceBuilder builder = new XsdNamespaceBuilder(in.readUTF(), in.readUTF(), new ArrayList<String>(count = in.readInt()));
+        XsdNamespaceBuilder builder = new XsdNamespaceBuilder(IOUtil.readUTF(in), IOUtil.readUTF(in),
+                                                              new ArrayList<String>(count = DataInputOutputUtil.readINT(in)));
         for (int i = 0; i < count; i++) {
-          builder.getTags().add(in.readUTF());
+          builder.getTags().add(IOUtil.readUTF(in));
         }
         return builder;
       }
@@ -136,7 +139,7 @@ public class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
 
   @Override
   public int getVersion() {
-    return 2;
+    return 3;
   }
 
   @Nullable

@@ -34,7 +34,6 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.NamedJDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
-import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
@@ -63,9 +62,10 @@ public class QuickListsManager implements ExportableApplicationComponent, NamedJ
     myActionManager = actionManagerEx;
     mySchemesManager = schemesManagerFactory.createSchemesManager(StoragePathMacros.ROOT_CONFIG + "/quicklists",
                                                                   new BaseSchemeProcessor<QuickList>() {
+                                                                    @NotNull
                                                                     @Override
-                                                                    public QuickList readScheme(@NotNull final Document schemeContent) {
-                                                                      return loadListFromDocument(schemeContent);
+                                                                    public QuickList readScheme(@NotNull Element element) {
+                                                                      return loadListFromDocument(element);
                                                                     }
 
                                                                     @Override
@@ -87,9 +87,10 @@ public class QuickListsManager implements ExportableApplicationComponent, NamedJ
     registerActions();
   }
 
-  private static QuickList loadListFromDocument(Document schemeContent) {
+  @NotNull
+  private static QuickList loadListFromDocument(@NotNull Element element) {
     QuickList list = new QuickList();
-    list.readExternal(schemeContent.getRootElement());
+    list.readExternal(element);
     return list;
   }
 
@@ -198,16 +199,15 @@ public class QuickListsManager implements ExportableApplicationComponent, NamedJ
             continue;
           }
 
-          final Document document;
+          Element element;
           try {
-            document = JDOMUtil.loadDocument(inputStream);
+            element = JDOMUtil.load(inputStream);
           }
           catch (JDOMException e) {
             LOG.info("Error reading quick list from  " + path + ": " + e.getLocalizedMessage());
             throw e;
           }
-          final QuickList scheme = loadListFromDocument(document);
-          mySchemesManager.addNewScheme(scheme, false);
+          mySchemesManager.addNewScheme(loadListFromDocument(element), false);
         }
         catch (final Exception e) {
           ApplicationManager.getApplication().invokeLater(

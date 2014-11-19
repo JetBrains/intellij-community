@@ -42,7 +42,7 @@ public class PyRemoteSdkFlavor extends CPythonSdkFlavor {
 
   @Override
   public boolean isValidSdkHome(String path) {
-    return StringUtil.isNotEmpty(path) && path.startsWith("ssh:") && checkName(NAMES, getExecutableName(path));
+    return StringUtil.isNotEmpty(path) && checkName(NAMES, getExecutableName(path)) && (path.startsWith("ssh:") || path.startsWith("vagrant:"));
   }
 
   private static boolean checkName(String[] names, @Nullable String name) {

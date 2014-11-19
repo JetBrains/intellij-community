@@ -29,6 +29,7 @@ import org.jetbrains.jps.builders.impl.BuildTargetChunk;
 import org.jetbrains.jps.builders.java.JavaBuilderUtil;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
+import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.storage.Timestamps;
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
@@ -74,6 +75,22 @@ public class FSOperations {
     }
   }
 
+  /**
+   * Note: marked file will well be visible as "dirty" for the current compilation round, 
+   * all builders that run in this compilation round after the one that marked the file, will see the 'dirty' state.
+   * @throws IOException
+   */
+  public static void markDirtyForCurrentRound(CompileContext context, final File file) throws IOException {
+    final ProjectDescriptor pd = context.getProjectDescriptor();
+    final BuildFSState.CompilationRound previous = pd.fsState.selectTargetRound(context, BuildFSState.CompilationRound.CURRENT);
+    try {
+      markDirty(context, file);
+    }
+    finally {
+      pd.fsState.selectTargetRound(context, previous);
+    }
+  }
+
   public static void markDirtyIfNotDeleted(CompileContext context, final File file) throws IOException {
     final JavaSourceRootDescriptor rd = context.getProjectDescriptor().getBuildRootIndex().findJavaRootDescriptor(context, file);
     if (rd != null) {
@@ -94,6 +111,22 @@ public class FSOperations {
     final ProjectDescriptor pd = context.getProjectDescriptor();
     for (ModuleBuildTarget target : chunk.getTargets()) {
       markDirtyFiles(context, target, pd.timestamps.getStorage(), true, null, filter);
+    }
+  }
+
+  /**
+   * Note: marked files will be visible as "dirty" for the current compilation round, 
+   * all builders that run in this compilation round after the one that marked files, will see the 'dirty' state.
+   * @throws IOException
+   */
+  public static void markDirtyForCurrentRound(CompileContext context, final ModuleChunk chunk, @Nullable FileFilter filter) throws IOException {
+    final ProjectDescriptor pd = context.getProjectDescriptor();
+    final BuildFSState.CompilationRound previous = pd.fsState.selectTargetRound(context, BuildFSState.CompilationRound.CURRENT);
+    try {
+      markDirty(context, chunk, filter);
+    }
+    finally {
+      pd.fsState.selectTargetRound(context, previous);
     }
   }
 
@@ -140,7 +173,17 @@ public class FSOperations {
       }
     }
   }
-
+  public static void markDirtyRecursivelyForCurrentRound(CompileContext context, ModuleChunk chunk) throws IOException {
+    final ProjectDescriptor pd = context.getProjectDescriptor();
+    final BuildFSState.CompilationRound previous = pd.fsState.selectTargetRound(context, BuildFSState.CompilationRound.CURRENT);
+    try {
+      markDirtyRecursively(context, chunk);
+    }
+    finally {
+      pd.fsState.selectTargetRound(context, previous);
+    }
+  }
+  
   private static Set<JpsModule> getDependentModulesRecursively(final JpsModule module, final JpsJavaClasspathKind kind) {
     return JpsJavaExtensionService.dependencies(module).includedIn(kind).recursivelyExportedOnly().getModules();
   }

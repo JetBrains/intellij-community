@@ -25,7 +25,10 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -80,11 +83,11 @@ import static com.jetbrains.python.inspections.quickfix.AddIgnoredIdentifierQuic
  * Date: Nov 15, 2008
  */
 public class PyUnresolvedReferencesInspection extends PyInspection {
-  private static Key<Visitor> KEY = Key.create("PyUnresolvedReferencesInspection.Visitor");
+  private static final Key<Visitor> KEY = Key.create("PyUnresolvedReferencesInspection.Visitor");
   public static final Key<PyUnresolvedReferencesInspection> SHORT_NAME_KEY =
     Key.create(PyUnresolvedReferencesInspection.class.getSimpleName());
 
-  public JDOMExternalizableStringList ignoredIdentifiers = new JDOMExternalizableStringList();
+  public List<String> ignoredIdentifiers = new ArrayList<String>();
 
   public static PyUnresolvedReferencesInspection getInstance(PsiElement element) {
     final InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(element.getProject()).getInspectionProfile();
@@ -123,7 +126,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
 
   @Override
   public JComponent createOptionsPanel() {
-    ListEditForm form = new ListEditForm("Ignore references", ignoredIdentifiers);
+    final ListEditForm form = new ListEditForm("Ignore references", ignoredIdentifiers);
     return form.getContentPanel();
   }
 

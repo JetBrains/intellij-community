@@ -20,38 +20,28 @@ import com.intellij.openapi.components.StateStorageException;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.components.store.StateStorageBase;
-import com.intellij.openapi.options.CurrentUserHolder;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
-import gnu.trove.TObjectLongHashMap;
-import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
-import org.jdom.filter.ElementFilter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.util.*;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
 
 public abstract class XmlElementStorage extends StateStorageBase<StorageData> {
-  private static final String ATTR_NAME = "name";
-  private static final String VERSION_FILE_SUFFIX = ".ver";
-
   @NotNull protected final String myRootElementName;
   protected StorageData myLoadedData;
   protected final StreamProvider myStreamProvider;
   protected final String myFileSpec;
   protected boolean myBlockSavingTheContent = false;
-
-  private final ComponentVersionProvider myLocalVersionProvider;
-  protected final RemoteComponentVersionProvider myRemoteVersionProvider;
 
   protected final RoamingType myRoamingType;
 
@@ -59,17 +49,13 @@ public abstract class XmlElementStorage extends StateStorageBase<StorageData> {
                               @Nullable RoamingType roamingType,
                               @Nullable TrackingPathMacroSubstitutor pathMacroSubstitutor,
                               @NotNull String rootElementName,
-                              @Nullable StreamProvider streamProvider,
-                              ComponentVersionProvider componentVersionProvider) {
+                              @Nullable StreamProvider streamProvider) {
     super(pathMacroSubstitutor);
 
     myFileSpec = fileSpec;
     myRoamingType = roamingType == null ? RoamingType.PER_USER : roamingType;
     myRootElementName = rootElementName;
     myStreamProvider = myRoamingType == RoamingType.DISABLED ? null : streamProvider;
-
-    myLocalVersionProvider = componentVersionProvider;
-    myRemoteVersionProvider = streamProvider == null || !streamProvider.isVersioningRequired() ? null : new RemoteComponentVersionProvider();
   }
 
   @Nullable
@@ -104,11 +90,8 @@ public abstract class XmlElementStorage extends StateStorageBase<StorageData> {
           loadState(result, element);
         }
 
-        //noinspection deprecation
-        if (!myStreamProvider.isVersioningRequired() && !(myStreamProvider instanceof OldStreamProviderAdapter || myStreamProvider instanceof CurrentUserHolder)) {
-          // we don't use local data if has stream provider (we don't use this logic for old stream providers)
-          return result;
-        }
+        // we don't use local data if has stream provider
+        return result;
       }
       catch (Exception e) {
         LOG.warn(e);
@@ -126,14 +109,7 @@ public abstract class XmlElementStorage extends StateStorageBase<StorageData> {
   @Nullable
   protected final Element loadDataFromStreamProvider() throws IOException, JDOMException {
     assert myStreamProvider != null;
-    InputStream inputStream = myStreamProvider.loadContent(myFileSpec, myRoamingType);
-    if (inputStream == null) {
-      return null;
-    }
-
-    Element element = JDOMUtil.loadDocument(inputStream).getRootElement();
-    filterOutOfDate(element);
-    return element;
+    return JDOMUtil.load(myStreamProvider.loadContent(myFileSpec, myRoamingType));
   }
 
   protected final void loadState(@NotNull StorageData result, @NotNull Element element) {
@@ -231,12 +207,9 @@ public abstract class XmlElementStorage extends StateStorageBase<StorageData> {
 
       if (myCopiedStorageData == null) {
         myCopiedStorageData = StorageData.setStateAndCloneIfNeed(componentName, element, myOriginalStorageData, myNewLiveStates);
-        if (myCopiedStorageData != null) {
-          myLocalVersionProvider.changeVersion(componentName, System.currentTimeMillis());
-        }
       }
-      else if (myCopiedStorageData.setState(componentName, element, myNewLiveStates) != null) {
-        myLocalVersionProvider.changeVersion(componentName, System.currentTimeMillis());
+      else {
+        myCopiedStorageData.setState(componentName, element, myNewLiveStates);
       }
     }
 
@@ -277,103 +250,10 @@ public abstract class XmlElementStorage extends StateStorageBase<StorageData> {
 
     private void doSaveForProvider(@NotNull Element element, @NotNull RoamingType roamingType, @Nullable BufferExposingByteArrayOutputStream content) throws IOException {
       if (content == null) {
-        StorageUtil.doSendContent(myStreamProvider, myFileSpec, element, roamingType, true);
+        StorageUtil.sendContent(myStreamProvider, myFileSpec, element, roamingType, true);
       }
       else {
         myStreamProvider.saveContent(myFileSpec, content.getInternalBuffer(), content.size(), myRoamingType, true);
-      }
-
-      if (myStreamProvider.isVersioningRequired()) {
-        TObjectLongHashMap<String> versions = loadVersions(element.getChildren(StorageData.COMPONENT));
-        if (!versions.isEmpty()) {
-          Element versionDoc = StateStorageManagerImpl.createComponentVersionsXml(versions);
-          StorageUtil.doSendContent(myStreamProvider, myFileSpec + VERSION_FILE_SUFFIX, versionDoc, roamingType, true);
-        }
-      }
-    }
-  }
-
-  private TObjectLongHashMap<String> loadVersions(List<Element> elements) {
-    TObjectLongHashMap<String> result = new TObjectLongHashMap<String>();
-    for (Element component : elements) {
-      String name = component.getAttributeValue(ATTR_NAME);
-      if (name != null) {
-        long version = myLocalVersionProvider.getVersion(name);
-        if (version > 0) {
-          result.put(name, version);
-        }
-      }
-    }
-    return result;
-  }
-
-  @TestOnly
-  public void resetData() {
-    myLoadedData = null;
-  }
-
-  private void filterOutOfDate(@NotNull Element element) {
-    if (myRemoteVersionProvider == null) {
-      return;
-    }
-
-    Iterator<Element> iterator = element.getContent(new ElementFilter(StorageData.COMPONENT)).iterator();
-    while (iterator.hasNext()) {
-      String name = iterator.next().getAttributeValue(StorageData.NAME);
-      long remoteVersion = myRemoteVersionProvider.getVersion(name);
-      if (remoteVersion <= myLocalVersionProvider.getVersion(name)) {
-        iterator.remove();
-      }
-      else {
-        myLocalVersionProvider.changeVersion(name, remoteVersion);
-      }
-    }
-  }
-
-  public void resetProviderCache() {
-    if (myRemoteVersionProvider != null) {
-      myRemoteVersionProvider.myProviderVersions = null;
-    }
-  }
-
-  private final class RemoteComponentVersionProvider implements ComponentVersionProvider {
-    private TObjectLongHashMap<String> myProviderVersions;
-
-    @Override
-    public long getVersion(String name) {
-      if (myProviderVersions == null) {
-        loadProviderVersions();
-      }
-      return myProviderVersions == null ? -1 : myProviderVersions.get(name);
-    }
-
-    @Override
-    public void changeVersion(String name, long version) {
-      if (myProviderVersions == null) {
-        loadProviderVersions();
-      }
-      if (myProviderVersions != null) {
-        myProviderVersions.put(name, version);
-      }
-    }
-
-    private void loadProviderVersions() {
-      assert myStreamProvider != null;
-      if (!myStreamProvider.isEnabled()) {
-        return;
-      }
-
-      myProviderVersions = new TObjectLongHashMap<String>();
-      for (RoamingType type : RoamingType.values()) {
-        try {
-          Document doc = StorageUtil.loadDocument(myStreamProvider.loadContent(myFileSpec + VERSION_FILE_SUFFIX, type));
-          if (doc != null) {
-            StateStorageManagerImpl.loadComponentVersions(myProviderVersions, doc);
-          }
-        }
-        catch (IOException e) {
-          LOG.debug(e);
-        }
       }
     }
   }

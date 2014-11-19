@@ -88,11 +88,12 @@ public class ReplaceIfWithConditionalIntention extends Intention {
       if (elseReturnValue == null) {
         return;
       }
-      final PsiMethod method = PsiTreeUtil.getParentOfType(thenReturn, PsiMethod.class);
+      final PsiElement method = PsiTreeUtil.getParentOfType(thenReturn, PsiMethod.class, PsiLambdaExpression.class);
       if (method == null) {
         return;
       }
-      final PsiType returnType = method.getReturnType();
+      final PsiType returnType = method instanceof PsiMethod ? ((PsiMethod)method).getReturnType() 
+                                                             : LambdaUtil.getFunctionalInterfaceReturnType((PsiLambdaExpression)method);
       final String conditional = getConditionalText(condition, thenReturnValue, elseReturnValue, returnType);
       replaceIfStatement(ifStatement, "return " + conditional + ';');
     }

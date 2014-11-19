@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,40 +21,29 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.components.StateStorage.SaveSession;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.options.CurrentUserHolder;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.RoamingTypeDisabled;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtilRt;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.messages.MessageBus;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectLongHashMap;
-import org.jdom.Document;
 import org.jdom.Element;
-import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 import org.picocontainer.MutablePicoContainer;
 import org.picocontainer.PicoContainer;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.ConnectException;
 import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public abstract class StateStorageManagerImpl implements StateStorageManager, Disposable, ComponentVersionProvider {
+public abstract class StateStorageManagerImpl implements StateStorageManager, Disposable {
   private static final Logger LOG = Logger.getInstance(StateStorageManagerImpl.class);
 
   private static final boolean ourHeadlessEnvironment;
@@ -71,16 +60,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   private final String myRootTagName;
   private final PicoContainer myPicoContainer;
 
-  private TObjectLongHashMap<String> myComponentVersions;
-  private final Object myComponentVersionsLock = new Object();
-
-  private String myVersionsFilePath;
-
-  private boolean isDirty;
-
   private StreamProvider myStreamProvider;
-
-  private final OldStreamProviderManager myOldStreamProvider = new OldStreamProviderManager();
 
   public StateStorageManagerImpl(@Nullable TrackingPathMacroSubstitutor pathMacroSubstitutor,
                                  String rootTagName,
@@ -225,6 +205,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
       ((MutablePicoContainer)myPicoContainer).registerComponentImplementation(key, storageSpec.storageClass());
       return (StateStorage)myPicoContainer.getComponentInstance(key);
     }
+    //noinspection deprecation
     if (!storageSpec.stateSplitter().equals(StateSplitter.class)) {
       return createDirectoryStateStorage(storageSpec.file(), storageSpec.stateSplitter());
     }
@@ -251,6 +232,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     }
   }
 
+  @SuppressWarnings("deprecation")
   @Nullable
   private StateStorage createDirectoryStateStorage(String file, Class<? extends StateSplitter> splitterClass) {
     StateSplitter splitter = ReflectionUtil.newInstance(splitterClass);
@@ -271,7 +253,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
 
     beforeFileBasedStorageCreate();
     return new FileBasedStorage(expandedFile, fileSpec, roamingType, getMacroSubstitutor(fileSpec), myRootTagName, this,
-                                createStorageTopicListener(), getStreamProvider(), this) {
+                                createStorageTopicListener(), getStreamProvider()) {
       @Override
       @NotNull
       protected StorageData createStorageData() {
@@ -298,47 +280,8 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   protected void beforeFileBasedStorageCreate() {
   }
 
-  @Override
-  public long getVersion(String name) {
-    return getComponentVersions().get(name);
-  }
-
-  @TestOnly
-  public void changeVersionsFilePath(String newPath) {
-    myVersionsFilePath = newPath;
-    synchronized (myComponentVersionsLock) {
-      myComponentVersions = null;
-    }
-    isDirty = false;
-  }
-
-  private TObjectLongHashMap<String> loadVersions() {
-    TObjectLongHashMap<String> result = new TObjectLongHashMap<String>();
-    String filePath = getNotNullVersionsFilePath();
-    if (filePath != null) {
-      try {
-        loadComponentVersions(result, JDOMUtil.loadDocument(new File(filePath)));
-      }
-      catch (JDOMException e) {
-        LOG.debug(e);
-      }
-      catch (IOException e) {
-        LOG.debug(e);
-      }
-    }
-    return result;
-  }
-
-  private String getNotNullVersionsFilePath() {
-    if (myVersionsFilePath == null) {
-      myVersionsFilePath = getVersionsFilePath();
-    }
-
-    return myVersionsFilePath;
-  }
-
-  public static void loadComponentVersions(TObjectLongHashMap<String> result, Document document) {
-    List<Element> componentObjects = document.getRootElement().getChildren("component");
+  public static void loadComponentVersions(@NotNull TObjectLongHashMap<String> result, @NotNull Element element) {
+    List<Element> componentObjects = element.getChildren("component");
     result.ensureCapacity(componentObjects.size());
     for (Element component : componentObjects) {
       String name = component.getAttributeValue("name");
@@ -353,18 +296,10 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     }
   }
 
-  protected abstract String getVersionsFilePath();
-
-  @Override
-  public void changeVersion(String name, long version) {
-    getComponentVersions().put(name, version);
-    isDirty = true;
-  }
-
   @Nullable
   @Override
   public StreamProvider getStreamProvider() {
-    return ObjectUtils.chooseNotNull(myStreamProvider, myOldStreamProvider);
+    return myStreamProvider;
   }
 
   protected TrackingPathMacroSubstitutor getMacroSubstitutor(@NotNull final String fileSpec) {
@@ -411,22 +346,6 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
 
   @Override
   public void finishSave(@NotNull SaveSession saveSession) {
-    if (!isDirty) {
-      return;
-    }
-
-    String filePath = getNotNullVersionsFilePath();
-    if (filePath != null) {
-      File file = new File(filePath);
-      FileUtilRt.createParentDirs(file);
-      try {
-        JDOMUtil.writeParent(createComponentVersionsXml(getComponentVersions()), file, "\n");
-        isDirty = false;
-      }
-      catch (IOException e) {
-        LOG.info(e);
-      }
-    }
   }
 
   private final class StateStorageManagerExternalizationSession implements ExternalizationSession {
@@ -516,135 +435,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   }
 
   @Override
-  public void registerStreamProvider(@SuppressWarnings("deprecation") com.intellij.openapi.options.StreamProvider streamProvider, final RoamingType type) {
-    synchronized (myOldStreamProvider) {
-      myOldStreamProvider.myStreamProviders.add(new OldStreamProviderAdapter(streamProvider, type));
-    }
-  }
-
-  @Override
   public void setStreamProvider(@Nullable StreamProvider streamProvider) {
     myStreamProvider = streamProvider;
-  }
-
-  private TObjectLongHashMap<String> getComponentVersions() {
-    synchronized (myComponentVersionsLock) {
-      if (myComponentVersions == null) {
-        myComponentVersions = loadVersions();
-      }
-      return myComponentVersions;
-    }
-  }
-
-  public static Element createComponentVersionsXml(TObjectLongHashMap<String> versions) {
-    Element root = new Element("versions");
-    Object[] componentNames = versions.keys();
-    Arrays.sort(componentNames);
-    for (Object key : componentNames) {
-      String name = (String)key;
-      long version = versions.get(name);
-      if (version != 0) {
-        Element element = new Element("component");
-        root.addContent(element);
-        element.setAttribute("name", name);
-        element.setAttribute("version", String.valueOf(version));
-      }
-    }
-    return root;
-  }
-
-  @SuppressWarnings("deprecation")
-  private static class OldStreamProviderManager extends StreamProvider implements CurrentUserHolder {
-    private final List<OldStreamProviderAdapter> myStreamProviders = new SmartList<OldStreamProviderAdapter>();
-
-    @Override
-    public boolean isVersioningRequired() {
-      return true;
-    }
-
-    @Override
-    public boolean isEnabled() {
-      for (StreamProvider provider : myStreamProviders) {
-        if (provider.isEnabled()) {
-          return true;
-        }
-      }
-      return false;
-    }
-
-    @Override
-    public boolean isApplicable(@NotNull String fileSpec, @NotNull RoamingType roamingType) {
-      for (StreamProvider provider : myStreamProviders) {
-        if (provider.isApplicable(fileSpec, roamingType)) {
-          return true;
-        }
-      }
-      return false;
-    }
-
-    @Override
-    public void saveContent(@NotNull String fileSpec, @NotNull byte[] content, int size, @NotNull RoamingType roamingType, boolean async) throws IOException {
-      for (StreamProvider streamProvider : myStreamProviders) {
-        try {
-          if (streamProvider.isEnabled() && streamProvider.isApplicable(fileSpec, roamingType)) {
-            streamProvider.saveContent(fileSpec, content, size, roamingType, async);
-          }
-        }
-        catch (Exception e) {
-          LOG.debug(e);
-        }
-      }
-    }
-
-    @Override
-    public InputStream loadContent(@NotNull final String fileSpec, @NotNull final RoamingType roamingType) throws IOException {
-      for (StreamProvider streamProvider : myStreamProviders) {
-        try {
-          if (streamProvider.isEnabled() && streamProvider.isApplicable(fileSpec, roamingType)) {
-            InputStream content = streamProvider.loadContent(fileSpec, roamingType);
-            if (content != null) {
-              return content;
-            }
-          }
-        }
-        catch (ConnectException e) {
-          LOG.debug("Cannot send user profile o server: " + e.getLocalizedMessage());
-        }
-        catch (Exception e) {
-          LOG.debug(e);
-        }
-      }
-
-      return null;
-    }
-
-    @Override
-    public void delete(@NotNull String fileSpec, @NotNull RoamingType roamingType) {
-      for (StreamProvider streamProvider : myStreamProviders) {
-        try {
-          if (streamProvider.isEnabled() && streamProvider.isApplicable(fileSpec, roamingType)) {
-            streamProvider.delete(fileSpec, roamingType);
-          }
-        }
-        catch (Exception e) {
-          LOG.debug(e);
-        }
-      }
-    }
-
-    @Override
-    public String getCurrentUserName() {
-      for (OldStreamProviderAdapter provider : myStreamProviders) {
-        if (!provider.isEnabled()) {
-          continue;
-        }
-
-        String userName = provider.getCurrentUserName();
-        if (userName != null) {
-          return userName;
-        }
-      }
-      return null;
-    }
   }
 }

@@ -126,10 +126,10 @@ public class ClassInstanceScanner extends DelegatingClassReferenceVisitor {
     }
     else if(parent instanceof PsiReturnStatement) {
       final PsiReturnStatement returnStatement = (PsiReturnStatement) parent;
-      PsiMethod enclosingMethod = PsiTreeUtil.getParentOfType(returnStatement, PsiMethod.class);
+      PsiElement enclosingMethod = PsiTreeUtil.getParentOfType(returnStatement, PsiMethod.class, PsiLambdaExpression.class);
       final PsiType returnType;
-      if(enclosingMethod != null) {
-        returnType = enclosingMethod.getReturnType();
+      if(enclosingMethod instanceof PsiMethod) {
+        returnType = ((PsiMethod)enclosingMethod).getReturnType();
       }
       else {
         returnType = null;

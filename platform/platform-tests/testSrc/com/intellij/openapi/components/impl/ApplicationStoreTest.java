@@ -149,11 +149,6 @@ public class ApplicationStoreTest extends LightPlatformLangTestCase {
         }
 
         @Override
-        protected String getVersionsFilePath() {
-          return testAppConfigPath + "/options/appComponentVersions.xml";
-        }
-
-        @Override
         protected TrackingPathMacroSubstitutor getMacroSubstitutor(@NotNull final String fileSpec) {
           if (fileSpec.equals(StoragePathMacros.APP_CONFIG + "/" + PathMacrosImpl.EXT_FILE_NAME + ".xml")) {
             return null;

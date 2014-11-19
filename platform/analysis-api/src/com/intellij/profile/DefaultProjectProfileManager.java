@@ -196,7 +196,7 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
   }
 
   @Override
-  public synchronized void deleteProfile(String name) {
+  public synchronized void deleteProfile(@NotNull String name) {
     myProfiles.remove(name);
   }
 

@@ -854,13 +854,13 @@ public class JavaDocInfoGenerator {
     buffer.append("</b>");
     buffer.append("</PRE>");
 
-    final PsiMethod method = PsiTreeUtil.getParentOfType(parameter, PsiMethod.class);
+    final PsiElement method = PsiTreeUtil.getParentOfType(parameter, PsiMethod.class, PsiLambdaExpression.class);
 
-    if (method != null) {
-      final PsiDocComment docComment = getDocComment(method);
+    if (method instanceof PsiMethod) {
+      final PsiDocComment docComment = getDocComment((PsiMethod)method);
       if (docComment != null) {
         final Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> tagInfoProvider =
-          findDocTag(docComment.getTags(), parameter.getName(), method);
+          findDocTag(docComment.getTags(), parameter.getName(), (PsiMethod)method);
 
         if (tagInfoProvider != null) {
           PsiElement[] elements = tagInfoProvider.first.getDataElements();

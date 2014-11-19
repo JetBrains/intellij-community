@@ -73,8 +73,12 @@ public class ReturnNullInspectionBase extends BaseInspection {
     if (!AnnotationUtil.isAnnotatingApplicable(elt)) {
       return null;
     }
-    final NullableNotNullManager manager =
-      NullableNotNullManager.getInstance(elt.getProject());
+
+    if (PsiTreeUtil.getParentOfType(elt, PsiMethod.class, PsiLambdaExpression.class) instanceof PsiLambdaExpression) {
+      return null;
+    }
+
+    final NullableNotNullManager manager = NullableNotNullManager.getInstance(elt.getProject());
     return new DelegatingFix(new AnnotateMethodFix(
       manager.getDefaultNullable(),
       ArrayUtil.toStringArray(manager.getNotNulls())){
@@ -114,8 +118,7 @@ public class ReturnNullInspectionBase extends BaseInspection {
   private class ReturnNullVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitLiteralExpression(
-      @NotNull PsiLiteralExpression value) {
+    public void visitLiteralExpression(@NotNull PsiLiteralExpression value) {
       super.visitLiteralExpression(value);
       final String text = value.getText();
       if (!PsiKeyword.NULL.equals(text)) {
@@ -130,22 +133,31 @@ public class ReturnNullInspectionBase extends BaseInspection {
       if (!(parent instanceof PsiReturnStatement)) {
         return;
       }
-      final PsiMethod method =
-        PsiTreeUtil.getParentOfType(value, PsiMethod.class);
-      if (method == null) {
+      final PsiElement element = PsiTreeUtil.getParentOfType(value, PsiMethod.class, PsiLambdaExpression.class);
+      final PsiMethod method;
+      final PsiType returnType;
+      if (element instanceof PsiMethod) {
+        method = (PsiMethod)element;
+        returnType = method.getReturnType();
+      } 
+      else if (element instanceof PsiLambdaExpression) {
+        final PsiType functionalInterfaceType = ((PsiLambdaExpression)element).getFunctionalInterfaceType();
+        method = LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceType);
+        returnType = LambdaUtil.getFunctionalInterfaceReturnType(functionalInterfaceType);
+      } 
+      else {
         return;
       }
-      if (m_ignorePrivateMethods &&
-          method.hasModifierProperty(PsiModifier.PRIVATE)) {
+      if (method == null || returnType == null) {
         return;
       }
-      final PsiType returnType = method.getReturnType();
-      if (returnType == null) {
+
+      if (m_ignorePrivateMethods && method.hasModifierProperty(PsiModifier.PRIVATE)) {
         return;
       }
+
       final boolean isArray = returnType.getArrayDimensions() > 0;
-      final NullableNotNullManager nullableNotNullManager =
-        NullableNotNullManager.getInstance(method.getProject());
+      final NullableNotNullManager nullableNotNullManager = NullableNotNullManager.getInstance(method.getProject());
       if (nullableNotNullManager.isNullable(method, false)) {
         return;
       }

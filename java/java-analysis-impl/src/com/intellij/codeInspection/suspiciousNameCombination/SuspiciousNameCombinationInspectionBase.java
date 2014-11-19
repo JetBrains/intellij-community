@@ -156,10 +156,10 @@ public class SuspiciousNameCombinationInspectionBase extends BaseJavaBatchLocalI
     @Override
     public void visitReturnStatement(final PsiReturnStatement statement) {
       final PsiExpression returnValue = statement.getReturnValue();
-      PsiMethod containingMethod = PsiTreeUtil.getParentOfType(returnValue, PsiMethod.class);
-      if (returnValue instanceof PsiReferenceExpression && containingMethod != null) {
+      PsiElement containingMethod = PsiTreeUtil.getParentOfType(returnValue, PsiMethod.class, PsiLambdaExpression.class);
+      if (returnValue instanceof PsiReferenceExpression && containingMethod instanceof PsiMethod) {
         final String refName = ((PsiReferenceExpression)returnValue).getReferenceName();
-        checkCombination(returnValue, containingMethod.getName(), refName, "suspicious.name.return");
+        checkCombination(returnValue, ((PsiMethod)containingMethod).getName(), refName, "suspicious.name.return");
       }
     }
 

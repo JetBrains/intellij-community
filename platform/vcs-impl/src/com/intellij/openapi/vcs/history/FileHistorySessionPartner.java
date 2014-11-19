@@ -147,7 +147,7 @@ public class FileHistorySessionPartner implements VcsAppendableHistorySessionPar
 
           if (history == null) {
             final Disposable disposable = Disposer.newDisposable();
-            history = new TabbedContentImpl(myFileHistoryPanel, myFileHistoryPanel.getVirtualFile().getName(), true, "History: ");
+            history = new TabbedContentImpl(myFileHistoryPanel, myFileHistoryPanel.getVirtualFile().getName(), true, "History");
             ContentsUtil.addOrReplaceContent(contentManager, history, true);
             Disposer.register(history, disposable);
           } else {

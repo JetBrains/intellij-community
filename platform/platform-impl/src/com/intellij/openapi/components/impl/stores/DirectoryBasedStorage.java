@@ -147,6 +147,37 @@ public class DirectoryBasedStorage extends StateStorageBase<DirectoryStorageData
     return checkIsSavingDisabled() ? null : new MySaveSession(this, getStorageData());
   }
 
+  @NotNull
+  public static VirtualFile createDir(@NotNull File ioDir, @NotNull Object requestor) {
+    //noinspection ResultOfMethodCallIgnored
+    ioDir.mkdirs();
+    String parentFile = ioDir.getParent();
+    VirtualFile parentVirtualFile = parentFile == null ? null : LocalFileSystem.getInstance().refreshAndFindFileByPath(parentFile.replace(File.separatorChar, '/'));
+    if (parentVirtualFile == null) {
+      throw new StateStorageException(ProjectBundle.message("project.configuration.save.file.not.found", parentFile));
+    }
+    return getFile(ioDir.getName(), parentVirtualFile, requestor);
+  }
+
+  @NotNull
+  public static VirtualFile getFile(@NotNull String fileName, @NotNull VirtualFile parentVirtualFile, @NotNull Object requestor) {
+    VirtualFile file = parentVirtualFile.findChild(fileName);
+    if (file != null) {
+      return file;
+    }
+
+    AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(DocumentRunnable.IgnoreDocumentRunnable.class);
+    try {
+      return parentVirtualFile.createChildData(requestor, fileName);
+    }
+    catch (IOException e) {
+      throw new StateStorageException(e);
+    }
+    finally {
+      token.finish();
+    }
+  }
+
   private static class MySaveSession implements SaveSession, ExternalizationSession {
     private final DirectoryBasedStorage storage;
     private final DirectoryStorageData originalStorageData;
@@ -228,14 +259,7 @@ public class DirectoryBasedStorage extends StateStorageBase<DirectoryStorageData
       }
 
       if (dir == null || !dir.isValid()) {
-        //noinspection ResultOfMethodCallIgnored
-        storage.myDir.mkdirs();
-        String parentFile = storage.myDir.getParent();
-        VirtualFile parentVirtualFile = parentFile == null ? null : LocalFileSystem.getInstance().refreshAndFindFileByPath(parentFile.replace(File.separatorChar, '/'));
-        if (parentVirtualFile == null) {
-          throw new StateStorageException(ProjectBundle.message("project.configuration.save.file.not.found", parentFile));
-        }
-        dir = getFile(storage.myDir.getName(), parentVirtualFile);
+        dir = createDir(storage.myDir, this);
       }
 
       if (!dirtyFileNames.isEmpty()) {
@@ -270,7 +294,7 @@ public class DirectoryBasedStorage extends StateStorageBase<DirectoryStorageData
               storeElement.addContent(element);
 
               BufferExposingByteArrayOutputStream byteOut;
-              VirtualFile file = getFile(fileName, dir);
+              VirtualFile file = getFile(fileName, dir, MySaveSession.this);
               if (file.exists()) {
                 byteOut = StorageUtil.writeToBytes(storeElement, StorageUtil.loadFile(file).second);
               }
@@ -295,19 +319,8 @@ public class DirectoryBasedStorage extends StateStorageBase<DirectoryStorageData
       AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(DocumentRunnable.IgnoreDocumentRunnable.class);
       try {
         for (VirtualFile file : dir.getChildren()) {
-          if (!removedFileNames.contains(file.getName())) {
-            continue;
-          }
-
-          try {
-            LOG.debug("Removing configuration file: " + file.getPresentableUrl());
-            file.delete(this);
-          }
-          catch (FileNotFoundException ignored) {
-            throw new ReadOnlyModificationException(file);
-          }
-          catch (IOException e) {
-            throw new StateStorageException(e);
+          if (removedFileNames.contains(file.getName())) {
+            deleteFile(file, this);
           }
         }
       }
@@ -315,24 +328,17 @@ public class DirectoryBasedStorage extends StateStorageBase<DirectoryStorageData
         token.finish();
       }
     }
+  }
 
-    @NotNull
-    private VirtualFile getFile(@NotNull String fileName, @NotNull VirtualFile parentVirtualFile) {
-      VirtualFile file = parentVirtualFile.findChild(fileName);
-      if (file != null) {
-        return file;
-      }
-
-      AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(DocumentRunnable.IgnoreDocumentRunnable.class);
-      try {
-        return parentVirtualFile.createChildData(this, fileName);
-      }
-      catch (IOException e) {
-        throw new StateStorageException(e);
-      }
-      finally {
-        token.finish();
-      }
+  public static void deleteFile(@NotNull VirtualFile file, @NotNull Object requestor) {
+    try {
+      file.delete(requestor);
+    }
+    catch (FileNotFoundException ignored) {
+      throw new ReadOnlyModificationException(file);
+    }
+    catch (IOException e) {
+      throw new StateStorageException(e);
     }
   }
 }

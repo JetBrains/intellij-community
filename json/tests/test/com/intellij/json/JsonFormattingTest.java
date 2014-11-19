@@ -84,7 +84,7 @@ public class JsonFormattingTest extends FormatterTestCase {
     withPreservedSettings(new ThrowableRunnable<Exception>() {
       @Override
       public void run() throws Exception {
-        getCustomSettings().PROPERTY_ALIGNMENT = alignmentType;
+        getCustomSettings().PROPERTY_ALIGNMENT = alignmentType.getId();
         doTest();
       }
     });

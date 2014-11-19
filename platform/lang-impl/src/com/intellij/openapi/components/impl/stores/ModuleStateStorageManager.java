@@ -16,7 +16,6 @@
 
 package com.intellij.openapi.components.impl.stores;
 
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.StateStorageOperation;
 import com.intellij.openapi.components.StoragePathMacros;
@@ -44,11 +43,6 @@ class ModuleStateStorageManager extends StateStorageManagerImpl {
   @Override
   protected String getOldStorageSpec(@NotNull Object component, @NotNull String componentName, @NotNull StateStorageOperation operation) {
     return StoragePathMacros.MODULE_FILE;
-  }
-
-  @Override
-  protected String getVersionsFilePath() {
-    return PathManager.getConfigPath() + "/componentVersions/" + "module" + getLocationHash() + ".xml";
   }
 
   private String getLocationHash() {

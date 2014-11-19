@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -44,7 +43,7 @@ import java.util.Map;
   name = "ProjectJdkTable",
   storages = {@Storage(file = StoragePathMacros.APP_CONFIG + "/jdk.table.xml", roamingType = RoamingType.DISABLED)}
 )
-public class ProjectJdkTableImpl extends ProjectJdkTable implements PersistentStateComponent<Element>, ExportableComponent {
+public class ProjectJdkTableImpl extends ProjectJdkTable implements ExportableComponent, PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.projectRoots.impl.ProjectJdkTableImpl");
 
   private final List<Sdk> mySdks = new ArrayList<Sdk>();
@@ -256,7 +255,7 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements PersistentSt
       try {
         ((ProjectJdkImpl)jdk).writeExternal(e);
       }
-      catch (WriteExternalException e1) {
+      catch (WriteExternalException ignored) {
         continue;
       }
       element.addContent(e);
