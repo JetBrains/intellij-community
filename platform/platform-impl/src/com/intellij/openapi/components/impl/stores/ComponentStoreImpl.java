@@ -107,6 +107,16 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
         }
       }
     }
+
+    for (SettingsSavingComponent settingsSavingComponent : mySettingsSavingComponents) {
+      try {
+        settingsSavingComponent.save();
+      }
+      catch (Throwable e) {
+        LOG.error(e);
+      }
+    }
+
     return createSaveSession(externalizationSession == null ? null : externalizationSession.createSaveSession());
   }
 
@@ -322,29 +332,18 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
     }
   }
 
-  protected class SaveSessionImpl implements ComponentSaveSession {
+  protected static class SaveSessionImpl implements ComponentSaveSession {
     private final SaveSession myStorageManagerSaveSession;
 
     public SaveSessionImpl(@Nullable SaveSession storageManagerSaveSession) {
       myStorageManagerSaveSession = storageManagerSaveSession;
     }
 
-    @NotNull
     @Override
-    public ComponentSaveSession save(@NotNull List<Pair<SaveSession, VirtualFile>> readonlyFiles) {
-      for (SettingsSavingComponent settingsSavingComponent : mySettingsSavingComponents) {
-        try {
-          settingsSavingComponent.save();
-        }
-        catch (Throwable e) {
-          LOG.error(e);
-        }
-      }
-
+    public void save(@NotNull List<Pair<SaveSession, VirtualFile>> readonlyFiles) {
       if (myStorageManagerSaveSession != null) {
         executeSave(myStorageManagerSaveSession, readonlyFiles);
       }
-      return this;
     }
   }
 
