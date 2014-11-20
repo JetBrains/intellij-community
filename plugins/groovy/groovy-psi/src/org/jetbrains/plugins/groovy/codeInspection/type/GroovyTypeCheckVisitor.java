@@ -585,8 +585,6 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
       }
     }
 
-
-    //todo so we don't check assignment at all if the expression is raw?
     if (PsiUtil.isRawClassMemberAccess(expression)) return;
     if (checkForImplicitEnumAssigning(expectedType, expression, expression)) return;
 
