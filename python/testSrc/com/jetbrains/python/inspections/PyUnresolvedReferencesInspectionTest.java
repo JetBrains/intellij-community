@@ -420,6 +420,11 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
     doMultiFileTest();
   }
 
+  // PY-14398
+  public void testImportToContainingFileInPackage() {
+    doMultiFileTest("p1/__init__.py");
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {
