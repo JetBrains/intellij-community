@@ -53,11 +53,6 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
     return InspectionGadgetsBundle.message("try.with.identical.catches.problem.descriptor", type.getPresentableText());
   }
 
-  @Override
-  public BaseInspectionVisitor buildVisitor() {
-    return new TryWithIdenticalCatchesVisitor();
-  }
-
   @Nls
   @NotNull
   @Override
@@ -66,8 +61,13 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
   }
 
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
-    return new CollapseCatchSectionsFix(((Integer)infos[1]).intValue(), ((Integer)infos[2]).intValue());
+  public boolean shouldInspect(PsiFile file) {
+    return PsiUtil.isLanguageLevel7OrHigher(file);
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new TryWithIdenticalCatchesVisitor();
   }
 
   private static class TryWithIdenticalCatchesVisitor extends BaseInspectionVisitor {
@@ -75,9 +75,6 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
     @Override
     public void visitTryStatement(PsiTryStatement statement) {
       super.visitTryStatement(statement);
-      if (!PsiUtil.isLanguageLevel7OrHigher(statement)) {
-        return;
-      }
       final PsiCatchSection[] catchSections = statement.getCatchSections();
       if (catchSections.length < 2) {
         return;
@@ -156,6 +153,11 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
         return true;
       }
     }
+  }
+
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new CollapseCatchSectionsFix(((Integer)infos[1]).intValue(), ((Integer)infos[2]).intValue());
   }
 
   private static class CollapseCatchSectionsFix extends InspectionGadgetsFix {

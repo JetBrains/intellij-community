@@ -17,9 +17,7 @@ package com.siyeh.ig.jdk;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
-import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
@@ -90,14 +88,9 @@ public class AutoBoxingInspection extends BaseInspection {
                                           "ignoreAddedToCollection");
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!PsiUtil.isLanguageLevel5OrHigher(holder.getFile())) {
-      return new PsiElementVisitor() { };
-    }
-
-    return super.buildVisitor(holder, isOnTheFly);
+  public boolean shouldInspect(PsiFile file) {
+    return PsiUtil.isLanguageLevel5OrHigher(file);
   }
 
   @Override
@@ -227,14 +220,6 @@ public class AutoBoxingInspection extends BaseInspection {
   }
 
   private class AutoBoxingVisitor extends BaseInspectionVisitor {
-
-    @Override
-    public void visitElement(PsiElement element) {
-      if (element.getLanguage() != JavaLanguage.INSTANCE) {
-        return;
-      }
-      super.visitElement(element);
-    }
 
     @Override
     public void visitArrayAccessExpression(PsiArrayAccessExpression expression) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.siyeh.ig.migration;
 
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -85,21 +84,6 @@ public class UnnecessaryUnboxingInspection extends BaseInspection {
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
-    return new UnnecessaryUnboxingVisitor();
-  }
-
-  @NotNull
-  @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!PsiUtil.isLanguageLevel5OrHigher(holder.getFile())) {
-      return new PsiElementVisitor() { };
-    }
-
-    return super.buildVisitor(holder, isOnTheFly);
-  }
-
-  @Override
   public InspectionGadgetsFix buildFix(Object... infos) {
     return new UnnecessaryUnboxingFix();
   }
@@ -154,6 +138,16 @@ public class UnnecessaryUnboxingInspection extends BaseInspection {
       final String strippedQualifierText = strippedQualifier.getText();
       PsiReplacementUtil.replaceExpression(methodCall, strippedQualifierText);
     }
+  }
+
+  @Override
+  public boolean shouldInspect(PsiFile file) {
+    return PsiUtil.isLanguageLevel5OrHigher(file);
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new UnnecessaryUnboxingVisitor();
   }
 
   private class UnnecessaryUnboxingVisitor extends BaseInspectionVisitor {
