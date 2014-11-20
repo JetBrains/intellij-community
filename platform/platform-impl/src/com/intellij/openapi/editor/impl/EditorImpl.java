@@ -6122,7 +6122,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     public void setFontPreferences(@NotNull FontPreferences preferences) {
       if (Comparing.equal(preferences, myFontPreferences)) return;
       preferences.copyTo(myFontPreferences);
-      reinitSettings();
+      reinitFontsAndSettings();
     }
 
     @Override
