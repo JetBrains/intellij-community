@@ -111,16 +111,21 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
         refUsages.set(filterInternalUsages(usagesIn));
       }
     }
-    refUsages.set(filterOverriding(usagesIn));
-
+    final ArrayList<UsageInfo> toMakeStatic = new ArrayList<>();
+    refUsages.set(filterOverriding(usagesIn, toMakeStatic));
+    if (!findAdditionalMembers(toMakeStatic)) return false;
     prepareSuccessful();
     return true;
   }
 
-  private static UsageInfo[] filterOverriding(UsageInfo[] usages) {
+  protected boolean findAdditionalMembers(ArrayList<UsageInfo> toMakeStatic) {return true;}
+
+  private static UsageInfo[] filterOverriding(UsageInfo[] usages, List<UsageInfo> suggestToMakeStatic) {
     ArrayList<UsageInfo> result = new ArrayList<UsageInfo>();
     for (UsageInfo usage : usages) {
-      if (!(usage instanceof OverridingMethodUsageInfo)) {
+      if (usage instanceof ChainedCallUsageInfo) {
+        suggestToMakeStatic.add(usage);
+      } else if (!(usage instanceof OverridingMethodUsageInfo)) {
         result.add(usage);
       }
     }
@@ -253,14 +258,18 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
       if (!PsiTreeUtil.isAncestor(myMember, element, true) || qualifier != null) {
         result.add(new UsageInfo(element));
       }
+
+      processExternalReference(element, method, result);
     }
   }
 
+  protected void processExternalReference(PsiElement element, PsiMethod method, ArrayList<UsageInfo> result) {}
+
   //should be called before setting static modifier
-  protected void setupTypeParameterList() throws IncorrectOperationException {
-    final PsiTypeParameterList list = myMember.getTypeParameterList();
+  protected void setupTypeParameterList(T member) throws IncorrectOperationException {
+    final PsiTypeParameterList list = member.getTypeParameterList();
     assert list != null;
-    final PsiTypeParameterList newList = RefactoringUtil.createTypeParameterListWithUsedTypeParameters(myMember);
+    final PsiTypeParameterList newList = RefactoringUtil.createTypeParameterListWithUsedTypeParameters(member);
     if (newList != null) {
       list.replace(newList);
     }
