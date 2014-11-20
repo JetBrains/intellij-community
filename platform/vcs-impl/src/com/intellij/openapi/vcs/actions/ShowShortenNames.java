@@ -79,14 +79,6 @@ public class ShowShortenNames extends ActionGroup {
       if (enabled) {
         myType.set();
       }
-      else {
-        if (myType == ShortNameType.NONE) {
-          ShortNameType.LASTNAME.set();
-        }
-        else {
-          ShortNameType.NONE.set();
-        }
-      }
       myGutter.revalidateMarkup();
     }
   }

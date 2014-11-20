@@ -74,14 +74,6 @@ public class ShowAnnotationColorsAction extends ActionGroup {
       if (enabled) {
         myType.set();
       }
-      else {
-        if (myType == ColorMode.NONE) {
-          ColorMode.ORDER.set();
-        }
-        else {
-          ColorMode.NONE.set();
-        }
-      }
       myGutter.revalidateMarkup();
     }
   }
