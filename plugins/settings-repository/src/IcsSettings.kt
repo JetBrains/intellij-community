@@ -8,8 +8,6 @@ import com.intellij.util.xmlb.XmlSerializer
 import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.annotations.Transient
 import org.jdom.Document
-import org.jdom.Element
-import org.jdom.JDOMException
 
 import java.io.File
 import java.io.IOException
@@ -54,7 +52,7 @@ class IcsSettings {
       return
     }
 
-    XmlSerializer.deserializeInto(this, JDOMUtil.loadDocument(settingsFile).getRootElement())
+    XmlSerializer.deserializeInto(this, JDOMUtil.load(settingsFile))
 
     if (commitDelay < 0) {
       commitDelay = DEFAULT_COMMIT_DELAY
