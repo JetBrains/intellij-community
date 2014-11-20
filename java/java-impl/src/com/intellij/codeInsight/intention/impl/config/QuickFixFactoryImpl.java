@@ -665,7 +665,7 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
       Collections.addAll(options, SuppressIntentionActionFromFix.convertBatchToSuppressIntentionActions(batchSuppressActions));
     }
     //need suppress from Unused Parameters but settings from Unused Symbol
-    QuickFixAction.registerQuickFixAction((HighlightInfo)highlightInfo, new RemoveUnusedParameterFix(parameter),
+    QuickFixAction.registerQuickFixAction((HighlightInfo)highlightInfo, new SafeDeleteFix(parameter),
                                           options, HighlightDisplayKey.getDisplayNameByKey(myUnusedSymbolKey));
   }
 
