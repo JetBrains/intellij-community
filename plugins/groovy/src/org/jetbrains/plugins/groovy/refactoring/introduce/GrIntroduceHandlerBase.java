@@ -39,7 +39,6 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.IntroduceTargetChooser;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
@@ -642,13 +641,6 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
 
     GrExpression selected = (GrExpression)selectedExpr;
     while (selected instanceof GrParenthesizedExpression) selected = ((GrParenthesizedExpression)selected).getOperand();
-    if (selected == null) return null;
-    PsiType type = selected.getType();
-    if (type != null) type = TypeConversionUtil.erasure(type);
-
-    if (PsiType.VOID.equals(type)) {
-      return null;
-    }
 
     return selected;
   }

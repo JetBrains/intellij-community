@@ -51,6 +51,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
@@ -580,7 +581,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     PsiType result = getNominalTypeInner(resolved);
     if (result == null) return null;
 
-    result = TypesUtil.substituteBoxAndNormalizeType(result, resolveResult.getSubstitutor(), resolveResult.getSpreadState(), this);
+    result = TypesUtil.substituteAndNormalizeType(result, resolveResult.getSubstitutor(), resolveResult.getSpreadState(), this);
     return result;
   }
 
@@ -717,6 +718,24 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
         GrExpression qualifier = refExpr.getQualifier();
         LOG.assertTrue(qualifier != null);
         return TypesUtil.createJavaLangClassType(qualifier.getType(), refExpr.getProject(), refExpr.getResolveScope());
+      }
+
+      if (PsiUtil.isCompileStatic(refExpr)) {
+        final GroovyResolveResult resolveResult = refExpr.advancedResolve();
+        final PsiElement resolvedF = resolveResult.getElement();
+        final PsiType type;
+        if (resolvedF instanceof GrField) {
+          type = ((GrField)resolvedF).getType();
+        }
+        else if (resolvedF instanceof GrAccessorMethod) {
+          type = ((GrAccessorMethod)resolvedF).getProperty().getType();
+        }
+        else {
+          type = null;
+        }
+        if (type != null) {
+          return resolveResult.getSubstitutor().substitute(type);
+        }
       }
 
       final PsiElement resolved = refExpr.resolve();

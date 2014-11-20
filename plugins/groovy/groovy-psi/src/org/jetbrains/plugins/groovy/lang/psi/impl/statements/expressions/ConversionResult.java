@@ -13,22 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
-package org.jetbrains.plugins.groovy.codeInspection.assignment;
-
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
-import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
-import org.jetbrains.plugins.groovy.codeInspection.type.GroovyTypeCheckVisitor;
-
-/**
- * @author Maxim.Medvedev
- */
-public class GroovyAssignabilityCheckInspection extends BaseInspection {
-
-  @NotNull
-  @Override
-  protected BaseInspectionVisitor buildVisitor() {
-    return new GroovyTypeCheckVisitor();
-  }
+public enum ConversionResult {
+  /**
+   * Can be converted
+   */
+  OK,
+  /**
+   * Can pass compiler's static type check, but probably will fail in runtime.
+   * Will be highlighted as warning.
+   */
+  WARNING,
+  /**
+   * Doesn't pass static type check.
+   * Will be highlighted as error.
+   */
+  ERROR
 }

@@ -15,21 +15,23 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.typeEnhancers;
 
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.util.InheritanceUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ConversionResult;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
-/**
- * @author Max Medvedev
- */
-public class GrBooleanTypeConverter extends GrTypeConverter {
+import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil.isEnum;
+
+public class GrEnumConverter extends GrTypeConverter {
 
   @Override
   public boolean isApplicableTo(@NotNull ApplicableTo position) {
-    return true;
+    return position == ApplicableTo.ASSIGNMENT || position == ApplicableTo.RETURN_VALUE;
   }
 
   @Nullable
@@ -38,21 +40,13 @@ public class GrBooleanTypeConverter extends GrTypeConverter {
                                           @NotNull PsiType actualType,
                                           @NotNull GroovyPsiElement context,
                                           @NotNull ApplicableTo currentPosition) {
-    if (PsiType.BOOLEAN != TypesUtil.unboxPrimitiveTypeWrapper(targetType)) return null;
-    if (PsiType.NULL == actualType) {
-      switch (currentPosition) {
-        case METHOD_PARAMETER:
-          return null;
-        case EXPLICIT_CAST:
-        case ASSIGNMENT:
-        case RETURN_VALUE:
-          return ConversionResult.OK;
-        default:
-          return null;
-      }
+    if (!isEnum(targetType)) return null;
+    if (InheritanceUtil.isInheritor(actualType, GroovyCommonClassNames.GROOVY_LANG_GSTRING) ||
+        InheritanceUtil.isInheritor(actualType, CommonClassNames.JAVA_LANG_STRING)) {
+      return GroovyConfigUtils.getInstance().isVersionAtLeast(context, GroovyConfigUtils.GROOVY1_8)
+             ? ConversionResult.OK
+             : ConversionResult.ERROR;
     }
-    return currentPosition == ApplicableTo.ASSIGNMENT || currentPosition == ApplicableTo.RETURN_VALUE
-           ? ConversionResult.OK
-           : null;
+    return null;
   }
 }
