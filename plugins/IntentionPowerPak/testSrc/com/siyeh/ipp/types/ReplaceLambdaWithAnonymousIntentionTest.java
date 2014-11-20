@@ -55,7 +55,7 @@ public class ReplaceLambdaWithAnonymousIntentionTest extends IPPTestCase {
     assertIntentionNotAvailable();
   }
 
-  public void testAmbiguity() {
+  public void _testAmbiguity() {
     assertIntentionNotAvailable();
   }
   
