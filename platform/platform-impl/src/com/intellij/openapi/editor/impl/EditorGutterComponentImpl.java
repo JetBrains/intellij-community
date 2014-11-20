@@ -252,7 +252,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     Color color = myEditor.getBackgroundColor(state.getMergedAttributes());
     if (!color.equals(defaultBackgroundColor)) {
       g.setColor(color);
-      g.fillRect(startX, startY, clip.width - startX, myEditor.getLineHeight());
+      g.fillRect(startX, startY, getWidth() - startX, myEditor.getLineHeight());
     }
   }
 
