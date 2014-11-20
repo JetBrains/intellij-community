@@ -48,7 +48,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
   private final Throwable myCreationTrace;
   private final Map<String, ExtensionPointImpl> myExtensionPoints = ContainerUtil.newConcurrentMap();
   private final Map<String,Throwable> myEPTraces = DEBUG_REGISTRATION ? new THashMap<String, Throwable>():null;
-  private final MultiMap<String, ExtensionPointAvailabilityListener> myAvailabilityListeners = new MultiMap<String, ExtensionPointAvailabilityListener>();
+  private final MultiMap<String, ExtensionPointAvailabilityListener> myAvailabilityListeners = MultiMap.createSmartList();
   private final List<Runnable> mySuspendedListenerActions = new ArrayList<Runnable>();
   private boolean myAvailabilityNotificationsActive = true;
 
