@@ -148,16 +148,13 @@ final class FilesDelta {
   }
 
   private boolean _addToRecompiled(BuildRootDescriptor root, File file) {
+    if (Utils.IS_TEST_MODE) {
+      LOG.info("Marking dirty: " + file.getPath());
+    }
     return _addToRecompiled(root, Collections.singleton(file));
   }
 
   private boolean _addToRecompiled(BuildRootDescriptor root, Collection<File> filesToAdd) {
-    if (Utils.IS_TEST_MODE) {
-      for (File file : filesToAdd) {
-        LOG.info("Marking dirty: " + file.getPath());
-      }
-    }
-
     Set<File> files;
     synchronized (myFilesToRecompile) {
       files = myFilesToRecompile.get(root);
