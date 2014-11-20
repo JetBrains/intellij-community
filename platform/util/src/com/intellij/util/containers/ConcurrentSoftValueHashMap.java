@@ -29,7 +29,7 @@ import java.util.Map;
  * Null keys are NOT allowed
  * Null values are NOT allowed
  */
-public final class ConcurrentSoftValueHashMap<K,V> extends ConcurrentRefValueHashMap<K,V> {
+final class ConcurrentSoftValueHashMap<K,V> extends ConcurrentRefValueHashMap<K,V> {
   public ConcurrentSoftValueHashMap(@NotNull Map<K, V> map) {
     super(map);
   }

@@ -16,7 +16,6 @@
 package com.siyeh.ig.inheritance;
 
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -121,19 +120,15 @@ public class MissingOverrideAnnotationInspection extends BaseInspection {
   }
 
   @Override
+  public boolean shouldInspect(PsiFile file) {
+    return PsiUtil.isLanguageLevel5OrHigher(file);
+  }
+
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new MissingOverrideAnnotationVisitor();
   }
 
-  @NotNull
-  @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!PsiUtil.isLanguageLevel5OrHigher(holder.getFile())) {
-      return new PsiElementVisitor() { };
-    }
-
-    return super.buildVisitor(holder, isOnTheFly);
-  }
   private class MissingOverrideAnnotationVisitor
     extends BaseInspectionVisitor {
 

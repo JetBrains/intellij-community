@@ -28,7 +28,9 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.*;
+import com.intellij.util.containers.ConcurrentIntObjectMap;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
@@ -36,8 +38,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.SoftReference;
 import java.util.*;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -51,7 +52,7 @@ public class SemServiceImpl extends SemService{
       return o2.getUniqueId() - o1.getUniqueId();
     }
   };
-  private final ConcurrentWeakHashMap<PsiElement, SoftReference<SemCacheChunk>> myCache = new ConcurrentWeakHashMap<PsiElement, SoftReference<SemCacheChunk>>();
+  private final ConcurrentMap<PsiElement, SoftReference<SemCacheChunk>> myCache = ContainerUtil.createConcurrentWeakMap();
   private volatile MultiMap<SemKey, NullableFunction<PsiElement, ? extends SemElement>> myProducers;
   private volatile MultiMap<SemKey, SemKey> myInheritors;
   private final Project myProject;

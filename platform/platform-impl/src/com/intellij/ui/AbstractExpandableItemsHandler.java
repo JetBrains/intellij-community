@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.OurHeavyWeightPopup;
 import com.intellij.util.Alarm;
@@ -341,6 +342,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
 
     SwingUtilities.convertPointToScreen(location, myComponent);
     myPopup = new OurHeavyWeightPopup(myComponent, myTipComponent, location.x, location.y);
+    WindowManagerEx.getInstanceEx().setWindowShadow(SwingUtilities.getWindowAncestor(myTipComponent), WindowManagerEx.WindowShadowMode.DISABLED);
     myPopup.show();
 
     repaintKeyItem();

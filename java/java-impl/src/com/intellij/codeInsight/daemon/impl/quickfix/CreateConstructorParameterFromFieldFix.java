@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@ import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ConcurrentWeakHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -193,7 +193,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
    @NotNull
   private Collection<SmartPsiElementPointer<PsiField>> getFieldsToFix() {
     Map<SmartPsiElementPointer<PsiField>, Boolean> fields = myClass.getUserData(FIELDS);
-    if (fields == null) myClass.putUserData(FIELDS, fields = new ConcurrentWeakHashMap<SmartPsiElementPointer<PsiField>,Boolean>(1));
+    if (fields == null) myClass.putUserData(FIELDS, fields = ContainerUtil.createConcurrentWeakMap());
     final Map<SmartPsiElementPointer<PsiField>, Boolean> finalFields = fields;
     return new AbstractCollection<SmartPsiElementPointer<PsiField>>() {
       @Override

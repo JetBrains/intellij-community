@@ -256,7 +256,7 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
     @Override
     public void visit(final UsageInfo usage) {
       if (usage instanceof OverriderUsageInfo) {
-        myAffectedMethods.add(((OverriderUsageInfo) usage).getElement());
+        myAffectedMethods.add(((OverriderUsageInfo) usage).getOverridingMethod());
       }
     }
 
@@ -270,7 +270,7 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
         final UsageInfo info = usageInfoIterator.next();
         if (info instanceof OverriderUsageInfo) {
           final OverriderUsageInfo overrideUsage = (OverriderUsageInfo) info;
-          if (myAffectedMethods.contains(overrideUsage.getElement())) {
+          if (myAffectedMethods.contains(overrideUsage.getOverridingMethod())) {
             usageInfoIterator.remove();
           }
         }

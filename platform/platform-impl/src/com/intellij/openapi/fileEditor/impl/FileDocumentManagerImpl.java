@@ -67,7 +67,6 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Function;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.ThrowableRunnable;
-import com.intellij.util.containers.ConcurrentWeakValueHashMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
@@ -95,7 +94,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
   private static final Key<Boolean> MUST_RECOMPUTE_FILE_TYPE = Key.create("Must recompute file type");
 
   private final Set<Document> myUnsavedDocuments = ContainerUtil.newConcurrentSet();
-  private final Map<VirtualFile, Document> myDocuments = new ConcurrentWeakValueHashMap<VirtualFile, Document>();
+  private final Map<VirtualFile, Document> myDocuments = ContainerUtil.createConcurrentWeakValueMap();
 
   private final MessageBus myBus;
 

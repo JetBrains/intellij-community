@@ -94,7 +94,7 @@ public class PsiMethodReferenceUtil {
         return false;
       }
     }
-    return true;
+    return !varargs || parameterTypes.length - 1 <= argTypes.length - offset;
   }
 
   @NotNull

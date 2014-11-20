@@ -21,10 +21,10 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.HgVcsMessages;
@@ -35,9 +35,6 @@ import org.zmlx.hg4idea.ui.HgInitAlreadyUnderHgDialog;
 import org.zmlx.hg4idea.ui.HgInitDialog;
 import org.zmlx.hg4idea.util.HgErrorUtil;
 import org.zmlx.hg4idea.util.HgUtil;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Action for initializing a Mercurial repository.
@@ -102,28 +99,9 @@ public class HgInit extends DumbAwareAction {
       .isAncestor(myProject.getBaseDir(), mapRoot, false)) {
       mapRoot.refresh(false, false);
       final String path = mapRoot.equals(myProject.getBaseDir()) ? "" : mapRoot.getPath();
-      final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
-      final List<VcsDirectoryMapping> vcsDirectoryMappings = new ArrayList<VcsDirectoryMapping>(vcsManager.getDirectoryMappings());
-      VcsDirectoryMapping mapping = new VcsDirectoryMapping(path, HgVcs.VCS_NAME);
-      for (int i = 0; i < vcsDirectoryMappings.size(); i++) {
-        final VcsDirectoryMapping m = vcsDirectoryMappings.get(i);
-        if (m.getDirectory().equals(path)) {
-          if (m.getVcs().length() == 0) {
-            vcsDirectoryMappings.set(i, mapping);
-            mapping = null;
-            break;
-          }
-          else if (m.getVcs().equals(mapping.getVcs())) {
-            mapping = null;
-            break;
-          }
-        }
-      }
-      if (mapping != null) {
-        vcsDirectoryMappings.add(mapping);
-      }
-      vcsManager.setDirectoryMappings(vcsDirectoryMappings);
-      vcsManager.updateActiveVcss();
+      ProjectLevelVcsManager manager = ProjectLevelVcsManager.getInstance(myProject);
+      manager.setDirectoryMappings(VcsUtil.addMapping(manager.getDirectoryMappings(), path, HgVcs.VCS_NAME));
+      manager.updateActiveVcss();
     }
   }
 

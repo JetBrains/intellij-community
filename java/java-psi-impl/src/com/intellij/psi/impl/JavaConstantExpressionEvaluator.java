@@ -25,7 +25,7 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ConcurrentSoftHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -86,7 +86,7 @@ public class JavaConstantExpressionEvaluator extends JavaRecursiveElementWalking
   private static final CachedValueProvider<ConcurrentMap<PsiElement,Object>> PROVIDER = new CachedValueProvider<ConcurrentMap<PsiElement,Object>>() {
     @Override
     public Result<ConcurrentMap<PsiElement,Object>> compute() {
-      ConcurrentMap<PsiElement, Object> value = new ConcurrentSoftHashMap<PsiElement, Object>();
+      ConcurrentMap<PsiElement, Object> value = ContainerUtil.createConcurrentSoftMap();
       return Result.create(value, PsiModificationTracker.MODIFICATION_COUNT);
     }
   };

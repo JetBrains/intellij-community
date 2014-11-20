@@ -29,13 +29,10 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsConfiguration;
-import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-
-import java.util.ArrayList;
-import java.util.List;
+import com.intellij.vcsUtil.VcsUtil;
 
 public class ImportAction extends ActionOnSelectedElement {
   private ImportDetails myImportDetails;
@@ -112,29 +109,9 @@ public class ImportAction extends ActionOnSelectedElement {
         }
         mapRoot.refresh(false, false);
         final String path = mapRoot.equals(projectBaseDir) ? "" : mapRoot.getPath();
-        final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
-        final List<VcsDirectoryMapping> vcsDirectoryMappings = new ArrayList<VcsDirectoryMapping>(vcsManager.getDirectoryMappings());
-        VcsDirectoryMapping mapping = new VcsDirectoryMapping(path, CvsVcs2.getInstance(project).getName());
-        for (int i = 0; i < vcsDirectoryMappings.size(); i++) {
-          final VcsDirectoryMapping m = vcsDirectoryMappings.get(i);
-          if (!m.getDirectory().equals(path)) {
-            continue;
-          }
-          if (m.getVcs().length() == 0) {
-            vcsDirectoryMappings.set(i, mapping);
-            mapping = null;
-            break;
-          }
-          else if (m.getVcs().equals(mapping.getVcs())) {
-            mapping = null;
-            break;
-          }
-        }
-        if (mapping != null) {
-          vcsDirectoryMappings.add(mapping);
-        }
-        vcsManager.setDirectoryMappings(vcsDirectoryMappings);
-        vcsManager.updateActiveVcss();
+        ProjectLevelVcsManager manager = ProjectLevelVcsManager.getInstance(project);
+        manager.setDirectoryMappings(VcsUtil.addMapping(manager.getDirectoryMappings(), path, CvsVcs2.getInstance(project).getName()));
+        manager.updateActiveVcss();
       }
     };
   }

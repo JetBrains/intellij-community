@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.migration;
 
-import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
@@ -568,17 +567,13 @@ public class ForCanBeForeachInspectionBase extends BaseInspection {
   }
 
   @Override
+  public boolean shouldInspect(PsiFile file) {
+    return PsiUtil.isLanguageLevel5OrHigher(file);
+  }
+
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new ForCanBeForeachVisitor();
-  }
-  @NotNull
-  @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!PsiUtil.isLanguageLevel5OrHigher(holder.getFile())) {
-      return new PsiElementVisitor() { };
-    }
-
-    return super.buildVisitor(holder, isOnTheFly);
   }
 
   private static class NumCallsToIteratorNextVisitor

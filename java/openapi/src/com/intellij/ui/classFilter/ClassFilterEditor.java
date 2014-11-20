@@ -270,7 +270,7 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
       UIManager.put(UIUtil.TABLE_FOCUS_CELL_BACKGROUND_PROPERTY, color);
       com.intellij.ui.classFilter.ClassFilter filter =
         (com.intellij.ui.classFilter.ClassFilter)table.getValueAt(row, FilterTableModel.FILTER);
-      component.setEnabled(ClassFilterEditor.this.isEnabled() && filter.isEnabled());
+      component.setEnabled(isSelected || (ClassFilterEditor.this.isEnabled() && filter.isEnabled()));
       return component;
     }
   }

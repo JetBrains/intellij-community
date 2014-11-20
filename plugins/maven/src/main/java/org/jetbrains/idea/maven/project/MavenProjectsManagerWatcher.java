@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.PathUtil;
-import com.intellij.util.containers.ConcurrentWeakHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.update.Update;
 import gnu.trove.THashSet;
@@ -58,10 +58,11 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ConcurrentMap;
 
 public class MavenProjectsManagerWatcher {
 
-  private static final Key<ConcurrentWeakHashMap<Project, Integer>> CRC_WITHOUT_SPACES = Key.create("MavenProjectsManagerWatcher.CRC_WITHOUT_SPACES");
+  private static final Key<ConcurrentMap<Project, Integer>> CRC_WITHOUT_SPACES = Key.create("MavenProjectsManagerWatcher.CRC_WITHOUT_SPACES");
 
   public static final Key<Boolean> FORCE_IMPORT_AND_RESOLVE_ON_REFRESH =
     Key.create(MavenProjectsManagerWatcher.class + "FORCE_IMPORT_AND_RESOLVE_ON_REFRESH");
@@ -414,9 +415,10 @@ public class MavenProjectsManagerWatcher {
     private boolean xmlFileWasChanged(VirtualFile xmlFile, VFileEvent event) {
       if (!xmlFile.isValid() || !(event instanceof VFileContentChangeEvent)) return true;
 
-      ConcurrentWeakHashMap<Project, Integer> map = xmlFile.getUserData(CRC_WITHOUT_SPACES);
+      ConcurrentMap<Project, Integer> map = xmlFile.getUserData(CRC_WITHOUT_SPACES);
       if (map == null) {
-        map = xmlFile.putUserDataIfAbsent(CRC_WITHOUT_SPACES, new ConcurrentWeakHashMap<Project, Integer>());
+        ConcurrentMap<Project, Integer> value = ContainerUtil.createConcurrentWeakMap();
+        map = xmlFile.putUserDataIfAbsent(CRC_WITHOUT_SPACES, value);
       }
 
       Integer crc = map.get(myProject);

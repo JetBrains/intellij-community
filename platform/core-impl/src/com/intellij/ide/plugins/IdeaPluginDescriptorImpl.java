@@ -34,9 +34,9 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.StringInterner;
-import com.intellij.util.containers.WeakStringInterner;
 import com.intellij.util.xmlb.JDOMXIncluder;
 import com.intellij.util.xmlb.XmlSerializer;
+import gnu.trove.THashMap;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -56,13 +56,13 @@ import java.util.*;
 public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   public static final IdeaPluginDescriptorImpl[] EMPTY_ARRAY = new IdeaPluginDescriptorImpl[0];
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.plugins.PluginDescriptor");
-  private static final StringInterner ourInterner = new WeakStringInterner();
   private final NullableLazyValue<String> myDescription = new NullableLazyValue<String>() {
     @Override
     protected String compute() {
       return computeDescription();
     }
   };
+
   private String myName;
   private PluginId myId;
   private String myResourceBundleBaseName;
@@ -108,16 +108,18 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
    * use {@link com.intellij.util.containers.StringInterner#intern(Object)} directly instead
    */
   @NotNull
+  @Deprecated
   public static String intern(@NotNull String s) {
-    return ourInterner.intern(s);
+    return s;
   }
 
   /**
    * @deprecated 
    * use {@link com.intellij.openapi.util.JDOMUtil#internElement(org.jdom.Element, com.intellij.util.containers.StringInterner)}
    */
+  @SuppressWarnings("unused")
+  @Deprecated
   public static void internJDOMElement(@NotNull Element rootElement) {
-    JDOMUtil.internElement(rootElement, ourInterner);
   }
 
   @Nullable
@@ -197,15 +199,16 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     if (idString == null || idString.isEmpty()) {
       idString = myName;
     }
-    myId = PluginId.getId(idString);
+    myId = idString == null ? null : PluginId.getId(idString);
 
     String internalVersionString = pluginBean.formatVersion;
     if (internalVersionString != null) {
       try {
+        //noinspection ResultOfMethodCallIgnored
         Integer.parseInt(internalVersionString);
       }
       catch (NumberFormatException e) {
-        LOG.error(new PluginException("Invalid value in plugin.xml format version: '" + internalVersionString+"'", e, myId));
+        LOG.error(new PluginException("Invalid value in plugin.xml format version: '" + internalVersionString + "'", e, myId));
       }
     }
     myUseIdeaClassLoader = pluginBean.useIdeaClassLoader;
@@ -232,33 +235,37 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     // preserve items order as specified in xml (filterBadPlugins will not fail if module comes first)
     Set<PluginId> dependentPlugins = new LinkedHashSet<PluginId>();
     Set<PluginId> optionalDependentPlugins = new LinkedHashSet<PluginId>();
-    myOptionalConfigs = new HashMap<PluginId, String>();
     if (pluginBean.dependencies != null) {
+      myOptionalConfigs = new THashMap<PluginId, String>();
       for (PluginDependency dependency : pluginBean.dependencies) {
         String text = dependency.pluginId;
-        if (text != null && !text.isEmpty()) {
-          final PluginId id = PluginId.getId(text);
+        if (!StringUtil.isEmpty(text)) {
+          PluginId id = PluginId.getId(text);
           dependentPlugins.add(id);
           if (dependency.optional) {
             optionalDependentPlugins.add(id);
-            if (dependency.configFile != null && !dependency.configFile.isEmpty()) {
+            if (!StringUtil.isEmpty(dependency.configFile)) {
               myOptionalConfigs.put(id, dependency.configFile);
             }
           }
         }
       }
     }
+
     myDependencies = dependentPlugins.isEmpty() ? PluginId.EMPTY_ARRAY : dependentPlugins.toArray(new PluginId[dependentPlugins.size()]);
     myOptionalDependencies = optionalDependentPlugins.isEmpty() ? PluginId.EMPTY_ARRAY : optionalDependentPlugins.toArray(new PluginId[optionalDependentPlugins.size()]);
 
-    List<HelpSetPath> hsPaths = new ArrayList<HelpSetPath>();
-    if (pluginBean.helpSets != null) {
-      for (PluginHelpSet pluginHelpSet : pluginBean.helpSets) {
-        HelpSetPath hsPath = new HelpSetPath(pluginHelpSet.file, pluginHelpSet.path);
-        hsPaths.add(hsPath);
+    if (pluginBean.helpSets == null || pluginBean.helpSets.length == 0) {
+      myHelpSets = HelpSetPath.EMPTY;
+    }
+    else {
+      myHelpSets = new HelpSetPath[pluginBean.helpSets.length];
+      PluginHelpSet[] sets = pluginBean.helpSets;
+      for (int i = 0, n = sets.length; i < n; i++) {
+        PluginHelpSet pluginHelpSet = sets[i];
+        myHelpSets[i] = new HelpSetPath(pluginHelpSet.file, pluginHelpSet.path);
       }
     }
-    myHelpSets = hsPaths.isEmpty() ? HelpSetPath.EMPTY : hsPaths.toArray(new HelpSetPath[hsPaths.size()]);
 
     myAppComponents = pluginBean.applicationComponents;
     myProjectComponents = pluginBean.projectComponents;
@@ -271,7 +278,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     StringInterner interner = new StringInterner();
     List<Element> extensions = copyElements(pluginBean.extensions, interner);
     if (extensions != null) {
-      myExtensions = new MultiMap<String, Element>();
+      myExtensions = MultiMap.createSmartList();
       for (Element extension : extensions) {
         myExtensions.putValue(ExtensionsAreaImpl.extractEPName(extension), extension);
       }
@@ -279,9 +286,9 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
     List<Element> extensionPoints = copyElements(pluginBean.extensionPoints, interner);
     if (extensionPoints != null) {
-      myExtensionsPoints = new MultiMap<String, Element>();
+      myExtensionsPoints = MultiMap.createSmartList();
       for (Element extensionPoint : extensionPoints) {
-        myExtensionsPoints.putValue(extensionPoint.getAttributeValue(ExtensionsAreaImpl.ATTRIBUTE_AREA), extensionPoint);
+        myExtensionsPoints.putValue(StringUtil.notNullize(extensionPoint.getAttributeValue(ExtensionsAreaImpl.ATTRIBUTE_AREA)), extensionPoint);
       }
     }
 
@@ -292,15 +299,15 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     }
   }
 
-  void registerExtensionPoints(ExtensionsArea area) {
+  void registerExtensionPoints(@NotNull ExtensionsArea area) {
     if (myExtensionsPoints != null) {
-      for (Element element : myExtensionsPoints.get(area.getAreaClass())) {
+      for (Element element : myExtensionsPoints.get(StringUtil.notNullize(area.getAreaClass()))) {
         area.registerExtensionPoint(this, element);
       }
     }
   }
 
-  void registerExtensions(ExtensionsArea area, String epName) {
+  void registerExtensions(@NotNull ExtensionsArea area, @NotNull String epName) {
     if (myExtensions != null) {
       for (Element element : myExtensions.get(epName)) {
         area.registerExtension(this, element);
@@ -516,8 +523,8 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
      descriptor outside its loading from the xml file since this information
      is available only from the site.
   */
-  public void setDownloadsCount( String dwnlds ){
-    myDownloadCounter = dwnlds;
+  public void setDownloadsCount(String downloadsCount) {
+    myDownloadCounter = downloadsCount;
   }
 
   @Override

@@ -20,9 +20,9 @@ package org.jetbrains.idea.maven.project;
  */
 public class MavenTestRunningSettings {
 
-  private boolean myPassArgLine;
-  private boolean myPassEnvironmentVariables;
-  private boolean myPassSystemProperties;
+  private boolean myPassArgLine = true;
+  private boolean myPassEnvironmentVariables = true;
+  private boolean myPassSystemProperties = true;
 
   public boolean isPassArgLine() {
     return myPassArgLine;

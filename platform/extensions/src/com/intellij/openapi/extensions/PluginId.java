@@ -15,10 +15,11 @@
  */
 package com.intellij.openapi.extensions;
 
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -27,7 +28,7 @@ import java.util.Map;
 public class PluginId implements Comparable<PluginId> {
   public static final PluginId[] EMPTY_ARRAY = new PluginId[0];
 
-  private static final Map<String, PluginId> ourRegisteredIds = new HashMap<String, PluginId>();
+  private static final Map<String, PluginId> ourRegisteredIds = new THashMap<String, PluginId>();
 
   private final String myIdString;
 
@@ -41,13 +42,24 @@ public class PluginId implements Comparable<PluginId> {
   }
 
   @NotNull
-  public static synchronized PluginId getId(String idString) {
+  public static synchronized PluginId getId(@NotNull String idString) {
     PluginId pluginId = ourRegisteredIds.get(idString);
     if (pluginId == null) {
       pluginId = new PluginId(idString);
       ourRegisteredIds.put(idString, pluginId);
     }
     return pluginId;
+  }
+
+  @Nullable
+  public static synchronized PluginId findId(@NotNull String... idStrings) {
+    for (String idString : idStrings) {
+      PluginId pluginId = ourRegisteredIds.get(idString);
+      if (pluginId != null) {
+        return pluginId;
+      }
+    }
+    return null;
   }
 
   @NonNls
@@ -60,7 +72,8 @@ public class PluginId implements Comparable<PluginId> {
     return getIdString();
   }
 
+  @NotNull
   public static synchronized Map<String, PluginId> getRegisteredIds() {
-    return new HashMap<String, PluginId>(ourRegisteredIds);
+    return new THashMap<String, PluginId>(ourRegisteredIds);
   }
 }

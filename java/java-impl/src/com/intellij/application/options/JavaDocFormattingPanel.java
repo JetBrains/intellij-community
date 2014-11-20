@@ -21,8 +21,10 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.ui.OnePixelDivider;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
+import com.intellij.ui.border.CustomLineBorder;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -58,6 +60,7 @@ public class JavaDocFormattingPanel extends OptionTreeWithPreviewPanel {
       }
     });
 
+    myPanel.setBorder(new CustomLineBorder(OnePixelDivider.BACKGROUND, 1, 0, 0, 0));
     myJavaDocPanel.add(BorderLayout.CENTER, myPanel);
     myJavaDocPanel.add(myEnableCheckBox, BorderLayout.NORTH);
   }

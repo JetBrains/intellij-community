@@ -252,7 +252,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     Color color = myEditor.getBackgroundColor(state.getMergedAttributes());
     if (!color.equals(defaultBackgroundColor)) {
       g.setColor(color);
-      g.fillRect(startX, startY, clip.width - startX, myEditor.getLineHeight());
+      g.fillRect(startX, startY, getWidth() - startX, myEditor.getLineHeight());
     }
   }
 
@@ -1053,9 +1053,10 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       return EditorMouseEventArea.ANNOTATIONS_AREA;
     }
 
-    if ((x -= myTextAnnotationExtraSize * 3 / 5) >= 0 && (x -= myTextAnnotationExtraSize * 2 / 5) < 0) {
+    if (x >= 0 && (x -= myTextAnnotationExtraSize) < 0) {
       return EditorMouseEventArea.LINE_MARKERS_AREA;
     }
+
     if (x >= 0 && (x -= getLineMarkerAreaWidth()) < 0) {
       return EditorMouseEventArea.LINE_MARKERS_AREA;
     }

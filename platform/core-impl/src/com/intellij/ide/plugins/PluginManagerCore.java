@@ -30,11 +30,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.io.ZipFileCache;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
-import com.intellij.util.PlatformUtilsCore;
-import com.intellij.util.ReflectionUtil;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.*;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.graph.CachingSemiGraph;
@@ -43,6 +39,7 @@ import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.GraphGenerator;
 import com.intellij.util.xmlb.XmlSerializationException;
 import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import gnu.trove.TIntProcedure;
 import org.jdom.Document;
 import org.jetbrains.annotations.NonNls;
@@ -68,7 +65,7 @@ public class PluginManagerCore {
   public static final float PLUGINS_PROGRESS_MAX_VALUE = 0.3f;
   static final Map<PluginId,Integer> ourId2Index = new THashMap<PluginId, Integer>();
   @NonNls static final String MODULE_DEPENDENCY_PREFIX = "com.intellij.module";
-  static final Map<String, IdeaPluginDescriptorImpl> ourModulesToContainingPlugins = new HashMap<String, IdeaPluginDescriptorImpl>();
+  static final Map<String, IdeaPluginDescriptorImpl> ourModulesToContainingPlugins = new THashMap<String, IdeaPluginDescriptorImpl>();
   static final PluginClassCache ourPluginClasses = new PluginClassCache();
   @NonNls static final String SPECIAL_IDEA_PLUGIN = "IDEA CORE";
   static final String DISABLE = "disable";
@@ -230,7 +227,7 @@ public class PluginManagerCore {
   public static void checkDependants(final IdeaPluginDescriptor pluginDescriptor,
                                      final Function<PluginId, IdeaPluginDescriptor> pluginId2Descriptor,
                                      final Condition<PluginId> check) {
-    checkDependants(pluginDescriptor, pluginId2Descriptor, check, new HashSet<PluginId>());
+    checkDependants(pluginDescriptor, pluginId2Descriptor, check, new THashSet<PluginId>());
   }
 
   private static boolean checkDependants(final IdeaPluginDescriptor pluginDescriptor,
@@ -239,9 +236,11 @@ public class PluginManagerCore {
                                          final Set<PluginId> processed) {
     processed.add(pluginDescriptor.getPluginId());
     final PluginId[] dependentPluginIds = pluginDescriptor.getDependentPluginIds();
-    final Set<PluginId> optionalDependencies = new HashSet<PluginId>(Arrays.asList(pluginDescriptor.getOptionalDependentPluginIds()));
+    final Set<PluginId> optionalDependencies = new THashSet<PluginId>(Arrays.asList(pluginDescriptor.getOptionalDependentPluginIds()));
     for (final PluginId dependentPluginId : dependentPluginIds) {
-      if (processed.contains(dependentPluginId)) continue;
+      if (processed.contains(dependentPluginId)) {
+        continue;
+      }
 
       // TODO[yole] should this condition be a parameter?
       if (isModuleDependency(dependentPluginId) && (ourModulesToContainingPlugins.isEmpty() || ourModulesToContainingPlugins.containsKey(
@@ -495,6 +494,7 @@ public class PluginManagerCore {
     if (!builder.isAcyclic()) {
       builder.getSCCs().forEach(new TIntProcedure() {
         int myTNumber = 0;
+        @Override
         public boolean execute(int size) {
           if (size > 1) {
             for (int j = 0; j < size; j++) {
@@ -552,23 +552,12 @@ public class PluginManagerCore {
     }));
   }
 
-  @Deprecated
-  static IdeaPluginDescriptorImpl[] findCorePlugin(IdeaPluginDescriptorImpl[] pluginDescriptors) {
-    for (IdeaPluginDescriptorImpl descriptor : pluginDescriptors) {
-      if (CORE_PLUGIN_ID.equals(descriptor.getPluginId().getIdString())) {
-        return new IdeaPluginDescriptorImpl[] {descriptor};
-      }
-    }
-    return IdeaPluginDescriptorImpl.EMPTY_ARRAY;
-  }
-
   @Nullable
-  static IdeaPluginDescriptorImpl loadDescriptorFromDir(final File file, @NonNls String fileName) {
+  static IdeaPluginDescriptorImpl loadDescriptorFromDir(@NotNull File file, @NotNull String fileName) {
     IdeaPluginDescriptorImpl descriptor = null;
     File descriptorFile = new File(file, META_INF + File.separator + fileName);
     if (descriptorFile.exists()) {
       descriptor = new IdeaPluginDescriptorImpl(file);
-
       try {
         descriptor.readExternal(descriptorFile.toURI().toURL());
       }
@@ -671,7 +660,7 @@ public class PluginManagerCore {
     }
 
     if (descriptor != null && descriptor.getOptionalConfigs() != null && !descriptor.getOptionalConfigs().isEmpty()) {
-      final Map<PluginId, IdeaPluginDescriptorImpl> descriptors = new HashMap<PluginId, IdeaPluginDescriptorImpl>(descriptor.getOptionalConfigs().size());
+      final Map<PluginId, IdeaPluginDescriptorImpl> descriptors = new THashMap<PluginId, IdeaPluginDescriptorImpl>(descriptor.getOptionalConfigs().size());
       for (Map.Entry<PluginId, String> entry: descriptor.getOptionalConfigs().entrySet()) {
         String optionalDescriptorName = entry.getValue();
         assert !Comparing.equal(fileName, optionalDescriptorName) : "recursive dependency: "+ fileName;
@@ -735,8 +724,8 @@ public class PluginManagerCore {
 
   @Nullable
   static String filterBadPlugins(List<? extends IdeaPluginDescriptor> result, final Map<String, String> disabledPluginNames) {
-    final Map<PluginId, IdeaPluginDescriptor> idToDescriptorMap = new HashMap<PluginId, IdeaPluginDescriptor>();
-    final StringBuffer message = new StringBuffer();
+    final Map<PluginId, IdeaPluginDescriptor> idToDescriptorMap = new THashMap<PluginId, IdeaPluginDescriptor>();
+    final StringBuilder message = new StringBuilder();
     boolean pluginsWithoutIdFound = false;
     for (Iterator<? extends IdeaPluginDescriptor> it = result.iterator(); it.hasNext();) {
       final IdeaPluginDescriptor descriptor = it.next();
@@ -744,7 +733,7 @@ public class PluginManagerCore {
       if (id == null) {
         pluginsWithoutIdFound = true;
       }
-      if (idToDescriptorMap.containsKey(id)) {
+      else if (idToDescriptorMap.containsKey(id)) {
         message.append("<br>");
         message.append(IdeBundle.message("message.duplicate.plugin.id"));
         message.append(id);
@@ -755,7 +744,7 @@ public class PluginManagerCore {
       }
     }
     addModulesAsDependents(idToDescriptorMap);
-    final List<String> disabledPluginIds = new ArrayList<String>();
+    final List<String> disabledPluginIds = new SmartList<String>();
     final LinkedHashSet<String> faultyDescriptors = new LinkedHashSet<String>();
     for (final Iterator<? extends IdeaPluginDescriptor> it = result.iterator(); it.hasNext();) {
       final IdeaPluginDescriptor pluginDescriptor = it.next();
@@ -835,7 +824,7 @@ public class PluginManagerCore {
 
   static void loadDescriptorsFromClassPath(@NotNull List<IdeaPluginDescriptorImpl> result, @Nullable StartupProgress progress) {
     Collection<URL> urls = getClassLoaderUrls();
-    String platformPrefix = System.getProperty(PlatformUtilsCore.PLATFORM_PREFIX_KEY);
+    String platformPrefix = System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY);
     int i = 0;
     for (URL url : urls) {
       i++;
@@ -910,8 +899,8 @@ public class PluginManagerCore {
     loadDescriptorsFromClassPath(result, fromSources ? progress : null);
 
     IdeaPluginDescriptorImpl[] pluginDescriptors = result.toArray(new IdeaPluginDescriptorImpl[result.size()]);
-    final Map<PluginId, IdeaPluginDescriptorImpl> idToDescriptorMap = new com.intellij.util.containers.HashMap<PluginId, IdeaPluginDescriptorImpl>();
-    for (final IdeaPluginDescriptorImpl descriptor : pluginDescriptors) {
+    final Map<PluginId, IdeaPluginDescriptorImpl> idToDescriptorMap = new THashMap<PluginId, IdeaPluginDescriptorImpl>();
+    for (IdeaPluginDescriptorImpl descriptor : pluginDescriptors) {
       idToDescriptorMap.put(descriptor.getPluginId(), descriptor);
     }
 
@@ -920,7 +909,7 @@ public class PluginManagerCore {
   }
 
   static void mergeOptionalConfigs(Map<PluginId, IdeaPluginDescriptorImpl> descriptors) {
-    final Map<PluginId, IdeaPluginDescriptorImpl> descriptorsWithModules = new HashMap<PluginId, IdeaPluginDescriptorImpl>(descriptors);
+    final Map<PluginId, IdeaPluginDescriptorImpl> descriptorsWithModules = new THashMap<PluginId, IdeaPluginDescriptorImpl>(descriptors);
     addModulesAsDependents(descriptorsWithModules);
     for (IdeaPluginDescriptorImpl descriptor : descriptors.values()) {
       final Map<PluginId, IdeaPluginDescriptorImpl> optionalDescriptors = descriptor.getOptionalDescriptors();
@@ -984,8 +973,8 @@ public class PluginManagerCore {
       if (pluginIds != null) {
         shouldLoad = pluginIds.contains(idString);
         if (!shouldLoad) {
-          Map<PluginId,IdeaPluginDescriptor> map = new HashMap<PluginId, IdeaPluginDescriptor>();
-          for (final IdeaPluginDescriptor pluginDescriptor : loaded) {
+          Map<PluginId,IdeaPluginDescriptor> map = new THashMap<PluginId, IdeaPluginDescriptor>();
+          for (IdeaPluginDescriptor pluginDescriptor : loaded) {
             map.put(pluginDescriptor.getPluginId(), pluginDescriptor);
           }
           addModulesAsDependents(map);
@@ -1062,14 +1051,10 @@ public class PluginManagerCore {
     final ClassLoader parentLoader = callerClass.getClassLoader();
 
     final List<IdeaPluginDescriptorImpl> result = new ArrayList<IdeaPluginDescriptorImpl>();
-    final HashMap<String, String> disabledPluginNames = new HashMap<String, String>();
-
-    List<String> brokenPluginsList = new ArrayList<String>();
-
+    final Map<String, String> disabledPluginNames = new THashMap<String, String>();
+    List<String> brokenPluginsList = new SmartList<String>();
     for (IdeaPluginDescriptorImpl descriptor : pluginDescriptors) {
-
       boolean skipped = shouldSkipPlugin(descriptor, pluginDescriptors);
-
       if (!skipped) {
         if (isBrokenPlugin(descriptor)) {
           brokenPluginsList.add(descriptor.getName());
@@ -1105,13 +1090,13 @@ public class PluginManagerCore {
                       + "<br>\n" + StringUtil.notNullize(errorMessage);
     }
 
-    final Map<PluginId, IdeaPluginDescriptorImpl> idToDescriptorMap = new HashMap<PluginId, IdeaPluginDescriptorImpl>();
-    for (final IdeaPluginDescriptorImpl descriptor : result) {
+    final Map<PluginId, IdeaPluginDescriptorImpl> idToDescriptorMap = new THashMap<PluginId, IdeaPluginDescriptorImpl>();
+    for (IdeaPluginDescriptorImpl descriptor : result) {
       idToDescriptorMap.put(descriptor.getPluginId(), descriptor);
     }
 
     final IdeaPluginDescriptor corePluginDescriptor = idToDescriptorMap.get(PluginId.getId(CORE_PLUGIN_ID));
-    assert corePluginDescriptor != null : CORE_PLUGIN_ID + " not found; platform prefix is " + System.getProperty(PlatformUtilsCore.PLATFORM_PREFIX_KEY);
+    assert corePluginDescriptor != null : CORE_PLUGIN_ID + " not found; platform prefix is " + System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY);
     for (IdeaPluginDescriptorImpl descriptor : result) {
       if (descriptor != corePluginDescriptor) {
         descriptor.insertDependency(corePluginDescriptor);
@@ -1133,6 +1118,7 @@ public class PluginManagerCore {
         final List<String> cycles = new ArrayList<String>();
         builder.getSCCs().forEach(new TIntProcedure() {
           int myTNumber = 0;
+          @Override
           public boolean execute(int size) {
             if (size > 1) {
               String cycle = "";
@@ -1212,8 +1198,9 @@ public class PluginManagerCore {
       descriptor.registerExtensionPoints(area);
     }
 
-    Set<String> epNames = ContainerUtil.newHashSet();
-    for (ExtensionPoint point : area.getExtensionPoints()) {
+    ExtensionPoint[] extensionPoints = area.getExtensionPoints();
+    Set<String> epNames = new THashSet<String>(extensionPoints.length);
+    for (ExtensionPoint point : extensionPoints) {
       epNames.add(point.getName());
     }
 

@@ -16,7 +16,6 @@
 package com.siyeh.ig.numeric;
 
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -72,17 +71,14 @@ public class CachedNumberConstructorCallInspection extends BaseInspection {
   }
 
   @Override
+  public boolean shouldInspect(PsiFile file) {
+    return PsiUtil.isLanguageLevel5OrHigher(file);
+  }
+
+
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new LongConstructorVisitor();
-  }
-  @NotNull
-  @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!PsiUtil.isLanguageLevel5OrHigher(holder.getFile())) {
-      return new PsiElementVisitor() { };
-    }
-
-    return super.buildVisitor(holder, isOnTheFly);
   }
 
   @Override

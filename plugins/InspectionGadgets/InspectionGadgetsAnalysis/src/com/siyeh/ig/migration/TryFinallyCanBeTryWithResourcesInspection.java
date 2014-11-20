@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -297,6 +297,11 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
   }
 
   @Override
+  public boolean shouldInspect(PsiFile file) {
+    return PsiUtil.isLanguageLevel7OrHigher(file);
+  }
+
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new TryFinallyCanBeTryWithResourcesVisitor();
   }
@@ -306,9 +311,6 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
     @Override
     public void visitTryStatement(PsiTryStatement tryStatement) {
       super.visitTryStatement(tryStatement);
-      if (!PsiUtil.isLanguageLevel7OrHigher(tryStatement)) {
-        return;
-      }
       final PsiResourceList resourceList = tryStatement.getResourceList();
       if (resourceList != null) {
         return;

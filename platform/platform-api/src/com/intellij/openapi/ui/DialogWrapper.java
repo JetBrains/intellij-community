@@ -37,7 +37,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.ui.*;
+import com.intellij.ui.ColorUtil;
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.UIBundle;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBOptionButton;
 import com.intellij.ui.components.JBScrollPane;
@@ -1676,20 +1679,6 @@ public abstract class DialogWrapper {
             }
             final StackingPopupDispatcher popupDispatcher = StackingPopupDispatcher.getInstance();
             if (popupDispatcher != null && !popupDispatcher.isPopupFocused()) {
-              Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-              
-              JTree tree = UIUtil.getParentOfType(JTree.class, focusOwner);
-              JTable table = UIUtil.getParentOfType(JTable.class, focusOwner);
-
-              if (tree != null && tree.isEditing()) {
-                tree.cancelEditing();
-                return;
-              }
-              if (table != null && table.isEditing()) {
-                TableUtil.stopEditing(table);
-                return;
-              }
-              
               doCancelAction(e);
             }
           }

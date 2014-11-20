@@ -17,7 +17,7 @@ package com.intellij.openapi.application;
 
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.PlatformUtilsCore;
+import com.intellij.util.PlatformUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -95,7 +95,7 @@ public class ApplicationNamesInfo {
   }
 
   public static String getComponentName() {
-    final String prefix = System.getProperty(PlatformUtilsCore.PLATFORM_PREFIX_KEY);
+    final String prefix = System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY);
     if (prefix != null) {
       return prefix + COMPONENT_NAME;
     }

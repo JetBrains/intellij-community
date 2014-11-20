@@ -515,7 +515,11 @@ public class UIUtil {
     char c = e.getKeyChar();
     if (c < 0x20 || c == 0x7F) return false;
 
-    return !e.isMetaDown() && !e.isAltDown() && !e.isControlDown();
+    if (SystemInfo.isMac) {
+      return !e.isMetaDown() && !e.isControlDown();
+    }
+
+    return !e.isAltDown() && !e.isControlDown();
   }
 
   public static int getStringY(@NotNull final String string, @NotNull final Rectangle bounds, @NotNull final Graphics2D g) {

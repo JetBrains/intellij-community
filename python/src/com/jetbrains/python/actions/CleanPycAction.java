@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.wm.StatusBar;
@@ -80,7 +81,8 @@ public class CleanPycAction extends AnAction {
   private static boolean isAllDirectories(@Nullable PsiElement[] elements) {
     if (elements == null || elements.length == 0) return false;
     for (PsiElement element : elements) {
-      if (!(element instanceof PsiDirectory)) {
+      if (!(element instanceof PsiDirectory) || FileIndexFacade.getInstance(element.getProject())
+        .isInLibraryClasses(((PsiDirectory)element).getVirtualFile())) {
         return false;
       }
     }

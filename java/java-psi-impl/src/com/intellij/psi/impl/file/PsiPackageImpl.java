@@ -38,7 +38,6 @@ import com.intellij.psi.util.*;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
-import com.intellij.util.containers.ConcurrentSoftValueHashMap;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -187,7 +186,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
 
     Map<String, PsiClass[]> map = SoftReference.dereference(myClassCache);
     if (map == null) {
-      myClassCache = new SoftReference<Map<String, PsiClass[]>>(map = new ConcurrentSoftValueHashMap<String, PsiClass[]>());
+      myClassCache = new SoftReference<Map<String, PsiClass[]>>(map = ContainerUtil.createConcurrentSoftValueMap());
     }
     PsiClass[] classes = map.get(name);
     if (classes != null) {

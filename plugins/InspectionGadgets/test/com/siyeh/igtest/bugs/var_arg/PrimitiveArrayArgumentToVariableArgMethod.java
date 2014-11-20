@@ -29,4 +29,26 @@ public class PrimitiveArrayArgumentToVariableArgMethod
         final X<byte[]> x = new X<byte[]>();
         x.method(bs);
     }
+
+    void m() {
+        String.format("%s", <warning descr="Confusing primitive array argument to var-arg method">new int[]{1, 2, 3}</warning>);
+    }
+
+    static void bar1(java.lang.Object... objects) {
+        for (java.lang.Object object : objects) {
+            System.out.println("object: " + object);
+        }
+    }
+
+    static void bar2(int... ints) {
+        for (int anInt : ints) {
+            System.out.print(anInt);
+        }
+    }
+
+    public static void invoke() {
+        int[] ints = {1, 2, 3};
+        bar1(<warning descr="Confusing primitive array argument to var-arg method">ints</warning>); // warn here
+        bar2(ints); // no warning needed here
+    }
 }

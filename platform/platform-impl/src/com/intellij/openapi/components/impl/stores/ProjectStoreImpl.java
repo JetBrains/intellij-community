@@ -22,7 +22,6 @@ import com.intellij.notification.NotificationsManager;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.components.StateStorage.SaveSession;
-import com.intellij.openapi.components.store.ComponentSaveSession;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -464,9 +463,8 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
       super(storageManagerSaveSession);
     }
 
-    @NotNull
     @Override
-    public ComponentSaveSession save(@NotNull List<Pair<SaveSession, VirtualFile>> readonlyFiles) {
+    public void save(@NotNull List<Pair<SaveSession, VirtualFile>> readonlyFiles) {
       ProjectImpl.UnableToSaveProjectNotification[] notifications =
         NotificationsManager.getNotificationsManager().getNotificationsOfType(ProjectImpl.UnableToSaveProjectNotification.class, myProject);
       if (notifications.length > 0) {
@@ -503,8 +501,6 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
           }
         }
       }
-
-      return this;
     }
 
     @NotNull

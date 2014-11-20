@@ -337,9 +337,46 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   public void setErrorStripeVisible(boolean val) {
     if (val) {
       myEditor.getVerticalScrollBar().setPersistentUI(new MyErrorPanel());
+      myEditor.getHorizontalScrollBar().setPersistentUI(new ButtonlessScrollBarUI() {
+        @Override
+        public boolean alwaysShowTrack() {
+          return false;
+        }
+
+        @Override
+        protected boolean isDark() {
+          return myEditor.isDarkEnough();
+        }
+
+        @Override
+        protected Color adjustColor(Color c) {
+          return isMacOverlayScrollbar() ? super.adjustColor(c) : EditorImpl.adjustThumbColor(super.adjustColor(c), isDark());
+        }
+
+        @Override
+        protected void paintThumb(Graphics g, JComponent c, Rectangle thumbBounds) {
+          if (!isMacOverlayScrollbar()) {
+            int half = getThickness() / 2;
+            int shift = half - 1;
+            g.translate(0, shift);
+            super.paintThumb(g, c, thumbBounds);
+            g.translate(0, -shift);
+          }
+          else {
+            super.paintThumb(g, c, thumbBounds);
+          }
+        }
+
+        protected void paintMaxiThumb(Graphics2D g, Rectangle thumbBounds) {
+          int arc = 3;
+          g.setColor(adjustColor(getGradientDarkColor()));
+          g.fillRoundRect(2, 0, thumbBounds.width, thumbBounds.height, arc, arc);
+        }
+      });
     }
     else {
       myEditor.getVerticalScrollBar().setPersistentUI(ButtonlessScrollBarUI.createNormal());
+      myEditor.getHorizontalScrollBar().setPersistentUI(ButtonlessScrollBarUI.createNormal());
     }
   }
 
