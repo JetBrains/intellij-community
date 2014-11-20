@@ -48,7 +48,7 @@ public class GroovyStaticTypeCheckVisitor extends GroovyTypeCheckVisitor {
   }
 
   @Override
-  protected void processTupleAssignment(GrTupleExpression tupleExpression, GrExpression initializer) {
+  protected void processTupleAssignment(@NotNull GrTupleExpression tupleExpression, @NotNull GrExpression initializer) {
     if (initializer instanceof GrListOrMap && !((GrListOrMap)initializer).isMap()) {
       final GrListOrMap initializerList = (GrListOrMap)initializer;
       final GrExpression[] vars = tupleExpression.getExpressions();

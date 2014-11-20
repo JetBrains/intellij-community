@@ -27,8 +27,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.CallInfo;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.ParameterCastFix;
+import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.findUsages.LiteralConstructorReference;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
@@ -51,6 +53,7 @@ import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.ErrorUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.spock.SpockUtils;
@@ -64,18 +67,16 @@ import static com.intellij.psi.util.PsiUtil.extractIterableTypeParameter;
 public class GroovyTypeCheckVisitorHelper {
 
   @Nullable
-  public static PsiType extractIterableArg(@Nullable PsiType type) {
-    return extractIterableTypeParameter(type, false);
-  }
-
-  @Nullable
   @Contract("null -> null")
   protected static GrListOrMap getTupleInitializer(@Nullable GrExpression initializer) {
-    return initializer instanceof GrListOrMap &&
-           initializer.getReference() instanceof LiteralConstructorReference &&
-           ((LiteralConstructorReference)initializer.getReference()).getConstructedClassType() != null
-           ? (GrListOrMap)initializer
-           : null;
+    if (initializer instanceof GrListOrMap &&
+        initializer.getReference() instanceof LiteralConstructorReference &&
+        ((LiteralConstructorReference)initializer.getReference()).getConstructedClassType() != null) {
+      return (GrListOrMap)initializer;
+    }
+    else {
+      return null;
+    }
   }
 
   public static boolean isOnlyOneMapParam(GrExpression[] exprs) {
@@ -99,10 +100,8 @@ public class GroovyTypeCheckVisitorHelper {
     return expr;
   }
 
-  public static boolean checkSimpleArrayAccess(CallInfo<? extends GrIndexProperty> info, PsiType type, PsiType[] types) {
+  public static boolean checkSimpleArrayAccess(@NotNull CallInfo<? extends GrIndexProperty> info, @Nullable PsiType type, @NotNull PsiType[] types) {
     if (!(type instanceof PsiArrayType)) return false;
-
-    assert types != null;
 
     if (PsiUtil.isLValue(info.getCall())) {
       if (types.length == 2 &&
@@ -165,7 +164,10 @@ public class GroovyTypeCheckVisitorHelper {
     return TypesUtil.isNumericType(ltype) && (rtype == null || TypesUtil.isNumericType(rtype));
   }
 
-  public static LocalQuickFix[] genCastFixes(GrSignature signature, PsiType[] argumentTypes, @Nullable GrArgumentList argumentList) {
+  @NotNull
+  public static LocalQuickFix[] genCastFixes(@NotNull GrSignature signature,
+                                             @NotNull PsiType[] argumentTypes,
+                                             @Nullable GrArgumentList argumentList) {
     if (argumentList == null) return LocalQuickFix.EMPTY_ARRAY;
     final List<GrExpression> args = getExpressionArgumentsOfCall(argumentList);
 
@@ -198,7 +200,8 @@ public class GroovyTypeCheckVisitorHelper {
     return fixes.toArray(new LocalQuickFix[fixes.size()]);
   }
 
-  public static String buildArgTypesList(PsiType[] argTypes) {
+  @NotNull
+  public static String buildArgTypesList(@NotNull PsiType[] argTypes) {
     StringBuilder builder = new StringBuilder();
     builder.append("(");
     for (int i = 0; i < argTypes.length; i++) {
@@ -212,10 +215,10 @@ public class GroovyTypeCheckVisitorHelper {
     return builder.toString();
   }
 
-  public static boolean checkCategoryQualifier(GrReferenceExpression place,
-                                               GrExpression qualifier,
-                                               PsiMethod gdkMethod,
-                                               PsiSubstitutor substitutor) {
+  public static boolean checkCategoryQualifier(@NotNull GrReferenceExpression place,
+                                               @Nullable GrExpression qualifier,
+                                               @NotNull PsiMethod gdkMethod,
+                                               @Nullable PsiSubstitutor substitutor) {
     PsiClass categoryAnnotationOwner = inferCategoryAnnotationOwner(place, qualifier);
 
     if (categoryAnnotationOwner != null) {
@@ -228,7 +231,8 @@ public class GroovyTypeCheckVisitorHelper {
     return false;
   }
 
-  public static PsiClass inferCategoryAnnotationOwner(GrReferenceExpression place, GrExpression qualifier) {
+  @Nullable
+  public static PsiClass inferCategoryAnnotationOwner(@NotNull GrReferenceExpression place, @Nullable GrExpression qualifier) {
     if (qualifier == null) {
       GrMethod container = PsiTreeUtil.getParentOfType(place, GrMethod.class, true, GrMember.class);
       if (container != null &&
@@ -246,7 +250,7 @@ public class GroovyTypeCheckVisitorHelper {
   }
 
   @Nullable
-  public static String getLValueVarName(PsiElement highlight) {
+  public static String getLValueVarName(@NotNull PsiElement highlight) {
     final PsiElement parent = highlight.getParent();
     if (parent instanceof GrVariable) {
       return ((GrVariable)parent).getName();
@@ -291,5 +295,13 @@ public class GroovyTypeCheckVisitorHelper {
       ContainerUtil.addAll(args, ((GrMethodCallExpression)parent).getClosureArguments());
     }
     return args;
+  }
+
+  static boolean isImplicitReturnStatement(@NotNull GrExpression expression) {
+    GrControlFlowOwner flowOwner = ControlFlowUtils.findControlFlowOwner(expression);
+    return flowOwner != null &&
+        PsiUtil.isExpressionStatement(expression) &&
+        ControlFlowUtils.isReturnValue(expression, flowOwner) &&
+        !PsiUtil.isVoidMethodCall(expression);
   }
 }
