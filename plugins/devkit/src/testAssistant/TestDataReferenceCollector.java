@@ -48,7 +48,7 @@ public class TestDataReferenceCollector {
   @Nullable
   List<String> collectTestDataReferences(@NotNull final PsiMethod method) {
     myContainingClass = method.getContainingClass();
-    List<String> result = collectTestDataReferences(method, new HashMap<String, Computable<String>>());
+    List<String> result = collectTestDataReferences(method, new HashMap<String, Computable<String>>(), new HashSet<PsiMethod>());
     if (!myFoundTestDataParameters) {
       myLogMessages.add("Found no parameters annotated with @TestDataFile");
     }
@@ -59,7 +59,9 @@ public class TestDataReferenceCollector {
     return result;
   }
 
-  private List<String> collectTestDataReferences(final PsiMethod method, final Map<String, Computable<String>> argumentMap) {
+  private List<String> collectTestDataReferences(final PsiMethod method,
+                                                 final Map<String, Computable<String>> argumentMap,
+                                                 final HashSet<PsiMethod> proceed) {
     final List<String> result = new ArrayList<String>();
     if (myTestDataPath == null) {
       return result;
@@ -79,7 +81,7 @@ public class TestDataReferenceCollector {
             }
           }
         }
-        if (callee != null) {
+        if (callee != null && proceed.add(callee)) {
           boolean haveAnnotatedParameters = false;
           final PsiParameter[] psiParameters = callee.getParameterList().getParameters();
           for (int i = 0, psiParametersLength = psiParameters.length; i < psiParametersLength; i++) {
@@ -92,7 +94,7 @@ public class TestDataReferenceCollector {
             }
           }
           if (expression.getMethodExpression().getQualifierExpression() == null && !haveAnnotatedParameters) {
-            result.addAll(collectTestDataReferences(callee, buildArgumentMap(expression, callee)));
+            result.addAll(collectTestDataReferences(callee, buildArgumentMap(expression, callee), proceed));
           }
         }
       }
