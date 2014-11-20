@@ -110,7 +110,7 @@ class SafeDeleteJavaCallerChooser extends JavaCallerChooser {
             final PsiElement resolve = ((PsiReferenceExpression)expression).resolve();
             if (resolve instanceof PsiParameter && !((PsiParameter)resolve).isVarArgs()) {
               final PsiElement scope = ((PsiParameter)resolve).getDeclarationScope();
-              if (scope instanceof PsiMethod) {
+              if (scope instanceof PsiMethod && ((PsiMethod)scope).findDeepestSuperMethods().length == 0) {
                 final Ref<Boolean> ref = new Ref<Boolean>(false);
                 if (ReferencesSearch.search(resolve, new LocalSearchScope(scope)).forEach(new Processor<PsiReference>() {
                   @Override
