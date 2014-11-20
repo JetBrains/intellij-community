@@ -25,6 +25,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.PlatformIcons;
@@ -156,13 +157,8 @@ public class HgBranchPopupActions {
       final HgBookmarkDialog bookmarkDialog = new HgBookmarkDialog(myPreselectedRepo);
       if (bookmarkDialog.showAndGet()) {
         final String name = bookmarkDialog.getName();
-        for (HgRepository repository : myRepositories) {
-          try {
-            new HgBookmarkCommand(myProject, repository.getRoot(), name).createBookmark(bookmarkDialog.isActive());
-          }
-          catch (HgCommandException exception) {
-            HgErrorUtil.handleException(myProject, exception);
-          }
+        if (!StringUtil.isEmptyOrSpaces(name)) {
+          HgBookmarkCommand.createBookmark(myRepositories, name, bookmarkDialog.isActive());
         }
       }
     }

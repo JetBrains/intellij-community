@@ -19,20 +19,13 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.command.HgMergeCommand;
 import org.zmlx.hg4idea.command.HgUpdateCommand;
-import org.zmlx.hg4idea.provider.update.HgConflictResolver;
-import org.zmlx.hg4idea.provider.update.HgHeadMerger;
 import org.zmlx.hg4idea.repo.HgRepository;
-import org.zmlx.hg4idea.util.HgErrorUtil;
 
 import java.util.List;
 
@@ -72,32 +65,7 @@ public class HgCommonBranchActions extends ActionGroup {
       FileDocumentManager.getInstance().saveAllDocuments();
       final UpdatedFiles updatedFiles = UpdatedFiles.create();
       for (final HgRepository repository : myRepositories) {
-        final HgMergeCommand hgMergeCommand = new HgMergeCommand(myProject, repository.getRoot());
-        hgMergeCommand.setRevision(myBranchName);//there is no difference between branch or revision or bookmark as parameter to merge,
-        // we need just a string
-        new Task.Backgroundable(myProject, "Merging changes...") {
-          @Override
-          public void run(@NotNull ProgressIndicator indicator) {
-            try {
-              new HgHeadMerger(myProject, hgMergeCommand)
-                .merge(repository.getRoot());
-              new HgConflictResolver(myProject, updatedFiles).resolve(repository.getRoot());
-            }
-
-            catch (VcsException exception) {
-              assert myProject != null;  // myProject couldn't be null, see annotation for Merge action
-              if (exception.isWarning()) {
-                VcsNotifier.getInstance(myProject).notifyWarning("Warning during merge", exception.getMessage());
-              }
-              else {
-                VcsNotifier.getInstance(myProject).notifyError("Exception during merge", exception.getMessage());
-              }
-            }
-            catch (Exception e1) {
-              HgErrorUtil.handleException(myProject, e1);
-            }
-          }
-        }.queue();
+        HgMergeCommand.mergeWith(repository, myBranchName, updatedFiles);
       }
     }
   }

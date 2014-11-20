@@ -15,23 +15,14 @@
  */
 package org.zmlx.hg4idea.action;
 
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.command.HgMergeCommand;
-import org.zmlx.hg4idea.execution.HgCommandException;
-import org.zmlx.hg4idea.provider.update.HgConflictResolver;
-import org.zmlx.hg4idea.provider.update.HgHeadMerger;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.ui.HgMergeDialog;
-import org.zmlx.hg4idea.util.HgErrorUtil;
 
 import java.util.Collection;
 
@@ -44,41 +35,8 @@ public class HgMerge extends HgAbstractGlobalSingleRepoAction {
     final HgMergeDialog mergeDialog = new HgMergeDialog(project, repos, selectedRepo);
     if (mergeDialog.showAndGet()) {
       final String targetValue = StringUtil.escapeBackSlashes(mergeDialog.getTargetValue());
-      final VirtualFile repoRoot = mergeDialog.getRepository().getRoot();
-      new Task.Backgroundable(project, "Merging changes...") {
-        @Override
-        public void run(@NotNull ProgressIndicator indicator) {
-          try {
-            executeMerge(project, repoRoot, targetValue);
-            HgErrorUtil.markDirtyAndHandleErrors(project, repoRoot);
-          }
-          catch (HgCommandException e) {
-            HgErrorUtil.handleException(project, e);
-          }
-        }
-      }.queue();
-    }
-  }
-
-
-  private static void executeMerge(@NotNull final Project project, @NotNull VirtualFile repo, @NotNull String targetValue)
-    throws HgCommandException {
-    UpdatedFiles updatedFiles = UpdatedFiles.create();
-
-    HgMergeCommand hgMergeCommand = new HgMergeCommand(project, repo);
-    hgMergeCommand.setRevision(targetValue);
-
-    try {
-      new HgHeadMerger(project, hgMergeCommand).merge(repo);
-      new HgConflictResolver(project, updatedFiles).resolve(repo);
-    }
-    catch (VcsException e) {
-      if (e.isWarning()) {
-        VcsNotifier.getInstance(project).notifyWarning("Warning during merge", e.getMessage());
-      }
-      else {
-        VcsNotifier.getInstance(project).notifyError("Exception during merge", e.getMessage());
-      }
+      final HgRepository repo = mergeDialog.getRepository();
+      HgMergeCommand.mergeWith(repo, targetValue, UpdatedFiles.create());
     }
   }
 }

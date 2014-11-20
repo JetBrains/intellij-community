@@ -199,8 +199,8 @@ public class HgRegularUpdater implements HgUpdater {
     HgMergeCommand mergeCommand = new HgMergeCommand(project, repoRoot);
     //do not explicitly set the revision, that way mercurial itself checks that there are exactly
     //two heads in this branch
-//    mergeCommand.setRevision(headToMerge.getRevision());
-    return new HgHeadMerger(project, mergeCommand).merge(repoRoot);
+    //    mergeCommand.setRevision(headToMerge.getRevision());
+    return mergeCommand.merge();
   }
 
   private void processRebase(ProgressIndicator indicator, final UpdatedFiles updatedFiles) throws VcsException {
