@@ -29,7 +29,6 @@ import com.intellij.psi.filters.element.ModifierFilter;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiImplUtil;
-import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.resolve.ClassResolverProcessor;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
@@ -266,7 +265,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
       case CLASS_NAME_KIND:
       case CLASS_OR_PACKAGE_NAME_KIND:
       case CLASS_IN_QUALIFIED_NEW_KIND:
-        JavaResolveResult[] results = multiResolve(false, containingFile, containingFile.getProject());
+        JavaResolveResult[] results = multiResolve(false);
         final PsiElement target = results.length == 1 ? results[0].getElement() : null;
         if (target instanceof PsiClass) {
           PsiClass aClass = (PsiClass)target;
@@ -363,36 +362,8 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
 
   @Override
   @NotNull
-  public JavaResolveResult[] multiResolve(final boolean incompleteCode) {
-    FileElement fileElement = SharedImplUtil.findFileElement(this);
-    if (fileElement == null) {
-      PsiUtilCore.ensureValid(this);
-      LOG.error("fileElement == null!");
-      return JavaResolveResult.EMPTY_ARRAY;
-    }
-    final PsiManagerEx manager = fileElement.getManager();
-    if (manager == null) {
-      PsiUtilCore.ensureValid(this);
-      LOG.error("getManager() == null!");
-      return JavaResolveResult.EMPTY_ARRAY;
-    }
-    PsiFile containingFile = SharedImplUtil.getContainingFile(fileElement);
-    boolean valid = containingFile != null && containingFile.isValid();
-    if (!valid) {
-      PsiUtilCore.ensureValid(this);
-      LOG.error("invalid!");
-      return JavaResolveResult.EMPTY_ARRAY;
-    }
-    Project project = manager.getProject();
-
-    return multiResolve(incompleteCode, containingFile, project);
-  }
-
-  @NotNull
-  private JavaResolveResult[] multiResolve(boolean incompleteCode, @NotNull PsiFile containingFile, @NotNull Project project) {
-    final ResolveCache resolveCache = ResolveCache.getInstance(project);
-    final ResolveResult[] results = resolveCache.resolveWithCaching(this, OurGenericsResolver.INSTANCE, true, incompleteCode, containingFile);
-    return results.length == 0 ? JavaResolveResult.EMPTY_ARRAY : (JavaResolveResult[])results;
+  public JavaResolveResult[] multiResolve(boolean incompleteCode) {
+    return PsiImplUtil.multiResolveImpl(this, incompleteCode, OurGenericsResolver.INSTANCE);
   }
 
   private PsiSubstitutor updateSubstitutor(PsiSubstitutor subst, final PsiClass psiClass) {

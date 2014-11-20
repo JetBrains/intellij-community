@@ -17,6 +17,7 @@ package com.intellij.psi.impl;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.FileASTNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -28,6 +29,7 @@ import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.impl.light.LightClassReference;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
+import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.scope.ElementClassHint;
@@ -53,6 +55,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import static com.intellij.psi.PsiAnnotation.TargetType;
@@ -715,5 +718,43 @@ public class PsiImplUtil {
     }
 
     return resultType;
+  }
+
+  @NotNull
+  public static <T extends PsiJavaCodeReferenceElement> JavaResolveResult[] multiResolveImpl(
+    @NotNull T element,
+    boolean incompleteCode,
+    @NotNull ResolveCache.PolyVariantContextResolver<? super T> resolver) {
+
+    FileASTNode fileElement = SharedImplUtil.findFileElement(element.getNode());
+    if (fileElement == null) {
+      PsiUtilCore.ensureValid(element);
+      LOG.error("fileElement == null!");
+      return JavaResolveResult.EMPTY_ARRAY;
+    }
+    PsiFile psiFile = SharedImplUtil.getContainingFile(fileElement);
+    PsiManager manager = psiFile == null ? null : psiFile.getManager();
+    if (manager == null) {
+      PsiUtilCore.ensureValid(element);
+      LOG.error("getManager() == null!");
+      return JavaResolveResult.EMPTY_ARRAY;
+    }
+    boolean valid = psiFile.isValid();
+    if (!valid) {
+      PsiUtilCore.ensureValid(element);
+      LOG.error("psiFile.isValid() == false!");
+      return JavaResolveResult.EMPTY_ARRAY;
+    }
+    if (element instanceof PsiMethodReferenceExpression) {
+      // method refs: do not cache results during parent conflict resolving
+      final Map<PsiMethodReferenceExpression, PsiType> map = PsiMethodReferenceUtil.ourRefs.get();
+      if (map != null && map.containsKey(element)) {
+        return (JavaResolveResult[])resolver.resolve(element, psiFile, incompleteCode);
+      }
+    }
+
+    ResolveResult[] results =
+      ResolveCache.getInstance(manager.getProject()).resolveWithCaching(element, resolver, true, incompleteCode, psiFile);
+    return results.length == 0 ? JavaResolveResult.EMPTY_ARRAY : (JavaResolveResult[])results;
   }
 }
