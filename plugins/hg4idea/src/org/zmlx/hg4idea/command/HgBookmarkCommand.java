@@ -33,6 +33,7 @@ public class HgBookmarkCommand {
     myBookmarkResultHandler = new HgCommandResultHandler() {
       @Override
       public void process(@Nullable HgCommandResult result) {
+        if(myProject.isDisposed()) return;
         getRepositoryManager(myProject).updateRepository(myRepo);
         if (HgErrorUtil.hasErrorsInCommandExecution(result)) {
           new HgCommandResultNotifier(myProject)
