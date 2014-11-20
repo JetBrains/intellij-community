@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorGutterAction;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorFontType;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.annotate.LineAnnotationAspect;
@@ -44,11 +45,14 @@ public class AnnotationFieldGutter implements ActiveAnnotationGutter {
   protected final LineAnnotationAspect myAspect;
   private final TextAnnotationPresentation myPresentation;
   private final boolean myIsGutterAction;
-  private Map<String, Color> myColorScheme;
-  private boolean myShowBg = ShowAnnotationColorsAction.isColorsEnabled();
+  private Couple<Map<String, Color>> myColorScheme;
   private boolean myShowAdditionalInfo = false;
 
-  AnnotationFieldGutter(FileAnnotation annotation, Editor editor, LineAnnotationAspect aspect, final TextAnnotationPresentation presentation, Map<String, Color> colorScheme) {
+  AnnotationFieldGutter(FileAnnotation annotation,
+                        Editor editor,
+                        LineAnnotationAspect aspect,
+                        final TextAnnotationPresentation presentation,
+                        Couple<Map<String, Color>> colorScheme) {
     myAnnotation = annotation;
     myEditor = editor;
     myAspect = aspect;
@@ -142,14 +146,12 @@ public class AnnotationFieldGutter implements ActiveAnnotationGutter {
 
   @Nullable
   public Color getBgColor(int line, Editor editor) {
-    if (myColorScheme == null || !myShowBg) return null;
+    ColorMode type = ShowAnnotationColorsAction.getType();
+    Map<String, Color> colorMap = type == ColorMode.AUTHOR ? myColorScheme.second : myColorScheme.first;
+    if (colorMap == null || type == ColorMode.NONE) return null;
     final VcsRevisionNumber number = myAnnotation.getLineRevisionNumber(line);
     if (number == null) return null;
-    return myColorScheme.get(number.asString());
-  }
-
-  public void setShowBg(boolean show) {
-    myShowBg = show;
+    return colorMap.get(number.asString());
   }
 
   public void setShowAdditionalInfo(boolean show) {

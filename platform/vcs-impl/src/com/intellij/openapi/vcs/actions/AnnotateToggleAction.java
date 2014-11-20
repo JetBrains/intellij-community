@@ -32,6 +32,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
@@ -263,7 +264,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
       new AnnotationPresentation(highlighting, switcher, editorGutter, gutters,
                                  additionalActions.toArray(new AnAction[additionalActions.size()]));
 
-    final Map<String, Color> bgColorMap = Registry.is("vcs.show.colored.annotations") ? computeBgColors(fileAnnotation) : null;
+    final Couple<Map<String, Color>> bgColorMap = Registry.is("vcs.show.colored.annotations") ? computeBgColors(fileAnnotation) : null;
     final Map<String, Integer> historyIds = Registry.is("vcs.show.history.numbers") ? computeLineNumbers(fileAnnotation) : null;
 
     if (switcher != null) {
@@ -330,7 +331,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
   }
 
   @Nullable
-  private static Map<String, Integer> computeLineNumbers(FileAnnotation fileAnnotation) {
+  private static Map<String, Integer> computeLineNumbers(@NotNull FileAnnotation fileAnnotation) {
     final SortedList<VcsFileRevision> revisions = new SortedList<VcsFileRevision>(new Comparator<VcsFileRevision>() {
       @Override
       public int compare(VcsFileRevision o1, VcsFileRevision o2) {
@@ -360,30 +361,45 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
     return numbers.size() < 2 ? null : numbers;
   }
 
-  @Nullable
-  private static Map<String, Color> computeBgColors(FileAnnotation fileAnnotation) {
-    final Map<String, Color> bgColors = new HashMap<String, Color>();
-    final Map<String, Color> revNumbers = new HashMap<String, Color>();
-    final int length = BG_COLORS.length;
+  @NotNull
+  private static Couple<Map<String, Color>> computeBgColors(@NotNull FileAnnotation fileAnnotation) {
+    Map<String, Color> commitOrderColors = new HashMap<String, Color>();
+    Map<String, Color> commitAuthorColors = new HashMap<String, Color>();
+    Map<String, Color> authorColors = new HashMap<String, Color>();
     final List<VcsFileRevision> fileRevisionList = fileAnnotation.getRevisions();
     final boolean darcula = UIUtil.isUnderDarcula();
     if (fileRevisionList != null) {
-      for (VcsFileRevision revision : fileRevisionList) {
+      final int colorsNumber = BG_COLORS.length;
+      final int revisionsNumber = fileRevisionList.size();
+      for (int i = 0; i < fileRevisionList.size(); i++) {
+        VcsFileRevision revision = fileRevisionList.get(i);
+        final String number = revision.getRevisionNumber().asString();
         final String author = revision.getAuthor();
-        final String revNumber = revision.getRevisionNumber().asString();
-        if (author != null && !bgColors.containsKey(author)) {
-          final int size = bgColors.size();
-          Color color = BG_COLORS[size < length ? size : size % length];
+
+        if (author != null && !authorColors.containsKey(author)) {
+          final int size = authorColors.size();
+          Color color = BG_COLORS[size < colorsNumber ? size : size % colorsNumber];
           if (darcula) {
             color = ColorUtil.shift(color, 0.3);
           }
-          bgColors.put(author, color);
+          authorColors.put(author, color);
         }
-        if (revNumber != null && !revNumbers.containsKey(revNumber)) {
-          revNumbers.put(revNumber, bgColors.get(author));
+
+        if (number != null && !commitOrderColors.containsKey(number)) {
+          Color color = BG_COLORS[colorsNumber * i / revisionsNumber];
+          if (darcula) {
+            color = ColorUtil.shift(color, 0.3);
+          }
+          commitOrderColors.put(number, color);
+        }
+
+        if (number != null && !commitAuthorColors.containsKey(number)) {
+          commitAuthorColors.put(number, authorColors.get(author));
         }
       }
     }
-    return bgColors.size() < 2 ? null : revNumbers;
+    commitOrderColors = commitOrderColors.size() > 1 ? commitOrderColors : null;
+    commitAuthorColors = commitAuthorColors.size() > 1 ? commitAuthorColors : null;
+    return Couple.of(commitOrderColors, commitAuthorColors);
   }
 }
