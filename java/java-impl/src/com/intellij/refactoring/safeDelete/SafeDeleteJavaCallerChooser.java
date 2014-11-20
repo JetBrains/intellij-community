@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.changeSignature.MethodNodeBase;
 import com.intellij.refactoring.changeSignature.inCallers.JavaCallerChooser;
@@ -110,6 +111,7 @@ class SafeDeleteJavaCallerChooser extends JavaCallerChooser {
             if (resolve instanceof PsiParameter && !((PsiParameter)resolve).isVarArgs()) {
               final PsiElement scope = ((PsiParameter)resolve).getDeclarationScope();
               if (scope instanceof PsiMethod) {
+                final Ref<Boolean> ref = new Ref<Boolean>(false);
                 if (ReferencesSearch.search(resolve, new LocalSearchScope(scope)).forEach(new Processor<PsiReference>() {
                   @Override
                   public boolean process(PsiReference reference) {
@@ -118,15 +120,21 @@ class SafeDeleteJavaCallerChooser extends JavaCallerChooser {
                       final PsiElement parent = element.getParent();
                       if (parent instanceof PsiExpressionList) {
                         final PsiElement gParent = parent.getParent();
-                        if (gParent instanceof PsiCallExpression &&
-                            nodeMethod.equals(((PsiCallExpression)gParent).resolveMethod())) {
-                          return true;
+                        if (gParent instanceof PsiCallExpression) {
+                          final PsiMethod resolved = ((PsiCallExpression)gParent).resolveMethod();
+                          if (scope.equals(resolved)) {
+                            return true;
+                          }
+                          if (nodeMethod.equals(resolved)) {
+                            ref.set(true);
+                            return true;
+                          }
                         }
                       }
                     }
                     return false;
                   }
-                })) {
+                }) && ref.get()) {
                   return (PsiParameter)resolve;
                 }
               }
@@ -163,7 +171,7 @@ class SafeDeleteJavaCallerChooser extends JavaCallerChooser {
       return new Condition<PsiMethod>() {
         @Override
         public boolean value(PsiMethod method) {
-          return getParameter(method) != null;
+          return !myCurrentMethod.equals(method) && getParameter(method) != null;
         }
       };
     }
