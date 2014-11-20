@@ -22,7 +22,6 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.StateStorage.SaveSession;
 import com.intellij.openapi.components.StateStorageException;
-import com.intellij.openapi.components.store.ComponentSaveSession;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ShutDownTracker;
@@ -31,8 +30,6 @@ import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-
 public final class StoreUtil {
   private StoreUtil() {
   }
@@ -40,13 +37,7 @@ public final class StoreUtil {
   public static void doSave(@NotNull IComponentStore stateStore) {
     ShutDownTracker.getInstance().registerStopperThread(Thread.currentThread());
     try {
-      ComponentSaveSession session = stateStore.startSave();
-      if (session == null) {
-        return;
-      }
-
-      List<Pair<SaveSession, VirtualFile>> readonlyFiles = new SmartList<Pair<SaveSession, VirtualFile>>();
-      session.save(readonlyFiles);
+      stateStore.save(new SmartList<Pair<SaveSession, VirtualFile>>());
     }
     catch (Throwable e) {
       PluginId pluginId = IdeErrorsDialog.findPluginId(e);
