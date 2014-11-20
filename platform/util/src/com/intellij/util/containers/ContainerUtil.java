@@ -2245,8 +2245,55 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   @Contract(pure=true)
+  public static <V> ConcurrentIntObjectMap<V> createConcurrentIntObjectSoftValueMap() {
+    return new ConcurrentSoftValueIntObjectHashMap<V>();
+  }
+
+  @NotNull
+  @Contract(pure=true)
   public static <V> ConcurrentLongObjectMap<V> createConcurrentLongObjectMap() {
     return new ConcurrentLongObjectHashMap<V>();
+  }
+
+  @NotNull
+  @Contract(pure=true)
+  public static <K,V> ConcurrentMap<K,V> createConcurrentWeakValueMap() {
+    return new ConcurrentWeakValueHashMap<K, V>();
+  }
+
+  @NotNull
+  @Contract(pure=true)
+  public static <K,V> ConcurrentMap<K,V> createConcurrentWeakKeySoftValueMap(int initialCapacity,
+                                                                             float loadFactor,
+                                                                             int concurrencyLevel,
+                                                                             @NotNull final TObjectHashingStrategy<K> hashingStrategy) {
+    return new ConcurrentWeakKeySoftValueHashMap<K, V>(initialCapacity, loadFactor, concurrencyLevel, hashingStrategy);
+  }
+
+  @NotNull
+  @Contract(pure=true)
+  public static <K,V> ConcurrentMap<K,V> createConcurrentSoftValueMap() {
+    return new ConcurrentSoftValueHashMap<K, V>();
+  }
+
+  @NotNull
+  @Contract(pure=true)
+  public static <K,V> ConcurrentMap<K,V> createConcurrentSoftMap() {
+    return new ConcurrentSoftHashMap<K, V>();
+  }
+
+  @NotNull
+  @Contract(pure=true)
+  public static <K,V> ConcurrentMap<K,V> createConcurrentWeakMap() {
+    return new ConcurrentWeakHashMap<K, V>();
+  }
+  @NotNull
+  @Contract(pure=true)
+  public static <K,V> ConcurrentMap<K,V> createConcurrentWeakMap(int initialCapacity,
+                                 float loadFactor,
+                                 int concurrencyLevel,
+                                 @NotNull TObjectHashingStrategy<K> hashingStrategy) {
+    return new ConcurrentWeakHashMap<K, V>(initialCapacity, loadFactor, concurrencyLevel, hashingStrategy);
   }
 
   @NotNull

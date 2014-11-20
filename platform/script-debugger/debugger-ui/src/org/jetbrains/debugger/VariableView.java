@@ -321,7 +321,7 @@ public final class VariableView extends XNamedValue implements VariableContext {
 
     if (hasNamedProperties) {
       // named properties should be added after additional properties
-      if (additionalProperties == null || additionalProperties.isProcessed()) {
+      if (additionalProperties == null || additionalProperties.getState() != Promise.State.PENDING) {
         promises.add(computeNamedProperties(objectValue, node, !hasIndexedProperties && additionalProperties == null));
       }
       else {

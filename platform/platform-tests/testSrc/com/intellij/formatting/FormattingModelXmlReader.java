@@ -4,7 +4,6 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.containers.HashMap;
-import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
@@ -27,8 +26,7 @@ import java.util.Map;
   public TestBlock readTestBlock(String dataName) throws IOException, JDOMException {
     final File dataFile = new File( PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/') +
                                     "/platform/platform-tests/testData/newGeneralFormatter", dataName + ".xml");
-    final Document document = JDOMUtil.loadDocument(dataFile);
-    return readBlock(document.getRootElement());
+    return readBlock(JDOMUtil.load(dataFile));
   }
 
   private TestBlock readBlock(final Element rootElement) {

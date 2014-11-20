@@ -1,0 +1,3 @@
+<node text="A.doIt()  ()" base="true">
+  <node text="Anonymous in foo() in A.run()  ()"/>
+</node>

@@ -33,21 +33,18 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author yole
- */
-public class StoreUtil {
+public final class StoreUtil {
   private StoreUtil() {
   }
 
   public static void doSave(@NotNull IComponentStore stateStore) {
-    ComponentSaveSession session = stateStore.startSave();
-    if (session == null) {
-      return;
-    }
-
     ShutDownTracker.getInstance().registerStopperThread(Thread.currentThread());
     try {
+      ComponentSaveSession session = stateStore.startSave();
+      if (session == null) {
+        return;
+      }
+
       List<Pair<SaveSession, VirtualFile>> readonlyFiles = new SmartList<Pair<SaveSession, VirtualFile>>();
       session.save(readonlyFiles);
     }
@@ -67,12 +64,7 @@ public class StoreUtil {
       }
     }
     finally {
-      try {
-        session.finishSave();
-      }
-      finally {
-        ShutDownTracker.getInstance().unregisterStopperThread(Thread.currentThread());
-      }
+      ShutDownTracker.getInstance().unregisterStopperThread(Thread.currentThread());
     }
   }
 

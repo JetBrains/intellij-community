@@ -1,8 +1,8 @@
 package org.jetbrains.debugger;
 
-import com.intellij.openapi.util.AsyncResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
 import org.jetbrains.debugger.values.ValueManager;
 
 import java.util.List;
@@ -32,7 +32,7 @@ public interface SuspendContext {
    * Call frames for the current suspended state (from the innermost (top) frame to the main (bottom) frame)
    */
   @NotNull
-  AsyncResult<CallFrame[]> getCallFrames();
+  Promise<CallFrame[]> getCallFrames();
 
   /**
    * @return a set of the breakpoints hit on VM suspension with which this

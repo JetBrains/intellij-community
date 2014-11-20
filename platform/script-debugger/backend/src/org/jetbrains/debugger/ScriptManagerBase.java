@@ -1,22 +1,21 @@
 package org.jetbrains.debugger;
 
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.AsyncResult;
-import com.intellij.openapi.util.AsyncValueLoaderManager;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.Url;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.PromiseManager;
 
 public abstract class ScriptManagerBase<SCRIPT extends ScriptBase> implements ScriptManager {
   @SuppressWarnings("unchecked")
-  private final AsyncValueLoaderManager<ScriptBase, String> scriptSourceLoader = new AsyncValueLoaderManager<ScriptBase, String>(ScriptBase.class) {
+  private final PromiseManager<ScriptBase, String> scriptSourceLoader = new PromiseManager<ScriptBase, String>(ScriptBase.class) {
     @Override
-    public void load(@NotNull ScriptBase script, @NotNull AsyncResult<String> result) {
+    public Promise<String> load(@NotNull ScriptBase script, @NotNull Promise<String> result) {
       //noinspection unchecked
-      loadScriptSource((SCRIPT)script).notify(result);
+      return loadScriptSource((SCRIPT)script);
     }
   };
 
@@ -25,9 +24,9 @@ public abstract class ScriptManagerBase<SCRIPT extends ScriptBase> implements Sc
 
   @NotNull
   @Override
-  public AsyncResult<String> getSource(@NotNull Script script) {
+  public Promise<String> getSource(@NotNull Script script) {
     if (!containsScript(script)) {
-      return AsyncResult.rejected();
+      return Promise.reject("No Script");
     }
     //noinspection unchecked
     return scriptSourceLoader.get((SCRIPT)script);

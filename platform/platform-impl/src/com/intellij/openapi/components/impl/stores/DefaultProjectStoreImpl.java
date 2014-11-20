@@ -142,10 +142,6 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
         return externalizationSession == null ? null : new MyExternalizationSession(externalizationSession);
       }
 
-      @Override
-      public void finishSave(@NotNull SaveSession saveSession) {
-      }
-
       @NotNull
       @Override
       public String expandMacros(@NotNull String file) {

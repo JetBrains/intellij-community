@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,9 +33,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author yole
- */
 public class ProjectWithModulesStoreImpl extends ProjectStoreImpl {
   public ProjectWithModulesStoreImpl(@NotNull ProjectImpl project) {
     super(project);
@@ -109,30 +106,6 @@ public class ProjectWithModulesStoreImpl extends ProjectStoreImpl {
       super(storageManagerSaveSession);
 
       myModuleSaveSessions = moduleSaveSessions;
-    }
-
-    @Override
-    public void finishSave() {
-      try {
-        Throwable first = null;
-        for (ComponentSaveSession moduleSaveSession : myModuleSaveSessions) {
-          try {
-            moduleSaveSession.finishSave();
-          }
-          catch (Throwable e) {
-            if (first == null) {
-              first = e;
-            }
-          }
-        }
-
-        if (first != null) {
-          throw new RuntimeException(first);
-        }
-      }
-      finally {
-        super.finishSave();
-      }
     }
 
     @Override

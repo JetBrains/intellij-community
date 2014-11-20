@@ -21,8 +21,6 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.JBColor;
 import com.intellij.util.containers.HashMap;
@@ -41,7 +39,9 @@ public class HighlightDisplayLevel {
                                                                                                         createIconByKey(CodeInsightColors.GENERIC_SERVER_ERROR_OR_WARNING));
   public static final HighlightDisplayLevel ERROR = new HighlightDisplayLevel(HighlightSeverity.ERROR, createIconByKey(CodeInsightColors.ERRORS_ATTRIBUTES));
   public static final HighlightDisplayLevel WARNING = new HighlightDisplayLevel(HighlightSeverity.WARNING, createIconByKey(CodeInsightColors.WARNINGS_ATTRIBUTES));
-  public static final Color GREEN = new JBColor(new Color(30, 160, 0), new Color(30, 160, 0));
+  // todo: move to color schemas  
+  public static final Color GREEN = new JBColor(new Color(113, 178, 98), new Color(30, 160, 0)); 
+  public static final Color TYPO = new JBColor(new Color(176, 209, 171), new Color(30, 160, 0));
   public static final HighlightDisplayLevel DO_NOT_SHOW = new HighlightDisplayLevel(HighlightSeverity.INFORMATION, createIconByMask(GREEN));
   /**
    * use #WEAK_WARNING instead
@@ -111,20 +111,10 @@ public class HighlightDisplayLevel {
     }
   }
 
-  private static final int EMPTY_ICON_DIM = 13;
+  public static final int EMPTY_ICON_DIM = 13;
 
   public static Icon createIconByKey(@NotNull TextAttributesKey key) {
-    for (IconCreator creator : Extensions.getExtensions(IconCreator.EXTENSION_POINT_NAME)) {
-      Icon icon = creator.createIcon(key);
-      if (icon != null) return icon;
-    }
     return new SingleColorIcon(key);
-  }
-
-  public interface IconCreator {
-    ExtensionPointName<IconCreator> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.codeHighlighting.iconCreator");
-
-    Icon createIcon(@NotNull TextAttributesKey key);
   }
 
   @NotNull

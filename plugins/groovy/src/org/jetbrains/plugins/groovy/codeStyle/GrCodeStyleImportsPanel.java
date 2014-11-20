@@ -49,7 +49,6 @@ public class GrCodeStyleImportsPanel extends JPanel {
 
   public GrCodeStyleImportsPanel() {
     setLayout(new BorderLayout());
-    setBorder(IdeBorderFactory.createEmptyBorder(2, 2, 2, 2));
     add(myWholePanel, BorderLayout.CENTER);
 
     myGeneralPanel.add(createGeneralOptionsPanel(), BorderLayout.CENTER);

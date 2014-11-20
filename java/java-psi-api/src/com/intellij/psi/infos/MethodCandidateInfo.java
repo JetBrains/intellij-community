@@ -26,7 +26,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
 import com.intellij.psi.impl.source.resolve.ParameterTypeInferencePolicy;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.containers.ConcurrentWeakHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -123,7 +123,7 @@ public class MethodCandidateInfo extends CandidateInfo{
           PsiSubstitutor substitutor = getSubstitutor(false);
           Map<PsiElement, CurrentCandidateProperties> map = CURRENT_CANDIDATE.get();
           if (map == null) {
-            map = new ConcurrentWeakHashMap<PsiElement, CurrentCandidateProperties>();
+            map = ContainerUtil.createConcurrentWeakMap();
             CURRENT_CANDIDATE.set(map);
           }
           final PsiMethod method = getElement();
@@ -268,7 +268,7 @@ public class MethodCandidateInfo extends CandidateInfo{
                                            boolean includeReturnConstraint) {
     Map<PsiElement, CurrentCandidateProperties> map = CURRENT_CANDIDATE.get();
     if (map == null) {
-      map = new ConcurrentWeakHashMap<PsiElement, CurrentCandidateProperties>();
+      map = ContainerUtil.createConcurrentWeakMap();
       CURRENT_CANDIDATE.set(map);
     }
     final PsiMethod method = getElement();

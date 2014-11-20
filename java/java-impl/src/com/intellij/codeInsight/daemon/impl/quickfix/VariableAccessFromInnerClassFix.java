@@ -32,7 +32,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ConcurrentWeakHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -132,7 +132,7 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
   @NotNull
   private Collection<PsiVariable> getVariablesToFix() {
     Map<PsiVariable, Boolean> vars = myContext.getUserData(VARS[myFixType]);
-    if (vars == null) myContext.putUserData(VARS[myFixType], vars = new ConcurrentWeakHashMap<PsiVariable, Boolean>(1));
+    if (vars == null) myContext.putUserData(VARS[myFixType], vars = ContainerUtil.createConcurrentWeakMap());
     final Map<PsiVariable, Boolean> finalVars = vars;
     return new AbstractCollection<PsiVariable>() {
       @Override

@@ -18,7 +18,9 @@ package com.intellij.openapi.vcs.history;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
@@ -40,6 +42,8 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ContentsUtil;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -151,7 +155,15 @@ public class FileHistorySessionPartner implements VcsAppendableHistorySessionPar
             ContentsUtil.addOrReplaceContent(contentManager, history, true);
             Disposer.register(history, disposable);
           } else {
-            ((TabbedContent)history).addContent(myFileHistoryPanel, myFileHistoryPanel.getVirtualFile().getName(), true);
+            TabbedContent tabbedContent = (TabbedContent)history;
+            String fileName = myFileHistoryPanel.getVirtualFile().getName();
+            for (Pair<String, JComponent> tab : new ArrayList<Pair<String, JComponent>>(tabbedContent.getTabs())) {
+              if (Comparing.equal(((FileHistoryPanelImpl)tab.second).getVirtualFile(), myFileHistoryPanel.getVirtualFile())) {
+                tabbedContent.removeContent(tab.second);
+              }
+            }
+            toolWindow.getContentManager().setSelectedContent(tabbedContent, true, true);
+            tabbedContent.addContent(myFileHistoryPanel, fileName, true);
           }
         } else {
           Content content = ContentFactory.SERVICE.getInstance().createContent(myFileHistoryPanel, actionName, true);

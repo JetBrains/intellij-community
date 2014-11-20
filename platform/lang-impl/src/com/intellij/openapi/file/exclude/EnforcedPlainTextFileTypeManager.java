@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.util.FileContentUtilCore;
-import com.intellij.util.containers.ConcurrentWeakHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
 
@@ -40,7 +40,7 @@ import java.util.Map;
  * @author Rustam Vishnyakov
  */
 public class EnforcedPlainTextFileTypeManager implements ProjectManagerListener {
-  private final Map<Project, Collection<VirtualFile>> myPlainTextFileSets = new ConcurrentWeakHashMap<Project, Collection<VirtualFile>>();
+  private final Map<Project, Collection<VirtualFile>> myPlainTextFileSets = ContainerUtil.createConcurrentWeakMap();
   private volatile boolean mySetsInitialized = false;
   private static final Object LOCK = new Object();
 
