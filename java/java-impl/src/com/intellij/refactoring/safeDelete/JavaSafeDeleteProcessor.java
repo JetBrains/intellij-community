@@ -39,20 +39,20 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.changeSignature.inCallers.JavaCallerChooser;
 import com.intellij.refactoring.safeDelete.usageInfo.*;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.*;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Processor;
+import com.intellij.util.*;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.HashSet;
 
 public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.safeDelete.JavaSafeDeleteProcessor");
@@ -240,14 +240,18 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
 
   @Nullable
   public UsageInfo[] preprocessUsages(final Project project, final UsageInfo[] usages) {
-    ArrayList<UsageInfo> result = new ArrayList<UsageInfo>();
+    final ArrayList<UsageInfo> result = new ArrayList<UsageInfo>();
     ArrayList<UsageInfo> overridingMethods = new ArrayList<UsageInfo>();
+    ArrayList<UsageInfo> delegatingParams = new ArrayList<UsageInfo>();
     for (UsageInfo usage : usages) {
       if (usage.isNonCodeUsage) {
         result.add(usage);
       }
       else if (usage instanceof SafeDeleteOverridingMethodUsageInfo) {
         overridingMethods.add(usage);
+      }
+      else if (usage instanceof SafeDeleteParameterCallHierarchyUsageInfo) {
+        delegatingParams.add(usage);
       }
       else {
         result.add(usage);
@@ -264,6 +268,21 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
           return null;
         }
         result.addAll(dialog.getSelected());
+      }
+    }
+
+    if (delegatingParams.size() == 1) {
+      final SafeDeleteParameterCallHierarchyUsageInfo parameterHierarchyUsageInfo = (SafeDeleteParameterCallHierarchyUsageInfo)delegatingParams.get(0);
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        result.addAll(delegatingParams);
+      } else {
+        final PsiMethod method = parameterHierarchyUsageInfo.getCalledMethod();
+        final PsiParameter parameter = parameterHierarchyUsageInfo.getReferencedElement();
+        final int parameterIndex = method.getParameterList().getParameterIndex(parameter);
+        final JavaCallerChooser chooser = new SafeDeleteJavaCallerChooser(method, project, parameterIndex, result);
+        if (!chooser.showAndGet()) {
+          return null;
+        }
       }
     }
 
@@ -709,12 +728,24 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
 
   private static void findParameterUsages(final PsiParameter parameter, final List<UsageInfo> usages) {
     final PsiMethod method = (PsiMethod)parameter.getDeclarationScope();
+    final int parameterIndex = method.getParameterList().getParameterIndex(parameter);
     //search for refs to current method only, do not search for refs to overriding methods, they'll be searched separately
     ReferencesSearch.search(method).forEach(new Processor<PsiReference>() {
       public boolean process(final PsiReference reference) {
         PsiElement element = reference.getElement();
         if (element != null) {
           JavaSafeDeleteDelegate.EP.forLanguage(element.getLanguage()).createUsageInfoForParameter(reference, usages, parameter, method);
+          if (!parameter.isVarArgs()) {
+            final PsiParameter paramInCaller = SafeDeleteJavaCallerChooser.isTheOnlyOneParameterUsage(element.getParent(), parameterIndex, method);
+            if (paramInCaller != null) {
+              if (ApplicationManager.getApplication().isUnitTestMode()) {
+                usages.add(new SafeDeleteParameterCallHierarchyUsageInfo((PsiMethod)paramInCaller.getDeclarationScope(), paramInCaller));
+              } 
+              else {
+                usages.add(new SafeDeleteParameterCallHierarchyUsageInfo(method, parameter));
+              }
+            }
+          }
         }
         return true;
       }

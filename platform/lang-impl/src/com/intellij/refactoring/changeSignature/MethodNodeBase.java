@@ -18,12 +18,14 @@ package com.intellij.refactoring.changeSignature;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.ColoredTreeCellRenderer;
+import com.intellij.util.containers.ContainerUtil;
 
 import javax.swing.tree.TreeNode;
 import java.util.*;
@@ -40,6 +42,10 @@ public abstract class MethodNodeBase<M extends PsiElement> extends CheckedTreeNo
   protected abstract List<M> computeCallers();
 
   protected abstract void customizeRendererText(ColoredTreeCellRenderer renderer);
+
+  protected Condition<M> getFilter() {
+    return Condition.TRUE;
+  } 
 
   protected MethodNodeBase(final M method, Set<M> called, Project project, Runnable cancelCallback) {
     super(method);
@@ -92,7 +98,7 @@ public abstract class MethodNodeBase<M extends PsiElement> extends CheckedTreeNo
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           @Override
           public void run() {
-            callers.set(computeCallers());
+            callers.set(ContainerUtil.filter(computeCallers(), getFilter()));
           }
         });
       }
