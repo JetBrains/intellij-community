@@ -878,8 +878,10 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
     final PsiTypeParameter[] parameters = method.getTypeParameters();
     final Map<PsiTypeParameter, PsiType> map = ContainerUtil.newHashMap();
     for (PsiTypeParameter parameter : parameters) {
-      PsiType type = TypeConversionUtil.erasure(JavaPsiFacade.getElementFactory(method.getProject()).createType(parameter));
-      map.put(parameter, type);
+      final PsiClassType[] types = parameter.getSuperTypes();
+      final PsiType bound = PsiIntersectionType.createIntersection(types);
+      final PsiWildcardType wildcardType = PsiWildcardType.createExtends(method.getManager(), bound);
+      map.put(parameter, wildcardType);
     }
     final PsiSubstitutor substitutor = PsiSubstitutorImpl.createSubstitutor(map);
 
