@@ -27,14 +27,10 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 public class ShowAnnotationColorsAction extends ActionGroup {
-  private final List<AnnotationFieldGutter> myGutters;
-  private final EditorGutterComponentEx myGutter;
-
   private final AnAction[] myChildren;
-  public ShowAnnotationColorsAction(List<AnnotationFieldGutter> gutters, EditorGutterComponentEx gutter) {
+
+  public ShowAnnotationColorsAction(EditorGutterComponentEx gutter) {
     super("Colors", true);
-    myGutters = gutters;
-    myGutter = gutter;
 
     final ArrayList<AnAction> kids = new ArrayList<AnAction>(ShortNameType.values().length);
     for (ColorMode type : ColorMode.values()) {

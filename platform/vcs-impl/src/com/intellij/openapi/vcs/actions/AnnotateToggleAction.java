@@ -46,7 +46,6 @@ import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.impl.UpToDateLineNumberProviderImpl;
 import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.ColorUtil;
 import com.intellij.util.containers.SortedList;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -363,43 +362,36 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
 
   @NotNull
   private static Couple<Map<String, Color>> computeBgColors(@NotNull FileAnnotation fileAnnotation) {
-    Map<String, Color> commitOrderColors = new HashMap<String, Color>();
-    Map<String, Color> commitAuthorColors = new HashMap<String, Color>();
-    Map<String, Color> authorColors = new HashMap<String, Color>();
+    final Map<String, Color> commitOrderColors = new HashMap<String, Color>();
+    final Map<String, Color> commitAuthorColors = new HashMap<String, Color>();
+    final Map<String, Color> authorColors = new HashMap<String, Color>();
     final List<VcsFileRevision> fileRevisionList = fileAnnotation.getRevisions();
-    final boolean darcula = UIUtil.isUnderDarcula();
     if (fileRevisionList != null) {
-      final int colorsNumber = BG_COLORS.length;
-      final int revisionsNumber = fileRevisionList.size();
+      final int colorsCount = BG_COLORS.length;
+      final int revisionsCount = fileRevisionList.size();
+
       for (int i = 0; i < fileRevisionList.size(); i++) {
         VcsFileRevision revision = fileRevisionList.get(i);
         final String number = revision.getRevisionNumber().asString();
         final String author = revision.getAuthor();
+        if (number == null) continue;
 
-        if (author != null && !authorColors.containsKey(author)) {
-          final int size = authorColors.size();
-          Color color = BG_COLORS[size < colorsNumber ? size : size % colorsNumber];
-          if (darcula) {
-            color = ColorUtil.shift(color, 0.3);
+        if (!commitAuthorColors.containsKey(number)) {
+          if (author != null && !authorColors.containsKey(author)) {
+            final int index = authorColors.size();
+            Color color = BG_COLORS[index % colorsCount];
+            authorColors.put(author, color);
           }
-          authorColors.put(author, color);
-        }
 
-        if (number != null && !commitOrderColors.containsKey(number)) {
-          Color color = BG_COLORS[colorsNumber * i / revisionsNumber];
-          if (darcula) {
-            color = ColorUtil.shift(color, 0.3);
-          }
-          commitOrderColors.put(number, color);
-        }
-
-        if (number != null && !commitAuthorColors.containsKey(number)) {
           commitAuthorColors.put(number, authorColors.get(author));
+        }
+        if (!commitOrderColors.containsKey(number)) {
+          Color color = BG_COLORS[colorsCount * i / revisionsCount];
+          commitOrderColors.put(number, color);
         }
       }
     }
-    commitOrderColors = commitOrderColors.size() > 1 ? commitOrderColors : null;
-    commitAuthorColors = commitAuthorColors.size() > 1 ? commitAuthorColors : null;
-    return Couple.of(commitOrderColors, commitAuthorColors);
+    return Couple.of(commitOrderColors.size() > 1 ? commitOrderColors : null,
+                     commitAuthorColors.size() > 1 ? commitAuthorColors : null);
   }
 }
