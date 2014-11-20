@@ -254,7 +254,10 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
           System.out.println("F: VFS events: " + events);
         }
         if (!files.isEmpty() && RE_DETECT_ASYNC) {
-          reDetectQueue.offer(files);
+          if (toLog()) {
+            System.out.println("F: queued to redetect: " + files);
+          }
+          reDetectQueue.offerIfAbsent(files);
         }
       }
     });
@@ -277,8 +280,9 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
 
   @TestOnly
   public void drainReDetectQueue() {
-    reDetectQueue.drain();
+    reDetectQueue.waitFor();
   }
+
   @TestOnly
   void reDetectAsync(boolean enable) {
     RE_DETECT_ASYNC = enable;
