@@ -102,6 +102,9 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
         myRuntimeInstance = null;
       }
       setStatus(ConnectionStatus.DISCONNECTED);
+      for (DeploymentLogManagerImpl logManager : myLogManagers.values()) {
+        logManager.disposeLogs();
+      }
     }
   }
 
@@ -165,6 +168,15 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
       @Override
       public void succeeded() {
         synchronized (myRemoteDeployments) {
+          for (DeploymentImpl deployment : new ArrayList<DeploymentImpl>(myDeployments)) {
+            DeploymentImpl oldDeployment = myRemoteDeployments.get(deployment.getName());
+            if (oldDeployment != null) {
+              oldDeployment.changeState(oldDeployment.getStatus(),
+                                        deployment.getStatus(), deployment.getStatusText(), deployment.getRuntime());
+              myDeployments.remove(deployment);
+              myDeployments.add(oldDeployment);
+            }
+          }
           myRemoteDeployments.clear();
           for (DeploymentImpl deployment : myDeployments) {
             myRemoteDeployments.put(deployment.getName(), deployment);
@@ -242,7 +254,7 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
             }
           }
         }
-        myLogManagers.remove(deploymentName);
+        myLogManagers.remove(deploymentName).disposeLogs();
         myEventDispatcher.queueDeploymentsChanged(ServerConnectionImpl.this);
         computeDeployments(myRuntimeInstance, EmptyRunnable.INSTANCE);
       }
