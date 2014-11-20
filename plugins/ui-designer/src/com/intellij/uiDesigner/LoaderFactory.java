@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,9 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ModuleRootAdapter;
+import com.intellij.openapi.roots.ModuleRootEvent;
+import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -30,7 +32,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl;
 import com.intellij.uiDesigner.core.Spacer;
 import com.intellij.util.PathUtil;
-import com.intellij.util.containers.ConcurrentWeakHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
@@ -40,6 +42,7 @@ import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author Anton Katilin
@@ -48,7 +51,7 @@ import java.util.*;
 public final class LoaderFactory {
   private final Project myProject;
 
-  private final ConcurrentWeakHashMap<Module, ClassLoader> myModule2ClassLoader;
+  private final ConcurrentMap<Module, ClassLoader> myModule2ClassLoader;
   private ClassLoader myProjectClassLoader = null;
   private final MessageBusConnection myConnection;
 
@@ -58,7 +61,7 @@ public final class LoaderFactory {
 
   public LoaderFactory(final Project project) {
     myProject = project;
-    myModule2ClassLoader = new ConcurrentWeakHashMap<Module, ClassLoader>();
+    myModule2ClassLoader = ContainerUtil.createConcurrentWeakMap();
     myConnection = myProject.getMessageBus().connect();
     myConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
       public void rootsChanged(final ModuleRootEvent event) {

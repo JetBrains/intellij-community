@@ -26,7 +26,7 @@ import static com.intellij.util.ObjectUtils.NULL;
  * @author peter
  */
 public abstract class WeakFactoryMap<T,V> {
-  private final ConcurrentMap<T, WeakReference<V>> myMap = new ConcurrentWeakHashMap<T, WeakReference<V>>();
+  private final ConcurrentMap<T, WeakReference<V>> myMap = ContainerUtil.createConcurrentWeakMap();
 
   protected abstract V create(T key);
 

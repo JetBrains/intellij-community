@@ -21,7 +21,6 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.containers.ConcurrentSoftValueHashMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.MultiMap;
@@ -42,7 +41,7 @@ import java.util.List;
 class BeanBinding extends Binding {
   private static final Logger LOG = Logger.getInstance(BeanBinding.class);
 
-  private static final Map<Class, List<Accessor>> ourAccessorCache = new ConcurrentSoftValueHashMap<Class, List<Accessor>>();
+  private static final Map<Class, List<Accessor>> ourAccessorCache = ContainerUtil.createConcurrentSoftValueMap();
 
   private final String myTagName;
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")

@@ -34,7 +34,7 @@ import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.Function;
-import com.intellij.util.containers.ConcurrentWeakHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -54,10 +54,10 @@ public class JavaResolveCache {
     return INSTANCE_KEY.getValue(project);
   }
 
-  private final ConcurrentMap<PsiExpression, Reference<PsiType>> myCalculatedTypes = new ConcurrentWeakHashMap<PsiExpression, Reference<PsiType>>();
+  private final ConcurrentMap<PsiExpression, Reference<PsiType>> myCalculatedTypes = ContainerUtil.createConcurrentWeakMap();
 
-  private final Map<PsiVariable,Object> myVarToConstValueMapPhysical = new ConcurrentWeakHashMap<PsiVariable, Object>();
-  private final Map<PsiVariable,Object> myVarToConstValueMapNonPhysical = new ConcurrentWeakHashMap<PsiVariable, Object>();
+  private final Map<PsiVariable,Object> myVarToConstValueMapPhysical = ContainerUtil.createConcurrentWeakMap();
+  private final Map<PsiVariable,Object> myVarToConstValueMapNonPhysical = ContainerUtil.createConcurrentWeakMap();
 
   private static final Object NULL = Key.create("NULL");
 
