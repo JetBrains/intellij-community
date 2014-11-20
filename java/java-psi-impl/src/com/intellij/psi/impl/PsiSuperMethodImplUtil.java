@@ -19,9 +19,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.HierarchicalMethodSignatureImpl;
+import com.intellij.psi.impl.source.PsiClassImpl;
 import com.intellij.psi.search.searches.DeepestSuperMethodsSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.*;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
@@ -138,7 +140,15 @@ public class PsiSuperMethodImplUtil {
       }
     });
 
-    for (PsiMethod method : aClass.getMethods()) {
+    PsiMethod[] methods = aClass.getMethods();
+    if (aClass instanceof PsiClassImpl) {
+      final PsiMethod valuesMethod = ((PsiClassImpl)aClass).getValuesMethod();
+      if (valuesMethod != null) {
+        methods = ArrayUtil.append(methods, valuesMethod);
+      }
+    }
+
+    for (PsiMethod method : methods) {
       if (!method.isValid()) {
         throw new PsiInvalidElementAccessException(method, "class.valid=" + aClass.isValid() + "; name=" + method.getName());
       }

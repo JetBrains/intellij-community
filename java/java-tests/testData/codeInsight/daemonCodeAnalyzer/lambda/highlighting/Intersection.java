@@ -13,8 +13,8 @@ class Test {
   {
     Object o1 = (Serializable & I) () -> {};
     Object o2 = (I & Serializable) () -> {};
-    Object o3 = (I & Runnable) <error descr="Multiple non-overriding abstract methods found in Runnable & I">() -> {}</error>;
-    Object o4 = (A & Runnable) <error descr="Multiple non-overriding abstract methods found in Runnable & A">() -> {}</error>;
+    Object o3 = (I & Runnable) <error descr="Multiple non-overriding abstract methods found in I & Runnable">() -> {}</error>;
+    Object o4 = (A & Runnable) <error descr="Multiple non-overriding abstract methods found in A & Runnable">() -> {}</error>;
     Object o5 = (Runnable & A) <error descr="Multiple non-overriding abstract methods found in Runnable & A">() -> {}</error>;
   }
 }

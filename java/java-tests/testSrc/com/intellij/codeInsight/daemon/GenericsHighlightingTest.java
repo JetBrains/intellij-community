@@ -81,7 +81,7 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testUncheckedOverriding() { doTest5(true); }
   public void testWildcardTypes() { doTest5(true); }
   public void testConvertibleTypes() { doTest5(true); }
-  public void testIntersectionTypes() { doTest7Incompatibility(true); }
+  public void testIntersectionTypes() { doTest6(true); }
   public void testVarargs() { doTest5(true); }
   public void testTypeArgsOnRaw() { doTest5(false); }
   public void testConditionalExpression() { doTest5(false); }

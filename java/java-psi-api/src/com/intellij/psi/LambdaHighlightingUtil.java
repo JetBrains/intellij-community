@@ -17,7 +17,9 @@ package com.intellij.psi;
 
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.util.MethodSignature;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,6 +45,34 @@ public class LambdaHighlightingUtil {
       return null;
     }
     return "Multiple non-overriding abstract methods found";
+  }
+
+  @Nullable
+  public static PsiElement checkParametersCompatible(PsiLambdaExpression expression,
+                                                     PsiParameter[] methodParameters,
+                                                     PsiSubstitutor substitutor) {
+    final PsiParameter[] lambdaParameters = expression.getParameterList().getParameters();
+    if (lambdaParameters.length != methodParameters.length) {
+      return expression;
+    }
+    else {
+      boolean hasFormalParameterTypes = expression.hasFormalParameterTypes();
+      for (int i = 0; i < lambdaParameters.length; i++) {
+        PsiParameter lambdaParameter = lambdaParameters[i];
+        PsiType lambdaParameterType = lambdaParameter.getType();
+        PsiType substitutedParamType = substitutor.substitute(methodParameters[i].getType());
+        if (hasFormalParameterTypes) {
+          if (!PsiTypesUtil.compareTypes(lambdaParameterType, substitutedParamType, true)) {
+            return lambdaParameter;
+          }
+        } else {
+          if (!TypeConversionUtil.isAssignable(substitutedParamType, lambdaParameterType)) {
+            return lambdaParameter;
+          }
+        }
+      }
+    }
+    return null;
   }
 
   public static String checkReturnTypeCompatible(PsiLambdaExpression lambdaExpression, PsiType functionalInterfaceReturnType) {
@@ -81,9 +111,9 @@ public class LambdaHighlightingUtil {
   }
 
   public static boolean insertSemicolonAfter(PsiLambdaExpression lambdaExpression) {
-     if (lambdaExpression.getBody() instanceof PsiCodeBlock) {
-       return true;
-     }
+    if (lambdaExpression.getBody() instanceof PsiCodeBlock) {
+      return true;
+    }
     if (insertSemicolon(lambdaExpression.getParent())) {
       return false;
     }

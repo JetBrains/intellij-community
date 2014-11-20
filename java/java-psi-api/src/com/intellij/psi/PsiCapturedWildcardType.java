@@ -28,6 +28,8 @@ public class PsiCapturedWildcardType extends PsiType.Stub {
   @NotNull private final PsiElement myContext;
   @Nullable private final PsiTypeParameter myParameter;
 
+  private PsiType myUpperBound;
+
   @NotNull
   public static PsiCapturedWildcardType create(@NotNull PsiWildcardType existential, @NotNull PsiElement context) {
     return create(existential, context, null);
@@ -40,11 +42,28 @@ public class PsiCapturedWildcardType extends PsiType.Stub {
     return new PsiCapturedWildcardType(existential, context, parameter);
   }
 
-  private PsiCapturedWildcardType(@NotNull PsiWildcardType existential, @NotNull PsiElement context, @Nullable PsiTypeParameter parameter) {
+  private PsiCapturedWildcardType(@NotNull PsiWildcardType existential,
+                                  @NotNull PsiElement context,
+                                  @Nullable PsiTypeParameter parameter) {
     super(PsiAnnotation.EMPTY_ARRAY);
     myExistential = existential;
     myContext = context;
     myParameter = parameter;
+    if (parameter != null) {
+      final PsiClassType[] boundTypes = parameter.getExtendsListTypes();
+      if (boundTypes.length > 0) {
+        PsiType result = null;
+        for (PsiType type : boundTypes) {
+          if (result == null) {
+            result = type;
+          }
+          else {
+            result = GenericsUtil.getGreatestLowerBound(result, type);
+          }
+        }
+        myUpperBound = result;
+      }
+    }
   }
 
   @Override
@@ -128,8 +147,12 @@ public class PsiCapturedWildcardType extends PsiType.Stub {
       return PsiWildcardType.createSuper(myContext.getManager(), ((PsiCapturedWildcardType)bound).getUpperBound());
     }
     else {
-      return PsiType.getJavaLangObject(myContext.getManager(), getResolveScope());
+      return myUpperBound != null ? myUpperBound : PsiType.getJavaLangObject(myContext.getManager(), getResolveScope());
     }
+  }
+
+  public void setUpperBound(PsiType upperBound) {
+    myUpperBound = upperBound;
   }
 
   @NotNull
@@ -140,5 +163,9 @@ public class PsiCapturedWildcardType extends PsiType.Stub {
   @NotNull
   public PsiElement getContext() {
     return myContext;
+  }
+
+  public PsiTypeParameter getTypeParameter() {
+    return myParameter;
   }
 }

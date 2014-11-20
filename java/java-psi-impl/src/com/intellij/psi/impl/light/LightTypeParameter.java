@@ -79,6 +79,10 @@ public class LightTypeParameter extends LightClass implements PsiTypeParameter {
     return getDelegate().addAnnotation(qualifiedName);
   }
 
+  public boolean useDelegateToSubstitute() {
+    return true;
+  }
+
   @Override
   public String toString() {
     return "PsiTypeParameter:" + getName();

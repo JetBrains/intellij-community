@@ -22,10 +22,10 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
-import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfaceParameterizationUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
+import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.JavaElementType;
@@ -40,14 +40,12 @@ import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase implements PsiMethodReferenceExpression {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiMethodReferenceExpressionImpl");
@@ -81,7 +79,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
 
     final MethodReferenceResolver resolver = new MethodReferenceResolver() {
       @Override
-      protected PsiConflictResolver createResolver(PsiMethodReferenceExpression referenceExpression,
+      protected PsiConflictResolver createResolver(PsiMethodReferenceExpressionImpl referenceExpression,
                                                    PsiMethodReferenceUtil.QualifierResolveResult qualifierResolveResult,
                                                    PsiMethod interfaceMethod,
                                                    MethodSignature signature) {
@@ -154,7 +152,8 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
         if (arrayClass == containingClass) {
           final PsiType componentType = qualifierResolveResult.getSubstitutor().substitute(arrayClass.getTypeParameters()[0]);
           LOG.assertTrue(componentType != null, qualifierResolveResult.getSubstitutor());
-          methods = new PsiMethod[] {factory.createMethodFromText("public " + componentType.createArrayType().getCanonicalText() + " __array__(int i) {return null;}", this)};
+          //15.13.1 A method reference expression of the form ArrayType :: new is always exact.
+          return factory.createMethodFromText("public " + componentType.createArrayType().getCanonicalText() + " __array__(int i) {return null;}", this);
         } else {
           methods = containingClass.getConstructors();
         }
@@ -173,25 +172,38 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
           if (psiMethod.getTypeParameters().length > 0) {
             final PsiReferenceParameterList parameterList = getParameterList();
             return parameterList != null && parameterList.getTypeParameterElements().length > 0 ? psiMethod : null;
-          }
-        }
-        if (containingClass.isPhysical() && containingClass.hasTypeParameters()) {
-          final PsiElement qualifier = getQualifier();
-          if (qualifier instanceof PsiTypeElement) {
-            final PsiJavaCodeReferenceElement referenceElement = ((PsiTypeElement)qualifier).getInnermostComponentReferenceElement();
-            if (referenceElement != null) {
-              final PsiReferenceParameterList parameterList = referenceElement.getParameterList();
-              if (parameterList == null || parameterList.getTypeParameterElements().length == 0) {
-                return null;
+          } else {
+            final PsiSubstitutor classSubstitutor = TypeConversionUtil.getClassSubstitutor(psiMethod.getContainingClass(), containingClass, PsiSubstitutor.EMPTY);
+            final Set<PsiType> signature = new HashSet<PsiType>(Arrays.asList(psiMethod.getSignature(PsiSubstitutor.EMPTY).getParameterTypes()));
+            signature.add(psiMethod.getReturnType());
+            boolean free = true;
+            for (PsiType type : signature) {
+              if (classSubstitutor != null) {
+                type = classSubstitutor.substitute(type);
+              }
+              if (type != null && PsiPolyExpressionUtil.mentionsTypeParameters(type, ContainerUtil.newHashSet(containingClass.getTypeParameters()))) {
+                free = false;
+                break;
               }
             }
+            if (free) return psiMethod;
+          }
+        }
+        if (containingClass.hasTypeParameters()) {
+          final PsiElement qualifier = getQualifier();
+          PsiJavaCodeReferenceElement referenceElement = null;
+          if (qualifier instanceof PsiTypeElement) {
+            referenceElement = ((PsiTypeElement)qualifier).getInnermostComponentReferenceElement();
           } else if (qualifier instanceof PsiReferenceExpression) {
             final PsiReferenceExpression expression = (PsiReferenceExpression)qualifier;
             if (qualifierResolveResult.isReferenceTypeQualified()) {
-              final PsiReferenceParameterList parameterList = expression.getParameterList();
-              if (parameterList == null || parameterList.getTypeParameterElements().length == 0) {
-                return null;
-              }
+              referenceElement = expression;
+            }
+          }
+          if (referenceElement != null) {
+            final PsiReferenceParameterList parameterList = referenceElement.getParameterList();
+            if (parameterList == null || parameterList.getTypeParameterElements().length == 0) {
+              return null;
             }
           }
         }
@@ -200,7 +212,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
     }
     return null;
   }
-  
+
   @Override
   public PsiExpression getQualifierExpression() {
     final PsiElement qualifier = getQualifier();
@@ -402,13 +414,13 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
       }
     }
 
-     // A method reference is congruent with a function type if the following are true:
-     //   The function type identifies a single compile-time declaration corresponding to the reference.
-     //   One of the following is true:
-     //      i)The return type of the function type is void.
-     //     ii)The return type of the function type is R; 
-     //        the result of applying capture conversion (5.1.10) to the return type of the invocation type (15.12.2.6) of the chosen declaration is R', 
-     //        where R is the target type that may be used to infer R'; neither R nor R' is void; and R' is compatible with R in an assignment context.
+    // A method reference is congruent with a function type if the following are true:
+    //   The function type identifies a single compile-time declaration corresponding to the reference.
+    //   One of the following is true:
+    //      i)The return type of the function type is void.
+    //     ii)The return type of the function type is R; 
+    //        the result of applying capture conversion (5.1.10) to the return type of the invocation type (15.12.2.6) of the chosen declaration is R', 
+    //        where R is the target type that may be used to infer R'; neither R nor R' is void; and R' is compatible with R in an assignment context.
 
     Map<PsiMethodReferenceExpression, PsiType> map = PsiMethodReferenceUtil.getFunctionalTypeMap();
     final JavaResolveResult result;
@@ -436,7 +448,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
         return true;
       }
 
-      final PsiSubstitutor subst = result.getSubstitutor();
+      PsiSubstitutor subst = result.getSubstitutor();
 
       PsiType methodReturnType = null;
       PsiClass containingClass = null;
@@ -451,6 +463,13 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
 
         if (returnType == PsiType.VOID) {
           return false;
+        }
+
+        PsiClass qContainingClass = PsiMethodReferenceUtil.getQualifierResolveResult(this).getContainingClass();
+        if (qContainingClass != null && containingClass != null &&
+            PsiMethodReferenceUtil.isReceiverType(left, containingClass, (PsiMethod)resolve)) {
+          subst = TypeConversionUtil.getClassSubstitutor(containingClass, qContainingClass, subst);
+          LOG.assertTrue(subst != null);
         }
 
         methodReturnType = subst.substitute(returnType);

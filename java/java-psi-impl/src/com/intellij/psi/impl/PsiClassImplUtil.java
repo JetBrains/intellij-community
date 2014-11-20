@@ -26,6 +26,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.filters.OrFilter;
 import com.intellij.psi.impl.compiled.ClsElementImpl;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
+import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.ElementClassFilter;
 import com.intellij.psi.scope.ElementClassHint;
@@ -588,9 +589,15 @@ public class PsiClassImplUtil {
                                          @NotNull PsiElementFactory factory,
                                          @NotNull PsiMethod candidateMethod,
                                          @NotNull PsiSubstitutor substitutor) {
-    if (isRaw && !candidateMethod.hasModifierProperty(PsiModifier.STATIC)) { //static methods are not erased due to raw overriding
-      PsiTypeParameter[] methodTypeParameters = candidateMethod.getTypeParameters();
-      substitutor = factory.createRawSubstitutor(substitutor, methodTypeParameters);
+    //4.8-2. Raw Types and Inheritance
+    //certain members of a raw type are not erased,
+    //namely static members whose types are parameterized, and members inherited from a non-generic supertype.
+    if (isRaw && !candidateMethod.hasModifierProperty(PsiModifier.STATIC)) {
+      final PsiClass containingClass = candidateMethod.getContainingClass();
+      if (containingClass != null && containingClass.hasTypeParameters()) {
+        PsiTypeParameter[] methodTypeParameters = candidateMethod.getTypeParameters();
+        substitutor = factory.createRawSubstitutor(substitutor, methodTypeParameters);
+      }
     }
     return substitutor;
   }
@@ -983,7 +990,7 @@ public class PsiClassImplUtil {
         PsiTypeParameter p2 = (PsiTypeParameter)another;
 
         return p1.getIndex() == p2.getIndex() &&
-               aClass.getManager().areElementsEquivalent(p1.getOwner(), p2.getOwner());
+               (aClass.getManager().areElementsEquivalent(p1.getOwner(), p2.getOwner()) || InferenceSession.areSameFreshVariables(p1, p2));
       }
       else {
         return false;

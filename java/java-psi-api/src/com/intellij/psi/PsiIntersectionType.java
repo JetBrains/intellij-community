@@ -19,7 +19,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Function;
-import gnu.trove.THashSet;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -52,7 +52,7 @@ public class PsiIntersectionType extends PsiType.Stub {
 
   private static PsiType[] flattenAndRemoveDuplicates(PsiType[] conjuncts) {
     try {
-      Set<PsiType> flattened = flatten(conjuncts, new THashSet<PsiType>());
+      Set<PsiType> flattened = flatten(conjuncts, ContainerUtil.<PsiType>newLinkedHashSet());
       return flattened.toArray(createArray(flattened.size()));
     }
     catch (NoSuchElementException e) {
@@ -78,8 +78,8 @@ public class PsiIntersectionType extends PsiType.Stub {
         for (PsiType existing : array) {
           if (type != existing) {
             final boolean allowUncheckedConversion = type instanceof PsiClassType && ((PsiClassType)type).isRaw();
-            if (TypeConversionUtil.isAssignable(GenericsUtil.eliminateWildcards(type), 
-                                                GenericsUtil.eliminateWildcards(existing), allowUncheckedConversion)) {
+            if (TypeConversionUtil.isAssignable(type, existing, allowUncheckedConversion) ||
+                TypeConversionUtil.isAssignable(GenericsUtil.eliminateWildcards(type), GenericsUtil.eliminateWildcards(existing), allowUncheckedConversion)) {
               iterator.remove();
               break;
             }

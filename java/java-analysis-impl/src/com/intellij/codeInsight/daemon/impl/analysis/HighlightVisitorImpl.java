@@ -315,41 +315,14 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
                 final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(resolveResult);
                 if (interfaceMethod != null) {
                   final PsiParameter[] parameters = interfaceMethod.getParameterList().getParameters();
-                  final PsiParameter[] lambdaParameters = expression.getParameterList().getParameters();
-                  final String incompatibleTypesMessage = "Incompatible parameter types in lambda expression";
-                  if (lambdaParameters.length != parameters.length) {
-                    HighlightInfo result = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression)
+                  PsiElement incompatibleElt = LambdaHighlightingUtil
+                    .checkParametersCompatible(expression, parameters, LambdaUtil.getSubstitutor(interfaceMethod, resolveResult));
+                  if (incompatibleElt != null) {
+                    final String incompatibleTypesMessage = "Incompatible parameter types in lambda expression";
+                    HighlightInfo result = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(incompatibleElt)
                       .descriptionAndTooltip(incompatibleTypesMessage).create();
                     myHolder.add(result);
-                  }
-                  else {
-                    final PsiSubstitutor substitutor = LambdaUtil.getSubstitutor(interfaceMethod, resolveResult);
-                    if (expression.hasFormalParameterTypes()) {
-                      for (int i = 0; i < lambdaParameters.length; i++) {
-                        if (!PsiTypesUtil.compareTypes(lambdaParameters[i].getType(), substitutor.substitute(parameters[i].getType()), true)) {
-                          HighlightInfo result = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-                            .range(lambdaParameters[i])
-                            .descriptionAndTooltip(incompatibleTypesMessage)
-                            .create();
-                          myHolder.add(result);
-                          break;
-                        }
-                      }
-                    } else {
-                      for (int i = 0; i < lambdaParameters.length; i++) {
-                        PsiParameter lambdaParameter = lambdaParameters[i];
-                        if (!TypeConversionUtil.isAssignable(lambdaParameter.getType(), substitutor.substitute(parameters[i].getType()))) {
-                          HighlightInfo result = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-                            .range(lambdaParameter)
-                            .descriptionAndTooltip(incompatibleTypesMessage)
-                            .create();
-                          myHolder.add(result);
-                          break;
-                        }
-                      }
-                    }
-                  }
-                  if (!myHolder.hasErrorResults()) {
+                  } else {
                     final PsiClass samClass = resolveResult.getElement();
                     if (!PsiUtil.isAccessible(myFile.getProject(), samClass, expression, null)) {
                       myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression)
@@ -1231,14 +1204,24 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       final String accessProblem = HighlightUtil.buildProblemWithAccessDescription(expression, result);
       HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(accessProblem).create();
       myHolder.add(info);
+    } else {
+      final TextAttributesScheme colorsScheme = myHolder.getColorsScheme();
+      if (method instanceof PsiMethod) {
+        final PsiElement methodNameElement = expression.getReferenceNameElement();
+        myHolder.add(HighlightNamesUtil.highlightMethodName((PsiMethod)method, methodNameElement, false, colorsScheme));
+      }
+      myHolder.add(HighlightNamesUtil.highlightClassNameInQualifier(expression, colorsScheme));
     }
     if (!myHolder.hasErrorResults()) {
       final PsiType functionalInterfaceType = expression.getFunctionalInterfaceType();
-      if (functionalInterfaceType != null && LambdaUtil.dependsOnTypeParams(functionalInterfaceType, functionalInterfaceType, expression)) {
-        HighlightInfo result1 =
-          HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip("Cyclic inference").create();
-        myHolder.add(result1); //todo[ann] append not inferred type params info
-      } else {
+      if (functionalInterfaceType != null) {
+        final boolean notFunctional = !LambdaUtil.isFunctionalType(functionalInterfaceType);
+        if (notFunctional) {
+          myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression)
+                         .descriptionAndTooltip(functionalInterfaceType.getPresentableText() + " is not a functional interface").create());
+        }
+      }
+      if (!myHolder.hasErrorResults()) {
         final PsiElement referenceNameElement = expression.getReferenceNameElement();
         if (referenceNameElement instanceof PsiKeyword) {
           if (!PsiMethodReferenceUtil.isValidQualifier(expression)) {

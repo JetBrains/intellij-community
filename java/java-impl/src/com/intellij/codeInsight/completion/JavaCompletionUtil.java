@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -303,7 +303,7 @@ public class JavaCompletionUtil {
     final Ref<PsiSubstitutor> subst = Ref.create(PsiSubstitutor.EMPTY);
     class MyProcessor extends BaseScopeProcessor implements NameHint, ElementClassHint {
       @Override
-      public boolean execute(@NotNull PsiElement element, ResolveState state) {
+      public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
         if (element == member) {
           subst.set(state.get(PsiSubstitutor.KEY));
         }
@@ -311,7 +311,7 @@ public class JavaCompletionUtil {
       }
 
       @Override
-      public String getName(ResolveState state) {
+      public String getName(@NotNull ResolveState state) {
         return member.getName();
       }
 
@@ -445,11 +445,16 @@ public class JavaCompletionUtil {
 
             PsiSubstitutor plainSub = plainResult.getSubstitutor();
             PsiSubstitutor castSub = TypeConversionUtil.getSuperClassSubstitutor(plainClass, (PsiClassType)castType);
-            if (method.getSignature(plainSub).equals(method.getSignature(castSub)) &&
-                Comparing.equal(plainSub.substitute(method.getReturnType()), castSub.substitute(method.getReturnType())) &&
-                processor.isAccessible(plainClass.findMethodBySignature(method, true))
-              ) {
-              return item;
+            PsiType returnType = method.getReturnType();
+            if (method.getSignature(plainSub).equals(method.getSignature(castSub))) {
+              PsiType typeAfterCast = toRaw(castSub.substitute(returnType));
+              PsiType typeDeclared = toRaw(plainSub.substitute(returnType));
+              if (typeAfterCast != null && typeDeclared != null &&
+                  typeAfterCast.isAssignableFrom(typeDeclared) &&
+                  processor.isAccessible(plainClass.findMethodBySignature(method, true))
+                ) {
+                return item;
+              }
             }
           }
         }
@@ -491,6 +496,11 @@ public class JavaCompletionUtil {
     });
   }
 
+  @Nullable
+  private static PsiType toRaw(@Nullable PsiType type) {
+    return type instanceof PsiClassType ? ((PsiClassType)type).rawType() : type;
+  }
+  
   public static LookupElement highlightIfNeeded(PsiType qualifierType, LookupElement item, Object object) {
     return containsMember(qualifierType, object) ? highlight(item) : item;
   }

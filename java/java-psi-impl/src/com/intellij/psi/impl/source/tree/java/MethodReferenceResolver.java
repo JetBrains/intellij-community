@@ -69,7 +69,7 @@ class MethodReferenceResolver implements ResolveCache.PolyVariantResolver<PsiMet
           if (interfaceMethod != null) {
             final PsiClassType returnType = composeReturnType(containingClass, substitutor);
             final InferenceSession session = new InferenceSession(containingClass.getTypeParameters(), substitutor, reference.getManager(), null);
-            if (!(session.isProperType(returnType) && session.isProperType(interfaceMethodReturnType))) {
+            if (!(session.isProperType(session.substituteWithInferenceVariables(returnType)) && session.isProperType(interfaceMethodReturnType))) {
               session.registerReturnTypeConstraints(returnType, interfaceMethodReturnType);
               substitutor = session.infer();
             }
@@ -84,7 +84,7 @@ class MethodReferenceResolver implements ResolveCache.PolyVariantResolver<PsiMet
           return candidateInfo == null ? JavaResolveResult.EMPTY_ARRAY : new JavaResolveResult[]{candidateInfo};
         }
 
-        final PsiConflictResolver conflictResolver = createResolver(reference, qualifierResolveResult, interfaceMethod, signature);
+        final PsiConflictResolver conflictResolver = createResolver((PsiMethodReferenceExpressionImpl)reference, qualifierResolveResult, interfaceMethod, signature);
         final MethodCandidatesProcessor processor =
           new MethodCandidatesProcessor(reference, reference.getContainingFile(), new PsiConflictResolver[] {conflictResolver}, new SmartList<CandidateInfo>()) {
             @Override
@@ -96,7 +96,7 @@ class MethodReferenceResolver implements ResolveCache.PolyVariantResolver<PsiMet
             protected MethodCandidateInfo createCandidateInfo(@NotNull final PsiMethod method,
                                                               @NotNull final PsiSubstitutor substitutor,
                                                               final boolean staticProblem,
-                                                              final boolean accessible, 
+                                                              final boolean accessible,
                                                               final boolean varargs) {
               final PsiExpressionList argumentList = getArgumentList();
               final PsiType[] typeParameters = reference.getTypeParameters();
@@ -117,13 +117,7 @@ class MethodReferenceResolver implements ResolveCache.PolyVariantResolver<PsiMet
                 private PsiSubstitutor inferTypeArguments() {
                   if (interfaceMethod == null) return substitutor;
                   final InferenceSession session = new InferenceSession(method.getTypeParameters(), substitutor, reference.getManager(), reference);
-
-                  //lift parameters from outer call
-                  final CurrentCandidateProperties methodSubstitutorPair = MethodCandidateInfo.getCurrentMethod(reference.getParent());
-                  if (methodSubstitutorPair != null) {
-                    session.initBounds(methodSubstitutorPair.getMethod().getTypeParameters());
-                  }
-
+                  session.initThrowsConstraints(method);
                   final PsiSubstitutor psiSubstitutor = session.collectApplicabilityConstraints(reference, this, functionalInterfaceType);
                   if (psiSubstitutor != null) {
                     return psiSubstitutor;
@@ -134,6 +128,10 @@ class MethodReferenceResolver implements ResolveCache.PolyVariantResolver<PsiMet
                   }
 
                   if (interfaceMethodReturnType != PsiType.VOID && interfaceMethodReturnType != null) {
+                    if (method.isConstructor()) {
+                      //todo
+                      session.initBounds(reference, method.getContainingClass().getTypeParameters());
+                    }
                     final PsiType returnType = method.isConstructor() ? composeReturnType(containingClass, substitutor) : method.getReturnType();
                     if (returnType != null) {
                       session.registerReturnTypeConstraints(returnType, interfaceMethodReturnType);
@@ -143,7 +141,7 @@ class MethodReferenceResolver implements ResolveCache.PolyVariantResolver<PsiMet
                 }
               };
             }
-        };
+          };
         processor.setIsConstructor(isConstructor);
         processor.setName(isConstructor ? containingClass.getName() : element.getText());
         final PsiExpression expression = reference.getQualifierExpression();
@@ -152,7 +150,7 @@ class MethodReferenceResolver implements ResolveCache.PolyVariantResolver<PsiMet
         }
 
         if (qualifierResolveResult.isReferenceTypeQualified() && isLocatedInStaticContext(containingClass, reference)) {
-           processor.handleEvent(JavaScopeProcessorEvent.START_STATIC, null);
+          processor.handleEvent(JavaScopeProcessorEvent.START_STATIC, null);
         }
         ResolveState state = ResolveState.initial().put(PsiSubstitutor.KEY, substitutor);
         containingClass.processDeclarations(processor, state, reference, reference);
@@ -190,7 +188,7 @@ class MethodReferenceResolver implements ResolveCache.PolyVariantResolver<PsiMet
     return functionalInterfaceType;
   }
 
-  protected PsiConflictResolver createResolver(PsiMethodReferenceExpression referenceExpression,
+  protected PsiConflictResolver createResolver(PsiMethodReferenceExpressionImpl referenceExpression,
                                                PsiMethodReferenceUtil.QualifierResolveResult qualifierResolveResult,
                                                PsiMethod interfaceMethod,
                                                MethodSignature signature) {
@@ -205,11 +203,11 @@ class MethodReferenceResolver implements ResolveCache.PolyVariantResolver<PsiMet
 
   private static class MethodReferenceConflictResolver extends JavaMethodsConflictResolver {
     private final MethodSignature mySignature;
-    private PsiMethodReferenceExpression myReferenceExpression;
+    private final PsiMethodReferenceExpressionImpl myReferenceExpression;
     private final PsiMethodReferenceUtil.QualifierResolveResult myQualifierResolveResult;
     private final boolean myFunctionalMethodVarArgs;
 
-    private MethodReferenceConflictResolver(PsiMethodReferenceExpression referenceExpression, 
+    private MethodReferenceConflictResolver(PsiMethodReferenceExpressionImpl referenceExpression,
                                             PsiMethodReferenceUtil.QualifierResolveResult qualifierResolveResult,
                                             @Nullable MethodSignature signature, boolean varArgs) {
       super(referenceExpression, signature != null ? signature.getParameterTypes() : PsiType.EMPTY_ARRAY, PsiUtil.getLanguageLevel(referenceExpression));
@@ -220,7 +218,7 @@ class MethodReferenceResolver implements ResolveCache.PolyVariantResolver<PsiMet
     }
 
     @Override
-    protected int getPertinentApplicabilityLevel(MethodCandidateInfo conflict) {
+    protected int getPertinentApplicabilityLevel(@NotNull MethodCandidateInfo conflict) {
       return conflict.isVarargs() ? MethodCandidateInfo.ApplicabilityLevel.VARARGS : MethodCandidateInfo.ApplicabilityLevel.FIXED_ARITY;
     }
 
@@ -232,8 +230,8 @@ class MethodReferenceResolver implements ResolveCache.PolyVariantResolver<PsiMet
       checkSameSignatures(conflicts);
       checkAccessStaticLevels(conflicts, true);
 
-      final PsiType[] parameterTypes = mySignature.getParameterTypes();
-      boolean hasReceiver = PsiMethodReferenceUtil.hasReceiver(parameterTypes, myQualifierResolveResult, myReferenceExpression);
+      final PsiType[] argTypes = mySignature.getParameterTypes();
+      boolean hasReceiver = PsiMethodReferenceUtil.hasReceiver(argTypes, myQualifierResolveResult, myReferenceExpression);
 
       final List<CandidateInfo> firstCandidates = new ArrayList<CandidateInfo>();
       final List<CandidateInfo> secondCandidates = new ArrayList<CandidateInfo>();
@@ -243,19 +241,19 @@ class MethodReferenceResolver implements ResolveCache.PolyVariantResolver<PsiMet
         final PsiMethod psiMethod = ((MethodCandidateInfo)conflict).getElement();
 
         final PsiSubstitutor substitutor = conflict.getSubstitutor();
-        final PsiType[] signatureParameterTypes2 = psiMethod.getSignature(substitutor).getParameterTypes();
+        final PsiType[] parameterTypes = psiMethod.getSignature(substitutor).getParameterTypes();
 
         final boolean varargs = ((MethodCandidateInfo)conflict).isVarargs();
         if (varargs && (!psiMethod.isVarArgs() || myFunctionalMethodVarArgs)) continue;
 
-        if ((varargs || parameterTypes.length == signatureParameterTypes2.length) &&
-            PsiMethodReferenceUtil.isCorrectAssignment(signatureParameterTypes2, parameterTypes, substitutor, varargs, 0)) {
+        if ((varargs || argTypes.length == parameterTypes.length) &&
+            PsiMethodReferenceUtil.isCorrectAssignment(parameterTypes, argTypes, varargs, 0)) {
           firstCandidates.add(conflict);
         }
 
         if (hasReceiver &&
-            (varargs || parameterTypes.length == signatureParameterTypes2.length + 1) &&
-            PsiMethodReferenceUtil.isCorrectAssignment(signatureParameterTypes2, parameterTypes, substitutor, varargs, 1)) {
+            (varargs || argTypes.length == parameterTypes.length + 1) &&
+            PsiMethodReferenceUtil.isCorrectAssignment(parameterTypes, argTypes, varargs, 1)) {
           secondCandidates.add(conflict);
         }
       }
@@ -300,13 +298,12 @@ class MethodReferenceResolver implements ResolveCache.PolyVariantResolver<PsiMet
     }
 
     @Override
-    protected boolean nonComparable(CandidateInfo method, CandidateInfo conflict) {
+    protected boolean nonComparable(@NotNull CandidateInfo method, @NotNull CandidateInfo conflict, boolean fixedArity) {
       if (method == conflict) return true;
       PsiElement psiElement = method.getElement();
       PsiElement conflictElement = conflict.getElement();
       if (psiElement instanceof PsiMethod && conflictElement instanceof PsiMethod) {
-        if (((PsiMethod)psiElement).getParameterList().getParametersCount() !=
-            ((PsiMethod)conflictElement).getParameterList().getParametersCount()) {
+        if (fixedArity && ((PsiMethod)psiElement).getParameterList().getParametersCount() != ((PsiMethod)conflictElement).getParameterList().getParametersCount()) {
           return true;
         }
       }

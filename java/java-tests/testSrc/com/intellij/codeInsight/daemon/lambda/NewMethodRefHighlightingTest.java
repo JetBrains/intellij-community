@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -254,6 +254,74 @@ public class NewMethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
   }
 
   public void testCollectingApplicabilityConstraints() {
+    doTest();
+  }
+
+  public void testIDEA126062() {
+    doTest();
+  }
+
+  public void testRejectReceiverTypesForConstructorRefs() {
+    doTest();
+  }
+
+  public void testEnumValuesMethod() throws Exception {
+    doTest();
+  }
+
+  public void testMissedApplicableMemberContainingClassSubstitution() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA126969() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA127506() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA127275() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA127275_() throws Exception {
+    doTest();
+  }
+
+  public void testUnresolvedMethodReference() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA128534() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA128712() throws Exception {
+    doTest();
+  }
+
+  public void testAdditionalConstraints3Level() throws Exception {
+    doTest();
+  }
+
+  public void testWildcardParametrization() throws Exception {
+    doTest();
+  }
+
+  public void testReceiverTypeSubstitution() throws Exception {
+    doTest();
+  }
+
+  public void testTypeParametersInitOrder() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA132560() throws Exception {
+    doTest();
+  }
+
+  public void testEnsureThatCapturedWildcardsAreNotOpenWithoutAnyReason() throws Exception {
     doTest();
   }
 

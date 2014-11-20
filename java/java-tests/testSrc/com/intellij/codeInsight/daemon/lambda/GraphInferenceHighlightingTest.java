@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,6 +49,10 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
   }
 
   public void testChainedInferenceTypeParamsOrderIndependent() throws Exception {
+    doTest();
+  }
+
+  public void testCyclicParamsDependency() throws Exception {
     doTest();
   }
 
@@ -168,6 +172,10 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
     doTest();
   }
 
+  public void testSiteSubstitutionInExpressionConstraints() throws Exception {
+    doTest();
+  }
+
   public void testIncorporationWithEqualsBoundsSubstitution() throws Exception {
     doTest();
   }
@@ -177,6 +185,81 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
   }
 
   public void testVarargsOnNonPertinentPlace() throws Exception {
+    doTest();
+  }
+
+  public void testRawTypeFromParent() throws Exception {
+    doTest();
+  }
+
+  public void testRawTypeFromParentArrayType() throws Exception {
+    doTest();
+  }
+
+  public void testInferFromConditionalExpressionCondition() throws Exception {
+    doTest();
+  }
+
+  public void testPrimitiveWrapperConditionInReturnConstraint() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA128174() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA128101() throws Exception {
+    doTest();
+  }
+
+  public void testOuterCallOverloads() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA127928() throws Exception {
+    doTest();
+  }
+  public void testIDEA128766() throws Exception {
+    doTest();
+  }
+
+  public void testSameMethodNestedChainedCallsNearFunctionInterfaces() throws Exception {
+    doTest();
+  }
+
+  public void testInfiniteTypes() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA126163() throws Exception {
+    doTest();
+  }
+
+  public void testIncompatibleBoundsFromAssignment() throws Exception {
+    doTest();
+  }
+
+  public void testFreshVariablesCreatedDuringResolveDependingOnAlreadyResolvedVariables() throws Exception {
+    doTest();
+  }
+
+  public void testCallToGenericMethodsOfNonGenericClassInsideRawInheritor() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA130549() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA130547() throws Exception {
+    doTest();
+  }
+
+  public void testUncheckedConversionWithRecursiveTypeParams() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA132725() throws Exception {
     doTest();
   }
 

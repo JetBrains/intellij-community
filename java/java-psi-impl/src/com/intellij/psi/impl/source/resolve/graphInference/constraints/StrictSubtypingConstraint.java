@@ -37,7 +37,7 @@ public class StrictSubtypingConstraint implements ConstraintFormula {
   }
 
   @Override
-  public void apply(PsiSubstitutor substitutor) {
+  public void apply(PsiSubstitutor substitutor, boolean cache) {
     myT = substitutor.substitute(myT);
     myS = substitutor.substitute(myS);
   }
@@ -92,8 +92,22 @@ public class StrictSubtypingConstraint implements ConstraintFormula {
           return false;
         }
 
-        if (!(myS instanceof PsiClassType)) return false;
-        PsiClassType.ClassResolveResult SResult = ((PsiClassType)myS).resolveGenerics();
+        PsiClassType.ClassResolveResult SResult = null;
+        if (myS instanceof PsiIntersectionType) {
+          for (PsiType conjunct : ((PsiIntersectionType)myS).getConjuncts()) {
+            if (conjunct instanceof PsiClassType) {
+              final PsiClassType.ClassResolveResult conjunctResult = ((PsiClassType)conjunct).resolveGenerics();
+              if (InheritanceUtil.isInheritorOrSelf(conjunctResult.getElement(), CClass, true)) {
+                SResult = conjunctResult;
+                break;
+              }
+            }
+          }
+        } else if (myS instanceof PsiClassType) {
+          SResult = ((PsiClassType)myS).resolveGenerics();
+        }
+
+        if (SResult == null) return false;
         PsiClass SClass = SResult.getElement();
         if (((PsiClassType)myT).isRaw()) {
           return SClass != null && InheritanceUtil.isInheritorOrSelf(SClass, CClass, true);
@@ -140,5 +154,10 @@ public class StrictSubtypingConstraint implements ConstraintFormula {
     int result = myS != null ? myS.hashCode() : 0;
     result = 31 * result + (myT != null ? myT.hashCode() : 0);
     return result;
+  }
+
+  @Override
+  public String toString() {
+    return myS.getPresentableText() + " < " + myT.getPresentableText();
   }
 }

@@ -3,6 +3,7 @@ package problems;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.*;
 
 import static java.util.stream.Collectors.*;
 
@@ -81,4 +82,33 @@ class Dish {
   public String toString() {
     return name;
   }
+}
+
+class Test67 {
+
+  static {
+    collectingAndThen(reducing(), Optional::get);
+    collectingAndThen(reducing(), o -> o.get());
+  }
+
+  static <T> List<Optional<T>> reducing() {
+    return null;
+  }
+
+  static <R,RR> void collectingAndThen(List<R> downstream, Function<R,RR> finisher){}
+}
+
+class Test99 {
+
+  {
+    collectingAndThen(reducing((d1, d2) ->   d2),  Optional::get);
+  }
+
+  public static <COL, R, RR> void collectingAndThen(Collector<COL, R> downstream, Function<R, RR> finisher) {}
+
+  public static <RED> Collector<RED, Optional<RED>> reducing(BinaryOperator<RED> op) {
+    return null;
+  }
+
+  static class Collector<A, C>{}
 }

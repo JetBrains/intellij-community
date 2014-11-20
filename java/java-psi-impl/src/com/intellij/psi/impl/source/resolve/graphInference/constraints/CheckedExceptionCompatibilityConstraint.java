@@ -17,6 +17,7 @@ package com.intellij.psi.impl.source.resolve.graphInference.constraints;
 
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable;
@@ -101,9 +102,17 @@ public class CheckedExceptionCompatibilityConstraint extends InputOutputConstrai
       
       final List<PsiType> thrownTypes = new ArrayList<PsiType>();
       if (myExpression instanceof PsiLambdaExpression) {
-        PsiElement body = ((PsiLambdaExpression)myExpression).getBody();
+        final PsiElement body = ((PsiLambdaExpression)myExpression).getBody();
         if (body != null) {
-          thrownTypes.addAll(ExceptionUtil.getUnhandledExceptions(body));
+          final List<PsiClassType> exceptions = ExceptionUtil.ourThrowsGuard.doPreventingRecursion(myExpression, false, new Computable<List<PsiClassType>>() {
+            @Override
+            public List<PsiClassType> compute() {
+              return ExceptionUtil.getUnhandledExceptions(body);
+            }
+          });
+          if (exceptions != null) {
+            thrownTypes.addAll(exceptions);
+          }
         }
       } else {
 
@@ -126,7 +135,7 @@ public class CheckedExceptionCompatibilityConstraint extends InputOutputConstrai
           for (PsiType type : method.getThrowsList().getReferencedTypes()) {
             type = psiSubstitutor.substitute(type);
             if (type instanceof PsiClassType && !ExceptionUtil.isUncheckedException((PsiClassType)type)) {
-              thrownTypes.add(type);
+              thrownTypes.add(substitutor.substitute(type));
             }
           }
         }

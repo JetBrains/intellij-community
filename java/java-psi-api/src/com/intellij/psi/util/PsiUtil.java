@@ -17,6 +17,8 @@ package com.intellij.psi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
@@ -510,7 +512,7 @@ public final class PsiUtil extends PsiUtilCore {
       PsiType lastParmType = getParameterType(lastParameter, languageLevel, substitutorForMethod);
       if (!(lastParmType instanceof PsiArrayType)) return ApplicabilityLevel.NOT_APPLICABLE;
       lastParmType = ((PsiArrayType)lastParmType).getComponentType();
-      if (lastParmType instanceof PsiCapturedWildcardType) {
+      if (lastParmType instanceof PsiCapturedWildcardType && !JavaVersionService.getInstance().isAtLeast(lastParameter, JavaSdkVersion.JDK_1_8)) {
         lastParmType = ((PsiCapturedWildcardType)lastParmType).getWildcard();
       }
       for (int i = parms.length - 1; i < args.length; i++) {
@@ -1087,6 +1089,11 @@ public final class PsiUtil extends PsiUtilCore {
     }
     else if (parent instanceof PsiDoWhileStatement) {
       if (checkSameExpression(expr, ((PsiDoWhileStatement)parent).getCondition())) {
+        return true;
+      }
+    }
+    else if (parent instanceof PsiConditionalExpression) {
+      if (checkSameExpression(expr, ((PsiConditionalExpression)parent).getCondition())) {
         return true;
       }
     }

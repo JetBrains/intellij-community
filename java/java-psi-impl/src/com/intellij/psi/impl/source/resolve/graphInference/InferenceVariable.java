@@ -15,27 +15,32 @@
  */
 package com.intellij.psi.impl.source.resolve.graphInference;
 
-import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightTypeParameter;
+import com.intellij.psi.util.PsiUtil;
 
 import java.util.*;
 
 /**
  * User: anna
  */
-public class InferenceVariable {
+public class InferenceVariable extends LightTypeParameter {
+  private PsiElement myContext;
+
   public PsiTypeParameter getParameter() {
-    return myParameter;
+    return getDelegate();
   }
 
   private boolean myThrownBound = false;
   private final Map<InferenceBound, List<PsiType>> myBounds = new HashMap<InferenceBound, List<PsiType>>();
-  private final PsiTypeParameter myParameter;
 
   private PsiType myInstantiation = PsiType.NULL;
-  public InferenceVariable(PsiTypeParameter parameter) {
-    myParameter = parameter;
+
+  InferenceVariable(PsiElement context, PsiTypeParameter parameter) {
+    super(parameter);
+    myContext = context;
   }
+
   public PsiType getInstantiation() {
     return myInstantiation;
   }
@@ -45,6 +50,10 @@ public class InferenceVariable {
   }
 
   public boolean addBound(PsiType classType, InferenceBound inferenceBound) {
+    if (inferenceBound == InferenceBound.EQ &&
+        PsiUtil.resolveClassInClassTypeOnly(classType) == this) {
+      return false;
+    }
     List<PsiType> list = myBounds.get(inferenceBound);
     if (list == null) {
       list = new ArrayList<PsiType>();
@@ -73,20 +82,18 @@ public class InferenceVariable {
       }
     }
 
+    if (!session.hasCapture(this) && dependencies.isEmpty()) {
+      return dependencies;
+    }
+
     next:
     for (InferenceVariable variable : session.getInferenceVariables()) {
       if (!dependencies.contains(variable) && variable != this) {
-        nextBound:
-        for (List<PsiType> bounds : myBounds.values()) { //todo
+        for (List<PsiType> bounds : variable.myBounds.values()) { //todo
           if (bounds != null) {
             for (PsiType bound : bounds) {
-              final Set<InferenceVariable> deps = new HashSet<InferenceVariable>();
-              session.collectDependencies(bound, deps);
-              if (deps.isEmpty()) {
-                continue nextBound;
-              }
-
-              if (deps.contains(this)) {
+              final InferenceVariable inferenceVariable = session.getInferenceVariable(bound);
+              if (inferenceVariable == this) {
                 dependencies.add(variable);
                 continue next;
               }
@@ -109,6 +116,16 @@ public class InferenceVariable {
     return dependencies;
   }
 
+  public boolean hasInstantiation(InferenceSession session) {
+    List<PsiType> bounds = getBounds(InferenceBound.EQ);
+    if (bounds != null) {
+      for (PsiType bound : bounds) {
+        if (session.isProperType(bound)) return true;
+      }
+    }
+    return false;
+  }
+
   public boolean isThrownBound() {
     return myThrownBound;
   }
@@ -117,12 +134,22 @@ public class InferenceVariable {
     myThrownBound = true;
   }
 
-  public void replaceBounds(InferenceBound boundType, LinkedHashSet<PsiType> bounds) {
-    
+  @Override
+  public boolean isEquivalentTo(PsiElement another) {
+    return this == another || getDelegate() == another;
+  }
+
+  @Override
+  public boolean useDelegateToSubstitute() {
+    return false;
   }
 
   @Override
   public String toString() {
-    return myParameter.toString();
+    return getDelegate().toString();
+  }
+
+  public PsiElement getCallContext() {
+    return myContext;
   }
 }

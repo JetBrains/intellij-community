@@ -73,7 +73,7 @@ public class TypeEqualityConstraint implements ConstraintFormula {
 
     if (session.isProperType(myT) && session.isProperType(myS)) {
       if (myT == null) return myS == null || myS.equalsToText(CommonClassNames.JAVA_LANG_OBJECT);
-      if (myS == null) return myT.equalsToText(CommonClassNames.JAVA_LANG_OBJECT);
+      if (myS == null) return true;
       return Comparing.equal(myT, myS);
     }
     InferenceVariable inferenceVariable = session.getInferenceVariable(myS);
@@ -91,7 +91,7 @@ public class TypeEqualityConstraint implements ConstraintFormula {
       final PsiClassType.ClassResolveResult sResult = ((PsiClassType)myS).resolveGenerics();
       final PsiClass tClass = tResult.getElement();
       //equal erasure
-      if (tClass != null && tClass.equals(sResult.getElement())) {
+      if (tClass != null && tClass.getManager().areElementsEquivalent(tClass, sResult.getElement())) {
         final PsiSubstitutor tSubstitutor = tResult.getSubstitutor();
         final PsiSubstitutor sSubstitutor = sResult.getSubstitutor();
         for (PsiTypeParameter typeParameter : tClass.getTypeParameters()) {
@@ -118,7 +118,7 @@ public class TypeEqualityConstraint implements ConstraintFormula {
   }
 
   @Override
-  public void apply(PsiSubstitutor substitutor) {
+  public void apply(PsiSubstitutor substitutor, boolean cache) {
     myT = substitutor.substitute(myT);
     myS = substitutor.substitute(myS);
   }
@@ -144,5 +144,10 @@ public class TypeEqualityConstraint implements ConstraintFormula {
     int result = myT != null ? myT.hashCode() : 0;
     result = 31 * result + (myS != null ? myS.hashCode() : 0);
     return result;
+  }
+
+  @Override
+  public String toString() {
+    return myT.getPresentableText() + " == " + myS.getPresentableText();
   }
 }

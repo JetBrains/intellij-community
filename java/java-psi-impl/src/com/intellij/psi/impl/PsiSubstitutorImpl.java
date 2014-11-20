@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,14 +80,14 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
   }
 
   private boolean containsInMap(PsiTypeParameter typeParameter) {
-    if (typeParameter instanceof LightTypeParameter) {
+    if (typeParameter instanceof LightTypeParameter && ((LightTypeParameter)typeParameter).useDelegateToSubstitute()) {
       typeParameter = ((LightTypeParameter)typeParameter).getDelegate();
     }
     return mySubstitutionMap.containsKey(typeParameter);
   }
 
   private PsiType getFromMap(@NotNull PsiTypeParameter typeParameter) {
-    if (typeParameter instanceof LightTypeParameter) {
+    if (typeParameter instanceof LightTypeParameter && ((LightTypeParameter)typeParameter).useDelegateToSubstitute()) {
       typeParameter = ((LightTypeParameter)typeParameter).getDelegate();
     }
     return mySubstitutionMap.get(typeParameter);
@@ -167,8 +167,9 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
               return newBound;
             }
           }
-          if (!wildcard.isBounded()) return PsiWildcardType.createUnbounded(wildcardType.getManager());
-          return newBound;
+          if (wildcard.isBounded()) {
+            return newBound;
+          }
         }
 
         return newBound == PsiType.NULL ? newBound : rebound(wildcardType, newBound);
@@ -377,19 +378,24 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
               !TypeConversionUtil.erasure(substitutedBoundType).isAssignableFrom(TypeConversionUtil.erasure(originalBound)) &&
               !TypeConversionUtil.erasure(substitutedBoundType).isAssignableFrom(originalBound)) { //erasure is essential to avoid infinite recursion
             if (wildcardType.isExtends()) {
-              final PsiType glb = GenericsUtil.getGreatestLowerBound(wildcardType.getBound(), substitutedBoundType);
+              final PsiType bound = wildcardType.getBound();
+              if (bound instanceof PsiArrayType && substitutedBoundType instanceof PsiArrayType &&
+                  !bound.isAssignableFrom(substitutedBoundType) && !substitutedBoundType.isAssignableFrom(bound)) {
+                continue;
+              }
+              final PsiType glb = GenericsUtil.getGreatestLowerBound(bound, substitutedBoundType);
               if (glb != null) {
                 substituted = PsiWildcardType.createExtends(manager, glb);
               }
             }
             else {
               //unbounded
-              substituted = PsiWildcardType.createExtends(manager, substitutedBoundType);
+              substituted = substitutedBoundType instanceof PsiCapturedWildcardType ? ((PsiCapturedWildcardType)substitutedBoundType).getWildcard() : PsiWildcardType.createExtends(manager, substitutedBoundType);
             }
           }
         }
       }
-    } else if (substituted instanceof PsiWildcardType && ((PsiWildcardType)substituted).isSuper()) {
+    } else if (substituted instanceof PsiWildcardType && ((PsiWildcardType)substituted).isSuper() && !(oldSubstituted instanceof PsiCapturedWildcardType)) {
       final PsiType erasure = TypeConversionUtil.erasure(((PsiWildcardType)substituted).getBound());
       if (erasure != null) {
         final PsiType[] boundTypes = typeParameter.getExtendsListTypes();
@@ -511,7 +517,8 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
         buffer.append(" of ");
         buffer.append(((PsiMethod)owner).getName());
         buffer.append(" in ");
-        buffer.append(((PsiMethod)owner).getContainingClass().getQualifiedName());
+        PsiClass aClass = ((PsiMethod)owner).getContainingClass();
+        buffer.append(aClass != null ? aClass.getQualifiedName() : "<no class>");
       }
       buffer.append(" -> ");
       if (entry.getValue() != null) {
