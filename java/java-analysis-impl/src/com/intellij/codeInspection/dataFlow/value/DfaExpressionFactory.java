@@ -116,7 +116,7 @@ public class DfaExpressionFactory {
       return null;
     }
 
-    if (!var.hasModifierProperty(PsiModifier.VOLATILE) && !var.hasModifierProperty(PsiModifier.TRANSIENT)) {
+    if (!var.hasModifierProperty(PsiModifier.VOLATILE)) {
       if (var instanceof PsiVariable && var.hasModifierProperty(PsiModifier.FINAL)) {
         DfaValue constValue = myFactory.getConstFactory().create((PsiVariable)var);
         if (constValue != null) return constValue;
