@@ -60,7 +60,7 @@ public class ApplicationStoreTest extends LightPlatformLangTestCase {
     }
   }
 
-  public void testStreamProviderSaveIfSeveralStoragesConfigured() throws Exception {
+  public void testStreamProviderSaveIfSeveralStoragesConfigured() throws Throwable {
     SeveralStoragesConfigured component = new SeveralStoragesConfigured();
 
     MyStreamProvider streamProvider = new MyStreamProvider();
@@ -68,7 +68,7 @@ public class ApplicationStoreTest extends LightPlatformLangTestCase {
 
     componentStore.initComponent(component, false);
     component.foo = "newValue";
-    StoreUtil.doSave(componentStore);
+    StoreUtil.save(componentStore, null);
 
     assertThat(streamProvider.data.get(RoamingType.PER_USER).get(StoragePathMacros.APP_CONFIG + "/proxy.settings.xml"), equalTo("<application>\n" +
                                                                                                                                 "  <component name=\"HttpConfigurable\">\n" +
