@@ -20,10 +20,10 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.OurHeavyWeightPopup;
 import com.intellij.util.Alarm;
-import com.intellij.util.JBHiDPIScaledImage;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,7 +40,13 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
 
   private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   private final CellRendererPane myRendererPane = new CellRendererPane();
-  private final TipComponent myTipComponent;
+  private final JComponent myTipComponent = new JComponent() {
+    @Override
+    protected void paintComponent(Graphics g) {
+      Insets insets = getInsets();
+      UIUtil.drawImage(g, myImage, insets.left, insets.top, null);
+    }
+  };
 
   private boolean myEnabled = Registry.is("ide.expansion.hints.enabled");
   private Popup myPopup;
@@ -52,8 +58,6 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     myComponent = component;
     myComponent.add(myRendererPane);
     myComponent.validate();
-
-    myTipComponent = new TipComponent();
 
     MouseAdapter tipMouseAdapter = new MouseAdapter() {
       @Override
@@ -351,7 +355,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
   private void repaintHint(Point location) {
     if (myPopup != null && myKey != null && myComponent.isShowing()) {
       SwingUtilities.convertPointToScreen(location, myComponent);
-      SwingUtilities.getWindowAncestor(myTipComponent).setLocation(location);
+      SwingUtilities.getWindowAncestor(myTipComponent).setBounds(new Rectangle(location, myTipComponent.getPreferredSize()));
       myTipComponent.repaint();
       repaintKeyItem();
     }
@@ -393,20 +397,21 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     g.translate(-(visibleRect.x + visibleRect.width - cellBounds.x), 0);
     doPaintTooltipImage(renderer, cellBounds, g, key);
 
+    Point location = new Point(visibleRect.x + visibleRect.width, cellBounds.y);
+    CustomLineBorder border = null;
     if (isPaintBorder()) {
-      g.translate(visibleRect.x + visibleRect.width - cellBounds.x, 0);
-      g.setColor(getBorderColor());
-      int rightX = size.width - 1;
-      int h = size.height;
-      UIUtil.drawLine(g, 0, 0, rightX, 0);
-      UIUtil.drawLine(g, rightX, 0, rightX, h - 1);
-      UIUtil.drawLine(g, 0, h - 1, rightX, h - 1);
+      border = new CustomLineBorder(getBorderColor(), 1, 0, 1, 1);
+      location.y -= 1;
+      size.width += 1;
+      size.height += 2;
     }
 
     g.dispose();
     myRendererPane.remove(renderer);
 
-    return new Point(visibleRect.x + visibleRect.width, cellBounds.y);
+    myTipComponent.setBorder(border);
+    myTipComponent.setPreferredSize(size);
+    return location;
   }
 
   protected boolean isPaintBorder() {
@@ -414,7 +419,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
   }
 
   protected Color getBorderColor() {
-    return UIUtil.getListSelectionBackground();
+    return JBColor.border();
   }
 
   protected Dimension getImageSize(final int width, final int height) {
@@ -438,33 +443,4 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
   protected abstract Pair<Component, Rectangle> getCellRendererAndBounds(KeyType key);
 
   protected abstract KeyType getCellKeyForPoint(Point point);
-
-  private class TipComponent extends JComponent {
-    @Override
-    public Dimension getMaximumSize() {
-      return getPreferredSize();
-    }
-
-    @Override
-    public Dimension getMinimumSize() {
-      return getPreferredSize();
-    }
-
-    @Override
-    public Dimension getPreferredSize() {
-      int w =  myImage.getWidth();
-      int h = myImage.getHeight();
-
-      if (myImage instanceof JBHiDPIScaledImage) {
-        w /= 2; h /= 2;
-      }
-
-      return new Dimension(w, h);
-    }
-
-    @Override
-    public void paint(Graphics g) {
-      UIUtil.drawImage(g, myImage, 0, 0, null);
-    }
-  }
 }

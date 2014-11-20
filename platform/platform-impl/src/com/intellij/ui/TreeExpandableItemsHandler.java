@@ -134,18 +134,6 @@ public class TreeExpandableItemsHandler extends AbstractExpandableItemsHandler<I
   }
 
   @Override
-  protected Dimension getImageSize(int width, int height) {
-    final TreeUI ui = myComponent.getUI();
-    return new Dimension(width, ui instanceof WideSelectionTreeUI && ((WideSelectionTreeUI)ui).isWideSelection() ? height - 1 : height);
-  }
-
-  @Override
-  protected void doFillBackground(final int height, final int width, final Graphics2D g) {
-    final TreeUI ui = myComponent.getUI();
-    super.doFillBackground(ui instanceof WideSelectionTreeUI && ((WideSelectionTreeUI)ui).isWideSelection() ? height - 1 : height, width, g);
-  }
-
-  @Override
   protected void doPaintTooltipImage(final Component rComponent,
                                      final Rectangle cellBounds,
                                      final Graphics2D g,
