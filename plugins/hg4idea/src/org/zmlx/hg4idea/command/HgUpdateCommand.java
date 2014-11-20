@@ -40,6 +40,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.zmlx.hg4idea.util.HgErrorUtil.hasUncommittedChangesConflict;
+import static org.zmlx.hg4idea.util.HgUtil.getRepositoryManager;
 
 public class HgUpdateCommand {
 
@@ -174,6 +175,7 @@ public class HgUpdateCommand {
         .notifyImportantWarning("Unresolved conflicts.",
                                 HgVcsMessages.message("hg4idea.update.warning.merge.conflicts", repository.getPath()));
     }
+    getRepositoryManager(project).updateRepository(repository);
     HgErrorUtil.markDirtyAndHandleErrors(project, repository);
     project.getMessageBus().syncPublisher(HgVcs.BRANCH_TOPIC).update(project, repository);
     return success;
