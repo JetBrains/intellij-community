@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.ui.InspectionToolPresentation;
 import com.intellij.codeInspection.visibility.VisibilityInspection;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.ui.UIUtil;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -32,7 +33,6 @@ import java.util.Arrays;
  *         Date: 5/24/12
  */
 public class GlobalInspectionContextTest extends CodeInsightTestCase {
-
   public void testProblemDuplication() throws Exception {
     String shortName = new VisibilityInspection().getShortName();
     InspectionProfileImpl profile = new InspectionProfileImpl("Foo");
@@ -45,6 +45,7 @@ public class GlobalInspectionContextTest extends CodeInsightTestCase {
 
     AnalysisScope scope = new AnalysisScope(getFile());
     context.doInspections(scope);
+    UIUtil.dispatchAllInvocationEvents(); // wait for launchInspections in invoke later
 
     Tools tools = context.getTools().get(shortName);
     GlobalInspectionToolWrapper toolWrapper = (GlobalInspectionToolWrapper)tools.getTool();
@@ -52,6 +53,8 @@ public class GlobalInspectionContextTest extends CodeInsightTestCase {
     assertEquals(1, presentation.getProblemDescriptors().size());
 
     context.doInspections(scope);
+    UIUtil.dispatchAllInvocationEvents(); // wait for launchInspections in invoke later
+
     tools = context.getTools().get(shortName);
     toolWrapper = (GlobalInspectionToolWrapper)tools.getTool();
     presentation = context.getPresentation(toolWrapper);
@@ -84,6 +87,11 @@ public class GlobalInspectionContextTest extends CodeInsightTestCase {
   public void tearDown() throws Exception {
     InspectionProfileImpl.INIT_INSPECTIONS = false;
     super.tearDown();
+  }
+
+  @Override
+  protected boolean isRunInWriteAction() {
+    return false;
   }
 
   @Override
