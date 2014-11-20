@@ -824,7 +824,7 @@ public class PluginManagerCore {
 
   static void loadDescriptorsFromClassPath(@NotNull List<IdeaPluginDescriptorImpl> result, @Nullable StartupProgress progress) {
     Collection<URL> urls = getClassLoaderUrls();
-    String platformPrefix = System.getProperty(PlatformUtilsCore.PLATFORM_PREFIX_KEY);
+    String platformPrefix = System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY);
     int i = 0;
     for (URL url : urls) {
       i++;
@@ -1096,7 +1096,7 @@ public class PluginManagerCore {
     }
 
     final IdeaPluginDescriptor corePluginDescriptor = idToDescriptorMap.get(PluginId.getId(CORE_PLUGIN_ID));
-    assert corePluginDescriptor != null : CORE_PLUGIN_ID + " not found; platform prefix is " + System.getProperty(PlatformUtilsCore.PLATFORM_PREFIX_KEY);
+    assert corePluginDescriptor != null : CORE_PLUGIN_ID + " not found; platform prefix is " + System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY);
     for (IdeaPluginDescriptorImpl descriptor : result) {
       if (descriptor != corePluginDescriptor) {
         descriptor.insertDependency(corePluginDescriptor);
