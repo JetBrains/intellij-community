@@ -157,12 +157,13 @@ public class FileBasedStorage extends XmlElementStorage {
   public static class FileStorageData extends StorageData {
     String myFilePath;
 
-    public FileStorageData(final String rootElementName) {
+    public FileStorageData(@NotNull String rootElementName) {
       super(rootElementName);
     }
 
-    protected FileStorageData(FileStorageData storageData) {
+    protected FileStorageData(@NotNull FileStorageData storageData) {
       super(storageData);
+
       myFilePath = storageData.myFilePath;
     }
 

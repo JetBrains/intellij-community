@@ -51,7 +51,7 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
   protected static class BaseStorageData extends FileBasedStorage.FileStorageData {
     protected int myVersion;
 
-    public BaseStorageData(final String rootElementName) {
+    public BaseStorageData(@NotNull String rootElementName) {
       super(rootElementName);
     }
 
@@ -102,6 +102,7 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
     }
   }
 
+  @NotNull
   protected abstract XmlElementStorage getMainStorage();
 
   @Nullable
