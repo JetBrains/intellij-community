@@ -155,9 +155,8 @@ final class FilesDelta {
   }
 
   private boolean _addToRecompiled(BuildRootDescriptor root, Collection<File> filesToAdd) {
-    Set<File> files;
     synchronized (myFilesToRecompile) {
-      files = myFilesToRecompile.get(root);
+      Set<File> files = myFilesToRecompile.get(root);
       if (files == null) {
         files = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
         myFilesToRecompile.put(root, files);
