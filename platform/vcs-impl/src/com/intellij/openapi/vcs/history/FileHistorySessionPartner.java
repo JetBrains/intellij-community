@@ -162,6 +162,7 @@ public class FileHistorySessionPartner implements VcsAppendableHistorySessionPar
                 tabbedContent.removeContent(tab.second);
               }
             }
+            toolWindow.getContentManager().setSelectedContent(tabbedContent, true, true);
             tabbedContent.addContent(myFileHistoryPanel, fileName, true);
           }
         } else {
