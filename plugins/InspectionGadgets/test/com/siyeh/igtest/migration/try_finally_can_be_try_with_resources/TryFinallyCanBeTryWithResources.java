@@ -1,6 +1,5 @@
 package com.siyeh.igtest.migration.try_finally_can_be_try_with_resources;
 
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -13,7 +12,7 @@ class TryFinallyCanBeTryWithResources {
         return 0;
       }
     };
-    try {
+    <warning descr="'try' can use automatic resource management">try</warning> {
       stream.read();
     } finally {
       stream.close();
