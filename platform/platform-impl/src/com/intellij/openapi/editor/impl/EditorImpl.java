@@ -488,42 +488,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myEditorComponent = new EditorComponentImpl(this);
     myScrollPane = new MyScrollPane();
     myVerticalScrollBar = (MyScrollBar)myScrollPane.getVerticalScrollBar();
-    ((MyScrollBar)myScrollPane.getHorizontalScrollBar()).setPersistentUI(new ButtonlessScrollBarUI() {
-      @Override
-      public boolean alwaysShowTrack() {
-        return false;
-      }
-
-      @Override
-      protected boolean isDark() {
-        return isDarkEnough();
-      }
-
-      @Override
-      protected Color adjustColor(Color c) {
-        return isMacOverlayScrollbar() ? super.adjustColor(c) : adjustThumbColor(super.adjustColor(c), isDark());
-      }
-
-      @Override
-      protected void paintThumb(Graphics g, JComponent c, Rectangle thumbBounds) {
-        if (!isMacOverlayScrollbar()) {
-          int half = getThickness() / 2;
-          int shift = half - 1;
-          g.translate(0, shift);
-          super.paintThumb(g, c, thumbBounds);
-          g.translate(0, -shift);
-        }
-        else {
-          super.paintThumb(g, c, thumbBounds);
-        }
-      }
-
-      protected void paintMaxiThumb(Graphics2D g, Rectangle thumbBounds) {
-        int arc = 3;
-        g.setColor(adjustColor(getGradientDarkColor()));
-        g.fillRoundRect(2, 0, thumbBounds.width, thumbBounds.height, arc, arc);
-      }
-    });
     myPanel = new JPanel();
 
     UIUtil.putClientProperty(
@@ -5117,6 +5081,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @NotNull
   MyScrollBar getVerticalScrollBar() {
     return myVerticalScrollBar;
+  }
+  
+  @NotNull
+  MyScrollBar getHorizontalScrollBar() {
+    return (MyScrollBar)myScrollPane.getHorizontalScrollBar();
   }
 
   private int getMouseSelectionState() {
