@@ -29,6 +29,7 @@ import com.intellij.openapi.fileTypes.FileTypeEditorHighlighterProviders;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
+import com.intellij.openapi.ui.OnePixelDivider;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -36,6 +37,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.ui.AncestorListenerAdapter;
+import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBTabbedPane;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
@@ -246,6 +248,7 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
     else {
       // If settings are language-specific
       previewPanel.add(getEditor().getComponent(), BorderLayout.CENTER);
+      previewPanel.setBorder(new CustomLineBorder(OnePixelDivider.BACKGROUND, 0, 1, 0, 0));
       updatePreview(true);
     }
   }

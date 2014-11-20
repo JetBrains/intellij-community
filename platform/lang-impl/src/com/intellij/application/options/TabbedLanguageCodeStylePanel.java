@@ -31,10 +31,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.ui.JBMenuItem;
 import com.intellij.openapi.ui.JBPopupMenu;
+import com.intellij.openapi.ui.OnePixelDivider;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TabbedPaneWrapper;
+import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.util.containers.hash.HashSet;
 import com.intellij.util.ui.GraphicsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -396,6 +398,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
     protected void installPreviewPanel(JPanel previewPanel) {
       previewPanel.setLayout(new BorderLayout());
       previewPanel.add(getEditor().getComponent(), BorderLayout.CENTER);
+      previewPanel.setBorder(new CustomLineBorder(OnePixelDivider.BACKGROUND, 0, 1, 0, 0));
     }
 
     @Override
@@ -425,6 +428,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
     protected void installPreviewPanel(JPanel previewPanel) {
       previewPanel.setLayout(new BorderLayout());
       previewPanel.add(getEditor().getComponent(), BorderLayout.CENTER);
+      previewPanel.setBorder(new CustomLineBorder(OnePixelDivider.BACKGROUND, 0, 1, 0, 0));
     }
 
   }
@@ -445,6 +449,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
     protected void installPreviewPanel(JPanel previewPanel) {
       previewPanel.setLayout(new BorderLayout());
       previewPanel.add(getEditor().getComponent(), BorderLayout.CENTER);
+      previewPanel.setBorder(new CustomLineBorder(OnePixelDivider.BACKGROUND, 0, 1, 0, 0));
     }
   }
 
@@ -563,22 +568,20 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
 
     private final IndentOptionsEditor myEditor;
     private final LanguageCodeStyleSettingsProvider myProvider;
-    private final JPanel myTopPanel;
-    private final JPanel myLeftPanel;
+    private final JPanel myTopPanel = new JPanel(new BorderLayout());
+    private final JPanel myLeftPanel = new JPanel(new BorderLayout());
     private final JPanel myRightPanel;
 
     protected MyIndentOptionsWrapper(CodeStyleSettings settings, LanguageCodeStyleSettingsProvider provider, IndentOptionsEditor editor) {
       super(settings);
       myProvider = provider;
-      myTopPanel = new JPanel();
-      myTopPanel.setLayout(new BorderLayout(8, 0));
-      myLeftPanel = new JPanel(new BorderLayout());
       myTopPanel.add(myLeftPanel, BorderLayout.WEST);
       myRightPanel = new JPanel();
       installPreviewPanel(myRightPanel);
       myEditor = editor;
       if (myEditor != null) {
         JPanel panel = myEditor.createPanel();
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         JScrollPane scroll = ScrollPaneFactory.createScrollPane(panel, true);
         scroll.setPreferredSize(new Dimension(panel.getPreferredSize().width + scroll.getVerticalScrollBar().getPreferredSize().width + 5, -1));
         myLeftPanel.add(scroll, BorderLayout.CENTER);
