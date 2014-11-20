@@ -30,8 +30,6 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.messages.MessageBus;
 import gnu.trove.THashMap;
-import gnu.trove.TObjectLongHashMap;
-import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.MutablePicoContainer;
@@ -278,22 +276,6 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   }
 
   protected void beforeFileBasedStorageCreate() {
-  }
-
-  public static void loadComponentVersions(@NotNull TObjectLongHashMap<String> result, @NotNull Element element) {
-    List<Element> componentObjects = element.getChildren("component");
-    result.ensureCapacity(componentObjects.size());
-    for (Element component : componentObjects) {
-      String name = component.getAttributeValue("name");
-      String version = component.getAttributeValue("version");
-      if (name != null && version != null) {
-        try {
-          result.put(name, Long.parseLong(version));
-        }
-        catch (NumberFormatException ignored) {
-        }
-      }
-    }
   }
 
   @Nullable
