@@ -1781,7 +1781,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       repaintLines(startLine, endLine);
     }
 
-    restoreCaretRelativePosition();
+    if (getCaretModel().getOffset() < e.getOffset() || getCaretModel().getOffset() > e.getOffset() + e.getNewLength()){
+      restoreCaretRelativePosition();
+    }
   }
 
   private void saveCaretRelativePosition() {
