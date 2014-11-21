@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -316,5 +317,25 @@ public class MiscPsiTest extends LightCodeInsightFixtureTestCase {
 
     assertTrue(file.getText(), file.getText().contains("foo() {\n"));
 
+  }
+
+  public void testPsiModificationNotAffectingDocument() {
+    final PsiJavaFile file = (PsiJavaFile)myFixture.addFileToProject("a.java", "class A{public static void foo() { }}");
+
+    PsiClass aClass = file.getClasses()[0];
+    //noinspection ResultOfMethodCallIgnored
+    aClass.getNode();
+    PlatformTestUtil.tryGcSoftlyReachableObjects();
+
+    PsiKeyword kw = assertInstanceOf(aClass.getMethods()[0].getModifierList().getFirstChild(), PsiKeyword.class);
+    kw.delete();
+
+    Document document = PsiDocumentManager.getInstance(getProject()).getDocument(file);
+    assertNotNull(document);
+    assertTrue(document.getModificationStamp() != file.getVirtualFile().getModificationStamp());
+    assertEquals(document.getModificationStamp(), file.getViewProvider().getModificationStamp());
+    FileDocumentManager.getInstance().saveDocument(document);
+
+    assertEquals(file.getText(), LoadTextUtil.loadText(file.getVirtualFile()).toString());
   }
 }

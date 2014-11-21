@@ -548,7 +548,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
 
     @Override
     public long getModificationStamp() {
-      Document document = com.intellij.reference.SoftReference.dereference(myDocument);
+      Document document = getCachedDocument();
       if (document != null) return getLastCommittedStamp(document);
       return myVirtualFile.getModificationStamp();
     }
