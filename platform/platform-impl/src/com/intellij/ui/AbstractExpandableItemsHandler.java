@@ -346,7 +346,8 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
 
     SwingUtilities.convertPointToScreen(location, myComponent);
     myPopup = new OurHeavyWeightPopup(myComponent, myTipComponent, location.x, location.y);
-    WindowManagerEx.getInstanceEx().setWindowShadow(SwingUtilities.getWindowAncestor(myTipComponent), WindowManagerEx.WindowShadowMode.DISABLED);
+    WindowManagerEx.getInstanceEx().setWindowShadow(SwingUtilities.getWindowAncestor(myTipComponent),
+                                                    WindowManagerEx.WindowShadowMode.DISABLED);
     myPopup.show();
 
     repaintKeyItem();
@@ -376,7 +377,11 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     if (!(renderer instanceof JComponent)) return null;
 
     myKeyItemBounds = rendererAndBounds.second;
-    myKeyItemBounds.width = Math.min(myKeyItemBounds.width, myComponent.getToolkit().getScreenSize().width);
+
+    Point toolTipLocationOnScreen = myKeyItemBounds.getLocation();
+    SwingUtilities.convertPointToScreen(toolTipLocationOnScreen, myComponent);
+    int maximumWidth = Math.max(0, myComponent.getToolkit().getScreenSize().width - toolTipLocationOnScreen.x);
+    myKeyItemBounds.width = Math.min(myKeyItemBounds.width, maximumWidth);
 
     Rectangle cellBounds = myKeyItemBounds;
     Rectangle visibleRect = getVisibleRect(key);
