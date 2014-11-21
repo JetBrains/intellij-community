@@ -195,23 +195,24 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
         }
       }
     });
-    replaceDuplicate(project, duplicates, members);
-    if (!silent) {
-      final Runnable nothingFoundRunnable = new Runnable() {
-        @Override
-        public void run() {
-          if (duplicates.isEmpty()) {
+    if (duplicates.isEmpty()) {
+      if (!silent) {
+        final Runnable nothingFoundRunnable = new Runnable() {
+          @Override
+          public void run() {
             final String message = RefactoringBundle.message("idea.has.not.found.any.code.that.can.be.replaced.with.method.call",
                                                              ApplicationNamesInfo.getInstance().getProductName());
             Messages.showInfoMessage(project, message, REFACTORING_NAME);
           }
+        };
+        if (ApplicationManager.getApplication().isUnitTestMode()) {
+          nothingFoundRunnable.run();
+        } else {
+          ApplicationManager.getApplication().invokeLater(nothingFoundRunnable, ModalityState.NON_MODAL);
         }
-      };
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        nothingFoundRunnable.run();
-      } else {
-        ApplicationManager.getApplication().invokeLater(nothingFoundRunnable, ModalityState.NON_MODAL);
       }
+    } else {
+      replaceDuplicate(project, duplicates, members);
     }
   }
 

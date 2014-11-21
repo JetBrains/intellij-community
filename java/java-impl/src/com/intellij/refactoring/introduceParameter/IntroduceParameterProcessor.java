@@ -15,9 +15,13 @@
  */
 package com.intellij.refactoring.introduceParameter;
 
+import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -34,6 +38,7 @@ import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.refactoring.util.*;
+import com.intellij.refactoring.util.duplicates.MethodDuplicatesHandler;
 import com.intellij.refactoring.util.occurrences.ExpressionOccurrenceManager;
 import com.intellij.refactoring.util.occurrences.LocalVariableOccurrenceManager;
 import com.intellij.refactoring.util.occurrences.OccurrenceManager;
@@ -51,6 +56,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -436,6 +442,35 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
     catch (IncorrectOperationException ex) {
       LOG.error(ex);
     }
+
+    if (isReplaceDuplicates()) {
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          processMethodsDuplicates();
+        }
+      }, ModalityState.NON_MODAL, myProject.getDisposed());
+    }
+  }
+
+  protected boolean isReplaceDuplicates() {
+    return true;
+  }
+
+  private void processMethodsDuplicates() {
+    final Runnable runnable = new Runnable() {
+      public void run() {
+        if (!myMethodToReplaceIn.isValid()) return;
+        MethodDuplicatesHandler.invokeOnScope(myProject, Collections.singleton(myMethodToReplaceIn),
+                                              new AnalysisScope(myMethodToReplaceIn.getContainingFile()), true);
+      }
+    };
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+      @Override
+      public void run() {
+        ApplicationManager.getApplication().runReadAction(runnable);
+      }
+    }, "Search method duplicates...", true, myProject);
   }
 
   private PsiMethod generateDelegate(final PsiMethod methodToReplaceIn) throws IncorrectOperationException {

@@ -338,7 +338,13 @@ public class IntroduceParameterTest extends LightRefactoringTestCase  {
 
   public void testEnclosingWithParamDeletion() {
     configureByFile("/refactoring/introduceParameter/before" + getTestName(false) + ".java");
-    perform(true, 0, "anObject", false, true, true, false, 1);
+    perform(true, 0, "anObject", false, true, true, false, 1, false);
+    checkResultByFile("/refactoring/introduceParameter/after" + getTestName(false) + ".java");
+  }
+
+  public void testCodeDuplicates() {
+    configureByFile("/refactoring/introduceParameter/before" + getTestName(false) + ".java");
+    perform(true, 0, "anObject", false, true, true, false, 0, true);
     checkResultByFile("/refactoring/introduceParameter/after" + getTestName(false) + ".java");
   }
 
@@ -390,7 +396,7 @@ public class IntroduceParameterTest extends LightRefactoringTestCase  {
                                  boolean generateDelegate) {
     return perform(
       replaceAllOccurrences, replaceFieldsWithGetters, parameterName, searchForSuper, declareFinal,
-      removeUnusedParameters, generateDelegate, 0
+      removeUnusedParameters, generateDelegate, 0, false
     );
   }
 
@@ -401,7 +407,8 @@ public class IntroduceParameterTest extends LightRefactoringTestCase  {
                                  boolean declareFinal,
                                  boolean removeUnusedParameters,
                                  boolean generateDelegate,
-                                 int enclosingLevel) {
+                                 int enclosingLevel,
+                                 final boolean replaceDuplicates) {
     final ElementToWorkOn[] elementToWorkOn = new ElementToWorkOn[1];
     ElementToWorkOn.processElementToWorkOn(myEditor, myFile, "INtr param", HelpID.INTRODUCE_PARAMETER, getProject(),
                                            new ElementToWorkOn.ElementsProcessor<ElementToWorkOn>() {
@@ -452,7 +459,12 @@ public class IntroduceParameterTest extends LightRefactoringTestCase  {
     new IntroduceParameterProcessor(
       getProject(), method, methodToSearchFor, initializer, expr, localVar, true, parameterName, replaceAllOccurrences,
       replaceFieldsWithGetters, declareFinal, generateDelegate, null, parametersToRemove
-    ).run();
+    ){
+      @Override
+      protected boolean isReplaceDuplicates() {
+        return replaceDuplicates;
+      }
+    }.run();
 
     myEditor.getSelectionModel().removeSelection();
     return true;
