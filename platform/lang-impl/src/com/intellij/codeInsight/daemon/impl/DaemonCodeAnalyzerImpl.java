@@ -749,8 +749,9 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
         documentManager.cancelAndRunWhenAllCommitted("restart daemon when all committed", this);
         return;
       }
-      RefResolveService resolveService = RefResolveService.getInstance(myProject);
-      if (!resolveService.isUpToDate() && resolveService.getQueueSize() == 1) {
+      if (RefResolveService.ENABLED &&
+          !RefResolveService.getInstance(myProject).isUpToDate() &&
+          RefResolveService.getInstance(myProject).getQueueSize() == 1) {
         return; // if the user have just typed in something, wait until the file is re-resolved
         // (or else it will blink like crazy since unused symbols calculation depends on resolve service)
       }
