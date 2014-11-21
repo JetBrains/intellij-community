@@ -147,13 +147,13 @@ public class PullUpProcessor extends BaseRefactoringProcessor implements PullUpD
   }
 
   private void processMethodsDuplicates() {
-    if (!myTargetSuperClass.isValid()) return;
     ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       @Override
       public void run() {
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           @Override
           public void run() {
+            if (!myTargetSuperClass.isValid()) return;
             final Query<PsiClass> search = ClassInheritorsSearch.search(myTargetSuperClass);
             final Set<VirtualFile> hierarchyFiles = new HashSet<VirtualFile>();
             for (PsiClass aClass : search) {
