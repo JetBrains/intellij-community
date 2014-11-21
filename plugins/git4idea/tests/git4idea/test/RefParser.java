@@ -1,4 +1,4 @@
-package git4idea.log;
+package git4idea.test;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.Hash;
@@ -7,6 +7,7 @@ import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.VcsRefType;
 import com.intellij.vcs.log.impl.HashImpl;
 import git4idea.branch.GitBranchUtil;
+import git4idea.log.GitRefManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

@@ -18,10 +18,14 @@ package git4idea.test;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.VcsLogObjectsFactory;
+import com.intellij.vcs.log.VcsRef;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.config.GitVersion;
@@ -31,6 +35,7 @@ import org.jetbrains.ide.BuiltInServerManagerImpl;
 import org.picocontainer.MutablePicoContainer;
 
 import java.io.File;
+import java.util.Set;
 
 import static com.intellij.openapi.vcs.Executor.*;
 import static git4idea.test.GitExecutor.git;
@@ -139,5 +144,15 @@ public class GitTestUtil {
     picoContainer.unregisterComponent(key);
     picoContainer.registerComponentImplementation(key, serviceImplementation);
     return (T) ServiceManager.getService(serviceInterface);
+  }
+
+  @NotNull
+  public static Set<VcsRef> readAllRefs(@NotNull VirtualFile root, @NotNull VcsLogObjectsFactory objectsFactory) {
+    String[] refs = StringUtil.splitByLines(git("log --branches --tags --no-walk --format=%H%d --decorate=full"));
+    Set<VcsRef> result = ContainerUtil.newHashSet();
+    for (String ref : refs) {
+      result.addAll(new RefParser(objectsFactory).parseCommitRefs(ref, root));
+    }
+    return result;
   }
 }
