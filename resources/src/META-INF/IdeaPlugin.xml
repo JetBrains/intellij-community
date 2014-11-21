@@ -33,10 +33,6 @@
 
   <project-components>
     <component>
-      <implementation-class>com.intellij.codeInsight.daemon.impl.PostHighlightingPassFactory</implementation-class>
-    </component>
-
-    <component>
       <implementation-class>com.intellij.compiler.classFilesIndex.api.index.ClassFilesIndexFeaturesHolder</implementation-class>
     </component>
 

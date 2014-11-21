@@ -45,6 +45,7 @@ public class HighlightingSessionImpl implements HighlightingSession {
   @NotNull private final Project myProject;
   private final Document myDocument;
   private final Map<TextRange,RangeMarker> myRanges2markersCache = new THashMap<TextRange, RangeMarker>();
+  private volatile boolean myDisposed;
 
   public HighlightingSessionImpl(@NotNull PsiFile psiFile,
                                  @Nullable Editor editor,
@@ -138,5 +139,10 @@ public class HighlightingSessionImpl implements HighlightingSession {
   void queueDisposeHighlighter(RangeHighlighterEx highlighter) {
     if (highlighter == null) return;
     myDisposeHighlighterInEDTQueue.offer(highlighter);
+  }
+
+  @Override
+  public void dispose() {
+    myDisposed = true;
   }
 }

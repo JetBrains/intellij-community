@@ -15,10 +15,7 @@
  */
 package com.intellij.testFramework;
 
-import com.intellij.codeHighlighting.TextEditorHighlightingPass;
-import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory;
 import com.intellij.ide.DataManager;
-import com.intellij.mock.MockProgressIndicator;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -34,13 +31,10 @@ import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapPainter;
 import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapApplianceManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -439,20 +433,6 @@ public class EditorTestUtil {
       }
     });
     return ref.get();
-  }
-
-  public static <T extends TextEditorHighlightingPassFactory> void runTextEditorHighlightingPass(@NotNull Editor editor, @NotNull Class<T> passFactory) {
-    Project project = editor.getProject();
-    assertNotNull(project);
-    PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
-    PsiFile psiFile = psiDocumentManager.getPsiFile(editor.getDocument());
-    assertNotNull(psiFile);
-
-    T factory = project.getComponent(passFactory);
-    TextEditorHighlightingPass pass = factory.createHighlightingPass(psiFile, editor);
-    assertNotNull(pass);
-    pass.collectInformation(new MockProgressIndicator());
-    pass.applyInformationToEditor();
   }
 
   public static class CaretAndSelectionState {

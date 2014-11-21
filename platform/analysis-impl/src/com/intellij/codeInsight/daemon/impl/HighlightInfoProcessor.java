@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,11 +25,11 @@ public abstract class HighlightInfoProcessor {
   public void highlightsInsideVisiblePartAreProduced(@NotNull HighlightingSession highlightingSession,
                                                      @NotNull List<HighlightInfo> infos,
                                                      @NotNull TextRange priorityRange,
-                                                     @NotNull TextRange restrictRange) {}
+                                                     @NotNull TextRange restrictRange, int groupId) {}
   public void highlightsOutsideVisiblePartAreProduced(@NotNull HighlightingSession highlightingSession,
                                                       @NotNull List<HighlightInfo> infos,
                                                       @NotNull TextRange priorityRange,
-                                                      @NotNull TextRange restrictedRange) {}
+                                                      @NotNull TextRange restrictedRange, int groupId) {}
 
   public void infoIsAvailable(@NotNull HighlightingSession highlightingSession, @NotNull HighlightInfo info) {}
   public void allHighlightsForRangeAreProduced(@NotNull HighlightingSession highlightingSession,
