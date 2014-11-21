@@ -125,29 +125,23 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
       super.load(rootElement, pathMacroSubstitutor, intern);
 
       for (Attribute attribute : rootElement.getAttributes()) {
-        myOptions.put(attribute.getName(), attribute.getValue());
+        if (!attribute.getName().equals(VERSION_OPTION)) {
+          myOptions.put(attribute.getName(), attribute.getValue());
+        }
       }
     }
 
     @Override
-    @NotNull
-    protected Element save(@NotNull Map<String, Element> newLiveStates) {
-      Element root = super.save(newLiveStates);
-      String versionString = Integer.toString(myVersion);
+    protected void writeOptions(@NotNull Element root, @NotNull String versionString) {
       if (!myOptions.isEmpty()) {
         for (Map.Entry<String, String> entry : myOptions.entrySet()) {
-          if (!entry.getKey().equals(VERSION_OPTION)) {
-            root.setAttribute(entry.getKey(), entry.getValue());
-          }
+          root.setAttribute(entry.getKey(), entry.getValue());
         }
       }
-      myOptions.put(VERSION_OPTION, versionString);
-
       // need be last for compat reasons
-      root.setAttribute(VERSION_OPTION, versionString);
+      super.writeOptions(root, versionString);
 
       dirty = false;
-      return root;
     }
 
     @Override
