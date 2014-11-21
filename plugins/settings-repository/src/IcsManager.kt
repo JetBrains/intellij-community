@@ -44,6 +44,8 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.vcs.VcsNotifier
 import java.util.concurrent.Future
 import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.util.ShutDownTracker
 
 val PLUGIN_NAME: String = "Settings Repository"
 
@@ -64,7 +66,7 @@ private fun getPathToBundledFile(filename: String): String {
     // running from sources
     pluginsDirectory = PathManager.getHomePath()
   }
-  return FileUtil.toSystemDependentName(pluginsDirectory + folder + "/lib/" + filename)
+  return FileUtilRt.toSystemDependentName(pluginsDirectory + folder + "/lib/" + filename)
 }
 
 fun getPluginSystemDir(): File {
@@ -336,6 +338,10 @@ public class IcsManager : ApplicationLoadListener {
           })
         }
       }
+
+      override fun afterProjectClosed(project: Project) {
+        autoSync()
+      }
     })
   }
 
@@ -356,31 +362,40 @@ public class IcsManager : ApplicationLoadListener {
           // should be first - could take time, so, may be, during this time something will be saved/committed
           val updater = repositoryManager.fetch()
 
-          cancelAndDisableAutoCommit()
-          // we merge in EDT non-modal to ensure that new settings will be properly applied
-          app.invokeAndWait({
+          if (!(app.isDisposed() || app.isDisposeInProgress())) {
+            cancelAndDisableAutoCommit()
+            // to ensure that repository will not be in uncompleted state and changes will be pushed
+            ShutDownTracker.getInstance().registerStopperThread(Thread.currentThread())
             try {
-              val updateResult = updater.merge()
-              if (updateResult != null && updateStoragesFromStreamProvider(app.getStateStore(), updateResult)) {
-                // force to avoid saveAll & confirmation
-                app.exit(true, true, true, true)
-              }
-            }
-            catch (e: Throwable) {
-              if (e is AuthenticationException || e is NoRemoteRepositoryException) {
-                LOG.warn(e)
-              }
-              else {
-                LOG.error(e)
+              // we merge in EDT non-modal to ensure that new settings will be properly applied
+              app.invokeAndWait({
+                if (!(app.isDisposed() || app.isDisposeInProgress())) {
+                  try {
+                    val updateResult = updater.merge()
+                    if (updateResult != null && updateStoragesFromStreamProvider(app.getStateStore(), updateResult)) {
+                      // force to avoid saveAll & confirmation
+                      app.exit(true, true, true, true)
+                    }
+                  }
+                  catch (e: Throwable) {
+                    if (e is AuthenticationException || e is NoRemoteRepositoryException) {
+                      LOG.warn(e)
+                    }
+                    else {
+                      LOG.error(e)
+                    }
+                  }
+                }
+              }, ModalityState.NON_MODAL)
+
+              if (!updater.definitelySkipPush) {
+                repositoryManager.push()
               }
             }
             finally {
               autoCommitEnabled = true
+              ShutDownTracker.getInstance().unregisterStopperThread(Thread.currentThread())
             }
-          }, ModalityState.NON_MODAL)
-
-          if (!updater.definitelySkipPush) {
-            repositoryManager.push()
           }
         }
         catch (e: ProcessCanceledException) {
