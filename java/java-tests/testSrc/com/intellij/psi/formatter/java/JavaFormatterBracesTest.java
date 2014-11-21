@@ -317,4 +317,16 @@ public class JavaFormatterBracesTest extends AbstractJavaFormatterTest {
       "}\n"
     );
   }
+
+  public void testConstructorLeftBraceWithEndLineComment() {
+    getSettings().METHOD_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_IF_WRAPPED;
+    doClassTest(
+      "// comment\n" +
+      "  public Test() {\n" +
+      "}\n",
+      "// comment\n" +
+      "public Test() {\n" +
+      "}\n"
+    );
+  }
 }
