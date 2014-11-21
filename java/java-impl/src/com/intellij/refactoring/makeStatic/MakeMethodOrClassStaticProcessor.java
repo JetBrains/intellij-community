@@ -111,7 +111,7 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
         refUsages.set(filterInternalUsages(usagesIn));
       }
     }
-    final ArrayList<UsageInfo> toMakeStatic = new ArrayList<>();
+    final ArrayList<UsageInfo> toMakeStatic = new ArrayList<UsageInfo>();
     refUsages.set(filterOverriding(usagesIn, toMakeStatic));
     if (!findAdditionalMembers(toMakeStatic)) return false;
     prepareSuccessful();
