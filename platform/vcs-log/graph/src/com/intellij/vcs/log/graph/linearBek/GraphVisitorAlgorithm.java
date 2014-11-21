@@ -43,7 +43,7 @@ public class GraphVisitorAlgorithm {
     this(false);
   }
 
-  public void visitGraph(@NotNull final LinearGraph graph, @NotNull GraphLayout layout, @NotNull final GraphVisitor visitor) {
+  public void visitGraph(@NotNull final LinearGraph graph, @NotNull GraphLayout layout, @NotNull GraphVisitor visitor) {
     final BitSetFlags visited = new BitSetFlags(graph.nodesCount(), false);
     for (int head : layout.getHeadNodeIndex()) {
       IntStack stack = new IntStack();
@@ -76,7 +76,7 @@ public class GraphVisitorAlgorithm {
     }
   }
 
-  public void visitSubgraph(@NotNull final LinearGraph graph, @NotNull final GraphVisitor visitor, int start, int depth) {
+  public void visitSubgraph(@NotNull final LinearGraph graph, @NotNull GraphVisitor visitor, int start, int depth) {
     final BitSetFlags visited = new BitSetFlags(graph.nodesCount(), false);
 
     IntStack stack = new IntStack();
