@@ -129,6 +129,8 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
           myOptions.put(attribute.getName(), attribute.getValue());
         }
       }
+
+      dirty = false;
     }
 
     @Override
