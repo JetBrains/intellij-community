@@ -117,6 +117,7 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
       super(storageData);
 
       myModule = storageData.myModule;
+      dirty = storageData.dirty;
       myOptions = new TreeMap<String, String>(storageData.myOptions);
     }
 
