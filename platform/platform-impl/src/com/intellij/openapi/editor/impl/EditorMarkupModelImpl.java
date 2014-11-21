@@ -681,7 +681,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
 
     private void paintTrackBasement(@NotNull Graphics g, @NotNull Rectangle bounds) {
-      if (transparent()) return;
+      //if (transparent()) return;
       g.setColor(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
       g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
     }
