@@ -1857,7 +1857,6 @@ public class Mappings {
               myAffectedFiles.add(srcFile);
               return; // do not process this file because it should not be integrated
             }
-            break;
           }
         }
       }
