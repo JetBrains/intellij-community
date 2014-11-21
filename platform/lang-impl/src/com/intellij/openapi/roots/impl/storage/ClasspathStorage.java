@@ -150,7 +150,7 @@ public class ClasspathStorage implements StateStorage {
         return provider;
       }
     }
-    return new UnsupportedStorageProvider(type);
+    throw new RuntimeException("Cannot find provider for " + type);
   }
 
   @NotNull
@@ -246,71 +246,6 @@ public class ClasspathStorage implements StateStorage {
 
     @Override
     public void modulePathChanged(Module module, String path) {
-    }
-  }
-
-  public static class UnsupportedStorageProvider implements ClasspathStorageProvider {
-    private final String myType;
-
-    public UnsupportedStorageProvider(final String type) {
-      myType = type;
-    }
-
-    @Override
-    @NonNls
-    public String getID() {
-      return myType;
-    }
-
-    @Override
-    @Nls
-    public String getDescription() {
-      return "Unsupported classpath format " + myType;
-    }
-
-    @Override
-    public void assertCompatible(final ModuleRootModel model) throws ConfigurationException {
-      throw new UnsupportedOperationException(getDescription());
-    }
-
-    @Override
-    public void detach(final Module module) {
-      throw new UnsupportedOperationException(getDescription());
-    }
-
-    @Override
-    public void moduleRenamed(Module module, String newName) {
-      throw new UnsupportedOperationException(getDescription());
-    }
-
-    @Override
-    public ClasspathConverter createConverter(final Module module) {
-      return new ClasspathConverter() {
-        @Override
-        public FileSet getFileSet() {
-          throw new StateStorageException(getDescription());
-        }
-
-        @Override
-        public Set<String> getClasspath(final ModifiableRootModel model, final Element element) throws InvalidDataException {
-          throw new InvalidDataException(getDescription());
-        }
-
-        @Override
-        public void setClasspath(ModuleRootModel model) throws WriteExternalException {
-          throw new WriteExternalException(getDescription());
-        }
-      };
-    }
-
-    @Override
-    public String getContentRoot(ModuleRootModel model) {
-      return null;
-    }
-
-    @Override
-    public void modulePathChanged(Module module, String path) {
-      throw new UnsupportedOperationException(getDescription());
     }
   }
 

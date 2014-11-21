@@ -89,8 +89,7 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
   public void canApply() throws ConfigurationException {
     super.canApply();
     if (myClasspathFormatPanel != null) {
-      final String storageID = myClasspathFormatPanel.getSelectedClasspathFormat();
-      ClasspathStorage.getProvider(storageID).assertCompatible(getModel());
+      ClasspathStorage.getProvider(myClasspathFormatPanel.getSelectedClasspathFormat()).assertCompatible(getModel());
     }
   }
 
