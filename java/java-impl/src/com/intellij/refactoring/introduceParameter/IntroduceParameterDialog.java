@@ -100,6 +100,7 @@ public class IntroduceParameterDialog extends RefactoringDialog {
     myTypeSelectorManager = typeSelectorManager;
     setTitle(REFACTORING_NAME);
     init();
+    myPanel.updateTypeSelector();
   }
 
   protected void dispose() {

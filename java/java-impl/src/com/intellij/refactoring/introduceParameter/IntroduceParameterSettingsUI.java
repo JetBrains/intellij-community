@@ -198,6 +198,15 @@ public abstract class IntroduceParameterSettingsUI {
     }
   }
 
+  protected void updateTypeSelector() {
+    if (myCbReplaceAllOccurences != null) {
+      getTypeSelectionManager().setAllOccurrences(myCbReplaceAllOccurences.isSelected());
+    }
+    else {
+      getTypeSelectionManager().setAllOccurrences(myIsInvokedOnDeclaration);
+    }
+  }
+  
   protected abstract TypeSelectorManager getTypeSelectionManager();
 
   protected void createRemoveParamsPanel(GridBagConstraints gbConstraints, JPanel panel) {
