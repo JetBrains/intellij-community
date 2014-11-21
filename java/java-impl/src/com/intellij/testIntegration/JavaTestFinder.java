@@ -47,7 +47,7 @@ public class JavaTestFinder implements TestFinder {
     PsiClass klass = findSourceElement(element);
     if (klass == null) return Collections.emptySet();
 
-    GlobalSearchScope scope = getSearchScope(element);
+    GlobalSearchScope scope = getSearchScope(element, true);
 
     PsiShortNamesCache cache = PsiShortNamesCache.getInstance(element.getProject());
 
@@ -63,10 +63,21 @@ public class JavaTestFinder implements TestFinder {
     return TestFinderHelper.getSortedElements(classesWithWeights, false);
   }
 
+  /**
+   * @deprecated {@link JavaTestFinder#getSearchScope(com.intellij.psi.PsiElement, boolean)}
+   */
   protected GlobalSearchScope getSearchScope(PsiElement element) {
+    return getSearchScope(element, true);
+  }
+
+  protected GlobalSearchScope getSearchScope(PsiElement element, boolean dependencies) {
+    if (dependencies) {
+      return getSearchScope(element);
+    }
     final Module module = getModule(element);
     if (module != null) {
-      return GlobalSearchScope.moduleWithDependenciesScope(module);
+      return dependencies ? GlobalSearchScope.moduleWithDependenciesScope(module) 
+                          : GlobalSearchScope.moduleWithDependentsScope(module);
     }
     else {
       return GlobalSearchScope.projectScope(element.getProject());
@@ -94,7 +105,7 @@ public class JavaTestFinder implements TestFinder {
   }
 
   private boolean collectTests(PsiClass klass, Processor<Pair<? extends PsiNamedElement, Integer>> processor) {
-    GlobalSearchScope scope = getSearchScope(klass);
+    GlobalSearchScope scope = getSearchScope(klass, false);
 
     PsiShortNamesCache cache = PsiShortNamesCache.getInstance(klass.getProject());
 
