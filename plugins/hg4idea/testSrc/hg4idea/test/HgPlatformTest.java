@@ -128,7 +128,7 @@ public abstract class HgPlatformTest extends UsefulTestCase {
     initRepo(root.getPath());
   }
 
-  private static void initRepo(String repoRoot) {
+  public static void initRepo(String repoRoot) {
     cd(repoRoot);
     hg("init");
     touch("file.txt");

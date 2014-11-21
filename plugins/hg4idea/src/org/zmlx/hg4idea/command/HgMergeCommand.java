@@ -93,10 +93,17 @@ public class HgMergeCommand {
   }
 
   public static void mergeWith(@NotNull final HgRepository repository,
-                               @NotNull String branchName,
+                               @NotNull final String branchName,
                                @NotNull final UpdatedFiles updatedFiles) {
+    mergeWith(repository, branchName, updatedFiles, null);
+  }
+
+  public static void mergeWith(@NotNull final HgRepository repository,
+                               @NotNull final String branchName,
+                               @NotNull final UpdatedFiles updatedFiles, @Nullable final Runnable onSuccessHandler) {
     final Project project = repository.getProject();
-    final HgMergeCommand hgMergeCommand = new HgMergeCommand(project, repository.getRoot());
+    final VirtualFile repositoryRoot = repository.getRoot();
+    final HgMergeCommand hgMergeCommand = new HgMergeCommand(project, repositoryRoot);
     hgMergeCommand.setRevision(branchName);//there is no difference between branch or revision or bookmark as parameter to merge,
     // we need just a string
     new Task.Backgroundable(project, "Merging changes...") {
@@ -104,7 +111,10 @@ public class HgMergeCommand {
       public void run(@NotNull ProgressIndicator indicator) {
         try {
           hgMergeCommand.merge();
-          new HgConflictResolver(project, updatedFiles).resolve(repository.getRoot());
+          new HgConflictResolver(project, updatedFiles).resolve(repositoryRoot);
+          if (HgConflictResolver.findConflicts(project, repositoryRoot).isEmpty() && onSuccessHandler != null) {
+            onSuccessHandler.run();    // for example commit changes
+          }
         }
         catch (VcsException exception) {
           if (exception.isWarning()) {

@@ -454,7 +454,7 @@ public abstract class HgUtil {
   }
 
   public static void executeOnPooledThreadIfNeeded(Runnable runnable) {
-    if (EventQueue.isDispatchThread()) {
+    if (EventQueue.isDispatchThread() && !ApplicationManager.getApplication().isUnitTestMode()) {
       ApplicationManager.getApplication().executeOnPooledThread(runnable);
     } else {
       runnable.run();

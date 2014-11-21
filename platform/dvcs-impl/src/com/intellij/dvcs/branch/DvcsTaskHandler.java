@@ -185,7 +185,7 @@ public abstract class DvcsTaskHandler<R extends Repository> extends VcsTaskHandl
     });
   }
 
-  protected abstract void checkout(String taskName, List<R> repos, @Nullable Runnable callInAwtLater);
+  protected abstract void checkout(@NotNull String taskName, @NotNull List<R> repos, @Nullable Runnable callInAwtLater);
 
   protected abstract void checkoutAsNewBranch(@NotNull String name, @NotNull List<R> repositories);
 
