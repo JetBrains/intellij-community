@@ -753,8 +753,18 @@ public class PsiImplUtil {
       }
     }
 
+    return multiResolveImpl(manager.getProject(), psiFile, element, incompleteCode, resolver);
+  }
+
+  public static <T extends PsiJavaCodeReferenceElement> JavaResolveResult[] multiResolveImpl(
+    Project project,
+    PsiFile psiFile,
+    T element,
+    boolean incompleteCode,
+    ResolveCache.PolyVariantContextResolver<? super T> resolver) {
+
     ResolveResult[] results =
-      ResolveCache.getInstance(manager.getProject()).resolveWithCaching(element, resolver, true, incompleteCode, psiFile);
+      ResolveCache.getInstance(project).resolveWithCaching(element, resolver, true, incompleteCode, psiFile);
     return results.length == 0 ? JavaResolveResult.EMPTY_ARRAY : (JavaResolveResult[])results;
   }
 }
