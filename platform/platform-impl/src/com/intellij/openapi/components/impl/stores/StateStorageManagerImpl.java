@@ -375,10 +375,14 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
       }
 
       List<SaveSession> saveSessions = null;
-      for (StateStorage.ExternalizationSession session : mySessions.values()) {
+      Collection<StateStorage.ExternalizationSession> externalizationSessions = mySessions.values();
+      for (StateStorage.ExternalizationSession session : externalizationSessions) {
         SaveSession saveSession = session.createSaveSession();
         if (saveSession != null) {
           if (saveSessions == null) {
+            if (externalizationSessions.size() == 1) {
+              return saveSession;
+            }
             saveSessions = new SmartList<SaveSession>();
           }
           saveSessions.add(saveSession);
