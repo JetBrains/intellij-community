@@ -125,6 +125,9 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
         if (PyImportStatementNavigator.getImportStatementByElement(element) != null) {
           continue;
         }
+        if (PyAugAssignmentStatementNavigator.getStatementByTarget(element) != null) {
+          continue;
+        }
         if (!myUsedElements.contains(element)) {
           myUnusedElements.add(element);
         }
