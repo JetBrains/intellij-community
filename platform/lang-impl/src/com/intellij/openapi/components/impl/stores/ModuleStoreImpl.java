@@ -92,7 +92,7 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
   }
 
   @Override
-  public ModuleFileData getMainStorageData() throws StateStorageException {
+  public ModuleFileData getMainStorageData() {
     return (ModuleFileData)super.getMainStorageData();
   }
 
@@ -100,11 +100,17 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
     private final Map<String, String> myOptions;
     private final Module myModule;
 
+    private boolean dirty = true;
+
     public ModuleFileData(@NotNull String rootElementName, @NotNull Module module) {
       super(rootElementName);
 
       myModule = module;
       myOptions = new TreeMap<String, String>();
+    }
+
+    public boolean isDirty() {
+      return dirty;
     }
 
     private ModuleFileData(@NotNull ModuleFileData storageData) {
@@ -140,6 +146,7 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
       // need be last for compat reasons
       root.setAttribute(VERSION_OPTION, versionString);
 
+      dirty = false;
       return root;
     }
 
@@ -158,15 +165,20 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
       return super.getChangedComponentNames(newStorageData, substitutor);
     }
 
-    public void setOption(final String optionName, final String optionValue) {
-      myOptions.put(optionName, optionValue);
+    public void setOption(@NotNull String optionName, @NotNull String optionValue) {
+      if (!optionValue.equals(myOptions.put(optionName, optionValue))) {
+        dirty = true;
+      }
     }
 
-    public void clearOption(final String optionName) {
-      myOptions.remove(optionName);
+    public void clearOption(@NotNull String optionName) {
+      if (myOptions.remove(optionName) != null) {
+        dirty = true;
+      }
     }
 
-    public String getOptionValue(final String optionName) {
+    @Nullable
+    public String getOptionValue(@NotNull String optionName) {
       return myOptions.get(optionName);
     }
   }
@@ -199,7 +211,7 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
   }
 
   @Override
-  public void setOption(final String optionName, final String optionValue) {
+  public void setOption(@NotNull String optionName, @NotNull String optionValue) {
     try {
       getMainStorageData().setOption(optionName,  optionValue);
     }
@@ -209,7 +221,7 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
   }
 
   @Override
-  public void clearOption(final String optionName) {
+  public void clearOption(@NotNull String optionName) {
     try {
       getMainStorageData().clearOption(optionName);
     }
@@ -219,7 +231,7 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
   }
 
   @Override
-  public String getOptionValue(final String optionName) {
+  public String getOptionValue(@NotNull String optionName) {
     try {
       return getMainStorageData().getOptionValue(optionName);
     }

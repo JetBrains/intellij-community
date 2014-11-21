@@ -33,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
@@ -128,7 +129,7 @@ public abstract class XmlElementStorage extends StateStorageBase<StorageData> {
 
   @Override
   @Nullable
-  public final ExternalizationSession startExternalization() {
+  public final XmlElementStorageSaveSession startExternalization() {
     return checkIsSavingDisabled() ? null : createSaveSession(getStorageData());
   }
 
@@ -210,6 +211,21 @@ public abstract class XmlElementStorage extends StateStorageBase<StorageData> {
       }
       else {
         myCopiedStorageData.setState(componentName, element, myNewLiveStates);
+      }
+    }
+
+    public void forceSave() {
+      LOG.assertTrue(myCopiedStorageData == null);
+
+      if (myBlockSavingTheContent) {
+        return;
+      }
+
+      try {
+        doSave(getElement(myOriginalStorageData, isCollapsePathsOnSave(), Collections.<String, Element>emptyMap()));
+      }
+      catch (IOException e) {
+        throw new StateStorageException(e);
       }
     }
 

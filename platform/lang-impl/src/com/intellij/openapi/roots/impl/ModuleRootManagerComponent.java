@@ -43,17 +43,14 @@ public class ModuleRootManagerComponent extends ModuleRootManagerImpl implements
   static class StorageChooser implements StateStorageChooser<ModuleRootManagerImpl> {
     @Override
     public Storage[] selectStorages(Storage[] storages, ModuleRootManagerImpl moduleRootManager, final StateStorageOperation operation) {
-      if (ClassPathStorageUtil.isDefaultStorage(moduleRootManager.getModule())) {
-        for (Storage storage : storages) {
-          if (storage.id().equals(ClassPathStorageUtil.DEFAULT_STORAGE)) {
-            return new Storage[]{storage};
-          }
+      boolean isDefaultStorageType = ClassPathStorageUtil.isDefaultStorage(moduleRootManager.getModule());
+      String id = isDefaultStorageType ? ClassPathStorageUtil.DEFAULT_STORAGE : ClasspathStorage.SPECIAL_STORAGE;
+      for (Storage storage : storages) {
+        if (storage.id().equals(id)) {
+          return new Storage[]{storage};
         }
-        throw new IllegalArgumentException();
       }
-      else {
-        return storages;
-      }
+      throw new IllegalArgumentException();
     }
   }
 }
