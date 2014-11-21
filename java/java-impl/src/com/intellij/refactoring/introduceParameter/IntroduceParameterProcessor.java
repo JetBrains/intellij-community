@@ -461,7 +461,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
     final Runnable runnable = new Runnable() {
       public void run() {
         if (!myMethodToReplaceIn.isValid()) return;
-        MethodDuplicatesHandler.invokeOnScope(myProject, Collections.singleton(myMethodToReplaceIn),
+        MethodDuplicatesHandler.invokeOnScope(myProject, Collections.<PsiMember>singleton(myMethodToReplaceIn),
                                               new AnalysisScope(myMethodToReplaceIn.getContainingFile()), true);
       }
     };
