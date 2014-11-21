@@ -227,6 +227,7 @@ import java.util.concurrent.locks.LockSupport;
  * @param <V> the type of mapped values
  * @author Doug Lea
  * @since 1.5
+ * @deprecated Use {@link ContainerUtil#newConcurrentMap()} instead
  */
 class ConcurrentHashMap<K, V> extends AbstractMap<K, V>
   implements ConcurrentMap<K, V>, TObjectHashingStrategy<K> {
