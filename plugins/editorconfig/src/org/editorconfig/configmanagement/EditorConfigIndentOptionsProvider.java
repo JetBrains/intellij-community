@@ -38,18 +38,19 @@ public class EditorConfigIndentOptionsProvider extends FileIndentOptionsProvider
     final SettingsProviderComponent settingsProvider = SettingsProviderComponent.getInstance();
     final List<EditorConfig.OutPair> outPairs = settingsProvider.getOutPairs(project, filePath);
     // Apply editorconfig settings for the current editor
-    return applyCodeStyleSettings(project, outPairs, file);
+    return applyCodeStyleSettings(project, outPairs, file, settings);
   }
 
   private static CommonCodeStyleSettings.IndentOptions applyCodeStyleSettings(Project project,
                                                                               final List<EditorConfig.OutPair> outPairs,
-                                                                              final VirtualFile file) {
+                                                                              final VirtualFile file,
+                                                                              final CodeStyleSettings settings) {
     // Apply indent options
     final String indentSize = Utils.configValueForKey(outPairs, indentSizeKey);
     final String continuationIndentSize = Utils.configValueForKey(outPairs, continuationSizeKey);
     final String tabWidth = Utils.configValueForKey(outPairs, tabWidthKey);
     final String indentStyle = Utils.configValueForKey(outPairs, indentStyleKey);
-    final CommonCodeStyleSettings.IndentOptions indentOptions = new CommonCodeStyleSettings.IndentOptions();
+    final CommonCodeStyleSettings.IndentOptions indentOptions = (CommonCodeStyleSettings.IndentOptions)settings.getIndentOptions(file.getFileType()).clone();
     if (applyIndentOptions(project, indentOptions, indentSize, continuationIndentSize, tabWidth, indentStyle, file.getCanonicalPath())) {
       return indentOptions;
     }
