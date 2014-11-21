@@ -265,7 +265,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
       case CLASS_NAME_KIND:
       case CLASS_OR_PACKAGE_NAME_KIND:
       case CLASS_IN_QUALIFIED_NEW_KIND:
-        JavaResolveResult[] results = multiResolve(false);
+        JavaResolveResult[] results = PsiImplUtil.multiResolveImpl(containingFile.getProject(), containingFile, this, false, OurGenericsResolver.INSTANCE);
         final PsiElement target = results.length == 1 ? results[0].getElement() : null;
         if (target instanceof PsiClass) {
           PsiClass aClass = (PsiClass)target;
