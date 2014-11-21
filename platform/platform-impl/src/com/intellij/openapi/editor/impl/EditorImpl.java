@@ -687,12 +687,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Override
   public void reinitSettings() {
     assertIsDispatchThread();
-    myCharHeight = -1;
-    myLineHeight = -1;
-    myDescent = -1;
-    myPlainFontMetrics = null;
-
-    clearTextWidthCache();
+    clearSettingsCache();
 
     reinitDocumentIndentOptions();
 
@@ -749,6 +744,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
+  private void clearSettingsCache() {
+    myCharHeight = -1;
+    myLineHeight = -1;
+    myDescent = -1;
+    myPlainFontMetrics = null;
+
+    clearTextWidthCache();
+  }
+
   private void reinitDocumentIndentOptions() {
     if (myProject != null && !myProject.isDisposed()) {
       CodeStyleSettingsManager.updateDocumentIndentOptions(myProject, myDocument);
@@ -780,17 +784,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myTraceableDisposable.kill(null);
 
     isReleased = true;
+    clearSettingsCache();
 
     myFoldingModel.dispose();
-
     mySoftWrapModel.release();
-
     myMarkupModel.dispose();
 
-    myLineHeight = -1;
-    myCharHeight = -1;
-    myDescent = -1;
-    myPlainFontMetrics = null;
     myScrollingModel.dispose();
     myGutterComponent.dispose();
     myMousePressedEvent = null;
@@ -6132,6 +6131,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       int globalFontSize = getDelegate().getEditorFontSize();
       myMaxFontSize = Math.max(OptionsConstants.MAX_EDITOR_FONT_SIZE, globalFontSize);
       reinitFonts();
+      clearSettingsCache();
     }
 
     @Override
