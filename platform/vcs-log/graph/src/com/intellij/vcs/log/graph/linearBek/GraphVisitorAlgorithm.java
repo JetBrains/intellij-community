@@ -53,7 +53,7 @@ public class GraphVisitorAlgorithm {
       visitor.enterSubtree(head, visited);
 
       while (!stack.empty()) {
-        int nextNode = nextNode(graph, stack.peek(), visited);
+        int nextNode = nextNode(graph, layout, stack.peek(), visited);
         if (nextNode != NODE_NOT_FOUND) {
           visited.set(nextNode, true);
           stack.push(nextNode);
@@ -76,7 +76,7 @@ public class GraphVisitorAlgorithm {
     }
   }
 
-  public void visitSubgraph(@NotNull final LinearGraph graph, @NotNull GraphVisitor visitor, int start, int depth) {
+  public void visitSubgraph(@NotNull LinearGraph graph, @NotNull GraphVisitor visitor, int start, int depth) {
     final BitSetFlags visited = new BitSetFlags(graph.nodesCount(), false);
 
     IntStack stack = new IntStack();
@@ -112,9 +112,10 @@ public class GraphVisitorAlgorithm {
     return NODE_NOT_FOUND;
   }
 
-  private int nextNode(@NotNull LinearGraph graph, int currentNode, @NotNull BitSetFlags visited) {
+  private int nextNode(@NotNull LinearGraph graph, @NotNull GraphLayout layout, int currentNode, @NotNull BitSetFlags visited) {
     List<Integer> downNodes = getDownNodes(graph, currentNode);
     if (myBackwards) Collections.reverse(downNodes);
+    int li = layout.getLayoutIndex(currentNode);
 
     for (int downNode : downNodes) {
       if (!visited.get(downNode)) {
@@ -122,7 +123,7 @@ public class GraphVisitorAlgorithm {
         boolean canGoThere = true;
         List<Integer> upNodes = getUpNodes(graph, downNode);
         for (int upNode : upNodes) {
-          if (!visited.get(upNode)) {
+          if (!visited.get(upNode) && layout.getLayoutIndex(upNode) <= li) {
             canGoThere = false;
             break;
           }
