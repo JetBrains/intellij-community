@@ -71,9 +71,6 @@ public class JavaTestFinder implements TestFinder {
   }
 
   protected GlobalSearchScope getSearchScope(PsiElement element, boolean dependencies) {
-    if (dependencies) {
-      return getSearchScope(element);
-    }
     final Module module = getModule(element);
     if (module != null) {
       return dependencies ? GlobalSearchScope.moduleWithDependenciesScope(module) 
