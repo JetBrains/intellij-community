@@ -249,7 +249,7 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
         try {
           element = fileSet.read(EclipseXml.CLASSPATH_FILE).getRootElement();
         }
-        catch (Exception e) {
+        catch (Exception ignored) {
           element = null;
         }
 
@@ -261,7 +261,7 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
         try {
           fileSet.read(EclipseXml.PROJECT_FILE);
         }
-        catch (Exception e) {
+        catch (Exception ignored) {
           DotProjectFileHelper.saveDotProjectFile(module, fileSet.getParent(EclipseXml.PROJECT_FILE));
         }
 

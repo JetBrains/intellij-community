@@ -17,7 +17,8 @@
 package com.intellij.openapi.roots.impl.storage;
 
 import com.intellij.application.options.PathMacrosCollector;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.components.impl.stores.IModuleStore;
 import com.intellij.openapi.module.Module;
@@ -28,7 +29,6 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -51,12 +51,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Vladislav.Kaznacheev
- * Date: Mar 9, 2007
- * Time: 1:42:06 PM
- */
 public class ClasspathStorage implements StateStorage {
   @NonNls public static final String SPECIAL_STORAGE = "special";
 
@@ -87,8 +81,8 @@ public class ClasspathStorage implements StateStorage {
           }, true, module);
         }
       }
-      catch (UnsupportedOperationException e) {
-        //UnsupportedStorageProvider doesn't mean any files
+      catch (UnsupportedOperationException ignored) {
+        // UnsupportedStorageProvider doesn't mean any files
       }
     }
   }
@@ -139,22 +133,6 @@ public class ClasspathStorage implements StateStorage {
     return true;
   }
 
-  public void setState(@NotNull Object component, @NotNull String componentName, @NotNull Object state) {
-    assert component instanceof ModuleRootManager;
-    assert componentName.equals("NewModuleRootManager");
-    assert state.getClass() == ModuleRootManagerImpl.ModuleRootManagerState.class;
-
-    try {
-      myConverter.setClasspath((ModuleRootManagerImpl)component);
-    }
-    catch (WriteExternalException e) {
-      throw new StateStorageException(e.getMessage());
-    }
-    catch (IOException e) {
-      throw new StateStorageException(e.getMessage());
-    }
-  }
-
   @Override
   @NotNull
   public ExternalizationSession startExternalization() {
@@ -163,25 +141,6 @@ public class ClasspathStorage implements StateStorage {
 
   @Override
   public void analyzeExternalChangesAndUpdateIfNeed(@NotNull Collection<VirtualFile> changedFiles, @NotNull Set<String> result) {
-  }
-
-  public void save() throws StateStorageException {
-    final Ref<IOException> ref = new Ref<IOException>();
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          getFileSet().commit();
-        }
-        catch (IOException e) {
-          ref.set(e);
-        }
-      }
-    });
-
-    if (!ref.isNull()) {
-      throw new StateStorageException(ref.get());
-    }
   }
 
   @NotNull
@@ -358,7 +317,19 @@ public class ClasspathStorage implements StateStorage {
   private final class ClasspathSaveSession implements ExternalizationSession, SaveSession {
     @Override
     public void setState(@NotNull Object component, @NotNull String componentName, @NotNull Object state, Storage storageSpec) {
-      ClasspathStorage.this.setState(component, componentName, state);
+      assert component instanceof ModuleRootManager;
+      assert componentName.equals("NewModuleRootManager");
+      assert state.getClass() == ModuleRootManagerImpl.ModuleRootManagerState.class;
+
+      try {
+        myConverter.setClasspath((ModuleRootManagerImpl)component);
+      }
+      catch (WriteExternalException e) {
+        throw new StateStorageException(e.getMessage());
+      }
+      catch (IOException e) {
+        throw new StateStorageException(e.getMessage());
+      }
     }
 
     @Nullable
@@ -369,7 +340,16 @@ public class ClasspathStorage implements StateStorage {
 
     @Override
     public void save() {
-      ClasspathStorage.this.save();
+      AccessToken token = WriteAction.start();
+      try {
+        getFileSet().commit();
+      }
+      catch (IOException e) {
+        throw new StateStorageException(e);
+      }
+      finally {
+        token.finish();
+      }
     }
   }
 }
