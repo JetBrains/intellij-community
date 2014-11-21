@@ -213,15 +213,12 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
       List<RefMethod> refConstructors = refClass.getConstructors();
       if (refConstructors.size() == 1) {
         addEntryPoint(refConstructors.get(0), isPersistent);
-        return;
       }
       else if (refConstructors.size() > 1) {
         // Many constructors here. Need to ask user which ones are used
         for (int i = 0; i < refConstructors.size(); i++) {
           addEntryPoint(refConstructors.get(i), isPersistent);
         }
-
-        return;
       }
     }
 
