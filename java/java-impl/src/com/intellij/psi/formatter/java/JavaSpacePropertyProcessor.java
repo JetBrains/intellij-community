@@ -381,11 +381,13 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
 
     return true;
   }
-  
+
   private static int getMethodHeaderStartOffset(@NotNull PsiMethod method) {
-    for (PsiElement element : method.getChildren()) {
-      if (element instanceof PsiTypeElement) {
-        return element.getTextRange().getStartOffset();
+    PsiTypeParameterList typeParameterList = PsiTreeUtil.findChildOfType(method, PsiTypeParameterList.class);
+    if (typeParameterList != null) {
+      PsiElement nextNonWsElem = PsiTreeUtil.skipSiblingsForward(typeParameterList, PsiWhiteSpace.class);
+      if (nextNonWsElem != null) {
+        return nextNonWsElem.getTextRange().getStartOffset();
       }
     }
     return method.getTextRange().getStartOffset();
