@@ -682,13 +682,10 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
     private void paintTrackBasement(@NotNull Graphics g, @NotNull Rectangle bounds) {
       if (transparent()) {
-        Graphics2D g2 = (Graphics2D)g.create();
-        try {
-          g2.setComposite(AlphaComposite.getInstance(AlphaComposite.CLEAR));
-          g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
-        } finally {
-          g2.dispose();
-        }
+        Graphics2D g2 = (Graphics2D)g;
+        g2.setComposite(AlphaComposite.getInstance(AlphaComposite.CLEAR));
+        g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
+        g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER));
       }
       else {
         g.setColor(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
