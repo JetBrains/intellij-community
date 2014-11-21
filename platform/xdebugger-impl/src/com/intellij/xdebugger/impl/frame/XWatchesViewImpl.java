@@ -25,6 +25,7 @@ import com.intellij.openapi.CompositeDisposable;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.SystemInfo;
@@ -47,6 +48,7 @@ import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreePanel;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeRestorer;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
+import com.intellij.xdebugger.impl.ui.tree.actions.XWatchTransferable;
 import com.intellij.xdebugger.impl.ui.tree.nodes.WatchNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.WatchesRootNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
@@ -83,8 +85,8 @@ public class XWatchesViewImpl extends XDebugView implements DnDNativeTarget, XWa
     ActionManager actionManager = ActionManager.getInstance();
 
     XDebuggerTree tree = myTreePanel.getTree();
-    actionManager.getAction(XDebuggerActions.XNEW_WATCH).registerCustomShortcutSet(CommonShortcuts.INSERT, tree);
-    actionManager.getAction(XDebuggerActions.XREMOVE_WATCH).registerCustomShortcutSet(CommonShortcuts.getDelete(), tree);
+    actionManager.getAction(XDebuggerActions.XNEW_WATCH).registerCustomShortcutSet(CommonShortcuts.INSERT, tree, myDisposables);
+    actionManager.getAction(XDebuggerActions.XREMOVE_WATCH).registerCustomShortcutSet(CommonShortcuts.getDelete(), tree, myDisposables);
 
     CustomShortcutSet f2Shortcut = new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0));
     actionManager.getAction(XDebuggerActions.XEDIT_WATCH).registerCustomShortcutSet(f2Shortcut, tree);
@@ -95,6 +97,20 @@ public class XWatchesViewImpl extends XDebugView implements DnDNativeTarget, XWa
     DnDManager.getInstance().registerTarget(this, tree);
     myRootNode = new WatchesRootNode(tree, this, session.getSessionData().getWatchExpressions());
     tree.setRoot(myRootNode, false);
+
+    new AnAction() {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        Object contents = CopyPasteManager.getInstance().getContents(XWatchTransferable.EXPRESSIONS_FLAVOR);
+        if (contents instanceof List) {
+          for (Object item : ((List)contents)){
+            if (item instanceof XExpression) {
+              addWatchExpression(((XExpression)item), -1, true);
+            }
+          }
+        }
+      }
+    }.registerCustomShortcutSet(CommonShortcuts.getPaste(), tree, myDisposables);
 
     final ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myTreePanel.getTree()).disableUpDownActions();
     decorator.setAddAction(new AnActionButtonRunnable() {
