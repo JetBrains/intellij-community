@@ -140,8 +140,7 @@ public class DaemonListeners implements Disposable {
                          @NotNull UndoManager undoManager,
                          @NotNull ProjectLevelVcsManager projectLevelVcsManager,
                          @NotNull VcsDirtyScopeManager vcsDirtyScopeManager,
-                         @NotNull FileStatusManager fileStatusManager,
-                         @NotNull RefResolveService resolveService) {
+                         @NotNull FileStatusManager fileStatusManager) {
     Disposer.register(project, this);
     myProject = project;
     myDaemonCodeAnalyzer = daemonCodeAnalyzer;
@@ -367,6 +366,7 @@ public class DaemonListeners implements Disposable {
       }
     });
     if (RefResolveService.ENABLED) {
+      RefResolveService resolveService = RefResolveService.getInstance(project);
       resolveService.addListener(this, new RefResolveService.Listener() {
         @Override
         public void allFilesResolved() {
