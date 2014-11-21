@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -115,7 +115,7 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
     getMainStorageData(); //load it
   }
 
-  public BaseStorageData getMainStorageData() throws StateStorageException {
+  public BaseStorageData getMainStorageData() {
     return (BaseStorageData)getMainStorage().getStorageData();
   }
 
@@ -127,7 +127,7 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
 
   @NotNull
   @Override
-  public StateStorageManager getStateStorageManager() {
+  public final StateStorageManager getStateStorageManager() {
     if (myStateStorageManager == null) {
       myStateStorageManager = createStateStorageManager();
     }

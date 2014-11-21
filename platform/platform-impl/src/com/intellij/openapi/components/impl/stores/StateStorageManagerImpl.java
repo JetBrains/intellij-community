@@ -239,10 +239,10 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
 
   @Nullable
   private StateStorage createFileStateStorage(@NotNull String fileSpec, @Nullable RoamingType roamingType) {
-    String expandedFile = expandMacros(fileSpec);
+    String filePath = expandMacros(fileSpec);
 
-    if (!ourHeadlessEnvironment && PathUtilRt.getFileName(expandedFile).lastIndexOf('.') < 0) {
-      throw new IllegalArgumentException("Extension is missing for storage file: " + expandedFile);
+    if (!ourHeadlessEnvironment && PathUtilRt.getFileName(filePath).lastIndexOf('.') < 0) {
+      throw new IllegalArgumentException("Extension is missing for storage file: " + filePath);
     }
 
     if (roamingType == RoamingType.PER_USER && fileSpec.equals(StoragePathMacros.WORKSPACE_FILE)) {
@@ -250,8 +250,8 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     }
 
     beforeFileBasedStorageCreate();
-    return new FileBasedStorage(expandedFile, fileSpec, roamingType, getMacroSubstitutor(fileSpec), myRootTagName, this,
-                                createStorageTopicListener(), getStreamProvider()) {
+    return new FileBasedStorage(filePath, fileSpec, roamingType, getMacroSubstitutor(fileSpec), myRootTagName, StateStorageManagerImpl.this,
+                                createStorageTopicListener(), myStreamProvider) {
       @Override
       @NotNull
       protected StorageData createStorageData() {
@@ -280,7 +280,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
 
   @Nullable
   @Override
-  public StreamProvider getStreamProvider() {
+  public final StreamProvider getStreamProvider() {
     return myStreamProvider;
   }
 

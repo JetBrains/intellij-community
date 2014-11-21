@@ -31,9 +31,9 @@ public interface IModuleStore extends IComponentStore {
   @NotNull
   String getModuleFileName();
 
-  void setOption(final String optionName, final String optionValue);
+  void setOption(@NotNull String optionName, @NotNull String optionValue);
 
-  void clearOption(final String optionName);
+  void clearOption(@NotNull String optionName);
 
-  String getOptionValue(final String optionName);
+  String getOptionValue(@NotNull String optionName);
 }
