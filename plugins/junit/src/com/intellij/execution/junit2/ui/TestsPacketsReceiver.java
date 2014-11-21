@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,7 +80,7 @@ public class TestsPacketsReceiver implements OutputPacketProcessor, Disposable {
   private final JUnitConsoleProperties myConsoleProperties;
 
 
-  public TestsPacketsReceiver(final JUnitTreeConsoleView consoleView, TestProxy unboundOutput) {
+  public TestsPacketsReceiver(@NotNull JUnitTreeConsoleView consoleView, @NotNull TestProxy unboundOutput) {
     myUnboundOutput = unboundOutput;
     myObjectRegistry = new InputObjectRegistry();
     myConsoleProperties = (JUnitConsoleProperties)consoleView.getProperties();

@@ -115,6 +115,10 @@ public class TransferToEDTQueue<T> {
     return true;
   }
 
+  public boolean offerIfAbsent(@NotNull T thing) {
+    return offerIfAbsent(thing, Equality.CANONICAL);
+  }
+
   public boolean offerIfAbsent(@NotNull final T thing, @NotNull final Equality<T> equality) {
     synchronized (myQueue) {
       boolean absent = myQueue.process(new Processor<T>() {

@@ -103,6 +103,6 @@ public class GenericRepositoryUtil {
   }
 
   public static <T> List<T> concat(List<? extends T> list, T... values) {
-    return ContainerUtil.concat(true, list, values);
+    return ContainerUtil.append(list, values);
   }
 }

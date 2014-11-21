@@ -15,6 +15,7 @@
  */
 package com.intellij.psi;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -27,7 +28,7 @@ import java.util.Collection;
 
 public abstract class RefResolveService extends AbstractProjectComponent {
   /**
-   * if true then getUseScope() returns scope restricted to only relevant files which are stored in {@link com.intellij.psi.RefResolveService}
+   * if true then PsiElement.getUseScope() returns scope restricted to only relevant files which are stored in {@link com.intellij.psi.RefResolveService}
    */
   public static final boolean ENABLED = /*ApplicationManager.getApplication().isUnitTestMode() ||*/ Boolean.getBoolean("ref.back");
 
@@ -51,7 +52,14 @@ public abstract class RefResolveService extends AbstractProjectComponent {
   /**
    * @return add files to the resolve queue. until all files from there are resolved, the service is in incomplete state and returns null from getBackwardIds()
    */
-  public abstract boolean queue(@NotNull Collection<VirtualFile> files, Object reason);
+  public abstract boolean queue(@NotNull Collection<VirtualFile> files, @NotNull Object reason);
 
   public abstract boolean isUpToDate();
+
+  public abstract int getQueueSize();
+  public abstract void addListener(@NotNull Disposable parent, @NotNull Listener listener);
+  public abstract static class Listener {
+    public void fileResolved(@NotNull VirtualFile virtualFile) {}
+    public void allFilesResolved() {}
+  }
 }
