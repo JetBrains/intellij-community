@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.LinkedHashSet;
 
 public final class SmartSerializer {
-  private final LinkedHashSet<String> mySerializedAccessorNameTracker;
+  private LinkedHashSet<String> mySerializedAccessorNameTracker;
   private TObjectFloatHashMap<String> myOrderedBindings;
   private final SerializationFilter mySerializationFilter;
 
@@ -53,6 +53,11 @@ public final class SmartSerializer {
     this(true, false);
   }
 
+  @NotNull
+  public static SmartSerializer skipEmptySerializer() {
+    return new SmartSerializer(true, true);
+  }
+
   public void readExternal(@NotNull Object bean, @NotNull Element element) {
     if (mySerializedAccessorNameTracker != null) {
       mySerializedAccessorNameTracker.clear();
@@ -68,11 +73,28 @@ public final class SmartSerializer {
   }
 
   public void writeExternal(@NotNull Object bean, @NotNull Element element) {
+    writeExternal(bean, element, true);
+  }
+
+  public void writeExternal(@NotNull Object bean, @NotNull Element element, boolean preserveCompatibility) {
     BeanBinding binding = getBinding(bean);
-    if (myOrderedBindings != null) {
+    if (preserveCompatibility && myOrderedBindings != null) {
       binding.sortBindings(myOrderedBindings);
     }
-    binding.serializeInto(bean, element, mySerializationFilter);
+
+    if (preserveCompatibility || mySerializedAccessorNameTracker == null) {
+      binding.serializeInto(bean, element, mySerializationFilter);
+    }
+    else {
+      LinkedHashSet<String> oldTracker = mySerializedAccessorNameTracker;
+      try {
+        mySerializedAccessorNameTracker = null;
+        binding.serializeInto(bean, element, mySerializationFilter);
+      }
+      finally {
+        mySerializedAccessorNameTracker = oldTracker;
+      }
+    }
   }
 
   @NotNull

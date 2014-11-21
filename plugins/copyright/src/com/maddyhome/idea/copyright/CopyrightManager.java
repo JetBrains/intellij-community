@@ -31,10 +31,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.DependencyValidationManager;
@@ -151,9 +148,11 @@ public class CopyrightManager extends AbstractProjectComponent implements Persis
     try {
       if (!myCopyrights.isEmpty()) {
         for (CopyrightProfile copyright : myCopyrights.values()) {
-          final Element copyrightElement = new Element(COPYRIGHT);
+          Element copyrightElement = new Element(COPYRIGHT);
           copyright.writeExternal(copyrightElement);
-          state.addContent(copyrightElement);
+          if (!JDOMUtil.isEmpty(copyrightElement)) {
+            state.addContent(copyrightElement);
+          }
         }
       }
 
@@ -178,7 +177,7 @@ public class CopyrightManager extends AbstractProjectComponent implements Persis
     if (myDefaultCopyright != null) {
       state.setAttribute(DEFAULT, myDefaultCopyright.getName());
     }
-    else {
+    else if (!myProject.isDefault()) {
       // todo we still add empty attribute to avoid annoying change (idea 12 - attribute exists, idea 13 - attribute doesn't exists)
       // CR-IC-3403#CFR-62470, idea <= 12 compatibility
       state.setAttribute(DEFAULT, "");

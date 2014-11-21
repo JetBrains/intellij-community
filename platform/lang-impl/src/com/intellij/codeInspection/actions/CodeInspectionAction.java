@@ -102,9 +102,9 @@ public class CodeInspectionAction extends BaseAnalysisAction {
       @Override
       public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
         if (value instanceof Profile) {
-          final Profile profile = (Profile)value;
+          Profile profile = (Profile)value;
           setText(profile.getName());
-          setIcon(profile.isLocal() ? AllIcons.General.Settings : AllIcons.General.ProjectSettings);
+          setIcon(profile.isProjectLevel() ? AllIcons.General.ProjectSettings : AllIcons.General.Settings);
         }
       }
     });

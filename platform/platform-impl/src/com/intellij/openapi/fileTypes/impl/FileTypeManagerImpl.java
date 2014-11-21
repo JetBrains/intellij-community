@@ -242,7 +242,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     bus.connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener.Adapter(){
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
-        Set<VirtualFile> files = ContainerUtil.map2Set(events, new Function<VFileEvent, VirtualFile>() {
+        Collection<VirtualFile> files = ContainerUtil.map2Set(events, new Function<VFileEvent, VirtualFile>() {
           @Override
           public VirtualFile fun(VFileEvent event) {
             VirtualFile file = event instanceof VFileCreateEvent ? null : event.getFile();

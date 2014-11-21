@@ -220,8 +220,7 @@ class BeanBinding extends Binding {
 
   private static String getTagNameFromAnnotation(Class<?> aClass) {
     Tag tag = aClass.getAnnotation(Tag.class);
-    if (tag != null && !tag.value().isEmpty()) return tag.value();
-    return null;
+    return tag != null && !tag.value().isEmpty() ? tag.value() : null;
   }
 
   @NotNull
@@ -287,6 +286,7 @@ class BeanBinding extends Binding {
              field.getAnnotation(Tag.class) != null ||
              field.getAnnotation(Attribute.class) != null ||
              field.getAnnotation(Property.class) != null ||
+             field.getAnnotation(Text.class) != null ||
              (Modifier.isPublic(modifiers) &&
               !Modifier.isFinal(modifiers) &&
               !Modifier.isTransient(modifiers) &&
@@ -332,7 +332,7 @@ class BeanBinding extends Binding {
     }
 
     Tag tag = accessor.getAnnotation(Tag.class);
-    if (tag != null && !tag.value().isEmpty()) {
+    if (tag != null) {
       return new TagBinding(accessor, tag);
     }
 

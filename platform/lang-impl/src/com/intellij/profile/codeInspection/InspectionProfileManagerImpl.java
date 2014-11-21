@@ -107,13 +107,13 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
 
       @Override
       public boolean shouldBeSaved(@NotNull InspectionProfileImpl scheme) {
-        return !scheme.isLocal() && scheme.wasInitialized();
+        return !scheme.isProjectLevel() && scheme.wasInitialized();
       }
 
       @Override
       public Element writeScheme(@NotNull InspectionProfileImpl scheme) throws WriteExternalException {
         Element root = new Element("inspections");
-        root.setAttribute("profile_name", scheme.myName);
+        root.setAttribute("profile_name", scheme.getName());
         scheme.writeExternal(root);
         return root;
       }

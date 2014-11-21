@@ -17,9 +17,11 @@ package com.intellij.profile;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.util.xmlb.SmartSerializer;
+import com.intellij.util.xmlb.annotations.OptionTag;
+import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,18 +35,33 @@ public abstract class ProfileEx implements Profile {
   public static final String SCOPE = "scope";
   public static final String NAME = "name";
 
-  // public for JDOMExternalizable
+  private final SmartSerializer mySerializer;
+
   @NotNull
-  public String myName;
-  public boolean myLocal = true;
+  protected String myName;
+
+  @SuppressWarnings("unused")
+  @OptionTag
+  // exists only to preserve compatibility
+  private boolean myLocal;
+
   protected ProfileManager myProfileManager;
 
+  private boolean myIsProjectLevel;
+
   public ProfileEx(@NotNull String name) {
-    setName(name);
+    this(name, SmartSerializer.skipEmptySerializer());
+  }
+
+  protected ProfileEx(@NotNull String name, @NotNull SmartSerializer serializer) {
+    myName = name;
+    mySerializer = serializer;
   }
 
   @Override
   @NotNull
+  // ugly name to preserve compatibility
+  @OptionTag("myName")
   public String getName() {
     return myName;
   }
@@ -65,13 +82,25 @@ public abstract class ProfileEx implements Profile {
   }
 
   @Override
-  public void setLocal(boolean isLocal) {
-    myLocal = isLocal;
+  @Transient
+  public boolean isLocal() {
+    return !myIsProjectLevel;
   }
 
   @Override
-  public boolean isLocal() {
-    return myLocal;
+  @Transient
+  public boolean isProjectLevel() {
+    return myIsProjectLevel;
+  }
+
+  @Override
+  public void setProjectLevel(boolean isProjectLevel) {
+    myIsProjectLevel = isProjectLevel;
+  }
+
+  @Override
+  public void setLocal(boolean isLocal) {
+    myIsProjectLevel = !isLocal;
   }
 
   @Override
@@ -80,37 +109,32 @@ public abstract class ProfileEx implements Profile {
   }
 
   @Override
-  public void setProfileManager(@NotNull ProfileManager profileManager) {
-    myProfileManager = profileManager;
-  }
-
-  @Override
   @NotNull
+  @Transient
   public ProfileManager getProfileManager() {
     return myProfileManager;
   }
 
   @Override
+  public void setProfileManager(@NotNull ProfileManager profileManager) {
+    myProfileManager = profileManager;
+  }
+
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
-    DefaultJDOMExternalizer.readExternal(this, element);
+    mySerializer.readExternal(this, element);
   }
 
   @Override
   public void writeExternal(Element element) throws WriteExternalException {
-    DefaultJDOMExternalizer.writeExternal(this, element);
+    mySerializer.writeExternal(this, element, isProjectLevel());
   }
 
-  public void profileChanged() {}
+  public void profileChanged() {
+  }
 
-  public boolean equals(final Object o) {
-    if (this == o) return true;
-    if (!(o instanceof ProfileEx)) return false;
-
-    final ProfileEx profileEx = (ProfileEx)o;
-
-    if (!myName.equals(profileEx.myName)) return false;
-
-    return true;
+  public boolean equals(Object o) {
+    return this == o || o instanceof ProfileEx && myName.equals(((ProfileEx)o).myName);
   }
 
   public int hashCode() {
@@ -118,12 +142,13 @@ public abstract class ProfileEx implements Profile {
   }
 
   @Override
-  public int compareTo(final Object o) {
+  public int compareTo(@NotNull Object o) {
     if (o instanceof Profile) {
       return getName().compareToIgnoreCase(((Profile)o).getName());
     }
     return 0;
   }
 
-  public void convert(@NotNull Element element, @NotNull Project project) {}
+  public void convert(@NotNull Element element, @NotNull Project project) {
+  }
 }
