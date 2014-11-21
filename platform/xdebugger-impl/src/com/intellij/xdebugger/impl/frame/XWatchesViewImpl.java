@@ -40,6 +40,7 @@ import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
+import com.intellij.xdebugger.impl.frame.actions.XWatchesTreeActionBase;
 import com.intellij.xdebugger.impl.ui.XDebugSessionData;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
@@ -109,6 +110,40 @@ public class XWatchesViewImpl extends XDebugView implements DnDNativeTarget, XWa
       }
     });
     decorator.addExtraAction(AnActionButton.fromAction(copyAction));
+    decorator.setMoveUpAction(new AnActionButtonRunnable() {
+      @Override
+      public void run(AnActionButton button) {
+        List<? extends WatchNode> nodes = XWatchesTreeActionBase.getSelectedNodes(getTree(), WatchNode.class);
+        assert nodes.size() == 1;
+        myRootNode.moveUp(nodes.get(0));
+        updateSessionData();
+      }
+    });
+    decorator.setMoveUpActionUpdater(new AnActionButtonUpdater() {
+      @Override
+      public boolean isEnabled(AnActionEvent e) {
+        List<? extends WatchNode> nodes = XWatchesTreeActionBase.getSelectedNodes(getTree(), WatchNode.class);
+        if (nodes.size() != 1) return false;
+        return myRootNode.getIndex(nodes.get(0)) > 0;
+      }
+    });
+    decorator.setMoveDownAction(new AnActionButtonRunnable() {
+      @Override
+      public void run(AnActionButton button) {
+        List<? extends WatchNode> nodes = XWatchesTreeActionBase.getSelectedNodes(getTree(), WatchNode.class);
+        assert nodes.size() == 1;
+        myRootNode.moveDown(nodes.get(0));
+        updateSessionData();
+      }
+    });
+    decorator.setMoveDownActionUpdater(new AnActionButtonUpdater() {
+      @Override
+      public boolean isEnabled(AnActionEvent e) {
+        List<? extends WatchNode> nodes = XWatchesTreeActionBase.getSelectedNodes(getTree(), WatchNode.class);
+        if (nodes.size() != 1) return false;
+        return myRootNode.getIndex(nodes.get(0)) < myRootNode.getChildCount() - 1;
+      }
+    });
     CustomLineBorder border = new CustomLineBorder(CaptionPanel.CNT_ACTIVE_BORDER_COLOR,
                                                    SystemInfo.isMac ? 1 : 0, 0,
                                                    SystemInfo.isMac ? 0 : 1, 0);
