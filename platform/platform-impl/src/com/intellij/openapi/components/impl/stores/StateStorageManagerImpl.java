@@ -389,15 +389,23 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
         }
       }
 
-      final List<SaveSession> list = saveSessions;
-      return saveSessions == null ? null : new SaveSession() {
-        @Override
-        public void save() {
-          for (SaveSession saveSession : list) {
-            saveSession.save();
+      if (saveSessions == null) {
+        return null;
+      }
+      else if (saveSessions.size() == 1) {
+        return saveSessions.get(0);
+      }
+      else {
+        final List<SaveSession> list = saveSessions;
+        return new SaveSession() {
+          @Override
+          public void save() {
+            for (SaveSession saveSession : list) {
+              saveSession.save();
+            }
           }
-        }
-      };
+        };
+      }
     }
   }
 
