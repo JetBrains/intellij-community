@@ -18,21 +18,18 @@ package com.intellij.debugger.engine.evaluation.expression;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
-import com.intellij.openapi.util.Comparing;
 import com.sun.jdi.BooleanValue;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author lex
  */
-public class WhileStatementEvaluator implements Evaluator {
+public class WhileStatementEvaluator extends LoopEvaluator {
   private final Evaluator myConditionEvaluator;
-  private final Evaluator myBodyEvaluator;
-  private final String myLabelName;
 
-  public WhileStatementEvaluator(Evaluator conditionEvaluator, Evaluator bodyEvaluator, String labelName) {
+  public WhileStatementEvaluator(@NotNull Evaluator conditionEvaluator, Evaluator bodyEvaluator, String labelName) {
+    super(labelName, bodyEvaluator);
     myConditionEvaluator = new DisableGC(conditionEvaluator);
-    myBodyEvaluator = new DisableGC(bodyEvaluator);
-    myLabelName = labelName;
   }
 
   public Modifier getModifier() {
@@ -51,25 +48,10 @@ public class WhileStatementEvaluator implements Evaluator {
           break;
         }
       }
-      try {
-        myBodyEvaluator.evaluate(context);
-      }
-      catch (BreakException e) {
-        if (Comparing.equal(e.getLabelName(), myLabelName)) {
-          break;
-        }
-        else {
-          throw e;
-        }
-      }
-      catch (ContinueException e) {
-        if (!Comparing.equal(e.getLabelName(), myLabelName)) {
-          throw e;
-        }
-      }
+
+      if (body(context)) break;
     }
 
     return value;
   }
-
 }

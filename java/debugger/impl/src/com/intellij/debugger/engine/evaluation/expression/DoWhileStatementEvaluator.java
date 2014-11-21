@@ -19,51 +19,39 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.sun.jdi.BooleanValue;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author egor
  */
-public abstract class ForStatementEvaluatorBase extends LoopEvaluator {
-  public ForStatementEvaluatorBase(String labelName, Evaluator bodyEvaluator) {
+public class DoWhileStatementEvaluator extends LoopEvaluator {
+  private final Evaluator myConditionEvaluator;
+
+  public DoWhileStatementEvaluator(@NotNull Evaluator conditionEvaluator, Evaluator bodyEvaluator, String labelName) {
     super(labelName, bodyEvaluator);
+    myConditionEvaluator = new DisableGC(conditionEvaluator);
+  }
+
+  public Modifier getModifier() {
+    return myConditionEvaluator.getModifier();
   }
 
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
     Object value = context.getDebugProcess().getVirtualMachineProxy().mirrorOf();
-    value = evaluateInitialization(context, value);
-
     while (true) {
-      // condition
-      Object codition = evaluateCondition(context);
-      if (codition instanceof Boolean) {
-        if (!(Boolean)codition) break;
-      }
-      else if (codition instanceof BooleanValue) {
-        if (!((BooleanValue)codition).booleanValue()) break;
-      }
-      else {
-        throw EvaluateExceptionUtil.BOOLEAN_EXPECTED;
-      }
-
-      // body
       if (body(context)) break;
 
-      // update
-      value = evaluateUpdate(context, value);
+      value = myConditionEvaluator.evaluate(context);
+      if (!(value instanceof BooleanValue)) {
+        throw EvaluateExceptionUtil.BOOLEAN_EXPECTED;
+      }
+      else {
+        if (!((BooleanValue)value).booleanValue()) {
+          break;
+        }
+      }
     }
 
-    return value;
-  }
-
-  protected Object evaluateInitialization(EvaluationContextImpl context, Object value) throws EvaluateException {
-    return value;
-  }
-
-  protected Object evaluateCondition(EvaluationContextImpl context) throws EvaluateException {
-    return true;
-  }
-
-  protected Object evaluateUpdate(EvaluationContextImpl context, Object value) throws EvaluateException {
     return value;
   }
 }

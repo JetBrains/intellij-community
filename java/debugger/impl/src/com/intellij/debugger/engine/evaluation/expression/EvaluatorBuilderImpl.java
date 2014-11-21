@@ -213,20 +213,37 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
     }
 
     @Override
-    public void visitWhileStatement(PsiWhileStatement statement) {
-      PsiStatement body = statement.getBody();
-      if(body == null) return;
-      body.accept(this);
-      Evaluator bodyEvaluator = myResult;
-
-      PsiExpression condition = statement.getCondition();
-      if(condition == null) return;
-      condition.accept(this);
-      String label = null;
-      if(statement.getParent() instanceof PsiLabeledStatement) {
-        label = ((PsiLabeledStatement)statement.getParent()).getLabelIdentifier().getText();
+    public void visitLabeledStatement(PsiLabeledStatement labeledStatement) {
+      PsiStatement statement = labeledStatement.getStatement();
+      if (statement != null) {
+        statement.accept(this);
       }
-      myResult = new WhileStatementEvaluator(myResult, bodyEvaluator, label);
+    }
+
+    private static String getLabel(PsiElement element) {
+      String label = null;
+      if(element.getParent() instanceof PsiLabeledStatement) {
+        label = ((PsiLabeledStatement)element.getParent()).getName();
+      }
+      return label;
+    }
+
+    @Override
+    public void visitDoWhileStatement(PsiDoWhileStatement statement) {
+      Evaluator bodyEvaluator = accept(statement.getBody());
+      Evaluator conditionEvaluator = accept(statement.getCondition());
+      if (conditionEvaluator != null) {
+        myResult = new DoWhileStatementEvaluator(conditionEvaluator, bodyEvaluator, getLabel(statement));
+      }
+    }
+
+    @Override
+    public void visitWhileStatement(PsiWhileStatement statement) {
+      Evaluator bodyEvaluator = accept(statement.getBody());
+      Evaluator conditionEvaluator = accept(statement.getCondition());
+      if (conditionEvaluator != null) {
+        myResult = new WhileStatementEvaluator(conditionEvaluator, bodyEvaluator, getLabel(statement));
+      }
     }
 
     @Override
@@ -235,13 +252,9 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
       Evaluator conditionEvaluator = accept(statement.getCondition());
       Evaluator updateEvaluator = accept(statement.getUpdate());
       Evaluator bodyEvaluator = accept(statement.getBody());
-      if (bodyEvaluator == null) return;
-
-      String label = null;
-      if(statement.getParent() instanceof PsiLabeledStatement) {
-        label = ((PsiLabeledStatement)statement.getParent()).getLabelIdentifier().getText();
+      if (bodyEvaluator != null) {
+        myResult = new ForStatementEvaluator(initializerEvaluator, conditionEvaluator, updateEvaluator, bodyEvaluator, getLabel(statement));
       }
-      myResult = new ForStatementEvaluator(initializerEvaluator, conditionEvaluator, updateEvaluator, bodyEvaluator, label);
     }
 
     @Override
@@ -253,13 +266,9 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
 
         Evaluator iteratedValueEvaluator = accept(statement.getIteratedValue());
         Evaluator bodyEvaluator = accept(statement.getBody());
-        if (bodyEvaluator == null) return;
-
-        String label = null;
-        if(statement.getParent() instanceof PsiLabeledStatement) {
-          label = ((PsiLabeledStatement)statement.getParent()).getLabelIdentifier().getText();
+        if (bodyEvaluator != null) {
+          myResult = new ForeachStatementEvaluator(iterationParameterEvaluator, iteratedValueEvaluator, bodyEvaluator, getLabel(statement));
         }
-        myResult = new ForeachStatementEvaluator(iterationParameterEvaluator, iteratedValueEvaluator, bodyEvaluator, label);
       }
       catch (EvaluateException e) {
         throw new EvaluateRuntimeException(e);

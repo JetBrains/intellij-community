@@ -27,7 +27,6 @@ import com.sun.jdi.Value;
 public class ForeachStatementEvaluator extends ForStatementEvaluatorBase {
   private final Evaluator myIterationParameterEvaluator;
   private final Evaluator myIterableEvaluator;
-  private final Evaluator myBodyEvaluator;
 
   private Evaluator myConditionEvaluator;
   private Evaluator myNextEvaluator;
@@ -41,10 +40,9 @@ public class ForeachStatementEvaluator extends ForStatementEvaluatorBase {
                                Evaluator iterableEvaluator,
                                Evaluator bodyEvaluator,
                                String labelName) {
-    super(labelName);
+    super(labelName, bodyEvaluator);
     myIterationParameterEvaluator = iterationParameterEvaluator;
     myIterableEvaluator = new DisableGC(iterableEvaluator);
-    myBodyEvaluator = bodyEvaluator != null ? new DisableGC(bodyEvaluator) : null;
   }
 
   public Modifier getModifier() {
@@ -102,8 +100,6 @@ public class ForeachStatementEvaluator extends ForStatementEvaluatorBase {
   @Override
   protected void evaluateBody(EvaluationContextImpl context) throws EvaluateException {
     myNextEvaluator.evaluate(context);
-    if (myBodyEvaluator != null) {
-      myBodyEvaluator.evaluate(context);
-    }
+    super.evaluateBody(context);
   }
 }

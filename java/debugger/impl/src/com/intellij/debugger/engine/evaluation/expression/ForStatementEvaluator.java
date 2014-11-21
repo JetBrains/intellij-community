@@ -25,7 +25,6 @@ public class ForStatementEvaluator extends ForStatementEvaluatorBase {
   private final Evaluator myInitializationEvaluator;
   private final Evaluator myConditionEvaluator;
   private final Evaluator myUpdateEvaluator;
-  private final Evaluator myBodyEvaluator;
 
   private Modifier myModifier;
 
@@ -34,22 +33,14 @@ public class ForStatementEvaluator extends ForStatementEvaluatorBase {
                                Evaluator updateEvaluator,
                                Evaluator bodyEvaluator,
                                String labelName) {
-    super(labelName);
+    super(labelName, bodyEvaluator);
     myInitializationEvaluator = initializationEvaluator != null ? new DisableGC(initializationEvaluator) : null;
     myConditionEvaluator = conditionEvaluator != null ? new DisableGC(conditionEvaluator) : null;
     myUpdateEvaluator = updateEvaluator != null ? new DisableGC(updateEvaluator) : null;
-    myBodyEvaluator = bodyEvaluator != null ? new DisableGC(bodyEvaluator) : null;
   }
 
   public Modifier getModifier() {
     return myModifier;
-  }
-
-  @Override
-  protected void evaluateBody(EvaluationContextImpl context) throws EvaluateException {
-    if (myBodyEvaluator != null) {
-      myBodyEvaluator.evaluate(context);
-    }
   }
 
   @Override
