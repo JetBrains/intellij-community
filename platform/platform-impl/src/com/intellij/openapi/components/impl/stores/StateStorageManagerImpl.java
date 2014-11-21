@@ -255,7 +255,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
       @Override
       @NotNull
       protected StorageData createStorageData() {
-        return StateStorageManagerImpl.this.createStorageData(myFileSpec);
+        return StateStorageManagerImpl.this.createStorageData(myFileSpec, getFilePath());
       }
 
       @Override
@@ -288,7 +288,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     return myPathMacroSubstitutor;
   }
 
-  protected abstract StorageData createStorageData(@NotNull String storageSpec);
+  protected abstract StorageData createStorageData(@NotNull String fileSpec, @NotNull String filePath);
 
   private static final Pattern MACRO_PATTERN = Pattern.compile("(\\$[^\\$]*\\$)");
 
@@ -326,7 +326,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     return new StateStorageManagerExternalizationSession();
   }
 
-  private final class StateStorageManagerExternalizationSession implements ExternalizationSession {
+  protected class StateStorageManagerExternalizationSession implements ExternalizationSession {
     final Map<StateStorage, StateStorage.ExternalizationSession> mySessions = new LinkedHashMap<StateStorage, StateStorage.ExternalizationSession>();
 
     @Override

@@ -27,9 +27,11 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.util.SmartList;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedWriter;
@@ -51,11 +53,13 @@ public class Convertor34 {
   private static final String JAVA_DOC_ROOTS_CANNOT_BE_CONVERTED = ProjectBundle.message("project.convert.javadoc.paths.error");
   private static final String MULTIPLE_OUTPUT_PATHS = ProjectBundle.message("project.convert.multiple.output.paths.error");
 
-  public static void execute(Element root, String filePath, @Nullable List<String> conversionProblems) {
-    if (filePath == null) return;
+  public static void execute(Element root, @Nullable String filePath, @Nullable List<String> conversionProblems) {
+    if (filePath == null) {
+      return;
+    }
 
     if (conversionProblems == null) {
-      conversionProblems = new ArrayList<String>();
+      conversionProblems = new SmartList<String>();
     }
     convertProjectFile(root, filePath, conversionProblems);
   }
@@ -121,7 +125,7 @@ public class Convertor34 {
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  private static void convertProjectFile(Element root, String filePath, List<String> conversionProblems) {
+  private static void convertProjectFile(Element root, @NotNull String filePath, List<String> conversionProblems) {
     Element rootComponent = null;
     List components = root.getChildren("component");
     for (final Object component1 : components) {

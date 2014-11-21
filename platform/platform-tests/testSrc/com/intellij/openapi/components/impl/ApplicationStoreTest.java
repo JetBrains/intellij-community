@@ -138,8 +138,8 @@ public class ApplicationStoreTest extends LightPlatformLangTestCase {
       TrackingPathMacroSubstitutor macroSubstitutor = new ApplicationPathMacroManager().createTrackingSubstitutor();
       stateStorageManager = new StateStorageManagerImpl(macroSubstitutor, "application", this, ApplicationManager.getApplication().getPicoContainer()) {
         @Override
-        protected StorageData createStorageData(@NotNull String storageSpec) {
-          return new FileBasedStorage.FileStorageData("application");
+        protected StorageData createStorageData(@NotNull String fileSpec, @NotNull String filePath) {
+          return new StorageData("application");
         }
 
         @Nullable

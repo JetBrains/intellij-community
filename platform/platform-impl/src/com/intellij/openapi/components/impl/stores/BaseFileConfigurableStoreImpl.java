@@ -48,7 +48,7 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
     return myComponentManager;
   }
 
-  protected static class BaseStorageData extends FileBasedStorage.FileStorageData {
+  protected static class BaseStorageData extends StorageData {
     protected int myVersion;
 
     public BaseStorageData(@NotNull String rootElementName) {

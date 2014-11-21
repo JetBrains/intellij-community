@@ -30,7 +30,6 @@ import com.intellij.openapi.vfs.tracker.VirtualFileTracker;
 import com.intellij.util.LineSeparator;
 import org.jdom.Element;
 import org.jdom.JDOMException;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -149,33 +148,7 @@ public class FileBasedStorage extends XmlElementStorage {
   @Override
   @NotNull
   protected StorageData createStorageData() {
-    FileStorageData data = new FileStorageData(myRootElementName);
-    data.myFilePath = myFilePath;
-    return data;
-  }
-
-  public static class FileStorageData extends StorageData {
-    String myFilePath;
-
-    public FileStorageData(@NotNull String rootElementName) {
-      super(rootElementName);
-    }
-
-    protected FileStorageData(@NotNull FileStorageData storageData) {
-      super(storageData);
-
-      myFilePath = storageData.myFilePath;
-    }
-
-    @Override
-    public StorageData clone() {
-      return new FileStorageData(this);
-    }
-
-    @NonNls
-    public String toString() {
-      return "FileStorageData[" + myFilePath + "]";
-    }
+    return new StorageData(myRootElementName);
   }
 
   @Nullable
