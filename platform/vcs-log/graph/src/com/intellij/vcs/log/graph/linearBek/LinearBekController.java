@@ -62,6 +62,8 @@ public class LinearBekController extends CascadeLinearGraphController {
         if (firstChildIndex == currentNodeIndex) return;
 
         int x = graphLayout.getLayoutIndex(firstChildIndex);
+        int y = graphLayout.getLayoutIndex(currentNodeIndex);
+
         final Map<Integer, Integer> magicMap = new HashMap<Integer, Integer>();
         new GraphVisitorAlgorithm(false).visitSubgraph(workingGraph, new GraphVisitorAlgorithm.SimpleVisitor() {
           @Override
@@ -71,8 +73,7 @@ public class LinearBekController extends CascadeLinearGraphController {
               magicMap.put(layoutIndex, nodeIndex);
             }
           }
-        }, firstChildIndex, 10);
-        int y = graphLayout.getLayoutIndex(currentNodeIndex);
+        }, firstChildIndex, 100);
 
         int k = 1;
         PriorityQueue<Integer> queue = new PriorityQueue<Integer>();
@@ -94,13 +95,6 @@ public class LinearBekController extends CascadeLinearGraphController {
 
         workingGraph.clear();
         for (int i = currentNodeIndex; i < currentNodeIndex + k; i++) {
-
-          for (int upNode : workingGraph.getUpNodes(i)) {
-            if (upNode >= currentNodeIndex + k || upNode < currentNodeIndex - 1) {
-              return;
-            }
-          }
-
           boolean isTail = true;
           for (int downNode : workingGraph.getDownNodes(i)) {
             if (!visited.get(downNode)) {
@@ -115,7 +109,8 @@ public class LinearBekController extends CascadeLinearGraphController {
                 }
               }
               workingGraph.removeEdge(i, downNode);
-            } else if (downNode > currentNodeIndex + k) {
+            }
+            else if (downNode > currentNodeIndex + k) {
               return; // settling case 2450 as "not collapsing at all"
             }
             else {
