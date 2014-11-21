@@ -6,7 +6,14 @@ import org.jetbrains.annotations.Nullable;
 
 public class UnnecessarilyQualifiedInnerClassAccessInspectionTest extends LightInspectionTestCase {
 
-  public void testTest() throws Exception {
+  public void testTest() {
+    doTest();
+  }
+
+  public void testNoImports() {
+    final UnnecessarilyQualifiedInnerClassAccessInspection inspection = new UnnecessarilyQualifiedInnerClassAccessInspection();
+    inspection.ignoreReferencesNeedingImport = true;
+    myFixture.enableInspections(inspection);
     doTest();
   }
 
