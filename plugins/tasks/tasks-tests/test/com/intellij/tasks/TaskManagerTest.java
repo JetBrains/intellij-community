@@ -123,4 +123,14 @@ public class TaskManagerTest extends TaskManagerTestCase {
     issues = myTaskManager.getIssues("");
     assertEquals(1, issues.size());
   }
+
+  public void testTaskHistoryLength() throws Exception {
+    TestRepository repository = new TestRepository();
+    int historyLength = myTaskManager.getState().taskHistoryLength;
+    for (int i = 0; i < historyLength + 100; i++) {
+      myTaskManager.addTask(new TaskTestUtil.TaskBuilder(Integer.toString(i), "", repository));
+    }
+    assertEquals(historyLength, myTaskManager.getLocalTasks().size());
+    assertEquals(Integer.toString(historyLength + 100 - 1), myTaskManager.getLocalTasks().get(historyLength - 1).getId());
+  }
 }
