@@ -19,9 +19,11 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.Ref;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.ide.PooledThreadExecutor;
 
@@ -59,6 +61,60 @@ public class ProgressIndicatorUtils {
 
   public static void scheduleWithWriteActionPriority(@NotNull ProgressIndicator progressIndicator, @NotNull ReadTask readTask) {
     scheduleWithWriteActionPriority(progressIndicator, PooledThreadExecutor.INSTANCE, readTask);
+  }
+
+  public static boolean runWithWriteActionPriority(@NotNull final Runnable action) {
+    return runWithWriteActionPriority(action, new ProgressIndicatorBase());
+  }
+
+  public static boolean runWithWriteActionPriority(@NotNull final Runnable action,
+                                                @NotNull final ProgressIndicator progressIndicator) {
+    final ApplicationEx application = (ApplicationEx)ApplicationManager.getApplication();
+
+    if (application.isWriteActionPending()) {
+      // first catch: check if write action acquisition started: especially important when current thread has read action, because
+      // tryRunReadAction below would just run without really checking if a write action is pending
+      if (!progressIndicator.isCanceled()) progressIndicator.cancel();
+      return false;
+    }
+
+    final ApplicationAdapter listener = new ApplicationAdapter() {
+      @Override
+      public void beforeWriteActionStart(Object action) {
+        if (!progressIndicator.isCanceled()) progressIndicator.cancel();
+      }
+    };
+
+    boolean succeededWithAddingListener = application.tryRunReadAction(new Runnable() {
+      @Override
+      public void run() {
+        // Even if writeLock.lock() acquisition is in progress at this point then runProcess will block wanting read action which is
+        // also ok as last resort.
+        application.addApplicationListener(listener);
+      }
+    });
+    if (!succeededWithAddingListener) { // second catch: writeLock.lock() acquisition is in progress or already acquired
+      if (!progressIndicator.isCanceled()) progressIndicator.cancel();
+      return false;
+    }
+    final Ref<Boolean> wasCancelled = new Ref<Boolean>();
+    try {
+      ProgressManager.getInstance().runProcess(new Runnable() {
+        @Override
+        public void run() {
+          try {
+            action.run();
+          }
+          catch (ProcessCanceledException ignore) {
+            wasCancelled.set(Boolean.TRUE);
+          }
+        }
+      }, progressIndicator);
+    }
+    finally {
+      application.removeApplicationListener(listener);
+    }
+    return wasCancelled.get() != Boolean.TRUE;
   }
 
   public static void scheduleWithWriteActionPriority(@NotNull final ProgressIndicator progressIndicator,

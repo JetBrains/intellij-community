@@ -1155,35 +1155,50 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     return new ReadAccessToken(status);
   }
 
+  private volatile boolean myWriteActionPending;
+
+  @Override
+  public boolean isWriteActionPending() {
+    return myWriteActionPending;
+  }
+
   private void startWrite(Class clazz) {
-    ActivityTracker.getInstance().inc();
-    fireBeforeWriteActionStart(clazz);
+    boolean writeActionPending = myWriteActionPending;
+    myWriteActionPending = true;
 
     try {
-      if (!isWriteAccessAllowed()) {
-        assertNoPsiLock();
-      }
-      if (!myLock.writeLock().tryLock()) {
-        final AtomicBoolean lockAcquired = new AtomicBoolean(false);
-        if (ourDumpThreadsOnLongWriteActionWaiting > 0) {
-          executeOnPooledThread(new Runnable() {
-            @Override
-            public void run() {
-              while (!lockAcquired.get()) {
-                TimeoutUtil.sleep(ourDumpThreadsOnLongWriteActionWaiting);
-                if (!lockAcquired.get()) {
-                  PerformanceWatcher.getInstance().dumpThreads(true);
+      ActivityTracker.getInstance().inc();
+      fireBeforeWriteActionStart(clazz);
+
+      try {
+        if (!isWriteAccessAllowed()) {
+          assertNoPsiLock();
+        }
+        if (!myLock.writeLock().tryLock()) {
+          final AtomicBoolean lockAcquired = new AtomicBoolean(false);
+          if (ourDumpThreadsOnLongWriteActionWaiting > 0) {
+            executeOnPooledThread(new Runnable() {
+              @Override
+              public void run() {
+                while (!lockAcquired.get()) {
+                  TimeoutUtil.sleep(ourDumpThreadsOnLongWriteActionWaiting);
+                  if (!lockAcquired.get()) {
+                    PerformanceWatcher.getInstance().dumpThreads(true);
+                  }
                 }
               }
-            }
-          });
+            });
+          }
+          myLock.writeLock().lockInterruptibly();
+          lockAcquired.set(true);
         }
-        myLock.writeLock().lockInterruptibly();
-        lockAcquired.set(true);
+      }
+      catch (InterruptedException e) {
+        throw new RuntimeInterruptedException(e);
       }
     }
-    catch (InterruptedException e) {
-      throw new RuntimeInterruptedException(e);
+    finally {
+      myWriteActionPending = writeActionPending;
     }
 
     myWriteActionsStack.push(clazz);
