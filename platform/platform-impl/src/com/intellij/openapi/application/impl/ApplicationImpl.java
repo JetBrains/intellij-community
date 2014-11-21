@@ -1322,7 +1322,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public boolean isWriteActionInProgress() {
-    return myLock.getWriteHoldCount() != 0;
+    return myLock.isWriteLocked();
   }
 
   public void editorPaintStart() {
