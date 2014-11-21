@@ -15,14 +15,16 @@
  */
 package org.jetbrains.idea.svn.rollback;
 
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.rollback.DefaultRollbackEnvironment;
 import com.intellij.openapi.vcs.rollback.RollbackProgressListener;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -64,25 +66,24 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
 
   public void rollbackChanges(List<Change> changes, final List<VcsException> exceptions, @NotNull final RollbackProgressListener listener) {
     listener.indeterminate();
-    final SvnChangeProvider changeProvider = (SvnChangeProvider) mySvnVcs.getChangeProvider();
+
     final Collection<List<Change>> collections = SvnUtil.splitChangesIntoWc(mySvnVcs, changes);
     for (List<Change> collection : collections) {
       // to be more sure about nested changes, being or being not reverted
       final List<Change> innerChanges = new ArrayList<Change>(collection);
       Collections.sort(innerChanges, ChangesAfterPathComparator.getInstance());
       //for (Change change : innerChanges) {
-        rollbackGroupForWc(innerChanges, exceptions, listener, changeProvider);
+        rollbackGroupForWc(innerChanges, exceptions, listener);
       //}
     }
   }
 
-  private void rollbackGroupForWc(List<Change> changes,
-                                  final List<VcsException> exceptions,
-                                  final RollbackProgressListener listener,
-                                  SvnChangeProvider changeProvider) {
+  private void rollbackGroupForWc(@NotNull List<Change> changes,
+                                  @NotNull final List<VcsException> exceptions,
+                                  @NotNull final RollbackProgressListener listener) {
     final UnversionedAndNotTouchedFilesGroupCollector collector = new UnversionedAndNotTouchedFilesGroupCollector();
+    final ChangesChecker checker = new ChangesChecker(mySvnVcs, collector);
 
-    final ChangesChecker checker = new ChangesChecker(changeProvider, collector);
     checker.gather(changes);
     exceptions.addAll(checker.getExceptions());
 
@@ -113,8 +114,7 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
     final Reverter reverter = new Reverter(mySvnVcs, revertHandler, exceptions);
     reverter.revert(checker.getForAdds(), true);
     reverter.revert(checker.getForDeletes(), true);
-    final List<File> edits = checker.getForEdits();
-    reverter.revert(edits.toArray(new File[edits.size()]), false);
+    reverter.revert(checker.getForEdits(), false);
 
     moveGroup(exceptions, fromToModified, properties);
 
@@ -268,11 +268,14 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
       myExceptions = exceptions;
     }
 
-    public void revert(final File[] files, final boolean recursive) {
-      if (files.length == 0) return;
+    public void revert(@NotNull Collection<File> files, boolean recursive) {
+      if (files.isEmpty()) return;
+
+      File target = files.iterator().next();
       try {
         // Files passed here are split into groups by root and working copy format - thus we could determine factory based on first file
-        myVcs.getFactory(files[0]).createRevertClient().revert(files, Depth.allOrEmpty(recursive), myHandler);
+        myVcs.getFactory(target).createRevertClient()
+          .revert(ArrayUtil.toObjectArray(files, File.class), Depth.allOrEmpty(recursive), myHandler);
       }
       catch (VcsException e) {
         processRevertError(e);
@@ -515,34 +518,45 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
   }
 
   // both adds and deletes
-  private static abstract class SuperfluousRemover {
+  private static class SuperfluousRemover {
     private final Set<File> myParentPaths;
+    private final boolean myCheckBefore;
 
-    private SuperfluousRemover() {
+    private SuperfluousRemover(boolean checkBefore) {
+      myCheckBefore = checkBefore;
       myParentPaths = new HashSet<File>();
     }
 
-    @Nullable
-    protected abstract File accept(final Change change);
+    protected boolean accept(@NotNull Change change) {
+      ContentRevision mainRevision = myCheckBefore ? change.getBeforeRevision() : change.getAfterRevision();
+      ContentRevision otherRevision = !myCheckBefore ? change.getBeforeRevision() : change.getAfterRevision();
 
-    public void check(final File file) {
-      for (Iterator<File> iterator = myParentPaths.iterator(); iterator.hasNext();) {
-        final File parentPath = iterator.next();
-        if (VfsUtil.isAncestor(parentPath, file, true)) {
-          return;
-        } else if (VfsUtil.isAncestor(file, parentPath, true)) {
-          iterator.remove();
-          // remove others; dont check for 1st variant any more
-          for (; iterator.hasNext();) {
-            final File innerParentPath = iterator.next();
-            if (VfsUtil.isAncestor(file, innerParentPath, true)) {
-              iterator.remove();
-            }
-          }
-          // will be added in the end
-        }
+      if (mainRevision == null || MoveRenameReplaceCheck.check(change)) {
+        check(otherRevision.getFile().getIOFile());
+        return true;
       }
-      myParentPaths.add(file);
+
+      return false;
+    }
+
+    public void check(@NotNull final File file) {
+      boolean parentAlreadyRegistered = ContainerUtil.or(myParentPaths, new Condition<File>() {
+        @Override
+        public boolean value(@NotNull File parentCandidate) {
+          return VfsUtilCore.isAncestor(parentCandidate, file, true);
+        }
+      });
+
+      if (!parentAlreadyRegistered) {
+        ContainerUtil.retainAll(myParentPaths, new Condition<File>() {
+          @Override
+          public boolean value(@NotNull File childCandidate) {
+            return !VfsUtilCore.isAncestor(file, childCandidate, true);
+          }
+        });
+
+        myParentPaths.add(file);
+      }
     }
 
     public Set<File> getParentPaths() {
@@ -551,8 +565,8 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
   }
 
   private static class ChangesChecker {
-    private final SuperfluousRemover myForAdds;
-    private final SuperfluousRemover myForDeletes;
+    @NotNull private final SuperfluousRemover myForAdds;
+    @NotNull private final SuperfluousRemover myForDeletes;
     private final List<File> myForEdits;
 
     private final SvnChangeProvider myChangeProvider;
@@ -560,36 +574,11 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
 
     private final List<VcsException> myExceptions;
 
-    private ChangesChecker(SvnChangeProvider changeProvider, UnversionedAndNotTouchedFilesGroupCollector collector) {
-      myChangeProvider = changeProvider;
+    private ChangesChecker(@NotNull SvnVcs vcs, UnversionedAndNotTouchedFilesGroupCollector collector) {
+      myChangeProvider = (SvnChangeProvider)vcs.getChangeProvider();
       myCollector = collector;
-
-      myForAdds = new SuperfluousRemover() {
-        @Nullable
-        @Override
-        protected File accept(Change change) {
-          final ContentRevision beforeRevision = change.getBeforeRevision();
-          final ContentRevision afterRevision = change.getAfterRevision();
-          if (beforeRevision == null || MoveRenameReplaceCheck.check(change)) {
-            return afterRevision.getFile().getIOFile();
-          }
-          return null;
-        }
-      };
-
-      myForDeletes = new SuperfluousRemover() {
-        @Nullable
-        @Override
-        protected File accept(Change change) {
-          final ContentRevision beforeRevision = change.getBeforeRevision();
-          final ContentRevision afterRevision = change.getAfterRevision();
-          if (afterRevision == null || MoveRenameReplaceCheck.check(change)) {
-            return beforeRevision.getFile().getIOFile();
-          }
-          return null;
-        }
-      };
-
+      myForAdds = new SuperfluousRemover(true);
+      myForDeletes = new SuperfluousRemover(false);
       myForEdits = new ArrayList<File>();
       myExceptions = new ArrayList<VcsException>();
     }
@@ -634,8 +623,8 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
       for (Change change : changes) {
         final ContentRevision afterRevision = change.getAfterRevision();
 
-        boolean checked = getAddDelete(myForAdds, change);
-        checked |= getAddDelete(myForDeletes, change);
+        boolean checked = myForAdds.accept(change);
+        checked |= myForDeletes.accept(change);
 
         if (! checked) {
           myForEdits.add(afterRevision.getFile().getIOFile());
@@ -643,31 +632,21 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
       }
     }
 
-    private boolean getAddDelete(final SuperfluousRemover superfluousRemover, final Change change) {
-      final File file = superfluousRemover.accept(change);
-      if (file != null) {
-        superfluousRemover.check(file);
-        return true;
-      }
-      return false;
+    @NotNull
+    public Collection<File> getForAdds() {
+      return myForAdds.getParentPaths();
     }
 
-    public File[] getForAdds() {
-      return convert(myForAdds.getParentPaths());
-    }
-
-    public File[] getForDeletes() {
-      return convert(myForDeletes.getParentPaths());
-    }
-
-    private File[] convert(final Collection<File> paths) {
-      return paths.toArray(new File[paths.size()]);
+    @NotNull
+    public Collection<File> getForDeletes() {
+      return myForDeletes.getParentPaths();
     }
 
     public List<VcsException> getExceptions() {
       return myExceptions;
     }
 
+    @NotNull
     public List<File> getForEdits() {
       return myForEdits;
     }
