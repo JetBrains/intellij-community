@@ -17,8 +17,9 @@ package com.siyeh.ig.assignment;
 
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLambdaExpression;
-import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -54,5 +55,10 @@ public class AssignmentToLambdaParameterInspection extends BaseAssignmentToParam
   @Override
   protected boolean isCorrectScope(PsiElement declarationScope) {
     return declarationScope instanceof PsiLambdaExpression;
+  }
+
+  @Override
+  public boolean shouldInspect(PsiFile file) {
+    return PsiUtil.isLanguageLevel8OrHigher(file);
   }
 }
