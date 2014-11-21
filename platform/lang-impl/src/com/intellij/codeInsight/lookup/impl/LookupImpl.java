@@ -93,11 +93,10 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       super.processKeyEvent(e);
     }
 
-    ExpandableItemsHandler<Integer> myExtender = new CompletionExtender(this);
     @NotNull
     @Override
-    public ExpandableItemsHandler<Integer> getExpandableItemsHandler() {
-      return myExtender;
+    protected ExpandableItemsHandler<Integer> createExpandableItemsHandler() {
+      return new CompletionExtender(this);
     }
   };
   final LookupCellRenderer myCellRenderer;
