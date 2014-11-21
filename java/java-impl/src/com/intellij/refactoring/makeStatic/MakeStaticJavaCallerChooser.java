@@ -71,14 +71,12 @@ class MakeStaticJavaCallerChooser extends JavaCallerChooser {
 
   private static class MakeStaticJavaMethodNode extends JavaMethodNode {
 
-    private final PsiMethod myCurrentMethod;
    
     public MakeStaticJavaMethodNode(PsiMethod currentMethod,
                                     HashSet<PsiMethod> called,
                                     Runnable cancelCallback,
                                     Project project) {
       super(currentMethod, called, project, cancelCallback);
-      myCurrentMethod = currentMethod;
     }
 
     @Override
@@ -91,7 +89,7 @@ class MakeStaticJavaCallerChooser extends JavaCallerChooser {
       return new Condition<PsiMethod>() {
         @Override
         public boolean value(PsiMethod method) {
-          return !myCurrentMethod.equals(method) && isTheLastClassRef(method, myCurrentMethod) != null;
+          return !myMethod.equals(method) && isTheLastClassRef(method, myMethod) != null;
         }
       };
     }

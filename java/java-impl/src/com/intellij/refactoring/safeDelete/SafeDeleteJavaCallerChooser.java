@@ -67,7 +67,7 @@ class SafeDeleteJavaCallerChooser extends JavaCallerChooser {
         final Set<MethodNodeBase<PsiMethod>> nodes = getSelectedNodes();
         for (MethodNodeBase<PsiMethod> node : nodes) {
           final SafeDeleteJavaMethodNode methodNode = (SafeDeleteJavaMethodNode)node;
-          final PsiMethod nodeMethod = methodNode.myCurrentMethod;
+          final PsiMethod nodeMethod = methodNode.getMethod();
           if (nodeMethod.equals(myMethod)) continue;
           final PsiParameter parameter = nodeMethod.getParameterList().getParameters()[methodNode.myParameterIdx];
           foreignMethodUsages.add(new SafeDeleteParameterCallHierarchyUsageInfo(nodeMethod, parameter));
@@ -131,8 +131,9 @@ class SafeDeleteJavaCallerChooser extends JavaCallerChooser {
                           }
                         }
                       }
+                      return false;
                     }
-                    return false;
+                    return true;
                   }
                 }) && ref.get()) {
                   return (PsiParameter)resolve;
@@ -148,7 +149,6 @@ class SafeDeleteJavaCallerChooser extends JavaCallerChooser {
 
   private static class SafeDeleteJavaMethodNode extends JavaMethodNode {
 
-    private final PsiMethod myCurrentMethod;
     private final int myParameterIdx;
 
     public SafeDeleteJavaMethodNode(PsiMethod currentMethod,
@@ -157,7 +157,6 @@ class SafeDeleteJavaCallerChooser extends JavaCallerChooser {
                                     int idx,
                                     Project project) {
       super(currentMethod, called, project, cancelCallback);
-      myCurrentMethod = currentMethod;
       myParameterIdx = idx;
     }
 
@@ -171,7 +170,7 @@ class SafeDeleteJavaCallerChooser extends JavaCallerChooser {
       return new Condition<PsiMethod>() {
         @Override
         public boolean value(PsiMethod method) {
-          return !myCurrentMethod.equals(method) && getParameter(method) != null;
+          return !myMethod.equals(method) && getParameter(method) != null;
         }
       };
     }
@@ -185,14 +184,14 @@ class SafeDeleteJavaCallerChooser extends JavaCallerChooser {
 
       //find first method call
       final Ref<PsiParameter> ref = new Ref<PsiParameter>();
-      ReferencesSearch.search(myCurrentMethod, new LocalSearchScope(caller)).forEach(new Processor<PsiReference>() {
+      ReferencesSearch.search(myMethod, new LocalSearchScope(caller)).forEach(new Processor<PsiReference>() {
         @Override
         public boolean process(PsiReference reference) {
           final PsiElement element = reference.getElement();
           if (element instanceof PsiReferenceExpression) {
             final PsiElement elementParent = element.getParent();
             if (elementParent instanceof PsiCallExpression) {
-              ref.set(isTheOnlyOneParameterUsage(elementParent, myParameterIdx, myCurrentMethod));
+              ref.set(isTheOnlyOneParameterUsage(elementParent, myParameterIdx, myMethod));
               return false;
             }
           }
