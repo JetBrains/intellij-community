@@ -101,11 +101,23 @@ private array_element ::= value (','|&']') {
 string_literal ::= SINGLE_QUOTED_STRING | DOUBLE_QUOTED_STRING {
   methods=[
     getTextFragments
+    getValue
+    SINGLE_QUOTED_STRING=""
+    DOUBLE_QUOTED_STRING=""
   ]
   mixin="com.intellij.json.psi.impl.JsonStringLiteralMixin"
 }
-number_literal ::= NUMBER
-boolean_literal ::= TRUE | FALSE
+number_literal ::= NUMBER {
+  methods=[
+    NUMBER=""
+    getValue
+  ]
+}
+boolean_literal ::= TRUE | FALSE {
+  methods=[
+    getValue
+  ]
+}
 null_literal ::= NULL
 
 literal ::= string_literal | number_literal | boolean_literal | null_literal {
