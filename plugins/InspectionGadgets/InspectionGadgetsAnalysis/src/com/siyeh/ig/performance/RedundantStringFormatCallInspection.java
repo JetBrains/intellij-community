@@ -47,6 +47,11 @@ public class RedundantStringFormatCallInspection extends BaseInspection {
     return new RedundantStringFormatCallFix();
   }
 
+  @Override
+  public boolean isEnabledByDefault() {
+    return true;
+  }
+
   private static class RedundantStringFormatCallFix extends InspectionGadgetsFix {
 
     @Override

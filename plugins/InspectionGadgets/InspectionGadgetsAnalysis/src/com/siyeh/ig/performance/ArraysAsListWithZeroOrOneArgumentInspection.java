@@ -52,6 +52,11 @@ public class ArraysAsListWithZeroOrOneArgumentInspection extends BaseInspection 
     }
   }
 
+  @Override
+  public boolean isEnabledByDefault() {
+    return true;
+  }
+
   @Nullable
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {

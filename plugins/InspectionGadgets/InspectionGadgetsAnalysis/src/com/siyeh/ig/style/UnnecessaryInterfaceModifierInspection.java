@@ -52,6 +52,11 @@ public class UnnecessaryInterfaceModifierInspection extends BaseInspection imple
   }
 
   @Override
+  public boolean isEnabledByDefault() {
+    return true;
+  }
+
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     final PsiModifierList modifierList = (PsiModifierList)infos[1];

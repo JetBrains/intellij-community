@@ -54,6 +54,11 @@ public class SubstringZeroInspection extends BaseInspection {
     return new SubstringZeroVisitor();
   }
 
+  @Override
+  public boolean isEnabledByDefault() {
+    return true;
+  }
+
   private static class SubstringZeroFix extends InspectionGadgetsFix {
 
     @Override

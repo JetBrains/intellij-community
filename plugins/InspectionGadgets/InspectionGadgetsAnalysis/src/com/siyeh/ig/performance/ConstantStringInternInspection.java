@@ -54,6 +54,11 @@ public class ConstantStringInternInspection extends BaseInspection {
     return new ConstantStringInternVisitor();
   }
 
+  @Override
+  public boolean isEnabledByDefault() {
+    return true;
+  }
+
   private static class ConstantStringInternFix extends InspectionGadgetsFix {
     @Override
     @NotNull

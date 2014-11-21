@@ -49,6 +49,11 @@ public class UnnecessaryEnumModifierInspection extends BaseInspection implements
   }
 
   @Override
+  public boolean isEnabledByDefault() {
+    return true;
+  }
+
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new UnnecessaryEnumModifierVisitor();
   }
