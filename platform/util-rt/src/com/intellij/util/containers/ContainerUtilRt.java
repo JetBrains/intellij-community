@@ -68,7 +68,7 @@ public class ContainerUtilRt {
 
   @NotNull
   @Contract(pure=true)
-  public static <K, V> Map<K,V> newHashMap(@NotNull Pair<K, V> first, Pair<K, V>[] entries) {
+  public static <K, V> Map<K,V> newHashMap(@NotNull Pair<K, V> first, @NotNull Pair<K, V>[] entries) {
     Map<K, V> map = newHashMap();
     map.put(first.getFirst(), first.getSecond());
     for (Pair<K, V> entry : entries) {
@@ -115,7 +115,7 @@ public class ContainerUtilRt {
 
   @NotNull
   @Contract(pure=true)
-  public static <K, V> LinkedHashMap<K,V> newLinkedHashMap(@NotNull Pair<K, V> first, Pair<K, V>[] entries) {
+  public static <K, V> LinkedHashMap<K,V> newLinkedHashMap(@NotNull Pair<K, V> first, @NotNull Pair<K, V>[] entries) {
     LinkedHashMap<K, V> map = newLinkedHashMap();
     map.put(first.getFirst(), first.getSecond());
     for (Pair<K, V> entry : entries) {
