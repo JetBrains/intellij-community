@@ -20,9 +20,9 @@ import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.components.impl.stores.StateStorageManager;
-import com.intellij.openapi.components.store.ComponentSaveSession;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.MultiMap;
 import org.jdom.JDOMException;
@@ -32,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -130,9 +131,8 @@ public class MockProjectStore implements IProjectStore {
   }
 
   @Override
-  @NotNull
-  public ComponentSaveSession startSave() {
-    throw new UnsupportedOperationException("Method startSave not implemented in " + getClass());
+  public void save(@NotNull List<Pair<StateStorage.SaveSession, VirtualFile>> readonlyFiles) {
+    throw new UnsupportedOperationException();
   }
 
   @Override

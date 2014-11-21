@@ -16,7 +16,6 @@
 package com.siyeh.ig.migration;
 
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -150,18 +149,13 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
-    return new UnnecessaryBoxingVisitor();
+  public boolean shouldInspect(PsiFile file) {
+    return PsiUtil.isLanguageLevel5OrHigher(file);
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!PsiUtil.isLanguageLevel5OrHigher(holder.getFile())) {
-      return new PsiElementVisitor() { };
-    }
-
-    return super.buildVisitor(holder, isOnTheFly);
+  public BaseInspectionVisitor buildVisitor() {
+    return new UnnecessaryBoxingVisitor();
   }
 
   private class UnnecessaryBoxingVisitor extends BaseInspectionVisitor {

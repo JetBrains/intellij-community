@@ -74,15 +74,13 @@ public class FileStatusMap implements Disposable {
     return documentRange.intersection(dirtyScope);
   }
 
-  public void setErrorFoundFlag(@NotNull Document document, boolean errorFound) {
+  public void setErrorFoundFlag(@NotNull Project project, @NotNull Document document, boolean errorFound) {
     //GHP has found error. Flag is used by ExternalToolPass to decide whether to run or not
     synchronized(myDocumentToStatusMap) {
       FileStatus status = myDocumentToStatusMap.get(document);
       if (status == null){
         if (!errorFound) return;
-        PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
-        assert file != null : document;
-        status = new FileStatus(file.getProject());
+        status = new FileStatus(project);
         myDocumentToStatusMap.put(document, status);
       }
       status.errorFound = errorFound;
@@ -97,7 +95,7 @@ public class FileStatusMap implements Disposable {
   }
 
   private static class FileStatus {
-    public boolean defensivelyMarked; // file marked dirty without knowledge of specific dirty region. Subsequent markScopeDirty can refine dirty scope, not extend it
+    private boolean defensivelyMarked; // file marked dirty without knowledge of specific dirty region. Subsequent markScopeDirty can refine dirty scope, not extend it
     private boolean wolfPassFinished;
     // if contains the special value "WHOLE_FILE_MARKER" then the corresponding range is (0, document length)
     private final TIntObjectHashMap<RangeMarker> dirtyScopes = new TIntObjectHashMap<RangeMarker>();
@@ -117,14 +115,14 @@ public class FileStatusMap implements Disposable {
       }
     }
 
-    public boolean allDirtyScopesAreNull() {
+    private boolean allDirtyScopesAreNull() {
       for (Object o : dirtyScopes.getValues()) {
         if (o != null) return false;
       }
       return true;
     }
 
-    public void combineScopesWith(@NotNull final TextRange scope, final int fileLength, @NotNull final Document document) {
+    private void combineScopesWith(@NotNull final TextRange scope, final int fileLength, @NotNull final Document document) {
       dirtyScopes.transformValues(new TObjectFunction<RangeMarker, RangeMarker>() {
         @Override
         public RangeMarker execute(RangeMarker oldScope) {
@@ -222,23 +220,6 @@ public class FileStatusMap implements Disposable {
     }
   }
 
-  public void markFileScopeDirty(@NotNull Document document, int passId) {
-    assertAllowModifications();
-    synchronized(myDocumentToStatusMap) {
-      FileStatus status = myDocumentToStatusMap.get(document);
-      if (status == null){
-        return;
-      }
-      if (passId == Pass.WOLF) {
-        status.wolfPassFinished = false;
-      }
-      else {
-        LOG.assertTrue(status.dirtyScopes.containsKey(passId));
-        status.setDirtyScope(passId, WHOLE_FILE_DIRTY_MARKER);
-      }
-    }
-  }
-
   public void markFileScopeDirtyDefensively(@NotNull PsiFile file) {
     assertAllowModifications();
     if (LOG.isDebugEnabled()) {
@@ -308,7 +289,7 @@ public class FileStatusMap implements Disposable {
   }
 
   @TestOnly
-  public void allowDirt(boolean allow) {
+  void allowDirt(boolean allow) {
     myAllowDirt = allow;
   }
 
@@ -387,7 +368,7 @@ public class FileStatusMap implements Disposable {
     }
   }
   @NotNull
-  public static String getAndClearLog() {
+  static String getAndClearLog() {
     String l = log.toString();
     log.setLength(0);
     return l;

@@ -38,6 +38,8 @@ public class AllIcons {
     public static final Icon Checked_selected = IconLoader.getIcon("/actions/checked_selected.png"); // 12x12
     public static final Icon Checked_small = IconLoader.getIcon("/actions/checked_small.png"); // 11x11
     public static final Icon Checked_small_selected = IconLoader.getIcon("/actions/checked_small_selected.png"); // 11x11
+    public static final Icon CheckedBlack = IconLoader.getIcon("/actions/checkedBlack.png"); // 12x12
+    public static final Icon CheckedGrey = IconLoader.getIcon("/actions/checkedGrey.png"); // 12x12
     public static final Icon CheckMulticaret = IconLoader.getIcon("/actions/CheckMulticaret.png"); // 16x16
     public static final Icon CheckOut = IconLoader.getIcon("/actions/checkOut.png"); // 16x16
     public static final Icon Clean = IconLoader.getIcon("/actions/clean.png"); // 16x16

@@ -24,7 +24,6 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.components.StateStorage.SaveSession;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.components.impl.stores.StateStorageManager.ExternalizationSession;
-import com.intellij.openapi.components.store.ComponentSaveSession;
 import com.intellij.openapi.components.store.ReadOnlyModificationException;
 import com.intellij.openapi.components.store.StateStorageBase;
 import com.intellij.openapi.diagnostic.Logger;
@@ -91,8 +90,7 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
   }
 
   @Override
-  @Nullable
-  public final ComponentSaveSession startSave() {
+  public final void save(@NotNull List<Pair<StateStorage.SaveSession, VirtualFile>> readonlyFiles) {
     ExternalizationSession externalizationSession = myComponents.isEmpty() ? null : getStateStorageManager().startExternalization();
     if (externalizationSession != null) {
       String[] names = ArrayUtilRt.toStringArray(myComponents.keySet());
@@ -117,11 +115,13 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
       }
     }
 
-    return createSaveSession(externalizationSession == null ? null : externalizationSession.createSaveSession());
+    doSave(externalizationSession == null ? null : externalizationSession.createSaveSession(), readonlyFiles);
   }
 
-  protected SaveSessionImpl createSaveSession(@Nullable SaveSession storageManagerSaveSession) {
-    return storageManagerSaveSession == null ? null : new SaveSessionImpl(storageManagerSaveSession);
+  protected void doSave(@Nullable SaveSession storageManagerSaveSession, @NotNull List<Pair<SaveSession, VirtualFile>> readonlyFiles) {
+    if (storageManagerSaveSession != null) {
+      executeSave(storageManagerSaveSession, readonlyFiles);
+    }
   }
 
   private <T> void commitPersistentComponent(@NotNull PersistentStateComponent<T> persistentStateComponent,
@@ -329,21 +329,6 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
     }
     catch (ReadOnlyModificationException e) {
       readonlyFiles.add(Pair.create(saveSession, e.getFile()));
-    }
-  }
-
-  protected static class SaveSessionImpl implements ComponentSaveSession {
-    private final SaveSession myStorageManagerSaveSession;
-
-    public SaveSessionImpl(@Nullable SaveSession storageManagerSaveSession) {
-      myStorageManagerSaveSession = storageManagerSaveSession;
-    }
-
-    @Override
-    public void save(@NotNull List<Pair<SaveSession, VirtualFile>> readonlyFiles) {
-      if (myStorageManagerSaveSession != null) {
-        executeSave(myStorageManagerSaveSession, readonlyFiles);
-      }
     }
   }
 

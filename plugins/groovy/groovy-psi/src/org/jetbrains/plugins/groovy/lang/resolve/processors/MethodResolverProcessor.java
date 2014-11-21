@@ -253,6 +253,10 @@ public class MethodResolverProcessor extends ResolverProcessor implements GrMeth
         System.arraycopy(myArgumentTypes, 0, argTypes, 1, myArgumentTypes.length);
         argTypes[0] = myThisType;
       }
+    } else if (method1 instanceof GrGdkMethod) {
+      return true;
+    } else if (method2 instanceof GrGdkMethod) {
+      return false;
     }
 
     if (myIsConstructor && argTypes != null && argTypes.length == 1) {

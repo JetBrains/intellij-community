@@ -124,7 +124,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
   @Override
   public boolean suitableForFile(@NotNull PsiFile file) {
-    return !InjectedLanguageManager.getInstance(file.getProject()).isInjectedFragment(file);
+    return file instanceof PsiJavaFile && !InjectedLanguageManager.getInstance(file.getProject()).isInjectedFragment(file);
   }
 
   @Override
@@ -155,7 +155,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   public boolean analyze(@NotNull final PsiFile file,
                          final boolean updateWholeFile,
                          @NotNull final HighlightInfoHolder holder,
-                         @NotNull final Runnable action) {
+                         @NotNull final Runnable highlight) {
     myFile = file;
     myHolder = CHECK_ELEMENT_LEVEL ? new CheckLevelHighlightInfoHolder(file, holder) : holder;
     boolean success = true;
@@ -163,20 +163,29 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       myLanguageLevel = PsiUtil.getLanguageLevel(file);
       myJavaSdkVersion = ObjectUtils.notNull(JavaVersionService.getInstance().getJavaSdkVersion(file), JavaSdkVersion.fromLanguageLevel(myLanguageLevel));
       if (updateWholeFile) {
-        Project project = file.getProject();
+        final Project project = file.getProject();
         DaemonCodeAnalyzerEx daemonCodeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(project);
-        FileStatusMap fileStatusMap = daemonCodeAnalyzer.getFileStatusMap();
-        ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-        if (indicator == null) throw new IllegalStateException("Must be run under progress");
-        RefCountHolder refCountHolder = RefCountHolder.startUsing(file, indicator);
+        final FileStatusMap fileStatusMap = daemonCodeAnalyzer.getFileStatusMap();
+        final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
+        if (progress == null) throw new IllegalStateException("Must be run under progress");
+        final RefCountHolder refCountHolder = RefCountHolder.get(file);
         myRefCountHolder = refCountHolder;
-        Document document = PsiDocumentManager.getInstance(project).getDocument(file);
+        final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
         TextRange dirtyScope = document == null ? file.getTextRange() : fileStatusMap.getFileDirtyScope(document, Pass.UPDATE_ALL);
-        success = refCountHolder.analyze(file, dirtyScope, action, indicator);
+        success = refCountHolder.analyze(file, dirtyScope, progress, new Runnable(){
+          @Override
+          public void run() {
+            highlight.run();
+            progress.checkCanceled();
+            HighlightingSession highlightingSession = ProgressableTextEditorHighlightingPass.getHighlightingSession(progress);
+            PostHighlightingVisitor highlightingVisitor = new PostHighlightingVisitor(file, document, refCountHolder, highlightingSession);
+            highlightingVisitor.collectHighlights(file, holder, progress);
+          }
+        });
       }
       else {
         myRefCountHolder = null;
-        action.run();
+        highlight.run();
       }
     }
     finally {

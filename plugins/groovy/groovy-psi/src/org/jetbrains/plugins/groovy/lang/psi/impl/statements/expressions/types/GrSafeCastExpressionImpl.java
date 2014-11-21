@@ -59,6 +59,7 @@ public class GrSafeCastExpressionImpl extends GrExpressionImpl implements GrSafe
 
         if (isCastToRawCollectionFromArray(opType, castType)) {
           final PsiClass resolved = ((PsiClassType)castType).resolve();
+          assert resolved != null;
           final PsiTypeParameter typeParameter = resolved.getTypeParameters()[0];
           final HashMap<PsiTypeParameter, PsiType> substitutionMap = new HashMap<PsiTypeParameter, PsiType>();
           substitutionMap.put(typeParameter, TypesUtil.getItemType(opType));
@@ -71,7 +72,7 @@ public class GrSafeCastExpressionImpl extends GrExpressionImpl implements GrSafe
           return traitClassType;
         }
 
-        return TypesUtil.boxPrimitiveType(castType, cast.getManager(), cast.getResolveScope());
+        return castType;//TypesUtil.boxPrimitiveType(castType, cast.getManager(), cast.getResolveScope());
       }
     };
 
@@ -79,6 +80,7 @@ public class GrSafeCastExpressionImpl extends GrExpressionImpl implements GrSafe
   /**
    * It is assumed that collection class should have only one type param and this param defines collection's item type.
    */
+  @SuppressWarnings("ConstantConditions")
   private static boolean isCastToRawCollectionFromArray(PsiType opType, PsiType castType) {
     return castType instanceof PsiClassType &&
            InheritanceUtil.isInheritor(castType, CommonClassNames.JAVA_UTIL_COLLECTION) &&

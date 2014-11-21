@@ -13,15 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.components.store;
 
-import com.intellij.openapi.components.StateStorage;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NotNull;
+/*
+ * Created by IntelliJ IDEA.
+ * User: dsl
+ * Date: 16.04.2002
+ * Time: 17:09:40
+ * To change template for new class use
+ * Code Style | Class Templates options (Tools | IDE Options).
+ */
+package com.intellij.refactoring.makeStatic;
 
-import java.util.List;
+import com.intellij.psi.PsiElement;
+import com.intellij.usageView.UsageInfo;
 
-public interface ComponentSaveSession {
-  void save(@NotNull List<Pair<StateStorage.SaveSession, VirtualFile>> readonlyFiles);
+class ChainedCallUsageInfo extends UsageInfo {
+  ChainedCallUsageInfo(PsiElement element) {
+    super(element);
+  }
 }

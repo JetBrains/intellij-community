@@ -27,10 +27,8 @@ import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtilRt;
 import com.intellij.util.messages.MessageBus;
-import gnu.trove.THashMap;
 import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -38,10 +36,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IModuleStore {
   private static final Logger LOG = Logger.getInstance(ModuleStoreImpl.class);
@@ -49,11 +47,12 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
   private final ModuleImpl myModule;
 
   @SuppressWarnings({"UnusedDeclaration"})
-  public ModuleStoreImpl(final ComponentManagerImpl componentManager, final ModuleImpl module) {
+  public ModuleStoreImpl(@NotNull ComponentManagerImpl componentManager, @NotNull ModuleImpl module) {
     super(componentManager);
     myModule = module;
   }
 
+  @NotNull
   @Override
   protected FileBasedStorage getMainStorage() {
     FileBasedStorage storage = (FileBasedStorage)getStateStorageManager().getStateStorage(StoragePathMacros.MODULE_FILE, RoamingType.PER_USER);
@@ -70,24 +69,24 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
   public void load() throws IOException, StateStorageException {
     super.load();
 
-    final ModuleFileData storageData = getMainStorageData();
-    final String moduleTypeId = storageData.myOptions.get(Module.ELEMENT_TYPE);
+    String moduleTypeId = getMainStorageData().myOptions.get(Module.ELEMENT_TYPE);
     myModule.setOption(Module.ELEMENT_TYPE, ModuleTypeManager.getInstance().findByID(moduleTypeId).getId());
 
-    if (ApplicationManager.getApplication().isHeadlessEnvironment() || ApplicationManager.getApplication().isUnitTestMode()) return;
+    if (ApplicationManager.getApplication().isHeadlessEnvironment() || ApplicationManager.getApplication().isUnitTestMode()) {
+      return;
+    }
 
     final TrackingPathMacroSubstitutor substitutor = getStateStorageManager().getMacroSubstitutor();
     if (substitutor != null) {
       final Collection<String> macros = substitutor.getUnknownMacros(null);
       if (!macros.isEmpty()) {
         final Project project = myModule.getProject();
-
-          StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
-            @Override
-            public void run() {
-              StorageUtil.notifyUnknownMacros(substitutor, project, null);
-            }
-          });
+        StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
+          @Override
+          public void run() {
+            StorageUtil.notifyUnknownMacros(substitutor, project, null);
+          }
+        });
       }
     }
   }
@@ -101,17 +100,18 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
     private final Map<String, String> myOptions;
     private final Module myModule;
 
-    public ModuleFileData(final String rootElementName, Module module) {
+    public ModuleFileData(@NotNull String rootElementName, @NotNull Module module) {
       super(rootElementName);
+
       myModule = module;
-      myOptions = new THashMap<String, String>(2);
+      myOptions = new TreeMap<String, String>();
     }
 
-    protected ModuleFileData(final ModuleFileData storageData) {
+    private ModuleFileData(@NotNull ModuleFileData storageData) {
       super(storageData);
 
-      myOptions = new THashMap<String, String>(storageData.myOptions);
       myModule = storageData.myModule;
+      myOptions = new TreeMap<String, String>(storageData.myOptions);
     }
 
     @Override
@@ -127,16 +127,18 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
     @NotNull
     protected Element save(@NotNull Map<String, Element> newLiveStates) {
       Element root = super.save(newLiveStates);
-      myOptions.put(VERSION_OPTION, Integer.toString(myVersion));
-      String[] options = ArrayUtil.toStringArray(myOptions.keySet());
-      Arrays.sort(options);
-      for (String option : options) {
-        root.setAttribute(option, myOptions.get(option));
+      String versionString = Integer.toString(myVersion);
+      if (!myOptions.isEmpty()) {
+        for (Map.Entry<String, String> entry : myOptions.entrySet()) {
+          if (!entry.getKey().equals(VERSION_OPTION)) {
+            root.setAttribute(entry.getKey(), entry.getValue());
+          }
+        }
       }
+      myOptions.put(VERSION_OPTION, versionString);
 
-      //need be last for compat reasons
-      root.removeAttribute(VERSION_OPTION);
-      root.setAttribute(VERSION_OPTION, Integer.toString(myVersion));
+      // need be last for compat reasons
+      root.setAttribute(VERSION_OPTION, versionString);
 
       return root;
     }

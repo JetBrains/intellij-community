@@ -640,7 +640,7 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
           public void run() {
             fix.invoke(project, editor, file);
           }
-        }, file, editor);
+        }, file);
       }
 
       @Override
@@ -719,22 +719,23 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
     return OrderEntryFix.registerFixes(registrar, reference);
   }
 
-  public static void invokeOnTheFlyImportOptimizer(@NotNull final Runnable runnable,
-                                                   @NotNull final PsiFile file,
-                                                   @NotNull final Editor editor) {
-    final long stamp = editor.getDocument().getModificationStamp();
+  private static void invokeOnTheFlyImportOptimizer(@NotNull final Runnable runnable, @NotNull final PsiFile file) {
+    final Project project = file.getProject();
+    final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
+    if (document == null) return;
+    final long stamp = document.getModificationStamp();
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
-        if (file.getProject().isDisposed() || editor.isDisposed() || editor.getDocument().getModificationStamp() != stamp) return;
+        if (project.isDisposed() || document.getModificationStamp() != stamp) return;
         //no need to optimize imports on the fly during undo/redo
-        final UndoManager undoManager = UndoManager.getInstance(editor.getProject());
+        final UndoManager undoManager = UndoManager.getInstance(project);
         if (undoManager.isUndoInProgress() || undoManager.isRedoInProgress()) return;
-        PsiDocumentManager.getInstance(file.getProject()).commitAllDocuments();
+        PsiDocumentManager.getInstance(project).commitAllDocuments();
         String beforeText = file.getText();
-        final long oldStamp = editor.getDocument().getModificationStamp();
+        final long oldStamp = document.getModificationStamp();
         DocumentUtil.writeInRunUndoTransparentAction(runnable);
-        if (oldStamp != editor.getDocument().getModificationStamp()) {
+        if (oldStamp != document.getModificationStamp()) {
           String afterText = file.getText();
           if (Comparing.strEqual(beforeText, afterText)) {
             LOG.error(

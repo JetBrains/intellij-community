@@ -377,6 +377,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     return myProject.isDefault() ? "" : ((FileBasedStorage)getProjectFileStorage()).getFilePath();
   }
 
+  @NotNull
   @Override
   protected XmlElementStorage getMainStorage() {
     return getProjectFileStorage();
@@ -454,66 +455,55 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   }
 
   @Override
-  protected SaveSessionImpl createSaveSession(@Nullable SaveSession storageManagerSaveSession) {
-    return storageManagerSaveSession == null ? null : new ProjectSaveSession(storageManagerSaveSession);
-  }
-
-  protected class ProjectSaveSession extends SaveSessionImpl {
-    public ProjectSaveSession(@Nullable SaveSession storageManagerSaveSession) {
-      super(storageManagerSaveSession);
+  protected final void doSave(@Nullable SaveSession storageManagerSaveSession, @NotNull List<Pair<SaveSession, VirtualFile>> readonlyFiles) {
+    ProjectImpl.UnableToSaveProjectNotification[] notifications =
+      NotificationsManager.getNotificationsManager().getNotificationsOfType(ProjectImpl.UnableToSaveProjectNotification.class, myProject);
+    if (notifications.length > 0) {
+      throw new SaveCancelledException();
     }
 
-    @Override
-    public void save(@NotNull List<Pair<SaveSession, VirtualFile>> readonlyFiles) {
-      ProjectImpl.UnableToSaveProjectNotification[] notifications =
-        NotificationsManager.getNotificationsManager().getNotificationsOfType(ProjectImpl.UnableToSaveProjectNotification.class, myProject);
-      if (notifications.length > 0) {
+    beforeSave(readonlyFiles);
+
+    super.doSave(storageManagerSaveSession, readonlyFiles);
+
+    if (!readonlyFiles.isEmpty()) {
+      ReadonlyStatusHandler.OperationStatus status;
+      AccessToken token = ReadAction.start();
+      try {
+        status = ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(getFilesList(readonlyFiles));
+      }
+      finally {
+        token.finish();
+      }
+
+      if (status.hasReadonlyFiles()) {
+        ProjectImpl.dropUnableToSaveProjectNotification(myProject, status.getReadonlyFiles());
         throw new SaveCancelledException();
       }
-
-      beforeSave(readonlyFiles);
-
-      super.save(readonlyFiles);
-
-      if (!readonlyFiles.isEmpty()) {
-        ReadonlyStatusHandler.OperationStatus status;
-        AccessToken token = ReadAction.start();
-        try {
-          status = ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(getFilesList(readonlyFiles));
-        }
-        finally {
-          token.finish();
+      else {
+        readonlyFiles.clear();
+        for (Pair<SaveSession, VirtualFile> entry : readonlyFiles) {
+          executeSave(entry.first, readonlyFiles);
         }
 
-        if (status.hasReadonlyFiles()) {
-          ProjectImpl.dropUnableToSaveProjectNotification(myProject, status.getReadonlyFiles());
+        if (!readonlyFiles.isEmpty()) {
+          ProjectImpl.dropUnableToSaveProjectNotification(myProject, getFilesList(readonlyFiles));
           throw new SaveCancelledException();
         }
-        else {
-          readonlyFiles.clear();
-          for (Pair<SaveSession, VirtualFile> entry : readonlyFiles) {
-            executeSave(entry.first, readonlyFiles);
-          }
-
-          if (!readonlyFiles.isEmpty()) {
-            ProjectImpl.dropUnableToSaveProjectNotification(myProject, getFilesList(readonlyFiles));
-            throw new SaveCancelledException();
-          }
-        }
       }
     }
+  }
 
-    @NotNull
-    private VirtualFile[] getFilesList(List<Pair<SaveSession, VirtualFile>> readonlyFiles) {
-      final VirtualFile[] files = new VirtualFile[readonlyFiles.size()];
-      for (int i = 0, size = readonlyFiles.size(); i < size; i++) {
-        files[i] = readonlyFiles.get(i).second;
-      }
-      return files;
-    }
+  protected void beforeSave(@NotNull List<Pair<SaveSession, VirtualFile>> readonlyFiles) {
+  }
 
-    protected void beforeSave(@NotNull List<Pair<SaveSession, VirtualFile>> readonlyFiles) {
+  @NotNull
+  private static VirtualFile[] getFilesList(List<Pair<SaveSession, VirtualFile>> readonlyFiles) {
+    final VirtualFile[] files = new VirtualFile[readonlyFiles.size()];
+    for (int i = 0, size = readonlyFiles.size(); i < size; i++) {
+      files[i] = readonlyFiles.get(i).second;
     }
+    return files;
   }
 
   private final StateStorageChooser<PersistentStateComponent<?>> myStateStorageChooser = new StateStorageChooser<PersistentStateComponent<?>>() {

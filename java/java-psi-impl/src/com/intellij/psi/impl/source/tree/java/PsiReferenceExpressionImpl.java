@@ -325,25 +325,7 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
   @Override
   @NotNull
   public JavaResolveResult[] multiResolve(boolean incompleteCode) {
-    FileElement fileElement = SharedImplUtil.findFileElement(this);
-    if (fileElement == null) {
-      LOG.error("fileElement == null!");
-      return JavaResolveResult.EMPTY_ARRAY;
-    }
-    final PsiManagerEx manager = fileElement.getManager();
-    if (manager == null) {
-      LOG.error("getManager() == null!");
-      return JavaResolveResult.EMPTY_ARRAY;
-    }
-    PsiFile file = SharedImplUtil.getContainingFile(fileElement);
-    boolean valid = file != null && file.isValid();
-    if (!valid) {
-      LOG.error("invalid!");
-      return JavaResolveResult.EMPTY_ARRAY;
-    }
-    Project project = manager.getProject();
-    ResolveResult[] results = ResolveCache.getInstance(project).resolveWithCaching(this, OurGenericsResolver.INSTANCE, true, incompleteCode, file);
-    return results.length == 0 ? JavaResolveResult.EMPTY_ARRAY : (JavaResolveResult[])results;
+    return PsiImplUtil.multiResolveImpl(this, incompleteCode, OurGenericsResolver.INSTANCE);
   }
 
   @Override

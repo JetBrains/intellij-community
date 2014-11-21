@@ -1701,15 +1701,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private void bulkUpdateStarted() {
-    myFoldingModel.onBulkDocumentUpdateStarted();
+    saveCaretRelativePosition();
+    
     myCaretModel.onBulkDocumentUpdateStarted();
     mySoftWrapModel.onBulkDocumentUpdateStarted();
+    myFoldingModel.onBulkDocumentUpdateStarted();
   }
 
   private void bulkUpdateFinished() {
     myFoldingModel.onBulkDocumentUpdateFinished();
-    myCaretModel.onBulkDocumentUpdateFinished();
     mySoftWrapModel.onBulkDocumentUpdateFinished();
+    myCaretModel.onBulkDocumentUpdateFinished();
 
     clearTextWidthCache();
 
@@ -1722,6 +1724,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     updateGutterSize();
     repaintToScreenBottom(0);
     updateCaretCursor();
+    
+    restoreCaretRelativePosition();
   }
 
   private void beforeChangedUpdate(@NotNull DocumentEvent e) {
@@ -1733,9 +1737,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return;
     }
 
-    Rectangle visibleArea = getScrollingModel().getVisibleArea();
-    Point pos = visualPositionToXY(getCaretModel().getVisualPosition());
-    myCaretUpdateVShift = pos.y - visibleArea.y;
+    saveCaretRelativePosition();
 
     // We assume that size container is already notified with the visual line widths during soft wraps processing
     if (!mySoftWrapModel.isSoftWrappingEnabled()) {
@@ -1779,9 +1781,23 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       repaintLines(startLine, endLine);
     }
 
+    if (getCaretModel().getOffset() < e.getOffset() || getCaretModel().getOffset() > e.getOffset() + e.getNewLength()){
+      restoreCaretRelativePosition();
+    }
+  }
+
+  private void saveCaretRelativePosition() {
+    Rectangle visibleArea = getScrollingModel().getVisibleArea();
+    Point pos = visualPositionToXY(getCaretModel().getVisualPosition());
+    myCaretUpdateVShift = pos.y - visibleArea.y;
+  }
+
+  private void restoreCaretRelativePosition() {
     Point caretLocation = visualPositionToXY(getCaretModel().getVisualPosition());
     int scrollOffset = caretLocation.y - myCaretUpdateVShift;
+    getScrollingModel().disableAnimation();
     getScrollingModel().scrollVertically(scrollOffset);
+    getScrollingModel().enableAnimation();
   }
 
   public boolean hasTabs() {
@@ -6108,7 +6124,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     public void setFontPreferences(@NotNull FontPreferences preferences) {
       if (Comparing.equal(preferences, myFontPreferences)) return;
       preferences.copyTo(myFontPreferences);
-      reinitSettings();
+      reinitFontsAndSettings();
     }
 
     @Override

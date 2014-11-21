@@ -172,6 +172,18 @@ public class MakeMethodStaticTest extends LightRefactoringTestCase {
     checkResultByFile("/refactoring/makeMethodStatic/after22.java");
   }
 
+  public void testDeepStaticOverrides() throws Exception {
+    configureByFile("/refactoring/makeMethodStatic/beforeOverrides.java");
+    perform(false);
+    checkResultByFile("/refactoring/makeMethodStatic/afterOverrides.java");
+  }
+
+  public void testDeepStatic() throws Exception {
+    configureByFile("/refactoring/makeMethodStatic/beforeDeep.java");
+    perform(false);
+    checkResultByFile("/refactoring/makeMethodStatic/afterDeep.java");
+  }
+
   public void testPreserveTypeParams() throws Exception {
     configureByFile("/refactoring/makeMethodStatic/beforePreserveTypeParams.java");
     performWithFields();

@@ -59,15 +59,6 @@ Foo untyped() { [] }
     assertEquals(4, ReferencesSearch.search(foo.constructors[0]).findAll().size())
   }
 
-  public void testList_Cast() throws Exception {
-    def foo = myFixture.addClass("""class Foo {
-    Foo() {}
-    }
-""")
-    myFixture.addFileToProject "a.gpp", "def x = (Foo) []"
-    assertOneElement(ReferencesSearch.search(foo.constructors[0]).findAll())
-  }
-
   public void testList_AsCast() throws Exception {
     def foo = myFixture.addClass("""class Foo {
     Foo() {}

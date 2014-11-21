@@ -31,6 +31,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.border.CustomLineBorder;
+import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.ui.treeStructure.SimpleNode;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -50,6 +51,7 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
   private final PropertiesComponent myProperties;
   private final Settings mySettings;
   private final SettingsSearch mySearch;
+  private final JPanel mySearchPanel;
   private final SettingsFilter myFilter;
   private final SettingsTreeView myTreeView;
   private final ConfigurableEditor myEditor;
@@ -74,6 +76,8 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
         myTreeView.myTree.processKeyEvent(event);
       }
     };
+    mySearchPanel = new JPanel(new VerticalLayout(0));
+    mySearchPanel.add(VerticalLayout.CENTER, mySearch);
     myFilter = new SettingsFilter(project, groups, mySearch) {
       @Override
       Configurable getConfigurable(SimpleNode node) {
@@ -174,17 +178,18 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
       }
     };
     myBanner = new Banner(myEditor.getResetAction());
-    mySearch.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+    mySearchPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
     JComponent left = myTreeView;
     JComponent right = myEditor;
     if (Registry.is("ide.settings.old.style")) {
       myBanner.setBorder(BorderFactory.createEmptyBorder(5, 10, 0, 10));
-      mySearch.setBackground(myTreeView.myTree.getBackground());
-      mySearch.addComponentListener(new ComponentAdapter() {
+      mySearch.setBackground(SettingsTreeView.BACKGROUND);
+      mySearchPanel.setBackground(SettingsTreeView.BACKGROUND);
+      mySearchPanel.addComponentListener(new ComponentAdapter() {
         @Override
         public void componentResized(ComponentEvent event) {
           Dimension size = myBanner.getPreferredSize();
-          size.height = mySearch.getHeight() - 5;
+          size.height = mySearchPanel.getHeight() - 5;
           myBanner.setPreferredSize(size);
           myBanner.setSize(size);
           myBanner.revalidate();
@@ -192,7 +197,7 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
         }
       });
       left = new JPanel(new BorderLayout());
-      left.add(BorderLayout.NORTH, mySearch);
+      left.add(BorderLayout.NORTH, mySearchPanel);
       left.add(BorderLayout.CENTER, myTreeView);
 
       right = new JPanel(new BorderLayout());
@@ -204,16 +209,16 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
       myTreeView.addComponentListener(new ComponentAdapter() {
         @Override
         public void componentResized(ComponentEvent event) {
-          Dimension size = mySearch.getPreferredSize();
+          Dimension size = mySearchPanel.getPreferredSize();
           size.width = myTreeView.getWidth();
-          mySearch.setPreferredSize(size);
-          mySearch.setSize(size);
-          mySearch.revalidate();
-          mySearch.repaint();
+          mySearchPanel.setPreferredSize(size);
+          mySearchPanel.setSize(size);
+          mySearchPanel.revalidate();
+          mySearchPanel.repaint();
         }
       });
       JPanel panel = new JPanel(new BorderLayout());
-      panel.add(BorderLayout.WEST, mySearch);
+      panel.add(BorderLayout.WEST, mySearchPanel);
       panel.add(BorderLayout.CENTER, myBanner);
       panel.setBorder(new CustomLineBorder(OnePixelDivider.BACKGROUND, 0, 0, 1, 0));
       add(BorderLayout.NORTH, panel);

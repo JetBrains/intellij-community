@@ -63,19 +63,19 @@ public class PluginManagerCore {
   @NonNls public static final String META_INF = "META-INF";
   @NonNls public static final String PLUGIN_XML = "plugin.xml";
   public static final float PLUGINS_PROGRESS_MAX_VALUE = 0.3f;
-  static final Map<PluginId,Integer> ourId2Index = new THashMap<PluginId, Integer>();
+  private static final Map<PluginId,Integer> ourId2Index = new THashMap<PluginId, Integer>();
   @NonNls static final String MODULE_DEPENDENCY_PREFIX = "com.intellij.module";
-  static final Map<String, IdeaPluginDescriptorImpl> ourModulesToContainingPlugins = new THashMap<String, IdeaPluginDescriptorImpl>();
-  static final PluginClassCache ourPluginClasses = new PluginClassCache();
+  private static final Map<String, IdeaPluginDescriptorImpl> ourModulesToContainingPlugins = new THashMap<String, IdeaPluginDescriptorImpl>();
+  private static final PluginClassCache ourPluginClasses = new PluginClassCache();
   @NonNls static final String SPECIAL_IDEA_PLUGIN = "IDEA CORE";
   static final String DISABLE = "disable";
   static final String ENABLE = "enable";
   static final String EDIT = "edit";
   @NonNls private static final String PROPERTY_PLUGIN_PATH = "plugin.path";
-  static List<String> ourDisabledPlugins = null;
-  static MultiMap<String, String> ourBrokenPluginVersions = null;
-  static IdeaPluginDescriptor[] ourPlugins;
-  static String myPluginError = null;
+  static List<String> ourDisabledPlugins;
+  private static MultiMap<String, String> ourBrokenPluginVersions;
+  private static IdeaPluginDescriptor[] ourPlugins;
+  static String myPluginError;
   static List<String> myPlugins2Disable = null;
   static LinkedHashSet<String> myPlugins2Enable = null;
   public static String BUILD_NUMBER;
@@ -183,10 +183,13 @@ public class PluginManagerCore {
   }
 
   public static boolean disablePlugin(String id) {
-    if (getDisabledPlugins().contains(id)) return false;
-    getDisabledPlugins().add(id);
+    List<String> disabledPlugins = getDisabledPlugins();
+    if (disabledPlugins.contains(id)) {
+      return false;
+    }
+    disabledPlugins.add(id);
     try {
-      saveDisabledPlugins(getDisabledPlugins(), false);
+      saveDisabledPlugins(disabledPlugins, false);
     }
     catch (IOException e) {
       return false;
@@ -242,7 +245,6 @@ public class PluginManagerCore {
         continue;
       }
 
-      // TODO[yole] should this condition be a parameter?
       if (isModuleDependency(dependentPluginId) && (ourModulesToContainingPlugins.isEmpty() || ourModulesToContainingPlugins.containsKey(
         dependentPluginId.getIdString()))) {
         continue;
@@ -824,7 +826,7 @@ public class PluginManagerCore {
 
   static void loadDescriptorsFromClassPath(@NotNull List<IdeaPluginDescriptorImpl> result, @Nullable StartupProgress progress) {
     Collection<URL> urls = getClassLoaderUrls();
-    String platformPrefix = System.getProperty(PlatformUtilsCore.PLATFORM_PREFIX_KEY);
+    String platformPrefix = System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY);
     int i = 0;
     for (URL url : urls) {
       i++;
@@ -1096,7 +1098,7 @@ public class PluginManagerCore {
     }
 
     final IdeaPluginDescriptor corePluginDescriptor = idToDescriptorMap.get(PluginId.getId(CORE_PLUGIN_ID));
-    assert corePluginDescriptor != null : CORE_PLUGIN_ID + " not found; platform prefix is " + System.getProperty(PlatformUtilsCore.PLATFORM_PREFIX_KEY);
+    assert corePluginDescriptor != null : CORE_PLUGIN_ID + " not found; platform prefix is " + System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY);
     for (IdeaPluginDescriptorImpl descriptor : result) {
       if (descriptor != corePluginDescriptor) {
         descriptor.insertDependency(corePluginDescriptor);

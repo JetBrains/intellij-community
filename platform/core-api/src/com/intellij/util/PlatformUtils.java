@@ -23,51 +23,49 @@ import org.jetbrains.annotations.Nullable;
  */
 @SuppressWarnings({"deprecation", "UnusedDeclaration"})
 public class PlatformUtils {
-  public static final String PLATFORM_PREFIX_KEY = PlatformUtilsCore.PLATFORM_PREFIX_KEY;
+  public static final String PLATFORM_PREFIX_KEY = "idea.platform.prefix";
 
-  public static final String IDEA_PREFIX = PlatformUtilsCore.IDEA_PREFIX;
-  public static final String IDEA_CE_PREFIX = PlatformUtilsCore.COMMUNITY_PREFIX;
-  public static final String APPCODE_PREFIX = PlatformUtilsCore.APPCODE_PREFIX;
-  public static final String CLION_PREFIX = PlatformUtilsCore.CLION_PREFIX;
-  public static final String PYCHARM_PREFIX = PlatformUtilsCore.PYCHARM_PREFIX;
-  public static final String PYCHARM_CE_PREFIX = PlatformUtilsCore.PYCHARM_PREFIX2;
-  public static final String RUBY_PREFIX = PlatformUtilsCore.RUBY_PREFIX;
-  public static final String PHP_PREFIX = PlatformUtilsCore.PHP_PREFIX;
-  public static final String WEB_PREFIX = PlatformUtilsCore.WEB_PREFIX;
-  public static final String DBE_PREFIX = PlatformUtilsCore.DBE_PREFIX;
-
-  private PlatformUtils() { }
+  public static final String IDEA_PREFIX = "idea";
+  public static final String IDEA_CE_PREFIX = "Idea";
+  public static final String APPCODE_PREFIX = "AppCode";
+  public static final String CLION_PREFIX = "CLion";
+  public static final String PYCHARM_PREFIX = "Python";
+  public static final String PYCHARM_CE_PREFIX = "PyCharmCore";
+  public static final String RUBY_PREFIX = "Ruby";
+  public static final String PHP_PREFIX = "PhpStorm";
+  public static final String WEB_PREFIX = "WebStorm";
+  public static final String DBE_PREFIX = "0xDBE";
 
   public static String getPlatformPrefix() {
-    return PlatformUtilsCore.getPlatformPrefix();
+    return getPlatformPrefix(IDEA_PREFIX);
   }
 
   public static String getPlatformPrefix(String defaultPrefix) {
-    return PlatformUtilsCore.getPlatformPrefix(defaultPrefix);
+    return System.getProperty(PLATFORM_PREFIX_KEY, defaultPrefix);
   }
 
   public static boolean isIntelliJ() {
-    return PlatformUtilsCore.isIntelliJ();
+    return isIdea() || isCommunity();
   }
 
   public static boolean isIdeaUltimate() {
-    return PlatformUtilsCore.isIdea();
+    return is(IDEA_PREFIX);
   }
 
   public static boolean isIdeaCommunity() {
-    return PlatformUtilsCore.isCommunity();
+    return is(COMMUNITY_PREFIX);
   }
 
   public static boolean isRubyMine() {
-    return PlatformUtilsCore.isRubyMine();
+    return is(RUBY_PREFIX);
   }
 
   public static boolean isAppCode() {
-    return PlatformUtilsCore.isAppCode();
+    return is(APPCODE_PREFIX);
   }
 
   public static boolean isCLion() {
-    return PlatformUtilsCore.isCLion();
+    return is(CLION_PREFIX);
   }
 
   public static boolean isCidr() {
@@ -75,31 +73,35 @@ public class PlatformUtils {
   }
 
   public static boolean isPyCharm() {
-    return PlatformUtilsCore.isPyCharm();
+    return isPyCharmPro() || isPyCharmCommunity();
   }
 
   public static boolean isPyCharmPro() {
-    return PlatformUtilsCore.isPyCharmPro();
+    return is(PYCHARM_PREFIX);
   }
 
   public static boolean isPyCharmCommunity() {
-    return PlatformUtilsCore.isPyCharmCommunity();
+    return is(PYCHARM_PREFIX2);
   }
 
   public static boolean isPhpStorm() {
-    return PlatformUtilsCore.isPhpStorm();
+    return is(PHP_PREFIX);
   }
 
   public static boolean isWebStorm() {
-    return PlatformUtilsCore.isWebStorm();
+    return is(WEB_PREFIX);
   }
 
   public static boolean isDatabaseIDE() {
-    return PlatformUtilsCore.isDatabaseIDE();
+    return is(DBE_PREFIX);
   }
 
   public static boolean isCommunityEdition() {
     return isIdeaCommunity() || isPyCharmCommunity();
+  }
+
+  private static boolean is(String idePrefix) {
+    return idePrefix.equals(getPlatformPrefix());
   }
 
   /** @deprecated not a common API; use DevKit's PsiUtil.isIdeaProject() when needed (to remove in IDEA 14) */
@@ -124,7 +126,7 @@ public class PlatformUtils {
 
   /** @deprecated to remove in IDEA 14 */
   @SuppressWarnings("UnusedDeclaration")
-  public static final String FLEX_PREFIX = PlatformUtilsCore.FLEX_PREFIX;
+  public static final String FLEX_PREFIX = "Flex";
 
   /** @deprecated to remove in IDEA 14 */
   @SuppressWarnings("UnusedDeclaration")

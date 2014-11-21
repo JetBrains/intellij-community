@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.inheritance;
 
-import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -47,24 +46,19 @@ public class ExtendsAnnotationInspection extends BaseInspection {
   @NotNull
   public String buildErrorString(Object... infos) {
     final PsiClass containingClass = (PsiClass)infos[0];
-    return InspectionGadgetsBundle.message(
-      "extends.annotation.problem.descriptor",
-      containingClass.getName());
+    return containingClass.isInterface()
+           ? InspectionGadgetsBundle.message("extends.annotation.interface.problem.descriptor", containingClass.getName())
+           : InspectionGadgetsBundle.message("extends.annotation.problem.descriptor", containingClass.getName());
+  }
+
+  @Override
+  public boolean shouldInspect(PsiFile file) {
+    return PsiUtil.isLanguageLevel5OrHigher(file);
   }
 
   @Override
   public BaseInspectionVisitor buildVisitor() {
     return new ExtendsAnnotationVisitor();
-  }
-
-  @NotNull
-  @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!PsiUtil.isLanguageLevel5OrHigher(holder.getFile())) {
-      return new PsiElementVisitor() { };
-    }
-
-    return super.buildVisitor(holder, isOnTheFly);
   }
 
   private static class ExtendsAnnotationVisitor
@@ -75,10 +69,8 @@ public class ExtendsAnnotationInspection extends BaseInspection {
       if (aClass.isAnnotationType()) {
         return;
       }
-      final PsiReferenceList extendsList = aClass.getExtendsList();
-      checkReferenceList(extendsList, aClass);
-      final PsiReferenceList implementsList = aClass.getImplementsList();
-      checkReferenceList(implementsList, aClass);
+      checkReferenceList(aClass.getExtendsList(), aClass);
+      checkReferenceList(aClass.getImplementsList(), aClass);
     }
 
     private void checkReferenceList(PsiReferenceList referenceList,
@@ -94,7 +86,6 @@ public class ExtendsAnnotationInspection extends BaseInspection {
           continue;
         }
         final PsiClass psiClass = (PsiClass)referent;
-        psiClass.isAnnotationType();
         if (psiClass.isAnnotationType()) {
           registerError(element, containingClass);
         }

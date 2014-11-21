@@ -458,9 +458,6 @@ public class BraceHighlightingHandler {
         }
       }
 
-      
-      
-      
       if (!scopeHighlighting) {
         showScopeHint(lBrace.getStartOffset(), lBrace.getEndOffset());
       }

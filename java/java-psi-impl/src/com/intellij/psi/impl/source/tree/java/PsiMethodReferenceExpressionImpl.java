@@ -21,15 +21,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiManagerEx;
-import com.intellij.psi.impl.source.resolve.ResolveCache;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfaceParameterizationUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.impl.source.tree.ChildRole;
-import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.JavaElementType;
-import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.ElementClassFilter;
 import com.intellij.psi.scope.PsiConflictResolver;
@@ -269,29 +266,8 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
 
   @NotNull
   @Override
-  public JavaResolveResult[] multiResolve(final boolean incompleteCode) {
-    FileElement fileElement = SharedImplUtil.findFileElement(this);
-    if (fileElement == null) {
-      LOG.error("fileElement == null!");
-      return JavaResolveResult.EMPTY_ARRAY;
-    }
-    final PsiManagerEx manager = fileElement.getManager();
-    if (manager == null) {
-      LOG.error("getManager() == null!");
-      return JavaResolveResult.EMPTY_ARRAY;
-    }
-    PsiFile file = SharedImplUtil.getContainingFile(fileElement);
-    boolean valid = file != null && file.isValid();
-    if (!valid) {
-      LOG.error("invalid!");
-      return JavaResolveResult.EMPTY_ARRAY;
-    }
-    final Map<PsiMethodReferenceExpression, PsiType> map = PsiMethodReferenceUtil.ourRefs.get();
-    if (map != null && map.containsKey(this)) {
-      return RESOLVER.resolve(this, file, incompleteCode);
-    }
-    ResolveResult[] results = ResolveCache.getInstance(getProject()).resolveWithCaching(this, RESOLVER, true, incompleteCode, file);
-    return results.length == 0 ? JavaResolveResult.EMPTY_ARRAY : (JavaResolveResult[])results;
+  public JavaResolveResult[] multiResolve(boolean incompleteCode) {
+    return PsiImplUtil.multiResolveImpl(this, incompleteCode, RESOLVER);
   }
 
   @Override

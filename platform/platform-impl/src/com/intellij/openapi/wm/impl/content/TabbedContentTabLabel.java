@@ -16,7 +16,10 @@
 package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.components.JBList;
@@ -34,7 +37,7 @@ import java.util.ArrayList;
 /**
  * @author Konstantin Bulenkov
  */
-public class TabbedContentTabLabel extends ContentTabLabel {
+public class TabbedContentTabLabel extends ContentTabLabel implements Disposable {
   private final ComboIcon myComboIcon = new ComboIcon() {
     @Override
     public Rectangle getIconRec() {
@@ -79,15 +82,18 @@ public class TabbedContentTabLabel extends ContentTabLabel {
         return label;
       }
     });
-    JBPopupFactory.getInstance().createListPopupBuilder(list).setItemChoosenCallback(new Runnable() {
-      @Override
-      public void run() {
-        int index = list.getSelectedIndex();
-        if (index != -1) {
-          myContent.selectContent(index);
+    final JBPopup popup = JBPopupFactory.getInstance().createListPopupBuilder(list)
+      .setItemChoosenCallback(new Runnable() {
+        @Override
+        public void run() {
+          int index = list.getSelectedIndex();
+          if (index != -1) {
+            myContent.selectContent(index);
+          }
         }
-      }
-    }).createPopup().showUnderneathOf(this);
+      }).createPopup();
+    Disposer.register(this, popup);
+    popup.showUnderneathOf(this);
   }
 
   @Override
@@ -109,5 +115,15 @@ public class TabbedContentTabLabel extends ContentTabLabel {
   protected void paintComponent(Graphics g) {
     super.paintComponent(g);
     myComboIcon.paintIcon(this, g);
+  }
+
+  @Override
+  public void dispose() {
+  }
+
+  @Override
+  public void removeNotify() {
+    super.removeNotify();
+    Disposer.dispose(this);
   }
 }

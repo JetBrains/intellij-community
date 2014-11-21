@@ -84,7 +84,7 @@ public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass imp
     List<ProperTextRange> outsideRanges = new ArrayList<ProperTextRange>();
     //TODO: this thing is just called TWICE with same arguments eating CPU on huge files :(
     Divider.divideInsideAndOutside(myFile, myStartOffset, myEndOffset, myPriorityRange, inside, insideRanges, outside,
-                                   outsideRanges, false, FILE_FILTER);
+                                   outsideRanges, false, SHOULD_HIGHIGHT_FILTER);
 
 
     // all infos for the "injected fragment for the host which is inside" are indeed inside
@@ -122,7 +122,8 @@ public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass imp
         myHighlights.addAll(toApplyInside);
         gotHighlights.clear();
 
-        myHighlightInfoProcessor.highlightsInsideVisiblePartAreProduced(myHighlightingSession, toApplyInside, myPriorityRange, myRestrictRange);
+        myHighlightInfoProcessor.highlightsInsideVisiblePartAreProduced(myHighlightingSession, toApplyInside, myPriorityRange, myRestrictRange,
+                                                                        getId());
       }
 
       List<HighlightInfo> toApply = new ArrayList<HighlightInfo>();
@@ -134,12 +135,14 @@ public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass imp
       }
       toApply.addAll(injectionsOutside);
 
-      myHighlightInfoProcessor.highlightsOutsideVisiblePartAreProduced(myHighlightingSession, toApply, myRestrictRange, new ProperTextRange(0, myDocument.getTextLength()));
+      myHighlightInfoProcessor.highlightsOutsideVisiblePartAreProduced(myHighlightingSession, toApply, myRestrictRange, new ProperTextRange(0, myDocument.getTextLength()),
+                                                                       getId());
     }
     else {
       // else apply only result (by default apply command) and only within inside
       myHighlights.addAll(gotHighlights);
-      myHighlightInfoProcessor.highlightsInsideVisiblePartAreProduced(myHighlightingSession, myHighlights, myRestrictRange, myRestrictRange);
+      myHighlightInfoProcessor.highlightsInsideVisiblePartAreProduced(myHighlightingSession, myHighlights, myRestrictRange, myRestrictRange,
+                                                                      getId());
     }
   }
 

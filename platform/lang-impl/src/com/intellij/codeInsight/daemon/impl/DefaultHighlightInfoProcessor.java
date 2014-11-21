@@ -43,7 +43,7 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
   public void highlightsInsideVisiblePartAreProduced(@NotNull final HighlightingSession highlightingSession,
                                                      @NotNull final List<HighlightInfo> infos,
                                                      @NotNull TextRange priorityRange,
-                                                     @NotNull TextRange restrictRange) {
+                                                     @NotNull TextRange restrictRange, final int groupId) {
     final PsiFile psiFile = highlightingSession.getPsiFile();
     final Project project = psiFile.getProject();
     final Document document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
@@ -64,7 +64,7 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
 
           EditorColorsScheme scheme = editor == null ? null : editor.getColorsScheme();
           UpdateHighlightersUtil.setHighlightersInRange(project, document, priorityIntersection, scheme, infos,
-                                                        (MarkupModelEx)markupModel, highlightingSession.getPassId());
+                                                        (MarkupModelEx)markupModel, groupId);
           showAutoImportPopups(editor, project, psiFile);
           if (editor != null) {
             DaemonListeners.repaintErrorStripeRenderer(editor, project);
@@ -85,7 +85,7 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
   public void highlightsOutsideVisiblePartAreProduced(@NotNull final HighlightingSession highlightingSession,
                                                       @NotNull final List<HighlightInfo> infos,
                                                       @NotNull final TextRange priorityRange,
-                                                      @NotNull final TextRange restrictedRange) {
+                                                      @NotNull final TextRange restrictedRange, final int groupId) {
     final PsiFile psiFile = highlightingSession.getPsiFile();
     final Project project = psiFile.getProject();
     final Document document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
@@ -102,7 +102,7 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
         UpdateHighlightersUtil.setHighlightersOutsideRange(project, document, psiFile, infos, scheme,
                                                            restrictedRange.getStartOffset(), restrictedRange.getEndOffset(),
                                                            ProperTextRange.create(priorityRange),
-                                                           highlightingSession.getPassId());
+                                                           groupId);
 
         if (editor != null) {
           DaemonListeners.repaintErrorStripeRenderer(editor, project);
