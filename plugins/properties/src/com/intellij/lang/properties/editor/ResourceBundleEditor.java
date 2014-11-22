@@ -36,7 +36,6 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.command.undo.UndoConstants;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -241,29 +240,24 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
       return;
     }
 
-    Stack<DefaultMutableTreeNode> toCheck = ContainerUtilRt.newStack();
-    toCheck.push((DefaultMutableTreeNode)root);
-    DefaultMutableTreeNode nodeToSelect = null;
+    Stack<TreeElement> toCheck = ContainerUtilRt.newStack();
+    toCheck.push(myStructureViewComponent.getTreeModel().getRoot());
+
     while (!toCheck.isEmpty()) {
-      DefaultMutableTreeNode node = toCheck.pop();
-      final ResourceBundleEditorViewElement element = getSelectedElement(node);
-      String value = element instanceof ResourceBundlePropertyStructureViewElement
-                     ? ((ResourceBundlePropertyStructureViewElement)element).getProperty().getUnescapedKey()
+      TreeElement element = toCheck.pop();
+      PsiElement value = element instanceof ResourceBundlePropertyStructureViewElement
+                     ? ((ResourceBundlePropertyStructureViewElement)element).getValue()
                      : null;
-      if (propertyName.equals(value)) {
-        nodeToSelect = node;
-        break;
+      if (value instanceof IProperty && propertyName.equals(((IProperty)value).getUnescapedKey())) {
+        myStructureViewComponent.select(value, true);
+        selectionChanged();
+        return;
       }
       else {
-        for (int i = 0; i < node.getChildCount(); i++) {
-          toCheck.push((DefaultMutableTreeNode)node.getChildAt(i));
+        for (TreeElement treeElement : element.getChildren()) {
+          toCheck.push(treeElement);
         }
       }
-    }
-    if (nodeToSelect != null) {
-      TreePath path = new TreePath(nodeToSelect.getPath());
-      tree.setSelectionPath(path);
-      tree.scrollPathToVisible(path);
     }
   }
 
@@ -713,8 +707,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     ResourceBundleEditorState myState = (ResourceBundleEditorState)state;
     String propertyName = myState.myPropertyName;
     if (propertyName != null) {
-      myStructureViewComponent.select(propertyName, true);
-      selectionChanged();
+      setStructureViewSelection(propertyName);
     }
   }
 
