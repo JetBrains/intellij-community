@@ -28,6 +28,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.ui.InspectionsAggregationUtil;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
@@ -68,6 +69,10 @@ public class InspectionsConfigTreeTable extends TreeTable {
   private final static int SEVERITIES_COLUMN = 1;
   private final static int IS_ENABLED_COLUMN = 2;
 
+  public static int getAdditionalShift() {
+    return SystemInfo.isMac ? 10 : 0;
+  }
+
   public static InspectionsConfigTreeTable create(final InspectionsConfigTreeTableSettings settings, Disposable parentDisposable) {
     return new InspectionsConfigTreeTable(new InspectionsConfigTreeTableModel(settings, parentDisposable));
   }
@@ -79,7 +84,7 @@ public class InspectionsConfigTreeTable extends TreeTable {
     severitiesColumn.setMaxWidth(20);
 
     final TableColumn isEnabledColumn = getColumnModel().getColumn(IS_ENABLED_COLUMN);
-    isEnabledColumn.setMaxWidth(20);
+    isEnabledColumn.setMaxWidth(20 + getAdditionalShift());
     isEnabledColumn.setCellRenderer(new ThreeStateCheckBoxRenderer());
     isEnabledColumn.setCellEditor(new ThreeStateCheckBoxRenderer());
 
