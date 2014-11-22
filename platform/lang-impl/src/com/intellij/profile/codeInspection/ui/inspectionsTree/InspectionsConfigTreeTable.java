@@ -69,7 +69,7 @@ public class InspectionsConfigTreeTable extends TreeTable {
   private final static int SEVERITIES_COLUMN = 1;
   private final static int IS_ENABLED_COLUMN = 2;
 
-  public static int getAdditionalShift() {
+  public static int getAdditionalShiftIfMac() {
     return SystemInfo.isMac ? 10 : 0;
   }
 
@@ -84,7 +84,7 @@ public class InspectionsConfigTreeTable extends TreeTable {
     severitiesColumn.setMaxWidth(20);
 
     final TableColumn isEnabledColumn = getColumnModel().getColumn(IS_ENABLED_COLUMN);
-    isEnabledColumn.setMaxWidth(20 + getAdditionalShift());
+    isEnabledColumn.setMaxWidth(20 + getAdditionalShiftIfMac());
     isEnabledColumn.setCellRenderer(new ThreeStateCheckBoxRenderer());
     isEnabledColumn.setCellEditor(new ThreeStateCheckBoxRenderer());
 
