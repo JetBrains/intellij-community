@@ -520,8 +520,8 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
 
     @Override
-    protected boolean isMacScrollbarHiddenAndDistractionFreeEnabled() {
-      return super.isMacScrollbarHiddenAndDistractionFreeEnabled() && isRealFileEditor(myEditor);
+    protected boolean isMacScrollbarHiddenAndXcodeLikeScrollbar() {
+      return super.isMacScrollbarHiddenAndXcodeLikeScrollbar() && isRealFileEditor(myEditor);
     }
 
     @Override
@@ -606,7 +606,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
     @Override
     protected boolean alwaysPaintThumb() {
-      if (scrollbar.getOrientation() == Adjustable.VERTICAL) return !(isDistractionFreeMode() && isRealFileEditor(myEditor));
+      if (scrollbar.getOrientation() == Adjustable.VERTICAL) return !(xcodeLikeScrollbar() && isRealFileEditor(myEditor));
       return super.alwaysPaintThumb();
     }
 
@@ -644,7 +644,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
     @Override
     protected void doPaintTrack(@NotNull Graphics g, @NotNull JComponent c, @NotNull Rectangle bounds) {
-      if (isMacScrollbarHiddenAndDistractionFreeEnabled()) {
+      if (isMacScrollbarHiddenAndXcodeLikeScrollbar()) {
         paintTrackBasement(g, bounds);
         return;
       }
@@ -876,7 +876,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
     @Override
     public void mouseMoved(@NotNull MouseEvent e) {
-      if (isMacScrollbarHiddenAndDistractionFreeEnabled()) return;
+      if (isMacScrollbarHiddenAndXcodeLikeScrollbar()) return;
       EditorImpl.MyScrollBar scrollBar = myEditor.getVerticalScrollBar();
       int buttonHeight = scrollBar.getDecScrollButtonHeight();
       int lineCount = getDocument().getLineCount() + myEditor.getSettings().getAdditionalLinesCount();

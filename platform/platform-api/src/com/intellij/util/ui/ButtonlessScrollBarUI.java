@@ -692,7 +692,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
   }
 
   private void paintMacThumb(Graphics g, Rectangle thumbBounds) {
-    if (isMacScrollbarHiddenAndDistractionFreeEnabled()) return;
+    if (isMacScrollbarHiddenAndXcodeLikeScrollbar()) return;
 
     thumbBounds = getMacScrollBarBounds(thumbBounds, true);
     Graphics2D g2d = (Graphics2D)g;
@@ -837,12 +837,12 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     return new EmptyButton();
   }
 
-  protected boolean isMacScrollbarHiddenAndDistractionFreeEnabled() {
-    return myMacScrollbarHidden && isMacOverlayScrollbarSupported() && isDistractionFreeMode();
+  protected boolean isMacScrollbarHiddenAndXcodeLikeScrollbar() {
+    return myMacScrollbarHidden && isMacOverlayScrollbarSupported() && xcodeLikeScrollbar();
   }
 
-  protected static boolean isDistractionFreeMode() {
-    return Registry.is("editor.distraction.free.mode");
+  protected static boolean xcodeLikeScrollbar() {
+    return Registry.is("editor.xcode.like.scrollbar");
   }
 
   public void registerRepaintCallback(ScrollbarRepaintCallback callback) {
