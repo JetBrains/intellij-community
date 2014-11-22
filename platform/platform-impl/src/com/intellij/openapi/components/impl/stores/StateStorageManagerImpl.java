@@ -28,6 +28,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtilRt;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
@@ -367,11 +368,11 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
       return session;
     }
 
-    @Nullable
+    @NotNull
     @Override
-    public SaveSession createSaveSession() {
+    public List<SaveSession> createSaveSession() {
       if (mySessions.isEmpty()) {
-        return null;
+        return Collections.emptyList();
       }
 
       List<SaveSession> saveSessions = null;
@@ -381,31 +382,14 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
         if (saveSession != null) {
           if (saveSessions == null) {
             if (externalizationSessions.size() == 1) {
-              return saveSession;
+              return Collections.singletonList(saveSession);
             }
             saveSessions = new SmartList<SaveSession>();
           }
           saveSessions.add(saveSession);
         }
       }
-
-      if (saveSessions == null) {
-        return null;
-      }
-      else if (saveSessions.size() == 1) {
-        return saveSessions.get(0);
-      }
-      else {
-        final List<SaveSession> list = saveSessions;
-        return new SaveSession() {
-          @Override
-          public void save() {
-            for (SaveSession saveSession : list) {
-              saveSession.save();
-            }
-          }
-        };
-      }
+      return ContainerUtil.notNullize(saveSessions);
     }
   }
 

@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.List;
 
 public interface StateStorageManager {
   void addMacro(@NotNull String macro, @NotNull String expansion);
@@ -74,9 +75,9 @@ public interface StateStorageManager {
     void setStateInOldStorage(@NotNull Object component, @NotNull String componentName, @NotNull Object state);
 
     /**
-     * return null if nothing to save
+     * return empty list if nothing to save
      */
-    @Nullable
-    StateStorage.SaveSession createSaveSession();
+    @NotNull
+    List<StateStorage.SaveSession> createSaveSession();
   }
 }

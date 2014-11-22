@@ -44,7 +44,7 @@ public class ProjectWithModulesStoreImpl extends ProjectStoreImpl {
 
     for (Module module : getPersistentModules()) {
       // we have to reinit all modules for component because we don't know affected module
-      ((ModuleStoreImpl)((ModuleImpl)module).getStateStore()).reinitComponent(componentName, changedStorages);
+      ((ModuleImpl)module).getStateStore().reinitComponent(componentName, changedStorages);
     }
     return true;
   }

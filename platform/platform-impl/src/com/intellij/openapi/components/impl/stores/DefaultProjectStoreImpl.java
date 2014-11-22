@@ -28,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 //todo: extends from base store class
 public class DefaultProjectStoreImpl extends ProjectStoreImpl {
@@ -161,13 +162,13 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
       }
 
       @Override
-      public void setStreamProvider(@Nullable com.intellij.openapi.components.impl.stores.StreamProvider streamProvider) {
+      public void setStreamProvider(@Nullable StreamProvider streamProvider) {
         throw new UnsupportedOperationException("Method setStreamProvider not implemented in " + getClass());
       }
 
       @Nullable
       @Override
-      public com.intellij.openapi.components.impl.stores.StreamProvider getStreamProvider() {
+      public StreamProvider getStreamProvider() {
         throw new UnsupportedOperationException("Method getStreamProviders not implemented in " + getClass());
       }
 
@@ -202,10 +203,10 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
       externalizationSession.setState(component, componentName, state, null);
     }
 
-    @Nullable
+    @NotNull
     @Override
-    public SaveSession createSaveSession() {
-      return externalizationSession.createSaveSession();
+    public List<SaveSession> createSaveSession() {
+      return Collections.singletonList(externalizationSession.createSaveSession());
     }
   }
 }

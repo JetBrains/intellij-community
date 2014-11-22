@@ -118,9 +118,20 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
     doSave(externalizationSession == null ? null : externalizationSession.createSaveSession(), readonlyFiles);
   }
 
-  protected void doSave(@Nullable SaveSession storageManagerSaveSession, @NotNull List<Pair<SaveSession, VirtualFile>> readonlyFiles) {
-    if (storageManagerSaveSession != null) {
-      executeSave(storageManagerSaveSession, readonlyFiles);
+  protected void doSave(@Nullable List<SaveSession> saveSessions, @NotNull List<Pair<SaveSession, VirtualFile>> readonlyFiles) {
+    if (saveSessions != null) {
+      for (SaveSession session : saveSessions) {
+        executeSave(session, readonlyFiles);
+      }
+    }
+  }
+
+  protected static void executeSave(@NotNull SaveSession session, @NotNull List<Pair<SaveSession, VirtualFile>> readonlyFiles) {
+    try {
+      session.save();
+    }
+    catch (ReadOnlyModificationException e) {
+      readonlyFiles.add(Pair.create(session, e.getFile()));
     }
   }
 
@@ -321,15 +332,6 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
   @Nullable
   protected StateStorageChooser<PersistentStateComponent<?>> getDefaultStateStorageChooser() {
     return null;
-  }
-
-  protected static void executeSave(@NotNull SaveSession saveSession, @NotNull List<Pair<SaveSession, VirtualFile>> readonlyFiles) {
-    try {
-      saveSession.save();
-    }
-    catch (ReadOnlyModificationException e) {
-      readonlyFiles.add(Pair.create(saveSession, e.getFile()));
-    }
   }
 
   @Override

@@ -20,9 +20,13 @@ import com.intellij.openapi.components.StateStorageOperation;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.module.impl.ModuleImpl;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collections;
+import java.util.List;
 
 class ModuleStateStorageManager extends StateStorageManagerImpl {
   @NonNls private static final String ROOT_TAG_NAME = "module";
@@ -43,25 +47,23 @@ class ModuleStateStorageManager extends StateStorageManagerImpl {
   @Override
   public ExternalizationSession startExternalization() {
     return new StateStorageManagerExternalizationSession() {
-      @Nullable
+      @NotNull
       @Override
-      public StateStorage.SaveSession createSaveSession() {
+      public List<StateStorage.SaveSession> createSaveSession() {
         final ModuleStoreImpl.ModuleFileData data = myModule.getStateStore().getMainStorageData();
-        final StateStorage.SaveSession session = super.createSaveSession();
-        if (data.isDirty()) {
-          return new StateStorage.SaveSession() {
-            @Override
-            public void save() {
-              if (session != null) {
-                session.save();
-              }
-              if (data.isDirty()) {
-                myModule.getStateStore().getMainStorage().forceSave();
-              }
-            }
-          };
+        List<StateStorage.SaveSession> sessions = super.createSaveSession();
+        if (!data.isDirty()) {
+          return sessions;
         }
-        return session;
+
+        return ContainerUtil.concat(sessions, Collections.singletonList(new StateStorage.SaveSession() {
+          @Override
+          public void save() {
+            if (data.isDirty()) {
+              myModule.getStateStore().getMainStorage().forceSave();
+            }
+          }
+        }));
       }
     };
   }

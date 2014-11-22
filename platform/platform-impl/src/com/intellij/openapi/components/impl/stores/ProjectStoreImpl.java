@@ -48,6 +48,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
+import java.util.ArrayList;
 import java.util.List;
 
 class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProjectStore {
@@ -455,7 +456,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   }
 
   @Override
-  protected final void doSave(@Nullable SaveSession storageManagerSaveSession, @NotNull List<Pair<SaveSession, VirtualFile>> readonlyFiles) {
+  protected final void doSave(@Nullable List<SaveSession> saveSessions, @NotNull List<Pair<SaveSession, VirtualFile>> readonlyFiles) {
     ProjectImpl.UnableToSaveProjectNotification[] notifications =
       NotificationsManager.getNotificationsManager().getNotificationsOfType(ProjectImpl.UnableToSaveProjectNotification.class, myProject);
     if (notifications.length > 0) {
@@ -464,7 +465,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
 
     beforeSave(readonlyFiles);
 
-    super.doSave(storageManagerSaveSession, readonlyFiles);
+    super.doSave(saveSessions, readonlyFiles);
 
     if (!readonlyFiles.isEmpty()) {
       ReadonlyStatusHandler.OperationStatus status;
@@ -481,8 +482,9 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
         throw new SaveCancelledException();
       }
       else {
+        List<Pair<SaveSession, VirtualFile>> oldList = new ArrayList<Pair<SaveSession, VirtualFile>>(readonlyFiles);
         readonlyFiles.clear();
-        for (Pair<SaveSession, VirtualFile> entry : readonlyFiles) {
+        for (Pair<SaveSession, VirtualFile> entry : oldList) {
           executeSave(entry.first, readonlyFiles);
         }
 
