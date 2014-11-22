@@ -370,7 +370,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
 
     @NotNull
     @Override
-    public List<SaveSession> createSaveSession() {
+    public List<SaveSession> createSaveSessions() {
       if (mySessions.isEmpty()) {
         return Collections.emptyList();
       }

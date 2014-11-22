@@ -115,7 +115,7 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
       }
     }
 
-    doSave(externalizationSession == null ? null : externalizationSession.createSaveSession(), readonlyFiles);
+    doSave(externalizationSession == null ? null : externalizationSession.createSaveSessions(), readonlyFiles);
   }
 
   protected void doSave(@Nullable List<SaveSession> saveSessions, @NotNull List<Pair<SaveSession, VirtualFile>> readonlyFiles) {

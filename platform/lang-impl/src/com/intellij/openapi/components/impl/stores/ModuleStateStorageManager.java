@@ -49,9 +49,9 @@ class ModuleStateStorageManager extends StateStorageManagerImpl {
     return new StateStorageManagerExternalizationSession() {
       @NotNull
       @Override
-      public List<StateStorage.SaveSession> createSaveSession() {
+      public List<StateStorage.SaveSession> createSaveSessions() {
         final ModuleStoreImpl.ModuleFileData data = myModule.getStateStore().getMainStorageData();
-        List<StateStorage.SaveSession> sessions = super.createSaveSession();
+        List<StateStorage.SaveSession> sessions = super.createSaveSessions();
         if (!data.isDirty()) {
           return sessions;
         }

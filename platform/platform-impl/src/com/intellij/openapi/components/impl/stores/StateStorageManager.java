@@ -78,6 +78,6 @@ public interface StateStorageManager {
      * return empty list if nothing to save
      */
     @NotNull
-    List<StateStorage.SaveSession> createSaveSession();
+    List<StateStorage.SaveSession> createSaveSessions();
   }
 }

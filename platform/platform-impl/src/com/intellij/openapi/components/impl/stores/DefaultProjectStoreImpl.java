@@ -20,6 +20,7 @@ import com.intellij.openapi.components.StateStorage.SaveSession;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.util.Couple;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -205,8 +206,8 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
 
     @NotNull
     @Override
-    public List<SaveSession> createSaveSession() {
-      return Collections.singletonList(externalizationSession.createSaveSession());
+    public List<SaveSession> createSaveSessions() {
+      return ContainerUtil.createMaybeSingletonList(externalizationSession.createSaveSession());
     }
   }
 }
