@@ -27,7 +27,8 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.util.ArrayList;
 import java.util.EventObject;
 import java.util.List;
@@ -43,7 +44,7 @@ public class ThreeStateCheckBoxRenderer extends ThreeStateCheckBox implements Ta
     setThirdStateEnabled(false);
     setHorizontalAlignment(CENTER);
     setVerticalAlignment(CENTER);
-    setBorder(BorderFactory.createEmptyBorder(0, 0, 0, InspectionsConfigTreeTable.getAdditionalShift()));
+    setBorder(BorderFactory.createEmptyBorder(0, 0, 0, InspectionsConfigTreeTable.getAdditionalShiftIfMac()));
     addItemListener(new ItemListener() {
       @Override
       public void itemStateChanged(ItemEvent e) {
