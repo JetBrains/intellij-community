@@ -36,7 +36,6 @@ import org.jetbrains.jps.incremental.MessageHandler;
 import org.jetbrains.jps.incremental.TargetTypeRegistry;
 import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
-import org.jetbrains.jps.incremental.fs.FSState;
 import org.jetbrains.jps.incremental.messages.*;
 import org.jetbrains.jps.incremental.storage.Timestamps;
 import org.jetbrains.jps.model.module.JpsModule;
@@ -445,7 +444,7 @@ final class BuildSession implements Runnable, CanceledStatus {
       final BufferExposingByteArrayOutputStream bytes = new BufferExposingByteArrayOutputStream();
       final DataOutputStream out = new DataOutputStream(bytes);
       try {
-        out.writeInt(FSState.VERSION);
+        out.writeInt(BuildFSState.VERSION);
         out.writeLong(ordinal);
         out.writeBoolean(false);
         while (true) {
@@ -475,7 +474,7 @@ final class BuildSession implements Runnable, CanceledStatus {
       final BufferExposingByteArrayOutputStream bytes = new BufferExposingByteArrayOutputStream();
       final DataOutputStream out = new DataOutputStream(bytes);
       try {
-        out.writeInt(FSState.VERSION);
+        out.writeInt(BuildFSState.VERSION);
         out.writeLong(myLastEventOrdinal);
         out.writeBoolean(hasWorkToDo(state, pd));
         state.save(out);
@@ -542,7 +541,7 @@ final class BuildSession implements Runnable, CanceledStatus {
       }
       final DataInputStream in = new DataInputStream(new ByteArrayInputStream(bytes));
       final int version = in.readInt();
-      if (version != FSState.VERSION) {
+      if (version != BuildFSState.VERSION) {
         return null;
       }
       final long savedOrdinal = in.readLong();

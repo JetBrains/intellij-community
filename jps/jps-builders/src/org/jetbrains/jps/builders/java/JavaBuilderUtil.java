@@ -30,6 +30,7 @@ import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.builders.java.dependencyView.Mappings;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 import org.jetbrains.jps.incremental.*;
+import org.jetbrains.jps.incremental.fs.CompilationRound;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
@@ -140,7 +141,7 @@ public class JavaBuilderUtil {
               }
 
               for (File file : newlyAffectedFiles) {
-                FSOperations.markDirtyIfNotDeleted(context, file);
+                FSOperations.markDirtyIfNotDeleted(context, CompilationRound.NEXT, file);
               }
               additionalPassRequired = isCompileJavaIncrementally(context) && chunkContainsAffectedFiles(context, chunk, newlyAffectedFiles);
             }
@@ -151,7 +152,7 @@ public class JavaBuilderUtil {
             context.processMessage(new ProgressMessage(messageText));
 
             additionalPassRequired = isCompileJavaIncrementally(context);
-            FSOperations.markDirtyRecursively(context, chunk);
+            FSOperations.markDirtyRecursively(context, CompilationRound.NEXT, chunk);
           }
         }
         else {
