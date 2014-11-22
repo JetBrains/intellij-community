@@ -215,7 +215,8 @@ class BeanBinding extends Binding {
         return name;
       }
     }
-    return aClass.getSimpleName();
+    String name = aClass.getSimpleName();
+    return name.isEmpty() ? aClass.getSuperclass().getSimpleName() : name;
   }
 
   private static String getTagNameFromAnnotation(Class<?> aClass) {
