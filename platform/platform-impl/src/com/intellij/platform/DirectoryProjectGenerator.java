@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ public interface DirectoryProjectGenerator<T> {
   T showGenerationSettings(final VirtualFile baseDir) throws ProcessCanceledException;
 
   /**
-   * @return 32x32 icon or null, if no icon is available
+   * @return 16x16 icon or null, if no icon is available
    */
   @Nullable
   Icon getLogo();
