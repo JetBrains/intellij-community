@@ -31,7 +31,12 @@ public class PluginSpecificProjectsStep extends DefaultActionGroup implements Du
     super("Plugin-specific", true);
     getTemplatePresentation().setIcon(AllIcons.Nodes.PluginLogo);
     for (DirectoryProjectGenerator generator : projectGenerators) {
-      add(new ProjectSpecificAction(callback, generator, isWelcomeScreen));
+      ProjectSpecificAction action = new ProjectSpecificAction(callback, generator, isWelcomeScreen);
+      if (isWelcomeScreen) {
+        addAll(action.getChildren(null));
+      } else {
+        add(action);
+      }
     }
   }
 }
