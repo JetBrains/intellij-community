@@ -29,15 +29,10 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.DumbAwareRunnable;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.project.*;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.DimensionService;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
 import com.intellij.openapi.wm.StatusBar;
@@ -45,9 +40,13 @@ import com.intellij.openapi.wm.WelcomeScreen;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
+import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.JBSlidingPanel;
 import com.intellij.ui.components.labels.ActionLink;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.popup.PopupFactoryImpl;
+import com.intellij.util.IconUtil;
+import com.intellij.util.NotNullFunction;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -57,11 +56,15 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Konstantin Bulenkov
@@ -193,8 +196,11 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
   }
 
   private class FlatWelcomeScreen extends JPanel implements WelcomeScreen {
+    private JBSlidingPanel mySlidingPanel = new JBSlidingPanel();
+
     public FlatWelcomeScreen() {
       super(new BorderLayout());
+      mySlidingPanel.add("root", this);
       setBackground(getMainBackground());
       if (RecentProjectsManagerBase.getInstance().getRecentProjectsActions(false).length > 0) {
         final JComponent recentProjects = createRecentProjects();
@@ -242,7 +248,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
 
     @Override
     public JComponent getWelcomePanel() {
-      return this;
+      return mySlidingPanel;
     }
 
     private JComponent createBody() {
@@ -337,6 +343,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
           if (icon.getIconHeight() != 16 || icon.getIconWidth() != 16) {
             icon = EmptyIcon.ICON_16;
           }
+          action = wrapGroups(action);
           ActionLink link = new ActionLink(text, icon, action, createUsageTracker(action));
           link.setPaintUnderline(false);
           link.setNormalColor(getLinkNormalColor());
@@ -354,9 +361,126 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
       return panel.root;
     }
 
+    private AnAction wrapGroups(AnAction action) {
+      if (action instanceof ActionGroup && ((ActionGroup)action).isPopup()) {
+        final Pair<JPanel, Runnable> panel = createActionGroupPanel((ActionGroup)action);
+        final String name = action.getClass().getName();
+        mySlidingPanel.add(name, panel.first);
+        final Presentation p = action.getTemplatePresentation();
+        return new DumbAwareAction(p.getText(), p.getDescription(), p.getIcon()) {
+          @Override
+          public void actionPerformed(@NotNull AnActionEvent e) {
+            mySlidingPanel.getLayout().swipe(mySlidingPanel, name, JBCardLayout.SwipeDirection.FORWARD, panel.second);
+          }
+        };
+      }
+      return action;
+    }
+
+    private Pair<JPanel, Runnable> createActionGroupPanel(ActionGroup action) {
+      JPanel actionsListPanel = new JPanel(new BorderLayout());
+      actionsListPanel.setBackground(getProjectsBackground());
+      final JBList list = new JBList(action.getChildren(null));
+      list.installCellRenderer(new NotNullFunction<AnAction, JComponent>() {
+        final JLabel label = new JLabel();
+        Map<Icon, Icon> scaled = new HashMap<Icon, Icon>();
+        {
+          Insets padding = UIUtil.getListCellPadding();
+          padding.top = 3;
+          padding.bottom = 3;
+          label.setBorder(new EmptyBorder(padding));
+        }
+        @NotNull
+        @Override
+        public JComponent fun(AnAction action) {
+          label.setText(action.getTemplatePresentation().getText());
+          Icon icon = action.getTemplatePresentation().getIcon();
+          if (icon.getIconHeight() == 32) {
+            Icon scaledIcon = scaled.get(icon);
+            if (scaledIcon == null) {
+              scaledIcon = IconUtil.scale(icon, 0.5);
+              scaled.put(icon, scaledIcon);
+            }
+            icon = scaledIcon;
+          }
+          label.setIcon(icon);
+          return label;
+        }
+      });
+      JScrollPane pane = ScrollPaneFactory.createScrollPane(list, true);
+      pane.setBackground(getProjectsBackground());
+      actionsListPanel.add(pane, BorderLayout.CENTER);
+      final JLabel back = new JLabel(AllIcons.Actions.Back);
+      Insets padding = UIUtil.getListCellPadding();
+      padding.bottom+=10;
+      back.setBorder(new EmptyBorder(padding));
+      back.setHorizontalAlignment(SwingConstants.LEFT);
+      new ClickListener(){
+        @Override
+        public boolean onClick(@NotNull MouseEvent event, int clickCount) {
+          goBack();
+          return true;
+        }
+      }.installOn(back);
+      actionsListPanel.add(back, BorderLayout.SOUTH);
+      final Ref<Component> selected = Ref.create();
+      final JPanel main = new JPanel(new BorderLayout());
+      main.add(actionsListPanel, BorderLayout.WEST);
+
+      ListSelectionListener selectionListener = new ListSelectionListener() {
+        @Override
+        public void valueChanged(ListSelectionEvent e) {
+          if (!selected.isNull()) {
+            main.remove(selected.get());
+          }
+          Object value = list.getSelectedValue();
+          if (value instanceof AbstractActionWithPanel) {
+            JPanel panel = ((AbstractActionWithPanel)value).createPanel();
+            panel.setBorder(new EmptyBorder(7, 10, 7, 10));
+            selected.set(panel);
+            main.add(selected.get());
+
+            for (JButton button : UIUtil.findComponentsOfType(main, JButton.class)) {
+              if (button.getClientProperty(DialogWrapper.DEFAULT_ACTION) == Boolean.TRUE) {
+                mySlidingPanel.getRootPane().setDefaultButton(button);
+                break;
+              }
+            }
+
+            main.revalidate();
+            main.repaint();
+          }
+        }
+      };
+      list.addListSelectionListener(selectionListener);
+      new AnAction() {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e) {
+          goBack();
+        }
+      }.registerCustomShortcutSet(KeyEvent.VK_ESCAPE, 0, main);
+      Runnable callback = new Runnable() {
+        @Override
+        public void run() {
+          ListScrollingUtil.ensureSelectionExists(list);
+          list.requestFocus();
+        }
+      };
+      return Pair.create(main, callback);
+    }
+
+    protected void goBack() {
+      mySlidingPanel.swipe("root", JBCardLayout.SwipeDirection.BACKWARD).doWhenDone(new Runnable() {
+        @Override
+        public void run() {
+          mySlidingPanel.getRootPane().setDefaultButton(null);
+        }
+      });
+    }
+
     private void collectAllActions(DefaultActionGroup group, ActionGroup actionGroup) {
       for (AnAction action : actionGroup.getChildren(null)) {
-        if (action instanceof ActionGroup) {
+        if (action instanceof ActionGroup && !((ActionGroup)action).isPopup()) {
           collectAllActions(group, (ActionGroup)action);
         } else {
           group.add(action);
