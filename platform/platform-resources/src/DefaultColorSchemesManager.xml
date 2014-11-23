@@ -1025,7 +1025,7 @@
         </option>
         <option name="CONSOLE_YELLOW_OUTPUT">
           <value>
-            <option name="FOREGROUND" value="cdcd00" />
+            <option name="FOREGROUND" value="C4A000" />
             <option name="BACKGROUND" />
             <option name="FONT_TYPE" value="0" />
             <option name="EFFECT_COLOR" />
