@@ -9,7 +9,9 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -19,6 +21,7 @@ import com.intellij.util.ui.UIUtil;
 import com.jetbrains.python.edu.course.*;
 import com.jetbrains.python.edu.editor.StudyEditor;
 import com.jetbrains.python.edu.ui.StudyToolWindowFactory;
+import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -184,5 +187,10 @@ public class StudyUtils {
     File resourceFile = new File(pathToResource, copyName);
     FileUtil.copy(new File(pathToResource, sourceName), resourceFile);
     return resourceFile;
+  }
+
+  @Nullable
+  public static Sdk findPythonSdk(@NotNull final Project project) {
+    return PythonSdkType.findPythonSdk(ModuleManager.getInstance(project).getModules()[0]);
   }
 }

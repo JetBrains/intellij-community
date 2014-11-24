@@ -34,7 +34,6 @@ import com.siyeh.ig.psiutils.SideEffectChecker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -178,7 +177,7 @@ class ContractInferenceInterpreter {
       }
     });
     if (notNull) {
-      return ContainerUtil.concat(fromDelegate, Arrays.asList(new MethodContract(myEmptyConstraints, NOT_NULL_VALUE)));
+      return ContainerUtil.concat(fromDelegate, Collections.singletonList(new MethodContract(myEmptyConstraints, NOT_NULL_VALUE)));
     }
     return fromDelegate;
   }
@@ -365,7 +364,7 @@ class ContractInferenceInterpreter {
         PsiStatement elseBranch = ((PsiIfStatement)statement).getElseBranch();
         if (elseBranch != null) {
           result.addAll(visitStatements(falseStates, elseBranch));
-        } else if (alwaysReturns(thenBranch)) {
+        } else {
           states = falseStates;
           continue;
         }
@@ -400,22 +399,6 @@ class ContractInferenceInterpreter {
           return true;
         }
       }
-    }
-    return false;
-  }
-
-  private static boolean alwaysReturns(@Nullable PsiStatement statement) {
-    if (statement instanceof PsiReturnStatement || statement instanceof PsiThrowStatement) return true;
-    if (statement instanceof PsiBlockStatement) {
-      for (PsiStatement child : ((PsiBlockStatement)statement).getCodeBlock().getStatements()) {
-        if (alwaysReturns(child)) {
-          return true;
-        }
-      }
-    }
-    if (statement instanceof PsiIfStatement) {
-      return alwaysReturns(((PsiIfStatement)statement).getThenBranch()) &&
-             alwaysReturns(((PsiIfStatement)statement).getElseBranch());
     }
     return false;
   }

@@ -31,6 +31,7 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.EmptyModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
@@ -325,6 +326,14 @@ public abstract class AbstractVcsTestCase {
       }
     });
     return annotation;
+  }
+
+  public void setFileText(@NotNull final VirtualFile file, @NotNull final String text) throws IOException {
+    PlatformTestCase.setFileText(file, text);
+  }
+
+  public static void setBinaryContent(final VirtualFile file, final byte[] content) {
+    PlatformTestCase.setBinaryContent(file, content);
   }
 
 }

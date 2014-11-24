@@ -44,8 +44,8 @@ public interface AbstractPythonTestRunConfigurationParams {
   String getPattern();
   void setPattern(String pattern);
 
-  boolean addContentRoots();
-  boolean addSourceRoots();
-  void addContentRoots(boolean addContentRoots);
-  void addSourceRoots(boolean addSourceRoots);
+  boolean shouldAddContentRoots();
+  boolean shouldAddSourceRoots();
+  void setAddContentRoots(boolean addContentRoots);
+  void setAddSourceRoots(boolean addSourceRoots);
 }

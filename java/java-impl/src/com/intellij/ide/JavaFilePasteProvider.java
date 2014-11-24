@@ -127,6 +127,8 @@ public class JavaFilePasteProvider implements PasteProvider {
   @Nullable
   private static PsiJavaFile createJavaFileFromClipboardContent(final Project project) {
     String text = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
-    return text != null ? (PsiJavaFile)PsiFileFactory.getInstance(project).createFileFromText("A.java", JavaLanguage.INSTANCE, text) : null;
+    if (text == null) return null;
+    PsiFile psiFile = PsiFileFactory.getInstance(project).createFileFromText("A.java", JavaLanguage.INSTANCE, text);
+    return psiFile instanceof PsiJavaFile ? (PsiJavaFile)psiFile : null;
   }
 }

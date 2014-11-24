@@ -54,6 +54,7 @@ import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
@@ -892,4 +893,24 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       }
     }.execute().throwException();
   }
+
+  public static void setFileText(@NotNull final VirtualFile file, @NotNull final String text) throws IOException {
+    new WriteAction() {
+      @Override
+      protected void run(@NotNull Result result) throws Throwable {
+        VfsUtil.saveText(file, text);
+      }
+    }.execute().throwException();
+  }
+
+  public static void setBinaryContent(final VirtualFile file, final byte[] content) {
+    new WriteAction() {
+      @Override
+      protected void run(@NotNull Result result) throws Throwable {
+        file.setBinaryContent(content);
+      }
+    }.execute().throwException();
+  }
+
+
 }
