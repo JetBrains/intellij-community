@@ -174,8 +174,7 @@ public class PluginsAdvertiser implements StartupActivity {
     try {
       File file = getExtensionsFile();
       if (file.isFile()) {
-        final Document document = JDOMUtil.loadDocument(file);
-        knownExtensions = XmlSerializer.deserialize(document, KnownExtensions.class);
+        knownExtensions = XmlSerializer.deserialize(JDOMUtil.load(file), KnownExtensions.class);
         ourKnownExtensions = new SoftReference<KnownExtensions>(knownExtensions);
         return knownExtensions;
       }

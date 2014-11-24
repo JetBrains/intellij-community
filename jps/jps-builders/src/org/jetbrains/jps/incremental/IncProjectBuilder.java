@@ -49,6 +49,7 @@ import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
 import org.jetbrains.jps.cmdline.BuildRunner;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
+import org.jetbrains.jps.incremental.fs.CompilationRound;
 import org.jetbrains.jps.incremental.messages.*;
 import org.jetbrains.jps.incremental.storage.BuildTargetConfiguration;
 import org.jetbrains.jps.incremental.storage.OneToManyPathsMapping;
@@ -1048,7 +1049,7 @@ public class IncProjectBuilder {
               for (String formPath : boundForms) {
                 final File formFile = new File(formPath);
                 if (formFile.exists()) {
-                  FSOperations.markDirty(context, formFile);
+                  FSOperations.markDirty(context, CompilationRound.CURRENT, formFile);
                 }
               }
               sourceToFormMap.remove(deletedSource);
@@ -1163,7 +1164,7 @@ public class IncProjectBuilder {
                 try {
                   // forcibly mark all files in the chunk dirty
                   context.getProjectDescriptor().fsState.clearContextRoundData(context);
-                  FSOperations.markDirty(context, chunk, null);
+                  FSOperations.markDirty(context, CompilationRound.NEXT, chunk, null);
                   // reverting to the beginning
                   myTargetsProcessed -= (buildersPassed * modulesInChunk) / stageCount;
                   stageCount = myTotalModuleLevelBuilderCount;

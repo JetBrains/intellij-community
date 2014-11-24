@@ -180,8 +180,7 @@ public class SvnUtil {
     // TODO[yole]: check for shift pressed
     if (activeVcs.getCheckoutOptions().getValue()) {
       LockDialog dialog = new LockDialog(project, true, ioFiles.length > 1);
-      dialog.show();
-      if (!dialog.isOK()) {
+      if (!dialog.showAndGet()) {
         return;
       }
       lockMessage = dialog.getComment();

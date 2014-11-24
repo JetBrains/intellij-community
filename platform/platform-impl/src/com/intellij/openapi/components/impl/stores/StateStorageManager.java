@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,10 +21,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.List;
 
-/**
- * @author mike
- */
 public interface StateStorageManager {
   void addMacro(@NotNull String macro, @NotNull String expansion);
 
@@ -57,8 +55,6 @@ public interface StateStorageManager {
   @Nullable
   ExternalizationSession startExternalization();
 
-  void finishSave(@NotNull StateStorage.SaveSession saveSession);
-
   @Nullable
   StateStorage getOldStorage(@NotNull Object component, @NotNull String componentName, @NotNull StateStorageOperation operation);
 
@@ -68,10 +64,10 @@ public interface StateStorageManager {
   @NotNull
   String collapseMacros(@NotNull String path);
 
-  void setStreamProvider(@Nullable com.intellij.openapi.components.impl.stores.StreamProvider streamProvider);
+  void setStreamProvider(@Nullable StreamProvider streamProvider);
 
   @Nullable
-  com.intellij.openapi.components.impl.stores.StreamProvider getStreamProvider();
+  StreamProvider getStreamProvider();
 
   interface ExternalizationSession {
     void setState(@NotNull Storage[] storageSpecs, @NotNull Object component, @NotNull String componentName, @NotNull Object state);
@@ -79,9 +75,9 @@ public interface StateStorageManager {
     void setStateInOldStorage(@NotNull Object component, @NotNull String componentName, @NotNull Object state);
 
     /**
-     * return null if nothing to save
+     * return empty list if nothing to save
      */
-    @Nullable
-    StateStorage.SaveSession createSaveSession();
+    @NotNull
+    List<StateStorage.SaveSession> createSaveSessions();
   }
 }

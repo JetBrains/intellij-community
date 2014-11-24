@@ -17,12 +17,17 @@ package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.highlighter.ProjectFileType;
+import com.intellij.ide.highlighter.custom.SyntaxTable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -33,22 +38,29 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.PatternUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.TestCase;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
 public class FileTypesTest extends PlatformTestCase {
   private FileTypeManagerImpl myFileTypeManager;
   private String myOldIgnoredFilesList;
+
+  public FileTypesTest() {
+    initPlatformLangPrefix();
+  }
 
   @Override
   protected void setUp() throws Exception {
@@ -348,5 +360,46 @@ public class FileTypesTest extends PlatformTestCase {
     assertTrue(detectorCalled.contains(vFile));
     detectorCalled.clear();
     System.out.println("T: ensureRedetected: clear");
+  }
+
+  public void testReassignedPredefinedFileType() throws Exception {
+
+    FileType perlFileType = myFileTypeManager.getFileTypeByFileName("foo.pl");
+    assertEquals("Perl", perlFileType.getName());
+    assertEquals(PlainTextFileType.INSTANCE, myFileTypeManager.getFileTypeByFileName("foo.cgi"));
+    myFileTypeManager.associatePattern(perlFileType, "*.cgi");
+    assertEquals(perlFileType, myFileTypeManager.getFileTypeByFileName("foo.cgi"));
+
+    Element element = new Element("foo");
+    myFileTypeManager.writeExternal(element);
+    myFileTypeManager.readExternal(element);
+    myFileTypeManager.initComponent();
+    assertEquals(perlFileType, myFileTypeManager.getFileTypeByFileName("foo.cgi"));
+
+    myFileTypeManager.removeAssociatedExtension(perlFileType, "*.cgi");
+  }
+
+  // for IDEA-114804 File types mapped to text are not remapped when corresponding plugin is installed
+  public void testRemappingToInstalledPluginExtension() throws WriteExternalException, InvalidDataException {
+    myFileTypeManager.associatePattern(PlainTextFileType.INSTANCE, "*.fromPlugin");
+    Element element = new Element("foo");
+    myFileTypeManager.writeExternal(element);
+    String s = JDOMUtil.writeElement(element);
+    System.out.println(s);
+
+    final AbstractFileType typeFromPlugin = new AbstractFileType(new SyntaxTable());
+    PlatformTestUtil.registerExtension(FileTypeFactory.FILE_TYPE_FACTORY_EP, new FileTypeFactory() {
+      @Override
+      public void createFileTypes(@NotNull FileTypeConsumer consumer) {
+        consumer.consume(typeFromPlugin, "fromPlugin");
+      }
+    }, getTestRootDisposable());
+    myFileTypeManager.initStandardFileTypes();
+    myFileTypeManager.readExternal(element);
+
+    myFileTypeManager.initComponent();
+    Map<FileNameMatcher, Pair<FileType, Boolean>> mappings = myFileTypeManager.getRemovedMappings();
+    assertEquals(1, mappings.size());
+    assertEquals(typeFromPlugin, mappings.values().iterator().next().first);
   }
 }

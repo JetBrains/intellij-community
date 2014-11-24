@@ -239,8 +239,9 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
           if (renamer.hasAnythingToRename()) {
             if (!ApplicationManager.getApplication().isUnitTestMode()) {
               final AutomaticRenamingDialog renamingDialog = new AutomaticRenamingDialog(myProject, renamer);
-              renamingDialog.show();
-              if (!renamingDialog.isOK()) return;
+              if (!renamingDialog.showAndGet()) {
+                return;
+              }
             }
 
             final Runnable runnable = new Runnable() {

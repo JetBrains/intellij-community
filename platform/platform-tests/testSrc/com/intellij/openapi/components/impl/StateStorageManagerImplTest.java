@@ -41,7 +41,7 @@ public class StateStorageManagerImplTest extends LightPlatformLangTestCase {
     super.setUp();
     myStateStorageManager = new StateStorageManagerImpl(null, "foo", null, ApplicationManager.getApplication().getPicoContainer()) {
       @Override
-      protected StorageData createStorageData(@NotNull String storageSpec) {
+      protected StorageData createStorageData(@NotNull String fileSpec, @NotNull String filePath) {
         throw new UnsupportedOperationException("Method createStorageData not implemented in " + getClass());
       }
 

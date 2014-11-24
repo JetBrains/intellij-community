@@ -436,6 +436,7 @@ public abstract class HgUtil {
   public static Map<VirtualFile, Collection<FilePath>> groupFilePathsByHgRoots(@NotNull Project project,
                                                                                @NotNull Collection<FilePath> files) {
     Map<VirtualFile, Collection<FilePath>> sorted = new HashMap<VirtualFile, Collection<FilePath>>();
+    if (project.isDisposed()) return sorted;
     HgRepositoryManager repositoryManager = getRepositoryManager(project);
     for (FilePath file : files) {
       HgRepository repo = repositoryManager.getRepositoryForFile(file);
@@ -453,7 +454,7 @@ public abstract class HgUtil {
   }
 
   public static void executeOnPooledThreadIfNeeded(Runnable runnable) {
-    if (EventQueue.isDispatchThread()) {
+    if (EventQueue.isDispatchThread() && !ApplicationManager.getApplication().isUnitTestMode()) {
       ApplicationManager.getApplication().executeOnPooledThread(runnable);
     } else {
       runnable.run();

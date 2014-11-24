@@ -48,8 +48,7 @@ public class GitStash extends GitRepositoryAction {
     final ChangeListManager changeListManager = ChangeListManager.getInstance(project);
     if (changeListManager.isFreezedWithNotification("Can not stash changes now")) return;
     GitStashDialog d = new GitStashDialog(project, gitRoots, defaultRoot);
-    d.show();
-    if (!d.isOK()) {
+    if (!d.showAndGet()) {
       return;
     }
     VirtualFile root = d.getGitRoot();

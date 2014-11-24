@@ -18,7 +18,6 @@ package com.intellij.openapi.application.impl;
 import com.intellij.BundleBase;
 import com.intellij.CommonBundle;
 import com.intellij.diagnostic.PerformanceWatcher;
-import com.intellij.diagnostic.PluginException;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.ide.*;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
@@ -1156,35 +1155,50 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     return new ReadAccessToken(status);
   }
 
+  private volatile boolean myWriteActionPending;
+
+  @Override
+  public boolean isWriteActionPending() {
+    return myWriteActionPending;
+  }
+
   private void startWrite(Class clazz) {
-    ActivityTracker.getInstance().inc();
-    fireBeforeWriteActionStart(clazz);
+    boolean writeActionPending = myWriteActionPending;
+    myWriteActionPending = true;
 
     try {
-      if (!isWriteAccessAllowed()) {
-        assertNoPsiLock();
-      }
-      if (!myLock.writeLock().tryLock()) {
-        final AtomicBoolean lockAcquired = new AtomicBoolean(false);
-        if (ourDumpThreadsOnLongWriteActionWaiting > 0) {
-          executeOnPooledThread(new Runnable() {
-            @Override
-            public void run() {
-              while (!lockAcquired.get()) {
-                TimeoutUtil.sleep(ourDumpThreadsOnLongWriteActionWaiting);
-                if (!lockAcquired.get()) {
-                  PerformanceWatcher.getInstance().dumpThreads(true);
+      ActivityTracker.getInstance().inc();
+      fireBeforeWriteActionStart(clazz);
+
+      try {
+        if (!isWriteAccessAllowed()) {
+          assertNoPsiLock();
+        }
+        if (!myLock.writeLock().tryLock()) {
+          final AtomicBoolean lockAcquired = new AtomicBoolean(false);
+          if (ourDumpThreadsOnLongWriteActionWaiting > 0) {
+            executeOnPooledThread(new Runnable() {
+              @Override
+              public void run() {
+                while (!lockAcquired.get()) {
+                  TimeoutUtil.sleep(ourDumpThreadsOnLongWriteActionWaiting);
+                  if (!lockAcquired.get()) {
+                    PerformanceWatcher.getInstance().dumpThreads(true);
+                  }
                 }
               }
-            }
-          });
+            });
+          }
+          myLock.writeLock().lockInterruptibly();
+          lockAcquired.set(true);
         }
-        myLock.writeLock().lockInterruptibly();
-        lockAcquired.set(true);
+      }
+      catch (InterruptedException e) {
+        throw new RuntimeInterruptedException(e);
       }
     }
-    catch (InterruptedException e) {
-      throw new RuntimeInterruptedException(e);
+    finally {
+      myWriteActionPending = writeActionPending;
     }
 
     myWriteActionsStack.push(clazz);
@@ -1351,38 +1365,11 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     myDispatcher.getMulticaster().writeActionFinished(action);
   }
 
-  public void _saveSettings() { // public for testing purposes
+  // public for testing purposes
+  public void _saveSettings() {
     if (mySaveSettingsIsInProgress.compareAndSet(false, true)) {
       try {
-        StoreUtil.doSave(getStateStore());
-      }
-      catch (final Throwable e) {
-        if (isUnitTestMode()) {
-          System.out.println("Saving application settings failed");
-          e.printStackTrace();
-        }
-        else {
-          LOG.info("Saving application settings failed", e);
-          invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              if (e instanceof PluginException) {
-                final PluginException pluginException = (PluginException)e;
-                PluginManagerCore.disablePlugin(pluginException.getPluginId().getIdString());
-                Messages.showMessageDialog("The plugin " +
-                                           pluginException.getPluginId() +
-                                           " failed to save settings and has been disabled. Please restart " +
-                                           ApplicationNamesInfo.getInstance().getFullProductName(), CommonBundle.getErrorTitle(),
-                                           Messages.getErrorIcon());
-              }
-              else {
-                Messages.showMessageDialog(ApplicationBundle.message("application.save.settings.error", e.getLocalizedMessage()),
-                                           CommonBundle.getErrorTitle(), Messages.getErrorIcon());
-
-              }
-            }
-          });
-        }
+        StoreUtil.save(getStateStore(), null);
       }
       finally {
         mySaveSettingsIsInProgress.set(false);

@@ -88,8 +88,7 @@ public class GrChangeSignatureProcessor extends ChangeSignatureProcessorBase {
       }
 
       ConflictsDialog dialog = prepareConflictsDialog(conflictDescriptions, usagesIn);
-      dialog.show();
-      if (!dialog.isOK()) {
+      if (!dialog.showAndGet()) {
         if (dialog.isShowConflicts()) prepareSuccessful();
         return false;
       }

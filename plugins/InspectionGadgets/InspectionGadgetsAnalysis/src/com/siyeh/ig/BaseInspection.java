@@ -26,6 +26,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiFile;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.UIUtil;
@@ -95,13 +96,26 @@ public abstract class BaseInspection extends BaseJavaBatchLocalInspectionTool {
 
   @Override
   @NotNull
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+  public final PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
                                         boolean isOnTheFly) {
+    if (!shouldInspect(holder.getFile())) {
+      return new PsiElementVisitor() { };
+    }
     final BaseInspectionVisitor visitor = buildVisitor();
     visitor.setProblemsHolder(holder);
     visitor.setOnTheFly(isOnTheFly);
     visitor.setInspection(this);
     return visitor;
+  }
+
+  /**
+   * To check precondition(s) on the entire file, to prevent doing the check on every PsiElement visited.
+   * Useful for e.g. a {@link com.intellij.psi.util.PsiUtil#isLanguageLevel5OrHigher(com.intellij.psi.PsiElement)} check
+   * which will be the same for all elements in the specified file.
+   * When this method returns false, {@link #buildVisitor()} will not be called.
+   */
+  public boolean shouldInspect(PsiFile file) {
+    return true;
   }
 
   protected JFormattedTextField prepareNumberEditor(@NonNls final String fieldName) {

@@ -9,7 +9,9 @@ import com.intellij.testFramework.UsefulTestCase;
 import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.env.PyExecutionFixtureTestTask;
 import com.jetbrains.env.PyTestTask;
-import com.jetbrains.python.packaging.*;
+import com.jetbrains.python.packaging.PyPackage;
+import com.jetbrains.python.packaging.PyPackageManager;
+import com.jetbrains.python.packaging.PyRequirement;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor;
@@ -75,11 +77,9 @@ public class PyPackagingTest extends PyEnvTestCase {
           final PyPackage setuptools = findPackage("setuptools", packages);
           assertNotNull(setuptools);
           assertEquals("setuptools", setuptools.getName());
-          assertEquals(PyPackageManager.SETUPTOOLS, setuptools.getVersion());
           final PyPackage pip = findPackage("pip", packages);
           assertNotNull(pip);
           assertEquals("pip", pip.getName());
-          assertEquals(PyPackageManager.PIP, pip.getVersion());
         }
         catch (IOException e) {
           throw new RuntimeException(e);

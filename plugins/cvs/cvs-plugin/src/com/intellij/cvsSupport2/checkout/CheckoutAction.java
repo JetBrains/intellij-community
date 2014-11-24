@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,10 +27,10 @@ import com.intellij.cvsSupport2.ui.CvsTabbedWindow;
 import com.intellij.cvsSupport2.ui.experts.checkout.CheckoutWizard;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.actions.VcsContext;
-import com.intellij.openapi.project.Project;
 
 import java.io.File;
 
@@ -58,8 +58,9 @@ public class CheckoutAction extends AbstractAction {
   protected CvsHandler getCvsHandler(CvsContext context) {
     final Project project = context.getProject();
     CheckoutWizard checkoutWizard = new CheckoutWizard(project);
-    checkoutWizard.show();
-    if (!checkoutWizard.isOK()) return CvsHandler.NULL;
+    if (!checkoutWizard.showAndGet()) {
+      return CvsHandler.NULL;
+    }
     myUseAlternativeCheckoutPath = checkoutWizard.useAlternativeCheckoutLocation();
     myCheckoutDirectory = checkoutWizard.getCheckoutDirectory();
 
@@ -70,7 +71,7 @@ public class CheckoutAction extends AbstractAction {
       myCheckoutDirectory,
       myUseAlternativeCheckoutPath,
       CvsApplicationLevelConfiguration.getInstance().MAKE_CHECKED_OUT_FILES_READONLY,
-        project == null ? null : VcsConfiguration.getInstance(project).getCheckoutOption());
+      project == null ? null : VcsConfiguration.getInstance(project).getCheckoutOption());
   }
 
   private String[] collectCheckoutPaths() {

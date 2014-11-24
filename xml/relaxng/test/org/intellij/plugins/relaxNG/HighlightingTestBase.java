@@ -181,7 +181,6 @@ public abstract class HighlightingTestBase extends UsefulTestCase implements Ide
       Pass.LINE_MARKERS,
       Pass.LOCAL_INSPECTIONS,
       Pass.POPUP_HINTS,
-      Pass.POST_UPDATE_ALL,
       Pass.UPDATE_ALL,
       Pass.UPDATE_FOLDING,
       Pass.UPDATE_OVERRIDEN_MARKERS,

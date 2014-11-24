@@ -30,10 +30,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /** @noinspection SynchronizationOnLocalVariableOrMethodParameter*/
 final class FilesDelta {
@@ -44,7 +41,12 @@ final class FilesDelta {
 
   protected void addAll(FilesDelta other) {
     myDeletedPaths.addAll(other.myDeletedPaths);
-    myFilesToRecompile.putAll(other.myFilesToRecompile);
+    final Map<BuildRootDescriptor, Set<File>> dataToAdd = other.myFilesToRecompile;
+    synchronized (dataToAdd) {
+      for (Map.Entry<BuildRootDescriptor, Set<File>> entry : dataToAdd.entrySet()) {
+        _addToRecompiled(entry.getKey(), entry.getValue());
+      }
+    }
   }
 
   public void save(DataOutput out) throws IOException {
@@ -149,15 +151,17 @@ final class FilesDelta {
     if (Utils.IS_TEST_MODE) {
       LOG.info("Marking dirty: " + file.getPath());
     }
+    return _addToRecompiled(root, Collections.singleton(file));
+  }
 
-    Set<File> files;
+  private boolean _addToRecompiled(BuildRootDescriptor root, Collection<File> filesToAdd) {
     synchronized (myFilesToRecompile) {
-      files = myFilesToRecompile.get(root);
+      Set<File> files = myFilesToRecompile.get(root);
       if (files == null) {
         files = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
         myFilesToRecompile.put(root, files);
       }
-      return files.add(file);
+      return files.addAll(filesToAdd);
     }
   }
 

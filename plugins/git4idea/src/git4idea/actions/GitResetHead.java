@@ -52,8 +52,7 @@ public class GitResetHead extends GitRepositoryAction {
                          Set<VirtualFile> affectedRoots,
                          List<VcsException> exceptions) throws VcsException {
     GitResetDialog d = new GitResetDialog(project, gitRoots, defaultRoot);
-    d.show();
-    if (!d.isOK()) {
+    if (!d.showAndGet()) {
       return;
     }
     GitLineHandler h = d.handler();

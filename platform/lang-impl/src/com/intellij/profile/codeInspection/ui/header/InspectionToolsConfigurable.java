@@ -26,7 +26,10 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ModifiableModel;
-import com.intellij.codeInspection.ex.*;
+import com.intellij.codeInspection.ex.InspectionManagerEx;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.ex.InspectionToolRegistrar;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
@@ -54,7 +57,10 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.profile.codeInspection.ui.ErrorsConfigurable;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.ui.ListCellRendererWrapper;
-import com.intellij.util.*;
+import com.intellij.util.Alarm;
+import com.intellij.util.Consumer;
+import com.intellij.util.Function;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import org.jdom.Document;
@@ -145,7 +151,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
         if (newProfile != null) {
           final InspectionProfileImpl modifiableModel = (InspectionProfileImpl)newProfile.getModifiableModel();
           modifiableModel.setModified(true);
-          modifiableModel.setLocal(true);
+          modifiableModel.setProjectLevel(false);
           addProfile(modifiableModel);
           rename(modifiableModel);
         }
@@ -300,7 +306,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
                 }
               }
               profile.readExternal(rootElement);
-              profile.setLocal(true);
+              profile.setProjectLevel(false);
               profile.initInspectionTools(getProject());
               if (getProfilePanel(profile) != null) {
                 if (Messages.showOkCancelDialog(myWholePanel, "Profile with name \'" +
@@ -525,7 +531,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
     return new SingleInspectionProfilePanel(myProjectProfileManager, profileName, profile) {
       @Override
       protected boolean accept(InspectionToolWrapper entry) {
-        return super.accept(entry) && InspectionToolsConfigurable.this.acceptTool(entry);
+        return super.accept(entry) && acceptTool(entry);
       }
     };
   }

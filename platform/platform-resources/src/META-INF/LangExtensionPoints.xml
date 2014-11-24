@@ -354,8 +354,6 @@
     <extensionPoint name="refactoring.moveHandler" interface="com.intellij.refactoring.move.MoveHandlerDelegate"/>
     <extensionPoint name="refactoring.moveDirectoryWithClassesHelper"
                     interface="com.intellij.refactoring.move.moveClassesOrPackages.MoveDirectoryWithClassesHelper"/>
-    <extensionPoint name="codeHighlighting.iconCreator"
-                    interface="com.intellij.codeHighlighting.HighlightDisplayLevel$IconCreator"/>
 
     <extensionPoint name="refactoring.helper" interface="com.intellij.refactoring.RefactoringHelper"/>
     <extensionPoint name="refactoring.inlineHandler" beanClass="com.intellij.lang.LanguageExtensionPoint">

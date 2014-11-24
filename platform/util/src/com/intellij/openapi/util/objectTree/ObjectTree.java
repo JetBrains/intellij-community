@@ -199,9 +199,11 @@ public final class ObjectTree<T> {
     synchronized (treeLock) {
       for (T object : myRootObjects) {
         if (object == null) continue;
-        final ObjectNode<T> objectNode = getNode(object);
+        ObjectNode<T> objectNode = getNode(object);
         if (objectNode == null) continue;
-
+        while (objectNode.getParent() != null) {
+          objectNode = objectNode.getParent();
+        }
         final Throwable trace = objectNode.getTrace();
         RuntimeException exception = new RuntimeException("Memory leak detected: " + object + " of class " + object.getClass()
                                                           + "\nSee the cause for the corresponding Disposer.register() stacktrace:\n",

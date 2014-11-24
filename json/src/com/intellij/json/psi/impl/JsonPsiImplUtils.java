@@ -191,4 +191,17 @@ public class JsonPsiImplUtils {
     }
     return null;
   }
+
+  @NotNull
+  public static String getValue(@NotNull JsonStringLiteral literal) {
+    return StringUtil.unescapeStringCharacters(StringUtil.unquoteString(literal.getText()));
+  }
+
+  public static boolean getValue(@NotNull JsonBooleanLiteral literal) {
+    return literal.textMatches("true");
+  }
+
+  public static double getValue(@NotNull JsonNumberLiteral literal) {
+    return Double.parseDouble(literal.getText());
+  }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -162,8 +162,9 @@ public class FileTypeChooser extends DialogWrapper {
   @Nullable
   public static FileType associateFileType(@NotNull final String fileName) {
     final FileTypeChooser chooser = new FileTypeChooser(suggestPatterns(fileName), fileName);
-    chooser.show();
-    if (!chooser.isOK()) return null;
+    if (!chooser.showAndGet()) {
+      return null;
+    }
     final FileType type = chooser.getSelectedType();
     if (type == FileTypes.UNKNOWN || type == null) return null;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -186,7 +186,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
     if (copyOneClass(classes)) {
       final String commonPath =
         ArrayUtilRt.find(elements, classes.values().iterator().next()) == -1 ? normalizeRelativeMap(relativePathsMap) : null;
-      CopyClassDialog dialog = new CopyClassDialog(classes.values().iterator().next()[0], defaultTargetDirectory, project, false){
+      CopyClassDialog dialog = new CopyClassDialog(classes.values().iterator().next()[0], defaultTargetDirectory, project, false) {
         @Override
         protected String getQualifiedName() {
           final String qualifiedName = super.getQualifiedName();
@@ -197,8 +197,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
         }
       };
       dialog.setTitle(RefactoringBundle.message("copy.handler.copy.class"));
-      dialog.show();
-      if (dialog.isOK()) {
+      if (dialog.showAndGet()) {
         openInEditor = dialog.openInEditor();
         targetDirectory = dialog.getTargetDirectory();
         className = dialog.getClassName();
@@ -219,8 +218,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
           }
         }
         final CopyFilesOrDirectoriesDialog dialog = new CopyFilesOrDirectoriesDialog(files, defaultTargetDirectory, project, false);
-        dialog.show();
-        if (dialog.isOK()) {
+        if (dialog.showAndGet()) {
           targetDirectory = dialog.getTargetDirectory();
           className = dialog.getNewName();
           openInEditor = dialog.openInEditor();
@@ -252,8 +250,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
 
     CopyClassDialog dialog = new CopyClassDialog(classes[0], null, project, true);
     dialog.setTitle(RefactoringBundle.message("copy.handler.clone.class"));
-    dialog.show();
-    if (dialog.isOK()) {
+    if (dialog.showAndGet()) {
       String className = dialog.getClassName();
       PsiDirectory targetDirectory = element.getContainingFile().getContainingDirectory();
       copyClassesImpl(className, project, Collections.singletonMap(classes[0].getContainingFile(), classes), null, targetDirectory,

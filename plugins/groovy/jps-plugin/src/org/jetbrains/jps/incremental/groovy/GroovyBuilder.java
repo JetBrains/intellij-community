@@ -45,6 +45,7 @@ import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
 import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.*;
+import org.jetbrains.jps.incremental.fs.CompilationRound;
 import org.jetbrains.jps.incremental.java.ClassPostProcessor;
 import org.jetbrains.jps.incremental.java.JavaBuilder;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
@@ -568,8 +569,8 @@ public class GroovyBuilder extends ModuleLevelBuilder {
       }
       try {
         final File groovyFile = new File(groovy);
-        if (!FSOperations.isMarkedDirty(context, groovyFile)) {
-          FSOperations.markDirty(context, groovyFile);
+        if (!FSOperations.isMarkedDirty(context, CompilationRound.CURRENT, groovyFile)) {
+          FSOperations.markDirty(context, CompilationRound.NEXT, groovyFile);
           FILES_MARKED_DIRTY_FOR_NEXT_ROUND.set(context, Boolean.TRUE);
         }
       }

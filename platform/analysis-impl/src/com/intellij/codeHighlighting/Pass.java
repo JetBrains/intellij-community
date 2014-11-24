@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,8 @@ package com.intellij.codeHighlighting;
 
 public interface Pass {
   int UPDATE_FOLDING = 1;
-  @Deprecated /** there is no visible highlighting pass anymore, use {@link #UPDATE_ALL} instead */
-  int UPDATE_VISIBLE = 2;
   int POPUP_HINTS = 3;
   int UPDATE_ALL = 4;
-  int POST_UPDATE_ALL = 5;
   int UPDATE_OVERRIDEN_MARKERS = 6;
   int LOCAL_INSPECTIONS = 7;
   int EXTERNAL_TOOLS = 8;

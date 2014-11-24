@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -85,11 +84,6 @@ public class UnnecessaryUnboxingInspection extends BaseInspection {
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
-    return new UnnecessaryUnboxingVisitor();
-  }
-
-  @Override
   public InspectionGadgetsFix buildFix(Object... infos) {
     return new UnnecessaryUnboxingFix();
   }
@@ -146,14 +140,20 @@ public class UnnecessaryUnboxingInspection extends BaseInspection {
     }
   }
 
-  private class UnnecessaryUnboxingVisitor extends BaseInspectionVisitor {
+  @Override
+  public boolean shouldInspect(PsiFile file) {
+    return PsiUtil.isLanguageLevel5OrHigher(file);
+  }
 
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new UnnecessaryUnboxingVisitor();
+  }
+
+  private class UnnecessaryUnboxingVisitor extends BaseInspectionVisitor {
     @Override
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
-      if (!PsiUtil.isLanguageLevel5OrHigher(expression)) {
-        return;
-      }
       if (!isUnboxingExpression(expression)) {
         return;
       }

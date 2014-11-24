@@ -13,7 +13,6 @@ import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
@@ -131,10 +130,9 @@ public class JavaOverrideImplementMemberChooser extends MemberChooser<PsiMethodM
 
   @Override
   protected void onAlphabeticalSortingEnabled(final AnActionEvent event) {
+    mySortedByOverriding = false;
     resetElements(myToImplement || myMerge ? myAllElements : myOnlyPrimaryElements, null, true);
-    if (mySortByOverridingAction != null) {
-      mySortByOverridingAction.setSelected(event, false);
-    }
+    restoreTree();
   }
 
   @Override
@@ -221,8 +219,8 @@ public class JavaOverrideImplementMemberChooser extends MemberChooser<PsiMethodM
     @Override
     public void setSelected(AnActionEvent e, boolean state) {
       myMerge = state;
-      if (state && mySortByOverridingAction.isSelected(e)) {
-        mySortByOverridingAction.setSelected(e, false);
+      if (state && mySortedByOverriding) {
+        mySortedByOverriding = false;
       }
       resetElements(state ? myAllElements : myOnlyPrimaryElements, null, true);
       setTitle(getChooserTitle(false, myMerge));

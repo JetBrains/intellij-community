@@ -23,11 +23,12 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.util.UniqueFileNamesProvider;
+import com.intellij.util.text.UniqueNameGenerator;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.net.URL;
@@ -91,9 +92,8 @@ public class MigrationMapSet {
     return ret;
   }
 
-  private File getMapDirectory() {
-    @NonNls String directoryPath = PathManager.getConfigPath() + File.separator + "migration";
-    File dir = new File(directoryPath);
+  private static File getMapDirectory() {
+    File dir = new File(PathManager.getConfigPath() + File.separator + "migration");
 
     if (!dir.exists()){
       if (!dir.mkdir()){
@@ -129,14 +129,15 @@ public class MigrationMapSet {
     return dir;
   }
 
-  private File[] getMapFiles() {
+  private static File[] getMapFiles() {
     File dir = getMapDirectory();
     if (dir == null){
       return new File[0];
     }
     File[] ret = dir.listFiles(new FileFilter() {
+      @Override
       @SuppressWarnings({"HardCodedStringLiteral"})
-      public boolean accept(File file){
+      public boolean accept(@NotNull File file){
         return !file.isDirectory() && StringUtil.endsWithIgnoreCase(file.getName(), ".xml");
       }
     });
@@ -170,12 +171,13 @@ public class MigrationMapSet {
     }
   }
 
-  private MigrationMap readMap(File file) throws JDOMException, InvalidDataException, IOException {
-    if (!file.exists()) return null;
-    Document document = JDOMUtil.loadDocument(file);
+  private static MigrationMap readMap(File file) throws JDOMException, InvalidDataException, IOException {
+    if (!file.exists()) {
+      return null;
+    }
 
-    Element root = document.getRootElement();
-    if (root == null || !MIGRATION_MAP.equals(root.getName())){
+    Element root = JDOMUtil.load(file);
+    if (!MIGRATION_MAP.equals(root.getName())){
       throw new InvalidDataException();
     }
 
@@ -237,18 +239,18 @@ public class MigrationMapSet {
     @NonNls String[] filePaths = new String[myMaps.size()];
     Document[] documents = new Document[myMaps.size()];
 
-    UniqueFileNamesProvider namesProvider = new UniqueFileNamesProvider();
+    UniqueNameGenerator namesProvider = new UniqueNameGenerator();
     for(int i = 0; i < myMaps.size(); i++){
       MigrationMap map = myMaps.get(i);
 
-      filePaths[i] = dir + File.separator + namesProvider.suggestName(map.getName()) + ".xml";
+      filePaths[i] = dir + File.separator + namesProvider.generateUniqueName(FileUtil.sanitizeName(map.getName())) + ".xml";
       documents[i] = saveMap(map);
     }
 
     JDOMUtil.updateFileSet(files, filePaths, documents, CodeStyleSettingsManager.getSettings(null).getLineSeparator());
   }
 
-  private Document saveMap(MigrationMap map) {
+  private static Document saveMap(MigrationMap map) {
     Element root = new Element(MIGRATION_MAP);
 
     Element nameElement = new Element(NAME);

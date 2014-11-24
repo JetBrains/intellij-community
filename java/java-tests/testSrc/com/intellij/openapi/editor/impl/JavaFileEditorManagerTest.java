@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.codeInsight.daemon.impl.CodeFoldingPassFactory;
+import com.intellij.codeHighlighting.Pass;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -23,9 +23,9 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiMethod;
-import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.FileEditorManagerTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import org.jdom.JDOMException;
 
 import java.io.File;
@@ -71,7 +71,7 @@ public class JavaFileEditorManagerTest extends FileEditorManagerTestCase {
     assertTrue(regions[0].isExpanded());
     assertTrue(regions[1].isExpanded());
 
-    EditorTestUtil.runTextEditorHighlightingPass(editor, CodeFoldingPassFactory.class);
+    CodeInsightTestFixtureImpl.instantiateAndRun(psiFile, editor, new int[]{Pass.UPDATE_ALL, Pass.LOCAL_INSPECTIONS}, false);
 
     regions = editor.getFoldingModel().getAllFoldRegions();
     assertEquals(2, regions.length);

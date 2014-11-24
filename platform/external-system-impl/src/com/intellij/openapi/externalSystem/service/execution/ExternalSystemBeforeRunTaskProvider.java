@@ -88,8 +88,9 @@ public abstract class ExternalSystemBeforeRunTaskProvider extends BeforeRunTaskP
     ExternalSystemEditTaskDialog dialog = new ExternalSystemEditTaskDialog(myProject, task.getTaskExecutionSettings(), mySystemId);
     dialog.setTitle(ExternalSystemBundle.message("tasks.select.task.title", mySystemId.getReadableName()));
 
-    dialog.show();
-    if (!dialog.isOK()) return false;
+    if (!dialog.showAndGet()) {
+      return false;
+    }
 
     return true;
   }

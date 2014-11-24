@@ -214,7 +214,7 @@
       <keyboard-shortcut first-keystroke="control X" second-keystroke="control C"/>
     </action>
     <action id="CloseAllEditorsButActive">
-      <keyboard-shortcut first-keystroke="control X" second-keystroke="1" />
+      <keyboard-shortcut first-keystroke="control 1"/>
     </action>
     <action id="Find">
       <keyboard-shortcut first-keystroke="control alt S"/>
@@ -250,7 +250,7 @@
       <keyboard-shortcut first-keystroke="control X" second-keystroke="2"/>
     </action>
     <action id="UnsplitAll">
-      <keyboard-shortcut first-keystroke="control 1"/>
+      <keyboard-shortcut first-keystroke="control X" second-keystroke="1" />
     </action>
     <action id="Unsplit">
       <keyboard-shortcut first-keystroke="control 0"/>

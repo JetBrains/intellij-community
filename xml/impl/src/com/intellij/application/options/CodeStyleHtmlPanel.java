@@ -117,8 +117,7 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
       public void actionPerformed(ActionEvent e) {
         final TagListDialog tagListDialog = new TagListDialog(title);
         tagListDialog.setData(createCollectionOn(uiField.getText()));
-        tagListDialog.show();
-        if (tagListDialog.isOK()) {
+        if (tagListDialog.showAndGet()) {
           uiField.setText(createStringOn(tagListDialog.getData()));
         }
       }

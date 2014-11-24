@@ -24,6 +24,7 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -45,9 +46,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpre
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * @author ilyas
  */
@@ -56,6 +54,8 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
   private static final Function<GrListOrMapImpl, PsiType> TYPES_CALCULATOR = new MyTypesCalculator();
 
   private final PsiReference myLiteralReference = new LiteralConstructorReference(this);
+  private volatile GrExpression[] myInitializers = null;
+  private volatile GrNamedArgument[] myNamedArguments = null;
 
   public GrListOrMapImpl(@NotNull ASTNode node) {
     super(node);
@@ -107,6 +107,11 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
   }
 
   @Override
+  public boolean isEmpty() {
+    return getInitializers().length == 0 && getNamedArguments().length == 0;
+  }
+
+  @Override
   public PsiElement getLBrack() {
     return findChildByType(GroovyTokenTypes.mLBRACK);
   }
@@ -119,23 +124,25 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
   @Override
   @NotNull
   public GrExpression[] getInitializers() {
-    List<GrExpression> result = ContainerUtil.newArrayList();
-    for (PsiElement cur = getFirstChild(); cur != null; cur = cur.getNextSibling()) {
-      if (cur instanceof GrExpression) {
-        result.add((GrExpression)cur);
-      }
+    GrExpression[] initializers = myInitializers;
+    if (initializers == null) {
+      initializers = PsiTreeUtil.getChildrenOfType(this, GrExpression.class);
+      initializers = initializers == null ? GrExpression.EMPTY_ARRAY : initializers;
+      myInitializers = initializers;
     }
-    return result.toArray(new GrExpression[result.size()]);
+    return initializers;
   }
 
   @Override
   @NotNull
   public GrNamedArgument[] getNamedArguments() {
-    List<GrNamedArgument> result = new ArrayList<GrNamedArgument>();
-    for (PsiElement cur = getFirstChild(); cur != null; cur = cur.getNextSibling()) {
-      if (cur instanceof GrNamedArgument) result.add((GrNamedArgument)cur);
+    GrNamedArgument[] namedArguments = myNamedArguments;
+    if (namedArguments == null) {
+      namedArguments = PsiTreeUtil.getChildrenOfType(this, GrNamedArgument.class);
+      namedArguments = namedArguments == null ? GrNamedArgument.EMPTY_ARRAY : namedArguments;
+      myNamedArguments = namedArguments;
     }
-    return result.toArray(new GrNamedArgument[result.size()]);
+    return namedArguments;
   }
 
   @Override
@@ -146,6 +153,12 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
   @Override
   public PsiReference getReference() {
     return myLiteralReference;
+  }
+
+  @Override
+  public void subtreeChanged() {
+    myInitializers = null;
+    myNamedArguments = null;
   }
 
   private static class MyTypesCalculator implements Function<GrListOrMapImpl, PsiType> {
@@ -237,6 +250,5 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
         }
       };
     }
-
   }
 }

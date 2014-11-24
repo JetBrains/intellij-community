@@ -42,8 +42,8 @@ import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteUsageInfo;
 import com.intellij.refactoring.util.NonCodeSearchDescriptionLocation;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.refactoring.util.TextOccurrencesUtil;
-import com.intellij.usageView.UsageInfoFactory;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.usageView.UsageInfoFactory;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.*;
@@ -210,10 +210,9 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
       }
       else {
         UnsafeUsagesDialog dialog = new UnsafeUsagesDialog(ArrayUtil.toStringArray(conflicts), myProject);
-        dialog.show();
-        if (!dialog.isOK()) {
+        if (!dialog.showAndGet()) {
           final int exitCode = dialog.getExitCode();
-          prepareSuccessful(); // dialog is always dismissed
+          prepareSuccessful(); // dialog is always dismissed;
           if (exitCode == UnsafeUsagesDialog.VIEW_USAGES_EXIT_CODE) {
             showUsages(usages);
           }

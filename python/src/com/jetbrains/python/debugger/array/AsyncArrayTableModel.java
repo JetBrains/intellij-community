@@ -177,7 +177,7 @@ public class AsyncArrayTableModel extends AbstractTableModel {
         final Object[][] chunkData = new Object[CHUNK_ROW_SIZE][CHUNK_COL_SIZE];
         for (int r = 0; r < CHUNK_ROW_SIZE; r++) {
           for (int c = 0; c < CHUNK_COL_SIZE; c++) {
-            chunkData[r][c] = data[roffset + r][coffset + c];
+            chunkData[r][c] = data[roffset * CHUNK_ROW_SIZE + r][coffset * CHUNK_COL_SIZE + c];
           }
         }
         myChunkCache.put(key, new ListenableFuture<ArrayChunk>() {

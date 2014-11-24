@@ -105,7 +105,7 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
 
     final Module module = ModuleUtilCore.findModuleForFile(file, project);
     if (module != null) {
-      final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
+      final Sdk sdk = PythonSdkType.findPythonSdk(module);
       return PythonSdkType.getLanguageLevelForSdk(sdk);
     }
     final Sdk sdk = findSdk(project, file);
@@ -133,7 +133,7 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
       return LanguageLevel.FORCE_LANGUAGE_LEVEL;
     }
 
-    final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
+    final Sdk sdk = PythonSdkType.findPythonSdk(module);
     return PythonSdkType.getLanguageLevelForSdk(sdk);
   }
 

@@ -35,25 +35,27 @@ import java.util.ArrayList;
 /**
  * @author Sergey.Malenkov
  */
-public final class SettingsDialog extends DialogWrapper implements DataProvider {
+public class SettingsDialog extends DialogWrapper implements DataProvider {
   private final String myDimensionServiceKey;
   private final AbstractEditor myEditor;
   private boolean myApplyButtonNeeded;
   private boolean myResetButtonNeeded;
 
-  public SettingsDialog(Project project, String key, @NotNull Configurable configurable, boolean showApplyButton) {
+  public SettingsDialog(Project project, String key, @NotNull Configurable configurable, boolean showApplyButton, boolean showResetButton) {
     super(project, true);
     myDimensionServiceKey = key;
     myEditor = new ConfigurableEditor(myDisposable, configurable);
     myApplyButtonNeeded = showApplyButton;
+    myResetButtonNeeded = showResetButton;
     init(configurable);
   }
 
-  public SettingsDialog(@NotNull Component parent, String key, @NotNull Configurable configurable, boolean showApplyButton) {
+  public SettingsDialog(@NotNull Component parent, String key, @NotNull Configurable configurable, boolean showApplyButton, boolean showResetButton) {
     super(parent, true);
     myDimensionServiceKey = key;
     myEditor = new ConfigurableEditor(myDisposable, configurable);
     myApplyButtonNeeded = showApplyButton;
+    myResetButtonNeeded = showResetButton;
     init(configurable);
   }
 

@@ -130,7 +130,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   private final AtomicInteger counterAutoDetect = new AtomicInteger();
   private final AtomicLong elapsedAutoDetect = new AtomicLong();
 
-  private void initStandardFileTypes() {
+  public void initStandardFileTypes() {
     final FileTypeConsumer consumer = new FileTypeConsumer() {
       @Override
       public void consume(@NotNull FileType fileType) {
@@ -171,6 +171,9 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
       catch (Throwable t) {
         PluginManager.handleComponentError(t, factory.getClass().getName(), null);
       }
+    }
+    for (final StandardFileType pair : myStandardFileTypes.values()) {
+      registerFileTypeWithoutNotification(pair.fileType, pair.matchers);
     }
   }
 
@@ -239,7 +242,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     bus.connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener.Adapter(){
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
-        Set<VirtualFile> files = ContainerUtil.map2Set(events, new Function<VFileEvent, VirtualFile>() {
+        Collection<VirtualFile> files = ContainerUtil.map2Set(events, new Function<VFileEvent, VirtualFile>() {
           @Override
           public VirtualFile fun(VFileEvent event) {
             VirtualFile file = event instanceof VFileCreateEvent ? null : event.getFile();
@@ -251,10 +254,16 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
           System.out.println("F: VFS events: " + events);
         }
         if (!files.isEmpty() && RE_DETECT_ASYNC) {
-          reDetectQueue.offer(files);
+          if (toLog()) {
+            System.out.println("F: queued to redetect: " + files);
+          }
+          reDetectQueue.offerIfAbsent(files);
         }
       }
     });
+
+    // this should be done BEFORE reading state
+    initStandardFileTypes();
   }
 
   private static boolean toLog() {
@@ -271,8 +280,9 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
 
   @TestOnly
   public void drainReDetectQueue() {
-    reDetectQueue.drain();
+    reDetectQueue.waitFor();
   }
+
   @TestOnly
   void reDetectAsync(boolean enable) {
     RE_DETECT_ASYNC = enable;
@@ -360,11 +370,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
 
   @Override
   public void initComponent() {
-    initStandardFileTypes();
-
-    for (final StandardFileType pair : myStandardFileTypes.values()) {
-      registerFileTypeWithoutNotification(pair.fileType, pair.matchers);
-    }
     if (!myUnresolvedMappings.isEmpty()) {
       for (StandardFileType pair : myStandardFileTypes.values()) {
         registerReDetectedMappings(pair);
@@ -896,11 +901,18 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
 
     for (Pair<FileNameMatcher, String> association : associations) {
       FileType type = getFileTypeByName(association.getSecond());
+      FileNameMatcher matcher = association.getFirst();
       if (type != null) {
-        associate(type, association.getFirst(), false);
+        if (PlainTextFileType.INSTANCE == type) {
+          FileType newFileType = myPatternsTable.findAssociatedFileType(matcher);
+          if (newFileType != null && newFileType != PlainTextFileType.INSTANCE && newFileType != UnknownFileType.INSTANCE) {
+            myRemovedMappings.put(matcher, Pair.create(newFileType, false));
+          }
+        }
+        associate(type, matcher, false);
       }
       else {
-        myUnresolvedMappings.put(association.getFirst(), association.getSecond());
+        myUnresolvedMappings.put(matcher, association.getSecond());
       }
     }
 
@@ -1339,7 +1351,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     }
   }
 
-  Map<FileNameMatcher, Pair<FileType, Boolean>> getRemovedMappings() {
+  public Map<FileNameMatcher, Pair<FileType, Boolean>> getRemovedMappings() {
     return myRemovedMappings;
   }
 

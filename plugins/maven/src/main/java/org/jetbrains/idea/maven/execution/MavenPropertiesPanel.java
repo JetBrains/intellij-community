@@ -53,8 +53,9 @@ public class MavenPropertiesPanel extends AddEditRemovePanel<Pair<String, String
   @Nullable
   private Pair<String, String> doAddOrEdit(@Nullable Pair<String, String> o) {
     EditMavenPropertyDialog d = new EditMavenPropertyDialog(o, myAvailableProperties);
-    d.show();
-    if (!d.isOK()) return null;
+    if (!d.showAndGet()) {
+      return null;
+    }
     return d.getValue();
   }
 

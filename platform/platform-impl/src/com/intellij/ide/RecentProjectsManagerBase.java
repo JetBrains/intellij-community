@@ -28,14 +28,17 @@ import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.wm.impl.SystemDock;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
+import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -76,7 +79,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
   private final Object myStateLock = new Object();
   private State myState = new State();
 
-  private final Map<String, String> myNameCache = Collections.synchronizedMap(new HashMap<String, String>());
+  private final Map<String, String> myNameCache = Collections.synchronizedMap(new THashMap<String, String>());
 
   protected RecentProjectsManagerBase(MessageBus messageBus) {
     messageBus.connect().subscribe(AppLifecycleListener.TOPIC, new MyAppLifecycleListener());
@@ -190,7 +193,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
       paths = ContainerUtil.newLinkedHashSet(myState.recentPaths);
     }
 
-    final Set<String> openedPaths = ContainerUtil.newHashSet();
+    Set<String> openedPaths = new THashSet<String>();
     for (Project openProject : ProjectManager.getInstance().getOpenProjects()) {
       ContainerUtil.addIfNotNull(openedPaths, getProjectPath(openProject));
     }
@@ -296,7 +299,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
   }
 
   @NotNull
-  private String getProjectName(String path) {
+  private String getProjectName(@NotNull String path) {
     String cached = myNameCache.get(path);
     if (cached != null) {
       return cached;
@@ -311,16 +314,18 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
     myNameCache.clear();
   }
 
-  private static String readProjectName(String path) {
+  private static String readProjectName(@NotNull String path) {
     final File file = new File(path);
     if (file.isDirectory()) {
       final File nameFile = new File(new File(path, Project.DIRECTORY_STORE_FOLDER), ProjectImpl.NAME_FILE);
       if (nameFile.exists()) {
         try {
-          final BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(nameFile), "UTF-8"));
+          final BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(nameFile), CharsetToolkit.UTF8_CHARSET));
           try {
-            final String name = in.readLine();
-            if (name != null && name.length() > 0) return name.trim();
+            String name = in.readLine();
+            if (!StringUtil.isEmpty(name)) {
+              return name.trim();
+            }
           }
           finally {
             in.close();
@@ -331,7 +336,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
       return file.getName();
     }
     else {
-      return FileUtil.getNameWithoutExtension(file.getName());
+      return FileUtilRt.getNameWithoutExtension(file.getName());
     }
   }
 

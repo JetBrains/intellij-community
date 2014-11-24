@@ -28,7 +28,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
  * Created by Max Medvedev on 05/02/14
  */
 public class GrIndexPropertyInfo extends CallInfoBase<GrIndexProperty> {
-  protected GrIndexPropertyInfo(GrIndexProperty call) {
+  public GrIndexPropertyInfo(GrIndexProperty call) {
     super(call);
   }
 

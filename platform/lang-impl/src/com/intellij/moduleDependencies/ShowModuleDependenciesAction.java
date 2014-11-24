@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,17 +53,18 @@ public class ShowModuleDependenciesAction extends AnAction{
     } else {
       final PsiElement element = CommonDataKeys.PSI_FILE.getData(dataContext);
       final Module module = element != null ? ModuleUtil.findModuleForPsiElement(element) : null;
-      if (module != null && ModuleManager.getInstance(project).getModules().length > 1){
+      if (module != null && ModuleManager.getInstance(project).getModules().length > 1) {
         MyModuleOrProjectScope dlg = new MyModuleOrProjectScope(module.getName());
-        dlg.show();
-        if (dlg.isOK()){
-          if (!dlg.useProjectScope()){
+        if (dlg.showAndGet()) {
+          if (!dlg.useProjectScope()) {
             panel = new ModulesDependenciesPanel(project, new Module[]{module});
             scope = new AnalysisScope(module);
-          } else {
+          }
+          else {
             panel = new ModulesDependenciesPanel(project);
           }
-        } else {
+        }
+        else {
           return;
         }
       } else {

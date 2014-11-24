@@ -31,6 +31,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.ValidationInfo;
@@ -78,7 +79,7 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
   private boolean myInstallFramework;
   private TextFieldWithBrowseButton myLocationField;
   protected final File myProjectDirectory;
-  private Button myCreateButton;
+  private JButton myCreateButton;
   private JLabel myErrorLabel;
   private AnAction myCreateAction;
   private Sdk mySdk;
@@ -87,6 +88,8 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
                                      NullableConsumer<AbstractProjectSettingsStep> callback,
                                      boolean isWelcomeScreen) {
     super();
+    getTemplatePresentation().setIcon(projectGenerator.getLogo());
+    getTemplatePresentation().setText(projectGenerator.getName());
     myProjectGenerator = projectGenerator;
     myCallback = callback;
     myIsWelcomeScreen = isWelcomeScreen;
@@ -116,10 +119,20 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
 
     final DirectoryProjectGenerator[] generators = Extensions.getExtensions(DirectoryProjectGenerator.EP_NAME);
     final int height = generators.length == 0 && !myIsWelcomeScreen ? 150 : 400;
-    mainPanel.setPreferredSize(new Dimension(mainPanel.getPreferredSize().width, height));
+    //mainPanel.setPreferredSize(new Dimension(mainPanel.getPreferredSize().width, height));
     myErrorLabel = new JLabel("");
     myErrorLabel.setForeground(JBColor.RED);
-    myCreateButton = new Button(myCreateAction, myCreateAction.getTemplatePresentation());
+    myCreateButton = new JButton("Create");
+    myCreateButton.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        boolean isValid = checkValid();
+        if (isValid && myCallback != null) {
+          myCallback.consume(AbstractProjectSettingsStep.this);
+        }
+      }
+    });
+    myCreateButton.putClientProperty(DialogWrapper.DEFAULT_ACTION, Boolean.TRUE);
 
     scrollPanel.add(basePanel, BorderLayout.NORTH);
     final JPanel advancedSettings = createAdvancedSettings();

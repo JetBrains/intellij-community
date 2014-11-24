@@ -365,6 +365,15 @@ public class DaemonListeners implements Disposable {
         });
       }
     });
+    if (RefResolveService.ENABLED) {
+      RefResolveService resolveService = RefResolveService.getInstance(project);
+      resolveService.addListener(this, new RefResolveService.Listener() {
+        @Override
+        public void allFilesResolved() {
+          stopDaemon(true, "RefResolveService is up to date");
+        }
+      });
+    }
   }
   
   static boolean isUnderIgnoredAction(@Nullable Object action) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2011  Bas Leijdekkers
+ * Copyright 2005-2014  Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -161,6 +161,11 @@ public class IndexOfReplaceableByContainsInspection
   }
 
   @Override
+  public boolean shouldInspect(PsiFile file) {
+    return PsiUtil.isLanguageLevel5OrHigher(file);
+  }
+
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new IndexOfReplaceableByContainsVisitor();
   }
@@ -171,9 +176,6 @@ public class IndexOfReplaceableByContainsInspection
     @Override
     public void visitBinaryExpression(
       PsiBinaryExpression expression) {
-      if (!PsiUtil.isLanguageLevel5OrHigher(expression)) {
-        return;
-      }
       super.visitBinaryExpression(expression);
       final PsiExpression rhs = expression.getROperand();
       if (rhs == null) {

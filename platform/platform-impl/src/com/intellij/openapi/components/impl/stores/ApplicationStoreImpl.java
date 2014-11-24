@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,8 +51,8 @@ class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationSto
       private boolean myConfigDirectoryRefreshed;
 
       @Override
-      protected StorageData createStorageData(@NotNull String storageSpec) {
-        return new FileBasedStorage.FileStorageData(ROOT_ELEMENT_NAME);
+      protected StorageData createStorageData(@NotNull String fileSpec, @NotNull String filePath) {
+        return new StorageData(ROOT_ELEMENT_NAME);
       }
 
       @Nullable

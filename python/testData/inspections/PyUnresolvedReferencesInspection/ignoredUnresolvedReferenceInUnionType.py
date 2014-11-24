@@ -4,5 +4,6 @@ class A:
 a = A()
 print(a.f<caret>oo)
 
-x = A() or None
-print(x.foo)
+def func(c):
+    x = A() if c else None
+    return x.foo

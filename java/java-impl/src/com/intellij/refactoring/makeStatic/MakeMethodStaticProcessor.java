@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.makeStatic;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -23,23 +24,51 @@ import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.changeSignature.inCallers.JavaCallerChooser;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.javadoc.MethodJavaDocHelper;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author dsl
  */
 public class MakeMethodStaticProcessor extends MakeMethodOrClassStaticProcessor<PsiMethod> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.makeMethodStatic.MakeMethodStaticProcessor");
+  private List<PsiMethod> myAdditionalMethods;
 
   public MakeMethodStaticProcessor(final Project project, final PsiMethod method, final Settings settings) {
     super(project, method, settings);
+  }
+
+  @Override
+  protected boolean findAdditionalMembers(ArrayList<UsageInfo> toMakeStatic) {
+    if (!toMakeStatic.isEmpty()) {
+      myAdditionalMethods = new ArrayList<PsiMethod>();
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        for (UsageInfo usageInfo : toMakeStatic) {
+          myAdditionalMethods.add((PsiMethod)usageInfo.getElement());
+        }
+      }
+      else {
+        final JavaCallerChooser chooser = new MakeStaticJavaCallerChooser(myMember, myProject, new Consumer<Set<PsiMethod>>() {
+          @Override
+          public void consume(Set<PsiMethod> methods) {
+            myAdditionalMethods.addAll(methods);
+          }
+        });
+        if (!chooser.showAndGet()) {
+          return false;
+        }
+      }
+    }
+    return true;
   }
 
   @Override
@@ -122,9 +151,19 @@ public class MakeMethodStaticProcessor extends MakeMethodOrClassStaticProcessor<
         anchor = javaDocHelper.addParameterAfter(fieldParameter.name, anchor);
       }
     }
-    setupTypeParameterList();
+    makeStatic(myMember);
+
+    if (myAdditionalMethods != null) {
+      for (PsiMethod method : myAdditionalMethods) {
+        makeStatic(method);
+      }
+    }
+  }
+
+  private void makeStatic(PsiMethod member) {
+    setupTypeParameterList(member);
     // Add static modifier
-    final PsiModifierList modifierList = myMember.getModifierList();
+    final PsiModifierList modifierList = member.getModifierList();
     modifierList.setModifierProperty(PsiModifier.STATIC, true);
     modifierList.setModifierProperty(PsiModifier.FINAL, false);
     modifierList.setModifierProperty(PsiModifier.DEFAULT, false);
@@ -264,5 +303,15 @@ public class MakeMethodStaticProcessor extends MakeMethodOrClassStaticProcessor<
 
   protected void findExternalUsages(final ArrayList<UsageInfo> result) {
     findExternalReferences(myMember, result);
+  }
+
+  @Override
+  protected void processExternalReference(PsiElement element, PsiMethod method, ArrayList<UsageInfo> result) {
+    if (!mySettings.isChangeSignature()) {
+      final PsiMethod containingMethod = MakeStaticJavaCallerChooser.isTheLastClassRef(element, method);
+      if (containingMethod != null) {
+        result.add(new ChainedCallUsageInfo(containingMethod));
+      }
+    }
   }
 }

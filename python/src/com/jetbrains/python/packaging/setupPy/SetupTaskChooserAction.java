@@ -89,8 +89,7 @@ public class SetupTaskChooserAction extends AnAction {
       parameters.add(taskName);
       if (options != null) {
         SetupTaskDialog dialog = new SetupTaskDialog(module.getProject(), taskName, options);
-        dialog.show();
-        if (!dialog.isOK()) {
+        if (!dialog.showAndGet()) {
           return;
         }
         parameters.addAll(dialog.getCommandLine());

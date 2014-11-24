@@ -562,14 +562,12 @@ import groovy.transform.CompileStatic
 @CompileStatic
 int method(x, y, z) {
     if (x) {
-        <error descr="Cannot assign 'String' to 'int'">'String'</error>
+        <error descr="Cannot return 'String' from method returning 'int'">'String'</error>
     } else if (y) {
         42
-    }
-    else if (z) {
-      <error descr="Cannot assign 'String' to 'int'">return</error> 'abc'
-    }
-    else {
+    } else if (z) {
+      <error descr="Cannot return 'String' from method returning 'int'">return</error> 'abc'
+    } else {
       return 43
     }
 }

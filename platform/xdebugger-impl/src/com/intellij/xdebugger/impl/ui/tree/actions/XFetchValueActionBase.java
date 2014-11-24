@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ public abstract class XFetchValueActionBase extends AnAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     TreePath[] paths = getSelectedNodes(e.getDataContext());
     if (paths != null) {
       for (TreePath path : paths) {
@@ -63,13 +63,13 @@ public abstract class XFetchValueActionBase extends AnAction {
   }
 
   @Override
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     TreePath[] paths = getSelectedNodes(e.getDataContext());
     if (paths == null) {
       return;
     }
 
-    ValueCollector valueCollector = new ValueCollector();
+    ValueCollector valueCollector = new ValueCollector(e);
     for (TreePath path : paths) {
       Object node = path.getLastPathComponent();
       if (node instanceof XValueNodeImpl) {
@@ -99,7 +99,12 @@ public abstract class XFetchValueActionBase extends AnAction {
 
   private final class ValueCollector {
     private final List<String> values = new SmartList<String>();
+    private final AnActionEvent myEvent;
     private volatile boolean processed;
+
+    public ValueCollector(AnActionEvent e) {
+      myEvent = e;
+    }
 
     public void add(@NotNull String value) {
       values.add(value);
@@ -107,7 +112,7 @@ public abstract class XFetchValueActionBase extends AnAction {
 
     public void finish(Project project) {
       if (processed && !values.contains(null) && !project.isDisposed()) {
-        handle(project, StringUtil.join(values, "\n"));
+        handle(project, StringUtil.join(values, "\n"), myEvent);
       }
     }
 
@@ -128,7 +133,7 @@ public abstract class XFetchValueActionBase extends AnAction {
     }
   }
 
-  protected abstract void handle(final Project project, final String value);
+  protected abstract void handle(final Project project, final String value, AnActionEvent e);
 
   private static final class CopyValueEvaluationCallback extends HeadlessValueEvaluationCallback {
     private final int myValueIndex;

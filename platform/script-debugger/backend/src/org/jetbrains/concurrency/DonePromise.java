@@ -1,10 +1,11 @@
 package org.jetbrains.concurrency;
 
+import com.intellij.openapi.util.Getter;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 
-class DonePromise<T> extends Promise<T> {
+class DonePromise<T> extends Promise<T> implements Getter<T> {
   private final T result;
 
   public DonePromise(T result) {
@@ -43,13 +44,14 @@ class DonePromise<T> extends Promise<T> {
     return (Promise<SUB_RESULT>)this;
   }
 
+  @NotNull
   @Override
-  public boolean isProcessed() {
-    return true;
+  public State getState() {
+    return State.FULFILLED;
   }
 
   @Override
-  public boolean isRejected() {
-    return false;
+  public T get() {
+    return result;
   }
 }

@@ -39,6 +39,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.components.GradientViewport;
 import com.intellij.ui.components.JBLabel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -106,7 +107,10 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
       ApplicationBundle.message("settings.code.style.general.formatter.marker.title"), true));
     myMarkerOptionsPanel.setBorder(
       IdeBorderFactory.createTitledBorder(ApplicationBundle.message("settings.code.style.general.formatter.marker.options.title"), true));
-    myScrollPane = ScrollPaneFactory.createScrollPane(myPanel, true);
+    myPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+    myScrollPane = ScrollPaneFactory.createScrollPane(null, true);
+    myScrollPane.setViewport(new GradientViewport(myPanel, 5, 0, 0, 0, true));
+    myScrollPane.getVerticalScrollBar().setUnitIncrement(10);
 
     myAdditionalSettingsPanel.setLayout(new VerticalFlowLayout(true, true));
     myAdditionalSettingsPanel.removeAll();

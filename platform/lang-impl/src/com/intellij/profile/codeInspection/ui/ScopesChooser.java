@@ -87,8 +87,7 @@ public abstract class ScopesChooser extends ComboBoxAction implements DumbAware 
       @Override
       public void actionPerformed(final AnActionEvent e) {
         final ScopesOrderDialog dlg = new ScopesOrderDialog(component, myInspectionProfile, myProject);
-        dlg.show();
-        if (dlg.isOK()) {
+        if (dlg.showAndGet()) {
           onScopesOrderChanged();
         }
       }

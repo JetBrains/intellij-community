@@ -43,13 +43,9 @@ class RejectedPromise<T> extends Promise<T> {
     return (Promise<SUB_RESULT>)this;
   }
 
+  @NotNull
   @Override
-  public boolean isProcessed() {
-    return true;
-  }
-
-  @Override
-  public boolean isRejected() {
-    return true;
+  public State getState() {
+    return State.REJECTED;
   }
 }

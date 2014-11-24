@@ -8,8 +8,9 @@ import java.util.Collection;
 
 /**
  * @author Denis Zhdanov
- * @deprecated use {@link com.intellij.openapi.vcs.roots.VcsRootDetector} instead
+ * @deprecated to remove in IDEA 15. Use {@link com.intellij.openapi.vcs.roots.VcsRootDetector} instead
  */
+@Deprecated
 public interface VcsRootFinder {
 
   ExtensionPointName<VcsRootFinder> EP_NAME = ExtensionPointName.create("com.intellij.vcs.rootFinder");

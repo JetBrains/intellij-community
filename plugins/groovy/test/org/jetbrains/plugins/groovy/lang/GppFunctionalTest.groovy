@@ -437,16 +437,6 @@ s.do<caret>Smth()
     assertEquals "doSmth", ((PsiMethod) findReference().resolve()).name
   }
 
-  public void testBaseConstructorCallInMapLiteras() throws Exception {
-    configureScript """
-@Typed File foo() { <warning descr="Constructor 'File' in 'java.io.File' cannot be applied to '(['super':[java.lang.String]])'">['super':['a']]</warning> }
-@Typed File goo() { <warning descr="Constructor 'File' in 'java.io.File' cannot be applied to '([:])'">[:]</warning> }
-File bar() { <warning descr="Constructor 'File' in 'java.io.File' cannot be applied to '([:])'">[:]</warning> }
-"""
-    myFixture.enableInspections new GroovyAssignabilityCheckInspection()
-    myFixture.checkHighlighting(true, false, false)
-  }
-
   public void testNestedLiteralConstructors() throws Exception {
     configureGppScript """
     class Foo {

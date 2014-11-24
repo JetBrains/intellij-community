@@ -31,14 +31,13 @@ import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
+import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class RefCountHolder {
@@ -49,57 +48,29 @@ public class RefCountHolder {
 
   private final Map<PsiAnchor, Boolean> myDclsUsedMap = ContainerUtil.newConcurrentMap();
   private final Map<PsiReference, PsiImportStatementBase> myImportStatements = ContainerUtil.newConcurrentMap();
-  private final AtomicReference<ProgressIndicator> myState = new AtomicReference<ProgressIndicator>(VIRGIN);
-  // contains actual info
+  private final AtomicReference<ProgressIndicator> myState = new AtomicReference<ProgressIndicator>(READY);
   private static final ProgressIndicator READY = new DaemonProgressIndicator() {
+    {
+      cancel();
+    }
     @Override
     public String toString() {
       return "READY";
     }
   };
-  // just created or cleared
-  private static final ProgressIndicator VIRGIN = new DaemonProgressIndicator() {
-    @Override
-    public String toString() {
-      return "VIRGIN";
-    }
-  };
-  private volatile ProgressIndicator analyzedUnder;
 
-  private static class HolderReference extends SoftReference<RefCountHolder> {
-    // Map holding hard references to RefCountHolder for each highlighting pass (identified by its progress indicator)
-    // there can be multiple passes running simultaneously (one actual and several passes just canceled and winding down but still alive)
-    // so there is a chance they overlap the usage of RCH
-    // As soon as everybody finished using RCH, map becomes empty and the RefCountHolder is eligible for gc
-    private final Map<ProgressIndicator, RefCountHolder> map = new ConcurrentHashMap<ProgressIndicator, RefCountHolder>();
+  private static final Key<Reference<RefCountHolder>> REF_COUNT_HOLDER_IN_FILE_KEY = Key.create("REF_COUNT_HOLDER_IN_FILE_KEY");
 
-    public HolderReference(@NotNull RefCountHolder holder) {
-      super(holder);
-    }
-
-    private void acquire(@NotNull ProgressIndicator indicator) {
-      RefCountHolder holder = get();
-      assert holder != null: "no way";
-      map.put(indicator, holder);
-    }
-
-    private RefCountHolder release(@NotNull ProgressIndicator indicator) {
-      return map.remove(indicator);
-    }
-  }
-
-  private static final Key<HolderReference> REF_COUNT_HOLDER_IN_FILE_KEY = Key.create("REF_COUNT_HOLDER_IN_FILE_KEY");
-
-  private static RefCountHolder getInstance(@NotNull PsiFile file, @NotNull ProgressIndicator indicator, boolean acquire) {
-    HolderReference ref = file.getUserData(REF_COUNT_HOLDER_IN_FILE_KEY);
+  @NotNull
+  public static RefCountHolder get(@NotNull PsiFile file) {
+    Reference<RefCountHolder> ref = file.getUserData(REF_COUNT_HOLDER_IN_FILE_KEY);
     RefCountHolder holder = com.intellij.reference.SoftReference.dereference(ref);
-    if (holder == null && acquire) {
+    if (holder == null) {
       holder = new RefCountHolder(file);
-      HolderReference newRef = new HolderReference(holder);
+      Reference<RefCountHolder> newRef = new SoftReference<RefCountHolder>(holder);
       while (true) {
         boolean replaced = ((UserDataHolderEx)file).replace(REF_COUNT_HOLDER_IN_FILE_KEY, ref, newRef);
         if (replaced) {
-          ref = newRef;
           break;
         }
         ref = file.getUserData(REF_COUNT_HOLDER_IN_FILE_KEY);
@@ -110,25 +81,7 @@ public class RefCountHolder {
         }
       }
     }
-    if (ref != null) {
-      if (acquire) {
-        ref.acquire(indicator);
-      }
-      else {
-        ref.release(indicator);
-      }
-    }
     return holder;
-  }
-
-  @NotNull
-  public static RefCountHolder startUsing(@NotNull PsiFile file, @NotNull ProgressIndicator indicator) {
-    return getInstance(file, indicator, true);
-  }
-
-  @Nullable("might be gced")
-  public static RefCountHolder endUsing(@NotNull PsiFile file, @NotNull ProgressIndicator indicator) {
-    return getInstance(file, indicator, false);
   }
 
   private RefCountHolder(@NotNull PsiFile file) {
@@ -166,7 +119,7 @@ public class RefCountHolder {
     myImportStatements.put(ref, importStatement);
   }
 
-  public boolean isRedundant(@NotNull PsiImportStatementBase importStatement) {
+  boolean isRedundant(@NotNull PsiImportStatementBase importStatement) {
     return !myImportStatements.containsValue(importStatement);
   }
 
@@ -218,7 +171,7 @@ public class RefCountHolder {
     return usedStatus == Boolean.TRUE;
   }
 
-  public boolean isReferencedByMethodReference(@NotNull PsiMethod method, @NotNull LanguageLevel languageLevel) {
+  boolean isReferencedByMethodReference(@NotNull PsiMethod method, @NotNull LanguageLevel languageLevel) {
     if (!languageLevel.isAtLeast(LanguageLevel.JDK_1_8)) return false;
 
     List<PsiReference> array;
@@ -267,7 +220,7 @@ public class RefCountHolder {
     return true;
   }
 
-  public boolean isReferencedForRead(@NotNull PsiVariable variable) {
+  boolean isReferencedForRead(@NotNull PsiVariable variable) {
     List<PsiReference> array;
     synchronized (myLocalRefsMap) {
       array = myLocalRefsMap.getKeysByValue(variable);
@@ -290,7 +243,7 @@ public class RefCountHolder {
     return false;
   }
 
-  public boolean isReferencedForWrite(@NotNull PsiVariable variable) {
+  boolean isReferencedForWrite(@NotNull PsiVariable variable) {
     List<PsiReference> array;
     synchronized (myLocalRefsMap) {
       array = myLocalRefsMap.getKeysByValue(variable);
@@ -308,16 +261,15 @@ public class RefCountHolder {
     return false;
   }
 
-  public boolean analyze(@NotNull PsiFile file, TextRange dirtyScope, @NotNull Runnable analyze, @NotNull ProgressIndicator indicator) {
-    ProgressIndicator old = myState.get();
-    if (old != VIRGIN && old != READY) return false;
-    if (!myState.compareAndSet(old, indicator)) {
-      log("a: failed to change ", old, "->", indicator);
+  public boolean analyze(@NotNull PsiFile file,
+                         TextRange dirtyScope,
+                         @NotNull ProgressIndicator indicator,
+                         @NotNull Runnable analyze) {
+    if (!myState.compareAndSet(READY, indicator)) {
+      log("a: failed to change ", myState, "->", indicator);
       return false;
     }
-    log("a: changed ", old, "->", indicator);
-    analyzedUnder = null;
-    boolean completed = false;
+    log("a: changed ", myState, "->", indicator);
     try {
       if (dirtyScope != null) {
         if (dirtyScope.equals(file.getTextRange())) {
@@ -329,43 +281,16 @@ public class RefCountHolder {
       }
 
       analyze.run();
-      analyzedUnder = indicator;
-      completed = true;
-    }
-    finally {
-      ProgressIndicator resultState = completed ? READY : VIRGIN;
-      boolean set = myState.compareAndSet(indicator, resultState);
-      assert set : myState.get();
-      log("a: changed after analyze", indicator, "->", resultState);
-    }
-    return true;
-  }
-
-  private static void log(@NonNls @NotNull Object... info) {
-    FileStatusMap.log(info);
-  }
-
-
-  public boolean retrieveUnusedReferencesInfo(@NotNull ProgressIndicator indicator, @NotNull Runnable analyze) {
-    ProgressIndicator old = myState.get();
-    if (!myState.compareAndSet(READY, indicator)) {
-      log("r: failed to change ", old, "->", indicator);
-      return false;
-    }
-    log("r: changed ", old, "->", indicator);
-    try {
-      ProgressIndicator under = analyzedUnder;
-      if (under != indicator) {
-        log("r: analyzed under ", under, "->", indicator);
-        return false;
-      }
-      analyze.run();
+      return true;
     }
     finally {
       boolean set = myState.compareAndSet(indicator, READY);
       assert set : myState.get();
-      log("r: changed back ", indicator, "->", READY);
+      log("a: changed after analyze", indicator, "->", READY);
     }
-    return true;
+  }
+
+  private static void log(@NonNls @NotNull Object... info) {
+    FileStatusMap.log(info);
   }
 }

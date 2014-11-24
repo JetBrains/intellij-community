@@ -79,7 +79,7 @@ public abstract class BaseAnalysisAction extends AnAction {
                                                                 scope,
                                                                 module != null ? ModuleUtilCore
                                                                   .getModuleNameInReadAction(module) : null,
-                                                                rememberScope, AnalysisUIOptions.getInstance(project), element){
+                                                                rememberScope, AnalysisUIOptions.getInstance(project), element) {
       @Override
       @Nullable
       protected JComponent getAdditionalActionSettings(final Project project) {
@@ -98,14 +98,13 @@ public abstract class BaseAnalysisAction extends AnAction {
         return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
       }
     };
-    dlg.show();
-    if (!dlg.isOK()) {
+    if (!dlg.showAndGet()) {
       canceled();
       return;
     }
     final int oldScopeType = uiOptions.SCOPE_TYPE;
     scope = dlg.getScope(uiOptions, scope, project, module);
-    if (!rememberScope){
+    if (!rememberScope) {
       uiOptions.SCOPE_TYPE = oldScopeType;
     }
     uiOptions.ANALYZE_TEST_SOURCES = dlg.isInspectTestSources();

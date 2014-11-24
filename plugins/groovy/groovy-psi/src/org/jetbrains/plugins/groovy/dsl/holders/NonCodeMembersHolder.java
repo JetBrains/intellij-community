@@ -21,7 +21,6 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.util.containers.ConcurrentSoftHashMap;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.dsl.CustomMembersGenerator;
@@ -49,7 +48,7 @@ public class NonCodeMembersHolder implements CustomMembersHolder {
       place, new CachedValueProvider<Map<List<Map>, NonCodeMembersHolder>>() {
       @Override
       public Result<Map<List<Map>, NonCodeMembersHolder>> compute() {
-        final Map<List<Map>, NonCodeMembersHolder> map = new ConcurrentSoftHashMap<List<Map>, NonCodeMembersHolder>();
+        final Map<List<Map>, NonCodeMembersHolder> map = ContainerUtil.createConcurrentSoftMap();
         return Result.create(map, PsiModificationTracker.MODIFICATION_COUNT);
       }
     });

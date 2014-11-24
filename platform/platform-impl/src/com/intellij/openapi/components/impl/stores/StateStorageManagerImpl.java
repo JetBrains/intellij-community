@@ -28,10 +28,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtilRt;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import gnu.trove.THashMap;
-import gnu.trove.TObjectLongHashMap;
-import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.MutablePicoContainer;
@@ -241,10 +240,10 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
 
   @Nullable
   private StateStorage createFileStateStorage(@NotNull String fileSpec, @Nullable RoamingType roamingType) {
-    String expandedFile = expandMacros(fileSpec);
+    String filePath = expandMacros(fileSpec);
 
-    if (!ourHeadlessEnvironment && PathUtilRt.getFileName(expandedFile).lastIndexOf('.') < 0) {
-      throw new IllegalArgumentException("Extension is missing for storage file: " + expandedFile);
+    if (!ourHeadlessEnvironment && PathUtilRt.getFileName(filePath).lastIndexOf('.') < 0) {
+      throw new IllegalArgumentException("Extension is missing for storage file: " + filePath);
     }
 
     if (roamingType == RoamingType.PER_USER && fileSpec.equals(StoragePathMacros.WORKSPACE_FILE)) {
@@ -252,12 +251,12 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     }
 
     beforeFileBasedStorageCreate();
-    return new FileBasedStorage(expandedFile, fileSpec, roamingType, getMacroSubstitutor(fileSpec), myRootTagName, this,
-                                createStorageTopicListener(), getStreamProvider()) {
+    return new FileBasedStorage(filePath, fileSpec, roamingType, getMacroSubstitutor(fileSpec), myRootTagName, StateStorageManagerImpl.this,
+                                createStorageTopicListener(), myStreamProvider) {
       @Override
       @NotNull
       protected StorageData createStorageData() {
-        return StateStorageManagerImpl.this.createStorageData(myFileSpec);
+        return StateStorageManagerImpl.this.createStorageData(myFileSpec, getFilePath());
       }
 
       @Override
@@ -280,25 +279,9 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   protected void beforeFileBasedStorageCreate() {
   }
 
-  public static void loadComponentVersions(@NotNull TObjectLongHashMap<String> result, @NotNull Element element) {
-    List<Element> componentObjects = element.getChildren("component");
-    result.ensureCapacity(componentObjects.size());
-    for (Element component : componentObjects) {
-      String name = component.getAttributeValue("name");
-      String version = component.getAttributeValue("version");
-      if (name != null && version != null) {
-        try {
-          result.put(name, Long.parseLong(version));
-        }
-        catch (NumberFormatException ignored) {
-        }
-      }
-    }
-  }
-
   @Nullable
   @Override
-  public StreamProvider getStreamProvider() {
+  public final StreamProvider getStreamProvider() {
     return myStreamProvider;
   }
 
@@ -306,7 +289,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     return myPathMacroSubstitutor;
   }
 
-  protected abstract StorageData createStorageData(@NotNull String storageSpec);
+  protected abstract StorageData createStorageData(@NotNull String fileSpec, @NotNull String filePath);
 
   private static final Pattern MACRO_PATTERN = Pattern.compile("(\\$[^\\$]*\\$)");
 
@@ -344,11 +327,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     return new StateStorageManagerExternalizationSession();
   }
 
-  @Override
-  public void finishSave(@NotNull SaveSession saveSession) {
-  }
-
-  private final class StateStorageManagerExternalizationSession implements ExternalizationSession {
+  protected class StateStorageManagerExternalizationSession implements ExternalizationSession {
     final Map<StateStorage, StateStorage.ExternalizationSession> mySessions = new LinkedHashMap<StateStorage, StateStorage.ExternalizationSession>();
 
     @Override
@@ -389,33 +368,28 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
       return session;
     }
 
-    @Nullable
+    @NotNull
     @Override
-    public SaveSession createSaveSession() {
+    public List<SaveSession> createSaveSessions() {
       if (mySessions.isEmpty()) {
-        return null;
+        return Collections.emptyList();
       }
 
       List<SaveSession> saveSessions = null;
-      for (StateStorage.ExternalizationSession session : mySessions.values()) {
+      Collection<StateStorage.ExternalizationSession> externalizationSessions = mySessions.values();
+      for (StateStorage.ExternalizationSession session : externalizationSessions) {
         SaveSession saveSession = session.createSaveSession();
         if (saveSession != null) {
           if (saveSessions == null) {
+            if (externalizationSessions.size() == 1) {
+              return Collections.singletonList(saveSession);
+            }
             saveSessions = new SmartList<SaveSession>();
           }
           saveSessions.add(saveSession);
         }
       }
-
-      final List<SaveSession> list = saveSessions;
-      return saveSessions == null ? null : new SaveSession() {
-        @Override
-        public void save() {
-          for (SaveSession saveSession : list) {
-            saveSession.save();
-          }
-        }
-      };
+      return ContainerUtil.notNullize(saveSessions);
     }
   }
 

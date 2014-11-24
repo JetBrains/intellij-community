@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -101,14 +101,15 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
                                            PsiElement anchorElement,
                                            PsiElement anchorElementIfAll) {
     final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(expr != null ? expr : anchorElement, PsiMethod.class);
-    
+
     PsiLocalVariable localVariable = null;
     if (expr instanceof PsiReferenceExpression) {
       PsiElement ref = ((PsiReferenceExpression)expr).resolve();
       if (ref instanceof PsiLocalVariable) {
         localVariable = (PsiLocalVariable)ref;
       }
-    } else if (anchorElement instanceof PsiLocalVariable) {
+    }
+    else if (anchorElement instanceof PsiLocalVariable) {
       localVariable = (PsiLocalVariable)anchorElement;
     }
 
@@ -125,7 +126,7 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
       replaceAllOccurrences = activeIntroducer.isReplaceAllOccurrences();
       type = ((InplaceIntroduceConstantPopup)activeIntroducer).getType();
     }
-    
+
     for (PsiExpression occurrence : occurrences) {
       if (RefactoringUtil.isAssignmentLHS(occurrence)) {
         String message =
@@ -135,7 +136,7 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
         return null;
       }
     }
-    
+
     if (localVariable == null) {
       final PsiElement errorElement = isStaticFinalInitializer(expr);
       if (errorElement != null) {
@@ -183,18 +184,17 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
       new IntroduceConstantDialog(project, parentClass, expr, localVariable, localVariable != null, occurrences, getParentClass(),
                                   typeSelectorManager, enteredName);
     dialog.setReplaceAllOccurrences(replaceAllOccurrences);
-    dialog.show();
-    if (!dialog.isOK()) {
+    if (!dialog.showAndGet()) {
       if (occurrences.length > 1) {
         WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
       }
       return null;
     }
     return new Settings(dialog.getEnteredName(), expr, occurrences, dialog.isReplaceAllOccurrences(), true, true,
-                                           InitializationPlace.IN_FIELD_DECLARATION, dialog.getFieldVisibility(), localVariable,
-                                           dialog.getSelectedType(), dialog.isDeleteVariable(), dialog.getDestinationClass(),
-                                           dialog.isAnnotateAsNonNls(),
-                                           dialog.introduceEnumConstant());
+                        InitializationPlace.IN_FIELD_DECLARATION, dialog.getFieldVisibility(), localVariable,
+                        dialog.getSelectedType(), dialog.isDeleteVariable(), dialog.getDestinationClass(),
+                        dialog.isAnnotateAsNonNls(),
+                        dialog.introduceEnumConstant());
   }
 
   private static void highlightError(Project project, Editor editor, PsiElement errorElement) {

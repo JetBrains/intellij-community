@@ -24,7 +24,6 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.components.StateStorage.SaveSession;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.components.impl.stores.StateStorageManager.ExternalizationSession;
-import com.intellij.openapi.components.store.ComponentSaveSession;
 import com.intellij.openapi.components.store.ReadOnlyModificationException;
 import com.intellij.openapi.components.store.StateStorageBase;
 import com.intellij.openapi.diagnostic.Logger;
@@ -91,8 +90,7 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
   }
 
   @Override
-  @Nullable
-  public final ComponentSaveSession startSave() {
+  public final void save(@NotNull List<Pair<StateStorage.SaveSession, VirtualFile>> readonlyFiles) {
     ExternalizationSession externalizationSession = myComponents.isEmpty() ? null : getStateStorageManager().startExternalization();
     if (externalizationSession != null) {
       String[] names = ArrayUtilRt.toStringArray(myComponents.keySet());
@@ -107,11 +105,34 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
         }
       }
     }
-    return createSaveSession(externalizationSession == null ? null : externalizationSession.createSaveSession());
+
+    for (SettingsSavingComponent settingsSavingComponent : mySettingsSavingComponents) {
+      try {
+        settingsSavingComponent.save();
+      }
+      catch (Throwable e) {
+        LOG.error(e);
+      }
+    }
+
+    doSave(externalizationSession == null ? null : externalizationSession.createSaveSessions(), readonlyFiles);
   }
 
-  protected SaveSessionImpl createSaveSession(@Nullable SaveSession storageManagerSaveSession) {
-    return storageManagerSaveSession == null ? null : new SaveSessionImpl(storageManagerSaveSession);
+  protected void doSave(@Nullable List<SaveSession> saveSessions, @NotNull List<Pair<SaveSession, VirtualFile>> readonlyFiles) {
+    if (saveSessions != null) {
+      for (SaveSession session : saveSessions) {
+        executeSave(session, readonlyFiles);
+      }
+    }
+  }
+
+  protected static void executeSave(@NotNull SaveSession session, @NotNull List<Pair<SaveSession, VirtualFile>> readonlyFiles) {
+    try {
+      session.save();
+    }
+    catch (ReadOnlyModificationException e) {
+      readonlyFiles.add(Pair.create(session, e.getFile()));
+    }
   }
 
   private <T> void commitPersistentComponent(@NotNull PersistentStateComponent<T> persistentStateComponent,
@@ -311,48 +332,6 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
   @Nullable
   protected StateStorageChooser<PersistentStateComponent<?>> getDefaultStateStorageChooser() {
     return null;
-  }
-
-  protected static void executeSave(@NotNull SaveSession saveSession, @NotNull List<Pair<SaveSession, VirtualFile>> readonlyFiles) {
-    try {
-      saveSession.save();
-    }
-    catch (ReadOnlyModificationException e) {
-      readonlyFiles.add(Pair.create(saveSession, e.getFile()));
-    }
-  }
-
-  protected class SaveSessionImpl implements ComponentSaveSession {
-    private final SaveSession myStorageManagerSaveSession;
-
-    public SaveSessionImpl(@Nullable SaveSession storageManagerSaveSession) {
-      myStorageManagerSaveSession = storageManagerSaveSession;
-    }
-
-    @NotNull
-    @Override
-    public ComponentSaveSession save(@NotNull List<Pair<SaveSession, VirtualFile>> readonlyFiles) {
-      for (SettingsSavingComponent settingsSavingComponent : mySettingsSavingComponents) {
-        try {
-          settingsSavingComponent.save();
-        }
-        catch (Throwable e) {
-          LOG.error(e);
-        }
-      }
-
-      if (myStorageManagerSaveSession != null) {
-        executeSave(myStorageManagerSaveSession, readonlyFiles);
-      }
-      return this;
-    }
-
-    @Override
-    public void finishSave() {
-      if (myStorageManagerSaveSession != null) {
-        getStateStorageManager().finishSave(myStorageManagerSaveSession);
-      }
-    }
   }
 
   @Override

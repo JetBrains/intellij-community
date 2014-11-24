@@ -67,8 +67,7 @@ public abstract class LevelChooserAction extends ComboBoxAction implements DumbA
       @Override
       public void actionPerformed(final AnActionEvent e) {
         final SeverityEditorDialog dlg = new SeverityEditorDialog(anchor, myChosen, mySeverityRegistrar);
-        dlg.show();
-        if (dlg.isOK()) {
+        if (dlg.showAndGet()) {
           final HighlightInfoType type = dlg.getSelectedType();
           if (type != null) {
             final HighlightSeverity severity = type.getSeverity(null);

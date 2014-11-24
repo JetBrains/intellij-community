@@ -22,10 +22,10 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.ui.DetailsComponent;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
+import com.intellij.ui.components.labels.SwingActionLink;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -50,7 +50,15 @@ public class CodeStyleMainPanel extends JPanel implements LanguageSelectorListen
   private final CodeStyleSchemesPanel mySchemesPanel;
   private final LanguageSelector myLangSelector;
   private boolean myIsDisposed = false;
-  private final DetailsComponent myDetailsComponent;
+  private final Action mySetFromAction = new AbstractAction("Set from...") {
+    @Override
+    public void actionPerformed(ActionEvent event) {
+      CodeStyleAbstractPanel selectedPanel = ensureCurrentPanel().getSelectedPanel();
+      if (selectedPanel instanceof TabbedLanguageCodeStylePanel) {
+        ((TabbedLanguageCodeStylePanel)selectedPanel).showSetFrom((Component)event.getSource());
+      }
+    }
+  };
 
   @NonNls
   private static final String WAIT_CARD = "CodeStyleSchemesConfigurable.$$$.Wait.placeholder.$$$";
@@ -97,19 +105,17 @@ public class CodeStyleMainPanel extends JPanel implements LanguageSelectorListen
 
     addWaitCard();
 
-    JComponent schemes = mySchemesPanel.getPanel();
+    JLabel link = new SwingActionLink(mySetFromAction);
+    link.setVerticalAlignment(SwingConstants.BOTTOM);
+
+    JPanel top = new JPanel(new BorderLayout());
+    top.add(BorderLayout.WEST, mySchemesPanel.getPanel());
+    top.add(BorderLayout.EAST, link);
     if (Registry.is("ide.new.settings.view")) {
-      schemes.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+      top.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
     }
-    add(schemes, BorderLayout.NORTH);
-
-    myDetailsComponent = new DetailsComponent();
-    myDetailsComponent.setPaintBorder(false);
-    myDetailsComponent.setContent(mySettingsPanel);
-    myDetailsComponent.setText(getDisplayName());
-    myDetailsComponent.setBannerMinHeight(24);
-
-    add(myDetailsComponent.getComponent(), BorderLayout.CENTER);
+    add(top, BorderLayout.NORTH);
+    add(mySettingsPanel, BorderLayout.CENTER);
 
     mySchemesPanel.resetSchemesCombo();
     mySchemesPanel.onSelectedSchemeChanged();
@@ -135,7 +141,6 @@ public class CodeStyleMainPanel extends JPanel implements LanguageSelectorListen
         if (!myIsDisposed) {
           ensureCurrentPanel().onSomethingChanged();
           String schemeName = myModel.getSelectedScheme().getName();
-          myDetailsComponent.setText(schemeName);
           updateSetFrom();
           myLayout.show(mySettingsPanel, schemeName);
         }
@@ -156,18 +161,7 @@ public class CodeStyleMainPanel extends JPanel implements LanguageSelectorListen
   }
 
   private void updateSetFrom() {
-    final CodeStyleAbstractPanel selectedPanel = ensureCurrentPanel().getSelectedPanel();
-    if (selectedPanel instanceof TabbedLanguageCodeStylePanel) {
-      myDetailsComponent.setBannerActions(new Action[]{new AbstractAction("Set from...") {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          final CodeStyleAbstractPanel selectedPanel = ensureCurrentPanel().getSelectedPanel();
-          if (selectedPanel instanceof TabbedLanguageCodeStylePanel) {
-            ((TabbedLanguageCodeStylePanel)selectedPanel).showSetFrom(e.getSource());
-          }
-        }
-      }});
-    }
+    mySetFromAction.setEnabled(ensureCurrentPanel().getSelectedPanel() instanceof TabbedLanguageCodeStylePanel);
   }
 
   public NewCodeStyleSettingsPanel[] getPanels() {

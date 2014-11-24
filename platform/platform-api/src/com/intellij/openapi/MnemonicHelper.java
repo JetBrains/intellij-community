@@ -70,10 +70,6 @@ public class MnemonicHelper extends ComponentTreeWatcher {
       DialogUtil.registerMnemonic(abstractButton);
       checkForDuplicateMnemonics(abstractButton);
       fixMacMnemonicKeyStroke(abstractButton, null);
-    } else if (parentComponent instanceof JTextComponent) {
-      if (SystemInfo.isMac) {
-        parentComponent.enableInputMethods(UISettings.getShadowInstance().DISABLE_MNEMONICS_IN_CONTROLS);
-      }
     } else if (parentComponent instanceof JLabel) {
       final JLabel jLabel = ((JLabel)parentComponent);
       jLabel.addPropertyChangeListener(TEXT_CHANGED_PROPERTY, TEXT_LISTENER);

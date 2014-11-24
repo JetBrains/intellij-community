@@ -1,32 +1,33 @@
 package org.jetbrains.debugger;
 
-import com.intellij.openapi.util.AsyncResult;
-import com.intellij.openapi.util.AsyncValueLoaderManager;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.PromiseManager;
 import org.jetbrains.debugger.values.ObjectValue;
 import org.jetbrains.debugger.values.ValueManager;
 
 import java.util.List;
 
 public abstract class DeclarativeScope<VALUE_LOADER extends ValueManager> extends ScopeBase {
-  private static final AsyncValueLoaderManager<DeclarativeScope, List<Variable>> VARIABLES_LOADER =
-    new AsyncValueLoaderManager<DeclarativeScope, List<Variable>>(DeclarativeScope.class) {
+  private static final PromiseManager<DeclarativeScope, List<Variable>> VARIABLES_LOADER =
+    new PromiseManager<DeclarativeScope, List<Variable>>(DeclarativeScope.class) {
       @Override
       public boolean isUpToDate(@NotNull DeclarativeScope host, @NotNull List<Variable> data) {
         return host.valueManager.getCacheStamp() == host.cacheStamp;
       }
 
+      @NotNull
       @Override
-      public void load(@NotNull DeclarativeScope host, @NotNull AsyncResult<List<Variable>> result) {
-        host.loadVariables().notify(result);
+      public Promise<List<Variable>> load(@NotNull DeclarativeScope host, @NotNull Promise<List<Variable>> promise) {
+        //noinspection unchecked
+        return host.loadVariables();
       }
     };
 
   @SuppressWarnings("UnusedDeclaration")
-  private volatile AsyncResult<List<? extends Variable>> variables;
+  private volatile Promise<List<Variable>> variables;
 
   private volatile int cacheStamp = -1;
 
@@ -65,7 +66,7 @@ public abstract class DeclarativeScope<VALUE_LOADER extends ValueManager> extend
   @NotNull
   @Override
   public final Promise<List<Variable>> getVariables() {
-    return Promise.wrap(VARIABLES_LOADER.get(this));
+    return VARIABLES_LOADER.get(this);
   }
 
   @NotNull

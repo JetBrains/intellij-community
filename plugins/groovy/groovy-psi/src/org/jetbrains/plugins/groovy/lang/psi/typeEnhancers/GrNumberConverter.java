@@ -19,24 +19,28 @@ import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ConversionResult;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 /**
  * Created by Max Medvedev on 8/16/13
  */
 public class GrNumberConverter extends GrTypeConverter {
+
   @Override
-  public boolean isAllowedInMethodCall() {
-    return false;
+  public boolean isApplicableTo(@NotNull ApplicableTo position) {
+    return position == ApplicableTo.ASSIGNMENT || position == ApplicableTo.EXPLICIT_CAST || position == ApplicableTo.RETURN_VALUE;
   }
 
   @Nullable
   @Override
-  public Boolean isConvertible(@NotNull PsiType lType, @NotNull PsiType rType, @NotNull GroovyPsiElement context) {
-    if (TypesUtil.isNumericType(lType) && TypesUtil.isNumericType(rType)) {
-      return Boolean.TRUE;
+  public ConversionResult isConvertibleEx(@NotNull PsiType targetType,
+                                          @NotNull PsiType actualType,
+                                          @NotNull GroovyPsiElement context,
+                                          @NotNull ApplicableTo currentPosition) {
+    if (TypesUtil.isNumericType(targetType) && TypesUtil.isNumericType(actualType)) {
+      return ConversionResult.OK;
     }
-
     return null;
   }
 }

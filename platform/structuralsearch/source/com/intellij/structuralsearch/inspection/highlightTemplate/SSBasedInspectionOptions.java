@@ -72,8 +72,9 @@ public class SSBasedInspectionOptions {
 
   private void addTemplate(SearchDialogFactory searchDialogFactory) {
     SearchDialog dialog = createDialog(searchDialogFactory);
-    dialog.show();
-    if (!dialog.isOK()) return;
+    if (!dialog.showAndGet()) {
+      return;
+    }
     Configuration configuration = dialog.getConfiguration();
 
     if (configuration.getName() == null || configuration.getName().equals(SearchDialog.USER_DEFINED)) {
@@ -235,8 +236,9 @@ public class SSBasedInspectionOptions {
     });
     dialog.setValuesFromConfig(configuration);
     dialog.setUseLastConfiguration(true);
-    dialog.show();
-    if (!dialog.isOK()) return;
+    if (!dialog.showAndGet()) {
+      return;
+    }
     Configuration newConfiguration = dialog.getConfiguration();
     copyConfiguration(newConfiguration, configuration);
     configurationsChanged(dialog.getSearchContext());

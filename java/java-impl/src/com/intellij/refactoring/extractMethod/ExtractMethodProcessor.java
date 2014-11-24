@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -554,25 +554,7 @@ public class ExtractMethodProcessor implements MatchProvider {
    * Invoked in command and in atomic action
    */
   public void doRefactoring() throws IncorrectOperationException {
-    List<PsiElement> elements = new ArrayList<PsiElement>();
-    for (PsiElement element : myElements) {
-      if (!(element instanceof PsiWhiteSpace || element instanceof PsiComment)) {
-        elements.add(element);
-      }
-    }
-    if (myExpression != null) {
-      myDuplicatesFinder = new DuplicatesFinder(PsiUtilCore.toPsiElementArray(elements), myInputVariables.copy(),
-                                                new ArrayList<PsiVariable>());
-      myDuplicates = myDuplicatesFinder.findDuplicates(myTargetClass);
-    }
-    else if (elements.size() > 0){
-      myDuplicatesFinder = new DuplicatesFinder(PsiUtilCore.toPsiElementArray(elements), myInputVariables.copy(),
-                                                myOutputVariable != null ? new VariableReturnValue(myOutputVariable) : null,
-                                                Arrays.asList(myOutputVariables));
-      myDuplicates = myDuplicatesFinder.findDuplicates(myTargetClass);
-    } else {
-      myDuplicates = new ArrayList<Match>();
-    }
+    initDuplicates();
 
     chooseAnchor();
 
@@ -623,6 +605,29 @@ public class ExtractMethodProcessor implements MatchProvider {
       myEditor.getCaretModel().moveToOffset(offset);
       myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
       myEditor.getSelectionModel().removeSelection();
+    }
+  }
+
+  private void initDuplicates() {
+    List<PsiElement> elements = new ArrayList<PsiElement>();
+    for (PsiElement element : myElements) {
+      if (!(element instanceof PsiWhiteSpace || element instanceof PsiComment)) {
+        elements.add(element);
+      }
+    }
+
+    if (myExpression != null) {
+      myDuplicatesFinder = new DuplicatesFinder(PsiUtilCore.toPsiElementArray(elements), myInputVariables.copy(),
+                                                new ArrayList<PsiVariable>());
+      myDuplicates = myDuplicatesFinder.findDuplicates(myTargetClass);
+    }
+    else if (elements.size() > 0){
+      myDuplicatesFinder = new DuplicatesFinder(PsiUtilCore.toPsiElementArray(elements), myInputVariables.copy(),
+                                                myOutputVariable != null ? new VariableReturnValue(myOutputVariable) : null,
+                                                Arrays.asList(myOutputVariables));
+      myDuplicates = myDuplicatesFinder.findDuplicates(myTargetClass);
+    } else {
+      myDuplicates = new ArrayList<Match>();
     }
   }
 
@@ -1344,7 +1349,8 @@ public class ExtractMethodProcessor implements MatchProvider {
   private void showMultipleOutputMessage(PsiType expressionType) {
     if (myShowErrorDialogs) {
       StringBuilder buffer = new StringBuilder();
-      buffer.append(RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("there.are.multiple.output.values.for.the.selected.code.fragment")));
+      buffer.append(RefactoringBundle.getCannotRefactorMessage(
+        RefactoringBundle.message("there.are.multiple.output.values.for.the.selected.code.fragment")));
       buffer.append("\n");
       if (myHasExpressionOutput) {
         buffer.append("    ").append(RefactoringBundle.message("expression.result")).append(": ");
@@ -1375,9 +1381,9 @@ public class ExtractMethodProcessor implements MatchProvider {
       if (ApplicationManager.getApplication().isUnitTestMode()) throw new RuntimeException(message);
       RefactoringMessageDialog dialog = new RefactoringMessageDialog(myRefactoringName, message, myHelpId, "OptionPane.errorIcon", true,
                                                                      myProject);
-      dialog.show();
-      if (dialog.isOK()) {
-        new ExtractMethodObjectHandler().invoke(myProject, myEditor, myTargetClass.getContainingFile(), DataManager.getInstance().getDataContext());
+      if (dialog.showAndGet()) {
+        new ExtractMethodObjectHandler()
+          .invoke(myProject, myEditor, myTargetClass.getContainingFile(), DataManager.getInstance().getDataContext());
       }
     }
   }
@@ -1392,10 +1398,12 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   public boolean hasDuplicates(Set<VirtualFile> files) {
+    initDuplicates();
+
     if (hasDuplicates()) return true;
     final PsiManager psiManager = PsiManager.getInstance(myProject);
     for (VirtualFile file : files) {
-      if (myDuplicatesFinder != null && !myDuplicatesFinder.findDuplicates(psiManager.findFile(file)).isEmpty()) return true;
+      if (!myDuplicatesFinder.findDuplicates(psiManager.findFile(file)).isEmpty()) return true;
     }
     return false;
   }

@@ -20,7 +20,9 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ConversionResult;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 import java.util.Iterator;
@@ -29,13 +31,25 @@ import java.util.Iterator;
  * @author Max Medvedev
  */
 public class GrGenericTypeConverter extends GrTypeConverter {
+
   @Override
-  public boolean isAllowedInMethodCall() {
-    return true;
+  public boolean isApplicableTo(@NotNull ApplicableTo position) {
+    switch (position) {
+      case METHOD_PARAMETER:
+      case ASSIGNMENT:
+      case RETURN_VALUE:
+        return true;
+      default:
+        return false;
+    }
   }
 
   @Override
-  public Boolean isConvertible(@NotNull PsiType ltype, @NotNull PsiType rtype, @NotNull GroovyPsiElement context) {
+  @Nullable
+  public ConversionResult isConvertibleEx(@NotNull PsiType ltype,
+                                          @NotNull PsiType rtype,
+                                          @NotNull GroovyPsiElement context,
+                                          @NotNull ApplicableTo position) {
     if (!(ltype instanceof PsiClassType && rtype instanceof PsiClassType)) {
       return null;
     }
@@ -52,7 +66,7 @@ public class GrGenericTypeConverter extends GrTypeConverter {
     PsiClassType.ClassResolveResult lresult = ((PsiClassType)ltype).resolveGenerics();
     PsiClassType.ClassResolveResult rresult = ((PsiClassType)rtype).resolveGenerics();
 
-    if (typeParametersAgree(lclass, rclass, lresult.getSubstitutor(), rresult.getSubstitutor(), context)) return Boolean.TRUE;
+    if (typeParametersAgree(lclass, rclass, lresult.getSubstitutor(), rresult.getSubstitutor(), context)) return ConversionResult.OK;
 
     return null;
   }

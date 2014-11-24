@@ -76,6 +76,18 @@ public class SafeDeleteTest extends MultiFileTestCase {
     doSingleFileTest();
   }
 
+  public void testDeepDeleteParameterSimple() throws Exception {
+    doSingleFileTest();
+  }
+
+  public void testImpossibleToDeepDeleteParameter() throws Exception {
+    doSingleFileTest();
+  }
+
+  public void testToDeepDeleteParameterOverriders() throws Exception {
+    doSingleFileTest();
+  }
+
   public void testParameterInHierarchy() throws Exception {
     doTest("C2");
   }

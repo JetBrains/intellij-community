@@ -966,8 +966,6 @@ class InternalGetVariable(InternalThreadCommand):
 #=======================================================================================================================
 # InternalGetArray
 #=======================================================================================================================
-from pydevd_vars import getVariable
-
 class InternalGetArray(InternalThreadCommand):
     def __init__(self, seq, roffset, coffset, rows, cols, format, thread_id, frame_id, scope, attrs):
         self.sequence = seq

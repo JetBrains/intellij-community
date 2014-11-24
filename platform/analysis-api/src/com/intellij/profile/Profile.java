@@ -24,18 +24,28 @@ import org.jetbrains.annotations.NotNull;
  * Date: 20-Nov-2005
  */
 public interface Profile extends JDOMExternalizable, Comparable, Scheme {
-
   void copyFrom(@NotNull Profile profile);
 
   void setLocal(boolean isLocal);
+
+  @Deprecated
+  /**
+   * @deprecated Use !{@link #isProjectLevel()}
+   */
   boolean isLocal();
 
+  boolean isProjectLevel();
+
+  void setProjectLevel(boolean isProjectLevel);
+
   void setName(@NotNull String name);
+
   @Override
   @NotNull
   String getName();
 
   void setProfileManager(@NotNull ProfileManager profileManager);
+
   @NotNull
   ProfileManager getProfileManager();
 }

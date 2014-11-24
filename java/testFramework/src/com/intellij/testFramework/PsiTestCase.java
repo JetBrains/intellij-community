@@ -35,7 +35,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.util.IncorrectOperationException;
-import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -145,10 +144,8 @@ public abstract class PsiTestCase extends ModuleTestCase {
   }
 
   private PsiTestData loadData(String dataName) throws Exception {
-    Document document = JDOMUtil.loadDocument(new File(myDataRoot + "/" + "data.xml"));
-
     PsiTestData data = createData();
-    Element documentElement = document.getRootElement();
+    Element documentElement = JDOMUtil.load(new File(myDataRoot + "/" + "data.xml"));
 
     final List nodes = documentElement.getChildren("data");
 

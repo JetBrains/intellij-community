@@ -74,8 +74,7 @@ public class AntRunConfiguration extends LocatableConfigurationBase implements R
         public void actionPerformed(ActionEvent e) {
           AntBuildTarget buildTarget = getTarget();
           final TargetChooserDialog dlg = new TargetChooserDialog(getProject(), buildTarget);
-          dlg.show();
-          if (dlg.isOK()) {
+          if (dlg.showAndGet()) {
             myFileUrl = null;
             myTargetName = null;
             buildTarget = dlg.getSelectedTarget();

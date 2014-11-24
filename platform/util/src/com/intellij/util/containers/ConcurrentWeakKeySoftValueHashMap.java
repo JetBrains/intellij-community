@@ -48,10 +48,10 @@ public class ConcurrentWeakKeySoftValueHashMap<K, V> implements ConcurrentMap<K,
   private final ReferenceQueue<V> myValueQueue = new ReferenceQueue<V>();
   @NotNull private final TObjectHashingStrategy<K> myHashingStrategy;
 
-  public ConcurrentWeakKeySoftValueHashMap(int initialCapacity,
-                                           float loadFactor,
-                                           int concurrencyLevel,
-                                           @NotNull final TObjectHashingStrategy<K> hashingStrategy) {
+  protected ConcurrentWeakKeySoftValueHashMap(int initialCapacity,
+                                              float loadFactor,
+                                              int concurrencyLevel,
+                                              @NotNull final TObjectHashingStrategy<K> hashingStrategy) {
     myHashingStrategy = hashingStrategy;
     myMap = ContainerUtil.newConcurrentMap(initialCapacity, loadFactor, concurrencyLevel, ContainerUtil.<KeyReference<K,V>>canonicalStrategy());
   }

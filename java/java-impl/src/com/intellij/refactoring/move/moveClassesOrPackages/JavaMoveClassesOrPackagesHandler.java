@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -120,8 +120,9 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
     if (canMoveOrRearrangePackages(elements) ) {
       System.arraycopy(elements, 0, directories, 0, directories.length);
       SelectMoveOrRearrangePackageDialog dialog = new SelectMoveOrRearrangePackageDialog(project, directories, targetContainer == null);
-      dialog.show();
-      if (!dialog.isOK()) return;
+      if (!dialog.showAndGet()) {
+        return;
+      }
 
       if (dialog.isPackageRearrageSelected()) {
         MoveClassesOrPackagesImpl.doRearrangePackage(project, directories);

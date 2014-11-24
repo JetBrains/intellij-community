@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.openapi.components.impl.stores;
 import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.StateStorage.SaveSession;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
-import com.intellij.openapi.components.store.ComponentSaveSession;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.impl.ModuleImpl;
@@ -28,14 +27,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author yole
- */
 public class ProjectWithModulesStoreImpl extends ProjectStoreImpl {
   public ProjectWithModulesStoreImpl(@NotNull ProjectImpl project) {
     super(project);
@@ -49,7 +44,7 @@ public class ProjectWithModulesStoreImpl extends ProjectStoreImpl {
 
     for (Module module : getPersistentModules()) {
       // we have to reinit all modules for component because we don't know affected module
-      ((ModuleStoreImpl)((ModuleImpl)module).getStateStore()).reinitComponent(componentName, changedStorages);
+      ((ModuleImpl)module).getStateStore().reinitComponent(componentName, changedStorages);
     }
     return true;
   }
@@ -88,60 +83,11 @@ public class ProjectWithModulesStoreImpl extends ProjectStoreImpl {
   }
 
   @Override
-  protected SaveSessionImpl createSaveSession(@Nullable SaveSession storageManagerSaveSession) {
-    List<ComponentSaveSession> moduleSaveSessions = new SmartList<ComponentSaveSession>();
+  protected void beforeSave(@NotNull List<Pair<SaveSession, VirtualFile>> readonlyFiles) {
+    super.beforeSave(readonlyFiles);
+
     for (Module module : getPersistentModules()) {
-      ContainerUtil.addIfNotNull(moduleSaveSessions, ((ModuleImpl)module).getStateStore().startSave());
-    }
-
-    if (moduleSaveSessions.isEmpty()) {
-      return super.createSaveSession(storageManagerSaveSession);
-    }
-    else {
-      return new ProjectWithModulesSaveSession(storageManagerSaveSession, moduleSaveSessions);
-    }
-  }
-
-  private class ProjectWithModulesSaveSession extends ProjectSaveSession {
-    private final List<ComponentSaveSession> myModuleSaveSessions;
-
-    public ProjectWithModulesSaveSession(@Nullable SaveSession storageManagerSaveSession, @NotNull List<ComponentSaveSession> moduleSaveSessions) {
-      super(storageManagerSaveSession);
-
-      myModuleSaveSessions = moduleSaveSessions;
-    }
-
-    @Override
-    public void finishSave() {
-      try {
-        Throwable first = null;
-        for (ComponentSaveSession moduleSaveSession : myModuleSaveSessions) {
-          try {
-            moduleSaveSession.finishSave();
-          }
-          catch (Throwable e) {
-            if (first == null) {
-              first = e;
-            }
-          }
-        }
-
-        if (first != null) {
-          throw new RuntimeException(first);
-        }
-      }
-      finally {
-        super.finishSave();
-      }
-    }
-
-    @Override
-    protected void beforeSave(@NotNull List<Pair<SaveSession, VirtualFile>> readonlyFiles) {
-      super.beforeSave(readonlyFiles);
-
-      for (ComponentSaveSession moduleSaveSession : myModuleSaveSessions) {
-        moduleSaveSession.save(readonlyFiles);
-      }
+      ((ModuleImpl)module).getStateStore().save(readonlyFiles);
     }
   }
 }

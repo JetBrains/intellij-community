@@ -30,7 +30,6 @@ import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.util.containers.ConcurrentList;
-import com.intellij.util.containers.ConcurrentWeakKeySoftValueHashMap;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,7 +37,7 @@ import java.util.concurrent.ConcurrentMap;
 
 public class ControlFlowFactory {
   // psiElements hold weakly, controlFlows softly
-  private final ConcurrentMap<PsiElement, ConcurrentList<ControlFlowContext>> cachedFlows = new ConcurrentWeakKeySoftValueHashMap<PsiElement, ConcurrentList<ControlFlowContext>>(100, 0.75f, Runtime.getRuntime().availableProcessors(),
+  private final ConcurrentMap<PsiElement, ConcurrentList<ControlFlowContext>> cachedFlows = ContainerUtil.createConcurrentWeakKeySoftValueMap(100, 0.75f, Runtime.getRuntime().availableProcessors(),
                                                                                                                                                                                   ContainerUtil.<PsiElement>canonicalStrategy());
 
   private static final NotNullLazyKey<ControlFlowFactory, Project> INSTANCE_KEY = ServiceManager.createLazyKey(ControlFlowFactory.class);

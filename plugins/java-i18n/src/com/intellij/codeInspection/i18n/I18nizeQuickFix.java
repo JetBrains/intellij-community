@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -122,8 +122,9 @@ public class I18nizeQuickFix implements LocalQuickFix, I18nQuickFixHandler {
       return;
     }
     final JavaI18nizeQuickFixDialog dialog = createDialog(project, psiFile, literalExpression);
-    dialog.show();
-    if (!dialog.isOK()) return;
+    if (!dialog.showAndGet()) {
+      return;
+    }
     final Collection<PropertiesFile> propertiesFiles = dialog.getAllPropertiesFiles();
 
     if (!FileModificationService.getInstance().preparePsiElementForWrite(literalExpression)) return;
@@ -132,10 +133,10 @@ public class I18nizeQuickFix implements LocalQuickFix, I18nQuickFixHandler {
           !FileModificationService.getInstance().prepareFileForWrite(file.getContainingFile())) return;
     }
 
-    CommandProcessor.getInstance().executeCommand(project, new Runnable(){
+    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
       @Override
       public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable(){
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
           @Override
           public void run() {
             try {
@@ -149,7 +150,7 @@ public class I18nizeQuickFix implements LocalQuickFix, I18nQuickFixHandler {
           }
         });
       }
-    }, CodeInsightBundle.message("quickfix.i18n.command.name"),project);
+    }, CodeInsightBundle.message("quickfix.i18n.command.name"), project);
   }
 
   protected PsiElement doReplacementInJava(@NotNull final PsiFile psiFile,

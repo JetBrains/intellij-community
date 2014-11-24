@@ -184,6 +184,11 @@ public class NullableNotNullManager implements PersistentStateComponent<Element>
     if (AnnotationUtil.isAnnotated(owner, nullable ? Arrays.asList(DEFAULT_NOT_NULLS) : Arrays.asList(DEFAULT_NULLABLES), checkBases, false)) {
       return null;
     }
+    
+    if (!nullable && InferredAnnotationsManager.getInstance(owner.getProject()).ignoreInference(owner, AnnotationUtil.NOT_NULL)) {
+      return null;
+    }
+
     return findNullabilityDefaultInHierarchy(owner, nullable);
   }
 

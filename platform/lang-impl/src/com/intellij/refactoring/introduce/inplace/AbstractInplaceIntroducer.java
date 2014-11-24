@@ -79,7 +79,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
 
   private DocumentAdapter myDocumentAdapter;
   protected final JPanel myWholePanel;
-  private boolean myFinished = false;
+  protected boolean myFinished = false;
 
   public AbstractInplaceIntroducer(Project project,
                                    Editor editor,

@@ -178,9 +178,9 @@ public class GroovyInlineMethodUtil {
     if (!application.isUnitTestMode()) {
       final InlineMethodDialog dialog = new InlineMethodDialog(project, method, invokedOnReference, checkMethodForRecursion(method));
 
-      dialog.show();
-      if (!dialog.isOK()) {
-        WindowManager.getInstance().getStatusBar(project).setInfo(GroovyRefactoringBundle.message("press.escape.to.remove.the.highlighting"));
+      if (!dialog.showAndGet()) {
+        WindowManager.getInstance().getStatusBar(project)
+          .setInfo(GroovyRefactoringBundle.message("press.escape.to.remove.the.highlighting"));
         return InlineHandler.Settings.CANNOT_INLINE_SETTINGS;
       }
       else {

@@ -18,17 +18,14 @@ package com.intellij.debugger.engine.evaluation.expression;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
-import com.intellij.openapi.util.Comparing;
 import com.sun.jdi.BooleanValue;
 
 /**
  * @author egor
  */
-public abstract class ForStatementEvaluatorBase implements Evaluator {
-  private final String myLabelName;
-
-  public ForStatementEvaluatorBase(String labelName) {
-    myLabelName = labelName;
+public abstract class ForStatementEvaluatorBase extends LoopEvaluator {
+  public ForStatementEvaluatorBase(String labelName, Evaluator bodyEvaluator) {
+    super(labelName, bodyEvaluator);
   }
 
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
@@ -49,26 +46,7 @@ public abstract class ForStatementEvaluatorBase implements Evaluator {
       }
 
       // body
-
-      try {
-        evaluateBody(context);
-      }
-      catch (BreakException e) {
-        if (Comparing.equal(e.getLabelName(), myLabelName)) {
-          break;
-        }
-        else {
-          throw e;
-        }
-      }
-      catch (ContinueException e) {
-        if (Comparing.equal(e.getLabelName(), myLabelName)) {
-          //continue;
-        }
-        else {
-          throw e;
-        }
-      }
+      if (body(context)) break;
 
       // update
       value = evaluateUpdate(context, value);
@@ -83,9 +61,6 @@ public abstract class ForStatementEvaluatorBase implements Evaluator {
 
   protected Object evaluateCondition(EvaluationContextImpl context) throws EvaluateException {
     return true;
-  }
-
-  protected void evaluateBody(EvaluationContextImpl context) throws EvaluateException {
   }
 
   protected Object evaluateUpdate(EvaluationContextImpl context, Object value) throws EvaluateException {

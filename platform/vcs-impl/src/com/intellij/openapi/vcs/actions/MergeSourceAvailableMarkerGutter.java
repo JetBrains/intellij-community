@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.ColorKey;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.vcs.annotate.*;
 import com.intellij.util.Consumer;
 
@@ -34,7 +35,7 @@ class MergeSourceAvailableMarkerGutter extends AnnotationFieldGutter implements 
                                    Editor editor,
                                    LineAnnotationAspect aspect,
                                    TextAnnotationPresentation highlighting,
-                                   Map<String, Color> colorScheme) {
+                                   Couple<Map<String, Color>> colorScheme) {
     super(annotation, editor, aspect, highlighting, colorScheme);
   }
 

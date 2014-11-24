@@ -3,10 +3,13 @@ package com.intellij.execution.process;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 public class AnsiEscapeDecoderTest extends PlatformTestCase {
@@ -52,11 +55,23 @@ public class AnsiEscapeDecoderTest extends PlatformTestCase {
     );
   }
 
+  @NotNull
+  private static List<Pair<String, String>> toListWithKeyName(@NotNull Collection<Pair<String, Key>> list) {
+    return ContainerUtil.map(list, new Function<Pair<String, Key>, Pair<String, String>>() {
+      @Override
+      public Pair<String, String> fun(Pair<String, Key> pair) {
+        return Pair.create(pair.first, pair.second.toString());
+      }
+    });
+  }
+
   private static AnsiEscapeDecoder.ColoredChunksAcceptor createExpectedAcceptor(@NotNull final Pair<String, Key>... expected) {
     return new AnsiEscapeDecoder.ColoredChunksAcceptor() {
       @Override
       public void coloredChunksAvailable(List<Pair<String, Key>> chunks) {
-        Assert.assertEquals(Arrays.asList(expected), chunks);
+        List<Pair<String, String>> expectedWithKeyName = toListWithKeyName(Arrays.asList(expected));
+        List<Pair<String, String>> actualWithKeyName = toListWithKeyName(chunks);
+        Assert.assertEquals(expectedWithKeyName, actualWithKeyName);
       }
 
       @Override

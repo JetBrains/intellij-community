@@ -41,6 +41,11 @@ object IndexTestGenerator {
     const(Commit),
     const(Save),
     const(PsiChange),
+    const(InvisiblePsiChange),
+    const(PostponedFormatting),
+    const(Reformat),
+    const(LoadViewProviderDocument),
+    const(CheckStamps),
     for (withImport <- arbitrary[Boolean];
          viaDocument <- arbitrary[Boolean])
       yield TextChange(viaDocument, withImport),
@@ -61,10 +66,12 @@ object IndexTestGenerator {
 
   def main(args: Array[String]) {
     propIndexTest.check
+    System.exit(0)
   }
 }
 
 case class IndexTestSeq(actions: List[Action]) {
+
   def printClass: String = {
     val sb = StringBuilder.newBuilder
     sb.append(prefix)
@@ -82,25 +89,72 @@ case class IndexTestSeq(actions: List[Action]) {
          |""".stripMargin)
     var changeId = 0
     var docClassName = "Foo"
+
+    def printCommit = {
+      sb.append(
+        s"""PsiDocumentManager.getInstance(project).commitAllDocuments()
+               |lastPsiName = "$docClassName"
+               |""".stripMargin)
+    }
+
     for (action <- actions) {
       sb.append("\n")
       action match {
         case Gc =>
           sb.append("PlatformTestUtil.tryGcSoftlyReachableObjects()\n")
+        case LoadViewProviderDocument =>
+          sb.append("assert psiManager.findFile(vFile).viewProvider.document\n")
+        case PostponedFormatting =>
+          sb.append(
+            """PostprocessReformattingAspect.getInstance(getProject()).
+              |  doPostponedFormatting()
+              |""".stripMargin)
+        case CheckStamps =>
+          sb.append(
+            """L:{
+              |def pf = psiManager.findFile(vFile)
+              |def vpStamp = pf.viewProvider.modificationStamp
+              |def doc = FileDocumentManager.instance.getDocument(vFile)
+              |def docStamp = doc.modificationStamp
+              |def vfStamp = vFile.modificationStamp
+              |//todo replace with assertions
+              |if (FileDocumentManager.instance.unsavedDocuments) {
+              |  assert docStamp > vfStamp
+              |} else {
+              |  assert docStamp == vfStamp
+              |  assert doc.text == LoadTextUtil.loadText(vFile) as String
+              |}
+              |if (PsiDocumentManager.getInstance(project).uncommittedDocuments) {
+              |  assert docStamp > vpStamp
+              |} else {
+              |  assert docStamp == vpStamp
+              |  assert doc.text == pf.viewProvider.contents as String
+              |  assert doc.text == pf.text
+              |}
+              |}
+            """.stripMargin)
+        case Reformat =>
+          printCommit
+          sb.append(
+            s"""CodeStyleManager.getInstance(getProject()).
+               |  reformat(psiManager.findFile(vFile))
+               |""".stripMargin)
         case Commit =>
-          sb.append(
-            s"""PsiDocumentManager.getInstance(project).commitAllDocuments()
-               |lastPsiName = "$docClassName"
-               |""".stripMargin)
+          printCommit
         case PsiChange =>
+          printCommit
           sb.append(
-            s"""PsiDocumentManager.getInstance(project).commitAllDocuments()
-               |lastPsiName = "$docClassName"
-               |myFixture.findClass("$docClassName").add(
-               |  elementFactory.createMethod("foo", PsiType.VOID))
-               |PostprocessReformattingAspect.getInstance(getProject()).
-               |  doPostponedFormatting()
+            s"""((PsiJavaFile)psiManager.findFile(vFile)).importList.add(
+               |  elementFactory.createImportStatementOnDemand("java.io"))
                |""".stripMargin)
+        case InvisiblePsiChange =>
+          printCommit
+          sb.append(
+             s"""L:{
+                |  def cls = JavaPsiFacade.getInstance(project).findClass(lastPsiName, scope)
+                |  cls.replace(cls.copy())
+                |}
+                |""".stripMargin)
         case Save =>
           sb.append("FileDocumentManager.instance.saveAllDocuments()\n")
         case UpdatePsiClassRef(load) =>
@@ -115,12 +169,14 @@ case class IndexTestSeq(actions: List[Action]) {
         case TextChange(viaDocument, withImport) =>
           changeId += 1
           docClassName = "Foo" + changeId
-          val newText = (if (withImport) "import zoo.Zoo; "  else "") + s"class $docClassName {}"
+          val newText = (if (withImport) "import zoo.Zoo; "  else "") + s"class $docClassName {\\n }"
 
           sb.append(
-            """counterBefore =
+            """PostprocessReformattingAspect.getInstance(getProject()).
+              |  doPostponedFormatting()
+              |counterBefore =
               |  psiManager.modificationTracker.javaStructureModificationCount
-              |                    """.stripMargin)
+              |""".stripMargin)
 
           if (viaDocument) {
             sb.append(
@@ -159,11 +215,13 @@ case class IndexTestSeq(actions: List[Action]) {
        |import com.intellij.openapi.util.Ref
        |import com.intellij.openapi.vfs.VfsUtil
        |import com.intellij.psi.*
+       |import com.intellij.psi.codeStyle.*
        |import com.intellij.psi.impl.source.*
        |import com.intellij.psi.search.GlobalSearchScope
        |import com.intellij.testFramework.PlatformTestUtil
        |import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
        |import com.intellij.util.ObjectUtils
+       |import com.intellij.openapi.fileEditor.impl.LoadTextUtil
        |import org.jetbrains.annotations.NotNull
        |class DummyTest extends JavaCodeInsightFixtureTestCase {
        |protected void invokeTestRunnable(Runnable runnable) {
@@ -203,3 +261,8 @@ case class UpdatePsiFileRef(load: Boolean) extends Action
 case class UpdateDocumentRef(load: Boolean) extends Action
 case class UpdateASTNodeRef(load: Boolean) extends Action
 case object PsiChange extends Action
+case object InvisiblePsiChange extends Action
+case object PostponedFormatting extends Action
+case object Reformat extends Action
+case object LoadViewProviderDocument extends Action
+case object CheckStamps extends Action

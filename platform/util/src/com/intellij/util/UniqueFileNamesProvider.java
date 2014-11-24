@@ -20,6 +20,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import java.util.ArrayList;
 import java.util.List;
 
+@SuppressWarnings("unused")
 @Deprecated
 /**
  * Use {@link com.intellij.util.text.UniqueNameGenerator}

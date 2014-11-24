@@ -488,42 +488,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myEditorComponent = new EditorComponentImpl(this);
     myScrollPane = new MyScrollPane();
     myVerticalScrollBar = (MyScrollBar)myScrollPane.getVerticalScrollBar();
-    ((MyScrollBar)myScrollPane.getHorizontalScrollBar()).setPersistentUI(new ButtonlessScrollBarUI() {
-      @Override
-      public boolean alwaysShowTrack() {
-        return false;
-      }
-
-      @Override
-      protected boolean isDark() {
-        return isDarkEnough();
-      }
-
-      @Override
-      protected Color adjustColor(Color c) {
-        return isMacOverlayScrollbar() ? super.adjustColor(c) : adjustThumbColor(super.adjustColor(c), isDark());
-      }
-
-      @Override
-      protected void paintThumb(Graphics g, JComponent c, Rectangle thumbBounds) {
-        if (!isMacOverlayScrollbar()) {
-          int half = getThickness() / 2;
-          int shift = half - 1;
-          g.translate(0, shift);
-          super.paintThumb(g, c, thumbBounds);
-          g.translate(0, -shift);
-        }
-        else {
-          super.paintThumb(g, c, thumbBounds);
-        }
-      }
-
-      protected void paintMaxiThumb(Graphics2D g, Rectangle thumbBounds) {
-        int arc = 3;
-        g.setColor(adjustColor(getGradientDarkColor()));
-        g.fillRoundRect(2, 0, thumbBounds.width, thumbBounds.height, arc, arc);
-      }
-    });
     myPanel = new JPanel();
 
     UIUtil.putClientProperty(
@@ -732,12 +696,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Override
   public void reinitSettings() {
     assertIsDispatchThread();
-    myCharHeight = -1;
-    myLineHeight = -1;
-    myDescent = -1;
-    myPlainFontMetrics = null;
-
-    clearTextWidthCache();
+    clearSettingsCache();
 
     reinitDocumentIndentOptions();
 
@@ -794,6 +753,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
+  private void clearSettingsCache() {
+    myCharHeight = -1;
+    myLineHeight = -1;
+    myDescent = -1;
+    myPlainFontMetrics = null;
+
+    clearTextWidthCache();
+  }
+
   private void reinitDocumentIndentOptions() {
     if (myProject != null && !myProject.isDisposed()) {
       CodeStyleSettingsManager.updateDocumentIndentOptions(myProject, myDocument);
@@ -825,17 +793,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myTraceableDisposable.kill(null);
 
     isReleased = true;
+    clearSettingsCache();
 
     myFoldingModel.dispose();
-
     mySoftWrapModel.release();
-
     myMarkupModel.dispose();
 
-    myLineHeight = -1;
-    myCharHeight = -1;
-    myDescent = -1;
-    myPlainFontMetrics = null;
     myScrollingModel.dispose();
     myGutterComponent.dispose();
     myMousePressedEvent = null;
@@ -1737,15 +1700,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private void bulkUpdateStarted() {
-    myFoldingModel.onBulkDocumentUpdateStarted();
+    saveCaretRelativePosition();
+    
     myCaretModel.onBulkDocumentUpdateStarted();
     mySoftWrapModel.onBulkDocumentUpdateStarted();
+    myFoldingModel.onBulkDocumentUpdateStarted();
   }
 
   private void bulkUpdateFinished() {
     myFoldingModel.onBulkDocumentUpdateFinished();
-    myCaretModel.onBulkDocumentUpdateFinished();
     mySoftWrapModel.onBulkDocumentUpdateFinished();
+    myCaretModel.onBulkDocumentUpdateFinished();
 
     clearTextWidthCache();
 
@@ -1758,6 +1723,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     updateGutterSize();
     repaintToScreenBottom(0);
     updateCaretCursor();
+    
+    restoreCaretRelativePosition();
   }
 
   private void beforeChangedUpdate(@NotNull DocumentEvent e) {
@@ -1769,9 +1736,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return;
     }
 
-    Rectangle visibleArea = getScrollingModel().getVisibleArea();
-    Point pos = visualPositionToXY(getCaretModel().getVisualPosition());
-    myCaretUpdateVShift = pos.y - visibleArea.y;
+    saveCaretRelativePosition();
 
     // We assume that size container is already notified with the visual line widths during soft wraps processing
     if (!mySoftWrapModel.isSoftWrappingEnabled()) {
@@ -1815,9 +1780,23 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       repaintLines(startLine, endLine);
     }
 
+    if (getCaretModel().getOffset() < e.getOffset() || getCaretModel().getOffset() > e.getOffset() + e.getNewLength()){
+      restoreCaretRelativePosition();
+    }
+  }
+
+  private void saveCaretRelativePosition() {
+    Rectangle visibleArea = getScrollingModel().getVisibleArea();
+    Point pos = visualPositionToXY(getCaretModel().getVisualPosition());
+    myCaretUpdateVShift = pos.y - visibleArea.y;
+  }
+
+  private void restoreCaretRelativePosition() {
     Point caretLocation = visualPositionToXY(getCaretModel().getVisualPosition());
     int scrollOffset = caretLocation.y - myCaretUpdateVShift;
+    getScrollingModel().disableAnimation();
     getScrollingModel().scrollVertically(scrollOffset);
+    getScrollingModel().enableAnimation();
   }
 
   public boolean hasTabs() {
@@ -5118,6 +5097,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   MyScrollBar getVerticalScrollBar() {
     return myVerticalScrollBar;
   }
+  
+  @NotNull
+  MyScrollBar getHorizontalScrollBar() {
+    return (MyScrollBar)myScrollPane.getHorizontalScrollBar();
+  }
 
   private int getMouseSelectionState() {
     return myMouseSelectionState;
@@ -6139,7 +6123,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     public void setFontPreferences(@NotNull FontPreferences preferences) {
       if (Comparing.equal(preferences, myFontPreferences)) return;
       preferences.copyTo(myFontPreferences);
-      reinitSettings();
+      reinitFontsAndSettings();
     }
 
     @Override
@@ -6191,6 +6175,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       int globalFontSize = getDelegate().getEditorFontSize();
       myMaxFontSize = Math.max(OptionsConstants.MAX_EDITOR_FONT_SIZE, globalFontSize);
       reinitFonts();
+      clearSettingsCache();
     }
 
     @Override

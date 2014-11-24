@@ -58,7 +58,7 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   @Contract(pure=true)
-  public static <K, V> Map<K, V> newHashMap(@NotNull Pair<K, V> first, Pair<K, V>... entries) {
+  public static <K, V> Map<K, V> newHashMap(@NotNull Pair<K, V> first, @NotNull Pair<K, V>... entries) {
     return ContainerUtilRt.newHashMap(first, entries);
   }
 
@@ -100,7 +100,7 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   @Contract(pure=true)
-  public static <K, V> LinkedHashMap<K, V> newLinkedHashMap(@NotNull Pair<K, V> first, Pair<K, V>... entries) {
+  public static <K, V> LinkedHashMap<K, V> newLinkedHashMap(@NotNull Pair<K, V> first, @NotNull Pair<K, V>... entries) {
     return ContainerUtilRt.newLinkedHashMap(first, entries);
   }
 
@@ -1221,13 +1221,31 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   /**
+   * @deprecated Use {@link #append(java.util.List, java.lang.Object[])} or {@link #prepend(java.util.List, java.lang.Object[])} instead
    * @param appendTail specify whether additional values should be appended in front or after the list
    * @return read-only list consisting of the elements from specified list with some additional values
    */
+  @Deprecated
   @NotNull
   @Contract(pure=true)
-  public static <T> List<T> concat(boolean appendTail, @NotNull List<? extends T> list, T... values) {
+  public static <T> List<T> concat(boolean appendTail, @NotNull List<? extends T> list, @NotNull T... values) {
     return appendTail ? concat(list, list(values)) : concat(list(values), list);
+  }
+
+  @NotNull
+  @Contract(pure=true)
+  public static <T> List<T> append(@NotNull List<? extends T> list, @NotNull T... values) {
+    return concat(list, list(values));
+  }
+
+  /**
+   * prepend values in front of the list
+   * @return read-only list consisting of values and the elements from specified list
+   */
+  @NotNull
+  @Contract(pure=true)
+  public static <T> List<T> prepend(@NotNull List<? extends T> list, @NotNull T... values) {
+    return concat(list(values), list);
   }
 
   /**
@@ -2245,8 +2263,55 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   @Contract(pure=true)
+  public static <V> ConcurrentIntObjectMap<V> createConcurrentIntObjectSoftValueMap() {
+    return new ConcurrentSoftValueIntObjectHashMap<V>();
+  }
+
+  @NotNull
+  @Contract(pure=true)
   public static <V> ConcurrentLongObjectMap<V> createConcurrentLongObjectMap() {
     return new ConcurrentLongObjectHashMap<V>();
+  }
+
+  @NotNull
+  @Contract(pure=true)
+  public static <K,V> ConcurrentMap<K,V> createConcurrentWeakValueMap() {
+    return new ConcurrentWeakValueHashMap<K, V>();
+  }
+
+  @NotNull
+  @Contract(pure=true)
+  public static <K,V> ConcurrentMap<K,V> createConcurrentWeakKeySoftValueMap(int initialCapacity,
+                                                                             float loadFactor,
+                                                                             int concurrencyLevel,
+                                                                             @NotNull final TObjectHashingStrategy<K> hashingStrategy) {
+    return new ConcurrentWeakKeySoftValueHashMap<K, V>(initialCapacity, loadFactor, concurrencyLevel, hashingStrategy);
+  }
+
+  @NotNull
+  @Contract(pure=true)
+  public static <K,V> ConcurrentMap<K,V> createConcurrentSoftValueMap() {
+    return new ConcurrentSoftValueHashMap<K, V>();
+  }
+
+  @NotNull
+  @Contract(pure=true)
+  public static <K,V> ConcurrentMap<K,V> createConcurrentSoftMap() {
+    return new ConcurrentSoftHashMap<K, V>();
+  }
+
+  @NotNull
+  @Contract(pure=true)
+  public static <K,V> ConcurrentMap<K,V> createConcurrentWeakMap() {
+    return new ConcurrentWeakHashMap<K, V>();
+  }
+  @NotNull
+  @Contract(pure=true)
+  public static <K,V> ConcurrentMap<K,V> createConcurrentWeakMap(int initialCapacity,
+                                 float loadFactor,
+                                 int concurrencyLevel,
+                                 @NotNull TObjectHashingStrategy<K> hashingStrategy) {
+    return new ConcurrentWeakHashMap<K, V>(initialCapacity, loadFactor, concurrencyLevel, hashingStrategy);
   }
 
   @NotNull

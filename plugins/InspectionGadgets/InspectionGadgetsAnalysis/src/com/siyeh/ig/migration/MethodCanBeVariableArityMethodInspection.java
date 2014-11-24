@@ -97,6 +97,11 @@ public class MethodCanBeVariableArityMethodInspection extends BaseInspection {
   }
 
   @Override
+  public boolean shouldInspect(PsiFile file) {
+    return PsiUtil.isLanguageLevel5OrHigher(file);
+  }
+
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new MethodCanBeVariableArityMethodVisitor();
   }
@@ -105,9 +110,6 @@ public class MethodCanBeVariableArityMethodInspection extends BaseInspection {
 
     @Override
     public void visitMethod(PsiMethod method) {
-      if (!PsiUtil.isLanguageLevel5OrHigher(method)) {
-        return;
-      }
       super.visitMethod(method);
       if (onlyReportPublicMethods && !method.hasModifierProperty(PsiModifier.PUBLIC)) {
         return;

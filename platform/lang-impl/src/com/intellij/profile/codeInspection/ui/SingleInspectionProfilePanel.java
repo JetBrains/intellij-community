@@ -172,26 +172,26 @@ public class SingleInspectionProfilePanel extends JPanel {
                                InspectionsBundle.message("inspection.unable.to.create.profile.dialog.title"));
       return null;
     }
-    InspectionProfileImpl inspectionProfile =
-        new InspectionProfileImpl(profileName, InspectionToolRegistrar.getInstance(), profileManager);
-      if (initValue == -1) {
-        inspectionProfile.initInspectionTools(project);
-        ModifiableModel profileModifiableModel = inspectionProfile.getModifiableModel();
-        final InspectionToolWrapper[] profileEntries = profileModifiableModel.getInspectionTools(null);
-        for (InspectionToolWrapper toolWrapper : profileEntries) {
-          profileModifiableModel.disableTool(toolWrapper.getShortName(), null, project);
-        }
-        profileModifiableModel.setLocal(true);
-        profileModifiableModel.setModified(true);
-        return profileModifiableModel;
-      } else if (initValue == 0) {
-        inspectionProfile.copyFrom(selectedProfile);
-        inspectionProfile.setName(profileName);
-        inspectionProfile.initInspectionTools(project);
-        inspectionProfile.setModified(true);
-        return inspectionProfile;
+    InspectionProfileImpl inspectionProfile = new InspectionProfileImpl(profileName, InspectionToolRegistrar.getInstance(), profileManager);
+    if (initValue == -1) {
+      inspectionProfile.initInspectionTools(project);
+      ModifiableModel profileModifiableModel = inspectionProfile.getModifiableModel();
+      final InspectionToolWrapper[] profileEntries = profileModifiableModel.getInspectionTools(null);
+      for (InspectionToolWrapper toolWrapper : profileEntries) {
+        profileModifiableModel.disableTool(toolWrapper.getShortName(), null, project);
       }
-      return null;
+      profileModifiableModel.setProjectLevel(false);
+      profileModifiableModel.setModified(true);
+      return profileModifiableModel;
+    }
+    else if (initValue == 0) {
+      inspectionProfile.copyFrom(selectedProfile);
+      inspectionProfile.setName(profileName);
+      inspectionProfile.initInspectionTools(project);
+      inspectionProfile.setModified(true);
+      return inspectionProfile;
+    }
+    return null;
   }
 
   @Nullable
@@ -1142,9 +1142,8 @@ public class SingleInspectionProfilePanel extends JPanel {
       return;
     }
     final ModifiableModel selectedProfile = getSelectedProfile();
-    final ProfileManager profileManager =
-      myShareProfile ? myProjectProfileManager : InspectionProfileManager.getInstance();
-    selectedProfile.setLocal(!myShareProfile);
+    ProfileManager profileManager = myShareProfile ? myProjectProfileManager : InspectionProfileManager.getInstance();
+    selectedProfile.setProjectLevel(myShareProfile);
     if (selectedProfile.getProfileManager() != profileManager) {
       if (selectedProfile.getProfileManager().getProfile(selectedProfile.getName(), false) != null) {
         selectedProfile.getProfileManager().deleteProfile(selectedProfile.getName());

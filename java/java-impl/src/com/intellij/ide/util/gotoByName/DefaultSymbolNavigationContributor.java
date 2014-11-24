@@ -26,7 +26,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
-import com.intellij.psi.impl.PsiSuperMethodImplUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchScopeUtil;
 import com.intellij.psi.search.PsiShortNamesCache;
@@ -90,17 +89,24 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
     return member.getContainingFile().getVirtualFile() != null;
   }
 
-  private static boolean hasSuperMethod(final PsiMethod method, final GlobalSearchScope scope, final Condition<PsiMember> qualifiedMatcher) {
+  private static boolean hasSuperMethodCandidates(final PsiMethod method,
+                                                  final GlobalSearchScope scope,
+                                                  final Condition<PsiMember> qualifiedMatcher) {
+    if (method.hasModifierProperty(PsiModifier.PRIVATE) || method.hasModifierProperty(PsiModifier.STATIC)) return false;
+    
     final PsiClass containingClass = method.getContainingClass();
     if (containingClass == null) return false;
 
-    // avoid using hierarchical findMethodsByName because we only want to check the given method hierarchy, without its siblings  
+    final int parametersCount = method.getParameterList().getParametersCount();
     return !InheritanceUtil.processSupers(containingClass, false, new Processor<PsiClass>() {
       @Override
       public boolean process(PsiClass superClass) {
         if (PsiSearchScopeUtil.isInScope(scope, superClass)) {
           for (PsiMethod candidate : superClass.findMethodsByName(method.getName(), false)) {
-            if (qualifiedMatcher.value(candidate) && PsiSuperMethodImplUtil.isSuperMethodSmart(method, candidate)) {
+            if (parametersCount == candidate.getParameterList().getParametersCount() && 
+                !candidate.hasModifierProperty(PsiModifier.PRIVATE) && 
+                !candidate.hasModifierProperty(PsiModifier.STATIC) && 
+                qualifiedMatcher.value(candidate)) {
               return false;
             }
           }
@@ -108,6 +114,20 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
         return true;
       }
     });
+    
+  }
+  private static boolean hasSuperMethod(final PsiMethod method, final GlobalSearchScope scope, final Condition<PsiMember> qualifiedMatcher) {
+    if (!hasSuperMethodCandidates(method, scope, qualifiedMatcher)) {
+      return false;
+    }
+
+    for (HierarchicalMethodSignature signature : method.getHierarchicalMethodSignature().getSuperSignatures()) {
+      PsiMethod superMethod = signature.getMethod();
+      if (PsiSearchScopeUtil.isInScope(scope, superMethod) && qualifiedMatcher.value(superMethod)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public void processNames(@NotNull Processor<String> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {
@@ -206,10 +226,10 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
 
       if (element1 instanceof PsiMethod){
         LOG.assertTrue(element2 instanceof PsiMethod);
-        PsiParameter[] parms1 = ((PsiMethod)element1).getParameterList().getParameters();
-        PsiParameter[] parms2 = ((PsiMethod)element2).getParameterList().getParameters();
+        PsiParameter[] params1 = ((PsiMethod)element1).getParameterList().getParameters();
+        PsiParameter[] params2 = ((PsiMethod)element2).getParameterList().getParameters();
 
-        if (parms1.length != parms2.length) return parms1.length - parms2.length;
+        if (params1.length != params2.length) return params1.length - params2.length;
       }
 
       String text1 = myRenderer.getElementText(element1);

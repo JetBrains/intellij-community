@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.PlatformIcons;
@@ -35,7 +36,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgNameWithHashInfo;
 import org.zmlx.hg4idea.HgRevisionNumber;
-import org.zmlx.hg4idea.action.HgAbstractGlobalAction;
 import org.zmlx.hg4idea.action.HgCommandResultNotifier;
 import org.zmlx.hg4idea.command.HgBookmarkCommand;
 import org.zmlx.hg4idea.command.HgBranchCreateCommand;
@@ -125,7 +125,7 @@ public class HgBranchPopupActions {
           });
         }
         catch (HgCommandException exception) {
-          HgAbstractGlobalAction.handleException(myProject, "Can't create new branch: ", exception);
+          HgErrorUtil.handleException(myProject, "Can't create new branch: ", exception);
         }
       }
     }
@@ -155,16 +155,10 @@ public class HgBranchPopupActions {
     public void actionPerformed(AnActionEvent e) {
 
       final HgBookmarkDialog bookmarkDialog = new HgBookmarkDialog(myPreselectedRepo);
-      bookmarkDialog.show();
-      if (bookmarkDialog.isOK()) {
+      if (bookmarkDialog.showAndGet()) {
         final String name = bookmarkDialog.getName();
-        for (HgRepository repository : myRepositories) {
-          try {
-            new HgBookmarkCommand(myProject, repository.getRoot(), name).createBookmark(bookmarkDialog.isActive());
-          }
-          catch (HgCommandException exception) {
-            HgAbstractGlobalAction.handleException(myProject, exception);
-          }
+        if (!StringUtil.isEmptyOrSpaces(name)) {
+          HgBookmarkCommand.createBookmark(myRepositories, name, bookmarkDialog.isActive());
         }
       }
     }
@@ -265,7 +259,7 @@ public class HgBranchPopupActions {
             new HgBookmarkCommand(myProject, repository.getRoot(), myBranchName).deleteBookmark();
           }
           catch (HgCommandException exception) {
-            HgAbstractGlobalAction.handleException(myProject, exception);
+            HgErrorUtil.handleException(myProject, exception);
           }
         }
       }

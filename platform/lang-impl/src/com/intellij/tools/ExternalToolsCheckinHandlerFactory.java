@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,8 +81,7 @@ public class ExternalToolsCheckinHandlerFactory extends CheckinHandlerFactory {
               id = ((Tool)item).getActionId();
             }
             final ToolSelectDialog dialog = new ToolSelectDialog(panel.getProject(), id, new ToolsPanel());
-            dialog.show();
-            if (!dialog.isOK()) {
+            if (!dialog.showAndGet()) {
               return;
             }
 

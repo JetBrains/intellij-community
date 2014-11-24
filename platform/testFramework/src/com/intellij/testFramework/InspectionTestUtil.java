@@ -22,6 +22,7 @@ import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ui.InspectionToolPresentation;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -159,5 +160,6 @@ expected:
     }
 
     globalContext.doInspections(scope);
+    UIUtil.dispatchAllInvocationEvents();
   }
 }

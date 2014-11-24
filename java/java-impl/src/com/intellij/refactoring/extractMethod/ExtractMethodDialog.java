@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -180,8 +180,7 @@ public class ExtractMethodDialog extends DialogWrapper implements AbstractExtrac
     checkMethodConflicts(conflicts);
     if (!conflicts.isEmpty()) {
       final ConflictsDialog conflictsDialog = new ConflictsDialog(myProject, conflicts);
-      conflictsDialog.show();
-      if (!conflictsDialog.isOK()){
+      if (!conflictsDialog.showAndGet()) {
         if (conflictsDialog.isShowConflicts()) close(CANCEL_EXIT_CODE);
         return;
       }

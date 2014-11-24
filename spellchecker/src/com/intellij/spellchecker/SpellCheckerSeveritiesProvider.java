@@ -42,7 +42,7 @@ public class SpellCheckerSeveritiesProvider extends SeveritiesProvider {
     final TextAttributes attributes = new TextAttributes();
 
     attributes.setEffectType(EffectType.WAVE_UNDERSCORE);
-    attributes.setEffectColor(HighlightDisplayLevel.GREEN);
+    attributes.setEffectColor(HighlightDisplayLevel.TYPO);
 
     HighlightInfoType typo = new HighlightInfoType.HighlightInfoTypeImpl(TYPO, TextAttributesKey.createTextAttributesKey("TYPO", attributes));
     return Collections.singletonList(typo);
@@ -50,7 +50,7 @@ public class SpellCheckerSeveritiesProvider extends SeveritiesProvider {
 
   @Override
   public Color getTrafficRendererColor(@NotNull TextAttributes textAttributes) {
-    return HighlightDisplayLevel.GREEN;
+    return HighlightDisplayLevel.TYPO;
   }
 
   @Override

@@ -16,6 +16,7 @@
 package com.siyeh.ig.resources;
 
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -138,7 +139,7 @@ public abstract class ResourceInspection extends BaseInspection {
         }
       }
     }
-    while (isInsignificant(nextStatement)) {
+    while (nextStatement != null && !isSignificant(nextStatement)) {
       nextStatement = PsiTreeUtil.getNextSiblingOfType(nextStatement, PsiStatement.class);
     }
     while (nextStatement == null) {
@@ -163,25 +164,17 @@ public abstract class ResourceInspection extends BaseInspection {
     return isResourceClose(nextStatement, variable);
   }
 
-  private static boolean isInsignificant(PsiStatement statement) {
-    if (statement == null) {
-      return false;
-    }
-    final boolean[] result = {true};
+  private static boolean isSignificant(@NotNull PsiStatement statement) {
+    final Ref<Boolean> result = new Ref<Boolean>(Boolean.TRUE);
     statement.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitExpression(PsiExpression expression) {
         super.visitExpression(expression);
-        result[0] = false;
-      }
-
-      @Override
-      public void visitElement(PsiElement element) {
-        super.visitElement(element);
-        if (!result[0]) stopWalking();
+        result.set(Boolean.FALSE);
+        stopWalking();
       }
     });
-    return result[0];
+    return !result.get().booleanValue();
   }
 
   protected static boolean isResourceClosedInFinally(@NotNull PsiTryStatement tryStatement, @NotNull PsiVariable variable) {

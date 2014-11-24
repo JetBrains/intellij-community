@@ -32,8 +32,6 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ConcurrentSoftValueHashMap;
-import com.intellij.util.containers.ConcurrentWeakHashMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.messages.MessageBusConnection;
@@ -66,8 +64,8 @@ public class GroovyPsiManager {
 
   private final Map<String, GrTypeDefinition> myArrayClass = new HashMap<String, GrTypeDefinition>();
 
-  private final ConcurrentMap<GroovyPsiElement, PsiType> myCalculatedTypes = new ConcurrentWeakHashMap<GroovyPsiElement, PsiType>();
-  private final Map<String, Map<GlobalSearchScope, PsiClass>> myClassCache = new ConcurrentSoftValueHashMap<String, Map<GlobalSearchScope, PsiClass>>();
+  private final ConcurrentMap<GroovyPsiElement, PsiType> myCalculatedTypes = ContainerUtil.createConcurrentWeakMap();
+  private final Map<String, Map<GlobalSearchScope, PsiClass>> myClassCache = ContainerUtil.createConcurrentSoftValueMap();
   private final ConcurrentMap<PsiMember, Boolean> myCompileStatic = ContainerUtil.newConcurrentMap();
 
   private static final RecursionGuard ourGuard = RecursionManager.createGuard("groovyPsiManager");

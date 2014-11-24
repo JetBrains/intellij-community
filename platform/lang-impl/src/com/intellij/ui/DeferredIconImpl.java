@@ -19,14 +19,13 @@
  */
 package com.intellij.ui;
 
+import com.intellij.concurrency.Job;
+import com.intellij.concurrency.JobLauncher;
 import com.intellij.ide.PowerSaveMode;
-import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.util.ProgressIndicatorBase;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
@@ -100,71 +99,54 @@ public class DeferredIconImpl<T> implements DeferredIcon {
     final Component paintingParent = SwingUtilities.getAncestorOfClass(PaintingParent.class, c);
     final Rectangle paintingParentRec = paintingParent == null ? null : ((PaintingParent)paintingParent).getChildRec(c);
 
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+    JobLauncher.getInstance().submitToJobThread(Job.DEFAULT_PRIORITY, new Runnable() {
       @Override
       public void run() {
         int oldWidth = myDelegateIcon.getIconWidth();
         final Icon[] evaluated = new Icon[1];
-        final Runnable evalRunnable = new Runnable() {
-          @Override
-          public void run() {
-            try {
-              evaluated[0] = nonNull(myEvaluator.fun(myParam));
-            }
-            catch (ProcessCanceledException e) {
-              evaluated[0] = EMPTY_ICON;
-            }
-            catch (IndexNotReadyException e) {
-              evaluated[0] = EMPTY_ICON;
-            }
-          }
-        };
 
         final long startTime = System.currentTimeMillis();
         if (myNeedReadAction) {
-          final ProgressIndicatorBase progress = new ProgressIndicatorBase();
-          final ApplicationAdapter listener = new ApplicationAdapter() {
-            @Override
-            public void beforeWriteActionStart(Object action) {
-              progress.cancel();
-            }
-          };
-          ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+          final Ref<Boolean> cancelled = new Ref<Boolean>();
+          boolean result = ProgressIndicatorUtils.runWithWriteActionPriority(new Runnable() {
             @Override
             public void run() {
-              ApplicationManager.getApplication().addApplicationListener(listener);
-            }
-          }, ModalityState.any());
-          try {
-            final Ref<Boolean> cancelled = new Ref<Boolean>();
-            ProgressManager.getInstance().runProcess(new Runnable() {
-              @Override
-              public void run() {
-                if (!ApplicationManagerEx.getApplicationEx().tryRunReadAction(new Runnable() {
-                  @Override
-                  public void run() {
-                    IconDeferrerImpl.evaluateDeferred(evalRunnable);
-                    if (myAutoUpdatable) {
-                      myLastCalcTime = System.currentTimeMillis();
-                      myLastTimeSpent = myLastCalcTime - startTime;
+              if (!ApplicationManagerEx.getApplicationEx().tryRunReadAction(new Runnable() {
+                @Override
+                public void run() {
+                  IconDeferrerImpl.evaluateDeferred(new Runnable() {
+                    @Override
+                    public void run() {
+                      try {
+                        evaluated[0] = nonNull(myEvaluator.fun(myParam));
+                      }
+                      catch (IndexNotReadyException e) {
+                        evaluated[0] = EMPTY_ICON;
+                      }
                     }
+                  });
+                  if (myAutoUpdatable) {
+                    myLastCalcTime = System.currentTimeMillis();
+                    myLastTimeSpent = myLastCalcTime - startTime;
                   }
-                })) {
-                  myIsScheduled = false;
-                  cancelled.set(Boolean.TRUE);
                 }
+              })) {
+                cancelled.set(Boolean.TRUE);
               }
-            }, progress);
-            if (cancelled.get() == Boolean.TRUE) return;
-          }
-          catch (ProcessCanceledException e) {
-          }
-          finally {
-            ApplicationManager.getApplication().removeApplicationListener(listener);
+            }
+          });
+          if (cancelled.get() == Boolean.TRUE || !result) {
+            myIsScheduled = false;
+            return;
           }
         }
         else {
-          IconDeferrerImpl.evaluateDeferred(evalRunnable);
+          IconDeferrerImpl.evaluateDeferred(new Runnable() {
+            @Override
+            public void run() {
+              evaluated[0] = nonNull(myEvaluator.fun(myParam));
+            }
+          });
           if (myAutoUpdatable) {
             myLastCalcTime = System.currentTimeMillis();
             myLastTimeSpent = myLastCalcTime - startTime;

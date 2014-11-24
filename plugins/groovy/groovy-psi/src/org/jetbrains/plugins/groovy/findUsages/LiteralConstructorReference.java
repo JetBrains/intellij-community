@@ -71,13 +71,19 @@ public class LiteralConstructorReference extends PsiReferenceBase.Poly<GrListOrM
 
   @Nullable
   private PsiClassType inferConversionType() {
-    GrListOrMap map = getElement();
-    final PsiClassType conversionType = getTargetConversionType(map);
+    final GrListOrMap listOrMap = getElement();
+    final PsiClassType conversionType = getTargetConversionType(listOrMap);
     if (conversionType == null) return null;
+    if (listOrMap.isEmpty()) {
+      PsiType unboxed = TypesUtil.unboxPrimitiveTypeWrapper(conversionType);
+      if (PsiType.BOOLEAN == unboxed || PsiType.CHAR == unboxed) {
+        return null;
+      }
+    }
 
-    PsiType type = map.getType();
-    PsiType ownType = type instanceof PsiClassType ? ((PsiClassType)type).rawType() : type;
-    if (ownType != null && TypesUtil.isAssignableWithoutConversions(conversionType.rawType(), ownType, map)) return null;
+    final PsiType type = listOrMap.getType();
+    final PsiType ownType = type instanceof PsiClassType ? ((PsiClassType)type).rawType() : type;
+    if (ownType != null && TypesUtil.isAssignableWithoutConversions(conversionType.rawType(), ownType, listOrMap)) return null;
 
     final PsiClass resolved = conversionType.resolve();
     if (resolved != null) {
@@ -92,13 +98,10 @@ public class LiteralConstructorReference extends PsiReferenceBase.Poly<GrListOrM
   public static PsiClassType getTargetConversionType(@NotNull final GrExpression expression) {
     //todo hack
     final PsiElement parent = PsiUtil.skipParentheses(expression.getParent(), true);
-    
+
     PsiType type = null;
     if (parent instanceof GrSafeCastExpression) {
       type = ((GrSafeCastExpression)parent).getType();
-    }
-    else if (parent instanceof GrTypeCastExpression) {
-      type = ((GrTypeCastExpression)parent).getType();
     }
     else if (parent instanceof GrAssignmentExpression &&
         PsiTreeUtil.isAncestor(((GrAssignmentExpression)parent).getRValue(), expression, false)) {
@@ -127,10 +130,20 @@ public class LiteralConstructorReference extends PsiReferenceBase.Poly<GrListOrM
       if (controlFlowOwner instanceof GrOpenBlock && controlFlowOwner.getParent() instanceof GrMethod) {
         if (ControlFlowUtils.isReturnValue(expression, controlFlowOwner)) {
           type = ((GrMethod)controlFlowOwner.getParent()).getReturnType();
+          if (PsiType.BOOLEAN.equals(TypesUtil.unboxPrimitiveTypeWrapper(type))
+              || TypesUtil.isEnum(type)
+              || PsiUtil.isCompileStatic(expression)
+              || TypesUtil.isClassType(type, CommonClassNames.JAVA_LANG_STRING)
+              || TypesUtil.isClassType(type, CommonClassNames.JAVA_LANG_CLASS)) {
+            type = null;
+          }
         }
       }
     }
 
+    if (PsiType.BOOLEAN.equals(type)) {
+      type = TypesUtil.boxPrimitiveType(type, expression.getManager(), expression.getResolveScope());
+    }
     return filterOutTrashTypes(type);
   }
 
@@ -138,7 +151,6 @@ public class LiteralConstructorReference extends PsiReferenceBase.Poly<GrListOrM
   private static PsiClassType filterOutTrashTypes(PsiType type) {
     if (!(type instanceof PsiClassType)) return null;
     if (type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) return null;
-    if (type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) return null;
     if (TypesUtil.resolvesTo(type, CommonClassNames.JAVA_UTIL_MAP)) return null;
     if (TypesUtil.resolvesTo(type, CommonClassNames.JAVA_UTIL_HASH_MAP)) return null;
     if (TypesUtil.resolvesTo(type, CommonClassNames.JAVA_UTIL_LIST)) return null;

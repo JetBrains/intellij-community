@@ -983,6 +983,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
       }
     };
     popupToolbar.setLayoutPolicy(NOWRAP_LAYOUT_POLICY);
+    popupToolbar.updateActionsImmediately();
 
     Point location;
     if (myOrientation == SwingConstants.HORIZONTAL) {
@@ -996,6 +997,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
 
     final ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(popupToolbar, null);
     builder.setResizable(false)
+      .setMovable(true) // fit the screen automatically
       .setRequestFocus(false)
       .setTitle(null)
       .setCancelOnClickOutside(true)

@@ -33,10 +33,6 @@
 
   <project-components>
     <component>
-      <implementation-class>com.intellij.codeInsight.daemon.impl.PostHighlightingPassFactory</implementation-class>
-    </component>
-
-    <component>
       <implementation-class>com.intellij.compiler.classFilesIndex.api.index.ClassFilesIndexFeaturesHolder</implementation-class>
     </component>
 
@@ -742,6 +738,10 @@
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.SwapIfStatementsIntentionAction</className>
+      <category>Control Flow</category>
+    </intentionAction>
+    <intentionAction>
+      <className>com.intellij.codeInsight.intention.impl.ConvertCompareToToEqualsIntention</className>
       <category>Control Flow</category>
     </intentionAction>
 

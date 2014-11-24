@@ -337,9 +337,46 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   public void setErrorStripeVisible(boolean val) {
     if (val) {
       myEditor.getVerticalScrollBar().setPersistentUI(new MyErrorPanel());
+      myEditor.getHorizontalScrollBar().setPersistentUI(new ButtonlessScrollBarUI() {
+        @Override
+        public boolean alwaysShowTrack() {
+          return false;
+        }
+
+        @Override
+        protected boolean isDark() {
+          return myEditor.isDarkEnough();
+        }
+
+        @Override
+        protected Color adjustColor(Color c) {
+          return isMacOverlayScrollbar() ? super.adjustColor(c) : EditorImpl.adjustThumbColor(super.adjustColor(c), isDark());
+        }
+
+        @Override
+        protected void paintThumb(Graphics g, JComponent c, Rectangle thumbBounds) {
+          if (!isMacOverlayScrollbar()) {
+            int half = getThickness() / 2;
+            int shift = half - 1;
+            g.translate(0, shift);
+            super.paintThumb(g, c, thumbBounds);
+            g.translate(0, -shift);
+          }
+          else {
+            super.paintThumb(g, c, thumbBounds);
+          }
+        }
+
+        protected void paintMaxiThumb(Graphics2D g, Rectangle thumbBounds) {
+          int arc = 3;
+          g.setColor(adjustColor(getGradientDarkColor()));
+          g.fillRoundRect(2, 0, thumbBounds.width, thumbBounds.height, arc, arc);
+        }
+      });
     }
     else {
       myEditor.getVerticalScrollBar().setPersistentUI(ButtonlessScrollBarUI.createNormal());
+      myEditor.getHorizontalScrollBar().setPersistentUI(ButtonlessScrollBarUI.createNormal());
     }
   }
 
@@ -483,8 +520,8 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
 
     @Override
-    protected boolean isMacScrollbarHiddenAndDistractionFreeEnabled() {
-      return super.isMacScrollbarHiddenAndDistractionFreeEnabled() && isRealFileEditor(myEditor);
+    protected boolean isMacScrollbarHiddenAndXcodeLikeScrollbar() {
+      return super.isMacScrollbarHiddenAndXcodeLikeScrollbar() && isRealFileEditor(myEditor);
     }
 
     @Override
@@ -569,7 +606,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
     @Override
     protected boolean alwaysPaintThumb() {
-      if (scrollbar.getOrientation() == Adjustable.VERTICAL) return !(isDistractionFreeMode() && isRealFileEditor(myEditor));
+      if (scrollbar.getOrientation() == Adjustable.VERTICAL) return !(xcodeLikeScrollbar() && isRealFileEditor(myEditor));
       return super.alwaysPaintThumb();
     }
 
@@ -607,7 +644,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
     @Override
     protected void doPaintTrack(@NotNull Graphics g, @NotNull JComponent c, @NotNull Rectangle bounds) {
-      if (isMacScrollbarHiddenAndDistractionFreeEnabled()) {
+      if (isMacScrollbarHiddenAndXcodeLikeScrollbar()) {
         paintTrackBasement(g, bounds);
         return;
       }
@@ -644,9 +681,16 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
 
     private void paintTrackBasement(@NotNull Graphics g, @NotNull Rectangle bounds) {
-      if (transparent()) return;
-      g.setColor(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
-      g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
+      if (transparent()) {
+        Graphics2D g2 = (Graphics2D)g;
+        g2.setComposite(AlphaComposite.getInstance(AlphaComposite.CLEAR));
+        g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
+        g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER));
+      }
+      else {
+        g.setColor(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
+        g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
+      }
     }
 
     @NotNull
@@ -832,7 +876,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
     @Override
     public void mouseMoved(@NotNull MouseEvent e) {
-      if (isMacScrollbarHiddenAndDistractionFreeEnabled()) return;
+      if (isMacScrollbarHiddenAndXcodeLikeScrollbar()) return;
       EditorImpl.MyScrollBar scrollBar = myEditor.getVerticalScrollBar();
       int buttonHeight = scrollBar.getDecScrollButtonHeight();
       int lineCount = getDocument().getLineCount() + myEditor.getSettings().getAdditionalLinesCount();

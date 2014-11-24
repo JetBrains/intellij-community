@@ -12,42 +12,69 @@
  */
 package com.intellij.openapi.vcs.actions;
 
-import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class ShowAnnotationColorsAction extends ToggleAction {
-  public static final String KEY = "vcs.show.colored.annotations";
-  private final List<AnnotationFieldGutter> myGutters;
-  private final EditorGutterComponentEx myGutter;
+public class ShowAnnotationColorsAction extends ActionGroup {
+  private final AnAction[] myChildren;
 
-  public ShowAnnotationColorsAction(List<AnnotationFieldGutter> gutters, EditorGutterComponentEx gutter) {
-    super("Colors");
-    myGutters = gutters;
-    myGutter = gutter;
-  }
+  public ShowAnnotationColorsAction(EditorGutterComponentEx gutter) {
+    super("Colors", true);
 
-  @Override
-  public boolean isSelected(AnActionEvent e) {
-    return isColorsEnabled();
-  }
-
-  @Override
-  public void setSelected(AnActionEvent e, boolean state) {
-    PropertiesComponent.getInstance().setValue(KEY, String.valueOf(state));
-    for (AnnotationFieldGutter gutter : myGutters) {
-      gutter.setShowBg(state);
+    final ArrayList<AnAction> kids = new ArrayList<AnAction>(ShortNameType.values().length);
+    for (ColorMode type : ColorMode.values()) {
+      kids.add(new SetColorModeAction(type, gutter));
     }
-    myGutter.revalidateMarkup();
+    myChildren = kids.toArray(new AnAction[kids.size()]);
   }
 
-  public static boolean isColorsEnabled() {
-    return PropertiesComponent.getInstance().getBoolean(KEY, true);
+  @NotNull
+  @Override
+  public AnAction[] getChildren(@Nullable AnActionEvent e) {
+    return myChildren;
+  }
+
+  public static ColorMode getType() {
+    for (ColorMode type : ColorMode.values()) {
+      if (type.isSet()) {
+        return type;
+      }
+    }
+    return ColorMode.ORDER;
+  }
+
+  public static class SetColorModeAction extends ToggleAction {
+    private final ColorMode myType;
+    private final EditorGutterComponentEx myGutter;
+
+    public SetColorModeAction(ColorMode type, EditorGutterComponentEx gutter) {
+      super(type.getDescription());
+      myType = type;
+      myGutter = gutter;
+    }
+
+    @Override
+    public boolean isSelected(AnActionEvent e) {
+      return myType == getType();
+    }
+
+    @Override
+    public void setSelected(AnActionEvent e, boolean enabled) {
+      if (enabled) {
+        myType.set();
+      }
+      myGutter.revalidateMarkup();
+    }
   }
 }

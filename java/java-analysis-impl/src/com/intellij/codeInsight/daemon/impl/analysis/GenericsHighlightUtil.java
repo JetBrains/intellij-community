@@ -404,7 +404,7 @@ public class GenericsHighlightUtil {
         result.add(info);
       }
       if (aClass instanceof PsiTypeParameter) {
-        info = HighlightMethodUtil.checkMethodIncompatibleReturnType(signature, signature.getSuperSignatures(), true, HighlightNamesUtil.getClassDeclarationTextRange(aClass));
+        info = HighlightMethodUtil.checkMethodIncompatibleReturnType(signature, signature.getSuperSignatures(), true, HighlightNamesUtil.getClassDeclarationTextRange(aClass), languageLevel);
         if (info != null) {
           result.add(info);
         }

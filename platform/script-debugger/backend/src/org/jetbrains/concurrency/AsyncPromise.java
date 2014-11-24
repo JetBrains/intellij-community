@@ -1,5 +1,6 @@
 package org.jetbrains.concurrency;
 
+import com.intellij.openapi.util.Getter;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
@@ -7,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public class AsyncPromise<T> extends Promise<T> {
+public class AsyncPromise<T> extends Promise<T> implements Getter<T> {
   private volatile Consumer<T> done;
   private volatile Consumer<String> rejected;
 
@@ -15,18 +16,10 @@ public class AsyncPromise<T> extends Promise<T> {
   // result object or error message
   private volatile Object result;
 
-  protected enum State {
-    PENDING, FULFILLED, REJECTED
-  }
-
+  @NotNull
   @Override
-  public boolean isProcessed() {
-    return state != State.PENDING;
-  }
-
-  @Override
-  public boolean isRejected() {
-    return state == State.REJECTED;
+  public State getState() {
+    return state;
   }
 
   @NotNull
@@ -43,8 +36,7 @@ public class AsyncPromise<T> extends Promise<T> {
         return this;
     }
 
-    assert this.done == null;
-    this.done = done;
+    this.done = setHandler(this.done, done);
     return this;
   }
 
@@ -61,9 +53,14 @@ public class AsyncPromise<T> extends Promise<T> {
         return this;
     }
 
-    assert this.rejected == null;
-    this.rejected = rejected;
+    this.rejected = setHandler(this.rejected, rejected);
     return this;
+  }
+
+  @Override
+  public T get() {
+    //noinspection unchecked
+    return state == State.FULFILLED ? (T)result : null;
   }
 
   @SuppressWarnings("SynchronizeOnThis")
@@ -111,7 +108,6 @@ public class AsyncPromise<T> extends Promise<T> {
         //noinspection unchecked
         return new DonePromise<SUB_RESULT>(fulfilled.fun((T)result));
       case REJECTED:
-        rejected.consume((String)result);
         return new RejectedPromise<SUB_RESULT>((String)result);
     }
 
@@ -141,6 +137,37 @@ public class AsyncPromise<T> extends Promise<T> {
     return promise;
   }
 
+  void notify(@NotNull final AsyncPromise<T> child) {
+    switch (state) {
+      case PENDING:
+        break;
+      case FULFILLED:
+        //noinspection unchecked
+        child.setResult((T)result);
+        return;
+      case REJECTED:
+        child.setError((String)result);
+        return;
+    }
+
+    addHandlers(new Consumer<T>() {
+      @Override
+      public void consume(T result) {
+        try {
+          child.setResult(result);
+        }
+        catch (Throwable e) {
+          child.setError(e.getMessage());
+        }
+      }
+    }, new Consumer<String>() {
+      @Override
+      public void consume(String error) {
+        child.setError(error);
+      }
+    });
+  }
+
   @Override
   @NotNull
   public <SUB_RESULT> Promise<SUB_RESULT> then(@NotNull final AsyncFunction<T, SUB_RESULT> fulfilled) {
@@ -151,37 +178,39 @@ public class AsyncPromise<T> extends Promise<T> {
         //noinspection unchecked
         return fulfilled.fun((T)result);
       case REJECTED:
-        rejected.consume((String)result);
         return new RejectedPromise<SUB_RESULT>((String)result);
     }
 
     final AsyncPromise<SUB_RESULT> promise = new AsyncPromise<SUB_RESULT>();
+    final Consumer<String> rejectedHandler = new Consumer<String>() {
+      @Override
+      public void consume(String error) {
+        promise.setError(error);
+      }
+    };
     addHandlers(new Consumer<T>() {
       @Override
       public void consume(T result) {
         try {
-          fulfilled.fun(result).done(new Consumer<SUB_RESULT>() {
-            @Override
-            public void consume(SUB_RESULT result) {
-              try {
-                promise.setResult(result);
+          fulfilled.fun(result)
+            .done(new Consumer<SUB_RESULT>() {
+              @Override
+              public void consume(SUB_RESULT result) {
+                try {
+                  promise.setResult(result);
+                }
+                catch (Throwable e) {
+                  promise.setError(e.getMessage());
+                }
               }
-              catch (Throwable e) {
-                promise.setError(e.getMessage());
-              }
-            }
-          }).rejected(rejected);
+            })
+            .rejected(rejectedHandler);
         }
         catch (Throwable e) {
           promise.setError(e.getMessage());
         }
       }
-    }, new Consumer<String>() {
-      @Override
-      public void consume(String error) {
-        promise.setError(error);
-      }
-    });
+    }, rejectedHandler);
     return promise;
   }
 

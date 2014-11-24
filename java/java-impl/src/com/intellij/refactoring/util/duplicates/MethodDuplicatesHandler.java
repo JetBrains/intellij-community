@@ -73,12 +73,12 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
 
     final AnalysisScope scope = new AnalysisScope(file);
     final Module module = ModuleUtilCore.findModuleForPsiElement(file);
-    final BaseAnalysisActionDialog dlg = new BaseAnalysisActionDialog(RefactoringBundle.message("replace.method.duplicates.scope.chooser.title", REFACTORING_NAME),
-                                                                RefactoringBundle.message("replace.method.duplicates.scope.chooser.message"),
-                                                                project, scope, module != null ? module.getName() : null, false,
-                                                                AnalysisUIOptions.getInstance(project), element);
-    dlg.show();
-    if (dlg.isOK()) {
+    final BaseAnalysisActionDialog dlg =
+      new BaseAnalysisActionDialog(RefactoringBundle.message("replace.method.duplicates.scope.chooser.title", REFACTORING_NAME),
+                                   RefactoringBundle.message("replace.method.duplicates.scope.chooser.message"),
+                                   project, scope, module != null ? module.getName() : null, false,
+                                   AnalysisUIOptions.getInstance(project), element);
+    if (dlg.showAndGet()) {
       ProgressManager.getInstance().run(new Task.Backgroundable(project, "Locate duplicates", true) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
@@ -195,23 +195,24 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
         }
       }
     });
-    replaceDuplicate(project, duplicates, members);
-    if (!silent) {
-      final Runnable nothingFoundRunnable = new Runnable() {
-        @Override
-        public void run() {
-          if (duplicates.isEmpty()) {
+    if (duplicates.isEmpty()) {
+      if (!silent) {
+        final Runnable nothingFoundRunnable = new Runnable() {
+          @Override
+          public void run() {
             final String message = RefactoringBundle.message("idea.has.not.found.any.code.that.can.be.replaced.with.method.call",
                                                              ApplicationNamesInfo.getInstance().getProductName());
             Messages.showInfoMessage(project, message, REFACTORING_NAME);
           }
+        };
+        if (ApplicationManager.getApplication().isUnitTestMode()) {
+          nothingFoundRunnable.run();
+        } else {
+          ApplicationManager.getApplication().invokeLater(nothingFoundRunnable, ModalityState.NON_MODAL);
         }
-      };
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        nothingFoundRunnable.run();
-      } else {
-        ApplicationManager.getApplication().invokeLater(nothingFoundRunnable, ModalityState.NON_MODAL);
       }
+    } else {
+      replaceDuplicate(project, duplicates, members);
     }
   }
 

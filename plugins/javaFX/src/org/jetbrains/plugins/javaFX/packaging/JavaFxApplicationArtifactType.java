@@ -103,8 +103,7 @@ public class JavaFxApplicationArtifactType extends ArtifactType {
                                                                    "Select Module",
                                                                    "Selected module output would to be included in the artifact");
         dialog.setSingleSelectionMode();
-        dialog.show();
-        if (dialog.isOK()) {
+        if (dialog.showAndGet()) {
           final List<Module> elements = dialog.getChosenElements();
           if (elements.isEmpty()) {
             return null;

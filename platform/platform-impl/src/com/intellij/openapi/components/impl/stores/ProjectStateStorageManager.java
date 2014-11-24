@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,17 +34,19 @@ class ProjectStateStorageManager extends StateStorageManagerImpl {
   }
 
   @Override
-  protected StorageData createStorageData(@NotNull String storageSpec) {
-    if (storageSpec.equals(StoragePathMacros.PROJECT_FILE)) return createIprStorageData();
-    if (storageSpec.equals(StoragePathMacros.WORKSPACE_FILE)) return createWsStorageData();
-    return new ProjectStoreImpl.ProjectStorageData(ROOT_TAG_NAME, myProject);
+  protected StorageData createStorageData(@NotNull String fileSpec, @NotNull String filePath) {
+    if (fileSpec.equals(StoragePathMacros.PROJECT_FILE)) {
+      return createIprStorageData(filePath);
+    }
+    else if (fileSpec.equals(StoragePathMacros.WORKSPACE_FILE)) {
+      return new ProjectStoreImpl.WsStorageData(ROOT_TAG_NAME, myProject);
+    }
+    else {
+      return new ProjectStoreImpl.ProjectStorageData(ROOT_TAG_NAME, myProject);
+    }
   }
 
-  public StorageData createWsStorageData() {
-    return new ProjectStoreImpl.WsStorageData(ROOT_TAG_NAME, myProject);
-  }
-
-  public StorageData createIprStorageData() {
+  protected StorageData createIprStorageData(@NotNull String filePath) {
     return new ProjectStoreImpl.IprStorageData(ROOT_TAG_NAME, myProject);
   }
 

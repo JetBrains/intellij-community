@@ -27,11 +27,13 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.plaf.basic.BasicLabelUI;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
+import java.lang.reflect.Field;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -141,7 +143,16 @@ public class LinkLabel<T> extends JLabel {
       int x = myIconWidth;
       int y = getTextBaseLine();
 
-      if (myUnderline && myPaintUnderline) {
+      boolean underline = myUnderline && myPaintUnderline;
+      if (underline) {
+        Rectangle bounds = getTextBounds();
+        if (bounds != null) {
+          int lineY = bounds.y + bounds.height - 1;
+          g.drawLine(bounds.x, lineY, bounds.x + bounds.width, lineY);
+          underline = false;
+        }
+      }
+      if (underline) {
         int k = 1;
         if (getFont().getSize() > 11) {
           k += (getFont().getSize() - 11);
@@ -215,6 +226,10 @@ public class LinkLabel<T> extends JLabel {
       }
     }
     if (getText() != null) {
+      Rectangle bounds = getTextBounds();
+      if (bounds != null) {
+        return bounds.contains(pt.x + insets.left, pt.y + insets.top);
+      }
       FontMetrics fm = getFontMetrics(getFont());
       int height = fm.getHeight() + 1;
       int y = getHeight() / 2 - fm.getHeight() / 2;
@@ -331,4 +346,14 @@ public class LinkLabel<T> extends JLabel {
     myPaintDefaultIcon = paintDefaultIcon;
   }
 
+  private Rectangle getTextBounds() {
+    try {
+      Field field = BasicLabelUI.class.getDeclaredField("paintTextR");
+      field.setAccessible(true);
+      return (Rectangle)field.get(getUI());
+    }
+    catch (Exception ignored) {
+      return null;
+    }
+  }
 }

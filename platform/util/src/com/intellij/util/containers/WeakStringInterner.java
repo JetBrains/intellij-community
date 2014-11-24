@@ -22,12 +22,13 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.ref.WeakReference;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author peter
  */
 public class WeakStringInterner extends StringInterner {
-  private final ConcurrentWeakHashMap<String, WeakReference<String>> myMap = new ConcurrentWeakHashMap<String, WeakReference<String>>();
+  private final ConcurrentMap<String, WeakReference<String>> myMap = ContainerUtil.createConcurrentWeakMap();
   
   @NotNull
   @Override

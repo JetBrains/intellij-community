@@ -18,7 +18,10 @@ package com.intellij.ide.actions;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.options.*;
+import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.ConfigurableGroup;
+import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.options.TabbedConfigurable;
 import com.intellij.openapi.options.ex.*;
 import com.intellij.openapi.options.newEditor.IdeSettingsDialog;
 import com.intellij.openapi.options.newEditor.OptionsEditor;
@@ -244,12 +247,12 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
     final DialogWrapper editor;
     if (parent == null) {
       editor = Registry.is("ide.new.settings.view")
-               ? new SettingsDialog(project, dimensionKey, configurable, showApplyButton)
+               ? new SettingsDialog(project, dimensionKey, configurable, showApplyButton, false)
                : new SingleConfigurableEditor(project, configurable, dimensionKey, showApplyButton);
     }
     else {
       editor = Registry.is("ide.new.settings.view")
-               ? new SettingsDialog(parent, dimensionKey, configurable, showApplyButton)
+               ? new SettingsDialog(parent, dimensionKey, configurable, showApplyButton, false)
                : new SingleConfigurableEditor(parent, configurable, dimensionKey, showApplyButton);
     }
     if (advancedInitialization != null) {
@@ -260,8 +263,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
         }
       });
     }
-    editor.show();
-    return editor.isOK();
+    return editor.showAndGet();
   }
 
   @NotNull

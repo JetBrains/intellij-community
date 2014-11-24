@@ -23,12 +23,14 @@ import com.intellij.codeInspection.ex.InspectionToolRegistrar;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.ApplicationProfileManager;
 import com.intellij.profile.Profile;
 import com.intellij.profile.ProfileManager;
 import com.intellij.profile.ProjectProfileManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -62,7 +64,7 @@ public class ProfilesComboBox extends JComboBox {
         if (value instanceof Profile) {
           final Profile profile = (Profile)value;
           setText(profile.getName());
-          setIcon(profile.isLocal() ? AllIcons.General.Settings : AllIcons.General.ProjectSettings);
+          setIcon(profile.isProjectLevel() ? AllIcons.General.ProjectSettings : AllIcons.General.Settings);
         }
         else if (value instanceof String) {
           setText((String)value);
@@ -74,11 +76,14 @@ public class ProfilesComboBox extends JComboBox {
       private Object myDeselectedItem = null;
 
       @Override
-      public void itemStateChanged(ItemEvent e) {
-        if (myFrozenProfilesCombo) return; //do not update during reloading
-        if (ItemEvent.SELECTED == e.getStateChange()) {
+      public void itemStateChanged(@NotNull ItemEvent e) {
+        if (myFrozenProfilesCombo) {
+          // do not update during reloading
+          return;
+        }
+        else if (ItemEvent.SELECTED == e.getStateChange()) {
           final Object item = e.getItem();
-          if (profileManager instanceof ProjectProfileManager && item instanceof Profile && ((Profile)item).isLocal()) {
+          if (profileManager instanceof ProjectProfileManager && item instanceof Profile && !((Profile)item).isProjectLevel()) {
             if (Messages.showOkCancelDialog(InspectionsBundle.message("inspection.new.profile.ide.to.project.warning.message"),
                                             InspectionsBundle.message("inspection.new.profile.ide.to.project.warning.title"),
                                             Messages.getErrorIcon()) == Messages.OK) {
@@ -86,7 +91,7 @@ public class ProfilesComboBox extends JComboBox {
                                                               InspectionsBundle.message("inspection.new.profile.dialog.title"),
                                                               Messages.getInformationIcon());
               final Object selectedItem = getSelectedItem();
-              if (newName != null && newName.length() > 0 && selectedItem instanceof Profile) {
+              if (!StringUtil.isEmpty(newName) && selectedItem instanceof Profile) {
                 if (ArrayUtil.find(profileManager.getAvailableProfileNames(), newName) == -1 &&
                     ArrayUtil.find(InspectionProfileManager.getInstance().getAvailableProfileNames(), newName) == -1) {
                   saveNewProjectProfile(newName, (Profile)selectedItem, profileManager);
@@ -112,7 +117,7 @@ public class ProfilesComboBox extends JComboBox {
     InspectionProfileImpl inspectionProfile = new InspectionProfileImpl(newName, InspectionToolRegistrar.getInstance(), profileManager);
     final ModifiableModel profileModifiableModel = inspectionProfile.getModifiableModel();
     profileModifiableModel.copyFrom(profile);
-    profileModifiableModel.setLocal(false);
+    profileModifiableModel.setProjectLevel(true);
     profileModifiableModel.setName(newName);
     ((DefaultComboBoxModel)getModel()).addElement(profileModifiableModel);
     setSelectedItem(profileModifiableModel);
@@ -138,8 +143,8 @@ public class ProfilesComboBox extends JComboBox {
     for (Profile profile : availableProfiles) {
       model.addElement(profile);
     }
-    if (selectedProfile != null && ((selectedProfile.isLocal() && profileManager instanceof ApplicationProfileManager) ||
-                                    (!selectedProfile.isLocal() && profileManager instanceof ProjectProfileManager))) {
+    if (selectedProfile != null && ((!selectedProfile.isProjectLevel() && profileManager instanceof ApplicationProfileManager) ||
+                                    (selectedProfile.isProjectLevel() && profileManager instanceof ProjectProfileManager))) {
       setSelectedItem(selectedProfile);
     }
     else {

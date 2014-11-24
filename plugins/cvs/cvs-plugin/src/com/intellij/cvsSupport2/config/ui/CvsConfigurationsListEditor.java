@@ -95,17 +95,17 @@ public class CvsConfigurationsListEditor extends DialogWrapper implements DataPr
   }
 
   @Nullable
-  public static CvsRootConfiguration reconfigureCvsRoot(String root, Project project){
+  public static CvsRootConfiguration reconfigureCvsRoot(String root, Project project) {
     final CvsApplicationLevelConfiguration configuration = CvsApplicationLevelConfiguration.getInstance();
     final CvsRootConfiguration selectedConfig = configuration.getConfigurationForCvsRoot(root);
     final ArrayList<CvsRootConfiguration> modifiableList = new ArrayList<CvsRootConfiguration>(configuration.CONFIGURATIONS);
     final CvsConfigurationsListEditor editor = new CvsConfigurationsListEditor(modifiableList, project, true);
     editor.select(selectedConfig);
-    editor.show();
-    if (editor.isOK()){
+    if (editor.showAndGet()) {
       configuration.CONFIGURATIONS = modifiableList;
       return configuration.getConfigurationForCvsRoot(root);
-    } else {
+    }
+    else {
       return null;
     }
   }

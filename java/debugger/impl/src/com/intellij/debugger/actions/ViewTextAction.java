@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.debugger.actions;
 
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
@@ -31,7 +32,7 @@ import java.awt.*;
  */
 public class ViewTextAction extends XFetchValueActionBase {
   @Override
-  protected void handle(Project project, String value) {
+  protected void handle(Project project, String value, AnActionEvent e) {
     final MyDialog dialog = new MyDialog(project);
     dialog.setTitle("View Text");
     dialog.setText(StringUtil.unquoteString(value));

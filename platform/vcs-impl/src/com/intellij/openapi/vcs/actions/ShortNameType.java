@@ -18,8 +18,8 @@ package com.intellij.openapi.vcs.actions;
 import com.intellij.ide.util.PropertiesComponent;
 
 /**
-* @author Konstantin Bulenkov
-*/
+ * @author Konstantin Bulenkov
+ */
 public enum ShortNameType {
   LASTNAME("lastname", "Last Name"),
   FIRSTNAME("firstname", "First Name"),
@@ -42,11 +42,7 @@ public enum ShortNameType {
     return myId.equals(PropertiesComponent.getInstance().getValue(KEY));
   }
 
-  void set(boolean enable) {
-    if (enable) {
-      PropertiesComponent.getInstance().setValue(KEY, myId);
-    } else {
-      PropertiesComponent.getInstance().unsetValue(KEY);
-    }
+  void set() {
+    PropertiesComponent.getInstance().setValue(KEY, myId);
   }
 }

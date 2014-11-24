@@ -141,7 +141,7 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
     myProfiles.clear();
     XmlSerializer.deserializeInto(this, state);
     for (Element o : state.getChildren(PROFILE)) {
-      final Profile profile = myApplicationProfileManager.createProfile();
+      Profile profile = myApplicationProfileManager.createProfile();
       profile.setProfileManager(this);
       try {
         profile.readExternal(o);
@@ -149,11 +149,8 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
       catch (InvalidDataException e) {
         LOG.error(e);
       }
-      final String name = profile.getName();
-      if (myApplicationProfileManager.getProfile(name) != null) { //override ide profile
-        // myApplicationProfileManager.deleteProfile(name);
-      }
-      myProfiles.put(name, profile);
+      profile.setProjectLevel(true);
+      myProfiles.put(profile.getName(), profile);
     }
     if (state.getChild("version") == null || !Comparing.strEqual(state.getChild("version").getAttributeValue("value"), VERSION)) {
       boolean toConvert = true;
@@ -231,7 +228,7 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
       setProjectProfile(PROJECT_DEFAULT_PROFILE_NAME);
       final Profile projectProfile = myApplicationProfileManager.createProfile();
       projectProfile.copyFrom(myApplicationProfileManager.getRootProfile());
-      projectProfile.setLocal(false);
+      projectProfile.setProjectLevel(true);
       projectProfile.setName(PROJECT_DEFAULT_PROFILE_NAME);
       myProfiles.put(PROJECT_DEFAULT_PROFILE_NAME, projectProfile);
     }

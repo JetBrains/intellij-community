@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.formatter;
 
-import com.intellij.codeInsight.daemon.impl.CodeFoldingPassFactory;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
@@ -40,7 +39,6 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
@@ -197,9 +195,6 @@ public abstract class FormatterTestCase extends LightPlatformTestCase {
         PsiDocumentManager.getInstance(getProject()).commitDocument(document);
         assertEquals(file.getText(), document.getText());
 
-        if (false && doCheckDocumentUpdate()) {
-          EditorTestUtil.runTextEditorHighlightingPass(editor, CodeFoldingPassFactory.class);
-        }
         try {
           if (doReformatRangeTest) {
             CodeStyleManager.getInstance(getProject())

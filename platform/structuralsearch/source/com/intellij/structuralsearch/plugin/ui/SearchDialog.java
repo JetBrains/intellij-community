@@ -669,9 +669,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
           @Override
           public void actionPerformed(ActionEvent e) {
             SelectTemplateDialog dialog = new SelectTemplateDialog(searchContext.getProject(), true, isReplaceDialog());
-            dialog.show();
-
-            if (!dialog.isOK()) {
+            if (!dialog.showAndGet()) {
               return;
             }
             Configuration[] configurations = dialog.getSelectedConfigurations();
@@ -697,9 +695,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
           @Override
           public void actionPerformed(ActionEvent e) {
             SelectTemplateDialog dialog = new SelectTemplateDialog(searchContext.getProject(), false, isReplaceDialog());
-            dialog.show();
-
-            if (!dialog.isOK()) {
+            if (!dialog.showAndGet()) {
               return;
             }
             Configuration[] configurations = dialog.getSelectedConfigurations();

@@ -357,6 +357,11 @@ public class JDOMUtil {
   }
 
   @NotNull
+  public static Element load(@NotNull File file) throws JDOMException, IOException {
+    return load(new BufferedInputStream(new FileInputStream(file)));
+  }
+
+  @NotNull
   public static Document loadDocument(@NotNull InputStream stream) throws JDOMException, IOException {
     InputStreamReader reader = new InputStreamReader(stream, CharsetToolkit.UTF8_CHARSET);
     try {

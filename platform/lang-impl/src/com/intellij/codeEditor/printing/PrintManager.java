@@ -85,8 +85,7 @@ class PrintManager {
 
     PrintDialog printDialog = new PrintDialog(shortFileName[0], directoryName[0], text, project);
     printDialog.reset();
-    printDialog.show();
-    if (!printDialog.isOK()) {
+    if (!printDialog.showAndGet()) {
       return;
     }
     printDialog.apply();
@@ -97,7 +96,8 @@ class PrintManager {
     PrintSettings printSettings = PrintSettings.getInstance();
     if (printSettings.getPrintScope() != PrintSettings.PRINT_DIRECTORY) {
       if (psiFile == null && editor == null) return;
-      TextPainter textPainter = psiFile != null ? initTextPainter(psiFile, editor) : initTextPainter((DocumentEx)editor.getDocument(), project);
+      TextPainter textPainter =
+        psiFile != null ? initTextPainter(psiFile, editor) : initTextPainter((DocumentEx)editor.getDocument(), project);
       if (textPainter == null) return;
 
       if (printSettings.getPrintScope() == PrintSettings.PRINT_SELECTED_TEXT &&
