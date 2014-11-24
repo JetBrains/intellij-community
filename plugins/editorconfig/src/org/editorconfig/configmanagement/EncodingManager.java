@@ -52,13 +52,13 @@ public class EncodingManager extends FileDocumentManagerAdapter {
   }
 
   private void applySettings(VirtualFile file) {
-    if (file == null || !file.isInLocalFileSystem()) return;
+    if (file == null) return;
     if (!Utils.isEnabled(CodeStyleSettingsManager.getInstance(myProject).getCurrentSettings())) return;
 
     // Prevent "setEncoding" calling "saveAll" from causing an endless loop
     isApplyingSettings = true;
     try {
-      final String filePath = file.getCanonicalPath();
+      final String filePath = Utils.getFilePath(myProject, file);
       final List<OutPair> outPairs = SettingsProviderComponent.getInstance().getOutPairs(myProject, filePath);
       final EncodingProjectManager encodingProjectManager = EncodingProjectManager.getInstance(myProject);
       final String charset = Utils.configValueForKey(outPairs, charsetKey);
