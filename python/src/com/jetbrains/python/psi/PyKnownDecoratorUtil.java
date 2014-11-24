@@ -27,6 +27,7 @@ public class PyKnownDecoratorUtil {
   private PyKnownDecoratorUtil() {
   }
 
+  // TODO provide more information about these decorators: attributes (e.g. lru_cache(f).cache_info), side-effects etc.
   @SuppressWarnings("SpellCheckingInspection")
   public enum KnownDecorator {
 
