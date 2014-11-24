@@ -101,6 +101,12 @@ public class PythonInspectionsTest extends PyTestCase {
     doTest(getTestName(false), inspection);
   }
 
+  // PY-9778
+  public void testPyUnusedLocalCoroutine() {
+    myFixture.copyDirectoryToProject("inspections/" + getTestName(false), "");
+    doHighlightingTest(PyUnusedLocalInspection.class, LanguageLevel.PYTHON34);
+  }
+
   public void testPyDictCreationInspection() {
     doHighlightingTest(PyDictCreationInspection.class, LanguageLevel.PYTHON26);
   }

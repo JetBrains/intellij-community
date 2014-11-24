@@ -697,34 +697,11 @@ public class PyUtil {
   }
 
   public static boolean hasCustomDecorators(@NotNull PyDecoratable decoratable) {
-    PyDecoratorList decoratorList = decoratable.getDecoratorList();
-    if (decoratorList == null) {
-      return false;
-    }
-    for (PyDecorator decorator : decoratorList.getDecorators()) {
-      QualifiedName name = decorator.getQualifiedName();
-      if (name == null || (!PyNames.CLASSMETHOD.equals(name.toString()) && !PyNames.STATICMETHOD.equals(name.toString()))) {
-        return true;
-      }
-    }
-    return false;
+    return PyKnownDecoratorUtil.hasNonBuiltinDecorator(decoratable, null);
   }
 
   public static boolean isDecoratedAsAbstract(@NotNull final PyDecoratable decoratable) {
-    final PyDecoratorList decoratorList = decoratable.getDecoratorList();
-    if (decoratorList == null) {
-      return false;
-    }
-    for (PyDecorator decorator : decoratorList.getDecorators()) {
-      final QualifiedName qualifiedName = decorator.getQualifiedName();
-      if (qualifiedName != null) {
-        final String name = qualifiedName.toString();
-        if (name.endsWith(PyNames.ABSTRACTMETHOD) || name.endsWith(PyNames.ABSTRACTPROPERTY)) {
-          return true;
-        }
-      }
-    }
-    return false;
+    return PyKnownDecoratorUtil.hasAbstractDecorator(decoratable, null);
   }
 
   public static ASTNode createNewName(PyElement element, String name) {
