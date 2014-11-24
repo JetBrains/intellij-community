@@ -9,18 +9,18 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.edu.StudyResourceManger;
 import com.jetbrains.python.edu.StudyTaskManager;
+import com.jetbrains.python.edu.StudyUtils;
 import com.jetbrains.python.edu.course.Task;
 import com.jetbrains.python.edu.course.TaskFile;
 import com.jetbrains.python.edu.editor.StudyEditor;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
@@ -28,7 +28,7 @@ public class StudyRunAction extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance(StudyRunAction.class.getName());
   public static final String ACTION_ID = "StudyRunAction";
 
-  public void run(Project project) {
+  public void run(@NotNull final Project project, @NotNull final Sdk sdk) {
     Editor selectedEditor = StudyEditor.getSelectedEditor(project);
     FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
     assert selectedEditor != null;
@@ -37,9 +37,7 @@ public class StudyRunAction extends DumbAwareAction {
     if (openedFile != null && openedFile.getCanonicalPath() != null) {
       String filePath = openedFile.getCanonicalPath();
       GeneralCommandLine cmd = new GeneralCommandLine();
-      cmd.setWorkDirectory(openedFile.getParent().getCanonicalPath());
-      Sdk sdk = PythonSdkType.findPythonSdk(ModuleManager.getInstance(project).getModules()[0]);
-      if (sdk != null) {
+      cmd.withWorkDirectory(openedFile.getParent().getCanonicalPath());
         String pythonPath = sdk.getHomePath();
         if (pythonPath != null) {
           cmd.setExePath(pythonPath);
@@ -79,11 +77,18 @@ public class StudyRunAction extends DumbAwareAction {
             LOG.error(e);
           }
         }
-      }
     }
   }
 
-  public void actionPerformed(AnActionEvent e) {
-    run(e.getProject());
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    Project project = e.getProject();
+    if (project == null) {
+      return;
+    }
+    Sdk sdk = StudyUtils.findPythonSdk(project);
+    if (sdk == null) {
+      return;
+    }
+    run(project, sdk);
   }
 }

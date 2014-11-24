@@ -20,6 +20,7 @@ import com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorImpl;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -35,6 +36,7 @@ import com.intellij.util.ui.EmptyClipboardOwner;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.python.edu.StudyDocumentListener;
 import com.jetbrains.python.edu.StudyTaskManager;
+import com.jetbrains.python.edu.StudyUtils;
 import com.jetbrains.python.edu.actions.*;
 import com.jetbrains.python.edu.course.Task;
 import com.jetbrains.python.edu.course.TaskFile;
@@ -209,23 +211,26 @@ public class StudyEditor implements TextEditor {
     myRefreshButton = addButton(taskActionsPanel, StudyRefreshTaskFileAction.ACTION_ID, AllIcons.Actions.Refresh, StudyRefreshTaskFileAction.SHORTCUT);
     JButton myShowHintButton = addButton(taskActionsPanel, StudyShowHintAction.ACTION_ID, StudyIcons.ShowHint, StudyShowHintAction.SHORTCUT);
     if (!taskFile.getTask().getUserTests().isEmpty()) {
-      JButton runButton = addButton(taskActionsPanel, StudyRunAction.ACTION_ID, AllIcons.General.Run, null);
-      runButton.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          StudyRunAction studyRunAction = (StudyRunAction)ActionManager.getInstance().getAction("StudyRunAction");
-          studyRunAction.run(myProject);
-        }
-      });
-      JButton watchInputButton = addButton(taskActionsPanel, "WatchInputAction", StudyIcons.WatchInput, null);
-      watchInputButton.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          StudyEditInputAction studyEditInputAction =
-            (StudyEditInputAction)ActionManager.getInstance().getAction("WatchInputAction");
-          studyEditInputAction.showInput(myProject);
-        }
-      });
+      final Sdk sdk = StudyUtils.findPythonSdk(myProject);
+      if (sdk != null) {
+        JButton runButton = addButton(taskActionsPanel, StudyRunAction.ACTION_ID, AllIcons.General.Run, null);
+        runButton.addActionListener(new ActionListener() {
+          @Override
+          public void actionPerformed(ActionEvent e) {
+            StudyRunAction studyRunAction = (StudyRunAction)ActionManager.getInstance().getAction("StudyRunAction");
+            studyRunAction.run(myProject, sdk);
+          }
+        });
+        JButton watchInputButton = addButton(taskActionsPanel, "WatchInputAction", StudyIcons.WatchInput, null);
+        watchInputButton.addActionListener(new ActionListener() {
+          @Override
+          public void actionPerformed(ActionEvent e) {
+            StudyEditInputAction studyEditInputAction =
+              (StudyEditInputAction)ActionManager.getInstance().getAction("WatchInputAction");
+            studyEditInputAction.showInput(myProject);
+          }
+        });
+      }
     }
     myCheckButton.addActionListener(new ActionListener() {
       @Override
