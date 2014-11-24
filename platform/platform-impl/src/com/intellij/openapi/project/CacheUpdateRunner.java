@@ -19,15 +19,14 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.caches.CacheUpdater;
 import com.intellij.ide.caches.FileContent;
 import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.impl.ApplicationImpl;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
@@ -142,62 +141,52 @@ public class CacheUpdateRunner extends DumbModeTask {
     }
   }
 
-  private static boolean processSomeFilesWhileUserIsInactive(@NotNull FileContentQueue queue,
-                                                             @NotNull Consumer<VirtualFile> progressUpdater,
+  private static boolean processSomeFilesWhileUserIsInactive(@NotNull final FileContentQueue queue,
+                                                             @NotNull final Consumer<VirtualFile> progressUpdater,
                                                              final boolean processInReadAction,
-                                                             @NotNull Project project,
-                                                             @NotNull Consumer<FileContent> fileProcessor) {
+                                                             @NotNull final Project project,
+                                                             @NotNull final Consumer<FileContent> fileProcessor) {
     final ProgressIndicatorBase innerIndicator = new ProgressIndicatorBase() {
       @Override
       protected boolean isCancelable() {
         return true; // the inner indicator must be always cancelable
       }
     };
-    final ApplicationAdapter canceller = new ApplicationAdapter() {
-      @Override
-      public void beforeWriteActionStart(Object action) {
-        innerIndicator.cancel();
-      }
-    };
+
     final Application application = ApplicationManager.getApplication();
-    // wait until listener installer for better ability to cancel indexing
-    application.invokeAndWait(new Runnable() {
+    final AtomicBoolean isFinished = new AtomicBoolean();
+
+    ProgressIndicatorUtils.runWithWriteActionPriority(new Runnable() {
       @Override
       public void run() {
-        application.addApplicationListener(canceller);
-      }
-    }, ModalityState.any());
-
-    final AtomicBoolean isFinished = new AtomicBoolean();
-    try {
-      int threadsCount = Registry.intValue("caches.indexerThreadsCount");
-      if (threadsCount <= 0) {
-        threadsCount = Math.max(1, Math.min(PROC_COUNT - 1, 4));
-      }
-      if (threadsCount == 1) {
-        Runnable process = new MyRunnable(innerIndicator, queue, isFinished, progressUpdater, processInReadAction, project, fileProcessor);
-        ProgressManager.getInstance().runProcess(process, innerIndicator);
-      }
-      else {
-        AtomicBoolean[] finishedRefs = new AtomicBoolean[threadsCount];
-        Future<?>[] futures = new Future<?>[threadsCount];
-        for (int i = 0; i < threadsCount; i++) {
-          AtomicBoolean ref = new AtomicBoolean();
-          finishedRefs[i] = ref;
-          Runnable process = new MyRunnable(innerIndicator, queue, ref, progressUpdater, processInReadAction, project, fileProcessor);
-          futures[i] = ApplicationManager.getApplication().executeOnPooledThread(getProcessWrapper(process));
+        int threadsCount = Registry.intValue("caches.indexerThreadsCount");
+        if (threadsCount <= 0) {
+          threadsCount = Math.max(1, Math.min(PROC_COUNT - 1, 4));
         }
-        isFinished.set(waitForAll(finishedRefs, futures));
+        if (threadsCount == 1 || application.isWriteAccessAllowed()) {
+          Runnable process =
+            new MyRunnable(innerIndicator, queue, isFinished, progressUpdater, processInReadAction, project, fileProcessor);
+          ProgressManager.getInstance().runProcess(process, innerIndicator);
+        }
+        else {
+          AtomicBoolean[] finishedRefs = new AtomicBoolean[threadsCount];
+          Future<?>[] futures = new Future<?>[threadsCount];
+          for (int i = 0; i < threadsCount; i++) {
+            AtomicBoolean ref = new AtomicBoolean();
+            finishedRefs[i] = ref;
+            Runnable process = new MyRunnable(innerIndicator, queue, ref, progressUpdater, processInReadAction, project, fileProcessor);
+            futures[i] = ApplicationManager.getApplication().executeOnPooledThread(process);
+          }
+          isFinished.set(waitForAll(finishedRefs, futures));
+        }
       }
-    }
-    finally {
-      application.removeApplicationListener(canceller);
-    }
+    }, innerIndicator);
 
     return isFinished.get();
   }
 
   private static boolean waitForAll(@NotNull AtomicBoolean[] finishedRefs, @NotNull Future<?>[] futures) {
+    assert !ApplicationManager.getApplication().isWriteAccessAllowed();
     try {
       for (Future<?> future : futures) {
         future.get();
@@ -211,7 +200,6 @@ public class CacheUpdateRunner extends DumbModeTask {
         }
       }
       return allFinished;
-
     }
     catch (InterruptedException ignored) {
     }
@@ -270,7 +258,7 @@ public class CacheUpdateRunner extends DumbModeTask {
         try {
           final FileContent fileContent = myQueue.take(myInnerIndicator);
           if (fileContent == null) {
-            myFinished.set(Boolean.TRUE);
+            myFinished.set(true);
             return;
           }
 
@@ -302,7 +290,10 @@ public class CacheUpdateRunner extends DumbModeTask {
                 @Override
                 public void run() {
                   if (myProcessInReadAction) {
-                    ApplicationManager.getApplication().runReadAction(action);
+                    // in wait methods we don't want to deadlock by grabbing write lock (or having it in queue) and trying to run read action in separate thread
+                    if (!ApplicationManagerEx.getApplicationEx().tryRunReadAction(action)) {
+                      throw new ProcessCanceledException();
+                    }
                   }
                   else {
                     action.run();
@@ -325,21 +316,5 @@ public class CacheUpdateRunner extends DumbModeTask {
         }
       }
     }
-  }
-
-  private static Runnable getProcessWrapper(final Runnable process) {
-    // launching thread will hold read access for workers
-    return ApplicationManager.getApplication().isReadAccessAllowed() ? new Runnable() {
-      @Override
-      public void run() {
-        ApplicationImpl.setExceptionalThreadWithReadAccessFlag(true);
-        try {
-          process.run();
-        }
-        finally {
-          ApplicationImpl.setExceptionalThreadWithReadAccessFlag(false);
-        }
-      }
-    } : process;
   }
 }

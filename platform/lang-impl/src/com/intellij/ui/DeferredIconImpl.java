@@ -25,7 +25,9 @@ import com.intellij.ide.PowerSaveMode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.tabs.impl.TabLabel;
 import com.intellij.util.Alarm;
@@ -102,39 +104,49 @@ public class DeferredIconImpl<T> implements DeferredIcon {
       public void run() {
         int oldWidth = myDelegateIcon.getIconWidth();
         final Icon[] evaluated = new Icon[1];
-        final Runnable evalRunnable = new Runnable() {
-          @Override
-          public void run() {
-            try {
-              evaluated[0] = nonNull(myEvaluator.fun(myParam));
-            }
-            catch (ProcessCanceledException e) {
-              evaluated[0] = EMPTY_ICON;
-            }
-            catch (IndexNotReadyException e) {
-              evaluated[0] = EMPTY_ICON;
-            }
-          }
-        };
 
         final long startTime = System.currentTimeMillis();
         if (myNeedReadAction) {
-          if (!ApplicationManagerEx.getApplicationEx().tryRunReadAction(new Runnable() {
+          final Ref<Boolean> cancelled = new Ref<Boolean>();
+          boolean result = ProgressIndicatorUtils.runWithWriteActionPriority(new Runnable() {
             @Override
             public void run() {
-              IconDeferrerImpl.evaluateDeferred(evalRunnable);
-              if (myAutoUpdatable) {
-                myLastCalcTime = System.currentTimeMillis();
-                myLastTimeSpent = myLastCalcTime - startTime;
+              if (!ApplicationManagerEx.getApplicationEx().tryRunReadAction(new Runnable() {
+                @Override
+                public void run() {
+                  IconDeferrerImpl.evaluateDeferred(new Runnable() {
+                    @Override
+                    public void run() {
+                      try {
+                        evaluated[0] = nonNull(myEvaluator.fun(myParam));
+                      }
+                      catch (IndexNotReadyException e) {
+                        evaluated[0] = EMPTY_ICON;
+                      }
+                    }
+                  });
+                  if (myAutoUpdatable) {
+                    myLastCalcTime = System.currentTimeMillis();
+                    myLastTimeSpent = myLastCalcTime - startTime;
+                  }
+                }
+              })) {
+                cancelled.set(Boolean.TRUE);
               }
             }
-          })) {
+          });
+          if (cancelled.get() == Boolean.TRUE || !result) {
             myIsScheduled = false;
             return;
           }
         }
         else {
-          IconDeferrerImpl.evaluateDeferred(evalRunnable);
+          IconDeferrerImpl.evaluateDeferred(new Runnable() {
+            @Override
+            public void run() {
+              evaluated[0] = nonNull(myEvaluator.fun(myParam));
+            }
+          });
           if (myAutoUpdatable) {
             myLastCalcTime = System.currentTimeMillis();
             myLastTimeSpent = myLastCalcTime - startTime;
