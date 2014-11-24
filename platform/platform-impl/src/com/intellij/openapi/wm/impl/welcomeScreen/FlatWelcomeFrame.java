@@ -22,14 +22,14 @@ import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.*;
+import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
@@ -117,7 +117,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
 
     myBalloonLayout = new BalloonLayoutImpl(rootPane, new Insets(8, 8, 8, 8));
 
-    setupCloseAction();
+    WelcomeFrame.setupCloseAction(this);
     new MnemonicHelper().register(this);
     Disposer.register(ApplicationManager.getApplication(), new Disposable() {
       @Override
@@ -138,32 +138,6 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
   private static void saveLocation(Rectangle location) {
     Point middle = new Point(location.x + location.width / 2, location.y = location.height / 2);
     DimensionService.getInstance().setLocation(WelcomeFrame.DIMENSION_KEY, middle, null);
-  }
-
-  private void setupCloseAction() {
-    setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
-    addWindowListener(
-      new WindowAdapter() {
-        public void windowClosing(final WindowEvent e) {
-          dispose();
-
-          final Application app = ApplicationManager.getApplication();
-          app.invokeLater(new DumbAwareRunnable() {
-            public void run() {
-              if (app.isDisposed()) {
-                ApplicationManagerEx.getApplicationEx().exit();
-                return;
-              }
-
-              final Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
-              if (openProjects.length == 0) {
-                ApplicationManagerEx.getApplicationEx().exit();
-              }
-            }
-          }, ModalityState.NON_MODAL);
-        }
-      }
-    );
   }
 
   @Override
@@ -385,10 +359,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
         final JLabel label = new JLabel();
         Map<Icon, Icon> scaled = new HashMap<Icon, Icon>();
         {
-          Insets padding = UIUtil.getListCellPadding();
-          padding.top = 3;
-          padding.bottom = 3;
-          label.setBorder(new EmptyBorder(padding));
+          label.setBorder(new EmptyBorder(new Insets(3, 7, 3, 7)));
         }
         @NotNull
         @Override
@@ -411,9 +382,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
       pane.setBackground(getProjectsBackground());
       actionsListPanel.add(pane, BorderLayout.CENTER);
       final JLabel back = new JLabel(AllIcons.Actions.Back);
-      Insets padding = UIUtil.getListCellPadding();
-      padding.bottom+=10;
-      back.setBorder(new EmptyBorder(padding));
+      back.setBorder(new EmptyBorder(new Insets(3, 7, 10, 7)));
       back.setHorizontalAlignment(SwingConstants.LEFT);
       new ClickListener(){
         @Override

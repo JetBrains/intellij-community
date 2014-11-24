@@ -25,7 +25,7 @@ abstract public class CCTaskWindowAction extends DumbAwareAction {
   @Nullable
   private static CCState getState(@NotNull AnActionEvent e) {
     final Project project = e.getProject();
-    if (project == null) {
+    if (project == null || CCProjectService.getInstance(project).getCourse() == null) {
       return null;
     }
     final PsiFile psiFile = CommonDataKeys.PSI_FILE.getData(e.getDataContext());

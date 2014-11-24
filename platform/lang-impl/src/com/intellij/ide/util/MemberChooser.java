@@ -172,6 +172,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
 
     defaultExpandTree();
 
+    //TODO: dmitry batkovich: appcode tests fail
     //restoreTree();
 
     if (myOptionControls == null) {
