@@ -64,8 +64,9 @@ public class FormattingDocumentModelImpl implements FormattingDocumentModel {
       if (PsiDocumentManager.getInstance(file.getProject()).isUncommited(document)) {
         LOG.error("Document is uncommitted");
       }
-      if (!file.textMatches(document.getImmutableCharSequence())) {
-        LOG.error("Document and psi file texts should be equal: file " + file);
+      if (file.getTextLength() != document.getTextLength()) {
+        LOG.error("Document and psi file texts should be equal: " +
+                  file + " file length = " + file.getTextLength() + ", document length = " + document.getTextLength());
       }
       return new FormattingDocumentModelImpl(document, file);
     }
