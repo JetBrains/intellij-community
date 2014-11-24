@@ -564,4 +564,6 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * @see #completeBasic()
    */
   void completeBasicAllCarets();
+
+  void saveText(VirtualFile file, String text);
 }

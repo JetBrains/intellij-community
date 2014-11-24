@@ -148,7 +148,7 @@ class ContractInferenceFromSourceTest extends LightCodeInsightFixtureTestCase {
     return true;
   }
 """)
-    assert c == []
+    assert c == ['null -> true']
   }
 
   void "test assertion"() {
@@ -389,6 +389,23 @@ class ContractInferenceFromSourceTest extends LightCodeInsightFixtureTestCase {
   }
     """)
     assert c == ['null -> null']
+  }
+
+  public void "test return after if without else"() {
+    def c = inferContracts("""
+public static boolean isBlank(String s) {
+        if (s != null) {
+            final int l = s.length();
+            for (int i = 0; i < l; i++) {
+                final char c = s.charAt(i);
+                if (c != ' ') {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }    """)
+    assert c == ['null -> true']
   }
 
   private String inferContract(String method) {

@@ -23,10 +23,14 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.UndoManager;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.TypedAction;
@@ -159,7 +163,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     return configureByText(fileType, text, null);
   }
 
-  protected PsiFile configureByText(@NotNull final FileType fileType, @NonNls @NotNull String text, @Nullable String _extension) {
+  protected PsiFile configureByText(@NotNull final FileType fileType, @NonNls @NotNull final String text, @Nullable String _extension) {
     try {
       final String extension = _extension == null ? fileType.getDefaultExtension():_extension;
 
@@ -169,15 +173,19 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
       if (fileTypeManager.getFileTypeByExtension(extension) != fileType) {
         new WriteCommandAction(getProject()) {
           @Override
-          protected void run(Result result) throws Exception {
+          protected void run(@NotNull Result result) throws Exception {
             fileTypeManager.associateExtension(fileType, extension);
           }
         }.execute();
       }
       final VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempFile);
       assert vFile != null;
-      vFile.setCharset(CharsetToolkit.UTF8_CHARSET);
-      VfsUtil.saveText(vFile, text);
+      new WriteAction() {
+        protected void run(@NotNull Result result) throws Throwable {
+          vFile.setCharset(CharsetToolkit.UTF8_CHARSET);
+          VfsUtil.saveText(vFile, text);
+        }
+      }.execute();
 
       final VirtualFile vdir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir);
 
