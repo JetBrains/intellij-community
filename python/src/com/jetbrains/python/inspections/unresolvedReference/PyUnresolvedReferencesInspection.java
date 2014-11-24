@@ -736,7 +736,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       }
       if (type instanceof PyFunctionType) {
         final Callable callable = ((PyFunctionType)type).getCallable();
-        if (callable instanceof PyFunction && ((PyFunction)callable).getDecoratorList() != null) {
+        if (callable instanceof PyFunction && PyKnownDecoratorUtil.hasNonBuiltinDecorator((PyFunction)callable, myTypeEvalContext)) {
           return true;
         }
       }

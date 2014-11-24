@@ -133,7 +133,8 @@ public class PyResolveUtil {
         final Scope scope = ControlFlowCache.getScope(scopeOwner);
         boolean found = false;
         if (name != null) {
-          final PsiElement resolved = scope.getNamedElement(name);
+          final boolean includeNestedGlobals = scopeOwner instanceof PyFile;
+          final PsiElement resolved = scope.getNamedElement(name, includeNestedGlobals);
           if (resolved != null) {
             if (!processor.execute(resolved, ResolveState.initial())) {
               found = true;
