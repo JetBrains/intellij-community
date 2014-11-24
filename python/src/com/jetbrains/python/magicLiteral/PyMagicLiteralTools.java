@@ -36,7 +36,7 @@ public final class PyMagicLiteralTools {
    */
   private final static PsiCacheKey<Ref<PyMagicLiteralExtensionPoint>, StringLiteralExpression> MAGIC_LITERAL_POINT =
     PsiCacheKey
-      .create(PyMagicLiteralTools.class.getName(), new MagicLiteralChecker(), PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
+      .create(PyMagicLiteralTools.class.getName(), new MagicLiteralChecker(), PsiModificationTracker.MODIFICATION_COUNT);
 
   private PyMagicLiteralTools() {
   }
