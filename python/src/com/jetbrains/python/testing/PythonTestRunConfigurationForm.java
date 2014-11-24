@@ -139,22 +139,22 @@ public class PythonTestRunConfigurationForm implements AbstractPythonTestRunConf
   }
 
   @Override
-  public boolean addContentRoots() {
+  public boolean shouldAddContentRoots() {
     return myCommonOptionsForm.shouldAddContentRoots();
   }
 
   @Override
-  public boolean addSourceRoots() {
+  public boolean shouldAddSourceRoots() {
     return myCommonOptionsForm.shouldAddSourceRoots();
   }
 
   @Override
-  public void addContentRoots(boolean addContentRoots) {
+  public void setAddContentRoots(boolean addContentRoots) {
     myCommonOptionsForm.setAddContentRoots(addContentRoots);
   }
 
   @Override
-  public void addSourceRoots(boolean addSourceRoots) {
+  public void setAddSourceRoots(boolean addSourceRoots) {
     myCommonOptionsForm.setAddSourceRoots(addSourceRoots);
   }
 
