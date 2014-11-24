@@ -722,4 +722,14 @@ public class PythonCompletionTest extends PyTestCase {
     assertNotNull(suggested);
     assertSameElements(suggested, "VAR", "subpkg1");
   }
+
+  // PY-14519
+  public void testOsPath() {
+    myFixture.copyDirectoryToProject("completion/" + getTestName(true), "");
+    myFixture.configureByFile("a.py");
+    myFixture.completeBasic();
+    final List<String> suggested = myFixture.getLookupElementStrings();
+    assertNotNull(suggested);
+    assertContainsElements(suggested, "path");
+  }
 }
