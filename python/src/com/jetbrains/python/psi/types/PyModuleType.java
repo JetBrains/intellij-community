@@ -303,11 +303,16 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
         final PsiElement resolved = member.resolve(location);
         if (resolved != null) {
           processor.execute(resolved, ResolveState.initial());
-          result.addAll(processor.getResultList());
+          final List<LookupElement> lookupList = processor.getResultList();
+          if (!lookupList.isEmpty()) {
+            final LookupElement element = lookupList.get(0);
+            if (name.equals(element.getLookupString())) {
+              result.add(element);
+              continue;
+            }
+          }
         }
-        else {
-          result.add(LookupElementBuilder.create(name).withIcon(member.getIcon()).withTypeText(member.getShortType()));
-        }
+        result.add(LookupElementBuilder.create(name).withIcon(member.getIcon()).withTypeText(member.getShortType()));
       }
     }
     if (point == PointInImport.NONE || point == PointInImport.AS_NAME) { // when not imported from, add regular attributes
