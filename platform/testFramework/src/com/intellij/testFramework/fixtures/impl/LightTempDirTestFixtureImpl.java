@@ -209,7 +209,7 @@ public class LightTempDirTestFixtureImpl extends BaseFixture implements TempDirT
   @NotNull
   public VirtualFile createFile(@NotNull String targetPath, final String text) throws IOException {
     final VirtualFile file = createFile(targetPath);
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
         try {
