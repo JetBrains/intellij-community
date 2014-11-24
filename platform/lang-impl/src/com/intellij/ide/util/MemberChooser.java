@@ -172,7 +172,8 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
 
     defaultExpandTree();
 
-    restoreTree();
+    //TODO: dmitry batkovich: appcode tests fail
+    //restoreTree();
 
     if (myOptionControls == null) {
       myCopyJavadocCheckbox = new NonFocusableCheckBox(IdeBundle.message("checkbox.copy.javadoc"));
