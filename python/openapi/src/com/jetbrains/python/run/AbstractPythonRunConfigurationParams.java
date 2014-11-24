@@ -60,8 +60,9 @@ public interface AbstractPythonRunConfigurationParams {
 
   void setMappingSettings(@Nullable PathMappingSettings mappingSettings);
 
-  boolean addContentRoots();
-  boolean addSourceRoots();
-  void addContentRoots(boolean add);
-  void addSourceRoots(boolean add);
+  boolean shouldAddContentRoots();
+  boolean shouldAddSourceRoots();
+
+  void setAddContentRoots(boolean flag);
+  void setAddSourceRoots(boolean flag);
 }
