@@ -26,10 +26,16 @@ class ImportHookManager(ModuleType):
             else:
                 # default value for level parameter in other versions
                 level = -1
-        module = self._system_import(name, globals, locals, fromlist, level)
+        activate_func = None
         if DictContains(self._modules_to_patch, name):
-            self._modules_to_patch[name]() #call activate function
-            self._modules_to_patch.pop(name)
+            activate_func = self._modules_to_patch.pop(name)
+
+        module = self._system_import(name, globals, locals, fromlist, level)
+        try:
+            if activate_func:
+                activate_func() #call activate function
+        except:
+            sys.stderr.write("Matplotlib support failed")
         return module
 
 try:
