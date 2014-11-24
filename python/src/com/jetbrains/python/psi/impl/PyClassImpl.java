@@ -81,7 +81,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     @Override
     public CachedValueProvider.Result<List<PyClassLikeType>> compute(@NotNull TypeEvalContext context) {
       final List<PyClassLikeType> ancestorTypes = isNewStyleClass() ? getMROAncestorTypes(context) : getOldStyleAncestorTypes(context);
-      return CachedValueProvider.Result.create(ancestorTypes, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
+      return CachedValueProvider.Result.create(ancestorTypes, PsiModificationTracker.MODIFICATION_COUNT);
     }
   }
 
@@ -96,7 +96,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   private class NewStyleCachedValueProvider implements CachedValueProvider<Boolean> {
     @Override
     public Result<Boolean> compute() {
-      return new Result<Boolean>(calculateNewStyleClass(), PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
+      return new Result<Boolean>(calculateNewStyleClass(), PsiModificationTracker.MODIFICATION_COUNT);
     }
   }
 
