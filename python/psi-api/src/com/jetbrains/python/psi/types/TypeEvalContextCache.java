@@ -64,7 +64,7 @@ class TypeEvalContextCache {
   TypeEvalContext getContext(@NotNull final Project project, @NotNull final TypeEvalContext standard) {
     final PsiModificationTracker tracker = SERVICE.getInstance(project);
     synchronized (myLock) {
-      final long currentCount = tracker.getOutOfCodeBlockModificationCount();
+      final long currentCount = tracker.getModificationCount();
       if (currentCount == myModificationCount) {
         // Cache is valid, use it
         final TypeEvalContext valueFromCache = myCache.get(standard.getConstraints());
