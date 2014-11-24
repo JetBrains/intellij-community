@@ -385,10 +385,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
         final JLabel label = new JLabel();
         Map<Icon, Icon> scaled = new HashMap<Icon, Icon>();
         {
-          Insets padding = UIUtil.getListCellPadding();
-          padding.top = 3;
-          padding.bottom = 3;
-          label.setBorder(new EmptyBorder(padding));
+          label.setBorder(new EmptyBorder(new Insets(3, 7, 3, 7)));
         }
         @NotNull
         @Override
@@ -411,9 +408,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
       pane.setBackground(getProjectsBackground());
       actionsListPanel.add(pane, BorderLayout.CENTER);
       final JLabel back = new JLabel(AllIcons.Actions.Back);
-      Insets padding = UIUtil.getListCellPadding();
-      padding.bottom+=10;
-      back.setBorder(new EmptyBorder(padding));
+      back.setBorder(new EmptyBorder(new Insets(3, 7, 10, 7)));
       back.setHorizontalAlignment(SwingConstants.LEFT);
       new ClickListener(){
         @Override
