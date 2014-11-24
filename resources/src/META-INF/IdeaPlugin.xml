@@ -1235,6 +1235,9 @@
     <applicationService serviceInterface="com.intellij.packageDependencies.DependenciesVisitorFactory"
                         serviceImplementation="com.intellij.packageDependencies.JavaDependenciesVisitorFactory"/>
 
+    <exceptionFilter implementation="com.intellij.execution.filters.ExceptionBaseFilterFactory"/>
+    <exceptionFilter implementation="com.intellij.execution.filters.ExceptionExFilterFactory"/>
+    <exceptionFilter implementation="com.intellij.openapi.vcs.contentAnnotation.VcsContentAnnotationExceptionFilterFactory"/>
 
     <internalFileTemplate name="Class"/>
     <internalFileTemplate name="Interface"/>
