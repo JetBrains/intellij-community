@@ -75,13 +75,8 @@ public class PythonFacet extends Facet<PythonFacetConfiguration> implements Libr
           }
         }
 
-        // !!!!!!!!!! WARNING !!!!!!!!!
-        // This generates Roots Changed Event and BaseRailsFacet uses such behaviour!
-        // Don't remove it without updating BaseRailsFacet behaviour!
         if (modelChanged){
           model.commit();
-        } else {
-          model.dispose();
         }
       }
     });
