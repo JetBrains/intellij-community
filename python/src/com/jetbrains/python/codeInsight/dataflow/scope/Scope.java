@@ -46,7 +46,7 @@ public interface Scope {
   List<PyImportedNameDefiner> getImportedNameDefiners();
 
   @Nullable
-  PsiNamedElement getNamedElement(String name);
+  PsiNamedElement getNamedElement(String name, boolean includeNestedGlobals);
 
   @NotNull
   Collection<PsiNamedElement> getNamedElements();
