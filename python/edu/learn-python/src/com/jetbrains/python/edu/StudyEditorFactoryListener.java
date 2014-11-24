@@ -17,7 +17,6 @@ import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.jetbrains.python.edu.course.StudyStatus;
 import com.jetbrains.python.edu.course.TaskFile;
 import com.jetbrains.python.edu.course.TaskWindow;
 import com.jetbrains.python.edu.editor.StudyEditor;
@@ -46,7 +45,7 @@ class StudyEditorFactoryListener implements EditorFactoryListener {
       TaskWindow taskWindow = myTaskFile.getTaskWindow(editor.getDocument(), pos);
       if (taskWindow != null) {
         myTaskFile.setSelectedTaskWindow(taskWindow);
-        taskWindow.draw(editor, taskWindow.getStatus() != StudyStatus.Solved, true);
+        taskWindow.draw(editor, false, false);
       }
       else {
         myTaskFile.drawAllWindows(editor);
