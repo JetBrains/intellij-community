@@ -108,6 +108,7 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
     return element.getName().isEmpty() && element.getValue().isEmpty();
   }
 
+  @NotNull
   @Override
   protected AnActionButton[] createExtraActions() {
     AnActionButton copyButton = new AnActionButton(ActionsBundle.message("action.EditorCopy.text"), AllIcons.Actions.Copy) {
