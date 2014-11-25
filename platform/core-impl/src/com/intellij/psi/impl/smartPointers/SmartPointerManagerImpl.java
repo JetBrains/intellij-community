@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ProperTextRange;
+import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -78,7 +79,16 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
           PsiFile injectedFile = psiDocumentManager.getPsiFile(injectedDoc);
           if (injectedFile == null) continue;
           RangeMarker[] cachedMarkers = getCachedRangeMarkerToInjectedFragment(injectedFile);
-          fastenBelts(injectedFile.getViewProvider().getVirtualFile(), 0, cachedMarkers);
+          boolean relevant = false;
+          for (Segment hostSegment : injectedDoc.getHostRanges()) {
+            if (offset <= hostSegment.getEndOffset()) {
+              relevant = true;
+              break;
+            }
+          }
+          if (relevant) {
+            fastenBelts(injectedFile.getViewProvider().getVirtualFile(), 0, cachedMarkers);
+          }
         }
       }
     }
