@@ -298,23 +298,23 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractRunConfig
   }
 
   @Override
-  public boolean addContentRoots() {
+  public boolean shouldAddContentRoots() {
     return myAddContentRoots;
   }
 
   @Override
-  public boolean addSourceRoots() {
+  public boolean shouldAddSourceRoots() {
     return myAddSourceRoots;
   }
 
   @Override
-  public void addSourceRoots(boolean add) {
-    myAddSourceRoots = add;
+  public void setAddSourceRoots(boolean flag) {
+    myAddSourceRoots = flag;
   }
 
   @Override
-  public void addContentRoots(boolean add) {
-    myAddContentRoots = add;
+  public void setAddContentRoots(boolean flag) {
+    myAddContentRoots = flag;
   }
 
   public static void copyParams(AbstractPythonRunConfigurationParams source, AbstractPythonRunConfigurationParams target) {
@@ -326,8 +326,8 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractRunConfig
     target.setModule(source.getModule());
     target.setUseModuleSdk(source.isUseModuleSdk());
     target.setMappingSettings(source.getMappingSettings());
-    target.addContentRoots(source.addContentRoots());
-    target.addSourceRoots(source.addSourceRoots());
+    target.setAddContentRoots(source.shouldAddContentRoots());
+    target.setAddSourceRoots(source.shouldAddSourceRoots());
   }
 
   /**

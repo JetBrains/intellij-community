@@ -98,7 +98,6 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   private static final int GAP_BETWEEN_ANNOTATIONS = 5;
   private Color myBackgroundColor = null;
   private String myLastGutterToolTip = null;
-  private int myLastPreferredHeight = -1;
   @NotNull private TIntFunction myLineNumberConvertor;
   private boolean myShowDefaultGutterPopup = true;
 
@@ -158,7 +157,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
             getLineMarkerAreaWidth() +
             getFoldingAreaWidth();
 
-    return new Dimension(w, myLastPreferredHeight);
+    return new Dimension(w, myEditor.getPreferredHeight());
   }
 
   @Override
@@ -545,15 +544,13 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   private void updateSizeInner() {
-    myLastPreferredHeight = myEditor.getPreferredHeight();
     calcIconAreaWidth();
     calcAnnotationsSize();
     calcAnnotationExtraSize();
   }
 
   private int sizeHash() {
-    int result = myLastPreferredHeight;
-    result = 31 * result + myLineMarkerAreaWidth;
+    int result = myLineMarkerAreaWidth;
     result = 31 * result + myTextAnnotationGuttersSize;
     result = 31 * result + myTextAnnotationExtraSize;
     return result;

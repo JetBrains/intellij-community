@@ -224,8 +224,8 @@ public abstract class AbstractPythonTestRunConfiguration extends AbstractPythonR
     target.setTestType(source.getTestType());
     target.setPattern(source.getPattern());
     target.usePattern(source.usePattern());
-    target.addContentRoots(source.addContentRoots());
-    target.addSourceRoots(source.addSourceRoots());
+    target.setAddContentRoots(source.shouldAddContentRoots());
+    target.setAddSourceRoots(source.shouldAddSourceRoots());
   }
 
   public AbstractPythonTestRunConfigurationParams getTestRunConfigurationParams() {

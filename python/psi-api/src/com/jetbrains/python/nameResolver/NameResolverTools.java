@@ -39,7 +39,7 @@ public final class NameResolverTools {
    * Cache: pair [qualified element name, class name (may be null)] by any psi element.
    */
   private static final PsiCacheKey<Pair<String, String>, PyElement> QUALIFIED_AND_CLASS_NAME =
-    PsiCacheKey.create(NameResolverTools.class.getName(), new QualifiedAndClassNameObtainer(), PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
+    PsiCacheKey.create(NameResolverTools.class.getName(), new QualifiedAndClassNameObtainer(), PsiModificationTracker.MODIFICATION_COUNT);
 
   private NameResolverTools() {
 
