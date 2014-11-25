@@ -157,8 +157,12 @@ public class PyRefactoringUtil {
 
       @Override
       public void visitPyReferenceExpression(PyReferenceExpression node) {
-        variables.add(node.getReferencedName());
-        super.visitPyReferenceExpression(node);
+        if (!node.isQualified()) {
+          variables.add(node.getReferencedName());
+        }
+        else {
+          super.visitPyReferenceExpression(node);
+        }
       }
 
       @Override
