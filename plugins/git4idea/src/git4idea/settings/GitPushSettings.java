@@ -17,6 +17,7 @@ package git4idea.settings;
 
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.ObjectUtils;
 import git4idea.config.UpdateMethod;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,11 +27,13 @@ import org.jetbrains.annotations.NotNull;
 @State(name = "Git.Push.Settings", storages = {@Storage(file = StoragePathMacros.WORKSPACE_FILE)})
 public class GitPushSettings implements PersistentStateComponent<GitPushSettings.State> {
 
+  private static final UpdateMethod DEFAULT_UPDATE_METHOD = UpdateMethod.MERGE;
+
   private State myState = new State();
 
   public static class State {
     public boolean myUpdateAllRoots = true;
-    public UpdateMethod myUpdateMethod = UpdateMethod.MERGE;
+    public UpdateMethod myUpdateMethod = DEFAULT_UPDATE_METHOD;
   }
 
   public static GitPushSettings getInstance(Project project) {
@@ -57,7 +60,7 @@ public class GitPushSettings implements PersistentStateComponent<GitPushSettings
 
   @NotNull
   public UpdateMethod getUpdateMethod() {
-    return myState.myUpdateMethod;
+    return ObjectUtils.notNull(myState.myUpdateMethod, DEFAULT_UPDATE_METHOD);
   }
 
   public void setUpdateMethod(@NotNull UpdateMethod updateMethod) {
