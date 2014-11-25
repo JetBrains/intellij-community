@@ -69,7 +69,7 @@ public abstract class XFetchValueActionBase extends AnAction {
       return;
     }
 
-    ValueCollector valueCollector = new ValueCollector(e);
+    ValueCollector valueCollector = new ValueCollector(XDebuggerTree.getTree(e.getDataContext()));
     for (TreePath path : paths) {
       Object node = path.getLastPathComponent();
       if (node instanceof XValueNodeImpl) {
@@ -99,11 +99,11 @@ public abstract class XFetchValueActionBase extends AnAction {
 
   private final class ValueCollector {
     private final List<String> values = new SmartList<String>();
-    private final AnActionEvent myEvent;
+    private final XDebuggerTree myTree;
     private volatile boolean processed;
 
-    public ValueCollector(AnActionEvent e) {
-      myEvent = e;
+    public ValueCollector(XDebuggerTree tree) {
+      myTree = tree;
     }
 
     public void add(@NotNull String value) {
@@ -112,7 +112,7 @@ public abstract class XFetchValueActionBase extends AnAction {
 
     public void finish(Project project) {
       if (processed && !values.contains(null) && !project.isDisposed()) {
-        handle(project, StringUtil.join(values, "\n"), myEvent);
+        handle(project, StringUtil.join(values, "\n"), myTree);
       }
     }
 
@@ -133,7 +133,7 @@ public abstract class XFetchValueActionBase extends AnAction {
     }
   }
 
-  protected abstract void handle(final Project project, final String value, AnActionEvent e);
+  protected abstract void handle(final Project project, final String value, XDebuggerTree tree);
 
   private static final class CopyValueEvaluationCallback extends HeadlessValueEvaluationCallback {
     private final int myValueIndex;
