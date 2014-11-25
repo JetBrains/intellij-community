@@ -47,6 +47,8 @@ import javax.swing.text.html.HTMLFrameHyperlinkEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.net.URL;
 import java.util.*;
@@ -382,6 +384,17 @@ public class ManagePackagesDialog extends DialogWrapper {
 
     public MyPackageFilter() {
       super("PACKAGE_FILTER", 5);
+      getTextEditor().addKeyListener(new KeyAdapter() {
+        public void keyPressed(final KeyEvent e) {
+          if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+            e.consume();
+            filter();
+            myPackages.requestFocus();
+          } else if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
+            onEscape(e);
+          }
+        }
+      });
     }
 
     public void filter() {
