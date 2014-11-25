@@ -216,9 +216,11 @@ public class PushController implements Disposable {
       public void onTargetChanged(T newTarget) {
         repoNode.setChecked(true);
         myExcludedRepositoryRoots.remove(model.getRepository().getRoot().getPath());
-        model.setTarget(newTarget);
-        model.clearErrors();
-        loadCommits(model, repoNode, false);
+        if (!newTarget.equals(model.getTarget()) || model.hasError() || !model.hasCommitInfo()) {
+          model.setTarget(newTarget);
+          model.clearErrors();
+          loadCommits(model, repoNode, false);
+        }
       }
 
       @Override
