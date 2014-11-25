@@ -72,6 +72,8 @@ import java.util.Set;
 )
 public class HttpConfigurable implements PersistentStateComponent<HttpConfigurable>, ExportableApplicationComponent {
   public static final int CONNECTION_TIMEOUT = SystemProperties.getIntProperty("idea.connection.timeout", 10000);
+  public static final int READ_TIMEOUT = SystemProperties.getIntProperty("idea.read.timeout", 60000);
+  public static final int REDIRECT_LIMIT = SystemProperties.getIntProperty("idea.redirect.limit", 10);
 
   public boolean PROXY_TYPE_IS_SOCKS;
   public boolean USE_HTTP_PROXY;
@@ -396,7 +398,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     }
 
     assert urlConnection != null;
-    urlConnection.setReadTimeout(CONNECTION_TIMEOUT);
+    urlConnection.setReadTimeout(READ_TIMEOUT);
     urlConnection.setConnectTimeout(CONNECTION_TIMEOUT);
     return urlConnection;
   }

@@ -25,17 +25,20 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.util.HttpRequests;
+import com.intellij.util.io.HttpRequests;
 import com.intellij.util.PathUtil;
-import com.intellij.util.ThrowableConvertor;
 import com.intellij.util.net.NetUtils;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.xml.sax.SAXException;
 
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
-import java.io.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URLConnection;
 import java.util.List;
@@ -45,14 +48,14 @@ import java.util.List;
  * @since Mar 28, 2003
  */
 public class RepositoryHelper {
-  @NonNls public static final String PLUGIN_LIST_FILE = "availables.xml";
+  @SuppressWarnings("SpellCheckingInspection") public static final String PLUGIN_LIST_FILE = "availables.xml";
 
   public static List<IdeaPluginDescriptor> loadPluginsFromRepository(@Nullable ProgressIndicator indicator) throws Exception {
     return loadPluginsFromRepository(indicator, null);
   }
 
-  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-  public static List<IdeaPluginDescriptor> loadPluginsFromRepository(@Nullable final ProgressIndicator indicator, @Nullable BuildNumber buildnumber) throws Exception {
+  public static List<IdeaPluginDescriptor> loadPluginsFromRepository(@Nullable final ProgressIndicator indicator,
+                                                                     @Nullable BuildNumber buildnumber) throws Exception {
     final ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
 
     String url = appInfo.getPluginsListUrl() + "?build=" + (buildnumber != null ? buildnumber.asString() : appInfo.getApiVersion());
@@ -65,7 +68,7 @@ public class RepositoryHelper {
     if (pluginListFile.length() > 0) {
       try {
         //noinspection SpellCheckingInspection
-        url = url + "&crc32=" + Files.hash(pluginListFile, Hashing.crc32()).toString();
+        url += "&crc32=" + Files.hash(pluginListFile, Hashing.crc32()).toString();
       }
       catch (NoSuchMethodError e) {
         String guavaPath = PathUtil.getJarPathForClass(Hashing.class);
@@ -73,15 +76,20 @@ public class RepositoryHelper {
       }
     }
 
-    return HttpRequests.request(url).get(new ThrowableConvertor<URLConnection, List<IdeaPluginDescriptor>, Exception>() {
+    if (indicator != null) {
+      indicator.setText2(IdeBundle.message("progress.waiting.for.reply.from.plugin.manager", appInfo.getPluginManagerUrl()));
+    }
+
+    return HttpRequests.request(url).connect(new HttpRequests.RequestProcessor<List<IdeaPluginDescriptor>>() {
       @Override
-      public List<IdeaPluginDescriptor> convert(URLConnection connection) throws Exception {
+      public List<IdeaPluginDescriptor> process(@NotNull HttpRequests.Request request) throws IOException {
         if (indicator != null) {
           indicator.checkCanceled();
-          indicator.setText2(IdeBundle.message("progress.waiting.for.reply.from.plugin.manager", appInfo.getPluginManagerUrl()));
         }
 
-        if (connection instanceof HttpURLConnection && ((HttpURLConnection)connection).getResponseCode() == HttpURLConnection.HTTP_NOT_MODIFIED) {
+        URLConnection connection = request.getConnection();
+        if (connection instanceof HttpURLConnection &&
+            ((HttpURLConnection)connection).getResponseCode() == HttpURLConnection.HTTP_NOT_MODIFIED) {
           return loadPluginList(pluginListFile);
         }
 
@@ -89,37 +97,35 @@ public class RepositoryHelper {
           indicator.checkCanceled();
           indicator.setText2(IdeBundle.message("progress.downloading.list.of.plugins"));
         }
-        return readPluginsStream(connection, indicator, PLUGIN_LIST_FILE);
+
+        synchronized (RepositoryHelper.class) {
+          File localFile = createLocalPluginsDescriptions(PLUGIN_LIST_FILE);
+          OutputStream output = new FileOutputStream(localFile);
+          try {
+            NetUtils.copyStreamContent(indicator, request.getInputStream(), output, connection.getContentLength());
+            return loadPluginList(localFile);
+          }
+          finally {
+            output.close();
+          }
+        }
       }
     });
   }
 
-  public synchronized static List<IdeaPluginDescriptor> readPluginsStream(@NotNull URLConnection connection,
-                                                                          @Nullable ProgressIndicator indicator,
-                                                                          @NotNull String file) throws Exception {
-    File localFile;
-    InputStream input = HttpRequests.getInputStream(connection);
+  private static List<IdeaPluginDescriptor> loadPluginList(File file) throws IOException{
     try {
-      localFile = createLocalPluginsDescriptions(file);
-      OutputStream output = new FileOutputStream(localFile);
-      try {
-        NetUtils.copyStreamContent(indicator, input, output, connection.getContentLength());
-      }
-      finally {
-        output.close();
-      }
+      SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
+      RepositoryContentHandler handler = new RepositoryContentHandler();
+      parser.parse(file, handler);
+      return handler.getPluginsList();
     }
-    finally {
-      input.close();
+    catch (ParserConfigurationException e) {
+      throw new IOException(e);
     }
-    return loadPluginList(localFile);
-  }
-
-  private static List<IdeaPluginDescriptor> loadPluginList(File file) throws Exception {
-    SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
-    RepositoryContentHandler handler = new RepositoryContentHandler();
-    parser.parse(file, handler);
-    return handler.getPluginsList();
+    catch (SAXException e) {
+      throw new IOException(e);
+    }
   }
 
   @NotNull

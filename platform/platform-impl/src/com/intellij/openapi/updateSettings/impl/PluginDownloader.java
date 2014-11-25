@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,10 +30,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileSystem;
-import com.intellij.util.Consumer;
-import com.intellij.util.HttpRequests;
+import com.intellij.util.io.HttpRequests;
 import com.intellij.util.PathUtil;
-import com.intellij.util.ThrowableConvertor;
 import com.intellij.util.io.ZipUtil;
 import com.intellij.util.net.NetUtils;
 import org.jetbrains.annotations.NonNls;
@@ -236,28 +234,18 @@ public class PluginDownloader {
     progressIndicator.checkCanceled();
     progressIndicator.setText(IdeBundle.message("progress.downloading.plugin", getPluginName()));
 
-    return HttpRequests.request(myPluginUrl).supportGzip(false).effectiveUrlConsumer(new Consumer<String>() {
+    return HttpRequests.request(myPluginUrl).gzip(false).connect(new HttpRequests.RequestProcessor<File>() {
       @Override
-      public void consume(String url) {
-        myPluginUrl = url;
-      }
-    }).get(new ThrowableConvertor<URLConnection, File, IOException>() {
-      @Override
-      public File convert(URLConnection connection) throws IOException {
+      public File process(@NotNull HttpRequests.Request request) throws IOException {
         progressIndicator.checkCanceled();
 
-        InputStream input = HttpRequests.getInputStream(connection);
+        URLConnection connection = request.getConnection();
+        OutputStream fileOut = new FileOutputStream(file);
         try {
-          OutputStream fileOut = new FileOutputStream(file);
-          try {
-            NetUtils.copyStreamContent(progressIndicator, input, fileOut, connection.getContentLength());
-          }
-          finally {
-            fileOut.close();
-          }
+          NetUtils.copyStreamContent(progressIndicator, request.getInputStream(), fileOut, connection.getContentLength());
         }
         finally {
-          input.close();
+          fileOut.close();
         }
 
         if (myFileName == null) {
@@ -291,9 +279,9 @@ public class PluginDownloader {
     if (fileName == null) {
       // try to find a filename in an URL
       final String usedURL = connection.getURL().toString();
-      fileName = usedURL.substring(usedURL.lastIndexOf("/") + 1);
+      fileName = usedURL.substring(usedURL.lastIndexOf('/') + 1);
       if (fileName.length() == 0 || fileName.contains("?")) {
-        fileName = myPluginUrl.substring(myPluginUrl.lastIndexOf("/") + 1);
+        fileName = myPluginUrl.substring(myPluginUrl.lastIndexOf('/') + 1);
       }
     }
 
