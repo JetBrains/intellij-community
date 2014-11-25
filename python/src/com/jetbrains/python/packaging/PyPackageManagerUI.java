@@ -267,7 +267,7 @@ public class PyPackageManagerUI {
           indicator.setFraction((double)i / size);
         }
         try {
-          manager.install(Arrays.asList(requirement), myExtraArgs);
+          manager.install(Collections.singletonList(requirement), myExtraArgs);
         }
         catch (RunCanceledByUserException e) {
           exceptions.add(e);
@@ -350,10 +350,10 @@ public class PyPackageManagerUI {
       indicator.setIndeterminate(true);
       try {
         manager.uninstall(myPackages);
-        return Arrays.asList();
+        return Collections.emptyList();
       }
       catch (ExecutionException e) {
-        return Arrays.asList(e);
+        return Collections.singletonList(e);
       }
       finally {
         manager.refresh();
