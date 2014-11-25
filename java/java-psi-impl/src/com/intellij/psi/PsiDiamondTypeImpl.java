@@ -358,8 +358,9 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
     final PsiExpressionList argumentList = expression.getArgumentList();
     if (argumentList != null) {
       final MethodCandidateInfo staticFactoryCandidateInfo =
-        new MethodCandidateInfo(staticFactoryMethod, PsiSubstitutor.EMPTY, false, false, argumentList, parent,
-                                argumentList.getExpressionTypes(), null) {
+        new MethodCandidateInfo(staticFactoryMethod, PsiSubstitutor.EMPTY, false, false, argumentList, parent, null, null) {
+          private PsiType[] myExpressionTypes;
+
           @Override
           public boolean isVarargs() {
             return varargs;
@@ -368,6 +369,18 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
           @Override
           protected PsiElement getParent() {
             return parent;
+          }
+
+          @Override
+          public PsiType[] getArgumentTypes() {
+            if (myExpressionTypes == null) {
+              final PsiType[] expressionTypes = argumentList.getExpressionTypes();
+              if (MethodCandidateInfo.isOverloadCheck()) {
+                return expressionTypes;
+              }
+              myExpressionTypes = expressionTypes;
+            }
+            return myExpressionTypes;
           }
 
           @Override
