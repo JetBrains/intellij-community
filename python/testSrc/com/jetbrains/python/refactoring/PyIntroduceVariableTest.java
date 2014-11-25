@@ -78,6 +78,12 @@ public class PyIntroduceVariableTest extends PyIntroduceTestCase {
     assertFalse(strings.contains("dict"));
   }
 
+  // PY-13264
+  public void testDontSuggestNameOfCalledFunction() {
+    final Collection<String> suggestions = buildSuggestions(PyCallExpression.class);
+    assertDoesntContain(suggestions, "select");
+  }
+
   public void testSuggestNamesNotInScope() {  // PY-4605
     final Collection<String> strings = buildSuggestions(PyExpression.class);
     assertTrue(strings.contains("myfunc1"));
