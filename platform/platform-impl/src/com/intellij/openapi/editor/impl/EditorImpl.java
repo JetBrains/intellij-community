@@ -3596,7 +3596,24 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return 1;
     }
 
-    return getHeightWithoutCaret();
+    if (isOneLineMode()) return getLineHeight();
+    
+    int size = mySizeContainer.getContentHeight();
+    
+    if (mySettings.isAdditionalPageAtBottom()) {
+      int lineHeight = getLineHeight();
+      int visibleAreaHeight = getScrollingModel().getVisibleArea().height;
+      // There is a possible case that user with 'show additional page at bottom' scrolls to that virtual page; switched to another
+      // editor (another tab); and then returns to the previously used editor (the one scrolled to virtual page). We want to preserve
+      // correct view size then because viewport position is set to the end of the original text otherwise.
+      if (visibleAreaHeight > 0 || myVirtualPageHeight <= 0) {
+        myVirtualPageHeight = Math.max(visibleAreaHeight - 2 * lineHeight, lineHeight);
+      }
+
+      return size + Math.max(myVirtualPageHeight, 0);
+    }
+
+    return size + mySettings.getAdditionalLinesCount() * getLineHeight();
   }
 
   public Dimension getPreferredSize() {
@@ -3623,39 +3640,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private Dimension getSizeWithoutCaret() {
     Dimension size = mySizeContainer.getContentSize();
-    if (isOneLineMode()) return new Dimension(size.width, getLineHeight());
-    if (mySettings.isAdditionalPageAtBottom()) {
-      int lineHeight = getLineHeight();
-      int visibleAreaHeight = getScrollingModel().getVisibleArea().height;
-      int virtualPageHeight;
-      // There is a possible case that user with 'show additional page at bottom' scrolls to that virtual page; switched to another
-      // editor (another tab); and then returns to the previously used editor (the one scrolled to virtual page). We want to preserve
-      // correct view size then because viewport position is set to the end of the original text otherwise.
-      if (visibleAreaHeight <= 0 && myVirtualPageHeight > 0) {
-        virtualPageHeight = myVirtualPageHeight;
-      }
-      else {
-        myVirtualPageHeight = virtualPageHeight = Math.max(visibleAreaHeight - 2 * lineHeight, lineHeight);
-      }
-
-      if (myVirtualPageHeight > 0) {
-        return new Dimension(size.width, size.height + virtualPageHeight);
-      }
-      return size;
-    }
-
-    return getContentSize();
-  }
-
-  private int getHeightWithoutCaret() {
-    if (isOneLineMode()) return getLineHeight();
-    int size = mySizeContainer.getContentHeight();
-    if (mySettings.isAdditionalPageAtBottom()) {
-      int lineHeight = getLineHeight();
-      return size + Math.max(getScrollingModel().getVisibleArea().height - 2 * lineHeight, lineHeight);
-    }
-
-    return size + mySettings.getAdditionalLinesCount() * getLineHeight();
+    return new Dimension(size.width, getPreferredHeight());
   }
 
   @NotNull
