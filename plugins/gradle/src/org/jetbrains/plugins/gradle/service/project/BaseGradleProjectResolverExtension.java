@@ -641,7 +641,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
 
       if (unresolved) {
         // Gradle uses names like 'unresolved dependency - commons-collections commons-collections 3.2' for unresolved dependencies.
-        libraryName = binaryPath.getName().substring(UNRESOLVED_DEPENDENCY_PREFIX.length());
+        libraryName = binaryPath.getPath().substring(UNRESOLVED_DEPENDENCY_PREFIX.length());
         int i = libraryName.indexOf(' ');
         if (i >= 0) {
           i = CharArrayUtil.shiftForward(libraryName, i + 1, " ");
