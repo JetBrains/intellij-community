@@ -31,7 +31,7 @@ public abstract class PythonPathCache {
   private final Map<QualifiedName, List<PsiElement>> myCache = new HashMap<QualifiedName, List<PsiElement>>();
   private final Map<VirtualFile, List<QualifiedName>> myQNameCache = new HashMap<VirtualFile, List<QualifiedName>>();
 
-  protected void clearCache() {
+  public void clearCache() {
     myCache.clear();
     myQNameCache.clear();
   }
