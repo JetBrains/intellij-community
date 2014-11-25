@@ -33,6 +33,8 @@ import java.awt.*;
  * User: cdr
  */
 abstract class RangeHighlighterData {
+  private static final Color NULL_COLOR = new Color(0, 0, 0);
+
   private final MarkupModel myModel;
   private TextAttributes myTextAttributes;
   private LineMarkerRenderer myLineMarkerRenderer;
@@ -54,9 +56,6 @@ abstract class RangeHighlighterData {
     myTextAttributes = textAttributes;
     setFlag(TARGET_AREA_IS_EXACT_FLAG, target == HighlighterTargetArea.EXACT_RANGE);
     myModel = model;
-    if (textAttributes != null) {
-      myErrorStripeColor = textAttributes.getErrorStripeColor();
-    }
   }
 
   private static final int AFTER_END_OF_LINE_FLAG = 0;
@@ -137,10 +136,14 @@ abstract class RangeHighlighterData {
   }
 
   public Color getErrorStripeMarkColor() {
-    return myErrorStripeColor;
+    if (myErrorStripeColor == NULL_COLOR) return null;
+    if (myErrorStripeColor != null) return myErrorStripeColor;
+    if (myTextAttributes != null) return myTextAttributes.getErrorStripeColor();
+    return null;
   }
 
   public void setErrorStripeMarkColor(Color color) {
+    if (color == null) color = NULL_COLOR;
     Color old = myErrorStripeColor;
     myErrorStripeColor = color;
     if (!Comparing.equal(old, color)) {
