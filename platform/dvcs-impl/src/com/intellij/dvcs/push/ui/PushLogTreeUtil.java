@@ -16,6 +16,9 @@
 package com.intellij.dvcs.push.ui;
 
 import com.intellij.ui.CheckboxTree;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.SimpleTextAttributes;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -50,5 +53,16 @@ public class PushLogTreeUtil {
       }
     }
     return tag;
+  }
+
+  public static SimpleTextAttributes addTransparencyIfNeeded(@NotNull final SimpleTextAttributes baseStyle, boolean isActive) {
+    if (isActive) return baseStyle;
+    Color color = baseStyle.getFgColor();
+    if (color == null) {
+      color = JBColor.black;
+    }
+    //noinspection UseJBColor
+    return new SimpleTextAttributes(baseStyle.getStyle(),
+                                    new Color(color.getRed(), color.getGreen(), color.getBlue(), 85));
   }
 }
