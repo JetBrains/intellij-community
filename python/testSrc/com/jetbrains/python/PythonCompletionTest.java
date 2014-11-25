@@ -708,21 +708,6 @@ public class PythonCompletionTest extends PyTestCase {
     assertDoesntContain(suggested, PyNames.METHOD_SPECIAL_ATTRIBUTES);
   }
 
-  // PY-14388
-  public void testAttributeOfIndirectlyImportedPackage() {
-    doMultiFileTest();
-  }
-
-  // PY-14387
-  public void testSubmoduleOfIndirectlyImportedPackage() {
-    myFixture.copyDirectoryToProject("completion/" + getTestName(true), "");
-    myFixture.configureByFile("a.py");
-    myFixture.completeBasic();
-    final List<String> suggested = myFixture.getLookupElementStrings();
-    assertNotNull(suggested);
-    assertSameElements(suggested, "VAR", "subpkg1");
-  }
-
   // PY-14519
   public void testOsPath() {
     myFixture.copyDirectoryToProject("completion/" + getTestName(true), "");
