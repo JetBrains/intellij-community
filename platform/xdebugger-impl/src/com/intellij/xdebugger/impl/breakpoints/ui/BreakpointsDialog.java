@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import com.intellij.ui.popup.util.DetailViewImpl;
 import com.intellij.ui.popup.util.ItemWrapper;
 import com.intellij.ui.popup.util.MasterController;
 import com.intellij.util.Function;
+import com.intellij.util.SingleAlarm;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.xdebugger.XDebuggerManager;
@@ -81,6 +82,15 @@ public class BreakpointsDialog extends DialogWrapper {
   private final DetailController myDetailController = new DetailController(myMasterController);
 
   private final Collection<BreakpointItem> myBreakpointItems = new ArrayList<BreakpointItem>();
+
+  private final SingleAlarm myRebuildAlarm = new SingleAlarm(new Runnable() {
+    @Override
+    public void run() {
+      collectItems();
+      myTreeController.rebuildTree(myBreakpointItems);
+      myDetailController.doUpdateDetailView(true);
+    }
+  }, 100, myDisposable);
 
   private final List<XBreakpointGroupingRule> myRulesAvailable = new ArrayList<XBreakpointGroupingRule>();
 
@@ -329,9 +339,7 @@ public class BreakpointsDialog extends DialogWrapper {
     final BreakpointPanelProvider.BreakpointsListener listener = new BreakpointPanelProvider.BreakpointsListener() {
       @Override
       public void breakpointsChanged() {
-        collectItems();
-        myTreeController.rebuildTree(myBreakpointItems);
-        myDetailController.doUpdateDetailView(true);
+        myRebuildAlarm.cancelAndRequest();
       }
     };
 
