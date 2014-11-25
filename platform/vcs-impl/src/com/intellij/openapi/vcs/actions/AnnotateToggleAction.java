@@ -379,7 +379,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
         if (!commitAuthorColors.containsKey(number)) {
           if (author != null && !authorColors.containsKey(author)) {
             final int index = authorColors.size();
-            Color color = BG_COLORS[index % colorsCount];
+            Color color = BG_COLORS[index * BG_COLORS_PRIME % colorsCount];
             authorColors.put(author, color);
           }
 

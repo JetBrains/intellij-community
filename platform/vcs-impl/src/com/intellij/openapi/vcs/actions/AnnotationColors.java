@@ -24,6 +24,8 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 public interface AnnotationColors {
+  int BG_COLORS_PRIME = 3;
+
   Color[] BG_COLORS = {
     new JBColor(new Color(234, 255, 226), new Color(70, 76, 67)),
     new JBColor(new Color(222, 241, 229), new Color(66, 72, 68)),
