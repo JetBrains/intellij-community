@@ -17,6 +17,7 @@ package com.intellij.psi.stubs;
 
 import com.intellij.openapi.diagnostic.LogUtil;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.RecentStringInterner;
 import com.intellij.util.io.AbstractStringEnumerator;
 import com.intellij.util.io.DataInputOutputUtil;
@@ -78,7 +79,17 @@ public class StubSerializationHelper {
     FileLocalStringEnumerator storage = new FileLocalStringEnumerator(true);
     StubOutputStream stubOutputStream = new StubOutputStream(out, storage);
 
-    doSerialize(rootStub, stubOutputStream);
+    if (rootStub instanceof PsiFileStub) {
+      final PsiFileStub[] roots = ((PsiFileStub)rootStub).getStubRoots();
+      DataInputOutputUtil.writeINT(stubOutputStream, roots.length);
+      for (PsiFileStub root : roots) {
+        doSerialize(root, stubOutputStream);
+      }
+    }
+    else {
+      DataInputOutputUtil.writeINT(stubOutputStream, 1);
+      doSerialize(rootStub, stubOutputStream);
+    }
     DataOutputStream resultStream = new DataOutputStream(stream);
     DataInputOutputUtil.writeINT(resultStream, storage.myStrings.size());
     byte[] buffer = IOUtil.allocReadWriteUTFBuffer();
@@ -111,7 +122,24 @@ public class StubSerializationHelper {
       ++i;
     }
 
-    return deserialize(inputStream, null);
+    int stubFilesCount = DataInputOutputUtil.readINT(inputStream);
+    if (stubFilesCount > 1) {
+      final List<PsiFileStub> stubs = new SmartList<PsiFileStub>();
+      while (stubFilesCount-- > 0) {
+        final PsiFileStub fileStub = (PsiFileStub)deserialize(inputStream, null);
+        stubs.add(fileStub);
+      }
+      final PsiFileStub[] stubsArray = stubs.toArray(new PsiFileStub[stubs.size()]);
+      for (PsiFileStub stub : stubsArray) {
+        if (stub instanceof PsiFileStubImpl) {
+          ((PsiFileStubImpl)stub).setStubRoots(stubsArray);
+        }
+      }
+      return stubsArray[0];
+    }
+    else {
+      return deserialize(inputStream, null);
+    }
   }
 
   String intern(String str) {

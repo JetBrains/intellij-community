@@ -675,15 +675,10 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     final VirtualFile vFile = getVirtualFile();
     if (!(vFile instanceof VirtualFileWithId)) return null;
 
-    final PsiFile stubBindingRoot = getViewProvider().getStubBindingRoot();
-    if (stubBindingRoot != this) {
-      LOG.error("Attempted to create stubs for non-root file: " + this + ", stub binding root: " + stubBindingRoot);
-      return null;
-    }
-
     ObjectStubTree tree = StubTreeLoader.getInstance().readOrBuild(getProject(), vFile, this);
     if (!(tree instanceof StubTree)) return null;
     StubTree stubHolder = (StubTree)tree;
+    final List<Pair<IStubFileElementType, PsiFile>> roots = StubTreeBuilder.getStubbedRoots(getViewProvider());
 
     synchronized (PsiLock.LOCK) {
       if (getTreeElement() != null) return null;
@@ -691,9 +686,14 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       final StubTree derefdOnLock = derefStub();
       if (derefdOnLock != null) return derefdOnLock;
 
-      //noinspection unchecked
-      ((StubBase)stubHolder.getRoot()).setPsi(this);
-      myStub = new SoftReference<StubTree>(stubHolder);
+      final PsiFileStub[] stubRoots = stubHolder.getRoot().getStubRoots();
+      int matchingRoot = 0;
+      for (Pair<IStubFileElementType, PsiFile> root : roots) {
+        final PsiFileStub matchingStub = stubRoots[matchingRoot++];
+        //noinspection unchecked
+        ((StubBase)matchingStub).setPsi(this);
+        ((PsiFileImpl)root.second).myStub = new SoftReference<StubTree>(new StubTree(matchingStub));
+      }
       return stubHolder;
     }
   }
@@ -777,6 +777,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   public int getStartOffsetInParent() {
     return calcTreeElement().getStartOffsetInParent();
   }
+
   @Override
   public int getTextOffset() {
     return calcTreeElement().getTextOffset();

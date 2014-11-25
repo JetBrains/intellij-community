@@ -21,8 +21,6 @@ import com.intellij.lang.ParserDefinition;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.NotNullComputable;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
@@ -343,7 +341,10 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
       if (!data.isEmpty()) {
         final SerializedStubTree stub = data.values().iterator().next();
         ObjectStubBase root = (ObjectStubBase)stub.getStub(true);
-        Map<StubIndexKey, Map<Object, int[]>> map = new ObjectStubTree(root, false).indexStubTree();
+
+        ObjectStubTree objectStubTree = root instanceof PsiFileStub ? new StubTree((PsiFileStub)root, false) :
+                                        new ObjectStubTree(root, false);
+        Map<StubIndexKey, Map<Object, int[]>> map = objectStubTree.indexStubTree();
 
         // xxx:fix refs inplace
         stubTree = (Map)map;
