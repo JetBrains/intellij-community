@@ -149,14 +149,9 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
       @Override
       public void run() {
         myVisiblePack.getVisibleGraph().getActionController().setLinearBranchesExpansion(false);
-        UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-          @Override
-          public void run() {
-            handleAnswer(null, true);
-          }
-        });
       }
     });
+    handleAnswer(null, true);
   }
 
   public void hideAll() {
@@ -164,14 +159,9 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
       @Override
       public void run() {
         myVisiblePack.getVisibleGraph().getActionController().setLinearBranchesExpansion(true);
-        UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-          @Override
-          public void run() {
-            handleAnswer(null, true);
-          }
-        });
       }
     });
+    handleAnswer(null, true);
   }
 
   public void setLongEdgeVisibility(boolean visibility) {
