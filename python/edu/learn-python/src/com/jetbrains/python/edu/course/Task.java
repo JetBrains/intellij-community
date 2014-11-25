@@ -4,9 +4,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.xmlb.annotations.Transient;
+import com.jetbrains.python.edu.StudyUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import com.jetbrains.python.edu.StudyUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -18,7 +18,7 @@ import java.util.Map;
 /**
  * Implementation of task which contains task files, tests, input file for tests
  */
-public class Task implements Stateful{
+public class Task implements Stateful {
   public static final String TASK_DIR = "task";
   private static final String ourTestFile = "tests.py";
   public String name;
@@ -85,8 +85,10 @@ public class Task implements Stateful{
    * @param resourceRoot directory where original task file stored
    * @throws java.io.IOException
    */
-  public void create(@NotNull final VirtualFile lessonDir, @NotNull final File resourceRoot) throws IOException {
+  public void create(@NotNull final VirtualFile lessonDir, @NotNull final File resourceRoot,
+                     @NotNull final Project project) throws IOException {
     VirtualFile taskDir = lessonDir.createChildDirectory(this, TASK_DIR + Integer.toString(myIndex + 1));
+    StudyUtils.markDirAsSourceRoot(taskDir, project);
     File newResourceRoot = new File(resourceRoot, taskDir.getName());
     int i = 0;
     for (Map.Entry<String, TaskFile> taskFile : taskFiles.entrySet()) {
@@ -197,5 +199,4 @@ public class Task implements Stateful{
     }
     return null;
   }
-
 }
