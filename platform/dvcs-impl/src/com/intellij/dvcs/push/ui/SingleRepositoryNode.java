@@ -24,22 +24,15 @@ import org.jetbrains.annotations.NotNull;
 public class SingleRepositoryNode extends RepositoryNode {
 
   @NotNull private final RepositoryWithBranchPanel myRepositoryPanel;
-  private final LoadingIcon myEmptyIcon;
 
   public SingleRepositoryNode(@NotNull RepositoryWithBranchPanel repositoryPanel, @NotNull CheckBoxModel model) {
     super(repositoryPanel, model, true);
     myRepositoryPanel = repositoryPanel;
-    myEmptyIcon =
-      LoadingIcon.createEmpty(repositoryPanel.getLoadingIcon().getIconWidth(), repositoryPanel.getLoadingIcon().getIconHeight());
   }
 
   @Override
   public boolean isCheckboxVisible() {
     return false;
-  }
-
-  public LoadingIcon getEmptyIcon() {
-    return myEmptyIcon;
   }
 
   @Override
@@ -52,8 +45,11 @@ public class SingleRepositoryNode extends RepositoryNode {
 
   @Override
   public void render(@NotNull ColoredTreeCellRenderer renderer) {
-    renderer.setIcon(myLoading.get() ? myRepositoryPanel.getLoadingIcon() : myEmptyIcon);
-    renderer.setIconOnTheRight(false);
+    if (myLoading.get()) {
+      renderer.setIcon(myRepositoryPanel.getLoadingIcon());
+      renderer.setIconOnTheRight(true);
+    }
+    renderer.append(" ");
     renderer.append(myRepositoryPanel.getSourceName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     renderer.append(myRepositoryPanel.getArrow(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     PushTargetPanel pushTargetPanel = myRepositoryPanel.getTargetPanel();

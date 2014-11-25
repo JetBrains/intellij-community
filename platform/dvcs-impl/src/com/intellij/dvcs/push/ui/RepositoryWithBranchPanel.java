@@ -153,11 +153,8 @@ public class RepositoryWithBranchPanel<T extends PushTarget> extends NonOpaquePa
       myTextRenderer.appendFixedTextFragmentWidth(120);
     }
     else {
-      SingleRepositoryNode singleRepositoryNode = ((SingleRepositoryNode)value);
       myRepositoryCheckbox.setVisible(false);
-      myTextRenderer.setIcon(singleRepositoryNode.getEmptyIcon());
-      myTextRenderer.setIconOnTheRight(false);
-      myTextRenderer.append("");
+      myTextRenderer.append(" ");
     }
     myTextRenderer.append(getSourceName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     myTextRenderer.append(getArrow(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
