@@ -42,9 +42,6 @@ class IndexGeneratedTest extends JavaCodeInsightFixtureTestCase {
 
     PlatformTestUtil.tryGcSoftlyReachableObjects()
 
-    println 'sleeping'
-    TimeoutUtil.sleep(10000)
-
     assert !((PsiManagerEx) psiManager).fileManager.getCachedPsiFile(vFile)
 
     FileDocumentManager.instance.saveAllDocuments()
