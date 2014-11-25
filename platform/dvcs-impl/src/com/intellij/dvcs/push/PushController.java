@@ -133,7 +133,7 @@ public class PushController implements Disposable {
   private void startLoadingCommits() {
     Map<RepositoryNode, MyRepoModel> priorityLoading = ContainerUtil.newLinkedHashMap();
     Map<RepositoryNode, MyRepoModel> others = ContainerUtil.newLinkedHashMap();
-    RepositoryNode nodeForCurrentEditor = findInfoByRepo(myCurrentlyOpenedRepository);
+    RepositoryNode nodeForCurrentEditor = findNodeByRepo(myCurrentlyOpenedRepository);
     for (Map.Entry<RepositoryNode, MyRepoModel> entry : myView2Model.entrySet()) {
       MyRepoModel model = entry.getValue();
       Repository repository = model.getRepository();
@@ -154,13 +154,17 @@ public class PushController implements Disposable {
   }
 
   @Nullable
-  private RepositoryNode findInfoByRepo(@Nullable final Repository repository) {
+  private RepositoryNode findNodeByRepo(@Nullable final Repository repository) {
     if (repository == null) return null;
-    for (Map.Entry<RepositoryNode, MyRepoModel> entry : myView2Model.entrySet()) {
-      MyRepoModel model = entry.getValue();
-      if (model.getRepository().getRoot().equals(repository)) return entry.getKey();
-    }
-    return null;
+    Map.Entry<RepositoryNode, MyRepoModel> entry =
+      ContainerUtil.find(myView2Model.entrySet(), new Condition<Map.Entry<RepositoryNode, MyRepoModel>>() {
+        @Override
+        public boolean value(Map.Entry<RepositoryNode, MyRepoModel> entry) {
+          MyRepoModel model = entry.getValue();
+          return model.getRepository().getRoot().equals(repository.getRoot());
+        }
+      });
+    return entry != null ? entry.getKey() : null;
   }
 
   private void loadCommitsFromMap(@NotNull Map<RepositoryNode, MyRepoModel> items) {
