@@ -186,7 +186,7 @@ public class VcsRootProblemNotifier {
       description.append("<br/>");
     }
 
-    String add = invalidRoots.isEmpty() ? "<a href='add'>Add " + pluralize("root", unregisteredRoots.size()) + "<a/>&nbsp;&nbsp;" : "";
+    String add = invalidRoots.isEmpty() ? "<a href='add'>Add " + pluralize("root", unregisteredRoots.size()) + "</a>&nbsp;&nbsp;" : "";
     String configure = "<a href='configure'>Configure</a>";
     String ignore = invalidRoots.isEmpty() ? "&nbsp;&nbsp;<a href='ignore'>Ignore</a>" : "";
     description.append(add + configure + ignore);
