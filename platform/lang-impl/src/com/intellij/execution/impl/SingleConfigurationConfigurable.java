@@ -20,6 +20,11 @@ import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.DataManager;
+import com.intellij.ide.impl.TypeSafeDataProviderAdapter;
+import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
@@ -126,7 +131,9 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
   @Override
   public final JComponent createComponent() {
     myComponent.myNameText.setEnabled(!myBrokenConfiguration);
-    return myComponent.getWholePanel();
+    JComponent result = myComponent.getWholePanel();
+    DataManager.registerDataProvider(result, new TypeSafeDataProviderAdapter(new MyDataProvider()));
+    return result;
   }
 
   final JComponent getValidationComponent() {
@@ -401,6 +408,15 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     @NonNls
     private String generateWarningLabelText(final ValidationResult configurationException) {
       return "<html><body><b>" + configurationException.getTitle() + ": </b>" + configurationException.getMessage() + "</body></html>";
+    }
+  }
+
+  private class MyDataProvider implements TypeSafeDataProvider {
+    @Override
+    public void calcData(DataKey key, DataSink sink) {
+      if (key.equals(ConfigurationSettingsEditorWrapper.CONFIGURATION_EDITOR_KEY)) {
+        sink.put(ConfigurationSettingsEditorWrapper.CONFIGURATION_EDITOR_KEY, (ConfigurationSettingsEditorWrapper)getEditor());
+      }
     }
   }
 }

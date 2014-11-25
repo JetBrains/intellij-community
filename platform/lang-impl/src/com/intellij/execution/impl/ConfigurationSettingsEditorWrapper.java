@@ -20,6 +20,7 @@ import com.intellij.execution.BeforeRunTask;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.UnknownRunConfiguration;
+import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.TypeSafeDataProviderAdapter;
 import com.intellij.ide.util.PropertiesComponent;
@@ -54,6 +55,14 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
 
   private final ConfigurationSettingsEditor myEditor;
   private final HideableDecorator myDecorator;
+
+  public <T extends SettingsEditor> T selectExecutorAndGetEditor(ProgramRunner runner, Class<T> editorClass) {
+    return myEditor.selectExecutorAndGetEditor(runner, editorClass);
+  }
+
+  public <T extends SettingsEditor> T selectTabAndGetEditor(Class<T> editorClass) {
+    return myEditor.selectTabAndGetEditor(editorClass);
+  }
 
   public ConfigurationSettingsEditorWrapper(final RunnerAndConfigurationSettings settings) {
     myEditor = new ConfigurationSettingsEditor(settings);

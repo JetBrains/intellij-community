@@ -54,16 +54,11 @@ public class ObjectStubTree<T extends Stub> {
   }
 
   @NotNull
-  public List<T> getPlainListFromAllRoots() {
-    return getPlainList();
-  }
-
-  @NotNull
   public Map<StubIndexKey, Map<Object, int[]>> indexStubTree() {
     StubIndexSink sink = new StubIndexSink();
-    final List<T> plainList = getPlainListFromAllRoots();
-    for (int i = 0, plainListSize = plainList.size(); i < plainListSize; i++) {
-      final Stub stub = plainList.get(i);
+
+    for (int i = 0, plainListSize = myPlainList.size(); i < plainListSize; i++) {
+      final Stub stub = myPlainList.get(i);
       sink.myStubIdx = i;
       StubSerializationUtil.getSerializer(stub).indexStub(stub, sink);
     }
@@ -71,15 +66,11 @@ public class ObjectStubTree<T extends Stub> {
     return sink.getResult();
   }
 
-  protected void enumerateStubs(@NotNull Stub root, @NotNull List<Stub> result) {
-    enumerateStubs(root, result, 0);
-  }
-
-  protected static void enumerateStubs(@NotNull Stub root, @NotNull List<Stub> result, int idOffset) {
-    ((ObjectStubBase)root).id = idOffset + result.size();
+  protected static void enumerateStubs(@NotNull Stub root, @NotNull List<Stub> result) {
+    ((ObjectStubBase)root).id = result.size();
     result.add(root);
     for (Stub child : root.getChildrenStubs()) {
-      enumerateStubs(child, result, idOffset);
+      enumerateStubs(child, result);
     }
   }
 
