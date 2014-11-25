@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,24 +20,14 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.OptionsBundle;
 
-/**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Dec 9, 2003
- * Time: 3:35:56 PM
- * To change this template use Options | File Templates.
- */
 public class IdeConfigurablesGroup extends ConfigurablesGroupBase implements ConfigurableGroup {
   public IdeConfigurablesGroup() {
     super(ApplicationManager.getApplication(), Configurable.APPLICATION_CONFIGURABLE, true);
   }
 
+  @Override
   public String getDisplayName() {
     return OptionsBundle.message("ide.settings.display.name");
-  }
-
-  public String getShortName() {
-    return OptionsBundle.message("ide.settings.short.name");
   }
 
   @Override
