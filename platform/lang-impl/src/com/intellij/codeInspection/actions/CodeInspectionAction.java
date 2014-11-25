@@ -60,17 +60,21 @@ public class CodeInspectionAction extends BaseAnalysisAction {
   @Override
   protected void analyze(@NotNull Project project, @NotNull AnalysisScope scope) {
     try {
-      scope.setSearchInLibraries(false);
-      FileDocumentManager.getInstance().saveAllDocuments();
-      final GlobalInspectionContextImpl inspectionContext = getGlobalInspectionContext(project);
-      inspectionContext.setExternalProfile(myExternalProfile);
-      inspectionContext.setCurrentScope(scope);
-      inspectionContext.doInspections(scope);
+      runInspections(project, scope);
     }
     finally {
       myGlobalInspectionContext = null;
       myExternalProfile = null;
     }
+  }
+
+  protected void runInspections(Project project, AnalysisScope scope) {
+    scope.setSearchInLibraries(false);
+    FileDocumentManager.getInstance().saveAllDocuments();
+    final GlobalInspectionContextImpl inspectionContext = getGlobalInspectionContext(project);
+    inspectionContext.setExternalProfile(myExternalProfile);
+    inspectionContext.setCurrentScope(scope);
+    inspectionContext.doInspections(scope);
   }
 
 

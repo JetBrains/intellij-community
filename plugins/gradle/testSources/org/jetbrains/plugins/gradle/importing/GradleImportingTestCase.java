@@ -16,6 +16,8 @@
 package org.jetbrains.plugins.gradle.importing;
 
 import com.intellij.compiler.server.BuildManager;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
@@ -146,7 +148,13 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
     assert wrapperJarFrom != null;
 
     final VirtualFile wrapperJarFromTo = createProjectSubFile("gradle/wrapper/gradle-wrapper.jar");
-    wrapperJarFromTo.setBinaryContent(wrapperJarFrom.contentsToByteArray());
+    new WriteAction() {
+      @Override
+      protected void run(@NotNull Result result) throws Throwable {
+        wrapperJarFromTo.setBinaryContent(wrapperJarFrom.contentsToByteArray());
+      }
+    }.execute().throwException();
+
 
     Properties properties = new Properties();
     properties.setProperty("distributionBase", "GRADLE_USER_HOME");

@@ -26,6 +26,7 @@ import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.mac.MacMainFrameDecorator;
 import com.intellij.util.ui.Animator;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -37,25 +38,21 @@ import java.lang.ref.WeakReference;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-
 /**
  * Created by Denis Fokin
  */
 public class SheetMessage {
-
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.messages.SheetMessage");
 
-  private JDialog myWindow;
-  private Window myParent;
-  private SheetController myController;
+  private final JDialog myWindow;
+  private final Window myParent;
+  private final SheetController myController;
 
   private final static int TIME_TO_SHOW_SHEET = 250;
 
   private Image staticImage;
   private int imageHeight;
-  private boolean restoreFullscreenButton;
-
-  private final WeakReference<Component> beforeShowFocusOwner;
+  private final boolean restoreFullScreenButton;
 
   public SheetMessage(final Window owner,
                       final String title,
@@ -68,7 +65,7 @@ public class SheetMessage {
   {
     final Window activeWindow = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
     final Component recentFocusOwner = activeWindow == null ? null : activeWindow.getMostRecentFocusOwner();
-    beforeShowFocusOwner = new WeakReference<Component>(recentFocusOwner);
+    WeakReference<Component> beforeShowFocusOwner = new WeakReference<Component>(recentFocusOwner);
 
     maximizeIfNeeded(owner);
 
@@ -77,7 +74,7 @@ public class SheetMessage {
 
     myWindow.addWindowListener(new WindowAdapter() {
       @Override
-      public void windowActivated(WindowEvent e) {
+      public void windowActivated(@NotNull WindowEvent e) {
         super.windowActivated(e);
       }
     });
@@ -99,7 +96,7 @@ public class SheetMessage {
 
       myWindow.addComponentListener(new ComponentAdapter() {
         @Override
-        public void componentShown(ComponentEvent e) {
+        public void componentShown(@NotNull ComponentEvent e) {
           super.componentShown(e);
           setWindowOpacity(1.0f);
           myWindow.setSize(myController.SHEET_NC_WIDTH, myController.SHEET_NC_HEIGHT);
@@ -111,8 +108,8 @@ public class SheetMessage {
       setPositionRelativeToParent();
     }
     startAnimation(true);
-    restoreFullscreenButton = couldBeInFullScreen();
-    if (restoreFullscreenButton) {
+    restoreFullScreenButton = couldBeInFullScreen();
+    if (restoreFullScreenButton) {
       FullScreenUtilities.setWindowCanFullScreen(myParent, false);
     }
 
@@ -127,11 +124,7 @@ public class SheetMessage {
     }
 
     LOG.assertTrue(focusCandidate != null, "The should return focus on closing the message");
-
-    if (focusCandidate != null) {
-      focusCandidate.requestFocus();
-    }
-
+    focusCandidate.requestFocus();
   }
 
   private static void maximizeIfNeeded(final Window owner) {
@@ -180,7 +173,7 @@ public class SheetMessage {
     staticImage = myController.getStaticImage();
     JPanel staticPanel = new JPanel() {
       @Override
-      public void paint(Graphics g) {
+      public void paint(@NotNull Graphics g) {
         super.paint(g);
         if (staticImage != null) {
           Graphics2D g2d = (Graphics2D) g.create();
@@ -227,7 +220,7 @@ public class SheetMessage {
 
           myController.requestFocus();
         } else {
-          if (restoreFullscreenButton) {
+          if (restoreFullScreenButton) {
             FullScreenUtilities.setWindowCanFullScreen(myParent, true);
           }
           myWindow.dispose();
@@ -251,13 +244,13 @@ public class SheetMessage {
   private void registerMoveResizeHandler () {
     myParent.addComponentListener(new ComponentAdapter() {
       @Override
-      public void componentResized(ComponentEvent e) {
+      public void componentResized(@NotNull ComponentEvent e) {
         super.componentResized(e);
         setPositionRelativeToParent();
       }
 
       @Override
-      public void componentMoved(ComponentEvent e) {
+      public void componentMoved(@NotNull ComponentEvent e) {
         super.componentMoved(e);
         setPositionRelativeToParent();
       }

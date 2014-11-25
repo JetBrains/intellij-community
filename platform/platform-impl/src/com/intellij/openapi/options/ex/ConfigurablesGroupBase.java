@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ import java.util.List;
  */
 public abstract class ConfigurablesGroupBase implements ConfigurableGroup {
   private Configurable[] myChildren;
-  private ComponentManager myComponentManager;
+  private final ComponentManager myComponentManager;
   private final ExtensionPointName<ConfigurableEP<Configurable>> myConfigurablesExtensionPoint;
   private final boolean myLoadComponents;
 
@@ -54,4 +54,9 @@ public abstract class ConfigurablesGroupBase implements ConfigurableGroup {
 
   @Nullable
   protected abstract ConfigurableFilter getConfigurableFilter();
+
+  @Override
+  public String getShortName() {
+    return null;
+  }
 }

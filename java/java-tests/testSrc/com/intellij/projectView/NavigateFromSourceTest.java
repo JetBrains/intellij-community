@@ -125,7 +125,7 @@ public class NavigateFromSourceTest extends BaseProjectViewTestCase {
     PsiClass psiClass = psiFile.getClasses()[0];
     final VirtualFile virtualFile = psiClass.getContainingFile().getVirtualFile();
     final JTree tree = pane.getTree();
-    virtualFile.setBinaryContent(newClassString.getBytes(CharsetToolkit.UTF8_CHARSET));
+    setBinaryContent(virtualFile, newClassString.getBytes(CharsetToolkit.UTF8_CHARSET));
 
     PlatformTestUtil.waitForAlarm(600);
 
