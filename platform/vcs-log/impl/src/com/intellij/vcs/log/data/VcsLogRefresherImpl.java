@@ -97,7 +97,9 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
       LogInfo data = loadRecentData(new CommitCountRequirements(myRecentCommitCount).asMap(myProviders.keySet()));
       Collection<List<GraphCommit<Integer>>> commits = data.getCommits();
       Map<VirtualFile, Set<VcsRef>> refs = data.getRefs();
-      DataPack dataPack = DataPack.build(multiRepoJoin(commits), refs, myProviders, myHashMap, false);
+      List<GraphCommit<Integer>> compoundList = multiRepoJoin(commits);
+      compoundList = compoundList.subList(0, Math.min(myRecentCommitCount, compoundList.size()));
+      DataPack dataPack = DataPack.build(compoundList, refs, myProviders, myHashMap, false);
       mySingleTaskController.request(RefreshRequest.RELOAD_ALL); // build/rebuild the full log in background
       return dataPack;
     }
