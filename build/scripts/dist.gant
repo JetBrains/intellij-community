@@ -86,6 +86,8 @@ target('build-dist-jars' : 'Target to build jars from locally compiled classes')
   // load ApplicationInfo.xml properties
   ant.xmlproperty(file: appInfoFile(), collapseAttributes: "true")
 
+  zipSources(home, paths.artifacts)
+
   layoutAll([buildNumber: "IC-$snapshot",
              system_selector: "IdeaIC${p("component.version.major")}",
              tools_jar: true],
