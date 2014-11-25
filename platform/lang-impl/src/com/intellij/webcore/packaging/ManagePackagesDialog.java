@@ -499,8 +499,6 @@ public class ManagePackagesDialog extends DialogWrapper {
       myVersionComboBox.setEnabled(false);
       myOptionsField.setEnabled(false);
       myDescriptionTextArea.setText("<html><body style='text-align: center;padding-top:20px;'>Loading...</body></html>");
-
-      setDownloadStatus(true);
       final Object pyPackage = myPackages.getSelectedValue();
       if (pyPackage instanceof RepoPackage) {
         final String packageName = ((RepoPackage)pyPackage).getName();
@@ -557,7 +555,6 @@ public class ManagePackagesDialog extends DialogWrapper {
         myInstallButton.setEnabled(false);
         myDescriptionTextArea.setText("");
       }
-      setDownloadStatus(false);
     }
   }
 
