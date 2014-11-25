@@ -28,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableModel;
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.Collection;
 
 public class VcsLogUiImpl implements VcsLogUi, Disposable {
@@ -380,9 +381,21 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
   }
 
   private void fireFilterChangeEvent(@NotNull VisiblePack visiblePack, boolean refresh) {
-    for (VcsLogListener listener : myLogListeners) {
+    Collection<VcsLogListener> logListeners = new ArrayList<VcsLogListener>(myLogListeners);
+
+    for (VcsLogListener listener : logListeners) {
       listener.onChange(visiblePack, refresh);
     }
+  }
+
+  public void invokeOnChange(@NotNull final Runnable runnable) {
+    addLogListener(new VcsLogListener() {
+      @Override
+      public void onChange(@NotNull VcsLogDataPack dataPack, boolean refreshHappened) {
+        runnable.run();
+        removeLogListener(this);
+      }
+    });
   }
 
   @Override
