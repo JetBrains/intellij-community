@@ -572,7 +572,7 @@ public class XDebugSessionImpl implements XDebugSession {
     myDebuggerManager.updateExecutionPoint(myCurrentStackFrame.getSourcePosition(), !isTopFrame, getPositionIconRenderer(isTopFrame));
   }
 
-  private boolean isTopFrameSelected() {
+  public boolean isTopFrameSelected() {
     return myCurrentExecutionStack != null && myIsTopFrame;
   }
 
