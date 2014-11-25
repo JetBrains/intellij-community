@@ -39,6 +39,10 @@ public class PropertiesASTFactory extends ASTFactory {
   @Override
   @Nullable
   public LeafElement createLeaf(@NotNull final IElementType type, CharSequence text) {
+    if (type == PropertiesTokenTypes.KEY_CHARACTERS) {
+      return new PropertyKeyImpl(type, text);
+    }
+
     if (type == PropertiesTokenTypes.VALUE_CHARACTERS) {
       return new PropertyValueImpl(type, text);
     }
