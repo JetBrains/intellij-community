@@ -1,0 +1,12 @@
+Cleaning output files:
+out/production/moveClassToAnotherRoot/pkg/A.class
+End of files
+Compiling files:
+src2/pkg/A.java
+End of files
+Cleaning output files:
+out/production/moveClassToAnotherRoot/pkg/Client.class
+End of files
+Compiling files:
+src/pkg/Client.java
+End of files
