@@ -592,7 +592,8 @@ public class ManagePackagesDialog extends DialogWrapper {
         RepoPackage repoPackage = (RepoPackage) value;
         String name = repoPackage.getName();
         if (myCurrentlyInstalling.contains(name)) {
-          name += " (installing)";
+          final String colorCode = UIUtil.isUnderDarcula() ? "589df6" : "0000FF";
+          name = "<html><body>" + repoPackage.getName() + " <font color=\"#" + colorCode + "\">(installing)</font></body></html>";
         }
         myNameLabel.setText(name);
         myRepositoryLabel.setText(repoPackage.getRepoUrl());
