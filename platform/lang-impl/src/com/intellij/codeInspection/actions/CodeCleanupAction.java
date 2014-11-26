@@ -36,7 +36,7 @@ public class CodeCleanupAction extends CodeInspectionAction {
   }
 
   @Override
-  protected void analyze(@NotNull final Project project, @NotNull final AnalysisScope scope) {
+  protected void runInspections(Project project, AnalysisScope scope) {
     final InspectionProfile profile = myExternalProfile != null ? myExternalProfile : InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
     final InspectionManager managerEx = InspectionManager.getInstance(project);
     final GlobalInspectionContextBase globalContext = (GlobalInspectionContextBase)managerEx.createNewGlobalContext(false);

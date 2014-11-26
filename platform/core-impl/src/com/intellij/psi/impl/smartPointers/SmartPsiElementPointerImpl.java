@@ -143,15 +143,18 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
       return new HardElementInfo(project, element);
     }
 
+    FileViewProvider viewProvider = containingFile.getViewProvider();
+    if (viewProvider instanceof FreeThreadedFileViewProvider) {
+      PsiLanguageInjectionHost hostContext = InjectedLanguageManager.getInstance(containingFile.getProject()).getInjectionHost(containingFile);
+      if (hostContext != null) {
+        SmartPsiElementPointer<PsiLanguageInjectionHost> hostPointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(hostContext);
+        return new InjectedSelfElementInfo(project, element, element.getTextRange(), containingFile, hostPointer);
+      }
+    }
+
     for(SmartPointerElementInfoFactory factory: Extensions.getExtensions(SmartPointerElementInfoFactory.EP_NAME)) {
       final SmartPointerElementInfo result = factory.createElementInfo(element);
       if (result != null) return result;
-    }
-
-    FileViewProvider viewProvider = containingFile.getViewProvider();
-    if (viewProvider instanceof FreeThreadedFileViewProvider) {
-      PsiElement hostContext = InjectedLanguageManager.getInstance(containingFile.getProject()).getInjectionHost(containingFile);
-      if (hostContext != null) return new InjectedSelfElementInfo(project, element, element.getTextRange(), containingFile, hostContext);
     }
 
     if (element instanceof PsiFile) {

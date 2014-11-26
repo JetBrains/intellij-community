@@ -21,11 +21,13 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NotNullComputable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.SearchTextFieldWithStoredHistory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -39,6 +41,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.text.BadLocationException;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -49,6 +53,7 @@ import java.util.List;
 public class VcsLogClassicFilterUi implements VcsLogFilterUi {
 
   private static final String HASH_PATTERN = "[a-fA-F0-9]{7,}";
+  private static final Logger LOG = Logger.getInstance(VcsLogClassicFilterUi.class);
 
   @NotNull private final VcsLogUiImpl myUi;
 
@@ -61,7 +66,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
   @NotNull private final FilterModel<VcsLogUserFilter> myUserFilterModel;
   @NotNull private final FilterModel<VcsLogDateFilter> myDateFilterModel;
   @NotNull private final FilterModel<VcsLogStructureFilter> myStructureFilterModel;
-  @NotNull private final FilterModel<VcsLogTextFilter> myTextFilterModel;
+  @NotNull private final TextFilterModel myTextFilterModel;
 
   public VcsLogClassicFilterUi(@NotNull VcsLogUiImpl ui,
                                @NotNull VcsLogDataHolder logDataHolder,
@@ -83,7 +88,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
     myUserFilterModel = new FilterModel<VcsLogUserFilter>(dataPackGetter);
     myDateFilterModel = new FilterModel<VcsLogDateFilter>(dataPackGetter);
     myStructureFilterModel = new FilterModel<VcsLogStructureFilter>(dataPackGetter);
-    myTextFilterModel = new FilterModel<VcsLogTextFilter>(dataPackGetter);
+    myTextFilterModel = new TextFilterModel(dataPackGetter);
 
     updateUiOnFilterChange();
   }
@@ -196,9 +201,9 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
 
   private static class TextFilterComponent extends DumbAwareAction implements CustomComponentAction {
 
-    private final FilterModel<VcsLogTextFilter> myFilterModel;
+    private final TextFilterModel myFilterModel;
 
-    public TextFilterComponent(FilterModel<VcsLogTextFilter> filterModel) {
+    public TextFilterComponent(TextFilterModel filterModel) {
       myFilterModel = filterModel;
     }
 
@@ -219,11 +224,23 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
           myFilterModel.setFilter(null);
         }
       };
+      textFilter.setText(myFilterModel.getText());
       textFilter.getTextEditor().addActionListener(new ActionListener() {
         @Override
         public void actionPerformed(@NotNull ActionEvent e) {
           myFilterModel.setFilter(new VcsLogTextFilterImpl(textFilter.getText()));
           textFilter.addCurrentTextToHistory();
+        }
+      });
+      textFilter.addDocumentListener(new DocumentAdapter() {
+        @Override
+        protected void textChanged(DocumentEvent e) {
+          try {
+            myFilterModel.setUnsavedText(e.getDocument().getText(0, e.getDocument().getLength()));
+          }
+          catch (BadLocationException ex) {
+            LOG.error(ex);
+          }
         }
       });
       return textFilter;
@@ -249,6 +266,37 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
+    }
+  }
+
+  private static class TextFilterModel extends FilterModel<VcsLogTextFilter> {
+    @Nullable private String myText;
+
+    public TextFilterModel(NotNullComputable<VcsLogDataPack> dataPackProvider) {
+      super(dataPackProvider);
+    }
+
+    @NotNull
+    String getText() {
+      if (myText != null) {
+        return myText;
+      }
+      else if (getFilter() != null) {
+        return getFilter().getText();
+      }
+      else {
+        return "";
+      }
+    }
+
+    void setUnsavedText(@NotNull String text) {
+      myText = text;
+    }
+
+    @Override
+    void setFilter(@Nullable VcsLogTextFilter filter) {
+      super.setFilter(filter);
+      myText = null;
     }
   }
 }

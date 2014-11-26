@@ -22,12 +22,14 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.options.*;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -36,25 +38,30 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.*;
 import java.util.List;
 
 /**
  * @author dyoma
  */
-class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerAndConfigurationSettings> {
+public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerAndConfigurationSettings> {
   private final ArrayList<SettingsEditor<RunnerAndConfigurationSettings>> myRunnerEditors =
     new ArrayList<SettingsEditor<RunnerAndConfigurationSettings>>();
+  private final Map<ProgramRunner, List<SettingsEditor>> myRunner2UnwrappedEditors = new HashMap<ProgramRunner, List<SettingsEditor>>();
   private RunnersEditorComponent myRunnersComponent;
   private final RunConfiguration myConfiguration;
   private final SettingsEditor<RunConfiguration> myConfigurationEditor;
   private SettingsEditorGroup<RunnerAndConfigurationSettings> myCompound;
 
+  private static final String RUNNERS_TAB_NAME = ExecutionBundle.message("run.configuration.startup.connection.rab.title");
+
+  private GroupSettingsBuilder<RunnerAndConfigurationSettings> myGroupSettingsBuilder;
+
   @Override
   public CompositeSettingsBuilder<RunnerAndConfigurationSettings> getBuilder() {
     init();
-    return new GroupSettingsBuilder<RunnerAndConfigurationSettings>(myCompound);
+    myGroupSettingsBuilder = new GroupSettingsBuilder<RunnerAndConfigurationSettings>(myCompound);
+    return myGroupSettingsBuilder;
   }
 
   private void init() {
@@ -88,7 +95,7 @@ class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerAndConfi
       }
 
       if (myRunnerEditors.size() > 0) {
-        myCompound.addEditor(ExecutionBundle.message("run.configuration.startup.connection.rab.title"),
+        myCompound.addEditor(RUNNERS_TAB_NAME,
                              new CompositeSettingsEditor<RunnerAndConfigurationSettings>(getFactory()) {
                                @Override
                                public CompositeSettingsBuilder<RunnerAndConfigurationSettings> getBuilder() {
@@ -125,27 +132,25 @@ class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerAndConfi
     SettingsEditor<RunnerAndConfigurationSettings> wrappedConfigEditor = null;
     SettingsEditor<RunnerAndConfigurationSettings> wrappedRunEditor = null;
     if (configEditor != null) {
-      wrappedConfigEditor = new SettingsEditorWrapper<RunnerAndConfigurationSettings, ConfigurationPerRunnerSettings>(configEditor,
-                                          new Convertor<RunnerAndConfigurationSettings, ConfigurationPerRunnerSettings>() {
-                                            @Override
-                                            public ConfigurationPerRunnerSettings convert(RunnerAndConfigurationSettings configurationSettings) {
-                                              return configurationSettings.getConfigurationSettings(runner);
-                                            }
-                                          });
-      myRunnerEditors.add(wrappedConfigEditor);
-      Disposer.register(this, wrappedConfigEditor);
+      wrappedConfigEditor = wrapEditor(configEditor,
+                                       new Convertor<RunnerAndConfigurationSettings, ConfigurationPerRunnerSettings>() {
+                                         @Override
+                                         public ConfigurationPerRunnerSettings convert(RunnerAndConfigurationSettings configurationSettings) {
+                                           return configurationSettings.getConfigurationSettings(runner);
+                                         }
+                                       },
+                                       runner);
     }
 
     if (runnerEditor != null) {
-      wrappedRunEditor = new SettingsEditorWrapper<RunnerAndConfigurationSettings, RunnerSettings>(runnerEditor,
-                                         new Convertor<RunnerAndConfigurationSettings, RunnerSettings>() {
-                                           @Override
-                                           public RunnerSettings convert(RunnerAndConfigurationSettings configurationSettings) {
-                                             return configurationSettings.getRunnerSettings(runner);
-                                           }
-                                         });
-      myRunnerEditors.add(wrappedRunEditor);
-      Disposer.register(this, wrappedRunEditor);
+      wrappedRunEditor = wrapEditor(runnerEditor,
+                                    new Convertor<RunnerAndConfigurationSettings, RunnerSettings>() {
+                                      @Override
+                                      public RunnerSettings convert(RunnerAndConfigurationSettings configurationSettings) {
+                                        return configurationSettings.getRunnerSettings(runner);
+                                      }
+                                    },
+                                    runner);
     }
 
     if (wrappedRunEditor != null && wrappedConfigEditor != null) {
@@ -159,6 +164,55 @@ class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerAndConfi
 
     if (wrappedRunEditor != null) return wrappedRunEditor.getComponent();
     return wrappedConfigEditor.getComponent();
+  }
+
+  private <T> SettingsEditor<RunnerAndConfigurationSettings> wrapEditor(SettingsEditor<T> editor,
+                                                                        Convertor<RunnerAndConfigurationSettings, T> convertor,
+                                                                        ProgramRunner runner) {
+    SettingsEditor<RunnerAndConfigurationSettings> wrappedEditor
+      = new SettingsEditorWrapper<RunnerAndConfigurationSettings, T>(editor, convertor);
+
+    List<SettingsEditor> unwrappedEditors = myRunner2UnwrappedEditors.get(runner);
+    if (unwrappedEditors == null) {
+      unwrappedEditors = new ArrayList<SettingsEditor>();
+      myRunner2UnwrappedEditors.put(runner, unwrappedEditors);
+    }
+    unwrappedEditors.add(editor);
+
+    myRunnerEditors.add(wrappedEditor);
+    Disposer.register(this, wrappedEditor);
+
+    return wrappedEditor;
+  }
+
+  public <T extends SettingsEditor> T selectExecutorAndGetEditor(final ProgramRunner runner, Class<T> editorClass) {
+    myGroupSettingsBuilder.selectEditor(RUNNERS_TAB_NAME);
+    Executor executor = ContainerUtil.find(myRunnersComponent.getExecutors(), new Condition<Executor>() {
+
+      @Override
+      public boolean value(Executor executor) {
+        return runner.equals(RunnerRegistry.getInstance().getRunner(executor.getId(), myConfiguration));
+      }
+    });
+    if (executor == null) {
+      return null;
+    }
+    myRunnersComponent.selectExecutor(executor);
+    return ContainerUtil.findInstance(myRunner2UnwrappedEditors.get(runner), editorClass);
+  }
+
+  public <T extends SettingsEditor> T selectTabAndGetEditor(Class<T> editorClass) {
+    for (Pair<String, SettingsEditor<RunnerAndConfigurationSettings>> name2editor : myCompound.getEditors()) {
+      SettingsEditor<RunnerAndConfigurationSettings> editor = name2editor.getSecond();
+      if (editor instanceof ConfigToSettingsWrapper) {
+        SettingsEditor<RunConfiguration> configEditor = ((ConfigToSettingsWrapper)editor).getConfigEditor();
+        if (editorClass.isInstance(configEditor)) {
+          myGroupSettingsBuilder.selectEditor(name2editor.getFirst());
+          return editorClass.cast(configEditor);
+        }
+      }
+    }
+    return null;
   }
 
   public ConfigurationSettingsEditor(RunnerAndConfigurationSettings settings) {
@@ -224,6 +278,14 @@ class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerAndConfi
       ListScrollingUtil.ensureSelectionExists(myRunnersList);
     }
 
+    public List<Executor> getExecutors() {
+      return Collections.list((Enumeration<Executor>)myListModel.elements());
+    }
+
+    public void selectExecutor(Executor executor) {
+      myRunnersList.setSelectedValue(executor, true);
+    }
+
     public JComponent getComponent() {
       return myRunnersPanel;
     }
@@ -237,6 +299,10 @@ class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerAndConfi
       if (configEditor instanceof RunConfigurationSettingsEditor) {
         ((RunConfigurationSettingsEditor)configEditor).setOwner(ConfigurationSettingsEditor.this);
       }
+    }
+
+    public SettingsEditor<RunConfiguration> getConfigEditor() {
+      return myConfigEditor;
     }
 
     @Override

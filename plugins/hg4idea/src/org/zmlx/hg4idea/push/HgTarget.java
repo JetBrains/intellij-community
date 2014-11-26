@@ -37,4 +37,21 @@ public class HgTarget implements PushTarget {
     // push is always allowed except invalid target
     return true;
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof HgTarget)) return false;
+
+    HgTarget hgTarget = (HgTarget)o;
+
+    if (!myTarget.equals(hgTarget.myTarget)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    return myTarget.hashCode();
+  }
 }

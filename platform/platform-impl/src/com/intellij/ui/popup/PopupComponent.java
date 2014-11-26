@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.UIUtil;
 import com.sun.awt.AWTUtilities;
@@ -136,6 +137,11 @@ public interface PopupComponent {
     }
 
     public void show() {
+
+      if (Registry.is("suppress.focus.stealing")) {
+        UIUtil.setAutoRequestFocus(getWindow(), false);
+      }
+
       if (!myRequestFocus) {
         myDialog.setFocusableWindowState(false);
       }

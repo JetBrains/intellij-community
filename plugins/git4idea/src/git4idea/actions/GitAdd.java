@@ -22,7 +22,10 @@ public class GitAdd extends ScheduleForAdditionAction {
 
   @Override
   protected boolean isStatusForAddition(FileStatus status) {
-    return status == FileStatus.UNKNOWN || status == FileStatus.MODIFIED || status == FileStatus.MERGED_WITH_CONFLICTS;
+    return status == FileStatus.UNKNOWN ||
+           status == FileStatus.MODIFIED ||
+           status == FileStatus.MERGED_WITH_CONFLICTS ||
+           status == FileStatus.ADDED;
   }
 
 }

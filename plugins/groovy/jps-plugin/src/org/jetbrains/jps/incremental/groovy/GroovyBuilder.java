@@ -327,6 +327,16 @@ public class GroovyBuilder extends ModuleLevelBuilder {
   }
 
   @Override
+  public void buildStarted(CompileContext context) {
+    if (myForStubs) {
+      File stubRoot = getStubRoot(context);
+      if (stubRoot.exists() && !FileUtil.deleteWithRenaming(stubRoot)) {
+        context.processMessage(new CompilerMessage(myBuilderName, BuildMessage.Kind.ERROR, "External make cannot clean " + stubRoot.getPath()));
+      }
+    }
+  }
+
+  @Override
   public void chunkBuildFinished(CompileContext context, ModuleChunk chunk) {
     JavaBuilderUtil.cleanupChunkResources(context);
     STUB_TO_SRC.set(context, null);
@@ -334,10 +344,10 @@ public class GroovyBuilder extends ModuleLevelBuilder {
 
   private static Map<ModuleBuildTarget, String> getStubGenerationOutputs(ModuleChunk chunk, CompileContext context) throws IOException {
     Map<ModuleBuildTarget, String> generationOutputs = new HashMap<ModuleBuildTarget, String>();
-    File commonRoot = new File(context.getProjectDescriptor().dataManager.getDataPaths().getDataStorageRoot(), "groovyStubs");
+    File commonRoot = getStubRoot(context);
     for (ModuleBuildTarget target : chunk.getTargets()) {
       File targetRoot = new File(commonRoot, target.getModule().getName() + File.separator + target.getTargetType().getTypeId());
-      if (!FileUtil.deleteWithRenaming(targetRoot)) {
+      if (targetRoot.exists() && !FileUtil.deleteWithRenaming(targetRoot)) {
         throw new IOException("External make cannot clean " + targetRoot.getPath());
       }
       if (!targetRoot.mkdirs()) {
@@ -346,6 +356,10 @@ public class GroovyBuilder extends ModuleLevelBuilder {
       generationOutputs.put(target, targetRoot.getPath());
     }
     return generationOutputs;
+  }
+
+  private static File getStubRoot(CompileContext context) {
+    return new File(context.getProjectDescriptor().dataManager.getDataPaths().getDataStorageRoot(), "groovyStubs");
   }
 
   @Nullable

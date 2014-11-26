@@ -20,18 +20,18 @@ import com.intellij.execution.BeforeRunTask;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.UnknownRunConfiguration;
+import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.impl.TypeSafeDataProviderAdapter;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.actionSystem.DataSink;
-import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.HideableDecorator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -54,6 +54,14 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
 
   private final ConfigurationSettingsEditor myEditor;
   private final HideableDecorator myDecorator;
+
+  public <T extends SettingsEditor> T selectExecutorAndGetEditor(ProgramRunner runner, Class<T> editorClass) {
+    return myEditor.selectExecutorAndGetEditor(runner, editorClass);
+  }
+
+  public <T extends SettingsEditor> T selectTabAndGetEditor(Class<T> editorClass) {
+    return myEditor.selectTabAndGetEditor(editorClass);
+  }
 
   public ConfigurationSettingsEditorWrapper(final RunnerAndConfigurationSettings settings) {
     myEditor = new ConfigurationSettingsEditor(settings);
@@ -91,7 +99,7 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
   protected JComponent createEditor() {
     myComponentPlace.setLayout(new BorderLayout());
     myComponentPlace.add(myEditor.getComponent(), BorderLayout.CENTER);
-    DataManager.registerDataProvider(myWholePanel, new TypeSafeDataProviderAdapter(new MyDataProvider()));
+    DataManager.registerDataProvider(myWholePanel, new MyDataProvider());
     return myWholePanel;
   }
 
@@ -144,12 +152,15 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
     myDecorator.setTitle(title);
   }
 
-  private class MyDataProvider implements TypeSafeDataProvider {
+  private class MyDataProvider implements DataProvider {
+
+    @Nullable
     @Override
-    public void calcData(DataKey key, DataSink sink) {
-      if (key.equals(CONFIGURATION_EDITOR_KEY)) {
-        sink.put(CONFIGURATION_EDITOR_KEY, ConfigurationSettingsEditorWrapper.this);
+    public Object getData(@NonNls String dataId) {
+      if (CONFIGURATION_EDITOR_KEY.is(dataId)) {
+        return ConfigurationSettingsEditorWrapper.this;
       }
+      return null;
     }
   }
 }

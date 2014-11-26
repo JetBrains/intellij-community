@@ -34,6 +34,7 @@ import com.intellij.util.NotNullProducer;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
+import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.frame.XDebugView;
 import com.intellij.xdebugger.impl.frame.XVariablesView;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
@@ -98,7 +99,9 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
         catch (Exception e) {
           continue;
         }
-        final Color color = bpLine == lineNumber ? new JBColor(new Color(0, 255, 86), new Color(255, 235, 9)) : getForeground();
+        XDebugSession session = XDebugView.getSession(values.iterator().next().getTree());
+        boolean isTopFrame = session instanceof XDebugSessionImpl && ((XDebugSessionImpl)session).isTopFrameSelected();
+        final Color color = bpLine == lineNumber && isTopFrame ? new JBColor(new Color(0, 255, 86), new Color(255, 235, 9)) : getForeground();
 
         final String name = value.getName();
         if (StringUtil.isEmpty(text.toString())) {

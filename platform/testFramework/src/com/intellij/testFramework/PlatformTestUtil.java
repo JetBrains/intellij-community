@@ -863,7 +863,7 @@ public class PlatformTestUtil {
     }
   }
 
-  private static void patchSystemFileEncoding(String encoding) throws NoSuchFieldException, IllegalAccessException {
+  private static void patchSystemFileEncoding(String encoding) {
     ReflectionUtil.resetField(Charset.class, Charset.class, "defaultCharset");
     System.setProperty("file.encoding", encoding);
   }

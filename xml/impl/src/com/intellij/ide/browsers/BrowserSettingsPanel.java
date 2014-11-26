@@ -164,7 +164,7 @@ final class BrowserSettingsPanel {
     defaultBrowserPolicyComboBox.setModel(new ListComboBoxModel<DefaultBrowserPolicy>(defaultBrowserPolicies));
     defaultBrowserPolicyComboBox.addItemListener(new ItemListener() {
       @Override
-      public void itemStateChanged(ItemEvent e) {
+      public void itemStateChanged(@NotNull ItemEvent e) {
         boolean customPathEnabled = e.getItem() == DefaultBrowserPolicy.ALTERNATIVE;
         if (e.getStateChange() == ItemEvent.DESELECTED) {
           if (customPathEnabled) {
@@ -206,7 +206,7 @@ final class BrowserSettingsPanel {
 
     clearExtractedFiles.addActionListener(new ActionListener() {
       @Override
-      public void actionPerformed(ActionEvent e) {
+      public void actionPerformed(@NotNull ActionEvent e) {
         BrowserLauncherAppless.clearExtractedFiles();
       }
     });
@@ -278,7 +278,7 @@ final class BrowserSettingsPanel {
     browsersEditor = new TableModelEditor<ConfigurableWebBrowser>(COLUMNS, itemEditor, "No web browsers configured")
       .modelListener(new TableModelEditor.DataChangedListener<ConfigurableWebBrowser>() {
         @Override
-        public void tableChanged(TableModelEvent event) {
+        public void tableChanged(@NotNull TableModelEvent event) {
           update();
         }
 

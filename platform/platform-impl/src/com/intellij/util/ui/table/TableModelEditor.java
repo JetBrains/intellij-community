@@ -76,7 +76,8 @@ public class TableModelEditor<T> implements ElementProducer<T> {
     table.setEnableAntialiasing(true);
     preferredScrollableViewportHeightInRows(JBTable.PREFERRED_SCROLLABLE_VIEWPORT_HEIGHT_IN_ROWS);
     new TableSpeedSearch(table);
-    if (columns[0].getColumnClass() == Boolean.class && columns[0].getName().isEmpty()) {
+    ColumnInfo firstColumn = columns[0];
+    if ((firstColumn.getColumnClass() == boolean.class || firstColumn.getColumnClass() == Boolean.class) && firstColumn.getName().isEmpty()) {
       TableUtil.setupCheckboxColumn(table.getColumnModel().getColumn(0));
     }
 
@@ -168,7 +169,7 @@ public class TableModelEditor<T> implements ElementProducer<T> {
     public abstract void dataChanged(@NotNull ColumnInfo<T, ?> columnInfo, int rowIndex);
 
     @Override
-    public void tableChanged(TableModelEvent e) {
+    public void tableChanged(@NotNull TableModelEvent e) {
     }
   }
 
@@ -357,7 +358,7 @@ public class TableModelEditor<T> implements ElementProducer<T> {
     return toolbarDecorator.addExtraAction(
       new ToolbarDecorator.ElementActionButton(IdeBundle.message("button.copy"), PlatformIcons.COPY_ICON) {
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           TableUtil.stopEditing(table);
 
           List<T> selectedItems = table.getSelectedObjects();

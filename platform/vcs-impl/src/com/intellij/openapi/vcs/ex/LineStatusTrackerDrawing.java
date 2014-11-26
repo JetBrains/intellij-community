@@ -33,7 +33,6 @@ import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.editor.markup.ActiveGutterRenderer;
-import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.LineMarkerRenderer;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -63,10 +62,12 @@ public class LineStatusTrackerDrawing {
   }
 
   static TextAttributes getAttributesFor(final Range range) {
-    final Color stripeColor = getDiffColor(range);
-    final TextAttributes textAttributes = new TextAttributes(null, stripeColor, null, EffectType.BOXED, Font.PLAIN);
-    textAttributes.setErrorStripeColor(stripeColor);
-    return textAttributes;
+    return new TextAttributes() {
+      @Override
+      public Color getErrorStripeColor() {
+        return getDiffColor(range);
+      }
+    };
   }
 
   private static void paintGutterFragment(final Editor editor, final Graphics g, final Rectangle r, final Range range) {

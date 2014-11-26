@@ -18,13 +18,15 @@ package com.intellij.openapi.vcs.changes.issueLinks;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.IssueNavigationConfiguration;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Consumer;
 
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.intellij.ui.JBColor.blue;
 
 /**
  * @author yole
@@ -85,6 +87,9 @@ public class IssueLinkRenderer {
   }
 
   private static SimpleTextAttributes getLinkAttributes(final SimpleTextAttributes baseStyle) {
-    return new SimpleTextAttributes(baseStyle.getStyle() | SimpleTextAttributes.STYLE_UNDERLINE, JBColor.blue);
+    Color color = baseStyle.getFgColor();
+    int alpha = color != null ? color.getAlpha() : 255;
+    @SuppressWarnings("UseJBColor") Color resultColor = new Color(blue.getRed(), blue.getGreen(), blue.getBlue(), alpha);
+    return new SimpleTextAttributes(baseStyle.getStyle() | SimpleTextAttributes.STYLE_UNDERLINE, resultColor);
   }
 }

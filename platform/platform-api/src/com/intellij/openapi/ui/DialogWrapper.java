@@ -1204,11 +1204,11 @@ public abstract class DialogWrapper {
     };
     toggleShowOptions.registerCustomShortcutSet(sc, root);
 
-    final JPanel northSection = new JPanel(new BorderLayout());
-    root.add(northSection, BorderLayout.NORTH);
-
     JComponent titlePane = createTitlePane();
     if (titlePane != null) {
+      JPanel northSection = new JPanel(new BorderLayout());
+      root.add(northSection, BorderLayout.NORTH);
+
       northSection.add(titlePane, BorderLayout.CENTER);
     }
 

@@ -20,6 +20,7 @@
 package com.intellij.util.messages.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.util.SmartFMap;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.MessageHandler;
@@ -117,7 +118,10 @@ public class MessageBusConnectionImpl implements MessageBusConnection {
     catch (AbstractMethodError e) {
       //Do nothing. This listener just does not implement something newly added yet.
     }
-    catch(Throwable e) {
+    catch (ProcessCanceledException e) {
+      throw e;
+    }
+    catch (Throwable e) {
       LOG.error(e.getCause() == null ? e : e.getCause());
     }
   }

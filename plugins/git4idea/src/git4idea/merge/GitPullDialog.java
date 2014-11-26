@@ -178,7 +178,9 @@ public class GitPullDialog extends DialogWrapper {
         return branch.getName();
       }
     }), false);
-    myBranchChooser.setElementMarked(currentRemoteBranch, true);
+    if (currentRemoteBranch != null) {
+      myBranchChooser.setElementMarked(currentRemoteBranch, true);
+    }
 
     validateDialog();
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.CommonActionsPanel;
+import com.intellij.util.SingleAlarm;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroup;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
@@ -55,6 +56,13 @@ public class BreakpointsFavoriteListProvider extends AbstractFavoritesListProvid
 
   private Set<XBreakpointGroupingRule> myRulesEnabled = new TreeSet<XBreakpointGroupingRule>(XBreakpointGroupingRule.PRIORITY_COMPARATOR);
 
+  private final SingleAlarm myRebuildAlarm = new SingleAlarm(new Runnable() {
+    @Override
+    public void run() {
+      updateChildren();
+    }
+  }, 100);
+
   public BreakpointsFavoriteListProvider(Project project) {
     super(project, "Breakpoints");
     myBreakpointPanelProviders = XBreakpointUtil.collectPanelProviders();
@@ -69,7 +77,7 @@ public class BreakpointsFavoriteListProvider extends AbstractFavoritesListProvid
 
   @Override
   public void breakpointsChanged() {
-    updateChildren();
+    myRebuildAlarm.cancelAndRequest();
   }
 
   private void getEnabledGroupingRules(Collection<XBreakpointGroupingRule> rules) {

@@ -428,7 +428,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
       }
       else if (myRole1 == ChildRole.FIELD) {
         int blankLines = myJavaSettings.BLANK_LINES_AROUND_INITIALIZER + 1;
-        myResult = Spacing.createSpacing(0, mySettings.SPACE_BEFORE_CLASS_LBRACE ? 1 : 0, blankLines, true, mySettings.KEEP_BLANK_LINES_BEFORE_RBRACE);
+        myResult = Spacing.createSpacing(0, mySettings.SPACE_BEFORE_CLASS_LBRACE ? 1 : 0, blankLines, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_BEFORE_RBRACE);
       }
       else if (myRole1 == ChildRole.CLASS) {
         setAroundClassSpacing();
@@ -546,6 +546,10 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     if (myRole2 == ChildRole.METHOD || myChild2.getElementType() == JavaElementType.METHOD) {
       if (myRole1 == ChildRole.LBRACE) {
         myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, 0);
+      }
+      else if (myRole1 == ChildRole.CLASS_INITIALIZER) {
+        int blankLines = myJavaSettings.BLANK_LINES_AROUND_INITIALIZER + 1;
+        myResult = Spacing.createSpacing(0, Integer.MAX_VALUE, blankLines, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_BEFORE_RBRACE);
       }
       else {
         final int blankLines = getLinesAroundMethod() + 1;

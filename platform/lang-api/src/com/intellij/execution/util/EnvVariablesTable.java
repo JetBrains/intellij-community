@@ -24,6 +24,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AnActionButton;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import org.jetbrains.annotations.NotNull;
@@ -93,6 +94,28 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
     return new ListTableModel((new ColumnInfo[]{name, value}));
   }
 
+  public void editVariableName(final EnvironmentVariable environmentVariable) {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+
+      @Override
+      public void run() {
+        final EnvironmentVariable actualEnvVar = ContainerUtil.find(getElements(), new Condition<EnvironmentVariable>() {
+          @Override
+          public boolean value(EnvironmentVariable item) {
+            return StringUtil.equals(environmentVariable.getName(), item.getName());
+          }
+        });
+        if (actualEnvVar == null) {
+          return;
+        }
+
+        setSelection(actualEnvVar);
+        if (actualEnvVar.getNameIsWriteable()) {
+          editSelection(0);
+        }
+      }
+    });
+  }
 
   public List<EnvironmentVariable> getEnvironmentVariables() {
     return getElements();

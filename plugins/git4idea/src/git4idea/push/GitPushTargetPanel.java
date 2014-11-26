@@ -16,10 +16,7 @@
 package git4idea.push;
 
 import com.intellij.dvcs.push.PushTargetPanel;
-import com.intellij.dvcs.push.ui.PushTargetTextField;
-import com.intellij.dvcs.push.ui.VcsEditableTextComponent;
-import com.intellij.dvcs.push.ui.VcsLinkListener;
-import com.intellij.dvcs.push.ui.VcsLinkedTextComponent;
+import com.intellij.dvcs.push.ui.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -143,26 +140,29 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
   }
 
   @Override
-  public void render(@NotNull ColoredTreeCellRenderer renderer, boolean isSelected) {
+  public void render(@NotNull ColoredTreeCellRenderer renderer, boolean isSelected, boolean isActive) {
+    SimpleTextAttributes targetTextAttributes = PushLogTreeUtil.addTransparencyIfNeeded(SimpleTextAttributes.REGULAR_ATTRIBUTES, isActive);
     if (myError != null) {
-      renderer.append(myError, SimpleTextAttributes.ERROR_ATTRIBUTES);
+      renderer.append(myError, PushLogTreeUtil.addTransparencyIfNeeded(SimpleTextAttributes.ERROR_ATTRIBUTES, isActive));
     }
     else {
       String currentRemote = myRemoteRenderedComponent.getText();
       if (getRemotes().size() > 1) {
         myRemoteRenderedComponent.setSelected(isSelected);
+        myRemoteRenderedComponent.setTransparent(!isActive);
         myRemoteRenderedComponent.render(renderer);
       }
       else {
-        renderer.append(currentRemote, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        renderer.append(currentRemote, targetTextAttributes);
       }
-      renderer.append(SEPARATOR, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      renderer.append(SEPARATOR, targetTextAttributes);
 
       GitPushTarget target = getValue();
       if (target.isNewBranchCreated()) {
-        renderer.append("+", SimpleTextAttributes.SYNTHETIC_ATTRIBUTES, this);
+        renderer.append("+", PushLogTreeUtil.addTransparencyIfNeeded(SimpleTextAttributes.SYNTHETIC_ATTRIBUTES, isActive), this);
       }
       myTargetRenderedComponent.setSelected(isSelected);
+      myTargetRenderedComponent.setTransparent(!isActive);
       myTargetRenderedComponent.render(renderer);
     }
   }

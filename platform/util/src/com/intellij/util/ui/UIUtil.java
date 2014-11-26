@@ -3001,7 +3001,7 @@ public class UIUtil {
     if (SystemInfo.isMac) return;
     if (SystemInfo.isJavaVersionAtLeast("1.7")) {
       try {
-        Method setAutoRequestFocusMethod  = onWindow.getClass().getMethod("setAutoRequestFocus",new Class [] {boolean.class});
+        Method setAutoRequestFocusMethod  = onWindow.getClass().getMethod("setAutoRequestFocus", boolean.class);
         setAutoRequestFocusMethod.invoke(onWindow, set);
       }
       catch (NoSuchMethodException e) { LOG.debug(e); }

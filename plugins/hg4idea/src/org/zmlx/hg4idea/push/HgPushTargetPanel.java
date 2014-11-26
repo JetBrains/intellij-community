@@ -52,12 +52,13 @@ public class HgPushTargetPanel extends PushTargetPanel<HgTarget> {
   }
 
   @Override
-  public void render(@NotNull ColoredTreeCellRenderer renderer, boolean isSelected) {
+  public void render(@NotNull ColoredTreeCellRenderer renderer, boolean isSelected, boolean isActive) {
     String targetText = myDestTargetPanel.getText();
     if (StringUtil.isEmptyOrSpaces(targetText)) {
       renderer.append(ENTER_REMOTE, SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES, this);
     }
     myTargetRenderedComponent.setSelected(isSelected);
+    myTargetRenderedComponent.setTransparent(!isActive);
     myTargetRenderedComponent.render(renderer);
   }
 

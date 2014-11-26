@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,6 +55,7 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
 
   private T myConsoleView;
 
+  @NotNull
   private final Project myProject;
 
   private ProcessBackedConsoleExecuteActionHandler myConsoleExecuteActionHandler;
@@ -260,6 +261,7 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
     return myConsoleView;
   }
 
+  @NotNull
   public Project getProject() {
     return myProject;
   }

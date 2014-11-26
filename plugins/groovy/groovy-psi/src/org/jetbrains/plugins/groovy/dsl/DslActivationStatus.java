@@ -38,27 +38,27 @@ public class DslActivationStatus implements PersistentStateComponent<Element> {
     return ServiceManager.getService(DslActivationStatus.class);
   }
 
-  public void activateUntilModification(@NotNull VirtualFile vfile) {
+  public synchronized void activateUntilModification(@NotNull VirtualFile vfile) {
     myStatus.put(vfile, ENABLED);
   }
 
-  public void disableFile(@NotNull VirtualFile vfile, @NotNull String error) {
+  public synchronized void disableFile(@NotNull VirtualFile vfile, @NotNull String error) {
     myStatus.put(vfile, error);
   }
 
   @Nullable
-  public String getInactivityReason(VirtualFile file) {
+  public synchronized String getInactivityReason(VirtualFile file) {
     String status = myStatus.get(file);
     return status == null || status == ENABLED ? null : status;
   }
 
-  public boolean isActivated(VirtualFile file) {
+  public synchronized boolean isActivated(VirtualFile file) {
     return myStatus.get(file) == ENABLED;
   }
 
   @Nullable
   @Override
-  public Element getState() {
+  public synchronized Element getState() {
     Element root = new Element("x");
     for (Map.Entry<VirtualFile, String> entry : myStatus.entrySet()) {
       VirtualFile file = entry.getKey();
@@ -72,7 +72,7 @@ public class DslActivationStatus implements PersistentStateComponent<Element> {
   }
 
   @Override
-  public void loadState(Element state) {
+  public synchronized void loadState(Element state) {
     List<Element> children = state.getChildren("file");
     for (Element element : children) {
       String url = element.getAttributeValue("url", "");
