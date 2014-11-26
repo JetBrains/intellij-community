@@ -30,8 +30,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileSystem;
-import com.intellij.util.io.HttpRequests;
 import com.intellij.util.PathUtil;
+import com.intellij.util.io.HttpRequests;
 import com.intellij.util.io.ZipUtil;
 import com.intellij.util.net.NetUtils;
 import org.jetbrains.annotations.NonNls;
@@ -113,6 +113,7 @@ public class PluginDownloader {
     }
     catch (IOException ex) {
       myFile = null;
+      LOG.warn(ex);
       errorMessage = ex.getMessage();
     }
     if (myFile == null) {

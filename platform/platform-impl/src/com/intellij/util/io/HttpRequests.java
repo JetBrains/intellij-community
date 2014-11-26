@@ -201,6 +201,6 @@ public final class HttpRequests {
       return connection;
     }
 
-    throw new IOException("Too many redirects");
+    throw new IOException(IdeBundle.message("error.connection.failed.redirects"));
   }
 }
