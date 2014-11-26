@@ -181,7 +181,8 @@ public final class ObjectTree<T> {
   }
 
   @TestOnly
-  void assertNoReferenceKeptInTree(@NotNull T disposable) {
+  // public for Upsource
+  public void assertNoReferenceKeptInTree(@NotNull T disposable) {
     synchronized (treeLock) {
       Collection<ObjectNode<T>> nodes = myObject2NodeMap.values();
       for (ObjectNode<T> node : nodes) {
