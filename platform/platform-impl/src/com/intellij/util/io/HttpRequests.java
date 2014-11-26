@@ -172,20 +172,18 @@ public final class HttpRequests {
 
       if (connection instanceof HttpURLConnection) {
         int responseCode = ((HttpURLConnection)connection).getResponseCode();
+
         if (responseCode != HttpURLConnection.HTTP_OK && responseCode != HttpURLConnection.HTTP_NOT_MODIFIED) {
+          ((HttpURLConnection)connection).disconnect();
+
           if (responseCode == HttpURLConnection.HTTP_MOVED_PERM || responseCode == HttpURLConnection.HTTP_MOVED_TEMP) {
             url = connection.getHeaderField("Location");
-          }
-          else {
-            url = null;
-          }
-
-          if (url == null) {
-            throw new IOException(IdeBundle.message("error.connection.failed.with.http.code.N", responseCode));
+            if (url != null) {
+              continue;
+            }
           }
 
-          ((HttpURLConnection)connection).disconnect();
-          continue;
+          throw new IOException(IdeBundle.message("error.connection.failed.with.http.code.N", responseCode));
         }
       }
 
