@@ -169,8 +169,9 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
   }
 
   private static final class MoreCommitsRequest implements Request {
+    @NotNull
     private final Runnable onLoaded;
-    MoreCommitsRequest(Runnable onLoaded) {
+    MoreCommitsRequest(@NotNull Runnable onLoaded) {
       this.onLoaded = onLoaded;
     }
   }
