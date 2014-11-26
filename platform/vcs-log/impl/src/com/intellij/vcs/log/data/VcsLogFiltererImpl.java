@@ -123,7 +123,8 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
           continue;
         }
 
-        if (filterRequest != null) { // "more commits needed" has no effect if filter changes; it also can't come after filter change request
+        if (filterRequest != null) {
+          // "more commits needed" has no effect if filter changes; it also can't come after filter change request
           myCommitCount = CommitCountStage.INITIAL;
         }
         else if (!moreCommitsRequests.isEmpty()) {
@@ -149,6 +150,7 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
 
   private static final class RefreshRequest implements Request {
     private final DataPack dataPack;
+
     RefreshRequest(DataPack dataPack) {
       this.dataPack = dataPack;
     }
@@ -156,6 +158,7 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
 
   private static final class FilterRequest implements Request {
     private final VcsLogFilterCollection filters;
+
     FilterRequest(VcsLogFilterCollection filters) {
       this.filters = filters;
     }
@@ -163,14 +166,15 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
 
   private static final class SortTypeRequest implements Request {
     private final PermanentGraph.SortType sortType;
+
     SortTypeRequest(PermanentGraph.SortType sortType) {
       this.sortType = sortType;
     }
   }
 
   private static final class MoreCommitsRequest implements Request {
-    @NotNull
-    private final Runnable onLoaded;
+    @NotNull private final Runnable onLoaded;
+
     MoreCommitsRequest(@NotNull Runnable onLoaded) {
       this.onLoaded = onLoaded;
     }
