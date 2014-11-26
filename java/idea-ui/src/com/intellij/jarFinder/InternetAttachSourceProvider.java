@@ -1,10 +1,24 @@
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.jarFinder;
 
 import com.intellij.codeInsight.AttachSourcesProvider;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -14,20 +28,20 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.PathUIUtils;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.io.HttpRequests;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.net.NetUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
-import java.net.HttpURLConnection;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -35,9 +49,7 @@ import java.util.regex.Pattern;
  * @author Sergey Evdokimov
  */
 public class InternetAttachSourceProvider implements AttachSourcesProvider {
-
-  private static final Logger LOG = Logger.getInstance("#com.intellij.jarFinder.SonatypeAttachSourceProvider");
-
+  private static final Logger LOG = Logger.getInstance(InternetAttachSourceProvider.class);
   private static final Pattern ARTIFACT_IDENTIFIER = Pattern.compile("[A-Za-z0-9\\.\\-_]+");
 
   @Nullable
@@ -126,19 +138,17 @@ public class InternetAttachSourceProvider implements AttachSourcesProvider {
       @Override
       public ActionCallback perform(List<LibraryOrderEntry> orderEntriesContainingFile) {
         final Task task = new Task.Modal(psiFile.getProject(), "Searching source...", true) {
-
-          // Don't move initialization of searchers to static context of top level class, to avoid unnecessary initialization of searcher's classes
-          private SourceSearcher[] mySearchers = new SourceSearcher[]{new MavenCentralSourceSearcher(), new SonatypeSourceSearcher()};
-
           @Override
           public void run(@NotNull final ProgressIndicator indicator) {
             String artifactUrl = null;
 
-            for (SourceSearcher searcher : mySearchers) {
+            SourceSearcher[] searchers = {new MavenCentralSourceSearcher(), new SonatypeSourceSearcher()};
+            for (SourceSearcher searcher : searchers) {
               try {
                 artifactUrl = searcher.findSourceJar(indicator, artifactId, version);
               }
               catch (SourceSearchException e) {
+                LOG.warn(e);
                 showMessage("Downloading failed", e.getMessage(), NotificationType.ERROR);
                 continue;
               }
@@ -147,47 +157,37 @@ public class InternetAttachSourceProvider implements AttachSourcesProvider {
             }
 
             if (artifactUrl == null) {
-              showMessage("Source not found", "Sources for: " + jarName + ".jar not found", NotificationType.WARNING);
+              showMessage("Sources not found", "Sources for '" + jarName + ".jar' not found", NotificationType.WARNING);
               return;
             }
 
-            libSourceDir.mkdirs();
-
-            if (!libSourceDir.exists()) {
+            if (!(libSourceDir.isDirectory() || libSourceDir.mkdirs())) {
               showMessage("Downloading failed", "Failed to create directory to store sources: " + libSourceDir, NotificationType.ERROR);
               return;
             }
 
             try {
-              HttpURLConnection urlConnection = HttpConfigurable.getInstance().openHttpConnection(artifactUrl);
-
-              int contentLength = urlConnection.getContentLength();
-
-              File tmpDownload = File.createTempFile("download", ".tmp", libSourceDir);
-              OutputStream out = new BufferedOutputStream(new FileOutputStream(tmpDownload));
-
-              try {
-                InputStream in = urlConnection.getInputStream();
-                indicator.setText("Downloading sources...");
-                indicator.setIndeterminate(false);
-                try {
-                  NetUtils.copyStreamContent(indicator, in, out, contentLength);
+              File tmpDownload = HttpRequests.request(artifactUrl).connect(new HttpRequests.RequestProcessor<File>() {
+                @Override
+                public File process(@NotNull HttpRequests.Request request) throws IOException {
+                  File tmpDownload = FileUtil.createTempFile(libSourceDir, "download.", ".tmp", false, false);
+                  OutputStream out = new BufferedOutputStream(new FileOutputStream(tmpDownload));
+                  try {
+                    NetUtils.copyStreamContent(indicator, request.getInputStream(), out, request.getConnection().getContentLength());
+                  }
+                  finally {
+                    out.close();
+                  }
+                  return tmpDownload;
                 }
-                finally {
-                  in.close();
-                }
-              }
-              finally {
-                out.close();
-              }
+              });
 
-              if (!sourceFile.exists()) {
-                if (!tmpDownload.renameTo(sourceFile)) {
-                  LOG.warn("Failed to rename file " + tmpDownload + " to " + sourceFileName);
-                }
+              if (!sourceFile.exists() && !tmpDownload.renameTo(sourceFile)) {
+                LOG.warn("Failed to rename file " + tmpDownload + " to " + sourceFileName);
               }
             }
             catch (IOException e) {
+              LOG.warn(e);
               showMessage("Downloading failed", "Connection problem. See log for more details.", NotificationType.ERROR);
             }
           }
@@ -197,17 +197,8 @@ public class InternetAttachSourceProvider implements AttachSourcesProvider {
             attachSourceJar(sourceFile, libraries);
           }
 
-          private void showMessage(final String title, final String message, final NotificationType notificationType) {
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                new Notification("Source searcher",
-                                 title,
-                                 message,
-                                 notificationType)
-                  .notify(getProject());
-              }
-            });
+          private void showMessage(String title, String message, NotificationType notificationType) {
+            new Notification("Source searcher", title, message, notificationType).notify(getProject());
           }
         };
 
@@ -230,7 +221,6 @@ public class InternetAttachSourceProvider implements AttachSourcesProvider {
 
   public static void attachSourceJar(@NotNull File sourceJar, @NotNull Collection<Library> libraries) {
     AccessToken accessToken = WriteAction.start();
-
     try {
       VirtualFile srcFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(sourceJar);
       if (srcFile == null) return;
