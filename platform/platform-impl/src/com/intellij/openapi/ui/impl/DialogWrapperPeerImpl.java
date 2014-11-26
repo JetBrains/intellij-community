@@ -203,6 +203,10 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
       }
       myDialog.setModalityType(modalityType);
     }
+
+    if (Registry.is("suppress.focus.stealing")) {
+      setAutoRequestFocus(false);
+    }
   }
 
   /** @see DialogWrapper#DialogWrapper(boolean, boolean)
