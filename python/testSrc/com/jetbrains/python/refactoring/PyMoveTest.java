@@ -194,6 +194,11 @@ public class PyMoveTest extends PyTestCase {
     doMoveFileTest("nspkg/nssubpkg", "");
   }
 
+  // PY-14432
+  public void testRelativeImportInsideMovedModule() {
+    doMoveFileTest("pkg1/subpkg1", "");
+  }
+
   public void testRelativeImportOfNameFromInitPy() {
     doMoveFileTest("pkg/subpkg2", "");
   }
