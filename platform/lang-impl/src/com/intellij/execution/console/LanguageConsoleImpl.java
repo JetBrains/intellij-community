@@ -20,13 +20,12 @@ import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.highlighter.HighlighterFactory;
+import com.intellij.ide.impl.TypeSafeDataProviderAdapter;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.EmptyAction;
-import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
@@ -62,7 +61,6 @@ import com.intellij.ui.SideBorder;
 import com.intellij.util.*;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -79,7 +77,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author Gregory.Shrago
  * In case of REPL consider to use {@link LanguageConsoleBuilder}
  */
-public class LanguageConsoleImpl implements LanguageConsole, DataProvider {
+public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   private static final int SEPARATOR_THICKNESS = 1;
   private final Project myProject;
 
@@ -179,7 +177,7 @@ public class LanguageConsoleImpl implements LanguageConsole, DataProvider {
     myPanel.add(myHistoryViewer.getComponent());
     myPanel.add(myConsoleEditor.getComponent());
 
-    DataManager.registerDataProvider(myPanel, this);
+    DataManager.registerDataProvider(myPanel, new TypeSafeDataProviderAdapter(this));
 
     myHistoryViewer.getComponent().addComponentListener(new ComponentAdapter() {
       @Override
@@ -614,17 +612,14 @@ public class LanguageConsoleImpl implements LanguageConsole, DataProvider {
     }
   }
 
-  @Nullable
   @Override
-  public Object getData(@NonNls String dataId) {
-    if (OpenFileDescriptor.NAVIGATE_IN_EDITOR.is(dataId)) {
-      return myConsoleEditor;
+  public void calcData(@NotNull DataKey key, @NotNull DataSink sink) {
+    if (OpenFileDescriptor.NAVIGATE_IN_EDITOR == key) {
+      sink.put(OpenFileDescriptor.NAVIGATE_IN_EDITOR, myConsoleEditor);
     }
     else if (getProject().isInitialized()) {
-      Caret caret = myConsoleEditor.getCaretModel().getCurrentCaret();
-      return FileEditorManagerEx.getInstanceEx(getProject()).getData(dataId, myConsoleEditor, caret);
+      sink.put(key, FileEditorManagerEx.getInstanceEx(getProject()).getData(key.getName(), myConsoleEditor, myConsoleEditor.getCaretModel().getCurrentCaret()));
     }
-    return null;
   }
 
   private void installEditorFactoryListener() {

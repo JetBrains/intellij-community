@@ -27,7 +27,7 @@ import java.nio.charset.Charset;
 /**
  * @author traff
  */
-public class ProcessBackedConsoleExecuteActionHandler extends BaseConsoleExecuteActionHandler implements Condition<LanguageConsole> {
+public class ProcessBackedConsoleExecuteActionHandler extends BaseConsoleExecuteActionHandler implements Condition<LanguageConsoleImpl> {
   private volatile ProcessHandler myProcessHandler;
 
   public ProcessBackedConsoleExecuteActionHandler(ProcessHandler processHandler, boolean preserveMarkup) {
@@ -74,7 +74,7 @@ public class ProcessBackedConsoleExecuteActionHandler extends BaseConsoleExecute
   }
 
   @Override
-  public boolean value(LanguageConsole console) {
+  public boolean value(LanguageConsoleImpl console) {
     return !isProcessTerminated();
   }
 }
