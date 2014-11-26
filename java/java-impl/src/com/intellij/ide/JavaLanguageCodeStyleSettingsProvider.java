@@ -272,6 +272,10 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
     "  private int field1;\n" +
     "  private int field2;\n" +
     "\n" +
+    "  {\n" +
+    "      field1 = 2;\n" +
+    "  }\n" +
+    "\n" +
     "  public void foo1() {\n" +
     "      new Runnable() {\n" +
     "          public void run() {\n" +
