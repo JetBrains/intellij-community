@@ -158,8 +158,8 @@ public class IdeaDecompilerTest extends LightCodeInsightFixtureTestCase {
 
       LineNumbersMapping mapping = file.getUserData(LineNumbersMapping.LINE_NUMBERS_MAPPING_KEY);
       assertNotNull(mapping);
-      assertEquals(11, mapping.map(3));
-      assertEquals(23, mapping.map(13));
+      assertEquals(11, mapping.bytecodeToSource(3));
+      assertEquals(23, mapping.bytecodeToSource(13));
     }
     finally {
       value.setValue(old);

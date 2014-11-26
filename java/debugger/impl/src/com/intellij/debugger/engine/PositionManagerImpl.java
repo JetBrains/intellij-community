@@ -146,7 +146,7 @@ public class PositionManagerImpl implements PositionManager {
       if (file != null) {
         LineNumbersMapping mapping = file.getUserData(LineNumbersMapping.LINE_NUMBERS_MAPPING_KEY);
         if (mapping != null) {
-          int line = mapping.map(lineNumber + 1);
+          int line = mapping.bytecodeToSource(lineNumber + 1);
           if (line > -1) {
             return SourcePosition.createFromLine(psiFile, line - 1);
           }

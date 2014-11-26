@@ -27,6 +27,6 @@ public interface LineNumbersMapping {
    */
   Key<LineNumbersMapping> LINE_NUMBERS_MAPPING_KEY = Key.create("line.numbers.mapping.key");
 
-  int map(int line);
-  int unmap(int line);
+  int bytecodeToSource(int line);
+  int sourceToBytecode(int line);
 }

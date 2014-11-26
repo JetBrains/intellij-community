@@ -60,7 +60,7 @@ public final class OpenFileHyperlinkInfo implements FileHyperlinkInfo {
     FileDocumentManager.getInstance().getDocument(myFile); // need to load decompiler text
     LineNumbersMapping mapping = myFile.getUserData(LineNumbersMapping.LINE_NUMBERS_MAPPING_KEY);
     if (mapping != null) {
-      line = mapping.map(myDocumentLine + 1) - 1;
+      line = mapping.bytecodeToSource(myDocumentLine + 1) - 1;
       if (line < 0) {
         line = myDocumentLine;
       }

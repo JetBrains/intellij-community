@@ -118,7 +118,7 @@ public class CompoundPositionManager extends PositionManagerEx {
     if (file != null) {
       LineNumbersMapping mapping = file.getUserData(LineNumbersMapping.LINE_NUMBERS_MAPPING_KEY);
       if (mapping != null) {
-        int line = mapping.unmap(position.getLine() + 1);
+        int line = mapping.sourceToBytecode(position.getLine() + 1);
         if (line > -1) {
           position = SourcePosition.createFromLine(position.getFile(), line - 1);
         }

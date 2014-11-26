@@ -349,7 +349,7 @@ public class IdeaDecompiler extends ClassFileDecompilers.Light {
     }
 
     @Override
-    public int map(int line) {
+    public int bytecodeToSource(int line) {
       for (int i = 0; i < myMapping.length; i += 2) {
         if (myMapping[i] == line) {
           return myMapping[i + 1];
@@ -359,7 +359,7 @@ public class IdeaDecompiler extends ClassFileDecompilers.Light {
     }
 
     @Override
-    public int unmap(int line) {
+    public int sourceToBytecode(int line) {
       for (int i = 0; i < myMapping.length; i += 2) {
         if (myMapping[i + 1] == line) {
           return myMapping[i];
