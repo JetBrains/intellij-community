@@ -2890,13 +2890,29 @@ public class UIUtil {
     }
   }
 
+  /**
+   * Adds an empty border with the specified insets to the specified component.
+   * If the component already has a border it will be preserved.
+   *
+   * @param component the component to which border added
+   * @param top       the inset from the top
+   * @param left      the inset from the left
+   * @param bottom    the inset from the bottom
+   * @param right     the inset from the right
+   */
+  public static void addInsets(@NotNull JComponent component, int top, int left, int bottom, int right) {
+    addBorder(component, BorderFactory.createEmptyBorder(top, left, bottom, right));
+  }
+
+  /**
+   * Adds an empty border with the specified insets to the specified component.
+   * If the component already has a border it will be preserved.
+   *
+   * @param component the component to which border added
+   * @param insets    the top, left, bottom, and right insets
+   */
   public static void addInsets(@NotNull JComponent component, @NotNull Insets insets) {
-    if (component.getBorder() != null) {
-      component.setBorder(new CompoundBorder(new EmptyBorder(insets), component.getBorder()));
-    }
-    else {
-      component.setBorder(new EmptyBorder(insets));
-    }
+    addInsets(component, insets.top, insets.left, insets.bottom, insets.right);
   }
 
   public static Dimension addInsets(@NotNull Dimension dimension, @NotNull Insets insets) {
@@ -2947,13 +2963,20 @@ public class UIUtil {
     return null;
   }
 
+  /**
+   * Adds the specified border to the specified component.
+   * If the component already has a border it will be preserved.
+   * If component or border is not specified nothing happens.
+   *
+   * @param component the component to which border added
+   * @param border    the border to add to the component
+   */
   public static void addBorder(JComponent component, Border border) {
-    if (component == null) return;
-
-    if (component.getBorder() != null) {
-      component.setBorder(new CompoundBorder(border, component.getBorder()));
-    }
-    else {
+    if (component != null && border != null) {
+      Border old = component.getBorder();
+      if (old != null) {
+        border = BorderFactory.createCompoundBorder(border, old);
+      }
       component.setBorder(border);
     }
   }
