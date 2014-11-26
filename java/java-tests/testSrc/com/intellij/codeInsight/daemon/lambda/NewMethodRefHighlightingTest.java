@@ -332,6 +332,10 @@ public class NewMethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest(true);
   }
 
+  public void testPotentialCompatibilityWithInvalidShape() throws Exception {
+    doTest(true);
+  }
+
   private void doTest() {
     doTest(false);
   }

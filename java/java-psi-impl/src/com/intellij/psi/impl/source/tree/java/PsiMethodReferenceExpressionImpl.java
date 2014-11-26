@@ -97,8 +97,8 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
       final PsiElement element = resolveResult.getElement();
       if (element instanceof PsiMethod) {
         final boolean isStatic = ((PsiMethod)element).hasModifierProperty(PsiModifier.STATIC);
+        final int parametersCount = ((PsiMethod)element).getParameterList().getParametersCount();
         if (qualifierResolveResult.isReferenceTypeQualified() && getReferenceNameElement() instanceof PsiIdentifier) {
-          final int parametersCount = ((PsiMethod)element).getParameterList().getParametersCount();
           if (parametersCount == interfaceArity && isStatic) {
             return true;
           }
@@ -106,8 +106,11 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
             return true;
           }
           if (((PsiMethod)element).isVarArgs()) return true;
-        } else if (!isStatic) {
-          return true;
+        }
+        else if (!isStatic) {
+          if (parametersCount == interfaceArity || ((PsiMethod)element).isVarArgs()) {
+            return true;
+          }
         }
       } else if (element instanceof PsiClass) {
         return true;
