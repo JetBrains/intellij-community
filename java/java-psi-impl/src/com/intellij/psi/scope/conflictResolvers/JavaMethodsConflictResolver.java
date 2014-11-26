@@ -33,6 +33,7 @@ import com.intellij.util.containers.HashSet;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TIntArrayList;
+import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -91,9 +92,6 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     // then noone can be more specific
     if (!atLeastOneMatch) return null;
 
-    checkLambdaApplicable(conflicts, myLanguageLevel);
-    if (conflicts.size() == 1) return conflicts.get(0);
-
     checkSpecifics(conflicts, applicabilityLevel, myLanguageLevel);
     if (conflicts.size() == 1) return conflicts.get(0);
 
@@ -106,63 +104,6 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     Set<CandidateInfo> uniques = new THashSet<CandidateInfo>(conflicts);
     if (uniques.size() == 1) return uniques.iterator().next();
     return null;
-  }
-
-  private void checkLambdaApplicable(@NotNull List<CandidateInfo> conflicts, @NotNull LanguageLevel languageLevel) {
-    if (!languageLevel.isAtLeast(LanguageLevel.JDK_1_8)) return;
-    for (int i = 0; i < getActualParametersLength(); i++) {
-
-      PsiExpression expression;
-      if (myArgumentsList instanceof PsiExpressionList) {
-        expression = ((PsiExpressionList)myArgumentsList).getExpressions()[i];
-      }
-      else {
-        final PsiType argType = getActualParameterTypes()[i];
-        expression = argType instanceof PsiLambdaExpressionType ? ((PsiLambdaExpressionType)argType).getExpression() : null;
-      }
-
-      final PsiLambdaExpression lambdaExpression = findNestedLambdaExpression(expression);
-      if (lambdaExpression != null) {
-        checkLambdaApplicable(conflicts, i, lambdaExpression);
-      }
-    }
-  }
-
-  private static PsiLambdaExpression findNestedLambdaExpression(PsiExpression expression) {
-    if (expression instanceof PsiLambdaExpression) {
-      return (PsiLambdaExpression)expression;
-    }
-    else if (expression instanceof PsiParenthesizedExpression) {
-      return findNestedLambdaExpression(((PsiParenthesizedExpression)expression).getExpression());
-    }
-    else if (expression instanceof PsiConditionalExpression) {
-      PsiLambdaExpression lambdaExpression = findNestedLambdaExpression(((PsiConditionalExpression)expression).getThenExpression());
-      if (lambdaExpression != null) {
-        return lambdaExpression;
-      }
-      return findNestedLambdaExpression(((PsiConditionalExpression)expression).getElseExpression());
-    }
-    return null;
-  }
-
-  private static void checkLambdaApplicable(@NotNull List<CandidateInfo> conflicts, int i, @NotNull PsiLambdaExpression lambdaExpression) {
-    for (Iterator<CandidateInfo> iterator = conflicts.iterator(); iterator.hasNext(); ) {
-      ProgressManager.checkCanceled();
-      final CandidateInfo conflict = iterator.next();
-      final PsiMethod method = (PsiMethod)conflict.getElement();
-      final PsiParameter[] methodParameters = method.getParameterList().getParameters();
-      if (methodParameters.length == 0) continue;
-      final PsiParameter param = i < methodParameters.length ? methodParameters[i] : methodParameters[methodParameters.length - 1];
-      final PsiType paramType = param.getType();
-      // http://docs.oracle.com/javase/specs/jls/se8/html/jls-15.html#jls-15.12.2.1
-      // A lambda expression or a method reference expression is potentially compatible with a type variable if the type variable is a type parameter of the candidate method.
-      final PsiClass paramClass = PsiUtil.resolveClassInType(paramType);
-      if (paramClass instanceof PsiTypeParameter && ((PsiTypeParameter)paramClass).getOwner() == method) continue;
-      if (!lambdaExpression.isAcceptable(((MethodCandidateInfo)conflict).getSubstitutor(false).substitute(paramType),
-                                         InferenceSession.isPertinentToApplicability(lambdaExpression, method))) {
-        iterator.remove();
-      }
-    }
   }
 
   public void checkSpecifics(@NotNull List<CandidateInfo> conflicts,

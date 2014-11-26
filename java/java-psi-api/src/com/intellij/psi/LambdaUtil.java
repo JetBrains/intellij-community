@@ -18,6 +18,7 @@ package com.intellij.psi;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.*;
@@ -493,6 +494,31 @@ public class LambdaUtil {
     return expression;
   }
 
+  // http://docs.oracle.com/javase/specs/jls/se8/html/jls-15.html#jls-15.12.2.1
+  // A lambda expression or a method reference expression is potentially compatible with a type variable 
+  // if the type variable is a type parameter of the candidate method.
+  public static boolean isPotentiallyCompatibleWithTypeParameter(PsiFunctionalExpression expression,
+                                                                 PsiExpressionList argsList,
+                                                                 PsiMethod method) {
+    if (!Registry.is("JDK8042508.bug.fixed", false)) {
+      final PsiCallExpression callExpression = PsiTreeUtil.getParentOfType(argsList, PsiCallExpression.class);
+      if (callExpression == null || callExpression.getTypeArguments().length > 0) {
+        return false;
+      }
+    }
+
+    final int lambdaIdx = getLambdaIdx(argsList, expression);
+    if (lambdaIdx >= 0) {
+      final PsiParameter[] parameters = method.getParameterList().getParameters();
+      final PsiParameter lambdaParameter = parameters[Math.min(lambdaIdx, parameters.length - 1)];
+      final PsiClass paramClass = PsiUtil.resolveClassInType(lambdaParameter.getType());
+      if (paramClass instanceof PsiTypeParameter && ((PsiTypeParameter)paramClass).getOwner() == method) {
+        return true;
+      }
+    }
+    return false;
+  }
+  
   public static class TypeParamsChecker extends PsiTypeVisitor<Boolean> {
     private PsiMethod myMethod;
     private final PsiClass myClass;
