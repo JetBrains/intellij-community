@@ -101,7 +101,7 @@ public class Mappings {
     myLock = base.myLock;
     myIsDelta = true;
     myChangedClasses = new TIntHashSet(DEFAULT_SET_CAPACITY, DEFAULT_SET_LOAD_FACTOR);
-    myChangedFiles = new THashSet(FileUtil.FILE_HASHING_STRATEGY);
+    myChangedFiles = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
     myDeletedClasses = new HashSet<Pair<ClassRepr, File>>(DEFAULT_SET_CAPACITY, DEFAULT_SET_LOAD_FACTOR);
     myAddedClasses = new HashSet<ClassRepr>(DEFAULT_SET_CAPACITY, DEFAULT_SET_LOAD_FACTOR);
     myDeltaIsTransient = base.myDeltaIsTransient;
@@ -2003,51 +2003,60 @@ public class Mappings {
         debug("Begin of Differentiate:");
         debug("Easy mode: ", myEasyMode);
 
-        processDisappearedClasses();
+        try {
+          processDisappearedClasses();
 
-        final List<FileClasses> newClasses = new ArrayList<FileClasses>();
-        myDelta.mySourceFileToClasses.forEachEntry(new TObjectObjectProcedure<File, Collection<ClassRepr>>() {
-          @Override
-          public boolean execute(File fileName, Collection<ClassRepr> classes) {
-            newClasses.add(new FileClasses(fileName, classes));
-            return true;
-          }
-        });
+          final List<FileClasses> newClasses = new ArrayList<FileClasses>();
+          myDelta.mySourceFileToClasses.forEachEntry(new TObjectObjectProcedure<File, Collection<ClassRepr>>() {
+            @Override
+            public boolean execute(File fileName, Collection<ClassRepr> classes) {
+              newClasses.add(new FileClasses(fileName, classes));
+              return true;
+            }
+          });
 
-        for (final FileClasses compiledFile : newClasses) {
-          final File fileName = compiledFile.myFileName;
-          final Set<ClassRepr> classes = compiledFile.myFileClasses;
-          final Set<ClassRepr> pastClasses = (Set<ClassRepr>)mySourceFileToClasses.get(fileName);
-          final DiffState state = new DiffState(Difference.make(pastClasses, classes));
-
-          if (!processChangedClasses(state)) {
+          for (final FileClasses compiledFile : newClasses) {
+            final File fileName = compiledFile.myFileName;
+            final Set<ClassRepr> classes = compiledFile.myFileClasses;
+            final Set<ClassRepr> pastClasses = (Set<ClassRepr>)mySourceFileToClasses.get(fileName);
+            final DiffState state = new DiffState(Difference.make(pastClasses, classes));
+  
+            if (!processChangedClasses(state)) {
+              if (!myEasyMode) {
+                // turning non-incremental
+                return false;
+              }
+            }
+  
+            processRemovedClases(state, fileName);
+            processAddedClasses(state, fileName);
+  
             if (!myEasyMode) {
-              // turning non-incremental
-              return false;
+              calculateAffectedFiles(state);
             }
           }
 
-          processRemovedClases(state, fileName);
-          processAddedClasses(state, fileName);
+          debug("End of Differentiate.");
 
-          if (!myEasyMode) {
-            calculateAffectedFiles(state);
+          if (myEasyMode) {
+            return false;
+          }
+
+          final Collection<String> removed = myDelta.myRemovedFiles;
+          if (removed != null) {
+            for (final String r : removed) {
+              myAffectedFiles.remove(new File(r));
+            }
+          }
+          return myDelayedWorks.doWork(myAffectedFiles);
+        }
+        finally {
+          if (myFilesToCompile != null) {
+            // if some class is associated with several sources, 
+            // some of them may not have been compiled in this round, so such files should be considered unchanged
+            myDelta.myChangedFiles.retainAll(myFilesToCompile);
           }
         }
-
-        debug("End of Differentiate.");
-
-        if (myEasyMode) {
-          return false;
-        }
-
-        final Collection<String> removed = myDelta.myRemovedFiles;
-        if (removed != null) {
-          for (final String r : removed) {
-            myAffectedFiles.remove(new File(r));
-          }
-        }
-        return myDelayedWorks.doWork(myAffectedFiles);
       }
     }
   }
