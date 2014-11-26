@@ -157,9 +157,9 @@ public final class UpdateChecker {
       settings.setKnownChannelIds(result.getAllChannelsIds());
     }
     else if (result.getState() == UpdateStrategy.State.CONNECTION_ERROR) {
-      //noinspection ThrowableResultOfMethodCallIgnored
-      showErrorMessage(manualCheck,
-                       result.getError() instanceof InterruptedIOException ? IdeBundle.message("updates.timeout.error") : IdeBundle.message("updates.error.connection.failed"));
+      Exception e = result.getError();
+      if (e != null) LOG.warn(e);
+      showErrorMessage(manualCheck, IdeBundle.message(e instanceof InterruptedIOException ? "updates.timeout.error" : "updates.error.connection.failed"));
       return;
     }
 
@@ -250,6 +250,7 @@ public final class UpdateChecker {
         return null;
       }
       catch (Exception e) {
+        LOG.warn(e);
         showErrorMessage(manualCheck, e.getMessage());
       }
     }
