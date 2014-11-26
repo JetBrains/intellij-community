@@ -27,8 +27,6 @@ import java.util.Map;
  * User: anna
  */
 public class PsiMethodReferenceUtil {
-  public static ThreadLocal<Map<PsiMethodReferenceExpression, PsiType>> ourRefs = new ThreadLocal<Map<PsiMethodReferenceExpression, PsiType>>();
-
   public static final Logger LOG = Logger.getInstance("#" + PsiMethodReferenceUtil.class.getName());
 
   public static boolean hasReceiver(PsiType[] parameterTypes, QualifierResolveResult qualifierResolveResult, PsiMethodReferenceExpression methodRef) {
@@ -95,16 +93,6 @@ public class PsiMethodReferenceUtil {
       }
     }
     return !varargs || parameterTypes.length - 1 <= argTypes.length - offset;
-  }
-
-  @NotNull
-  public static Map<PsiMethodReferenceExpression, PsiType> getFunctionalTypeMap() {
-    Map<PsiMethodReferenceExpression, PsiType> map = ourRefs.get();
-    if (map == null) {
-      map = new HashMap<PsiMethodReferenceExpression, PsiType>();
-      ourRefs.set(map);
-    }
-    return map;
   }
 
   public static class QualifierResolveResult {
