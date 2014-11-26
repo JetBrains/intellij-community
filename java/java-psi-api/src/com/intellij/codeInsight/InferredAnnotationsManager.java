@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Returns annotations inferred by bytecode our source code, for example contracts and nullity.
+ * Returns annotations inferred by bytecode or source code, for example contracts and nullity.
  * 
  * @see com.intellij.codeInsight.NullableNotNullManager
  * @see org.jetbrains.annotations.Contract
