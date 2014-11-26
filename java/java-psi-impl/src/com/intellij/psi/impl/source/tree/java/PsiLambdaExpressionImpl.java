@@ -234,7 +234,7 @@ public class PsiLambdaExpressionImpl extends ExpressionPsiElement implements Psi
     }
 
     PsiType methodReturnType = interfaceMethod.getReturnType();
-    if (methodReturnType != null) {
+    if (methodReturnType != null && methodReturnType != PsiType.VOID) {
       Map<PsiElement, PsiType> map = LambdaUtil.ourFunctionTypes.get();
       if (map == null) {
         map = new HashMap<PsiElement, PsiType>();
