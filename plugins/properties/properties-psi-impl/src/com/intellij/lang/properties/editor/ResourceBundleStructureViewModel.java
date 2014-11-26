@@ -24,6 +24,7 @@ import com.intellij.ide.util.treeView.smartTree.Grouper;
 import com.intellij.ide.util.treeView.smartTree.Sorter;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.structureView.GroupByWordPrefixes;
+import com.intellij.lang.properties.structureView.InvalidElementFilter;
 import com.intellij.lang.properties.structureView.PropertiesSeparatorManager;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,6 +35,7 @@ public class ResourceBundleStructureViewModel implements PropertiesGroupingStruc
   private final ResourceBundle myResourceBundle;
   private final GroupByWordPrefixes myByWordPrefixesGrouper;
   private final StructureViewTreeElement myRoot;
+  private final InvalidElementFilter myInvalidElementFilter;
 
   public ResourceBundleStructureViewModel(ResourceBundle root) {
     myResourceBundle = root;
@@ -41,6 +43,7 @@ public class ResourceBundleStructureViewModel implements PropertiesGroupingStruc
       getSeparator(myResourceBundle);
     myByWordPrefixesGrouper = new GroupByWordPrefixes(separator);
     myRoot = new ResourceBundleFileStructureViewElement(myResourceBundle);
+    myInvalidElementFilter = new InvalidElementFilter();
   }
 
   public void setSeparator(String separator) {
@@ -69,7 +72,7 @@ public class ResourceBundleStructureViewModel implements PropertiesGroupingStruc
 
   @NotNull
   public Filter[] getFilters() {
-    return Filter.EMPTY_ARRAY;
+    return new Filter[]{ myInvalidElementFilter };
   }
 
   public Object getCurrentEditorElement() {
