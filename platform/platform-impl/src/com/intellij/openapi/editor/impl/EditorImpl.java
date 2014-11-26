@@ -276,6 +276,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Nullable
   private CharSequence myPlaceholderText;
   private int myLastPaintedPlaceholderWidth;
+  private boolean myShowPlaceholderWhenFocused;
 
   private boolean myStickySelection;
   private int myStickySelectionStart;
@@ -2080,6 +2081,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myPlaceholderText = text;
   }
 
+  @Override
+  public void setShowPlaceholderWhenFocused(boolean show) {
+    myShowPlaceholderWhenFocused = show;
+  }
+
   Color getBackgroundColor(@NotNull final TextAttributes attributes) {
     final Color attrColor = attributes.getBackgroundColor();
     return Comparing.equal(attrColor, myScheme.getDefaultBackground()) ? getBackgroundColor() : attrColor;
@@ -2897,8 +2903,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return false;
     }
 
-    if (KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner() == myEditorComponent &&
-      !Boolean.TRUE.equals(SHOW_PLACEHOLDER_WHEN_FOCUSED.get(this))) {
+    if (KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner() == myEditorComponent && !myShowPlaceholderWhenFocused) {
       // There is a possible case that placeholder text was painted and the editor gets focus now. We want to over-paint previously
       // used placeholder text then.
       myLastBackgroundColor = getBackgroundColor();

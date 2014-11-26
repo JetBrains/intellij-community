@@ -806,6 +806,11 @@ public class EditorWindowImpl extends UserDataHolderBase implements EditorWindow
   }
 
   @Override
+  public void setShowPlaceholderWhenFocused(boolean show) {
+    myDelegate.setShowPlaceholderWhenFocused(show);
+  }
+
+  @Override
   public boolean isStickySelection() {
     return myDelegate.isStickySelection();
   }
