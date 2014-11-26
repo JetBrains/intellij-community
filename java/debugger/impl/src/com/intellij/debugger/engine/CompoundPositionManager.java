@@ -21,6 +21,7 @@ import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
+import com.intellij.execution.filters.LineNumbersMapping;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThreeState;
@@ -110,23 +111,14 @@ public class CompoundPositionManager extends PositionManagerEx {
     return Collections.emptyList();
   }
 
-  private static int mapToOriginalLine(int line, int[] mapping) {
-    for (int i = 0; i < mapping.length; i += 2) {
-      if (mapping[i + 1] == line) {
-        return mapping[i];
-      }
-    }
-    return -1;
-  }
-
   @Override
   @NotNull
   public List<Location> locationsOfLine(@NotNull ReferenceType type, @NotNull SourcePosition position) {
     VirtualFile file = position.getFile().getVirtualFile();
     if (file != null) {
-      int[] data = file.getUserData(LINE_NUMBERS_MAPPING_KEY);
-      if (data != null) {
-        int line = mapToOriginalLine(position.getLine() + 1, data);
+      LineNumbersMapping mapping = file.getUserData(LineNumbersMapping.LINE_NUMBERS_MAPPING_KEY);
+      if (mapping != null) {
+        int line = mapping.unmap(position.getLine() + 1);
         if (line > -1) {
           position = SourcePosition.createFromLine(position.getFile(), line - 1);
         }
