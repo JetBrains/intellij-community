@@ -242,12 +242,12 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
     return canNavigate();
   }
 
-  @Nullable
   private OpenFileDescriptor getDescriptor() {
     VirtualFile file = getFile();
     if(file == null) return null;
     Segment range = getNavigationRange();
-    if (range != null && file instanceof VirtualFileWindow) {
+    if (range != null && file instanceof VirtualFileWindow && range.getStartOffset() >= 0) {
+      // have to use injectedToHost(TextRange) to calculate right offset in case of multiple shreds
       range = ((VirtualFileWindow)file).getDocumentWindow().injectedToHost(TextRange.create(range));
       file = ((VirtualFileWindow)file).getDelegate();
     }
@@ -272,7 +272,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
     Segment range = getUsageInfo().getNavigationRange();
     if (range == null) {
       ProperTextRange rangeInElement = getUsageInfo().getRangeInElement();
-      range = rangeInElement == null ? TextRange.from(myOffset,1) : rangeInElement.shiftRight(myOffset);
+      range = myOffset < 0 ? new UnfairTextRange(-1,-1) : rangeInElement == null ? TextRange.from(myOffset,1) : rangeInElement.shiftRight(myOffset);
     }
     if (range.getEndOffset() >= document.getTextLength()) {
       int line = Math.max(0, Math.min(myLineNumber, document.getLineCount() - 1));
