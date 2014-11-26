@@ -17,7 +17,7 @@ package org.jetbrains.java.decompiler;
 
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPassFactory;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
-import com.intellij.debugger.PositionManager;
+import com.intellij.execution.filters.LineNumbersMapping;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -152,13 +152,14 @@ public class IdeaDecompilerTest extends LightCodeInsightFixtureTestCase {
       value.setValue(true);
 
       VirtualFile file = getTestFile("LineNumbers.class");
-      assertNull(file.getUserData(PositionManager.LINE_NUMBERS_MAPPING_KEY));
+      assertNull(file.getUserData(LineNumbersMapping.LINE_NUMBERS_MAPPING_KEY));
 
       new IdeaDecompiler().getText(file);
 
-      int[] mapping = file.getUserData(PositionManager.LINE_NUMBERS_MAPPING_KEY);
+      LineNumbersMapping mapping = file.getUserData(LineNumbersMapping.LINE_NUMBERS_MAPPING_KEY);
       assertNotNull(mapping);
-      assertEquals(20, mapping.length);
+      assertEquals(11, mapping.map(3));
+      assertEquals(23, mapping.map(13));
     }
     finally {
       value.setValue(old);
