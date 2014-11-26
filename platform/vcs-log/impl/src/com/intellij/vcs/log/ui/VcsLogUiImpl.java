@@ -249,7 +249,14 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
         }
       });
     }
-    else {
+    else if (!myVisiblePack.isFull()) {
+      invokeOnChange(new Runnable() {
+        @Override
+        public void run() {
+          jumpTo(commitId, rowGetter);
+        }
+      });
+    } else {
       commitNotFound(commitId.toString());
     }
   }
@@ -292,8 +299,8 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
   public TIntHashSet getSelectedCommits() {
     int[] selectedRows = getTable().getSelectedRows();
     return getCommitsAtRows(myVisiblePack.getVisibleGraph(), selectedRows);
-  } 
-  
+  }
+
   @NotNull
   private static TIntHashSet getCommitsAtRows(@NotNull VisibleGraph<Integer> graph, int[] rows) {
     TIntHashSet commits = new TIntHashSet();
