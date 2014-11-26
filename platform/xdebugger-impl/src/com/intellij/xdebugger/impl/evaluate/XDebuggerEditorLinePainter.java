@@ -74,7 +74,7 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
     }
     Set<XValueNodeImpl> values = map.get(Pair.create(file, lineNumber));
     if (values != null && !values.isEmpty()) {
-      final int bpLine = getCurrentBreakPointLine(values);
+      final int bpLine = getCurrentBreakPointLineInFile(values, file);
       ArrayList<VariableText> result = new ArrayList<VariableText>();
       for (XValueNodeImpl value : values) {
         SimpleColoredText text = new SimpleColoredText();
@@ -144,13 +144,13 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
     return null;
   }
 
-  private static int getCurrentBreakPointLine(Set<XValueNodeImpl> values) {
+  private static int getCurrentBreakPointLineInFile(Set<XValueNodeImpl> values, VirtualFile file) {
     try {
       final XValueNodeImpl node = values.iterator().next();
       final XDebugSession session = XDebugView.getSession(node.getTree());
       if (session != null) {
         final XSourcePosition position = session.getCurrentPosition();
-        if (position != null) {
+        if (position != null && position.getFile().equals(file)) {
           return position.getLine();
         }
       }
