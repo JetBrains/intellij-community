@@ -18,16 +18,14 @@ package com.jetbrains.python.refactoring.move;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFileHandler;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.PathUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonFileType;
@@ -42,11 +40,14 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.intellij.openapi.vfs.VirtualFileManager.*;
+
 /**
  * @author vlan
  */
 public class PyMoveFileHandler extends MoveFileHandler {
   private static final Key<PsiNamedElement> REFERENCED_ELEMENT = Key.create("PY_REFERENCED_ELEMENT");
+  private static final Key<String> ORIGINAL_FILE_LOCATION = Key.create("PY_ORIGINAL_FILE_LOCATION");
 
   @Override
   public boolean canProcessElement(PsiFile element) {
@@ -69,8 +70,52 @@ public class PyMoveFileHandler extends MoveFileHandler {
       if (moveDestination != root && root != null && searchForReferences && !probablyNamespacePackage(file, moveDestination, root)) {
         CreatePackageAction.createInitPyInHierarchy(moveDestination, root);
       }
+      if (file instanceof PyFile) {
+        final PyFile module = (PyFile)file;
+        final String originalLocation = file.getUserData(ORIGINAL_FILE_LOCATION);
+        file.putUserData(ORIGINAL_FILE_LOCATION, null);
+        for (PyFromImportStatement statement : module.getFromImports()) {
+          if (statement.getRelativeLevel() == 0) {
+            continue;
+          }
+          if (originalLocation == null) {
+            continue;
+          }
+          String relativeImportBasePath = extractPath(originalLocation);
+          for (int level = 0; level < statement.getRelativeLevel(); level++) {
+            relativeImportBasePath = PathUtil.getParentPath(relativeImportBasePath);
+          }
+          if (!relativeImportBasePath.isEmpty()) {
+            //noinspection ConstantConditions
+            final String relativeImportBaseUrl = constructUrl(extractProtocol(originalLocation), relativeImportBasePath);
+            VirtualFile sourceFile = getInstance().findFileByUrl(relativeImportBaseUrl);
+            if (sourceFile != null && sourceFile.exists() && statement.getImportSource() != null) {
+              sourceFile = sourceFile.findFileByRelativePath(statement.getImportSource().getText().replace('.', '/'));
+            }
+            if (sourceFile != null) {
+              final PsiManager psiManager = file.getManager();
+              final PsiFileSystemItem sourceElement;
+              if (sourceFile.isDirectory()) {
+                sourceElement = psiManager.findDirectory(sourceFile);
+              }
+              else {
+                sourceElement = psiManager.findFile(sourceFile);
+              }
+              final QualifiedName newName = QualifiedNameFinder.findShortestImportableQName(sourceElement);
+              final PsiElement fromKeyword = statement.getFirstChild();
+              final PsiElement firstDot = fromKeyword.getNextSibling().getNextSibling();
+              assert firstDot.getNode().getElementType() == PyTokenTypes.DOT;
+              final PsiWhiteSpace nextWhitespace = PsiTreeUtil.getNextSiblingOfType(firstDot, PsiWhiteSpace.class);
+              final PsiElement replacementEnd = nextWhitespace == null ? statement.getLastChild() : nextWhitespace.getPrevSibling();
+              if (replacementEnd != firstDot) {
+                statement.deleteChildRange(firstDot.getNextSibling(), replacementEnd);
+              }
+              replaceWithQualifiedExpression(firstDot, newName);
+            }
+          }
+        }
+      }
     }
-    // TODO: Update relative imports
   }
 
   private static boolean probablyNamespacePackage(@NotNull PsiFile anchor, @NotNull PsiDirectory destination, @NotNull PsiDirectory root) {
@@ -81,6 +126,7 @@ public class PyMoveFileHandler extends MoveFileHandler {
       if (destination.findFile(PyNames.INIT_DOT_PY) != null) {
         return false;
       }
+      //noinspection ConstantConditions
       destination = destination.getParent();
     }
     return true;
@@ -89,6 +135,7 @@ public class PyMoveFileHandler extends MoveFileHandler {
   @Override
   public List<UsageInfo> findUsages(PsiFile file, PsiDirectory newParent, boolean searchInComments, boolean searchInNonJavaFiles) {
     if (file != null) {
+      file.putUserData(ORIGINAL_FILE_LOCATION, file.getVirtualFile().getUrl());
       final List<UsageInfo> usages = PyRefactoringUtil.findUsages(file, false);
       for (UsageInfo usage : usages) {
         final PsiElement element = usage.getElement();
@@ -128,7 +175,8 @@ public class PyMoveFileHandler extends MoveFileHandler {
             if (((PyReferenceExpression)element).isQualified()) {
               final QualifiedName newQualifiedName = QualifiedNameFinder.findCanonicalImportPath(newElement, element);
               replaceWithQualifiedExpression(element, newQualifiedName);
-            } else {
+            }
+            else {
               final QualifiedName newName = QualifiedName.fromComponents(PyClassRefactoringUtil.getOriginalName(newElement));
               final PsiElement replaced = replaceWithQualifiedExpression(element, newName);
               PyClassRefactoringUtil.insertImport(replaced, newElement, null);
@@ -141,8 +189,9 @@ public class PyMoveFileHandler extends MoveFileHandler {
       final PyImportOptimizer optimizer = new PyImportOptimizer();
       for (PsiFile file : updatedFiles) {
         final boolean injectedFragment = InjectedLanguageManager.getInstance(file.getProject()).isInjectedFragment(file);
-        if (!injectedFragment)
+        if (!injectedFragment) {
           optimizer.processFile(file).run();
+        }
       }
     }
   }
