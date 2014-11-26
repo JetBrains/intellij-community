@@ -260,7 +260,7 @@ class Intf {
     return calcPopupElements(createPopup(model), text, checkboxState)
   }
 
-  private static ArrayList<String> calcPopupElements(ChooseByNamePopup popup, String text, boolean checkboxState = false) {
+  static ArrayList<String> calcPopupElements(ChooseByNamePopup popup, String text, boolean checkboxState = false) {
     List<Object> elements = ['empty']
     def semaphore = new Semaphore()
     semaphore.down()

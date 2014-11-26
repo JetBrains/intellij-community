@@ -20,6 +20,7 @@ import com.intellij.execution.*;
 import com.intellij.execution.configuration.ConfigurationFactoryEx;
 import com.intellij.execution.configurations.*;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
@@ -387,11 +388,18 @@ class RunConfigurable extends BaseConfigurable {
     myRightPanel.removeAll();
     mySelectedConfigurable = configurable;
 
-    final JBScrollPane scrollPane = new JBScrollPane(configurable.createComponent());
+    JComponent configurableComponent = configurable.createComponent();
+    final JBScrollPane scrollPane = new JBScrollPane(configurableComponent);
     scrollPane.setBorder(null);
     myRightPanel.add(scrollPane, BorderLayout.CENTER);
     if (configurable instanceof SingleConfigurationConfigurable) {
       myRightPanel.add(((SingleConfigurationConfigurable)configurable).getValidationComponent(), BorderLayout.SOUTH);
+      if (configurableComponent != null) {
+        DataProvider dataProvider = DataManager.getDataProvider(configurableComponent);
+        if (dataProvider != null) {
+          DataManager.registerDataProvider(myRightPanel, dataProvider);
+        }
+      }
     }
 
     setupDialogBounds();

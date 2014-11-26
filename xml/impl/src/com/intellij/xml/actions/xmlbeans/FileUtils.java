@@ -16,8 +16,6 @@
 package com.intellij.xml.actions.xmlbeans;
 
 
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.*;
@@ -60,11 +58,6 @@ public class FileUtils {
       f = new File(name + ++num + ext);
     } while (f.exists());
     return name + num + ext;
-  }
-
-
-  public static void saveText(VirtualFile virtualFile, String text) throws IOException {
-    VfsUtil.saveText(virtualFile, text);
   }
 
   public static boolean copyFile(File in, File out) {

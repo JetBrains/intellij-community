@@ -19,13 +19,7 @@
  */
 package com.intellij.psi.stubs;
 
-import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
 
 public class StubTree extends ObjectStubTree<StubElement<?>> {
 
@@ -35,31 +29,6 @@ public class StubTree extends ObjectStubTree<StubElement<?>> {
 
   public StubTree(@NotNull final PsiFileStub root, final boolean withBackReference) {
     super((ObjectStubBase)root, withBackReference);
-  }
-
-  @Override
-  protected void enumerateStubs(@NotNull Stub root, @NotNull List<Stub> result) {
-    final PsiFileStub[] files = ((PsiFileStub)root).getStubRoots();
-    int idOffset = 0;
-    final List<Stub> dummyList = new ArrayList<Stub>();
-    for (PsiFileStub file : files) {
-      if (file == root) break;
-      dummyList.clear();
-      enumerateStubs(file, dummyList, idOffset);
-      idOffset += dummyList.size();
-    }
-    enumerateStubs(root, result, idOffset);
-  }
-
-  @NotNull
-  @Override
-  public List<StubElement<?>> getPlainListFromAllRoots() {
-    return ContainerUtil.concat(getRoot().getStubRoots(), new Function<PsiFileStub, Collection<? extends StubElement<?>>>() {
-      @Override
-      public Collection<? extends StubElement<?>> fun(PsiFileStub stub) {
-        return new StubTree(stub).getPlainList();
-      }
-    });
   }
 
   @NotNull

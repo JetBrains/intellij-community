@@ -39,6 +39,9 @@ import java.util.LinkedHashSet;
  */
 public class FileContentUtil extends FileContentUtilCore {
 
+  /**
+   * @deprecated to be removed after IDEA 15. Use {@link VfsUtil#saveText(VirtualFile, String)} instead.
+   */
   public static void setFileText(@Nullable Project project, final VirtualFile virtualFile, final String text) throws IOException {
     if (project == null) {
       project = ProjectUtil.guessProjectForFile(virtualFile);

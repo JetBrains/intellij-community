@@ -16,10 +16,7 @@
 package com.intellij.execution.util;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.ui.AnActionButton;
-import com.intellij.ui.AnActionButtonRunnable;
-import com.intellij.ui.AnActionButtonUpdater;
-import com.intellij.ui.ToolbarDecorator;
+import com.intellij.ui.*;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
@@ -32,6 +29,7 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.util.Collections;
 import java.util.List;
 import java.util.Observable;
 
@@ -170,6 +168,18 @@ public abstract class ListTableWithButtons<T> extends Observable {
 
   public void refreshValues() {
     myTableView.getComponent().repaint();
+  }
+
+  protected void setSelection(T element) {
+    myTableView.setSelection(Collections.singleton(element));
+    TableUtil.scrollSelectionToVisible(myTableView);
+  }
+
+  protected void editSelection(int column) {
+    int row = myElements.indexOf(getSelection());
+    if (row != -1) {
+      TableUtil.editCellAt(myTableView, row, column);
+    }
   }
 
   protected abstract T createElement();

@@ -385,6 +385,13 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
           return Result.create(Collections.<GroovyDslScript>emptyList(), ModificationTracker.NEVER_CHANGED);
         }
 
+        // eagerly initialize some services used by background gdsl parsing threads
+        // because service init requires a read action
+        // and there could be a deadlock with a write action waiting already on EDT
+        // if current thread is inside a non-cancellable read action
+        GroovyDslExecutor.getIdeaVersion();
+        DslActivationStatus.getInstance();
+
         int count = 0;
 
         List<GroovyDslScript> result = new ArrayList<GroovyDslScript>();
