@@ -69,4 +69,8 @@ public class VisiblePack implements VcsLogDataPack {
   public PermanentGraph<Integer> getPermanentGraph() {
     return myDataPack.getPermanentGraph();
   }
+
+  public boolean isFull() {
+    return myDataPack.isFull();
+  }
 }

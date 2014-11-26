@@ -22,28 +22,25 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.ThreeComponentsSplitter;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowType;
 import com.intellij.openapi.wm.impl.commands.FinalizableCommand;
+import com.intellij.reference.SoftReference;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.util.containers.HashMap;
-import com.intellij.util.ui.FadeInFadeOut;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
@@ -201,24 +198,6 @@ public final class ToolWindowsPane extends JBLayeredPane implements Disposable {
     super.addNotify();
     if (ScreenUtil.isStandardAddRemoveNotify(this)) {
       UISettings.getInstance().addUISettingsListener(myUISettingsListener, myDisposable);
-      IdeGlassPaneUtil.find(this).addMousePreprocessor(new MouseAdapter() {
-        @Override
-        public void mouseClicked(MouseEvent e) {
-          if (SwingUtilities.isLeftMouseButton(e) && e.getClickCount() == 2 && e.getModifiersEx() == 0) {
-            e = SwingUtilities.convertMouseEvent(e.getComponent(), e, ToolWindowsPane.this);
-            Component component = SwingUtilities.getDeepestComponentAt(ToolWindowsPane.this, e.getX(), e.getY());
-            Component header = component == null ? null : UIUtil.findParentByCondition((JComponent)component, new Condition<Component>() {
-              @Override
-              public boolean value(Component component) {
-                return component instanceof ToolWindowHeader || component instanceof ActionListener;
-              }
-            });
-            if (header instanceof ToolWindowHeader) {
-              ((ToolWindowHeader)header).switchMaximizedState(myFrame.getProject());
-            }
-          }
-        }
-      }, this);
     }
   }
 
@@ -891,36 +870,60 @@ public final class ToolWindowsPane extends JBLayeredPane implements Disposable {
       myInfo = info;
       myDirtyMode = dirtyMode;
     }
-
     public final void run() {
-      // Show component.
-      final UISettings uiSettings = UISettings.getInstance();
-      if (!myDirtyMode && uiSettings.ANIMATE_WINDOWS && !UISettings.isRemoteDesktopConnected()) {
-        myLayeredPane.add(myComponent, JLayeredPane.PALETTE_LAYER);
-        myLayeredPane.moveToFront(myComponent);
-        myLayeredPane.setBoundsInPaletteLayer(myComponent, myInfo.getAnchor(), myInfo.getWeight());
-        final FadeInFadeOut fadeIn = new FadeInFadeOut(myComponent, 250, true, myId2Button.get(myInfo.getId()));
-        add(fadeIn, FadeInFadeOut.LAYER);
-        fadeIn.setBounds(0, 0, getWidth(), getHeight());
-        myLayeredPane.remove(myComponent);
-        fadeIn.doAnimation(new Runnable() {
-          @Override
-          public void run() {
-            remove(fadeIn);
+      try {
+        // Show component.
+        final UISettings uiSettings = UISettings.getInstance();
+        if (!myDirtyMode && uiSettings.ANIMATE_WINDOWS && !UISettings.isRemoteDesktopConnected()) {
+          // Prepare top image. This image is scrolling over bottom image.
+          final Image topImage = myLayeredPane.getTopImage();
+          final Graphics topGraphics = topImage.getGraphics();
+
+          Rectangle bounds;
+
+          try {
             myLayeredPane.add(myComponent, JLayeredPane.PALETTE_LAYER);
-            //myComponent.requestFocus();
-            repaint();
-            finish();
+            myLayeredPane.moveToFront(myComponent);
+            myLayeredPane.setBoundsInPaletteLayer(myComponent, myInfo.getAnchor(), myInfo.getWeight());
+            bounds = myComponent.getBounds();
+            myComponent.paint(topGraphics);
+            myLayeredPane.remove(myComponent);
           }
-        });
-      }
-      else { // not animated
-        myLayeredPane.add(myComponent, JLayeredPane.PALETTE_LAYER);
-        myLayeredPane.setBoundsInPaletteLayer(myComponent, myInfo.getAnchor(), myInfo.getWeight());
+          finally {
+            topGraphics.dispose();
+          }
+          // Prepare bottom image.
+          final Image bottomImage = myLayeredPane.getBottomImage();
+          final Graphics bottomGraphics = bottomImage.getGraphics();
+          try {
+            bottomGraphics.setClip(0, 0, bounds.width, bounds.height);
+            bottomGraphics.translate(-bounds.x, -bounds.y);
+            myLayeredPane.paint(bottomGraphics);
+          }
+          finally {
+            bottomGraphics.dispose();
+          }
+          // Start animation.
+          final Surface surface = new Surface(topImage, bottomImage, 1, myInfo.getAnchor(), uiSettings.ANIMATION_SPEED);
+          myLayeredPane.add(surface, JLayeredPane.PALETTE_LAYER);
+          surface.setBounds(bounds);
+          myLayeredPane.validate();
+          myLayeredPane.repaint();
+
+          surface.runMovement();
+          myLayeredPane.remove(surface);
+          myLayeredPane.add(myComponent, JLayeredPane.PALETTE_LAYER);
+        }
+        else { // not animated
+          myLayeredPane.add(myComponent, JLayeredPane.PALETTE_LAYER);
+          myLayeredPane.setBoundsInPaletteLayer(myComponent, myInfo.getAnchor(), myInfo.getWeight());
+        }
         if (!myDirtyMode) {
-          myLayeredPane.revalidate();
+          myLayeredPane.validate();
           myLayeredPane.repaint();
         }
+      }
+      finally {
         finish();
       }
     }
@@ -1076,30 +1079,53 @@ public final class ToolWindowsPane extends JBLayeredPane implements Disposable {
       myInfo = info;
       myDirtyMode = dirtyMode;
     }
-
     public final void run() {
-      final UISettings uiSettings = UISettings.getInstance();
-      if (!myDirtyMode && uiSettings.ANIMATE_WINDOWS && !UISettings.isRemoteDesktopConnected()) {
-        // Remove component from the layered pane and start animation.
-        final FadeInFadeOut fadeOut = new FadeInFadeOut(myComponent, 450, false, getButtonById(myInfo.getId()));
-        add(fadeOut, FadeInFadeOut.LAYER);
-        fadeOut.setBounds(0, 0, getWidth(), getHeight());
-        myLayeredPane.remove(myComponent);
-        fadeOut.doAnimation(new Runnable() {
-          @Override
-          public void run() {
-            remove(fadeOut);
-            repaint();
-            finish();
+      try {
+        final UISettings uiSettings = UISettings.getInstance();
+        if (!myDirtyMode && uiSettings.ANIMATE_WINDOWS && !UISettings.isRemoteDesktopConnected()) {
+          final Rectangle bounds = myComponent.getBounds();
+          // Prepare top image. This image is scrolling over bottom image. It contains
+          // picture of component is being removed.
+          final Image topImage = myLayeredPane.getTopImage();
+          final Graphics topGraphics = topImage.getGraphics();
+          try {
+            myComponent.paint(topGraphics);
           }
-        });
-      }
-      else { // not animated
-        myLayeredPane.remove(myComponent);
+          finally {
+            topGraphics.dispose();
+          }
+          // Prepare bottom image. This image contains picture of component that is located
+          // under the component to is being removed.
+          final Image bottomImage = myLayeredPane.getBottomImage();
+          final Graphics bottomGraphics = bottomImage.getGraphics();
+          try {
+            myLayeredPane.remove(myComponent);
+            bottomGraphics.clipRect(0, 0, bounds.width, bounds.height);
+            bottomGraphics.translate(-bounds.x, -bounds.y);
+            myLayeredPane.paint(bottomGraphics);
+          }
+          finally {
+            bottomGraphics.dispose();
+          }
+          // Remove component from the layered pane and start animation.
+          final Surface surface = new Surface(topImage, bottomImage, -1, myInfo.getAnchor(), uiSettings.ANIMATION_SPEED * 2);
+          myLayeredPane.add(surface, JLayeredPane.PALETTE_LAYER);
+          surface.setBounds(bounds);
+          myLayeredPane.validate();
+          myLayeredPane.repaint();
+
+          surface.runMovement();
+          myLayeredPane.remove(surface);
+        }
+        else { // not animated
+          myLayeredPane.remove(myComponent);
+        }
         if (!myDirtyMode) {
-          myLayeredPane.revalidate();
+          myLayeredPane.validate();
           myLayeredPane.repaint();
         }
+      }
+      finally {
         finish();
       }
     }
@@ -1166,16 +1192,56 @@ public final class ToolWindowsPane extends JBLayeredPane implements Disposable {
       updateLayout();
     }
   }
-
   private final class MyLayeredPane extends JBLayeredPane {
     /*
      * These images are used to perform animated showing and hiding of components.
      * They are the member for performance reason.
      */
+    private SoftReference<BufferedImage> myBottomImageRef;
+    private SoftReference<BufferedImage> myTopImageRef;
 
     public MyLayeredPane(final JComponent splitter) {
+      myBottomImageRef = new SoftReference<BufferedImage>(null);
+      myTopImageRef = new SoftReference<BufferedImage>(null);
       setOpaque(false);
       add(splitter, JLayeredPane.DEFAULT_LAYER);
+    }
+
+    public final Image getBottomImage() {
+      Pair<BufferedImage, SoftReference<BufferedImage>> result = getImage(myBottomImageRef);
+      myBottomImageRef = result.second;
+      return result.first;
+    }
+
+    public final Image getTopImage() {
+      Pair<BufferedImage, SoftReference<BufferedImage>> result = getImage(myTopImageRef);
+      myTopImageRef = result.second;
+      return result.first;
+    }
+
+    private Pair<BufferedImage, SoftReference<BufferedImage>> getImage(SoftReference<BufferedImage> imageRef) {
+      LOG.assertTrue(UISettings.getInstance().ANIMATE_WINDOWS);
+      BufferedImage image = imageRef.get();
+      if (
+        image == null ||
+        image.getWidth(null) < getWidth() || image.getHeight(null) < getHeight()
+        ) {
+        final int width = Math.max(Math.max(1, getWidth()), myFrame.getWidth());
+        final int height = Math.max(Math.max(1, getHeight()), myFrame.getHeight());
+        if (SystemInfo.isWindows) {
+          image = myFrame.getGraphicsConfiguration().createCompatibleImage(width, height);
+        }
+        else {
+          // Under Linux we have found that images created by createCompatibleImage(),
+          // createVolatileImage(), etc extremely slow for rendering. TrueColor buffered image
+          // is MUCH faster.
+          // On Mac we create a retina-compatible image
+
+          image = UIUtil.createImage(width, height, BufferedImage.TYPE_INT_RGB);
+        }
+        imageRef = new SoftReference<BufferedImage>(image);
+      }
+      return Pair.create(image, imageRef);
     }
 
     /**

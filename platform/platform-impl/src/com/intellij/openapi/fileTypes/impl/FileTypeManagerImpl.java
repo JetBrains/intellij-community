@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.fileTypes.impl;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.intellij.ide.highlighter.custom.SyntaxTable;
 import com.intellij.ide.highlighter.custom.impl.ReadFileType;
 import com.intellij.ide.plugins.PluginManager;
@@ -130,6 +131,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   private final AtomicInteger counterAutoDetect = new AtomicInteger();
   private final AtomicLong elapsedAutoDetect = new AtomicLong();
 
+  @VisibleForTesting
   public void initStandardFileTypes() {
     final FileTypeConsumer consumer = new FileTypeConsumer() {
       @Override
@@ -1351,6 +1353,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     }
   }
 
+  @VisibleForTesting
   public Map<FileNameMatcher, Pair<FileType, Boolean>> getRemovedMappings() {
     return myRemovedMappings;
   }

@@ -143,6 +143,10 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, DataProvider {
     });
 
     IdeMenuBar.installAppMenuIfNeeded(this);
+
+    if (Registry.is("suppress.focus.stealing")) {
+      setFocusableWindowState(false);
+    }
   }
 
   private void updateBorder() {

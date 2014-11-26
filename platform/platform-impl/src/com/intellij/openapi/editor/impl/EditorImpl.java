@@ -552,7 +552,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @NotNull
   static Color adjustThumbColor(@NotNull Color base, boolean dark) {
-    return ColorUtil.withAlpha(ColorUtil.shift(base, dark ? 1.3 : 0.9), 0.7);
+    return dark ? ColorUtil.withAlpha(ColorUtil.shift(base, 1.35), 0.5) 
+                : ColorUtil.withAlpha(ColorUtil.shift(base, 0.68), 0.4);
   }
 
   boolean isDarkEnough() {
