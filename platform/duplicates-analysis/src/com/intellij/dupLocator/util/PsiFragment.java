@@ -169,6 +169,16 @@ public abstract class PsiFragment {
       Comparing.equal(f.getFile(), getFile()) && ((start <= fStart && fStart <= end) || (start <= fEnd && fEnd <= end));
   }
 
+  public boolean contains(PsiFragment f) {
+    final int start = getStartOffset();
+    final int end = getEndOffset();
+    final int fStart = f.getStartOffset();
+    final int fEnd = f.getEndOffset();
+
+    return
+      Comparing.equal(f.getFile(), getFile()) && (start <= fStart && end >= fEnd);
+  }
+
   public abstract boolean isEqual(PsiElement[] elements, int discardCost);
 
   @Nullable
