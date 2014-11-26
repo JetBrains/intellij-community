@@ -12,7 +12,10 @@ import com.intellij.util.PairFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.*;
-import com.intellij.vcs.log.data.*;
+import com.intellij.vcs.log.data.VcsLogDataHolder;
+import com.intellij.vcs.log.data.VcsLogFilterer;
+import com.intellij.vcs.log.data.VcsLogUiProperties;
+import com.intellij.vcs.log.data.VisiblePack;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.graph.VisibleGraph;
 import com.intellij.vcs.log.graph.actions.GraphAnswer;
@@ -51,8 +54,12 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
 
   @NotNull private VisiblePack myVisiblePack;
 
-  public VcsLogUiImpl(@NotNull VcsLogDataHolder logDataHolder, @NotNull Project project, @NotNull VcsLogSettings settings,
-                      @NotNull VcsLogColorManager manager, @NotNull VcsLogUiProperties uiProperties, @NotNull VcsLogFilterer filterer) {
+  public VcsLogUiImpl(@NotNull VcsLogDataHolder logDataHolder,
+                      @NotNull Project project,
+                      @NotNull VcsLogSettings settings,
+                      @NotNull VcsLogColorManager manager,
+                      @NotNull VcsLogUiProperties uiProperties,
+                      @NotNull VcsLogFilterer filterer) {
     myLogDataHolder = logDataHolder;
     myProject = project;
     myColorManager = manager;
@@ -131,8 +138,9 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
       // => it has previous values set.
       return rowsToSelect;
     }
-    for (int row = 0; row < visibleGraph.getVisibleCommitCount()
-                      && rowsToSelect.size() < selectedHashes.size(); row++) { //stop iterating if found all hashes
+    for (int row = 0;
+         row < visibleGraph.getVisibleCommitCount() && rowsToSelect.size() < selectedHashes.size();
+         row++) { //stop iterating if found all hashes
       int commit = visibleGraph.getRowInfo(row).getCommit();
       if (selectedHashes.contains(commit)) {
         rowsToSelect.add(row);
@@ -256,7 +264,8 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
           jumpTo(commitId, rowGetter);
         }
       });
-    } else {
+    }
+    else {
       commitNotFound(commitId.toString());
     }
   }
