@@ -89,7 +89,7 @@ public class EditorConfigAnnotator implements Annotator {
 
         @Override
         public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-          return false;
+          return true;
         }
 
         @Override
