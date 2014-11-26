@@ -18,11 +18,9 @@ package com.intellij.codeHighlighting;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.ui.JBColor;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.ColorIcon;
 import org.jetbrains.annotations.NotNull;
@@ -39,10 +37,8 @@ public class HighlightDisplayLevel {
                                                                                                         createIconByKey(CodeInsightColors.GENERIC_SERVER_ERROR_OR_WARNING));
   public static final HighlightDisplayLevel ERROR = new HighlightDisplayLevel(HighlightSeverity.ERROR, createIconByKey(CodeInsightColors.ERRORS_ATTRIBUTES));
   public static final HighlightDisplayLevel WARNING = new HighlightDisplayLevel(HighlightSeverity.WARNING, createIconByKey(CodeInsightColors.WARNINGS_ATTRIBUTES));
-  // todo: move to color schemas  
-  public static final Color GREEN = new JBColor(new Color(113, 178, 98), new Color(30, 160, 0)); 
-  public static final Color TYPO = new JBColor(new Color(176, 209, 171), new Color(30, 160, 0));
-  public static final HighlightDisplayLevel DO_NOT_SHOW = new HighlightDisplayLevel(HighlightSeverity.INFORMATION, createIconByMask(GREEN));
+  private static final Icon DO_NOT_SHOW_KEY = createIconByKey(TextAttributesKey.createTextAttributesKey("DO_NOT_SHOW"));
+  public static final HighlightDisplayLevel DO_NOT_SHOW = new HighlightDisplayLevel(HighlightSeverity.INFORMATION, DO_NOT_SHOW_KEY);
   /**
    * use #WEAK_WARNING instead
    */
@@ -100,8 +96,8 @@ public class HighlightDisplayLevel {
     return mySeverity;
   }
 
-  public static void registerSeverity(@NotNull HighlightSeverity severity, final Color renderColor) {
-    Icon severityIcon = createIconByMask(renderColor);
+  public static void registerSeverity(@NotNull HighlightSeverity severity, final TextAttributesKey key) {
+    Icon severityIcon = createIconByKey(key);
     final HighlightDisplayLevel level = ourMap.get(severity);
     if (level == null) {
       new HighlightDisplayLevel(severity, severityIcon);
@@ -147,19 +143,20 @@ public class HighlightDisplayLevel {
     public Color getColor() {
       final EditorColorsManager manager = EditorColorsManager.getInstance();
       if (manager != null) {
-        final EditorColorsScheme globalScheme = manager.getGlobalScheme();
-        return globalScheme.getAttributes(myKey).getErrorStripeColor();
+        TextAttributes attributes = manager.getGlobalScheme().getAttributes(myKey);
+        Color stripe = attributes.getErrorStripeColor();
+        if (stripe != null) return stripe;
+        return attributes.getEffectColor();
       }
       TextAttributes defaultAttributes = myKey.getDefaultAttributes();
       if (defaultAttributes == null) defaultAttributes = TextAttributes.ERASE_MARKER;
-      return  defaultAttributes.getErrorStripeColor();
+      return defaultAttributes.getErrorStripeColor();
     }
 
     @Override
     public void paintIcon(final Component c, final Graphics g, final int x, final int y) {
-      final Graphics2D g2 = (Graphics2D)g;
-      g2.setColor(getColor());
-      g2.fillRect(x, y, EMPTY_ICON_DIM, EMPTY_ICON_DIM);
+      g.setColor(getColor());
+      g.fillRect(x, y, EMPTY_ICON_DIM, EMPTY_ICON_DIM);
     }
 
     @Override
@@ -170,6 +167,19 @@ public class HighlightDisplayLevel {
     @Override
     public int getIconHeight() {
       return EMPTY_ICON_DIM;
+    }
+  }
+
+  public static class SemiBorderIcon extends SingleColorIcon {
+    public SemiBorderIcon(TextAttributesKey key) {
+      super(key);
+    }
+
+    @Override
+    public void paintIcon(Component component, Graphics g, int x, int y) {
+      g.setColor(getColor());
+      g.fillRect(x, y, 1, getIconHeight());
+      g.fillRect(x, y + getIconHeight() - 1, getIconWidth(), 1);
     }
   }
 }
