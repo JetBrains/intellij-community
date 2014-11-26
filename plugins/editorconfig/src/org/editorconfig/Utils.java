@@ -27,10 +27,6 @@ public class Utils {
     EditorConfigNotifier.getInstance().error(project, configValue, "\"" + configValue + "\" is not a valid value" + (!configKey.isEmpty() ? " for " + configKey : "") + " for file " + filePath);
   }
 
-  public static void appliedConfigMessage(Project project, String configValue, String configKey, String filePath) {
-    EditorConfigNotifier.getInstance().info(project, "Applied .editorconfig settings");
-  }
-
   public static String getFilePath(Project project, VirtualFile file) {
     if (!file.isInLocalFileSystem()) {
       return project.getBasePath() + "/" + file.getNameWithoutExtension() + "." + file.getFileType().getDefaultExtension();

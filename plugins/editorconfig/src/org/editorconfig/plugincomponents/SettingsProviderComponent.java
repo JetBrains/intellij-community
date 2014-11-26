@@ -1,7 +1,11 @@
 package org.editorconfig.plugincomponents;
 
+import com.intellij.lang.LanguageAnnotators;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -13,6 +17,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import org.editorconfig.Utils;
+import org.editorconfig.annotations.EditorConfigAnnotator;
 import org.editorconfig.core.EditorConfig;
 import org.editorconfig.core.EditorConfig.OutPair;
 import org.editorconfig.core.EditorConfigException;
@@ -24,8 +29,18 @@ import java.util.*;
 public class SettingsProviderComponent implements ApplicationComponent {
   private EditorConfig editorConfig;
 
-  public SettingsProviderComponent() {
+  public SettingsProviderComponent(FileTypeManager manager) {
     editorConfig = new EditorConfig();
+    registerAnnotator(manager);
+  }
+
+  public void registerAnnotator(FileTypeManager manager) {
+    final EditorConfigAnnotator annotator = new EditorConfigAnnotator();
+    for (FileType type : manager.getRegisteredFileTypes()) {
+      if (type instanceof LanguageFileType) {
+        LanguageAnnotators.INSTANCE.addExplicitExtension(((LanguageFileType)type).getLanguage(), annotator);
+      }
+    }
   }
 
   public static SettingsProviderComponent getInstance() {
