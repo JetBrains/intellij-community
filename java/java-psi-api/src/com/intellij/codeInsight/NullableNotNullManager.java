@@ -168,30 +168,26 @@ public class NullableNotNullManager implements PersistentStateComponent<Element>
     myDefaultNotNull = defaultNotNull;
   }
 
-  @Nullable
-  private static PsiAnnotation checkInferred(@NotNull PsiAnnotation annotation, @NotNull PsiModifierListOwner owner) {
-    if (owner instanceof PsiMethod &&
-        AnnotationUtil.isInferredAnnotation(annotation) &&
-        AnnotationUtil.NOT_NULL.equals(annotation.getQualifiedName()) &&
-        PsiUtil.canBeOverriden((PsiMethod)owner)) {
-      return null;
-    }
-    return annotation;
+  private static boolean skipAnnotation(@NotNull PsiAnnotation annotation, @NotNull PsiModifierListOwner owner) {
+    return owner instanceof PsiMethod &&
+           PsiUtil.canBeOverriden((PsiMethod)owner) &&
+           AnnotationUtil.isInferredAnnotation(annotation) &&
+           AnnotationUtil.NOT_NULL.equals(annotation.getQualifiedName());
   }
 
   @Nullable 
   private PsiAnnotation findNullabilityAnnotation(@NotNull PsiModifierListOwner owner, boolean checkBases, boolean nullable) {
     Set<String> qNames = ContainerUtil.newHashSet(nullable ? getNullables() : getNotNulls());
     PsiAnnotation annotation = AnnotationUtil.findAnnotation(owner, qNames);
-    if (annotation != null) {
-      return checkInferred(annotation, owner);
+    if (annotation != null && !skipAnnotation(annotation, owner)) {
+      return annotation;
     }
 
     if (checkBases && owner instanceof PsiMethod) {
       for (PsiModifierListOwner superOwner : AnnotationUtil.getSuperAnnotationOwners(owner)) {
         annotation = AnnotationUtil.findAnnotation(superOwner, qNames);
-        if (annotation != null) {
-          return checkInferred(annotation, superOwner);
+        if (annotation != null && !skipAnnotation(annotation, superOwner)) {
+          return annotation;
         }
       }
     }
