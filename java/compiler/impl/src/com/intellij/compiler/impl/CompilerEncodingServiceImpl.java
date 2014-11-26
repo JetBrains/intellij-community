@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,6 +60,7 @@ public class CompilerEncodingServiceImpl extends CompilerEncodingService {
     }, false);
   }
 
+  @NotNull
   private Map<Module, Set<Charset>> computeModuleCharsetMap() {
     final Map<Module, Set<Charset>> map = new THashMap<Module, Set<Charset>>();
     final Map<VirtualFile, Charset> mappings = EncodingProjectManager.getInstance(myProject).getAllMappings();
