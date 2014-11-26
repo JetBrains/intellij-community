@@ -174,17 +174,7 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
   }
 
   protected PsiType getInterfaceType(PsiMethodReferenceExpression reference) {
-    PsiType functionalInterfaceType = null;
-    final Map<PsiMethodReferenceExpression,PsiType> map = PsiMethodReferenceUtil.ourRefs.get();
-    if (map != null) {
-      functionalInterfaceType = FunctionalInterfaceParameterizationUtil.getGroundTargetType(map.get(reference));
-    }
-
-    if (functionalInterfaceType == null) {
-      functionalInterfaceType = reference.getFunctionalInterfaceType();
-    }
-
-    return functionalInterfaceType;
+    return reference.getFunctionalInterfaceType();
   }
 
   protected PsiConflictResolver createResolver(PsiMethodReferenceExpressionImpl referenceExpression,

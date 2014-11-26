@@ -112,12 +112,7 @@ public abstract class InputOutputConstraintFormula implements ConstraintFormula 
   public void apply(PsiSubstitutor substitutor, boolean cache) {
     setT(substitutor.substitute(getT()));
     if (cache) {
-      Map<PsiElement, PsiType> map = LambdaUtil.ourFunctionTypes.get();
-      if (map == null) {
-        map = new HashMap<PsiElement, PsiType>();
-        LambdaUtil.ourFunctionTypes.set(map);
-      }
-      map.put(getExpression(), getT());
+      LambdaUtil.getFunctionalTypeMap().put(getExpression(), getT());
     }
   }
 

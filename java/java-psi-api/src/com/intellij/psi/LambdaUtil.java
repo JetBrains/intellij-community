@@ -22,6 +22,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.*;
+import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -286,6 +287,15 @@ public class LambdaUtil {
       element = parent;
       parent = parent.getParent();
     }
+
+    final Map<PsiElement, PsiType> map = ourFunctionTypes.get();
+    if (map != null) {
+      final PsiType type = map.get(expression);
+      if (type != null) {
+        return type;
+      }
+    }
+
     if (parent instanceof PsiArrayInitializerExpression) {
       final PsiType psiType = ((PsiArrayInitializerExpression)parent).getType();
       if (psiType instanceof PsiArrayType) {
@@ -325,13 +335,6 @@ public class LambdaUtil {
             final int finalLambdaIdx = adjustLambdaIdx(lambdaIdx, properties.getMethod(), parameters);
             if (finalLambdaIdx < parameters.length) {
               return properties.getSubstitutor().substitute(getNormalizedType(parameters[finalLambdaIdx]));
-            }
-          }
-          final Map<PsiElement, PsiType> map = ourFunctionTypes.get();
-          if (map != null) {
-            final PsiType type = map.get(expression);
-            if (type != null) {
-              return type;
             }
           }
           final JavaResolveResult resolveResult = contextCall.resolveMethodGenerics();
@@ -518,7 +521,17 @@ public class LambdaUtil {
     }
     return false;
   }
-  
+
+  @NotNull
+  public static Map<PsiElement, PsiType> getFunctionalTypeMap() {
+    Map<PsiElement, PsiType> map = ourFunctionTypes.get();
+    if (map == null) {
+      map = new HashMap<PsiElement, PsiType>();
+      ourFunctionTypes.set(map);
+    }
+    return map;
+  }
+
   public static class TypeParamsChecker extends PsiTypeVisitor<Boolean> {
     private PsiMethod myMethod;
     private final PsiClass myClass;
