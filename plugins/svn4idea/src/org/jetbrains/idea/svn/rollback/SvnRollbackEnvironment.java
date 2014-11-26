@@ -32,6 +32,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.io.File;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -54,7 +55,7 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
                               @NotNull RollbackProgressListener listener) {
     listener.indeterminate();
 
-    for (List<Change> collection : SvnUtil.splitChangesIntoWc(mySvnVcs, changes)) {
+    for (Collection<Change> collection : SvnUtil.splitChangesIntoWc(mySvnVcs, changes).values()) {
       // to be more sure about nested changes, being or being not reverted
       List<Change> sortedChanges = ContainerUtil.sorted(collection, ChangesAfterPathComparator.getInstance());
 

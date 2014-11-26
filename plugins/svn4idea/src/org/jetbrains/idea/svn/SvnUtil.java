@@ -40,8 +40,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.impl.status.StatusBarUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
-import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -90,6 +90,8 @@ public class SvnUtil {
 
   public static final Pattern ERROR_PATTERN = Pattern.compile("^svn: (E(\\d+)): (.*)$", Pattern.MULTILINE);
   public static final Pattern WARNING_PATTERN = Pattern.compile("^svn: warning: (W(\\d+)): (.*)$", Pattern.MULTILINE);
+
+  private static final Pair<SVNURL, WorkingCopyFormat> UNKNOWN_REPOSITORY_AND_FORMAT = Pair.create(null, WorkingCopyFormat.UNKNOWN);
 
   private SvnUtil() { }
 
@@ -305,46 +307,28 @@ public class SvnUtil {
     }
   }
 
-  public static Collection<List<Change>> splitChangesIntoWc(final SvnVcs vcs, final List<Change> changes) {
-    return splitIntoRepositories(vcs, changes, new Convertor<Change, FilePath>() {
+  @NotNull
+  public static Map<Pair<SVNURL, WorkingCopyFormat>, Set<Change>> splitChangesIntoWc(@NotNull SvnVcs vcs, @NotNull List<Change> changes) {
+    return splitIntoRepositoriesMap(vcs, changes, new Convertor<Change, FilePath>() {
       @Override
-      public FilePath convert(Change o) {
-        return ChangesUtil.getFilePath(o);
+      public FilePath convert(@NotNull Change change) {
+        return ChangesUtil.getFilePath(change);
       }
     });
   }
 
-  public static <T> Collection<List<T>> splitIntoRepositories(final SvnVcs vcs, final List<T> committables,
-                                                              Convertor<T, FilePath> convertor) {
-    if (committables.size() == 1) {
-      return Collections.singletonList(committables);
-    }
+  @NotNull
+  public static <T> Map<Pair<SVNURL, WorkingCopyFormat>, Set<T>> splitIntoRepositoriesMap(@NotNull final SvnVcs vcs,
+                                                                                          @NotNull List<T> items,
+                                                                                          @NotNull final Convertor<T, FilePath> converter) {
+    return ContainerUtil.classify(items.iterator(), new Convertor<T, Pair<SVNURL, WorkingCopyFormat>>() {
+      @Override
+      public Pair<SVNURL, WorkingCopyFormat> convert(@NotNull T item) {
+        RootUrlInfo path = vcs.getSvnFileUrlMapping().getWcRootForFilePath(converter.convert(item).getIOFile());
 
-    final MultiMap<Pair<SVNURL, WorkingCopyFormat>, T> result = splitIntoRepositoriesMap(vcs, committables, convertor);
-
-    if (result.size() == 1) {
-      return Collections.singletonList(committables);
-    }
-    final Collection<List<T>> result2 = new ArrayList<List<T>>();
-    for (Map.Entry<Pair<SVNURL, WorkingCopyFormat>, Collection<T>> entry : result.entrySet()) {
-      result2.add((List<T>)entry.getValue());
-    }
-    return result2;
-  }
-
-  public static <T> MultiMap<Pair<SVNURL, WorkingCopyFormat>, T> splitIntoRepositoriesMap(SvnVcs vcs,
-                                                                                          List<T> committables,
-                                                                                          Convertor<T, FilePath> convertor) {
-    final MultiMap<Pair<SVNURL, WorkingCopyFormat>, T> result = MultiMap.create();
-    for (T committable : committables) {
-      final RootUrlInfo path = vcs.getSvnFileUrlMapping().getWcRootForFilePath(convertor.convert(committable).getIOFile());
-      if (path == null) {
-        result.putValue(Pair.create((SVNURL)null, WorkingCopyFormat.UNKNOWN), committable);
-      } else {
-        result.putValue(Pair.create(path.getRepositoryUrlUrl(), path.getFormat()), committable);
+        return path == null ? UNKNOWN_REPOSITORY_AND_FORMAT : Pair.create(path.getRepositoryUrlUrl(), path.getFormat());
       }
-    }
-    return result;
+    });
   }
 
   /**
