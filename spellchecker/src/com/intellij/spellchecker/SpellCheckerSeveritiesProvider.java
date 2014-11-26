@@ -20,12 +20,10 @@
  */
 package com.intellij.spellchecker;
 
-import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.SeveritiesProvider;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,23 +32,19 @@ import java.util.Collections;
 import java.util.List;
 
 public class SpellCheckerSeveritiesProvider extends SeveritiesProvider {
+  private static final TextAttributesKey TYPO_KEY = TextAttributesKey.createTextAttributesKey("TYPO");
   public static final HighlightSeverity TYPO = new HighlightSeverity("TYPO", HighlightSeverity.INFORMATION.myVal + 5);
 
   @Override
   @NotNull
   public List<HighlightInfoType> getSeveritiesHighlightInfoTypes() {
-    final TextAttributes attributes = new TextAttributes();
-
-    attributes.setEffectType(EffectType.WAVE_UNDERSCORE);
-    attributes.setEffectColor(HighlightDisplayLevel.TYPO);
-
-    HighlightInfoType typo = new HighlightInfoType.HighlightInfoTypeImpl(TYPO, TextAttributesKey.createTextAttributesKey("TYPO", attributes));
+    HighlightInfoType typo = new HighlightInfoType.HighlightInfoTypeImpl(TYPO, TYPO_KEY);
     return Collections.singletonList(typo);
   }
 
   @Override
   public Color getTrafficRendererColor(@NotNull TextAttributes textAttributes) {
-    return HighlightDisplayLevel.TYPO;
+    return textAttributes.getErrorStripeColor();
   }
 
   @Override

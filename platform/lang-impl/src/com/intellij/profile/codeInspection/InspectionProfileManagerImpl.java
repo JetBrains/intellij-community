@@ -30,10 +30,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.BaseSchemeProcessor;
 import com.intellij.openapi.options.Scheme;
@@ -148,17 +145,12 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
   }
 
   public static void registerProvidedSeverities() {
-    final EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     for (SeveritiesProvider provider : Extensions.getExtensions(SeveritiesProvider.EP_NAME)) {
       for (HighlightInfoType highlightInfoType : provider.getSeveritiesHighlightInfoTypes()) {
-        final HighlightSeverity highlightSeverity = highlightInfoType.getSeverity(null);
+        HighlightSeverity highlightSeverity = highlightInfoType.getSeverity(null);
         SeverityRegistrar.registerStandard(highlightInfoType, highlightSeverity);
-        final TextAttributesKey attributesKey = highlightInfoType.getAttributesKey();
-        TextAttributes textAttributes = scheme.getAttributes(attributesKey);
-        if (textAttributes == null) {
-          textAttributes = attributesKey.getDefaultAttributes();
-        }
-        HighlightDisplayLevel.registerSeverity(highlightSeverity, provider.getTrafficRendererColor(textAttributes));
+        TextAttributesKey attributesKey = highlightInfoType.getAttributesKey();
+        HighlightDisplayLevel.registerSeverity(highlightSeverity, attributesKey);
       }
     }
   }
