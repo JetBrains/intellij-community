@@ -278,7 +278,7 @@ final class BrowserSettingsPanel {
     browsersEditor = new TableModelEditor<ConfigurableWebBrowser>(COLUMNS, itemEditor, "No web browsers configured")
       .modelListener(new TableModelEditor.DataChangedListener<ConfigurableWebBrowser>() {
         @Override
-        public void tableChanged(TableModelEvent event) {
+        public void tableChanged(@NotNull TableModelEvent event) {
           update();
         }
 
