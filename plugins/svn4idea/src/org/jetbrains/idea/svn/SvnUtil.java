@@ -29,6 +29,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
@@ -39,7 +40,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.impl.status.StatusBarUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
@@ -115,16 +115,6 @@ public class SvnUtil {
     final Info info = vcs.getInfo(parent);
 
     return info != null;
-  }
-
-  public static List<File> toFiles(Iterable<String> paths) {
-    List<File> result = ContainerUtil.newArrayList();
-
-    for (String path : paths) {
-      result.add(new File(path));
-    }
-
-    return result;
   }
 
   public static Collection<VirtualFile> crawlWCRoots(final Project project, File path, SvnWCRootCrawler callback, ProgressIndicator progress) {
@@ -316,16 +306,16 @@ public class SvnUtil {
   }
 
   public static Collection<List<Change>> splitChangesIntoWc(final SvnVcs vcs, final List<Change> changes) {
-    return splitIntoRepositories(vcs, changes, new Convertor<Change, File>() {
+    return splitIntoRepositories(vcs, changes, new Convertor<Change, FilePath>() {
       @Override
-      public File convert(Change o) {
-        return ChangesUtil.getFilePath(o).getIOFile();
+      public FilePath convert(Change o) {
+        return ChangesUtil.getFilePath(o);
       }
     });
   }
 
   public static <T> Collection<List<T>> splitIntoRepositories(final SvnVcs vcs, final List<T> committables,
-                                                              Convertor<T, File> convertor) {
+                                                              Convertor<T, FilePath> convertor) {
     if (committables.size() == 1) {
       return Collections.singletonList(committables);
     }
@@ -343,10 +333,11 @@ public class SvnUtil {
   }
 
   public static <T> MultiMap<Pair<SVNURL, WorkingCopyFormat>, T> splitIntoRepositoriesMap(SvnVcs vcs,
-    List<T> committables, Convertor<T, File> convertor) {
+                                                                                          List<T> committables,
+                                                                                          Convertor<T, FilePath> convertor) {
     final MultiMap<Pair<SVNURL, WorkingCopyFormat>, T> result = MultiMap.create();
     for (T committable : committables) {
-      final RootUrlInfo path = vcs.getSvnFileUrlMapping().getWcRootForFilePath(convertor.convert(committable));
+      final RootUrlInfo path = vcs.getSvnFileUrlMapping().getWcRootForFilePath(convertor.convert(committable).getIOFile());
       if (path == null) {
         result.putValue(Pair.create((SVNURL)null, WorkingCopyFormat.UNKNOWN), committable);
       } else {

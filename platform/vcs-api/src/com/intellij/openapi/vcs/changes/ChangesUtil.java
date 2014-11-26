@@ -22,6 +22,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
@@ -79,11 +80,11 @@ public class ChangesUtil {
     return ProjectLevelVcsManager.getInstance(project).getVcsFor(VcsContextFactory.SERVICE.getInstance().createFilePathOn(file));
   }
 
-  private static class Adder {
-    private final List<FilePath> myResult = new ArrayList<FilePath>();
-    private final Set<String> myDuplicatesControlSet = new HashSet<String>();
+  public static class Adder {
+    @NotNull private final List<FilePath> myResult = new ArrayList<FilePath>();
+    @NotNull private final Set<String> myDuplicatesControlSet = new HashSet<String>();
 
-    public void add(final FilePath file) {
+    public void add(@NotNull FilePath file) {
       final String path = file.getIOFile().getAbsolutePath();
       if (! myDuplicatesControlSet.contains(path)) {
         myResult.add(file);
@@ -91,13 +92,30 @@ public class ChangesUtil {
       }
     }
 
+    public void addParents(@NotNull FilePath file, @NotNull Condition<FilePath> condition) {
+      FilePath parent = file.getParentPath();
+
+      if (parent != null && condition.value(parent)) {
+        add(parent);
+        addParents(parent, condition);
+      }
+    }
+
+    @NotNull
     public List<FilePath> getResult() {
       return myResult;
     }
   }
 
-  public static List<FilePath> getPaths(final Collection<Change> changes) {
-    final Adder adder = new Adder();
+  @NotNull
+  public static List<FilePath> getPaths(@NotNull Collection<Change> changes) {
+    return getPathsAdder(changes).getResult();
+  }
+
+  @NotNull
+  public static Adder getPathsAdder(@NotNull Collection<Change> changes) {
+    Adder adder = new Adder();
+
     for (Change change : changes) {
       ContentRevision beforeRevision = change.getBeforeRevision();
       if (beforeRevision != null) {
@@ -108,7 +126,8 @@ public class ChangesUtil {
         adder.add(afterRevision.getFile());
       }
     }
-    return adder.getResult();
+
+    return adder;
   }
 
   public static List<File> getIoFilesFromChanges(final Collection<Change> changes) {
