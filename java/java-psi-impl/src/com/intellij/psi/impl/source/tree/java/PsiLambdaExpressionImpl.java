@@ -18,7 +18,6 @@ package com.intellij.psi.impl.source.tree.java;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfaceParameterizationUtil;
@@ -34,6 +33,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.HashMap;
+import java.util.Map;
 
 public class PsiLambdaExpressionImpl extends ExpressionPsiElement implements PsiLambdaExpression {
 
@@ -168,35 +169,35 @@ public class PsiLambdaExpressionImpl extends ExpressionPsiElement implements Psi
   }
 
   @Override
-  public boolean isAcceptable(PsiType left) {
-    return isAcceptable(left, false);
-  }
-
-  @Override
-  public boolean isAcceptable(PsiType leftType, boolean checkReturnType) {
+  public boolean isAcceptable(PsiType leftType) {
     if (leftType instanceof PsiIntersectionType) {
       for (PsiType conjunctType : ((PsiIntersectionType)leftType).getConjuncts()) {
-        if (isAcceptable(conjunctType, checkReturnType)) return true;
+        if (isAcceptable(conjunctType)) return true;
       }
       return false;
     }
-    final PsiElement argsList = PsiTreeUtil.getParentOfType(this, PsiExpressionList.class);
-    if (MethodCandidateInfo.ourOverloadGuard.currentStack().contains(argsList)) {
-      if (!hasFormalParameterTypes()) {
-        return true;
-      }
-      final MethodCandidateInfo.CurrentCandidateProperties candidateProperties = MethodCandidateInfo.getCurrentMethod(argsList);
-      if (candidateProperties != null && !InferenceSession.isPertinentToApplicability(this, candidateProperties.getMethod())) {
-        return true;
-      }
-    }
+    final PsiExpressionList argsList = PsiTreeUtil.getParentOfType(this, PsiExpressionList.class);
 
     leftType = FunctionalInterfaceParameterizationUtil.getGroundTargetType(leftType, this);
 
     final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(leftType);
     final PsiClass psiClass = resolveResult.getElement();
     if (psiClass instanceof PsiAnonymousClass) {
-      return isAcceptable(((PsiAnonymousClass)psiClass).getBaseClassType(), checkReturnType);
+      return isAcceptable(((PsiAnonymousClass)psiClass).getBaseClassType());
+    }
+
+    if (MethodCandidateInfo.ourOverloadGuard.currentStack().contains(argsList)) {
+      final MethodCandidateInfo.CurrentCandidateProperties candidateProperties = MethodCandidateInfo.getCurrentMethod(argsList);
+      if (candidateProperties != null) {
+        final PsiMethod method = candidateProperties.getMethod();
+        if (!InferenceSession.isPertinentToApplicability(this, method) && hasFormalParameterTypes()) {
+          return true;
+        }
+
+        if (LambdaUtil.isPotentiallyCompatibleWithTypeParameter(this, argsList, method)) {
+          return true;
+        }
+      }
     }
 
     final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(resolveResult);
@@ -206,54 +207,75 @@ public class PsiLambdaExpressionImpl extends ExpressionPsiElement implements Psi
     final PsiSubstitutor substitutor = LambdaUtil.getSubstitutor(interfaceMethod, resolveResult);
 
     assert leftType != null;
-    final PsiParameter[] lambdaParameters = getParameterList().getParameters();
-    final PsiType[] parameterTypes = interfaceMethod.getSignature(substitutor).getParameterTypes();
-    if (lambdaParameters.length != parameterTypes.length) return false;
+    if (!isPotentiallyCompatible(leftType)) {
+      return false;
+    }
 
-    for (int lambdaParamIdx = 0, length = lambdaParameters.length; lambdaParamIdx < length; lambdaParamIdx++) {
-      PsiParameter parameter = lambdaParameters[lambdaParamIdx];
-      final PsiTypeElement typeElement = parameter.getTypeElement();
-      if (typeElement != null) {
-        final PsiType lambdaFormalType = toArray(typeElement.getType());
-        final PsiType methodParameterType = toArray(parameterTypes[lambdaParamIdx]);
-        if (!lambdaFormalType.equals(methodParameterType)) {
-          return false;
+    if (MethodCandidateInfo.ourOverloadGuard.currentStack().contains(argsList) && !hasFormalParameterTypes()) {
+      return true;
+    }
+
+   
+
+    if (hasFormalParameterTypes()) {
+      final PsiParameter[] lambdaParameters = getParameterList().getParameters();
+      final PsiType[] parameterTypes = interfaceMethod.getSignature(substitutor).getParameterTypes();
+      for (int lambdaParamIdx = 0, length = lambdaParameters.length; lambdaParamIdx < length; lambdaParamIdx++) {
+        PsiParameter parameter = lambdaParameters[lambdaParamIdx];
+        final PsiTypeElement typeElement = parameter.getTypeElement();
+        if (typeElement != null) {
+          final PsiType lambdaFormalType = toArray(typeElement.getType());
+          final PsiType methodParameterType = toArray(parameterTypes[lambdaParamIdx]);
+          if (!lambdaFormalType.equals(methodParameterType)) {
+            return false;
+          }
         }
       }
     }
 
-
-    //A lambda expression (§15.27) is potentially compatible with a functional interface type (§9.8) if all of the following are true:
-    //   The arity of the target type's function type is the same as the arity of the lambda expression.
-    //   If the target type's function type has a void return, then the lambda body is either a statement expression (§14.8) or a void-compatible block (§15.27.2).
-    //   If the target type's function type has a (non-void) return type, then the lambda body is either an expression or a value-compatible block (§15.27.2).
     PsiType methodReturnType = interfaceMethod.getReturnType();
-    if (checkReturnType) {
-      final String uniqueVarName = JavaCodeStyleManager.getInstance(getProject()).suggestUniqueVariableName("l", this, true);
-      final String canonicalText = toArray(leftType).getCanonicalText();
-      final PsiStatement assignmentFromText = JavaPsiFacade.getElementFactory(getProject())
-        .createStatementFromText(canonicalText + " " + uniqueVarName + " = " + getText(), this);
-      final PsiLocalVariable localVariable = (PsiLocalVariable)((PsiDeclarationStatement)assignmentFromText).getDeclaredElements()[0];
-      if (methodReturnType != null) {
-        return LambdaHighlightingUtil.checkReturnTypeCompatible((PsiLambdaExpression)localVariable.getInitializer(),
-                                                                substitutor.substitute(methodReturnType)) == null;
+    if (methodReturnType != null) {
+      Map<PsiElement, PsiType> map = LambdaUtil.ourFunctionTypes.get();
+      if (map == null) {
+        map = new HashMap<PsiElement, PsiType>();
+        LambdaUtil.ourFunctionTypes.set(map);
       }
-    } else {
-      final PsiElement body = getBody();
-      if (methodReturnType == PsiType.VOID) {
-        if (body instanceof PsiCodeBlock) {
-          return isVoidCompatible();
-        } else {
-          return LambdaUtil.isExpressionStatementExpression(body);
+      try {
+        if (map.put(this, leftType) != null) {
+          return false;
         }
-      } else {
-        if (body instanceof PsiCodeBlock) {
-          return isValueCompatible();
-        }
-        return body instanceof PsiExpression;
+        return LambdaHighlightingUtil.checkReturnTypeCompatible(this, substitutor.substitute(methodReturnType)) == null;
+      }
+      finally {
+        map.remove(this);
       }
     }
     return true;
+  }
+
+  //A lambda expression (§15.27) is potentially compatible with a functional interface type (§9.8) if all of the following are true:
+  //   The arity of the target type's function type is the same as the arity of the lambda expression.
+  //   If the target type's function type has a void return, then the lambda body is either a statement expression (§14.8) or a void-compatible block (§15.27.2).
+  //   If the target type's function type has a (non-void) return type, then the lambda body is either an expression or a value-compatible block (§15.27.2).
+  private boolean isPotentiallyCompatible(PsiType left) {
+    final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(left);
+    if (interfaceMethod == null) return false;
+
+    if (getParameterList().getParametersCount() != interfaceMethod.getParameterList().getParametersCount()) {
+      return false;
+    }
+    final PsiType methodReturnType = interfaceMethod.getReturnType();
+    final PsiElement body = getBody();
+    if (methodReturnType == PsiType.VOID) {
+      if (body instanceof PsiCodeBlock) {
+        return isVoidCompatible();
+      } else {
+        return LambdaUtil.isExpressionStatementExpression(body);
+      }
+    }
+    else {
+      return body instanceof PsiCodeBlock && isValueCompatible() || body instanceof PsiExpression;
+    }
   }
 
   private static PsiType toArray(PsiType paramType) {
