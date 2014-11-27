@@ -321,7 +321,7 @@ public final class PyClassRefactoringUtil {
     }
     final AddImportHelper.ImportPriority priority = AddImportHelper.getImportPriority(anchor, newFile);
     if (preferFromImport && !containingQName.getComponents().isEmpty()) {
-      return AddImportHelper.addImportFrom(file, null, containingQName.toString(), importedName, asName, priority, anchor);
+      return AddImportHelper.addOrUpdateFromImportStatement(file, containingQName.toString(), importedName, asName, priority, anchor);
     }
     else {
       return AddImportHelper.addImportStatement(file, containingQName.append(importedName).toString(), asName, priority, anchor);
