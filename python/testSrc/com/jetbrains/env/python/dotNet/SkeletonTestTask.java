@@ -121,6 +121,7 @@ class SkeletonTestTask extends PyExecutionFixtureTestTask {
 
     FileUtil.copy(skeletonFile, new File(myFixture.getTempDirPath(), skeletonFile.getName()));
     if (myExpectedSkeletonFile != null) {
+      // TODO: Get rid of hardcoded skeleton version
       myFixture.checkResultByFile(skeletonFile.getName(), myExpectedSkeletonFile, false);
     }
     myGeneratedSkeleton = (PyFile)myFixture.configureByFile(skeletonFile.getName());
