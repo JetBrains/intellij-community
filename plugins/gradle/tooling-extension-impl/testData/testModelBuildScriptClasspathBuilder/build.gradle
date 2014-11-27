@@ -1,4 +1,12 @@
 //noinspection GrPackage
+buildscript {
+  dependencies {
+    classpath 'junit:junit:4.11'
+  }
+  repositories {
+    mavenCentral()
+  }
+}
 
 project("moduleWithAdditionalClasspath") {
   buildscript {
