@@ -15,7 +15,6 @@
  */
 package com.intellij.packaging.impl.run;
 
-import com.intellij.compiler.impl.CompileScopeUtil;
 import com.intellij.execution.BeforeRunTask;
 import com.intellij.execution.BeforeRunTaskProvider;
 import com.intellij.execution.RunManagerEx;
@@ -43,12 +42,10 @@ import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.api.CmdlineRemoteProto;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -191,7 +188,6 @@ public class BuildArtifactsBeforeRunTaskProvider extends BeforeRunTaskProvider<B
         final CompilerManager manager = CompilerManager.getInstance(myProject);
         finished.down();
         final CompileScope scope = ArtifactCompileScope.createArtifactsScope(myProject, artifacts);
-        CompileScopeUtil.setBaseScopeForExternalBuild(scope, Collections.<CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope>emptyList());
         ExecutionManagerImpl.EXECUTION_SESSION_ID_KEY.set(scope, ExecutionManagerImpl.EXECUTION_SESSION_ID_KEY.get(env));
         manager.make(scope, CompilerFilter.ALL, callback);
       }
