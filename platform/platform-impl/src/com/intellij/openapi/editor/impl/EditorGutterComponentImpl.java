@@ -1046,7 +1046,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       }
     }
 
-    final int lineNumberAreaWidth = calculator.execute(maxLineNumber);
+    final int lineNumberAreaWidth = calculator.execute(maxLineNumber) + 2;
     if (myLineNumberAreaWidth != lineNumberAreaWidth) {
       myLineNumberAreaWidth = lineNumberAreaWidth;
       fireResized();
