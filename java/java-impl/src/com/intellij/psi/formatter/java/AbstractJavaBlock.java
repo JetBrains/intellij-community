@@ -50,31 +50,24 @@ import static com.intellij.psi.formatter.java.JavaFormatterUtil.getWrapType;
 
 public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlock, ReservedWrapsProvider {
 
-  /**
-   * Holds types of the elements for which <code>'align in column'</code> rule may be preserved.
-   *
-   * @see CodeStyleSettings#ALIGN_GROUP_FIELD_DECLARATIONS
-   */
-  protected static final Set<IElementType> ALIGN_IN_COLUMNS_ELEMENT_TYPES = Collections.unmodifiableSet(new HashSet<IElementType>(
-    Arrays.asList(JavaElementType.FIELD)));
-
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.formatter.java.AbstractJavaBlock");
 
-  /**
-   * Shared thread-safe config object to use during <code>'align in column'</code> processing.
-   *
-   * @see CodeStyleSettings#ALIGN_GROUP_FIELD_DECLARATIONS
-   */
-  private static final AlignmentInColumnsConfig ALIGNMENT_IN_COLUMNS_CONFIG = new AlignmentInColumnsConfig(
-    TokenSet.create(JavaTokenType.IDENTIFIER), JavaJspElementType.WHITE_SPACE_BIT_SET, ElementType.JAVA_COMMENT_BIT_SET,
-    TokenSet.create(JavaTokenType.EQ), TokenSet.create(JavaElementType.FIELD));
+  protected static final Set<IElementType> ALIGN_IN_COLUMNS_ELEMENT_TYPES = ContainerUtil.newHashSet(JavaElementType.FIELD);
 
-  /**
-   * Enumerates types of variable declaration sub-elements that should be aligned in columns.
-   */
-  private static final Set<IElementType> VAR_DECLARATION_ELEMENT_TYPES_TO_ALIGN = new HashSet<IElementType>(Arrays.asList(
-    JavaElementType.MODIFIER_LIST, JavaElementType.TYPE, JavaTokenType.IDENTIFIER, JavaTokenType.EQ
-  ));
+  private static final AlignmentInColumnsConfig ALIGNMENT_IN_COLUMNS_CONFIG = new AlignmentInColumnsConfig(
+    TokenSet.create(JavaTokenType.IDENTIFIER),
+    JavaJspElementType.WHITE_SPACE_BIT_SET,
+    ElementType.JAVA_COMMENT_BIT_SET,
+    TokenSet.create(JavaTokenType.EQ),
+    TokenSet.create(JavaElementType.FIELD)
+  );
+
+  private static final Set<IElementType> VAR_DECLARATION_ELEMENT_TYPES_TO_ALIGN = ContainerUtil.newHashSet(
+    JavaElementType.MODIFIER_LIST,
+    JavaElementType.TYPE,
+    JavaTokenType.IDENTIFIER,
+    JavaTokenType.EQ
+  );
 
   @NotNull protected final CommonCodeStyleSettings mySettings;
   @NotNull protected final JavaCodeStyleSettings myJavaSettings;

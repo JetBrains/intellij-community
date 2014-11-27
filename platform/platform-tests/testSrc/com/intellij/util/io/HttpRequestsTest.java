@@ -15,6 +15,7 @@
  */
 package com.intellij.util.io;
 
+import com.intellij.ide.IdeBundle;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
@@ -41,31 +42,19 @@ public class HttpRequestsTest {
       fail();
     }
     catch (IOException e) {
-      assertEquals("Too many redirects", e.getMessage());
+      assertEquals(IdeBundle.message("error.connection.failed.redirects"), e.getMessage());
     }
   }
 
-  @Test
-  public void testConnectTimeout() {
-    try {
-      HttpRequests.request("http://openjdk.java.net").connectTimeout(1).connect(myProcessor);
-      fail();
-    }
-    catch (SocketTimeoutException ignore) { }
-    catch (IOException e) {
-      fail(e.getMessage());
-    }
+  @Test(timeout = 5000, expected = SocketTimeoutException.class)
+  public void testConnectTimeout() throws IOException {
+    HttpRequests.request("http://openjdk.java.net").connectTimeout(1).connect(myProcessor);
+    fail();
   }
 
-  @Test
-  public void testReadTimeout() {
-    try {
-      HttpRequests.request("http://openjdk.java.net").readTimeout(1).connect(myProcessor);
-      fail();
-    }
-    catch (SocketTimeoutException ignore) { }
-    catch (IOException e) {
-      fail(e.getMessage());
-    }
+  @Test(timeout = 5000, expected = SocketTimeoutException.class)
+  public void testReadTimeout() throws IOException {
+    HttpRequests.request("http://openjdk.java.net").readTimeout(1).connect(myProcessor);
+    fail();
   }
 }

@@ -54,7 +54,7 @@ public class ManageButton extends ComboBoxAction implements DumbAware {
     group.add(new CopyAction());
     group.add(new RenameAction());
     group.add(new DeleteAction());
-    group.add(new EditDescriptionAction());
+    group.add(new EditDescriptionAction(myBuilder.hasDescription()));
     group.add(new ExportAction());
     group.addSeparator();
 
@@ -123,8 +123,8 @@ public class ManageButton extends ComboBoxAction implements DumbAware {
   }
 
   private class EditDescriptionAction extends AnAction implements DumbAware {
-    public EditDescriptionAction() {
-      super("Edit description");
+    public EditDescriptionAction(boolean hasDescription) {
+      super(hasDescription ? "Edit description" : "Add description");
     }
 
     @Override

@@ -19,16 +19,16 @@ import com.intellij.ide.util.gotoByName.ChooseByNameBase;
 import com.intellij.ide.util.gotoByName.DefaultChooseByNameItemProvider;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.io.File;
 
 /**
 * @author peter
@@ -48,11 +48,17 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
                                 @NotNull ProgressIndicator indicator,
                                 @NotNull Processor<Object> consumer) {
     if (pattern.contains("/") || pattern.contains("\\")) {
-      File ioFile = new File(pattern);
-      VirtualFile vFile = ioFile.exists() ? LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioFile) : null;
-      PsiFile psiFile = vFile == null ? null : PsiManager.getInstance(myProject).findFile(vFile);
-      if (psiFile != null && !consumer.process(psiFile)) {
-        return false;
+      VirtualFile vFile = LocalFileSystem.getInstance().findFileByPathIfCached(FileUtil.toSystemIndependentName(pattern));
+      if (vFile != null) {
+        ProjectFileIndex index = ProjectFileIndex.SERVICE.getInstance(myProject);
+        if (index.isInContent(vFile) || index.isInLibraryClasses(vFile) || index.isInLibrarySource(vFile)) {
+          PsiFileSystemItem fileOrDir = vFile.isDirectory() ?
+                                        PsiManager.getInstance(myProject).findDirectory(vFile) :
+                                        PsiManager.getInstance(myProject).findFile(vFile);
+          if (fileOrDir != null && !consumer.process(fileOrDir)) {
+            return false;
+          }
+        }
       }
     }
 

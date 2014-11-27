@@ -282,7 +282,8 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     }
   }
 
-  boolean finishCommit(@NotNull final Document document,
+  // public for Upsource
+  public boolean finishCommit(@NotNull final Document document,
                        @NotNull final List<Processor<Document>> finishProcessors,
                        final boolean synchronously,
                        @NotNull final Object reason) {
@@ -363,7 +364,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     }
   }
 
-  private void doCommit(@NotNull final Document document) {
+  protected void doCommit(@NotNull final Document document) {
     assert !myIsCommitInProgress : "Do not call commitDocument() from inside PSI change listener";
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override

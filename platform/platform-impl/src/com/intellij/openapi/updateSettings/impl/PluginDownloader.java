@@ -113,6 +113,7 @@ public class PluginDownloader {
     }
     catch (IOException ex) {
       myFile = null;
+      LOG.warn(ex);
       errorMessage = ex.getMessage();
     }
     if (myFile == null) {

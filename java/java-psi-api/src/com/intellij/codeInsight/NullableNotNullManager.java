@@ -24,6 +24,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
@@ -167,14 +168,28 @@ public class NullableNotNullManager implements PersistentStateComponent<Element>
     myDefaultNotNull = defaultNotNull;
   }
 
+  private static boolean skipAnnotation(@NotNull PsiAnnotation annotation, @NotNull PsiModifierListOwner owner) {
+    return owner instanceof PsiMethod &&
+           PsiUtil.canBeOverriden((PsiMethod)owner) &&
+           AnnotationUtil.isInferredAnnotation(annotation) &&
+           AnnotationUtil.NOT_NULL.equals(annotation.getQualifiedName());
+  }
+
   @Nullable 
   private PsiAnnotation findNullabilityAnnotation(@NotNull PsiModifierListOwner owner, boolean checkBases, boolean nullable) {
     Set<String> qNames = ContainerUtil.newHashSet(nullable ? getNullables() : getNotNulls());
-    PsiAnnotation annotation = checkBases && (owner instanceof PsiClass || owner instanceof PsiMethod)
-                               ? AnnotationUtil.findAnnotationInHierarchy(owner, qNames)
-                               : AnnotationUtil.findAnnotation(owner, qNames);
-    if (annotation != null) {
+    PsiAnnotation annotation = AnnotationUtil.findAnnotation(owner, qNames);
+    if (annotation != null && !skipAnnotation(annotation, owner)) {
       return annotation;
+    }
+
+    if (checkBases && owner instanceof PsiMethod) {
+      for (PsiModifierListOwner superOwner : AnnotationUtil.getSuperAnnotationOwners(owner)) {
+        annotation = AnnotationUtil.findAnnotation(superOwner, qNames);
+        if (annotation != null && !skipAnnotation(annotation, superOwner)) {
+          return annotation;
+        }
+      }
     }
 
     PsiType type = getOwnerType(owner);
@@ -302,6 +317,7 @@ public class NullableNotNullManager implements PersistentStateComponent<Element>
     }
 
     try {
+      //noinspection deprecation
       DefaultJDOMExternalizer.writeExternal(this, component);
     }
     catch (WriteExternalException e) {
@@ -313,6 +329,7 @@ public class NullableNotNullManager implements PersistentStateComponent<Element>
   @Override
   public void loadState(Element state) {
     try {
+      //noinspection deprecation
       DefaultJDOMExternalizer.readExternal(this, state);
       if (myNullables.isEmpty()) {
         Collections.addAll(myNullables, DEFAULT_NULLABLES);

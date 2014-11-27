@@ -17,6 +17,7 @@ package com.intellij.navigation
 import com.intellij.ide.actions.GotoFileItemProvider
 import com.intellij.ide.util.gotoByName.ChooseByNamePopup
 import com.intellij.ide.util.gotoByName.GotoFileModel
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import org.jetbrains.annotations.NotNull
@@ -27,12 +28,16 @@ class ChooseByNameHddTest extends JavaCodeInsightFixtureTestCase {
 
   public void "test go to file by full path"() {
     def psiFile = myFixture.addFileToProject("foo/index.html", "foo")
-    def path = psiFile.virtualFile.path
+    def vFile = psiFile.virtualFile
+    def path = vFile.path
 
-    def popup = ChooseByNamePopup.createPopup(project, new GotoFileModel(project), new GotoFileItemProvider(project, null))
-    assert ChooseByNameTest.calcPopupElements(popup, path) == [psiFile]
-    assert ChooseByNameTest.calcPopupElements(popup, FileUtil.toSystemDependentName(path)) == [psiFile]
-    popup.close(false)
+    ApplicationManager.application.runReadAction {
+      def popup = ChooseByNamePopup.createPopup(project, new GotoFileModel(project), new GotoFileItemProvider(project, null))
+      assert ChooseByNameTest.calcPopupElements(popup, path) == [psiFile]
+      assert ChooseByNameTest.calcPopupElements(popup, FileUtil.toSystemDependentName(path)) == [psiFile]
+      assert ChooseByNameTest.calcPopupElements(popup, vFile.parent.path) == [psiFile.containingDirectory]
+      popup.close(false)
+    }
   }
 
   @Override

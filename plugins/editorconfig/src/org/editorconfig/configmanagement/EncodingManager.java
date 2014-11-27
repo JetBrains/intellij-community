@@ -67,7 +67,6 @@ public class EncodingManager extends FileDocumentManagerAdapter {
         if (newCharset != null) {
           if (Comparing.equal(newCharset, file.getCharset())) return;
           encodingProjectManager.setEncoding(file, newCharset);
-          Utils.appliedConfigMessage(myProject, charset, charsetKey, filePath);
         } else {
           Utils.invalidConfigMessage(myProject, charset, charsetKey, filePath);
         }
