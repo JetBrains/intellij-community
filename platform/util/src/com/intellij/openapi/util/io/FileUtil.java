@@ -19,6 +19,7 @@ import com.intellij.CommonBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.FixedFuture;
 import com.intellij.util.containers.ContainerUtil;
@@ -32,6 +33,7 @@ import org.jetbrains.annotations.*;
 
 import java.io.*;
 import java.lang.reflect.Method;
+import java.nio.charset.Charset;
 import java.util.*;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
@@ -1116,7 +1118,7 @@ public class FileUtil extends FileUtilRt {
   }
 
   public static void appendToFile(@NotNull File file, @NotNull String text) throws IOException {
-    writeToFile(file, text.getBytes("UTF-8"), true);
+    writeToFile(file, text.getBytes(CharsetToolkit.UTF8_CHARSET), true);
   }
 
   public static void writeToFile(@NotNull File file, @NotNull byte[] text) throws IOException {
@@ -1124,7 +1126,7 @@ public class FileUtil extends FileUtilRt {
   }
 
   public static void writeToFile(@NotNull File file, @NotNull String text) throws IOException {
-    writeToFile(file, text.getBytes("UTF-8"), false);
+    writeToFile(file, text.getBytes(CharsetToolkit.UTF8_CHARSET), false);
   }
 
   public static void writeToFile(@NotNull File file, @NotNull byte[] text, int off, int len) throws IOException {
@@ -1420,6 +1422,10 @@ public class FileUtil extends FileUtilRt {
   @NotNull
   public static String loadFile(@NotNull File file, @Nullable @NonNls String encoding) throws IOException {
     return FileUtilRt.loadFile(file, encoding);
+  }
+  @NotNull
+  public static String loadFile(@NotNull File file, @NotNull @NonNls Charset encoding) throws IOException {
+    return String.valueOf(FileUtilRt.loadFileText(file, encoding));
   }
 
   @NotNull

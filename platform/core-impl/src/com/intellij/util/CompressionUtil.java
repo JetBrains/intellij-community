@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.openapi.util.ThreadLocalCachedByteArray;
 import com.intellij.util.io.DataInputOutputUtil;
 import org.iq80.snappy.CorruptionException;
 import org.iq80.snappy.Snappy;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -33,7 +34,7 @@ public class CompressionUtil {
   private static final int COMPRESSION_THRESHOLD = 64;
   private static final ThreadLocalCachedByteArray spareBufferLocal = new ThreadLocalCachedByteArray();
 
-  public static int writeCompressed(DataOutput out, byte[] bytes, int length) throws IOException {
+  public static int writeCompressed(@NotNull DataOutput out, @NotNull byte[] bytes, int length) throws IOException {
     if (length > COMPRESSION_THRESHOLD) {
       final byte[] compressedOutputBuffer = spareBufferLocal.getBuffer(Snappy.maxCompressedLength(length));
 
@@ -41,20 +42,23 @@ public class CompressionUtil {
       DataInputOutputUtil.writeINT(out, -compressedSize);
       out.write(compressedOutputBuffer, 0, compressedSize);
       return compressedSize;
-    } else {
+    }
+    else {
       DataInputOutputUtil.writeINT(out, length);
       out.write(bytes, 0, length);
       return length;
     }
   }
 
-  public static byte[] readCompressed(DataInput in) throws IOException {
+  @NotNull
+  public static byte[] readCompressed(@NotNull DataInput in) throws IOException {
     int size = DataInputOutputUtil.readINT(in);
     if (size < 0) {
       byte[] bytes = spareBufferLocal.getBuffer(-size);
       in.readFully(bytes, 0, -size);
       return Snappy.uncompress(bytes, 0, -size);
-    } else {
+    }
+    else {
       byte[] bytes = new byte[size];
       in.readFully(bytes);
       return bytes;
@@ -63,7 +67,8 @@ public class CompressionUtil {
 
   private static final int STRING_COMPRESSION_THRESHOLD = 1024;
 
-  public static CharSequence uncompressCharSequence(Object string, Charset charset) {
+  @NotNull
+  public static CharSequence uncompressCharSequence(@NotNull Object string, @NotNull Charset charset) {
     if (string instanceof CharSequence) return (CharSequence)string;
     byte[] b = (byte[])string;
     try {
@@ -71,12 +76,14 @@ public class CompressionUtil {
       byte[] bytes = spareBufferLocal.getBuffer(uncompressedLength);
       int bytesLength = Snappy.uncompress(b, 0, b.length, bytes, 0);
       return new String(bytes, 0, bytesLength, charset);
-    } catch (CorruptionException ex) {
+    }
+    catch (CorruptionException ex) {
       throw new RuntimeException(ex);
     }
   }
 
-  public static Object compressCharSequence(CharSequence string, Charset charset) {
+  @NotNull
+  public static Object compressCharSequence(@NotNull CharSequence string, @NotNull Charset charset) {
     if (string.length() < STRING_COMPRESSION_THRESHOLD) {
       if (string instanceof CharBuffer && ((CharBuffer)string).capacity() > STRING_COMPRESSION_THRESHOLD) {
         string = string.toString();   // shrink to size
@@ -85,7 +92,8 @@ public class CompressionUtil {
     }
     try {
       return Snappy.compress(string.toString().getBytes(charset));
-    } catch (CorruptionException ex) {
+    }
+    catch (CorruptionException ex) {
       ex.printStackTrace();
       return string;
     }

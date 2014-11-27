@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -361,7 +361,7 @@ public abstract class AbstractExternalFilter {
     while (read != null && !startSection.matcher(StringUtil.toUpperCase(read)).find());
 
     if (input instanceof MyReader && contentEncoding != null) {
-      if (!contentEncoding.equalsIgnoreCase("UTF-8") &&
+      if (!contentEncoding.equalsIgnoreCase(CharsetToolkit.UTF8) &&
           !contentEncoding.equals(((MyReader)input).getEncoding()))
       { //restart page parsing with correct encoding
         Reader stream;

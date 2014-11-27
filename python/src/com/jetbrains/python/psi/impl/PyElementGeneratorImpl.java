@@ -21,6 +21,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -122,7 +123,7 @@ public class PyElementGeneratorImpl extends PyElementGenerator {
     VirtualFile vfile = destination == null ? null : destination.getVirtualFile();
     Charset charset;
     if (vfile == null) {
-      charset = (preferUTF8 ? Charset.forName("UTF-8") : Charset.forName("US-ASCII"));
+      charset = (preferUTF8 ? CharsetToolkit.UTF8_CHARSET : Charset.forName("US-ASCII"));
     }
     else {
       charset = vfile.getCharset();

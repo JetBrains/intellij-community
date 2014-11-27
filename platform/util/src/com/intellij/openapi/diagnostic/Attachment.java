@@ -15,12 +15,10 @@
  */
 package com.intellij.openapi.diagnostic;
 
-import com.intellij.util.ArrayUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.Base64Converter;
 import com.intellij.util.PathUtilRt;
 import org.jetbrains.annotations.NotNull;
-
-import java.io.UnsupportedEncodingException;
 
 public class Attachment {
   public static final Attachment[] EMPTY_ARRAY = new Attachment[0];
@@ -43,12 +41,7 @@ public class Attachment {
 
   @NotNull
   public static byte[] getBytes(@NotNull String content) {
-    try {
-      return content.getBytes("UTF-8");
-    }
-    catch (UnsupportedEncodingException ignored) {
-      return ArrayUtil.EMPTY_BYTE_ARRAY;
-    }
+    return content.getBytes(CharsetToolkit.UTF8_CHARSET);
   }
 
   @NotNull
