@@ -472,6 +472,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   private class ErrorStripeButton extends JButton {
     private ErrorStripeButton() {
       setFocusable(false);
+      setOpaque(false);
     }
 
     @Override

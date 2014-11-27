@@ -181,11 +181,6 @@ public class PsiLambdaExpressionImpl extends ExpressionPsiElement implements Psi
     leftType = FunctionalInterfaceParameterizationUtil.getGroundTargetType(leftType, this);
 
     final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(leftType);
-    final PsiClass psiClass = resolveResult.getElement();
-    if (psiClass instanceof PsiAnonymousClass) {
-      return isAcceptable(((PsiAnonymousClass)psiClass).getBaseClassType());
-    }
-
     if (MethodCandidateInfo.ourOverloadGuard.currentStack().contains(argsList)) {
       final MethodCandidateInfo.CurrentCandidateProperties candidateProperties = MethodCandidateInfo.getCurrentMethod(argsList);
       if (candidateProperties != null) {
@@ -200,13 +195,6 @@ public class PsiLambdaExpressionImpl extends ExpressionPsiElement implements Psi
       }
     }
 
-    final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(resolveResult);
-
-    if (interfaceMethod == null) return false;
-
-    final PsiSubstitutor substitutor = LambdaUtil.getSubstitutor(interfaceMethod, resolveResult);
-
-    assert leftType != null;
     if (!isPotentiallyCompatible(leftType)) {
       return false;
     }
@@ -215,7 +203,10 @@ public class PsiLambdaExpressionImpl extends ExpressionPsiElement implements Psi
       return true;
     }
 
-   
+    final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(resolveResult);
+    if (interfaceMethod == null) return false;
+
+    final PsiSubstitutor substitutor = LambdaUtil.getSubstitutor(interfaceMethod, resolveResult);
 
     if (hasFormalParameterTypes()) {
       final PsiParameter[] lambdaParameters = getParameterList().getParameters();
@@ -235,11 +226,7 @@ public class PsiLambdaExpressionImpl extends ExpressionPsiElement implements Psi
 
     PsiType methodReturnType = interfaceMethod.getReturnType();
     if (methodReturnType != null && methodReturnType != PsiType.VOID) {
-      Map<PsiElement, PsiType> map = LambdaUtil.ourFunctionTypes.get();
-      if (map == null) {
-        map = new HashMap<PsiElement, PsiType>();
-        LambdaUtil.ourFunctionTypes.set(map);
-      }
+      Map<PsiElement, PsiType> map = LambdaUtil.getFunctionalTypeMap();
       try {
         if (map.put(this, leftType) != null) {
           return false;

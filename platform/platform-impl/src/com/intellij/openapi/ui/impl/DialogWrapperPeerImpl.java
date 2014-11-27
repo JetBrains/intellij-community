@@ -203,10 +203,6 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
       }
       myDialog.setModalityType(modalityType);
     }
-
-    if (Registry.is("suppress.focus.stealing")) {
-      setAutoRequestFocus(false);
-    }
   }
 
   /** @see DialogWrapper#DialogWrapper(boolean, boolean)
@@ -248,6 +244,11 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
     }
 
     myDialog = new MyDialog(owner, myWrapper, myProject, myWindowFocusedCallback, myTypeAheadDone, myTypeAheadCallback);
+
+    if (Registry.is("suppress.focus.stealing")) {
+      setAutoRequestFocus(false);
+    }
+
     myDialog.setModalityType(ideModalityType.toAwtModality());
 
     myCanBeParent = canBeParent;

@@ -67,6 +67,6 @@ public class PropertiesFileType extends LanguageFileType {
     if (charset == null) {
       charset = CharsetToolkit.getDefaultSystemCharset();
     }
-    return charset != null ? charset.name() : null;
+    return charset.name();
   }
 }

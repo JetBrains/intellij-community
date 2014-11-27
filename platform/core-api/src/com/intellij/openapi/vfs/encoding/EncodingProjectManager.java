@@ -35,4 +35,23 @@ public abstract class EncodingProjectManager extends EncodingManager {
 
   public abstract void setMapping(@NotNull Map<VirtualFile, Charset> result);
 
+  /**
+   * @return Project encoding name (configured in Settings|File Encodings|Project Encoding) or empty string if it's configured to "System Default"
+   */
+  @NotNull
+  @Override
+  public abstract String getDefaultCharsetName();
+
+  /**
+   * @return Project encoding (configured in Settings|File Encodings|Project Encoding)
+   */
+  @NotNull
+  @Override
+  public abstract Charset getDefaultCharset();
+
+  /**
+   * Sets Project encoding (configured in Settings|File Encodings|Project Encoding). Use empty string to specify "System Default"
+   */
+  @Override
+  public abstract void setDefaultCharsetName(@NotNull String name);
 }

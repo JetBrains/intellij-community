@@ -104,6 +104,11 @@ public class PyInlineLocalTest extends PyTestCase {
     doTest();
   }
 
+  // PY-13114
+  public void testMethodCallInlinedAsQualifier() {
+    doTest();
+  }
+
   // PY-12409
   public void testResultExceedsRightMargin() {
     final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(myFixture.getProject());

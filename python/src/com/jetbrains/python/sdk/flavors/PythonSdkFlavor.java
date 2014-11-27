@@ -19,13 +19,14 @@ import com.google.common.collect.Lists;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.encoding.EncodingManager;
+import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.util.PatternUtil;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.PySdkUtil;
@@ -208,12 +209,10 @@ public abstract class PythonSdkFlavor {
   }
 
   @SuppressWarnings({"MethodMayBeStatic"})
-  public void addPredefinedEnvironmentVariables(Map<String, String> envs) {
-    Charset defaultCharset = EncodingManager.getInstance().getDefaultCharset();
-    if (defaultCharset != null) {
-      final String encoding = defaultCharset.name();
-      PythonEnvUtil.setPythonIOEncoding(envs, encoding);
-    }
+  public void addPredefinedEnvironmentVariables(Map<String, String> envs, @NotNull Project project) {
+    Charset defaultCharset = EncodingProjectManager.getInstance(project).getDefaultCharset();
+    final String encoding = defaultCharset.name();
+    PythonEnvUtil.setPythonIOEncoding(envs, encoding);
   }
 
   @NotNull

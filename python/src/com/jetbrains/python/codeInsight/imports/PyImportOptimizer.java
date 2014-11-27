@@ -20,6 +20,7 @@ import com.intellij.lang.ImportOptimizer;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.formatter.PyBlock;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
 import com.jetbrains.python.psi.*;
@@ -102,7 +103,8 @@ public class PyImportOptimizer implements ImportOptimizer {
             toImport = ((PyFromImportStatement)importStatement).resolveImportSource();
           }
           else {
-            toImport = importStatement.getImportElements()[0].resolve();
+            final PyImportElement firstImportElement = ArrayUtil.getFirstElement(importStatement.getImportElements());
+            toImport = firstImportElement != null? firstImportElement.resolve() : null;
           }
           prioritize(importStatement, toImport);
         }

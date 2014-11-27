@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -235,7 +236,7 @@ public class FileTemplatesLoader {
       return;
     }
     try {
-      final String text = FileUtil.loadFile(file, FTManager.CONTENT_ENCODING);
+      final String text = FileUtil.loadFile(file, CharsetToolkit.UTF8_CHARSET);
       manager.addTemplate(templateQName, extension).setText(text);
     }
     catch (IOException e) {

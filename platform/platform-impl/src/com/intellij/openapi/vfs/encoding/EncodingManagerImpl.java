@@ -47,6 +47,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Alarm;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.xmlb.annotations.Attribute;
 import gnu.trove.Equality;
@@ -83,6 +84,7 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
   private final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
 
   static class State {
+    @NotNull
     private Charset myDefaultEncoding = CharsetToolkit.UTF8_CHARSET;
 
     @Attribute("default_encoding")
@@ -92,17 +94,9 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
     }
 
     public void setDefaultCharsetName(@NotNull String name) {
-      if (name.isEmpty()) {
-        myDefaultEncoding = ChooseFileEncodingAction.NO_ENCODING;
-        return;
-      }
-      myDefaultEncoding = CharsetToolkit.forName(name);
-      if (myDefaultEncoding == null) {
-        myDefaultEncoding = CharsetToolkit.getDefaultSystemCharset();
-      }
-      if (myDefaultEncoding == null) {
-        myDefaultEncoding = CharsetToolkit.UTF8_CHARSET;
-      }
+      myDefaultEncoding = name.isEmpty()
+                          ? ChooseFileEncodingAction.NO_ENCODING
+                          : ObjectUtils.notNull(CharsetToolkit.forName(name), CharsetToolkit.getDefaultSystemCharset());
     }
   }
 
@@ -251,10 +245,6 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
   }
 
   @Override
-  public void setUseUTFGuessing(final VirtualFile virtualFile, final boolean useUTFGuessing) {
-  }
-
-  @Override
   public boolean isNative2Ascii(@NotNull final VirtualFile virtualFile) {
     Project project = guessProject(virtualFile);
     return project != null && EncodingProjectManager.getInstance(project).isNative2Ascii(virtualFile);
@@ -303,11 +293,6 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
     Project project = guessProject(virtualFile);
     if (project == null) return;
     EncodingProjectManager.getInstance(project).setDefaultCharsetForPropertiesFiles(virtualFile, charset);
-  }
-
-  @Override
-  public void addPropertyChangeListener(@NotNull PropertyChangeListener listener){
-    myPropertyChangeSupport.addPropertyChangeListener(listener);
   }
 
   @Override

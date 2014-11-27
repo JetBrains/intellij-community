@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.update.FileGroup;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
@@ -122,7 +123,7 @@ public class MergeChangeCollector {
       File mergeHeadsFile = new File(root, GitRepositoryFiles.GIT_MERGE_HEAD);
       try {
         if (mergeHeadsFile.exists()) {
-          String mergeHeads = new String(FileUtil.loadFileText(mergeHeadsFile, GitUtil.UTF8_ENCODING));
+          String mergeHeads = new String(FileUtil.loadFileText(mergeHeadsFile, CharsetToolkit.UTF8));
           for (StringScanner s = new StringScanner(mergeHeads); s.hasMoreData();) {
             String head = s.line();
             if (head.length() == 0) {

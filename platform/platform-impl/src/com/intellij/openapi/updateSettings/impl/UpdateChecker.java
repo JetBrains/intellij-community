@@ -36,9 +36,12 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.*;
+import com.intellij.util.Function;
+import com.intellij.util.PlatformUtils;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.HttpRequests;
 import com.intellij.util.io.UrlConnectionUtil;
@@ -648,11 +651,11 @@ public final class UpdateChecker {
           args.append('&');
         }
 
-        args.append(URLEncoder.encode(name, "UTF-8"));
+        args.append(URLEncoder.encode(name, CharsetToolkit.UTF8));
 
         String value = ourAdditionalRequestOptions.get(name);
         if (!StringUtil.isEmpty(value)) {
-          args.append('=').append(URLEncoder.encode(value, "UTF-8"));
+          args.append('=').append(URLEncoder.encode(value, CharsetToolkit.UTF8));
         }
       }
 

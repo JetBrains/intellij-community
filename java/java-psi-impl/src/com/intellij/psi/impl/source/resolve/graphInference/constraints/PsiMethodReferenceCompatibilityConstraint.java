@@ -21,7 +21,6 @@ import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfacePa
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.infos.MethodCandidateInfo;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -124,7 +123,7 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
       return true;
     }
 
-    final Map<PsiMethodReferenceExpression, PsiType> map = PsiMethodReferenceUtil.getFunctionalTypeMap();
+    final Map<PsiElement, PsiType> map = LambdaUtil.getFunctionalTypeMap();
     final PsiType added = map.put(myExpression, session.startWithFreshVars(groundTargetType));
     final JavaResolveResult resolve;
     try {

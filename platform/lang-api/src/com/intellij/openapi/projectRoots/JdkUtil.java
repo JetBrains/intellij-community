@@ -27,7 +27,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
@@ -271,11 +270,8 @@ public class JdkUtil {
     if (encoding == null) {
       Charset charset = javaParameters.getCharset();
       if (charset == null) charset = EncodingManager.getInstance().getDefaultCharset();
-      if (charset == null) charset = CharsetToolkit.getDefaultSystemCharset();
-      if (charset != null) {
-        commandLine.addParameter("-Dfile.encoding=" + charset.name());
-        commandLine.withCharset(charset);
-      }
+      commandLine.addParameter("-Dfile.encoding=" + charset.name());
+      commandLine.withCharset(charset);
     }
     else {
       try {

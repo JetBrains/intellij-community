@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -107,9 +107,7 @@ public class JavaParameters extends SimpleJavaParameters {
 
   public void setDefaultCharset(final Project project) {
     Charset encoding = EncodingProjectManager.getInstance(project).getDefaultCharset();
-    if (encoding != null) {
-      setCharset(encoding);
-    }
+    setCharset(encoding);
   }
 
   public void configureByModule(final Module module,
