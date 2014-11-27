@@ -7,11 +7,12 @@ import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebugProcessAdapter;
 import com.intellij.debugger.engine.RemoteDebugProcessHandler;
 import com.intellij.debugger.ui.DebuggerPanelsManager;
-import com.intellij.execution.*;
+import com.intellij.execution.DefaultExecutionResult;
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.SearchScopeProvider;
-import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -40,7 +41,6 @@ public class JavaDebuggerLauncherImpl extends JavaDebuggerLauncher {
   public void startDebugSession(@NotNull JavaDebugConnectionData info, @NotNull ExecutionEnvironment executionEnvironment, @NotNull RemoteServer<?> server)
     throws ExecutionException {
     final Project project = executionEnvironment.getProject();
-    Executor executor = DefaultDebugExecutor.getDebugExecutorInstance();
     final DebuggerPanelsManager manager = DebuggerPanelsManager.getInstance(project);
     final JavaDebugServerModeHandler serverModeHandler = info.getServerModeHandler();
     boolean serverMode = serverModeHandler != null;
@@ -51,9 +51,6 @@ public class JavaDebuggerLauncherImpl extends JavaDebuggerLauncher {
     LOG.assertTrue(debugContentDescriptor != null);
     ProcessHandler processHandler = debugContentDescriptor.getProcessHandler();
     LOG.assertTrue(processHandler != null);
-    processHandler.startNotify();
-    ExecutionManager.getInstance(project).getContentManager().showRunContent(executor, debugContentDescriptor,
-                                                                             executionEnvironment.getContentToReuse());
     if (serverMode) {
       serverModeHandler.attachRemote();
       DebuggerManager.getInstance(executionEnvironment.getProject())
