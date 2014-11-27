@@ -15,18 +15,23 @@
  */
 package com.intellij.core;
 
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.encoding.EncodingRegistry;
+import com.intellij.openapi.vfs.encoding.EncodingManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.beans.PropertyChangeListener;
 import java.nio.charset.Charset;
+import java.util.Collection;
+import java.util.Collections;
 
 /**
  * @author yole
  */
-public class CoreEncodingRegistry extends EncodingRegistry {
+public class CoreEncodingRegistry extends EncodingManager {
   @Override
   public boolean isNative2Ascii(@NotNull VirtualFile virtualFile) {
     return false;
@@ -55,5 +60,49 @@ public class CoreEncodingRegistry extends EncodingRegistry {
   @Override
   public boolean isNative2AsciiForPropertiesFiles() {
     return false;
+  }
+
+  @NotNull
+  @Override
+  public Collection<Charset> getFavorites() {
+    return Collections.singletonList(CharsetToolkit.UTF8_CHARSET);
+  }
+
+  @Override
+  public void setNative2AsciiForPropertiesFiles(VirtualFile virtualFile, boolean native2Ascii) {
+
+  }
+
+  @NotNull
+  @Override
+  public String getDefaultCharsetName() {
+    return getDefaultCharset().name();
+  }
+
+  @Nullable
+  @Override
+  public Charset getDefaultCharsetForPropertiesFiles(@Nullable VirtualFile virtualFile) {
+    return null;
+  }
+
+  @Override
+  public void setDefaultCharsetForPropertiesFiles(@Nullable VirtualFile virtualFile, @Nullable Charset charset) {
+
+  }
+
+  @Override
+  public void addPropertyChangeListener(@NotNull PropertyChangeListener listener, @NotNull Disposable parentDisposable) {
+
+  }
+
+  @Override
+  public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) {
+
+  }
+
+  @Nullable
+  @Override
+  public Charset getCachedCharsetFromContent(@NotNull Document document) {
+    return null;
   }
 }
