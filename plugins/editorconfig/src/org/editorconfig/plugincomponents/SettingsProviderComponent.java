@@ -40,10 +40,12 @@ public class SettingsProviderComponent implements ApplicationComponent {
     final EditorConfigAnnotator annotator = new EditorConfigAnnotator();
     for (FileType type : manager.getRegisteredFileTypes()) {
       if (type instanceof LanguageFileType) {
-        final Language language = ((LanguageFileType)type).getLanguage();
-        final String id = language.getID();
-        if (languages.contains(id)) continue;
-        LanguageAnnotators.INSTANCE.addExplicitExtension(language, annotator);
+        final Language lang = ((LanguageFileType)type).getLanguage();
+        final String id = lang.getID();
+        // don't add annotator for language twice
+        // don't add annotator for languages not having own annotators - they may rely on parent annotators
+        if (languages.contains(id) || (lang.getBaseLanguage() != null && LanguageAnnotators.INSTANCE.forKey(lang).isEmpty())) continue;
+        LanguageAnnotators.INSTANCE.addExplicitExtension(lang, annotator);
         languages.add(id);
       }
     }
