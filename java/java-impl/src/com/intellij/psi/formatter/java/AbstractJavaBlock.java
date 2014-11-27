@@ -709,33 +709,6 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     return new ChainMethodCallsBlockBuilder(alignment, blockWrap, indent).build(nodes);
   }
 
-  @NotNull
-  private Block createSyntheticBlock(@NotNull final List<ASTNode> subNodes, final Wrap wrap, @Nullable final Alignment alignment) {
-    final ArrayList<Block> subBlocks = new ArrayList<Block>();
-    final ASTNode firstNode = subNodes.get(0);
-    if (firstNode.getElementType() == JavaTokenType.DOT) {
-      subBlocks.add(createJavaBlock(firstNode, getSettings(), myJavaSettings, Indent.getNoneIndent(), null, AlignmentStrategy.getNullStrategy()));
-      subNodes.remove(0);
-      if (!subNodes.isEmpty()) {
-        subBlocks.add(createSyntheticBlock(subNodes, wrap, null));
-      }
-      return new SyntheticCodeBlock(subBlocks, alignment, mySettings,
-                                    myJavaSettings, Indent.getContinuationIndent(myIndentSettings.USE_RELATIVE_INDENTS), wrap);
-    }
-    return new SyntheticCodeBlock(createJavaBlocks(subNodes), alignment, mySettings,
-                                  myJavaSettings, Indent.getContinuationWithoutFirstIndent(myIndentSettings.USE_RELATIVE_INDENTS), null);
-  }
-
-  @NotNull
-  private List<Block> createJavaBlocks(@NotNull final List<ASTNode> subNodes) {
-    final ArrayList<Block> result = new ArrayList<Block>();
-    for (ASTNode node : subNodes) {
-      result.add(createJavaBlock(node, getSettings(), myJavaSettings, Indent.getContinuationWithoutFirstIndent(myIndentSettings.USE_RELATIVE_INDENTS), null,
-                                 AlignmentStrategy.getNullStrategy()));
-    }
-    return result;
-  }
-
   private static void collectNodes(@NotNull List<ASTNode> nodes, @NotNull ASTNode node) {
     ASTNode child = node.getFirstChildNode();
     while (child != null) {
@@ -1384,7 +1357,8 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
           myWrap = getNewWrap();
         }
 
-        blocks.add(createSyntheticBlock(currentCallChunk.nodes, wrapToUse, alignmentToUse));
+        SyntheticBlockBuilder builder = new SyntheticBlockBuilder(mySettings, myJavaSettings);
+        blocks.add(builder.create(currentCallChunk.nodes, wrapToUse, alignmentToUse));
       }
 
       return blocks;
