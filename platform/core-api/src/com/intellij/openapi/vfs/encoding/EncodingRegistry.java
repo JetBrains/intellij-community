@@ -37,7 +37,7 @@ public abstract class EncodingRegistry {
   /**
    * @return charset configured in Settings|File Encodings|IDE encoding
    */
-  @Nullable
+  @NotNull
   public abstract Charset getDefaultCharset();
 
   /**

@@ -32,6 +32,7 @@ public class CoreEncodingRegistry extends EncodingRegistry {
     return false;
   }
 
+  @NotNull
   @Override
   public Charset getDefaultCharset() {
     return CharsetToolkit.getDefaultSystemCharset();

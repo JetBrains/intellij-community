@@ -59,6 +59,7 @@ public interface FilePath {
   @Nullable
   Document getDocument();
 
+  @NotNull
   Charset getCharset();
 
   /**
@@ -67,6 +68,7 @@ public interface FilePath {
    * @param project the project which settings will be consulted
    * @return the character set of the file
    */
+  @NotNull
   Charset getCharset(Project project);
 
   /**

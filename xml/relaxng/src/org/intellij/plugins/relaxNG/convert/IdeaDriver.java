@@ -83,9 +83,7 @@ public class IdeaDriver {
 
       if (inputType != SchemaType.DTD) {
         final Charset charset = inputFile.getCharset();
-        if (charset != null) {
-          inputParams.add("encoding=" + charset.name());
-        }
+        inputParams.add("encoding=" + charset.name());
       }
 
       final ArrayList<String> outputParams = new ArrayList<String>();

@@ -21,7 +21,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileTooBigException;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VfsBundle;
@@ -346,11 +345,13 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     VfsData.invalidateFile(myId);
   }
 
+  @NotNull
   @Override
   public Charset getCharset() {
     return isCharsetSet() ? super.getCharset() : computeCharset();
   }
 
+  @NotNull
   private Charset computeCharset() {
     Charset charset;
     if (isDirectory()) {

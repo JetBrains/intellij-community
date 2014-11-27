@@ -506,6 +506,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   /**
    * @return Retrieve the charset file has been loaded with (if loaded) and would be saved with (if would).
    */
+  @NotNull
   public Charset getCharset() {
     Charset charset = getStoredCharset();
     if (charset == null) {
