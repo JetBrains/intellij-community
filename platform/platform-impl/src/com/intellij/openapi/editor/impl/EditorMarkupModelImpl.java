@@ -676,7 +676,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         try {
           myDirtyYPositions = myDirtyYPositions.intersection(docRange);
           if (myDirtyYPositions == null) myDirtyYPositions = docRange;
-          repaint(imageGraphics, componentBounds.width, ERROR_ICON_WIDTH, myDirtyYPositions);
+          repaint(imageGraphics, componentBounds.width, myDirtyYPositions);
           myDirtyYPositions = null;
         }
         finally {
@@ -706,7 +706,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       return isMacOverlayScrollbar() ? super.adjustColor(c) : EditorImpl.adjustThumbColor(super.adjustColor(c), isDark());
     }
 
-    private void repaint(@NotNull final Graphics g, int gutterWidth, final int stripeWidth, @NotNull ProperTextRange yrange) {
+    private void repaint(@NotNull final Graphics g, int gutterWidth, @NotNull ProperTextRange yrange) {
       final Rectangle clip = new Rectangle(0, yrange.getStartOffset(), gutterWidth, yrange.getLength() + myMinMarkHeight);
       paintTrackBasement(g, clip);
 
@@ -714,12 +714,12 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       int startOffset = yPositionToOffset(clip.y - myMinMarkHeight, true);
       int endOffset = yPositionToOffset(clip.y + clip.height, false);
 
-      drawMarkup(g, stripeWidth, startOffset, endOffset, EditorMarkupModelImpl.this);
-      drawMarkup(g, stripeWidth, startOffset, endOffset,
+      drawMarkup(g, startOffset, endOffset, EditorMarkupModelImpl.this);
+      drawMarkup(g, startOffset, endOffset,
                  (MarkupModelEx)DocumentMarkupModel.forDocument(document, myEditor.getProject(), true));
     }
 
-    private void drawMarkup(@NotNull final Graphics g, final int width, int startOffset, int endOffset, @NotNull MarkupModelEx markup) {
+    private void drawMarkup(@NotNull final Graphics g, int startOffset, int endOffset, @NotNull MarkupModelEx markup) {
       final Queue<PositionedStripe> thinEnds = new PriorityQueue<PositionedStripe>(5, new Comparator<PositionedStripe>() {
         @Override
         public int compare(@NotNull PositionedStripe o1, @NotNull PositionedStripe o2) {
@@ -755,7 +755,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
           int ye = range.getEndOffset();
           if (ye - ys < myMinMarkHeight) ye = ys + myMinMarkHeight;
 
-          yStart[0] = drawStripesEndingBefore(ys, ends, stripes, g, width, yStart[0]);
+          yStart[0] = drawStripesEndingBefore(ys, ends, stripes, g, yStart[0]);
 
           final int layer = highlighter.getLayer();
 
@@ -776,7 +776,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
             if (yStart[0] != ys) {
               if (!stripes.isEmpty()) {
                 PositionedStripe top = stripes.get(0);
-                drawSpot(g, width, top.thin, yStart[0], ys, top.color);
+                drawSpot(g, top.thin, yStart[0], ys, top.color);
               }
               yStart[0] = ys;
             }
@@ -797,14 +797,14 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         }
       });
 
-      drawStripesEndingBefore(Integer.MAX_VALUE, thinEnds, thinStripes, g, width, thinYStart[0]);
-      drawStripesEndingBefore(Integer.MAX_VALUE, wideEnds, wideStripes, g, width, wideYStart[0]);
+      drawStripesEndingBefore(Integer.MAX_VALUE, thinEnds, thinStripes, g, thinYStart[0]);
+      drawStripesEndingBefore(Integer.MAX_VALUE, wideEnds, wideStripes, g, wideYStart[0]);
     }
 
     private int drawStripesEndingBefore(int ys,
                                         @NotNull Queue<PositionedStripe> ends,
                                         @NotNull List<PositionedStripe> stripes,
-                                        @NotNull Graphics g, int width, int yStart) {
+                                        @NotNull Graphics g, int yStart) {
       while (!ends.isEmpty()) {
         PositionedStripe endingStripe = ends.peek();
         if (endingStripe.yEnd > ys) break;
@@ -815,14 +815,14 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         stripes.remove(i);
         if (i == 0) {
           // visible
-          drawSpot(g, width, endingStripe.thin, yStart, endingStripe.yEnd, endingStripe.color);
+          drawSpot(g, endingStripe.thin, yStart, endingStripe.yEnd, endingStripe.color);
           yStart = endingStripe.yEnd;
         }
       }
       return yStart;
     }
 
-    private void drawSpot(@NotNull Graphics g, int width, boolean thinErrorStripeMark, int yStart, int yEnd, @Nullable Color color) {
+    private void drawSpot(@NotNull Graphics g, boolean thinErrorStripeMark, int yStart, int yEnd, @Nullable Color color) {
       if (color == null) return;
       int paintWidth;
       int x;
@@ -837,7 +837,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       }
       else {
         x = myMinMarkHeight + THIN_GAP;
-        paintWidth = width;
+        paintWidth = ERROR_ICON_WIDTH;
       }
       g.setColor(color);
       g.fillRect(x, yStart, paintWidth, yEnd - yStart);
