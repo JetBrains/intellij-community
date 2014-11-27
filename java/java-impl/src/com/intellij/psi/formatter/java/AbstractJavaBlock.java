@@ -1259,19 +1259,6 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     myParentBlock = parentBlock;
   }
 
-  /**
-   * Allows to answer if special 'variable declaration alignment' strategy should be used for the given node.
-   * I.e. given node is supposed to be parent node of sub-nodes that should be aligned 'by-columns'.
-   * <p/>
-   * The main idea of that strategy is to provide alignment in columns like the one below:
-   * <pre>
-   *     public int    i   = 1;
-   *     public double ddd = 2;
-   * </pre>
-   *
-   * @param node    node
-   * @return
-   */
   protected boolean shouldUseVarDeclarationAlignment(@NotNull ASTNode node) {
     return mySettings.ALIGN_GROUP_FIELD_DECLARATIONS && ALIGN_IN_COLUMNS_ELEMENT_TYPES.contains(node.getElementType())
            && (!myAlignmentInColumnsHelper.useDifferentVarDeclarationAlignment(
@@ -1280,17 +1267,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   }
 
   /**
-   * Allows to answer if given node corresponds to part of composite field definition. Example:
-   * <p/>
-   * <pre>
-   *   int i1, i2 = 2;
-   * </pre>
-   * <p/>
-   * Parsing such a code produces two fields - {@code 'int i1'} and {@code 'i2 = 2'}. This method returns <code>true</code>
-   * for the second one.
-   *
-   * @param node    node to check
-   * @return        <code>true</code> if given node is a non-first part of composite field definition; <code>false</code> otherwise
+   * @return <code>true</code> if given node is a non-first part of composite field definition; <code>false</code> otherwise
    */
   protected static boolean compoundFieldPart(@NotNull ASTNode node) {
     if (node.getElementType() != JavaElementType.FIELD) {
