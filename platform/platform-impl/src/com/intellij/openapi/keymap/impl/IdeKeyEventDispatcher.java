@@ -249,12 +249,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
    * @throws IllegalArgumentException if <code>component</code> is <code>null</code>.
    */
   public static boolean isModalContext(@NotNull Component component) {
-    Window window;
-    if (component instanceof Window) {
-      window = (Window)component;
-    } else {
-      window = SwingUtilities.getWindowAncestor(component);
-    }
+    Window window = UIUtil.getWindow(component);
 
     if (window instanceof IdeFrameImpl) {
       final Component pane = ((IdeFrameImpl) window).getGlassPane();

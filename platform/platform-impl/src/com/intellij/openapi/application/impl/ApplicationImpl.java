@@ -672,7 +672,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   @Override
   @NotNull
   public ModalityState getModalityStateForComponent(@NotNull Component c) {
-    Window window = c instanceof Window ? (Window)c : SwingUtilities.windowForComponent(c);
+    Window window = UIUtil.getWindow(c);
     if (window == null) return getNoneModalityState(); //?
     return LaterInvocator.modalityStateForWindow(window);
   }
