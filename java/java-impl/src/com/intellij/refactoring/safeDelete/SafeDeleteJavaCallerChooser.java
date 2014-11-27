@@ -30,12 +30,11 @@ import com.intellij.refactoring.changeSignature.inCallers.JavaMethodNode;
 import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteParameterCallHierarchyUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Consumer;
+import com.intellij.util.Function;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 abstract class SafeDeleteJavaCallerChooser extends JavaCallerChooser {
   private final PsiMethod myMethod;
@@ -49,14 +48,21 @@ abstract class SafeDeleteJavaCallerChooser extends JavaCallerChooser {
     myResult = result;
   }
 
+  protected abstract ArrayList<SafeDeleteParameterCallHierarchyUsageInfo> getTopLevelItems();
+  protected abstract int getParameterIdx();
+
   @Override
   protected JavaMethodNode createTreeNode(PsiMethod nodeMethod,
                                           com.intellij.util.containers.HashSet<PsiMethod> called,
                                           Runnable cancelCallback) {
-    return new SafeDeleteJavaMethodNode(nodeMethod, called, cancelCallback, getParameterIdx(), nodeMethod != null ? nodeMethod.getProject() : myProject);
+    final SafeDeleteJavaMethodNode node = new SafeDeleteJavaMethodNode(nodeMethod, called, cancelCallback, getParameterIdx(),
+                                                                       nodeMethod != null ? nodeMethod.getProject() : myProject);
+    if (getTopMethod().equals(nodeMethod)) {
+      node.setEnabled(false);
+      node.setChecked(true);
+    }
+    return node;
   }
-
-  protected abstract int getParameterIdx();
 
   @Override
   protected void doOKAction() {
@@ -69,7 +75,7 @@ abstract class SafeDeleteJavaCallerChooser extends JavaCallerChooser {
           final PsiMethod nodeMethod = methodNode.getMethod();
           if (nodeMethod.equals(myMethod)) continue;
           final PsiParameter parameter = nodeMethod.getParameterList().getParameters()[methodNode.myParameterIdx];
-          foreignMethodUsages.add(new SafeDeleteParameterCallHierarchyUsageInfo(nodeMethod, parameter));
+          foreignMethodUsages.add(new SafeDeleteParameterCallHierarchyUsageInfo(nodeMethod, parameter, nodeMethod));
           ReferencesSearch.search(nodeMethod).forEach(new Processor<PsiReference>() {
             public boolean process(final PsiReference reference) {
               final PsiElement element = reference.getElement();
@@ -146,7 +152,7 @@ abstract class SafeDeleteJavaCallerChooser extends JavaCallerChooser {
     return null;
   }
 
-  private static class SafeDeleteJavaMethodNode extends JavaMethodNode {
+  private class SafeDeleteJavaMethodNode extends JavaMethodNode {
 
     private final int myParameterIdx;
 
@@ -162,6 +168,20 @@ abstract class SafeDeleteJavaCallerChooser extends JavaCallerChooser {
     @Override
     protected MethodNodeBase<PsiMethod> createNode(PsiMethod caller, HashSet<PsiMethod> called) {
       return new SafeDeleteJavaMethodNode(caller, called, myCancelCallback, getParameterIndex(caller), myProject);
+    }
+
+    @Override
+    protected List<PsiMethod> computeCallers() {
+      if (getTopMethod().equals(getMethod())) {
+        final ArrayList<SafeDeleteParameterCallHierarchyUsageInfo> items = getTopLevelItems();
+        return ContainerUtil.map(items, new Function<SafeDeleteParameterCallHierarchyUsageInfo, PsiMethod>() {
+          @Override
+          public PsiMethod fun(SafeDeleteParameterCallHierarchyUsageInfo info) {
+            return info.getCallerMethod();
+          }
+        });
+      }
+      return super.computeCallers();
     }
 
     @Override

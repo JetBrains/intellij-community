@@ -261,6 +261,10 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
     return tree;
   }
 
+  protected M getTopMethod() {
+    return myMethod;
+  }
+  
   private void getSelectedMethods(Set<M> methods) {
     MethodNodeBase<M> node = myRoot;
     getSelectedMethodsInner(node, methods);

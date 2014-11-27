@@ -31,6 +31,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.ui.tree.TreeUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -48,7 +49,7 @@ public class MakeMethodStaticProcessor extends MakeMethodOrClassStaticProcessor<
   }
 
   @Override
-  protected boolean findAdditionalMembers(ArrayList<UsageInfo> toMakeStatic) {
+  protected boolean findAdditionalMembers(final ArrayList<UsageInfo> toMakeStatic) {
     if (!toMakeStatic.isEmpty()) {
       myAdditionalMethods = new ArrayList<PsiMethod>();
       if (ApplicationManager.getApplication().isUnitTestMode()) {
@@ -62,7 +63,13 @@ public class MakeMethodStaticProcessor extends MakeMethodOrClassStaticProcessor<
           public void consume(Set<PsiMethod> methods) {
             myAdditionalMethods.addAll(methods);
           }
-        });
+        }) {
+          @Override
+          protected ArrayList<UsageInfo> getTopLevelItems() {
+            return toMakeStatic;
+          }
+        };
+        TreeUtil.expand(chooser.getTree(), 2);
         if (!chooser.showAndGet()) {
           return false;
         }

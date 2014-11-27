@@ -48,6 +48,7 @@ import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.*;
 import com.intellij.util.*;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -241,8 +242,8 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
   @Nullable
   public UsageInfo[] preprocessUsages(final Project project, final UsageInfo[] usages) {
     final ArrayList<UsageInfo> result = new ArrayList<UsageInfo>();
-    ArrayList<UsageInfo> overridingMethods = new ArrayList<UsageInfo>();
-    ArrayList<UsageInfo> delegatingParams = new ArrayList<UsageInfo>();
+    final ArrayList<UsageInfo> overridingMethods = new ArrayList<UsageInfo>();
+    final ArrayList<SafeDeleteParameterCallHierarchyUsageInfo> delegatingParams = new ArrayList<SafeDeleteParameterCallHierarchyUsageInfo>();
     for (UsageInfo usage : usages) {
       if (usage.isNonCodeUsage) {
         result.add(usage);
@@ -251,7 +252,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
         overridingMethods.add(usage);
       }
       else if (usage instanceof SafeDeleteParameterCallHierarchyUsageInfo) {
-        delegatingParams.add(usage);
+        delegatingParams.add((SafeDeleteParameterCallHierarchyUsageInfo)usage);
       }
       else {
         result.add(usage);
@@ -281,10 +282,16 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
         final int parameterIndex = method.getParameterList().getParameterIndex(parameter);
         final JavaCallerChooser chooser = new SafeDeleteJavaCallerChooser(method, project, result) {
           @Override
+          protected ArrayList<SafeDeleteParameterCallHierarchyUsageInfo> getTopLevelItems() {
+            return delegatingParams;
+          }
+
+          @Override
           protected int getParameterIdx() {
             return parameterIndex;
           }
         };
+        TreeUtil.expand(chooser.getTree(), 2);
         if (!chooser.showAndGet()) {
           return null;
         }
@@ -743,11 +750,12 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
           if (!parameter.isVarArgs()) {
             final PsiParameter paramInCaller = SafeDeleteJavaCallerChooser.isTheOnlyOneParameterUsage(element.getParent(), parameterIndex, method);
             if (paramInCaller != null) {
+              final PsiMethod callerMethod = (PsiMethod)paramInCaller.getDeclarationScope();
               if (ApplicationManager.getApplication().isUnitTestMode()) {
-                usages.add(new SafeDeleteParameterCallHierarchyUsageInfo((PsiMethod)paramInCaller.getDeclarationScope(), paramInCaller));
+                usages.add(new SafeDeleteParameterCallHierarchyUsageInfo(callerMethod, paramInCaller, callerMethod));
               } 
               else {
-                usages.add(new SafeDeleteParameterCallHierarchyUsageInfo(method, parameter));
+                usages.add(new SafeDeleteParameterCallHierarchyUsageInfo(method, parameter, callerMethod));
               }
             }
           }
