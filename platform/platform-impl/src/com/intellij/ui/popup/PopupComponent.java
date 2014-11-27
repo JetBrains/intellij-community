@@ -106,7 +106,7 @@ public interface PopupComponent {
         throw new IllegalArgumentException("Popup owner must be showing");
       }
 
-      final Window wnd = owner instanceof Window ? (Window)owner: SwingUtilities.getWindowAncestor(owner);
+      final Window wnd = UIUtil.getWindow(owner);
       if (wnd instanceof Frame) {
         myDialog = new JDialog((Frame)wnd);
       } else if (wnd instanceof Dialog) {
