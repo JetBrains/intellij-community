@@ -1214,33 +1214,27 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     processChild(localResult, child, AlignmentStrategy.getNullStrategy(), null, Indent.getNoneIndent());
     child = child.getTreeNext();
 
-    AlignmentStrategy varDeclarationAlignmentStrategy
-      = AlignmentStrategy.createAlignmentPerTypeStrategy(VAR_DECLARATION_ELEMENT_TYPES_TO_ALIGN, JavaElementType.FIELD, true);
+    AlignmentStrategy varDeclarationAlignmentStrategy = AlignmentStrategy.createAlignmentPerTypeStrategy(VAR_DECLARATION_ELEMENT_TYPES_TO_ALIGN, JavaElementType.FIELD, true);
 
     while (child != null) {
-      // We consider that subsequent fields shouldn't be aligned if they are separated by blank line(s).
-      if (!FormatterUtil.containsWhiteSpacesOnly(child)) {
-        if (!ElementType.JAVA_COMMENT_BIT_SET.contains(child.getElementType()) && !shouldUseVarDeclarationAlignment(child)) {
-          // Reset var declaration alignment.
-          varDeclarationAlignmentStrategy = AlignmentStrategy.createAlignmentPerTypeStrategy(
-            VAR_DECLARATION_ELEMENT_TYPES_TO_ALIGN, JavaElementType.FIELD, true
-          );
-        }
-        final boolean rBrace = isRBrace(child);
-        Indent childIndent = rBrace ? Indent.getNoneIndent() : getCodeBlockInternalIndent(childrenIndent, false);
-        if (!rBrace && child.getElementType() == JavaElementType.CODE_BLOCK
-            && (getBraceStyle() == CommonCodeStyleSettings.NEXT_LINE_SHIFTED
-                || getBraceStyle() == CommonCodeStyleSettings.NEXT_LINE_SHIFTED2))
-        {
-          childIndent = Indent.getNormalIndent();
-        }
-        AlignmentStrategy alignmentStrategyToUse = ALIGN_IN_COLUMNS_ELEMENT_TYPES.contains(child.getElementType())
-                                                      ? varDeclarationAlignmentStrategy : AlignmentStrategy.getNullStrategy();
-        child = processChild(localResult, child, alignmentStrategyToUse, childWrap, childIndent);
-        if (rBrace) {
-          result.add(createCodeBlockBlock(localResult, indent, childrenIndent));
-          return child;
-        }
+      if (FormatterUtil.containsWhiteSpacesOnly(child)) {
+        child = child.getTreeNext();
+        continue;
+      }
+
+      if (!ElementType.JAVA_COMMENT_BIT_SET.contains(child.getElementType()) && !shouldUseVarDeclarationAlignment(child)) {
+        varDeclarationAlignmentStrategy = AlignmentStrategy.createAlignmentPerTypeStrategy(VAR_DECLARATION_ELEMENT_TYPES_TO_ALIGN, JavaElementType.FIELD, true);
+      }
+
+      Indent childIndent = getIndentForCodeBlock(child, childrenIndent);
+      AlignmentStrategy alignmentStrategyToUse = getAlignmentStrategy(child, varDeclarationAlignmentStrategy);
+
+      final boolean isRBrace = isRBrace(child);
+      child = processChild(localResult, child, alignmentStrategyToUse, childWrap, childIndent);
+
+      if (isRBrace) {
+        result.add(createCodeBlockBlock(localResult, indent, childrenIndent));
+        return child;
       }
 
       if (child != null) {
@@ -1249,6 +1243,23 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     }
     result.add(createCodeBlockBlock(localResult, indent, childrenIndent));
     return null;
+  }
+
+  private AlignmentStrategy getAlignmentStrategy(ASTNode child, AlignmentStrategy varDeclarationAlignmentStrategy) {
+    return ALIGN_IN_COLUMNS_ELEMENT_TYPES.contains(child.getElementType())
+           ? varDeclarationAlignmentStrategy
+           : AlignmentStrategy.getNullStrategy();
+  }
+
+  private Indent getIndentForCodeBlock(ASTNode child, int childrenIndent) {
+    if (child.getElementType() == JavaElementType.CODE_BLOCK
+        && (getBraceStyle() == CommonCodeStyleSettings.NEXT_LINE_SHIFTED
+            || getBraceStyle() == CommonCodeStyleSettings.NEXT_LINE_SHIFTED2))
+    {
+      return Indent.getNormalIndent();
+    }
+
+    return isRBrace(child) ? Indent.getNoneIndent() : getCodeBlockInternalIndent(childrenIndent, false);
   }
 
   public AbstractJavaBlock getParentBlock() {
