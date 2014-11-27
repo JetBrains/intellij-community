@@ -77,8 +77,6 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, DataProvider {
 
   private static boolean myUpdatingTitle;
 
-  private static String xdgCurrentDesktop = System.getenv("XDG_CURRENT_DESKTOP");
-
   private String myTitle;
   private String myFileTitle;
   private File myCurrentFile;
@@ -115,10 +113,6 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, DataProvider {
     new MnemonicHelper().register(this);
 
     myBalloonLayout = new BalloonLayoutImpl(myRootPane, new Insets(8, 8, 8, 8));
-
-    if (!Registry.is("ide.windowSystem.focusAppOnStartup") && !isThereActiveFrame()) {
-      setFocusableWindowState(false);
-    }
 
     // to show window thumbnail under Macs
     // http://lists.apple.com/archives/java-dev/2009/Dec/msg00240.html
@@ -206,22 +200,12 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, DataProvider {
     return null;
   }
 
-  public static boolean isThereActiveFrame() {
-    Frame[] all = Frame.getFrames();
-    for (Frame each : all) {
-      if (each.isActive()) {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
   @SuppressWarnings({"deprecation", "SSBasedInspection"})
   @Override
   public void show() {
     super.show();
     SwingUtilities.invokeLater(new Runnable() {
+      @Override
       public void run() {
         setFocusableWindowState(true);
       }
