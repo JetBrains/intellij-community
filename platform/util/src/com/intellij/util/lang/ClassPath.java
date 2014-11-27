@@ -58,7 +58,7 @@ public class ClassPath {
     push(urls);
   }
 
-  // Accessed by reflection from PluginClassLoader // TODO: do we need it?
+  /** @deprecated to be removed in IDEA 15 */
   void addURL(URL url) {
     push(Collections.singletonList(url));
   }

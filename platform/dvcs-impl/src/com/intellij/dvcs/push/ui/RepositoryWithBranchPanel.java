@@ -161,7 +161,10 @@ public class RepositoryWithBranchPanel<T extends PushTarget> extends NonOpaquePa
     if (bounds != null) {
       setPreferredSize(new Dimension(tree.getVisibleRect().width - bounds.x, bounds.height));
     }
-    myDestPushTargetPanelComponent.requestFocus();
+    if (myTextRenderer.getTree().hasFocus()) {
+      //delegate focus from tree to editable component if needed
+      myDestPushTargetPanelComponent.requestFocus(true);
+    }
     revalidate();
     return this;
   }
@@ -216,11 +219,6 @@ public class RepositoryWithBranchPanel<T extends PushTarget> extends NonOpaquePa
 
   public int getLoadingIconAndCheckBoxGapV() {
     return myCheckBoxLoadingIconGapV;
-  }
-
-  public int getVBorderOffset(@NotNull SimpleColoredComponent coloredRenderer) {
-    Border border = coloredRenderer.getMyBorder();
-    return border != null ? border.getBorderInsets(coloredRenderer).top : 0;
   }
 
   public int getCheckBoxHeight() {

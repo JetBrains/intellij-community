@@ -23,10 +23,13 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.ProcessingContext;
-import com.intellij.util.containers.HashSet;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Set;
 
 /**
  * @author cdr
@@ -81,15 +84,15 @@ public class FilePathReferenceProvider extends PsiReferenceProvider {
       @Override
       @NotNull
       public Collection<PsiFileSystemItem> computeDefaultContexts() {
-        Set<PsiFileSystemItem> systemItems = new HashSet<PsiFileSystemItem>();
         if (forModules.length > 0) {
+          Set<PsiFileSystemItem> rootsForModules = ContainerUtil.newLinkedHashSet();
           for (Module forModule : forModules) {
-            systemItems.addAll(getRoots(forModule, true));
+            rootsForModules.addAll(getRoots(forModule, true));
           }
-        } else {
-          systemItems.addAll(getRoots(ModuleUtilCore.findModuleForPsiElement(getElement()), true));
+          return rootsForModules;
         }
-        return systemItems;
+
+        return getRoots(ModuleUtilCore.findModuleForPsiElement(getElement()), true);
       }
 
       @Override
@@ -140,10 +143,11 @@ public class FilePathReferenceProvider extends PsiReferenceProvider {
   }
 
   @NotNull
-  public static Collection<PsiFileSystemItem> getRoots(final Module thisModule, boolean includingClasses) {
+  public static Collection<PsiFileSystemItem> getRoots(@Nullable final Module thisModule, boolean includingClasses) {
     if (thisModule == null) return Collections.emptyList();
+
     ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(thisModule);
-    List<PsiFileSystemItem> result = new ArrayList<PsiFileSystemItem>();
+    Set<PsiFileSystemItem> result = ContainerUtil.newLinkedHashSet();
     final PsiManager psiManager = PsiManager.getInstance(thisModule.getProject());
     if (includingClasses) {
       VirtualFile[] libraryUrls = moduleRootManager.orderEntries().getAllLibrariesAndSdkClassesRoots();
@@ -155,7 +159,9 @@ public class FilePathReferenceProvider extends PsiReferenceProvider {
       }
     }
 
-    VirtualFile[] sourceRoots = moduleRootManager.orderEntries().recursively().withoutSdk().withoutLibraries().getSourceRoots();
+    VirtualFile[] sourceRoots = moduleRootManager.orderEntries().recursively()
+      .withoutSdk().withoutLibraries()
+      .sources().usingCache().getRoots();
     for (VirtualFile root : sourceRoots) {
       final PsiDirectory directory = psiManager.findDirectory(root);
       if (directory != null) {
