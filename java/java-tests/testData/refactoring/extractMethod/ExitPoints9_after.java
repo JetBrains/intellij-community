@@ -1,3 +1,5 @@
+import org.jetbrains.annotations.Nullable;
+
 class Result {
     private String _message;
 
@@ -17,6 +19,7 @@ class Main {
         return result;
     }
 
+    @Nullable
     private static Result newMethod(String name) {
         Result result;
         if (name == null) {

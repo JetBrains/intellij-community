@@ -17,13 +17,17 @@ package com.intellij.refactoring.extractMethod;
 
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.ExceptionUtil;
+import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.AnonymousTargetClassPreselectionUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
+import com.intellij.codeInsight.intention.AddAnnotationFix;
+import com.intellij.codeInsight.intention.impl.AddNotNullAnnotationFix;
+import com.intellij.codeInsight.intention.impl.AddNotNullAnnotationIntention;
+import com.intellij.codeInsight.intention.impl.AddNullableAnnotationFix;
+import com.intellij.codeInsight.intention.impl.AddNullableNotNullAnnotationFix;
 import com.intellij.codeInsight.navigation.NavigationUtil;
-import com.intellij.codeInspection.dataFlow.RunnerResult;
-import com.intellij.codeInspection.dataFlow.StandardDataFlowRunner;
-import com.intellij.codeInspection.dataFlow.StandardInstructionVisitor;
+import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.instructions.BranchingInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
 import com.intellij.ide.DataManager;
@@ -39,6 +43,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
@@ -862,6 +867,20 @@ public class ExtractMethodProcessor implements MatchProvider {
       }
     }
 
+    if (isNullabilityCheckApplicable() && !(newMethod.getReturnType() instanceof PsiPrimitiveType) && 
+        PsiUtil.isLanguageLevel5OrHigher(newMethod) && Registry.is("annotate.extracted.method.nullable.when.applicable", true)) {
+      final NullableNotNullManager manager = NullableNotNullManager.getInstance(myProject);
+      final PsiClass nullableAnnotationClass =
+        JavaPsiFacade.getInstance(myProject).findClass(manager.getDefaultNullable(), GlobalSearchScope.allScope(myProject));
+      if (nullableAnnotationClass != null) {
+        final Collection<PsiElement> nullableReturn = DataFlowInspectionBase.getNullableReturn(newMethod);
+        if (nullableReturn != null && !nullableReturn.isEmpty()) {
+          final AddNullableNotNullAnnotationFix annotationFix = new AddNullableAnnotationFix(newMethod);
+          annotationFix.invoke(myProject, myTargetClass.getContainingFile(), newMethod, newMethod);
+        }
+      }
+    }
+
     myExtractedMethod = (PsiMethod)myTargetClass.addAfter(newMethod, myAnchor);
     if (isNeedToChangeCallContext() && myNeedChangeContext) {
       ChangeContextUtil.decodeContextInfo(myExtractedMethod, myTargetClass, RefactoringChangeUtil.createThisExpression(myManager, null));
@@ -870,7 +889,10 @@ public class ExtractMethodProcessor implements MatchProvider {
         methodExpression.setQualifierExpression(RefactoringChangeUtil.createThisExpression(myManager, myTargetClass));
       }
     }
+  }
 
+  protected boolean isNullabilityCheckApplicable() {
+    return true;
   }
 
   protected boolean isNeedToChangeCallContext() {

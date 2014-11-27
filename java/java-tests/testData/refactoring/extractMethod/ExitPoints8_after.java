@@ -1,3 +1,5 @@
+import org.jetbrains.annotations.Nullable;
+
 class C {
     public Object m() {
         Object o = newMethod();
@@ -5,6 +7,7 @@ class C {
         return null;
     }
 
+    @Nullable
     private Object newMethod() {
         for (Object o : new ArrayList<Object>()) {
             if (o != null) {

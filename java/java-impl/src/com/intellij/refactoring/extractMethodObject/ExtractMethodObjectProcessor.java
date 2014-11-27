@@ -658,6 +658,16 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     }
 
     @Override
+    protected boolean isNullabilityCheckApplicable() {
+      return false;
+    }
+
+    @Override
+    protected boolean isNeedToChangeCallContext() {
+      return false;
+    }
+
+    @Override
     protected void apply(final AbstractExtractDialog dialog) {
       super.apply(dialog);
       myCreateInnerClass = !(dialog instanceof ExtractMethodObjectDialog) || ((ExtractMethodObjectDialog)dialog).createInnerClass();
@@ -739,11 +749,6 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
 
     public PsiVariable[] getOutputVariables() {
       return myOutputVariables;
-    }
-
-    @Override
-    protected boolean isNeedToChangeCallContext() {
-      return false;
     }
 
     @Override
