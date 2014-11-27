@@ -77,6 +77,14 @@ public class BooleanMethodIsAlwaysInvertedInspectionBase extends GlobalJavaBatch
           refMethod.putUserData(ALWAYS_INVERTED, Boolean.FALSE);
         }
       }
+
+      @Override
+      public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
+        super.visitMethodReferenceExpression(expression);
+        if (expression.isReferenceTo(psiElement)) {
+          refMethod.putUserData(ALWAYS_INVERTED, Boolean.FALSE);
+        }
+      }
     });
   }
 

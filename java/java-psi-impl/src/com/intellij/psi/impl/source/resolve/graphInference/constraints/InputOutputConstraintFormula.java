@@ -42,7 +42,7 @@ public abstract class InputOutputConstraintFormula implements ConstraintFormula 
   public Set<InferenceVariable> getInputVariables(InferenceSession session) {
     final PsiExpression psiExpression = getExpression();
     final PsiType type = getT();
-    if (psiExpression instanceof PsiLambdaExpression || psiExpression instanceof PsiMethodReferenceExpression) {
+    if (psiExpression instanceof PsiFunctionalExpression) {
       final InferenceVariable inferenceVariable = session.getInferenceVariable(type);
       if (inferenceVariable != null) {
         return Collections.singleton(inferenceVariable);
