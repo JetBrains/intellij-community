@@ -279,7 +279,12 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
         final PsiMethod method = parameterHierarchyUsageInfo.getCalledMethod();
         final PsiParameter parameter = parameterHierarchyUsageInfo.getReferencedElement();
         final int parameterIndex = method.getParameterList().getParameterIndex(parameter);
-        final JavaCallerChooser chooser = new SafeDeleteJavaCallerChooser(method, project, parameterIndex, result);
+        final JavaCallerChooser chooser = new SafeDeleteJavaCallerChooser(method, project, result) {
+          @Override
+          protected int getParameterIdx() {
+            return parameterIndex;
+          }
+        };
         if (!chooser.showAndGet()) {
           return null;
         }

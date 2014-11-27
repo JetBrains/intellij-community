@@ -23,7 +23,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.changeSignature.MethodNodeBase;
 import com.intellij.refactoring.changeSignature.inCallers.JavaCallerChooser;
@@ -38,17 +37,15 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-class SafeDeleteJavaCallerChooser extends JavaCallerChooser {
+abstract class SafeDeleteJavaCallerChooser extends JavaCallerChooser {
   private final PsiMethod myMethod;
   private final Project myProject;
-  private final int myParameterIndex;
   private final ArrayList<UsageInfo> myResult;
 
-  public SafeDeleteJavaCallerChooser(PsiMethod method, Project project, int parameterIndex, ArrayList<UsageInfo> result) {
+  public SafeDeleteJavaCallerChooser(PsiMethod method, Project project, ArrayList<UsageInfo> result) {
     super(method, project, "Select Methods To Propagate Parameter Deletion", null, Consumer.EMPTY_CONSUMER);
     myMethod = method;
     myProject = project;
-    myParameterIndex = parameterIndex;
     myResult = result;
   }
 
@@ -56,8 +53,10 @@ class SafeDeleteJavaCallerChooser extends JavaCallerChooser {
   protected JavaMethodNode createTreeNode(PsiMethod nodeMethod,
                                           com.intellij.util.containers.HashSet<PsiMethod> called,
                                           Runnable cancelCallback) {
-    return new SafeDeleteJavaMethodNode(nodeMethod, called, cancelCallback, myParameterIndex, nodeMethod != null ? nodeMethod.getProject() : myProject);
+    return new SafeDeleteJavaMethodNode(nodeMethod, called, cancelCallback, getParameterIdx(), nodeMethod != null ? nodeMethod.getProject() : myProject);
   }
+
+  protected abstract int getParameterIdx();
 
   @Override
   protected void doOKAction() {
