@@ -61,11 +61,7 @@ import java.util.Set;
  */
 public class ImportMavenRepositoriesTask implements Runnable {
   @NotNull
-  private final static MavenRemoteRepository mavenCentralRemoteRepository;
-
-  static {
-    mavenCentralRemoteRepository = new MavenRemoteRepository("central", null, "http://repo1.maven.org/maven2/", null, null, null);
-  }
+  private final MavenRemoteRepository mavenCentralRemoteRepository;
 
   private final Project myProject;
   private final boolean myForce;
@@ -73,6 +69,7 @@ public class ImportMavenRepositoriesTask implements Runnable {
   public ImportMavenRepositoriesTask(Project project, boolean force) {
     myProject = project;
     myForce = force;
+    mavenCentralRemoteRepository = new MavenRemoteRepository("central", null, "http://repo1.maven.org/maven2/", null, null, null);
   }
 
   public ImportMavenRepositoriesTask(Project project) {
@@ -164,17 +161,16 @@ public class ImportMavenRepositoriesTask implements Runnable {
         if (call == null || call.getClosureArguments().length != 1) return null;
 
         GrExpression expression = call.getInvokedExpression();
-        return expression != null && ArrayUtil.contains(expression.getText(), blockNames) ? call.getClosureArguments()[0] : null;
+        return ArrayUtil.contains(expression.getText(), blockNames) ? call.getClosureArguments()[0] : null;
       }
     });
   }
 
   @NotNull
-  private static Collection<? extends MavenRemoteRepository> findMavenRemoteRepositories(@Nullable GrClosableBlock repositoriesBlock) {
+  private Collection<? extends MavenRemoteRepository> findMavenRemoteRepositories(@Nullable GrClosableBlock repositoriesBlock) {
     Set<MavenRemoteRepository> myRemoteRepositories = ContainerUtil.newHashSet();
     for (GrMethodCall repo : PsiTreeUtil
       .getChildrenOfTypeAsList(repositoriesBlock, GrMethodCall.class)) {
-      if (repo.getInvokedExpression() == null) continue;
 
       final String expressionText = repo.getInvokedExpression().getText();
       if ("mavenCentral".equals(expressionText)) {
@@ -199,7 +195,6 @@ public class ImportMavenRepositoriesTask implements Runnable {
           GrApplicationStatement statement = applicationStatementList.get(0);
           if (statement == null) continue;
           GrExpression expression = statement.getInvokedExpression();
-          if (expression == null) continue;
 
           if ("url".equals(expression.getText())) {
             URI urlArgumentValue = resolveUriFromSimpleExpression(statement.getExpressionArguments()[0]);
