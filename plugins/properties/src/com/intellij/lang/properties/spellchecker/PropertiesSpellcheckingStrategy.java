@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,8 @@
  */
 package com.intellij.lang.properties.spellchecker;
 
-import com.intellij.lang.properties.psi.impl.PropertyImpl;
+import com.intellij.lang.properties.psi.impl.PropertyKeyImpl;
 import com.intellij.lang.properties.psi.impl.PropertyValueImpl;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.spellchecker.inspections.PlainTextSplitter;
 import com.intellij.spellchecker.inspections.PropertiesSplitter;
@@ -29,25 +28,25 @@ import org.jetbrains.annotations.NotNull;
 
 
 public class PropertiesSpellcheckingStrategy extends SpellcheckingStrategy {
-  private Tokenizer<PropertyValueImpl> myPropertyValueTokenizer = TokenizerBase.create(PlainTextSplitter.getInstance());
-  private Tokenizer<PropertyImpl> myPropertyTokenizer = new MyPropertyTokenizer();
-  
+
+  private final Tokenizer<PropertyValueImpl> myPropertyValueTokenizer = TokenizerBase.create(PlainTextSplitter.getInstance());
+  private final Tokenizer<PropertyKeyImpl> myPropertyTokenizer = new MyPropertyTokenizer();
+
   @NotNull
   @Override
   public Tokenizer getTokenizer(PsiElement element) {
     if (element instanceof PropertyValueImpl) {
       return myPropertyValueTokenizer;
     }
-    if (element instanceof PropertyImpl) {
+    if (element instanceof PropertyKeyImpl) {
       return myPropertyTokenizer;
     }
     return super.getTokenizer(element);
   }
 
-  private static class MyPropertyTokenizer extends Tokenizer<PropertyImpl> {
-    public void tokenize(@NotNull PropertyImpl element, TokenConsumer consumer) {
-      String key = element.getKey();
-      consumer.consumeToken(element, key, true, 0, TextRange.allOf(key), PropertiesSplitter.getInstance());
+  private static class MyPropertyTokenizer extends Tokenizer<PropertyKeyImpl> {
+    public void tokenize(@NotNull PropertyKeyImpl element, TokenConsumer consumer) {
+      consumer.consumeToken(element, PropertiesSplitter.getInstance());
     }
   }
 }
