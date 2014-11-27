@@ -195,7 +195,7 @@ public class PyMoveTest extends PyTestCase {
   }
 
   // PY-14432
-  public void testRelativeImportInsideMovedModule() {
+  public void testRelativeImportsInsideMovedModule() {
     doMoveFileTest("pkg1/subpkg1", "");
   }
 
