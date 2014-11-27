@@ -34,6 +34,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -80,20 +81,19 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
   implements ErrorsConfigurable, SearchableConfigurable, Configurable.NoScroll {
   public static final String ID = "Errors";
   public static final String DISPLAY_NAME = "Inspections";
+  private static final String HEADER_TITLE = "Profile:";
+
   private static final Logger LOG = Logger.getInstance("#" + InspectionToolsConfigurable.class.getName());
   protected final InspectionProfileManager myProfileManager;
   protected final InspectionProjectProfileManager myProjectProfileManager;
   private final CardLayout myLayout = new CardLayout();
   private final AuxiliaryRightPanel myAuxiliaryRightPanel;
-  private final JPanel myProfilesHolder;
   private final Map<Profile, SingleInspectionProfilePanel> myPanels =
     new HashMap<Profile, SingleInspectionProfilePanel>();
   private final List<String> myDeletedProfiles = new ArrayList<String>();
-  private final String myHeaderTitle = "Profile:";
   protected ProfilesConfigurableComboBox myProfiles;
   private JPanel myPanel;
   private JPanel myWholePanel;
-  private JComponent myManageButton;
   private Alarm mySelectionAlarm;
 
   public InspectionToolsConfigurable(@NotNull final InspectionProjectProfileManager projectProfileManager,
@@ -115,7 +115,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
       public void customize(final JList list, final Profile value, final int index, final boolean selected, final boolean hasFocus) {
         final String profileName = value.getName();
         final SingleInspectionProfilePanel singleInspectionProfilePanel = myPanels.get(value);
-        final boolean isShared = singleInspectionProfilePanel != null ? singleInspectionProfilePanel.isProfileShared() : false;
+        final boolean isShared = singleInspectionProfilePanel != null && singleInspectionProfilePanel.isProfileShared();
         setIcon(isShared ? AllIcons.General.ProjectSettings : AllIcons.General.Settings);
         setText(profileName);
       }
@@ -126,11 +126,11 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
         myAuxiliaryRightPanel.showDescription(inspectionProfile.getDescription());
       }
     };
-    myProfilesHolder = new JPanel();
-    myProfilesHolder.setLayout(new CardLayout());
+    JPanel profilesHolder = new JPanel();
+    profilesHolder.setLayout(new CardLayout());
 
 
-    myManageButton = new ManageButton(new ManageButtonBuilder() {
+    JComponent manageButton = new ManageButton(new ManageButtonBuilder() {
       @Override
       public boolean isSharedToTeamMembers() {
         SingleInspectionProfilePanel panel = getSelectedPanel();
@@ -138,16 +138,29 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
       }
 
       @Override
-      public void setShareToTeamMembers(boolean share) {
+      public void setShareToTeamMembers(boolean shared) {
+        final InspectionProfileImpl inspectionProfile = getSelectedObject();
+        final String name = inspectionProfile.getName();
+        for (Map.Entry<Profile, SingleInspectionProfilePanel> e : myPanels.entrySet()) {
+          final InspectionProfileImpl currentProfile = (InspectionProfileImpl)e.getKey();
+          if (currentProfile.getName().equals(name) && !currentProfile.equals(inspectionProfile)) {
+            final boolean curShared = e.getValue().isProfileShared();
+            if (curShared == shared) {
+              Messages.showErrorDialog((shared ? "Shared" : "Application level") + " profile with same name exists.", "Inspections Settings");
+              return;
+            }
+          }
+        }
+
         final SingleInspectionProfilePanel panel = getSelectedPanel();
         LOG.assertTrue(panel != null, "No settings panel for: " + getSelectedObject());
-        panel.setProfileShared(share);
+        panel.setProfileShared(shared);
         myProfiles.repaint();
       }
 
       @Override
       public void copy() {
-        final InspectionProfileImpl newProfile = copyToNewProfile(0, getSelectedObject(), getProject());
+        final InspectionProfileImpl newProfile = copyToNewProfile(getSelectedObject(), getProject());
         if (newProfile != null) {
           final InspectionProfileImpl modifiableModel = (InspectionProfileImpl)newProfile.getModifiableModel();
           modifiableModel.setModified(true);
@@ -186,10 +199,11 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
 
           @Override
           public boolean checkValid(@NotNull String text) {
-            final boolean isValid = text.equals(initialName) || !hasName(text);
+            final boolean isValid = text.equals(initialName) || !hasName(text, myPanels.get(inspectionProfile).isProfileShared());
             if (isValid) {
               myAuxiliaryRightPanel.showDescription(getSelectedObject().getDescription());
-            } else {
+            }
+            else {
               myAuxiliaryRightPanel.showError("Name is already in use. Please change name to unique.");
             }
             return isValid;
@@ -217,6 +231,11 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
       @Override
       public void editDescription() {
         myAuxiliaryRightPanel.editDescription(getSelectedObject().getDescription());
+      }
+
+      @Override
+      public boolean hasDescription() {
+        return !StringUtil.isEmpty(getSelectedObject().getDescription());
       }
 
       @Override
@@ -297,7 +316,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
                     final TextAttributes textAttributes = CodeInsightColors.WARNINGS_ATTRIBUTES.getDefaultAttributes();
                     HighlightInfoType.HighlightInfoTypeImpl info =
                       new HighlightInfoType.HighlightInfoTypeImpl(new HighlightSeverity(level, 50),
-                                                                  com.intellij.openapi.editor.colors.TextAttributesKey
+                                                                  TextAttributesKey
                                                                     .createTextAttributesKey(level));
                     myProfileManager.getOwnSeverityRegistrar()
                       .registerSeverity(new SeverityRegistrar.SeverityBasedTextAttributes(textAttributes.clone(), info),
@@ -346,13 +365,13 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
     });
 
     toolbar.setLayout(new GridBagLayout());
-    toolbar.add(new JLabel(myHeaderTitle),
+    toolbar.add(new JLabel(HEADER_TITLE),
                 new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.VERTICAL, new Insets(10, 5, 0, 0), 0,
                                        0));
     toolbar.add(myProfiles,
                 new GridBagConstraints(1, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.VERTICAL, new Insets(10, 5, 0, 0), 0,
                                        0));
-    toolbar.add(myManageButton,
+    toolbar.add(manageButton,
                 new GridBagConstraints(2, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.VERTICAL, new Insets(10, 5, 0, 0), 0,
                                        0));
     toolbar.add(myAuxiliaryRightPanel,
@@ -369,12 +388,12 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
   }
 
   @Nullable
-  private InspectionProfileImpl copyToNewProfile(final int initValue, ModifiableModel selectedProfile, @NotNull Project project) {
+  private InspectionProfileImpl copyToNewProfile(ModifiableModel selectedProfile, @NotNull Project project) {
     String profileDefaultName = selectedProfile.getName();
     do {
       profileDefaultName += " (copy)";
     }
-    while (hasName(profileDefaultName));
+    while (hasName(profileDefaultName, myPanels.get(selectedProfile).isProfileShared()));
 
     final ProfileManager profileManager = selectedProfile.getProfileManager();
     InspectionProfileImpl inspectionProfile =
@@ -606,9 +625,9 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
     });
   }
 
-  private boolean hasName(final @NotNull String name) {
-    for (Profile profile : myPanels.keySet()) {
-      if (name.equals(profile.getName())) {
+  private boolean hasName(final @NotNull String name, boolean shared) {
+    for (Map.Entry<Profile, SingleInspectionProfilePanel> e : myPanels.entrySet()) {
+      if (name.equals(e.getKey().getName()) && shared == e.getValue().isProfileShared()) {
         return true;
       }
     }
