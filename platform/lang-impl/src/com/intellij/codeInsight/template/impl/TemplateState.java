@@ -331,7 +331,7 @@ public class TemplateState implements Disposable {
     }
     else {
       PsiFile file = getPsiFile();
-      preprocessTemplate(file, myEditor.getCaretModel().getOffset(), myTemplate.getTemplateText());
+      template = preprocessTemplate(file, myEditor.getCaretModel().getOffset(), myTemplate.getTemplateText());
       int caretOffset = myEditor.getCaretModel().getOffset();
       myTemplateRange = myDocument.createRangeMarker(caretOffset, caretOffset);
     }
@@ -349,10 +349,13 @@ public class TemplateState implements Disposable {
     }
   }
 
-  private void preprocessTemplate(final PsiFile file, int caretOffset, final String textToInsert) {
+  private TemplateImpl preprocessTemplate(final PsiFile file, int caretOffset, final String textToInsert) {
+    TemplateImpl result = myTemplate;
     for (TemplatePreprocessor preprocessor : Extensions.getExtensions(TemplatePreprocessor.EP_NAME)) {
-      preprocessor.preprocessTemplate(myEditor, file, caretOffset, textToInsert, myTemplate.getTemplateText());
+      result = preprocessor.preprocessTemplate(myEditor, file, caretOffset, myTemplate, textToInsert);
     }
+
+    return result;
   }
 
   private void processAllExpressions(@NotNull final TemplateImpl template) {
