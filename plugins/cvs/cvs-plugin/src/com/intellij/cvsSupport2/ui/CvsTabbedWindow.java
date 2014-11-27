@@ -26,6 +26,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ToolWindow;
@@ -37,6 +38,7 @@ import com.intellij.ui.errorView.ContentManagerProvider;
 import com.intellij.ui.errorView.ErrorViewFactory;
 import com.intellij.util.ui.ErrorTreeView;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -166,15 +168,6 @@ public class CvsTabbedWindow implements Disposable {
     return -1;
   }
 
-  public Editor addOutput(Editor output) {
-    LOG.assertTrue(myOutput == null);
-    if (myOutput == null) {
-      addTab(CvsBundle.message("tab.title.cvs.output"), output.getComponent(), false, false, false, true, null, "cvs.cvsOutput");
-      myOutput = output;
-    }
-    return myOutput;
-  }
-
   public ErrorTreeView getErrorsTreeView() {
     if (myErrorsView == null) {
       myErrorsView = ErrorViewFactory.SERVICE.getInstance()
@@ -213,7 +206,23 @@ public class CvsTabbedWindow implements Disposable {
   }
 
   public Editor getOutput() {
+    if (myOutput == null) {
+      final Editor outputEditor = createOutputEditor(myProject);
+      addTab(CvsBundle.message("tab.title.cvs.output"), outputEditor.getComponent(), false, false, false, true, null, "cvs.cvsOutput");
+      myOutput = outputEditor;
+    }
     return myOutput;
+  }
+
+  @NotNull
+  private static Editor createOutputEditor(Project project) {
+    final Editor result = EditorFactory.getInstance().createViewer(EditorFactory.getInstance().createDocument(""), project);
+    final EditorSettings editorSettings = result.getSettings();
+    editorSettings.setLineMarkerAreaShown(false);
+    editorSettings.setLineNumbersShown(false);
+    editorSettings.setIndentGuidesShown(false);
+    editorSettings.setFoldingOutlineShown(false);
+    return result;
   }
 
   private static class GlobalCvsSettingsAction extends AnAction {
