@@ -34,4 +34,6 @@ public interface VcsLogStructureFilter extends VcsLogDetailsFilter {
   @NotNull
   Collection<VirtualFile> getFiles(@NotNull VirtualFile root);
 
+  Collection<VirtualFile> getRoots();
+
 }

@@ -440,10 +440,13 @@ public class GitLogProvider implements VcsLogProvider {
 
     // note: structure filter must be the last parameter, because it uses "--" which separates parameters from paths
     if (filterCollection.getStructureFilter() != null) {
-      filterParameters.add("--simplify-merges");
-      filterParameters.add("--");
-      for (VirtualFile file : filterCollection.getStructureFilter().getFiles(root)) {
-        filterParameters.add(file.getPath());
+      Collection<VirtualFile> files = filterCollection.getStructureFilter().getFiles(root);
+      if (!files.isEmpty()) {
+        filterParameters.add("--simplify-merges");
+        filterParameters.add("--");
+        for (VirtualFile file : files) {
+          filterParameters.add(file.getPath());
+        }
       }
     }
 

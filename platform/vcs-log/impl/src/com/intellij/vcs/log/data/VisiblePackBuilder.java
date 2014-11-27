@@ -207,7 +207,7 @@ class VisiblePackBuilder {
     for (Map.Entry<VirtualFile, VcsLogProvider> entry : providers.entrySet()) {
       VirtualFile root = entry.getKey();
 
-      if (filterCollection.getStructureFilter() != null && filterCollection.getStructureFilter().getFiles(root).isEmpty()
+      if (filterCollection.getStructureFilter() != null && !filterCollection.getStructureFilter().getRoots().contains(root)
           || filterCollection.getUserFilter() != null && filterCollection.getUserFilter().getUserNames(root).isEmpty()) {
         // there is a structure or user filter, but it doesn't match this root
         continue;

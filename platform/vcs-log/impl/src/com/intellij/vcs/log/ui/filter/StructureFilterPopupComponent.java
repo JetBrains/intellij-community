@@ -68,7 +68,11 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogStructure
   private static Collection<VirtualFile> getAllFiles(@NotNull VcsLogDataPack dataPack, @NotNull VcsLogStructureFilter filter) {
     Collection<VirtualFile> result = ContainerUtil.newArrayList();
     for (VirtualFile root : dataPack.getLogProviders().keySet()) {
-      result.addAll(filter.getFiles(root));
+      Collection<VirtualFile> files = filter.getFiles(root);
+      result.addAll(files);
+      if (files.isEmpty() && filter.getRoots().contains(root)) {
+        result.add(root);
+      }
     }
     return result;
   }
@@ -107,11 +111,10 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogStructure
       VcsLogDataPack dataPack = myFilterModel.getDataPack();
       VcsLogStructureFilter filter = myFilterModel.getFilter();
       Collection<VirtualFile> files = filter == null ? Collections.<VirtualFile>emptySet() : getAllFiles(dataPack, filter);
-      Set<VirtualFile> roots = dataPack.getLogProviders().keySet();
       VcsStructureChooser chooser = new VcsStructureChooser(project, "Select Files or Folders to Filter", files,
-                                                            new ArrayList<VirtualFile>(roots));
+                                                            new ArrayList<VirtualFile>(dataPack.getLogProviders().keySet()));
       if (chooser.showAndGet()) {
-        myFilterModel.setFilter(new VcsLogStructureFilterImpl(chooser.getSelectedFiles(), roots));
+        myFilterModel.setFilter(VcsLogStructureFilterImpl.build(chooser.getSelectedFiles(), dataPack));
       }
     }
   }
