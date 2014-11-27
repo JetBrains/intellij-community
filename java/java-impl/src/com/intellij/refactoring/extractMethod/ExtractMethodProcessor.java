@@ -760,8 +760,8 @@ public class ExtractMethodProcessor implements MatchProvider {
         CodeStyleManager.getInstance(myProject).reformat(ifStatement);
       }
       else if (myNotNullConditionalCheck) {
-        final String varName = myOutputVariable.getName();
-        declareVariableAtMethodCallLocation(varName, myReturnType instanceof PsiPrimitiveType ? ((PsiPrimitiveType)myReturnType).getBoxedType(myCodeFragmentMember) : myReturnType);
+        String varName = myOutputVariable.getName();
+        varName = declareVariableAtMethodCallLocation(varName, myReturnType instanceof PsiPrimitiveType ? ((PsiPrimitiveType)myReturnType).getBoxedType(myCodeFragmentMember) : myReturnType);
         addToMethodCallLocation(myElementFactory.createStatementFromText("if (" + varName + " != null) return " + varName + ";", null));
       }
       else if (myGenerateConditionalExit) {
@@ -903,12 +903,17 @@ public class ExtractMethodProcessor implements MatchProvider {
     declareVariableAtMethodCallLocation(name, myOutputVariable.getType());
   }
 
-  private void declareVariableAtMethodCallLocation(String name, PsiType type) {
+  private String declareVariableAtMethodCallLocation(String name, PsiType type) {
+    if (myControlFlowWrapper.getOutputVariables(false).length == 0) {
+      PsiElement lastStatement = myEnclosingBlockStatement != null ? myEnclosingBlockStatement : myElements[myElements.length - 1];
+      name = JavaCodeStyleManager.getInstance(myProject).suggestUniqueVariableName(name, lastStatement, true);
+    }
     PsiDeclarationStatement statement = myElementFactory.createVariableDeclarationStatement(name, type, myMethodCall);
     statement = (PsiDeclarationStatement)addToMethodCallLocation(statement);
     PsiVariable var = (PsiVariable)statement.getDeclaredElements()[0];
     myMethodCall = (PsiMethodCallExpression)var.getInitializer();
     var.getModifierList().replace(myOutputVariable.getModifierList());
+    return name;
   }
 
   private void adjustFinalParameters(final PsiMethod method) throws IncorrectOperationException {

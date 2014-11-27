@@ -87,6 +87,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  public void testNotNullCheckNameConflicts() throws Exception {
+    doTest();
+  }
+
   public void testContinueInside() throws Exception {
     doTest();
   }

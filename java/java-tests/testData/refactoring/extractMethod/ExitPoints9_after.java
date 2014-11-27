@@ -12,8 +12,8 @@ class Main {
     public static Result doIt(String name) {
         Result result;
 
-        Result result = newMethod(name);
-        if (result != null) return result;
+        Result result1 = newMethod(name);
+        if (result1 != null) return result1;
 
         result = new Result("Name is " + name);
         return result;
