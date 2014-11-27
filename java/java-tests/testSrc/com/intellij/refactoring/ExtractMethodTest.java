@@ -80,11 +80,11 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
   }
 
   public void testExitPoints8() throws Exception {
-    doExitPointsTest(false);
+    doTest();
   }
 
   public void testExitPoints9() throws Exception {
-    doExitPointsTest(false);
+    doTest();
   }
 
   public void testContinueInside() throws Exception {

@@ -143,8 +143,12 @@ public class ControlFlowWrapper {
 
 
   public PsiVariable[] getOutputVariables() {
+    return getOutputVariables(myGenerateConditionalExit);
+  }
+
+  public PsiVariable[] getOutputVariables(boolean collectVariablesAtExitPoints) {
     PsiVariable[] myOutputVariables = ControlFlowUtil.getOutputVariables(myControlFlow, myFlowStart, myFlowEnd, myExitPoints.toArray());
-    if (myGenerateConditionalExit) {
+    if (collectVariablesAtExitPoints) {
       //variables declared in selected block used in return statements are to be considered output variables when extracting guard methods
       final Set<PsiVariable> outputVariables = new HashSet<PsiVariable>(Arrays.asList(myOutputVariables));
       for (PsiStatement statement : myExitStatements) {
