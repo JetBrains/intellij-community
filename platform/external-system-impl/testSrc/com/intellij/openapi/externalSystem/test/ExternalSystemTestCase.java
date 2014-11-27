@@ -38,10 +38,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.*;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.impl.compiler.ArtifactCompileScope;
 import com.intellij.testFramework.*;
@@ -55,7 +52,9 @@ import org.junit.After;
 import org.junit.Before;
 
 import java.awt.*;
-import java.io.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.*;
@@ -490,10 +489,10 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
       @Override
       protected void run(@NotNull Result<VirtualFile> result) throws Throwable {
         if (advanceStamps) {
-          file.setBinaryContent(content.getBytes("UTF-8"), -1, file.getTimeStamp() + 4000);
+          file.setBinaryContent(content.getBytes(CharsetToolkit.UTF8_CHARSET), -1, file.getTimeStamp() + 4000);
         }
         else {
-          file.setBinaryContent(content.getBytes("UTF-8"), file.getModificationStamp(), file.getTimeStamp());
+          file.setBinaryContent(content.getBytes(CharsetToolkit.UTF8_CHARSET), file.getModificationStamp(), file.getTimeStamp());
         }
       }
     }.execute().getResultObject();

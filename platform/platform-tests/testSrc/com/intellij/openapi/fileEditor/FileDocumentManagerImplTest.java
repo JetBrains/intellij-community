@@ -150,7 +150,7 @@ public class FileDocumentManagerImplTest extends PlatformLangTestCase {
     final Document[] unsavedDocuments = myDocumentManager.getUnsavedDocuments();
     assertEquals(1, unsavedDocuments.length);
     assertSame(document, unsavedDocuments[0]);
-    assertEquals("test", new String(file.contentsToByteArray(), "UTF-8"));
+    assertEquals("test", new String(file.contentsToByteArray(), CharsetToolkit.UTF8_CHARSET));
   }
 
   public void testGetUnsavedDocuments_afterSaveAllDocuments() throws Exception {
@@ -218,7 +218,7 @@ public class FileDocumentManagerImplTest extends PlatformLangTestCase {
       final Document[] unsavedDocuments = myDocumentManager.getUnsavedDocuments();
       assertEquals(1, unsavedDocuments.length);
       assertSame(document, unsavedDocuments[0]);
-      assertEquals("test", new String(file.contentsToByteArray(), "UTF-8"));
+      assertEquals("test", new String(file.contentsToByteArray(), CharsetToolkit.UTF8_CHARSET));
     }
     finally {
       myDocumentManager.dropAllUnsavedDocuments();
@@ -296,7 +296,7 @@ public class FileDocumentManagerImplTest extends PlatformLangTestCase {
     myDocumentManager.saveDocument(document);
     assertTrue(stamp != file.getModificationStamp());
     assertEquals(document.getModificationStamp(), file.getModificationStamp());
-    assertEquals("xxx test", new String(file.contentsToByteArray(), "UTF-8"));
+    assertEquals("xxx test", new String(file.contentsToByteArray(), CharsetToolkit.UTF8_CHARSET));
   }
 
   public void testSaveAllDocuments_DocumentWasChanged() throws Exception {
@@ -313,7 +313,7 @@ public class FileDocumentManagerImplTest extends PlatformLangTestCase {
 
     myDocumentManager.saveAllDocuments();
     assertNotEquals(stamp, file.getModificationStamp());
-    assertEquals("xxx test", new String(file.contentsToByteArray(), "UTF-8"));
+    assertEquals("xxx test", new String(file.contentsToByteArray(), CharsetToolkit.UTF8_CHARSET));
   }
 
   public void testGetFile() throws Exception {
@@ -342,7 +342,7 @@ public class FileDocumentManagerImplTest extends PlatformLangTestCase {
     });
 
     myDocumentManager.saveAllDocuments();
-    assertEquals("xxx test\rtest", new String(file.contentsToByteArray(), "UTF-8"));
+    assertEquals("xxx test\rtest", new String(file.contentsToByteArray(), CharsetToolkit.UTF8_CHARSET));
   }
 
   public void testContentChanged_noDocument() throws Exception {
@@ -532,7 +532,7 @@ public class FileDocumentManagerImplTest extends PlatformLangTestCase {
 
     assertEquals("old test", document.getText());
     assertEquals(file.getModificationStamp(), document.getModificationStamp());
-    assertEquals("old test", new String(file.contentsToByteArray(), "UTF-8"));
+    assertEquals("old test", new String(file.contentsToByteArray(), CharsetToolkit.UTF8_CHARSET));
     assertEquals(documentStamp, document.getModificationStamp());
   }
 

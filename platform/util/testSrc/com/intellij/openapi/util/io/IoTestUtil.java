@@ -17,6 +17,7 @@ package com.intellij.openapi.util.io;
 
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
@@ -228,7 +229,7 @@ public class IoTestUtil {
     try {
       for (int i = 0; i < data.length; i += 2) {
         stream.putNextEntry(new ZipEntry(data[i]));
-        stream.write(data[i + 1].getBytes("UTF-8"));
+        stream.write(data[i + 1].getBytes(CharsetToolkit.UTF8_CHARSET));
         stream.closeEntry();
       }
     }

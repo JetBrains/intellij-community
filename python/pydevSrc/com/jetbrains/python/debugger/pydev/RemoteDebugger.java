@@ -12,6 +12,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.BaseOutputReader;
@@ -25,7 +26,6 @@ import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
-import java.nio.charset.Charset;
 import java.security.SecureRandom;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -475,7 +475,7 @@ public class RemoteDebugger implements ProcessDebugger {
     synchronized (mySocketObject) {
       final InputStream myInputStream = socket.getInputStream();
       //noinspection IOResourceOpenedButNotSafelyClosed
-      final Reader reader = new InputStreamReader(myInputStream, Charset.forName("UTF-8")); //TODO: correct econding?
+      final Reader reader = new InputStreamReader(myInputStream, CharsetToolkit.UTF8_CHARSET); //TODO: correct econding?
       return new DebuggerReader(reader);
     }
   }

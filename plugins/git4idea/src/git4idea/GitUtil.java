@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,7 +63,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.nio.charset.Charset;
 import java.util.*;
 
 /**
@@ -87,14 +86,6 @@ public class GitUtil {
       return o1.getPresentableUrl().compareTo(o2.getPresentableUrl());
     }
   };
-  /**
-   * The UTF-8 encoding name
-   */
-  public static final String UTF8_ENCODING = "UTF-8";
-  /**
-   * The UTF8 charset
-   */
-  public static final Charset UTF8_CHARSET = Charset.forName(UTF8_ENCODING);
   public static final String DOT_GIT = ".git";
 
   public static final String ORIGIN_HEAD = "origin/HEAD";

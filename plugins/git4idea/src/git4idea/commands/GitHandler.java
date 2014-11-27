@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProcessEventListener;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -88,7 +89,8 @@ public abstract class GitHandler {
 
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
   @NonNls
-  private Charset myCharset = Charset.forName("UTF-8"); // Character set to use for IO
+  @NotNull
+  private Charset myCharset = CharsetToolkit.UTF8_CHARSET; // Character set to use for IO
 
   private final EventDispatcher<ProcessEventListener> myListeners = EventDispatcher.create(ProcessEventListener.class);
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
@@ -624,6 +626,7 @@ public abstract class GitHandler {
   /**
    * @return a character set to use for IO
    */
+  @NotNull
   public Charset getCharset() {
     return myCharset;
   }
@@ -634,7 +637,7 @@ public abstract class GitHandler {
    * @param charset a character set
    */
   @SuppressWarnings({"SameParameterValue"})
-  public void setCharset(final Charset charset) {
+  public void setCharset(@NotNull Charset charset) {
     myCharset = charset;
   }
 

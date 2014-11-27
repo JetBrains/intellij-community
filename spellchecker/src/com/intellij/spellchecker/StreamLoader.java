@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.spellchecker;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.spellchecker.dictionary.Loader;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
@@ -25,7 +26,6 @@ import java.io.*;
 public class StreamLoader implements Loader {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.spellchecker.StreamLoader");
-  private static final String ENCODING = "UTF-8";
 
   private final InputStream stream;
   private final String name;
@@ -46,7 +46,7 @@ public class StreamLoader implements Loader {
     BufferedReader br = null;
 
     try {
-      br = new BufferedReader(new InputStreamReader(in, ENCODING));
+      br = new BufferedReader(new InputStreamReader(in, CharsetToolkit.UTF8_CHARSET));
       String strLine;
       while ((strLine = br.readLine()) != null) {
         consumer.consume(strLine);
