@@ -18,8 +18,8 @@ package org.jetbrains.plugins.gradle.integrations.maven;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.Result;
-import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
+import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -68,9 +68,15 @@ public class ImportMavenRepositoriesTask implements Runnable {
   }
 
   private final Project myProject;
+  private final boolean myForce;
+
+  public ImportMavenRepositoriesTask(Project project, boolean force) {
+    myProject = project;
+    myForce = force;
+  }
 
   public ImportMavenRepositoriesTask(Project project) {
-    myProject = project;
+    this(project, true);
   }
 
   @Override
@@ -83,9 +89,17 @@ public class ImportMavenRepositoriesTask implements Runnable {
 
     final ModuleManager moduleManager = ModuleManager.getInstance(myProject);
     for (Module module : moduleManager.getModules()) {
-      final String externalSystemId = module.getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY);
-      final String modulePath = module.getOptionValue(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY);
-      if (!GradleConstants.SYSTEM_ID.getId().equals(externalSystemId) || modulePath == null) continue;
+      if (!ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module)) continue;
+
+      final String modulePath = ExternalSystemApiUtil.getExternalProjectPath(module);
+      assert modulePath != null;
+
+      if (!myForce) {
+        final ExternalProjectSettings linkedProjectSettings =
+          ExternalSystemApiUtil.getSettings(myProject, GradleConstants.SYSTEM_ID).getLinkedProjectSettings(modulePath);
+
+        if (linkedProjectSettings == null || !linkedProjectSettings.isUseAutoImport()) continue;
+      }
 
       String buildScript = FileUtil.findFileInProvidedPath(modulePath, GradleConstants.DEFAULT_SCRIPT_NAME);
       if (StringUtil.isEmpty(buildScript)) continue;
