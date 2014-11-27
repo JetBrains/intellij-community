@@ -180,7 +180,9 @@ public class AddImportHelper {
    * @param file   where to operate
    * @param name   which to import (qualified is OK)
    * @param asName optional name for 'as' clause
-   * @param anchor place where the imported name was used
+   * @param anchor place where the imported name was used. It will be used to determine proper block where new import should be inserted,
+   *               e.g. inside conditional block or try/except statement. Also if anchor is another import statement, new import statement
+   *               will be inserted right after it.
    * @return whether import statement was actually added
    */
   public static boolean addImportStatement(@NotNull PsiFile file,
@@ -208,7 +210,12 @@ public class AddImportHelper {
     final PsiElement insertParent = importStatement != null && importStatement.getContainingFile() == file ?
                                     importStatement.getParent() : file;
     try {
-      insertParent.addBefore(importNodeToInsert, getInsertPosition(insertParent, name, priority));
+      if (anchor instanceof PyImportStatementBase) {
+        insertParent.addAfter(importNodeToInsert, anchor);
+      }
+      else {
+        insertParent.addBefore(importNodeToInsert, getInsertPosition(insertParent, name, priority));
+      }
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
@@ -217,14 +224,16 @@ public class AddImportHelper {
   }
 
   /**
-   * Adds a new {@link com.jetbrains.python.psi.PyFromImportStatement} statement below other top-level imports.
+   * Adds a new {@link com.jetbrains.python.psi.PyFromImportStatement} statement below other top-level imports or as specified by anchor.
    *
    * @param file   where to operate
    * @param from   import source (reference after {@code from} keyword)
    * @param name   imported name (identifier after {@code import} keyword)
    * @param asName optional alias (identifier after {@code as} keyword)
-   * @param anchor place where the imported name was used. It's used to determine proper block where new import should be inserted,
-   *               e.g. inside conditional block or try/except statement.
+   * @param anchor place where the imported name was used. It will be used to determine proper block where new import should be inserted,
+   *               e.g. inside conditional block or try/except statement. Also if anchor is another import statement, new import statement
+   *               will be inserted right after it.
+   * @see #addOrUpdateFromImportStatement
    */
   public static void addFromImportStatement(@NotNull PsiFile file,
                                             @NotNull String from,
@@ -253,7 +262,12 @@ public class AddImportHelper {
         insertParent.addBefore(whitespace, element);
       }
       else {
-        insertParent.addBefore(nodeToInsert, getInsertPosition(insertParent, from, priority));
+        if (anchor instanceof PyImportStatementBase) {
+          insertParent.addAfter(nodeToInsert, anchor);
+        }
+        else {
+          insertParent.addBefore(nodeToInsert, getInsertPosition(insertParent, from, priority));
+        }
       }
     }
     catch (IncorrectOperationException e) {
@@ -270,7 +284,9 @@ public class AddImportHelper {
    * @param name     imported name (identifier after {@code import} keyword)
    * @param asName   optional alias (identifier after {@code as} keyword)
    * @param priority optional import priority used to sort imports
-   * @param anchor   used to determine insert position for new import statement
+   * @param anchor   place where the imported name was used. It will be used to determine proper block where new import should be inserted,
+   *                 e.g. inside conditional block or try/except statement. Also if anchor is another import statement, new import statement
+   *                 will be inserted right after it.
    * @return whether import was actually added
    * @see #addFromImportStatement
    */
@@ -312,6 +328,8 @@ public class AddImportHelper {
    * @param file    file where import will be inserted
    * @param element used to determine where to insert import
    * @see com.jetbrains.python.codeInsight.PyCodeInsightSettings#PREFER_FROM_IMPORT
+   * @see #addImportStatement
+   * @see #addOrUpdateFromImportStatement
    */
   public static void addImport(final PsiNamedElement target, final PsiFile file, final PyElement element) {
     final boolean useQualified = !PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT;
