@@ -99,7 +99,7 @@ public class CvsVcs2 extends AbstractVcs<CvsChangeList> implements TransactionPr
   private ChangeProvider myChangeProvider;
   private MergeProvider myMergeProvider;
 
-  public CvsVcs2(Project project, CvsStorageComponent cvsStorageComponent) {
+  public CvsVcs2(@NotNull Project project, CvsStorageComponent cvsStorageComponent) {
     super(project, NAME);
     myCvsHistoryProvider = new CvsHistoryProvider(project);
     myCvsCheckinEnvironment = new CvsCheckinEnvironment(getProject());

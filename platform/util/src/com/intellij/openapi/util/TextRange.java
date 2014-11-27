@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,12 +58,14 @@ public class TextRange implements Segment, Serializable {
     return myEndOffset - myStartOffset;
   }
 
+  @Override
   public boolean equals(Object obj) {
     if (!(obj instanceof TextRange)) return false;
     TextRange range = (TextRange)obj;
     return myStartOffset == range.myStartOffset && myEndOffset == range.myEndOffset;
   }
 
+  @Override
   public int hashCode() {
     return myStartOffset + myEndOffset;
   }
@@ -80,6 +82,7 @@ public class TextRange implements Segment, Serializable {
     return myStartOffset <= offset && offset <= myEndOffset;
   }
 
+  @Override
   public String toString() {
     return "(" + myStartOffset + "," + myEndOffset + ")";
   }

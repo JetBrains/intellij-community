@@ -26,9 +26,9 @@ class Foo {
       System.out.println(s);
     });
 
-    <error descr="Cannot resolve method 'foo(<lambda expression>)'">foo</error>((String p, String k) -> {
+    foo<error descr="Cannot resolve method 'foo(<lambda expression>)'">((String p, String k) -> {
       System.out.println(p);
-    });
+    })</error>;
   }
 }
 
@@ -62,7 +62,7 @@ class WithTypeParams {
         System.out.println(p);
       });
   
-      <error descr="Cannot resolve method 'foo(<lambda expression>)'">foo</error>((int k) -> {System.out.println(k);});
+      foo<error descr="Cannot resolve method 'foo(<lambda expression>)'">((int k) -> {System.out.println(k);})</error>;
     }
   }
 }

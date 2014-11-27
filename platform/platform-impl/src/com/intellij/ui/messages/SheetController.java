@@ -26,6 +26,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jdesktop.swingx.graphics.GraphicsUtilities;
 import org.jdesktop.swingx.graphics.ShadowRenderer;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -41,26 +42,24 @@ import java.net.URISyntaxException;
  * Created by Denis Fokin
  */
 public class SheetController {
-
   private static final Logger LOG = Logger.getInstance(SheetController.class);
   private static final int SHEET_MINIMUM_HEIGHT = 143;
-  private static String fontName = "Lucida Grande";
-  private static Font regularFont = new Font(fontName, Font.PLAIN, 10);
-  private static Font boldFont = new Font(fontName, Font.BOLD, 12).deriveFont(Font.BOLD);
+  private static final String fontName = "Lucida Grande";
+  private static final Font regularFont = new Font(fontName, Font.PLAIN, 10);
+  private static final Font boldFont = new Font(fontName, Font.BOLD, 12).deriveFont(Font.BOLD);
   private final DialogWrapper.DoNotAskOption myDoNotAskOption;
   private JCheckBox doNotAskCheckBox;
   private boolean myDoNotAskResult;
 
   private BufferedImage myShadowImage;
   
-  private JButton[] buttons;
+  private final JButton[] buttons;
   private JButton myDefaultButton;
   private JButton myFocusedButton;
 
   public static int SHADOW_BORDER = 5;
 
-  private static int RIGHT_OFFSET = 10 - SHADOW_BORDER;
-  private static int BOTTOM_SHEET_PADDING = 10;
+  private static final int RIGHT_OFFSET = 10 - SHADOW_BORDER;
 
   private final static int TOP_SHEET_PADDING = 20;
   private final static int GAP_BETWEEN_LINES = 10;
@@ -68,9 +67,9 @@ public class SheetController {
   private final static int LEFT_SHEET_PADDING = 35;
   private final static int LEFT_SHEET_OFFSET = 120;
 
-  private static int GAP_BETWEEN_BUTTONS = 5;
+  private static final int GAP_BETWEEN_BUTTONS = 5;
 
-  private static String SPACE_OR_LINE_SEPARATOR_PATTERN = "[\\s" + System.getProperty("line.separator") + "]+";
+  private static final String SPACE_OR_LINE_SEPARATOR_PATTERN = "[\\s" + System.getProperty("line.separator") + "]+";
 
   // SHEET
   public int SHEET_WIDTH = 400;
@@ -85,11 +84,11 @@ public class SheetController {
   private Icon myIcon = UIUtil.getInformationIcon();
 
   private String myResult;
-  private JPanel mySheetPanel;
-  private SheetMessage mySheetMessage;
+  private final JPanel mySheetPanel;
+  private final SheetMessage mySheetMessage;
 
-  private JEditorPane messageTextPane = new JEditorPane();
-  private Dimension messageArea = new Dimension(250, Short.MAX_VALUE);
+  private final JEditorPane messageTextPane = new JEditorPane();
+  private final Dimension messageArea = new Dimension(250, Short.MAX_VALUE);
 
   SheetController(final SheetMessage sheetMessage,
                   final String title,
@@ -185,7 +184,7 @@ public class SheetController {
 
     ActionListener actionListener = new ActionListener() {
       @Override
-      public void actionPerformed(ActionEvent e) {
+      public void actionPerformed(@NotNull ActionEvent e) {
         if (e.getSource() instanceof JButton) {
           myResult = ((JButton)e.getSource()).getName();
         }
@@ -210,7 +209,7 @@ public class SheetController {
   private JPanel createSheetPanel(String title, String message, JButton[] buttons) {
     JPanel sheetPanel = new JPanel() {
       @Override
-      protected void paintComponent(Graphics g2d) {
+      protected void paintComponent(@NotNull Graphics g2d) {
         final Graphics2D g = (Graphics2D) g2d.create();
         super.paintComponent(g);
         g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, getSheetAlpha()));
@@ -236,7 +235,7 @@ public class SheetController {
 
     JPanel ico = new JPanel() {
       @Override
-      protected void paintComponent(Graphics g) {
+      protected void paintComponent(@NotNull Graphics g) {
         super.paintComponent(g);
         myIcon.paintIcon(this, g, 0, 0);
       }
@@ -270,6 +269,7 @@ public class SheetController {
     messageTextPane.setContentType("text/html");
 
     messageTextPane.addHyperlinkListener(new HyperlinkListener() {
+      @Override
       public void hyperlinkUpdate(HyperlinkEvent he) {
         if(he.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
           if(Desktop.isDesktopSupported()) {
@@ -326,6 +326,7 @@ public class SheetController {
 
     layoutWithAbsoluteLayout(buttons, sheetPanel);
 
+    int BOTTOM_SHEET_PADDING = 10;
     SHEET_HEIGHT += BOTTOM_SHEET_PADDING;
 
     if (SHEET_HEIGHT < SHEET_MINIMUM_HEIGHT) {
@@ -418,7 +419,7 @@ public class SheetController {
     doNotAskCheckBox = new JCheckBox(myDoNotAskOption.getDoNotShowMessage(), !myDoNotAskOption.isToBeShown());
     doNotAskCheckBox.addItemListener(new ItemListener() {
       @Override
-      public void itemStateChanged(ItemEvent e) {
+      public void itemStateChanged(@NotNull ItemEvent e) {
         myDoNotAskResult = e.getStateChange() == ItemEvent.SELECTED;
       }
     });

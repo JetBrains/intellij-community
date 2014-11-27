@@ -15,12 +15,12 @@
  */
 package com.intellij.debugger.actions;
 
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.EditorTextField;
 import com.intellij.xdebugger.impl.ui.TextViewer;
+import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.actions.XFetchValueActionBase;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,7 +32,7 @@ import java.awt.*;
  */
 public class ViewTextAction extends XFetchValueActionBase {
   @Override
-  protected void handle(Project project, String value, AnActionEvent e) {
+  protected void handle(Project project, String value, XDebuggerTree tree) {
     final MyDialog dialog = new MyDialog(project);
     dialog.setTitle("View Text");
     dialog.setText(StringUtil.unquoteString(value));

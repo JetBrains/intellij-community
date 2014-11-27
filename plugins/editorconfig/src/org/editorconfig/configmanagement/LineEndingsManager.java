@@ -84,7 +84,6 @@ public class LineEndingsManager extends FileDocumentManagerAdapter {
             statusBarUpdated = true;
             updateStatusBar();
           }
-          Utils.appliedConfigMessage(myProject, lineEndings, lineEndingsKey, filePath);
         }
       }
       catch (IllegalArgumentException e) {

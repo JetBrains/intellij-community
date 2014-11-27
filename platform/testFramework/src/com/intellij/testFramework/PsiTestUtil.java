@@ -262,6 +262,12 @@ public class PsiTestUtil {
     Assert.assertEquals(reparsedTree, originalTree);
   }
 
+  public static void addLibrary(final Module module, final String libPath) {
+    File file = new File(libPath);
+    String libName = file.getName();
+    addLibrary(module, libName, file.getParent(), libName);
+  }
+
   public static void addLibrary(final Module module, final String libName, final String libPath, final String... jarArr) {
     ModuleRootModificationUtil.updateModel(module, new Consumer<ModifiableRootModel>() {
       @Override

@@ -84,7 +84,6 @@ public class EditorSettingsManager extends FileDocumentManagerAdapter {
       }
       else {
         file.putUserData(userDataKey, data);
-        Utils.appliedConfigMessage(myProject, configValue, editorConfigKey, file.getCanonicalPath());
       }
     }
   }

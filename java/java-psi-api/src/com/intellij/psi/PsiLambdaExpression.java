@@ -46,6 +46,4 @@ public interface PsiLambdaExpression extends PsiFunctionalExpression {
    * @return true when lambda declares parameter types explicitly
    */
   boolean hasFormalParameterTypes();
-
-  boolean isAcceptable(PsiType leftType, boolean checkReturnType);
 }

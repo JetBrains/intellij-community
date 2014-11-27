@@ -88,15 +88,15 @@ public class RepositoryNode extends CheckedTreeNode implements EditableTreeNode,
         renderer.appendFixedTextFragmentWidth(myRepositoryPanel.calculateRendererShiftH(renderer));
       }
     }
-    renderer.append(getRepoName(renderer, repoFixedWidth),
-                    isChecked() ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.GRAY_ATTRIBUTES);
+    SimpleTextAttributes repositoryDetailsTextAttributes = PushLogTreeUtil
+      .addTransparencyIfNeeded(SimpleTextAttributes.REGULAR_ATTRIBUTES, isChecked());
+
+    renderer.append(getRepoName(renderer, repoFixedWidth), repositoryDetailsTextAttributes);
     renderer.appendFixedTextFragmentWidth(repoFixedWidth);
-    renderer.append(myRepositoryPanel.getSourceName(),
-                    isChecked() ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.GRAY_ATTRIBUTES);
-    renderer
-      .append(myRepositoryPanel.getArrow(), isChecked() ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.GRAY_ATTRIBUTES);
+    renderer.append(myRepositoryPanel.getSourceName(), repositoryDetailsTextAttributes);
+    renderer.append(myRepositoryPanel.getArrow(), repositoryDetailsTextAttributes);
     PushTargetPanel pushTargetPanel = myRepositoryPanel.getTargetPanel();
-    pushTargetPanel.render(renderer, renderer.getTree().isPathSelected(TreeUtil.getPathFromRoot(this)));
+    pushTargetPanel.render(renderer, renderer.getTree().isPathSelected(TreeUtil.getPathFromRoot(this)), isChecked());
 
     int maxSize = Math.max(myRepositoryPanel.getCheckBoxHeight(), myLoadingIcon.getIconHeight());
     int rendererHeight = renderer.getPreferredSize().height;

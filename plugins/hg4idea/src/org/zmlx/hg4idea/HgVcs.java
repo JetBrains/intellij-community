@@ -112,7 +112,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   private HgIncomingOutgoingWidget myOutgoingWidget;
   @NotNull private HgVersion myVersion = HgVersion.NULL;  // version of Hg which this plugin uses.
 
-  public HgVcs(Project project,
+  public HgVcs(@NotNull Project project,
                @NotNull HgGlobalSettings globalSettings,
                @NotNull HgProjectSettings projectSettings,
                ProjectLevelVcsManager vcsManager) {

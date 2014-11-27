@@ -27,6 +27,8 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.EditorFactoryAdapter;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.EditorMarkupModel;
+import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Disposer;
@@ -149,6 +151,10 @@ public class EmmetPreviewHint extends LightweightHint implements Disposable {
     EditorFactory editorFactory = EditorFactory.getInstance();
     Document document = editorFactory.createDocument(templateText);
     final EditorEx previewEditor = (EditorEx)editorFactory.createEditor(document, parentEditor.getProject(), fileType, true);
+    MarkupModelEx model = previewEditor.getMarkupModel();
+    if (model instanceof EditorMarkupModel) {
+      ((EditorMarkupModel)model).setErrorStripeVisible(true);
+    }
     final EditorSettings settings = previewEditor.getSettings();
     settings.setLineNumbersShown(false);
     settings.setAdditionalLinesCount(1);

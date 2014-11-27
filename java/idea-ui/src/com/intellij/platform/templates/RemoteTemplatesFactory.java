@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.StreamUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.ProjectTemplatesFactory;
 import com.intellij.util.ArrayUtil;
@@ -92,7 +93,7 @@ public class RemoteTemplatesFactory extends ProjectTemplatesFactory {
     try {
       connection = getConnection(code + "_templates.xml");
       stream = connection.getInputStream();
-      String text = StreamUtil.readText(stream, TemplateModuleBuilder.UTF_8);
+      String text = StreamUtil.readText(stream, CharsetToolkit.UTF8_CHARSET);
       return createFromText(text);
     }
     catch (IOException ex) {  // timeouts, lost connection etc

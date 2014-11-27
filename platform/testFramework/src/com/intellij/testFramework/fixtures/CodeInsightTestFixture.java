@@ -120,7 +120,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * @return the VirtualFile for the copied directory in the test project directory.
    */
   @NotNull
-  VirtualFile copyDirectoryToProject(@NonNls @NotNull String sourceFilePath, @NonNls @NotNull String targetPath);
+  VirtualFile copyDirectoryToProject(@TestDataFile @NonNls @NotNull String sourceFilePath, @NonNls @NotNull String targetPath);
 
   /**
    * Copies a file from the testdata directory to the same relative path in the test project directory.

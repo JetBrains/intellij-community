@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.GitUtil;
 import git4idea.GitVcs;
 import org.jetbrains.annotations.NotNull;
 
@@ -126,7 +125,6 @@ public class GitBinaryHandler extends GitHandler {
       public void processTerminated(int exitCode) {
         if (exitCode != 0 && !isIgnoredErrorCode(exitCode)) {
           Charset cs = getCharset();
-          cs = cs == null ? GitUtil.UTF8_CHARSET : cs;
           String message = new String(myStderr.toByteArray(), cs);
           if (message.length() == 0) {
             //noinspection ThrowableResultOfMethodCallIgnored

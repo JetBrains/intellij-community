@@ -50,7 +50,11 @@ public class SimpleJavaBlock extends AbstractJavaBlock {
   @Override
   protected List<Block> buildChildren() {
     ASTNode child = myNode.getFirstChildNode();
-    int offset = myStartOffset != -1 ? myStartOffset : child != null ? child.getTextRange().getStartOffset():0;
+    int offset = myStartOffset;
+    if (offset == -1) {
+      offset = child != null ? child.getTextRange().getStartOffset() : 0;
+    }
+
     final ArrayList<Block> result = new ArrayList<Block>();
 
     Indent indent = null;
@@ -71,11 +75,9 @@ public class SimpleJavaBlock extends AbstractJavaBlock {
     myReservedAlignment2 = createChildAlignment2(myReservedAlignment);
     Wrap childWrap = createChildWrap();
     while (child != null) {
-      if (!FormatterUtil.containsWhiteSpacesOnly(child) && child.getTextLength() > 0){
+      if (isNotEmptyNode(child)) {
         final ASTNode astNode = child;
-        AlignmentStrategy alignmentStrategyToUse = ALIGN_IN_COLUMNS_ELEMENT_TYPES.contains(myNode.getElementType())
-          ? myAlignmentStrategy
-          : AlignmentStrategy.wrap(chooseAlignment(myReservedAlignment, myReservedAlignment2, child));
+        AlignmentStrategy alignmentStrategyToUse = getAlignmentStrategy(child);
         child = processChild(result, astNode, alignmentStrategyToUse, childWrap, indent, offset);
         if (astNode != child && child != null) {
           offset = child.getTextRange().getStartOffset();
@@ -86,6 +88,7 @@ public class SimpleJavaBlock extends AbstractJavaBlock {
           indent = Indent.getContinuationIndent(myIndentSettings.USE_RELATIVE_INDENTS);
         }
       }
+
       if (child != null) {
         offset += child.getTextLength();
         child = child.getTreeNext();
@@ -93,6 +96,16 @@ public class SimpleJavaBlock extends AbstractJavaBlock {
     }
 
     return result;
+  }
+
+  private AlignmentStrategy getAlignmentStrategy(ASTNode child) {
+    return ALIGN_IN_COLUMNS_ELEMENT_TYPES.contains(myNode.getElementType())
+           ? myAlignmentStrategy
+           : AlignmentStrategy.wrap(chooseAlignment(myReservedAlignment, myReservedAlignment2, child));
+  }
+
+  private boolean isNotEmptyNode(@NotNull ASTNode child) {
+    return !FormatterUtil.containsWhiteSpacesOnly(child) && child.getTextLength() > 0;
   }
 
   @Override

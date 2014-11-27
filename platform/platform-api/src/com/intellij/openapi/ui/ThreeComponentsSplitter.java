@@ -37,7 +37,7 @@ import java.awt.event.MouseEvent;
  * @author Vladimir Kondratyev
  */
 public class ThreeComponentsSplitter extends JPanel implements Disposable {
-  public static final int MIN_SIZE = 48;
+  public static final int MIN_SIZE = 0;
 
   private int myDividerWidth;
   /**
@@ -63,8 +63,8 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
   @Nullable private JComponent myInnerComponent;
   @Nullable private JComponent myLastComponent;
 
-  private int myFirstSize = 10;
-  private int myLastSize = 10;
+  private int myFirstSize = 0;
+  private int myLastSize = 0;
 
   private boolean myShowDividerControls;
   private int myDividerZone;

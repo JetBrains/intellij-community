@@ -108,7 +108,14 @@ public class WeakestTypeFinder {
         referenceParent = referenceElement.getParent();
       }
       final PsiElement referenceGrandParent = referenceParent.getParent();
-      if (referenceParent instanceof PsiExpressionList) {
+      if (reference instanceof PsiMethodReferenceExpression) {
+        final PsiMethodReferenceExpression methodReferenceExpression = (PsiMethodReferenceExpression)reference;
+        final PsiType type = methodReferenceExpression.getFunctionalInterfaceType();
+        final PsiType returnType = LambdaUtil.getFunctionalInterfaceReturnType(type);
+        if (!PsiType.VOID.equals(returnType) && !checkType(returnType, weakestTypeClasses)) {
+          return Collections.emptyList();
+        }
+      } else if (referenceParent instanceof PsiExpressionList) {
         if (!(referenceGrandParent instanceof PsiMethodCallExpression)) {
           return Collections.emptyList();
         }
@@ -186,7 +193,7 @@ public class WeakestTypeFinder {
         if (referenceElement.equals(condition)) {
           return Collections.emptyList();
         }
-        final PsiType type = ExpectedTypeUtils.findExpectedType( conditionalExpression, true);
+        final PsiType type = ExpectedTypeUtils.findExpectedType(conditionalExpression, true);
         if (!checkType(type, weakestTypeClasses)) {
           return Collections.emptyList();
         }

@@ -50,9 +50,8 @@ public class MethodReferenceCompletionProvider extends CompletionProvider<Comple
           final PsiElement position = parameters.getPosition();
           final PsiElement refPlace = position.getParent();
           final ExpectedTypeInfoImpl typeInfo =
-            new ExpectedTypeInfoImpl(returnType, ExpectedTypeInfo.TYPE_OR_SUBTYPE, returnType, TailType.UNKNOWN, null,
-                                     ExpectedTypeInfoImpl.NULL);
-          final Map<PsiMethodReferenceExpression, PsiType> map = PsiMethodReferenceUtil.getFunctionalTypeMap();
+            new ExpectedTypeInfoImpl(returnType, ExpectedTypeInfo.TYPE_OR_SUBTYPE, returnType, TailType.UNKNOWN, null, ExpectedTypeInfoImpl.NULL);
+          final Map<PsiElement, PsiType> map = LambdaUtil.getFunctionalTypeMap();
           Consumer<LookupElement> noTypeCheck = new Consumer<LookupElement>() {
             @Override
             public void consume(final LookupElement lookupElement) {

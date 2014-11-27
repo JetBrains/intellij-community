@@ -25,19 +25,16 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.refactoring.JavaRefactoringFactory;
-import com.intellij.refactoring.JavaRefactoringSettings;
-import com.intellij.refactoring.MoveDestination;
-import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.*;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveHandler;
+import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -54,7 +51,7 @@ import java.util.Set;
 /**
  * @author ven
  */
-public class MoveClassesOrPackagesToNewDirectoryDialog extends DialogWrapper {
+public class MoveClassesOrPackagesToNewDirectoryDialog extends RefactoringDialog {
   private static final Logger LOG = Logger.getInstance("com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesToNewDirectoryDialog");
 
   private final PsiDirectory myDirectory;
@@ -69,7 +66,7 @@ public class MoveClassesOrPackagesToNewDirectoryDialog extends DialogWrapper {
   public MoveClassesOrPackagesToNewDirectoryDialog(@NotNull final PsiDirectory directory, PsiElement[] elementsToMove,
                                                    boolean canShowPreserveSourceRoots,
                                                    final MoveCallback moveCallback) {
-    super(false);
+    super(directory.getProject(), false);
     setTitle(MoveHandler.REFACTORING_NAME);
     myDirectory = directory;
     myElementsToMove = elementsToMove;
@@ -149,7 +146,8 @@ public class MoveClassesOrPackagesToNewDirectoryDialog extends DialogWrapper {
     return myRootPanel;
   }
 
-  protected void doOKAction() {
+  @Override
+  protected void doAction() {
     final String path = FileUtil.toSystemIndependentName(myDestDirectoryField.getText());
     final Project project = myDirectory.getProject();
     PsiDirectory directory = ApplicationManager.getApplication().runWriteAction(new Computable<PsiDirectory>() {
@@ -169,7 +167,6 @@ public class MoveClassesOrPackagesToNewDirectoryDialog extends DialogWrapper {
       return;
     }
 
-    super.doOKAction();
     final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);
     if (aPackage == null) {
       Messages.showErrorDialog(project, RefactoringBundle.message("destination.directory.does.not.correspond.to.any.package"),
@@ -182,8 +179,7 @@ public class MoveClassesOrPackagesToNewDirectoryDialog extends DialogWrapper {
     final boolean searchForTextOccurences = isSearchInNonJavaFiles();
     refactoringSettings.MOVE_SEARCH_IN_COMMENTS = searchInComments;
     refactoringSettings.MOVE_SEARCH_FOR_TEXT = searchForTextOccurences;
-
-    performRefactoring(project, directory, aPackage, searchInComments, searchForTextOccurences);
+    invokeRefactoring(createRefactoringProcessor(project, directory, aPackage, searchInComments, searchForTextOccurences));
   }
 
   @Override
@@ -204,14 +200,16 @@ public class MoveClassesOrPackagesToNewDirectoryDialog extends DialogWrapper {
         searchInComments, searchInNonJavaFiles, moveCallback);
   }
 
-  protected void performRefactoring(Project project, PsiDirectory directory, PsiPackage aPackage,
-                                    boolean searchInComments,
-                                    boolean searchForTextOccurences) {
+  protected BaseRefactoringProcessor createRefactoringProcessor(Project project,
+                                                                PsiDirectory directory,
+                                                                PsiPackage aPackage,
+                                                                boolean searchInComments,
+                                                                boolean searchForTextOccurences) {
     final VirtualFile sourceRoot = ProjectRootManager.getInstance(project).getFileIndex().getSourceRootForFile(directory.getVirtualFile());
     if (sourceRoot == null) {
       Messages.showErrorDialog(project, RefactoringBundle.message("destination.directory.does.not.correspond.to.any.package"),
                                RefactoringBundle.message("cannot.move"));
-      return;
+      return null;
     }
     final JavaRefactoringFactory factory = JavaRefactoringFactory.getInstance(project);
     final MoveDestination destination = myPreserveSourceRoot.isSelected() && myPreserveSourceRoot.isVisible()
@@ -222,14 +220,9 @@ public class MoveClassesOrPackagesToNewDirectoryDialog extends DialogWrapper {
         searchInComments, searchForTextOccurences, myMoveCallback);
 
     if (processor.verifyValidPackageName()) {
-      processor.setPrepareSuccessfulSwingThreadCallback(new Runnable() {
-        @Override
-        public void run() {
-        }
-      });
-
-      processor.run();
+      return processor;
     }
+    return null;
   }
 }
 

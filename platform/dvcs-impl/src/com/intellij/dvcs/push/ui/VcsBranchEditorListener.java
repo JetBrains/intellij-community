@@ -28,7 +28,7 @@ import java.awt.event.MouseEvent;
 
 public class VcsBranchEditorListener extends LinkMouseListenerBase {
 
-  private static final Logger LOGGER = Logger.getInstance(VcsBranchEditorListener.class);
+  private static final Logger LOG = Logger.getInstance(VcsBranchEditorListener.class);
   private final CheckboxTree.CheckboxTreeCellRenderer myRenderer;
   private VcsLinkedTextComponent myUnderlined;
 
@@ -74,7 +74,7 @@ public class VcsBranchEditorListener extends LinkMouseListenerBase {
       if (path == null) return; //path could not be null if tag not null; see com.intellij.dvcs.push.ui.PushLogTreeUtil.getTagAtForRenderer
       Object node = path.getLastPathComponent();
       if (node == null || (!(node instanceof DefaultMutableTreeNode))) {
-        LOGGER.warn("Incorrect last path component: " + node);
+        LOG.warn("Incorrect last path component: " + node);
         return;
       }
       textWithLink.fireOnClick((DefaultMutableTreeNode)node, event);

@@ -25,6 +25,7 @@ import com.intellij.vcs.log.VcsFullCommitDetails;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreeNode;
 
 public class CommitNode extends DefaultMutableTreeNode implements CustomRenderedTreeNode, TooltipNode {
 
@@ -43,7 +44,10 @@ public class CommitNode extends DefaultMutableTreeNode implements CustomRendered
   @Override
   public void render(@NotNull ColoredTreeCellRenderer renderer) {
     renderer.append("   ");
-    new IssueLinkRenderer(myProject, renderer).appendTextWithLinks(getUserObject().getSubject(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    TreeNode parent = getParent();
+    new IssueLinkRenderer(myProject, renderer).appendTextWithLinks(getUserObject().getSubject(), PushLogTreeUtil
+      .addTransparencyIfNeeded(SimpleTextAttributes.REGULAR_ATTRIBUTES,
+                               !(parent instanceof RepositoryNode) || ((RepositoryNode)parent).isChecked()));
   }
 
   public String getTooltip() {

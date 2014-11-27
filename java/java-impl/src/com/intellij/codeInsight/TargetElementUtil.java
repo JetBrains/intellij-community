@@ -99,6 +99,15 @@ public class TargetElementUtil extends TargetElementUtilBase {
       if (ref instanceof PsiJavaReference) {
         refElement = ((PsiJavaReference)ref).advancedResolve(true).getElement();
       }
+      else if (ref == null) {
+        final PsiElement element = file.findElementAt(offset);
+        if (element != null) {
+          final PsiElement parent = element.getParent();
+          if (parent instanceof PsiFunctionalExpression) {
+            refElement = PsiUtil.resolveClassInType(((PsiFunctionalExpression)parent).getFunctionalInterfaceType());
+          }
+        } 
+      }
     }
 
     if (refElement != null) {

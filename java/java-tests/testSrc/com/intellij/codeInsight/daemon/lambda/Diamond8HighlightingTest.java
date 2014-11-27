@@ -23,6 +23,10 @@ import org.jetbrains.annotations.NonNls;
 public class Diamond8HighlightingTest extends LightDaemonAnalyzerTestCase {
   @NonNls static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/diamond";
 
+  public void testAvoidClassRefCachingDuringInference() throws Exception {
+    doTest();
+  }
+
   public void testIDEA97294() throws Exception {
     doTest();
   }

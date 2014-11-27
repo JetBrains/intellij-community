@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
+import com.intellij.execution.filters.LineNumbersMapping;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
@@ -143,11 +144,11 @@ public class PositionManagerImpl implements PositionManager {
     if (lineNumber > -1) {
       VirtualFile file = psiFile.getVirtualFile();
       if (file != null) {
-        int[] data = file.getUserData(LINE_NUMBERS_MAPPING_KEY);
-        if (data != null) {
-          int line = mapLine(lineNumber+1, data);
+        LineNumbersMapping mapping = file.getUserData(LineNumbersMapping.LINE_NUMBERS_MAPPING_KEY);
+        if (mapping != null) {
+          int line = mapping.bytecodeToSource(lineNumber + 1);
           if (line > -1) {
-            return SourcePosition.createFromLine(psiFile, line-1);
+            return SourcePosition.createFromLine(psiFile, line - 1);
           }
         }
       }

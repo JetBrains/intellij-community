@@ -112,16 +112,20 @@ public class DuplocatorHashCallback implements FragmentsCollector {
       PsiFragment aFrag = fi.get(0);
 
       if (aFrag.isEqual(elements, discardCost)) {
-        boolean skip = false;
+        boolean skipNew = false;
 
-        for (Iterator<PsiFragment> frags = fi.iterator(); frags.hasNext() && !skip; ) {
-          skip = frag.intersectsWith(frags.next());
-          if (skip) {
-            frags.remove();
+        for (Iterator<PsiFragment> frags = fi.iterator(); frags.hasNext() && !skipNew; ) {
+          final PsiFragment old = frags.next();
+          if (frag.intersectsWith(old)) {
+            if (old.getCost() < frag.getCost() || frag.contains(old)) {
+              frags.remove();
+            } else {
+              skipNew = true;
+            }
           }
         }
 
-        fi.add(frag);
+        if (!skipNew) fi.add(frag);
 
         found = true;
       }

@@ -114,6 +114,7 @@ DONT_TRACE = {
               'queue.py':1,
               'socket.py':1,
               'weakref.py':1,
+              '_weakrefset.py':1,
               'linecache.py':1,
               'threading.py':1,
 

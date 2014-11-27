@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -177,7 +178,7 @@ public class SaveProjectAsTemplateAction extends AnAction {
                 public InputStream getContent(final File file) throws IOException {
                   if (virtualFile.getFileType().isBinary() || PROJECT_TEMPLATE_XML.equals(virtualFile.getName())) return STANDARD.getContent(file);
                   String result = getEncodedContent(virtualFile, project, parameters);
-                  return new ByteArrayInputStream(result.getBytes(TemplateModuleBuilder.UTF_8));
+                  return new ByteArrayInputStream(result.getBytes(CharsetToolkit.UTF8_CHARSET));
                 }
               });
             }

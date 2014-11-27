@@ -57,13 +57,11 @@ public class TreeUtil {
   public static void ensureParsedRecursively(@NotNull ASTNode node) {
     ((TreeElement)node).acceptTree(new RecursiveTreeElementWalkingVisitor() { });
   }
-  public static void ensureParsedRecursivelyCheckingProgress(@NotNull ASTNode node, final ProgressIndicator indicator) {
+  public static void ensureParsedRecursivelyCheckingProgress(@NotNull ASTNode node, @NotNull final ProgressIndicator indicator) {
     ((TreeElement)node).acceptTree(new RecursiveTreeElementWalkingVisitor() {
       @Override
       public void visitLeaf(LeafElement leaf) {
-        if (indicator != null) {
-          indicator.checkCanceled();
-        }
+        indicator.checkCanceled();
       }
     });
   }

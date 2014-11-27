@@ -164,7 +164,7 @@ public class StudyDirectoryProjectGenerator extends PythonProjectGenerator imple
       Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
       final Course course = gson.fromJson(reader, Course.class);
       course.init(false);
-      course.create(baseDir, new File(mySelectedCourseFile.getParent()));
+      course.create(baseDir, new File(mySelectedCourseFile.getParent()), project);
       course.setResourcePath(mySelectedCourseFile.getAbsolutePath());
       VirtualFileManager.getInstance().refreshWithoutFileWatcher(true);
       StudyTaskManager.getInstance(project).setCourse(course);

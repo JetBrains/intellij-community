@@ -21,6 +21,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
+import com.intellij.notification.NotificationsManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -171,6 +172,11 @@ public class PyPackageManagerUI {
     protected abstract String getFailureTitle();
 
     protected void taskStarted(@NotNull ProgressIndicator indicator) {
+      final PackagingNotification[] notifications =
+        NotificationsManager.getNotificationsManager().getNotificationsOfType(PackagingNotification.class, getProject());
+      for (PackagingNotification notification : notifications) {
+        notification.expire();
+      }
       indicator.setText(getTitle() + "...");
       if (myListener != null) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -185,8 +191,8 @@ public class PyPackageManagerUI {
     protected void taskFinished(@NotNull final List<ExecutionException> exceptions) {
       final Ref<Notification> notificationRef = new Ref<Notification>(null);
       if (exceptions.isEmpty()) {
-        notificationRef.set(new Notification(PACKAGING_GROUP_ID, getSuccessTitle(), getSuccessDescription(),
-                                             NotificationType.INFORMATION));
+        notificationRef.set(new PackagingNotification(PACKAGING_GROUP_ID, getSuccessTitle(), getSuccessDescription(),
+                                                             NotificationType.INFORMATION, null));
       }
       else {
         final PackageManagementService.ErrorDescription description = PyPackageManagementService.toErrorDescription(exceptions, mySdk);
@@ -201,7 +207,7 @@ public class PyPackageManagerUI {
               PackagesNotificationPanel.showError(title, description);
             }
           };
-          notificationRef.set(new Notification(PACKAGING_GROUP_ID, getFailureTitle(), firstLine + " <a href=\"xxx\">Details...</a>",
+          notificationRef.set(new PackagingNotification(PACKAGING_GROUP_ID, getFailureTitle(), firstLine + " <a href=\"xxx\">Details...</a>",
                                                NotificationType.ERROR, listener));
         }
       }
@@ -217,6 +223,16 @@ public class PyPackageManagerUI {
           }
         }
       });
+    }
+
+    private static class PackagingNotification extends Notification{
+
+      public PackagingNotification(@NotNull String groupDisplayId,
+                                   @NotNull String title,
+                                   @NotNull String content,
+                                   @NotNull NotificationType type, @Nullable NotificationListener listener) {
+        super(groupDisplayId, title, content, type, listener);
+      }
     }
   }
 
@@ -251,7 +267,7 @@ public class PyPackageManagerUI {
           indicator.setFraction((double)i / size);
         }
         try {
-          manager.install(Arrays.asList(requirement), myExtraArgs);
+          manager.install(Collections.singletonList(requirement), myExtraArgs);
         }
         catch (RunCanceledByUserException e) {
           exceptions.add(e);
@@ -334,10 +350,10 @@ public class PyPackageManagerUI {
       indicator.setIndeterminate(true);
       try {
         manager.uninstall(myPackages);
-        return Arrays.asList();
+        return Collections.emptyList();
       }
       catch (ExecutionException e) {
-        return Arrays.asList(e);
+        return Collections.singletonList(e);
       }
       finally {
         manager.refresh();

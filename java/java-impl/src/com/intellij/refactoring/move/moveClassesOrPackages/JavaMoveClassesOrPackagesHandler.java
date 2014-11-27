@@ -32,6 +32,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.file.JavaDirectoryServiceImpl;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.MoveCallback;
@@ -215,11 +216,11 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
       final MoveClassesOrPackagesToNewDirectoryDialog dlg =
         new MoveClassesOrPackagesToNewDirectoryDialog(directories[0], new PsiElement[0], false, callback) {
           @Override
-          protected void performRefactoring(Project project,
-                                            final PsiDirectory targetDirectory,
-                                            PsiPackage aPackage,
-                                            boolean searchInComments,
-                                            boolean searchForTextOccurences) {
+          protected BaseRefactoringProcessor createRefactoringProcessor(Project project,
+                                                                        final PsiDirectory targetDirectory,
+                                                                        PsiPackage aPackage,
+                                                                        boolean searchInComments,
+                                                                        boolean searchForTextOccurences) {
             try {
               for (PsiDirectory dir: directories) {
                 MoveFilesOrDirectoriesUtil.checkIfMoveIntoSelf(dir, targetDirectory);
@@ -227,17 +228,9 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
             }
             catch (IncorrectOperationException e) {
               Messages.showErrorDialog(project, e.getMessage(), RefactoringBundle.message("cannot.move"));
-              return;
+              return null;
             }
-            final MoveDirectoryWithClassesProcessor processor =
-              new MoveDirectoryWithClassesProcessor(project, directories, targetDirectory, searchInComments, searchForTextOccurences,
-                                                    true, callback);
-            processor.setPrepareSuccessfulSwingThreadCallback(new Runnable() {
-              @Override
-              public void run() {
-              }
-            });
-            processor.run();
+            return new MoveDirectoryWithClassesProcessor(project, directories, targetDirectory, searchInComments, searchForTextOccurences, true, callback);
           }
         };
       dlg.show();

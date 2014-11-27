@@ -15,11 +15,14 @@
  */
 package org.jetbrains.idea.maven.compiler;
 
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 
 import java.util.Arrays;
@@ -520,7 +523,7 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
   }
 
   public void testUpdatingWhenPropertiesInFiltersAreChanged() throws Exception {
-    VirtualFile filter = createProjectSubFile("filters/filter.properties", "xxx=1");
+    final VirtualFile filter = createProjectSubFile("filters/filter.properties", "xxx=1");
     createProjectSubFile("resources/file.properties", "value=${xxx}");
 
     importProject("<groupId>test</groupId>" +
@@ -541,7 +544,12 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
     compileModules("project");
     assertResult("target/classes/file.properties", "value=1");
 
-    VfsUtil.saveText(filter, "xxx=2");
+    new WriteAction() {
+      @Override
+      protected void run(@NotNull Result result) throws Throwable {
+        VfsUtil.saveText(filter, "xxx=2");
+      }
+    }.execute().throwException();
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     compileModules("project");
     assertResult("target/classes/file.properties", "value=2");
@@ -1010,7 +1018,12 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
   public void testDoNotFilterButCopyBigFiles() throws Exception {
     assertEquals(FileTypeManager.getInstance().getFileTypeByFileName("file.xyz"), FileTypes.UNKNOWN);
 
-    createProjectSubFile("resources/file.xyz").setBinaryContent(new byte[1024 * 1024 * 20]);
+    new WriteAction() {
+      @Override
+      protected void run(@NotNull Result result) throws Throwable {
+        createProjectSubFile("resources/file.xyz").setBinaryContent(new byte[1024 * 1024 * 20]);
+      }
+    }.execute().throwException();
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +

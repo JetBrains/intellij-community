@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,10 +28,7 @@ import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Segment;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.reference.SoftReference;
@@ -45,6 +42,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.lang.ref.Reference;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -84,10 +82,10 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
     myUsageInfo = usageInfo;
     myMergedUsageInfos = usageInfo;
 
-    Pair<Integer,Integer> data =
-    ApplicationManager.getApplication().runReadAction(new Computable<Pair<Integer,Integer>>() {
+    Point data =
+    ApplicationManager.getApplication().runReadAction(new Computable<Point>() {
       @Override
-      public Pair<Integer, Integer> compute() {
+      public Point compute() {
         PsiElement element = getElement();
         PsiFile psiFile = usageInfo.getFile();
         Document document = psiFile == null ? null : PsiDocumentManager.getInstance(getProject()).getDocument(psiFile);
@@ -110,11 +108,11 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
             lineNumber = getLineNumber(document, startOffset);
           }
         }
-        return Pair.create(offset, lineNumber);
+        return new Point(offset, lineNumber);
       }
     });
-    myOffset = data.first;
-    myLineNumber = data.second;
+    myOffset = data.x;
+    myLineNumber = data.y;
     myModificationStamp = getCurrentModificationStamp();
   }
 
@@ -244,12 +242,16 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
     return canNavigate();
   }
 
-  @Nullable
   private OpenFileDescriptor getDescriptor() {
     VirtualFile file = getFile();
     if(file == null) return null;
-    int offset = getNavigationOffset();
-    return new OpenFileDescriptor(getProject(), file, offset);
+    Segment range = getNavigationRange();
+    if (range != null && file instanceof VirtualFileWindow && range.getStartOffset() >= 0) {
+      // have to use injectedToHost(TextRange) to calculate right offset in case of multiple shreds
+      range = ((VirtualFileWindow)file).getDocumentWindow().injectedToHost(TextRange.create(range));
+      file = ((VirtualFileWindow)file).getDelegate();
+    }
+    return new OpenFileDescriptor(getProject(), file, range == null ? getNavigationOffset() : range.getStartOffset());
   }
 
   int getNavigationOffset() {
@@ -264,11 +266,27 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
     return offset;
   }
 
+  private Segment getNavigationRange() {
+    Document document = getDocument();
+    if (document == null) return null;
+    Segment range = getUsageInfo().getNavigationRange();
+    if (range == null) {
+      ProperTextRange rangeInElement = getUsageInfo().getRangeInElement();
+      range = myOffset < 0 ? new UnfairTextRange(-1,-1) : rangeInElement == null ? TextRange.from(myOffset,1) : rangeInElement.shiftRight(myOffset);
+    }
+    if (range.getEndOffset() >= document.getTextLength()) {
+      int line = Math.max(0, Math.min(myLineNumber, document.getLineCount() - 1));
+      range = TextRange.from(document.getLineStartOffset(line),1);
+    }
+    return range;
+  }
+
   @NotNull
   private Project getProject() {
     return getUsageInfo().getProject();
   }
 
+  @Override
   public String toString() {
     TextChunk[] textChunks = getPresentation().getText();
     StringBuilder result = new StringBuilder();
@@ -493,7 +511,8 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
     return myUsageInfo.getTooltipText();
   }
 
-  public @Nullable UsageType getUsageType() {
+  @Nullable
+  public UsageType getUsageType() {
     UsageType usageType = myUsageType;
 
     if (usageType == null) {
