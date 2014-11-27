@@ -37,6 +37,9 @@ import java.util.Map;
 public class SimpleJavaBlock extends AbstractJavaBlock {
   private final Map<IElementType, Wrap> myReservedWrap = ContainerUtil.newHashMap();
   private int myStartOffset = -1;
+  private int myCurrentOffset;
+  private Indent myCurrentIndent;
+  private ASTNode myCurrentChild;
 
   public SimpleJavaBlock(ASTNode node,
                          Wrap wrap,
@@ -49,53 +52,66 @@ public class SimpleJavaBlock extends AbstractJavaBlock {
 
   @Override
   protected List<Block> buildChildren() {
-    ASTNode child = myNode.getFirstChildNode();
-    int offset = myStartOffset;
-    if (offset == -1) {
-      offset = child != null ? child.getTextRange().getStartOffset() : 0;
+    myCurrentChild = myNode.getFirstChildNode();
+    myCurrentOffset = myStartOffset;
+    if (myCurrentOffset == -1) {
+      myCurrentOffset = myCurrentChild != null ? myCurrentChild.getTextRange().getStartOffset() : 0;
     }
 
-    final ArrayList<Block> result = new ArrayList<Block>();
+    final List<Block> result = new ArrayList<Block>();
 
-    Indent indent = null;
-    while (child != null) {
-      if (StdTokenSets.COMMENT_BIT_SET.contains(child.getElementType()) || child.getElementType() == JavaDocElementType.DOC_COMMENT) {
-        result.add(createJavaBlock(child, mySettings, myJavaSettings, Indent.getNoneIndent(), null, AlignmentStrategy.getNullStrategy()));
-        indent = Indent.getNoneIndent();
-      }
-      else if (!FormatterUtil.containsWhiteSpacesOnly(child)) {
-        break;
-      }
-
-      offset += child.getTextLength();
-      child = child.getTreeNext();
-    }
+    myCurrentIndent = null;
+    processHeadCommentsAndWhiteSpaces(result);
 
     myReservedAlignment = createChildAlignment();
     myReservedAlignment2 = createChildAlignment2(myReservedAlignment);
     Wrap childWrap = createChildWrap();
-    while (child != null) {
-      if (isNotEmptyNode(child)) {
-        final ASTNode astNode = child;
-        AlignmentStrategy alignmentStrategyToUse = getAlignmentStrategy(child);
-        child = processChild(result, astNode, alignmentStrategyToUse, childWrap, indent, offset);
-        if (astNode != child && child != null) {
-          offset = child.getTextRange().getStartOffset();
-        }
-        if (indent != null &&
-            !(myNode.getPsi() instanceof PsiFile) &&
-            child != null && child.getElementType() != JavaElementType.MODIFIER_LIST) {
-          indent = Indent.getContinuationIndent(myIndentSettings.USE_RELATIVE_INDENTS);
-        }
-      }
-
-      if (child != null) {
-        offset += child.getTextLength();
-        child = child.getTreeNext();
-      }
-    }
+    processRemainingChildren(result, childWrap);
 
     return result;
+  }
+
+  private void processRemainingChildren(List<Block> result, Wrap childWrap) {
+    while (myCurrentChild != null) {
+      if (isNotEmptyNode(myCurrentChild)) {
+        final ASTNode astNode = myCurrentChild;
+        AlignmentStrategy alignmentStrategyToUse = getAlignmentStrategy(myCurrentChild);
+        myCurrentChild = processChild(result, astNode, alignmentStrategyToUse, childWrap, myCurrentIndent, myCurrentOffset);
+        if (astNode != myCurrentChild && myCurrentChild != null) {
+          myCurrentOffset = myCurrentChild.getTextRange().getStartOffset();
+        }
+        if (myCurrentIndent != null &&
+            !(myNode.getPsi() instanceof PsiFile) &&
+            myCurrentChild != null && myCurrentChild.getElementType() != JavaElementType.MODIFIER_LIST) {
+          myCurrentIndent = Indent.getContinuationIndent(myIndentSettings.USE_RELATIVE_INDENTS);
+        }
+      }
+
+      if (myCurrentChild != null) {
+        myCurrentOffset += myCurrentChild.getTextLength();
+        myCurrentChild = myCurrentChild.getTreeNext();
+      }
+    }
+  }
+
+  private void processHeadCommentsAndWhiteSpaces(@NotNull List<Block> result) {
+    while (myCurrentChild != null) {
+      if (StdTokenSets.COMMENT_BIT_SET.contains(myCurrentChild.getElementType()) || myCurrentChild.getElementType() == JavaDocElementType.DOC_COMMENT) {
+        Block commentBlock = createJavaBlock(
+          myCurrentChild,
+          mySettings, myJavaSettings,
+          Indent.getNoneIndent(), null, AlignmentStrategy.getNullStrategy()
+        );
+        result.add(commentBlock);
+        myCurrentIndent = Indent.getNoneIndent();
+      }
+      else if (!FormatterUtil.containsWhiteSpacesOnly(myCurrentChild)) {
+        break;
+      }
+
+      myCurrentOffset += myCurrentChild.getTextLength();
+      myCurrentChild = myCurrentChild.getTreeNext();
+    }
   }
 
   private AlignmentStrategy getAlignmentStrategy(ASTNode child) {
