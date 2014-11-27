@@ -88,9 +88,14 @@ public class PyMoveFileHandler extends MoveFileHandler {
           if (!relativeImportBasePath.isEmpty()) {
             //noinspection ConstantConditions
             final String relativeImportBaseUrl = constructUrl(extractProtocol(originalLocation), relativeImportBasePath);
-            VirtualFile sourceFile = getInstance().findFileByUrl(relativeImportBaseUrl);
-            if (sourceFile != null && sourceFile.exists() && statement.getImportSource() != null) {
-              sourceFile = sourceFile.findFileByRelativePath(statement.getImportSource().getText().replace('.', '/'));
+            final VirtualFile relativeImportBaseDir = getInstance().findFileByUrl(relativeImportBaseUrl);
+            VirtualFile sourceFile = relativeImportBaseDir;
+            if (relativeImportBaseDir != null && relativeImportBaseDir.exists() && statement.getImportSource() != null) {
+              final String relativePath = statement.getImportSource().getText().replace('.', '/');
+              sourceFile = relativeImportBaseDir.findFileByRelativePath(relativePath);
+              if (sourceFile == null) {
+                sourceFile = relativeImportBaseDir.findFileByRelativePath(relativePath + PyNames.DOT_PY);
+              }
             }
             if (sourceFile != null) {
               final PsiManager psiManager = file.getManager();
