@@ -1,7 +1,7 @@
 # encoding: utf-8
 # module __builtin__
 # from (built-in)
-# by generator 1.135
+# by generator 1.136
 from __future__ import print_function
 """
 Built-in functions, exceptions, and other objects.
@@ -266,7 +266,7 @@ def hash(p_object): # real signature unknown; restored from __doc__
 
 def help(with_a_twist): # real signature unknown; restored from __doc__
     """
-    Define the builtin 'help'.
+    Define the built-in 'help'.
         This is a wrapper around pydoc.help (with a twist).
     """
     pass
@@ -766,8 +766,6 @@ class object:
     __module__ = ''
 
 
-from object import object
-
 class basestring(object):
     """ Type basestring cannot be instantiated; it is the base for str and unicode. """
     def __init__(self, *args, **kwargs): # real signature unknown
@@ -778,8 +776,6 @@ class basestring(object):
         """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
         pass
 
-
-from object import object
 
 class int(object):
     """
@@ -1043,8 +1039,6 @@ class int(object):
 
 
 
-from int import int
-
 class bool(int):
     """
     bool(x) -> bool
@@ -1093,8 +1087,6 @@ class bool(int):
         """ x.__xor__(y) <==> x^y """
         pass
 
-
-from object import object
 
 class buffer(object):
     """
@@ -1185,8 +1177,6 @@ class buffer(object):
         """ x.__str__() <==> str(x) """
         pass
 
-
-from object import object
 
 class bytearray(object):
     """
@@ -1740,8 +1730,6 @@ class bytearray(object):
         pass
 
 
-from basestring import basestring
-
 class str(basestring):
     """
     str(object='') -> string
@@ -2246,8 +2234,6 @@ class str(basestring):
 bytes = str
 
 
-from object import object
-
 class classmethod(object):
     """
     classmethod(function) -> method
@@ -2289,8 +2275,6 @@ class classmethod(object):
     __func__ = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
 
 
-
-from object import object
 
 class complex(object):
     """
@@ -2484,8 +2468,6 @@ class complex(object):
 
 
 
-from object import object
-
 class dict(object):
     """
     dict() -> new empty dictionary
@@ -2672,8 +2654,6 @@ class dict(object):
     __hash__ = None
 
 
-from object import object
-
 class enumerate(object):
     """
     enumerate(iterable[, start]) -> iterator for index, value of iterable
@@ -2705,8 +2685,6 @@ class enumerate(object):
         """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
         pass
 
-
-from object import object
 
 class file(object):
     """
@@ -2923,8 +2901,6 @@ class file(object):
     """
 
 
-
-from object import object
 
 class float(object):
     """
@@ -3185,8 +3161,6 @@ class float(object):
 
 
 
-from object import object
-
 class frozenset(object):
     """
     frozenset() -> empty frozenset object
@@ -3343,8 +3317,6 @@ class frozenset(object):
         """ x.__xor__(y) <==> x^y """
         pass
 
-
-from object import object
 
 class list(object):
     """
@@ -3522,8 +3494,6 @@ class list(object):
 
     __hash__ = None
 
-
-from object import object
 
 class long(object):
     """
@@ -3773,8 +3743,6 @@ class long(object):
 
 
 
-from object import object
-
 class memoryview(object):
     """
     memoryview(object)
@@ -3858,8 +3826,6 @@ class memoryview(object):
     suboffsets = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
 
 
-
-from object import object
 
 class property(object):
     """
@@ -3962,8 +3928,6 @@ class property(object):
 
 
 
-from object import object
-
 class reversed(object):
     """
     reversed(sequence) -> reverse iterator over values of the sequence
@@ -3994,8 +3958,6 @@ class reversed(object):
         """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
         pass
 
-
-from object import object
 
 class set(object):
     """
@@ -4225,8 +4187,6 @@ class set(object):
     __hash__ = None
 
 
-from object import object
-
 class slice(object):
     """
     slice(stop)
@@ -4284,8 +4244,6 @@ class slice(object):
 
 
 
-from object import object
-
 class staticmethod(object):
     """
     staticmethod(function) -> method
@@ -4324,8 +4282,6 @@ class staticmethod(object):
     __func__ = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
 
 
-
-from object import object
 
 class super(object):
     """
@@ -4386,8 +4342,6 @@ class super(object):
     """
 
 
-
-from object import object
 
 class tuple(object):
     """
@@ -4502,8 +4456,6 @@ class tuple(object):
         pass
 
 
-from object import object
-
 class type(object):
     """
     type(object) -> the object's type
@@ -4614,8 +4566,6 @@ class type(object):
     __name__ = 'type'
     __weakrefoffset__ = 368
 
-
-from basestring import basestring
 
 class unicode(basestring):
     """
@@ -5138,8 +5088,6 @@ class unicode(basestring):
         """ x.__str__() <==> str(x) """
         pass
 
-
-from object import object
 
 class xrange(object):
     """
