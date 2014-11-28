@@ -41,6 +41,7 @@ import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.inCallers.JavaCallerChooser;
 import com.intellij.refactoring.safeDelete.usageInfo.*;
+import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.usageView.UsageInfo;
@@ -747,7 +748,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
         PsiElement element = reference.getElement();
         if (element != null) {
           JavaSafeDeleteDelegate.EP.forLanguage(element.getLanguage()).createUsageInfoForParameter(reference, usages, parameter, method);
-          if (!parameter.isVarArgs()) {
+          if (!parameter.isVarArgs() && !RefactoringChangeUtil.isSuperMethodCall(element.getParent())) {
             final PsiParameter paramInCaller = SafeDeleteJavaCallerChooser.isTheOnlyOneParameterUsage(element.getParent(), parameterIndex, method);
             if (paramInCaller != null) {
               final PsiMethod callerMethod = (PsiMethod)paramInCaller.getDeclarationScope();
