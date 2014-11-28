@@ -322,7 +322,9 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
   }
 
   public void applyFiltersAndUpdateUi() {
-    myFilterer.onFiltersChange(myMainFrame.getFilterUi().getFilters());
+    VcsLogFilterCollection filters = myMainFrame.getFilterUi().getFilters();
+    myFilterer.onFiltersChange(filters);
+    myMainFrame.onFiltersChange(filters);
   }
 
   @NotNull

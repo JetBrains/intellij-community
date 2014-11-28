@@ -44,6 +44,7 @@ public class BranchesPanel extends JPanel {
 
   private List<RefGroup> myRefGroups;
   private final RefPainter myRefPainter;
+  @Nullable private Collection<VirtualFile> myRoots = null;
 
   private Map<Integer, RefGroup> myRefPositions = ContainerUtil.newHashMap();
 
@@ -107,10 +108,13 @@ public class BranchesPanel extends JPanel {
     int paddingX = 0;
     for (RefGroup group : myRefGroups) {
       // TODO it is assumed here that all refs in a single group belong to a single root
-      Color rootIndicatorColor = myUI.getColorManager().getRootColor(group.getRefs().iterator().next().getRoot());
-      Rectangle rectangle = myRefPainter.drawLabel((Graphics2D)g, group.getName(), paddingX, group.getBgColor(), rootIndicatorColor);
-      paddingX += rectangle.width + UIUtil.DEFAULT_HGAP;
-      myRefPositions.put(rectangle.x, group);
+      VirtualFile root = group.getRefs().iterator().next().getRoot();
+      if (myRoots == null || myRoots.contains(root)) {
+        Color rootIndicatorColor = myUI.getColorManager().getRootColor(root);
+        Rectangle rectangle = myRefPainter.drawLabel((Graphics2D)g, group.getName(), paddingX, group.getBgColor(), rootIndicatorColor);
+        paddingX += rectangle.width + UIUtil.DEFAULT_HGAP;
+        myRefPositions.put(rectangle.x, group);
+      }
     }
   }
 
@@ -151,6 +155,17 @@ public class BranchesPanel extends JPanel {
       }
     }
     return groups;
+  }
+
+  public void onFiltersChange(@NotNull VcsLogFilterCollection filters) {
+    VcsLogStructureFilter structureFilter = filters.getStructureFilter();
+    if (structureFilter != null) {
+      myRoots = structureFilter.getRoots();
+    }
+    else {
+      myRoots = null;
+    }
+    getParent().repaint();
   }
 
   private static class RefPopupComponent extends JPanel {
