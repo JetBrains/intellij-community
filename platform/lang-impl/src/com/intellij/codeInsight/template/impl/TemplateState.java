@@ -126,7 +126,7 @@ public class TemplateState implements Disposable {
 
       @Override
       public void beforeCommandFinished(CommandEvent event) {
-        if (started) {
+        if (started && !isDisposed()) {
           Runnable runnable = new Runnable() {
             @Override
             public void run() {
