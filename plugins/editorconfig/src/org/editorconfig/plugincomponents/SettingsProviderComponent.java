@@ -44,7 +44,7 @@ public class SettingsProviderComponent implements ApplicationComponent {
         final String id = lang.getID();
         // don't add annotator for language twice
         // don't add annotator for languages not having own annotators - they may rely on parent annotators
-        if (languages.contains(id) || (lang.getBaseLanguage() != null && LanguageAnnotators.INSTANCE.forKey(lang).isEmpty())) continue;
+        if (languages.contains(id) || (lang.getBaseLanguage() != null/* && LanguageAnnotators.INSTANCE.forKey(lang).isEmpty()*/)) continue;
         LanguageAnnotators.INSTANCE.addExplicitExtension(lang, annotator);
         languages.add(id);
       }
