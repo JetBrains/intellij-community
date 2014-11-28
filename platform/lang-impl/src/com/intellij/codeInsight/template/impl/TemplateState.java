@@ -333,7 +333,8 @@ public class TemplateState implements Disposable {
       PsiFile file = getPsiFile();
       preprocessTemplate(file, myEditor.getCaretModel().getOffset());
       myPrevTemplate = myTemplate;
-      assert !myTemplate.isInline();
+      LOG.assertTrue(!myTemplate.isInline(),
+                     "current template: " + presentTemplate(myTemplate) + ", previous template: " + presentTemplate(myPrevTemplate));
 
       int caretOffset = myEditor.getCaretModel().getOffset();
       myTemplateRange = myDocument.createRangeMarker(caretOffset, caretOffset);
