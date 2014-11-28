@@ -123,7 +123,11 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
     }
 
     RunProfile runProfile = LangDataKeys.RUN_PROFILE.getData(DataManager.getInstance().getDataContext(tree));
-    return !(runProfile instanceof RunConfiguration && ((RunConfiguration)runProfile).getType().getDisplayName().startsWith("JavaScript"));
+    if (runProfile instanceof RunConfiguration) {
+      String id = ((RunConfiguration)runProfile).getType().getId();
+      return !(id.startsWith("Javascript") || id.startsWith("Node"));
+    }
+    return true;
   }
 
   @Nullable
