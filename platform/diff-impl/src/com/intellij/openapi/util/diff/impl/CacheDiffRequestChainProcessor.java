@@ -187,7 +187,7 @@ public abstract class CacheDiffRequestChainProcessor implements Disposable {
           requestRef[0] = presentable.process(myContext, indicator);
         }
         catch (ProcessCanceledException e) {
-          requestRef[0] = new ErrorDiffRequest(presentable, "Operation Canceled");
+          requestRef[0] = new ErrorDiffRequest(presentable, "Operation Canceled"); // TODO: add reload action
         }
         catch (DiffRequestPresentableException e) {
           requestRef[0] = new ErrorDiffRequest(presentable, e);

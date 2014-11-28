@@ -3,7 +3,6 @@ package com.intellij.openapi.util.diff.impl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffContentUtil;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
@@ -62,6 +61,15 @@ public class DiffContentFactory {
     Document document = FileDocumentManager.getInstance().getDocument(file);
     if (document == null) return null;
     return new FileDocumentContentImpl(project, document, file);
+  }
+
+  @NotNull
+  public static BinaryFileContentImpl createBinary(@Nullable Project project,
+                                                   @NotNull String name,
+                                                   @NotNull String path,
+                                                   @NotNull byte[] content) throws IOException {
+    // TODO: create mock VirtualFile
+    return createTemporalFile(project, name, name, content);
   }
 
   @NotNull
