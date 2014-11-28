@@ -359,6 +359,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
       @Override
       public void saveDescription(@NotNull String description) {
         getSelectedObject().setDescription(description);
+        getSelectedObject().setModified(true);
         myAuxiliaryRightPanel.showDescription(description);
       }
     });
@@ -457,10 +458,6 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
     final InspectionProfileImpl selectedProfile = getSelectedObject();
     final InspectionProfileImpl currentProfile = getCurrentProfile();
     if (!Comparing.equal(selectedProfile.getName(), currentProfile.getName()) || selectedProfile.isProjectLevel() != currentProfile.isProjectLevel()) {
-      return true;
-    }
-
-    if (super.isModified()) {
       return true;
     }
     for (SingleInspectionProfilePanel panel : myPanels.values()) {
