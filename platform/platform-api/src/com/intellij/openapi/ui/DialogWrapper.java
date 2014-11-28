@@ -2006,7 +2006,7 @@ public abstract class DialogWrapper {
    */
   private static void ensureEventDispatchThread() {
     if (!EventQueue.isDispatchThread()) {
-      throw new IllegalStateException("The DialogWrapper can be used only in event dispatch thread. Current thread: "+Thread.currentThread());
+      throw new IllegalStateException("The DialogWrapper can only be used in event dispatch thread. Current thread: "+Thread.currentThread());
     }
   }
 
