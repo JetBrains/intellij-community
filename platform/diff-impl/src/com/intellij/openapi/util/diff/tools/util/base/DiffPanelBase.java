@@ -1,0 +1,139 @@
+package com.intellij.openapi.util.diff.tools.util.base;
+
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.diff.DiffBundle;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.diff.api.DiffTool;
+import com.intellij.openapi.util.diff.comparison.DiffTooBigException;
+import com.intellij.ui.EditorNotificationPanel;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
+import java.awt.*;
+
+public abstract class DiffPanelBase extends JPanel implements DataProvider {
+  @NotNull protected final JPanel CONTENTS_EQUAL_NOTIFICATION =
+    createNotification(DiffBundle.message("diff.contents.are.identical.message.text"));
+  @NotNull protected final JPanel CANT_CALCULATE_DIFF =
+    createNotification("Can not calculate diff");
+  @NotNull protected final JPanel CONTENTS_OPERATION_CANCELED_NOTIFICATION =
+    createNotification("Can not calculate diff. Operation canceled.");
+  @NotNull protected final JPanel CONTENTS_TOO_BIG_NOTIFICATION =
+    createNotification("Can not calculate diff. " + DiffTooBigException.MESSAGE);
+
+  @Nullable protected final Project myProject;
+  @NotNull private final DataProvider myDataProvider;
+  @NotNull protected final DiffTool.DiffContext.DiffWindow myContextWindow;
+
+  @NotNull protected final JPanel myContentPanel;
+  @NotNull protected final JPanel myNotificationsPanel;
+
+  @NotNull protected final CardLayout myCardLayout;
+
+  @NotNull protected String myCurrentCard;
+
+  public DiffPanelBase(@Nullable Project project,
+                       @NotNull DataProvider provider,
+                       @NotNull DiffTool.DiffContext context) {
+    super(new BorderLayout());
+    myProject = project;
+    myDataProvider = provider;
+    myContextWindow = context.getDiffWindow();
+
+    myCardLayout = new CardLayout();
+    myContentPanel = new JPanel(myCardLayout);
+
+    myNotificationsPanel = new JPanel();
+    myNotificationsPanel.setLayout(new BoxLayout(myNotificationsPanel, BoxLayout.Y_AXIS));
+
+    add(myContentPanel, BorderLayout.CENTER);
+
+    JComponent topPanel = createTopPanel();
+    if (topPanel != null) add(topPanel, BorderLayout.NORTH);
+
+    JComponent bottomPanel = createBottomPanel();
+    if (bottomPanel != null) add(bottomPanel, BorderLayout.SOUTH);
+  }
+
+  @Nullable
+  public JComponent createTopPanel() {
+    return null;
+  }
+
+  @Nullable
+  public JComponent createBottomPanel() {
+    return null;
+  }
+
+  public boolean isWindowFocused() {
+    Window ancestor = SwingUtilities.getWindowAncestor(this);
+    return ancestor != null && ancestor.isFocusableWindow();
+  }
+
+  public boolean isFocused() {
+    return myContextWindow.isFocused();
+  }
+
+  public void requestFocus() {
+    myContextWindow.requestFocus();
+  }
+
+  protected void setCurrentCard(@NotNull String card) {
+    setCurrentCard(card, true);
+  }
+
+  protected void setCurrentCard(@NotNull String card, boolean keepFocus) {
+    boolean focused = isFocused();
+
+    myCardLayout.show(myContentPanel, card);
+    myCurrentCard = card;
+    myContentPanel.revalidate();
+
+    if (keepFocus && focused) requestFocus();
+  }
+
+  @Nullable
+  @Override
+  public Object getData(@NonNls String dataId) {
+    return myDataProvider.getData(dataId);
+  }
+
+  @Nullable
+  public abstract JComponent getPreferredFocusedComponent();
+
+  //
+  // Notifications
+  //
+
+  public void addContentsEqualNotification() {
+    myNotificationsPanel.add(CONTENTS_EQUAL_NOTIFICATION);
+    myNotificationsPanel.revalidate();
+  }
+
+  public void addTooBigContentNotification() {
+    myNotificationsPanel.add(CONTENTS_TOO_BIG_NOTIFICATION);
+    myNotificationsPanel.revalidate();
+  }
+
+  public void addOperationCanceledNotification() {
+    myNotificationsPanel.add(CONTENTS_OPERATION_CANCELED_NOTIFICATION);
+    myNotificationsPanel.revalidate();
+  }
+
+  public void addDiffErrorNotification() {
+    myNotificationsPanel.add(CANT_CALCULATE_DIFF);
+    myNotificationsPanel.revalidate();
+  }
+
+  public void resetNotifications() {
+    myNotificationsPanel.removeAll();
+    myNotificationsPanel.revalidate();
+  }
+
+  @NotNull
+  public static JPanel createNotification(@NotNull String text) {
+    return new EditorNotificationPanel().text(text);
+  }
+}
