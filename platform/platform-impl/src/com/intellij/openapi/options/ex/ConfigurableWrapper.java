@@ -28,7 +28,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.List;
 
@@ -257,8 +256,9 @@ public class ConfigurableWrapper implements SearchableConfigurable {
         }
       }
       myKids = kids;
-      if (getConfigurable() instanceof Configurable.SortingConfigurable) {
-        Arrays.sort(myKids, ((SortingConfigurable)getConfigurable()).getChildComparator());
+      Configurable.SortingConfigurable sorting = cast(Configurable.SortingConfigurable.class, this);
+      if (sorting != null) {
+        Arrays.sort(myKids, sorting.getChildComparator());
       }
     }
 
@@ -269,18 +269,11 @@ public class ConfigurableWrapper implements SearchableConfigurable {
 
     @Override
     public ConfigurableWrapper addChild(Configurable configurable) {
-      final UnnamedConfigurable thisConfigurable = getConfigurable();
-      if (thisConfigurable instanceof Configurable.SortingConfigurable) {
-        final int preIndex = Arrays.binarySearch(myKids, configurable, ((SortingConfigurable)thisConfigurable).getChildComparator());
+      Configurable.SortingConfigurable sorting = cast(Configurable.SortingConfigurable.class, this);
+      if (sorting != null) {
+        final int preIndex = Arrays.binarySearch(myKids, configurable, sorting.getChildComparator());
         LOG.assertTrue(preIndex < 0);
-        int index = -preIndex - 1;
-
-        int length = myKids.length;
-        Configurable[] result = (Configurable[])Array.newInstance(myKids.getClass().getComponentType(), length + 1);
-        System.arraycopy(myKids, 0, result, 0, index);
-        result[index] = configurable;
-        System.arraycopy(myKids, index, result, index + 1, length - index);
-        myKids = result;
+        myKids = ArrayUtil.insert(myKids, -preIndex - 1, configurable);
       }
       else {
         myKids = ArrayUtil.append(myKids, configurable);
