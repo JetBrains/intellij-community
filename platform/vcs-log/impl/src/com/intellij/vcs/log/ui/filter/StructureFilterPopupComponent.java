@@ -15,10 +15,8 @@
  */
 package com.intellij.vcs.log.ui.filter;
 
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.CheckboxAction;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -79,7 +77,50 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogStructure
 
   @Override
   protected ActionGroup createActionGroup() {
-    return new DefaultActionGroup(createAllAction(), new SelectAction());
+
+    Set<VirtualFile> roots = myFilterModel.getDataPack().getLogProviders().keySet();
+
+    List<AnAction> actions = new ArrayList<AnAction>();
+    if (roots.size() <= 10) {
+      for (VirtualFile root : roots) {
+        actions.add(new SelectVisibleRootAction(root));
+      }
+    }
+    return new DefaultActionGroup(createAllAction(), new Separator(), new DefaultActionGroup(actions), new Separator(), new SelectAction());
+  }
+
+  private boolean isVisible(@NotNull VirtualFile root) {
+    if (myFilterModel.getFilter() != null) {
+      return myFilterModel.getFilter().getRoots().contains(root);
+    }
+    else {
+      return true;
+    }
+  }
+
+  private void setVisible(@NotNull VirtualFile root, boolean visible) {
+    Set<VirtualFile> roots = myFilterModel.getDataPack().getLogProviders().keySet();
+
+    Collection<VirtualFile> visibleRoots;
+    VcsLogStructureFilter previousFilter = myFilterModel.getFilter();
+    if (previousFilter == null) {
+      if (visible) {
+        visibleRoots = roots;
+      }
+      else {
+        visibleRoots = ContainerUtil.subtract(roots, Collections.singleton(root));
+      }
+    }
+    else {
+      if (visible) {
+        visibleRoots = ContainerUtil.union(new HashSet<VirtualFile>(myFilterModel.getFilter().getRoots()), Collections.singleton(root));
+      }
+      else {
+        visibleRoots = ContainerUtil.subtract(myFilterModel.getFilter().getRoots(), Collections.singleton(root));
+      }
+    }
+    myFilterModel.setFilter(VcsLogStructureFilterImpl.build(visibleRoots, myFilterModel.getDataPack()));
+    // todo if there are some non-roots in structure filter they will get lost
   }
 
   @NotNull
@@ -98,6 +139,25 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogStructure
       tooltip += "\n...";
     }
     return tooltip;
+  }
+
+  private class SelectVisibleRootAction extends CheckboxAction {
+    @NotNull private final VirtualFile myRoot;
+
+    private SelectVisibleRootAction(@NotNull VirtualFile root) {
+      super(root.getName());
+      myRoot = root;
+    }
+
+    @Override
+    public boolean isSelected(AnActionEvent e) {
+      return isVisible(myRoot);
+    }
+
+    @Override
+    public void setSelected(AnActionEvent e, boolean state) {
+      setVisible(myRoot, state);
+    }
   }
 
   private class SelectAction extends DumbAwareAction {
