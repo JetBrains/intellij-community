@@ -52,7 +52,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.List;
 
@@ -272,7 +271,7 @@ public class BreakpointsDialog extends DialogWrapper {
         navigate(true);
         close(OK_EXIT_CODE);
       }
-    }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)), tree);
+    }.registerCustomShortcutSet(CommonShortcuts.ENTER, tree);
 
     new AnAction("BreakpointDialog.ShowSource") {
       @Override

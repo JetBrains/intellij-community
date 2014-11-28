@@ -349,7 +349,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
 
     group.add(new AnAction("Edit Shortcut", "Edit Shortcut", AllIcons.ToolbarDecorator.Edit) {
       {
-        registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)), myActionsTree.getTree());
+        registerCustomShortcutSet(CommonShortcuts.ENTER, myActionsTree.getTree());
       }
 
       @Override
