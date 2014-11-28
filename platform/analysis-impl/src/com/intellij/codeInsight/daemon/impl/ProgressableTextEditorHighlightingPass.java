@@ -21,12 +21,14 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.WrappedProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -74,6 +76,9 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
 
   @Override
   public final void doCollectInformation(@NotNull final ProgressIndicator progress) {
+    if (!(progress instanceof DaemonProgressIndicator)) {
+      throw new IncorrectOperationException("Highlighting must be run under DaemonProgressIndicator, but got: "+progress);
+    }
     myFinished = false;
     if (myFile != null) {
       myHighlightingSession = new HighlightingSessionImpl(myFile, myEditor, progress, getColorsScheme(), getId(), myRestrictRange);
@@ -86,9 +91,7 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
       }
       progress.checkCanceled();
 
-      if (progress instanceof UserDataHolder) {
-        ((UserDataHolder)progress).putUserData(HIGHLIGHTING_SESSION, myHighlightingSession);
-      }
+      ((DaemonProgressIndicator)progress).putUserData(HIGHLIGHTING_SESSION, myHighlightingSession);
     }
     try {
       collectInformationWithProgress(progress);
@@ -100,10 +103,11 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
     }
   }
   private static final Key<HighlightingSession> HIGHLIGHTING_SESSION = Key.create("HIGHLIGHTING_SESSION");
-  public static HighlightingSession getHighlightingSession(@NotNull ProgressIndicator progressIndicator) {
-    return ((UserDataHolder)progressIndicator).getUserData(HIGHLIGHTING_SESSION);
+  public static HighlightingSession getHighlightingSession(@NotNull ProgressIndicator indicator) {
+    return indicator instanceof WrappedProgressIndicator ?
+           getHighlightingSession(((WrappedProgressIndicator)indicator).getOriginalProgressIndicator()) :
+           ((UserDataHolder)indicator).getUserData(HIGHLIGHTING_SESSION);
   }
-
 
   protected abstract void collectInformationWithProgress(@NotNull ProgressIndicator progress);
 

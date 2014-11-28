@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight.daemon.impl;
+package com.intellij.codeInsight.daemon.impl.analysis;
 
+import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
+import com.intellij.codeInsight.daemon.impl.FileStatusMap;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Key;
@@ -28,7 +30,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.BidirectionalMap;
-import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -40,15 +42,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class RefCountHolder {
+class RefCountHolder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.RefCountHolder");
 
   private final PsiFile myFile;
   private final BidirectionalMap<PsiReference,PsiElement> myLocalRefsMap = new BidirectionalMap<PsiReference, PsiElement>();
 
-  private final Map<PsiAnchor, Boolean> myDclsUsedMap = ContainerUtil.newConcurrentMap();
-  private final Map<PsiReference, PsiImportStatementBase> myImportStatements = ContainerUtil.newConcurrentMap();
-  private final AtomicReference<ProgressIndicator> myState = new AtomicReference<ProgressIndicator>(READY);
+  private final Map<PsiAnchor, Boolean> myDclsUsedMap = new THashMap<PsiAnchor, Boolean>();
+  private final Map<PsiReference, PsiImportStatementBase> myImportStatements = new THashMap<PsiReference, PsiImportStatementBase>();
+  private final AtomicReference<ProgressIndicator> myState = new AtomicReference<ProgressIndicator>(EMPTY);
+  // contains useful information
   private static final ProgressIndicator READY = new DaemonProgressIndicator() {
     {
       cancel();
@@ -56,6 +59,16 @@ public class RefCountHolder {
     @Override
     public String toString() {
       return "READY";
+    }
+  };
+  // contains no information, must be rebuilt before use
+  private static final ProgressIndicator EMPTY = new DaemonProgressIndicator() {
+    {
+      cancel();
+    }
+    @Override
+    public String toString() {
+      return "EMPTY";
     }
   };
 
@@ -265,12 +278,16 @@ public class RefCountHolder {
                          TextRange dirtyScope,
                          @NotNull ProgressIndicator indicator,
                          @NotNull Runnable analyze) {
-    if (!myState.compareAndSet(READY, indicator)) {
+    if (myState.compareAndSet(EMPTY, indicator)) {
+      clear();
+    }
+    else if (!myState.compareAndSet(READY, indicator)) {
       log("a: failed to change ", myState, "->", indicator);
       return false;
     }
-    log("a: changed ", myState, "->", indicator);
+    boolean success = false;
     try {
+      log("a: changed ", myState, "->", indicator);
       if (dirtyScope != null) {
         if (dirtyScope.equals(file.getTextRange())) {
           clear();
@@ -281,12 +298,14 @@ public class RefCountHolder {
       }
 
       analyze.run();
+      success = true;
       return true;
     }
     finally {
-      boolean set = myState.compareAndSet(indicator, READY);
+      ProgressIndicator result = success ? READY : EMPTY;
+      boolean set = myState.compareAndSet(indicator, result);
       assert set : myState.get();
-      log("a: changed after analyze", indicator, "->", READY);
+      log("a: changed after analyze", indicator, "->", result);
     }
   }
 

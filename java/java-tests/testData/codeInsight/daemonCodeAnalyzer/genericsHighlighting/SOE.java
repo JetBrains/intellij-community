@@ -20,5 +20,6 @@ abstract class NodeRef<G extends Node<G, GR>, GR extends NodeRef<G, GR>> extends
 class D {
     void f() {
         Version v = new Node<<error descr="Wildcard type '?' cannot be instantiated directly">?</error>, <error descr="Wildcard type '?' cannot be instantiated directly">?</error>>(){}<EOLError descr="';' expected"></EOLError>
+        v.hashCode();
     }
 }

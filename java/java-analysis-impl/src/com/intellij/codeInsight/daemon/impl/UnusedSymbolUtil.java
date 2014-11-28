@@ -39,7 +39,7 @@ import org.jetbrains.annotations.Nullable;
 public class UnusedSymbolUtil {
   private static final ImplicitUsageProvider[] ourImplicitUsageProviders = Extensions.getExtensions(ImplicitUsageProvider.EP_NAME);
 
-  static boolean isInjected(@NotNull Project project, @NotNull PsiModifierListOwner modifierListOwner) {
+  public static boolean isInjected(@NotNull Project project, @NotNull PsiModifierListOwner modifierListOwner) {
     return EntryPointsManagerBase.getInstance(project).isEntryPoint(modifierListOwner);
   }
 
@@ -57,7 +57,7 @@ public class UnusedSymbolUtil {
     return false;
   }
 
-  static boolean isImplicitRead(@NotNull Project project, @NotNull PsiVariable element, @NotNull ProgressIndicator progress) {
+  public static boolean isImplicitRead(@NotNull Project project, @NotNull PsiVariable element, @NotNull ProgressIndicator progress) {
     for(ImplicitUsageProvider provider: ourImplicitUsageProviders) {
       progress.checkCanceled();
       if (provider.isImplicitRead(element)) {
@@ -67,9 +67,9 @@ public class UnusedSymbolUtil {
     return isInjected(project, element);
   }
 
-  static boolean isImplicitWrite(@NotNull Project project,
-                                 @NotNull PsiVariable element,
-                                 @NotNull ProgressIndicator progress) {
+  public static boolean isImplicitWrite(@NotNull Project project,
+                                        @NotNull PsiVariable element,
+                                        @NotNull ProgressIndicator progress) {
     for(ImplicitUsageProvider provider: ourImplicitUsageProviders) {
       progress.checkCanceled();
       if (provider.isImplicitWrite(element)) {
