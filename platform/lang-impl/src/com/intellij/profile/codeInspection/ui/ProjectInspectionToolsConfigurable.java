@@ -57,11 +57,4 @@ public class ProjectInspectionToolsConfigurable extends InspectionToolsConfigura
     }
     InspectionProfileManagerImpl.onProfilesChanged();
   }
-
-  @Override
-  public boolean isModified() {
-    final InspectionProfileImpl selectedObject = getSelectedObject();
-    if (!Comparing.strEqual(getCurrentProfile().getName(), selectedObject.getName())) return true;
-    return super.isModified();
-  }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,8 +25,9 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.encoding.EncodingRegistry;
+import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,7 +46,7 @@ public class BinaryContent extends DiffContent {
   private final byte[] myBytes;
   private final Charset myCharset;
   private Document myDocument = null;
-  private String myFilePath;
+  private final String myFilePath;
 
   /**
    * @param charset use to convert bytes to String. null means bytes can't be converted to text. Has no sense if fileType.isBinary()
@@ -88,12 +89,8 @@ public class BinaryContent extends DiffContent {
 
       String text = null;
       try {
-        if (myCharset == null) {
-          text = CharsetToolkit.bytesToString(myBytes, EncodingRegistry.getInstance().getDefaultCharset());
-        }
-        else {
-          text = CharsetToolkit.bytesToString(myBytes, myCharset);
-        }
+        Charset charset = ObjectUtils.notNull(myCharset, EncodingProjectManager.getInstance(myProject).getDefaultCharset());
+        text = CharsetToolkit.bytesToString(myBytes, charset);
       }
       catch (IllegalCharsetNameException e) {
       }

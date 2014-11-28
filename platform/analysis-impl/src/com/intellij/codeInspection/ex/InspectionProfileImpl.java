@@ -800,10 +800,6 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   }
 
   public void setDescription(String description) {
-    if (Comparing.strEqual(description, myDescription)) {
-      return;
-    }
-    setModified(true);
     myDescription = description;
   }
 

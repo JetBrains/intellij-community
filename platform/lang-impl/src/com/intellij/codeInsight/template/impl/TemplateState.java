@@ -126,7 +126,7 @@ public class TemplateState implements Disposable {
 
       @Override
       public void beforeCommandFinished(CommandEvent event) {
-        if (started) {
+        if (started && !isDisposed()) {
           Runnable runnable = new Runnable() {
             @Override
             public void run() {
@@ -320,25 +320,28 @@ public class TemplateState implements Disposable {
     myTemplateIndented = false;
     myCurrentVariableNumber = -1;
     mySegments = new TemplateSegments(myEditor);
-    myPrevTemplate = myTemplate;
 
     //myArgument = argument;
     myPredefinedVariableValues = predefinedVarValues;
 
     if (template.isInline()) {
+      myPrevTemplate = myTemplate;
       int caretOffset = myEditor.getCaretModel().getOffset();
       myTemplateRange = myDocument.createRangeMarker(caretOffset, caretOffset + template.getTemplateText().length());
     }
     else {
       PsiFile file = getPsiFile();
-      preprocessTemplate(file, myEditor.getCaretModel().getOffset(), myTemplate.getTemplateText());
+      preprocessTemplate(file, myEditor.getCaretModel().getOffset());
+      myPrevTemplate = myTemplate;
+      assert !myTemplate.isInline();
+
       int caretOffset = myEditor.getCaretModel().getOffset();
       myTemplateRange = myDocument.createRangeMarker(caretOffset, caretOffset);
     }
     myTemplateRange.setGreedyToLeft(true);
     myTemplateRange.setGreedyToRight(true);
 
-    processAllExpressions(template);
+    processAllExpressions(myTemplate);
   }
 
   private void fireTemplateCancelled() {
@@ -349,9 +352,9 @@ public class TemplateState implements Disposable {
     }
   }
 
-  private void preprocessTemplate(final PsiFile file, int caretOffset, final String textToInsert) {
+  private void preprocessTemplate(final PsiFile file, int caretOffset) {
     for (TemplatePreprocessor preprocessor : Extensions.getExtensions(TemplatePreprocessor.EP_NAME)) {
-      preprocessor.preprocessTemplate(myEditor, file, caretOffset, textToInsert, myTemplate.getTemplateText());
+      myTemplate = preprocessor.preprocessTemplate(myEditor, file, caretOffset, myTemplate);
     }
   }
 

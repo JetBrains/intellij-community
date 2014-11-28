@@ -33,15 +33,13 @@ class DonePromise<T> extends Promise<T> implements Getter<T> {
   @NotNull
   @Override
   public <SUB_RESULT> Promise<SUB_RESULT> then(@NotNull Function<T, SUB_RESULT> done) {
-    //noinspection unchecked
-    return (Promise<SUB_RESULT>)this;
+    return Promise.resolve(done.fun(result));
   }
 
   @NotNull
   @Override
   public <SUB_RESULT> Promise<SUB_RESULT> then(@NotNull AsyncFunction<T, SUB_RESULT> done) {
-    //noinspection unchecked
-    return (Promise<SUB_RESULT>)this;
+    return done.fun(result);
   }
 
   @NotNull

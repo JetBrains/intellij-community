@@ -20,6 +20,8 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Comparator;
+
 /**
  * Named component which provides a configuration user interface.
  *
@@ -91,5 +93,12 @@ public interface Configurable extends UnnamedConfigurable {
    * Forbids setting an empty border to the content of the configurable.
    */
   interface NoMargin {
+  }
+
+  /**
+   * Provides a way to sort children of a configurables
+   */
+  interface SortingConfigurable {
+    Comparator<Configurable> getChildComparator();
   }
 }

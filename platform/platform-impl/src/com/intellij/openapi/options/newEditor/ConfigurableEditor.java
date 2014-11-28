@@ -33,6 +33,7 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.RelativeFont;
 import com.intellij.ui.components.labels.LinkLabel;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 
@@ -149,7 +150,7 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
       case MouseEvent.MOUSE_RELEASED:
       case MouseEvent.MOUSE_DRAGGED:
         MouseEvent me = (MouseEvent)event;
-        if (isDescendingFrom(me.getComponent(), this)) {
+        if (isDescendingFrom(me.getComponent(), this) || isPopupOverEditor(me.getComponent())) {
           requestUpdate();
         }
         break;
@@ -176,6 +177,21 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
         return myConfigurable != configurable;
       }
     });
+  }
+
+  private boolean isPopupOverEditor(Component component) {
+    Window editor = UIUtil.getWindow(this);
+    if (editor != null) {
+      Window popup = UIUtil.getWindow(component);
+      if (popup != null && editor == popup.getParent()) {
+        if (popup instanceof JDialog) {
+          JDialog dialog = (JDialog)popup;
+          return Dialog.ModalityType.MODELESS == dialog.getModalityType();
+        }
+        return popup instanceof JWindow;
+      }
+    }
+    return false;
   }
 
   void updateCurrent(Configurable configurable, boolean reset) {

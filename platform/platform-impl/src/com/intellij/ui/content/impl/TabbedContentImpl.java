@@ -81,6 +81,11 @@ public class TabbedContentImpl extends ContentImpl implements TabbedContent {
   }
 
   @Override
+  public String getDisplayName() {
+    return getTabName();
+  }
+
+  @Override
   public void selectContent(int index) {
     Pair<String, JComponent> tab = myTabs.get(index);
     setDisplayName(tab.first);

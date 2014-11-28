@@ -398,7 +398,7 @@ public class PushController implements Disposable {
         });
       }
     };
-    node.startLoading(myPushLog.getTree(), myExecutorService.submit(task, result));
+    node.startLoading(myPushLog.getTree(), myExecutorService.submit(task, result), initial);
   }
 
   private boolean shouldSelect(@NotNull MyRepoModel model) {

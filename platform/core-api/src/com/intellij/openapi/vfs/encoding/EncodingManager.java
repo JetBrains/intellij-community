@@ -42,19 +42,14 @@ public abstract class EncodingManager extends EncodingRegistry {
   @NotNull
   public abstract Collection<Charset> getFavorites();
 
-  @Deprecated // does nothing
-  public abstract void setUseUTFGuessing(VirtualFile virtualFile, boolean useUTFGuessing);
-
+  @Override
   public abstract boolean isNative2AsciiForPropertiesFiles();
 
   public abstract void setNative2AsciiForPropertiesFiles(VirtualFile virtualFile, boolean native2Ascii);
 
-  @Nullable
+  @NotNull
   // returns empty for system default
-  public String getDefaultCharsetName() {
-    Charset charset = getDefaultCharset();
-    return charset == null ? null : charset.displayName();
-  }
+  public abstract String getDefaultCharsetName();
 
   public void setDefaultCharsetName(@NotNull String name) {
     throw new UnsupportedOperationException("Not implemented");
@@ -63,14 +58,11 @@ public abstract class EncodingManager extends EncodingRegistry {
   /**
    * @return null for system-default
    */
+  @Override
   @Nullable
   public abstract Charset getDefaultCharsetForPropertiesFiles(@Nullable VirtualFile virtualFile);
   public abstract void setDefaultCharsetForPropertiesFiles(@Nullable VirtualFile virtualFile, @Nullable Charset charset);
 
-  /**
-   * @deprecated use {@link EncodingManager#addPropertyChangeListener(java.beans.PropertyChangeListener, com.intellij.openapi.Disposable)} instead
-   */
-  public abstract void addPropertyChangeListener(@NotNull PropertyChangeListener listener);
   public abstract void addPropertyChangeListener(@NotNull PropertyChangeListener listener, @NotNull Disposable parentDisposable);
 
   public abstract void removePropertyChangeListener(@NotNull PropertyChangeListener listener);

@@ -32,5 +32,5 @@ public interface EditableTreeNode extends CustomRenderedTreeNode {
 
   void cancelLoading();
 
-  void startLoading(@NotNull JTree tree, @NotNull Future<AtomicReference<OutgoingResult>> future);
+  void startLoading(@NotNull JTree tree, @NotNull Future<AtomicReference<OutgoingResult>> future, boolean initial);
 }

@@ -100,6 +100,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   private String myLastGutterToolTip = null;
   @NotNull private TIntFunction myLineNumberConvertor;
   private boolean myShowDefaultGutterPopup = true;
+  private Map<Integer, Color> myTextFgColors = new HashMap<Integer, Color>();
 
   @SuppressWarnings("unchecked")
   public EditorGutterComponentImpl(EditorImpl editor) {
@@ -208,7 +209,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         paintFoldingBackground(g, clip);
         paintLineMarkersBackground(g, clip);
         paintBackground(g, clip, getLineMarkerAreaOffset(), getLineMarkerAreaWidth());
-        paintEditorBackgrounds(g, clip, firstVisibleOffset, lastVisibleOffset);
+        paintEditorBackgrounds(g, firstVisibleOffset, lastVisibleOffset);
         paintAnnotations(g, clip);
         paintLineMarkers(g, firstVisibleOffset, lastVisibleOffset);
         paintFoldingLines((Graphics2D)g, clip);
@@ -226,8 +227,10 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     }
   }
 
-  private void paintEditorBackgrounds(Graphics g, Rectangle clip, int firstVisibleOffset, int lastVisibleOffset) {
+  private void paintEditorBackgrounds(Graphics g, int firstVisibleOffset, int lastVisibleOffset) {
+    myTextFgColors.clear();
     Color defaultBackgroundColor = myEditor.getBackgroundColor();
+    Color defaultForegroundColor = myEditor.getColorsScheme().getDefaultForeground();
     int startX = myEditor.isInDistractionFreeMode() ? 0 : getWhitespaceSeparatorOffset() + (isFoldingOutlineShown() ? 1 : 0);
     IterationState state = new IterationState(myEditor, firstVisibleOffset, lastVisibleOffset, false, true);
     while (!state.atEnd()) {
@@ -236,20 +239,30 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       for (int line = visualStart.getLine(); line <= visualEnd.getLine(); line++) {
         if (line == visualStart.getLine()) {
           if (visualStart.getColumn() == 0) {
-            drawEditorLineBackgroundRect(g, clip, state, defaultBackgroundColor, startX, myEditor.visibleLineToY(line));
+            drawEditorLineBackgroundRect(g, state, defaultBackgroundColor, defaultForegroundColor, startX, myEditor.visibleLineToY(line));
           }
         }
         else if (line != visualEnd.getLine() || visualEnd.getColumn() != 0) {
-          drawEditorLineBackgroundRect(g, clip, state, defaultBackgroundColor, startX, myEditor.visibleLineToY(line));
+          drawEditorLineBackgroundRect(g, state, defaultBackgroundColor, defaultForegroundColor, startX, myEditor.visibleLineToY(line));
         }
       }
       state.advance();
     }
   }
 
-  private void drawEditorLineBackgroundRect(Graphics g, Rectangle clip, IterationState state, Color defaultBackgroundColor, int startX, int startY) {
-    Color color = myEditor.getBackgroundColor(state.getMergedAttributes());
+  private void drawEditorLineBackgroundRect(Graphics g,
+                                            IterationState state,
+                                            Color defaultBackgroundColor,
+                                            Color defaultForegroundColor,
+                                            int startX,
+                                            int startY) {
+    TextAttributes attributes = state.getMergedAttributes();
+    Color color = myEditor.getBackgroundColor(attributes);
     if (!color.equals(defaultBackgroundColor)) {
+      Color fgColor = attributes.getForegroundColor();
+      if (!fgColor.equals(defaultForegroundColor)) {
+        myTextFgColors.put(startY, fgColor);
+      }
       g.setColor(color);
       g.fillRect(startX, startY, getWidth() - startX, myEditor.getLineHeight());
     }
@@ -418,7 +431,6 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     }
 
     Color color = myEditor.getColorsScheme().getColor(EditorColors.LINE_NUMBERS_COLOR);
-    g.setColor(color != null ? color : JBColor.blue);
     g.setFont(myEditor.getColorsScheme().getFont(EditorFontType.PLAIN));
 
     Graphics2D g2 = (Graphics2D)g;
@@ -439,11 +451,14 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       int logLine = myLineNumberConvertor.execute(logicalPosition.line);
       if (logLine >= 0) {
         String s = String.valueOf(logLine + 1);
+        int startY = (i + 1) * lineHeight;
+        Color fgColor = myTextFgColors.get(startY - lineHeight);
+        g.setColor(fgColor != null ? fgColor : color != null ? color : JBColor.blue);
         g.drawString(s,
                      getLineNumberAreaOffset() + getLineNumberAreaWidth() -
                      myEditor.getFontMetrics(Font.PLAIN).stringWidth(s) -
                      4,
-                     (i + 1) * lineHeight - myEditor.getDescent());
+                     startY - myEditor.getDescent());
       }
     }
 
@@ -1031,7 +1046,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       }
     }
 
-    final int lineNumberAreaWidth = calculator.execute(maxLineNumber);
+    final int lineNumberAreaWidth = calculator.execute(maxLineNumber) + 2;
     if (myLineNumberAreaWidth != lineNumberAreaWidth) {
       myLineNumberAreaWidth = lineNumberAreaWidth;
       fireResized();

@@ -64,7 +64,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.encoding.EncodingManager;
+import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.FileElement;
@@ -243,10 +243,10 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     myStatementsToExecute = statementsToExecute;
   }
 
-  public static Map<String, String> addDefaultEnvironments(Sdk sdk, Map<String, String> envs) {
-    Charset defaultCharset = EncodingManager.getInstance().getDefaultCharset();
+  public static Map<String, String> addDefaultEnvironments(Sdk sdk, Map<String, String> envs, @NotNull Project project) {
+    Charset defaultCharset = EncodingProjectManager.getInstance(project).getDefaultCharset();
 
-    final String encoding = defaultCharset != null ? defaultCharset.name() : "utf-8";
+    final String encoding = defaultCharset.name();
     setPythonIOEncoding(setPythonUnbuffered(envs), encoding);
 
     PythonSdkFlavor.initPythonPath(envs, true, PythonCommandLineState.getAddedPaths(sdk));
@@ -392,7 +392,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
 
       @Override
       public Map<String, String> getAdditionalEnvs() {
-        return addDefaultEnvironments(sdk, environmentVariables);
+        return addDefaultEnvironments(sdk, environmentVariables,getProject());
       }
     };
   }

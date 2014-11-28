@@ -311,8 +311,7 @@ public class InferenceSession {
       expression = PsiUtil.skipParenthesizedExprDown(expression);
       if (expression instanceof PsiConditionalExpression ||
           expression instanceof PsiCallExpression ||
-          expression instanceof PsiLambdaExpression ||
-          expression instanceof PsiMethodReferenceExpression) {
+          expression instanceof PsiFunctionalExpression) {
         found = true;
         break;
       }

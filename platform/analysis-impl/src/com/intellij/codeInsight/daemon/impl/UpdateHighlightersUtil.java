@@ -167,7 +167,9 @@ public class UpdateHighlightersUtil {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     final DaemonCodeAnalyzerEx codeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(project);
-    codeAnalyzer.cleanFileLevelHighlights(project, group, psiFile);
+    if (startOffset == 0 && endOffset == document.getTextLength()) {
+      codeAnalyzer.cleanFileLevelHighlights(project, group, psiFile);
+    }
 
     final MarkupModel markup = DocumentMarkupModel.forDocument(document, project, true);
     assertMarkupConsistent(markup, project);

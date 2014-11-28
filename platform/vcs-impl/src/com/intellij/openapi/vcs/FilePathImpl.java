@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -144,6 +144,7 @@ public class FilePathImpl implements FilePath {
     }
   }
 
+  @NotNull
   @Override
   public String getPath() {
     final VirtualFile virtualFile = myVirtualFile;
@@ -221,6 +222,7 @@ public class FilePathImpl implements FilePath {
     return myFile;
   }
 
+  @NotNull
   @Override
   public String getName() {
     return myName;
@@ -246,11 +248,13 @@ public class FilePathImpl implements FilePath {
   }
 
   @Override
+  @NotNull
   public Charset getCharset() {
     return getCharset(null);
   }
 
   @Override
+  @NotNull
   public Charset getCharset(Project project) {
     // try to find existing virtual file
     VirtualFile existing = myVirtualFile != null && myVirtualFile.isValid() ? myVirtualFile : null;
@@ -264,15 +268,9 @@ public class FilePathImpl implements FilePath {
       }
     }
     if (existing != null) {
-      Charset rc = existing.getCharset();
-      if (rc != null) {
-        return rc;
-      }
+      return existing.getCharset();
     }
-    EncodingManager e = project != null ? EncodingProjectManager.getInstance(project) : null;
-    if (e == null) {
-      e = EncodingManager.getInstance();
-    }
+    EncodingManager e = project == null ? EncodingManager.getInstance() : EncodingProjectManager.getInstance(project);
     return e.getDefaultCharset();
   }
 

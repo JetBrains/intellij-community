@@ -489,6 +489,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myEditorComponent = new EditorComponentImpl(this);
     myScrollPane = new MyScrollPane();
     myVerticalScrollBar = (MyScrollBar)myScrollPane.getVerticalScrollBar();
+    myVerticalScrollBar.setOpaque(false);
     myPanel = new JPanel();
 
     UIUtil.putClientProperty(
@@ -4852,11 +4853,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     public void setUI(ScrollBarUI ui) {
       if (myPersistentUI == null) myPersistentUI = ui;
       super.setUI(myPersistentUI);
-    }
-
-    @Override
-    public void paint(@NotNull Graphics g) {
-      super.paint(g);
+      setOpaque(false);
     }
 
     /**

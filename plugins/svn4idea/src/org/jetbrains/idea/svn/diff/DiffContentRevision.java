@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.openapi.vfs.encoding.EncodingRegistry;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,7 +59,7 @@ public class DiffContentRevision implements ContentRevision {
       }
       final byte[] bytes = bos.toByteArray();
       final Charset charset = myFilePath.getCharset();
-      myContents = charset == null ? CharsetToolkit.bytesToString(bytes, EncodingRegistry.getInstance().getDefaultCharset()) : CharsetToolkit.bytesToString(bytes, charset);
+      myContents = CharsetToolkit.bytesToString(bytes, charset);
     }
     return myContents;
   }

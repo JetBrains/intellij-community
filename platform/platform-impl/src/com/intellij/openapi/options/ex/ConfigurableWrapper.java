@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -255,6 +256,10 @@ public class ConfigurableWrapper implements SearchableConfigurable {
         }
       }
       myKids = kids;
+      Configurable.SortingConfigurable sorting = cast(Configurable.SortingConfigurable.class, this);
+      if (sorting != null) {
+        Arrays.sort(myKids, sorting.getChildComparator());
+      }
     }
 
     @Override
@@ -264,7 +269,15 @@ public class ConfigurableWrapper implements SearchableConfigurable {
 
     @Override
     public ConfigurableWrapper addChild(Configurable configurable) {
-      myKids = ArrayUtil.append(myKids, configurable);
+      Configurable.SortingConfigurable sorting = cast(Configurable.SortingConfigurable.class, this);
+      if (sorting != null) {
+        final int preIndex = Arrays.binarySearch(myKids, configurable, sorting.getChildComparator());
+        LOG.assertTrue(preIndex < 0);
+        myKids = ArrayUtil.insert(myKids, -preIndex - 1, configurable);
+      }
+      else {
+        myKids = ArrayUtil.append(myKids, configurable);
+      }
       return this;
     }
   }

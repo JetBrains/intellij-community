@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,10 +38,11 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWrapper;
-import com.intellij.openapi.vfs.encoding.EncodingManager;
+import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.ui.HideableTitledPanel;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.FormBuilder;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -54,7 +55,7 @@ import java.util.Collection;
 import java.util.List;
 
 public class CreatePatchConfigurationPanel {
-  private static final String SYSTEM_DEFAULT = IdeBundle.message("encoding.name.system.default");
+  private static final String SYSTEM_DEFAULT = IdeBundle.message("encoding.name.system.default", CharsetToolkit.getDefaultSystemCharset().displayName());
 
   public static final String ALL = "(All)";
   private JPanel myMainPanel;
@@ -73,7 +74,7 @@ public class CreatePatchConfigurationPanel {
   private JPanel myPanelWithSelectedFiles;
   private boolean myExecute;
 
-  public CreatePatchConfigurationPanel(final Project project) {
+  public CreatePatchConfigurationPanel(@NotNull final Project project) {
     myProject = project;
     initMainPanel();
 
@@ -130,12 +131,12 @@ public class CreatePatchConfigurationPanel {
     encodingsModel.insertElementAt(SYSTEM_DEFAULT, 0);
     myEncoding.setModel(encodingsModel);
 
-    final String name = EncodingManager.getInstance().getDefaultCharsetName();
+    final String name = EncodingProjectManager.getInstance(myProject).getDefaultCharsetName();
     if (StringUtil.isEmpty(name)) {
       myEncoding.setSelectedItem(SYSTEM_DEFAULT);
     }
     else {
-      myEncoding.setSelectedItem(EncodingManager.getInstance().getDefaultCharset());
+      myEncoding.setSelectedItem(EncodingProjectManager.getInstance(myProject).getDefaultCharset());
     }
   }
 
@@ -143,7 +144,7 @@ public class CreatePatchConfigurationPanel {
   public Charset getEncoding() {
     final Object selectedItem = myEncoding.getSelectedItem();
     if (SYSTEM_DEFAULT.equals(selectedItem)) {
-      return EncodingManager.getInstance().getDefaultCharset();
+      return CharsetToolkit.getDefaultSystemCharset();
     }
     return (Charset)selectedItem;
   }

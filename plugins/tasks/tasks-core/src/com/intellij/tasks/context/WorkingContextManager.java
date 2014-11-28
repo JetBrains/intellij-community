@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.tasks.Task;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
@@ -134,7 +135,7 @@ public class WorkingContextManager {
       Element element = new Element("context");
       saveContext(element);
       String s = new XMLOutputter().outputString(element);
-      entry.setData(s.getBytes("UTF-8"));
+      entry.setData(s.getBytes(CharsetToolkit.UTF8_CHARSET));
     }
     catch (IOException e) {
       LOG.error(e);

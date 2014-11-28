@@ -125,7 +125,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     PsiClass containingClass = PsiTreeUtil.getParentOfType(scope, PsiClass.class);
     if (containingClass != null && PsiUtil.isLocalOrAnonymousClass(containingClass)) return;
 
-    final StandardDataFlowRunner dfaRunner = new StandardDataFlowRunner(scope, TREAT_UNKNOWN_MEMBERS_AS_NULLABLE) {
+    final StandardDataFlowRunner dfaRunner = new StandardDataFlowRunner(TREAT_UNKNOWN_MEMBERS_AS_NULLABLE, true) {
       @Override
       protected boolean shouldCheckTimeLimit() {
         if (!onTheFly) return false;
@@ -134,6 +134,21 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     };
     analyzeDfaWithNestedClosures(scope, holder, dfaRunner, Arrays.asList(dfaRunner.createMemoryState()), onTheFly);
   }
+  
+  @Nullable
+  public static Collection<PsiElement> getNullableReturn(PsiMethod method) {
+    final StandardDataFlowRunner dfaRunner = new StandardDataFlowRunner();
+    final DataFlowInstructionVisitor visitor = new DataFlowInstructionVisitor(dfaRunner);
+    final PsiCodeBlock body = method.getBody();
+    if (body == null) {
+      return null;
+    }
+    final RunnerResult rc = dfaRunner.analyzeMethod(body, visitor);
+    if (rc == RunnerResult.OK) {
+      return visitor.getProblems(NullabilityProblem.nullableReturn);
+    }
+    return null;
+  } 
 
   private void analyzeDfaWithNestedClosures(PsiElement scope,
                                             ProblemsHolder holder,

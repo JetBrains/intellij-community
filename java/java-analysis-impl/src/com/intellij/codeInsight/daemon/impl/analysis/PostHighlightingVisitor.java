@@ -13,10 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight.daemon.impl;
+package com.intellij.codeInsight.daemon.impl.analysis;
 
-import com.intellij.codeInsight.daemon.*;
-import com.intellij.codeInsight.daemon.impl.analysis.*;
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
+import com.intellij.codeInsight.daemon.JavaErrorMessages;
+import com.intellij.codeInsight.daemon.UnusedImportProvider;
+import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -41,7 +44,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.PomNamedTarget;
 import com.intellij.pom.java.LanguageLevel;
@@ -51,7 +53,6 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
-import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Processor;
@@ -63,9 +64,8 @@ import org.jetbrains.annotations.PropertyKey;
 import java.util.List;
 import java.util.Set;
 
-public class PostHighlightingVisitor {
+class PostHighlightingVisitor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.PostHighlightingPass");
-  private static final Key<Long> LAST_POST_PASS_TIMESTAMP = Key.create("LAST_POST_PASS_TIMESTAMP");
   private final LanguageLevel myLanguageLevel;
   private final RefCountHolder myRefCountHolder;
   @NotNull private final Project myProject;
@@ -81,17 +81,6 @@ public class PostHighlightingVisitor {
   private final HighlightDisplayKey myDeadCodeKey;
   private final HighlightInfoType myDeadCodeInfoType;
   private final UnusedDeclarationInspectionBase myDeadCodeInspection;
-
-  private static boolean isUpToDate(@NotNull PsiFile file) {
-    Long lastStamp = file.getUserData(LAST_POST_PASS_TIMESTAMP);
-    long currentStamp = PsiModificationTracker.SERVICE.getInstance(file.getProject()).getModificationCount();
-    return lastStamp != null && lastStamp == currentStamp || !ProblemHighlightFilter.shouldHighlightFile(file);
-  }
-
-  private static void markFileUpToDate(@NotNull PsiFile file) {
-    long lastStamp = PsiModificationTracker.SERVICE.getInstance(file.getProject()).getModificationCount();
-    file.putUserData(LAST_POST_PASS_TIMESTAMP, lastStamp);
-  }
 
   private void optimizeImportsOnTheFlyLater(@NotNull final ProgressIndicator progress) {
     if ((myHasRedundantImports || myHasMissortedImports) && !progress.isCanceled()) {
@@ -237,8 +226,6 @@ public class PostHighlightingVisitor {
       fileStatusMap.setErrorFoundFlag(myProject, myDocument, true);
     }
 
-    markFileUpToDate(myFile);
-
     optimizeImportsOnTheFlyLater(progress);
   }
 
@@ -260,7 +247,6 @@ public class PostHighlightingVisitor {
   private HighlightInfo processIdentifier(@NotNull PsiIdentifier identifier, @NotNull ProgressIndicator progress, @NotNull GlobalUsageHelper helper) {
     if (SuppressionUtil.inspectionResultSuppressed(identifier, myUnusedSymbolInspection)) return null;
     PsiElement parent = identifier.getParent();
-    if (PsiUtilCore.hasErrorElementChild(parent)) return null;
 
     if (parent instanceof PsiLocalVariable && myUnusedSymbolInspection.LOCAL_VARIABLE) {
       return processLocalVariable((PsiLocalVariable)parent, identifier, progress);

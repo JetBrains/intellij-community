@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,8 +65,6 @@ import java.util.zip.ZipInputStream;
 *         Date: 10/19/12
 */
 public class TemplateModuleBuilder extends ModuleBuilder {
-
-  public static final String UTF_8 = "UTF-8";
 
   private final ModuleType myType;
   private List<WizardInputField> myAdditionalFields;
@@ -272,7 +270,8 @@ public class TemplateModuleBuilder extends ModuleBuilder {
       properties.put(ProjectTemplateParameterFactory.IJ_PROJECT_NAME, projectName);
     }
     String merged = FileTemplateUtil.mergeTemplate(properties, content, true);
-    return StringUtilRt.convertLineSeparators(merged.replace("\\$", "$").replace("\\#", "#"), SystemInfo.isWindows ? "\r\n" : "\n").getBytes(UTF_8);
+    return StringUtilRt.convertLineSeparators(merged.replace("\\$", "$").replace("\\#", "#"), SystemInfo.isWindows ? "\r\n" : "\n").getBytes(
+      CharsetToolkit.UTF8_CHARSET);
   }
 
   @Nullable

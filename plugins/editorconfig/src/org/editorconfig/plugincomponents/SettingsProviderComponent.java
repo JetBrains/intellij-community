@@ -1,5 +1,6 @@
 package org.editorconfig.plugincomponents;
 
+import com.intellij.lang.Language;
 import com.intellij.lang.LanguageAnnotators;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.components.ServiceManager;
@@ -35,10 +36,17 @@ public class SettingsProviderComponent implements ApplicationComponent {
   }
 
   public void registerAnnotator(FileTypeManager manager) {
+    final Set<String> languages = new HashSet<String>();
     final EditorConfigAnnotator annotator = new EditorConfigAnnotator();
     for (FileType type : manager.getRegisteredFileTypes()) {
       if (type instanceof LanguageFileType) {
-        LanguageAnnotators.INSTANCE.addExplicitExtension(((LanguageFileType)type).getLanguage(), annotator);
+        final Language lang = ((LanguageFileType)type).getLanguage();
+        final String id = lang.getID();
+        // don't add annotator for language twice
+        // don't add annotator for languages not having own annotators - they may rely on parent annotators
+        if (languages.contains(id) || (lang.getBaseLanguage() != null/* && LanguageAnnotators.INSTANCE.forKey(lang).isEmpty()*/)) continue;
+        LanguageAnnotators.INSTANCE.addExplicitExtension(lang, annotator);
+        languages.add(id);
       }
     }
   }

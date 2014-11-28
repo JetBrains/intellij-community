@@ -761,7 +761,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
       return thenSpecifics == elseSpecifics ? thenSpecifics : Specifics.NEITHER;
     }
 
-    if (expr instanceof PsiLambdaExpression || expr instanceof PsiMethodReferenceExpression) {
+    if (expr instanceof PsiFunctionalExpression) {
 
       if (expr instanceof PsiLambdaExpression && !((PsiLambdaExpression)expr).hasFormalParameterTypes()) {
         return Specifics.NEITHER;

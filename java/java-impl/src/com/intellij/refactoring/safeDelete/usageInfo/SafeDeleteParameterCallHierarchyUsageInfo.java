@@ -21,11 +21,13 @@ import com.intellij.util.IncorrectOperationException;
 
 public class SafeDeleteParameterCallHierarchyUsageInfo extends SafeDeleteUsageInfo implements SafeDeleteCustomUsageInfo {
 
-  private PsiMethod myCalledMethod;
+  private final PsiMethod myCalledMethod;
+  private final PsiMethod myCallerMethod;
 
-  public SafeDeleteParameterCallHierarchyUsageInfo(PsiMethod calledMethod, PsiParameter parameter) {
+  public SafeDeleteParameterCallHierarchyUsageInfo(PsiMethod calledMethod, PsiParameter parameter, PsiMethod callerMethod) {
     super(calledMethod, parameter);
     myCalledMethod = calledMethod;
+    myCallerMethod = callerMethod;
   }
 
   @Override
@@ -42,5 +44,9 @@ public class SafeDeleteParameterCallHierarchyUsageInfo extends SafeDeleteUsageIn
 
   public PsiMethod getCalledMethod() {
     return myCalledMethod;
+  }
+
+  public PsiMethod getCallerMethod() {
+    return myCallerMethod;
   }
 }

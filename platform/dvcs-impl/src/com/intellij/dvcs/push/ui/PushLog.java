@@ -159,6 +159,17 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
         updateChangesView();
       }
     });
+    myTree.addFocusListener(new FocusAdapter() {
+      @Override
+      public void focusLost(FocusEvent e) {
+        DefaultMutableTreeNode node = (DefaultMutableTreeNode)myTree.getLastSelectedPathComponent();
+        if (node != null && node instanceof RepositoryNode && myTree.isEditing()) {
+          //need to force repaint foreground  for non-focused editing node
+          myTree.getCellEditor().getTreeCellEditorComponent(myTree, node, true, false, false, myTree.getRowForPath(
+            TreeUtil.getPathFromRoot(node)));
+        }
+      }
+    });
     myTree.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0), START_EDITING);
     //override default tree behaviour.
     myTree.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "");

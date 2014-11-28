@@ -78,6 +78,11 @@ public class HgStatusCommand {
       targetRevision = null;
     }
 
+    public Builder removed(boolean val) {
+      includeRemoved = val;
+      return this;
+    }
+
     public Builder unknown(boolean val) {
       includeUnknown = val;
       return this;

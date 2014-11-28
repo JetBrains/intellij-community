@@ -269,7 +269,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
   public void addPredefinedEnvironmentVariables(Map<String, String> envs, boolean passParentEnvs) {
     final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(myConfig.getInterpreterPath());
     if (flavor != null) {
-      flavor.addPredefinedEnvironmentVariables(envs);
+      flavor.addPredefinedEnvironmentVariables(envs, myConfig.getProject());
     }
   }
 

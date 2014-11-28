@@ -413,7 +413,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
       return (XmlFile)psiFile;
     }
 
-    return XmlNamespaceIndex.guessSchema(namespace, myLocalName, version, file);
+    return XmlNamespaceIndex.guessSchema(namespace, myLocalName, version, fileLocation, file);
   }
 
   @Nullable

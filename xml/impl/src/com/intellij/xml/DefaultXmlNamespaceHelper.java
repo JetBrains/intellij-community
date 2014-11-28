@@ -195,6 +195,7 @@ public class DefaultXmlNamespaceHelper extends XmlNamespaceHelper {
         for (XmlElementDescriptor descriptor : descriptors) {
           if (descriptor == null) {
             LOG.error(nsDescriptor + " returned null element for getRootElementsDescriptors() array");
+            continue;
           }
           if (descriptor.getName().equals(name)) {
             continue ns;

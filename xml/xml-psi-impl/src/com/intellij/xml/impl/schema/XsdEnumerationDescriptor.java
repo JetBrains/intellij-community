@@ -98,10 +98,13 @@ public abstract class XsdEnumerationDescriptor<T extends XmlElement> extends Xml
   }
 
   private boolean processEnumerationImpl(final XmlTag declaration, final PairProcessor<PsiElement, String> pairProcessor) {
-    if ("boolean".equals(declaration.getAttributeValue("name"))) {
-      XmlAttributeValue valueElement = declaration.getAttribute("name").getValueElement();
+    XmlAttribute name = declaration.getAttribute("name");
+    if (name != null && "boolean".equals(name.getValue())) {
+      XmlAttributeValue valueElement = name.getValueElement();
       pairProcessor.process(valueElement, "true");
       pairProcessor.process(valueElement, "false");
+      pairProcessor.process(valueElement, "1");
+      pairProcessor.process(valueElement, "0");
       myExhaustiveEnum = true;
       return true;
     }

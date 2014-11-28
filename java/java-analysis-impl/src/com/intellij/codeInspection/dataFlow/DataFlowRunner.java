@@ -30,7 +30,6 @@ import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
@@ -56,18 +55,12 @@ public class DataFlowRunner {
   // is executed more than this limit times.
   public static final int MAX_STATES_PER_BRANCH = 300;
 
-  protected DataFlowRunner(PsiElement block) {
-    this(block, false);
+  protected DataFlowRunner() {
+    this(false, true);
   }
 
-  protected DataFlowRunner(PsiElement block, boolean unknownMembersAreNullable) {
-    PsiElement parentConstructor = PsiTreeUtil.findFirstParent(block, new Condition<PsiElement>() {
-      @Override
-      public boolean value(PsiElement psiElement) {
-        return psiElement instanceof PsiMethod && ((PsiMethod)psiElement).isConstructor();
-      }
-    });
-    myValueFactory = new DfaValueFactory(parentConstructor == null, unknownMembersAreNullable);
+  protected DataFlowRunner(boolean unknownMembersAreNullable, boolean honorFieldInitializers) {
+    myValueFactory = new DfaValueFactory(honorFieldInitializers, unknownMembersAreNullable);
   }
 
   public DfaValueFactory getFactory() {

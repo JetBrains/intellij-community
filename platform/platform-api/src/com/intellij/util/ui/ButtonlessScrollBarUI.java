@@ -250,6 +250,19 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     };
   }
 
+  @Override
+  protected ArrowButtonListener createArrowButtonListener() {
+    return new ArrowButtonListener() {
+      @Override
+      public void mousePressed(MouseEvent event) {
+      }
+
+      @Override
+      public void mouseReleased(MouseEvent event) {
+      }
+    };
+  }
+
   protected boolean isMacOverlayScrollbar() {
     return myMacScrollerStyle == NSScrollerHelper.Style.Overlay && isMacOverlayScrollbarSupported();
   }

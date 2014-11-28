@@ -15,9 +15,7 @@
  */
 package com.intellij.psi.impl;
 
-import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
 import com.intellij.diagnostic.ThreadDumper;
-import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ex.ApplicationEx;
@@ -27,9 +25,8 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.util.ProgressIndicatorBase;
+import com.intellij.openapi.progress.util.StandardProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.FileViewProvider;
@@ -175,7 +172,7 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
 
   private void doQueue(@NotNull Project project, @NotNull Document document, @NotNull Object reason) {
     synchronized (documentsToCommit) {
-      ProgressIndicator indicator = new DaemonProgressIndicator();
+      ProgressIndicator indicator = createProgressIndicator();
       CommitTask newTask = new CommitTask(document, project, indicator, reason);
 
       markRemovedFromDocsToCommit(newTask);
@@ -211,7 +208,7 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
     }
     if (task != null) {
       boolean stillUncommitted = !task.project.isDisposed() &&
-                                 ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(task.project)).isInUncommittedSet(task.document);
+                                 ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(task.project)).isInUncommittedSet(task.document);
       if (stillUncommitted) {
         s += "; Uncommitted: " + task.document;
       }
@@ -325,7 +322,7 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
 
         log("Pulled", task, false, indicator);
 
-        if (project.isDisposed() || !((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(project)).isInUncommittedSet(document)) {
+        if (project.isDisposed() || !((PsiDocumentManagerBase)PsiDocumentManager.getInstance(project)).isInUncommittedSet(document)) {
           log("Abandon and proceed to next",task, false);
           return;
         }
@@ -394,13 +391,6 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
 
     if (!project.isInitialized() && !project.isDefault()) {
       @NonNls String s = project + "; Disposed: "+project.isDisposed()+"; Open: "+project.isOpen();
-      s += "; SA Passed: ";
-      try {
-        s += ((StartupManagerImpl)StartupManager.getInstance(project)).startupActivityPassed();
-      }
-      catch (Exception e) {
-        s += e;
-      }
       try {
         Disposer.dispose(project);
       }
@@ -433,7 +423,7 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
   @NotNull
   @Override
   protected ProgressIndicator createProgressIndicator() {
-    return new ProgressIndicatorBase();
+    return new StandardProgressIndicatorBase();
   }
 
   private void startNewTask(@Nullable CommitTask task, @NotNull Object reason) {
@@ -459,7 +449,7 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
         myApplication.assertReadAccessAllowed();
         if (project.isDisposed()) return;
 
-        final PsiDocumentManagerImpl documentManager = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(project);
+        final PsiDocumentManagerBase documentManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(project);
         if (documentManager.isCommitted(document)) return;
 
         FileViewProvider viewProvider = documentManager.getCachedViewProvider(document);
@@ -525,7 +515,7 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
           }
         }
 
-        PsiDocumentManagerImpl documentManager = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(project);
+        PsiDocumentManagerBase documentManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(project);
 
         log("Executing later finishCommit", task, false);
         boolean success = documentManager.finishCommit(document, finishProcessors, synchronously, task.reason);
@@ -546,7 +536,7 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
   }
 
   @NotNull
-  private Processor<Document> handleCommitWithoutPsi(@NotNull final PsiDocumentManagerImpl documentManager,
+  private Processor<Document> handleCommitWithoutPsi(@NotNull final PsiDocumentManagerBase documentManager,
                                                      @NotNull Document document,
                                                      @NotNull final CommitTask task,
                                                      final boolean synchronously) {

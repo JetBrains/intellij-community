@@ -5,6 +5,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -30,9 +31,9 @@ public class EncodingManager extends FileDocumentManagerAdapter {
   static {
     Map<String, Charset> map = new HashMap<String, Charset>();
     map.put("latin1", Charset.forName("ISO-8859-1"));
-    map.put("utf-8", Charset.forName("UTF-8"));
-    map.put("utf-16be", Charset.forName("UTF-16BE"));
-    map.put("utf-16le", Charset.forName("UTF-16LE"));
+    map.put("utf-8", CharsetToolkit.UTF8_CHARSET);
+    map.put("utf-16be", CharsetToolkit.UTF_16BE_CHARSET);
+    map.put("utf-16le", CharsetToolkit.UTF_16LE_CHARSET);
     encodingMap = Collections.unmodifiableMap(map);
   }
 
