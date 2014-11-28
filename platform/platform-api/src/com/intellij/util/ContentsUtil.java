@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,10 @@
  */
 package com.intellij.util;
 
-import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentManager;
 
 public class ContentsUtil {
-  private ContentsUtil() {
-  }
-
   public static void addOrReplaceContent(ContentManager manager, Content content, boolean select) {
     final String contentName = content.getDisplayName();
 
