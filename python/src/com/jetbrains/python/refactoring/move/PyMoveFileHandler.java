@@ -71,56 +71,70 @@ public class PyMoveFileHandler extends MoveFileHandler {
         CreatePackageAction.createInitPyInHierarchy(moveDestination, root);
       }
       if (file instanceof PyFile) {
-        final PyFile module = (PyFile)file;
-        final String originalLocation = file.getUserData(ORIGINAL_FILE_LOCATION);
-        file.putUserData(ORIGINAL_FILE_LOCATION, null);
-        for (PyFromImportStatement statement : module.getFromImports()) {
-          if (statement.getRelativeLevel() == 0) {
-            continue;
-          }
-          if (originalLocation == null) {
-            continue;
-          }
-          String relativeImportBasePath = extractPath(originalLocation);
-          for (int level = 0; level < statement.getRelativeLevel(); level++) {
-            relativeImportBasePath = PathUtil.getParentPath(relativeImportBasePath);
-          }
-          if (!relativeImportBasePath.isEmpty()) {
-            //noinspection ConstantConditions
-            final String relativeImportBaseUrl = constructUrl(extractProtocol(originalLocation), relativeImportBasePath);
-            final VirtualFile relativeImportBaseDir = getInstance().findFileByUrl(relativeImportBaseUrl);
-            VirtualFile sourceFile = relativeImportBaseDir;
-            if (relativeImportBaseDir != null && relativeImportBaseDir.exists() && statement.getImportSource() != null) {
-              final String relativePath = statement.getImportSource().getText().replace('.', '/');
-              sourceFile = relativeImportBaseDir.findFileByRelativePath(relativePath);
-              if (sourceFile == null) {
-                sourceFile = relativeImportBaseDir.findFileByRelativePath(relativePath + PyNames.DOT_PY);
-              }
-            }
-            if (sourceFile != null) {
-              final PsiManager psiManager = file.getManager();
-              final PsiFileSystemItem sourceElement;
-              if (sourceFile.isDirectory()) {
-                sourceElement = psiManager.findDirectory(sourceFile);
-              }
-              else {
-                sourceElement = psiManager.findFile(sourceFile);
-              }
-              final QualifiedName newName = QualifiedNameFinder.findShortestImportableQName(sourceElement);
-              final PsiElement fromKeyword = statement.getFirstChild();
-              final PsiElement firstDot = fromKeyword.getNextSibling().getNextSibling();
-              assert firstDot.getNode().getElementType() == PyTokenTypes.DOT;
-              final PsiWhiteSpace nextWhitespace = PsiTreeUtil.getNextSiblingOfType(firstDot, PsiWhiteSpace.class);
-              final PsiElement replacementEnd = nextWhitespace == null ? statement.getLastChild() : nextWhitespace.getPrevSibling();
-              if (replacementEnd != firstDot) {
-                statement.deleteChildRange(firstDot.getNextSibling(), replacementEnd);
-              }
-              replaceWithQualifiedExpression(firstDot, newName);
-            }
-          }
-        }
+        updateRelativeImportsInModule((PyFile)file);
       }
     }
+  }
+
+  private static void updateRelativeImportsInModule(@NotNull PyFile module) {
+    final String originalLocation = module.getUserData(ORIGINAL_FILE_LOCATION);
+    if (originalLocation == null) {
+      return;
+    }
+    module.putUserData(ORIGINAL_FILE_LOCATION, null);
+    for (PyFromImportStatement statement : module.getFromImports()) {
+      if (statement.getRelativeLevel() == 0) {
+        continue;
+      }
+      final PsiFileSystemItem sourceElement = resolveRelativeImportSourceFromModuleLocation(originalLocation, statement);
+      if (sourceElement == null) {
+        continue;
+      }
+      final QualifiedName newName = QualifiedNameFinder.findShortestImportableQName(sourceElement);
+      final PsiElement fromKeyword = statement.getFirstChild();
+      final PsiElement firstDot = fromKeyword.getNextSibling().getNextSibling();
+      assert firstDot.getNode().getElementType() == PyTokenTypes.DOT;
+      final PsiWhiteSpace nextWhitespace = PsiTreeUtil.getNextSiblingOfType(firstDot, PsiWhiteSpace.class);
+      final PsiElement replacementEnd = nextWhitespace == null ? statement.getLastChild() : nextWhitespace.getPrevSibling();
+      if (replacementEnd != firstDot) {
+        statement.deleteChildRange(firstDot.getNextSibling(), replacementEnd);
+      }
+      replaceWithQualifiedExpression(firstDot, newName);
+    }
+  }
+
+  @Nullable
+  private static PsiFileSystemItem resolveRelativeImportSourceFromModuleLocation(@NotNull String moduleLocation,
+                                                                                 @NotNull PyFromImportStatement statement) {
+    String relativeImportBasePath = extractPath(moduleLocation);
+    for (int level = 0; level < statement.getRelativeLevel(); level++) {
+      relativeImportBasePath = PathUtil.getParentPath(relativeImportBasePath);
+    }
+    if (!relativeImportBasePath.isEmpty()) {
+      //noinspection ConstantConditions
+      final String relativeImportBaseUrl = constructUrl(extractProtocol(moduleLocation), relativeImportBasePath);
+      final VirtualFile relativeImportBaseDir = getInstance().findFileByUrl(relativeImportBaseUrl);
+      VirtualFile sourceFile = relativeImportBaseDir;
+      if (relativeImportBaseDir != null && relativeImportBaseDir.exists() && statement.getImportSource() != null) {
+        final String relativePath = statement.getImportSource().getText().replace('.', '/');
+        sourceFile = relativeImportBaseDir.findFileByRelativePath(relativePath);
+        if (sourceFile == null) {
+          sourceFile = relativeImportBaseDir.findFileByRelativePath(relativePath + PyNames.DOT_PY);
+        }
+      }
+      if (sourceFile != null) {
+        final PsiManager psiManager = statement.getManager();
+        final PsiFileSystemItem sourceElement;
+        if (sourceFile.isDirectory()) {
+          sourceElement = psiManager.findDirectory(sourceFile);
+        }
+        else {
+          sourceElement = psiManager.findFile(sourceFile);
+        }
+        return sourceElement;
+      }
+    }
+    return null;
   }
 
   private static boolean probablyNamespacePackage(@NotNull PsiFile anchor, @NotNull PsiDirectory destination, @NotNull PsiDirectory root) {
