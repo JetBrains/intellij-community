@@ -199,6 +199,16 @@ public class PyMoveTest extends PyTestCase {
     doMoveFileTest("pkg1/subpkg1", "");
   }
 
+  // PY-14595
+  public void testNamespacePackageUsedInMovedFunction() {
+    runWithLanguageLevel(LanguageLevel.PYTHON33, new Runnable() {
+      @Override
+      public void run() {
+        doMoveSymbolTest("func", "b.py");
+      }
+    });
+  }
+
   public void testRelativeImportOfNameFromInitPy() {
     doMoveFileTest("pkg/subpkg2", "");
   }
