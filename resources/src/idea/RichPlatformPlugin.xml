@@ -330,6 +330,7 @@
 
 
     <stepsBeforeRunProvider implementation="com.intellij.compiler.options.CompileStepBeforeRun" id="compileBeforeRun"/>
+    <stepsBeforeRunProvider implementation="com.intellij.compiler.options.MakeProjectStepBeforeRun" id="makeProjectBeforeRun"/>
     <stepsBeforeRunProvider implementation="com.intellij.compiler.options.CompileStepBeforeRunNoErrorCheck" id="compileBeforeRunNoErrorCheck" order="after compileBeforeRun"/>
     <stepsBeforeRunProvider implementation="com.intellij.packaging.impl.run.BuildArtifactsBeforeRunTaskProvider" order="after compileBeforeRunNoErrorCheck"/>
     <programRunner id="defaultRunRunner" implementation="com.intellij.execution.impl.DefaultJavaProgramRunner"/>
