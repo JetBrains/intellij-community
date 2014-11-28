@@ -311,8 +311,8 @@ class TestSpecialCases(unittest.TestCase):
             self.m.redo("__builtin__", False)
         for classes_buff in self.m.classes_buffs:
             for data in classes_buff.data:
-                self.assertNotIn("from object import object", data)
-                self.assertNotIn("from .object import object", data)
+                self.assertFalse("from object import object" in data)
+                self.assertFalse("from .object import object" in data)
 
     def testRange(self):
         self._testBuiltinFuncName("range", "(start=None, stop=None, step=None)")
