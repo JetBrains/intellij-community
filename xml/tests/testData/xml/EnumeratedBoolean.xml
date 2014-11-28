@@ -6,6 +6,6 @@
     <test:bool>false</test:bool>
     <test:bool>1</test:bool>
     <test:bool>0</test:bool>
-    <test:bool>unknown</test:bool>
+    <test:bool><error descr="Wrong tag value">unknown</error></test:bool>
 
 </test:testelem>
