@@ -905,8 +905,10 @@ public class ExtractMethodProcessor implements MatchProvider {
 
   private String declareVariableAtMethodCallLocation(String name, PsiType type) {
     if (myControlFlowWrapper.getOutputVariables(false).length == 0) {
-      PsiElement lastStatement = myEnclosingBlockStatement != null ? myEnclosingBlockStatement : myElements[myElements.length - 1];
-      name = JavaCodeStyleManager.getInstance(myProject).suggestUniqueVariableName(name, lastStatement, true);
+      PsiElement lastStatement = PsiTreeUtil.getNextSiblingOfType(myEnclosingBlockStatement != null ? myEnclosingBlockStatement : myElements[myElements.length - 1], PsiStatement.class);
+      if (lastStatement != null) {
+        name = JavaCodeStyleManager.getInstance(myProject).suggestUniqueVariableName(name, lastStatement, true);
+      }
     }
     PsiDeclarationStatement statement = myElementFactory.createVariableDeclarationStatement(name, type, myMethodCall);
     statement = (PsiDeclarationStatement)addToMethodCallLocation(statement);
