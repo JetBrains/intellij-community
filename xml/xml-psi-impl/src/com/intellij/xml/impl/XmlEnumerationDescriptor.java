@@ -22,6 +22,10 @@ public abstract class XmlEnumerationDescriptor<T extends XmlElement> {
 
   public abstract String[] getEnumeratedValues();
 
+  public String[] getValuesForCompletion() {
+    return getEnumeratedValues();
+  }
+
   public PsiElement getValueDeclaration(XmlElement attributeValue, String value) {
     String defaultValue = getDefaultValue();
     if (Comparing.equal(defaultValue, value)) {
