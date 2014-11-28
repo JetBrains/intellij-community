@@ -1,5 +1,6 @@
 package com.intellij.openapi.util.diff.tools.util;
 
+import com.intellij.openapi.diff.DiffNavigationContext;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.diff.api.DiffTool;
 import com.intellij.openapi.util.diff.requests.DiffRequest;
@@ -13,10 +14,12 @@ public class ScrollToLineHelper {
 
   @Nullable protected ScrollToPolicy myScrollToChange;
   @Nullable protected Pair<Side, Integer> myScrollToLine;
+  @Nullable protected DiffNavigationContext myNavigationContext;
 
   public void processContext(@NotNull DiffTool.DiffContext context, @NotNull DiffRequest request) {
     myScrollToChange = context.getUserData(DiffUserDataKeys.SCROLL_TO_CHANGE);
     myScrollToLine = request.getUserData(DiffUserDataKeys.SCROLL_TO_LINE);
+    myNavigationContext = request.getUserData(DiffUserDataKeys.NAVIGATION_CONTEXT);
   }
 
   public void onSuccessfulScroll() {
@@ -24,5 +27,6 @@ public class ScrollToLineHelper {
 
     myScrollToChange = null;
     myScrollToLine = null;
+    myNavigationContext = null;
   }
 }

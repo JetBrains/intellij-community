@@ -2,6 +2,7 @@ package com.intellij.openapi.util.diff.tools.util.twoside;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diff.DiffNavigationContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -290,6 +291,11 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
     return false;
   }
 
+  @CalledInAwt
+  protected boolean doScrollToContext(@NotNull DiffNavigationContext context) {
+    return false;
+  }
+
   @Nullable
   protected abstract SyncScrollSupport.SyncScrollable getSyncScrollable();
 
@@ -413,6 +419,7 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
       if (editor.getCaretModel().getOffset() != 0 || editor.getScrollingModel().getVerticalScrollOffset() != 0) return;
 
       if (myShouldScroll && myScrollToChange != null) if (doScrollToChange(myScrollToChange)) onSuccessfulScroll();
+      if (myShouldScroll && myNavigationContext != null) if (doScrollToContext(myNavigationContext)) onSuccessfulScroll();
       if (myShouldScroll) doScrollToChange(ScrollToPolicy.FIRST_CHANGE);
       onSuccessfulScroll();
     }

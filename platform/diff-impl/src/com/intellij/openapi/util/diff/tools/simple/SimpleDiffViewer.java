@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
+import com.intellij.openapi.diff.DiffNavigationContext;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -19,6 +20,9 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.diff.actions.BufferedLineIterator;
+import com.intellij.openapi.util.diff.actions.NavigationContextChecker;
 import com.intellij.openapi.util.diff.api.DiffTool.DiffContext;
 import com.intellij.openapi.util.diff.comparison.DiffTooBigException;
 import com.intellij.openapi.util.diff.contents.DocumentContent;
@@ -44,9 +48,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.BitSet;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
 
 class SimpleDiffViewer extends TwosideTextDiffViewer {
@@ -339,6 +341,25 @@ class SimpleDiffViewer extends TwosideTextDiffViewer {
     return true;
   }
 
+  @Override
+  protected boolean doScrollToContext(@NotNull DiffNavigationContext context) {
+    if (myEditor2 == null) return false;
+
+    ChangedLinesIterator changedLinesIterator = new ChangedLinesIterator(Side.RIGHT);
+    NavigationContextChecker checker = new NavigationContextChecker(changedLinesIterator, context);
+    int line = checker.contextMatchCheck();
+    if (line == -1) {
+      // this will work for the case, when spaces changes are ignored, and corresponding fragments are not reported as changed
+      // just try to find target line  -> +-
+      AllLinesIterator allLinesIterator = new AllLinesIterator(Side.RIGHT);
+      NavigationContextChecker checker2 = new NavigationContextChecker(allLinesIterator, context);
+      line = checker2.contextMatchCheck();
+    }
+    if (line == -1) return false;
+
+    return doScrollToLine(Pair.create(Side.RIGHT, line));
+  }
+
   //
   // Getters
   //
@@ -541,6 +562,83 @@ class SimpleDiffViewer extends TwosideTextDiffViewer {
         if (change.isSelectedByLine(line, side)) return true;
       }
       return false;
+    }
+  }
+
+  //
+  // Scroll from annotate
+  //
+
+  private class AllLinesIterator implements Iterator<Pair<Integer, CharSequence>> {
+    @NotNull private final Side mySide;
+    @NotNull private final Document myDocument;
+    private int myLine = 0;
+
+    private AllLinesIterator(@NotNull Side side) {
+      mySide = side;
+
+      Editor editor = mySide.select(myEditor1, myEditor2);
+      assert editor != null;
+      myDocument = editor.getDocument();
+    }
+
+    @Override
+    public boolean hasNext() {
+      return myLine < getLineCount(myDocument);
+    }
+
+    @Override
+    public Pair<Integer, CharSequence> next() {
+      int offset1 = myDocument.getLineStartOffset(myLine);
+      int offset2 = myDocument.getLineEndOffset(myLine);
+
+      CharSequence text = myDocument.getImmutableCharSequence().subSequence(offset1, offset2);
+
+      Pair<Integer, CharSequence> pair = new Pair<Integer, CharSequence>(myLine, text);
+      myLine++;
+
+      return pair;
+    }
+
+    @Override
+    public void remove() {
+      throw new UnsupportedOperationException();
+    }
+  }
+
+  private class ChangedLinesIterator extends BufferedLineIterator {
+    @NotNull private final Side mySide;
+    private int myIndex = 0;
+
+    private ChangedLinesIterator(@NotNull Side side) {
+      mySide = side;
+      init();
+    }
+
+    @Override
+    public boolean hasNextBlock() {
+      return myIndex < myDiffChanges.size();
+    }
+
+    @Override
+    public void loadNextBlock() {
+      LineFragment fragment = myDiffChanges.get(myIndex).getFragment();
+      myIndex++;
+
+      int line1 = mySide.getStartLine(fragment);
+      int line2 = mySide.getEndLine(fragment);
+
+      Editor editor = mySide.select(myEditor1, myEditor2);
+      assert editor != null;
+      Document document = editor.getDocument();
+
+      for (int i = line1; i < line2; i++) {
+        int offset1 = document.getLineStartOffset(i);
+        int offset2 = document.getLineEndOffset(i);
+
+        CharSequence text = document.getImmutableCharSequence().subSequence(offset1, offset2);
+        addLine(i, text);
+      }
     }
   }
 

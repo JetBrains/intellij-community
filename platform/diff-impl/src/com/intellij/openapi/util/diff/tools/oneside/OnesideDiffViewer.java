@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
+import com.intellij.openapi.diff.DiffNavigationContext;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -25,6 +26,8 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.diff.actions.BufferedLineIterator;
+import com.intellij.openapi.util.diff.actions.NavigationContextChecker;
 import com.intellij.openapi.util.diff.actions.impl.OpenInEditorWithMouseAction;
 import com.intellij.openapi.util.diff.actions.impl.SetEditorSettingsAction;
 import com.intellij.openapi.util.diff.api.DiffTool.DiffContext;
@@ -713,6 +716,86 @@ class OnesideDiffViewer extends TextDiffViewerBase {
   }
 
   //
+  // Scroll from annotate
+  //
+
+  private class AllLinesIterator implements Iterator<Pair<Integer, CharSequence>> {
+    @NotNull private final Side mySide;
+    @NotNull private final Document myDocument;
+    private int myLine = 0;
+
+    private AllLinesIterator(@NotNull Side side) {
+      mySide = side;
+
+      DocumentContent content = mySide.select(myActualContent1, myActualContent2);
+      assert content != null;
+      myDocument = content.getDocument();
+    }
+
+    @Override
+    public boolean hasNext() {
+      return myLine < getLineCount(myDocument);
+    }
+
+    @Override
+    public Pair<Integer, CharSequence> next() {
+      int offset1 = myDocument.getLineStartOffset(myLine);
+      int offset2 = myDocument.getLineEndOffset(myLine);
+
+      CharSequence text = myDocument.getImmutableCharSequence().subSequence(offset1, offset2);
+
+      Pair<Integer, CharSequence> pair = new Pair<Integer, CharSequence>(myLine, text);
+      myLine++;
+
+      return pair;
+    }
+
+    @Override
+    public void remove() {
+      throw new UnsupportedOperationException();
+    }
+  }
+
+  private class ChangedLinesIterator extends BufferedLineIterator {
+    @NotNull private final Side mySide;
+    @NotNull private final List<OnesideDiffChange> myChanges;
+
+    private int myIndex = 0;
+
+    private ChangedLinesIterator(@NotNull Side side, @NotNull List<OnesideDiffChange> changes) {
+      mySide = side;
+      myChanges = changes;
+      init();
+    }
+
+    @Override
+    public boolean hasNextBlock() {
+      return myIndex < myChanges.size();
+    }
+
+    @Override
+    public void loadNextBlock() {
+      OnesideDiffChange change = myChanges.get(myIndex);
+      myIndex++;
+
+      int line1 = change.getLine1();
+      int line2 = change.getLine2();
+
+      Document document = myEditor.getDocument();
+
+      for (int i = line1; i < line2; i++) {
+        int offset1 = document.getLineStartOffset(i);
+        int offset2 = document.getLineEndOffset(i);
+
+        if (offset2 < change.getStartOffset2()) continue; // because we want only insertions
+
+        CharSequence text = document.getImmutableCharSequence().subSequence(offset1, offset2);
+        addLine(i, text);
+      }
+    }
+  }
+
+  //
   // Helpers
   //
 
@@ -847,6 +930,7 @@ class OnesideDiffViewer extends TextDiffViewerBase {
     public void scrollOnRediff() {
       if (myShouldScroll && myScrollToChange != null) if (doScrollToChange(myScrollToChange)) onSuccessfulScroll();
       if (myShouldScroll && myScrollToLine != null) if (doScrollToLine(myScrollToLine)) onSuccessfulScroll();
+      if (myShouldScroll && myNavigationContext != null) if (doScrollToContext(myNavigationContext)) onSuccessfulScroll();
       if (myShouldScroll) doScrollToChange(ScrollToPolicy.FIRST_CHANGE);
       onSuccessfulScroll();
     }
@@ -876,6 +960,25 @@ class OnesideDiffViewer extends TextDiffViewerBase {
 
       DiffUtil.scrollToLine(myEditor, targetChange.getLine1());
       return true;
+    }
+
+    private boolean doScrollToContext(@NotNull DiffNavigationContext context) {
+      if (myChangedBlockData == null) return false;
+      if (myActualContent2 == null) return false;
+
+      ChangedLinesIterator changedLinesIterator = new ChangedLinesIterator(Side.RIGHT, myChangedBlockData.getDiffChanges());
+      NavigationContextChecker checker = new NavigationContextChecker(changedLinesIterator, context);
+      int line = checker.contextMatchCheck();
+      if (line == -1) {
+        // this will work for the case, when spaces changes are ignored, and corresponding fragments are not reported as changed
+        // just try to find target line  -> +-
+        AllLinesIterator allLinesIterator = new AllLinesIterator(Side.RIGHT);
+        NavigationContextChecker checker2 = new NavigationContextChecker(allLinesIterator, context);
+        line = checker2.contextMatchCheck();
+      }
+      if (line == -1) return false;
+
+      return doScrollToLine(Pair.create(Side.RIGHT, line));
     }
   }
 }
