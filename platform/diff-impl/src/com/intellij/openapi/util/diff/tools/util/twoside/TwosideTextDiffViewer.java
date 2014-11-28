@@ -4,6 +4,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.VisibleAreaEvent;
@@ -12,6 +13,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.diff.actions.impl.FocusOppositePaneAction;
+import com.intellij.openapi.util.diff.actions.impl.OpenInEditorWithMouseAction;
 import com.intellij.openapi.util.diff.api.DiffTool.DiffContext;
 import com.intellij.openapi.util.diff.contents.DiffContent;
 import com.intellij.openapi.util.diff.contents.DocumentContent;
@@ -90,6 +92,8 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
 
     myEditorSettingsAction = new MySetEditorSettingsAction(getTextSettings());
     myEditorSettingsAction.applyDefaults();
+
+    new MyOpenInEditorWithMouseAction().register(getEditors());
   }
 
   @Override
@@ -342,6 +346,21 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
       myCurrentSide = myCurrentSide.other();
       myPanel.requestFocus();
       getCurrentEditor().getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+    }
+  }
+
+  private class MyOpenInEditorWithMouseAction extends OpenInEditorWithMouseAction {
+    @Override
+    protected OpenFileDescriptor getDescriptor(@NotNull Editor editor, int line) {
+      if (editor != myEditor1 && editor != myEditor2) return null;
+      Side side = Side.fromLeft(editor == myEditor1);
+
+      DocumentContent content = side.select(myActualContent1, myActualContent2);
+      if (content == null) return null;
+
+      int offset = editor.logicalPositionToOffset(new LogicalPosition(line, 0));
+
+      return content.getOpenFileDescriptor(offset);
     }
   }
 

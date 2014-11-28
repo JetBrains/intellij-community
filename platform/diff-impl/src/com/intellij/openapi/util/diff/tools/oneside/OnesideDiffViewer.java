@@ -12,6 +12,7 @@ import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -24,6 +25,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.diff.actions.impl.OpenInEditorWithMouseAction;
 import com.intellij.openapi.util.diff.actions.impl.SetEditorSettingsAction;
 import com.intellij.openapi.util.diff.api.DiffTool.DiffContext;
 import com.intellij.openapi.util.diff.comparison.DiffTooBigException;
@@ -108,6 +110,8 @@ class OnesideDiffViewer extends TextDiffViewerBase {
 
     myEditorSettingsAction = new MySetEditorSettingsAction();
     myEditorSettingsAction.applyDefaults();
+
+    new MyOpenInEditorWithMouseAction().register(getEditors());
   }
 
   @Override
@@ -696,6 +700,15 @@ class OnesideDiffViewer extends TextDiffViewerBase {
     @Override
     public List<? extends Editor> getEditors() {
       return OnesideDiffViewer.this.getEditors();
+    }
+  }
+
+  private class MyOpenInEditorWithMouseAction extends OpenInEditorWithMouseAction {
+    @Override
+    protected OpenFileDescriptor getDescriptor(@NotNull Editor editor, int line) {
+      if (editor != myEditor) return null;
+
+      return getOpenFileDescriptor(myEditor.logicalPositionToOffset(new LogicalPosition(line, 0)));
     }
   }
 

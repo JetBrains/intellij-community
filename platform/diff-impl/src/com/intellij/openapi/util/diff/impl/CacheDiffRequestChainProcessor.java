@@ -30,6 +30,7 @@ import com.intellij.openapi.util.diff.tools.util.SoftHardCacheMap;
 import com.intellij.openapi.util.diff.util.DiffUtil;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.util.Consumer;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,7 +57,7 @@ public abstract class CacheDiffRequestChainProcessor implements Disposable {
   @NotNull private final MyDiffWindow myDiffWindow;
   @NotNull private final OpenInEditorAction myOpenInEditorAction;
 
-  @NotNull private final JPanel myPanel;
+  @NotNull private final MyPanel myPanel;
   @NotNull private final ModifiablePanel myContentPanel;
   @NotNull private final ModifiablePanel myToolbarPanel; // TODO: allow to call 'updateToolbar' from Viewer ?
   @NotNull private final ModifiablePanel myToolbarStatusPanel;
@@ -81,7 +82,7 @@ public abstract class CacheDiffRequestChainProcessor implements Disposable {
 
     myDiffWindow = new MyDiffWindow();
 
-    myPanel = new JPanel(new BorderLayout());
+    myPanel = new MyPanel();
     myContentPanel = new ModifiablePanel();
     myToolbarPanel = new ModifiablePanel();
     myToolbarStatusPanel = new ModifiablePanel();
@@ -536,6 +537,23 @@ public abstract class CacheDiffRequestChainProcessor implements Disposable {
   //
   // Helpers
   //
+
+  private class MyPanel extends JPanel implements DataProvider {
+    public MyPanel() {
+      super(new BorderLayout());
+    }
+
+    @Nullable
+    @Override
+    public Object getData(@NonNls String dataId) {
+      if (OpenInEditorAction.KEY.is(dataId)) {
+        return myOpenInEditorAction;
+      }
+      else {
+        return null;
+      }
+    }
+  }
 
   private class MyFocusTraversalPolicy extends IdeFocusTraversalPolicy {
     @Override
