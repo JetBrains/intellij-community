@@ -39,6 +39,7 @@ import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
+import gnu.trove.TObjectLongHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -146,7 +147,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
         @Override
         public void computed(@NotNull VirtualFile file, @NotNull Document document, int line) {
           final Map<Pair<VirtualFile, Integer>, Set<XValueNodeImpl>> map = myTree.getProject().getUserData(XVariablesView.DEBUG_VARIABLES);
-          final Map<VirtualFile, Long> timestamps = myTree.getProject().getUserData(XVariablesView.DEBUG_VARIABLES_TIMESTAMPS);
+          final TObjectLongHashMap<VirtualFile> timestamps = myTree.getProject().getUserData(XVariablesView.DEBUG_VARIABLES_TIMESTAMPS);
           if (map == null || timestamps == null) {
             return;
           }
@@ -169,7 +170,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
           public void setSourcePosition(@Nullable XSourcePosition sourcePosition) {
             final Map<Pair<VirtualFile, Integer>, Set<XValueNodeImpl>> map =
               myTree.getProject().getUserData(XVariablesView.DEBUG_VARIABLES);
-            final Map<VirtualFile, Long> timestamps = myTree.getProject().getUserData(XVariablesView.DEBUG_VARIABLES_TIMESTAMPS);
+            final TObjectLongHashMap<VirtualFile> timestamps = myTree.getProject().getUserData(XVariablesView.DEBUG_VARIABLES_TIMESTAMPS);
             if (map == null || timestamps == null || sourcePosition == null) return;
             VirtualFile file = sourcePosition.getFile();
             if (!Comparing.equal(debuggerPosition.getFile(), sourcePosition.getFile())) return;

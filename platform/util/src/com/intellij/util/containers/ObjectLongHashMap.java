@@ -16,31 +16,31 @@
 package com.intellij.util.containers;
 
 import gnu.trove.TObjectHashingStrategy;
-import gnu.trove.TObjectIntHashMap;
+import gnu.trove.TObjectLongHashMap;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * return -1 instead of 0 if no such mapping exists
  */
-public class ObjectIntHashMap<K> extends TObjectIntHashMap<K> {
-  public ObjectIntHashMap(int initialCapacity) {
+public class ObjectLongHashMap<K> extends TObjectLongHashMap<K> {
+  public ObjectLongHashMap(int initialCapacity) {
     super(initialCapacity);
   }
 
-  public ObjectIntHashMap(@NotNull TObjectHashingStrategy<K> strategy) {
+  public ObjectLongHashMap(@NotNull TObjectHashingStrategy<K> strategy) {
     super(strategy);
   }
 
-  public ObjectIntHashMap(int initialCapacity, @NotNull TObjectHashingStrategy<K> strategy) {
+  public ObjectLongHashMap(int initialCapacity, @NotNull TObjectHashingStrategy<K> strategy) {
     super(initialCapacity, strategy);
   }
 
-  public ObjectIntHashMap() {
+  public ObjectLongHashMap() {
     super();
   }
 
   @Override
-  public final int get(K key) {
+  public final long get(K key) {
     int index = index(key);
     return index < 0 ? -1 : _values[index];
   }
