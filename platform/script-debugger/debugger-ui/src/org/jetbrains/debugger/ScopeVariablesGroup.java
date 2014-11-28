@@ -97,14 +97,14 @@ public class ScopeVariablesGroup extends XValueGroup {
             return;
           }
 
-          callFrame.getReceiverVariable().doWhenDone(new Consumer<Variable>() {
+          callFrame.getReceiverVariable().done(new Consumer<Variable>() {
             @Override
             public void consume(Variable variable) {
               if (!node.isObsolete()) {
                 node.addChildren(variable == null ? XValueChildrenList.EMPTY : XValueChildrenList.singleton(CallFrameBase.RECEIVER_NAME, new VariableView(variable, context)), true);
               }
             }
-          }).doWhenRejected(new Consumer<String>() {
+          }).rejected(new Consumer<String>() {
             @Override
             public void consume(@Nullable String error) {
               if (!node.isObsolete()) {
