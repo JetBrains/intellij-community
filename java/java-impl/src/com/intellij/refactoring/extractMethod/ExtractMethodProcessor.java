@@ -31,6 +31,7 @@ import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.instructions.BranchingInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -867,15 +868,25 @@ public class ExtractMethodProcessor implements MatchProvider {
       }
     }
 
-    if (isNullabilityCheckApplicable() && !(newMethod.getReturnType() instanceof PsiPrimitiveType) && 
-        PsiUtil.isLanguageLevel5OrHigher(newMethod) && Registry.is("annotate.extracted.method.nullable.when.applicable", true)) {
+    if (isNullabilityCheckApplicable() && !(newMethod.getReturnType() instanceof PsiPrimitiveType) && PsiUtil.isLanguageLevel5OrHigher(newMethod) && 
+        PropertiesComponent.getInstance(myProject).getBoolean(ExtractMethodDialog.EXTRACT_METHOD_GENERATE_ANNOTATIONS, true)) {
       final NullableNotNullManager manager = NullableNotNullManager.getInstance(myProject);
       final PsiClass nullableAnnotationClass =
         JavaPsiFacade.getInstance(myProject).findClass(manager.getDefaultNullable(), GlobalSearchScope.allScope(myProject));
       if (nullableAnnotationClass != null) {
-        final Collection<PsiElement> nullableReturn = DataFlowInspectionBase.getNullableReturn(newMethod);
-        if (nullableReturn != null && !nullableReturn.isEmpty()) {
-          final AddNullableNotNullAnnotationFix annotationFix = new AddNullableAnnotationFix(newMethod);
+        final Nullness nullness = DfaUtil.inferMethodNullity(newMethod);
+        AddNullableNotNullAnnotationFix annotationFix;
+        switch (nullness) {
+          case NOT_NULL:
+            annotationFix = new AddNotNullAnnotationFix(newMethod);
+            break;
+          case NULLABLE:
+            annotationFix = new AddNullableAnnotationFix(newMethod);
+            break;
+          default:
+            annotationFix = null;
+        }
+        if (annotationFix != null) {
           annotationFix.invoke(myProject, myTargetClass.getContainingFile(), newMethod, newMethod);
         }
       }
