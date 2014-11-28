@@ -122,7 +122,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
     }) {
       @Override
       public void onProfileChosen(InspectionProfileImpl inspectionProfile) {
-        myLayout.show(myPanel, inspectionProfile.getName());
+        myLayout.show(myPanel, getCardName(inspectionProfile));
         myAuxiliaryRightPanel.showDescription(inspectionProfile.getDescription());
       }
     };
@@ -408,7 +408,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
   private void addProfile(InspectionProfileImpl model) {
     final String modelName = model.getName();
     final SingleInspectionProfilePanel panel = createPanel(model, modelName);
-    myPanel.add(modelName, panel);
+    myPanel.add(getCardName(model), panel);
 
     myProfiles.getModel().addElement(model);
     putProfile(model, panel);
@@ -454,6 +454,12 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
 
   @Override
   public boolean isModified() {
+    final InspectionProfileImpl selectedProfile = getSelectedObject();
+    final InspectionProfileImpl currentProfile = getCurrentProfile();
+    if (!Comparing.equal(selectedProfile.getName(), currentProfile.getName()) || selectedProfile.isProjectLevel() != currentProfile.isProjectLevel()) {
+      return true;
+    }
+
     if (super.isModified()) {
       return true;
     }
@@ -519,16 +525,17 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
       final String profileName = profile.getName();
       final ModifiableModel modifiableProfile = ((InspectionProfileImpl)profile).getModifiableModel();
       modifiableProfiles.add(modifiableProfile);
-      final SingleInspectionProfilePanel panel = createPanel((InspectionProfileImpl)modifiableProfile, profileName);
+      final InspectionProfileImpl inspectionProfile = (InspectionProfileImpl)modifiableProfile;
+      final SingleInspectionProfilePanel panel = createPanel(inspectionProfile, profileName);
       putProfile(modifiableProfile, panel);
-      myPanel.add(profileName, panel);
+      myPanel.add(getCardName(inspectionProfile), panel);
     }
     myProfiles.reset(modifiableProfiles);
     myAuxiliaryRightPanel.showDescription(getSelectedObject().getDescription());
 
     final InspectionProfileImpl inspectionProfile = getCurrentProfile();
     myProfiles.selectProfile(inspectionProfile);
-    myLayout.show(myPanel, inspectionProfile.getName());
+    myLayout.show(myPanel, getCardName(inspectionProfile));
     final SingleInspectionProfilePanel panel = getSelectedPanel();
     if (panel != null) {
       panel.setVisible(true);//make sure that UI was initialized
@@ -547,6 +554,10 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
         }
       });
     }
+  }
+
+  private static String getCardName(final InspectionProfileImpl inspectionProfile) {
+    return (inspectionProfile.isProjectLevel() ? "s" : "a") + inspectionProfile.getName();
   }
 
   private SingleInspectionProfilePanel createPanel(InspectionProfileImpl profile, String profileName) {

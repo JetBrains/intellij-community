@@ -58,10 +58,4 @@ public class IDEInspectionToolsConfigurable extends InspectionToolsConfigurable 
     myProfileManager.setRootProfile(rootProfile);
     myCurrentSelection = rootProfile;
   }
-
-  @Override
-  public boolean isModified() {
-    if (!Comparing.strEqual(getSelectedObject().getName(), myCurrentSelection)) return true;
-    return super.isModified();
-  }
 }
