@@ -24,6 +24,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -33,6 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author Gregory.Shrago
@@ -129,6 +131,49 @@ public class DfaUtil {
       }
     }
     return null;
+  }
+
+  @NotNull
+  public static Nullness inferMethodNullity(PsiMethod method) {
+    final PsiCodeBlock body = method.getBody();
+    if (body == null || PsiUtil.resolveClassInType(method.getReturnType()) == null) {
+      return Nullness.UNKNOWN;
+    }
+
+    final AtomicBoolean hasNulls = new AtomicBoolean();
+    final AtomicBoolean hasNotNulls = new AtomicBoolean();
+    final AtomicBoolean hasUnknowns = new AtomicBoolean();
+
+    final StandardDataFlowRunner dfaRunner = new StandardDataFlowRunner();
+    final RunnerResult rc = dfaRunner.analyzeMethod(body, new StandardInstructionVisitor() {
+      @Override
+      public DfaInstructionState[] visitCheckReturnValue(CheckReturnValueInstruction instruction,
+                                                         DataFlowRunner runner,
+                                                         DfaMemoryState memState) {
+        DfaValue returned = memState.peek();
+        if (memState.isNull(returned)) {
+          hasNulls.set(true);
+        }
+        else if (memState.isNotNull(returned)) {
+          hasNotNulls.set(true);
+        }
+        else {
+          hasUnknowns.set(true);
+        }
+        return super.visitCheckReturnValue(instruction, runner, memState);
+      }
+    });
+
+    if (rc == RunnerResult.OK) {
+      if (hasNulls.get()) {
+        return Nullness.NULLABLE;
+      }
+      if (hasNotNulls.get() && !hasUnknowns.get()) {
+        return Nullness.NOT_NULL;
+      }
+    }
+
+    return Nullness.UNKNOWN;
   }
 
   private static class ValuableInstructionVisitor extends StandardInstructionVisitor {
