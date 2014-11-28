@@ -80,7 +80,7 @@ public abstract class OpenInBrowserBaseGroupAction extends ComputableActionGroup
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      e.getPresentation().setVisible(!WebBrowserManager.getInstance().getBrowsers().isEmpty());
+      e.getPresentation().setVisible(!WebBrowserManager.getInstance().getActiveBrowsers().isEmpty());
     }
   }
 }
