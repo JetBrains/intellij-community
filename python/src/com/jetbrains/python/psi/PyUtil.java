@@ -967,6 +967,32 @@ public class PyUtil {
     } // don't touch non-dirs
   }
 
+  /**
+   * If target is a PsiDirectory, that is also a valid Python package, return PsiFile that points to __init__.py,
+   * if such file exists, or directory itself (i.e. namespace package). Otherwise, return {@code null}.
+   * Unlike {@link #turnDirIntoInit(com.intellij.psi.PsiElement)} this function handles namespace packages and
+   * accepts only PsiDirectories as target.
+   *
+   * @param target directory to check
+   * @param anchor optional PSI element to determine language level as for {@link #isPackage(com.intellij.psi.PsiDirectory, com.intellij.psi.PsiElement)}
+   * @return PsiFile or PsiDirectory, if target is a Python package and {@code null} null otherwise
+   */
+  @Nullable
+  public static PsiElement turnDirIntoPackageElement(@NotNull PsiDirectory target, @Nullable PsiElement anchor) {
+    if (isPackage(target, anchor)) {
+      final PsiFile file = target.findFile(PyNames.INIT_DOT_PY);
+      return file != null ? file : target;
+    }
+    else {
+      return null;
+    }
+  }
+
+  /**
+   * If target is a Python module named __init__.py file, return its directory. Otherwise return target unchanged.
+   * @param target PSI element to check
+   * @return PsiDirectory or target unchanged
+   */
   @Contract("null -> null; !null -> !null")
   @Nullable
   public static PsiElement turnInitIntoDir(@Nullable PsiElement target) {
@@ -977,7 +1003,7 @@ public class PyUtil {
   }
 
   public static boolean isPackage(@NotNull PsiDirectory directory, @Nullable PsiElement anchor) {
-    if (turnDirIntoInit(directory) != null) {
+    if (directory.findFile(PyNames.INIT_DOT_PY) != null) {
       return true;
     }
     final LanguageLevel level = anchor != null ?
