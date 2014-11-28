@@ -59,7 +59,7 @@ class FooBool {
     b = ["true"]
     b = [true]
     b = [1] as List
-    b = <error descr="Constructor 'Boolean' in 'java.lang.Boolean' cannot be applied to '(['b':java.lang.Integer, 'c':java.lang.Integer,...])'">[a: 1, b: 2, c: 3]</error>
+    b = <error descr="Constructor 'Boolean' in 'java.lang.Boolean' cannot be applied to '(['a':java.lang.Integer, 'b':java.lang.Integer,...])'">[a: 1, b: 2, c: 3]</error>
     b = [a: 1, b: 2, c: 3] as Map
     b = [a: 1, b: 2, c: 3] as List
   }
@@ -88,7 +88,7 @@ class FooBool {
     boolean b20 = [] as List
     boolean b21 = <error descr="Constructor 'Boolean' in 'java.lang.Boolean' cannot be applied to '(java.lang.Integer, java.lang.Integer, java.lang.Integer)'">[1, 2, 3]</error>
     boolean b22 = [1, 2, 3] as List
-    boolean b23 = <error descr="Constructor 'Boolean' in 'java.lang.Boolean' cannot be applied to '(['b':java.lang.Integer, 'c':java.lang.Integer,...])'">[a: 1, b: 2, c: 3]</error>
+    boolean b23 = <error descr="Constructor 'Boolean' in 'java.lang.Boolean' cannot be applied to '(['a':java.lang.Integer, 'b':java.lang.Integer,...])'">[a: 1, b: 2, c: 3]</error>
     boolean b24 = [a: 1, b: 2, c: 3] as Map
     boolean b25 = [a: 1, b: 2, c: 3] as List
   }
