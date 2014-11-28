@@ -271,6 +271,12 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
       public void visitReturnStatement(PsiReturnStatement statement) {
         returnStatements.add(statement);
       }
+
+      @Override
+      public void visitClass(PsiClass aClass) {}
+
+      @Override
+      public void visitLambdaExpression(PsiLambdaExpression expression) {}
     });
     if (myExtractProcessor.generatesConditionalExit()) {
       for (int i = 0; i < returnStatements.size() - 1; i++) {
@@ -307,8 +313,10 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
       }
 
       @Override
-      public void visitClass(PsiClass aClass) {
-      }
+      public void visitClass(PsiClass aClass) {}
+
+      @Override
+      public void visitLambdaExpression(PsiLambdaExpression expression) {}
 
       @Override
       public void visitDeclarationStatement(final PsiDeclarationStatement statement) {
