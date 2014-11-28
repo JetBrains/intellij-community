@@ -430,6 +430,13 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
       HighlightInfo info = assertOneElement(fileLevel);
       assertEquals("top level", info.getDescription());
 
+      type("\n\n");
+      doHighlighting();
+      fileLevel =
+        ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(ourProject)).getFileLevelHighlights(getProject(), getFile());
+      info = assertOneElement(fileLevel);
+      assertEquals("top level", info.getDescription());
+
       type("//xxx"); //disable top level annotation
       List<HighlightInfo> warnings = doHighlighting(HighlightSeverity.WARNING);
       assertEmpty(warnings);
