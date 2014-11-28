@@ -25,6 +25,7 @@ import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.ArrayUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.impl.BasicXmlAttributeDescriptor;
+import com.intellij.xml.impl.XmlEnumerationDescriptor;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -49,8 +50,13 @@ public class XmlAttributeValueGetter implements ContextGetter {
       return ArrayUtil.EMPTY_STRING_ARRAY;
     }
 
-    return descriptor instanceof BasicXmlAttributeDescriptor ?
-                      ((BasicXmlAttributeDescriptor)descriptor).getEnumeratedValues(attribute) : descriptor.getEnumeratedValues();
+    if (descriptor instanceof BasicXmlAttributeDescriptor) {
+      return ((BasicXmlAttributeDescriptor)descriptor).getEnumeratedValues(attribute);
+    }
+    if (descriptor instanceof XmlEnumerationDescriptor) {
+      return ((XmlEnumerationDescriptor)descriptor).getValuesForCompletion();
+    }
+    return descriptor.getEnumeratedValues();
   }
 
   private Object[] getApplicableAttributeVariants(PsiElement _context) {
