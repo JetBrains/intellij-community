@@ -28,12 +28,16 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class RepositoryNode extends CheckedTreeNode implements EditableTreeNode, Comparable<RepositoryNode> {
 
+  private static final int PROGRESS_DELAY = 100;
+  private static final int START_DELAY = 500;
   @NotNull protected final LoadingIcon myLoadingIcon;
   @NotNull protected final AtomicBoolean myLoading = new AtomicBoolean();
   @NotNull private final CheckBoxModel myCheckBoxModel;
@@ -142,11 +146,22 @@ public class RepositoryNode extends CheckedTreeNode implements EditableTreeNode,
   }
 
   @Override
-  public void startLoading(@NotNull JTree tree, @NotNull Future<AtomicReference<OutgoingResult>> future) {
+  public void startLoading(@NotNull final JTree tree, @NotNull Future<AtomicReference<OutgoingResult>> future, boolean initial) {
     myFuture = future;
-    myLoading.set(true);
-    myLoadingIcon.setObserver(tree, this);
+    final Timer t = new Timer(initial ? START_DELAY : PROGRESS_DELAY, new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        if (!myFuture.isDone()) {
+          myLoading.set(true);
+          myLoadingIcon.setObserver(tree, RepositoryNode.this);
+          tree.repaint();
+        }
+      }
+    });
+    t.setRepeats(false);
+    t.start();
   }
+
 
   public int compareTo(@NotNull RepositoryNode repositoryNode) {
     String name = myRepositoryPanel.getRepositoryName();
