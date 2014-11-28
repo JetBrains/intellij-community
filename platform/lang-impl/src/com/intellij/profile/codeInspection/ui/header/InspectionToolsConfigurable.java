@@ -358,8 +358,11 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
     myAuxiliaryRightPanel = new AuxiliaryRightPanel(new AuxiliaryRightPanel.DescriptionSaveListener() {
       @Override
       public void saveDescription(@NotNull String description) {
-        getSelectedObject().setDescription(description);
-        getSelectedObject().setModified(true);
+        final InspectionProfileImpl inspectionProfile = getSelectedObject();
+        if (!Comparing.equal(description, inspectionProfile.getDescription())) {
+          inspectionProfile.setDescription(description);
+          inspectionProfile.setModified(true);
+        }
         myAuxiliaryRightPanel.showDescription(description);
       }
     });
