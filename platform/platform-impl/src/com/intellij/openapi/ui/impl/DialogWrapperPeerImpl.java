@@ -438,7 +438,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
 
     final AnCancelAction anCancelAction = new AnCancelAction();
     final JRootPane rootPane = getRootPane();
-    anCancelAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0)), rootPane);
+    anCancelAction.registerCustomShortcutSet(CommonShortcuts.ESCAPE, rootPane);
     myDisposeActions.add(new Runnable() {
       @Override
       public void run() {

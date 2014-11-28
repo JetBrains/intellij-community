@@ -6068,6 +6068,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myOwnAttributes.put(key, attributes);
     }
 
+    @Nullable
     @Override
     public Color getColor(ColorKey key) {
       if (myOwnColors.containsKey(key)) return myOwnColors.get(key);

@@ -61,7 +61,8 @@ import java.awt.event.*;
  */
 @SuppressWarnings("MethodMayBeStatic")
 public class ExtractMethodDialog extends DialogWrapper implements AbstractExtractDialog {
-  public static final String EXTRACT_METHOD_DEFAULT_VISIBILITY = "extract.method.default.visibility";
+  private static final String EXTRACT_METHOD_DEFAULT_VISIBILITY = "extract.method.default.visibility";
+  public static final String EXTRACT_METHOD_GENERATE_ANNOTATIONS = "extractMethod.generateAnnotations";
   private final Project myProject;
   private final PsiType myReturnType;
   private final PsiTypeParameterList myTypeParameterList;
@@ -75,6 +76,7 @@ public class ExtractMethodDialog extends DialogWrapper implements AbstractExtrac
   private final MethodSignatureComponent mySignature;
   private final JCheckBox myMakeStatic;
   protected JCheckBox myMakeVarargs;
+  protected JCheckBox myGenerateAnnotations;
   private JCheckBox myCbChainedConstructor;
 
   private final InputVariables myVariableData;
@@ -196,6 +198,10 @@ public class ExtractMethodDialog extends DialogWrapper implements AbstractExtrac
     if (containingMethod != null && containingMethod.hasModifierProperty(PsiModifier.PUBLIC)) {
       PropertiesComponent.getInstance(myProject).setValue(EXTRACT_METHOD_DEFAULT_VISIBILITY, getVisibility());
     }
+
+    if (myGenerateAnnotations != null) {
+      PropertiesComponent.getInstance(myProject).setValue(EXTRACT_METHOD_GENERATE_ANNOTATIONS, String.valueOf(myGenerateAnnotations.isSelected()));
+    }
     super.doOKAction();
   }
 
@@ -285,6 +291,13 @@ public class ExtractMethodDialog extends DialogWrapper implements AbstractExtrac
       });
       myMakeVarargs.setSelected(false);
       optionsPanel.add(myMakeVarargs);
+    }
+
+    if (!(myReturnType instanceof PsiPrimitiveType) && PsiUtil.isLanguageLevel5OrHigher(myTargetClass)) {
+      final boolean isSelected = PropertiesComponent.getInstance(myProject).getBoolean(EXTRACT_METHOD_GENERATE_ANNOTATIONS, true);
+      myGenerateAnnotations = new JCheckBox("Generate annotations", isSelected);
+      //todo update signature?!
+      optionsPanel.add(myGenerateAnnotations);
     }
 
     if (myCbChainedConstructor != null) {

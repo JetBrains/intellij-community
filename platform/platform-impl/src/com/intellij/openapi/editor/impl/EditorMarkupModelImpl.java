@@ -592,8 +592,14 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         }
       }
       else {
-        int half = getThickness() / 2;
-        int shift = isMirrored() ? -half + 2 : half - 1;
+        int shift;
+        if (Registry.is("editor.full.width.scrollbar")) {
+          shift = isMirrored() ? -myMinMarkHeight + 1 : myMinMarkHeight;
+        }
+        else {
+          int half = getThickness() / 2;
+          shift = isMirrored() ? -half + 2 : half - 1;
+        }
         g.translate(shift, 0);
         super.paintThumb(g, c, thumbBounds);
         g.translate(-shift, 0);

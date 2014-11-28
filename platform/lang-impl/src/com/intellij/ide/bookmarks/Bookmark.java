@@ -359,7 +359,11 @@ public class Bookmark implements Navigatable {
   }
 
   private static boolean darkBackground() {
-    return ColorUtil.isDark(EditorColorsManager.getInstance().getGlobalScheme().getColor(EditorColors.GUTTER_BACKGROUND));
+    Color gutterBackground = EditorColorsManager.getInstance().getGlobalScheme().getColor(EditorColors.GUTTER_BACKGROUND);
+    if (gutterBackground == null) {
+      gutterBackground = EditorColors.GUTTER_BACKGROUND.getDefaultColor();
+    }
+    return ColorUtil.isDark(gutterBackground);
   }
 
   private static class MyGutterIconRenderer extends GutterIconRenderer {

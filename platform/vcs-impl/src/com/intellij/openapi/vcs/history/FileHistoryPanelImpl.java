@@ -1774,6 +1774,17 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     }
   }
 
+  @Override
+  public boolean equals(Object obj) {
+    return obj instanceof FileHistoryPanelImpl && Comparing.equal(((FileHistoryPanelImpl)obj).getVirtualFile(), getVirtualFile());
+  }
+
+  @Override
+  public int hashCode() {
+    final VirtualFile file = getVirtualFile();
+    return file == null ? 0 : file.hashCode();
+  }
+
   private class MyToggleAction extends ToggleAction implements DumbAware {
 
     public MyToggleAction() {

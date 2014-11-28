@@ -1,3 +1,5 @@
+import org.jetbrains.annotations.NotNull;
+
 class Test {
   void foo() {
       final String str = newMethod();
@@ -9,6 +11,7 @@ class Test {
     }
   }
 
+    @NotNull
     private String newMethod() {
         final String str = "";
         if (str == "") {

@@ -423,6 +423,9 @@ public class NullityInferrer {
     }
 
     @Override
+    public void visitLambdaExpression(PsiLambdaExpression expression) {}
+
+    @Override
     public void visitReturnStatement(@NotNull PsiReturnStatement statement) {
       super.visitReturnStatement(statement);
       final PsiExpression value = statement.getReturnValue();
@@ -491,8 +494,10 @@ public class NullityInferrer {
         final boolean[] sometimesReturnsNull = new boolean[1];
         body.accept(new JavaRecursiveElementWalkingVisitor() {
           @Override
-          public void visitClass(PsiClass aClass) {
-          }
+          public void visitClass(PsiClass aClass) {}
+
+          @Override
+          public void visitLambdaExpression(PsiLambdaExpression expression) {}
 
           @Override
           public void visitElement(PsiElement element) {

@@ -29,6 +29,7 @@ import com.intellij.openapi.options.*;
 import com.intellij.openapi.options.ex.ConfigurableCardPanel;
 import com.intellij.openapi.options.ex.ConfigurableVisitor;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.RelativeFont;
@@ -87,6 +88,7 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
     myResetAction.putValue(Action.SHORT_DESCRIPTION, RESET_DESCRIPTION);
     myResetAction.setEnabled(false);
     myErrorLabel.setOpaque(true);
+    myErrorLabel.setEnabled(parent instanceof SettingsEditor);
     myErrorLabel.setVisible(false);
     myErrorLabel.setVerticalTextPosition(SwingConstants.TOP);
     myErrorLabel.setBorder(BorderFactory.createEmptyBorder(10, 15, 15, 15));
@@ -228,8 +230,13 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
       myErrorLabel.setVisible(false);
       return true;
     }
-    myErrorLabel.setText("<html><body><strong>Changes were not applied because of the following error</strong>:<br>" + exception.getMessage());
-    myErrorLabel.setVisible(true);
+    if (myErrorLabel.isEnabled()) {
+      myErrorLabel.setText("<html><body><strong>" + exception.getTitle() + "</strong>:<br>" + exception.getMessage());
+      myErrorLabel.setVisible(true);
+    }
+    else {
+      Messages.showMessageDialog(this, exception.getMessage(), exception.getTitle(), Messages.getErrorIcon());
+    }
     return false;
   }
 

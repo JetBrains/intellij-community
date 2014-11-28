@@ -134,21 +134,6 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     };
     analyzeDfaWithNestedClosures(scope, holder, dfaRunner, Arrays.asList(dfaRunner.createMemoryState()), onTheFly);
   }
-  
-  @Nullable
-  public static Collection<PsiElement> getNullableReturn(PsiMethod method) {
-    final StandardDataFlowRunner dfaRunner = new StandardDataFlowRunner();
-    final DataFlowInstructionVisitor visitor = new DataFlowInstructionVisitor(dfaRunner);
-    final PsiCodeBlock body = method.getBody();
-    if (body == null) {
-      return null;
-    }
-    final RunnerResult rc = dfaRunner.analyzeMethod(body, visitor);
-    if (rc == RunnerResult.OK) {
-      return visitor.getProblems(NullabilityProblem.nullableReturn);
-    }
-    return null;
-  } 
 
   private void analyzeDfaWithNestedClosures(PsiElement scope,
                                             ProblemsHolder holder,

@@ -53,6 +53,7 @@ public class DefaultColorsScheme extends AbstractColorsScheme implements ReadOnl
     return attrs;
   }
 
+  @Nullable
   @Override
   public Color getColor(ColorKey key) {
     if (key == null) return null;
