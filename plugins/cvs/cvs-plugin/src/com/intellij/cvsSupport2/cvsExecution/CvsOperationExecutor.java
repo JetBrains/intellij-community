@@ -207,10 +207,7 @@ public class CvsOperationExecutor {
       Messages.showErrorDialog(errorMessage, "CVS Error");
       return;
     }
-    if (errors.isEmpty()) {
-      tabbedWindow.hideErrors();
-    }
-    else {
+    if (!errors.isEmpty()) {
       ErrorTreeView errorTreeView = tabbedWindow.getErrorsTreeView();
       for (final VcsException exception : errors) {
         final String groupName = DateFormatUtil.formatDateTime(System.currentTimeMillis()) + ' ' + handler.getTitle();
@@ -222,7 +219,6 @@ public class CvsOperationExecutor {
                                    null, null, exception);
         }
       }
-      tabbedWindow.ensureVisible(myProject);
     }
   }
 
