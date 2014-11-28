@@ -185,8 +185,11 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
     throws ProjectBuildException {
     for (ArtifactBuildTaskProvider provider : JpsServiceManager.getInstance().getExtensions(ArtifactBuildTaskProvider.class)) {
       List<? extends BuildTask> tasks = provider.createArtifactBuildTasks(artifact, phase);
-      for (BuildTask task : tasks) {
-        task.build(context);
+      if (!tasks.isEmpty()) {
+        context.processMessage(new ProgressMessage("Running " + phase.getPresentableName() + " tasks for '" + artifact.getName() + "' artifact..."));
+        for (BuildTask task : tasks) {
+          task.build(context);
+        }
       }
     }
   }
