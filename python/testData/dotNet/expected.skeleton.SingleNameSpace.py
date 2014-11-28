@@ -1,7 +1,7 @@
 # encoding: utf-8
 # module SingleNameSpace
 # from SingleNameSpace, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
-# by generator 1.136
+# by generator XXX
 # no doc
 # no imports
 
