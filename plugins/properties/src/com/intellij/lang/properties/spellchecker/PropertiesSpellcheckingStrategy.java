@@ -21,7 +21,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.spellchecker.inspections.PlainTextSplitter;
 import com.intellij.spellchecker.inspections.PropertiesSplitter;
 import com.intellij.spellchecker.tokenizer.SpellcheckingStrategy;
-import com.intellij.spellchecker.tokenizer.TokenConsumer;
 import com.intellij.spellchecker.tokenizer.Tokenizer;
 import com.intellij.spellchecker.tokenizer.TokenizerBase;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
 public class PropertiesSpellcheckingStrategy extends SpellcheckingStrategy {
 
   private final Tokenizer<PropertyValueImpl> myPropertyValueTokenizer = TokenizerBase.create(PlainTextSplitter.getInstance());
-  private final Tokenizer<PropertyKeyImpl> myPropertyTokenizer = new MyPropertyTokenizer();
+  private final Tokenizer<PropertyKeyImpl> myPropertyTokenizer = TokenizerBase.create(PropertiesSplitter.getInstance());
 
   @NotNull
   @Override
@@ -42,11 +41,5 @@ public class PropertiesSpellcheckingStrategy extends SpellcheckingStrategy {
       return myPropertyTokenizer;
     }
     return super.getTokenizer(element);
-  }
-
-  private static class MyPropertyTokenizer extends Tokenizer<PropertyKeyImpl> {
-    public void tokenize(@NotNull PropertyKeyImpl element, TokenConsumer consumer) {
-      consumer.consumeToken(element, PropertiesSplitter.getInstance());
-    }
   }
 }
