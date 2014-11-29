@@ -188,7 +188,7 @@ class VisiblePackBuilder {
   private Set<Integer> getMatchingHeads(@NotNull VcsLogRefs refs,
                                         @NotNull Set<VirtualFile> vcsRoots,
                                         @NotNull VcsLogStructureFilter filter) {
-    Pair<Set<VirtualFile>, MultiMap<VirtualFile, VirtualFile>> roots = VcsLogFileFilterUtil.collectRoots(filter.getFiles(), vcsRoots);
+    Pair<Set<VirtualFile>, MultiMap<VirtualFile, VirtualFile>> roots = VcsLogFileFilter.collectRoots(filter.getFiles(), vcsRoots);
     return getMatchingHeads(refs, ContainerUtil.union(roots.first, roots.second.keySet()));
   }
 
@@ -257,7 +257,7 @@ class VisiblePackBuilder {
     VcsLogStructureFilter structureFilter = filterCollection.getStructureFilter();
 
     Pair<Set<VirtualFile>, MultiMap<VirtualFile, VirtualFile>> selectedRootsAndFiles =
-      VcsLogFileFilterUtil.collectRootsAndFiles(providers.keySet(), rootFilter, structureFilter);
+      VcsLogFileFilter.collectRootsAndFiles(providers.keySet(), rootFilter, structureFilter);
 
     Collection<List<TimedVcsCommit>> logs = ContainerUtil.newArrayList();
     for (Map.Entry<VirtualFile, VcsLogProvider> entry : providers.entrySet()) {

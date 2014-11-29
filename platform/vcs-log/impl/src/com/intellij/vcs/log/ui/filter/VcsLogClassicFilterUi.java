@@ -287,7 +287,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
       if (filter == null) {
         myVisibleRoots = null;
       } else {
-        myVisibleRoots = VcsLogFileFilterUtil.collectRoots(roots, filter.getRootFilter(), filter.getStructureFilter());
+        myVisibleRoots = VcsLogFileFilter.collectRoots(roots, filter.getRootFilter(), filter.getStructureFilter());
       }
     }
 

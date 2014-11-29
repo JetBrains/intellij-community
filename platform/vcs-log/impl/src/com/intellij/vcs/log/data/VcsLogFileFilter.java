@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.vcs.log.VcsLogFilter;
 import com.intellij.vcs.log.VcsLogRootFilter;
 import com.intellij.vcs.log.VcsLogStructureFilter;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +30,15 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.Set;
 
-public class VcsLogFileFilterUtil {
+public class VcsLogFileFilter implements VcsLogFilter {
+  @Nullable private final VcsLogStructureFilter myStructureFilter;
+  @Nullable private final VcsLogRootFilter myRootFilter;
+
+  public VcsLogFileFilter(@Nullable VcsLogStructureFilter structureFilter, @Nullable VcsLogRootFilter rootFilter) {
+    myStructureFilter = structureFilter;
+    myRootFilter = rootFilter;
+  }
+
   @NotNull
   static Pair<Set<VirtualFile>, MultiMap<VirtualFile, VirtualFile>> collectRoots(@NotNull Collection<VirtualFile> files,
                                                                                  @NotNull Set<VirtualFile> roots) {
@@ -87,5 +96,15 @@ public class VcsLogFileFilterUtil {
 
     Pair<Set<VirtualFile>, MultiMap<VirtualFile, VirtualFile>> rootsAndFiles = collectRootsAndFiles(roots, rootFilter, structureFilter);
     return ContainerUtil.union(rootsAndFiles.first, rootsAndFiles.second.keySet());
+  }
+
+  @Nullable
+  public VcsLogStructureFilter getStructureFilter() {
+    return myStructureFilter;
+  }
+
+  @Nullable
+  public VcsLogRootFilter getRootFilter() {
+    return myRootFilter;
   }
 }
