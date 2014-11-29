@@ -31,7 +31,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.SearchTextFieldWithStoredHistory;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.*;
@@ -142,7 +141,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
     actionGroup.add(new FilterActionComponent(new Computable<JComponent>() {
       @Override
       public JComponent compute() {
-        return new StructureFilterPopupComponent(myStructureFilterModel);
+        return new StructureFilterPopupComponent(myStructureFilterModel, myUi.getColorManager());
       }
     }));
     return actionGroup;

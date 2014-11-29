@@ -16,15 +16,18 @@
 package com.intellij.vcs.log.ui.filter;
 
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.CheckboxAction;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.VcsLogDataPack;
+import com.intellij.vcs.log.VcsLogRootFilter;
+import com.intellij.vcs.log.VcsLogRootFilterImpl;
+import com.intellij.vcs.log.data.VcsLogFileFilter;
 import com.intellij.vcs.log.data.VcsLogStructureFilterImpl;
+import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.VcsStructureChooser;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,9 +36,11 @@ import java.util.*;
 
 class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilter> {
   private static final int FILTER_LABEL_LENGTH = 20;
+  @NotNull private final VcsLogColorManager myColorManager;
 
-  public StructureFilterPopupComponent(@NotNull FilterModel<VcsLogFileFilter> filterModel) {
+  public StructureFilterPopupComponent(@NotNull FilterModel<VcsLogFileFilter> filterModel, @NotNull VcsLogColorManager colorManager) {
     super("Structure", filterModel);
+    myColorManager = colorManager;
   }
 
   @NotNull
@@ -70,7 +75,6 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
 
   @Override
   protected ActionGroup createActionGroup() {
-
     Set<VirtualFile> roots = myFilterModel.getDataPack().getLogProviders().keySet();
 
     List<AnAction> actions = new ArrayList<AnAction>();
@@ -136,7 +140,7 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
     return tooltip;
   }
 
-  private class SelectVisibleRootAction extends CheckboxAction {
+  private class SelectVisibleRootAction extends ToggleAction {
     @NotNull private final VirtualFile myRoot;
 
     private SelectVisibleRootAction(@NotNull VirtualFile root) {
@@ -166,7 +170,7 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
       VcsLogDataPack dataPack = myFilterModel.getDataPack();
       VcsLogFileFilter filter = myFilterModel.getFilter();
       VcsLogRootFilter rootFilter = filter == null ? null : filter.getRootFilter();
-      Collection<VirtualFile> files = filter == null ? Collections.<VirtualFile>emptySet() : getAllFiles(filter);
+      Collection<VirtualFile> files = filter == null || filter.getStructureFilter() == null ? Collections.<VirtualFile>emptySet() : filter.getStructureFilter().getFiles();
       VcsStructureChooser chooser = new VcsStructureChooser(project, "Select Files or Folders to Filter", files,
                                                             new ArrayList<VirtualFile>(dataPack.getLogProviders().keySet()));
       if (chooser.showAndGet()) {
