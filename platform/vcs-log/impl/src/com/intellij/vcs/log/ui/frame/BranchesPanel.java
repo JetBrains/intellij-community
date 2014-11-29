@@ -158,9 +158,9 @@ public class BranchesPanel extends JPanel {
   }
 
   public void onFiltersChange(@NotNull VcsLogFilterCollection filters) {
-    VcsLogStructureFilter structureFilter = filters.getStructureFilter();
-    if (structureFilter != null) {
-      myRoots = structureFilter.getRoots();
+    VcsLogRootFilter rootFilter = filters.getRootFilter();
+    if (rootFilter != null) {
+      myRoots = rootFilter.getRoots();
     }
     else {
       myRoots = null;

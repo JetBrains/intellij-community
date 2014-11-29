@@ -32,38 +32,28 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class VcsLogStructureFilterImpl implements VcsLogDetailsFilter, VcsLogStructureFilter {
-  @NotNull private final Set<VirtualFile> myRoots;
-  @NotNull private final MultiMap<VirtualFile, VirtualFile> myRootToFiles;
+  @NotNull private final Set<VirtualFile> myFiles;
 
-  public VcsLogStructureFilterImpl(@NotNull Set<VirtualFile> roots,
-                                   @NotNull MultiMap<VirtualFile, VirtualFile> rootToFiles) {
-    myRoots = roots;
-    myRootToFiles = rootToFiles;
+  public VcsLogStructureFilterImpl(@NotNull Set<VirtualFile> files) {
+    myFiles = files;
   }
 
   @NotNull
   @Override
-  public Collection<VirtualFile> getFiles(@NotNull VirtualFile root) {
-    return myRootToFiles.get(root);
-  }
-
-  @Override
-  public Collection<VirtualFile> getRoots() {
-    return ContainerUtil.union(myRoots, myRootToFiles.keySet());
+  public Collection<VirtualFile> getFiles() {
+    return myFiles;
   }
 
   @Override
   public boolean matches(@NotNull VcsCommitMetadata details) {
-    if (myRoots.contains(details.getRoot())) return true;
-
     if ((details instanceof VcsFullCommitDetails)) {
       for (Change change : ((VcsFullCommitDetails)details).getChanges()) {
         ContentRevision before = change.getBeforeRevision();
-        if (before != null && matches(before.getFile().getPath(), myRootToFiles.get(details.getRoot()))) {
+        if (before != null && matches(before.getFile().getPath())) {
           return true;
         }
         ContentRevision after = change.getAfterRevision();
-        if (after != null && matches(after.getFile().getPath(), myRootToFiles.get(details.getRoot()))) {
+        if (after != null && matches(after.getFile().getPath())) {
           return true;
         }
       }
@@ -74,47 +64,12 @@ public class VcsLogStructureFilterImpl implements VcsLogDetailsFilter, VcsLogStr
     }
   }
 
-  private boolean matches(@NotNull final String path, @NotNull Collection<VirtualFile> files) {
-    return ContainerUtil.find(files, new Condition<VirtualFile>() {
+  private boolean matches(@NotNull final String path) {
+    return ContainerUtil.find(myFiles, new Condition<VirtualFile>() {
       @Override
       public boolean value(VirtualFile file) {
         return FileUtil.isAncestor(file.getPath(), path, false);
       }
     }) != null;
-  }
-
-  @NotNull
-  public static VcsLogStructureFilterImpl build(@NotNull Collection<VirtualFile> files,
-                                        @NotNull VcsLogDataPack dataPack) {
-    Set<VirtualFile> roots = dataPack.getLogProviders().keySet();
-
-    Set<VirtualFile> selectedRoots = new HashSet<VirtualFile>();
-    MultiMap<VirtualFile, VirtualFile> selectedFiles = new MultiMap<VirtualFile, VirtualFile>();
-
-    for (VirtualFile file : files) {
-      if (roots.contains(file)) {
-        // no need in details filter
-        selectedRoots.add(file);
-      }
-      else {
-        VirtualFile candidateAncestorRoot = null;
-        for (VirtualFile root : roots) {
-          if (VfsUtilCore.isAncestor(root, file, false)) {
-            if (candidateAncestorRoot == null || VfsUtilCore.isAncestor(candidateAncestorRoot, root, false)) {
-              candidateAncestorRoot = root;
-            }
-          }
-          else if (VfsUtilCore.isAncestor(file, root, false)) {
-            selectedRoots.add(root);
-          }
-        }
-
-        if (candidateAncestorRoot != null) {
-          selectedFiles.putValue(candidateAncestorRoot, file);
-        }
-      }
-    }
-
-    return new VcsLogStructureFilterImpl(selectedRoots, selectedFiles);
   }
 }

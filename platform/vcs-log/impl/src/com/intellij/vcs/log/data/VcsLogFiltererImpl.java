@@ -55,7 +55,7 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
                      @NotNull final PermanentGraph.SortType initialSortType,
                      @NotNull final Consumer<VisiblePack> visiblePackConsumer) {
     myVisiblePackBuilder = new VisiblePackBuilder(providers, hashMap, topCommitsDetailsCache, detailsGetter);
-    myFilters = new VcsLogFilterCollectionImpl(null, null, null, null, null, null);
+    myFilters = new VcsLogFilterCollectionImpl(null, null, null, null, null, null, null);
     mySortType = initialSortType;
 
     myTaskController = new SingleTaskController<Request, VisiblePack>(visiblePackConsumer) {

@@ -24,11 +24,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.graph.GraphCommit;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.graph.VisibleGraph;
+import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,7 +65,7 @@ class VisiblePackBuilder {
       return Pair.create(applyHashFilter(dataPack, hashFilter.getHashes(), sortType), commitCount);
     }
 
-    Set<Integer> matchingHeads = getMatchingHeads(dataPack.getRefs(), filters);
+    Set<Integer> matchingHeads = getMatchingHeads(dataPack.getRefs(), dataPack.getLogProviders().keySet(), filters);
     List<VcsLogDetailsFilter> detailsFilters = filters.getDetailsFilters();
     List<Hash> matchingCommits = null;
     boolean canRequestMore = false;
@@ -105,8 +107,8 @@ class VisiblePackBuilder {
   }
 
   private VisiblePack applyHashFilter(@NotNull DataPack dataPack,
-                                       @NotNull Collection<String> hashes,
-                                       @NotNull PermanentGraph.SortType sortType) {
+                                      @NotNull Collection<String> hashes,
+                                      @NotNull PermanentGraph.SortType sortType) {
     final Set<Integer> indices = ContainerUtil.map2SetNotNull(hashes, new Function<String, Integer>() {
       @Override
       public Integer fun(String partOfHash) {
@@ -124,13 +126,39 @@ class VisiblePackBuilder {
   }
 
   @Nullable
-  private Set<Integer> getMatchingHeads(@NotNull VcsLogRefs refs, @NotNull VcsLogFilterCollection filters) {
+  private Set<Integer> getMatchingHeads(@NotNull VcsLogRefs refs, Set<VirtualFile> roots, @NotNull VcsLogFilterCollection filters) {
     VcsLogBranchFilter branchFilter = filters.getBranchFilter();
-    if (branchFilter == null) {
-      return null;
+    VcsLogRootFilter rootFilter = filters.getRootFilter();
+    VcsLogStructureFilter structureFilter = filters.getStructureFilter();
+
+    if (branchFilter == null && rootFilter == null && structureFilter == null) return null;
+
+    Set<Integer> filteredByFile = null;
+    Set<Integer> filteredByBranch = null;
+
+    if (branchFilter != null) {
+      filteredByBranch = getMatchingHeads(refs, branchFilter);
+    }
+    if (rootFilter != null) {
+      filteredByFile = getMatchingHeads(refs, rootFilter);
+    }
+    if (structureFilter != null) {
+      if (filteredByFile == null) {
+        filteredByFile = getMatchingHeads(refs, roots, structureFilter);
+      }
+      else {
+        filteredByFile = ContainerUtil.union(filteredByFile, getMatchingHeads(refs, roots, structureFilter));
+      }
     }
 
-    final Collection<String> branchNames = new HashSet<String>(branchFilter.getBranchNames());
+    if (filteredByBranch == null) return filteredByFile;
+    if (filteredByFile == null) return filteredByBranch;
+
+    return new HashSet<Integer>(ContainerUtil.intersection(filteredByBranch, filteredByFile));
+  }
+
+  private Set<Integer> getMatchingHeads(@NotNull VcsLogRefs refs, @NotNull VcsLogBranchFilter filter) {
+    final Collection<String> branchNames = new HashSet<String>(filter.getBranchNames());
     return new HashSet<Integer>(ContainerUtil.mapNotNull(refs.getBranches(), new Function<VcsRef, Integer>() {
       @Override
       public Integer fun(VcsRef ref) {
@@ -140,6 +168,28 @@ class VisiblePackBuilder {
         return null;
       }
     }));
+  }
+
+  private Set<Integer> getMatchingHeads(@NotNull VcsLogRefs refs, @NotNull VcsLogRootFilter filter) {
+    Collection<VirtualFile> roots = filter.getRoots();
+    return getMatchingHeads(refs, roots);
+  }
+
+  private Set<Integer> getMatchingHeads(@NotNull VcsLogRefs refs, @NotNull Collection<VirtualFile> roots) {
+    Set<Integer> result = new HashSet<Integer>();
+    for (VcsRef branch : refs.getBranches()) {
+      if (roots.contains(branch.getRoot())) {
+        result.add(myHashMap.getCommitIndex(branch.getCommitHash()));
+      }
+    }
+    return result;
+  }
+
+  private Set<Integer> getMatchingHeads(@NotNull VcsLogRefs refs,
+                                        @NotNull Set<VirtualFile> vcsRoots,
+                                        @NotNull VcsLogStructureFilter filter) {
+    Pair<Set<VirtualFile>, MultiMap<VirtualFile, VirtualFile>> roots = VcsLogFileFilterUtil.collectRoots(filter.getFiles(), vcsRoots);
+    return getMatchingHeads(refs, ContainerUtil.union(roots.first, roots.second.keySet()));
   }
 
   @NotNull
@@ -203,17 +253,28 @@ class VisiblePackBuilder {
   private static List<Hash> getFilteredDetailsFromTheVcs(@NotNull Map<VirtualFile, VcsLogProvider> providers,
                                                          @NotNull VcsLogFilterCollection filterCollection,
                                                          int maxCount) throws VcsException {
+    VcsLogRootFilter rootFilter = filterCollection.getRootFilter();
+    VcsLogStructureFilter structureFilter = filterCollection.getStructureFilter();
+
+    Pair<Set<VirtualFile>, MultiMap<VirtualFile, VirtualFile>> selectedRootsAndFiles =
+      VcsLogFileFilterUtil.collectRootsAndFiles(providers.keySet(), rootFilter, structureFilter);
+
     Collection<List<TimedVcsCommit>> logs = ContainerUtil.newArrayList();
     for (Map.Entry<VirtualFile, VcsLogProvider> entry : providers.entrySet()) {
       VirtualFile root = entry.getKey();
 
-      if (filterCollection.getStructureFilter() != null && !filterCollection.getStructureFilter().getRoots().contains(root)
-          || filterCollection.getUserFilter() != null && filterCollection.getUserFilter().getUserNames(root).isEmpty()) {
+      if (!selectedRootsAndFiles.first.contains(root) ||
+          filterCollection.getUserFilter() != null && filterCollection.getUserFilter().getUserNames(root).isEmpty()) {
         // there is a structure or user filter, but it doesn't match this root
         continue;
       }
 
-      List<TimedVcsCommit> matchingCommits = entry.getValue().getCommitsMatchingFilter(root, filterCollection, maxCount);
+      VcsLogFilterCollection rootSpecificCollection = filterCollection;
+      if (rootSpecificCollection.getStructureFilter() != null) {
+        rootSpecificCollection = replaceStructureFilter(filterCollection, new HashSet<VirtualFile>(selectedRootsAndFiles.second.get(root)));
+      }
+
+      List<TimedVcsCommit> matchingCommits = entry.getValue().getCommitsMatchingFilter(root, rootSpecificCollection, maxCount);
       logs.add(matchingCommits);
     }
 
@@ -224,6 +285,15 @@ class VisiblePackBuilder {
         return commit.getId();
       }
     });
+  }
+
+  @NotNull
+  private static VcsLogFilterCollection replaceStructureFilter(@NotNull VcsLogFilterCollection filterCollection,
+                                                               @NotNull Set<VirtualFile> files) {
+    return new VcsLogFilterCollectionImpl(filterCollection.getBranchFilter(), filterCollection.getUserFilter(),
+                                          filterCollection.getHashFilter(), filterCollection.getDateFilter(),
+                                          filterCollection.getTextFilter(), new VcsLogStructureFilterImpl(files),
+                                          filterCollection.getRootFilter());
   }
 
   @Nullable

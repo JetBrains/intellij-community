@@ -20,17 +20,16 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-/**
- * Tells the log to filter by files and folders.
- */
-public interface VcsLogStructureFilter extends VcsLogDetailsFilter {
+public class VcsLogRootFilterImpl implements VcsLogRootFilter {
+  @NotNull private final Collection<VirtualFile> myRoots;
 
-  /**
-   * <p>Returns files which are affected by matching commits, and folders containing such files.</p>
-   *
-   * <p>That is: the commit A (made in the given VCS root) modifying file f.txt matches this filter,
-   *    if this method returns a set which includes a folder containing f.txt, or the file f.txt itself.</p>
-   */
+  public VcsLogRootFilterImpl(@NotNull Collection<VirtualFile> roots) {
+    myRoots = roots;
+  }
+
   @NotNull
-  Collection<VirtualFile> getFiles();
+  @Override
+  public Collection<VirtualFile> getRoots() {
+    return myRoots;
+  }
 }

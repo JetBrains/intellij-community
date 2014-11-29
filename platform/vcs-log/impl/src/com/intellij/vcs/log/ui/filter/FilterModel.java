@@ -48,6 +48,11 @@ class FilterModel<Filter extends VcsLogFilter> {
   }
 
   @NotNull
+  public Computable<VcsLogDataPack> getDataPackProvider() {
+    return myDataPackProvider;
+  }
+
+  @NotNull
   VcsLogDataPack getDataPack() {
     return myDataPackProvider.compute();
   }
