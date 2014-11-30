@@ -623,6 +623,8 @@ public class GitUtil {
                 //noinspection AssignmentToForLoopParameter
                 i++;
               }
+              //noinspection AssignmentToForLoopParameter
+              i--;
               assert n == b.length;
               // add them to string
               final String encoding = GitConfigUtil.getFileNameEncoding();
