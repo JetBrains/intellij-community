@@ -28,4 +28,10 @@ public class GitUtilsTest {
     Assert.assertEquals("0000000000000000", GitUtil.formatLongRev(0));
     Assert.assertEquals("fffffffffffffffe", GitUtil.formatLongRev(-2));
   }
+
+  @Test
+  public void testUnescapePath() throws Exception {
+    Assert.assertEquals("Cyrillic folder", "папка/file.txt", GitUtil.unescapePath("\\320\\277\\320\\260\\320\\277\\320\\272\\320\\260/file.txt"));
+    Assert.assertEquals("Cyrillic folder and filename", "папка/документ", GitUtil.unescapePath("\\320\\277\\320\\260\\320\\277\\320\\272\\320\\260/\\320\\264\\320\\276\\320\\272\\321\\203\\320\\274\\320\\265\\320\\275\\321\\202"));
+  }
 }
