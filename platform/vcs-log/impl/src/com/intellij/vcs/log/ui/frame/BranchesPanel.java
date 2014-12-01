@@ -14,6 +14,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.RefsModel;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
+import com.intellij.vcs.log.data.VcsLogFileFilter;
 import com.intellij.vcs.log.impl.SingletonRefGroup;
 import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
@@ -27,10 +28,8 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.Collection;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 import static com.intellij.vcs.log.printer.idea.PrintParameters.HEIGHT_CELL;
 
@@ -158,13 +157,7 @@ public class BranchesPanel extends JPanel {
   }
 
   public void onFiltersChange(@NotNull VcsLogFilterCollection filters) {
-    VcsLogRootFilter rootFilter = filters.getRootFilter();
-    if (rootFilter != null) {
-      myRoots = rootFilter.getRoots();
-    }
-    else {
-      myRoots = null;
-    }
+    myRoots = VcsLogFileFilter.collectRoots(new HashSet<VirtualFile>(myDataHolder.getRoots()), filters.getRootFilter(), filters.getStructureFilter());
     getParent().repaint();
   }
 
