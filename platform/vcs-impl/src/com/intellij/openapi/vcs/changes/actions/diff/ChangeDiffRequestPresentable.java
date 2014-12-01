@@ -26,6 +26,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.diff.chains.DiffRequestPresentable;
@@ -35,7 +36,6 @@ import com.intellij.openapi.util.diff.impl.DiffContentFactory;
 import com.intellij.openapi.util.diff.requests.DiffRequest;
 import com.intellij.openapi.util.diff.requests.SimpleDiffRequest;
 import com.intellij.openapi.util.diff.tools.util.DiffUserDataKeys;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -117,32 +117,14 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
     if (bRev != null) checkContentRevision(bRev, context, indicator);
     if (aRev != null) checkContentRevision(aRev, context, indicator);
 
-    // TODO: "MyFile.txt (/some/path/to/)" ?
-    String beforePath = getPathPresentable(bRev);
-    String afterPath = getPathPresentable(aRev);
-    String title;
-    if (beforePath != null && afterPath != null && !beforePath.equals(afterPath)) {
-      title = beforePath + " -> " + afterPath;
-    }
-    else if (beforePath != null) {
-      title = beforePath;
-    }
-    else {
-      title = afterPath;
-    }
+    String title = getRequestTitle(bRev, aRev);
 
     indicator.setIndeterminate(true);
     DiffContent content1 = createContent(bRev, indicator);
     DiffContent content2 = createContent(aRev, indicator);
 
-    String beforeRevisionTitle = (bRev != null) ? bRev.getRevisionNumber().asString() : "";
-    String afterRevisionTitle = (aRev != null) ? aRev.getRevisionNumber().asString() : "";
-    if ((beforeRevisionTitle == null) || (beforeRevisionTitle.length() == 0)) {
-      beforeRevisionTitle = "Base version";
-    }
-    if ((afterRevisionTitle == null) || (afterRevisionTitle.length() == 0)) {
-      afterRevisionTitle = "Your version";
-    }
+    String beforeRevisionTitle = getRevisionTitle(bRev, "Base version");
+    String afterRevisionTitle = getRevisionTitle(aRev, "Your version");
 
     SimpleDiffRequest request = new SimpleDiffRequest(title, content1, content2, beforeRevisionTitle, afterRevisionTitle);
     request.putUserData(CONTENT_REVISIONS, new ContentRevision[]{aRev, bRev});
@@ -158,9 +140,76 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
     return request;
   }
 
-  @Nullable
-  private static String getPathPresentable(@Nullable ContentRevision revision) {
-    return revision != null ? FileUtil.toSystemDependentName(revision.getFile().getPath()) : null;
+  @NotNull
+  private static String getRequestTitle(@Nullable ContentRevision bRev, @Nullable ContentRevision aRev) {
+    assert bRev != null || aRev != null;
+    if (bRev != null && aRev != null) {
+      FilePath bPath = bRev.getFile();
+      FilePath aPath = aRev.getFile();
+      if (bPath.equals(aPath)) {
+        return getPathPresentable(bPath);
+      }
+      else {
+        return getPathPresentable(bPath, aPath);
+      }
+    }
+    else if (bRev != null) {
+      return getPathPresentable(bRev.getFile());
+    }
+    else {
+      return getPathPresentable(aRev.getFile());
+    }
+  }
+
+  @NotNull
+  private static String getPathPresentable(@NotNull FilePath path) {
+    FilePath parentPath = path.getParentPath();
+    if (!path.isDirectory() && parentPath != null) {
+      return path.getName() + " (" + parentPath.getPath() + ")";
+    }
+    else {
+      return path.getPath();
+    }
+  }
+
+  @NotNull
+  private static String getPathPresentable(@NotNull FilePath bPath, @NotNull FilePath aPath) {
+    FilePath bParentPath = bPath.getParentPath();
+    FilePath aParentPath = aPath.getParentPath();
+    if (Comparing.equal(bParentPath, aParentPath)) {
+      if (bParentPath != null) {
+        return bPath.getName() + " -> " + aPath.getName() + " (" + bParentPath.getPath() + ")";
+      }
+      else {
+        return bPath.getPath() + " -> " + aPath.getPath();
+      }
+    }
+    else {
+      if (bPath.getName().equals(aPath.getName())) {
+        if (bParentPath != null && aParentPath != null) {
+          return bPath.getName() + " (" + bParentPath.getPath() + " -> " + bParentPath.getPath() + ")";
+        }
+        else {
+          return bPath.getPath() + " -> " + aPath.getPath();
+        }
+      }
+      else {
+        if (bParentPath != null && aParentPath != null) {
+          return bPath.getName() + " -> " + aPath.getName() + " (" + bParentPath.getPath() + " -> " + bParentPath.getPath() + ")";
+        }
+        else {
+          return bPath.getPath() + " -> " + aPath.getPath();
+        }
+      }
+    }
+  }
+
+  @NotNull
+  private static String getRevisionTitle(@Nullable ContentRevision revision, @NotNull String defaultValue) {
+    if (revision == null) return defaultValue;
+    String title = revision.getRevisionNumber().asString();
+    if (title == null || title.isEmpty()) return defaultValue;
+    return title;
   }
 
   @NotNull
