@@ -115,6 +115,9 @@
     <extensionPoint name="debugger.frameExtraVarsProvider"
                     interface="com.intellij.debugger.engine.FrameExtraVariablesProvider"/>
 
+    <extensionPoint name="debugger.simpleGetterProvider"
+                    interface="com.intellij.debugger.engine.SimpleGetterProvider"/>
+
     <extensionPoint name="allOverridingMethodsSearch" interface="com.intellij.util.QueryExecutor"/>
     <extensionPoint name="annotatedElementsSearch" interface="com.intellij.util.QueryExecutor"/>
     <extensionPoint name="annotatedPackagesSearch" interface="com.intellij.util.QueryExecutor"/>
@@ -1455,6 +1458,7 @@
     <xdebugger.breakpointType implementation="com.intellij.debugger.ui.breakpoints.JavaExceptionBreakpointType"/>
     <xdebugger.breakpointType implementation="com.intellij.debugger.ui.breakpoints.JavaLineBreakpointType"/>
     <debugger.jvmSmartStepIntoHandler implementation="com.intellij.debugger.actions.JavaSmartStepIntoHandler"/>
+    <debugger.simpleGetterProvider implementation="com.intellij.debugger.engine.JavaSimpleGetterProvider"/>
 
     <applicationService serviceInterface="com.intellij.remoteServer.runtime.deployment.debug.JavaDebuggerLauncher"
                         serviceImplementation="com.intellij.remoteServer.impl.runtime.deployment.debug.JavaDebuggerLauncherImpl"/>
