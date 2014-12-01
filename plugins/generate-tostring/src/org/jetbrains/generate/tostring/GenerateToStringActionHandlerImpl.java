@@ -162,8 +162,11 @@ public class GenerateToStringActionHandlerImpl extends EditorWriteActionHandler 
             return null;
         }
 
-        // must not be an interface
-        return clazz.isInterface() ? null : clazz;
+        //exclude interfaces, non-java classes etc
+        for (GenerateToStringClassFilter filter : GenerateToStringClassFilter.EP_NAME.getExtensions()) {
+            if (!filter.canGenerateToString(clazz)) return null;
+        }
+        return clazz;
     }
 
     public static class MemberChooserHeaderPanel extends JPanel {
