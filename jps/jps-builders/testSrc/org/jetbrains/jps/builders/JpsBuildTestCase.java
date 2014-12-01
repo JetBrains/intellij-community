@@ -58,8 +58,10 @@ import org.jetbrains.jps.model.serialization.JpsProjectLoader;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 import org.jetbrains.jps.util.JpsPathUtil;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.util.Collections;
 import java.util.Map;
 
@@ -385,5 +387,27 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
       myJdk = addJdk("1.6");
     }
     return addModule(moduleName, srcPaths, getAbsolutePath("out/production/" + moduleName), null, myJdk);
+  }
+
+  protected void checkMappingsAreSameAfterRebuild(ProjectDescriptor pd) throws IOException {
+    String makeDump = dumpMappings(pd);
+    doBuild(pd, CompileScopeTestBuilder.rebuild().allModules()).assertSuccessful();
+    String rebuildDump = dumpMappings(pd);
+    assertEquals(rebuildDump, makeDump);
+  }
+
+  private static String dumpMappings(ProjectDescriptor pd) throws IOException {
+    final ByteArrayOutputStream dump = new ByteArrayOutputStream();
+
+    final PrintStream stream = new PrintStream(dump);
+    try {
+      pd.dataManager.getMappings().toStream(stream);
+    }
+    finally {
+      stream.close();
+    }
+
+    dump.close();
+    return dump.toString();
   }
 }
