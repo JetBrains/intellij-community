@@ -191,7 +191,7 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
       assertEquals(expected, actual);
 
       if (result.isSuccessful()) {
-        checkMappingsAreSameAfterRebuild(pd);
+        checkMappingsAreSameAfterRebuild(result);
       }
       return result;
     }
