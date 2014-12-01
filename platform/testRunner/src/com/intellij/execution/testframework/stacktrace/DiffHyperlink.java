@@ -22,16 +22,18 @@ package com.intellij.execution.testframework.stacktrace;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.filters.HyperlinkInfo;
-import com.intellij.execution.testframework.AbstractTestProxy;
-import com.intellij.execution.testframework.Printable;
-import com.intellij.execution.testframework.Printer;
+import com.intellij.execution.filters.HyperlinkInfoBase;
+import com.intellij.execution.testframework.*;
+import com.intellij.execution.testframework.actions.ViewAssertEqualsDiffAction;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diff.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -186,6 +188,9 @@ public class DiffHyperlink implements Printable {
 
   public class DiffHyperlinkInfo implements HyperlinkInfo {
     public void navigate(final Project project) {
+      if (ViewAssertEqualsDiffAction.openDiff(DataManager.getInstance().getDataContext())) {
+        return;
+      }
       openDiff(project);
     }
 

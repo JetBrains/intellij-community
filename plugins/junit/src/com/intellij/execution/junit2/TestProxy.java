@@ -329,6 +329,13 @@ public class TestProxy extends AbstractTestProxy {
     if (myState instanceof AssertEqualsDiffViewerProvider) {
       return (AssertEqualsDiffViewerProvider)myState;
     }
+
+    for (TestProxy proxy : getChildren()) {
+      if (proxy.myState instanceof AssertEqualsDiffViewerProvider) {
+        return (AssertEqualsDiffViewerProvider)proxy.myState;
+      }
+    }
+
     return null;
   }
 }
