@@ -29,10 +29,7 @@ import com.intellij.openapi.fileTypes.FileTypeListener;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootEvent;
-import com.intellij.openapi.roots.ModuleRootListener;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -99,7 +96,11 @@ public class PsiVFSListener extends VirtualFileAdapter {
         public void run() {
           VirtualFile parent = vFile.getParent();
           PsiDirectory parentDir = getCachedDirectory(parent);
-          if (parentDir == null) return; // do not notifyListeners event if parent directory was never accessed via PSI
+          if (parentDir == null) {
+            // parent directory was never accessed via PSI
+            handleVfsChangeWithoutPsi(vFile);
+            return;
+          }
 
           if (!vFile.isDirectory()) {
             PsiFile psiFile = myFileManager.findFile(vFile);
@@ -182,6 +183,8 @@ public class PsiVFSListener extends VirtualFileAdapter {
             myManager.childRemoved(treeEvent);
           }
         });
+      } else if (parent != null) {
+        handleVfsChangeWithoutPsi(parent);
       }
     }
     else {
@@ -200,6 +203,8 @@ public class PsiVFSListener extends VirtualFileAdapter {
             }
           });
         }
+      } else if (parent != null) {
+        handleVfsChangeWithoutPsi(parent);
       }
     }
   }
@@ -333,7 +338,10 @@ public class PsiVFSListener extends VirtualFileAdapter {
         PsiDirectory psiDir = myFileManager.getCachedDirectory(vFile);
         fire = psiDir != null;
       }
-      if (!fire) return; // do not fire event if parent directory was never accessed via PSI
+      if (!fire) {
+        handleVfsChangeWithoutPsi(vFile);
+        return;
+      }
     }
 
     ((SmartPointerManagerImpl)SmartPointerManager.getInstance(myManager.getProject())).fastenBelts(vFile, 0, null);
@@ -646,7 +654,23 @@ public class PsiVFSListener extends VirtualFileAdapter {
             }
           }
         );
+      } else {
+        handleVfsChangeWithoutPsi(file);
       }
     }
+  }
+
+  private void handleVfsChangeWithoutPsi(@NotNull VirtualFile vFile) {
+    if (isInRootModel(vFile)) {
+      PsiTreeChangeEventImpl event = new PsiTreeChangeEventImpl(myManager);
+      event.setPropertyName(PsiTreeChangeEvent.PROP_UNLOADED_PSI);
+      myManager.beforePropertyChange(event);
+      myManager.propertyChanged(event);
+    }
+  }
+
+  private boolean isInRootModel(@NotNull VirtualFile file) {
+    ProjectFileIndex index = ProjectFileIndex.SERVICE.getInstance(myProject);
+    return index.isInContent(file) || index.isInLibraryClasses(file) || index.isInLibrarySource(file);
   }
 }
