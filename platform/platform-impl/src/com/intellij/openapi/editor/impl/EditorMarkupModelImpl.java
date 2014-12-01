@@ -678,7 +678,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
           if (myDirtyYPositions == null) myDirtyYPositions = docRange;
           repaint(imageGraphics, componentBounds.width, myDirtyYPositions);
           myDirtyYPositions = null;
-          c.repaint(); // because of model changing inside paintTrack, reschedule actual repaint with the right clip
+          //c.repaint(); // because of model changing inside paintTrack, reschedule actual repaint with the right clip
         }
         finally {
           ((ApplicationImpl)ApplicationManager.getApplication()).editorPaintFinish();
