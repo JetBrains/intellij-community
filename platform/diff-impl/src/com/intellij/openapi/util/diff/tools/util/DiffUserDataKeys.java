@@ -39,7 +39,7 @@ public interface DiffUserDataKeys {
   // DiffChain
   //
 
-  Key<JComponent> BOTTOM_PANEL = Key.create("Diff.BottomPanel");
+  Key<JComponent> BOTTOM_PANEL = Key.create("Diff.BottomPanel"); // Could implement Disposable
 
   //
   // DiffContext / DiffRequest

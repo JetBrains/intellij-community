@@ -1361,7 +1361,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     }
 
     @Override
-    public void dispose() {
+    public void dispose() { // TODO: fair Document synchronizer ?
       if (myCommitDialog != null) {
         myCommitDialog.setMessageConsumer(null);
         final String text = getEditorField().getText();
