@@ -62,9 +62,7 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
 import java.util.*;
-import java.util.List;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
@@ -512,29 +510,28 @@ public class JavaCompletionUtil {
                                                 @NotNull LookupElement item,
                                                 @NotNull Object object,
                                                 @NotNull PsiElement place) {
-    final boolean bold = containsMember(qualifierType, object);
-    boolean red = false;
-    if (object instanceof PsiMember) {
-      red = Java15APIUsageInspectionBase.isForbiddenApiUsage((PsiMember)object, PsiUtil.getLanguageLevel(place));
-    }
-    LookupElement result = item;
-    if (bold || red) {
-      final Color fg = red ? JBColor.RED : null;
-      result = LookupElementDecorator.withRenderer(result, new LookupElementRenderer<LookupElementDecorator<LookupElement>>() {
+    if (object instanceof PsiMember &&
+        Java15APIUsageInspectionBase.isForbiddenApiUsage((PsiMember)object, PsiUtil.getLanguageLevel(place))) {
+      return LookupElementDecorator.withRenderer(item, new LookupElementRenderer<LookupElementDecorator<LookupElement>>() {
         @Override
         public void renderElement(LookupElementDecorator<LookupElement> element, LookupElementPresentation presentation) {
           element.getDelegate().renderElement(presentation);
-          presentation.setItemTextBold(bold);
-          if (fg != null) {
-            presentation.setItemTextForeground(fg);
-          }
+          presentation.setItemTextForeground(JBColor.RED);
         }
       });
     }
-    if (bold) {
-      result = PrioritizedLookupElement.withExplicitProximity(result, 1);
+    if (containsMember(qualifierType, object)) {
+      LookupElementRenderer<LookupElementDecorator<LookupElement>> boldRenderer =
+        new LookupElementRenderer<LookupElementDecorator<LookupElement>>() {
+          @Override
+          public void renderElement(LookupElementDecorator<LookupElement> element, LookupElementPresentation presentation) {
+            element.getDelegate().renderElement(presentation);
+            presentation.setItemTextBold(true);
+          }
+        };
+      return PrioritizedLookupElement.withExplicitProximity(LookupElementDecorator.withRenderer(item, boldRenderer), 1);
     }
-    return result;
+    return item;
   }
 
   public static boolean containsMember(@Nullable PsiType qualifierType, @NotNull Object object) {
