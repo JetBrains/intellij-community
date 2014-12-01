@@ -6,6 +6,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.diff.util.Side;
 
+import javax.swing.*;
 import java.util.List;
 
 public interface DiffUserDataKeys {
@@ -26,6 +27,8 @@ public interface DiffUserDataKeys {
   //
   // DiffContext
   //
+
+  Key<JComponent> BOTTOM_PANEL = Key.create("Diff.BottomPanel");
 
   Key<List<AnAction>> CONTEXT_ACTIONS = Key.create("Diff.ContextActions");
 

@@ -107,6 +107,9 @@ public abstract class CacheDiffRequestChainProcessor implements Disposable {
     myPanel.add(topPanel, BorderLayout.NORTH);
     myPanel.add(myContentPanel, BorderLayout.CENTER);
 
+    JComponent bottomPanel = myContext.getUserData(DiffUserDataKeys.BOTTOM_PANEL);
+    if (bottomPanel != null) myPanel.add(bottomPanel, BorderLayout.SOUTH);
+
     myPanel.setFocusTraversalPolicyProvider(true);
     myPanel.setFocusTraversalPolicy(new MyFocusTraversalPolicy());
 
