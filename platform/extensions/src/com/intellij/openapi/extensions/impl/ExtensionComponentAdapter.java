@@ -61,7 +61,7 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable, Assign
 
   @Override
   public Class getComponentImplementation() {
-    return loadClass(myImplementationClassName);
+    return loadImplementationClass();
   }
 
   @Override
@@ -81,11 +81,6 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable, Assign
             catch (Exception e) {
               throw new PicoInitializationException(e);
             }
-          }
-
-          ExtensionInitializer initializer = (ExtensionInitializer)container.getComponentInstance(ExtensionInitializer.class);
-          if (initializer != null) {
-            initializer.initExtension(componentInstance);
           }
 
           myComponentInstance = componentInstance;
@@ -149,14 +144,14 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable, Assign
     return myPluginDescriptor;
   }
 
-  private Class loadClass(final String className) {
+  private Class loadImplementationClass() {
     if (myImplementationClass == null) {
       try {
         ClassLoader classLoader = myPluginDescriptor != null ? myPluginDescriptor.getPluginClassLoader() : getClass().getClassLoader();
         if (classLoader == null) {
           classLoader = getClass().getClassLoader();
         }
-        myImplementationClass = Class.forName(className, false, classLoader);
+        myImplementationClass = Class.forName(myImplementationClassName, false, classLoader);
       }
       catch (ClassNotFoundException e) {
         throw new RuntimeException(e);
@@ -167,16 +162,11 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable, Assign
 
   private synchronized ComponentAdapter getDelegate() {
     if (myDelegate == null) {
-      Class impl = loadClass(myImplementationClassName);
+      Class impl = loadImplementationClass();
       myDelegate = new CachingComponentAdapter(new ConstructorInjectionComponentAdapter(getComponentKey(), impl, null, true));
     }
 
     return myDelegate;
-  }
-
-  @Override
-  public boolean isAssignableTo(Class aClass) {
-    return aClass.getName().equals(myImplementationClassName);
   }
 
   @Override
