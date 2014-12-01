@@ -229,10 +229,10 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
   @Override
   public void setGlobalScheme(@Nullable EditorColorsScheme scheme) {
     if (setGlobalSchemeInner(scheme)) {
-      fireChanges(scheme);
-
       LafManager.getInstance().updateUI();
       EditorFactory.getInstance().refreshAllEditors();
+
+      fireChanges(scheme);
     }
   }
 
