@@ -76,7 +76,7 @@ public class GroovyConstructorUsagesSearcher extends QueryExecutorBase<PsiRefere
 
   @Override
   public void processQuery(@NotNull MethodReferencesSearch.SearchParameters p, @NotNull Processor<PsiReference> consumer) {
-    processConstructorUsages(p.getMethod(), p.getScope(), consumer, p.getOptimizer(), true, !p.isStrictSignatureSearch());
+    processConstructorUsages(p.getMethod(), p.getEffectiveSearchScope(), consumer, p.getOptimizer(), true, !p.isStrictSignatureSearch());
   }
 
   public static final Key<Set<PsiClass>> LITERALLY_CONSTRUCTED_CLASSES = Key.create("LITERALLY_CONSTRUCTED_CLASSES");
@@ -145,7 +145,7 @@ public class GroovyConstructorUsagesSearcher extends QueryExecutorBase<PsiRefere
                                               final LiteralConstructorSearcher literalProcessor) {
     final Set<PsiAnchor> processedMethods = new ConcurrentHashSet<PsiAnchor>();
 
-    ReferencesSearch.searchOptimized(clazz, scope, true, collector, true, new PairProcessor<PsiReference, SearchRequestCollector>() {
+    ReferencesSearch.searchOptimized(clazz, scope, false, collector, true, new PairProcessor<PsiReference, SearchRequestCollector>() {
       @Override
       public boolean process(PsiReference ref, SearchRequestCollector collector) {
         final PsiElement element = ref.getElement();
