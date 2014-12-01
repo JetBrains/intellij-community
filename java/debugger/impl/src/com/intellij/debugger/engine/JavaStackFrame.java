@@ -216,9 +216,8 @@ public class JavaStackFrame extends XStackFrame {
           final ReferenceType thisRefType = thisObjectReference.referenceType();
           if (thisRefType instanceof ClassType && thisRefType.equals(location.declaringType()) && thisRefType.name().contains("$")) { // makes sense for nested classes only
             final ClassType clsType = (ClassType)thisRefType;
-            final VirtualMachineProxyImpl vm = debugProcess.getVirtualMachineProxy();
             for (Field field : clsType.fields()) {
-              if ((!vm.canGetSyntheticAttribute() || field.isSynthetic()) && StringUtil
+              if (!DebuggerUtils.isSynthetic(field) && StringUtil
                 .startsWith(field.name(), FieldDescriptorImpl.OUTER_LOCAL_VAR_FIELD_PREFIX)) {
                 final FieldDescriptorImpl fieldDescriptor = myNodeManager.getFieldDescriptor(myDescriptor, thisObjectReference, field);
                 children.add(JavaValue.create(fieldDescriptor, evaluationContext, myNodeManager));

@@ -485,8 +485,10 @@ public abstract class DebuggerUtils {
     if (typeComponent == null) {
       return false;
     }
-    VirtualMachine machine = typeComponent.virtualMachine();
-    return machine != null && machine.canGetSyntheticAttribute() && typeComponent.isSynthetic();
+    for (SyntheticTypeComponentProvider provider : SyntheticTypeComponentProvider.EP_NAME.getExtensions()) {
+      if (provider.isSynthetic(typeComponent)) return true;
+    }
+    return false;
   }
 
   public static boolean isSimpleGetter(PsiMethod method) {
