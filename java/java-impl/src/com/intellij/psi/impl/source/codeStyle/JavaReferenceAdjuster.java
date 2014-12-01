@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.codeStyle.ReferenceAdjuster;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
@@ -133,7 +134,8 @@ public class JavaReferenceAdjuster implements ReferenceAdjuster {
   @Override
   public ASTNode process(@NotNull ASTNode element, boolean addImports, boolean incompleteCode, Project project) {
     final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
-    return process(element, addImports, incompleteCode, settings.USE_FQ_CLASS_NAMES_IN_JAVADOC, settings.USE_FQ_CLASS_NAMES);
+    JavaCodeStyleSettings javaSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
+    return process(element, addImports, incompleteCode, javaSettings.useFqNamesInJavadocAlways(), settings.USE_FQ_CLASS_NAMES);
   }
 
   private static boolean isAnnotated(ASTNode element) {
@@ -175,7 +177,8 @@ public class JavaReferenceAdjuster implements ReferenceAdjuster {
   @Override
   public void processRange(@NotNull ASTNode element, int startOffset, int endOffset, Project project) {
     final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
-    processRange(element, startOffset, endOffset, settings.USE_FQ_CLASS_NAMES_IN_JAVADOC, settings.USE_FQ_CLASS_NAMES);
+    JavaCodeStyleSettings javaSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
+    processRange(element, startOffset, endOffset, javaSettings.useFqNamesInJavadocAlways(), settings.USE_FQ_CLASS_NAMES);
   }
 
   private static void addReferencesInRange(List<ASTNode> array, ASTNode parent, int startOffset, int endOffset) {

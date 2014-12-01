@@ -234,6 +234,8 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
 
   public boolean LAYOUT_STATIC_IMPORTS_SEPARATELY = true;
   public boolean USE_FQ_CLASS_NAMES = false;
+  
+  @Deprecated
   public boolean USE_FQ_CLASS_NAMES_IN_JAVADOC = true;
   public boolean USE_SINGLE_CLASS_IMPORTS = true;
   public boolean INSERT_INNER_CLASS_IMPORTS = false;
