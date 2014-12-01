@@ -15,11 +15,12 @@
  */
 package com.intellij.openapi.util.diff.chains;
 
+import com.intellij.openapi.util.UserDataHolder;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public interface DiffRequestChain {
+public interface DiffRequestChain extends UserDataHolder {
   @NotNull
   List<? extends DiffRequestPresentable> getRequests();
 

@@ -21,26 +21,23 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 
 public class DiffDialogHints {
-  @NotNull public static final DiffDialogHints NON_MODAL = new DiffDialogHints(false);
-  @NotNull public static final DiffDialogHints MODAL = new DiffDialogHints(true);
+  @NotNull public static final DiffDialogHints DEFAULT = new DiffDialogHints(null);
+  @NotNull public static final DiffDialogHints FRAME = new DiffDialogHints(true);
+  @NotNull public static final DiffDialogHints MODAL = new DiffDialogHints(false);
 
   //
   // Impl
   //
 
-  private final boolean myModal;
+  @Nullable private final Boolean myFrame;
   @Nullable private final Component myParent;
 
-  public DiffDialogHints() {
-    this(false);
+  public DiffDialogHints(@Nullable Boolean frame) {
+    this(frame, null);
   }
 
-  public DiffDialogHints(boolean modal) {
-    this(modal, null);
-  }
-
-  public DiffDialogHints(boolean modal, @Nullable Component parent) {
-    myModal = modal;
+  public DiffDialogHints(@Nullable Boolean frame, @Nullable Component parent) {
+    myFrame = frame;
     myParent = parent;
   }
 
@@ -48,8 +45,9 @@ public class DiffDialogHints {
   // Getters
   //
 
-  public boolean isModal() {
-    return myModal;
+  @Nullable
+  public Boolean getFrame() {
+    return myFrame;
   }
 
   @Nullable

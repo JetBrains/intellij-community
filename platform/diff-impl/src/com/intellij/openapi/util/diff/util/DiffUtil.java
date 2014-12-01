@@ -20,8 +20,10 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapperDialog;
+import com.intellij.openapi.ui.WindowWrapper;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.diff.DiffDialogHints;
 import com.intellij.openapi.util.diff.comparison.ComparisonPolicy;
 import com.intellij.openapi.util.diff.comparison.ComparisonUtil;
 import com.intellij.openapi.util.diff.contents.DiffContent;
@@ -387,7 +389,8 @@ public class DiffUtil {
     indicator.checkCanceled();
     if (lineFragments.isFine()) {
       return LineFragments.createFine(ComparisonUtil.squashFine(lineFragments.getFineFragments()));
-    } else {
+    }
+    else {
       return LineFragments.create(ComparisonUtil.squash(lineFragments.getFragments()));
     }
   }
@@ -622,6 +625,13 @@ public class DiffUtil {
   //
   // Windows
   //
+
+  @NotNull
+  public static WindowWrapper.Mode getWindowMode(@NotNull DiffDialogHints hints) {
+    Boolean frame = hints.getFrame();
+    if (frame == null) frame = !(KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow() instanceof JDialog);
+    return frame ? WindowWrapper.Mode.FRAME : WindowWrapper.Mode.MODAL;
+  }
 
   public static void closeWindow(@Nullable Window window, boolean modalOnly, boolean recursive) {
     if (window == null) return;

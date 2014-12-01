@@ -15,6 +15,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.diff.actions.impl.GoToChangePopupBuilder;
 import com.intellij.openapi.util.diff.chains.DiffRequestChain;
 import com.intellij.openapi.util.diff.chains.DiffRequestPresentable;
@@ -133,7 +134,7 @@ public class MigrateToNewDiffUtil {
   }
 
 
-  private static class ChangeRequestChainWrapper implements DiffRequestChain, GoToChangePopupBuilder.Chain {
+  private static class ChangeRequestChainWrapper extends UserDataHolderBase implements DiffRequestChain, GoToChangePopupBuilder.Chain {
     @NotNull private final ChangeRequestChain myChain;
     @NotNull private final List<MyPresentableWrapper> myRequests;
 

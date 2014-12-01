@@ -43,7 +43,7 @@ abstract class BaseShowDiffAction extends AnAction implements DumbAware {
     DiffRequest request = getDiffRequest(e);
     if (request == null) return;
 
-    DiffManager.getInstance().showDiff(e.getProject(), request, DiffDialogHints.NON_MODAL);
+    DiffManager.getInstance().showDiff(e.getProject(), request, DiffDialogHints.FRAME);
   }
 
   protected abstract boolean isAvailable(@NotNull AnActionEvent e);

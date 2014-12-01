@@ -1,6 +1,7 @@
 package com.intellij.openapi.vcs.changes.actions.diff;
 
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.diff.actions.impl.GoToChangePopupBuilder;
 import com.intellij.openapi.util.diff.chains.DiffRequestChain;
 import com.intellij.openapi.vcs.changes.Change;
@@ -12,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class ChangeDiffRequestChain implements DiffRequestChain, GoToChangePopupBuilder.Chain {
+public class ChangeDiffRequestChain extends UserDataHolderBase implements DiffRequestChain, GoToChangePopupBuilder.Chain {
   @NotNull private final List<ChangeDiffRequestPresentable> myRequests;
   private int myIndex;
 

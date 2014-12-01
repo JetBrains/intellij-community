@@ -18,6 +18,7 @@ package com.intellij.openapi.util.diff.chains;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.diff.requests.DiffRequest;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -25,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class SimpleDiffRequestChain implements DiffRequestChain {
+public class SimpleDiffRequestChain extends UserDataHolderBase implements DiffRequestChain {
   @NotNull private final List<DiffRequestPresentableWrapper> myRequests;
   private int myIndex = 0;
 

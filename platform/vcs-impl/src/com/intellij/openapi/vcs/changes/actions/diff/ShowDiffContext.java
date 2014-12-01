@@ -16,34 +16,28 @@
 package com.intellij.openapi.vcs.changes.actions.diff;
 
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.diff.DiffDialogHints;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
 public class ShowDiffContext {
   @NotNull private final DiffDialogHints myDialogHints;
-  @NotNull private final Map<String, Object> myContext;
+
   @NotNull private final List<AnAction> myActions;
+  @NotNull private final Map<Key, Object> myContext;
 
   public ShowDiffContext() {
-    this(DiffDialogHints.NON_MODAL, Collections.<AnAction>emptyList(), Collections.<String, Object>emptyMap());
+    this(DiffDialogHints.DEFAULT);
   }
 
-  public ShowDiffContext(boolean isModal) {
-    this(isModal ? DiffDialogHints.MODAL : DiffDialogHints.NON_MODAL,
-         Collections.<AnAction>emptyList(),
-         Collections.<String, Object>emptyMap());
-  }
-
-  public ShowDiffContext(@NotNull DiffDialogHints dialogHints,
-                         @NotNull List<AnAction> actions,
-                         @NotNull Map<String, Object> context) {
+  public ShowDiffContext(@NotNull DiffDialogHints dialogHints) {
     myDialogHints = dialogHints;
-    myContext = context;
-    myActions = actions;
+    myContext = ContainerUtil.newHashMap(0);
+    myActions = ContainerUtil.newArrayList();
   }
 
   @NotNull
@@ -52,12 +46,20 @@ public class ShowDiffContext {
   }
 
   @NotNull
-  public Map<String, Object> getContext() {
-    return myContext;
+  public List<AnAction> getActions() {
+    return myActions;
   }
 
   @NotNull
-  public List<AnAction> getActions() {
-    return myActions;
+  public Map<Key, Object> getContext() {
+    return myContext;
+  }
+
+  public void addAction(@NotNull AnAction action) {
+    myActions.add(action);
+  }
+
+  public <T> void putContext(@NotNull Key<T> key, T value) {
+    myContext.put(key, value);
   }
 }

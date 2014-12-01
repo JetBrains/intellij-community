@@ -1,9 +1,12 @@
 package com.intellij.openapi.util.diff.tools.util;
 
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.diff.DiffNavigationContext;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.diff.util.Side;
+
+import java.util.List;
 
 public interface DiffUserDataKeys {
   /*
@@ -23,6 +26,8 @@ public interface DiffUserDataKeys {
   //
   // DiffContext
   //
+
+  Key<List<AnAction>> CONTEXT_ACTIONS = Key.create("Diff.ContextActions");
 
   Key<Side> PREFERRED_FOCUS_SIDE = Key.create("Diff.PreferredFocusSide");
 

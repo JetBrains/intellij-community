@@ -24,8 +24,10 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.diff.DiffManager;
 import com.intellij.openapi.util.diff.chains.DiffRequestChain;
+import com.intellij.openapi.util.diff.tools.util.DiffUserDataKeys;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.ui.ChangesComparator;
@@ -35,6 +37,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class ShowDiffAction extends AnAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance(ShowDiffAction.class);
@@ -161,7 +164,10 @@ public class ShowDiffAction extends AnAction implements DumbAware {
     DiffRequestChain chain = new ChangeDiffRequestChain(presentables);
     chain.setIndex(index);
 
-    // TODO: pass context data
+    for (Map.Entry<Key, Object> entry : context.getContext().entrySet()) {
+      chain.putUserData(entry.getKey(), entry.getValue());
+    }
+    chain.putUserData(DiffUserDataKeys.CONTEXT_ACTIONS, context.getActions());
 
     DiffManager.getInstance().showDiff(project, chain, context.getDialogHints());
   }

@@ -10,7 +10,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.diff.DiffManagerEx;
 import com.intellij.openapi.util.diff.actions.impl.*;
 import com.intellij.openapi.util.diff.api.DiffTool;
@@ -264,6 +264,9 @@ public abstract class CacheDiffRequestChainProcessor implements Disposable {
                             new MyChangeDiffToolAction());
 
     DiffUtil.addActionBlock(group, viewerActions);
+
+    List<AnAction> contextActions = myContext.getUserData(DiffUserDataKeys.CONTEXT_ACTIONS);
+    DiffUtil.addActionBlock(group, contextActions);
 
     DiffUtil.addActionBlock(group, myActiveRequest.getActions());
 
@@ -576,7 +579,7 @@ public abstract class CacheDiffRequestChainProcessor implements Disposable {
     }
   }
 
-  private class MyDiffContext extends UserDataHolderBase implements DiffTool.DiffContext {
+  private class MyDiffContext implements DiffTool.DiffContext {
     @Nullable
     @Override
     public Project getProject() {
@@ -587,6 +590,17 @@ public abstract class CacheDiffRequestChainProcessor implements Disposable {
     @Override
     public DiffWindow getDiffWindow() {
       return myDiffWindow;
+    }
+
+    @Nullable
+    @Override
+    public <T> T getUserData(@NotNull Key<T> key) {
+      return myRequestChain.getUserData(key);
+    }
+
+    @Override
+    public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
+      myRequestChain.putUserData(key, value);
     }
   }
 }

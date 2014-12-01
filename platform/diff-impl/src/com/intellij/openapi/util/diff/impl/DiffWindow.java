@@ -2,7 +2,6 @@ package com.intellij.openapi.util.diff.impl;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.WindowWrapper;
-import com.intellij.openapi.ui.WindowWrapper.Mode;
 import com.intellij.openapi.ui.WindowWrapperBuilder;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.diff.DiffDialogHints;
@@ -24,7 +23,7 @@ public class DiffWindow {
     myHints = hints;
 
     myProcessor = new MyCacheDiffRequestChainProcessor(project, requestChain);
-    myWrapper = new WindowWrapperBuilder(hints.isModal() ? Mode.MODAL : Mode.FRAME, myProcessor.getComponent())
+    myWrapper = new WindowWrapperBuilder(DiffUtil.getWindowMode(hints), myProcessor.getComponent())
       .setProject(project)
       .setParent(hints.getParent())
       .setDimensionServiceKey("DiffContextDialog")
