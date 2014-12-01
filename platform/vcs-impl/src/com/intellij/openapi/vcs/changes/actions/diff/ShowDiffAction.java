@@ -24,18 +24,22 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.diff.DiffDialogHints;
 import com.intellij.openapi.util.diff.DiffManager;
 import com.intellij.openapi.util.diff.chains.DiffRequestChain;
 import com.intellij.openapi.util.diff.tools.util.DiffUserDataKeys;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.actions.ShowDiffUIContext;
 import com.intellij.openapi.vcs.changes.ui.ChangesComparator;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -141,6 +145,10 @@ public class ShowDiffAction extends AnAction implements DumbAware {
     return matchingChanges.toArray(new Change[matchingChanges.size()]);
   }
 
+  //
+  // Impl
+  //
+
   public static void showDiffForChange(@NotNull Project project, @NotNull List<Change> changes) {
     showDiffForChange(project, changes, 0);
   }
@@ -170,5 +178,17 @@ public class ShowDiffAction extends AnAction implements DumbAware {
     chain.putUserData(DiffUserDataKeys.CONTEXT_ACTIONS, context.getActions());
 
     DiffManager.getInstance().showDiff(project, chain, context.getDialogHints());
+  }
+
+  //
+  // Compatibility
+  //
+
+  @NotNull
+  public static ShowDiffContext convertContext(@NotNull ShowDiffUIContext uiContext) {
+    if (uiContext.getActionsFactory() != null) LOG.warn("DiffExtendUIFactory ignored");
+    if (uiContext.getDiffNavigationContext() != null) LOG.warn("DiffNavigationContext ignored");
+
+    return new ShowDiffContext(uiContext.isShowFrame() ? DiffDialogHints.FRAME : DiffDialogHints.MODAL);
   }
 }
