@@ -523,6 +523,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  public void testFoldedParamNameSuggestion() throws Exception {
+    doTest();
+  }
+
   public void testNonFoldInIfBody() throws Exception {
     doTest();
   }
