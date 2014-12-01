@@ -1137,6 +1137,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     for (VariableData data : myVariableDatum) {
       if (data.passAsParameter) {
         PsiParameter parm = myElementFactory.createParameter(data.name, data.type);
+        copyParamAnnotations(parm);
         if (isFinal) {
           PsiUtil.setModifierProperty(parm, PsiModifier.FINAL, true);
         }
@@ -1169,6 +1170,21 @@ public class ExtractMethodProcessor implements MatchProvider {
       PsiUtil.setModifierProperty(newMethod, PsiModifier.DEFAULT, true);
     }
     return (PsiMethod)myStyleManager.reformat(newMethod);
+  }
+
+  private void copyParamAnnotations(PsiParameter parm) {
+    final PsiVariable variable = PsiResolveHelper.SERVICE.getInstance(myProject).resolveReferencedVariable(parm.getName(), myElements[0]);
+    if (variable instanceof PsiParameter) {
+      final PsiModifierList modifierList = variable.getModifierList();
+      if (modifierList != null) {
+        for (PsiAnnotation annotation : modifierList.getAnnotations()) {
+          if (SuppressWarnings.class.getName().equals(annotation.getQualifiedName())) continue;
+          final PsiModifierList parmModifierList = parm.getModifierList();
+          LOG.assertTrue(parmModifierList != null, parm);
+          parmModifierList.add(annotation);
+        }
+      }
+    }
   }
 
   @NotNull
