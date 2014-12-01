@@ -512,6 +512,16 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     private PopupHandler myHandler;
     private JButton myErrorStripeButton;
     @Nullable private BufferedImage myCachedTrack;
+    private ComponentAdapter myResizeListener = new ComponentAdapter() {
+      @Override
+      public void componentResized(ComponentEvent e) {
+        dropCache();
+      }
+    };
+
+    public void dropCache() {
+      myCachedTrack = null;
+    }
 
     @NotNull
     @Override
@@ -534,13 +544,15 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     @Override
     public void installUI(JComponent c) {
       super.installUI(c);
-      myCachedTrack = null;
+      c.addComponentListener(myResizeListener);
+      dropCache();
     }
 
     @Override
     public void uninstallUI(@NotNull JComponent c) {
       super.uninstallUI(c);
-      myCachedTrack = null;
+      c.removeComponentListener(myResizeListener);
+      dropCache();
     }
 
     @Override
@@ -660,7 +672,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
       Rectangle componentBounds = c.getBounds();
       ProperTextRange docRange = ProperTextRange.create(0, (int)componentBounds.getHeight());
-      if (myCachedTrack == null || myCachedTrack.getHeight() != componentBounds.getHeight()) {
+      if (myCachedTrack == null) {
         myCachedTrack = UIUtil.createImage(componentBounds.width, componentBounds.height, BufferedImage.TYPE_INT_ARGB);
         myDirtyYPositions = docRange;
         paintTrackBasement(myCachedTrack.getGraphics(), new Rectangle(0, 0, componentBounds.width, componentBounds.height));
@@ -678,7 +690,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
           if (myDirtyYPositions == null) myDirtyYPositions = docRange;
           repaint(imageGraphics, componentBounds.width, myDirtyYPositions);
           myDirtyYPositions = null;
-          //c.repaint(); // because of model changing inside paintTrack, reschedule actual repaint with the right clip
+          c.repaint(); // because of model changing inside paintTrack, reschedule actual repaint with the right clip
         }
         finally {
           ((ApplicationImpl)ApplicationManager.getApplication()).editorPaintFinish();
