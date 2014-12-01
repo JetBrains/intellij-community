@@ -6013,6 +6013,16 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myFontPreferences.clear();
       myFontPreferences.register(editorFontName, editorFontSize);
 
+      EditorColorsScheme delegate = getDelegate();
+      List<String> secondaryFonts = delegate != null ? delegate.getFontPreferences().getRealFontFamilies() : ContainerUtil.<String>emptyList();
+      boolean first = true; //skip delegate's primary font
+      for (String font : secondaryFonts) {
+        if (!first) {
+          myFontPreferences.register(font, editorFontSize);
+        }
+        first = false;
+      }
+
       myFontsMap = new EnumMap<EditorFontType, Font>(EditorFontType.class);
 
       Font plainFont = new Font(editorFontName, Font.PLAIN, editorFontSize);
