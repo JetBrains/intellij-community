@@ -352,24 +352,14 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
         updateOnListSelection();
       }
     });
-    myBrowser.setDiffExtendUIFactory(new DiffExtendUIFactory() {
-      @Override
-      public List<? extends AnAction> createActions(final Change change) {
-        return myBrowser.createDiffActions(change);
-      }
-
-      @Override
-      @Nullable
-      public JComponent createBottomComponent() {
-        return new DiffCommitMessageEditor(CommitChangeListDialog.this);
-      }
-    });
 
     myCommitMessageArea = new CommitMessage(project);
 
     if (!VcsConfiguration.getInstance(project).CLEAR_INITIAL_COMMIT_MESSAGE) {
       setComment(project, initialSelection, comment);
     }
+
+    myBrowser.setDiffBottomComponent(new DiffCommitMessageEditor(this));
 
     myActionName = VcsBundle.message("commit.dialog.title");
 

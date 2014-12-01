@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.changes.actions.diff;
 import com.intellij.CommonBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diff.impl.GenericDataProvider;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
@@ -33,10 +34,12 @@ import com.intellij.openapi.util.diff.contents.DiffContent;
 import com.intellij.openapi.util.diff.impl.DiffContentFactory;
 import com.intellij.openapi.util.diff.requests.DiffRequest;
 import com.intellij.openapi.util.diff.requests.SimpleDiffRequest;
+import com.intellij.openapi.util.diff.tools.util.DiffUserDataKeys;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -147,6 +150,10 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
     for (Map.Entry<Key, Object> entry : myContext.entrySet()) {
       request.putUserData(entry.getKey(), entry.getValue());
     }
+
+    GenericDataProvider dataProvider = new GenericDataProvider();
+    dataProvider.putData(VcsDataKeys.CURRENT_CHANGE, myChange);
+    request.putUserData(DiffUserDataKeys.DATA_PROVIDER, dataProvider);
 
     return request;
   }
