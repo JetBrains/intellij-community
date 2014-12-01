@@ -28,13 +28,20 @@ public interface DiffUserDataKeys {
   // DiffContext
   //
 
-  Key<JComponent> BOTTOM_PANEL = Key.create("Diff.BottomPanel");
-
-  Key<List<AnAction>> CONTEXT_ACTIONS = Key.create("Diff.ContextActions");
-
   Key<Side> PREFERRED_FOCUS_SIDE = Key.create("Diff.PreferredFocusSide");
 
   Key<ScrollToPolicy> SCROLL_TO_CHANGE = Key.create("Diff.ScrollSoChange");
-
   enum ScrollToPolicy {FIRST_CHANGE, LAST_CHANGE}
+
+  //
+  // DiffChain
+  //
+
+  Key<JComponent> BOTTOM_PANEL = Key.create("Diff.BottomPanel");
+
+  //
+  // DiffContext / DiffRequest
+  //
+
+  Key<List<AnAction>> CONTEXT_ACTIONS = Key.create("Diff.ContextActions");
 }

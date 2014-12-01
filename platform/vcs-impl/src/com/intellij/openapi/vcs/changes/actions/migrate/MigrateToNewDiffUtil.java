@@ -71,8 +71,10 @@ public class MigrateToNewDiffUtil {
   public static DiffRequest convertRequest(@NotNull com.intellij.openapi.diff.DiffRequest oldRequest) {
     DiffRequest request = convertRequestFair(oldRequest);
     if (request != null) return request;
-    return new ErrorDiffRequest(new MyDiffRequestPresentable(oldRequest), "Can't convert from old-style request",
-                                Collections.singletonList(new MyShowDiffAction(oldRequest)));
+
+    ErrorDiffRequest erorRequest = new ErrorDiffRequest(new MyDiffRequestPresentable(oldRequest), "Can't convert from old-style request");
+    erorRequest.putUserData(DiffUserDataKeys.CONTEXT_ACTIONS, Collections.<AnAction>singletonList(new MyShowDiffAction(oldRequest)));
+    return erorRequest;
   }
 
   @Nullable
@@ -91,7 +93,7 @@ public class MigrateToNewDiffUtil {
 
     SimpleDiffRequest newRequest = createSimpleRequest(content1, content2, oldRequest.getWindowTitle(), titles[0], titles[1]);
 
-    newRequest.addAction(new MyShowDiffAction(oldRequest));
+    newRequest.putUserData(DiffUserDataKeys.CONTEXT_ACTIONS, Collections.<AnAction>singletonList(new MyShowDiffAction(oldRequest)));
 
     DiffNavigationContext navigationContext = (DiffNavigationContext)oldRequest.getGenericData().get(DiffTool.SCROLL_TO_LINE.getName());
     if (navigationContext != null) {
@@ -294,7 +296,9 @@ public class MigrateToNewDiffUtil {
     @Override
     public DiffRequest process(@NotNull UserDataHolder context, @NotNull ProgressIndicator indicator)
       throws DiffRequestPresentableException, ProcessCanceledException {
-      return new ErrorDiffRequest(this, "Can't convert from old-style request", Collections.singletonList(new MyShowDiffAction(myRequest)));
+      ErrorDiffRequest errorRequest = new ErrorDiffRequest(this, "Can't convert from old-style request");
+      errorRequest.putUserData(DiffUserDataKeys.CONTEXT_ACTIONS, Collections.<AnAction>singletonList(new MyShowDiffAction(myRequest)));
+      return errorRequest;
     }
   }
 }

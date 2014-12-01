@@ -1,40 +1,28 @@
 package com.intellij.openapi.util.diff.requests;
 
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.util.diff.chains.DiffRequestPresentable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
 
 public class ErrorDiffRequest extends DiffRequestBase {
   @NotNull private final DiffRequestPresentable myPresentable;
   @NotNull private final String myErrorMessage;
   @Nullable private final Throwable myException;
-  @Nullable private final List<? extends AnAction> myAdditionalActions;
 
   public ErrorDiffRequest(@NotNull DiffRequestPresentable presentable, @NotNull Throwable e) {
-    this(presentable, e.getMessage(), e, null);
+    this(presentable, e.getMessage(), e);
   }
 
   public ErrorDiffRequest(@NotNull DiffRequestPresentable presentable, @NotNull String message) {
-    this(presentable, message, null, null);
+    this(presentable, message, null);
   }
 
   public ErrorDiffRequest(@NotNull DiffRequestPresentable presentable,
                           @NotNull String message,
-                          @Nullable List<? extends AnAction> actions) {
-    this(presentable, message, null, actions);
-  }
-
-  public ErrorDiffRequest(@NotNull DiffRequestPresentable presentable,
-                          @NotNull String message,
-                          @Nullable Throwable e,
-                          @Nullable List<? extends AnAction> actions) {
+                          @Nullable Throwable e) {
     myPresentable = presentable;
     myErrorMessage = message;
     myException = e;
-    myAdditionalActions = actions;
   }
 
   @NotNull
@@ -56,11 +44,5 @@ public class ErrorDiffRequest extends DiffRequestBase {
   @Override
   public String getWindowTitle() {
     return myPresentable.getName();
-  }
-
-  @Nullable
-  @Override
-  public List<? extends AnAction> getActions() {
-    return myAdditionalActions;
   }
 }

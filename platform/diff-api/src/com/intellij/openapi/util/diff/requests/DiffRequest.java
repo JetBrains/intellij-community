@@ -27,9 +27,6 @@ public interface DiffRequest extends UserDataHolder {
   @NotNull
   String getWindowTitle();
 
-  @Nullable
-  List<? extends AnAction> getActions();
-
   /*
    * Called when DiffRequest is shown
    *

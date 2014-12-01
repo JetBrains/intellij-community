@@ -12,8 +12,6 @@ public class SimpleDiffRequest extends DiffRequestBase implements ContentDiffReq
   @NotNull private final String[] myContentTitles;
   @NotNull private final String myWindowTitle;
 
-  @NotNull private final List<AnAction> myActions = new ArrayList<AnAction>();
-
   public SimpleDiffRequest(@NotNull String windowTitle,
                            @NotNull DiffContent content1,
                            @NotNull DiffContent content2,
@@ -40,16 +38,6 @@ public class SimpleDiffRequest extends DiffRequestBase implements ContentDiffReq
   @Override
   public String getWindowTitle() {
     return myWindowTitle;
-  }
-
-  @NotNull
-  @Override
-  public List<? extends AnAction> getActions() {
-    return myActions;
-  }
-
-  public void addAction(@NotNull AnAction action) {
-    myActions.add(action);
   }
 
   @Override

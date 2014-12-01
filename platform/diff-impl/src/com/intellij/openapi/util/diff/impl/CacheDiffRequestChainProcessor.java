@@ -271,7 +271,8 @@ public abstract class CacheDiffRequestChainProcessor implements Disposable {
     List<AnAction> contextActions = myContext.getUserData(DiffUserDataKeys.CONTEXT_ACTIONS);
     DiffUtil.addActionBlock(group, contextActions);
 
-    DiffUtil.addActionBlock(group, myActiveRequest.getActions());
+    List<AnAction> requestContextActions = myActiveRequest.getUserData(DiffUserDataKeys.CONTEXT_ACTIONS);
+    DiffUtil.addActionBlock(group, requestContextActions);
 
     DiffUtil.addActionBlock(group, ActionManager.getInstance().getAction(IdeActions.ACTION_CONTEXT_HELP));
 

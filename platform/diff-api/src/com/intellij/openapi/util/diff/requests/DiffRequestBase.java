@@ -7,12 +7,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public abstract class DiffRequestBase extends UserDataHolderBase implements DiffRequest {
-  @Nullable
-  @Override
-  public List<? extends AnAction> getActions() {
-    return null;
-  }
-
   @Override
   public void onAssigned(boolean isAssigned) {
   }
