@@ -112,6 +112,9 @@
     <extensionPoint name="debugger.jvmSmartStepIntoHandler"
                     interface="com.intellij.debugger.actions.JvmSmartStepIntoHandler"/>
 
+    <extensionPoint name="debugger.frameExtraVarsProvider"
+                    interface="com.intellij.debugger.engine.FrameExtraVariablesProvider"/>
+
     <extensionPoint name="allOverridingMethodsSearch" interface="com.intellij.util.QueryExecutor"/>
     <extensionPoint name="annotatedElementsSearch" interface="com.intellij.util.QueryExecutor"/>
     <extensionPoint name="annotatedPackagesSearch" interface="com.intellij.util.QueryExecutor"/>
