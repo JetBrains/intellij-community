@@ -1977,11 +1977,19 @@ public class StringUtil extends StringUtilRt {
   @Contract(pure = true)
   public static String unescapeSlashes(@NotNull final String str) {
     final StringBuilder buf = new StringBuilder(str.length());
-    unescapeSlashes(buf, str);
+    unescapeChar(buf, str, '/');
     return buf.toString();
   }
 
-  private static void unescapeSlashes(@NotNull StringBuilder buf, @NotNull String str) {
+  @NotNull
+  @Contract(pure = true)
+  public static String unescapeBackSlashes(@NotNull final String str) {
+    final StringBuilder buf = new StringBuilder(str.length());
+    unescapeChar(buf, str, '\\');
+    return buf.toString();
+  }
+
+  private static void unescapeChar(@NotNull StringBuilder buf, @NotNull String str, char unescapeChar) {
     final int length = str.length();
     final int last = length - 1;
     for (int i = 0; i < length; i++) {
@@ -1989,7 +1997,7 @@ public class StringUtil extends StringUtilRt {
       if (ch == '\\' && i != last) {
         i++;
         ch = str.charAt(i);
-        if (ch != '/') buf.append('\\');
+        if (ch != unescapeChar) buf.append('\\');
       }
 
       buf.append(ch);
