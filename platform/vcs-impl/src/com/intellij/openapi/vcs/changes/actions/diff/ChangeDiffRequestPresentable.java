@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.changes.actions.diff;
 
 import com.intellij.CommonBundle;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.GenericDataProvider;
@@ -61,16 +62,16 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
 
   @NotNull private final Project myProject;
   @NotNull private final Change myChange;
-  @NotNull private final Map<Key, Object> myContext;
+  @NotNull private final Map<Key, Object> myChangeContext;
 
   public ChangeDiffRequestPresentable(@NotNull Project project, @NotNull Change change) {
     this(project, change, Collections.<Key, Object>emptyMap());
   }
 
-  public ChangeDiffRequestPresentable(@NotNull Project project, @NotNull Change change, @NotNull Map<Key, Object> context) {
+  public ChangeDiffRequestPresentable(@NotNull Project project, @NotNull Change change, @NotNull Map<Key, Object> changeContext) {
     myChange = change;
     myProject = project;
-    myContext = context;
+    myChangeContext = changeContext;
   }
 
   @NotNull
@@ -104,44 +105,57 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
   }
 
   @NotNull
-  private DiffRequest loadCurrentContents(@NotNull UserDataHolder context,
-                                          @NotNull ProgressIndicator indicator) throws IOException, VcsException,
-                                                                                       DiffRequestPresentableException {
-    final ContentRevision bRev = myChange.getBeforeRevision();
-    final ContentRevision aRev = myChange.getAfterRevision();
+  protected DiffRequest loadCurrentContents(@NotNull UserDataHolder context,
+                                            @NotNull ProgressIndicator indicator) throws IOException, VcsException,
+                                                                                         DiffRequestPresentableException {
+    DiffRequest request = createRequest(myProject, myChange, context, indicator);
 
-    if (bRev == null && aRev == null) {
-      LOG.warn("Both revision contents are empty");
-      throw new DiffRequestPresentableException("Bad revisions contents");
-    }
-    if (bRev != null) checkContentRevision(bRev, context, indicator);
-    if (aRev != null) checkContentRevision(aRev, context, indicator);
+    request.putUserData(CONTENT_REVISIONS, new ContentRevision[]{myChange.getBeforeRevision(), myChange.getAfterRevision()});
 
-    String title = getRequestTitle(bRev, aRev);
-
-    indicator.setIndeterminate(true);
-    DiffContent content1 = createContent(bRev, indicator);
-    DiffContent content2 = createContent(aRev, indicator);
-
-    String beforeRevisionTitle = getRevisionTitle(bRev, "Base version");
-    String afterRevisionTitle = getRevisionTitle(aRev, "Your version");
-
-    SimpleDiffRequest request = new SimpleDiffRequest(title, content1, content2, beforeRevisionTitle, afterRevisionTitle);
-    request.putUserData(CONTENT_REVISIONS, new ContentRevision[]{aRev, bRev});
-
-    for (Map.Entry<Key, Object> entry : myContext.entrySet()) {
+    for (Map.Entry<Key, Object> entry : myChangeContext.entrySet()) {
       request.putUserData(entry.getKey(), entry.getValue());
     }
 
-    GenericDataProvider dataProvider = new GenericDataProvider();
-    dataProvider.putData(VcsDataKeys.CURRENT_CHANGE, myChange);
-    request.putUserData(DiffUserDataKeys.DATA_PROVIDER, dataProvider);
+    DataProvider dataProvider = request.getUserData(DiffUserDataKeys.DATA_PROVIDER);
+    if (dataProvider == null) {
+      dataProvider = new GenericDataProvider();
+      request.putUserData(DiffUserDataKeys.DATA_PROVIDER, dataProvider);
+    }
+    if (dataProvider instanceof GenericDataProvider) ((GenericDataProvider)dataProvider).putData(VcsDataKeys.CURRENT_CHANGE, myChange);
 
     return request;
   }
 
   @NotNull
-  private static String getRequestTitle(@Nullable ContentRevision bRev, @Nullable ContentRevision aRev) {
+  public static DiffRequest createRequest(@NotNull Project project,
+                                          @NotNull Change change,
+                                          @NotNull UserDataHolder context,
+                                          @NotNull ProgressIndicator indicator) throws IOException, VcsException,
+                                                                                       DiffRequestPresentableException {
+    final ContentRevision bRev = change.getBeforeRevision();
+    final ContentRevision aRev = change.getAfterRevision();
+
+    if (bRev == null && aRev == null) {
+      LOG.warn("Both revision contents are empty");
+      throw new DiffRequestPresentableException("Bad revisions contents");
+    }
+    if (bRev != null) checkContentRevision(project, bRev, context, indicator);
+    if (aRev != null) checkContentRevision(project, aRev, context, indicator);
+
+    String title = getRequestTitle(bRev, aRev);
+
+    indicator.setIndeterminate(true);
+    DiffContent content1 = createContent(project, bRev, indicator);
+    DiffContent content2 = createContent(project, aRev, indicator);
+
+    String beforeRevisionTitle = getRevisionTitle(bRev, "Base version");
+    String afterRevisionTitle = getRevisionTitle(aRev, "Your version");
+
+    return new SimpleDiffRequest(title, content1, content2, beforeRevisionTitle, afterRevisionTitle);
+  }
+
+  @NotNull
+  public static String getRequestTitle(@Nullable ContentRevision bRev, @Nullable ContentRevision aRev) {
     assert bRev != null || aRev != null;
     if (bRev != null && aRev != null) {
       FilePath bPath = bRev.getFile();
@@ -162,7 +176,7 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
   }
 
   @NotNull
-  private static String getPathPresentable(@NotNull FilePath path) {
+  public static String getPathPresentable(@NotNull FilePath path) {
     FilePath parentPath = path.getParentPath();
     if (!path.isDirectory() && parentPath != null) {
       return path.getName() + " (" + parentPath.getPath() + ")";
@@ -173,7 +187,7 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
   }
 
   @NotNull
-  private static String getPathPresentable(@NotNull FilePath bPath, @NotNull FilePath aPath) {
+  public static String getPathPresentable(@NotNull FilePath bPath, @NotNull FilePath aPath) {
     FilePath bParentPath = bPath.getParentPath();
     FilePath aParentPath = aPath.getParentPath();
     if (Comparing.equal(bParentPath, aParentPath)) {
@@ -205,7 +219,7 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
   }
 
   @NotNull
-  private static String getRevisionTitle(@Nullable ContentRevision revision, @NotNull String defaultValue) {
+  public static String getRevisionTitle(@Nullable ContentRevision revision, @NotNull String defaultValue) {
     if (revision == null) return defaultValue;
     String title = revision.getRevisionNumber().asString();
     if (title == null || title.isEmpty()) return defaultValue;
@@ -213,9 +227,10 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
   }
 
   @NotNull
-  private DiffContent createContent(@Nullable ContentRevision revision,
-                                    @NotNull ProgressIndicator indicator) throws IOException, VcsException,
-                                                                                 DiffRequestPresentableException {
+  public static DiffContent createContent(@NotNull Project project,
+                                          @Nullable ContentRevision revision,
+                                          @NotNull ProgressIndicator indicator) throws IOException, VcsException,
+                                                                                       DiffRequestPresentableException {
     indicator.checkCanceled();
 
     if (revision == null) return DiffContentFactory.createEmpty();
@@ -223,7 +238,7 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
     if (revision instanceof CurrentContentRevision) {
       VirtualFile vFile = ((CurrentContentRevision)revision).getVirtualFile();
       if (vFile == null) throw new DiffRequestPresentableException("Can't get current revision content");
-      return DiffContentFactory.create(myProject, vFile);
+      return DiffContentFactory.create(project, vFile);
     }
 
     FilePath filePath = revision.getFile();
@@ -232,17 +247,18 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
       if (content == null) {
         throw new DiffRequestPresentableException("Can't get binary revision content");
       }
-      return DiffContentFactory.createBinary(myProject, filePath.getName(), filePath.getPath(), content);
+      return DiffContentFactory.createBinary(project, filePath.getName(), filePath.getPath(), content);
     }
 
     String revisionContent = revision.getContent();
     if (revisionContent == null) throw new IOException("Can't get revision content");
-    return FileAwareDocumentContent.create(myProject, revisionContent, filePath);
+    return FileAwareDocumentContent.create(project, revisionContent, filePath);
   }
 
-  private void checkContentRevision(@NotNull ContentRevision rev,
-                                    @NotNull UserDataHolder context,
-                                    @NotNull ProgressIndicator indicator) throws DiffRequestPresentableException {
+  public static void checkContentRevision(@NotNull Project project,
+                                          @NotNull ContentRevision rev,
+                                          @NotNull UserDataHolder context,
+                                          @NotNull ProgressIndicator indicator) throws DiffRequestPresentableException {
     if (rev.getFile().isDirectory()) {
       throw new DiffRequestPresentableException("Can't show diff for directory");
     }
@@ -251,7 +267,7 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
     if (!type.isBinary()) return;
 
     if (FileTypes.UNKNOWN.equals(type)) {
-      checkAssociate(myProject, rev.getFile(), context, indicator);
+      checkAssociate(project, rev.getFile(), context, indicator);
     }
   }
 
