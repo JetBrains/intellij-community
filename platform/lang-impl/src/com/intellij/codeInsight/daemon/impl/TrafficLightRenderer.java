@@ -48,7 +48,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.ui.LayeredIcon;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
@@ -66,7 +65,7 @@ import java.util.List;
 
 public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
   private static final TextAttributesKey NO_ANALYSIS = TextAttributesKey.createTextAttributesKey("NO_ANALYSIS");
-  private static final Icon NO_ANALYSIS_ICON = new HighlightDisplayLevel.SemiBorderIcon(NO_ANALYSIS);
+  private static final Icon NO_ANALYSIS_ICON = new HighlightDisplayLevel.SingleColorIcon(NO_ANALYSIS);
   private final Project myProject;
   private final Document myDocument;
   private final PsiFile myFile;
@@ -297,20 +296,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     if (PowerSaveMode.isEnabled() || status.reasonWhySuspended != null || status.reasonWhyDisabled != null || status.errorAnalyzingFinished) {
       return icon;
     }
-    double progress = getOverallProgress(status);
-    TruncatingIcon trunc = new TruncatingIcon(icon, icon.getIconWidth(), (int)(icon.getIconHeight() * progress));
-
-    return new LayeredIcon(trunc, AllIcons.General.Eye);
-  }
-
-  private static double getOverallProgress(@NotNull DaemonCodeAnalyzerStatus status) {
-    long advancement = 0;
-    long limit = 0;
-    for (ProgressableTextEditorHighlightingPass ps : status.passStati) {
-      advancement += ps.getProgressCount();
-      limit += ps.getProgressLimit();
-    }
-    return limit == 0 ? status.errorAnalyzingFinished ? 1 : 0 : advancement * 1.0 / limit;
+    return AllIcons.General.Eye;
   }
 
   // return true if panel needs to be rebuilt

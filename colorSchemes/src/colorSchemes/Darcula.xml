@@ -1516,7 +1516,7 @@
     </option>
     <option name="NO_ANALYSIS">
       <value>
-        <option name="ERROR_STRIPE_COLOR" value="777777" /> 
+        <option name="ERROR_STRIPE_COLOR" value="666666" /> 
       </value>
     </option>
     <option name="DO_NOT_SHOW">
