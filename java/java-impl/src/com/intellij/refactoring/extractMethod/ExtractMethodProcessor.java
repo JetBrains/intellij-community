@@ -71,6 +71,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.VisibilityUtil;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -502,6 +503,19 @@ public class ExtractMethodProcessor implements MatchProvider {
       @Override
       protected boolean isOutputVariable(PsiVariable var) {
         return ExtractMethodProcessor.this.isOutputVariable(var);
+      }
+
+      @Override
+      protected void checkMethodConflicts(MultiMap<PsiElement, String> conflicts) {
+        super.checkMethodConflicts(conflicts);
+        final VariableData[] parameters = getChosenParameters();
+        final PsiResolveHelper resolveHelper = PsiResolveHelper.SERVICE.getInstance(myProject);
+        for (VariableData parameter : parameters) {
+          final PsiVariable variable = resolveHelper.resolveReferencedVariable(parameter.name, myElements[0]);
+          if (variable != null && isDeclaredInside(variable)) {
+            conflicts.putValue(variable, "Variable with name " + parameter.name + " is already defined in the selected scope");
+          }
+        }
       }
     };
   }
