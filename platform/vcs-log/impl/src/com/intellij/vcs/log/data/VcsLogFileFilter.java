@@ -19,15 +19,17 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.VcsLogFilter;
+import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.VcsLogRootFilter;
 import com.intellij.vcs.log.VcsLogStructureFilter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
 public class VcsLogFileFilter implements VcsLogFilter {
@@ -39,9 +41,19 @@ public class VcsLogFileFilter implements VcsLogFilter {
     myRootFilter = rootFilter;
   }
 
+  @Nullable
+  public VcsLogStructureFilter getStructureFilter() {
+    return myStructureFilter;
+  }
+
+  @Nullable
+  public VcsLogRootFilter getRootFilter() {
+    return myRootFilter;
+  }
+
   @NotNull
-  static Pair<Set<VirtualFile>, MultiMap<VirtualFile, VirtualFile>> collectRoots(@NotNull Collection<VirtualFile> files,
-                                                                                 @NotNull Set<VirtualFile> roots) {
+  private static Pair<Set<VirtualFile>, MultiMap<VirtualFile, VirtualFile>> collectRoots(@NotNull Collection<VirtualFile> files,
+                                                                                         @NotNull Set<VirtualFile> roots) {
     Set<VirtualFile> selectedRoots = new HashSet<VirtualFile>();
     MultiMap<VirtualFile, VirtualFile> selectedFiles = new MultiMap<VirtualFile, VirtualFile>();
 
@@ -71,40 +83,46 @@ public class VcsLogFileFilter implements VcsLogFilter {
     return Pair.create(selectedRoots, selectedFiles);
   }
 
+  // collect "nu voobche vse" (there is no english translation for this expression =) ) roots that might be visible
+  // if filters unset returns just all roots
   @NotNull
-  public static Pair<Set<VirtualFile>, MultiMap<VirtualFile, VirtualFile>> collectRootsAndFiles(@NotNull Set<VirtualFile> roots,
-                                                                                                @Nullable VcsLogRootFilter rootFilter,
-                                                                                                @Nullable VcsLogStructureFilter structureFilter) {
-    if (rootFilter == null && structureFilter == null) return Pair.create(roots, MultiMap.<VirtualFile, VirtualFile>create());
+  public static Set<VirtualFile> getAllVisibleRoots(@NotNull Collection<VirtualFile> roots, @NotNull VcsLogFilterCollection filters) {
+    return getAllVisibleRoots(roots, filters.getRootFilter(), filters.getStructureFilter());
+  }
 
-    if (structureFilter == null) {
-      return Pair.create((Set<VirtualFile>)new HashSet<VirtualFile>(rootFilter.getRoots()), MultiMap.<VirtualFile, VirtualFile>create());
+  // same as other getAllVisibleRoots
+  @NotNull
+  public static Set<VirtualFile> getAllVisibleRoots(@NotNull Collection<VirtualFile> roots, @NotNull VcsLogFileFilter filter) {
+    return getAllVisibleRoots(roots, filter.getRootFilter(), filter.getStructureFilter());
+  }
+
+  private static Set<VirtualFile> getAllVisibleRoots(@NotNull Collection<VirtualFile> roots, @Nullable VcsLogRootFilter rootFilter, @Nullable VcsLogStructureFilter structureFilter) {
+    if (rootFilter == null && structureFilter == null) return new HashSet<VirtualFile>(roots);
+
+    // should not we, like, intersect here?
+    Set<VirtualFile> result = new HashSet<VirtualFile>();
+    if (rootFilter != null) {
+      result.addAll(rootFilter.getRoots());
     }
-    Pair<Set<VirtualFile>, MultiMap<VirtualFile, VirtualFile>> selectedRootsAndFiles = collectRoots(structureFilter.getFiles(), roots);
-    if (rootFilter == null) {
-      return selectedRootsAndFiles;
+    if (structureFilter != null) {
+      Pair<Set<VirtualFile>, MultiMap<VirtualFile, VirtualFile>> rootsAndFiles = collectRoots(structureFilter.getFiles(), new HashSet<VirtualFile>(roots));
+      result.addAll(ContainerUtil.union(rootsAndFiles.first, rootsAndFiles.second.keySet()));
     }
-    return Pair.create(ContainerUtil.union(new HashSet<VirtualFile>(rootFilter.getRoots()), selectedRootsAndFiles.first),
-                       selectedRootsAndFiles.second);
+
+    return result;
   }
 
-  @Nullable
-  public static Set<VirtualFile> collectRoots(@NotNull Set<VirtualFile> roots,
-                                              @Nullable VcsLogRootFilter rootFilter,
-                                              @Nullable VcsLogStructureFilter structureFilter) {
-    if (rootFilter == null && structureFilter == null) return null;
+  // for given root returns files that are selected in it
+  // if a root is visible as a whole returns empty set
+  // same if root is invisible as a whole
+  // so check that before calling this method
+  @NotNull
+  public static Set<VirtualFile> getFilteredFilesForRoot(@NotNull VirtualFile root, VcsLogFilterCollection filterCollection) {
+    if (filterCollection.getStructureFilter() == null) return Collections.emptySet();
 
-    Pair<Set<VirtualFile>, MultiMap<VirtualFile, VirtualFile>> rootsAndFiles = collectRootsAndFiles(roots, rootFilter, structureFilter);
-    return ContainerUtil.union(rootsAndFiles.first, rootsAndFiles.second.keySet());
-  }
+    Pair<Set<VirtualFile>, MultiMap<VirtualFile, VirtualFile>> rootsAndFiles =
+      collectRoots(filterCollection.getStructureFilter().getFiles(), Collections.singleton(root));
 
-  @Nullable
-  public VcsLogStructureFilter getStructureFilter() {
-    return myStructureFilter;
-  }
-
-  @Nullable
-  public VcsLogRootFilter getRootFilter() {
-    return myRootFilter;
+    return new HashSet<VirtualFile>(rootsAndFiles.second.get(root));
   }
 }
