@@ -109,6 +109,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
   private final ProgressManager myProgressManager;
   private volatile boolean myDefaultProjectWasDisposed = false;
 
+  public static int TEST_PROJECTS_OPENED = 0;
+
   private final Runnable restartApplicationOrReloadProjectTask = new Runnable() {
     @Override
     public void run() {
@@ -718,6 +720,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
     synchronized (myOpenProjects) {
       assert ApplicationManager.getApplication().isUnitTestMode();
       assert !project.isDisposed() : "Must not open already disposed project";
+      TEST_PROJECTS_OPENED++;
       myTestProjects.add(project);
     }
   }
