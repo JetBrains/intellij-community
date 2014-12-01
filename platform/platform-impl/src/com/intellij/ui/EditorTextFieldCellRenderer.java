@@ -106,6 +106,7 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
     // reuse EditorTextField initialization logic
     EditorTextField field = new EditorTextField(new MyDocument(), null, FileTypes.PLAIN_TEXT, false, false);
     field.setSupplementary(true);
+    field.setFontInheritedFromLAF(false);
     field.addNotify(); // creates editor
 
     EditorEx editor = (EditorEx)ObjectUtils.assertNotNull(field.getEditor());
