@@ -45,7 +45,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 // TODO: svn integration
 public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
@@ -56,10 +58,16 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
 
   @NotNull private final Project myProject;
   @NotNull private final Change myChange;
+  @NotNull private final Map<Key, Object> myContext;
 
   public ChangeDiffRequestPresentable(@NotNull Project project, @NotNull Change change) {
+    this(project, change, Collections.<Key, Object>emptyMap());
+  }
+
+  public ChangeDiffRequestPresentable(@NotNull Project project, @NotNull Change change, @NotNull Map<Key, Object> context) {
     myChange = change;
     myProject = project;
+    myContext = context;
   }
 
   @NotNull
@@ -135,6 +143,11 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
 
     SimpleDiffRequest request = new SimpleDiffRequest(title, content1, content2, beforeRevisionTitle, afterRevisionTitle);
     request.putUserData(CONTENT_REVISIONS, new ContentRevision[]{aRev, bRev});
+
+    for (Map.Entry<Key, Object> entry : myContext.entrySet()) {
+      request.putUserData(entry.getKey(), entry.getValue());
+    }
+
     return request;
   }
 

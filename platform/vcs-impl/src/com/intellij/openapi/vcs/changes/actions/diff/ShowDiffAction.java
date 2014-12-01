@@ -166,13 +166,13 @@ public class ShowDiffAction extends AnAction implements DumbAware {
 
     List<ChangeDiffRequestPresentable> presentables = new ArrayList<ChangeDiffRequestPresentable>(changes.size());
     for (Change change : changes) {
-      presentables.add(new ChangeDiffRequestPresentable(project, change));
+      presentables.add(new ChangeDiffRequestPresentable(project, change, context.getChangeContext(change)));
     }
 
     DiffRequestChain chain = new ChangeDiffRequestChain(presentables);
     chain.setIndex(index);
 
-    for (Map.Entry<Key, Object> entry : context.getContext().entrySet()) {
+    for (Map.Entry<Key, Object> entry : context.getChainContext().entrySet()) {
       chain.putUserData(entry.getKey(), entry.getValue());
     }
     chain.putUserData(DiffUserDataKeys.CONTEXT_ACTIONS, context.getActions());
