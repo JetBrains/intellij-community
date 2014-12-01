@@ -56,4 +56,9 @@ public class CompletionParameterTypeInferencePolicy extends ProcessCandidatePara
     }
     return guess;
   }
+
+  @Override
+  public boolean isVarargsIgnored() {
+    return true;
+  }
 }

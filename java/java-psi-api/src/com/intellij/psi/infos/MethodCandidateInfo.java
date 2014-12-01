@@ -273,7 +273,7 @@ public class MethodCandidateInfo extends CandidateInfo{
     }
     final PsiMethod method = getElement();
     final CurrentCandidateProperties alreadyThere = 
-      map.put(getMarkerList(), new CurrentCandidateProperties(method, super.getSubstitutor(), isVarargs(), !includeReturnConstraint));
+      map.put(getMarkerList(), new CurrentCandidateProperties(method, super.getSubstitutor(), policy.isVarargsIgnored() || isVarargs(), !includeReturnConstraint));
     try {
       PsiTypeParameter[] typeParameters = method.getTypeParameters();
 

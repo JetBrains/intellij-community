@@ -35,11 +35,7 @@ public abstract class ParameterTypeInferencePolicy {
 
   public abstract PsiType adjustInferredType(PsiManager manager, PsiType guess, ConstraintType second);
 
-  /**
-   * @return true when Object bounds would be rejected in the hope that outer call could provide more information. Should be used for java 1.8 only
-   */
-  @Deprecated
-  public boolean allowPostponeInference() {
+  public boolean isVarargsIgnored() {
     return false;
   }
 }
