@@ -99,17 +99,22 @@ public class VcsLogFileFilter implements VcsLogFilter {
   private static Set<VirtualFile> getAllVisibleRoots(@NotNull Collection<VirtualFile> roots, @Nullable VcsLogRootFilter rootFilter, @Nullable VcsLogStructureFilter structureFilter) {
     if (rootFilter == null && structureFilter == null) return new HashSet<VirtualFile>(roots);
 
-    // should not we, like, intersect here?
-    Set<VirtualFile> result = new HashSet<VirtualFile>();
+    Collection<VirtualFile> fromRootFilter;
     if (rootFilter != null) {
-      result.addAll(rootFilter.getRoots());
-    }
-    if (structureFilter != null) {
-      Pair<Set<VirtualFile>, MultiMap<VirtualFile, VirtualFile>> rootsAndFiles = collectRoots(structureFilter.getFiles(), new HashSet<VirtualFile>(roots));
-      result.addAll(ContainerUtil.union(rootsAndFiles.first, rootsAndFiles.second.keySet()));
+      fromRootFilter = rootFilter.getRoots();
+    } else {
+      fromRootFilter = roots;
     }
 
-    return result;
+    Collection<VirtualFile> fromStructureFilter;
+    if (structureFilter != null) {
+      Pair<Set<VirtualFile>, MultiMap<VirtualFile, VirtualFile>> rootsAndFiles = collectRoots(structureFilter.getFiles(), new HashSet<VirtualFile>(roots));
+      fromStructureFilter = ContainerUtil.union(rootsAndFiles.first, rootsAndFiles.second.keySet());
+    } else {
+      fromStructureFilter = roots;
+    }
+
+    return new HashSet<VirtualFile>(ContainerUtil.intersection(fromRootFilter, fromStructureFilter));
   }
 
   // for given root returns files that are selected in it
