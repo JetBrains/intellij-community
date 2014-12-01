@@ -149,25 +149,46 @@ public class ShowDiffAction extends AnAction implements DumbAware {
   // Impl
   //
 
-  public static void showDiffForChange(@NotNull Project project, @NotNull List<Change> changes) {
+  public static void showDiffForChange(@NotNull Project project, @NotNull Iterable<Change> changes) {
     showDiffForChange(project, changes, 0);
   }
 
-  public static void showDiffForChange(@NotNull Project project, @NotNull List<Change> changes, int index) {
+  public static void showDiffForChange(@NotNull Project project, @NotNull Iterable<Change> changes, int index) {
     showDiffForChange(project, changes, index, new ShowDiffContext());
   }
 
   public static void showDiffForChange(@NotNull Project project,
-                                       @NotNull List<Change> changes,
+                                       @NotNull Iterable<Change> changes,
+                                       @NotNull Condition<Change> condition,
+                                       @NotNull ShowDiffContext context) {
+    int index = 0;
+    List<ChangeDiffRequestPresentable> presentables = new ArrayList<ChangeDiffRequestPresentable>();
+    for (Change change : changes) {
+      if (condition.value(change)) index = presentables.size();
+      presentables.add(new ChangeDiffRequestPresentable(project, change, context.getChangeContext(change)));
+    }
+
+    showDiffForChange(project, presentables, index, context);
+  }
+
+  public static void showDiffForChange(@NotNull Project project,
+                                       @NotNull Iterable<Change> changes,
                                        int index,
                                        @NotNull ShowDiffContext context) {
-    if (changes.isEmpty()) return;
-    if (index < 0 || index >= changes.size()) index = 0;
-
-    List<ChangeDiffRequestPresentable> presentables = new ArrayList<ChangeDiffRequestPresentable>(changes.size());
+    List<ChangeDiffRequestPresentable> presentables = new ArrayList<ChangeDiffRequestPresentable>();
     for (Change change : changes) {
       presentables.add(new ChangeDiffRequestPresentable(project, change, context.getChangeContext(change)));
     }
+
+    showDiffForChange(project, presentables, index, context);
+  }
+
+  private static void showDiffForChange(@NotNull Project project,
+                                        @NotNull List<ChangeDiffRequestPresentable> presentables,
+                                        int index,
+                                        @NotNull ShowDiffContext context) {
+    if (presentables.isEmpty()) return;
+    if (index < 0 || index >= presentables.size()) index = 0;
 
     DiffRequestChain chain = new ChangeDiffRequestChain(presentables);
     chain.setIndex(index);
