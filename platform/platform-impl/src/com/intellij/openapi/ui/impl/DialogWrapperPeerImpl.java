@@ -245,9 +245,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
 
     myDialog = new MyDialog(owner, myWrapper, myProject, myWindowFocusedCallback, myTypeAheadDone, myTypeAheadCallback);
 
-    if (Registry.is("suppress.focus.stealing")) {
-      setAutoRequestFocus(false);
-    }
+    UIUtil.suppressFocusStealing(getWindow());
 
     myDialog.setModalityType(ideModalityType.toAwtModality());
 

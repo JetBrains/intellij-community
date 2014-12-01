@@ -3020,6 +3020,14 @@ public class UIUtil {
     return JOptionPane.getRootFrame();
   }
 
+  public static void suppressFocusStealing (Window window) {
+    // Focus stealing is not a problem on Mac
+    if (SystemInfo.isMac) return;
+    if (Registry.is("suppress.focus.stealing")) {
+      setAutoRequestFocus(window, false);
+    }
+  }
+
   public static void setAutoRequestFocus (final Window onWindow, final boolean set){
     if (SystemInfo.isMac) return;
     if (SystemInfo.isJavaVersionAtLeast("1.7")) {
