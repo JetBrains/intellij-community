@@ -557,6 +557,16 @@ public abstract class CacheDiffRequestChainProcessor implements Disposable {
         return myOpenInEditorAction;
       }
       else {
+        DataProvider contextProvider = myContext.getUserData(DiffUserDataKeys.DATA_PROVIDER);
+        if (contextProvider != null) {
+          Object data = contextProvider.getData(dataId);
+          if (data != null) return data;
+        }
+        DataProvider requestProvider = myActiveRequest.getUserData(DiffUserDataKeys.DATA_PROVIDER);
+        if (requestProvider != null) {
+          Object data = requestProvider.getData(dataId);
+          if (data != null) return data;
+        }
         return null;
       }
     }
