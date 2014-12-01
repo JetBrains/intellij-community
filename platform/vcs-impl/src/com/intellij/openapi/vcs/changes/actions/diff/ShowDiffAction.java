@@ -39,7 +39,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -165,7 +164,8 @@ public class ShowDiffAction extends AnAction implements DumbAware {
     List<ChangeDiffRequestPresentable> presentables = new ArrayList<ChangeDiffRequestPresentable>();
     for (Change change : changes) {
       if (condition.value(change)) index = presentables.size();
-      presentables.add(new ChangeDiffRequestPresentable(project, change, context.getChangeContext(change)));
+      ChangeDiffRequestPresentable presentable = ChangeDiffRequestPresentable.create(project, change, context.getChangeContext(change));
+      if (presentable != null) presentables.add(presentable);
     }
 
     showDiffForChange(project, presentables, index, context);
@@ -175,12 +175,19 @@ public class ShowDiffAction extends AnAction implements DumbAware {
                                        @NotNull Iterable<Change> changes,
                                        int index,
                                        @NotNull ShowDiffContext context) {
+    int i = 0;
+    int newIndex = 0;
     List<ChangeDiffRequestPresentable> presentables = new ArrayList<ChangeDiffRequestPresentable>();
     for (Change change : changes) {
-      presentables.add(new ChangeDiffRequestPresentable(project, change, context.getChangeContext(change)));
+      if (i == index) newIndex = presentables.size();
+      ChangeDiffRequestPresentable presentable = ChangeDiffRequestPresentable.create(project, change, context.getChangeContext(change));
+      if (presentable != null) {
+        presentables.add(presentable);
+      }
+      i++;
     }
 
-    showDiffForChange(project, presentables, index, context);
+    showDiffForChange(project, presentables, newIndex, context);
   }
 
   private static void showDiffForChange(@NotNull Project project,

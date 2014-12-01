@@ -49,11 +49,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-// TODO: svn integration
 public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
   private static final Logger LOG = Logger.getInstance(ChangeDiffRequestPresentable.class);
 
@@ -64,11 +62,30 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
   @NotNull private final Change myChange;
   @NotNull private final Map<Key, Object> myChangeContext;
 
-  public ChangeDiffRequestPresentable(@NotNull Project project, @NotNull Change change) {
-    this(project, change, Collections.<Key, Object>emptyMap());
+  @Nullable
+  public static ChangeDiffRequestPresentable create(@NotNull Project project,
+                                                    @NotNull Change change,
+                                                    @NotNull Map<Key, Object> changeContext) {
+    if (!canCreate(project, change)) return null;
+    return new ChangeDiffRequestPresentable(project, change, changeContext);
   }
 
-  public ChangeDiffRequestPresentable(@NotNull Project project, @NotNull Change change, @NotNull Map<Key, Object> changeContext) {
+  private static boolean canCreate(@NotNull Project project, @NotNull Change change) {
+    for (ChangeDiffRequestProvider provider : ChangeDiffRequestProvider.EP_NAME.getExtensions()) {
+      if (provider.canCreate(project, change)) return true;
+    }
+
+    ContentRevision bRev = change.getBeforeRevision();
+    ContentRevision aRev = change.getAfterRevision();
+
+    if (bRev == null && aRev == null) return false;
+    if (bRev != null && bRev.getFile().isDirectory()) return false;
+    if (aRev != null && aRev.getFile().isDirectory()) return false;
+
+    return true;
+  }
+
+  private ChangeDiffRequestPresentable(@NotNull Project project, @NotNull Change change, @NotNull Map<Key, Object> changeContext) {
     myChange = change;
     myProject = project;
     myChangeContext = changeContext;
@@ -77,6 +94,11 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
   @NotNull
   public Change getChange() {
     return myChange;
+  }
+
+  @NotNull
+  public Project getProject() {
+    return myProject;
   }
 
   @NotNull
@@ -106,9 +128,15 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
 
   @NotNull
   protected DiffRequest loadCurrentContents(@NotNull UserDataHolder context,
-                                            @NotNull ProgressIndicator indicator) throws IOException, VcsException,
-                                                                                         DiffRequestPresentableException {
-    DiffRequest request = createRequest(myProject, myChange, context, indicator);
+                                            @NotNull ProgressIndicator indicator) throws DiffRequestPresentableException {
+    DiffRequest request = null;
+    for (ChangeDiffRequestProvider provider : ChangeDiffRequestProvider.EP_NAME.getExtensions()) {
+      if (provider.canCreate(myProject, myChange)) {
+        request = provider.process(this, context, indicator);
+        break;
+      }
+    }
+    if (request == null) request = createRequest(myProject, myChange, context, indicator);
 
     request.putUserData(CONTENT_REVISIONS, new ContentRevision[]{myChange.getBeforeRevision(), myChange.getAfterRevision()});
 
@@ -130,8 +158,7 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
   public static DiffRequest createRequest(@NotNull Project project,
                                           @NotNull Change change,
                                           @NotNull UserDataHolder context,
-                                          @NotNull ProgressIndicator indicator) throws IOException, VcsException,
-                                                                                       DiffRequestPresentableException {
+                                          @NotNull ProgressIndicator indicator) throws DiffRequestPresentableException {
     final ContentRevision bRev = change.getBeforeRevision();
     final ContentRevision aRev = change.getAfterRevision();
 
@@ -229,30 +256,39 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
   @NotNull
   public static DiffContent createContent(@NotNull Project project,
                                           @Nullable ContentRevision revision,
-                                          @NotNull ProgressIndicator indicator) throws IOException, VcsException,
-                                                                                       DiffRequestPresentableException {
-    indicator.checkCanceled();
+                                          @NotNull ProgressIndicator indicator) throws DiffRequestPresentableException {
+    try {
+      indicator.checkCanceled();
 
-    if (revision == null) return DiffContentFactory.createEmpty();
+      if (revision == null) return DiffContentFactory.createEmpty();
 
-    if (revision instanceof CurrentContentRevision) {
-      VirtualFile vFile = ((CurrentContentRevision)revision).getVirtualFile();
-      if (vFile == null) throw new DiffRequestPresentableException("Can't get current revision content");
-      return DiffContentFactory.create(project, vFile);
-    }
-
-    FilePath filePath = revision.getFile();
-    if (revision instanceof BinaryContentRevision) {
-      byte[] content = ((BinaryContentRevision)revision).getBinaryContent();
-      if (content == null) {
-        throw new DiffRequestPresentableException("Can't get binary revision content");
+      if (revision instanceof CurrentContentRevision) {
+        VirtualFile vFile = ((CurrentContentRevision)revision).getVirtualFile();
+        if (vFile == null) throw new DiffRequestPresentableException("Can't get current revision content");
+        return DiffContentFactory.create(project, vFile);
       }
-      return DiffContentFactory.createBinary(project, filePath.getName(), filePath.getPath(), content);
-    }
 
-    String revisionContent = revision.getContent();
-    if (revisionContent == null) throw new IOException("Can't get revision content");
-    return FileAwareDocumentContent.create(project, revisionContent, filePath);
+      FilePath filePath = revision.getFile();
+      if (revision instanceof BinaryContentRevision) {
+        byte[] content = ((BinaryContentRevision)revision).getBinaryContent();
+        if (content == null) {
+          throw new DiffRequestPresentableException("Can't get binary revision content");
+        }
+        return DiffContentFactory.createBinary(project, filePath.getName(), filePath.getPath(), content);
+      }
+
+      String revisionContent = revision.getContent();
+      if (revisionContent == null) throw new DiffRequestPresentableException("Can't get revision content");
+      return FileAwareDocumentContent.create(project, revisionContent, filePath);
+    }
+    catch (IOException e) {
+      LOG.info(e);
+      throw new DiffRequestPresentableException(e);
+    }
+    catch (VcsException e) {
+      LOG.info(e);
+      throw new DiffRequestPresentableException(e);
+    }
   }
 
   public static void checkContentRevision(@NotNull Project project,
