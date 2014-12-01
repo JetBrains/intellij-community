@@ -15,6 +15,8 @@
  */
 package com.intellij.refactoring.extractMethod;
 
+import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInspection.dataFlow.Nullness;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.editor.event.DocumentAdapter;
@@ -69,6 +71,7 @@ public class ExtractMethodDialog extends DialogWrapper implements AbstractExtrac
   private final PsiType[] myExceptions;
   private final boolean myStaticFlag;
   private boolean myCanBeStatic;
+  private final Nullness myNullness;
   private final PsiElement[] myElementsToExtract;
   private final String myHelpId;
 
@@ -98,6 +101,7 @@ public class ExtractMethodDialog extends DialogWrapper implements AbstractExtrac
                              String initialMethodName,
                              String title,
                              String helpId,
+                             Nullness nullness, 
                              final PsiElement[] elementsToExtract) {
     super(project, true);
     myProject = project;
@@ -107,6 +111,7 @@ public class ExtractMethodDialog extends DialogWrapper implements AbstractExtrac
     myExceptions = exceptions;
     myStaticFlag = isStatic;
     myCanBeStatic = canBeStatic;
+    myNullness = nullness;
     myElementsToExtract = elementsToExtract;
     myVariableData = inputVariables;
     myHelpId = helpId;
@@ -293,10 +298,15 @@ public class ExtractMethodDialog extends DialogWrapper implements AbstractExtrac
       optionsPanel.add(myMakeVarargs);
     }
 
-    if (!(myReturnType instanceof PsiPrimitiveType) && PsiUtil.isLanguageLevel5OrHigher(myTargetClass)) {
+    if (myNullness != null) {
       final boolean isSelected = PropertiesComponent.getInstance(myProject).getBoolean(EXTRACT_METHOD_GENERATE_ANNOTATIONS, true);
       myGenerateAnnotations = new JCheckBox("Generate annotations", isSelected);
-      //todo update signature?!
+      myGenerateAnnotations.addItemListener(new ItemListener() {
+        @Override
+        public void itemStateChanged(ItemEvent e) {
+          updateSignature();
+        }
+      });
       optionsPanel.add(myGenerateAnnotations);
     }
 
@@ -454,6 +464,12 @@ public class ExtractMethodDialog extends DialogWrapper implements AbstractExtrac
 
   protected String getSignature() {
     final @NonNls StringBuilder buffer = new StringBuilder();
+    if (myGenerateAnnotations != null && myGenerateAnnotations.isSelected()) {
+      final NullableNotNullManager nullManager = NullableNotNullManager.getInstance(myProject);
+      buffer.append("@");
+      buffer.append(StringUtil.getShortName(myNullness == Nullness.NULLABLE ? nullManager.getDefaultNullable() : nullManager.getDefaultNotNull()));
+      buffer.append("\n");
+    }
     final String visibilityString = VisibilityUtil.getVisibilityString(myVisibilityPanel.getVisibility());
     buffer.append(visibilityString);
     if (buffer.length() > 0) {

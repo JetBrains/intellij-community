@@ -706,6 +706,7 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
 
     if (doRefactor) {
       processor.testPrepare();
+      processor.testNullness();
       if (disabledParams != null) {
         for (int param : disabledParams) {
           processor.doNotPassParameter(param);

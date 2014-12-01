@@ -666,11 +666,6 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     }
 
     @Override
-    protected boolean isNullabilityCheckApplicable() {
-      return false;
-    }
-
-    @Override
     protected boolean isNeedToChangeCallContext() {
       return false;
     }
