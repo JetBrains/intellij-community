@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 package com.intellij.codeInspection
+import com.intellij.codeInsight.NullableNotNullManager
 import com.intellij.codeInspection.dataFlow.DfaUtil
 import com.intellij.codeInspection.dataFlow.Nullness
 import com.intellij.psi.PsiMethod
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 
 import static com.intellij.codeInspection.dataFlow.Nullness.*
-
 /**
  * @author peter
  */
-class NullityInferenceFromDfaTest extends LightCodeInsightFixtureTestCase {
+abstract class NullityInferenceFromSourceTestCase extends LightCodeInsightFixtureTestCase {
 
   void "test return string literal"() {
     assert inferNullity(parse('String foo() { return "a"; }')) == NOT_NULL
@@ -38,12 +38,33 @@ class NullityInferenceFromDfaTest extends LightCodeInsightFixtureTestCase {
     assert inferNullity(parse('int foo() { return "z"; }')) == UNKNOWN
   }
 
-  private static Nullness inferNullity(PsiMethod method) {
-    return DfaUtil.inferMethodNullity(method)
+  void "test delegation"() {
+    assert inferNullity(parse('String foo() { return bar(); }; String bar() { return "z"; }; ')) == NOT_NULL
   }
+
+  void "test if branch returns null"() {
+    assert inferNullity(parse('String bar() { if (equals(2)) return null; return "a"; }; ')) == NULLABLE
+  }
+
+  void "test delegation to nullable means nothing"() {
+    assert inferNullity(parse('String foo() { return bar(); }; String bar() { if (equals(2)) return null; return "a"; }; ')) == UNKNOWN
+  }
+
+  protected abstract Nullness inferNullity(PsiMethod method)
 
   private PsiMethod parse(String method) {
     return myFixture.addClass("final class Foo { $method }").methods[0]
   }
 
+  static class LightInferenceTest extends NullityInferenceFromSourceTestCase {
+    Nullness inferNullity(PsiMethod method) {
+      return NullableNotNullManager.isNotNull(method) ? NOT_NULL : NullableNotNullManager.isNullable(method) ? NULLABLE : UNKNOWN
+    }
+  }
+
+  static class DfaInferenceTest extends NullityInferenceFromSourceTestCase {
+    Nullness inferNullity(PsiMethod method) {
+      return DfaUtil.inferMethodNullity(method)
+    }
+  }
 }
