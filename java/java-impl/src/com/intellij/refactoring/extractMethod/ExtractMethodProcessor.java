@@ -882,7 +882,9 @@ public class ExtractMethodProcessor implements MatchProvider {
       }
     }
 
-    if (myNullness != null && PropertiesComponent.getInstance(myProject).getBoolean(ExtractMethodDialog.EXTRACT_METHOD_GENERATE_ANNOTATIONS, true)) {
+    if (myNullness != null &&
+        PsiUtil.resolveClassInType(myReturnType) != null &&
+        PropertiesComponent.getInstance(myProject).getBoolean(ExtractMethodDialog.EXTRACT_METHOD_GENERATE_ANNOTATIONS, true)) {
       AddNullableNotNullAnnotationFix annotationFix;
       switch (myNullness) {
         case NOT_NULL:

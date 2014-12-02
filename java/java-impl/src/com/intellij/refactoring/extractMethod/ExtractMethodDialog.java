@@ -197,7 +197,7 @@ public class ExtractMethodDialog extends DialogWrapper implements AbstractExtrac
       PropertiesComponent.getInstance(myProject).setValue(EXTRACT_METHOD_DEFAULT_VISIBILITY, getVisibility());
     }
 
-    if (myGenerateAnnotations != null) {
+    if (myGenerateAnnotations != null && myGenerateAnnotations.isEnabled()) {
       PropertiesComponent.getInstance(myProject).setValue(EXTRACT_METHOD_GENERATE_ANNOTATIONS, String.valueOf(myGenerateAnnotations.isSelected()));
     }
     super.doOKAction();
@@ -252,6 +252,14 @@ public class ExtractMethodDialog extends DialogWrapper implements AbstractExtrac
       ((JComboBox)component).addActionListener(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
+          if (myGenerateAnnotations != null) {
+            final PsiType selectedType = mySelector.getSelectedType();
+            final boolean enabled = PsiUtil.resolveClassInType(selectedType) != null;
+            if (!enabled) {
+              myGenerateAnnotations.setSelected(false);
+            }
+            myGenerateAnnotations.setEnabled(enabled);
+          }
           updateSignature();
         }
       });
