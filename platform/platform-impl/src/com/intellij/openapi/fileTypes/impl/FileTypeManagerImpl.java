@@ -75,7 +75,7 @@ import java.util.concurrent.atomic.AtomicLong;
 public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOMExternalizable, ExportableApplicationComponent, Disposable {
   private static final Logger LOG = Logger.getInstance(FileTypeManagerImpl.class);
 
-  private static final int VERSION = 11;
+  private static final int VERSION = 12;
   private static final Key<FileType> FILE_TYPE_KEY = Key.create("FILE_TYPE_KEY");
   // cached auto-detected file type. If the file was auto-detected as plain text or binary
   // then the value is null and autoDetectedAsText, autoDetectedAsBinary and autoDetectWasRun sets are used instead.
@@ -838,6 +838,9 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   @Override
   public void readExternal(Element parentNode) throws InvalidDataException {
     int savedVersion = getVersion(parentNode);
+
+    String previousIgnores = getIgnoredFilesList();
+    
     for (final Object o : parentNode.getChildren()) {
       final Element e = (Element)o;
       if (ELEMENT_FILETYPES.equals(e.getName())) {
@@ -890,9 +893,17 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
       addIgnore(".bundle");
     }
 
-    if (savedVersion < VERSION) {
+    if (savedVersion < 11) {
       addIgnore("*.rbc");
     }
+    
+    if (savedVersion == 11 && PlatformUtils.isCLion()) {
+      // TODO During EAP CLion missed FileTypesManager.xml and users got empty excludes list
+      // TODO this code is only necessary until CLion 1.0 is released, then can be safely deleted
+      // previousIgnores come now from FileTypesManager.xml and merged with anything user may have added manually
+      myIgnoredPatterns.setIgnoreMasks(StringUtil.join(Arrays.asList(previousIgnores, getIgnoredFilesList()), ";"));
+    }
+
     myIgnoredFileCache.clearCache();
     fileTypeChangedCount.set(JDOMExternalizer.readInteger(parentNode, "fileTypeChangedCounter", 0));
     autoDetectedAttribute = autoDetectedAttribute.newVersion(fileTypeChangedCount.get());
