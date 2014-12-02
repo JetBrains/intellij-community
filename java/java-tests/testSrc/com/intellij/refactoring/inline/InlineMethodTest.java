@@ -272,6 +272,10 @@ public class InlineMethodTest extends LightRefactoringTestCase {
     doTest();
   }
 
+  public void testReturnStatementWithoutBraces() throws Exception {
+    doTestInlineThisOnly();
+  }
+
   private void doTestInlineThisOnly() {
     @NonNls String fileName = "/refactoring/inlineMethod/" + getTestName(false) + ".java";
     configureByFile(fileName);

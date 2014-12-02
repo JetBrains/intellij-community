@@ -405,6 +405,7 @@ public class GitHistoryUtils {
     h.addParameters("--no-walk");
     h.addParameters(parser.getPretty(), "--encoding=UTF-8");
     h.addParameters(new ArrayList<String>(hashes));
+    h.endOptions();
 
     String output = h.run();
     List<GitLogRecord> records = parser.parse(output);
@@ -442,6 +443,7 @@ public class GitHistoryUtils {
     h.addParameters("--no-walk");
     h.addParameters(parser.getPretty(), "--encoding=UTF-8");
     h.addParameters(refs);
+    h.endOptions();
 
     String output = h.run();
     List<GitLogRecord> records = parser.parse(output);

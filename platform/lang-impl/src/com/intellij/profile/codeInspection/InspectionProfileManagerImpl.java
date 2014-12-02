@@ -108,10 +108,10 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
       }
 
       @Override
-      public Element writeScheme(@NotNull InspectionProfileImpl scheme) throws WriteExternalException {
+      public Element writeScheme(@NotNull InspectionProfileImpl scheme) {
         Element root = new Element("inspections");
         root.setAttribute("profile_name", scheme.getName());
-        scheme.writeExternal(root);
+        scheme.serializeInto(root, false);
         return root;
       }
 

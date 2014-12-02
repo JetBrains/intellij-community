@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.refactoring.copy.CopyClassesHandler;
@@ -48,6 +49,8 @@ public class CopyClassTest extends CodeInsightTestCase {
   }
 
   public void testLibraryClass() throws Exception {  // IDEADEV-28791
+    JavaCodeStyleSettings javaSettings = getCurrentCodeStyleSettings().getCustomSettings(JavaCodeStyleSettings.class);
+    javaSettings.CLASS_NAMES_IN_JAVADOC = JavaCodeStyleSettings.FULLY_QUALIFY_NAMES_ALWAYS;
     doTest("java.util.ArrayList", "Bar");
   }
 

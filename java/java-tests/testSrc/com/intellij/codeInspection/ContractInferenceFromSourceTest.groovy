@@ -359,13 +359,13 @@ class ContractInferenceFromSourceTest extends LightCodeInsightFixtureTestCase {
 
   public void "test use delegated method notnull"() {
     def c = inferContracts("""
-    final Object foo(Object bar) {
-        return doo();
+    final Object foo(Object bar, boolean b) {
+        return b ? doo() : null;
     }
 
     @org.jetbrains.annotations.NotNull Object doo() {}
     """)
-    assert c == ['_ -> !null']
+    assert c == ['_, true -> !null', '_, false -> null']
   }
 
   public void "test use delegated method notnull with contracts"() {
@@ -379,7 +379,7 @@ class ContractInferenceFromSourceTest extends LightCodeInsightFixtureTestCase {
       return smth();
     }
     """)
-    assert c == ['_, null -> fail', '_, _ -> !null']
+    assert c == ['_, null -> fail']
   }
 
   public void "test dig into type cast"() {

@@ -32,6 +32,7 @@ import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.idea.IdeaTestApplication;
+import com.intellij.mock.MockApplication;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -109,6 +110,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.lang.management.GarbageCollectorMXBean;
+import java.lang.management.ManagementFactory;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -181,6 +184,17 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
   public static IdeaTestApplication getApplication() {
     return ourApplication;
+  }
+
+  public static void reportTestExecutionStatistics() {
+    System.out.println("----- TEST STATISTICS -----");
+    UsefulTestCase.logSetupTeardownCosts();
+    System.out.println(String.format("Application reinitializations: %d", MockApplication.INSTANCES_CREATED));
+    System.out.println(String.format("Test projects opened: %d", ProjectManagerImpl.TEST_PROJECTS_CREATED));
+    for (GarbageCollectorMXBean mxBean : ManagementFactory.getGarbageCollectorMXBeans()) {
+      System.out.println(String.format("Garbage collection in memory pool %s: %d ms", mxBean.getName(), mxBean.getCollectionTime()));
+    }
+    System.out.println(String.format("Total classes loaded: %d", ManagementFactory.getClassLoadingMXBean().getTotalLoadedClassCount()));
   }
 
   protected void resetAllFields() {

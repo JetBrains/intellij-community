@@ -134,12 +134,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
                                 @SuppressWarnings("UnusedParameters") @NotNull final NamedScopeManager namedScopeManager,
                                 @SuppressWarnings("UnusedParameters") @NotNull final DependencyValidationManager dependencyValidationManager) {
     myProject = project;
-    colorsManager.addEditorColorsListener(new EditorColorsListener() {
-      @Override
-      public void globalSchemeChange(EditorColorsScheme scheme) {
-        restart();
-      }
-    }, myProject);
     mySettings = daemonCodeAnalyzerSettings;
     myEditorTracker = editorTracker;
     myPsiDocumentManager = psiDocumentManager;
