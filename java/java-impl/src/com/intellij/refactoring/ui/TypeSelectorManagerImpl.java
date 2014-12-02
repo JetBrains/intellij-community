@@ -197,7 +197,7 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
     return result.toArray(PsiType.createArray(result.size()));
   }
 
-  private void collectAllSameShapedTypes(ExpectedTypeInfo[] expectedTypes, ArrayList<PsiType> allowedTypes) {
+  private static void collectAllSameShapedTypes(ExpectedTypeInfo[] expectedTypes, ArrayList<PsiType> allowedTypes) {
     for (ExpectedTypeInfo info : expectedTypes) {
       if (info.getKind() == ExpectedTypeInfo.TYPE_SAME_SHAPED) {
         allowedTypes.add(info.getDefaultType());

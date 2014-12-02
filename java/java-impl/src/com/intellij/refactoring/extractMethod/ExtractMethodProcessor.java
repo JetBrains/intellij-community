@@ -16,6 +16,7 @@
 package com.intellij.refactoring.extractMethod;
 
 import com.intellij.codeInsight.ChangeContextUtil;
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
@@ -486,6 +487,11 @@ public class ExtractMethodProcessor implements MatchProvider {
     myStatic = isStatic() | dialog.isMakeStatic();
     myIsChainedConstructor = dialog.isChainedConstructor();
     myMethodVisibility = dialog.getVisibility();
+
+    final PsiType returnType = dialog.getReturnType();
+    if (returnType != null) {
+      myReturnType = returnType;
+    }
   }
 
   protected AbstractExtractDialog createExtractMethodDialog(final boolean direct) {
@@ -498,6 +504,11 @@ public class ExtractMethodProcessor implements MatchProvider {
                                                          myRefactoringName, myHelpId, myNullness, myElements) {
       protected boolean areTypesDirected() {
         return direct;
+      }
+
+      @Override
+      protected PsiExpression[] findOccurrences() {
+        return ExtractMethodProcessor.this.findOccurrences();
       }
 
       @Override
@@ -531,6 +542,19 @@ public class ExtractMethodProcessor implements MatchProvider {
         }
       }
     };
+  }
+
+  public PsiExpression[] findOccurrences() {
+    if (myExpression != null) {
+      return new PsiExpression[] {myExpression};
+    }
+    if (myOutputVariable != null) {
+      final PsiElement scope = myOutputVariable instanceof PsiLocalVariable 
+                               ? RefactoringUtil.getVariableScope((PsiLocalVariable)myOutputVariable) 
+                               : PsiTreeUtil.findCommonParent(myElements);
+      return CodeInsightUtil.findReferenceExpressions(scope, myOutputVariable);
+    }
+    return PsiExpression.EMPTY_ARRAY;
   }
 
   private Nullness initNullness() {
@@ -611,6 +635,14 @@ public class ExtractMethodProcessor implements MatchProvider {
     myVariableDatum = new VariableData[myInputVariables.getInputVariables().size()];
     for (int i = 0; i < myInputVariables.getInputVariables().size(); i++) {
       myVariableDatum[i] = myInputVariables.getInputVariables().get(i);
+    }
+  }
+
+  @TestOnly
+  public void testPrepare(PsiType returnType) {
+    testPrepare();
+    if (returnType != null) {
+      myReturnType = returnType;
     }
   }
 
@@ -964,7 +996,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   private void declareVariableAtMethodCallLocation(String name) {
-    declareVariableAtMethodCallLocation(name, myOutputVariable.getType());
+    declareVariableAtMethodCallLocation(name, myReturnType);
   }
 
   private String declareVariableAtMethodCallLocation(String name, PsiType type) {
