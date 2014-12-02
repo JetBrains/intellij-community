@@ -572,7 +572,7 @@ public class PluginManagerCore {
   }
 
   @Nullable
-  static IdeaPluginDescriptorImpl loadDescriptorFromJar(File file, @NonNls String fileName) {
+  static IdeaPluginDescriptorImpl loadDescriptorFromJar(@NotNull File file, @NotNull @NonNls String fileName) {
     try {
       String fileURL = StringUtil.replace(file.toURI().toASCIIString(), "!", "%21");
       URL jarURL = new URL("jar:" + fileURL + "!/META-INF/" + fileName);
@@ -603,7 +603,7 @@ public class PluginManagerCore {
   }
 
   @Nullable
-  public static IdeaPluginDescriptorImpl loadDescriptorFromJar(File file) {
+  public static IdeaPluginDescriptorImpl loadDescriptorFromJar(@NotNull File file) {
     return loadDescriptorFromJar(file, PLUGIN_XML);
   }
 
