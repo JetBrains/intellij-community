@@ -50,10 +50,7 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.PlatformIcons;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.NotNullPredicate;
 import com.jetbrains.python.PyBundle;
@@ -847,13 +844,7 @@ public class PyUtil {
   @Nullable
   @SuppressWarnings("unchecked")
   public static <T> T as(@Nullable final Object expression, @NotNull final Class<T> clazz) {
-    if (expression == null) {
-      return null;
-    }
-    if (clazz.isAssignableFrom(expression.getClass())) {
-      return (T)expression;
-    }
-    return null;
+    return ObjectUtils.tryCast(expression, clazz);
   }
 
   // TODO: Move to PsiElement?
@@ -1165,8 +1156,8 @@ public class PyUtil {
   public static Collection<VirtualFile> getSourceRoots(@NotNull Module module) {
     final Set<VirtualFile> result = new LinkedHashSet<VirtualFile>();
     final ModuleRootManager manager = ModuleRootManager.getInstance(module);
-    result.addAll(Arrays.asList(manager.getSourceRoots()));
-    result.addAll(Arrays.asList(manager.getContentRoots()));
+    Collections.addAll(result, manager.getSourceRoots());
+    Collections.addAll(result, manager.getContentRoots());
     return result;
   }
 
@@ -1708,10 +1699,7 @@ public class PyUtil {
 
     private static boolean isObject(@NotNull final PyMemberInfo<PyElement> classMemberInfo) {
       final PyElement element = classMemberInfo.getMember();
-      if ((element instanceof PyClass) && PyNames.OBJECT.equals(element.getName())) {
-        return true;
-      }
-      return false;
+      return (element instanceof PyClass) && PyNames.OBJECT.equals(element.getName());
     }
   }
 
@@ -1751,10 +1739,7 @@ public class PyUtil {
    */
   public static boolean isObjectClass(@NotNull PyClass cls) {
     final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(cls);
-    if (cls == builtinCache.getClass(PyNames.OBJECT) || cls == builtinCache.getClass(PyNames.FAKE_OLD_BASE)) {
-      return true;
-    }
-    return false;
+    return cls == builtinCache.getClass(PyNames.OBJECT) || cls == builtinCache.getClass(PyNames.FAKE_OLD_BASE);
   }
 
   /**
@@ -1768,9 +1753,6 @@ public class PyUtil {
    */
   public static boolean isObjectType(@NotNull PyType type, @NotNull PsiElement anchor) {
     final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(anchor);
-    if (type == builtinCache.getObjectType() || type == builtinCache.getOldstyleClassobjType()) {
-      return true;
-    }
-    return false;
+    return type == builtinCache.getObjectType() || type == builtinCache.getOldstyleClassobjType();
   }
 }
