@@ -483,7 +483,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         if (!transparent()) {
           g.setColor(getEditor().getColorsScheme().getDefaultBackground());
           Rectangle bounds = getBounds();
-          g.fillRect(bounds.x, bounds.y, bounds.height, bounds.width);
+          g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
         }
 
         if (myErrorStripeRenderer != null) {
