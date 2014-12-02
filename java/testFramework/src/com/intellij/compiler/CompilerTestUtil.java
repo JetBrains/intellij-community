@@ -27,6 +27,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.util.SystemProperties;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -98,15 +99,21 @@ public class CompilerTestUtil {
       new WriteAction() {
         @Override
         protected void run(@NotNull final Result result) throws IOException {
-          VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
-          Assert.assertNotNull(file.getAbsolutePath(), virtualFile);
-          //emulate save via 'saveSettings' so file won't be treated as changed externally
-          OutputStream stream = virtualFile.getOutputStream(new SaveSessionRequestor());
+          VfsRootAccess.allowRootAccess(file.getAbsolutePath());
           try {
-            JDOMUtil.writeParent(root, stream, SystemProperties.getLineSeparator());
+            VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+            Assert.assertNotNull(file.getAbsolutePath(), virtualFile);
+            //emulate save via 'saveSettings' so file won't be treated as changed externally
+            OutputStream stream = virtualFile.getOutputStream(new SaveSessionRequestor());
+            try {
+              JDOMUtil.writeParent(root, stream, SystemProperties.getLineSeparator());
+            }
+            finally {
+              stream.close();
+            }
           }
           finally {
-            stream.close();
+            VfsRootAccess.disallowRootAccess(file.getAbsolutePath());
           }
         }
       }.execute().throwException();
