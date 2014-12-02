@@ -17,13 +17,13 @@ package com.intellij.util;
 
 import com.intellij.openapi.util.ThreadLocalCachedByteArray;
 import com.intellij.util.io.DataInputOutputUtil;
+import com.intellij.util.io.DataOutputStream;
+import com.intellij.util.text.StringFactory;
 import org.iq80.snappy.CorruptionException;
 import org.iq80.snappy.Snappy;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
+import java.io.*;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 
@@ -96,6 +96,65 @@ public class CompressionUtil {
     catch (CorruptionException ex) {
       ex.printStackTrace();
       return string;
+    }
+  }
+
+  @NotNull
+  public static Object compressStringRawBytes(@NotNull CharSequence string) {
+    int length = string.length();
+    if (length < STRING_COMPRESSION_THRESHOLD) {
+      if (string instanceof CharBuffer && ((CharBuffer)string).capacity() > STRING_COMPRESSION_THRESHOLD) {
+        string = string.toString();   // shrink to size
+      }
+      return string;
+    }
+    try {
+      ByteArrayOutputStream bytes = new ByteArrayOutputStream(length);
+      @NotNull DataOutput out = new DataOutputStream(bytes);
+
+      DataInputOutputUtil.writeINT(out, length);
+      for (int i=0; i< length;i++) {
+        char c = string.charAt(i);
+        DataInputOutputUtil.writeINT(out, c);
+      }
+      byte[] compressedBytes = Snappy.compress(bytes.toByteArray());
+      return compressedBytes.length < length * 2 ? compressedBytes : string;
+    }
+    catch (CorruptionException ex) {
+      ex.printStackTrace();
+      return string;
+    }
+    catch (IOException e) {
+      e.printStackTrace();
+      return string;
+    }
+  }
+
+  @NotNull
+  public static CharSequence uncompressStringRawBytes(@NotNull Object compressed) {
+    if (compressed instanceof CharSequence) return (CharSequence)compressed;
+    byte[] b = (byte[])compressed;
+    try {
+      int uncompressedLength = Snappy.getUncompressedLength(b, 0);
+      byte[] bytes = spareBufferLocal.getBuffer(uncompressedLength);
+      int bytesLength = Snappy.uncompress(b, 0, b.length, bytes, 0);
+      ByteArrayInputStream byteStream = new ByteArrayInputStream(bytes, 0, bytesLength);
+      @NotNull DataInput in = new DataInputStream(byteStream);
+
+      int len = DataInputOutputUtil.readINT(in);
+      char[] chars = new char[len];
+
+      for (int i=0; i<len; i++) {
+        int c = DataInputOutputUtil.readINT(in);
+        chars[i] = (char)c;
+      }
+      return StringFactory.createShared(chars);
+    }
+    catch (CorruptionException ex) {
+      throw new RuntimeException(ex);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
     }
   }
 }
