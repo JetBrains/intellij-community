@@ -15,13 +15,9 @@
  */
 package com.intellij.openapi.util.diff.requests;
 
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.diff.util.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
 
 public interface DiffRequest extends UserDataHolder {
   @NotNull

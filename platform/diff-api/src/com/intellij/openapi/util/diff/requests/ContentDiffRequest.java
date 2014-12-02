@@ -28,7 +28,8 @@ public interface ContentDiffRequest extends DiffRequest {
 
   /**
    * @return contents names. Should have same length as {@link #getContents()}
+   * Titles could be null.
    */
   @NotNull
-  String[] getContentTitles(); // TODO: move to user data / make nullable ?
+  String[] getContentTitles();
 }
