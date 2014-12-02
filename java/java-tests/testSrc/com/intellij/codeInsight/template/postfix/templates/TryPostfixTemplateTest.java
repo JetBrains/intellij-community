@@ -28,15 +28,15 @@ public class TryPostfixTemplateTest extends PostfixTemplateTestCase {
     doTest();
   }
 
-  public void testStatement() {
-    doTest();
-  }
-
   public void testMultiStatement() {
     doTest();
   }
 
   public void testNotStatement() {
+    doTest();
+  }
+
+  public void testNotResolvedExpression() {
     doTest();
   }
 }
