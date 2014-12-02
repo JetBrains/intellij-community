@@ -323,7 +323,7 @@ public class ExtractMethodDialog extends DialogWrapper implements AbstractExtrac
       optionsPanel.add(myMakeVarargs);
     }
 
-    if (myNullness != null) {
+    if (myNullness != null && myNullness != Nullness.UNKNOWN) {
       final boolean isSelected = PropertiesComponent.getInstance(myProject).getBoolean(EXTRACT_METHOD_GENERATE_ANNOTATIONS, true);
       myGenerateAnnotations = new JCheckBox("Generate annotations", isSelected);
       myGenerateAnnotations.addItemListener(new ItemListener() {
