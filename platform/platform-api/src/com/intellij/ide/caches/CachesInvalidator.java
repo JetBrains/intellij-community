@@ -16,13 +16,21 @@
 package com.intellij.ide.caches;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import org.jetbrains.annotations.Nullable;
 
-public interface CachesInvalidater {
-  ExtensionPointName<CachesInvalidater> EP_NAME = ExtensionPointName.create("com.intellij.cachesInvalidater");
+public abstract class CachesInvalidator {
+  public static final ExtensionPointName<CachesInvalidator> EP_NAME = ExtensionPointName.create("com.intellij.cachesInvalidator");
+
 
   /**
-   * The method should not consume significant time e.g. all the clearing operations should be executed next time the corresponding cache is
-   * required or checked for existing.
+   * @return description of the caches to be cleared, shown in the warning dialog to the user  
    */
-  void invalidateCaches();
+  @Nullable
+  public String getDescription() { return null; } 
+  
+  /**
+   * The method should not consume significant time.
+   * All the clearing operations should be executed after IDE relaunches.
+   */
+  public abstract void invalidateCaches();
 }
