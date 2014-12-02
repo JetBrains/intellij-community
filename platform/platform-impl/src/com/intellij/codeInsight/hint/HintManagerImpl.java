@@ -124,7 +124,11 @@ public class HintManagerImpl extends HintManager implements Disposable {
       @Override
       public void visibleAreaChanged(VisibleAreaEvent e) {
         updateScrollableHints(e);
-        hideHints(HIDE_BY_SCROLLING, false, false);
+        if (e.getOldRectangle() == null ||
+            e.getOldRectangle().x != e.getNewRectangle().x ||
+            e.getOldRectangle().y != e.getNewRectangle().y) {
+          hideHints(HIDE_BY_SCROLLING, false, false);
+        }
       }
     };
 
