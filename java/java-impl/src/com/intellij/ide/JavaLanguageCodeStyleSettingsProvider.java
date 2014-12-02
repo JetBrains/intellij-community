@@ -206,7 +206,7 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
 
   private static final String GENERAL_CODE_SAMPLE =
     "public class Foo {\n" +
-    "  public int[] X = new int[]{1, 3, 5 7, 9, 11};\n" +
+    "  public int[] X = new int[]{1, 3, 5, 7, 9, 11};\n" +
     "\n" +
     "  public void foo(boolean a, int x, int y, int z) {\n" +
     "    label1:\n" +
