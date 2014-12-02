@@ -42,6 +42,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.awt.*;
 import java.util.Set;
 
 public class IdeaDecompilerTest extends LightCodeInsightFixtureTestCase {
@@ -178,6 +179,11 @@ public class IdeaDecompilerTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testCancellation() {
+    if (GraphicsEnvironment.isHeadless()) {
+      System.err.println("** skipped in headless env.");
+      return;
+    }
+
     final VirtualFile file = getTestFile(PlatformTestUtil.getRtJarPath() + "!/javax/swing/JTable.class");
 
     final IdeaDecompiler decompiler = (IdeaDecompiler)ClassFileDecompilers.find(file);
