@@ -238,5 +238,7 @@
     <extensionPoint name="editor.linePainter" interface="com.intellij.openapi.editor.EditorLinePainter"/>
 
     <extensionPoint name="actionFromOptionDescriptorProvider" interface="com.intellij.ide.ui.search.ActionFromOptionDescriptorProvider"/>
+
+    <extensionPoint name="cachesInvalidater" interface="com.intellij.ide.caches.CachesInvalidater"/>
   </extensionPoints>
 </idea-plugin>

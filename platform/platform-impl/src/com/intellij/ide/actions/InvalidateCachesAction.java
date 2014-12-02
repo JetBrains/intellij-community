@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.actions;
 
+import com.intellij.ide.caches.CachesInvalidater;
 import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -25,16 +26,17 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
+import org.jetbrains.annotations.NotNull;
 
 public class InvalidateCachesAction extends AnAction implements DumbAware {
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     super.update(e);
     e.getPresentation().setText(ApplicationManager.getApplication().isRestartCapable() ? "Invalidate Caches / Restart..." : "Invalidate Caches...");
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final ApplicationEx app = (ApplicationEx)ApplicationManager.getApplication();
     final boolean mac = Messages.canShowMacSheetPanel();
     boolean canRestart = app.isRestartCapable();
@@ -66,6 +68,11 @@ public class InvalidateCachesAction extends AnAction implements DumbAware {
 
     UsageTrigger.trigger(ApplicationManagerEx.getApplicationEx().getName() + ".caches.invalidated");
     FSRecords.invalidateCaches();
+
+    for (CachesInvalidater invalidater : CachesInvalidater.EP_NAME.getExtensions()) {
+      invalidater.invalidateCaches();
+    }
+
     if (result == 0) app.restart(true);
   }
 }
