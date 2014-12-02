@@ -125,9 +125,13 @@ public abstract class ProfileEx implements Profile {
     mySerializer.readExternal(this, element);
   }
 
+  public void serializeInto(@NotNull Element element, boolean preserveCompatibility) {
+    mySerializer.writeExternal(this, element, preserveCompatibility);
+  }
+
   @Override
   public void writeExternal(Element element) throws WriteExternalException {
-    mySerializer.writeExternal(this, element, isProjectLevel());
+    serializeInto(element, true);
   }
 
   public void profileChanged() {

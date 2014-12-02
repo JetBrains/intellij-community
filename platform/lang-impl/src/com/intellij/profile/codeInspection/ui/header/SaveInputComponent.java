@@ -57,18 +57,6 @@ public class SaveInputComponent extends JPanel {
     myButton.setDefaultCapable(false);
     myButton.setFocusable(false);
     myButton.putClientProperty("JButton.buttonType", "square");
-    //myButton.setUI(new DarculaButtonUI() {
-    //  @Override
-    //  public void paint(Graphics g, JComponent c) {
-    //    final Color color1 = getButtonColor1();
-    //    final Color color2 = getButtonColor2();
-    //    if (color1 != null && color2 != null) {
-    //      ((Graphics2D)g).setPaint(UIUtil.getGradientPaint(0, 0, color1, 0, c.getHeight(), color2));
-    //    }
-    //    //g.fillRoundRect(2, 0, c.getWidth() - 3, c.getHeight() - 2, 5, 5);
-    //    super.paint(g, c);n
-    //  }
-    //});
     myButton.setBorder(new DarculaButtonPainter() {
       @Override
       public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
@@ -77,8 +65,11 @@ public class SaveInputComponent extends JPanel {
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2d.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_DEFAULT);
         ((Graphics2D)g).setPaint(Gray._100.withAlpha(180));
-        //g.drawRoundRect(x + 2, y, width - 3, height - 2, 5, 5);
-        g.drawRoundRect(x + 2, y, width - 3 - 5, height - 2, 5, 5);
+        if (SystemInfo.isMac) {
+          g.drawRoundRect(x + 2, y + 3, width - 8, height - 7, 5, 5);
+        } else {
+          g.drawRoundRect(x + 2, y, width - 8, height - 2, 5, 5);
+        }
         config.restore();
       }
 

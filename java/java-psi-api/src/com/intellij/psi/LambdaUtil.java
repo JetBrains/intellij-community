@@ -38,7 +38,7 @@ public class LambdaUtil {
   private static final Logger LOG = Logger.getInstance("#" + LambdaUtil.class.getName());
 
   @Nullable
-  public static PsiType getFunctionalInterfaceReturnType(PsiLambdaExpression expr) {
+  public static PsiType getFunctionalInterfaceReturnType(PsiFunctionalExpression expr) {
     return getFunctionalInterfaceReturnType(expr.getFunctionalInterfaceType());
   }
 

@@ -32,7 +32,6 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.util.Processor;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -339,5 +338,24 @@ public class PsiModificationTrackerTest extends JavaCodeInsightFixtureTestCase {
 
     assertNull(JavaPsiFacade.getInstance(getProject()).findClass("foo.Foo", GlobalSearchScope.allScope(getProject())));
     assertFalse(count1 == tracker.getJavaStructureModificationCount());
+  }
+
+  public void testVirtualFileRename_WithPsi() throws IOException {
+    PsiModificationTracker tracker = PsiManager.getInstance(getProject()).getModificationTracker();
+    final PsiManagerEx psiManager = (PsiManagerEx)PsiManager.getInstance(getProject());
+    GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
+
+    final VirtualFile file = myFixture.addFileToProject("foo/Foo.java", "package foo; class Foo {}").getVirtualFile();
+    assertNotNull(JavaPsiFacade.getInstance(getProject()).findClass("foo.Foo", scope));
+    long count1 = tracker.getModificationCount();
+    long hc = psiManager.findFile(file).hashCode();
+    long stamp1 = psiManager.findFile(file).getModificationStamp();
+
+    file.rename(this, "Bar.java");
+
+    assertNotNull(JavaPsiFacade.getInstance(getProject()).findClass("foo.Foo", scope));
+    assertTrue(count1 != tracker.getModificationCount());
+    assertTrue(stamp1 != psiManager.findFile(file).getModificationStamp());
+    assertEquals(hc, psiManager.findFile(file).hashCode());
   }
 }
