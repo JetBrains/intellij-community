@@ -186,15 +186,21 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     return ourApplication;
   }
 
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
   public static void reportTestExecutionStatistics() {
     System.out.println("----- TEST STATISTICS -----");
     UsefulTestCase.logSetupTeardownCosts();
-    System.out.println(String.format("Application reinitializations: %d", MockApplication.INSTANCES_CREATED));
-    System.out.println(String.format("Test projects opened: %d", ProjectManagerImpl.TEST_PROJECTS_CREATED));
+    System.out.println(String.format("##teamcity[buildStatisticValue key='ideaTests.appInstancesCreated' value='%d']",
+                                     MockApplication.INSTANCES_CREATED));
+    System.out.println(String.format("##teamcity[buildStatisticValue key='ideaTests.projectInstancesCreated' value='%d']",
+                                     ProjectManagerImpl.TEST_PROJECTS_CREATED));
+    long totalGcTime = 0;
     for (GarbageCollectorMXBean mxBean : ManagementFactory.getGarbageCollectorMXBeans()) {
-      System.out.println(String.format("Garbage collection in memory pool %s: %d ms", mxBean.getName(), mxBean.getCollectionTime()));
+      totalGcTime += mxBean.getCollectionTime();
     }
-    System.out.println(String.format("Total classes loaded: %d", ManagementFactory.getClassLoadingMXBean().getTotalLoadedClassCount()));
+    System.out.println(String.format("##teamcity[buildStatisticValue key='ideaTests.gcTimeMs' value='%d']", totalGcTime));
+    System.out.println(String.format("##teamcity[buildStatisticValue key='ideaTests.classesLoaded' value='%d']",
+                                     ManagementFactory.getClassLoadingMXBean().getTotalLoadedClassCount()));
   }
 
   protected void resetAllFields() {
