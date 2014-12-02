@@ -48,7 +48,7 @@ public class CodeStyleImportsPanel extends JPanel {
   private JPanel myImportsLayoutPanel;
   private JPanel myWholePanel;
   private ImportLayoutPanel myImportLayoutPanel;
-  private FullyQualifiedNamesInJdOptionProvider myFqnInJavadocOption;
+  private FullyQualifiedNamesInJavadocOptionProvider myFqnInJavadocOption;
 
   public CodeStyleImportsPanel(CodeStyleSettings settings) {
     mySettings = settings;
@@ -129,7 +129,7 @@ public class CodeStyleImportsPanel extends JPanel {
     myCbInsertInnerClassImports = new JCheckBox(ApplicationBundle.message("checkbox.insert.imports.for.inner.classes"));
     group.add(myCbInsertInnerClassImports);
 
-    myFqnInJavadocOption = new FullyQualifiedNamesInJdOptionProvider(mySettings);
+    myFqnInJavadocOption = new FullyQualifiedNamesInJavadocOptionProvider(mySettings);
     group.add(myFqnInJavadocOption.getPanel());
     
     myClassCountField = new JTextField(3);
