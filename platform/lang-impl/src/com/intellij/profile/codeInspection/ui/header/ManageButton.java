@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.ex.CheckboxAction;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -39,7 +40,11 @@ public class ManageButton extends ComboBoxAction implements DumbAware {
 
   public JComponent build() {
     final JComponent component = createCustomComponent(getTemplatePresentation());
-    component.setBorder(BorderFactory.createEmptyBorder(0, 0, 1, 0));
+    if (SystemInfo.isMac) {
+      component.setBorder(BorderFactory.createEmptyBorder(3, 0, 4, 0));
+    } else {
+      component.setBorder(BorderFactory.createEmptyBorder(0, 0, 1, 0));
+    }
     return component;
   }
 
