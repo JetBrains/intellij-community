@@ -47,6 +47,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 import static com.intellij.psi.formatter.java.JavaFormatterUtil.getWrapType;
+import static com.intellij.psi.formatter.java.MultipleFieldDeclarationHelper.*;
 
 public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlock, ReservedWrapsProvider {
 
@@ -615,55 +616,6 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       }
       return lastFieldInGroup;
     }
-  }
-
-  /**
-   * Serves for processing composite field definitions as a single formatting block.
-   * <p/>
-   * <code>'Composite field definition'</code> looks like {@code 'int i1, i2 = 2'}. It produces two nodes of type
-   * {@link JavaElementType#FIELD} - {@code 'int i1'} and {@code 'i2 = 2'}. This method returns the second node if the first one
-   * is given (the given node is returned for <code>'single'</code> fields).
-   *
-   * @param child     child field node to check
-   * @return          last child field node at the field group identified by the given node if any; given child otherwise
-   */
-  @NotNull
-  private static ASTNode findLastFieldInGroup(@NotNull final ASTNode child) {
-    PsiElement psi = child.getPsi();
-    if (psi == null) {
-      return child;
-    }
-    final PsiTypeElement typeElement = ((PsiVariable)psi).getTypeElement();
-    if (typeElement == null) return child;
-
-    ASTNode lastChildNode = child.getLastChildNode();
-    if (lastChildNode == null) return child;
-
-    if (lastChildNode.getElementType() == JavaTokenType.SEMICOLON) return child;
-
-    ASTNode currentResult = child;
-    ASTNode currentNode = child.getTreeNext();
-
-    while (currentNode != null) {
-      if (currentNode.getElementType() == TokenType.WHITE_SPACE
-          || currentNode.getElementType() == JavaTokenType.COMMA
-          || StdTokenSets.COMMENT_BIT_SET.contains(currentNode.getElementType())) {
-      }
-      else if (currentNode.getElementType() == JavaElementType.FIELD) {
-        if (compoundFieldPart(currentNode)) {
-          currentResult = currentNode;
-        }
-        else {
-          return currentResult;
-        }
-      }
-      else {
-        return currentResult;
-      }
-
-      currentNode = currentNode.getTreeNext();
-    }
-    return currentResult;
   }
 
   @Nullable
@@ -1275,23 +1227,6 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
            && (!myAlignmentInColumnsHelper.useDifferentVarDeclarationAlignment(
                   node, ALIGNMENT_IN_COLUMNS_CONFIG, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS)
            || compoundFieldPart(node));
-  }
-
-  /**
-   * @return <code>true</code> if given node is a non-first part of composite field definition; <code>false</code> otherwise
-   */
-  protected static boolean compoundFieldPart(@NotNull ASTNode node) {
-    if (node.getElementType() != JavaElementType.FIELD) {
-      return false;
-    }
-    ASTNode firstChild = node.getFirstChildNode();
-    if (firstChild == null || firstChild.getElementType() != JavaTokenType.IDENTIFIER) {
-      return false;
-    }
-
-    ASTNode prev = node.getTreePrev();
-    return prev == null || !JavaJspElementType.WHITE_SPACE_BIT_SET.contains(prev.getElementType())
-           || StringUtil.countNewLines(prev.getChars()) <= 1;
   }
 
   @NotNull
