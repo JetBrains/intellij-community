@@ -509,11 +509,24 @@ public class ExtractMethodProcessor implements MatchProvider {
       protected void checkMethodConflicts(MultiMap<PsiElement, String> conflicts) {
         super.checkMethodConflicts(conflicts);
         final VariableData[] parameters = getChosenParameters();
-        final PsiResolveHelper resolveHelper = PsiResolveHelper.SERVICE.getInstance(myProject);
+        final Map<String, PsiLocalVariable> vars = new HashMap<String, PsiLocalVariable>();
+        for (PsiElement element : myElements) {
+          element.accept(new JavaRecursiveElementWalkingVisitor() {
+            @Override
+            public void visitLocalVariable(PsiLocalVariable variable) {
+              super.visitLocalVariable(variable);
+              vars.put(variable.getName(), variable);
+            }
+
+            @Override
+            public void visitClass(PsiClass aClass) {}
+          });
+        }
         for (VariableData parameter : parameters) {
-          final PsiVariable variable = resolveHelper.resolveReferencedVariable(parameter.name, myElements[0]);
-          if (variable != null && isDeclaredInside(variable)) {
-            conflicts.putValue(variable, "Variable with name " + parameter.name + " is already defined in the selected scope");
+          final String paramName = parameter.name;
+          final PsiLocalVariable variable = vars.get(paramName);
+          if (variable != null) {
+            conflicts.putValue(variable, "Variable with name " + paramName + " is already defined in the selected scope");
           }
         }
       }
