@@ -239,6 +239,6 @@
 
     <extensionPoint name="actionFromOptionDescriptorProvider" interface="com.intellij.ide.ui.search.ActionFromOptionDescriptorProvider"/>
 
-    <extensionPoint name="cachesInvalidater" interface="com.intellij.ide.caches.CachesInvalidater"/>
+    <extensionPoint name="cachesInvalidator" interface="com.intellij.ide.caches.CachesInvalidator"/>
   </extensionPoints>
 </idea-plugin>
