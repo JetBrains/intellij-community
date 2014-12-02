@@ -17,7 +17,6 @@
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.LightPlatformTestCase;
@@ -25,8 +24,6 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.TestCase;
 
-import java.lang.management.GarbageCollectorMXBean;
-import java.lang.management.ManagementFactory;
 import java.lang.reflect.Method;
 
 /**
@@ -66,13 +63,7 @@ public class _LastInSuiteTest extends TestCase {
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   public void testStatistics() throws Exception {
-    System.out.println("----- TEST STATISTICS -----");
-    System.out.println(String.format("Application reinitializations: %d", ApplicationManager.ourApplicationChanges));
-    System.out.println(String.format("Test projects opened: %d", ProjectManagerImpl.TEST_PROJECTS_OPENED));
-    for (GarbageCollectorMXBean mxBean : ManagementFactory.getGarbageCollectorMXBeans()) {
-      System.out.println(String.format("Garbage collection in memory pool %s: %d ms", mxBean.getName(), mxBean.getCollectionTime()));
-    }
-    System.out.println(String.format("Total classes loaded: %d", ManagementFactory.getClassLoadingMXBean().getTotalLoadedClassCount()));
+    LightPlatformTestCase.reportTestExecutionStatistics();
   }
 
   private static void captureMemorySnapshot() {

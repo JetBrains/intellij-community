@@ -26,7 +26,6 @@ import org.jetbrains.annotations.NotNull;
  */
 public class ApplicationManager {
   protected static Application ourApplication = null;
-  public static int ourApplicationChanges = 0;
 
   /**
    * Gets Application.
@@ -39,7 +38,6 @@ public class ApplicationManager {
 
   private static void setApplication(@NotNull Application instance) {
     ourApplication = instance;
-    ourApplicationChanges++;
     CachedSingletonsRegistry.cleanupCachedFields();
   }
 

@@ -109,8 +109,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
   private final ProgressManager myProgressManager;
   private volatile boolean myDefaultProjectWasDisposed = false;
 
-  public static int TEST_PROJECTS_OPENED = 0;
-
   private final Runnable restartApplicationOrReloadProjectTask = new Runnable() {
     @Override
     public void run() {
@@ -224,6 +222,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
     }
   }
 
+  public static int TEST_PROJECTS_CREATED = 0;
   private static final boolean LOG_PROJECT_LEAKAGE_IN_TESTS = false;
   private static final int MAX_LEAKY_PROJECTS = 42;
   @SuppressWarnings("FieldCanBeLocal") private final Map<Project, String> myProjects = new WeakHashMap<Project, String>();
@@ -234,18 +233,21 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
     filePath = toCanonicalName(filePath);
 
     //noinspection ConstantConditions
-    if (LOG_PROJECT_LEAKAGE_IN_TESTS && ApplicationManager.getApplication().isUnitTestMode()) {
-      for (int i = 0; i < 42; i++) {
-        if (myProjects.size() < MAX_LEAKY_PROJECTS) break;
-        System.gc();
-        TimeoutUtil.sleep(100);
-        System.gc();
-      }
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      TEST_PROJECTS_CREATED++;
+      if (LOG_PROJECT_LEAKAGE_IN_TESTS) {
+        for (int i = 0; i < 42; i++) {
+          if (myProjects.size() < MAX_LEAKY_PROJECTS) break;
+          System.gc();
+          TimeoutUtil.sleep(100);
+          System.gc();
+        }
 
-      if (myProjects.size() >= MAX_LEAKY_PROJECTS) {
-        List<Project> copy = new ArrayList<Project>(myProjects.keySet());
-        myProjects.clear();
-        throw new TooManyProjectLeakedException(copy);
+        if (myProjects.size() >= MAX_LEAKY_PROJECTS) {
+          List<Project> copy = new ArrayList<Project>(myProjects.keySet());
+          myProjects.clear();
+          throw new TooManyProjectLeakedException(copy);
+        }
       }
     }
 
@@ -720,7 +722,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
     synchronized (myOpenProjects) {
       assert ApplicationManager.getApplication().isUnitTestMode();
       assert !project.isDisposed() : "Must not open already disposed project";
-      TEST_PROJECTS_OPENED++;
       myTestProjects.add(project);
     }
   }
