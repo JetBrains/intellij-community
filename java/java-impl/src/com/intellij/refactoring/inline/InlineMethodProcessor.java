@@ -1269,7 +1269,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       if (parentStatement != null) {
         PsiElement parent = ref.getParent();
         while (!parent.equals(parentStatement)) {
-          if (parent instanceof PsiExpressionStatement) {
+          if (parent instanceof PsiExpressionStatement || parent instanceof PsiReturnStatement) {
             String text = "{\n}";
             PsiBlockStatement blockStatement = (PsiBlockStatement)myFactory.createStatementFromText(text, null);
             blockStatement = (PsiBlockStatement)myCodeStyleManager.reformat(blockStatement);
