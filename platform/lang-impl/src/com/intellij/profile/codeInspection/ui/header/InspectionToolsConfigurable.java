@@ -481,7 +481,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
         panel.apply();
       }
     }
-    reset();
+    doReset();
   }
 
   private SingleInspectionProfilePanel getProfilePanel(Profile inspectionProfile) {
@@ -513,6 +513,10 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
 
   @Override
   public void reset() {
+    doReset();
+  }
+
+  private void doReset() {
     myDeletedProfiles.clear();
     myPanels.clear();
     final Collection<Profile> profiles = getProfiles();

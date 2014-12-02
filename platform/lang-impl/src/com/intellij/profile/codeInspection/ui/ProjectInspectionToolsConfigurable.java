@@ -44,7 +44,6 @@ public class ProjectInspectionToolsConfigurable extends InspectionToolsConfigura
 
   @Override
   public void apply() throws ConfigurationException {
-    super.apply();
     final InspectionProfileImpl selectedObject = getSelectedObject();
     final String profileName = selectedObject.getName();
     final SingleInspectionProfilePanel selectedPanel = getSelectedPanel();
@@ -56,5 +55,6 @@ public class ProjectInspectionToolsConfigurable extends InspectionToolsConfigura
       myProjectProfileManager.setProjectProfile(null);
     }
     InspectionProfileManagerImpl.onProfilesChanged();
+    super.apply();
   }
 }
