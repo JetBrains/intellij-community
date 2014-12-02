@@ -26,7 +26,7 @@ public class NonPhysicalReferenceSearcher extends QueryExecutorBase<PsiReference
 
   public void processQuery(@NotNull ReferencesSearch.SearchParameters queryParameters, @NotNull Processor<PsiReference> consumer) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
-    final SearchScope scope = queryParameters.getScope();
+    final SearchScope scope = queryParameters.getScopeDeterminedByUser();
     final PsiElement element = queryParameters.getElementToSearch();
     final PsiFile containingFile = element.getContainingFile();
     final boolean isPhysical = containingFile == null || containingFile.getViewProvider().isPhysical();

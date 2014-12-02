@@ -55,7 +55,7 @@ public class AccessorMethodReferencesSearcher extends QueryExecutorBase<PsiRefer
 
     if (propertyName == null) return;
 
-    final SearchScope onlyGroovyFiles = GroovyScopeUtil.restrictScopeToGroovyFiles(queryParameters.getScope(), GroovyScopeUtil.getEffectiveScope(method));
+    final SearchScope onlyGroovyFiles = GroovyScopeUtil.restrictScopeToGroovyFiles(queryParameters.getEffectiveSearchScope(), GroovyScopeUtil.getEffectiveScope(method));
 
     queryParameters.getOptimizer().searchWord(propertyName, onlyGroovyFiles, UsageSearchContext.IN_CODE, true, method);
 
