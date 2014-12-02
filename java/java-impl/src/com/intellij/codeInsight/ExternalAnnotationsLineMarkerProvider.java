@@ -71,7 +71,7 @@ public class ExternalAnnotationsLineMarkerProvider implements LineMarkerProvider
                                           AllIcons.Gutter.ExtAnnotation,
                                           Pass.UPDATE_ALL,
                                           ourTooltipProvider, MyIconGutterHandler.INSTANCE,
-                                          GutterIconRenderer.Alignment.LEFT);
+                                          GutterIconRenderer.Alignment.RIGHT);
   }
 
   private static boolean shouldShowSignature(PsiModifierListOwner owner) {
