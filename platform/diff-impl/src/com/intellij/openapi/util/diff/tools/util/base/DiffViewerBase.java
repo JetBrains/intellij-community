@@ -241,28 +241,11 @@ public abstract class DiffViewerBase implements DiffTool.DiffViewer, DataProvide
   @Nullable
   @Override
   public Object getData(@NonNls String dataId) {
-    if (DiffDataKeys.DIFF_REQUEST.is(dataId)) {
-      return myRequest;
-    }
-    else if (DiffDataKeys.DIFF_VIEWER.is(dataId)) {
-      return this;
-    }
-    else if (CommonDataKeys.PROJECT.is(dataId)) {
-      return myContext.getProject();
-    }
-    else if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
+    if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
       return getOpenFileDescriptor();
     }
     else if (DiffDataKeys.OPEN_FILE_DESCRIPTOR.is(dataId)) {
       return getOpenFileDescriptor();
-    }
-    else if (PlatformDataKeys.HELP_ID.is(dataId)) {
-      if (myRequest.getUserData(DiffUserDataKeys.HELP_ID) != null) {
-        return myRequest.getUserData(DiffUserDataKeys.HELP_ID);
-      }
-      else {
-        return "reference.dialogs.diff.file";
-      }
     }
     else {
       return null;
