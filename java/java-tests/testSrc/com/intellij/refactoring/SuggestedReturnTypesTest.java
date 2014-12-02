@@ -57,6 +57,10 @@ public class SuggestedReturnTypesTest extends LightCodeInsightTestCase {
     doTest("String");
   }
 
+  public void testOutputUsedInPostfixExpr() throws Exception {
+    doTest("Integer", "int");
+  }
+
   private void doTest(String... types) throws Exception {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
 
