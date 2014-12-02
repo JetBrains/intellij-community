@@ -190,7 +190,7 @@
 
     <applicationService serviceImplementation="com.intellij.application.options.editor.WebEditorOptions"/>
 
-    <applicationConfigurable groupId="editor" key="emmet.configuration.title" bundle="messages.XmlBundle" provider="com.intellij.application.options.emmet.EmmetConfigurableProvider"/>
+    <applicationConfigurable groupId="editor" key="emmet.configuration.title" bundle="messages.XmlBundle" id="reference.idesettings.emmet" provider="com.intellij.application.options.emmet.EmmetConfigurableProvider"/>
     <applicationService serviceImplementation="com.intellij.application.options.emmet.EmmetOptions"/>
 
     <applicationService serviceImplementation="com.intellij.application.options.editor.XmlFoldingSettings"/>

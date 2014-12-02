@@ -189,9 +189,9 @@ public class ConfigurableWrapper implements SearchableConfigurable {
     if (myEp.id != null) {
       return myEp.id;
     }
-    UnnamedConfigurable configurable = getConfigurable();
-    if (configurable instanceof SearchableConfigurable) {
-      return ((SearchableConfigurable)configurable).getId();
+    SearchableConfigurable configurable = cast(SearchableConfigurable.class, this);
+    if (configurable != null) {
+      return configurable.getId();
     }
     return myEp.instanceClass != null
            ? myEp.instanceClass
