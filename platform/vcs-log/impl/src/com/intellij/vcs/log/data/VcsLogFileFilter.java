@@ -96,7 +96,8 @@ public class VcsLogFileFilter implements VcsLogFilter {
     return getAllVisibleRoots(roots, filter.getRootFilter(), filter.getStructureFilter());
   }
 
-  private static Set<VirtualFile> getAllVisibleRoots(@NotNull Collection<VirtualFile> roots, @Nullable VcsLogRootFilter rootFilter, @Nullable VcsLogStructureFilter structureFilter) {
+  @NotNull
+  public static Set<VirtualFile> getAllVisibleRoots(@NotNull Collection<VirtualFile> roots, @Nullable VcsLogRootFilter rootFilter, @Nullable VcsLogStructureFilter structureFilter) {
     if (rootFilter == null && structureFilter == null) return new HashSet<VirtualFile>(roots);
 
     Collection<VirtualFile> fromRootFilter;

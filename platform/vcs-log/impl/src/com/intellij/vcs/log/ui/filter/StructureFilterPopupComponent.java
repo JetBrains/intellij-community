@@ -25,6 +25,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogDataPack;
 import com.intellij.vcs.log.VcsLogRootFilter;
 import com.intellij.vcs.log.VcsLogRootFilterImpl;
+import com.intellij.vcs.log.VcsLogStructureFilter;
 import com.intellij.vcs.log.data.VcsLogFileFilter;
 import com.intellij.vcs.log.data.VcsLogStructureFilterImpl;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
@@ -41,41 +42,52 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
   public StructureFilterPopupComponent(@NotNull FilterModel<VcsLogFileFilter> filterModel, @NotNull VcsLogColorManager colorManager) {
     super("Structure", filterModel);
     myColorManager = colorManager;
+    myShowDisabledActions = true;
   }
 
   @NotNull
   @Override
   protected String getText(@NotNull VcsLogFileFilter filter) {
-    Collection<VirtualFile> files = getAllFiles(filter);
-    if (files.size() == 0) {
+    Collection<VirtualFile> visibleRoots = VcsLogFileFilter.getAllVisibleRoots(getAllRoots(), filter);
+    if (visibleRoots.size() == getAllRoots().size()) {
       return ALL;
     }
-    else if (files.size() == 1) {
-      VirtualFile file = files.iterator().next();
+    else if (visibleRoots.size() == 1) {
+      VirtualFile file = visibleRoots.iterator().next();
       return StringUtil.shortenPathWithEllipsis(file.getPresentableUrl(), FILTER_LABEL_LENGTH);
     }
     else {
-      return files.size() + " items";
+      return visibleRoots.size() + " roots"; // todo
     }
   }
 
   @Nullable
   @Override
   protected String getToolTip(@NotNull VcsLogFileFilter filter) {
-    return getToolTip(getAllFiles(filter));
+    return getToolTip(VcsLogFileFilter.getAllVisibleRoots(getAllRoots(), filter));
   }
 
   @NotNull
-  private static Collection<VirtualFile> getAllFiles(@NotNull VcsLogFileFilter filter) {
-    Collection<VirtualFile> result = ContainerUtil.newArrayList();
-    if (filter.getRootFilter() != null) result.addAll(filter.getRootFilter().getRoots());
-    if (filter.getStructureFilter() != null) result.addAll(filter.getStructureFilter().getFiles());
-    return result;
+  private static String getToolTip(@NotNull Collection<VirtualFile> files) {
+    List<VirtualFile> filesToDisplay = new ArrayList<VirtualFile>(files);
+    if (files.size() > 10) {
+      filesToDisplay = filesToDisplay.subList(0, 10);
+    }
+    String tooltip = StringUtil.join(filesToDisplay, new Function<VirtualFile, String>() {
+      @Override
+      public String fun(VirtualFile file) {
+        return file.getPresentableUrl();
+      }
+    }, "\n");
+    if (files.size() > 10) {
+      tooltip += "\n...";
+    }
+    return tooltip;
   }
 
   @Override
   protected ActionGroup createActionGroup() {
-    Set<VirtualFile> roots = myFilterModel.getDataPack().getLogProviders().keySet();
+    Set<VirtualFile> roots = getAllRoots();
 
     List<AnAction> actions = new ArrayList<AnAction>();
     if (roots.size() <= 10) {
@@ -84,6 +96,10 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
       }
     }
     return new DefaultActionGroup(createAllAction(), new Separator(), new DefaultActionGroup(actions), new Separator(), new SelectAction());
+  }
+
+  private Set<VirtualFile> getAllRoots() {
+    return myFilterModel.getDataPack().getLogProviders().keySet();
   }
 
   private boolean isVisible(@NotNull VirtualFile root) {
@@ -97,7 +113,7 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
   }
 
   private void setVisible(@NotNull VirtualFile root, boolean visible) {
-    Set<VirtualFile> roots = myFilterModel.getDataPack().getLogProviders().keySet();
+    Set<VirtualFile> roots = getAllRoots();
 
     VcsLogFileFilter previousFilter = myFilterModel.getFilter();
     VcsLogRootFilter rootFilter = previousFilter != null ? previousFilter.getRootFilter() : null;
@@ -122,22 +138,15 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
     myFilterModel.setFilter(new VcsLogFileFilter(previousFilter != null ? previousFilter.getStructureFilter() : null, new VcsLogRootFilterImpl(visibleRoots)));
   }
 
-  @NotNull
-  private static String getToolTip(@NotNull Collection<VirtualFile> files) {
-    List<VirtualFile> filesToDisplay = new ArrayList<VirtualFile>(files);
-    if (files.size() > 10) {
-      filesToDisplay = filesToDisplay.subList(0, 10);
+  private static String getStructureActionText(@NotNull VcsLogStructureFilter filter) {
+    Collection<VirtualFile> files = filter.getFiles();
+    if (files.size() == 1) {
+      VirtualFile file = files.iterator().next();
+      return StringUtil.shortenPathWithEllipsis(file.getPresentableUrl(), FILTER_LABEL_LENGTH);
     }
-    String tooltip = StringUtil.join(filesToDisplay, new Function<VirtualFile, String>() {
-      @Override
-      public String fun(VirtualFile file) {
-        return file.getPresentableUrl();
-      }
-    }, "\n");
-    if (files.size() > 10) {
-      tooltip += "\n...";
+    else {
+      return files.size() + " items";
     }
-    return tooltip;
   }
 
   private class SelectVisibleRootAction extends ToggleAction {
@@ -157,11 +166,37 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
     public void setSelected(AnActionEvent e, boolean state) {
       setVisible(myRoot, state);
     }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      super.update(e);
+
+      Presentation presentation = e.getPresentation();
+      if (myFilterModel.getFilter() == null || myFilterModel.getFilter().getStructureFilter() == null) {
+        presentation.setEnabled(true);
+      } else {
+        presentation.setEnabled(VcsLogFileFilter.getAllVisibleRoots(getAllRoots(), null, myFilterModel.getFilter().getStructureFilter()).contains(myRoot));
+      }
+      presentation.setVisible(true);
+    }
   }
 
   private class SelectAction extends DumbAwareAction {
+    public static final String STRUCTURE_FILTER_TEXT = "Select...";
+
     SelectAction() {
-      super("Select...");
+      super(STRUCTURE_FILTER_TEXT);
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      super.update(e);
+      Presentation presentation = e.getPresentation();
+      if (myFilterModel.getFilter() != null && myFilterModel.getFilter().getStructureFilter() != null) {
+        presentation.setText(getStructureActionText(myFilterModel.getFilter().getStructureFilter()));
+      } else {
+        presentation.setText(STRUCTURE_FILTER_TEXT);
+      }
     }
 
     @Override
