@@ -472,7 +472,6 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
 
   @Override
   public void apply() throws ConfigurationException {
-    final Map<Profile, SingleInspectionProfilePanel> panels = new LinkedHashMap<Profile, SingleInspectionProfilePanel>();
     for (final Profile inspectionProfile : myPanels.keySet()) {
       if (myDeletedProfiles.remove(inspectionProfile)) {
         deleteProfile(getProfilePanel(inspectionProfile).getSelectedProfile());
@@ -480,12 +479,9 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
       else {
         final SingleInspectionProfilePanel panel = getProfilePanel(inspectionProfile);
         panel.apply();
-        final ModifiableModel profile = panel.getSelectedProfile();
-        panels.put(profile, panel);
       }
     }
-    myPanels.clear();
-    myPanels.putAll(panels);
+    reset();
   }
 
   private SingleInspectionProfilePanel getProfilePanel(Profile inspectionProfile) {
