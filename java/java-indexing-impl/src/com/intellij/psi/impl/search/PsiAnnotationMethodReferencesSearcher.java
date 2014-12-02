@@ -50,7 +50,7 @@ public class PsiAnnotationMethodReferencesSearcher implements QueryExecutor<PsiR
         }
       });
       if (containingClass != null) {
-        final Query<PsiReference> query = ReferencesSearch.search(containingClass, p.getScope(), p.isIgnoreAccessScope());
+        final Query<PsiReference> query = ReferencesSearch.search(containingClass, p.getEffectiveSearchScope(), p.isIgnoreAccessScope());
         return query.forEach(createImplicitDefaultAnnotationMethodConsumer(consumer));
       }
     }

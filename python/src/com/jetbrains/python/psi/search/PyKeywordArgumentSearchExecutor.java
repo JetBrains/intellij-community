@@ -40,7 +40,7 @@ public class PyKeywordArgumentSearchExecutor extends QueryExecutorBase<PsiRefere
     if (!(owner instanceof PyFunction)) {
       return;
     }
-    ReferencesSearch.search(owner, queryParameters.getScope()).forEach(new Processor<PsiReference>() {
+    ReferencesSearch.search(owner, queryParameters.getEffectiveSearchScope()).forEach(new Processor<PsiReference>() {
       @Override
       public boolean process(PsiReference reference) {
         final PsiElement refElement = reference.getElement();
