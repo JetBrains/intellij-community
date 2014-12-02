@@ -15,6 +15,7 @@
  */
 package com.intellij.util.pico;
 
+import com.intellij.openapi.extensions.AreaPicoContainer;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
@@ -27,9 +28,7 @@ import java.io.Serializable;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class DefaultPicoContainer implements MutablePicoContainer, Serializable {
-  private final ComponentAdapterFactory componentAdapterFactory;
-
+public class DefaultPicoContainer implements AreaPicoContainer, Serializable {
   private final PicoContainer parent;
   private final Set<PicoContainer> children = new HashSet<PicoContainer>();
 
@@ -38,13 +37,12 @@ public class DefaultPicoContainer implements MutablePicoContainer, Serializable 
   private final Map<String, ComponentAdapter> classNameToAdapter = ContainerUtil.newConcurrentMap();
   private final AtomicReference<FList<ComponentAdapter>> nonAssignableComponentAdapters = new AtomicReference<FList<ComponentAdapter>>(FList.<ComponentAdapter>emptyList());
 
-  public DefaultPicoContainer(@NotNull ComponentAdapterFactory componentAdapterFactory, PicoContainer parent) {
-    this.componentAdapterFactory = componentAdapterFactory;
+  public DefaultPicoContainer(PicoContainer parent) {
     this.parent = parent == null ? null : ImmutablePicoContainerProxyFactory.newProxyInstance(parent);
   }
 
-  protected DefaultPicoContainer() {
-    this(new DefaultComponentAdapterFactory(), null);
+  public DefaultPicoContainer() {
+    this(null);
   }
 
   @Override
@@ -120,19 +118,20 @@ public class DefaultPicoContainer implements MutablePicoContainer, Serializable 
   }
 
   @Override
-  public List getComponentAdaptersOfType(Class componentType) {
-    if (componentType == null) {
-      return Collections.emptyList();
-    }
-    List<ComponentAdapter> found = new ArrayList<ComponentAdapter>();
-    for (final Object o : getComponentAdapters()) {
-      ComponentAdapter componentAdapter = (ComponentAdapter)o;
+  public List getComponentAdaptersOfType(final Class componentType) {
+    if (componentType == null) return Collections.emptyList();
+    if (componentType == String.class) return Collections.emptyList();
 
-      if (ReflectionUtil.isAssignable(componentType, componentAdapter.getComponentImplementation())) {
-        found.add(componentAdapter);
-      }
+    List<ComponentAdapter> result = new ArrayList<ComponentAdapter>();
+
+    final Map<String,ComponentAdapter> cache = getAssignablesCache();
+    final ComponentAdapter cacheHit = cache.get(componentType.getName());
+    if (cacheHit != null) {
+      result.add(cacheHit);
     }
-    return found;
+
+    result.addAll(getNonAssignableAdaptersOfType(componentType));
+    return result;
   }
 
   @Override
@@ -206,8 +205,17 @@ public class DefaultPicoContainer implements MutablePicoContainer, Serializable 
   @Override
   @Nullable
   public Object getComponentInstance(Object componentKey) {
-    ComponentAdapter componentAdapter = getComponentAdapter(componentKey);
-    return componentAdapter == null ? null : getInstance(componentAdapter);
+    ComponentAdapter adapter = getFromCache(componentKey);
+    if (adapter != null) {
+      return getLocalInstance(adapter);
+    }
+    if (parent != null) {
+      adapter = parent.getComponentAdapter(componentKey);
+      if (adapter != null) {
+        return parent.getComponentInstance(adapter.getComponentKey());
+      }
+    }
+    return null;
   }
 
   @Override
@@ -292,7 +300,7 @@ public class DefaultPicoContainer implements MutablePicoContainer, Serializable 
 
   @Override
   public MutablePicoContainer makeChildContainer() {
-    DefaultPicoContainer pc = new DefaultPicoContainer(componentAdapterFactory, this);
+    DefaultPicoContainer pc = new DefaultPicoContainer(this);
     addChildContainer(pc);
     return pc;
   }
@@ -342,7 +350,7 @@ public class DefaultPicoContainer implements MutablePicoContainer, Serializable 
 
   @Override
   public ComponentAdapter registerComponentImplementation(@NotNull Object componentKey, @NotNull Class componentImplementation, Parameter[] parameters) {
-    ComponentAdapter componentAdapter = componentAdapterFactory.createComponentAdapter(componentKey, componentImplementation, parameters);
+    ComponentAdapter componentAdapter = new ConstructorInjectionComponentAdapter(componentKey, componentImplementation, parameters, true);
     return registerComponent(componentAdapter);
   }
 

@@ -27,7 +27,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-import org.picocontainer.MutablePicoContainer;
 
 import java.lang.reflect.Array;
 import java.util.*;
@@ -281,10 +280,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     final ExtensionComponentAdapter adapter = myLoadedAdapters.get(index);
 
     Object key = adapter.getComponentKey();
-    myOwner.getMutablePicoContainer().unregisterComponent(key);
-    for (MutablePicoContainer pluginContainer : myOwner.getPluginContainers()) {
-      pluginContainer.unregisterComponent(key);
-    }
+    myOwner.getPicoContainer().unregisterComponent(key);
 
     processAdapters();
     unregisterExtension(extension, null);
@@ -434,10 +430,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
       }
       if (myLoadedAdapters.contains(adapter)) {
         Object key = adapter.getComponentKey();
-        myOwner.getMutablePicoContainer().unregisterComponent(key);
-        for (MutablePicoContainer pluginContainer : myOwner.getPluginContainers()) {
-          pluginContainer.unregisterComponent(key);
-        }
+        myOwner.getPicoContainer().unregisterComponent(key);
 
         @SuppressWarnings("unchecked") T extension = (T)adapter.getExtension();
         unregisterExtension(extension, adapter.getPluginDescriptor());

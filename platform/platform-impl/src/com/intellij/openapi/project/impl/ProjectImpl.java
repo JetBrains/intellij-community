@@ -63,7 +63,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.*;
-import org.picocontainer.defaults.CachingComponentAdapter;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -141,7 +140,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
       public ComponentAdapter getDelegate() {
         if (myDelegate == null) {
           final Class storeClass = projectStoreClassProvider.getProjectStoreClass(isDefault());
-          myDelegate = new CachingComponentAdapter(new ConstructorInjectionComponentAdapter(storeClass, storeClass, null, true));
+          myDelegate = new ConstructorInjectionComponentAdapter(storeClass, storeClass, null, true);
         }
 
         return myDelegate;

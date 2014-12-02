@@ -15,7 +15,10 @@
  */
 package com.intellij.openapi.extensions.impl;
 
-import com.intellij.openapi.extensions.*;
+import com.intellij.openapi.extensions.LoadingOrder;
+import com.intellij.openapi.extensions.PluginAware;
+import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.util.pico.AssignableToComponentAdapter;
 import com.intellij.util.pico.ConstructorInjectionComponentAdapter;
@@ -23,7 +26,6 @@ import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.picocontainer.*;
-import org.picocontainer.defaults.CachingComponentAdapter;
 
 /**
  * @author Alexander Kireyev
@@ -163,7 +165,7 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable, Assign
   private synchronized ComponentAdapter getDelegate() {
     if (myDelegate == null) {
       Class impl = loadImplementationClass();
-      myDelegate = new CachingComponentAdapter(new ConstructorInjectionComponentAdapter(getComponentKey(), impl, null, true));
+      myDelegate = new ConstructorInjectionComponentAdapter(getComponentKey(), impl, null, true);
     }
 
     return myDelegate;
