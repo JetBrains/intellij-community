@@ -644,7 +644,7 @@
       <action id="ForceStepOver" class="com.intellij.xdebugger.impl.actions.ForceStepOverAction" icon="AllIcons.Debugger.Actions.Force_step_over"/>
       <action id="StepInto" class="com.intellij.xdebugger.impl.actions.StepIntoAction" icon="AllIcons.Actions.TraceInto"/>
       <action id="ForceStepInto" class="com.intellij.xdebugger.impl.actions.ForceStepIntoAction" icon="AllIcons.Debugger.Actions.Force_step_into"/>
-      <action id="SmartStepInto" class="com.intellij.xdebugger.impl.actions.SmartStepIntoAction" icon="AllIcons.Actions.TraceInto"/>
+      <action id="SmartStepInto" class="com.intellij.xdebugger.impl.actions.SmartStepIntoAction" icon="AllIcons.Debugger.SmartStepInto"/>
       <action id="StepOut" class="com.intellij.xdebugger.impl.actions.StepOutAction" icon="AllIcons.Actions.StepOut"/>
       <action id="RunToCursor" class="com.intellij.xdebugger.impl.actions.RunToCursorAction" icon="AllIcons.Actions.RunToCursor"/>
       <action id="ForceRunToCursor" class="com.intellij.xdebugger.impl.actions.ForceRunToCursorAction" icon="AllIcons.Debugger.Actions.Force_run_to_cursor"/>
