@@ -15,12 +15,10 @@
  */
 package com.intellij.dvcs.push.ui;
 
-import com.intellij.CommonBundle;
 import com.intellij.dvcs.push.*;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.OptionAction;
 import com.intellij.openapi.ui.ValidationInfo;
 import net.miginfocom.swing.MigLayout;
@@ -33,8 +31,6 @@ import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
-import static com.intellij.openapi.ui.Messages.OK;
 
 public class VcsPushDialog extends DialogWrapper {
 
@@ -156,10 +152,7 @@ public class VcsPushDialog extends DialogWrapper {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-      int answer = Messages.showOkCancelDialog(myProject,
-                                  "You're going to force push. It will overwrite commits at the remote. Are you sure you want to proceed?",
-                                  "Force Push", "&Force Push", CommonBundle.getCancelButtonText(), Messages.getWarningIcon());
-      if (answer == OK) {
+      if (myController.ensureForcePushIsNeeded()) {
         myController.push(true);
         close(OK_EXIT_CODE);
       }
