@@ -65,9 +65,22 @@ public class MethodReferencesSearch extends ExtensibleQueryFactory<PsiReference,
       return myOptimizer;
     }
 
+    /**
+     * @return the user-visible search scope, most often "Project Files" or "Project and Libraries".
+     * Searchers most likely need to use {@link #getEffectiveSearchScope()}.
+     */
+    public SearchScope getScopeDeterminedByUser() {
+      return myScope;
+    }
+    
+    
+    /**
+     * @return Same as {@link #getScopeDeterminedByUser()}. Searchers most likely need to use {@link #getEffectiveSearchScope()}.
+     */
+    @Deprecated
     @NotNull
     public SearchScope getScope() {
-      return myScope;
+      return getScopeDeterminedByUser();
     }
 
     @NotNull
