@@ -59,7 +59,7 @@ public class XmlEnumeratedValueReference extends PsiReferenceBase<XmlElement> im
       return defaultValue == null ? ArrayUtil.EMPTY_OBJECT_ARRAY : new Object[] {defaultValue};
     }
     else {
-      String[] values = myDescriptor.getEnumeratedValues();
+      String[] values = myDescriptor.getValuesForCompletion();
       return values == null ? ArrayUtil.EMPTY_OBJECT_ARRAY : values;
     }
   }
