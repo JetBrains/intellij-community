@@ -20,8 +20,11 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.SizedIcon;
 import com.intellij.util.Function;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.ColorIcon;
 import com.intellij.vcs.log.VcsLogDataPack;
 import com.intellij.vcs.log.VcsLogRootFilter;
 import com.intellij.vcs.log.VcsLogRootFilterImpl;
@@ -30,17 +33,20 @@ import com.intellij.vcs.log.data.VcsLogFileFilter;
 import com.intellij.vcs.log.data.VcsLogStructureFilterImpl;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.VcsStructureChooser;
+import com.intellij.vcs.log.ui.frame.VcsLogGraphTable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 
 class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilter> {
   private static final int FILTER_LABEL_LENGTH = 20;
   @NotNull private final VcsLogColorManager myColorManager;
 
   public StructureFilterPopupComponent(@NotNull FilterModel<VcsLogFileFilter> filterModel, @NotNull VcsLogColorManager colorManager) {
-    super("Structure", filterModel);
+    super("Paths", filterModel);
     myColorManager = colorManager;
     myShowDisabledActions = true;
   }
@@ -135,7 +141,8 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
         visibleRoots = ContainerUtil.subtract(rootFilter.getRoots(), Collections.singleton(root));
       }
     }
-    myFilterModel.setFilter(new VcsLogFileFilter(previousFilter != null ? previousFilter.getStructureFilter() : null, new VcsLogRootFilterImpl(visibleRoots)));
+    myFilterModel.setFilter(
+      new VcsLogFileFilter(previousFilter != null ? previousFilter.getStructureFilter() : null, new VcsLogRootFilterImpl(visibleRoots)));
   }
 
   private static String getStructureActionText(@NotNull VcsLogStructureFilter filter) {
@@ -150,11 +157,14 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
   }
 
   private class SelectVisibleRootAction extends ToggleAction {
+    private static final int ICON_SIZE = 15;
+    @NotNull private final CheckboxColorIcon myIcon;
     @NotNull private final VirtualFile myRoot;
 
     private SelectVisibleRootAction(@NotNull VirtualFile root) {
       super(root.getName());
       myRoot = root;
+      myIcon = new CheckboxColorIcon(ICON_SIZE, VcsLogGraphTable.getRootBackgroundColor(myRoot, myColorManager));
     }
 
     @Override
@@ -172,17 +182,52 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
       super.update(e);
 
       Presentation presentation = e.getPresentation();
+      boolean enabled;
       if (myFilterModel.getFilter() == null || myFilterModel.getFilter().getStructureFilter() == null) {
-        presentation.setEnabled(true);
-      } else {
-        presentation.setEnabled(VcsLogFileFilter.getAllVisibleRoots(getAllRoots(), null, myFilterModel.getFilter().getStructureFilter()).contains(myRoot));
+        enabled = true;
       }
+      else {
+        enabled = VcsLogFileFilter.getAllVisibleRoots(getAllRoots(), null, myFilterModel.getFilter().getStructureFilter()).contains(myRoot);
+      }
+
+      myIcon.prepare(enabled, isSelected(e));
+      presentation.setIcon(myIcon);
+
+      presentation.setEnabled(enabled);
       presentation.setVisible(true);
     }
   }
 
+  private static class CheckboxColorIcon extends ColorIcon {
+    private final int mySize;
+    private boolean mySelected = false;
+    private boolean myEnabled = false;
+    private SizedIcon mySizedIcon;
+
+    public CheckboxColorIcon(int size, @NotNull Color color) {
+      super(size, color);
+      mySize = size;
+      mySizedIcon = new SizedIcon(PlatformIcons.CHECK_ICON_SMALL, mySize, mySize);
+    }
+
+    public void prepare(boolean enabled, boolean selected) {
+      mySelected = selected;
+      myEnabled = enabled;
+    }
+
+    @Override
+    public void paintIcon(Component component, Graphics g, int i, int j) {
+      if (myEnabled) {
+        super.paintIcon(component, g, i, j);
+      }
+      if (mySelected) {
+        mySizedIcon.paintIcon(component, g, i, j);
+      }
+    }
+  }
+
   private class SelectAction extends DumbAwareAction {
-    public static final String STRUCTURE_FILTER_TEXT = "Select...";
+    public static final String STRUCTURE_FILTER_TEXT = "Select Paths...";
 
     SelectAction() {
       super(STRUCTURE_FILTER_TEXT);
@@ -194,7 +239,8 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
       Presentation presentation = e.getPresentation();
       if (myFilterModel.getFilter() != null && myFilterModel.getFilter().getStructureFilter() != null) {
         presentation.setText(getStructureActionText(myFilterModel.getFilter().getStructureFilter()));
-      } else {
+      }
+      else {
         presentation.setText(STRUCTURE_FILTER_TEXT);
       }
     }
@@ -205,11 +251,14 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
       VcsLogDataPack dataPack = myFilterModel.getDataPack();
       VcsLogFileFilter filter = myFilterModel.getFilter();
       VcsLogRootFilter rootFilter = filter == null ? null : filter.getRootFilter();
-      Collection<VirtualFile> files = filter == null || filter.getStructureFilter() == null ? Collections.<VirtualFile>emptySet() : filter.getStructureFilter().getFiles();
+      Collection<VirtualFile> files = filter == null || filter.getStructureFilter() == null
+                                      ? Collections.<VirtualFile>emptySet()
+                                      : filter.getStructureFilter().getFiles();
       VcsStructureChooser chooser = new VcsStructureChooser(project, "Select Files or Folders to Filter", files,
                                                             new ArrayList<VirtualFile>(dataPack.getLogProviders().keySet()));
       if (chooser.showAndGet()) {
-        myFilterModel.setFilter(new VcsLogFileFilter(new VcsLogStructureFilterImpl(new HashSet<VirtualFile>(chooser.getSelectedFiles())), rootFilter));
+        myFilterModel
+          .setFilter(new VcsLogFileFilter(new VcsLogStructureFilterImpl(new HashSet<VirtualFile>(chooser.getSelectedFiles())), rootFilter));
       }
     }
   }
