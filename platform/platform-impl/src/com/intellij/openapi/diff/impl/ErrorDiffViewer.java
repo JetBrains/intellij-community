@@ -39,7 +39,7 @@ public class ErrorDiffViewer implements DiffViewer {
   @NotNull private final JPanel myPanel;
   @NotNull private final DiffToolbarComponent myToolbar;
 
-  protected ErrorDiffViewer(@NotNull DiffRequest request) {
+  protected ErrorDiffViewer(Window window, @NotNull DiffRequest request) {
     myRequest = request;
 
     myPanel = new AbstractDataProviderPanel(new BorderLayout(), false) {
@@ -84,6 +84,16 @@ public class ErrorDiffViewer implements DiffViewer {
 
     final JPanel messagePanel = createMessagePanel(message);
     myPanel.add(messagePanel, BorderLayout.CENTER);
+
+    setWindowTitle(window, request.getWindowTitle());
+  }
+
+  private static void setWindowTitle(Window window, String title) {
+    if (title == null || title.isEmpty()) title = "Diff";
+    if (window instanceof JDialog) {
+      ((JDialog)window).setTitle(title);
+    }
+    else if (window instanceof JFrame) ((JFrame)window).setTitle(title);
   }
 
   @Override

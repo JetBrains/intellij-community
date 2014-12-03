@@ -99,7 +99,7 @@ public class CompositeDiffPanel implements DiffViewer {
     }
 
     if (myMap.isEmpty()) {
-      final ErrorDiffViewer errorDiffViewer = new ErrorDiffViewer(request);
+      final ErrorDiffViewer errorDiffViewer = new ErrorDiffViewer(myWindow, request);
       final Content content = myUi.createContent(FICTIVE_KEY, errorDiffViewer.getComponent(), FICTIVE_KEY, null,
                                                  errorDiffViewer.getPreferredFocusedComponent());
       content.setCloseable(false);
