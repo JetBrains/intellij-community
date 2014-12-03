@@ -27,7 +27,6 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Expirable;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.wm.FocusCommand;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.impl.FloatingDecorator;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
@@ -47,9 +46,6 @@ public final class RequestFocusInEditorComponentCmd extends FinalizableCommand{
 
   private final IdeFocusManager myFocusManager;
   private final Expirable myTimestamp;
-
-  private final long timestamp = System.currentTimeMillis();
-  private final Exception myAllocation = new Exception();
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.commands.RequestFocusInEditorComponentCmd");
 
@@ -108,11 +104,7 @@ public final class RequestFocusInEditorComponentCmd extends FinalizableCommand{
 
       if(myComponent != null){
         final boolean forced = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner() == null;
-
-        FocusCommand command = new FocusCommand.ByComponent(myComponent, myAllocation);
-        command.setCommandCreationTime(timestamp);
-
-        myFocusManager.requestFocus(command, myForced || forced).notifyWhenDone(myDoneCallback).doWhenDone(new Runnable() {
+        myFocusManager.requestFocus(myComponent, myForced || forced).notifyWhenDone(myDoneCallback).doWhenDone(new Runnable() {
           public void run() {
             if (SystemInfo.isLinux && Registry.is("suppress.focus.stealing")) return;
             // if owner is active window or it has active child window which isn't floating decorator then
@@ -122,9 +114,9 @@ public final class RequestFocusInEditorComponentCmd extends FinalizableCommand{
             // 2. "Do not show preview" dialog is popping up.
             // 3. At that time "preview" tool window is being activated and modal "don't show..." dialog
             // isn't active.
-            if (!owner.isActive()) {
-              final Window activeWindow = getActiveWindow(owner.getOwnedWindows());
-              if (activeWindow == null || (activeWindow instanceof FloatingDecorator)) {
+            if(!owner.isActive()){
+              final Window activeWindow=getActiveWindow(owner.getOwnedWindows());
+              if(activeWindow == null || (activeWindow instanceof FloatingDecorator)){
                 //Thread.dumpStack();
                 //System.out.println("------------------------------------------------------");
                 owner.toFront();
