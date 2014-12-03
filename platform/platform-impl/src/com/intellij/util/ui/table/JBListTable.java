@@ -35,7 +35,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
-import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
@@ -48,7 +47,7 @@ import static java.awt.event.KeyEvent.*;
 /**
  * @author Konstantin Bulenkov
  */
-public abstract class JBListTable extends JPanel {
+public abstract class JBListTable {
   protected final JTable myInternalTable;
   private final JBTable mainTable;
   private final RowResizeAnimator myRowResizeAnimator;
@@ -57,7 +56,6 @@ public abstract class JBListTable extends JPanel {
   private int myLastFocusedEditorComponentIdx = -1;
 
   public JBListTable(@NotNull final JTable t) {
-    super(new BorderLayout());
     myInternalTable = t;
     final JBListTableModel model = new JBListTableModel(t.getModel()) {
       @Override
@@ -122,10 +120,11 @@ public abstract class JBListTable extends JPanel {
 
       @Override
       public TableCellRenderer getCellRenderer(int row, int column) {
-        return new DefaultTableCellRenderer() {
+        final JBTableRowRenderer rowRenderer = getRowRenderer(row);
+        return new TableCellRenderer() {
           @Override
-          public Component getTableCellRendererComponent(JTable table, Object value, boolean selected, boolean hasFocus, int row, int col) {
-            return getRowRenderer(t, row, selected, hasFocus);
+          public Component getTableCellRendererComponent(JTable table, Object value, boolean selected, boolean focused, int row, int col) {
+            return rowRenderer.getRowRendererComponent(t, row, selected, focused);
           }
         };
       }
@@ -269,7 +268,7 @@ public abstract class JBListTable extends JPanel {
     return mainTable;
   }
 
-  protected abstract JComponent getRowRenderer(JTable table, int row, boolean selected, boolean focused);
+  protected abstract JBTableRowRenderer getRowRenderer(int row);
 
   protected abstract JBTableRowEditor getRowEditor(int row);
 
