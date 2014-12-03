@@ -68,10 +68,8 @@ import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.util.*;
 import com.intellij.refactoring.util.classMembers.ElementNeedsThis;
 import com.intellij.refactoring.util.duplicates.*;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Processor;
-import com.intellij.util.VisibilityUtil;
+import com.intellij.util.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -566,7 +564,19 @@ public class ExtractMethodProcessor implements MatchProvider {
                                : PsiTreeUtil.findCommonParent(myElements);
       return CodeInsightUtil.findReferenceExpressions(scope, myOutputVariable);
     }
-    return PsiExpression.EMPTY_ARRAY;
+    final List<PsiStatement> filter = ContainerUtil.filter(myExitStatements, new Condition<PsiStatement>() {
+      @Override
+      public boolean value(PsiStatement statement) {
+        return statement instanceof PsiReturnStatement;
+      }
+    });
+    final List<PsiExpression> map = ContainerUtil.map(filter, new Function<PsiStatement, PsiExpression>() {
+      @Override
+      public PsiExpression fun(PsiStatement statement) {
+        return ((PsiReturnStatement) statement).getReturnValue();
+      }
+    });
+    return map.toArray(new PsiExpression[map.size()]);
   }
 
   private Nullness initNullness() {
