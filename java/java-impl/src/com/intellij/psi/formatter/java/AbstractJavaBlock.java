@@ -16,8 +16,6 @@
 package com.intellij.psi.formatter.java;
 
 import com.intellij.formatting.*;
-import com.intellij.formatting.alignment.AlignmentInColumnsConfig;
-import com.intellij.formatting.alignment.AlignmentInColumnsHelper;
 import com.intellij.formatting.alignment.AlignmentStrategy;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
@@ -38,7 +36,6 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.impl.source.tree.java.ClassElement;
 import com.intellij.psi.jsp.JspElementType;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -389,13 +386,13 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
 
   @Nullable
   protected Alignment chooseAlignment(@Nullable Alignment alignment, @Nullable Alignment alignment2, @NotNull ASTNode child) {
-    if (preferSlaveAlignment(child)) {
+    if (isTernaryOperatorToken(child)) {
       return alignment2;
     }
     return alignment;
   }
 
-  private boolean preferSlaveAlignment(@NotNull final ASTNode child) {
+  private boolean isTernaryOperatorToken(@NotNull final ASTNode child) {
     final IElementType nodeType = myNode.getElementType();
 
     if (nodeType == JavaElementType.CONDITIONAL_EXPRESSION) {
