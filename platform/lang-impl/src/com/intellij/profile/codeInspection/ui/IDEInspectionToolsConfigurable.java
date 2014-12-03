@@ -44,9 +44,7 @@ public class IDEInspectionToolsConfigurable extends InspectionToolsConfigurable 
   }
 
   @Override
-  public void apply() throws ConfigurationException {
-    final String rootProfile = getSelectedObject().getName();
-    myProfileManager.setRootProfile(rootProfile);
-    super.apply();
+  protected void applyRootProfile(String name, boolean isShared) {
+    myProfileManager.setRootProfile(name);
   }
 }

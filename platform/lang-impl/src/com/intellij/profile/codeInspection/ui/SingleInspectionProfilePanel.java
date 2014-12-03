@@ -125,7 +125,7 @@ public class SingleInspectionProfilePanel extends JPanel {
   private InspectionsConfigTreeTable myTreeTable;
   private TreeExpander myTreeExpander;
   @NotNull
-  private String myInitialProfile;
+  private String myCurrentProfileName;
   private boolean myIsInRestore = false;
   private boolean myShareProfile;
   private Splitter myRightSplitter;
@@ -143,7 +143,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     super(new BorderLayout());
     myProjectProfileManager = projectProfileManager;
     mySelectedProfile = (InspectionProfileImpl)profile;
-    myInitialProfile = inspectionProfileName;
+    myCurrentProfileName = inspectionProfileName;
     myShareProfile = profile.getProfileManager() == projectProfileManager;
   }
 
@@ -1045,7 +1045,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     if (mySelectedProfile == modifiableModel) return;
     mySelectedProfile = (InspectionProfileImpl)modifiableModel;
     if (mySelectedProfile != null) {
-      myInitialProfile = mySelectedProfile.getName();
+      myCurrentProfileName = mySelectedProfile.getName();
     }
     initToolStates();
     filterTree();
@@ -1121,7 +1121,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     if (myModified) return true;
     if (mySelectedProfile.isChanged()) return true;
     if (myShareProfile != (mySelectedProfile.getProfileManager() == myProjectProfileManager)) return true;
-    if (!Comparing.strEqual(myInitialProfile, mySelectedProfile.getName())) return true;
+    if (!Comparing.strEqual(myCurrentProfileName, mySelectedProfile.getName())) return true;
     if (!Comparing.equal(myInitialScopesOrder, mySelectedProfile.getScopesOrder())) return true;
     if (descriptorsAreChanged()) {
       return true;
@@ -1144,6 +1144,12 @@ public class SingleInspectionProfilePanel extends JPanel {
       return;
     }
     final ModifiableModel selectedProfile = getSelectedProfile();
+
+    if (!Comparing.equal(myCurrentProfileName, selectedProfile.getName())) {
+      selectedProfile.getProfileManager().deleteProfile(selectedProfile.getName());
+      selectedProfile.setName(myCurrentProfileName);
+      selectedProfile.getProfileManager().updateProfile(selectedProfile);
+    }
     ProfileManager profileManager = myShareProfile ? myProjectProfileManager : InspectionProfileManager.getInstance();
     selectedProfile.setProjectLevel(myShareProfile);
     if (selectedProfile.getProfileManager() != profileManager) {
@@ -1208,6 +1214,15 @@ public class SingleInspectionProfilePanel extends JPanel {
 
   public void setProfileShared(boolean profileShared) {
     myShareProfile = profileShared;
+  }
+
+  @NotNull
+  public String getCurrentProfileName() {
+    return myCurrentProfileName;
+  }
+
+  public void setCurrentProfileName(@NotNull String currentProfileName) {
+    myCurrentProfileName = currentProfileName;
   }
 
   @Override
