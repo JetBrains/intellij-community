@@ -328,7 +328,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
     dialog.show();
     if (dialog.isOK()) {
       final boolean pathChanged = !Comparing.equal(currentSdk.getHomePath(), dialog.getHomePath());
-      if (!currentSdk.getName().equals(dialog.getName()) || pathChanged || dialog.isAssociateChanged()) {
+      if (!modificator.getName().equals(dialog.getName()) || pathChanged || dialog.isAssociateChanged()) {
         myModifiedModificators.add(modificator);
         modificator.setName(dialog.getName());
         modificator.setHomePath(dialog.getHomePath());

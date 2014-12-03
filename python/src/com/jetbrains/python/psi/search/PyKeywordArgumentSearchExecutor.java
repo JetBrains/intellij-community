@@ -15,9 +15,12 @@
  */
 package com.jetbrains.python.psi.search;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.QueryExecutorBase;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Processor;
@@ -31,7 +34,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class PyKeywordArgumentSearchExecutor extends QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters> {
   @Override
-  public void processQuery(@NotNull ReferencesSearch.SearchParameters queryParameters, @NotNull final Processor<PsiReference> consumer) {
+  public void processQuery(@NotNull final ReferencesSearch.SearchParameters queryParameters, @NotNull final Processor<PsiReference> consumer) {
     final PsiElement element = queryParameters.getElementToSearch();
     if (!(element instanceof PyNamedParameter)) {
       return;
@@ -40,7 +43,13 @@ public class PyKeywordArgumentSearchExecutor extends QueryExecutorBase<PsiRefere
     if (!(owner instanceof PyFunction)) {
       return;
     }
-    ReferencesSearch.search(owner, queryParameters.getScope()).forEach(new Processor<PsiReference>() {
+    SearchScope scope = ApplicationManager.getApplication().runReadAction(new Computable<SearchScope>() {
+      @Override
+      public SearchScope compute() {
+        return queryParameters.getEffectiveSearchScope();
+      }
+    });
+    ReferencesSearch.search(owner, scope).forEach(new Processor<PsiReference>() {
       @Override
       public boolean process(PsiReference reference) {
         final PsiElement refElement = reference.getElement();

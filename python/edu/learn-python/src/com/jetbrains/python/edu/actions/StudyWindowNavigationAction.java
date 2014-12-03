@@ -39,7 +39,7 @@ abstract public class StudyWindowNavigationAction extends DumbAwareAction {
             if (nextTaskWindow == null) {
               return;
             }
-            nextTaskWindow.draw(selectedEditor, true, true);
+            selectedTaskFile.navigateToTaskWindow(selectedEditor, nextTaskWindow);
             selectedTaskFile.setSelectedTaskWindow(nextTaskWindow);
             }
           }
@@ -50,7 +50,7 @@ abstract public class StudyWindowNavigationAction extends DumbAwareAction {
   protected abstract TaskWindow getNextTaskWindow(@NotNull final TaskWindow window);
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project == null) {
       return;
@@ -59,7 +59,7 @@ abstract public class StudyWindowNavigationAction extends DumbAwareAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     StudyUtils.updateAction(e);
   }
 }

@@ -80,7 +80,7 @@ public class DebuggerContextUtil {
 
           //final Editor editor = fileEditor instanceof TextEditorImpl ? ((TextEditorImpl)fileEditor).getEditor() : null;
           if (editor != null && position != null && file.getVirtualFile().equals(position.getFile())) {
-            final Couple<Collection<TextRange>> usages = IdentifierHighlighterPass.getHighlightUsages(psi, file);
+            final Couple<Collection<TextRange>> usages = IdentifierHighlighterPass.getHighlightUsages(psi, file, false);
             final List<TextRange> ranges = new ArrayList<TextRange>();
             ranges.addAll(usages.first);
             ranges.addAll(usages.second);
@@ -104,6 +104,6 @@ public class DebuggerContextUtil {
       catch (Exception ignore) {
       }
     }
-    return SourcePosition.createFromOffset(file, psi.getTextOffset());
+    return null;
   }
 }

@@ -47,6 +47,8 @@ import javax.swing.text.html.HTMLFrameHyperlinkEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.net.URL;
 import java.util.*;
@@ -382,6 +384,17 @@ public class ManagePackagesDialog extends DialogWrapper {
 
     public MyPackageFilter() {
       super("PACKAGE_FILTER", 5);
+      getTextEditor().addKeyListener(new KeyAdapter() {
+        public void keyPressed(final KeyEvent e) {
+          if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+            e.consume();
+            filter();
+            myPackages.requestFocus();
+          } else if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
+            onEscape(e);
+          }
+        }
+      });
     }
 
     public void filter() {
@@ -486,8 +499,6 @@ public class ManagePackagesDialog extends DialogWrapper {
       myVersionComboBox.setEnabled(false);
       myOptionsField.setEnabled(false);
       myDescriptionTextArea.setText("<html><body style='text-align: center;padding-top:20px;'>Loading...</body></html>");
-
-      setDownloadStatus(true);
       final Object pyPackage = myPackages.getSelectedValue();
       if (pyPackage instanceof RepoPackage) {
         final String packageName = ((RepoPackage)pyPackage).getName();
@@ -544,7 +555,6 @@ public class ManagePackagesDialog extends DialogWrapper {
         myInstallButton.setEnabled(false);
         myDescriptionTextArea.setText("");
       }
-      setDownloadStatus(false);
     }
   }
 
@@ -579,7 +589,8 @@ public class ManagePackagesDialog extends DialogWrapper {
         RepoPackage repoPackage = (RepoPackage) value;
         String name = repoPackage.getName();
         if (myCurrentlyInstalling.contains(name)) {
-          name += " (installing)";
+          final String colorCode = UIUtil.isUnderDarcula() ? "589df6" : "0000FF";
+          name = "<html><body>" + repoPackage.getName() + " <font color=\"#" + colorCode + "\">(installing)</font></body></html>";
         }
         myNameLabel.setText(name);
         myRepositoryLabel.setText(repoPackage.getRepoUrl());

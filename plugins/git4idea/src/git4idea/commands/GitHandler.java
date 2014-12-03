@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.vcsUtil.VcsFileUtil;
@@ -120,16 +121,17 @@ public abstract class GitHandler {
     myAppSettings = GitVcsApplicationSettings.getInstance();
     myProjectSettings = GitVcsSettings.getInstance(myProject);
     myEnv = new HashMap<String, String>(System.getenv());
-    myVcs = GitVcs.getInstance(project);
+    myVcs = ObjectUtils.assertNotNull(GitVcs.getInstance(project));
     myWorkingDirectory = directory;
     myCommandLine = new GeneralCommandLine();
     if (myAppSettings != null) {
       myCommandLine.setExePath(myAppSettings.getPathToGit());
     }
     myCommandLine.setWorkDirectory(myWorkingDirectory);
-    if (command.name().length() > 0) {
-      myCommandLine.addParameter(command.name());
+    if (GitVersionSpecialty.CAN_OVERRIDE_GIT_CONFIG_FOR_COMMAND.existsIn(myVcs.getVersion())) {
+      myCommandLine.addParameters("-c", "core.quotepath=false");
     }
+    myCommandLine.addParameter(command.name());
     myStdoutSuppressed = true;
   }
 

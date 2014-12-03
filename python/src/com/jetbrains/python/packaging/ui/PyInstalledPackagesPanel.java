@@ -175,6 +175,11 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
   }
 
   @Override
+  protected boolean canInstallPackage(@NotNull final InstalledPackage pyPackage) {
+    return myHasManagement;
+  }
+
+  @Override
   protected boolean canUpgradePackage(InstalledPackage pyPackage) {
     return myHasManagement;
   }

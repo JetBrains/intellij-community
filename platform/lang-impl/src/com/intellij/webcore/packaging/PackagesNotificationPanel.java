@@ -25,6 +25,7 @@ public class PackagesNotificationPanel {
   public PackagesNotificationPanel() {
     myHtmlViewer = SwingHelper.createHtmlViewer(true, null, null, null);
     myHtmlViewer.setVisible(false);
+    myHtmlViewer.setOpaque(true);
     myHtmlViewer.addHyperlinkListener(new HyperlinkAdapter() {
       @Override
       protected void hyperlinkActivated(HyperlinkEvent e) {

@@ -12,8 +12,10 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
@@ -33,6 +35,8 @@ import com.jetbrains.python.edu.editor.StudyEditor;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.io.IOException;
 import java.util.Map;
@@ -41,7 +45,7 @@ public class StudyCheckAction extends DumbAwareAction {
 
   private static final Logger LOG = Logger.getInstance(StudyCheckAction.class.getName());
   private static final String ANSWERS_POSTFIX = "_answers.py";
-  public static final  String ACTION_ID = "CheckAction";
+  public static final String ACTION_ID = "CheckAction";
   public static final String SHORTCUT = "ctrl alt pressed ENTER";
 
 
@@ -108,9 +112,15 @@ public class StudyCheckAction extends DumbAwareAction {
             VirtualFile taskDir = studyState.getTaskDir();
             flushWindows(task, taskDir);
             StudyRunAction runAction = (StudyRunAction)ActionManager.getInstance().getAction(StudyRunAction.ACTION_ID);
-            if (runAction != null && taskFiles.size() == 1) {
-              runAction.run(project);
+            if (runAction == null) {
+              return;
             }
+            Sdk sdk = StudyUtils.findPythonSdk(project);
+            if (sdk == null) {
+              createNoPythonInterpreterPopUp(project);
+              return;
+            }
+            runAction.run(project, sdk);
             ApplicationManager.getApplication().invokeLater(new Runnable() {
               @Override
               public void run() {
@@ -155,6 +165,27 @@ public class StudyCheckAction extends DumbAwareAction {
         });
       }
     });
+  }
+
+  private static void createNoPythonInterpreterPopUp(@NotNull final Project project) {
+    String text = "<html>No Python interpreter configured for the project<br><a href=\"\">Configure interpreter</a></html>";
+    BalloonBuilder balloonBuilder =
+      JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(text, null, MessageType.WARNING.getPopupBackground(), new HyperlinkListener() {
+        @Override
+        public void hyperlinkUpdate(HyperlinkEvent event) {
+          if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+            ApplicationManager.getApplication().invokeLater(new Runnable() {
+              @Override
+              public void run() {
+                ShowSettingsUtil.getInstance().showSettingsDialog(project, "Project Interpreter");
+              }
+            });
+          }
+        }
+      });
+    balloonBuilder.setHideOnLinkClick(true);
+    final Balloon balloon = balloonBuilder.createBalloon();
+    showCheckPopUp(project, balloon);
   }
 
   private static void navigateToFailedTaskWindow(@NotNull final StudyState studyState,
@@ -261,6 +292,13 @@ public class StudyCheckAction extends DumbAwareAction {
     BalloonBuilder balloonBuilder =
       JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(text, null, color, null);
     final Balloon balloon = balloonBuilder.createBalloon();
+    showCheckPopUp(project, balloon);
+  }
+
+  /**
+   * shows pop up in the center of "check task" button in study editor
+   */
+  private static void showCheckPopUp(@NotNull final Project project, @NotNull final Balloon balloon) {
     StudyEditor studyEditor = StudyEditor.getSelectedStudyEditor(project);
     assert studyEditor != null;
     JButton checkButton = studyEditor.getCheckButton();

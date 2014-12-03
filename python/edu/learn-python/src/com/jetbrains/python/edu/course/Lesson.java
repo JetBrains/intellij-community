@@ -1,5 +1,6 @@
 package com.jetbrains.python.edu.course;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.NotNull;
@@ -9,7 +10,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Lesson implements Stateful{
+public class Lesson implements Stateful {
   public String name;
   public List<Task> taskList = new ArrayList<Task>();
   private Course myCourse = null;
@@ -59,13 +60,14 @@ public class Lesson implements Stateful{
    * @param resourceRoot directory where original lesson stored
    * @throws java.io.IOException
    */
-  public void create(@NotNull final VirtualFile courseDir, @NotNull final File resourceRoot) throws IOException {
+  public void create(@NotNull final VirtualFile courseDir, @NotNull final File resourceRoot,
+                     @NotNull final Project project) throws IOException {
     String lessonDirName = LESSON_DIR + Integer.toString(myIndex + 1);
     VirtualFile lessonDir = courseDir.createChildDirectory(this, lessonDirName);
     for (int i = 0; i < taskList.size(); i++) {
       Task task = taskList.get(i);
       task.setIndex(i);
-      task.create(lessonDir, new File(resourceRoot, lessonDir.getName()));
+      task.create(lessonDir, new File(resourceRoot, lessonDir.getName()), project);
     }
   }
 
