@@ -68,10 +68,8 @@ import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.util.*;
 import com.intellij.refactoring.util.classMembers.ElementNeedsThis;
 import com.intellij.refactoring.util.duplicates.*;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Processor;
-import com.intellij.util.VisibilityUtil;
+import com.intellij.util.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -241,8 +239,11 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
     catch (ControlFlowWrapper.ExitStatementsNotSameException e) {
       myExitStatements = myControlFlowWrapper.getExitStatements();
-      showMultipleExitPointsMessage();
-      return false;
+      myNotNullConditionalCheck = areAllExitPointsAreNotNull(getExpectedReturnType());
+      if (!myNotNullConditionalCheck) {
+        showMultipleExitPointsMessage();
+        return false;
+      }
     }
 
     myOutputVariables = myControlFlowWrapper.getOutputVariables();
@@ -265,11 +266,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
     myHasExpressionOutput = expressionType != PsiType.VOID;
 
-    final PsiType returnStatementType = myCodeFragmentMember instanceof PsiMethod 
-                                        ? ((PsiMethod)myCodeFragmentMember).getReturnType()
-                                        : myCodeFragmentMember instanceof PsiLambdaExpression 
-                                          ? LambdaUtil.getFunctionalInterfaceReturnType((PsiLambdaExpression)myCodeFragmentMember) 
-                                          : null;
+    final PsiType returnStatementType = getExpectedReturnType();
     myHasReturnStatementOutput = myHasReturnStatement && returnStatementType != null && returnStatementType != PsiType.VOID;
 
     if (myGenerateConditionalExit && myOutputVariables.length == 1) {
@@ -284,15 +281,7 @@ public class ExtractMethodProcessor implements MatchProvider {
         myNullConditionalCheck &= isNullInferred(myOutputVariables[0].getName(), false);
       }
 
-      if (insertNotNullCheckIfPossible() && myControlFlowWrapper.getOutputVariables(false).length == 0) {
-        myNotNullConditionalCheck = returnStatementType != null && returnStatementType != PsiType.VOID;
-        for (PsiStatement statement : myExitStatements) {
-          if (statement instanceof PsiReturnStatement) {
-            final PsiExpression returnValue = ((PsiReturnStatement)statement).getReturnValue();
-            myNotNullConditionalCheck &= returnValue != null && !isNullInferred(returnValue.getText(), true);
-          }
-        }
-      }
+      myNotNullConditionalCheck = areAllExitPointsAreNotNull(returnStatementType);
     }
 
     if (!myHasReturnStatementOutput && checkOutputVariablesCount() && !myNullConditionalCheck && !myNotNullConditionalCheck) {
@@ -340,6 +329,28 @@ public class ExtractMethodProcessor implements MatchProvider {
       checkLocalClasses((PsiMethod) container);
     }
     return true;
+  }
+
+  private PsiType getExpectedReturnType() {
+    return myCodeFragmentMember instanceof PsiMethod 
+                                        ? ((PsiMethod)myCodeFragmentMember).getReturnType()
+                                        : myCodeFragmentMember instanceof PsiLambdaExpression 
+                                          ? LambdaUtil.getFunctionalInterfaceReturnType((PsiLambdaExpression)myCodeFragmentMember) 
+                                          : null;
+  }
+
+  private boolean areAllExitPointsAreNotNull(PsiType returnStatementType) {
+    if (insertNotNullCheckIfPossible() && myControlFlowWrapper.getOutputVariables(false).length == 0) {
+      boolean isNotNull = returnStatementType != null && returnStatementType != PsiType.VOID;
+      for (PsiStatement statement : myExitStatements) {
+        if (statement instanceof PsiReturnStatement) {
+          final PsiExpression returnValue = ((PsiReturnStatement)statement).getReturnValue();
+          isNotNull &= returnValue != null && !isNullInferred(returnValue.getText(), true);
+        }
+      }
+      return isNotNull;
+    }
+    return false;
   }
 
   protected boolean insertNotNullCheckIfPossible() {
@@ -553,7 +564,19 @@ public class ExtractMethodProcessor implements MatchProvider {
                                : PsiTreeUtil.findCommonParent(myElements);
       return CodeInsightUtil.findReferenceExpressions(scope, myOutputVariable);
     }
-    return PsiExpression.EMPTY_ARRAY;
+    final List<PsiStatement> filter = ContainerUtil.filter(myExitStatements, new Condition<PsiStatement>() {
+      @Override
+      public boolean value(PsiStatement statement) {
+        return statement instanceof PsiReturnStatement;
+      }
+    });
+    final List<PsiExpression> map = ContainerUtil.map(filter, new Function<PsiStatement, PsiExpression>() {
+      @Override
+      public PsiExpression fun(PsiStatement statement) {
+        return ((PsiReturnStatement) statement).getReturnValue();
+      }
+    });
+    return map.toArray(new PsiExpression[map.size()]);
   }
 
   private Nullness initNullness() {
@@ -796,7 +819,7 @@ public class ExtractMethodProcessor implements MatchProvider {
         CodeStyleManager.getInstance(myProject).reformat(ifStatement);
       }
       else if (myNotNullConditionalCheck) {
-        String varName = myOutputVariable.getName();
+        String varName = myOutputVariable != null ? myOutputVariable.getName() : "x";
         varName = declareVariableAtMethodCallLocation(varName, myReturnType instanceof PsiPrimitiveType ? ((PsiPrimitiveType)myReturnType).getBoxedType(myCodeFragmentMember) : myReturnType);
         addToMethodCallLocation(myElementFactory.createStatementFromText("if (" + varName + " != null) return " + varName + ";", null));
       }
@@ -1021,7 +1044,9 @@ public class ExtractMethodProcessor implements MatchProvider {
     statement = (PsiDeclarationStatement)addToMethodCallLocation(statement);
     PsiVariable var = (PsiVariable)statement.getDeclaredElements()[0];
     myMethodCall = (PsiMethodCallExpression)var.getInitializer();
-    var.getModifierList().replace(myOutputVariable.getModifierList());
+    if (myOutputVariable != null) {
+      var.getModifierList().replace(myOutputVariable.getModifierList());
+    }
     return name;
   }
 

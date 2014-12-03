@@ -432,6 +432,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     }
 
     Color color = myEditor.getColorsScheme().getColor(EditorColors.LINE_NUMBERS_COLOR);
+    g.setColor(color != null ? color : JBColor.blue);
     g.setFont(myEditor.getColorsScheme().getFont(EditorFontType.PLAIN));
 
     Graphics2D g2 = (Graphics2D)g;
@@ -453,8 +454,10 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       if (logLine >= 0) {
         String s = String.valueOf(logLine + 1);
         int startY = (i + 1) * lineHeight;
-        Color fgColor = myTextFgColors.get(i);
-        g.setColor(fgColor != null ? fgColor : color != null ? color : JBColor.blue);
+        if (myEditor.isInDistractionFreeMode()) {
+          Color fgColor = myTextFgColors.get(i);
+          g.setColor(fgColor != null ? fgColor : color != null ? color : JBColor.blue);
+        }
         g.drawString(s,
                      getLineNumberAreaOffset() + getLineNumberAreaWidth() -
                      myEditor.getFontMetrics(Font.PLAIN).stringWidth(s) -

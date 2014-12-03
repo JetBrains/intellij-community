@@ -239,6 +239,28 @@ class ContractInferenceFromSourceTest extends LightCodeInsightFixtureTestCase {
     assert c == []
   }
 
+  public void "test return boxed integer"() {
+    def c = inferContracts("""
+    static Object test1(Object o1) {
+        return o1 == null ? 1 : smth();
+    }
+    
+    static native Object smth()
+    """)
+    assert c == ['null -> !null']
+  }
+
+  public void "test return boxed boolean"() {
+    def c = inferContracts("""
+    static Object test1(Object o1) {
+        return o1 == null ? false : smth();
+    }
+    
+    static native Object smth()
+    """)
+    assert c == ['null -> !null']
+  }
+
   public void "test boolean autoboxing in delegation"() {
     def c = inferContracts("""
     static Boolean test04(String s) {
@@ -389,6 +411,15 @@ class ContractInferenceFromSourceTest extends LightCodeInsightFixtureTestCase {
   }
     """)
     assert c == ['null -> null']
+  }
+
+  public void "test compare with string literal"() {
+    def c = inferContracts("""
+  String cast(String s) {
+    return s == "a" ? "b" : null;
+  }
+    """)
+    assert c == []
   }
 
   public void "test return after if without else"() {

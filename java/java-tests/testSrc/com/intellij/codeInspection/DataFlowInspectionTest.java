@@ -184,6 +184,8 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testUnknownFloatMayBeNaN() { doTest(); }
   public void testFloatEquality() { doTest(); }
   public void testLastConstantConditionInAnd() { doTest(); }
+  
+  public void testCompileTimeConstant() { doTest(); }
 
   public void testTransientFinalField() { doTest(); }
   public void testRememberLocalTransientFieldState() { doTest(); }

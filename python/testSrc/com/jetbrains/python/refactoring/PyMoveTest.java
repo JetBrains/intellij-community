@@ -200,6 +200,12 @@ public class PyMoveTest extends PyTestCase {
     doMoveFileTest("pkg1/subpkg1", "");
   }
 
+
+  // PY-14432
+  public void testRelativeImportSourceWithSpacesInsideMovedModule() {
+    doMoveFileTest("pkg/subpkg1/a.py", "");
+  }
+
   // PY-14595
   public void testNamespacePackageUsedInMovedFunction() {
     runWithLanguageLevel(LanguageLevel.PYTHON33, new Runnable() {

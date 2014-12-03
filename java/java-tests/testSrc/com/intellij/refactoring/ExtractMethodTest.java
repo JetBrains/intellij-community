@@ -58,6 +58,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
   }
 
   public void testExitPoints4() throws Exception {
+    doTest();
+  }
+
+  public void testExitPoints4Nullable() throws Exception {
     doExitPointsTest(false);
   }
 
