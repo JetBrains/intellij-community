@@ -100,7 +100,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     myFocusTrackback = new FocusTrackback(this, WindowManager.getInstance().suggestParentWindow(project), false);
 
     Component parent = parentComponent;
-    if (parent == null && project == null && !GraphicsEnvironment.isHeadless()) {
+    if (parent == null && project == null && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
       parent = JOptionPane.getRootFrame();
     }
 
