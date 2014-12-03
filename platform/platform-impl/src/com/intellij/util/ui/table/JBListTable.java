@@ -15,10 +15,12 @@
  */
 package com.intellij.util.ui.table;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.DottedBorder;
 import com.intellij.ui.EditorSettingsProvider;
@@ -51,12 +53,14 @@ public abstract class JBListTable {
   protected final JTable myInternalTable;
   private final JBTable mainTable;
   private final RowResizeAnimator myRowResizeAnimator;
+  private final Disposable myOnRemoveDisposable;
   private MouseEvent myMouseEvent;
   private MyCellEditor myCellEditor;
   private int myLastFocusedEditorComponentIdx = -1;
 
   public JBListTable(@NotNull final JTable t) {
     myInternalTable = t;
+    myOnRemoveDisposable = Disposer.newDisposable();
     final JBListTableModel model = new JBListTableModel(t.getModel()) {
       @Override
       public JBTableRow getRow(int index) {
@@ -245,15 +249,20 @@ public abstract class JBListTable {
       @Override
       public void removeNotify() {
         super.removeNotify();
-        myRowResizeAnimator.stopAnimation();
+        Disposer.dispose(myOnRemoveDisposable);
       }
     };
     mainTable.setStriped(true);
     myRowResizeAnimator = new RowResizeAnimator(mainTable);
+    Disposer.register(myOnRemoveDisposable, myRowResizeAnimator);
   }
 
   public void stopEditing() {
     TableUtil.stopEditing(mainTable);
+  }
+
+  public Disposable getOnRemoveDisposable() {
+    return myOnRemoveDisposable;
   }
 
   private static void installPaddingAndBordersForEditors(JBTableRowEditor editor) {
@@ -394,7 +403,7 @@ public abstract class JBListTable {
     }
   }
 
-  private static class RowResizeAnimator implements ActionListener {
+  private static class RowResizeAnimator implements ActionListener, Disposable {
     private static final int ANIMATION_STEP_MILLIS = 15;
     private static final int RESIZE_AMOUNT_PER_STEP = 5;
 
@@ -414,6 +423,11 @@ public abstract class JBListTable {
     @Override
     public void actionPerformed(final ActionEvent e) {
       doAnimationStep(e.getWhen());
+    }
+
+    @Override
+    public void dispose() {
+      stopAnimation();
     }
 
     private void startAnimation() {
