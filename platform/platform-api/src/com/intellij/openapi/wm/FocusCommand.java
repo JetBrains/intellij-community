@@ -44,7 +44,12 @@ public abstract class FocusCommand extends ActiveRunnable implements Expirable {
   private Expirable myExpirable;
 
   private static long lastProcessedCommandTime = 0;
-  protected final long commandCreationTime = System.currentTimeMillis();
+
+  public void setCommandCreationTime (long time) {
+    commandCreationTime = time;
+  }
+
+  protected long commandCreationTime = System.currentTimeMillis();
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.FocusCommand");
 

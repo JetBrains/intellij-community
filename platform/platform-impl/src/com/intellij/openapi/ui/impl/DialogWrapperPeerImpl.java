@@ -944,66 +944,57 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
         }
       }
 
+      public void setUpWindow () {
+        final DialogWrapper wrapper = getActiveWrapper();
+        if (wrapper == null && !myFocusedCallback.isProcessed()) {
+          myFocusedCallback.setRejected();
+          myTypeAheadDone.setRejected();
+          return;
+        }
+
+        if (myActivated) {
+          return;
+        }
+        myActivated = true;
+        JComponent toFocus = wrapper == null ? null : wrapper.getPreferredFocusedComponent();
+        if (toFocus == null) {
+          toFocus = getRootPane().getDefaultButton();
+        }
+
+        IJSwingUtilities.moveMousePointerOn(getRootPane().getDefaultButton());
+        setupSelectionOnPreferredComponent(toFocus);
+
+        if (toFocus != null) {
+          final JComponent toRequest = toFocus;
+          getFocusManager().requestFocus(toRequest, true);
+          notifyFocused(wrapper);
+        } else {
+          if (isShowing()) {
+            notifyFocused(wrapper);
+          }
+        }
+        if (myTypeAheadCallback != null) {
+          myTypeAheadCallback.setDone();
+        }
+      }
+
       @Override
       public void windowOpened(WindowEvent e) {
-        SwingUtilities.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            myOpened = true;
-            final DialogWrapper activeWrapper = getActiveWrapper();
-            if (activeWrapper == null) {
-              myFocusedCallback.setRejected();
-              myTypeAheadDone.setRejected();
-            }
-          }
-        });
+
+        setUpWindow();
+
+        myOpened = true;
+        final DialogWrapper activeWrapper = getActiveWrapper();
+        if (activeWrapper == null) {
+          myFocusedCallback.setRejected();
+          myTypeAheadDone.setRejected();
+        }
+
       }
 
       @Override
       public void windowActivated(final WindowEvent e) {
-        SwingUtilities.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            final DialogWrapper wrapper = getActiveWrapper();
-            if (wrapper == null && !myFocusedCallback.isProcessed()) {
-              myFocusedCallback.setRejected();
-              myTypeAheadDone.setRejected();
-              return;
-            }
-
-            if (myActivated) {
-              return;
-            }
-            myActivated = true;
-            JComponent toFocus = wrapper == null ? null : wrapper.getPreferredFocusedComponent();
-            if (toFocus == null) {
-              toFocus = getRootPane().getDefaultButton();
-            }
-
-            IJSwingUtilities.moveMousePointerOn(getRootPane().getDefaultButton());
-            setupSelectionOnPreferredComponent(toFocus);
-
-            if (toFocus != null) {
-              final JComponent toRequest = toFocus;
-              SwingUtilities.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                  if (isShowing() && isActive()) {
-                    getFocusManager().requestFocus(toRequest, true);
-                    notifyFocused(wrapper);
-                  }
-                }
-              });
-            } else {
-              if (isShowing()) {
-                notifyFocused(wrapper);
-              }
-            }
-            if (myTypeAheadCallback != null) {
-              myTypeAheadCallback.setDone();
-            }
-          }
-        });
+        setUpWindow();
       }
 
       private void notifyFocused(DialogWrapper wrapper) {
