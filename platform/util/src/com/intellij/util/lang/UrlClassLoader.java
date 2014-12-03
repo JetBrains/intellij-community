@@ -73,27 +73,27 @@ public class UrlClassLoader extends ClassLoader {
   private final ClassPath myClassPath;
   private final boolean myAllowBootstrapResources;
 
-  /** @deprecated use {@link #build()} (to remove in IDEA 14) */
+  /** @deprecated use {@link #build()}, left for compatibility with java.system.class.loader setting */
   public UrlClassLoader(@NotNull ClassLoader parent) {
     this(build().urls(((URLClassLoader)parent).getURLs()).parent(parent.getParent()).allowLock().useCache());
   }
 
-  /** @deprecated use {@link #build()} (to remove in IDEA 14) */
+  /** @deprecated use {@link #build()} (to remove in IDEA 15) */
   public UrlClassLoader(List<URL> urls, @Nullable ClassLoader parent) {
     this(build().urls(urls).parent(parent));
   }
 
-  /** @deprecated use {@link #build()} (to remove in IDEA 14) */
+  /** @deprecated use {@link #build()} (to remove in IDEA 15) */
   public UrlClassLoader(URL[] urls, @Nullable ClassLoader parent) {
     this(build().urls(urls).parent(parent));
   }
 
-  /** @deprecated use {@link #build()} (to remove in IDEA 14) */
+  /** @deprecated use {@link #build()} (to remove in IDEA 15) */
   public UrlClassLoader(List<URL> urls, @Nullable ClassLoader parent, boolean lockJars, boolean useCache) {
     this(build().urls(urls).parent(parent).allowLock(lockJars).useCache(useCache));
   }
 
-  /** @deprecated use {@link #build()} (to remove in IDEA 14) */
+  /** @deprecated use {@link #build()} (to remove in IDEA 15) */
   public UrlClassLoader(List<URL> urls, @Nullable ClassLoader parent, boolean lockJars, boolean useCache, boolean allowUnescaped, boolean preload) {
     super(parent);
     myURLs = ContainerUtil.map(urls, new Function<URL, URL>() {

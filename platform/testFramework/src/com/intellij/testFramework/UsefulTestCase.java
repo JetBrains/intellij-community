@@ -387,6 +387,8 @@ public abstract class UsefulTestCase extends TestCase {
       totalTeardown += entry.getValue();
     }
     System.out.println(String.format("Total overhead: setup %d ms, teardown %d ms", totalSetup, totalTeardown));
+    System.out.println(String.format("##teamcity[buildStatisticValue key='ideaTests.totalSetupMs' value='%d']", totalSetup));
+    System.out.println(String.format("##teamcity[buildStatisticValue key='ideaTests.totalTeardownMs' value='%d']", totalTeardown));
   }
 
   public static void replaceIdeEventQueueSafely() {

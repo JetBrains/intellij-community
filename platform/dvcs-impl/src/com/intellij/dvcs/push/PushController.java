@@ -15,20 +15,25 @@
  */
 package com.intellij.dvcs.push;
 
+import com.intellij.CommonBundle;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.push.ui.*;
 import com.intellij.dvcs.repo.Repository;
+import com.intellij.dvcs.ui.DvcsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.util.Function;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsFullCommitDetails;
@@ -48,6 +53,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static com.intellij.openapi.ui.Messages.OK;
+
 public class PushController implements Disposable {
 
   @NotNull private final Project myProject;
@@ -55,7 +62,7 @@ public class PushController implements Disposable {
   @NotNull private final List<PushSupport<?, ?, ?>> myPushSupports;
   @NotNull private final PushLog myPushLog;
   @NotNull private final VcsPushDialog myDialog;
-  @NotNull private final PushSettings myExcludedSettings;
+  @NotNull private final PushSettings myPushSettings;
   @NotNull private final Set<String> myExcludedRepositoryRoots;
   @Nullable private final Repository myCurrentlyOpenedRepository;
   private boolean mySingleRepoProject;
@@ -69,8 +76,8 @@ public class PushController implements Disposable {
                         @NotNull VcsPushDialog dialog,
                         @NotNull List<? extends Repository> preselectedRepositories, @Nullable Repository currentRepo) {
     myProject = project;
-    myExcludedSettings = ServiceManager.getService(project, PushSettings.class);
-    myExcludedRepositoryRoots = ContainerUtil.newHashSet(myExcludedSettings.getExcludedRepoRoots());
+    myPushSettings = ServiceManager.getService(project, PushSettings.class);
+    myExcludedRepositoryRoots = ContainerUtil.newHashSet(myPushSettings.getExcludedRepoRoots());
     myPreselectedRepositories = preselectedRepositories;
     myCurrentlyOpenedRepository = currentRepo;
     myPushSupports = getAffectedSupports(myProject);
@@ -429,7 +436,7 @@ public class PushController implements Disposable {
     Task.Backgroundable task = new Task.Backgroundable(myProject, "Pushing...", false) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        myExcludedSettings.saveExcludedRepoRoots(myExcludedRepositoryRoots);
+        myPushSettings.saveExcludedRepoRoots(myExcludedRepositoryRoots);
         for (PushSupport support : myPushSupports) {
           doPush(support, force);
         }
@@ -530,6 +537,65 @@ public class PushController implements Disposable {
       ContainerUtil.putIfNotNull(support, support.createOptionsPanel(), result);
     }
     return result;
+  }
+
+  public boolean ensureForcePushIsNeeded() {
+    Collection<MyRepoModel> selectedNodes = getSelectedRepoNode();
+    MyRepoModel selectedModel = ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(selectedNodes));
+    final PushSupport activePushSupport = selectedModel.getSupport();
+    final PushTarget commonTarget = getCommonTarget(selectedNodes);
+    if (commonTarget != null && activePushSupport.isSilentForcePushAllowed(commonTarget)) return true;
+    return Messages.showOkCancelDialog(myProject, DvcsBundle.message("push.force.confirmation.text",
+                                                                     commonTarget != null
+                                                                     ? " to <b>" +
+                                                                       commonTarget.getPresentation() + "</b>"
+                                                                     : ""),
+                                       "Force Push", "&Force Push",
+                                       CommonBundle.getCancelButtonText(),
+                                       Messages.getWarningIcon(),
+                                       commonTarget != null
+                                       ? new DialogWrapper.DoNotAskOption() {
+
+                                         @Override
+                                         public boolean isToBeShown() {
+                                           return true;
+                                         }
+
+                                         @Override
+                                         public void setToBeShown(boolean toBeShown, int exitCode) {
+                                           if (!toBeShown && exitCode == OK) {
+                                             activePushSupport.saveSilentForcePushTarget(commonTarget);
+                                           }
+                                         }
+
+                                         @Override
+                                         public boolean canBeHidden() {
+                                           return true;
+                                         }
+
+                                         @Override
+                                         public boolean shouldSaveOptionsOnCancel() {
+                                           return false;
+                                         }
+
+                                         @NotNull
+                                         @Override
+                                         public String getDoNotShowMessage() {
+                                           return "Don't warn about this target";
+                                         }
+                                       }
+                                       : null) == OK;
+  }
+
+  @Nullable
+  private static PushTarget getCommonTarget(@NotNull Collection<MyRepoModel> selectedNodes) {
+    final PushTarget commonTarget = ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(selectedNodes)).getTarget();
+    return commonTarget != null && !ContainerUtil.exists(selectedNodes, new Condition<MyRepoModel>() {
+      @Override
+      public boolean value(MyRepoModel model) {
+        return !commonTarget.equals(model.getTarget());
+      }
+    }) ? commonTarget : null;
   }
 
   private static class MyRepoModel<Repo extends Repository, S extends PushSource, T extends PushTarget> {

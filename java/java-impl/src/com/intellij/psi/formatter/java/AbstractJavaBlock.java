@@ -47,27 +47,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 import static com.intellij.psi.formatter.java.JavaFormatterUtil.getWrapType;
+import static com.intellij.psi.formatter.java.MultipleFieldDeclarationHelper.*;
 
 public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlock, ReservedWrapsProvider {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.formatter.java.AbstractJavaBlock");
-
-  protected static final Set<IElementType> ALIGN_IN_COLUMNS_ELEMENT_TYPES = ContainerUtil.newHashSet(JavaElementType.FIELD);
-
-  private static final AlignmentInColumnsConfig ALIGNMENT_IN_COLUMNS_CONFIG = new AlignmentInColumnsConfig(
-    TokenSet.create(JavaTokenType.IDENTIFIER),
-    JavaJspElementType.WHITE_SPACE_BIT_SET,
-    ElementType.JAVA_COMMENT_BIT_SET,
-    TokenSet.create(JavaTokenType.EQ),
-    TokenSet.create(JavaElementType.FIELD)
-  );
-
-  private static final Set<IElementType> VAR_DECLARATION_ELEMENT_TYPES_TO_ALIGN = ContainerUtil.newHashSet(
-    JavaElementType.MODIFIER_LIST,
-    JavaElementType.TYPE,
-    JavaTokenType.IDENTIFIER,
-    JavaTokenType.EQ
-  );
 
   @NotNull protected final CommonCodeStyleSettings mySettings;
   @NotNull protected final JavaCodeStyleSettings myJavaSettings;
@@ -83,7 +67,6 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   protected Alignment myReservedAlignment2;
 
   private final JavaWrapManager myWrapManager;
-  private final AlignmentInColumnsHelper myAlignmentInColumnsHelper;
   private Map<IElementType, Wrap> myPreferredWraps;
   private AbstractJavaBlock myParentBlock;
 
@@ -94,7 +77,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
                               @NotNull final CommonCodeStyleSettings settings,
                               @NotNull JavaCodeStyleSettings javaSettings)
   {
-    this(node, wrap, indent, settings, javaSettings, JavaWrapManager.INSTANCE, AlignmentStrategy.wrap(alignment), AlignmentInColumnsHelper.INSTANCE);
+    this(node, wrap, indent, settings, javaSettings, JavaWrapManager.INSTANCE, AlignmentStrategy.wrap(alignment));
   }
 
   protected AbstractJavaBlock(@NotNull final ASTNode node,
@@ -104,7 +87,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
                               @NotNull final CommonCodeStyleSettings settings,
                               @NotNull JavaCodeStyleSettings javaSettings)
   {
-    this(node, wrap, indent, settings, javaSettings, JavaWrapManager.INSTANCE, alignmentStrategy, AlignmentInColumnsHelper.INSTANCE);
+    this(node, wrap, indent, settings, javaSettings, JavaWrapManager.INSTANCE, alignmentStrategy);
   }
 
   protected AbstractJavaBlock(@NotNull final ASTNode node,
@@ -113,8 +96,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
                               @NotNull final CommonCodeStyleSettings settings,
                               @NotNull JavaCodeStyleSettings javaSettings,
                               final JavaWrapManager wrapManager,
-                              @NotNull final AlignmentStrategy alignmentStrategy,
-                              AlignmentInColumnsHelper alignmentInColumnsHelper) {
+                              @NotNull final AlignmentStrategy alignmentStrategy) {
     super(node, wrap, createBlockAlignment(alignmentStrategy, node));
     mySettings = settings;
     myJavaSettings = javaSettings;
@@ -122,7 +104,6 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     myIndent = indent;
     myWrapManager = wrapManager;
     myAlignmentStrategy = alignmentStrategy;
-    myAlignmentInColumnsHelper = alignmentInColumnsHelper;
   }
 
   @Nullable
@@ -617,55 +598,6 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     }
   }
 
-  /**
-   * Serves for processing composite field definitions as a single formatting block.
-   * <p/>
-   * <code>'Composite field definition'</code> looks like {@code 'int i1, i2 = 2'}. It produces two nodes of type
-   * {@link JavaElementType#FIELD} - {@code 'int i1'} and {@code 'i2 = 2'}. This method returns the second node if the first one
-   * is given (the given node is returned for <code>'single'</code> fields).
-   *
-   * @param child     child field node to check
-   * @return          last child field node at the field group identified by the given node if any; given child otherwise
-   */
-  @NotNull
-  private static ASTNode findLastFieldInGroup(@NotNull final ASTNode child) {
-    PsiElement psi = child.getPsi();
-    if (psi == null) {
-      return child;
-    }
-    final PsiTypeElement typeElement = ((PsiVariable)psi).getTypeElement();
-    if (typeElement == null) return child;
-
-    ASTNode lastChildNode = child.getLastChildNode();
-    if (lastChildNode == null) return child;
-
-    if (lastChildNode.getElementType() == JavaTokenType.SEMICOLON) return child;
-
-    ASTNode currentResult = child;
-    ASTNode currentNode = child.getTreeNext();
-
-    while (currentNode != null) {
-      if (currentNode.getElementType() == TokenType.WHITE_SPACE
-          || currentNode.getElementType() == JavaTokenType.COMMA
-          || StdTokenSets.COMMENT_BIT_SET.contains(currentNode.getElementType())) {
-      }
-      else if (currentNode.getElementType() == JavaElementType.FIELD) {
-        if (compoundFieldPart(currentNode)) {
-          currentResult = currentNode;
-        }
-        else {
-          return currentResult;
-        }
-      }
-      else {
-        return currentResult;
-      }
-
-      currentNode = currentNode.getTreeNext();
-    }
-    return currentResult;
-  }
-
   @Nullable
   private ASTNode processTernaryOperationRange(@NotNull final List<Block> result,
                                                @NotNull final ASTNode child,
@@ -756,7 +688,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       if (role == ChildRole.MODIFIER_LIST) return defaultAlignment;
       return null;
     }
-    else if (ALIGN_IN_COLUMNS_ELEMENT_TYPES.contains(nodeType)) {
+    else if (JavaElementType.FIELD == nodeType) {
       return getVariableDeclarationSubElementAlignment(child);
     }
     else if (nodeType == JavaElementType.METHOD) {
@@ -1214,7 +1146,10 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     processChild(localResult, child, AlignmentStrategy.getNullStrategy(), null, Indent.getNoneIndent());
     child = child.getTreeNext();
 
-    AlignmentStrategy varDeclarationAlignmentStrategy = AlignmentStrategy.createAlignmentPerTypeStrategy(VAR_DECLARATION_ELEMENT_TYPES_TO_ALIGN, JavaElementType.FIELD, true);
+    ChildAlignmentStrategyProvider alignmentStrategyProvider = ChildAlignmentStrategyProvider.NULL_STRATEGY_PROVIDER;
+    if (mySettings.ALIGN_GROUP_FIELD_DECLARATIONS) {
+      alignmentStrategyProvider = new SubsequentFieldAligner(mySettings);
+    }
 
     while (child != null) {
       if (FormatterUtil.containsWhiteSpacesOnly(child)) {
@@ -1222,12 +1157,8 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
         continue;
       }
 
-      if (!ElementType.JAVA_COMMENT_BIT_SET.contains(child.getElementType()) && !shouldUseVarDeclarationAlignment(child)) {
-        varDeclarationAlignmentStrategy = AlignmentStrategy.createAlignmentPerTypeStrategy(VAR_DECLARATION_ELEMENT_TYPES_TO_ALIGN, JavaElementType.FIELD, true);
-      }
-
       Indent childIndent = getIndentForCodeBlock(child, childrenIndent);
-      AlignmentStrategy alignmentStrategyToUse = getAlignmentStrategy(child, varDeclarationAlignmentStrategy);
+      AlignmentStrategy alignmentStrategyToUse = alignmentStrategyProvider.getNextChildStrategy(child);
 
       final boolean isRBrace = isRBrace(child);
       child = processChild(localResult, child, alignmentStrategyToUse, childWrap, childIndent);
@@ -1243,12 +1174,6 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     }
     result.add(createCodeBlockBlock(localResult, indent, childrenIndent));
     return null;
-  }
-
-  private AlignmentStrategy getAlignmentStrategy(ASTNode child, AlignmentStrategy varDeclarationAlignmentStrategy) {
-    return ALIGN_IN_COLUMNS_ELEMENT_TYPES.contains(child.getElementType())
-           ? varDeclarationAlignmentStrategy
-           : AlignmentStrategy.getNullStrategy();
   }
 
   private Indent getIndentForCodeBlock(ASTNode child, int childrenIndent) {
@@ -1268,30 +1193,6 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
 
   public void setParentBlock(@NotNull AbstractJavaBlock parentBlock) {
     myParentBlock = parentBlock;
-  }
-
-  protected boolean shouldUseVarDeclarationAlignment(@NotNull ASTNode node) {
-    return mySettings.ALIGN_GROUP_FIELD_DECLARATIONS && ALIGN_IN_COLUMNS_ELEMENT_TYPES.contains(node.getElementType())
-           && (!myAlignmentInColumnsHelper.useDifferentVarDeclarationAlignment(
-                  node, ALIGNMENT_IN_COLUMNS_CONFIG, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS)
-           || compoundFieldPart(node));
-  }
-
-  /**
-   * @return <code>true</code> if given node is a non-first part of composite field definition; <code>false</code> otherwise
-   */
-  protected static boolean compoundFieldPart(@NotNull ASTNode node) {
-    if (node.getElementType() != JavaElementType.FIELD) {
-      return false;
-    }
-    ASTNode firstChild = node.getFirstChildNode();
-    if (firstChild == null || firstChild.getElementType() != JavaTokenType.IDENTIFIER) {
-      return false;
-    }
-
-    ASTNode prev = node.getTreePrev();
-    return prev == null || !JavaJspElementType.WHITE_SPACE_BIT_SET.contains(prev.getElementType())
-           || StringUtil.countNewLines(prev.getChars()) <= 1;
   }
 
   @NotNull

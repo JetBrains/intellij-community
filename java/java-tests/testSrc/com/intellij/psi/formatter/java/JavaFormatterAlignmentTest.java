@@ -238,6 +238,23 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
       "}"
     );
   }
+
+  public void testDoNotAlignIfNotEnabled() {
+    getSettings().ALIGN_GROUP_FIELD_DECLARATIONS = false;
+    doTextTest(
+      "public class Test {\n" +
+      "private Long field2 = null;\n" +
+      "private final Object field1 = null;\n" +
+      "private int i = 1;\n" +
+      "}",
+
+      "public class Test {\n" +
+      "    private Long field2 = null;\n" +
+      "    private final Object field1 = null;\n" +
+      "    private int i = 1;\n" +
+      "}"
+    );
+  }
   
   public void testAnnotatedAndNonAnnotatedFieldsInColumnsAlignment() {
     // Inspired by IDEA-60237

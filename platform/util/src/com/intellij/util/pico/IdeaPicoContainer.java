@@ -16,67 +16,18 @@
 
 package com.intellij.util.pico;
 
-import org.jetbrains.annotations.NotNull;
-import org.picocontainer.*;
-import org.picocontainer.defaults.*;
-import org.picocontainer.monitors.DefaultComponentMonitor;
+import org.picocontainer.PicoContainer;
 
-import java.util.*;
-
+/**
+ * @deprecated please use DefaultPicoContainer directly
+ */
 public class IdeaPicoContainer extends DefaultPicoContainer {
 
   public IdeaPicoContainer() {
-    this(null);
+    super(null);
   }
 
   public IdeaPicoContainer(final PicoContainer parent) {
-    super(new MyComponentAdapterFactory(), parent);
-  }
-
-  private static class MyComponentAdapterFactory extends MonitoringComponentAdapterFactory {
-    private final LifecycleStrategy myLifecycleStrategy;
-
-    private MyComponentAdapterFactory() {
-      myLifecycleStrategy = new DefaultLifecycleStrategy(new DefaultComponentMonitor());
-    }
-
-    @Override
-    public ComponentAdapter createComponentAdapter(@NotNull Object componentKey, @NotNull Class componentImplementation, Parameter[] parameters)
-      throws PicoIntrospectionException, AssignabilityRegistrationException, NotConcreteRegistrationException {
-      return new CachingComponentAdapter(
-        new ConstructorInjectionComponentAdapter(componentKey, componentImplementation, parameters, true, currentMonitor(), myLifecycleStrategy));
-    }
-
-    @Override
-    public void changeMonitor(ComponentMonitor monitor) {
-      super.changeMonitor(monitor);
-      if (myLifecycleStrategy instanceof ComponentMonitorStrategy) {
-        ((ComponentMonitorStrategy)myLifecycleStrategy).changeMonitor(monitor);
-      }
-    }
-  }
-
-
-
-  @Override
-  public ComponentAdapter getComponentAdapterOfType(final Class componentType) {
-    return super.getComponentAdapterOfType(componentType);
-  }
-
-  @Override
-  public List getComponentAdaptersOfType(final Class componentType) {
-    if (componentType == null) return Collections.emptyList();
-    if (componentType == String.class) return Collections.emptyList();
-
-    List<ComponentAdapter> result = new ArrayList<ComponentAdapter>();
-
-    final Map<String,ComponentAdapter> cache = getAssignablesCache();
-    final ComponentAdapter cacheHit = cache.get(componentType.getName());
-    if (cacheHit != null) {
-      result.add(cacheHit);
-    }
-
-    result.addAll(getNonAssignableAdaptersOfType(componentType));
-    return result;
+    super(parent);
   }
 }

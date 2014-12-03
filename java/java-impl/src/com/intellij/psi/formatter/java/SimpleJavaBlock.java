@@ -115,7 +115,7 @@ public class SimpleJavaBlock extends AbstractJavaBlock {
   }
 
   private AlignmentStrategy getAlignmentStrategy(ASTNode child) {
-    return ALIGN_IN_COLUMNS_ELEMENT_TYPES.contains(myNode.getElementType())
+    return JavaElementType.FIELD == myNode.getElementType()
            ? myAlignmentStrategy
            : AlignmentStrategy.wrap(chooseAlignment(myReservedAlignment, myReservedAlignment2, child));
   }

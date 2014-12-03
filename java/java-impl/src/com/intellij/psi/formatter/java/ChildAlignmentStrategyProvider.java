@@ -13,16 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.caches;
+package com.intellij.psi.formatter.java;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.formatting.alignment.AlignmentStrategy;
+import com.intellij.lang.ASTNode;
+import org.jetbrains.annotations.NotNull;
 
-public interface CachesInvalidater {
-  ExtensionPointName<CachesInvalidater> EP_NAME = ExtensionPointName.create("com.intellij.cachesInvalidater");
+public interface ChildAlignmentStrategyProvider {
 
-  /**
-   * The method should not consume significant time e.g. all the clearing operations should be executed next time the corresponding cache is
-   * required or checked for existing.
-   */
-  void invalidateCaches();
+  AlignmentStrategy getNextChildStrategy(@NotNull ASTNode child);
+
+  ChildAlignmentStrategyProvider NULL_STRATEGY_PROVIDER = new ChildAlignmentStrategyProvider() {
+    @Override
+    public AlignmentStrategy getNextChildStrategy(@NotNull ASTNode child) {
+      return AlignmentStrategy.getNullStrategy();
+    }
+  };
+
 }

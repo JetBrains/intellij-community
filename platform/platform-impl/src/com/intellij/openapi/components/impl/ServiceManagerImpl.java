@@ -229,8 +229,7 @@ public class ServiceManagerImpl implements BaseComponent {
 
     private synchronized ComponentAdapter getDelegate() {
       if (myDelegate == null) {
-        myDelegate = new CachingComponentAdapter(new ConstructorInjectionComponentAdapter(getComponentKey(), loadClass(
-          myDescriptor.getImplementation()), null, true));
+        myDelegate = new ConstructorInjectionComponentAdapter(getComponentKey(), loadClass(myDescriptor.getImplementation()), null, true);
       }
 
       return myDelegate;
