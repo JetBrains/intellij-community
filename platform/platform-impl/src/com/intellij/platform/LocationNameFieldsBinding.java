@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithBrowseButton.BrowseFolderActionListener;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
@@ -111,7 +112,6 @@ public class LocationNameFieldsBinding {
     return !currentName.equals(mySuggestedProjectName);
   }
 
-
   private class NameFieldDocument extends PlainDocument {
     public NameFieldDocument(final JTextField projectNameTextField, final TextFieldWithBrowseButton locationField) {
       addDocumentListener(new DocumentAdapter() {
@@ -128,14 +128,25 @@ public class LocationNameFieldsBinding {
 
     @Override
     public void insertString(int offs, String str, AttributeSet a) throws BadLocationException {
-      boolean ok = true;
-      for (int idx = 0; idx < str.length() && ok; idx++) {
-        char ch = str.charAt(idx);
-        ok = ch != File.separatorChar && ch != '\\' && ch != '/' && ch != '|' && ch != ':';
+      StringBuilder sb = null;
+      for (int i = 0; i < str.length(); i++) {
+        char c = str.charAt(i);
+        boolean replace = c == '\\' || c == '/' || SystemInfo.isWindows && (c == '|' || c == ':');
+        if (replace) {
+          if (sb == null) {
+            sb = new StringBuilder(str.length());
+            sb.append(str.substring(0, i));
+          }
+          sb.append('_');
+        }
+        else if (sb != null) {
+          sb.append(c);
+        }
       }
-      if (ok) {
-        super.insertString(offs, str, a);
+      if (sb != null) {
+        str = sb.toString();
       }
+      super.insertString(offs, str, a);
     }
   }
 }
