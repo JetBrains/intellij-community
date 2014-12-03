@@ -42,6 +42,17 @@ abstract class NullityInferenceFromSourceTestCase extends LightCodeInsightFixtur
     assert inferNullity(parse('String foo() { return bar(); }; String bar() { return "z"; }; ')) == NOT_NULL
   }
 
+  void "test same delegate method invoked twice"() {
+    assert inferNullity(parse('''
+String foo() { 
+  if (equals(2)) return bar();
+  if (equals(3)) return bar();
+  return "abc"; 
+}
+String bar() { return "z"; }
+''')) == NOT_NULL
+  }
+
   void "test if branch returns null"() {
     assert inferNullity(parse('String bar() { if (equals(2)) return null; return "a"; }; ')) == NULLABLE
   }
