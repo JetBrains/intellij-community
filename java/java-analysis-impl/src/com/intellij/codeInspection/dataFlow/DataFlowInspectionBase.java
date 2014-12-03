@@ -536,6 +536,10 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
   }
 
   private static boolean isCompileConstantInIfCondition(PsiElement element) {
+    if (element instanceof PsiPrefixExpression && ((PsiPrefixExpression)element).getOperationTokenType() == JavaTokenType.EXCL) {
+      return isCompileConstantInIfCondition(((PsiPrefixExpression)element).getOperand());
+    }
+
     if (!(element instanceof PsiReferenceExpression)) return false;
     PsiElement resolved = ((PsiReferenceExpression)element).resolve();
     if (!(resolved instanceof PsiField)) return false;
