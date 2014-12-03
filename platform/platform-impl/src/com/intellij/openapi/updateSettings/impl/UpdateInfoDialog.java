@@ -22,6 +22,7 @@ import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.JBColor;
@@ -208,7 +209,12 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
       }
       configureMessageArea(myUpdateMessage, message, null, BrowserHyperlinkListener.INSTANCE);
 
-      myCurrentVersion.setText(formatVersion(appInfo.getFullVersion(), appInfo.getBuild().asStringWithoutProductCode()));
+      myCurrentVersion.setText(
+        formatVersion(
+          appInfo.getFullVersion() + (appInfo instanceof ApplicationInfoEx && ((ApplicationInfoEx)appInfo).isEAP() ? " EAP": ""),
+          appInfo.getBuild().asStringWithoutProductCode()
+        )
+      );
       myNewVersion.setText(formatVersion(myLatestBuild.getVersion(), myLatestBuild.getNumber().asStringWithoutProductCode()));
 
       if (myPatch != null) {
