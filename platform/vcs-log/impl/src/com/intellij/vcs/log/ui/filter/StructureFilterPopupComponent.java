@@ -97,7 +97,12 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
 
     List<AnAction> actions = new ArrayList<AnAction>();
     if (roots.size() <= 10) {
-      for (VirtualFile root : roots) {
+      for (VirtualFile root : ContainerUtil.sorted(roots, new Comparator<VirtualFile>() {
+        @Override
+        public int compare(VirtualFile o1, VirtualFile o2) {
+          return o1.getName().compareTo(o2.getName());
+        }
+      })) {
         actions.add(new SelectVisibleRootAction(root));
       }
     }
