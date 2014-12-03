@@ -132,7 +132,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   private final AtomicLong elapsedAutoDetect = new AtomicLong();
 
   @VisibleForTesting
-  public void initStandardFileTypes() {
+  void initStandardFileTypes() {
     final FileTypeConsumer consumer = new FileTypeConsumer() {
       @Override
       public void consume(@NotNull FileType fileType) {
@@ -332,7 +332,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
 
   private static void writeImportedExtensionsMap(final Element map, final ImportedFileType type) {
     for (FileNameMatcher matcher : type.getOriginalPatterns()) {
-      Element content = AbstractFileType.writeMapping(type, matcher, false);
+      Element content = AbstractFileType.writeMapping(type.getName(), matcher, false);
       if (content != null) {
         map.addContent(content);
       }
@@ -1014,6 +1014,13 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
       writeExtensionsMap(map, type, true);
     }
 
+    for (Map.Entry<FileNameMatcher, String> entry : myUnresolvedMappings.entrySet()) {
+      Element content = AbstractFileType.writeMapping(entry.getValue(), entry.getKey(), true);
+      if (content != null) {
+        map.addContent(content);
+      }
+    }
+
     int value = fileTypeChangedCount.get();
     if (value != 0) {
       JDOMExternalizer.write(parentNode, "fileTypeChangedCounter", value);
@@ -1030,7 +1037,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
       }
       else if (shouldSave(type)) {
         if (!(type instanceof ImportedFileType) || !((ImportedFileType)type).getOriginalPatterns().contains(matcher)) {
-          Element content = AbstractFileType.writeMapping(type, matcher, specifyTypeName);
+          Element content = AbstractFileType.writeMapping(type.getName(), matcher, specifyTypeName);
           if (content != null) {
             map.addContent(content);
           }
@@ -1364,9 +1371,15 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     }
   }
 
-  @VisibleForTesting
-  public Map<FileNameMatcher, Pair<FileType, Boolean>> getRemovedMappings() {
+  Map<FileNameMatcher, Pair<FileType, Boolean>> getRemovedMappings() {
     return myRemovedMappings;
+  }
+
+  @TestOnly
+  void clearForTests() {
+    myStandardFileTypes.clear();
+    myUnresolvedMappings.clear();
+    mySchemesManager.clearAllSchemes();
   }
 
   @Override
