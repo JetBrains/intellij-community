@@ -1304,11 +1304,14 @@ public class BuildManager implements ApplicationComponent{
                 // this will ensure that we'll be able to obtain VirtualFile for existing roots
                 CompilerUtil.refreshOutputDirectories(rootFiles, false);
 
-                final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
                 final LocalFileSystem lfs = LocalFileSystem.getInstance();
                 final Set<VirtualFile> filesToRefresh = new HashSet<VirtualFile>();
                 ApplicationManager.getApplication().runReadAction(new Runnable() {
                   public void run() {
+                    if (project.isDisposed()) {
+                      return;
+                    }
+                    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
                     for (File root : rootFiles) {
                       final VirtualFile rootFile = lfs.findFileByIoFile(root);
                       if (rootFile != null && fileIndex.isInSourceContent(rootFile)) {
