@@ -28,6 +28,7 @@ public class _FirstInSuiteTest extends TestCase {
   public static long suiteStarted = 0L;
 
   public void testNothing() throws Exception {
+    suiteStarted = System.nanoTime();
     SwingUtilities.invokeAndWait(new Runnable() {
       @Override
       public void run() {
@@ -48,7 +49,6 @@ public class _FirstInSuiteTest extends TestCase {
 
   // performance tests
   public void testNothingPerformance() throws Exception {
-    suiteStarted = System.nanoTime();
     testNothing();
   }
 }
