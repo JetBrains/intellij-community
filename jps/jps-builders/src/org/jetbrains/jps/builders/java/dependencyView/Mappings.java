@@ -1870,10 +1870,8 @@ public class Mappings {
           if (!c.isLocal() && !c.isAnonymous() && isEmpty(c.getOuterClassName())) {
             final Collection<File> currentSources = myClassToSourceFile.get(c.name);
             final File currentlyMappedTo = currentSources != null && currentSources.size() == 1? currentSources.iterator().next() : null;
-            Collection<File> newSources = myDelta.myClassToSourceFile.get(c.name);
             // only check, if exactly one file is mapped
-            if (currentlyMappedTo != null && !myCompiledFiles.contains(currentlyMappedTo) && (newSources == null || newSources.size() <= 1)
-                && !FileUtil.filesEqual(currentlyMappedTo, srcFile) && currentlyMappedTo.exists() && myFilter.belongsToCurrentTargetChunk(currentlyMappedTo)) {
+            if (currentlyMappedTo != null && !myCompiledFiles.contains(currentlyMappedTo) && !FileUtil.filesEqual(currentlyMappedTo, srcFile) && currentlyMappedTo.exists() && myFilter.belongsToCurrentTargetChunk(currentlyMappedTo)) {
               // Same classes from different source files.
               // Schedule for recompilation both to make possible 'duplicate sources' error evident
               debug("Scheduling for recompilation duplicated sources: ", currentlyMappedTo.getPath() + "; " + srcFile.getPath());
