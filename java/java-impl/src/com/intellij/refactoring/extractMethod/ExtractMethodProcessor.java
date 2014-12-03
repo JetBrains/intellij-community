@@ -638,7 +638,14 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   @TestOnly
-  public void testPrepare(PsiType returnType) {
+  public void testPrepare(PsiType returnType, boolean makeStatic) throws PrepareFailedException{
+    if (makeStatic) {
+      if (!isCanBeStatic()) {
+        throw new PrepareFailedException("Failed to make static", myElements[0]);
+      }
+      myInputVariables.setPassFields(true);
+      myStatic = true;
+    }
     testPrepare();
     if (returnType != null) {
       myReturnType = returnType;
@@ -1464,8 +1471,21 @@ public class ExtractMethodProcessor implements MatchProvider {
   private boolean applyChosenClassAndExtract(List<PsiVariable> inputVariables, @Nullable Pass<ExtractMethodProcessor> extractPass)
     throws PrepareFailedException {
     myStatic = shouldBeStatic();
+    final Set<PsiField> fields = new LinkedHashSet<PsiField>();
     if (!PsiUtil.isLocalOrAnonymousClass(myTargetClass) && (myTargetClass.getContainingClass() == null || myTargetClass.hasModifierProperty(PsiModifier.STATIC))) {
-      ElementNeedsThis needsThis = new ElementNeedsThis(myTargetClass);
+      ElementNeedsThis needsThis = new ElementNeedsThis(myTargetClass) {
+        @Override
+        protected void visitClassMemberReferenceElement(PsiMember classMember, PsiJavaCodeReferenceElement classMemberReference) {
+          if (classMember instanceof PsiField && !classMember.hasModifierProperty(PsiModifier.STATIC)) {
+            final PsiExpression expression = PsiTreeUtil.getParentOfType(classMemberReference, PsiExpression.class, false);
+            if (expression == null || !PsiUtil.isAccessedForWriting(expression)) {
+              fields.add((PsiField)classMember);
+              return;
+            }
+          }
+          super.visitClassMemberReferenceElement(classMember, classMemberReference);
+        }
+      };
       for (int i = 0; i < myElements.length && !needsThis.usesMembers(); i++) {
         PsiElement element = myElements[i];
         element.accept(needsThis);
@@ -1477,6 +1497,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
 
     myInputVariables = new InputVariables(inputVariables, myProject, new LocalSearchScope(myElements), true);
+    myInputVariables.setUsedInstanceFields(fields);
 
     if (!checkExitPoints()){
       return false;

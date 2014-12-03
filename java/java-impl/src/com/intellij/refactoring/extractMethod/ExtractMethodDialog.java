@@ -280,8 +280,17 @@ public class ExtractMethodDialog extends DialogWrapper implements AbstractExtrac
     if (myStaticFlag || myCanBeStatic) {
       myMakeStatic.setEnabled(!myStaticFlag);
       myMakeStatic.setSelected(myStaticFlag);
+      if (myVariableData.hasInstanceFields()) {
+        myMakeStatic.setText(RefactoringBundle.message("declare.static.pass.fields.checkbox"));
+      }
       myMakeStatic.addItemListener(new ItemListener() {
         public void itemStateChanged(ItemEvent e) {
+          if (myVariableData.hasInstanceFields()) {
+            myVariableData.setPassFields(myMakeStatic.isSelected());
+            myInputVariables = myVariableData.getInputVariables().toArray(new VariableData[myVariableData.getInputVariables().size()]);
+            updateVarargsEnabled();
+            createParametersPanel();
+          }
           updateSignature();
         }
       });
