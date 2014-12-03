@@ -23,7 +23,9 @@ public abstract class CachesInvalidator {
 
 
   /**
-   * @return description of the caches to be cleared, shown in the warning dialog to the user  
+   * @return description of the files to be cleared, shown in the warning dialog to the user.
+   *         When to use: when invalidation will lead to the loss of a potentially valuable to the user information, e.g. Local History.
+   *         Do not use:  when caches are easily re-buildable and doesn't contain user's data (to avoid unnecessary confusion). 
    */
   @Nullable
   public String getDescription() { return null; } 
