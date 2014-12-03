@@ -2346,11 +2346,6 @@
   <item name="java.lang.System void checkKey(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
-  <item name="java.lang.System void exit(int)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;_ -&gt; fail&quot;"/>
-    </annotation>
-  </item>
   <item name="java.lang.System void setProperties(java.util.Properties) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>

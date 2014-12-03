@@ -240,7 +240,7 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
   private JavaResolveResult[] resolve(IElementType parentType, @NotNull PsiFile containingFile) {
     if (parentType == JavaElementType.REFERENCE_EXPRESSION) {
       JavaResolveResult[] result = resolveToVariable(containingFile);
-      if (result.length > 0) {
+      if (result.length == 1 && result[0].isAccessible()) {
         return result;
       }
 

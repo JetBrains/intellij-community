@@ -106,8 +106,8 @@ public class ControlFlowWrapper {
     }
 
     if (myExitPoints.size() != 1) {
-      areExitStatementsTheSame();
       myGenerateConditionalExit = true;
+      areExitStatementsTheSame();
     }
     return myExitStatements;
   }

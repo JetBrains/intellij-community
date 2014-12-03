@@ -75,18 +75,22 @@ public class NullityInference {
           PsiExpression value = statement.getReturnValue();
           if (value == null) {
             hasErrors.set(true);
-          } else {
-            if (value instanceof PsiLiteralExpression) {
-              if (value.textMatches(PsiKeyword.NULL)) {
-                hasNulls.set(true);
-              } else {
-                hasNotNulls.set(true);
-              }
-            } else if (value instanceof PsiMethodCallExpression) {
-              calls.add((PsiMethodCallExpression)value);
-            } else {
-              hasUnknowns.set(true);
+          } else if (value instanceof PsiLiteralExpression) {
+            if (value.textMatches(PsiKeyword.NULL)) {
+              hasNulls.set(true);
             }
+            else {
+              hasNotNulls.set(true);
+            }
+          }
+          else if (value.getType() instanceof PsiPrimitiveType) {
+            hasNotNulls.set(true);
+          }
+          else if (value instanceof PsiMethodCallExpression) {
+            calls.add((PsiMethodCallExpression)value);
+          }
+          else {
+            hasUnknowns.set(true);
           }
           super.visitReturnStatement(statement);
         }

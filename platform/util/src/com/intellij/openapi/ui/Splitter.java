@@ -286,7 +286,7 @@ public class Splitter extends JPanel {
       }
 
       int iSize1 = (int)Math.round(Math.floor(size1));
-      int iSize2 = (int)Math.round(total - size1 - d);
+      int iSize2 = total - iSize1 - d;
 
       if (isVertical()) {
         firstRect.setBounds(0, 0, width, iSize1);

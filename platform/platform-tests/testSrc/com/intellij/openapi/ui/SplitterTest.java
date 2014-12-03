@@ -30,7 +30,7 @@ public class SplitterTest extends TestCase{
     resizeTest(new Splitter(false));
   }
 
-  private void resizeTest(Splitter splitter) {
+  private static void resizeTest(Splitter splitter) {
     JPanel jPanel1 = new JPanel();
     jPanel1.setMinimumSize(new Dimension(100, 100));
     JPanel jPanel2 = new JPanel();
@@ -48,9 +48,11 @@ public class SplitterTest extends TestCase{
     splitter.doLayout();
     checkBounds(splitter);
 
-    splitter.setProportion(.1f);
-    splitter.doLayout();
-    checkBounds(splitter);
+    for (float proportion = 0; proportion <= 1; proportion+=0.01) {
+      splitter.setProportion(proportion);
+      splitter.doLayout();
+      checkBounds(splitter);
+    }
 
     splitter.setProportion(.9f);
     splitter.doLayout();
@@ -86,7 +88,7 @@ public class SplitterTest extends TestCase{
   }
 
 
-  private void checkBounds(Splitter splitter) {
+  private static void checkBounds(Splitter splitter) {
     Dimension firstSize = splitter.getFirstComponent().getSize();
     Dimension secondSize = splitter.getSecondComponent().getSize();
 

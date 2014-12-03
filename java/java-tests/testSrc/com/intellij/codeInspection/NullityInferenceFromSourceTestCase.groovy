@@ -50,6 +50,18 @@ abstract class NullityInferenceFromSourceTestCase extends LightCodeInsightFixtur
     assert inferNullity(parse('String foo() { return bar(); }; String bar() { if (equals(2)) return null; return "a"; }; ')) == UNKNOWN
   }
 
+  void "test return boxed boolean constant"() {
+    assert inferNullity(parse('Object foo() { return true; }')) == NOT_NULL
+  }
+
+  void "test return boxed boolean value"() {
+    assert inferNullity(parse('Object foo(Object o) { return o == null; }')) == NOT_NULL
+  }
+
+  void "test return boxed integer"() {
+    assert inferNullity(parse('Object foo() { return 1; }')) == NOT_NULL
+  }
+
   protected abstract Nullness inferNullity(PsiMethod method)
 
   private PsiMethod parse(String method) {

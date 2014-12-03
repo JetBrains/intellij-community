@@ -16,7 +16,6 @@
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.InferredAnnotationsManager;
 import com.intellij.codeInspection.bytecodeAnalysis.asm.LeakingParameters;
 import com.intellij.codeInspection.bytecodeAnalysis.data.*;
 import com.intellij.openapi.util.io.FileUtil;
@@ -48,7 +47,7 @@ public class BytecodeAnalysisTest extends JavaCodeInsightFixtureTestCase {
   public static final String ORG_JETBRAINS_ANNOTATIONS_CONTRACT = Contract.class.getName();
   private final String myClassesProjectRelativePath = "/classes/" + Test01.class.getPackage().getName().replace('.', '/');
   private JavaPsiFacade myJavaPsiFacade;
-  private InferredAnnotationsManager myInferredAnnotationsManager;
+  private ProjectBytecodeAnalysis myBytecodeAnalysisService;
   private MessageDigest myMessageDigest;
 
 
@@ -56,7 +55,7 @@ public class BytecodeAnalysisTest extends JavaCodeInsightFixtureTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     myJavaPsiFacade = JavaPsiFacade.getInstance(myModule.getProject());
-    myInferredAnnotationsManager = InferredAnnotationsManager.getInstance(myModule.getProject());
+    myBytecodeAnalysisService = ProjectBytecodeAnalysis.getInstance(myModule.getProject());
     myMessageDigest = MessageDigest.getInstance("MD5");
     setUpDataClasses();
   }
@@ -131,7 +130,7 @@ public class BytecodeAnalysisTest extends JavaCodeInsightFixtureTestCase {
       params: for (int i = 0; i < annotations.length; i++) {
         Annotation[] parameterAnnotations = annotations[i];
         PsiParameter psiParameter = psiMethod.getParameterList().getParameters()[i];
-        PsiAnnotation inferredAnnotation = myInferredAnnotationsManager.findInferredAnnotation(psiParameter, AnnotationUtil.NOT_NULL);
+        PsiAnnotation inferredAnnotation = myBytecodeAnalysisService.findInferredAnnotation(psiParameter, AnnotationUtil.NOT_NULL);
         for (Annotation parameterAnnotation : parameterAnnotations) {
           if (parameterAnnotation.annotationType() == ExpectNotNull.class) {
             assertNotNull(javaMethod.toString() + " " + i, inferredAnnotation);
@@ -143,13 +142,13 @@ public class BytecodeAnalysisTest extends JavaCodeInsightFixtureTestCase {
 
       // not-null result
       ExpectNotNull expectedAnnotation = javaMethod.getAnnotation(ExpectNotNull.class);
-      PsiAnnotation actualAnnotation = myInferredAnnotationsManager.findInferredAnnotation(psiMethod, AnnotationUtil.NOT_NULL);
+      PsiAnnotation actualAnnotation = myBytecodeAnalysisService.findInferredAnnotation(psiMethod, AnnotationUtil.NOT_NULL);
       assertEquals(javaMethod.toString(), expectedAnnotation == null, actualAnnotation == null);
 
 
       // contracts
       ExpectContract expectedContract = javaMethod.getAnnotation(ExpectContract.class);
-      PsiAnnotation actualContract = myInferredAnnotationsManager.findInferredAnnotation(psiMethod, ORG_JETBRAINS_ANNOTATIONS_CONTRACT);
+      PsiAnnotation actualContract = myBytecodeAnalysisService.findInferredAnnotation(psiMethod, ORG_JETBRAINS_ANNOTATIONS_CONTRACT);
 
       String expectedText = expectedContract == null ? "null" : expectedContract.toString();
       String inferredText = actualContract == null ? "null" : actualContract.getText();
