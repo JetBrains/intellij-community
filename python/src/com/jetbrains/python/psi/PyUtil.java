@@ -959,24 +959,25 @@ public class PyUtil {
   }
 
   /**
-   * If target is a PsiDirectory, that is also a valid Python package, return PsiFile that points to __init__.py,
+   * If directory is a PsiDirectory, that is also a valid Python package, return PsiFile that points to __init__.py,
    * if such file exists, or directory itself (i.e. namespace package). Otherwise, return {@code null}.
    * Unlike {@link #turnDirIntoInit(com.intellij.psi.PsiElement)} this function handles namespace packages and
    * accepts only PsiDirectories as target.
    *
-   * @param target directory to check
+   * @param directory directory to check
    * @param anchor optional PSI element to determine language level as for {@link #isPackage(com.intellij.psi.PsiDirectory, com.intellij.psi.PsiElement)}
    * @return PsiFile or PsiDirectory, if target is a Python package and {@code null} null otherwise
    */
   @Nullable
-  public static PsiElement turnDirIntoPackageElement(@NotNull PsiDirectory target, @Nullable PsiElement anchor) {
-    if (isPackage(target, anchor)) {
-      final PsiFile file = target.findFile(PyNames.INIT_DOT_PY);
-      return file != null ? file : target;
+  public static PsiElement getPackageElement(@NotNull PsiDirectory directory, @Nullable PsiElement anchor) {
+    if (isPackage(directory, anchor)) {
+      final PsiElement init = turnDirIntoInit(directory);
+      if (init != null) {
+        return init;
+      }
+      return directory;
     }
-    else {
-      return null;
-    }
+    return null;
   }
 
   /**
@@ -1008,18 +1009,6 @@ public class PyUtil {
 
   public static boolean isPackage(@NotNull PsiFile file) {
     return PyNames.INIT_DOT_PY.equals(file.getName());
-  }
-
-  @Nullable
-  public static PsiElement getPackageElement(@NotNull PsiDirectory directory, @Nullable PsiElement anchor) {
-    if (isPackage(directory, anchor)) {
-      final PsiElement init = turnDirIntoInit(directory);
-      if (init != null) {
-        return init;
-      }
-      return directory;
-    }
-    return null;
   }
 
   private static boolean isSetuptoolsNamespacePackage(@NotNull PsiDirectory directory) {
