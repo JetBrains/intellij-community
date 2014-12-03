@@ -77,7 +77,7 @@ public class PropertiesCompletionContributor extends CompletionContributor {
     }
   }
 
-  private static boolean hasMoreImportantReference(PsiReference[] references, PropertyReference propertyReference) {
+  public static boolean hasMoreImportantReference(@NotNull PsiReference[] references, @NotNull PropertyReference propertyReference) {
     return propertyReference.isSoft() && ContainerUtil.or(references, new Condition<PsiReference>() {
       @Override
       public boolean value(PsiReference reference) {
