@@ -3,6 +3,7 @@ package com.intellij.openapi.util.diff.impl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -30,6 +31,7 @@ import com.intellij.openapi.util.diff.tools.util.SoftHardCacheMap;
 import com.intellij.openapi.util.diff.util.DiffUtil;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.util.Consumer;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,6 +45,10 @@ import static com.intellij.openapi.util.diff.tools.util.DiffUserDataKeys.ScrollT
 import static com.intellij.openapi.util.diff.tools.util.DiffUserDataKeys.ScrollToPolicy.LAST_CHANGE;
 
 public abstract class CacheDiffRequestChainProcessor implements Disposable {
+  private static final Logger LOG = Logger.getInstance(CacheDiffRequestChainProcessor.class);
+
+  private boolean myDisposed;
+
   @Nullable private final Project myProject;
   @NotNull private final DiffRequestChain myRequestChain;
 
@@ -64,7 +70,6 @@ public abstract class CacheDiffRequestChainProcessor implements Disposable {
   @Nullable private final JLabel myTitleLabel;
 
   @NotNull private DiffRequest myActiveRequest;
-
   @Nullable private DiffViewer myActiveViewer;
   @Nullable private DiffTool myActiveTool;
 
@@ -122,6 +127,10 @@ public abstract class CacheDiffRequestChainProcessor implements Disposable {
     });
   }
 
+  //
+  // Update
+  //
+
   public void updateRequest() {
     updateRequest(false);
   }
@@ -132,28 +141,65 @@ public abstract class CacheDiffRequestChainProcessor implements Disposable {
     DiffRequest request = loadRequest();
     if (!force && request == myActiveRequest) return;
 
+    resetState();
+
+    setupActiveRequest(request);
+
+    setupSuitableTool();
+
+    setupActiveViewer();
+
+    initActiveViewer();
+
+    if (hadFocus) requestFocus();
+  }
+
+  private void resetState() {
     myActiveRequest.onAssigned(false);
-    request.onAssigned(true);
+    myActiveRequest = NoDiffRequest.INSTANCE;
 
-    myActiveRequest = request;
-
-    myActiveTool = getSuitableTool(myActiveRequest);
+    myActiveTool = null;
 
     if (myActiveViewer != null) Disposer.dispose(myActiveViewer);
+    myActiveViewer = null;
+  }
+
+  private void setupActiveRequest(@NotNull DiffRequest request) {
+    request.onAssigned(true);
+    myActiveRequest = request;
+  }
+
+  private void setupSuitableTool() {
+    for (DiffTool tool : myToolOrder) {
+      if (tool.canShow(myContext, myActiveRequest)) {
+        myActiveTool = tool;
+        return;
+      }
+    }
+
+    myActiveTool = ErrorDiffTool.INSTANCE;
+  }
+
+  private void setupActiveViewer() {
+    assert myActiveTool != null;
+
     myActiveViewer = myActiveTool.createComponent(myContext, myActiveRequest);
 
 
     myContentPanel.setContent(myActiveViewer.getComponent());
 
     if (myTitleLabel != null) {
-      myTitleLabel.setText(request.getWindowTitle());
+      myTitleLabel.setText(myActiveRequest.getWindowTitle());
     }
     else {
-      setWindowTitle(request.getWindowTitle());
+      setWindowTitle(myActiveRequest.getWindowTitle());
     }
 
     myPanel.validate();
+  }
 
+  private void initActiveViewer() {
+    assert myActiveViewer != null;
 
     DiffTool.ToolbarComponents toolbarComponents = myActiveViewer.init();
 
@@ -166,9 +212,6 @@ public abstract class CacheDiffRequestChainProcessor implements Disposable {
     myToolbarStatusPanel.setContent(toolbarComponents.statusPanel);
 
     myPanel.validate();
-
-
-    if (hadFocus) requestFocus();
   }
 
   @NotNull
@@ -214,17 +257,6 @@ public abstract class CacheDiffRequestChainProcessor implements Disposable {
     return request;
   }
 
-  @NotNull
-  private DiffTool getSuitableTool(@NotNull DiffRequest request) {
-    for (DiffTool tool : myToolOrder) {
-      if (tool.canShow(myContext, request)) {
-        return tool;
-      }
-    }
-
-    return ErrorDiffTool.INSTANCE;
-  }
-
   //
   // Abstract
   //
@@ -249,9 +281,18 @@ public abstract class CacheDiffRequestChainProcessor implements Disposable {
 
   @Override
   public void dispose() {
-    myActiveRequest.onAssigned(false);
-    myRequestCache.clear();
-    if (myActiveViewer != null) Disposer.dispose(myActiveViewer);
+    if (myDisposed) return;
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        if (myDisposed) return;
+        myDisposed = true;
+
+        myRequestCache.clear();
+
+        resetState();
+      }
+    });
   }
 
   @NotNull
