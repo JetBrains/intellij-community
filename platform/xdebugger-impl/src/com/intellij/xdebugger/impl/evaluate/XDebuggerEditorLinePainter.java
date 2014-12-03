@@ -31,6 +31,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.NotNullProducer;
+import com.intellij.util.containers.ObjectLongHashMap;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
@@ -57,7 +58,7 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
     }
 
     final Map<Pair<VirtualFile, Integer>, Set<XValueNodeImpl>> map = project.getUserData(XVariablesView.DEBUG_VARIABLES);
-    final Map<VirtualFile, Long> timestamps = project.getUserData(XVariablesView.DEBUG_VARIABLES_TIMESTAMPS);
+    final ObjectLongHashMap<VirtualFile> timestamps = project.getUserData(XVariablesView.DEBUG_VARIABLES_TIMESTAMPS);
     final Document doc = FileDocumentManager.getInstance().getDocument(file);
 
     if (map == null || timestamps == null || doc == null) {
@@ -70,7 +71,7 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
       project.putUserData(CACHE, oldValues);
     }
     final Long timestamp = timestamps.get(file);
-    if (timestamp == null || timestamp < doc.getModificationStamp()) {
+    if (timestamp == -1 || timestamp < doc.getModificationStamp()) {
       return null;
     }
     Set<XValueNodeImpl> values = map.get(Pair.create(file, lineNumber));
@@ -96,7 +97,7 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
             }
           }
         }
-        catch (Exception e) {
+        catch (Exception ignored) {
           continue;
         }
         XDebugSession session = XDebugView.getSession(values.iterator().next().getTree());
@@ -191,8 +192,8 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
   }
 
   static class Variable {
-    private int lineNumber;
-    private String name;
+    private final int lineNumber;
+    private final String name;
 
     public Variable(String name, int lineNumber) {
       this.lineNumber = lineNumber;

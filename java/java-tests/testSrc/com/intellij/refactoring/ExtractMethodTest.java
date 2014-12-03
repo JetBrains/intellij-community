@@ -19,12 +19,10 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.extractMethod.ExtractMethodHandler;
 import com.intellij.refactoring.extractMethod.ExtractMethodProcessor;
 import com.intellij.refactoring.extractMethod.PrepareFailedException;
@@ -523,6 +521,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  public void testFoldedParamNameSuggestion() throws Exception {
+    doTest();
+  }
+
   public void testNonFoldInIfBody() throws Exception {
     doTest();
   }
@@ -611,12 +613,57 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  public void testCopyParamAnnotations() throws Exception {
+    doTest();
+  }
+
+  public void testInferredNotNullInReturnStatement() throws Exception {
+    doTest();
+  }
+
+  public void testChangedReturnType() throws Exception {
+    doTestReturnTypeChanged(PsiType.getJavaLangObject(getPsiManager(), GlobalSearchScope.allScope(getProject())));
+  }
+
+  public void testPassFieldAsParameterAndMakeStatic() throws Exception {
+    doTestPassFieldsAsParams();
+  }
+
+  public void testCantPassFieldAsParameter() throws Exception {
+    try {
+      doTestPassFieldsAsParams();
+      fail("Field was modified inside. Make static should be disabled");
+    }
+    catch (PrepareFailedException ignore) {
+    }
+  }
+
   private void doTestDisabledParam() throws PrepareFailedException {
     final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
     settings.ELSE_ON_NEW_LINE = true;
     settings.CATCH_ON_NEW_LINE = myCatchOnNewLine;
     configureByFile(BASE_PATH + getTestName(false) + ".java");
     boolean success = performExtractMethod(true, true, getEditor(), getFile(), getProject(), false, 0);
+    assertTrue(success);
+    checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
+  }
+
+  private void doTestReturnTypeChanged(PsiType type) throws PrepareFailedException {
+    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+    settings.ELSE_ON_NEW_LINE = true;
+    settings.CATCH_ON_NEW_LINE = myCatchOnNewLine;
+    configureByFile(BASE_PATH + getTestName(false) + ".java");
+    boolean success = performExtractMethod(true, true, getEditor(), getFile(), getProject(), false, type, false);
+    assertTrue(success);
+    checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
+  }
+
+  private void doTestPassFieldsAsParams() throws PrepareFailedException {
+    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+    settings.ELSE_ON_NEW_LINE = true;
+    settings.CATCH_ON_NEW_LINE = myCatchOnNewLine;
+    configureByFile(BASE_PATH + getTestName(false) + ".java");
+    boolean success = performExtractMethod(true, true, getEditor(), getFile(), getProject(), false, null, true);
     assertTrue(success);
     checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
   }
@@ -676,6 +723,19 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
                                              final boolean extractChainedConstructor,
                                              int... disabledParams)
     throws PrepareFailedException, IncorrectOperationException {
+    return performExtractMethod(doRefactor, replaceAllDuplicates, editor, file, project, extractChainedConstructor, null, false, disabledParams);
+  }
+
+  public static boolean performExtractMethod(boolean doRefactor,
+                                             boolean replaceAllDuplicates,
+                                             Editor editor,
+                                             PsiFile file,
+                                             Project project,
+                                             final boolean extractChainedConstructor,
+                                             PsiType returnType,
+                                             boolean makeStatic,
+                                             int... disabledParams)
+    throws PrepareFailedException, IncorrectOperationException {
     int startOffset = editor.getSelectionModel().getSelectionStart();
     int endOffset = editor.getSelectionModel().getSelectionEnd();
 
@@ -705,7 +765,8 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     }
 
     if (doRefactor) {
-      processor.testPrepare();
+      processor.testPrepare(returnType, makeStatic);
+      processor.testNullness();
       if (disabledParams != null) {
         for (int param : disabledParams) {
           processor.doNotPassParameter(param);

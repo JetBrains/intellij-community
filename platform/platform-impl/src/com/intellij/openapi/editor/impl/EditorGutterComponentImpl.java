@@ -734,8 +734,10 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
     int startOffset = highlighter.getStartOffset();
     int endOffset = highlighter.getEndOffset();
-    if (myEditor.getFoldingModel().isOffsetCollapsed(startOffset) &&
-        myEditor.getFoldingModel().isOffsetCollapsed(endOffset)) {
+
+    FoldRegion startFoldRegion = myEditor.getFoldingModel().getCollapsedRegionAtOffset(startOffset);
+    FoldRegion endFoldRegion = myEditor.getFoldingModel().getCollapsedRegionAtOffset(endOffset);
+    if (startFoldRegion != null && endFoldRegion != null && startFoldRegion.equals(endFoldRegion)) {
       return null;
     }
 
@@ -1047,7 +1049,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       }
     }
 
-    final int lineNumberAreaWidth = calculator.execute(maxLineNumber) + 2;
+    final int lineNumberAreaWidth = calculator.execute(maxLineNumber) + 4;
     if (myLineNumberAreaWidth != lineNumberAreaWidth) {
       myLineNumberAreaWidth = lineNumberAreaWidth;
       fireResized();

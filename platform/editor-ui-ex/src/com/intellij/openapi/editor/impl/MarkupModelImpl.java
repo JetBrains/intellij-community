@@ -28,7 +28,10 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.ex.*;
+import com.intellij.openapi.editor.ex.DisposableIterator;
+import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.ex.MarkupModelEx;
+import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -279,7 +282,7 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
 
   @Override
   @NotNull
-  public DisposableIterator<RangeHighlighterEx> overlappingIterator(int startOffset, int endOffset) {
+  public IntervalTreeImpl.PeekableIterator<RangeHighlighterEx> overlappingIterator(int startOffset, int endOffset) {
     startOffset = Math.max(0,startOffset);
     IntervalTreeImpl.PeekableIterator<RangeHighlighterEx> exact = myHighlighterTree.overlappingIterator(new TextRangeInterval(startOffset, Math.max(startOffset, endOffset)));
     IntervalTreeImpl.PeekableIterator<RangeHighlighterEx> lines = myHighlighterTreeForLines.overlappingIterator(roundToLineBoundaries(startOffset, endOffset));
@@ -287,8 +290,8 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   }
 
   @NotNull
-  private static <T extends RangeHighlighterEx> DisposableIterator<T> merge(@NotNull final IntervalTreeImpl.PeekableIterator<T> iterator1, @NotNull final IntervalTreeImpl.PeekableIterator<T> iterator2) {
-    return new DisposableIterator<T>() {
+  protected static <T extends RangeHighlighterEx> IntervalTreeImpl.PeekableIterator<T> merge(@NotNull final IntervalTreeImpl.PeekableIterator<T> iterator1, @NotNull final IntervalTreeImpl.PeekableIterator<T> iterator2) {
+    return new IntervalTreeImpl.PeekableIterator<T>() {
       @Override
       public void dispose() {
         iterator1.dispose();
@@ -302,21 +305,31 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
 
       @Override
       public T next() {
+        return choose().next();
+      }
+
+      @NotNull
+      private IntervalTreeImpl.PeekableIterator<T> choose() {
         T t1 = iterator1.hasNext() ? iterator1.peek() : null;
         T t2 = iterator2.hasNext() ? iterator2.peek() : null;
         if (t1 == null) {
-          return iterator2.next();
+          return iterator2;
         }
         if (t2 == null) {
-          return iterator1.next();
+          return iterator1;
         }
         int compare = RangeHighlighterEx.BY_AFFECTED_START_OFFSET.compare(t1, t2);
-        return (compare < 0 ? iterator1 : iterator2).next();
+        return compare < 0 ? iterator1 : iterator2;
       }
 
       @Override
       public void remove() {
         throw new NoSuchElementException();
+      }
+
+      @Override
+      public T peek() {
+        return choose().peek();
       }
     };
   }

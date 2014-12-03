@@ -18,6 +18,8 @@ package com.intellij.psi;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
@@ -167,6 +169,12 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
     final DiamondInferenceResult result = new DiamondInferenceResult(classOrAnonymousClassReference.getReferenceName() + "<>");
 
     if (PsiUtil.isRawSubstitutor(staticFactory, inferredSubstitutor)) {
+      if (!JavaVersionService.getInstance().isAtLeast(argumentList, JavaSdkVersion.JDK_1_8) && 
+          PsiUtil.skipParenthesizedExprUp(newExpression.getParent()) instanceof PsiExpressionList) {
+        for (PsiTypeParameter parameter : parameters) {
+          result.addInferredType(PsiType.getJavaLangObject(psiClass.getManager(), GlobalSearchScope.allScope(psiClass.getProject())));
+        }
+      }
       return result;
     }
 

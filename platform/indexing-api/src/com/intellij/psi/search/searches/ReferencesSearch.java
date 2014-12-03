@@ -60,7 +60,16 @@ public class ReferencesSearch extends ExtensibleQueryFactory<PsiReference, Refer
     }
 
     /**
-     * Use {@link #getEffectiveSearchScope} instead
+     * @return the user-visible search scope, most often "Project Files" or "Project and Libraries".
+     * Searchers most likely need to use {@link #getEffectiveSearchScope()}.
+     */
+    public SearchScope getScopeDeterminedByUser() {
+      return myScope;
+    }
+
+
+    /**
+     * Same as {@link #getScopeDeterminedByUser()}. Use {@link #getEffectiveSearchScope} instead
      */
     @Deprecated()
     @NotNull

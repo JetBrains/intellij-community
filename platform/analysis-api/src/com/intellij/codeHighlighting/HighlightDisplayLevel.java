@@ -156,7 +156,9 @@ public class HighlightDisplayLevel {
     @Override
     public void paintIcon(final Component c, final Graphics g, final int x, final int y) {
       g.setColor(getColor());
-      g.fillRect(x, y, EMPTY_ICON_DIM, EMPTY_ICON_DIM);
+      g.translate(x, y);
+      g.fillPolygon(new int[]{0, EMPTY_ICON_DIM, EMPTY_ICON_DIM}, new int[]{0, 0, EMPTY_ICON_DIM}, 3);
+      g.translate(-x, -y);
     }
 
     @Override
@@ -167,19 +169,6 @@ public class HighlightDisplayLevel {
     @Override
     public int getIconHeight() {
       return EMPTY_ICON_DIM;
-    }
-  }
-
-  public static class SemiBorderIcon extends SingleColorIcon {
-    public SemiBorderIcon(TextAttributesKey key) {
-      super(key);
-    }
-
-    @Override
-    public void paintIcon(Component component, Graphics g, int x, int y) {
-      g.setColor(getColor());
-      g.fillRect(x, y, 1, getIconHeight());
-      g.fillRect(x, y + getIconHeight() - 1, getIconWidth(), 1);
     }
   }
 }

@@ -19,18 +19,15 @@ import com.intellij.ide.actions.ViewStructureAction;
 import com.intellij.ide.util.FileStructurePopup;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeBuilder;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
 import com.intellij.util.ui.tree.TreeUtil;
-import org.junit.Assert;
 import org.junit.Before;
 
 import javax.swing.tree.TreePath;
-import java.io.File;
 
 /**
  * @author Konstantin Bulenkov
@@ -67,7 +64,7 @@ public abstract class FileStructureTestBase extends CodeInsightFixtureTestCase {
     return getFileName("tree");
   }
 
-  protected void checkTree(String filter) throws Exception {
+  protected void checkTree(String filter) {
     myPopup.setSearchFilterForTests(filter);
     getBuilder().refilter(null, false, true);
     getBuilder().queueUpdate();
@@ -75,17 +72,15 @@ public abstract class FileStructureTestBase extends CodeInsightFixtureTestCase {
     checkTree();
   }
 
-  protected void checkTree() throws Exception {
-    final String expected = FileUtil.loadFile(new File(getTestDataPath() + "/" + getTreeFileName()), true);
-    Assert.assertEquals(expected.trim(), PlatformTestUtil.print(getTree(), true).trim());
+  protected void checkTree() {
+    assertSameLinesWithFile(getTestDataPath() + "/" + getTreeFileName(), PlatformTestUtil.print(getTree(), true).trim());
   }
 
 
-  public void update() throws InterruptedException {
+  public void update() {
     myPopup.getTreeBuilder().refilter().doWhenProcessed(new Runnable() {
       @Override
       public void run() {
-
         getStructure().rebuild();
         updateTree();
         getBuilder().updateFromRoot();

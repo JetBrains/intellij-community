@@ -504,6 +504,23 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     assertEquals(1, countInitializedTools(foo));
   }
 
+  public void testPreserveCompatibility() throws Exception {
+    InspectionProfileImpl foo = new InspectionProfileImpl("foo");
+    String test = "<profile version=\"1.0\" is_locked=\"false\">\n" +
+                 "  <option name=\"myName\" value=\"idea.default\" />\n" +
+                 "  <option name=\"myLocal\" value=\"false\" />\n" +
+                 "  <inspection_tool class=\"AbstractMethodCallInConstructor\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\" />\n" +
+                 "  <inspection_tool class=\"AssignmentToForLoopParameter\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\">\n" +
+                 "    <option name=\"m_checkForeachParameters\" value=\"false\" />\n" +
+                 "  </inspection_tool>\n" +
+                 "</profile>";
+    foo.readExternal(JDOMUtil.loadDocument(test).getRootElement());
+    foo.initInspectionTools(getProject());
+    Element serialized = new Element("profile");
+    foo.writeExternal(serialized);
+    assertEquals(test, JDOMUtil.writeElement(serialized));
+  }
+
   public static int countInitializedTools(Profile foo) {
     return getInitializedTools(foo).size();
   }

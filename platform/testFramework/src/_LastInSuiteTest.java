@@ -61,6 +61,11 @@ public class _LastInSuiteTest extends TestCase {
     }
   }
 
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
+  public void testStatistics() throws Exception {
+    LightPlatformTestCase.reportTestExecutionStatistics();
+  }
+
   private static void captureMemorySnapshot() {
     try {
       Method snapshot = ReflectionUtil.getMethod(Class.forName("com.intellij.util.ProfilingUtil"), "forceCaptureMemorySnapshot");

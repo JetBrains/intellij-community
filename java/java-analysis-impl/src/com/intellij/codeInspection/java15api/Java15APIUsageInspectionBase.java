@@ -354,8 +354,11 @@ public class Java15APIUsageInspectionBase extends BaseJavaBatchLocalInspectionTo
     return nextForbiddenApi != null && isForbiddenSignature(signature, nextLanguageLevel, nextForbiddenApi);
   }
 
+  /**
+   * please leave public for {@link #com.intellij.codeInspection.JavaAPIUsagesInspectionTest#testCollectSinceApiUsages}
+   */
   @Nullable
-  private static String getSignature(@Nullable PsiMember member) {
+  public static String getSignature(@Nullable PsiMember member) {
     if (member instanceof PsiClass) {
       return ((PsiClass)member).getQualifiedName();
     }

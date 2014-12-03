@@ -99,11 +99,11 @@ public class CommandLineTokenizer extends StringTokenizer {
 
         int i;
         int quotationMarks = 0;
-        final StringBuffer buffer = new StringBuffer();
+        final StringBuilder buffer = new StringBuilder();
 
         do {
             while ((i = nextToken.indexOf('"')) >= 0) {
-                boolean isEscapedQuote = i > 0 && nextToken.charAt(i - 1) == '\\';
+                boolean isEscapedQuote = isEscapedAtPos(nextToken, i);
                 if (!isEscapedQuote) quotationMarks++;
                 buffer.append(nextToken.substring(0, isEscapedQuote ? i - 1 : i));
                 if (isEscapedQuote) buffer.append('"');
@@ -120,7 +120,7 @@ public class CommandLineTokenizer extends StringTokenizer {
               buffer.append(nextToken);
             }
 
-            if ((isEscapedWhitespace || quotationMarks % 2 == 1) && super.hasMoreTokens()) {
+            if ((isEscapedWhitespace || (quotationMarks & 1) == 1) && super.hasMoreTokens()) {
                 nextToken = super.nextToken();
             } else {
                 nextToken = null;
@@ -128,5 +128,15 @@ public class CommandLineTokenizer extends StringTokenizer {
         } while (nextToken != null);
 
         return buffer.toString();
+    }
+
+    private static boolean isEscapedAtPos(String token, int pos) {
+        int escapeCount = 0;
+        --pos;
+        while (pos >= 0 && token.charAt(pos) == '\\') {
+            ++escapeCount;
+            --pos;
+        }
+        return (escapeCount & 1) == 1;
     }
 }

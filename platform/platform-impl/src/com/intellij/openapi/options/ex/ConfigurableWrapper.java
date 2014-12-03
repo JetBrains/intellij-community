@@ -135,9 +135,14 @@ public class ConfigurableWrapper implements SearchableConfigurable {
   @Override
   public String getDisplayName() {
     if (myEp.displayName == null && myEp.key == null) {
-      UnnamedConfigurable configurable = getConfigurable();
-      if (configurable instanceof Configurable) {
-        return ((Configurable)configurable).getDisplayName();
+      boolean loaded = myConfigurable != null;
+      Configurable configurable = cast(Configurable.class, this);
+      if (configurable != null) {
+        String name = configurable.getDisplayName();
+        if (!loaded) {
+          LOG.warn("configurable loaded for its name: " + name);
+        }
+        return name;
       }
     }
     return myEp.getDisplayName();
@@ -189,9 +194,14 @@ public class ConfigurableWrapper implements SearchableConfigurable {
     if (myEp.id != null) {
       return myEp.id;
     }
-    UnnamedConfigurable configurable = getConfigurable();
-    if (configurable instanceof SearchableConfigurable) {
-      return ((SearchableConfigurable)configurable).getId();
+    boolean loaded = myConfigurable != null;
+    SearchableConfigurable configurable = cast(SearchableConfigurable.class, this);
+    if (configurable != null) {
+      String id = configurable.getId();
+      if (!loaded) {
+        LOG.warn("configurable loaded for its id: " + id);
+      }
+      return id;
     }
     return myEp.instanceClass != null
            ? myEp.instanceClass

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.ui.laf.darcula.ui;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ui.GraphicsUtil;
@@ -43,27 +44,41 @@ public class DarculaButtonUI extends BasicButtonUI {
 
   @Override
   public void paint(Graphics g, JComponent c) {
-    final Border border = c.getBorder();
-    final GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
-    final boolean square = isSquare(c);
-    if (c.isEnabled() && border != null) {
-      final Insets ins = border.getBorderInsets(c);
-      final int yOff = (ins.top + ins.bottom) / 4;
-      if (!square) {
-        if (c instanceof JButton && ((JButton)c).isDefaultButton()) {
-          ((Graphics2D)g).setPaint(UIUtil.getGradientPaint(0, 0, getSelectedButtonColor1(), 0, c.getHeight(), getSelectedButtonColor2()));
+    int w = c.getWidth();
+    int h = c.getHeight();
+    if (isHelpButton(c)) {
+      ((Graphics2D)g).setPaint(UIUtil.getGradientPaint(0, 0, getButtonColor1(), 0, h, getButtonColor2()));
+      int x = (w - 22) / 2;
+      int y = (h - 22) / 2;
+      g.fillOval(x, y, 22, 22);
+      AllIcons.Actions.Help.paintIcon(c, g, x + 3, y + 3);
+    } else {
+      final Border border = c.getBorder();
+      final GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
+      final boolean square = isSquare(c);
+      if (c.isEnabled() && border != null) {
+        final Insets ins = border.getBorderInsets(c);
+        final int yOff = (ins.top + ins.bottom) / 4;
+        if (!square) {
+          if (c instanceof JButton && ((JButton)c).isDefaultButton()) {
+            ((Graphics2D)g).setPaint(UIUtil.getGradientPaint(0, 0, getSelectedButtonColor1(), 0, h, getSelectedButtonColor2()));
+          }
+          else {
+            ((Graphics2D)g).setPaint(UIUtil.getGradientPaint(0, 0, getButtonColor1(), 0, h, getButtonColor2()));
+          }
         }
-        else {
-          ((Graphics2D)g).setPaint(UIUtil.getGradientPaint(0, 0, getButtonColor1(), 0, c.getHeight(), getButtonColor2()));
-        }
+        g.fillRoundRect(square ? 2 : 4, yOff, w - 2 * 4, h - 2 * yOff, square ? 3 : 5, square ? 3 : 5);
       }
-      g.fillRoundRect(square ? 2 : 4, yOff, c.getWidth() - 2 * 4, c.getHeight() - 2 * yOff, square ? 3 : 5, square ? 3 : 5);
+      config.restore();
+      super.paint(g, c);
     }
-    config.restore();
-    super.paint(g, c);
   }
 
   protected void paintText(Graphics g, JComponent c, Rectangle textRect, String text) {
+    if (isHelpButton(c)) {
+      return;
+    }
+    
     AbstractButton button = (AbstractButton)c;
     ButtonModel model = button.getModel();
     Color fg = button.getForeground();
@@ -122,6 +137,12 @@ public class DarculaButtonUI extends BasicButtonUI {
        c.setFont(c.getFont().deriveFont(Font.BOLD));
       }
     }
+  }
+  
+  public static boolean isHelpButton(JComponent button) {
+    return SystemInfo.isMac 
+           && button instanceof JButton 
+           && "help".equals(button.getClientProperty("JButton.buttonType"));
   }
 
   protected Color getButtonColor1() {

@@ -402,4 +402,59 @@ public class FileTypesTest extends PlatformTestCase {
     assertEquals(1, mappings.size());
     assertEquals(typeFromPlugin, mappings.values().iterator().next().first);
   }
+
+  public void testPreserveUninstalledPluginAssociations() throws Exception {
+    final AbstractFileType typeFromPlugin = new AbstractFileType(new SyntaxTable()) {
+      @NotNull
+      @Override
+      public String getName() {
+        return "Foo files";
+      }
+    };
+    FileTypeFactory factory = new FileTypeFactory() {
+      @Override
+      public void createFileTypes(@NotNull FileTypeConsumer consumer) {
+        consumer.consume(typeFromPlugin, "fromPlugin");
+      }
+    };
+    Element element = new Element("foo");
+    myFileTypeManager.writeExternal(element);
+    try {
+      Extensions.getRootArea().getExtensionPoint(FileTypeFactory.FILE_TYPE_FACTORY_EP).registerExtension(factory);
+      myFileTypeManager.initStandardFileTypes();
+      myFileTypeManager.readExternal(element);
+      myFileTypeManager.initComponent();
+
+      myFileTypeManager.associatePattern(typeFromPlugin, "*.foo");
+
+      element = new Element("foo");
+      myFileTypeManager.writeExternal(element);
+      System.out.println(JDOMUtil.writeElement(element));
+
+      Extensions.getRootArea().getExtensionPoint(FileTypeFactory.FILE_TYPE_FACTORY_EP).unregisterExtension(factory);
+      myFileTypeManager.clearForTests();
+      myFileTypeManager.initStandardFileTypes();
+      myFileTypeManager.readExternal(element);
+      myFileTypeManager.initComponent();
+
+      element = new Element("foo");
+      myFileTypeManager.writeExternal(element);
+      System.out.println(JDOMUtil.writeElement(element));
+
+      Extensions.getRootArea().getExtensionPoint(FileTypeFactory.FILE_TYPE_FACTORY_EP).registerExtension(factory);
+      myFileTypeManager.clearForTests();
+      myFileTypeManager.initStandardFileTypes();
+      myFileTypeManager.readExternal(element);
+      myFileTypeManager.initComponent();
+
+      element = new Element("foo");
+      myFileTypeManager.writeExternal(element);
+      System.out.println(JDOMUtil.writeElement(element));
+
+      assertEquals(typeFromPlugin, myFileTypeManager.getFileTypeByFileName("foo.foo"));
+    }
+    finally {
+      Extensions.getRootArea().getExtensionPoint(FileTypeFactory.FILE_TYPE_FACTORY_EP).unregisterExtension(factory);
+    }
+  }
 }

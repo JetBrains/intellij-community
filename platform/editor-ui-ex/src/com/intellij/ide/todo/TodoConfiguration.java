@@ -19,6 +19,9 @@ package com.intellij.ide.todo;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.NamedComponent;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.editor.colors.EditorColorsListener;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
@@ -54,8 +57,14 @@ public class TodoConfiguration implements NamedComponent, JDOMExternalizable {
   /**
    * public for upsource
    */
-  public TodoConfiguration(@NotNull MessageBus messageBus) {
+  public TodoConfiguration(@NotNull MessageBus messageBus, EditorColorsManager manager) {
     myMessageBus = messageBus;
+    manager.addEditorColorsListener(new EditorColorsListener() {
+      @Override
+      public void globalSchemeChange(EditorColorsScheme scheme) {
+        colorSettingsChanged();
+      }
+    });
     resetToDefaultTodoPatterns();
   }
 

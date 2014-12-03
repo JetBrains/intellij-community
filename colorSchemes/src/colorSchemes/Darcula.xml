@@ -1492,9 +1492,9 @@
     </option>
     <option name="TODO_DEFAULT_ATTRIBUTES">
       <value>
-        <option name="FOREGROUND" value="0264ab" />
+        <option name="FOREGROUND" value="008bcc" />
         <option name="FONT_TYPE" value="2" />
-        <option name="ERROR_STRIPE_COLOR" value="015998" />
+        <option name="ERROR_STRIPE_COLOR" value="0977ab" />
       </value>
     </option>
     <option name="OC.TYPEDEF">
@@ -1516,7 +1516,7 @@
     </option>
     <option name="NO_ANALYSIS">
       <value>
-        <option name="ERROR_STRIPE_COLOR" value="777777" /> 
+        <option name="ERROR_STRIPE_COLOR" value="666666" /> 
       </value>
     </option>
     <option name="DO_NOT_SHOW">

@@ -554,6 +554,12 @@ public class SMTestProxy extends AbstractTestProxy {
     if (myState instanceof AssertEqualsDiffViewerProvider) {
       return (AssertEqualsDiffViewerProvider)myState;
     }
+
+    for (SMTestProxy child : myChildren) {
+      if (child.myState instanceof AssertEqualsDiffViewerProvider) {
+        return (AssertEqualsDiffViewerProvider)child.myState;
+      }
+    }
     return null;
   }
 

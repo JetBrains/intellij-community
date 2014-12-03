@@ -293,11 +293,14 @@ public class TemplateState implements Disposable {
                     @Nullable Map<String, String> predefinedVarValues) {
     LOG.assertTrue(!myStarted, "Already started");
     myStarted = true;
-    myTemplate = template;
+
+    final PsiFile file = getPsiFile();
+    myTemplate = substituteTemplate(file, myEditor.getCaretModel().getOffset(), template);
+
     myProcessor = processor;
 
-    DocumentReference[] refs = myDocument != null 
-                               ? new DocumentReference[]{DocumentReferenceManager.getInstance().create(myDocument)} 
+    DocumentReference[] refs = myDocument != null
+                               ? new DocumentReference[]{DocumentReferenceManager.getInstance().create(myDocument)}
                                : null;
     UndoManager.getInstance(myProject).undoableActionPerformed(new BasicUndoableAction(refs) {
       @Override
@@ -320,22 +323,17 @@ public class TemplateState implements Disposable {
     myTemplateIndented = false;
     myCurrentVariableNumber = -1;
     mySegments = new TemplateSegments(myEditor);
+    myPrevTemplate = myTemplate;
 
     //myArgument = argument;
     myPredefinedVariableValues = predefinedVarValues;
 
-    if (template.isInline()) {
-      myPrevTemplate = myTemplate;
+    if (myTemplate.isInline()) {
       int caretOffset = myEditor.getCaretModel().getOffset();
-      myTemplateRange = myDocument.createRangeMarker(caretOffset, caretOffset + template.getTemplateText().length());
+      myTemplateRange = myDocument.createRangeMarker(caretOffset, caretOffset + myTemplate.getTemplateText().length());
     }
     else {
-      PsiFile file = getPsiFile();
-      preprocessTemplate(file, myEditor.getCaretModel().getOffset());
-      myPrevTemplate = myTemplate;
-      LOG.assertTrue(!myTemplate.isInline(),
-                     "current template: " + presentTemplate(myTemplate) + ", previous template: " + presentTemplate(myPrevTemplate));
-
+      preprocessTemplate(file, myEditor.getCaretModel().getOffset(), myTemplate.getTemplateText());
       int caretOffset = myEditor.getCaretModel().getOffset();
       myTemplateRange = myDocument.createRangeMarker(caretOffset, caretOffset);
     }
@@ -353,9 +351,20 @@ public class TemplateState implements Disposable {
     }
   }
 
-  private void preprocessTemplate(final PsiFile file, int caretOffset) {
+  private TemplateImpl substituteTemplate(final PsiFile file, int caretOffset, TemplateImpl template) {
+    for (TemplateSubstitutor substitutor : Extensions.getExtensions(TemplateSubstitutor.EP_NAME)) {
+      final TemplateImpl substituted = substitutor.substituteTemplate(myEditor, file, caretOffset, template);
+      if (substituted != null) {
+        template = substituted;
+      }
+
+    }
+    return template;
+  }
+
+  private void preprocessTemplate(final PsiFile file, int caretOffset, final String textToInsert) {
     for (TemplatePreprocessor preprocessor : Extensions.getExtensions(TemplatePreprocessor.EP_NAME)) {
-      myTemplate = preprocessor.preprocessTemplate(myEditor, file, caretOffset, myTemplate);
+      preprocessor.preprocessTemplate(myEditor, file, caretOffset, textToInsert, myTemplate.getTemplateText());
     }
   }
 
@@ -394,7 +403,7 @@ public class TemplateState implements Disposable {
           if (isMultiCaretMode()) {
             finishTemplateEditing(false);
           }
-        } 
+        }
       }
     });
   }
@@ -417,7 +426,7 @@ public class TemplateState implements Disposable {
       public void run() {
         IntArrayList indices = initEmptyVariables();
         mySegments.setSegmentsGreedy(false);
-        LOG.assertTrue(myTemplateRange.isValid(), 
+        LOG.assertTrue(myTemplateRange.isValid(),
                        "template key: " + myTemplate.getKey() + "; " +
                        "template text" + myTemplate.getTemplateText() + "; " +
                        "variable number: " + getCurrentVariableNumber());

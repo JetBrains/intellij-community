@@ -45,6 +45,7 @@ import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.exceptionCases.AbstractExceptionCase;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import junit.framework.AssertionFailedError;
@@ -92,6 +93,9 @@ public abstract class UsefulTestCase extends TestCase {
   private static final String DEFAULT_SETTINGS_EXTERNALIZED;
   private static final Random RNG = new SecureRandom();
   private static final String ORIGINAL_TEMP_DIR = FileUtil.getTempDirectory();
+
+  public static Map<String, Long> TOTAL_SETUP_COST_MILLIS = new HashMap<String, Long>();
+  public static Map<String, Long> TOTAL_TEARDOWN_COST_MILLIS = new HashMap<String, Long>();
 
   protected final Disposable myTestRootDisposable = new Disposable() {
     @Override
@@ -335,7 +339,56 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   protected void defaultRunBare() throws Throwable {
-    super.runBare();
+    Throwable exception = null;
+    long setupStart = System.nanoTime();
+    setUp();
+    long setupCost = (System.nanoTime() - setupStart) / 1000000;
+    logPerClassCost(setupCost, TOTAL_SETUP_COST_MILLIS);
+
+    try {
+      runTest();
+    } catch (Throwable running) {
+      exception = running;
+    } finally {
+      try {
+        long teardownStart = System.nanoTime();
+        tearDown();
+        long teardownCost = (System.nanoTime() - teardownStart) / 1000000;
+        logPerClassCost(teardownCost, TOTAL_TEARDOWN_COST_MILLIS);
+      } catch (Throwable tearingDown) {
+        if (exception == null) exception = tearingDown;
+      }
+    }
+    if (exception != null) throw exception;
+  }
+
+  /**
+   * Logs the setup cost grouped by test fixture class (superclass of the current test class).
+   *
+   * @param cost setup cost in milliseconds
+   */
+  private void logPerClassCost(long cost, Map<String, Long> costMap) {
+    Class<?> superclass = getClass().getSuperclass();
+    Long oldCost = costMap.get(superclass.getName());
+    long newCost = oldCost == null ? cost : oldCost + cost;
+    costMap.put(superclass.getName(), newCost);
+  }
+
+  public static void logSetupTeardownCosts() {
+    long totalSetup = 0, totalTeardown = 0;
+    System.out.println("Setup costs");
+    for (Map.Entry<String, Long> entry : TOTAL_SETUP_COST_MILLIS.entrySet()) {
+      System.out.println(String.format("  %s: %d ms", entry.getKey(), entry.getValue()));
+      totalSetup += entry.getValue();
+    }
+    System.out.println("Teardown costs");
+    for (Map.Entry<String, Long> entry : TOTAL_TEARDOWN_COST_MILLIS.entrySet()) {
+      System.out.println(String.format("  %s: %d ms", entry.getKey(), entry.getValue()));
+      totalTeardown += entry.getValue();
+    }
+    System.out.println(String.format("Total overhead: setup %d ms, teardown %d ms", totalSetup, totalTeardown));
+    System.out.println(String.format("##teamcity[buildStatisticValue key='ideaTests.totalSetupMs' value='%d']", totalSetup));
+    System.out.println(String.format("##teamcity[buildStatisticValue key='ideaTests.totalTeardownMs' value='%d']", totalTeardown));
   }
 
   public static void replaceIdeEventQueueSafely() {

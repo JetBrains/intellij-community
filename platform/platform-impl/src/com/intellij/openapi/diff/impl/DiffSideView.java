@@ -255,7 +255,10 @@ public class DiffSideView {
 
   public JComponent getFocusableComponent() {
     Editor editor = getEditor();
-    return editor != null ? editor.getContentComponent() : MOCK_COMPONENT;
+    if (editor != null) return editor.getContentComponent();
+    FileEditor fileEditor = myEditorSource.getFileEditor();
+    if (fileEditor != null) return fileEditor.getComponent();
+    return MOCK_COMPONENT;
   }
 
   public void becomeMaster() {

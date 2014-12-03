@@ -138,9 +138,7 @@ public interface PopupComponent {
 
     public void show() {
 
-      if (Registry.is("suppress.focus.stealing")) {
-        UIUtil.setAutoRequestFocus(getWindow(), false);
-      }
+    UIUtil.suppressFocusStealing(getWindow());
 
       if (!myRequestFocus) {
         myDialog.setFocusableWindowState(false);

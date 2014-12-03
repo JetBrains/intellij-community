@@ -25,7 +25,6 @@ import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
@@ -38,8 +37,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-
-import static com.jetbrains.python.psi.PyUtil.sure;
 
 /**
  * @author yole
@@ -384,17 +381,12 @@ public class PyBlock implements ASTBlock {
   }
 
   private static boolean isAfterStatementList(ASTNode child) {
-    try {
-      PsiElement prev = sure(child.getPsi().getPrevSibling());
-      sure(prev instanceof PyStatement);
-      PsiElement lastchild = PsiTreeUtil.getDeepestLast(prev);
-      sure(lastchild.getParent() instanceof PyStatementList);
-      return true;
-    }
-    catch (IncorrectOperationException e) {
-      // not our cup of tea
+    PsiElement prev = child.getPsi().getPrevSibling();
+    if (!(prev instanceof PyStatement)) {
       return false;
     }
+    PsiElement lastchild = PsiTreeUtil.getDeepestLast(prev);
+    return lastchild.getParent() instanceof PyStatementList;
   }
 
   private boolean needListAlignment(ASTNode child) {

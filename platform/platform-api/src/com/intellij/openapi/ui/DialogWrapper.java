@@ -460,7 +460,8 @@ public abstract class DialogWrapper {
     List<JButton> buttons = new ArrayList<JButton>();
 
     boolean hasHelpToMoveToLeftSide = false;
-    if (UIUtil.isUnderAquaLookAndFeel() && Arrays.asList(actions).contains(getHelpAction())) {
+    if ((UIUtil.isUnderAquaLookAndFeel() || (UIUtil.isUnderDarcula() && SystemInfo.isMac)) 
+        && Arrays.asList(actions).contains(getHelpAction())) {
       hasHelpToMoveToLeftSide = true;
       actions = ArrayUtil.remove(actions, getHelpAction());
     }
@@ -534,10 +535,8 @@ public abstract class DialogWrapper {
 
     if (hasHelpToMoveToLeftSide) {
       JButton helpButton = new JButton(getHelpAction());
-      if (!UIUtil.isUnderDarcula()) {
-        helpButton.putClientProperty("JButton.buttonType", "help");
-        helpButton.setText("");
-      }
+      helpButton.putClientProperty("JButton.buttonType", "help");
+      helpButton.setText("");
       helpButton.setMargin(insets);
       helpButton.setToolTipText(ActionsBundle.actionDescription("HelpTopics"));
       panel.add(helpButton, BorderLayout.WEST);

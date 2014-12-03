@@ -31,23 +31,59 @@ import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+
 public class AddAntBuildFile extends AnAction {
   public void actionPerformed(AnActionEvent event) {
-    DataContext dataContext = event.getDataContext();
-    Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
-    AntConfiguration antConfiguration = AntConfiguration.getInstance(project);
-    try {
-      antConfiguration.addBuildFile(file);
-      ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.ANT_BUILD).activate(null);
+    final DataContext dataContext = event.getDataContext();
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    if (project == null) {
+      return;
     }
-    catch (AntNoFileException e) {
-      String message = e.getMessage();
-      if (message == null || message.length() == 0) {
-        message = AntBundle.message("cannot.add.build.files.from.excluded.directories.error.message", e.getFile().getPresentableUrl());
-      }
 
-      Messages.showWarningDialog(project, message, AntBundle.message("cannot.add.build.file.dialog.title"));
+    final Set<VirtualFile> files = new HashSet<VirtualFile>();
+    
+    VirtualFile[] contextFiles = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
+    if (contextFiles != null) {
+      files.addAll(Arrays.asList(contextFiles));
+    }
+    final VirtualFile singleFile = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
+    if (singleFile != null) {
+      files.add(singleFile);
+    }
+
+    if (files.isEmpty()) {
+      return;
+    }
+    
+    final AntConfiguration antConfiguration = AntConfiguration.getInstance(project);
+    int filesAdded = 0;
+    final StringBuilder errors = new StringBuilder();
+
+    for (VirtualFile file : files) {
+      try {
+        antConfiguration.addBuildFile(file);
+        filesAdded++;
+      }
+      catch (AntNoFileException e) {
+        String message = e.getMessage();
+        if (message == null || message.length() == 0) {
+          message = AntBundle.message("cannot.add.build.files.from.excluded.directories.error.message", e.getFile().getPresentableUrl());
+        }
+        if (errors.length() > 0) {
+          errors.append("\n");
+        }
+        errors.append(message);
+      }
+    }
+
+    if (errors.length() > 0) {
+      Messages.showWarningDialog(project, errors.toString(), AntBundle.message("cannot.add.build.file.dialog.title"));
+    }
+    if (filesAdded > 0) {
+      ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.ANT_BUILD).activate(null);
     }
   }
 

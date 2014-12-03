@@ -279,7 +279,11 @@ class RefCountHolder {
                          @NotNull ProgressIndicator indicator,
                          @NotNull Runnable analyze) {
     if (myState.compareAndSet(EMPTY, indicator)) {
-      clear();
+      if (!file.getTextRange().equals(dirtyScope)) {
+        // empty holder needs filling before it can be used, so restart daemon to re-analyze the whole file
+        myState.set(EMPTY);
+        return false;
+      }
     }
     else if (!myState.compareAndSet(READY, indicator)) {
       log("a: failed to change ", myState, "->", indicator);

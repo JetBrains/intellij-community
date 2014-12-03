@@ -34,7 +34,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class MethodUsagesSearcher extends QueryExecutorBase<PsiReference, MethodReferencesSearch.SearchParameters> {
   @Override
-  public void processQuery(@NotNull MethodReferencesSearch.SearchParameters p, @NotNull final Processor<PsiReference> consumer) {
+  public void processQuery(@NotNull final MethodReferencesSearch.SearchParameters p, @NotNull final Processor<PsiReference> consumer) {
     final PsiMethod method = p.getMethod();
     final boolean[] isConstructor = new boolean[1];
     final PsiManager[] psiManager = new PsiManager[1];
@@ -65,11 +65,16 @@ public class MethodUsagesSearcher extends QueryExecutorBase<PsiReference, Method
 
     final SearchRequestCollector collector = p.getOptimizer();
 
-    final SearchScope searchScope = p.getScope();
+    final SearchScope searchScope = ApplicationManager.getApplication().runReadAction(new Computable<SearchScope>() {
+      @Override
+      public SearchScope compute() {
+        return p.getEffectiveSearchScope();
+      }
+    });
 
     if (isConstructor[0]) {
       new ConstructorReferencesSearchHelper(psiManager[0]).
-        processConstructorReferences(consumer, method, aClass, searchScope, !strictSignatureSearch, strictSignatureSearch, collector);
+        processConstructorReferences(consumer, method, aClass, searchScope, false, strictSignatureSearch, collector);
     }
 
     if (isValueAnnotation[0]) {

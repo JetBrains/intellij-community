@@ -306,6 +306,11 @@ public class ExtractLightMethodObjectHandler {
     }
 
     @Override
+    public PsiType getReturnType() {
+      return null;
+    }
+
+    @Override
     public void show() {}
 
     @Override

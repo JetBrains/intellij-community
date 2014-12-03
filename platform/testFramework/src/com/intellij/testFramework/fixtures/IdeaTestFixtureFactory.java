@@ -18,6 +18,7 @@ package com.intellij.testFramework.fixtures;
 
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.builders.ModuleFixtureBuilder;
+import com.intellij.testFramework.fixtures.impl.IdeaTestFixtureFactoryImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,17 +26,7 @@ import org.jetbrains.annotations.Nullable;
  * This is to be provided by IDEA and not by plugin authors.
  */
 public abstract class IdeaTestFixtureFactory {
-  private static final IdeaTestFixtureFactory ourInstance;
-
-  static {
-    try {
-      final Class<?> aClass = Class.forName("com.intellij.testFramework.fixtures.impl.IdeaTestFixtureFactoryImpl");
-      ourInstance = (IdeaTestFixtureFactory)aClass.newInstance();
-    }
-    catch (Exception e) {
-      throw new RuntimeException("Can't instantiate factory", e);
-    }
-  }
+  private static final IdeaTestFixtureFactory ourInstance = new IdeaTestFixtureFactoryImpl();
 
   @NotNull
   public static IdeaTestFixtureFactory getFixtureFactory() {

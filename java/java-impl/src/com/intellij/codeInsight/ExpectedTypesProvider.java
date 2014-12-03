@@ -746,7 +746,7 @@ public class ExpectedTypesProvider {
         }
         else {
           if (type != null) {
-            info = createInfoImpl(type, ExpectedTypeInfo.TYPE_OR_SUPERTYPE, PsiType.INT, tailType);
+            info = createInfoImpl(type, type instanceof PsiPrimitiveType ? ExpectedTypeInfo.TYPE_OR_SUPERTYPE : ExpectedTypeInfo.TYPE_OR_SUBTYPE, PsiType.INT, tailType);
           }
           else {
             info = createInfoImpl(PsiType.LONG, ExpectedTypeInfo.TYPE_OR_SUBTYPE, PsiType.INT, tailType);
@@ -772,7 +772,7 @@ public class ExpectedTypesProvider {
       }
       else {
         if (type != null) {
-          info = createInfoImpl(type, ExpectedTypeInfo.TYPE_OR_SUPERTYPE, PsiType.INT, TailType.NONE);
+          info = createInfoImpl(type, type instanceof PsiPrimitiveType ? ExpectedTypeInfo.TYPE_OR_SUPERTYPE : ExpectedTypeInfo.TYPE_OR_SUBTYPE, PsiType.INT, TailType.NONE);
         }
         else {
           info = createInfoImpl(PsiType.LONG, PsiType.INT);

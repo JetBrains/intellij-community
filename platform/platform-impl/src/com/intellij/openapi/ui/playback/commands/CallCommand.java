@@ -26,18 +26,15 @@ import java.lang.reflect.Method;
 import java.util.Set;
 
 /**
- * Created by IntelliJ IDEA.
- * User: kirillk
- * Date: 8/3/11
- * Time: 4:08 PM
- * To change this template use File | Settings | File Templates.
+ * Author: kirillk
+ * Date: 8/3/11 4:08 PM
  */
 public class CallCommand extends AbstractCommand {
 
   public static final String PREFIX = CMD_PREFIX + "call";
 
   public CallCommand(String text, int line) {
-    super(text, line);
+    super(text, line, true);
   }
 
   @Override
@@ -131,10 +128,5 @@ public class CallCommand extends AbstractCommand {
     }
 
     return null;
-  }
-
-  @Override
-  protected boolean isAwtThread() {
-    return true;
   }
 }

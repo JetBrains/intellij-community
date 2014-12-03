@@ -12,8 +12,12 @@
   <xi:include href="/META-INF/structuralsearch.xml" xpointer="xpointer(/idea-plugin/*)">
     <xi:fallback/>
   </xi:include>
-  <xi:include href="/META-INF/structuralsearch-java.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="/META-INF/IntentionPowerPack.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/META-INF/structuralsearch-java.xml" xpointer="xpointer(/idea-plugin/*)">
+    <xi:fallback/>
+  </xi:include>
+  <xi:include href="/META-INF/IntentionPowerPack.xml" xpointer="xpointer(/idea-plugin/*)">
+    <xi:fallback/>
+  </xi:include>
   <xi:include href="/META-INF/InspectionGadgets.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/ManifestSupport.xml" xpointer="xpointer(/idea-plugin/*)">
     <xi:fallback/>
@@ -112,6 +116,15 @@
     <extensionPoint name="debugger.jvmSmartStepIntoHandler"
                     interface="com.intellij.debugger.actions.JvmSmartStepIntoHandler"/>
 
+    <extensionPoint name="debugger.frameExtraVarsProvider"
+                    interface="com.intellij.debugger.engine.FrameExtraVariablesProvider"/>
+
+    <extensionPoint name="debugger.simpleGetterProvider"
+                    interface="com.intellij.debugger.engine.SimpleGetterProvider"/>
+
+    <extensionPoint name="debugger.syntheticProvider"
+                    interface="com.intellij.debugger.engine.SyntheticTypeComponentProvider"/>
+
     <extensionPoint name="allOverridingMethodsSearch" interface="com.intellij.util.QueryExecutor"/>
     <extensionPoint name="annotatedElementsSearch" interface="com.intellij.util.QueryExecutor"/>
     <extensionPoint name="annotatedPackagesSearch" interface="com.intellij.util.QueryExecutor"/>
@@ -188,6 +201,8 @@
     <extensionPoint name="codeInsight.createFieldFromUsageHelper" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.daemon.impl.quickfix.CreateFieldFromUsageHelper"/>
     </extensionPoint>
+
+    <extensionPoint name="generation.toStringClassFilter" interface="org.jetbrains.generate.tostring.GenerateToStringClassFilter"/>
 
     <extensionPoint name="getterSetterProvider" interface="com.intellij.codeInsight.generation.GetterSetterPrototypeProvider"/>
 
@@ -1450,6 +1465,8 @@
     <xdebugger.breakpointType implementation="com.intellij.debugger.ui.breakpoints.JavaExceptionBreakpointType"/>
     <xdebugger.breakpointType implementation="com.intellij.debugger.ui.breakpoints.JavaLineBreakpointType"/>
     <debugger.jvmSmartStepIntoHandler implementation="com.intellij.debugger.actions.JavaSmartStepIntoHandler"/>
+    <debugger.simpleGetterProvider implementation="com.intellij.debugger.engine.JavaSimpleGetterProvider"/>
+    <debugger.syntheticProvider implementation="com.intellij.debugger.engine.DefaultSyntheticProvider"/>
 
     <applicationService serviceInterface="com.intellij.remoteServer.runtime.deployment.debug.JavaDebuggerLauncher"
                         serviceImplementation="com.intellij.remoteServer.impl.runtime.deployment.debug.JavaDebuggerLauncherImpl"/>
@@ -1528,6 +1545,7 @@
     <localInspection language="JAVA" shortName="FieldNotUsedInToString" displayName="Field not used in 'toString()' method" groupName="toString() issues"
                      enabledByDefault="false" level="WARNING" runForWholeFile="true"
                      implementationClass="org.jetbrains.generate.tostring.inspection.FieldNotUsedInToStringInspection"/>
+    <generation.toStringClassFilter implementation="org.jetbrains.generate.tostring.GenerateToStringInterfaceFilter" order="last"/>
 
     <codeInsight.unresolvedReferenceQuickFixProvider implementation="com.intellij.jarFinder.FindJarQuickFixProvider"/>
 

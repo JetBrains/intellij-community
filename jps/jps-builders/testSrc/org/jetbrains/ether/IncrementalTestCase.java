@@ -185,13 +185,12 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
       if (!logFile.exists()) {
         logFile = new File(baseDir, "build.log");
       }
-      final String expected = StringUtil.convertLineSeparators(FileUtil.loadFile(logFile));
       final String actual = log.toString();
 
-      assertEquals(expected, actual);
+      assertSameLinesWithFile(logFile.getAbsolutePath(), actual);
 
       if (result.isSuccessful()) {
-        checkMappingsAreSameAfterRebuild(pd);
+        checkMappingsAreSameAfterRebuild(result);
       }
       return result;
     }

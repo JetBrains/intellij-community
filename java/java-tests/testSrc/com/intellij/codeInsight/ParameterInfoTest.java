@@ -144,7 +144,15 @@ public class ParameterInfoTest extends LightCodeInsightTestCase {
     doTestPresentation("<html>List&lt;String&gt; param</html>");
   }
 
+  public void testIgnoreVarargs() throws Exception {
+    doTestPresentation("<html>Class&lt;CharSequence&gt; a, <b>Class&lt;? extends CharSequence&gt;... stopAt</b></html>", 1);
+  }
+
   private void doTestPresentation(String expectedString) {
+    doTestPresentation(expectedString, -1);
+  }
+
+  private void doTestPresentation(String expectedString, int currentParameterIndex) {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
 
     final MethodParameterInfoHandler handler = new MethodParameterInfoHandler();
@@ -156,7 +164,8 @@ public class ParameterInfoTest extends LightCodeInsightTestCase {
     assertEquals(1, itemsToShow.length);
     assertTrue(itemsToShow[0] instanceof MethodCandidateInfo);
     final PsiMethod method = ((MethodCandidateInfo)itemsToShow[0]).getElement();
-    final ParameterInfoUIContextEx parameterContext = ParameterInfoComponent.createContext(itemsToShow, myEditor, handler, -1);
+    final ParameterInfoUIContextEx parameterContext = ParameterInfoComponent.createContext(itemsToShow, myEditor, handler,
+                                                                                           currentParameterIndex);
     Assert.assertEquals(expectedString,
                         MethodParameterInfoHandler
                           .updateMethodPresentation(method, ((MethodCandidateInfo)itemsToShow[0]).getSubstitutor(), parameterContext));

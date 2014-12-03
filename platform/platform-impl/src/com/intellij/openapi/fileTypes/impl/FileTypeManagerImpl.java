@@ -75,7 +75,7 @@ import java.util.concurrent.atomic.AtomicLong;
 public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOMExternalizable, ExportableApplicationComponent, Disposable {
   private static final Logger LOG = Logger.getInstance(FileTypeManagerImpl.class);
 
-  private static final int VERSION = 11;
+  private static final int VERSION = 12;
   private static final Key<FileType> FILE_TYPE_KEY = Key.create("FILE_TYPE_KEY");
   // cached auto-detected file type. If the file was auto-detected as plain text or binary
   // then the value is null and autoDetectedAsText, autoDetectedAsBinary and autoDetectWasRun sets are used instead.
@@ -132,7 +132,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   private final AtomicLong elapsedAutoDetect = new AtomicLong();
 
   @VisibleForTesting
-  public void initStandardFileTypes() {
+  void initStandardFileTypes() {
     final FileTypeConsumer consumer = new FileTypeConsumer() {
       @Override
       public void consume(@NotNull FileType fileType) {
@@ -332,7 +332,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
 
   private static void writeImportedExtensionsMap(final Element map, final ImportedFileType type) {
     for (FileNameMatcher matcher : type.getOriginalPatterns()) {
-      Element content = AbstractFileType.writeMapping(type, matcher, false);
+      Element content = AbstractFileType.writeMapping(type.getName(), matcher, false);
       if (content != null) {
         map.addContent(content);
       }
@@ -838,6 +838,9 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   @Override
   public void readExternal(Element parentNode) throws InvalidDataException {
     int savedVersion = getVersion(parentNode);
+
+    String previousIgnores = getIgnoredFilesList();
+    
     for (final Object o : parentNode.getChildren()) {
       final Element e = (Element)o;
       if (ELEMENT_FILETYPES.equals(e.getName())) {
@@ -890,9 +893,17 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
       addIgnore(".bundle");
     }
 
-    if (savedVersion < VERSION) {
+    if (savedVersion < 11) {
       addIgnore("*.rbc");
     }
+    
+    if (savedVersion == 11 && PlatformUtils.isCLion()) {
+      // TODO During EAP CLion missed FileTypesManager.xml and users got empty excludes list
+      // TODO this code is only necessary until CLion 1.0 is released, then can be safely deleted
+      // previousIgnores come now from FileTypesManager.xml and merged with anything user may have added manually
+      myIgnoredPatterns.setIgnoreMasks(StringUtil.join(Arrays.asList(previousIgnores, getIgnoredFilesList()), ";"));
+    }
+
     myIgnoredFileCache.clearCache();
     fileTypeChangedCount.set(JDOMExternalizer.readInteger(parentNode, "fileTypeChangedCounter", 0));
     autoDetectedAttribute = autoDetectedAttribute.newVersion(fileTypeChangedCount.get());
@@ -1003,6 +1014,13 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
       writeExtensionsMap(map, type, true);
     }
 
+    for (Map.Entry<FileNameMatcher, String> entry : myUnresolvedMappings.entrySet()) {
+      Element content = AbstractFileType.writeMapping(entry.getValue(), entry.getKey(), true);
+      if (content != null) {
+        map.addContent(content);
+      }
+    }
+
     int value = fileTypeChangedCount.get();
     if (value != 0) {
       JDOMExternalizer.write(parentNode, "fileTypeChangedCounter", value);
@@ -1019,7 +1037,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
       }
       else if (shouldSave(type)) {
         if (!(type instanceof ImportedFileType) || !((ImportedFileType)type).getOriginalPatterns().contains(matcher)) {
-          Element content = AbstractFileType.writeMapping(type, matcher, specifyTypeName);
+          Element content = AbstractFileType.writeMapping(type.getName(), matcher, specifyTypeName);
           if (content != null) {
             map.addContent(content);
           }
@@ -1353,9 +1371,15 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     }
   }
 
-  @VisibleForTesting
-  public Map<FileNameMatcher, Pair<FileType, Boolean>> getRemovedMappings() {
+  Map<FileNameMatcher, Pair<FileType, Boolean>> getRemovedMappings() {
     return myRemovedMappings;
+  }
+
+  @TestOnly
+  void clearForTests() {
+    myStandardFileTypes.clear();
+    myUnresolvedMappings.clear();
+    mySchemesManager.clearAllSchemes();
   }
 
   @Override

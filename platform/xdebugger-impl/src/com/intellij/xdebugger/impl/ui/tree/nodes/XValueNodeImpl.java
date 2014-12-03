@@ -39,6 +39,7 @@ import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
+import gnu.trove.TObjectLongHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -136,52 +137,52 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
 
   public void updateInlineDebuggerData() {
     try {
-      final XDebugSession session = XDebugView.getSession(getTree());
-      if (session != null) {
-        final XSourcePosition debuggerPosition = session.getCurrentPosition();
-        if (debuggerPosition != null) {
-          final XInlineDebuggerDataCallback callback = new XInlineDebuggerDataCallback() {
-            @Override
-            public void computed(@NotNull VirtualFile file, @NotNull Document document, int line) {
-              final Map<Pair<VirtualFile, Integer>, Set<XValueNodeImpl>> map = myTree.getProject().getUserData(XVariablesView.DEBUG_VARIABLES);
-              final Map<VirtualFile, Long> timestamps = myTree.getProject().getUserData(XVariablesView.DEBUG_VARIABLES_TIMESTAMPS);
-              if (map == null || timestamps == null) {
-                return;
-              }
+      XDebugSession session = XDebugView.getSession(getTree());
+      final XSourcePosition debuggerPosition = session == null ? null : session.getCurrentPosition();
+      if (debuggerPosition == null) {
+        return;
+      }
 
-              Pair<VirtualFile, Integer> key = Pair.create(file, line);
-              Set<XValueNodeImpl> presentations = new LinkedHashSet<XValueNodeImpl>();
-              Set<XValueNodeImpl> old = map.put(key, presentations);
-              timestamps.put(file, document.getModificationStamp());
-              presentations.add(XValueNodeImpl.this);
-              if (old != null) {
-                presentations.addAll(old);
-              }
-              myTree.updateEditor();
-            }
-          };
+      final XInlineDebuggerDataCallback callback = new XInlineDebuggerDataCallback() {
+        @Override
+        public void computed(@NotNull VirtualFile file, @NotNull Document document, int line) {
+          final Map<Pair<VirtualFile, Integer>, Set<XValueNodeImpl>> map = myTree.getProject().getUserData(XVariablesView.DEBUG_VARIABLES);
+          final TObjectLongHashMap<VirtualFile> timestamps = myTree.getProject().getUserData(XVariablesView.DEBUG_VARIABLES_TIMESTAMPS);
+          if (map == null || timestamps == null) {
+            return;
+          }
 
-          if (getValueContainer().computeInlineDebuggerData(callback) == ThreeState.UNSURE) {
-            class ValueDeclaration implements XInlineSourcePosition {
-              @Override
-              public void setSourcePosition(@Nullable XSourcePosition sourcePosition) {
-                final Map<Pair<VirtualFile, Integer>, Set<XValueNodeImpl>> map =
-                  myTree.getProject().getUserData(XVariablesView.DEBUG_VARIABLES);
-                final Map<VirtualFile, Long> timestamps = myTree.getProject().getUserData(XVariablesView.DEBUG_VARIABLES_TIMESTAMPS);
-                if (map == null || timestamps == null || sourcePosition == null) return;
-                VirtualFile file = sourcePosition.getFile();
-                if (!Comparing.equal(debuggerPosition.getFile(), sourcePosition.getFile())) return;
-                final Document doc = FileDocumentManager.getInstance().getDocument(file);
-                if (doc == null) return;
-                int line = sourcePosition.getLine();
-                callback.computed(file, doc, line);
-              }
-            }
-            class NearestValuePosition extends ValueDeclaration implements XNearestSourcePosition {}
-            getValueContainer().computeSourcePosition(new ValueDeclaration());
-            getValueContainer().computeSourcePosition(new NearestValuePosition());
+          Pair<VirtualFile, Integer> key = Pair.create(file, line);
+          Set<XValueNodeImpl> presentations = new LinkedHashSet<XValueNodeImpl>();
+          Set<XValueNodeImpl> old = map.put(key, presentations);
+          timestamps.put(file, document.getModificationStamp());
+          presentations.add(XValueNodeImpl.this);
+          if (old != null) {
+            presentations.addAll(old);
+          }
+          myTree.updateEditor();
+        }
+      };
+
+      if (getValueContainer().computeInlineDebuggerData(callback) == ThreeState.UNSURE) {
+        class ValueDeclaration implements XInlineSourcePosition {
+          @Override
+          public void setSourcePosition(@Nullable XSourcePosition sourcePosition) {
+            final Map<Pair<VirtualFile, Integer>, Set<XValueNodeImpl>> map =
+              myTree.getProject().getUserData(XVariablesView.DEBUG_VARIABLES);
+            final TObjectLongHashMap<VirtualFile> timestamps = myTree.getProject().getUserData(XVariablesView.DEBUG_VARIABLES_TIMESTAMPS);
+            if (map == null || timestamps == null || sourcePosition == null) return;
+            VirtualFile file = sourcePosition.getFile();
+            if (!Comparing.equal(debuggerPosition.getFile(), sourcePosition.getFile())) return;
+            final Document doc = FileDocumentManager.getInstance().getDocument(file);
+            if (doc == null) return;
+            int line = sourcePosition.getLine();
+            callback.computed(file, doc, line);
           }
         }
+        class NearestValuePosition extends ValueDeclaration implements XNearestSourcePosition {}
+        getValueContainer().computeSourcePosition(new ValueDeclaration());
+        getValueContainer().computeSourcePosition(new NearestValuePosition());
       }
     }
     catch (Exception ignore) {

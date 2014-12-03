@@ -483,13 +483,24 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         if (!transparent()) {
           g.setColor(getEditor().getColorsScheme().getDefaultBackground());
           Rectangle bounds = getBounds();
-          g.fillRect(bounds.x, bounds.y, bounds.height, bounds.width);
+          g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
         }
 
         if (myErrorStripeRenderer != null) {
-          int x = THIN_GAP + myMinMarkHeight;
-          final Rectangle b = new Rectangle(x, 0, ERROR_ICON_WIDTH, ERROR_ICON_HEIGHT);
-          myErrorStripeRenderer.paint(this, g, b);
+          if (isMirrored() && g instanceof Graphics2D) {
+            Graphics2D g2d = (Graphics2D)g;
+            AffineTransform old = g2d.getTransform();
+            AffineTransform tx = AffineTransform.getScaleInstance(-1, 1);
+            tx.translate(-ERROR_ICON_WIDTH, 0);
+            g2d.transform(tx);
+            myErrorStripeRenderer.paint(this, g2d, new Rectangle(0, 0, ERROR_ICON_WIDTH, ERROR_ICON_HEIGHT));
+            g2d.setTransform(old);
+          }
+          else {
+            int x = THIN_GAP + myMinMarkHeight;
+            final Rectangle b = new Rectangle(x, 0, ERROR_ICON_WIDTH, ERROR_ICON_HEIGHT);
+            myErrorStripeRenderer.paint(this, g, b);
+          }
         }
       }
       finally {
@@ -727,12 +738,11 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       int startOffset = yPositionToOffset(clip.y - myMinMarkHeight, true);
       int endOffset = yPositionToOffset(clip.y + clip.height, false);
 
-      drawMarkup(g, startOffset, endOffset, EditorMarkupModelImpl.this);
       drawMarkup(g, startOffset, endOffset,
-                 (MarkupModelEx)DocumentMarkupModel.forDocument(document, myEditor.getProject(), true));
+                 (MarkupModelEx)DocumentMarkupModel.forDocument(document, myEditor.getProject(), true),EditorMarkupModelImpl.this);
     }
 
-    private void drawMarkup(@NotNull final Graphics g, int startOffset, int endOffset, @NotNull MarkupModelEx markup) {
+    private void drawMarkup(@NotNull final Graphics g, int startOffset, int endOffset, @NotNull MarkupModelEx markup1, @NotNull MarkupModelEx markup2) {
       final Queue<PositionedStripe> thinEnds = new PriorityQueue<PositionedStripe>(5, new Comparator<PositionedStripe>() {
         @Override
         public int compare(@NotNull PositionedStripe o1, @NotNull PositionedStripe o2) {
@@ -751,64 +761,73 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       final int[] thinYStart = new int[1];  // in range 0..yStart all spots are drawn
       final int[] wideYStart = new int[1];  // in range 0..yStart all spots are drawn
 
-      markup.processRangeHighlightersOverlappingWith(startOffset, endOffset, new Processor<RangeHighlighterEx>() {
-        @Override
-        public boolean process(@NotNull RangeHighlighterEx highlighter) {
-          if (!highlighter.getEditorFilter().avaliableIn(myEditor)) return true;
+      DisposableIterator<RangeHighlighterEx> iterator1 = markup1.overlappingIterator(startOffset, endOffset);
+      DisposableIterator<RangeHighlighterEx> iterator2 = markup2.overlappingIterator(startOffset, endOffset);
+      IntervalTreeImpl.PeekableIterator<RangeHighlighterEx> iterator = merge((IntervalTreeImpl.PeekableIterator<RangeHighlighterEx>)iterator1,
+                                                                          (IntervalTreeImpl.PeekableIterator<RangeHighlighterEx>)iterator2);
+      try {
+        ContainerUtil.process(iterator, new Processor<RangeHighlighterEx>() {
+          @Override
+          public boolean process(@NotNull RangeHighlighterEx highlighter) {
+            if (!highlighter.getEditorFilter().avaliableIn(myEditor)) return true;
 
-          Color color = highlighter.getErrorStripeMarkColor();
-          if (color == null) return true;
-          boolean isThin = highlighter.isThinErrorStripeMark();
-          int[] yStart = isThin ? thinYStart : wideYStart;
-          List<PositionedStripe> stripes = isThin ? thinStripes : wideStripes;
-          Queue<PositionedStripe> ends = isThin ? thinEnds : wideEnds;
+            Color color = highlighter.getErrorStripeMarkColor();
+            if (color == null) return true;
+            boolean isThin = highlighter.isThinErrorStripeMark();
+            int[] yStart = isThin ? thinYStart : wideYStart;
+            List<PositionedStripe> stripes = isThin ? thinStripes : wideStripes;
+            Queue<PositionedStripe> ends = isThin ? thinEnds : wideEnds;
 
-          ProperTextRange range = offsetsToYPositions(highlighter.getStartOffset(), highlighter.getEndOffset());
-          final int ys = range.getStartOffset();
-          int ye = range.getEndOffset();
-          if (ye - ys < myMinMarkHeight) ye = ys + myMinMarkHeight;
+            ProperTextRange range = offsetsToYPositions(highlighter.getStartOffset(), highlighter.getEndOffset());
+            final int ys = range.getStartOffset();
+            int ye = range.getEndOffset();
+            if (ye - ys < myMinMarkHeight) ye = ys + myMinMarkHeight;
 
-          yStart[0] = drawStripesEndingBefore(ys, ends, stripes, g, yStart[0]);
+            yStart[0] = drawStripesEndingBefore(ys, ends, stripes, g, yStart[0]);
 
-          final int layer = highlighter.getLayer();
+            final int layer = highlighter.getLayer();
 
-          PositionedStripe stripe = null;
-          int i;
-          for (i = 0; i < stripes.size(); i++) {
-            PositionedStripe s = stripes.get(i);
-            if (s.layer == layer) {
-              stripe = s;
-              break;
-            }
-            if (s.layer < layer) {
-              break;
-            }
-          }
-          if (stripe == null) {
-            // started new stripe, draw previous above
-            if (yStart[0] != ys) {
-              if (!stripes.isEmpty()) {
-                PositionedStripe top = stripes.get(0);
-                drawSpot(g, top.thin, yStart[0], ys, top.color);
+            PositionedStripe stripe = null;
+            int i;
+            for (i = 0; i < stripes.size(); i++) {
+              PositionedStripe s = stripes.get(i);
+              if (s.layer == layer) {
+                stripe = s;
+                break;
               }
-              yStart[0] = ys;
+              if (s.layer < layer) {
+                break;
+              }
             }
-            stripe = new PositionedStripe(color, ye, isThin, layer);
-            stripes.add(i, stripe);
-            ends.offer(stripe);
-          }
-          else {
-            // key changed, reinsert into queue
-            if (stripe.yEnd != ye) {
-              ends.remove(stripe);
-              stripe.yEnd = ye;
+            if (stripe == null) {
+              // started new stripe, draw previous above
+              if (yStart[0] != ys) {
+                if (!stripes.isEmpty()) {
+                  PositionedStripe top = stripes.get(0);
+                  drawSpot(g, top.thin, yStart[0], ys, top.color);
+                }
+                yStart[0] = ys;
+              }
+              stripe = new PositionedStripe(color, ye, isThin, layer);
+              stripes.add(i, stripe);
               ends.offer(stripe);
             }
-          }
+            else {
+              // key changed, reinsert into queue
+              if (stripe.yEnd != ye) {
+                ends.remove(stripe);
+                stripe.yEnd = ye;
+                ends.offer(stripe);
+              }
+            }
 
-          return true;
-        }
-      });
+            return true;
+          }
+        });
+      }
+      finally {
+        iterator.dispose();
+      }
 
       drawStripesEndingBefore(Integer.MAX_VALUE, thinEnds, thinStripes, g, thinYStart[0]);
       drawStripesEndingBefore(Integer.MAX_VALUE, wideEnds, wideStripes, g, wideYStart[0]);

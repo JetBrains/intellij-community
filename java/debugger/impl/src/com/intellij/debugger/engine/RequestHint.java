@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -210,7 +210,7 @@ public class RequestHint {
           if (location != null) {
             final Method method = location.method();
             if (method != null) {
-              if (myVirtualMachineProxy.canGetSyntheticAttribute() ? method.isSynthetic() : method.name().indexOf('$') >= 0) {
+              if (myVirtualMachineProxy.canGetSyntheticAttribute() ? DebuggerUtils.isSynthetic(method) : method.name().indexOf('$') >= 0) {
                 // step into lambda methods
                 if (!method.name().startsWith(LambdaMethodFilter.LAMBDA_METHOD_PREFIX)) {
                   return myDepth;

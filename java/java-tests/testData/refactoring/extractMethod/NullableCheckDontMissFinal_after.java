@@ -1,4 +1,4 @@
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 class Test {
   void foo() {
@@ -11,7 +11,7 @@ class Test {
     }
   }
 
-    @NotNull
+    @Nullable
     private String newMethod() {
         final String str = "";
         if (str == "") {

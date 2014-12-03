@@ -1,9 +1,11 @@
 public class Foo {
     void m() {
         try {
-            somevalue<caret>
+            doAct()
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
+
+    void doAct() {}
 }
