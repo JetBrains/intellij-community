@@ -125,7 +125,6 @@ public class ExtractMethodProcessor implements MatchProvider {
   protected boolean myCanBeStatic;
   protected boolean myCanBeChainedConstructor;
   protected boolean myIsChainedConstructor;
-  private DuplicatesFinder myDuplicatesFinder;
   private List<Match> myDuplicates;
   @PsiModifier.ModifierConstant private String myMethodVisibility = PsiModifier.PRIVATE;
   protected boolean myGenerateConditionalExit;
@@ -709,7 +708,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
   }
 
-  private void initDuplicates() {
+  private DuplicatesFinder initDuplicates() {
     List<PsiElement> elements = new ArrayList<PsiElement>();
     for (PsiElement element : myElements) {
       if (!(element instanceof PsiWhiteSpace || element instanceof PsiComment)) {
@@ -718,18 +717,21 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
 
     if (myExpression != null) {
-      myDuplicatesFinder = new DuplicatesFinder(PsiUtilCore.toPsiElementArray(elements), myInputVariables.copy(),
+      DuplicatesFinder finder = new DuplicatesFinder(PsiUtilCore.toPsiElementArray(elements), myInputVariables.copy(),
                                                 new ArrayList<PsiVariable>());
-      myDuplicates = myDuplicatesFinder.findDuplicates(myTargetClass);
+      myDuplicates = finder.findDuplicates(myTargetClass);
+      return finder;
     }
     else if (elements.size() > 0){
-      myDuplicatesFinder = new DuplicatesFinder(PsiUtilCore.toPsiElementArray(elements), myInputVariables.copy(),
+      DuplicatesFinder myDuplicatesFinder = new DuplicatesFinder(PsiUtilCore.toPsiElementArray(elements), myInputVariables.copy(),
                                                 myOutputVariable != null ? new VariableReturnValue(myOutputVariable) : null,
                                                 Arrays.asList(myOutputVariables));
       myDuplicates = myDuplicatesFinder.findDuplicates(myTargetClass);
+      return myDuplicatesFinder;
     } else {
       myDuplicates = new ArrayList<Match>();
     }
+    return null;
   }
 
   public void doExtract() throws IncorrectOperationException {
@@ -1561,12 +1563,12 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   public boolean hasDuplicates(Set<VirtualFile> files) {
-    initDuplicates();
+    final DuplicatesFinder finder = initDuplicates();
 
     if (hasDuplicates()) return true;
     final PsiManager psiManager = PsiManager.getInstance(myProject);
     for (VirtualFile file : files) {
-      if (!myDuplicatesFinder.findDuplicates(psiManager.findFile(file)).isEmpty()) return true;
+      if (!finder.findDuplicates(psiManager.findFile(file)).isEmpty()) return true;
     }
     return false;
   }
