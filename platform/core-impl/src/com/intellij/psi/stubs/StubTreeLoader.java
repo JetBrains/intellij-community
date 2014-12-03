@@ -41,4 +41,6 @@ public abstract class StubTreeLoader {
   public abstract long getStubTreeTimestamp(VirtualFile vFile);
 
   public abstract boolean canHaveStub(VirtualFile file);
+
+  public abstract String getIndexingStampDebugInfo(VirtualFile file);
 }
