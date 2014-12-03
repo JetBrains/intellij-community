@@ -247,6 +247,12 @@ public abstract class JBListTable {
       }
 
       @Override
+      public void addNotify() {
+        super.addNotify();
+        Disposer.register(myOnRemoveDisposable, myRowResizeAnimator);
+      }
+
+      @Override
       public void removeNotify() {
         super.removeNotify();
         Disposer.dispose(myOnRemoveDisposable);
@@ -254,7 +260,6 @@ public abstract class JBListTable {
     };
     mainTable.setStriped(true);
     myRowResizeAnimator = new RowResizeAnimator(mainTable);
-    Disposer.register(myOnRemoveDisposable, myRowResizeAnimator);
   }
 
   public void stopEditing() {
