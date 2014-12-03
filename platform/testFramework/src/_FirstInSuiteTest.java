@@ -25,6 +25,8 @@ import javax.swing.*;
  */
 @SuppressWarnings("JUnitTestClassNamingConvention")
 public class _FirstInSuiteTest extends TestCase {
+  public static long suiteStarted = 0L;
+
   public void testNothing() throws Exception {
     SwingUtilities.invokeAndWait(new Runnable() {
       @Override
@@ -46,6 +48,7 @@ public class _FirstInSuiteTest extends TestCase {
 
   // performance tests
   public void testNothingPerformance() throws Exception {
+    suiteStarted = System.nanoTime();
     testNothing();
   }
 }
