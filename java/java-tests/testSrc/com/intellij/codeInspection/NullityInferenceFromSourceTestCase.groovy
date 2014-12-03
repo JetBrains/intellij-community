@@ -60,6 +60,18 @@ abstract class NullityInferenceFromSourceTestCase extends LightCodeInsightFixtur
     Nullness inferNullity(PsiMethod method) {
       return NullableNotNullManager.isNotNull(method) ? NOT_NULL : NullableNotNullManager.isNullable(method) ? NULLABLE : UNKNOWN
     }
+    void "test return boxed boolean constant"() {
+      assert inferNullity(parse('Object foo() { return true; }')) == NOT_NULL
+    }
+
+    void "test return boxed boolean value"() {
+      assert inferNullity(parse('Object foo(Object o) { return o == null; }')) == NOT_NULL
+    }
+
+    void "test return boxed integer"() {
+      assert inferNullity(parse('Object foo() { return 1; }')) == NOT_NULL
+    }
+
   }
 
   static class DfaInferenceTest extends NullityInferenceFromSourceTestCase {
