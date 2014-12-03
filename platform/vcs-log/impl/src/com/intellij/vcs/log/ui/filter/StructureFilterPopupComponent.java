@@ -70,11 +70,27 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
   @Nullable
   @Override
   protected String getToolTip(@NotNull VcsLogFileFilter filter) {
-    return getToolTip(VcsLogFileFilter.getAllVisibleRoots(getAllRoots(), filter));
+    VcsLogRootFilter rootFilter = filter.getRootFilter();
+    VcsLogStructureFilter structureFilter = filter.getStructureFilter();
+    return getToolTip(rootFilter == null ? getAllRoots() : rootFilter.getRoots(), structureFilter == null ? Collections.<VirtualFile>emptySet() : structureFilter.getFiles());
   }
 
   @NotNull
-  private static String getToolTip(@NotNull Collection<VirtualFile> files) {
+  private String getToolTip(@NotNull Collection<VirtualFile> roots, @NotNull Collection<VirtualFile> files) {
+    String tooltip = "";
+    if (roots.isEmpty()) {
+      tooltip += "No Roots Selected";
+    } if (roots.size() != getAllRoots().size()) {
+      tooltip += "Roots:\n" + getTooltipTextForFiles(roots);
+    }
+    if (!files.isEmpty()) {
+      if (!tooltip.isEmpty()) tooltip += "\n";
+      tooltip += "Paths:\n" + getTooltipTextForFiles(files);
+    }
+    return tooltip;
+  }
+
+  private static String getTooltipTextForFiles(Collection<VirtualFile> files) {
     List<VirtualFile> filesToDisplay = new ArrayList<VirtualFile>(files);
     if (files.size() > 10) {
       filesToDisplay = filesToDisplay.subList(0, 10);
