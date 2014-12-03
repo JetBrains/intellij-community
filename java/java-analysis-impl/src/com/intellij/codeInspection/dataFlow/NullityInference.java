@@ -111,7 +111,7 @@ public class NullityInference {
         return Nullness.NULLABLE;
       }
       
-      if (delegates.size() > 1) {
+      if (hasErrors.get() || delegates.size() > 1) {
         return Nullness.UNKNOWN;
       }
 

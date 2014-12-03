@@ -75,13 +75,17 @@ String bar() { return "z"; }
 
   protected abstract Nullness inferNullity(PsiMethod method)
 
-  private PsiMethod parse(String method) {
+  protected PsiMethod parse(String method) {
     return myFixture.addClass("final class Foo { $method }").methods[0]
   }
 
   static class LightInferenceTest extends NullityInferenceFromSourceTestCase {
     Nullness inferNullity(PsiMethod method) {
       return NullableNotNullManager.isNotNull(method) ? NOT_NULL : NullableNotNullManager.isNullable(method) ? NULLABLE : UNKNOWN
+    }
+
+    void "test skip when errors"() {
+      assert inferNullity(parse('String foo() { if(); return 2; } ')) == UNKNOWN
     }
   }
 
