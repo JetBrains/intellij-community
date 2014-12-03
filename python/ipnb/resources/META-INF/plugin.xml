@@ -35,7 +35,6 @@
       <keyboard-shortcut keymap="$default" first-keystroke="ctrl ENTER"/>
     </action>
     <action class="org.jetbrains.plugins.ipnb.editor.actions.IpnbRunCellAction" id="IpnbRunCellAction" text="Run cell">
-      <keyboard-shortcut keymap="$default" first-keystroke="shift ENTER"/>
     </action>
     <action class="org.jetbrains.plugins.ipnb.editor.actions.IpnbSaveAction" id="IpnbSaveAction" text="Save and Checkpoint">
     </action>
