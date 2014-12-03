@@ -61,22 +61,21 @@ public class VcsLogFileFilter implements VcsLogFilter {
       if (roots.contains(file)) {
         selectedRoots.add(file);
       }
-      else {
-        VirtualFile candidateAncestorRoot = null;
-        for (VirtualFile root : roots) {
-          if (VfsUtilCore.isAncestor(root, file, false)) {
-            if (candidateAncestorRoot == null || VfsUtilCore.isAncestor(candidateAncestorRoot, root, false)) {
-              candidateAncestorRoot = root;
-            }
-          }
-          else if (VfsUtilCore.isAncestor(file, root, false)) {
-            selectedRoots.add(root);
+      VirtualFile candidateAncestorRoot = null;
+      for (VirtualFile root : roots) {
+        if (root.equals(file)) continue;
+        if (VfsUtilCore.isAncestor(root, file, false)) {
+          if (candidateAncestorRoot == null || VfsUtilCore.isAncestor(candidateAncestorRoot, root, false)) {
+            candidateAncestorRoot = root;
           }
         }
+        else if (VfsUtilCore.isAncestor(file, root, false)) {
+          selectedRoots.add(root);
+        }
+      }
 
-        if (candidateAncestorRoot != null) {
-          selectedFiles.putValue(candidateAncestorRoot, file);
-        }
+      if (candidateAncestorRoot != null) {
+        selectedFiles.putValue(candidateAncestorRoot, file);
       }
     }
 
@@ -97,21 +96,26 @@ public class VcsLogFileFilter implements VcsLogFilter {
   }
 
   @NotNull
-  public static Set<VirtualFile> getAllVisibleRoots(@NotNull Collection<VirtualFile> roots, @Nullable VcsLogRootFilter rootFilter, @Nullable VcsLogStructureFilter structureFilter) {
+  public static Set<VirtualFile> getAllVisibleRoots(@NotNull Collection<VirtualFile> roots,
+                                                    @Nullable VcsLogRootFilter rootFilter,
+                                                    @Nullable VcsLogStructureFilter structureFilter) {
     if (rootFilter == null && structureFilter == null) return new HashSet<VirtualFile>(roots);
 
     Collection<VirtualFile> fromRootFilter;
     if (rootFilter != null) {
       fromRootFilter = rootFilter.getRoots();
-    } else {
+    }
+    else {
       fromRootFilter = roots;
     }
 
     Collection<VirtualFile> fromStructureFilter;
     if (structureFilter != null) {
-      Pair<Set<VirtualFile>, MultiMap<VirtualFile, VirtualFile>> rootsAndFiles = collectRoots(structureFilter.getFiles(), new HashSet<VirtualFile>(roots));
+      Pair<Set<VirtualFile>, MultiMap<VirtualFile, VirtualFile>> rootsAndFiles =
+        collectRoots(structureFilter.getFiles(), new HashSet<VirtualFile>(roots));
       fromStructureFilter = ContainerUtil.union(rootsAndFiles.first, rootsAndFiles.second.keySet());
-    } else {
+    }
+    else {
       fromStructureFilter = roots;
     }
 
