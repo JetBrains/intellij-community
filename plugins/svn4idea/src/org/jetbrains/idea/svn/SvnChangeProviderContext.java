@@ -213,7 +213,6 @@ class SvnChangeProviderContext implements StatusReceiver {
     FileStatus fStatus = SvnStatusConvertor.convertStatus(status);
 
     final StatusType statusType = status.getContentsStatus();
-    final StatusType propStatus = status.getPropertiesStatus();
     if (status.is(StatusType.STATUS_UNVERSIONED, StatusType.UNKNOWN)) {
       final VirtualFile file = filePath.getVirtualFile();
       if (file != null) {
@@ -225,8 +224,7 @@ class SvnChangeProviderContext implements StatusReceiver {
                                               SvnUtil.getChangelistName(status), SvnVcs.getKey());
     }
     else if (status.is(StatusType.STATUS_CONFLICTED, StatusType.STATUS_MODIFIED, StatusType.STATUS_REPLACED) ||
-             propStatus == StatusType.STATUS_MODIFIED ||
-             propStatus == StatusType.STATUS_CONFLICTED) {
+             status.isProperty(StatusType.STATUS_MODIFIED, StatusType.STATUS_CONFLICTED)) {
       myChangelistBuilder.processChangeInList(
         createChange(SvnContentRevision.createBaseRevision(myVcs, filePath, status), CurrentContentRevision.create(filePath), fStatus,
                      status), SvnUtil.getChangelistName(status), SvnVcs.getKey()
@@ -377,18 +375,14 @@ class SvnChangeProviderContext implements StatusReceiver {
   private Change patchWithPropertyChange(final Change change, final Status svnStatus, final Status deletedStatus)
     throws SVNException {
     if (svnStatus == null) return change;
-    final StatusType propertiesStatus = svnStatus.getPropertiesStatus();
-    if (StatusType.STATUS_CONFLICTED.equals(propertiesStatus) || StatusType.CHANGED.equals(propertiesStatus) ||
-        StatusType.STATUS_ADDED.equals(propertiesStatus) || StatusType.STATUS_DELETED.equals(propertiesStatus) ||
-        StatusType.STATUS_MODIFIED.equals(propertiesStatus) || StatusType.STATUS_REPLACED.equals(propertiesStatus) ||
-        StatusType.MERGED.equals(propertiesStatus)) {
-
+    if (svnStatus.isProperty(StatusType.STATUS_CONFLICTED, StatusType.CHANGED, StatusType.STATUS_ADDED, StatusType.STATUS_DELETED,
+                             StatusType.STATUS_MODIFIED, StatusType.STATUS_REPLACED, StatusType.MERGED)) {
       final FilePath path = ChangesUtil.getFilePath(change);
       final File ioFile = path.getIOFile();
       final File beforeFile = deletedStatus != null ? deletedStatus.getFile() : ioFile;
-      final String beforeList = StatusType.STATUS_ADDED.equals(propertiesStatus) && deletedStatus == null ? null :
+      final String beforeList = svnStatus.isProperty(StatusType.STATUS_ADDED) && deletedStatus == null ? null :
                                 AbstractShowPropertiesDiffAction.getPropertyList(myVcs, beforeFile, SVNRevision.BASE);
-      final String afterList = StatusType.STATUS_DELETED.equals(propertiesStatus) ? null :
+      final String afterList = svnStatus.isProperty(StatusType.STATUS_DELETED) ? null :
                                AbstractShowPropertiesDiffAction.getPropertyList(myVcs, ioFile, SVNRevision.WORKING);
 
       // TODO: There are cases when status output is like (on newly added file with some properties that is locally deleted)
@@ -402,7 +396,7 @@ class SvnChangeProviderContext implements StatusReceiver {
                                                afterList == null ? null : new SimpleContentRevision(afterList, path, afterRevisionNu),
                                                deletedStatus != null
                                                ? FileStatus.MODIFIED
-                                               : SvnStatusConvertor.convertPropertyStatus(propertiesStatus));
+                                               : SvnStatusConvertor.convertPropertyStatus(svnStatus.getPropertiesStatus()));
       change.addAdditionalLayerElement(SvnChangeProvider.PROPERTY_LAYER, propertyChange);
     }
     return change;
