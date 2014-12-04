@@ -39,7 +39,6 @@ import javax.sound.sampled.Clip;
 import javax.swing.*;
 import javax.swing.Timer;
 import javax.swing.border.Border;
-import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import javax.swing.plaf.ButtonUI;
@@ -227,8 +226,8 @@ public class UIUtil {
   private static final Color INACTIVE_HEADER_COLOR = Gray._128;
   private static final Color BORDER_COLOR = Color.LIGHT_GRAY;
 
-  public static final Color AQUA_SEPARATOR_FOREGROUND_COLOR = Gray._190;
-  public static final Color AQUA_SEPARATOR_BACKGROUND_COLOR = Gray._240;
+  public static final Color AQUA_SEPARATOR_FOREGROUND_COLOR = new JBColor(Gray._190, Gray.x51);
+  public static final Color AQUA_SEPARATOR_BACKGROUND_COLOR = new JBColor(Gray._240, Gray.x51);
   public static final Color TRANSPARENT_COLOR = new Color(0, 0, 0, 0);
 
   public static final int DEFAULT_HGAP = 10;
