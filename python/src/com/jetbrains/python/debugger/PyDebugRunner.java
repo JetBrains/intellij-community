@@ -40,6 +40,7 @@ import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.console.PythonConsoleView;
 import com.jetbrains.python.console.PythonDebugConsoleCommunication;
 import com.jetbrains.python.console.PythonDebugLanguageConsoleView;
+import com.jetbrains.python.console.pydev.ConsoleCommunicationListener;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import com.jetbrains.python.run.CommandLinePatcher;
 import com.jetbrains.python.run.PythonCommandLineState;
@@ -100,7 +101,7 @@ public class PyDebugRunner extends GenericProgramRunner {
             new PyDebugProcess(session, serverSocket, result.getExecutionConsole(), result.getProcessHandler(),
                                pyState.isMultiprocessDebug());
 
-          createConsoleCommunicationAndSetupActions(project, result, pyDebugProcess);
+          createConsoleCommunicationAndSetupActions(project, result, pyDebugProcess, session);
 
 
           return pyDebugProcess;
@@ -119,20 +120,20 @@ public class PyDebugRunner extends GenericProgramRunner {
   }
 
   public static void createConsoleCommunicationAndSetupActions(@NotNull final Project project,
-                                                                  @NotNull final ExecutionResult result,
-                                                                  @NotNull PyDebugProcess debugProcess) {
+                                                               @NotNull final ExecutionResult result,
+                                                               @NotNull PyDebugProcess debugProcess, @NotNull XDebugSession session) {
     ExecutionConsole console = result.getExecutionConsole();
     if (console instanceof PythonDebugLanguageConsoleView) {
       ProcessHandler processHandler = result.getProcessHandler();
 
-      initDebugConsoleView(project, debugProcess, (PythonDebugLanguageConsoleView)console, processHandler);
+      initDebugConsoleView(project, debugProcess, (PythonDebugLanguageConsoleView)console, processHandler, session);
     }
   }
 
   public static PythonDebugConsoleCommunication initDebugConsoleView(Project project,
                                                                      PyDebugProcess debugProcess,
                                                                      PythonDebugLanguageConsoleView console,
-                                                                     ProcessHandler processHandler) {
+                                                                     ProcessHandler processHandler, final XDebugSession session) {
     PythonConsoleView pythonConsoleView = console.getPydevConsoleView();
     PythonDebugConsoleCommunication debugConsoleCommunication = new PythonDebugConsoleCommunication(project, debugProcess);
 
@@ -146,6 +147,18 @@ public class PyDebugRunner extends GenericProgramRunner {
 
     debugProcess.getSession().addSessionListener(consoleExecuteActionHandler);
     new LanguageConsoleBuilder(pythonConsoleView).processHandler(processHandler).initActions(consoleExecuteActionHandler, "py");
+
+
+    debugConsoleCommunication.addCommunicationListener(new ConsoleCommunicationListener() {
+      @Override
+      public void commandExecuted(boolean more) {
+        session.rebuildViews();
+      }
+
+      @Override
+      public void inputRequested() {
+      }
+    });
 
     return debugConsoleCommunication;
   }

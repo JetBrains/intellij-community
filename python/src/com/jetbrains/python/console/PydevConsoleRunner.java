@@ -85,6 +85,7 @@ import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.console.completion.PydevConsoleElement;
 import com.jetbrains.python.console.parsing.PythonConsoleData;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
+import com.jetbrains.python.console.pydev.ConsoleCommunicationListener;
 import com.jetbrains.python.debugger.PyDebugRunner;
 import com.jetbrains.python.debugger.PySourcePosition;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
@@ -1006,7 +1007,18 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
                                       consoleDebugProcessHandler);
 
           PythonDebugConsoleCommunication communication =
-            PyDebugRunner.initDebugConsoleView(getProject(), consoleDebugProcess, debugConsoleView, consoleDebugProcessHandler);
+            PyDebugRunner.initDebugConsoleView(getProject(), consoleDebugProcess, debugConsoleView, consoleDebugProcessHandler, session);
+
+          communication.addCommunicationListener(new ConsoleCommunicationListener() {
+            @Override
+            public void commandExecuted(boolean more) {
+              session.rebuildViews();
+            }
+
+            @Override
+            public void inputRequested() {
+            }
+          });
 
           myPydevConsoleCommunication.setDebugCommunication(communication);
           debugConsoleView.attachToProcess(consoleDebugProcessHandler);
