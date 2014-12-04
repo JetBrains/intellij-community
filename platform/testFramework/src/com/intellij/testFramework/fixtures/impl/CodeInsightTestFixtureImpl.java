@@ -1189,6 +1189,10 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         catch (Exception e) {
           throw new RuntimeException(e);
         }
+
+        VirtualFile tempDir = myTempDirFixture.getFile("");
+        PlatformTestCase.synchronizeTempDirVfs(tempDir);
+
         myPsiManager = (PsiManagerImpl)PsiManager.getInstance(getProject());
         configureInspections(myInspections == null ? LocalInspectionTool.EMPTY_ARRAY : myInspections);
 
