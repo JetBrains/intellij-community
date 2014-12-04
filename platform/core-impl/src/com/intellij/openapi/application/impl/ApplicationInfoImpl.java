@@ -685,26 +685,26 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
       myWhatsNewUrl = whatsnewElement.getAttributeValue(ATTRIBUTE_URL);
     }
 
-    myPluginsListUrl = DEFAULT_PLUGINS_HOST + "/plugins/list/";
-    myPluginsDownloadUrl = DEFAULT_PLUGINS_HOST + "/pluginManager/";
-
     Element pluginsElement = parentNode.getChild(ELEMENT_PLUGINS);
     if (pluginsElement != null) {
-      myPluginManagerUrl = pluginsElement.getAttributeValue(ATTRIBUTE_URL);
-      final String listUrl = pluginsElement.getAttributeValue(ATTRIBUTE_LIST_URL);
-      if (listUrl != null) {
-        myPluginsListUrl = listUrl;
-      }
-      final String downloadUrl = pluginsElement.getAttributeValue(ATTRIBUTE_DOWNLOAD_URL);
-      if (downloadUrl != null) {
-        myPluginsDownloadUrl = downloadUrl;
-      }
+      String url = pluginsElement.getAttributeValue(ATTRIBUTE_URL);
+      myPluginManagerUrl = url != null ? url : DEFAULT_PLUGINS_HOST;
+      boolean closed = StringUtil.endsWith(myPluginManagerUrl, "/");
+
+      String listUrl = pluginsElement.getAttributeValue(ATTRIBUTE_LIST_URL);
+      myPluginsListUrl = listUrl != null ? listUrl : myPluginManagerUrl + (closed ? "" : "/") + "plugins/list/";
+
+      String downloadUrl = pluginsElement.getAttributeValue(ATTRIBUTE_DOWNLOAD_URL);
+      myPluginsDownloadUrl = downloadUrl != null ? downloadUrl : myPluginManagerUrl + (closed ? "" : "/") + "pluginManager/";
+
       if (!getBuild().isSnapshot()) {
         myBuiltinPluginsUrl = pluginsElement.getAttributeValue(ATTRIBUTE_BUILTIN_URL);
       }
     }
     else {
       myPluginManagerUrl = DEFAULT_PLUGINS_HOST;
+      myPluginsListUrl = DEFAULT_PLUGINS_HOST + "/plugins/list/";
+      myPluginsDownloadUrl = DEFAULT_PLUGINS_HOST + "/pluginManager/";
     }
 
     final String pluginsHost = System.getProperty("idea.plugins.host");
