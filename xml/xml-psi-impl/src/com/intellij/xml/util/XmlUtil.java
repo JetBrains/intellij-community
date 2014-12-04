@@ -1346,12 +1346,12 @@ public class XmlUtil {
   }
 
   @Nullable
-  public static String extractXmlEncodingFromProlog(final byte[] content) {
+  public static String extractXmlEncodingFromProlog(@NotNull byte[] content) {
     return XmlCharsetDetector.extractXmlEncodingFromProlog(content);
   }
 
   @Nullable
-  public static String extractXmlEncodingFromProlog(String text) {
+  public static String extractXmlEncodingFromProlog(@NotNull CharSequence text) {
     return XmlCharsetDetector.extractXmlEncodingFromProlog(text);
   }
 
