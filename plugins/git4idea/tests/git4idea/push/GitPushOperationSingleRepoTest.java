@@ -35,8 +35,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import static git4idea.push.GitPushRepoResult.Type.*;
@@ -175,7 +175,7 @@ public class GitPushOperationSingleRepoTest extends GitPushOperationBaseTest {
         return updateResult;
       }
     }.execute();
-    assertResult(REJECTED, -1, "master", "origin/master", GitUpdateResult.SUCCESS, Arrays.asList("bro.txt"), result);
+    assertResult(REJECTED, -1, "master", "origin/master", GitUpdateResult.SUCCESS, Collections.singletonList("bro.txt"), result);
 
     cd(myParentRepo.getPath());
     String history = git("log --all --pretty=%H ");
@@ -214,7 +214,7 @@ public class GitPushOperationSingleRepoTest extends GitPushOperationBaseTest {
     assertEquals(hash, commits[1].split("#")[0]);
     assertEquals(broHash, commits[2].split("#")[0]);
 
-    assertResult(SUCCESS, 2, "master", "origin/master", GitUpdateResult.SUCCESS, Arrays.asList("bro.txt"), result);
+    assertResult(SUCCESS, 2, "master", "origin/master", GitUpdateResult.SUCCESS, Collections.singletonList("bro.txt"), result);
   }
 
   public void test_update_with_conflicts_cancels_push() throws IOException {
@@ -230,7 +230,7 @@ public class GitPushOperationSingleRepoTest extends GitPushOperationBaseTest {
     agreeToUpdate(GitRejectedPushUpdateDialog.REBASE_EXIT_CODE);
 
     GitPushResult result = push("master", "origin/master");
-    assertResult(REJECTED, -1, "master", "origin/master", GitUpdateResult.INCOMPLETE, Arrays.asList("bro.txt"), result);
+    assertResult(REJECTED, -1, "master", "origin/master", GitUpdateResult.INCOMPLETE, Collections.singletonList("bro.txt"), result);
   }
 
   public void test_push_tags() throws IOException {
