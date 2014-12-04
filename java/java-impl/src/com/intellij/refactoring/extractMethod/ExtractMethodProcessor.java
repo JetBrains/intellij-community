@@ -53,6 +53,8 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.impl.source.codeStyle.JavaCodeStyleManagerImpl;
+import com.intellij.psi.scope.processor.VariablesProcessor;
+import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.PsiElementProcessor;
@@ -112,6 +114,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   protected InputVariables myInputVariables; // input variables
   protected PsiVariable[] myOutputVariables; // output variables
   protected PsiVariable myOutputVariable; // the only output variable
+  private   PsiVariable myArtificialOutputVariable;
   private Collection<PsiStatement> myExitStatements;
 
   private boolean myHasReturnStatement; // there is a return statement
@@ -339,6 +342,23 @@ public class ExtractMethodProcessor implements MatchProvider {
                                           : null;
   }
 
+  @Nullable
+  private PsiVariable getArtificialOutputVariable() {
+    if (myOutputVariables.length == 0) {
+      final VariablesProcessor processor = new VariablesProcessor(true) {
+        @Override
+        protected boolean check(PsiVariable var, ResolveState state) {
+          return isDeclaredInside(var);
+        }
+      };
+      PsiScopesUtil.treeWalkUp(processor, myElements[myElements.length - 1], myCodeFragmentMember);
+      if (processor.size() == 1) {
+        return processor.getResult(0);
+      }
+    }
+    return null;
+  }
+
   private boolean areAllExitPointsAreNotNull(PsiType returnStatementType) {
     if (insertNotNullCheckIfPossible() && myControlFlowWrapper.getOutputVariables(false).length == 0) {
       boolean isNotNull = returnStatementType != null && returnStatementType != PsiType.VOID;
@@ -508,7 +528,9 @@ public class ExtractMethodProcessor implements MatchProvider {
     final List<VariableData> variables = myInputVariables.getInputVariables();
     myVariableDatum = variables.toArray(new VariableData[variables.size()]);
     myNullness = initNullness();
-    return new ExtractMethodDialog(myProject, myTargetClass, myInputVariables, myReturnType, getTypeParameterList(),
+    myArtificialOutputVariable = PsiType.VOID.equals(myReturnType) ? getArtificialOutputVariable() : null;
+    final PsiType returnType = myArtificialOutputVariable != null ? myArtificialOutputVariable.getType() : myReturnType;
+    return new ExtractMethodDialog(myProject, myTargetClass, myInputVariables, returnType, getTypeParameterList(),
                                    getThrownExceptions(), isStatic(), isCanBeStatic(), myCanBeChainedConstructor,
                                                          suggestInitialMethodName(),
                                                          myRefactoringName, myHelpId, myNullness, myElements) {
@@ -524,6 +546,10 @@ public class ExtractMethodProcessor implements MatchProvider {
       @Override
       protected boolean isOutputVariable(PsiVariable var) {
         return ExtractMethodProcessor.this.isOutputVariable(var);
+      }
+
+      protected boolean isVoidReturn() {
+        return myArtificialOutputVariable != null;
       }
 
       @Override
@@ -668,6 +694,9 @@ public class ExtractMethodProcessor implements MatchProvider {
       }
       myInputVariables.setPassFields(true);
       myStatic = true;
+    }
+    if (PsiType.VOID.equals(myReturnType)) {
+      myArtificialOutputVariable = getArtificialOutputVariable();
     }
     testPrepare();
     if (returnType != null) {
@@ -850,9 +879,14 @@ public class ExtractMethodProcessor implements MatchProvider {
         myMethodCall = (PsiMethodCallExpression)((PsiReturnStatement)statement).getReturnValue().replace(myMethodCall);
       }
       else {
-        PsiStatement statement = myElementFactory.createStatementFromText("x();", null);
-        statement = (PsiStatement)addToMethodCallLocation(statement);
-        myMethodCall = (PsiMethodCallExpression)((PsiExpressionStatement)statement).getExpression().replace(myMethodCall);
+        if (myArtificialOutputVariable != null && myReturnType != PsiType.VOID) {
+          declareVariableAtMethodCallLocation(myArtificialOutputVariable.getName());
+        }
+        else {
+          PsiStatement statement = myElementFactory.createStatementFromText("x();", null);
+          statement = (PsiStatement)addToMethodCallLocation(statement);
+          myMethodCall = (PsiMethodCallExpression)((PsiExpressionStatement)statement).getExpression().replace(myMethodCall);
+        }
       }
       if (myHasReturnStatement && !myHasReturnStatementOutput && !hasNormalExit()) {
         PsiStatement statement = myElementFactory.createStatementFromText("return;", null);
@@ -1011,6 +1045,9 @@ public class ExtractMethodProcessor implements MatchProvider {
           }
         }
       }
+    }
+    else if (myArtificialOutputVariable != null && !PsiType.VOID.equals(myReturnType)) {
+      body.add(myElementFactory.createStatementFromText("return " + myArtificialOutputVariable.getName() + ";", null));
     }
     return exitStatementCopy;
   }

@@ -205,7 +205,7 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
     }
   }
 
-  private PsiType[] getTypesForAll(final boolean areTypesDirected) {
+  protected PsiType[] getTypesForAll(final boolean areTypesDirected) {
     final ArrayList<ExpectedTypeInfo[]> expectedTypesFromAll = new ArrayList<ExpectedTypeInfo[]>();
     for (PsiExpression occurrence : myOccurrences) {
       final ExpectedTypeInfo[] expectedTypes = ExpectedTypesProvider.getExpectedTypes(occurrence, false, myOccurrenceClassProvider, isUsedAfter());
