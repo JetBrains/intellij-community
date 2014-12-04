@@ -1853,15 +1853,46 @@ public class Mappings {
         // checking if this newly added class duplicates already existing one
         for (ClassRepr c : addedClasses) {
           if (!c.isLocal() && !c.isAnonymous() && isEmpty(c.getOuterClassName())) {
-            final Collection<File> currentSources = myClassToSourceFile.get(c.name);
-            final File currentlyMappedTo = currentSources != null && currentSources.size() == 1? currentSources.iterator().next() : null;
-            // only check, if exactly one file is mapped
-            if (currentlyMappedTo != null && !myCompiledFiles.contains(currentlyMappedTo) && !FileUtil.filesEqual(currentlyMappedTo, srcFile) && currentlyMappedTo.exists() && myFilter.belongsToCurrentTargetChunk(currentlyMappedTo)) {
-              // Same classes from different source files.
+            final Set<File> candidates = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
+            final Collection<File> currentlyMapped = myClassToSourceFile.get(c.name);
+            if (currentlyMapped != null) {
+              candidates.addAll(currentlyMapped);
+            }
+            candidates.removeAll(myCompiledFiles);
+            final Collection<File> newSources = myDelta.myClassToSourceFile.get(c.name);
+            if (newSources != null) {
+              candidates.removeAll(newSources);
+            }
+            final Set<File> nonExistentOrOutOfScope = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
+            for (final File candidate : candidates) {
+              if (!candidate.exists() || !myFilter.belongsToCurrentTargetChunk(candidate)) {
+                nonExistentOrOutOfScope.add(candidate);
+              }
+            }
+            candidates.removeAll(nonExistentOrOutOfScope);
+
+            if (!candidates.isEmpty()) {
+              // Possibly duplicate classes from different sets of source files
               // Schedule for recompilation both to make possible 'duplicate sources' error evident
-              debug("Scheduling for recompilation duplicated sources: ", currentlyMappedTo.getPath() + "; " + srcFile.getPath());
-              myAffectedFiles.add(currentlyMappedTo);
-              myAffectedFiles.add(srcFile);
+              candidates.clear(); // just reusing the container
+              if (currentlyMapped != null) {
+                candidates.addAll(currentlyMapped);
+              }
+              if (newSources != null) {
+                candidates.addAll(newSources);
+              }
+              candidates.removeAll(nonExistentOrOutOfScope);
+
+              if (myDebugS.isDebugEnabled()) {
+                final StringBuilder msg = new StringBuilder();
+                msg.append("Possibly duplicated classes; Scheduling for recompilation sources: ");
+                for (File file : candidates) {
+                  msg.append(file.getPath()).append("; ");
+                }
+                debug(msg.toString());
+              }
+
+              myAffectedFiles.addAll(candidates);
               return; // do not process this file because it should not be integrated
             }
           }
