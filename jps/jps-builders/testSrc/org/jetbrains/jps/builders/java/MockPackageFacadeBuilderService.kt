@@ -44,103 +44,97 @@ import com.intellij.util.io.EnumeratorStringDescriptor
  *
  * @author nik
  */
-public class MockPackageFacadeBuilderService: BuilderService() {
-  override fun createModuleLevelBuilders(): List<ModuleLevelBuilder> {
-    return listOf(MockPackageFacadeGenerator())
+class MockPackageFacadeGenerator : ModuleLevelBuilder(BuilderCategory.SOURCE_PROCESSOR) {
+  override fun build(context: CompileContext,
+                     chunk: ModuleChunk,
+                     dirtyFilesHolder: DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget>,
+                     outputConsumer: ModuleLevelBuilder.OutputConsumer): ModuleLevelBuilder.ExitCode {
+    val filesToCompile = MultiMap.createLinked<ModuleBuildTarget, File>()
+    dirtyFilesHolder.processDirtyFiles { target, file, root ->
+      if (isCompilable(file)) {
+        filesToCompile.putValue(target, file)
+      }
+      true
+    }
+
+    val allFilesToCompile = ArrayList(filesToCompile.values())
+    if (allFilesToCompile.isEmpty()) return ModuleLevelBuilder.ExitCode.NOTHING_DONE
+
+    if (JavaBuilderUtil.isCompileJavaIncrementally(context)) {
+      val logger = context.getLoggingManager().getProjectBuilderLogger()
+      if (logger.isEnabled()) {
+        if (!filesToCompile.isEmpty()) {
+          logger.logCompiledFiles(allFilesToCompile, "MockPackageFacadeGenerator", "Compiling files:")
+        }
+      }
+    }
+
+    val mappings = context.getProjectDescriptor().dataManager.getMappings()
+    val delta = mappings.createDelta()
+    val callback = delta.getCallback()
+
+    fun generateClass(packageName: String, className: String, target: ModuleBuildTarget, sources: Collection<String>, generate: (ClassWriter.() -> Unit)? = null) {
+      val writer = ClassWriter(ClassWriter.COMPUTE_FRAMES)
+      val fullClassName = StringUtil.getQualifiedName(packageName, className).replace('.', '/')
+      writer.visit(Opcodes.V1_6, Opcodes.ACC_PUBLIC, fullClassName, null, "java/lang/Object", null)
+      if (generate != null) {
+        writer.generate()
+      }
+      writer.visitEnd()
+      val outputFile = File(target.getOutputDir(), "$fullClassName.class")
+      val classBytes = writer.toByteArray()
+      FileUtil.writeToFile(outputFile, classBytes)
+      outputConsumer.registerOutputFile(target, outputFile, sources)
+      callback.associate(fullClassName.replace('/', '.'), sources, ClassReader(classBytes))
+    }
+
+    for (target in chunk.getTargets()) {
+      val packagesStorage = context.getProjectDescriptor().dataManager.getStorage(target, PACKAGE_CACHE_STORAGE_PROVIDER)
+      for (file in filesToCompile[target]) {
+        generateClass(getPackageName(file), FileUtil.getNameWithoutExtension(file), target, listOf(file.getAbsolutePath()))
+      }
+
+      val packagesToGenerate = filesToCompile[target].mapTo(THashSet<String>(), ::getPackageName)
+      filesToCompile[target].mapNotNullTo(packagesToGenerate) { packagesStorage.getState(it.getAbsolutePath()) }
+      val packagesFromDeletedFiles = dirtyFilesHolder.getRemovedFiles(target).filter { isCompilable(File(it)) }.mapNotNull { packagesStorage.getState(it) }
+      packagesToGenerate.addAll(packagesFromDeletedFiles)
+
+      val getParentFile: (File) -> File = { it.getParentFile() }
+      val dirsToCheck = filesToCompile[target].mapTo(THashSet(FileUtil.FILE_HASHING_STRATEGY), getParentFile)
+      packagesFromDeletedFiles.flatMap { mappings.getClassSources(mappings.getName(StringUtil.getQualifiedName(it, "PackageFacade"))) }.mapNotNullTo(dirsToCheck, getParentFile)
+
+      for (packageName in packagesToGenerate) {
+        val files = dirsToCheck.mapNotNull { it.listFiles() }.flatMap { it.toList() }.filter { isCompilable(it) && packageName == getPackageName(it) }
+        if (files.isEmpty()) continue
+
+        val classNames = files.map { FileUtilRt.getNameWithoutExtension(it.getName()) }.sort()
+        val sources = files.map { it.getAbsolutePath() }
+
+        generateClass(packageName, "PackageFacade", target, sources) {
+          for (fileName in classNames) {
+            val fieldClass = StringUtil.getQualifiedName(packageName, fileName).replace('.', '/')
+            visitField(Opcodes.ACC_PUBLIC, StringUtil.decapitalize(fileName), "L$fieldClass;", null, null).visitEnd()
+          }
+        }
+        for (source in sources) {
+          packagesStorage.update(FileUtil.toSystemIndependentName(source), packageName)
+        }
+      }
+    }
+    if (JavaBuilderUtil.updateMappings(context, delta, dirtyFilesHolder, chunk, allFilesToCompile, allFilesToCompile)) {
+      return ModuleLevelBuilder.ExitCode.ADDITIONAL_PASS_REQUIRED
+    }
+
+
+    return ModuleLevelBuilder.ExitCode.OK
   }
 
-  private class MockPackageFacadeGenerator: ModuleLevelBuilder(BuilderCategory.SOURCE_PROCESSOR) {
-    override fun build(context: CompileContext,
-                       chunk: ModuleChunk,
-                       dirtyFilesHolder: DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget>,
-                       outputConsumer: ModuleLevelBuilder.OutputConsumer): ModuleLevelBuilder.ExitCode {
-      val filesToCompile = MultiMap.createLinked<ModuleBuildTarget, File>()
-      dirtyFilesHolder.processDirtyFiles { target, file, root ->
-        if (isCompilable(file)) {
-          filesToCompile.putValue(target, file)
-        }
-        true
-      }
+  override fun getCompilableFileExtensions(): List<String> {
+    return listOf("p")
+  }
 
-      val allFilesToCompile = ArrayList(filesToCompile.values())
-      if (allFilesToCompile.isEmpty()) return ModuleLevelBuilder.ExitCode.NOTHING_DONE
-
-      if (JavaBuilderUtil.isCompileJavaIncrementally(context)) {
-        val logger = context.getLoggingManager().getProjectBuilderLogger()
-        if (logger.isEnabled()) {
-          if (!filesToCompile.isEmpty()) {
-            logger.logCompiledFiles(allFilesToCompile, "MockPackageFacadeGenerator", "Compiling files:")
-          }
-        }
-      }
-
-      val mappings = context.getProjectDescriptor().dataManager.getMappings()
-      val delta = mappings.createDelta()
-      val callback = delta.getCallback()
-
-      fun generateClass(packageName: String, className: String, target: ModuleBuildTarget, sources: Collection<String>, generate: (ClassWriter.() -> Unit)? = null) {
-        val writer = ClassWriter(ClassWriter.COMPUTE_FRAMES)
-        val fullClassName = StringUtil.getQualifiedName(packageName, className).replace('.', '/')
-        writer.visit(Opcodes.V1_6, Opcodes.ACC_PUBLIC, fullClassName, null, "java/lang/Object", null)
-        if (generate != null) {
-          writer.generate()
-        }
-        writer.visitEnd()
-        val outputFile = File(target.getOutputDir(), "$fullClassName.class")
-        val classBytes = writer.toByteArray()
-        FileUtil.writeToFile(outputFile, classBytes)
-        outputConsumer.registerOutputFile(target, outputFile, sources)
-        callback.associate(fullClassName.replace('/', '.'), sources, ClassReader(classBytes))
-      }
-
-      for (target in chunk.getTargets()) {
-        val packagesStorage = context.getProjectDescriptor().dataManager.getStorage(target, PACKAGE_CACHE_STORAGE_PROVIDER)
-        for (file in filesToCompile[target]) {
-          generateClass(getPackageName(file), FileUtil.getNameWithoutExtension(file), target, listOf(file.getAbsolutePath()))
-        }
-
-        val packagesToGenerate = filesToCompile[target].mapTo(THashSet<String>(), ::getPackageName)
-        filesToCompile[target].mapNotNullTo(packagesToGenerate) { packagesStorage.getState(it.getAbsolutePath()) }
-        val packagesFromDeletedFiles = dirtyFilesHolder.getRemovedFiles(target).filter { isCompilable(File(it)) }.mapNotNull { packagesStorage.getState(it) }
-        packagesToGenerate.addAll(packagesFromDeletedFiles)
-
-        val getParentFile: (File) -> File = { it.getParentFile() }
-        val dirsToCheck = filesToCompile[target].mapTo(THashSet(FileUtil.FILE_HASHING_STRATEGY), getParentFile)
-        packagesFromDeletedFiles.flatMap { mappings.getClassSources(mappings.getName(StringUtil.getQualifiedName(it, "PackageFacade"))) }.mapNotNullTo(dirsToCheck, getParentFile)
-
-        for (packageName in packagesToGenerate) {
-          val files = dirsToCheck.mapNotNull { it.listFiles() }.flatMap { it.toList() }.filter { isCompilable(it) && packageName == getPackageName(it) }
-          if (files.isEmpty()) continue
-
-          val classNames = files.map { FileUtilRt.getNameWithoutExtension(it.getName()) }.sort()
-          val sources = files.map { it.getAbsolutePath() }
-
-          generateClass(packageName, "PackageFacade", target, sources) {
-            for (fileName in classNames) {
-              val fieldClass = StringUtil.getQualifiedName(packageName, fileName).replace('.', '/')
-              visitField(Opcodes.ACC_PUBLIC, StringUtil.decapitalize(fileName), "L$fieldClass;", null, null).visitEnd()
-            }
-          }
-          for (source in sources) {
-            packagesStorage.update(FileUtil.toSystemIndependentName(source), packageName)
-          }
-        }
-      }
-      if (JavaBuilderUtil.updateMappings(context, delta, dirtyFilesHolder, chunk, allFilesToCompile, allFilesToCompile)) {
-        return ModuleLevelBuilder.ExitCode.ADDITIONAL_PASS_REQUIRED
-      }
-
-
-      return ModuleLevelBuilder.ExitCode.OK
-    }
-
-    override fun getCompilableFileExtensions(): List<String> {
-      return listOf("p")
-    }
-
-    override fun getPresentableName(): String {
-      return "Mock Package Facade Generator"
-    }
+  override fun getPresentableName(): String {
+    return "Mock Package Facade Generator"
   }
 }
 
