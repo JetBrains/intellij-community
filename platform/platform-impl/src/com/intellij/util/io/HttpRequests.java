@@ -18,6 +18,7 @@ package com.intellij.util.io;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.net.HttpConfigurable;
 import org.jetbrains.annotations.NotNull;
@@ -59,6 +60,7 @@ public final class HttpRequests {
     private int myTimeout = HttpConfigurable.READ_TIMEOUT;
     private int myRedirectLimit = HttpConfigurable.REDIRECT_LIMIT;
     private boolean myGzip = true;
+    private boolean myForceHttps = false;
 
     private RequestBuilder(@NotNull String url) {
       myUrl = url;
@@ -85,6 +87,12 @@ public final class HttpRequests {
     @NotNull
     public RequestBuilder gzip(boolean value) {
       myGzip = value;
+      return this;
+    }
+
+    @NotNull
+    public RequestBuilder forceHttps(boolean forceHttps) {
+      myForceHttps = forceHttps;
       return this;
     }
 
@@ -164,6 +172,10 @@ public final class HttpRequests {
 
   private static URLConnection openConnection(RequestBuilder builder) throws IOException {
     String url = builder.myUrl;
+
+    if (builder.myForceHttps && StringUtil.startsWith(url, "http:")) {
+      url = "https:" + url.substring(5);
+    }
 
     for (int i = 0; i < builder.myRedirectLimit; i++) {
       URLConnection connection;
