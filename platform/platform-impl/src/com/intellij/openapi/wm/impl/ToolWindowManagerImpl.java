@@ -1374,7 +1374,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       return false;
     }
     final Stripe stripe = myToolWindowsPane.getStripeFor(toolWindowId);
-    return stripe.getButtonFor(toolWindowId) != null;
+    return stripe != null && stripe.getButtonFor(toolWindowId) != null;
   }
 
   @Override
@@ -1397,6 +1397,9 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     }
 
     final Stripe stripe = myToolWindowsPane.getStripeFor(toolWindowId);
+    if (stripe == null) {
+      return;
+    }
     final ToolWindowImpl window = getInternalDecorator(toolWindowId).getToolWindow();
     if (!window.isAvailable()) {
       window.setPlaceholderMode(true);
