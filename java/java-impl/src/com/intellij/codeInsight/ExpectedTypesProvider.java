@@ -880,10 +880,16 @@ public class ExpectedTypesProvider {
       if (statement.getException() == myExpr) {
         PsiManager manager = statement.getManager();
         PsiType throwableType = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createTypeByFQClassName("java.lang.Throwable", myExpr.getResolveScope());
-        PsiMember container = PsiTreeUtil.getParentOfType(statement, PsiMethod.class, PsiClass.class);
+        PsiElement container = PsiTreeUtil.getParentOfType(statement, PsiMethod.class, PsiLambdaExpression.class, PsiClass.class);
         PsiType[] throwsTypes = PsiType.EMPTY_ARRAY;
         if (container instanceof PsiMethod) {
           throwsTypes = ((PsiMethod)container).getThrowsList().getReferencedTypes();
+        }
+        else if (container instanceof PsiLambdaExpression) {
+          final PsiMethod method = LambdaUtil.getFunctionalInterfaceMethod(container);
+          if (method != null) {
+            throwsTypes = method.getThrowsList().getReferencedTypes();
+          }
         }
 
         if (throwsTypes.length == 0) {

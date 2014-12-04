@@ -26,7 +26,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -68,25 +68,34 @@ public class NullityInference {
       final AtomicBoolean hasNotNulls = new AtomicBoolean();
       final AtomicBoolean hasNulls = new AtomicBoolean();
       final AtomicBoolean hasUnknowns = new AtomicBoolean();
-      final List<PsiMethodCallExpression> calls = ContainerUtil.newArrayList();
+      final Set<PsiMethod> delegates = ContainerUtil.newLinkedHashSet();
       body.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override
         public void visitReturnStatement(PsiReturnStatement statement) {
           PsiExpression value = statement.getReturnValue();
           if (value == null) {
             hasErrors.set(true);
-          } else {
-            if (value instanceof PsiLiteralExpression) {
-              if (value.textMatches(PsiKeyword.NULL)) {
-                hasNulls.set(true);
-              } else {
-                hasNotNulls.set(true);
-              }
-            } else if (value instanceof PsiMethodCallExpression) {
-              calls.add((PsiMethodCallExpression)value);
-            } else {
-              hasUnknowns.set(true);
+          } else if (value instanceof PsiLiteralExpression) {
+            if (value.textMatches(PsiKeyword.NULL)) {
+              hasNulls.set(true);
             }
+            else {
+              hasNotNulls.set(true);
+            }
+          }
+          else if (value.getType() instanceof PsiPrimitiveType) {
+            hasNotNulls.set(true);
+          }
+          else if (value instanceof PsiMethodCallExpression) {
+            PsiMethod target = ((PsiMethodCallExpression)value).resolveMethod();
+            if (target == null) {
+              hasUnknowns.set(true);
+            } else {
+              delegates.add(target);
+            }
+          }
+          else {
+            hasUnknowns.set(true);
           }
           super.visitReturnStatement(statement);
         }
@@ -102,13 +111,12 @@ public class NullityInference {
         return Nullness.NULLABLE;
       }
       
-      if (calls.size() > 1) {
+      if (hasErrors.get() || delegates.size() > 1) {
         return Nullness.UNKNOWN;
       }
 
-      if (calls.size() == 1) {
-        PsiMethod target = calls.get(0).resolveMethod();
-        if (target != null && NullableNotNullManager.isNotNull(target)) {
+      if (delegates.size() == 1) {
+        if (NullableNotNullManager.isNotNull(delegates.iterator().next())) {
           return Nullness.NOT_NULL;
         }
         return Nullness.UNKNOWN;

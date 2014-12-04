@@ -61,6 +61,10 @@ public class SuggestedReturnTypesTest extends LightCodeInsightTestCase {
     doTest("Integer", "int");
   }
 
+  public void testOutputUsedInReturn() throws Exception {
+    doTest("String");
+  }
+
   private void doTest(String... types) throws Exception {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
 

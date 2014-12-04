@@ -87,4 +87,9 @@ public class CoreStubTreeLoader extends StubTreeLoader {
     }
     return false;
   }
+
+  @Override
+  public String getIndexingStampDebugInfo(VirtualFile file) {
+    return "";
+  }
 }

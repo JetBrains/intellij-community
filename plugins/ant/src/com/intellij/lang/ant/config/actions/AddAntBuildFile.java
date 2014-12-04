@@ -16,6 +16,7 @@
 package com.intellij.lang.ant.config.actions;
 
 import com.intellij.lang.ant.AntBundle;
+import com.intellij.lang.ant.config.AntBuildFile;
 import com.intellij.lang.ant.config.AntConfiguration;
 import com.intellij.lang.ant.config.AntConfigurationBase;
 import com.intellij.lang.ant.config.AntNoFileException;
@@ -30,35 +31,31 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
 public class AddAntBuildFile extends AnAction {
-  public void actionPerformed(AnActionEvent event) {
+  public void actionPerformed(@NotNull AnActionEvent event) {
     final DataContext dataContext = event.getDataContext();
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       return;
     }
-
-    final Set<VirtualFile> files = new HashSet<VirtualFile>();
-    
-    VirtualFile[] contextFiles = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
-    if (contextFiles != null) {
-      files.addAll(Arrays.asList(contextFiles));
-    }
-    final VirtualFile singleFile = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
-    if (singleFile != null) {
-      files.add(singleFile);
-    }
-
-    if (files.isEmpty()) {
+    final VirtualFile[] contextFiles = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
+    if (contextFiles == null || contextFiles.length == 0) {
       return;
     }
-    
     final AntConfiguration antConfiguration = AntConfiguration.getInstance(project);
+
+    final Set<VirtualFile> files = new HashSet<VirtualFile>();
+    files.addAll(Arrays.asList(contextFiles));
+    for (AntBuildFile buildFile : antConfiguration.getBuildFiles()) {
+      files.remove(buildFile.getVirtualFile());
+    }
+    
     int filesAdded = 0;
     final StringBuilder errors = new StringBuilder();
 
@@ -87,51 +84,41 @@ public class AddAntBuildFile extends AnAction {
     }
   }
 
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     final Presentation presentation = e.getPresentation();
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    if (project == null) {
-      disable(presentation);
-      return;
+    if (project != null) {
+      final VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
+      if (files != null && files.length > 0) {
+        for (VirtualFile file : files) {
+          final PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
+          if (!(psiFile instanceof XmlFile)) {
+            continue;
+          }
+          final XmlFile xmlFile = (XmlFile)psiFile;
+          final XmlDocument document = xmlFile.getDocument();
+          if (document == null) {
+            continue;
+          }
+          final XmlTag rootTag = document.getRootTag();
+          if (rootTag == null) {
+            continue;
+          }
+          if (!"project".equals(rootTag.getName())) {
+            continue;
+          }
+          if (AntConfigurationBase.getInstance(project).getAntBuildFile(psiFile) != null) {
+            continue;
+          }
+          // found at least one candidate file
+          enable(presentation);
+          return;
+        }
+      }
     }
 
-    final VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
-    if (file == null) {
-      disable(presentation);
-      return;
-    }
-
-    final PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
-    if (!(psiFile instanceof XmlFile)) {
-      disable(presentation);
-      return;
-    }
-
-    final XmlFile xmlFile = (XmlFile)psiFile;
-    final XmlDocument document = xmlFile.getDocument();
-    if (document == null) {
-      disable(presentation);
-      return;
-    }
-
-    final XmlTag rootTag = document.getRootTag();
-    if (rootTag == null) {
-      disable(presentation);
-      return;
-    }
-
-    if (!"project".equals(rootTag.getName())) {
-      disable(presentation);
-      return;
-    }
-
-    if (AntConfigurationBase.getInstance(project).getAntBuildFile(psiFile) != null) {
-      disable(presentation);
-      return;
-    }
-
-    enable(presentation);
+    disable(presentation);
   }
 
   private static void enable(Presentation presentation) {

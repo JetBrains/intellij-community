@@ -167,4 +167,9 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
   public boolean canHaveStub(VirtualFile file) {
     return StubUpdatingIndex.canHaveStub(file);
   }
+
+  @Override
+  public String getIndexingStampDebugInfo(VirtualFile file) {
+    return StubUpdatingIndex.getIndexingStampInfo(file);
+  }
 }

@@ -42,6 +42,17 @@ abstract class NullityInferenceFromSourceTestCase extends LightCodeInsightFixtur
     assert inferNullity(parse('String foo() { return bar(); }; String bar() { return "z"; }; ')) == NOT_NULL
   }
 
+  void "test same delegate method invoked twice"() {
+    assert inferNullity(parse('''
+String foo() { 
+  if (equals(2)) return bar();
+  if (equals(3)) return bar();
+  return "abc"; 
+}
+String bar() { return "z"; }
+''')) == NOT_NULL
+  }
+
   void "test if branch returns null"() {
     assert inferNullity(parse('String bar() { if (equals(2)) return null; return "a"; }; ')) == NULLABLE
   }
@@ -50,15 +61,31 @@ abstract class NullityInferenceFromSourceTestCase extends LightCodeInsightFixtur
     assert inferNullity(parse('String foo() { return bar(); }; String bar() { if (equals(2)) return null; return "a"; }; ')) == UNKNOWN
   }
 
+  void "test return boxed boolean constant"() {
+    assert inferNullity(parse('Object foo() { return true; }')) == NOT_NULL
+  }
+
+  void "test return boxed boolean value"() {
+    assert inferNullity(parse('Object foo(Object o) { return o == null; }')) == NOT_NULL
+  }
+
+  void "test return boxed integer"() {
+    assert inferNullity(parse('Object foo() { return 1; }')) == NOT_NULL
+  }
+
   protected abstract Nullness inferNullity(PsiMethod method)
 
-  private PsiMethod parse(String method) {
+  protected PsiMethod parse(String method) {
     return myFixture.addClass("final class Foo { $method }").methods[0]
   }
 
   static class LightInferenceTest extends NullityInferenceFromSourceTestCase {
     Nullness inferNullity(PsiMethod method) {
       return NullableNotNullManager.isNotNull(method) ? NOT_NULL : NullableNotNullManager.isNullable(method) ? NULLABLE : UNKNOWN
+    }
+
+    void "test skip when errors"() {
+      assert inferNullity(parse('String foo() { if(); return 2; } ')) == UNKNOWN
     }
   }
 
