@@ -485,13 +485,22 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
   private static int readInt(Scanner s, Process process) throws ExecutionException {
     long started = System.currentTimeMillis();
 
+    StringBuilder sb = new StringBuilder();
+    boolean flag = false;
+
     while (System.currentTimeMillis() - started < PORTS_WAITING_TIMEOUT) {
       if (s.hasNextLine()) {
         String line = s.nextLine();
+        sb.append(line).append("\n");
         try {
-          return Integer.parseInt(line);
+          int i =  Integer.parseInt(line);
+          if (flag) {
+            LOG.warn("Unexpected strings in output:\n" + sb.toString());
+          }
+          return i;
         }
         catch (NumberFormatException ignored) {
+          flag = true;
           continue;
         }
       }
@@ -501,10 +510,10 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
       if (process.exitValue() != 0) {
         String error;
         try {
-          error = "Console process terminated with error:\n" + StreamUtil.readText(process.getErrorStream());
+          error = "Console process terminated with error:\n" + StreamUtil.readText(process.getErrorStream()) + sb.toString();
         }
         catch (Exception ignored) {
-          error = "Console process terminated with exit code " + process.exitValue();
+          error = "Console process terminated with exit code " + process.exitValue() + ", output:" + sb.toString();
         }
         throw new ExecutionException(error);
       }
