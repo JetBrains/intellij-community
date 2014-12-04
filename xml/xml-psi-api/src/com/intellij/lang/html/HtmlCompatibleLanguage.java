@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,16 +15,9 @@
  */
 package com.intellij.lang.html;
 
-import com.intellij.lang.xml.XMLLanguage;
-
 /**
- * @author max
+ * Language that is based on HTML (like some template languages)
+ * @author Ilya.Kazakevich
  */
-public class HTMLLanguage extends XMLLanguage implements HtmlCompatibleLanguage {
-
-  public static final HTMLLanguage INSTANCE = new HTMLLanguage();
-
-  private HTMLLanguage() {
-    super(XMLLanguage.INSTANCE, "HTML", "text/html", "text/htmlh");
-  }
+public interface HtmlCompatibleLanguage {
 }
