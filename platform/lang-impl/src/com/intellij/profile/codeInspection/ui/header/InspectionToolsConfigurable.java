@@ -613,8 +613,8 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
   }
 
   @Override
-  public void selectProfile(String name) {
-    myProfiles.selectProfile(name);
+  public void selectProfile(Profile profile) {
+    myProfiles.selectProfile(profile);
   }
 
   @Override
