@@ -29,6 +29,7 @@ import com.intellij.psi.impl.source.tree.StdTokenSets;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -71,11 +72,20 @@ public class SimpleJavaBlock extends AbstractJavaBlock {
     return result;
   }
 
+  @Nullable
+  protected Alignment createChildAlignment2(@Nullable Alignment base) {
+    final IElementType nodeType = myNode.getElementType();
+    if (nodeType == JavaElementType.CONDITIONAL_EXPRESSION) {
+      return base == null ? createAlignment(mySettings.ALIGN_MULTILINE_TERNARY_OPERATION, null) : createAlignment(base, mySettings.ALIGN_MULTILINE_TERNARY_OPERATION, null);
+    }
+    return null;
+  }
+
   private void processRemainingChildren(List<Block> result, Wrap childWrap) {
     while (myCurrentChild != null) {
       if (isNotEmptyNode(myCurrentChild)) {
         final ASTNode astNode = myCurrentChild;
-        AlignmentStrategy alignmentStrategyToUse = getAlignmentStrategy(myCurrentChild);
+        AlignmentStrategy alignmentStrategyToUse = AlignmentStrategy.wrap(chooseAlignment(myReservedAlignment, myReservedAlignment2, myCurrentChild));
         myCurrentChild = processChild(result, astNode, alignmentStrategyToUse, childWrap, myCurrentIndent, myCurrentOffset);
         if (astNode != myCurrentChild && myCurrentChild != null) {
           myCurrentOffset = myCurrentChild.getTextRange().getStartOffset();
@@ -112,12 +122,6 @@ public class SimpleJavaBlock extends AbstractJavaBlock {
       myCurrentOffset += myCurrentChild.getTextLength();
       myCurrentChild = myCurrentChild.getTreeNext();
     }
-  }
-
-  private AlignmentStrategy getAlignmentStrategy(ASTNode child) {
-    return JavaElementType.FIELD == myNode.getElementType()
-           ? myAlignmentStrategy
-           : AlignmentStrategy.wrap(chooseAlignment(myReservedAlignment, myReservedAlignment2, child));
   }
 
   private boolean isNotEmptyNode(@NotNull ASTNode child) {
