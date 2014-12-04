@@ -173,6 +173,19 @@ public class Status {
     });
   }
 
+  public boolean isProperty(@NotNull StatusType type) {
+    return type.equals(getPropertiesStatus());
+  }
+
+  public boolean isProperty(@NotNull StatusType... types) {
+    return ContainerUtil.or(types, new Condition<StatusType>() {
+      @Override
+      public boolean value(StatusType type) {
+        return isProperty(type);
+      }
+    });
+  }
+
   public boolean isLocked() {
     return myIsLocked;
   }
