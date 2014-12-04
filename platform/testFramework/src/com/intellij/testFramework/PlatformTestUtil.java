@@ -88,11 +88,11 @@ public class PlatformTestUtil {
   private static final boolean SKIP_HEADLESS = GraphicsEnvironment.isHeadless();
   private static final boolean SKIP_SLOW = Boolean.getBoolean("skip.slow.tests.locally");
 
-  public static <T> void registerExtension(final ExtensionPointName<T> name, final T t, final Disposable parentDisposable) {
+  public static <T> void registerExtension(@NotNull ExtensionPointName<T> name, @NotNull T t, @NotNull Disposable parentDisposable) {
     registerExtension(Extensions.getRootArea(), name, t, parentDisposable);
   }
 
-  public static <T> void registerExtension(final ExtensionsArea area, final ExtensionPointName<T> name, final T t, final Disposable parentDisposable) {
+  public static <T> void registerExtension(@NotNull ExtensionsArea area, @NotNull ExtensionPointName<T> name, @NotNull final T t, @NotNull Disposable parentDisposable) {
     final ExtensionPoint<T> extensionPoint = area.getExtensionPoint(name.getName());
     extensionPoint.registerExtension(t);
     Disposer.register(parentDisposable, new Disposable() {
