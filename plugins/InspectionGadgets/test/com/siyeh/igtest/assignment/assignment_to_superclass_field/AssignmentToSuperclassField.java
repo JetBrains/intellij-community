@@ -21,5 +21,9 @@ class B extends AssignmentToSuperclassField {
     <warning descr="Assignment to field 'j' defined in superclass 'AssignmentToSuperclassField'">this.j</warning> = 4;
     <warning descr="Assignment to field 'k' defined in superclass 'AssignmentToSuperclassField'">super.k</warning>++;
     z = 100;
+    Runnable r = () -> i = 6;
+    new Object() {{
+      i = 4;
+    }};
   }
 }
