@@ -253,10 +253,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       if (value instanceof DfaVariableValue) {
         setVariableState(var, getVariableState((DfaVariableValue)value));
       }
-      else if (value instanceof DfaBoxedValue) {
-        setVariableState(var, getVariableState(var).withNullable(false));
-        applyCondition(compareToNull(var, true));
-      }
     }
 
     if (getVariableState(var).isNotNull()) {
@@ -477,6 +473,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   @Override
   public boolean isNotNull(DfaValue dfaVar) {
     if (dfaVar instanceof DfaConstValue) return ((DfaConstValue)dfaVar).getValue() != null;
+    if (dfaVar instanceof DfaBoxedValue) return true;
     if (dfaVar instanceof DfaTypeValue) return ((DfaTypeValue)dfaVar).isNotNull();
     if (dfaVar instanceof DfaVariableValue) {
       if (getVariableState((DfaVariableValue)dfaVar).isNotNull()) return true;

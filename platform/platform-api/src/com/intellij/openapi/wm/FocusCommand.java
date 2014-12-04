@@ -190,6 +190,7 @@ public abstract class FocusCommand extends ActiveRunnable implements Expirable {
         });
       }
 
+
       if (commandCreationTime > lastProcessedCommandTime) {
         if (!(myToFocus.requestFocusInWindow())) {
           if (shouldLogFocuses) {

@@ -49,7 +49,7 @@ public class ConcurrentWeakKeySoftValueHashMap<K, V> implements ConcurrentMap<K,
   private final ReferenceQueue<V> myValueQueue = new ReferenceQueue<V>();
   @NotNull private final TObjectHashingStrategy<K> myHashingStrategy;
 
-  protected ConcurrentWeakKeySoftValueHashMap(int initialCapacity,
+  public ConcurrentWeakKeySoftValueHashMap(int initialCapacity,
                                               float loadFactor,
                                               int concurrencyLevel,
                                               @NotNull final TObjectHashingStrategy<K> hashingStrategy) {

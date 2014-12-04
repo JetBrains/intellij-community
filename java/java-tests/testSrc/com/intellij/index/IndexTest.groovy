@@ -252,7 +252,8 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
     ((VirtualFileSystemEntry)vFile).setModificationStamp(0); // as unchanged file
 
     final Document document = FileDocumentManager.getInstance().getDocument(vFile);
-    assertTrue(document != null && document.getModificationStamp() == 0);
+    assertTrue(document != null);
+    assert document.getModificationStamp() == 0;
     assertNotNull(findClass("Foo"));
 
     WriteCommandAction.runWriteCommandAction(getProject(), new Runnable() {

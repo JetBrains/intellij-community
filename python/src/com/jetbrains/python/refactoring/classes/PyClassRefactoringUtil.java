@@ -245,7 +245,7 @@ public final class PyClassRefactoringUtil {
     final String asName = node.getCopyableUserData(ENCODED_IMPORT_AS);
     final Boolean useFromImport = node.getCopyableUserData(ENCODED_USE_FROM_IMPORT);
     if (target instanceof PsiDirectory) {
-      target = (PsiNamedElement)PyUtil.turnDirIntoPackageElement((PsiDirectory)target, node);
+      target = (PsiNamedElement)PyUtil.getPackageElement((PsiDirectory)target, node);
     }
     if (target instanceof PyFunction) {
       final PyFunction f = (PyFunction)target;

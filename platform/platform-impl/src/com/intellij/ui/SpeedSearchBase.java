@@ -525,8 +525,10 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       myPopupLayeredPane.validate();
       myPopupLayeredPane.repaint();
       myPopupLayeredPane = null;
-      
-      Disposer.dispose(myListenerDisposable);
+
+      if (myListenerDisposable != null) {
+        Disposer.dispose(myListenerDisposable);
+      }
       myListenerDisposable = null;
     }
     else if (searchPopup != null) {

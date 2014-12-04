@@ -281,7 +281,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   /**
    * Runs highlighting test for the given files.
-   * The same as {@link #testHighlighting(boolean, boolean, boolean, String...)} with all options set.
+   * The same as {@link #testHighlighting(boolean, boolean, boolean, String...)} with {@code checkInfos=false}.
    *
    * @param filePaths the first file is tested only; the others are just copied along with the first.
    * @return highlighting duration in milliseconds

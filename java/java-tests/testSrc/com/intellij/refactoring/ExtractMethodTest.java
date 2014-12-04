@@ -58,6 +58,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
   }
 
   public void testExitPoints4() throws Exception {
+    doTest();
+  }
+
+  public void testExitPoints4Nullable() throws Exception {
     doExitPointsTest(false);
   }
 
@@ -625,6 +629,28 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doTestReturnTypeChanged(PsiType.getJavaLangObject(getPsiManager(), GlobalSearchScope.allScope(getProject())));
   }
 
+  public void testMakeVoidMethodReturnVariable() throws Exception {
+    doTestReturnTypeChanged(PsiType.INT);
+  }
+
+  public void testMultipleVarsInMethodNoReturnStatementAndAssignment() throws Exception {
+    //return type should not be suggested but still 
+    doTestReturnTypeChanged(PsiType.INT);
+  }
+
+  public void testPassFieldAsParameterAndMakeStatic() throws Exception {
+    doTestPassFieldsAsParams();
+  }
+
+  public void testCantPassFieldAsParameter() throws Exception {
+    try {
+      doTestPassFieldsAsParams();
+      fail("Field was modified inside. Make static should be disabled");
+    }
+    catch (PrepareFailedException ignore) {
+    }
+  }
+
   private void doTestDisabledParam() throws PrepareFailedException {
     final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
     settings.ELSE_ON_NEW_LINE = true;
@@ -640,7 +666,17 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     settings.ELSE_ON_NEW_LINE = true;
     settings.CATCH_ON_NEW_LINE = myCatchOnNewLine;
     configureByFile(BASE_PATH + getTestName(false) + ".java");
-    boolean success = performExtractMethod(true, true, getEditor(), getFile(), getProject(), false, type);
+    boolean success = performExtractMethod(true, true, getEditor(), getFile(), getProject(), false, type, false);
+    assertTrue(success);
+    checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
+  }
+
+  private void doTestPassFieldsAsParams() throws PrepareFailedException {
+    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+    settings.ELSE_ON_NEW_LINE = true;
+    settings.CATCH_ON_NEW_LINE = myCatchOnNewLine;
+    configureByFile(BASE_PATH + getTestName(false) + ".java");
+    boolean success = performExtractMethod(true, true, getEditor(), getFile(), getProject(), false, null, true);
     assertTrue(success);
     checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
   }
@@ -700,7 +736,7 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
                                              final boolean extractChainedConstructor,
                                              int... disabledParams)
     throws PrepareFailedException, IncorrectOperationException {
-    return performExtractMethod(doRefactor, replaceAllDuplicates, editor, file, project, extractChainedConstructor, null, disabledParams);
+    return performExtractMethod(doRefactor, replaceAllDuplicates, editor, file, project, extractChainedConstructor, null, false, disabledParams);
   }
 
   public static boolean performExtractMethod(boolean doRefactor,
@@ -710,6 +746,7 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
                                              Project project,
                                              final boolean extractChainedConstructor,
                                              PsiType returnType,
+                                             boolean makeStatic,
                                              int... disabledParams)
     throws PrepareFailedException, IncorrectOperationException {
     int startOffset = editor.getSelectionModel().getSelectionStart();
@@ -741,7 +778,7 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     }
 
     if (doRefactor) {
-      processor.testPrepare(returnType);
+      processor.testPrepare(returnType, makeStatic);
       processor.testNullness();
       if (disabledParams != null) {
         for (int param : disabledParams) {

@@ -48,22 +48,22 @@ public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
       }
     }
 
-    if (!ignoreInference(listOwner, annotationFQN)) {
-      PsiAnnotation fromBytecode = ProjectBytecodeAnalysis.getInstance(myProject).findInferredAnnotation(listOwner, annotationFQN);
-      if (fromBytecode != null) {
-        return fromBytecode;
-      }
+    if (ignoreInference(listOwner, annotationFQN)) {
+      return null;
+    }
+    
+    PsiAnnotation fromBytecode = ProjectBytecodeAnalysis.getInstance(myProject).findInferredAnnotation(listOwner, annotationFQN);
+    if (fromBytecode != null) {
+      return fromBytecode;
     }
 
-    if (canInferFromSource(listOwner)) {
-      //noinspection ConstantConditions
-      PsiMethod method = (PsiMethod)listOwner;
+    if (listOwner instanceof PsiMethod) {
       if (ORG_JETBRAINS_ANNOTATIONS_CONTRACT.equals(annotationFQN)) {
-        return getInferredContractAnnotation(method);
+        return getInferredContractAnnotation((PsiMethod)listOwner);
       }
-      
+
       if ((AnnotationUtil.NOT_NULL.equals(annotationFQN) || AnnotationUtil.NULLABLE.equals(annotationFQN))) {
-        PsiAnnotation anno = getInferredNullityAnnotation(method);
+        PsiAnnotation anno = getInferredNullityAnnotation((PsiMethod)listOwner);
         return anno == null ? null : annotationFQN.equals(anno.getQualifiedName()) ? anno : null;
       }
     }
@@ -79,6 +79,9 @@ public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
 
   @Override
   public boolean ignoreInference(@NotNull PsiModifierListOwner owner, @Nullable String annotationFQN) {
+    if (owner instanceof PsiMethod && PsiUtil.canBeOverriden((PsiMethod)owner)) {
+      return true;
+    }
     if (ORG_JETBRAINS_ANNOTATIONS_CONTRACT.equals(annotationFQN) && hasHardcodedContracts(owner)) {
       return true;
     }
@@ -138,10 +141,6 @@ public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
     return ProjectBytecodeAnalysis.getInstance(myProject).createContractAnnotation(attrs);
   }
 
-  private static boolean canInferFromSource(PsiModifierListOwner listOwner) {
-    return listOwner instanceof PsiMethod && !PsiUtil.canBeOverriden((PsiMethod)listOwner);
-  }
-
   @NotNull
   @Override
   public PsiAnnotation[] findInferredAnnotations(@NotNull PsiModifierListOwner listOwner) {
@@ -150,17 +149,24 @@ public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
     PsiAnnotation[] fromBytecode = ProjectBytecodeAnalysis.getInstance(myProject).findInferredAnnotations(listOwner);
     for (PsiAnnotation annotation : fromBytecode) {
       if (!ignoreInference(listOwner, annotation.getQualifiedName())) {
-        if (!ORG_JETBRAINS_ANNOTATIONS_CONTRACT.equals(annotation.getQualifiedName()) || canInferFromSource(listOwner)) {
-          result.add(annotation);
-        }
+        result.add(annotation);
       }
     }
 
-    if (canInferFromSource(listOwner)) {
+    if (listOwner instanceof PsiMethod) {
       PsiAnnotation hardcoded = getHardcodedContractAnnotation((PsiMethod)listOwner);
-      ContainerUtil.addIfNotNull(result, hardcoded != null ? hardcoded : getInferredContractAnnotation((PsiMethod)listOwner));
-      
-      ContainerUtil.addIfNotNull(result, getInferredNullityAnnotation((PsiMethod)listOwner));
+      if (hardcoded != null) {
+        result.add(hardcoded);
+      } else if (!ignoreInference(listOwner, ORG_JETBRAINS_ANNOTATIONS_CONTRACT)) {
+        ContainerUtil.addIfNotNull(result, getInferredContractAnnotation((PsiMethod)listOwner));
+      }
+
+      if (!ignoreInference(listOwner, AnnotationUtil.NOT_NULL) || !ignoreInference(listOwner, AnnotationUtil.NULLABLE)) {
+        PsiAnnotation annotation = getInferredNullityAnnotation((PsiMethod)listOwner);
+        if (annotation != null && !ignoreInference(listOwner, annotation.getQualifiedName())) {
+          result.add(annotation);
+        }
+      }
     }
 
     return result.isEmpty() ? PsiAnnotation.EMPTY_ARRAY : result.toArray(new PsiAnnotation[result.size()]);

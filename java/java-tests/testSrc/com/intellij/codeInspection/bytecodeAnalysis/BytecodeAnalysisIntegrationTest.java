@@ -17,7 +17,6 @@ package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ExternalAnnotationsManager;
-import com.intellij.codeInsight.InferredAnnotationsManager;
 import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -257,7 +256,7 @@ public class BytecodeAnalysisIntegrationTest extends JavaCodeInsightFixtureTestC
 
   @Nullable
   private PsiAnnotation findInferredAnnotation(PsiModifierListOwner owner, String fqn) {
-    return InferredAnnotationsManager.getInstance(myModule.getProject()).findInferredAnnotation(owner, fqn);
+    return ProjectBytecodeAnalysis.getInstance(getProject()).findInferredAnnotation(owner, fqn);
   }
 
   @Nullable

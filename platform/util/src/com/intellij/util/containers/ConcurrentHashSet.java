@@ -24,16 +24,19 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 
-class ConcurrentHashSet<K> implements Set<K> {
+/**
+ * @deprecated use {@link ContainerUtil#newConcurrentSet()} instead
+ */
+public class ConcurrentHashSet<K> implements Set<K> {
   private final ConcurrentMap<K, Boolean> map;
 
-  ConcurrentHashSet(int initialCapacity) {
+  public ConcurrentHashSet(int initialCapacity) {
     map = ContainerUtil.newConcurrentMap(initialCapacity);
   }
-  ConcurrentHashSet() {
+  public ConcurrentHashSet() {
     map = ContainerUtil.newConcurrentMap();
   }
-  ConcurrentHashSet(@NotNull TObjectHashingStrategy<K> hashingStrategy) {
+  public ConcurrentHashSet(@NotNull TObjectHashingStrategy<K> hashingStrategy) {
     map = ContainerUtil.newConcurrentMap(hashingStrategy);
   }
 

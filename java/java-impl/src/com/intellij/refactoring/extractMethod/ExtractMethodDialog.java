@@ -31,6 +31,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.*;
 import com.intellij.refactoring.util.ConflictsUtil;
@@ -40,6 +41,7 @@ import com.intellij.ui.EditorTextField;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.ui.SeparatorFactory;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.MultiMap;
@@ -239,11 +241,28 @@ public class ExtractMethodDialog extends DialogWrapper implements AbstractExtrac
     return main;
   }
 
+  protected boolean isVoidReturn() {
+    return false;
+  }
+  
   @Nullable
   private JPanel createReturnTypePanel() {
-    mySelector = new TypeSelectorManagerImpl(myProject, myReturnType, findOccurrences(), areTypesDirected()).getTypeSelector();
+    if (TypeConversionUtil.isPrimitiveWrapper(myReturnType) && myNullness == Nullness.NULLABLE) {
+      return null;
+    }
+    final TypeSelectorManagerImpl manager = new TypeSelectorManagerImpl(myProject, myReturnType, findOccurrences(), areTypesDirected()) {
+      @Override
+      public PsiType[] getTypesForAll(boolean direct) {
+        final PsiType[] types = super.getTypesForAll(direct);
+        return !isVoidReturn() ? types : ArrayUtil.prepend(PsiType.VOID, types);
+      }
+    };
+    mySelector = manager.getTypeSelector();
     final JComponent component = mySelector.getComponent();
     if (component instanceof JComboBox) {
+      if (isVoidReturn()) {
+        mySelector.selectType(PsiType.VOID);
+      }
       final JPanel returnTypePanel = new JPanel(new BorderLayout(2, 0));
       final JLabel label = new JLabel(RefactoringBundle.message("changeSignature.return.type.prompt"));
       returnTypePanel.add(label, BorderLayout.NORTH);
@@ -280,8 +299,17 @@ public class ExtractMethodDialog extends DialogWrapper implements AbstractExtrac
     if (myStaticFlag || myCanBeStatic) {
       myMakeStatic.setEnabled(!myStaticFlag);
       myMakeStatic.setSelected(myStaticFlag);
+      if (myVariableData.hasInstanceFields()) {
+        myMakeStatic.setText(RefactoringBundle.message("declare.static.pass.fields.checkbox"));
+      }
       myMakeStatic.addItemListener(new ItemListener() {
         public void itemStateChanged(ItemEvent e) {
+          if (myVariableData.hasInstanceFields()) {
+            myVariableData.setPassFields(myMakeStatic.isSelected());
+            myInputVariables = myVariableData.getInputVariables().toArray(new VariableData[myVariableData.getInputVariables().size()]);
+            updateVarargsEnabled();
+            createParametersPanel();
+          }
           updateSignature();
         }
       });
@@ -523,7 +551,7 @@ public class ExtractMethodDialog extends DialogWrapper implements AbstractExtrac
       buffer.append(myTargetClass.getName());
     }
     else {
-      buffer.append(PsiFormatUtil.formatType(mySelector.getSelectedType(), 0, PsiSubstitutor.EMPTY));
+      buffer.append(PsiFormatUtil.formatType(mySelector != null ? mySelector.getSelectedType() : myReturnType, 0, PsiSubstitutor.EMPTY));
       buffer.append(" ");
       buffer.append(myNameField.getText());
     }
@@ -593,6 +621,6 @@ public class ExtractMethodDialog extends DialogWrapper implements AbstractExtrac
   }
 
   public PsiType getReturnType() {
-    return mySelector.getSelectedType();
+    return mySelector != null ? mySelector.getSelectedType() : myReturnType;
   }
 }

@@ -126,7 +126,7 @@ public class TemplatesCompletionTest extends CompletionAutoPopupTestCase {
     doAutoPopupTest("instanceof", null);
   }
 
-  public void   testDoNotAutoCompleteCompletionElementIfTemplateUnique() {
+  public void testDoNotAutoCompleteCompletionElementIfTemplateUnique() {
     LiveTemplateCompletionContributor.ourShowTemplatesInTests = true;
     configureByFile();
     myFixture.completeBasic();

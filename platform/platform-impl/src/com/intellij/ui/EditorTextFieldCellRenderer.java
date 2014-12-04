@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.impl.DelegateColorScheme;
 import com.intellij.openapi.editor.event.DocumentListener;
@@ -30,7 +31,9 @@ import com.intellij.openapi.editor.impl.RangeMarkerTree;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
@@ -56,31 +59,54 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
 
   private static final Key<MyPanel> MY_PANEL_PROPERTY = Key.create("EditorTextFieldCellRenderer.MyEditorPanel");
 
-  public EditorTextFieldCellRenderer(Disposable parent) {
+  private final Project myProject;
+  private final boolean myInheritFontFromLaF;
+
+  protected EditorTextFieldCellRenderer(@Nullable Project project, @NotNull Disposable parent) {
+    this(project, true, parent);
+  }
+
+  protected EditorTextFieldCellRenderer(@Nullable Project project, boolean inheritFontFromLaF, @NotNull Disposable parent) {
+    myProject = project;
+    myInheritFontFromLaF = inheritFontFromLaF;
     Disposer.register(parent, this);
   }
 
-  protected abstract EditorColorsScheme getColorScheme();
-
-  protected abstract String getText(FontMetrics fontMetrics, JTable table, Object value, int row, int column);
+  protected abstract String getText(JTable table, Object value, int row, int column);
 
   @Nullable
-  protected abstract TextAttributes getTextAttributes(Object value, boolean selected, int row, int col);
+  protected TextAttributes getTextAttributes(JTable table, Object value, boolean selected, boolean focused, int row, int col) {
+    return null;
+  }
+
+  protected Color getCellBackground(JTable table, Object value, boolean selected, boolean focused, int row, int column) {
+    return UIUtil.getTableBackground(selected);
+  }
+
+  @Nullable
+  protected FileType getFileType() {
+    return null;
+  }
+
+  @NotNull
+  protected EditorColorsScheme getColorScheme() {
+    return EditorColorsManager.getInstance().getGlobalScheme();
+  }
 
   @Override
-  public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+  public Component getTableCellRendererComponent(JTable table, Object value, boolean selected, boolean focused, int row, int column) {
     MyPanel panel = getEditorPanel(table);
     EditorEx editor = panel.myEditor;
     editor.getColorsScheme().setEditorFontSize(table.getFont().getSize());
-    String text = getText(((EditorImpl)editor).getFontMetrics(Font.PLAIN), table, value, row, column);
-    TextAttributes textAttributes = getTextAttributes(value, isSelected, row, column);
+    String text = getText(table, value, row, column);
+    TextAttributes textAttributes = getTextAttributes(table, value, selected, focused, row, column);
     panel.setText(text, textAttributes);
 
-    ((EditorImpl)editor).setPaintSelection(isSelected);
-    editor.getSelectionModel().setSelection(0, isSelected ? editor.getDocument().getTextLength() : 0);
+    ((EditorImpl)editor).setPaintSelection(selected);
+    editor.getSelectionModel().setSelection(0, selected ? editor.getDocument().getTextLength() : 0);
     editor.getColorsScheme().setColor(EditorColors.SELECTION_BACKGROUND_COLOR, table.getSelectionBackground());
     editor.getColorsScheme().setColor(EditorColors.SELECTION_FOREGROUND_COLOR, table.getSelectionForeground());
-    editor.setBackgroundColor(getCellBackgroundColor(getColorScheme(), table, isSelected, row));
+    editor.setBackgroundColor(getCellBackground(table, value, selected, focused, row, column));
     panel.setOpaque(!Comparing.equal(editor.getBackgroundColor(), table.getBackground()));
 
     panel.setBorder(null); // prevents double border painting when ExtendedItemRendererComponentWrapper is used
@@ -88,14 +114,8 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
     return panel;
   }
 
-  public static Color getCellBackgroundColor(EditorColorsScheme colorsScheme, JTable table, boolean isSelected, int row) {
-    return isSelected ? table.getSelectionBackground() :
-           table.getSelectionModel().getLeadSelectionIndex() == row ? colorsScheme.getColor(EditorColors.CARET_ROW_COLOR) :
-           table.getBackground();
-  }
-
   @NotNull
-  private MyPanel getEditorPanel(JTable table) {
+  private MyPanel getEditorPanel(final JTable table) {
     MyPanel panel = UIUtil.getClientProperty(table, MY_PANEL_PROPERTY);
     if (panel != null) {
       DelegateColorScheme scheme = (DelegateColorScheme)panel.myEditor.getColorsScheme();
@@ -103,10 +123,10 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
       return panel;
     }
 
-    // reuse EditorTextField initialization logic
-    EditorTextField field = new EditorTextField(new MyDocument(), null, FileTypes.PLAIN_TEXT, false, false);
+    FileType fileType = ObjectUtils.notNull(getFileType(), FileTypes.PLAIN_TEXT);
+    EditorTextField field = new EditorTextField(new MyDocument(), myProject, fileType, false, false);
     field.setSupplementary(true);
-    field.setFontInheritedFromLAF(false);
+    field.setFontInheritedFromLAF(myInheritFontFromLaF);
     field.addNotify(); // creates editor
 
     EditorEx editor = (EditorEx)ObjectUtils.assertNotNull(field.getEditor());
@@ -119,6 +139,12 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
 
     panel = new MyPanel(editor);
     Disposer.register(this, panel);
+    Disposer.register(this, new Disposable() {
+      @Override
+      public void dispose() {
+        UIUtil.putClientProperty(table, MY_PANEL_PROPERTY, null);
+      }
+    });
 
     table.putClientProperty(MY_PANEL_PROPERTY, panel);
     return panel;
@@ -155,6 +181,15 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
       myRawText = text;
       myTextAttributes = textAttributes;
       recalculatePreferredSize();
+    }
+
+    @Override
+    public void setBackground(Color bg) {
+      // allows for striped tables
+      if (myEditor != null) {
+        myEditor.setBackgroundColor(bg);
+      }
+      super.setBackground(bg);
     }
 
     @Override

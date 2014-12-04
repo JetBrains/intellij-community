@@ -62,7 +62,7 @@ public class ListTableModel<Item> extends TableViewModel<Item> implements Editab
   }
 
   @Override
-  public Class getColumnClass(int columnIndex) {
+  public Class<?> getColumnClass(int columnIndex) {
     return myColumnInfos[columnIndex].getColumnClass();
   }
 
