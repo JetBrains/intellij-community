@@ -37,11 +37,11 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 import static git4idea.push.GitPushRepoResult.Type.*;
 import static git4idea.test.GitExecutor.*;
+import static java.util.Collections.singletonMap;
 
 public class GitPushOperationSingleRepoTest extends GitPushOperationBaseTest {
 
@@ -161,7 +161,7 @@ public class GitPushOperationSingleRepoTest extends GitPushOperationBaseTest {
     refresh();
     PushSpec<GitPushSource, GitPushTarget> pushSpec = makePushSpec(myRepository, "master", "origin/master");
 
-    GitPushResult result = new GitPushOperation(myProject, Collections.singletonMap(myRepository, pushSpec), null, false) {
+    GitPushResult result = new GitPushOperation(myProject, singletonMap(myRepository, pushSpec), null, false) {
       @NotNull
       @Override
       protected GitUpdateResult update(@NotNull Collection<GitRepository> rootsToUpdate, @NotNull UpdateMethod updateMethod) {
@@ -233,6 +233,19 @@ public class GitPushOperationSingleRepoTest extends GitPushOperationBaseTest {
     assertResult(REJECTED, -1, "master", "origin/master", GitUpdateResult.INCOMPLETE, Arrays.asList("bro.txt"), result);
   }
 
+  public void test_push_tags() throws IOException {
+    cd(myRepository);
+    git("tag v1");
+
+    refresh();
+    PushSpec<GitPushSource, GitPushTarget> spec = makePushSpec(myRepository, "master", "origin/master");
+    GitPushResult pushResult = new GitPushOperation(myProject, singletonMap(myRepository, spec), GitPushTagMode.ALL, false).execute();
+    GitPushRepoResult result = pushResult.getResults().get(myRepository);
+    List<String> pushedTags = result.getPushedTags();
+    assertEquals(1, pushedTags.size());
+    assertEquals("refs/tags/v1", pushedTags.get(0));
+  }
+
   @NotNull
   private GitPushResult push(@NotNull String from, @NotNull String to) {
     return push(from, to, false);
@@ -242,7 +255,7 @@ public class GitPushOperationSingleRepoTest extends GitPushOperationBaseTest {
   private GitPushResult push(@NotNull String from, @NotNull String to, boolean force) {
     refresh();
     PushSpec<GitPushSource, GitPushTarget> spec = makePushSpec(myRepository, from, to);
-    return new GitPushOperation(myProject, Collections.singletonMap(myRepository, spec), null, force).execute();
+    return new GitPushOperation(myProject, singletonMap(myRepository, spec), null, force).execute();
   }
 
   private String pushCommitFromBro() throws IOException {
