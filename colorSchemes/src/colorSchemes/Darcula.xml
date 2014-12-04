@@ -419,9 +419,7 @@
       <value />
     </option>
     <option name="DEFAULT_FUNCTION_CALL">
-      <value>
-        <option name="FOREGROUND" value="cc7833" />
-      </value>
+      <value/>
     </option>
     <option name="DEFAULT_FUNCTION_DECLARATION">
       <value>
