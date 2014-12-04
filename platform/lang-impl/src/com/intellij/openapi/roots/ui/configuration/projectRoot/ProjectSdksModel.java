@@ -86,15 +86,6 @@ public class ProjectSdksModel implements SdkModel {
   }
 
   public void reset(@Nullable Project project) {
-    resetSdkModel();
-    if (project != null) {
-      myProjectSdk = findSdk(ProjectRootManager.getInstance(project).getProjectSdkName());
-    }
-    myModified = false;
-    myInitialized = true;
-  }
-
-  private void resetSdkModel() {
     myProjectSdks.clear();
     final Sdk[] projectSdks = ProjectJdkTable.getInstance().getAllJdks();
     for (Sdk sdk : projectSdks) {
@@ -105,6 +96,11 @@ public class ProjectSdksModel implements SdkModel {
         LOG.error(e);
       }
     }
+    if (project != null) {
+      myProjectSdk = findSdk(ProjectRootManager.getInstance(project).getProjectSdkName());
+    }
+    myModified = false;
+    myInitialized = true;
   }
 
   public void disposeUIResources() {
@@ -171,7 +167,6 @@ public class ProjectSdksModel implements SdkModel {
         }
       }
     });
-    resetSdkModel();
     myModified = false;
   }
 
@@ -302,11 +297,17 @@ public class ProjectSdksModel implements SdkModel {
 
   public void doAdd(Sdk newSdk, @Nullable Consumer<Sdk> updateTree) {
     myModified = true;
-    myProjectSdks.put(newSdk, newSdk);
-    if (updateTree != null) {
-      updateTree.consume(newSdk);
+    try {
+      Sdk editableCopy = (Sdk)newSdk.clone();
+      myProjectSdks.put(newSdk, editableCopy);
+      if (updateTree != null) {
+        updateTree.consume(editableCopy);
+      }
+      mySdkEventsDispatcher.getMulticaster().sdkAdded(editableCopy);
     }
-    mySdkEventsDispatcher.getMulticaster().sdkAdded(newSdk);
+    catch (CloneNotSupportedException e) {
+      LOG.error(e);
+    }
   }
 
   @Nullable
