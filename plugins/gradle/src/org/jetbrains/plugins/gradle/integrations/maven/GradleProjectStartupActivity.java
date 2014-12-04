@@ -30,6 +30,6 @@ public class GradleProjectStartupActivity implements StartupActivity {
   @Override
   public void runActivity(@NotNull final Project project) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
-    DumbService.getInstance(project).smartInvokeLater(new ImportMavenRepositoriesTask(project, false));
+    DumbService.getInstance(project).smartInvokeLater(new ImportMavenRepositoriesTask(project));
   }
 }

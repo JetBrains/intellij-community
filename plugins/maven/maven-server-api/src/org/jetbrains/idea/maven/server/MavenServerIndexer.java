@@ -55,4 +55,6 @@ public interface MavenServerIndexer extends Remote {
   Collection<MavenArchetype> getArchetypes() throws RemoteException;
 
   void release() throws RemoteException;
+
+  boolean indexExists(File dir) throws RemoteException;
 }
