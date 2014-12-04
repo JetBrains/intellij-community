@@ -1989,8 +1989,10 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           }
           if (myPopup == null || !myPopup.isVisible()) {
             final ActionCallback callback = ListDelegationUtil.installKeyboardDelegation(getField().getTextEditor(), myList);
+            JBScrollPane content = new JBScrollPane(myList);
+            content.setMinimumSize(new Dimension(myBalloon.getSize().width, 30));
             final ComponentPopupBuilder builder = JBPopupFactory.getInstance()
-              .createComponentPopupBuilder(new JBScrollPane(myList), null);
+              .createComponentPopupBuilder(content, null);
             myPopup = builder
               .setRequestFocus(false)
               .setCancelKeyEnabled(false)
@@ -2001,6 +2003,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
                 }
               })
               .createPopup();
+            myPopup.setMinimumSize(new Dimension(myBalloon.getSize().width, 30));
             myPopup.getContent().setBorder(new EmptyBorder(0, 0, 0, 0));
             Disposer.register(myPopup, new Disposable() {
               @Override
@@ -2022,7 +2025,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
               }
             });
             myPopup.show(new RelativePoint(getField().getParent(), new Point(0, getField().getParent().getHeight())));
-            updatePopupBounds();
+            //updatePopupBounds();
 
             ActionManager.getInstance().addAnActionListener(new AnActionListener.Adapter() {
               @Override
@@ -2179,7 +2182,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       size.width = parent.getWidth();
     }
     if (myList.getItemsCount() == 0) {
-      size.height = 70;
+      size.height = 30;
     }
     Dimension sz = new Dimension(size.width, myList.getPreferredSize().height);
     if (sz.width > POPUP_MAX_WIDTH || sz.height > POPUP_MAX_WIDTH) {
