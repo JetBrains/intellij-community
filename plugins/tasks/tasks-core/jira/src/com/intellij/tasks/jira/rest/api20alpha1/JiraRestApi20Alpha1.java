@@ -2,9 +2,11 @@ package com.intellij.tasks.jira.rest.api20alpha1;
 
 import com.google.gson.reflect.TypeToken;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.tasks.CustomTaskState;
 import com.intellij.tasks.LocalTask;
+import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskBundle;
-import com.intellij.tasks.TaskState;
 import com.intellij.tasks.jira.JiraRepository;
 import com.intellij.tasks.jira.rest.JiraRestApi;
 import com.intellij.tasks.jira.rest.JiraRestTask;
@@ -12,22 +14,31 @@ import com.intellij.tasks.jira.rest.api20alpha1.model.JiraIssueApi20Alpha1;
 import com.intellij.tasks.jira.rest.model.JiraIssue;
 import com.intellij.tasks.jira.rest.model.JiraResponseWrapper;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /**
  * This REST API is used in JIRA versions from 4.2 to 4.4.
+ *
  * @author Mikhail Golubev
  */
 public class JiraRestApi20Alpha1 extends JiraRestApi {
   private static final Logger LOG = Logger.getInstance(JiraRestApi20Alpha1.class);
-  private static final Type ISSUES_WRAPPER_TYPE = new TypeToken<JiraResponseWrapper.Issues<JiraIssueApi20Alpha1>>() { /* empty */ }.getType();
+  private static final Type ISSUES_WRAPPER_TYPE = new TypeToken<JiraResponseWrapper.Issues<JiraIssueApi20Alpha1>>() { /* empty */
+  }.getType();
 
   public JiraRestApi20Alpha1(JiraRepository repository) {
     super(repository);
+  }
+
+  @NotNull
+  @Override
+  public Set<CustomTaskState> getPossibleStates(@NotNull Task task) throws Exception {
+    return Collections.emptySet();
   }
 
   @Override
@@ -55,20 +66,12 @@ public class JiraRestApi20Alpha1 extends JiraRestApi {
     return updatedIssues;
   }
 
-  @Nullable
+  @NotNull
   @Override
-  protected String getRequestForStateTransition(@NotNull TaskState state) {
-    switch (state) {
-      case IN_PROGRESS:
-        return  "{\"transition\": \"4\"}";
-      case RESOLVED:
-        // 5 for "Resolved", 2 for "Closed"
-        return  "{\"transition\": \"5\", \"resolution\": \"Fixed\"}";
-      case REOPENED:
-        return  "{\"transition\": \"3\"}";
-      default:
-        return null;
-    }
+  protected String getRequestForStateTransition(@NotNull CustomTaskState state) {
+    final String stateId = state.getId();
+    assert StringUtil.isNotEmpty(stateId);
+    return "{\"transition\": \"" + stateId + "\"}";
   }
 
   @Override

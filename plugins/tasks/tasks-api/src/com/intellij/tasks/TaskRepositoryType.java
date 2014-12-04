@@ -67,8 +67,10 @@ public abstract class TaskRepositoryType<T extends TaskRepository> implements Ta
   public abstract Class<T> getRepositoryClass();
 
   /**
-   * @return states that can be set by {@link TaskRepository#setTaskState(Task, TaskState)}
+   * @return states that can be set by {@link TaskRepository#setTaskState(Task, CustomTaskState)}
+   * @deprecated Use {@link com.intellij.tasks.TaskRepository#getPossibleStates(Task)} instead.
    */
+  @Deprecated
   public EnumSet<TaskState> getPossibleTaskStates() {
     return EnumSet.noneOf(TaskState.class);
   }

@@ -3,11 +3,14 @@ package com.intellij.tasks.jira.rest.api2;
 import com.google.gson.reflect.TypeToken;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.tasks.CustomTaskState;
 import com.intellij.tasks.LocalTask;
-import com.intellij.tasks.TaskState;
+import com.intellij.tasks.Task;
 import com.intellij.tasks.jira.JiraRepository;
 import com.intellij.tasks.jira.rest.JiraRestApi;
+import com.intellij.tasks.jira.rest.api2.model.JiraCustomTaskState;
 import com.intellij.tasks.jira.rest.api2.model.JiraIssueApi2;
+import com.intellij.tasks.jira.rest.api2.model.JiraTransitionsWrapper;
 import com.intellij.tasks.jira.rest.model.JiraIssue;
 import com.intellij.tasks.jira.rest.model.JiraResponseWrapper;
 import org.apache.commons.httpclient.methods.GetMethod;
@@ -18,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * This REST API version is used in JIRA 5.1.8 and above (including JIRA 6.x.x).
@@ -63,21 +67,27 @@ public class JiraRestApi2 extends JiraRestApi {
     return JiraRepository.GSON.fromJson(response, JiraIssueApi2.class);
   }
 
-  @Nullable
+  @NotNull
   @Override
-  protected String getRequestForStateTransition(@NotNull TaskState state) {
-    // REST API 2.0 require double quotes both around field names and values (even numbers)
-    switch (state) {
-      case IN_PROGRESS:
-        return  "{\"transition\": {\"id\": \"4\"}}";
-      case RESOLVED:
-        // 5 for "Resolved", 2 for "Closed"
-        return  "{\"transition\": {\"id\": \"5\"}, \"fields\": {\"resolution\": {\"name\": \"Fixed\"}}}";
-      case REOPENED:
-        return  "{\"transition\": {\"id\": \"3\"}}";
-      default:
-        return null;
+  protected String getRequestForStateTransition(@NotNull CustomTaskState state) {
+    final JiraCustomTaskState transition = (JiraCustomTaskState)state;
+    assert StringUtil.isNotEmpty(state.getId());
+    if (transition.hasResolutionId()) {
+      return "{\"transition\": {\"id\": \"" + state.getId() + "\"}, \"fields\": {\"resolution\": {\"id\": \"" + transition.getResolutionId() + "\"}}}";
     }
+    else {
+      return "{\"transition\": {\"id\": \"" + state.getId() + "\"}}";
+    }
+  }
+
+  @NotNull
+  @Override
+  public Set<CustomTaskState> getPossibleStates(@NotNull Task task) throws Exception {
+    final GetMethod method = new GetMethod(myRepository.getRestUrl("issue", task.getId(), "transitions"));
+    method.setQueryString("expand=transitions.fields");
+    final String response = myRepository.executeMethod(method);
+    final JiraTransitionsWrapper wrapper = JiraRepository.GSON.fromJson(response, JiraTransitionsWrapper.class);
+    return wrapper.getTransitions();
   }
 
   @Override

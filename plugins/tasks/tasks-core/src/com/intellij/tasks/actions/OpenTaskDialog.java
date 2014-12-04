@@ -20,6 +20,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.binding.BindControl;
 import com.intellij.openapi.options.binding.ControlBinder;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -30,8 +31,10 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsTaskHandler;
 import com.intellij.tasks.*;
 import com.intellij.tasks.impl.TaskManagerImpl;
+import com.intellij.tasks.impl.TaskUiUtil.ComboBoxUpdater;
 import com.intellij.tasks.impl.TaskUtil;
 import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.containers.ContainerUtil;
@@ -42,6 +45,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Set;
 
 /**
  * @author Dmitry Avdeev
@@ -50,10 +54,23 @@ public class OpenTaskDialog extends DialogWrapper {
   private final static Logger LOG = Logger.getInstance("#com.intellij.tasks.actions.SimpleOpenTaskDialog");
   public static final String START_FROM_BRANCH = "start.from.branch";
 
+  private static final CustomTaskState DO_NOT_UPDATE_STATE = new CustomTaskState() {
+    @NotNull
+    @Override
+    public String getId() {
+      return "";
+    }
+
+    @NotNull
+    @Override
+    public String getPresentableName() {
+      return "-- do not update --";
+    }
+  };
+
   private JPanel myPanel;
   @BindControl(value = "clearContext", instant = true)
   private JCheckBox myClearContext;
-  private JCheckBox myMarkAsInProgressBox;
   private JLabel myTaskNameLabel;
   private JPanel myVcsPanel;
   private JTextField myBranchName;
@@ -62,6 +79,7 @@ public class OpenTaskDialog extends DialogWrapper {
   private JBCheckBox myCreateChangelist;
   private JBLabel myFromLabel;
   private ComboBox myBranchFrom;
+  private ComboBox myStateComboBox;
 
   private final Project myProject;
   private final Task myTask;
@@ -81,10 +99,35 @@ public class OpenTaskDialog extends DialogWrapper {
     binder.bindAnnotations(this);
     binder.reset();
 
-    TaskRepository repository = task.getRepository();
-    myMarkAsInProgressBox.setSelected(manager.getState().markAsInProgress);
-    if (!TaskUtil.isStateSupported(repository, TaskState.IN_PROGRESS)) {
-      myMarkAsInProgressBox.setVisible(false);
+    myStateComboBox.setRenderer(new ListCellRendererWrapper<CustomTaskState>() {
+      @Override
+      public void customize(JList list, CustomTaskState value, int index, boolean selected, boolean hasFocus) {
+        if (value != null) {
+          setText(value.getPresentableName());
+        }
+        else {
+          setText("-- no states available --");
+        }
+      }
+    });
+
+    // Capture correct modality state
+    final TaskRepository repository = myTask.getRepository();
+    if (repository != null) {
+      // Find out proper way to determine modality state here
+      new ComboBoxUpdater<CustomTaskState>(myProject, "Fetching available task states...", myStateComboBox) {
+        @NotNull
+        @Override
+        protected Set<CustomTaskState> fetch(@NotNull ProgressIndicator indicator) throws Exception {
+          return repository.getPossibleStates(myTask);
+        }
+
+        @Nullable
+        @Override
+        public CustomTaskState getExtraItem() {
+          return DO_NOT_UPDATE_STATE;
+        }
+      }.queue();
     }
 
     TaskManagerImpl.Config state = taskManager.getState();
@@ -186,14 +229,14 @@ public class OpenTaskDialog extends DialogWrapper {
   public void createTask() {
     final TaskManagerImpl taskManager = (TaskManagerImpl)TaskManager.getManager(myProject);
 
-    taskManager.getState().markAsInProgress = isMarkAsInProgress();
     taskManager.getState().createChangelist = myCreateChangelist.isSelected();
     taskManager.getState().createBranch = myCreateBranch.isSelected();
 
     TaskRepository repository = myTask.getRepository();
-    if (isMarkAsInProgress() && repository != null) {
+    final CustomTaskState selectedItem = (CustomTaskState)myStateComboBox.getSelectedItem();
+    if (repository != null && selectedItem != null && selectedItem != DO_NOT_UPDATE_STATE) {
       try {
-        repository.setTaskState(myTask, TaskState.IN_PROGRESS);
+        repository.setTaskState(myTask, selectedItem);
       }
       catch (Exception ex) {
         Messages.showErrorDialog(myProject, ex.getMessage(), "Cannot Set State For Issue");
@@ -252,10 +295,6 @@ public class OpenTaskDialog extends DialogWrapper {
     return myClearContext.isSelected();
   }
 
-  private boolean isMarkAsInProgress() {
-    return myMarkAsInProgressBox.isSelected() && myMarkAsInProgressBox.isVisible();
-  }
-
   @NonNls
   protected String getDimensionServiceKey() {
     return "SimpleOpenTaskDialog";
@@ -276,5 +315,9 @@ public class OpenTaskDialog extends DialogWrapper {
 
   protected JComponent createCenterPanel() {
     return myPanel;
+  }
+
+  private void createUIComponents() {
+    myStateComboBox = new ComboBox(300);
   }
 }

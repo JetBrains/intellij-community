@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Set;
 import java.util.concurrent.Callable;
 
 /**
@@ -165,6 +166,17 @@ public abstract class TaskRepository {
   }
 
   /**
+   * Retrieve states available for task from server. One of these states will be passed later to {@link #setTaskState(Task, TaskState)}.
+   * @param task task to update
+   * @return set of available states
+   */
+  @NotNull
+  public Set<CustomTaskState> getPossibleStates(@NotNull Task task) throws Exception {
+    //noinspection unchecked
+    return getRepositoryType().getPossibleTaskStates();
+  }
+
+  /**
    * @param id task ID. Don't forget to define {@link #extractId(String)}, if your server uses not <tt>PROJECT-123</tt> format for task IDs.
    * @return found task or {@code null} otherwise. Basically you should return {@code null} on e.g. 404 error and throw exception with
    * information about failure in other cases.
@@ -179,6 +191,15 @@ public abstract class TaskRepository {
   @Nullable
   public abstract String extractId(@NotNull String taskName);
 
+
+  /**
+   * @deprecated Use {@link #setTaskState(Task, CustomTaskState)} instead
+   */
+  @Deprecated
+  public void setTaskState(@NotNull Task task, @NotNull TaskState state) throws Exception {
+    throw new UnsupportedOperationException("Setting task to state " + state + " is not supported");
+  }
+
   /**
    * Update state of the task on server. Don't forget to add {@link #STATE_UPDATING} in {@link #getFeatures()} and
    * supported states in {@link TaskRepositoryType#getPossibleTaskStates()}.
@@ -188,9 +209,10 @@ public abstract class TaskRepository {
    * @see com.intellij.tasks.TaskRepositoryType#getPossibleTaskStates()
    * @see com.intellij.tasks.TaskRepository#getFeatures()
    */
-  public void setTaskState(@NotNull Task task, @NotNull TaskState state) throws Exception {
-    throw new UnsupportedOperationException("Setting task to state " + state + " is not supported");
+  public void setTaskState(@NotNull Task task, @NotNull CustomTaskState state) throws Exception {
+    setTaskState(task, ((TaskState)state));
   }
+
 
   // for serialization
   public TaskRepository() {

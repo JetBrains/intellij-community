@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.List;
+import java.util.Collection;
 
 /**
  * @author Mikhail Golubev
@@ -33,13 +33,18 @@ public class TaskUiUtil {
   public abstract static class RemoteFetchTask<T> extends Task.Backgroundable {
     protected T myResult;
     protected Exception myException;
-    private final ModalityState myModalityState = ModalityState.current();
+    private final ModalityState myModalityState;
 
     /**
      * Should be called only from EDT, so current modality state can be captured.
      */
     protected RemoteFetchTask(@Nullable Project project, @NotNull String title) {
+      this(project, title, ModalityState.current());
+    }
+
+    protected RemoteFetchTask(@Nullable Project project, @NotNull String title, @NotNull ModalityState modalityState) {
       super(project, title);
+      myModalityState = modalityState;
     }
 
     @Override
@@ -80,11 +85,11 @@ public class TaskUiUtil {
    * Auxiliary remote fetcher designed to simplify updating of combo boxes in repository editors, which is
    * indeed a rather common task.
    */
-  public static abstract class ComboBoxUpdater<T> extends RemoteFetchTask<List<T>> {
+  public static abstract class ComboBoxUpdater<T> extends RemoteFetchTask<Collection<T>> {
     protected final ComboBox myComboBox;
 
     public ComboBoxUpdater(@Nullable Project project, @NotNull String title, @NotNull ComboBox comboBox) {
-      super(project, title);
+      super(project, title, ModalityState.any());
       myComboBox = comboBox;
     }
 
