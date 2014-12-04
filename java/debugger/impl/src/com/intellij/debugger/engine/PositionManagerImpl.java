@@ -81,7 +81,7 @@ public class PositionManagerImpl implements PositionManager {
           return;
         }
 
-        if (PsiUtil.isLocalOrAnonymousClass(psiClass)) {
+        if (!classHasName(psiClass)) {
           final PsiClass parent = JVMNameUtil.getTopLevelParentClass(psiClass);
 
           if (parent == null) {
@@ -113,6 +113,10 @@ public class PositionManagerImpl implements PositionManager {
       return null;  // no suitable class found for this name
     }
     return myDebugProcess.getRequestsManager().createClassPrepareRequest(waitRequestor.get(), waitPrepareFor.get());
+  }
+
+  private static boolean classHasName(PsiClass psiClass) {
+    return !PsiUtil.isLocalOrAnonymousClass(psiClass) && JVMNameUtil.getNonAnonymousClassName(psiClass) != null;
   }
 
   public SourcePosition getSourcePosition(final Location location) throws NoDataException {
@@ -226,7 +230,7 @@ public class PositionManagerImpl implements PositionManager {
         final PsiClass psiClass = JVMNameUtil.getClassAt(position);
         if (psiClass != null) {
           classAtPositionRef.set(psiClass);
-          if (PsiUtil.isLocalOrAnonymousClass(psiClass)) {
+          if (!classHasName(psiClass)) {
             isLocalOrAnonymous.set(Boolean.TRUE);
             final PsiClass topLevelClass = JVMNameUtil.getTopLevelParentClass(psiClass);
             if (topLevelClass != null) {
