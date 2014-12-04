@@ -646,6 +646,18 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doTestPassFieldsAsParams();
   }
 
+  public void testDefaultNamesConflictResolution() throws Exception {
+    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+    final String oldPrefix = settings.LOCAL_VARIABLE_NAME_PREFIX;
+    try {
+      settings.LOCAL_VARIABLE_NAME_PREFIX = "_";
+      doTest();
+    }
+    finally {
+      settings.LOCAL_VARIABLE_NAME_PREFIX = oldPrefix;
+    }
+  }
+
   public void testCantPassFieldAsParameter() throws Exception {
     try {
       doTestPassFieldsAsParams();

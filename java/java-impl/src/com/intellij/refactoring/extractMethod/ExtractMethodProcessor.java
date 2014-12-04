@@ -1239,7 +1239,10 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   private void renameInputVariables() throws IncorrectOperationException {
-    for (VariableData data : myVariableDatum) {
+    //when multiple input variables should have the same name, unique names are generated
+    //without reverse, the second rename would rename variable without a prefix into second one though it was already renamed
+    for (int i = myVariableDatum.length - 1; i >= 0;  i--) {
+      VariableData data = myVariableDatum[i];
       PsiVariable variable = data.variable;
       if (!data.name.equals(variable.getName())) {
         for (PsiElement element : myElements) {
