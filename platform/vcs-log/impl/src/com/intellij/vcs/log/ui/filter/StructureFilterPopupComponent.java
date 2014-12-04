@@ -43,6 +43,8 @@ import java.util.List;
 
 class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilter> {
   private static final int FILTER_LABEL_LENGTH = 20;
+  public static final FileByNameComparator FILE_BY_NAME_COMPARATOR = new FileByNameComparator();
+  public static final FileByPathComparator FILE_BY_PATH_COMPARATOR = new FileByPathComparator();
   @NotNull private final VcsLogColorManager myColorManager;
 
   public StructureFilterPopupComponent(@NotNull FilterModel<VcsLogFileFilter> filterModel, @NotNull VcsLogColorManager colorManager) {
@@ -54,25 +56,40 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
   @NotNull
   @Override
   protected String getText(@NotNull VcsLogFileFilter filter) {
+    Collection<VirtualFile> roots = filter.getRootFilter() == null ? getAllRoots() : filter.getRootFilter().getRoots();
+    Collection<VirtualFile> files =
+      filter.getStructureFilter() == null ? Collections.<VirtualFile>emptySet() : filter.getStructureFilter().getFiles();
     Collection<VirtualFile> visibleRoots = VcsLogFileFilter.getAllVisibleRoots(getAllRoots(), filter);
-    if (visibleRoots.size() == getAllRoots().size()) {
-      return ALL;
+
+    if (files.isEmpty()) {
+      return getText(roots, "roots", true, visibleRoots.size() == getAllRoots().size());
     }
-    else if (visibleRoots.size() == 1) {
-      VirtualFile file = visibleRoots.iterator().next();
-      return StringUtil.shortenPathWithEllipsis(file.getPresentableUrl(), FILTER_LABEL_LENGTH);
+    else if (visibleRoots.size() == getAllRoots().size()) {
+      return getText(files, "folders", false, files.isEmpty());
     }
     else {
-      return visibleRoots.size() + " roots"; // todo
+      return (files.size() + roots.size()) + " items";
+    }
+  }
+
+  private String getText(Collection<VirtualFile> files, String category, boolean shorten, boolean full) {
+    if (full) {
+      return ALL;
+    }
+    else if (files.size() == 1) {
+      VirtualFile file = files.iterator().next();
+      return StringUtil.shortenPathWithEllipsis(shorten ? file.getName() : file.getPresentableUrl(), FILTER_LABEL_LENGTH);
+    }
+    else {
+      return files.size() + " " + category;
     }
   }
 
   @Nullable
   @Override
   protected String getToolTip(@NotNull VcsLogFileFilter filter) {
-    VcsLogRootFilter rootFilter = filter.getRootFilter();
-    VcsLogStructureFilter structureFilter = filter.getStructureFilter();
-    return getToolTip(rootFilter == null ? getAllRoots() : rootFilter.getRoots(), structureFilter == null ? Collections.<VirtualFile>emptySet() : structureFilter.getFiles());
+    return getToolTip(filter.getRootFilter() == null ? getAllRoots() : filter.getRootFilter().getRoots(),
+                      filter.getStructureFilter() == null ? Collections.<VirtualFile>emptySet() : filter.getStructureFilter().getFiles());
   }
 
   @NotNull
@@ -80,25 +97,26 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
     String tooltip = "";
     if (roots.isEmpty()) {
       tooltip += "No Roots Selected";
-    } if (roots.size() != getAllRoots().size()) {
-      tooltip += "Roots:\n" + getTooltipTextForFiles(roots);
+    }
+    if (roots.size() != getAllRoots().size()) {
+      tooltip += "Roots:\n" + getTooltipTextForFiles(roots, true);
     }
     if (!files.isEmpty()) {
       if (!tooltip.isEmpty()) tooltip += "\n";
-      tooltip += "Paths:\n" + getTooltipTextForFiles(files);
+      tooltip += "Paths:\n" + getTooltipTextForFiles(files, false);
     }
     return tooltip;
   }
 
-  private static String getTooltipTextForFiles(Collection<VirtualFile> files) {
-    List<VirtualFile> filesToDisplay = new ArrayList<VirtualFile>(files);
+  private static String getTooltipTextForFiles(Collection<VirtualFile> files, final boolean shorten) {
+    List<VirtualFile> filesToDisplay = ContainerUtil.sorted(files, shorten ? FILE_BY_NAME_COMPARATOR : FILE_BY_PATH_COMPARATOR);
     if (files.size() > 10) {
       filesToDisplay = filesToDisplay.subList(0, 10);
     }
     String tooltip = StringUtil.join(filesToDisplay, new Function<VirtualFile, String>() {
       @Override
       public String fun(VirtualFile file) {
-        return file.getPresentableUrl();
+        return shorten ? file.getName() : file.getPresentableUrl();
       }
     }, "\n");
     if (files.size() > 10) {
@@ -113,12 +131,7 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
 
     List<AnAction> actions = new ArrayList<AnAction>();
     if (roots.size() <= 10) {
-      for (VirtualFile root : ContainerUtil.sorted(roots, new Comparator<VirtualFile>() {
-        @Override
-        public int compare(VirtualFile o1, VirtualFile o2) {
-          return o1.getName().compareTo(o2.getName());
-        }
-      })) {
+      for (VirtualFile root : ContainerUtil.sorted(roots, FILE_BY_NAME_COMPARATOR)) {
         actions.add(new SelectVisibleRootAction(root));
       }
     }
@@ -174,6 +187,20 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
     }
     else {
       return files.size() + " items";
+    }
+  }
+
+  private static class FileByNameComparator implements Comparator<VirtualFile> {
+    @Override
+    public int compare(VirtualFile o1, VirtualFile o2) {
+      return o1.getName().compareTo(o2.getName());
+    }
+  }
+
+  private static class FileByPathComparator implements Comparator<VirtualFile> {
+    @Override
+    public int compare(VirtualFile o1, VirtualFile o2) {
+      return o1.getPresentableUrl().compareTo(o2.getPresentableUrl());
     }
   }
 
