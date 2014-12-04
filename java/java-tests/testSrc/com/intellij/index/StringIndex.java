@@ -50,6 +50,10 @@ public class StringIndex {
   public void update(final String path, @Nullable String content, @Nullable String oldContent) throws StorageException {
     myIndex.update(path.hashCode(), toInput(path, content)).compute();
   }
+
+  public void dispose() {
+    myIndex.dispose();
+  }
   
   @Nullable 
   private PathContentPair toInput(@NotNull String path, @Nullable String content) {
