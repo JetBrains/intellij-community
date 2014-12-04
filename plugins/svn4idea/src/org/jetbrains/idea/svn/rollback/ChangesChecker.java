@@ -40,11 +40,11 @@ public class ChangesChecker {
   private final List<File> myForEdits;
 
   private final SvnChangeProvider myChangeProvider;
-  private final UnversionedAndNotTouchedFilesGroupCollector myCollector;
+  @NotNull private final UnversionedAndNotTouchedFilesGroupCollector myCollector;
 
   private final List<VcsException> myExceptions;
 
-  ChangesChecker(@NotNull SvnVcs vcs, UnversionedAndNotTouchedFilesGroupCollector collector) {
+  ChangesChecker(@NotNull SvnVcs vcs, @NotNull UnversionedAndNotTouchedFilesGroupCollector collector) {
     myChangeProvider = (SvnChangeProvider)vcs.getChangeProvider();
     myCollector = collector;
     myForAdds = new SuperfluousRemover(true);

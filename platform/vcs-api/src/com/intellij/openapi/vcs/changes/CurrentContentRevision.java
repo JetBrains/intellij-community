@@ -71,6 +71,7 @@ public class CurrentContentRevision implements ContentRevision {
     return VcsRevisionNumber.NULL;
   }
 
+  @NotNull
   public static ContentRevision create(FilePath file) {
     if (file.getFileType().isBinary()) {
       return new CurrentBinaryContentRevision(file);
