@@ -66,7 +66,7 @@ public class SvnChangeProvider implements ChangeProvider {
     mySvnFileUrlMapping = (SvnFileUrlMappingImpl) vcs.getSvnFileUrlMapping();
   }
 
-  public void getChanges(final VcsDirtyScope dirtyScope, final ChangelistBuilder builder, ProgressIndicator progress,
+  public void getChanges(final VcsDirtyScope dirtyScope, @NotNull ChangelistBuilder builder, ProgressIndicator progress,
                          final ChangeListManagerGate addGate) throws VcsException {
     final SvnScopeZipper zipper = new SvnScopeZipper(dirtyScope);
     zipper.run();
@@ -293,6 +293,7 @@ public class SvnChangeProvider implements ChangeProvider {
     }
   }
 
+  @NotNull
   private SvnContentRevision createBeforeRevision(final SvnChangedFile changedFile, final boolean forDeleted) {
     return SvnContentRevision.createBaseRevision(myVcs,
                                                  forDeleted ? FilePathImpl.createForDeletedFile(changedFile.getStatus().getFile(),
