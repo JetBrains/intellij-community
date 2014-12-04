@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -275,13 +275,17 @@ public class JVMNameUtil {
 
   @Nullable
   public static String getNonAnonymousClassName(PsiClass aClass) {
+    String name = aClass.getName();
+    if (name == null) {
+      return null;
+    }
     PsiClass parentClass = PsiTreeUtil.getParentOfType(aClass, PsiClass.class, true);
-    if(parentClass != null) {
+    if (parentClass != null) {
       final String parentName = getNonAnonymousClassName(parentClass);
       if (parentName == null) {
         return null;
       }
-      return parentName + "$" + aClass.getName();
+      return parentName + "$" + name;
     }
     return DebuggerManager.getInstance(aClass.getProject()).getVMClassQualifiedName(aClass);
   }
