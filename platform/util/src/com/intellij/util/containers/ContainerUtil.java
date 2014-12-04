@@ -1593,7 +1593,7 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   @Contract(pure=true)
-  public static <T> List<T> sorted(@NotNull Collection<T> list, @NotNull Comparator<T> comparator) {
+  public static <T> List<T> sorted(@NotNull Iterable<T> list, @NotNull Comparator<T> comparator) {
     List<T> sorted = newArrayList(list);
     sort(sorted, comparator);
     return sorted;

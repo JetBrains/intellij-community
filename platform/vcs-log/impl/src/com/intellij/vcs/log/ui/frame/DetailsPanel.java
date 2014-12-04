@@ -224,7 +224,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
   @NotNull
   private List<VcsRef> sortRefs(@NotNull Hash hash, @NotNull VirtualFile root) {
     Collection<VcsRef> refs = myDataPack.getRefsModel().refsToCommit(hash);
-    return ContainerUtil.sorted(refs, myLogDataHolder.getLogProvider(root).getReferenceManager().getComparator());
+    return ContainerUtil.sorted(refs, myLogDataHolder.getLogProvider(root).getReferenceManager().getLabelsOrderComparator());
   }
 
   private static class DataPanel extends JEditorPane {
