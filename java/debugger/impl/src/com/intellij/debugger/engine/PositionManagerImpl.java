@@ -184,15 +184,6 @@ public class PositionManagerImpl implements PositionManager {
     return SourcePosition.createFromLine(psiFile, lineNumber);
   }
 
-  private static int mapLine(int line, int[] mapping) {
-    for (int i = 0; i < mapping.length; i+=2) {
-      if (mapping[i] == line) {
-        return mapping[i+1];
-      }
-    }
-    return -1;
-  }
-
   @Nullable
   private PsiFile getPsiFileByLocation(final Project project, final Location location) {
     if (location == null) {
