@@ -115,11 +115,11 @@ public class HighlightDisplayLevel {
 
   @NotNull
   public static Icon createIconByMask(final Color renderColor) {
-    return new MyColorIcon(EMPTY_ICON_DIM, renderColor);
+    return new TheColorIcon(EMPTY_ICON_DIM, renderColor);
   }
 
-  private static class MyColorIcon extends ColorIcon implements ColoredIcon {
-    public MyColorIcon(int size, @NotNull Color color) {
+  public static class TheColorIcon extends ColorIcon implements ColoredIcon {
+    public TheColorIcon(int size, @NotNull Color color) {
       super(size, color);
     }
 
