@@ -49,10 +49,10 @@ import java.util.List;
 public class PluginDownloader {
   private static final Logger LOG = Logger.getInstance("#" + PluginDownloader.class.getName());
 
-  @NonNls private static final String FILENAME = "filename=";
+  private static final String FILENAME = "filename=";
 
   private final String myPluginId;
-  private String myPluginUrl;
+  private final String myPluginUrl;
   private String myPluginVersion;
 
   private String myFileName;
@@ -71,15 +71,8 @@ public class PluginDownloader {
     myPluginVersion = pluginVersion;
   }
 
-  public PluginDownloader(String pluginId,
-                          String pluginUrl,
-                          String pluginVersion,
-                          String fileName,
-                          String pluginName,
-                          BuildNumber buildNumber) {
-    myPluginId = pluginId;
-    myPluginUrl = pluginUrl;
-    myPluginVersion = pluginVersion;
+  public PluginDownloader(String pluginId, String pluginUrl, String pluginVersion, String fileName, String pluginName, BuildNumber buildNumber) {
+    this(pluginId, pluginUrl, pluginVersion);
     myFileName = fileName;
     myPluginName = pluginName;
     myBuildNumber = buildNumber;
@@ -332,15 +325,22 @@ public class PluginDownloader {
     return myDepends;
   }
 
+  public void setDescriptor(IdeaPluginDescriptor descriptor) {
+    myDescriptor = descriptor;
+  }
+
+  public IdeaPluginDescriptor getDescriptor() {
+    return myDescriptor;
+  }
+
   public static PluginDownloader createDownloader(IdeaPluginDescriptor descriptor) throws UnsupportedEncodingException {
     return createDownloader(descriptor, null);
   }
 
-  public static PluginDownloader createDownloader(IdeaPluginDescriptor descriptor,
-                                                  BuildNumber buildNumber) throws UnsupportedEncodingException {
-    PluginDownloader downloader = new PluginDownloader(descriptor.getPluginId().getIdString(), 
-                                                       UpdateChecker.getDownloadUrl(descriptor, buildNumber), 
-                                                       descriptor.getVersion(), null, descriptor.getName(), buildNumber);
+  public static PluginDownloader createDownloader(IdeaPluginDescriptor descriptor, BuildNumber buildNumber) throws UnsupportedEncodingException {
+    String string = descriptor.getPluginId().getIdString();
+    String url = UpdateChecker.getDownloadUrl(descriptor, buildNumber);
+    PluginDownloader downloader = new PluginDownloader(string, url, descriptor.getVersion(), null, descriptor.getName(), buildNumber);
     downloader.setDescriptor(descriptor);
     return downloader;
   }
@@ -412,13 +412,5 @@ public class PluginDownloader {
       return node;
     }
     return null;
-  }
-
-  public void setDescriptor(IdeaPluginDescriptor descriptor) {
-    myDescriptor = descriptor;
-  }
-
-  public IdeaPluginDescriptor getDescriptor() {
-    return myDescriptor;
   }
 }

@@ -18,7 +18,7 @@ package com.intellij.ide.plugins;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.options.newEditor.IdeSettingsDialog;
+import com.intellij.openapi.options.newEditor.SettingsDialog;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -281,8 +281,9 @@ public class PluginHeaderPanel {
               public void run() {
                 final DialogWrapper settings =
                   DialogWrapper.findInstance(IdeFocusManager.findInstance().getFocusOwner());
-                if (settings instanceof IdeSettingsDialog) {
-                  ((IdeSettingsDialog)settings).doOKAction();
+                if (settings instanceof SettingsDialog) {
+                  ((SettingsDialog)settings).doOKAction();
+                  ApplicationManager.getApplication().restart();
                 } else {
                   ApplicationManager.getApplication().restart();
                 }

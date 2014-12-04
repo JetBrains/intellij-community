@@ -133,7 +133,7 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
   }
 
   @Override
-  protected void doOKAction() {
+  public void doOKAction() {
     if (myEditor.apply()) {
       ApplicationManager.getApplication().saveAll();
       super.doOKAction();

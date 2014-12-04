@@ -19,15 +19,18 @@ import com.intellij.codeInspection.InspectionProfileEntry;
 import com.siyeh.ig.LightInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
-public class AssignmentToSuperclassFieldInspectionTest extends LightInspectionTestCase {
+/**
+ * @author Bas Leijdekkers
+ */
+public class AssignmentToStaticFieldFromInstanceMethodInspectionTest extends LightInspectionTestCase {
 
-  public void testAssignmentToSuperclassField() throws Exception {
+  public void testAssignmentToStaticFieldFromInstanceMethod() {
     doTest();
   }
 
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {
-    return new AssignmentToSuperclassFieldInspection();
+    return new AssignmentToStaticFieldFromInstanceMethodInspection();
   }
 }

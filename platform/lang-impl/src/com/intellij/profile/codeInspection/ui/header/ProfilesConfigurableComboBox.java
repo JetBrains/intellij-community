@@ -89,17 +89,8 @@ public abstract class ProfilesConfigurableComboBox extends JPanel {
     return (InspectionProfileImpl)myProfilesComboBox.getSelectedItem();
   }
 
-  public void selectProfile(InspectionProfileImpl inspectionProfile) {
+  public void selectProfile(Profile inspectionProfile) {
     myProfilesComboBox.setSelectedItem(inspectionProfile);
-  }
-
-  public void selectProfile(String name) {
-    for (int i = 0; i < myProfilesComboBox.getItemCount(); i++) {
-      if (Comparing.strEqual(((InspectionProfileImpl)myProfilesComboBox.getItemAt(i)).getName(), name)) {
-        myProfilesComboBox.setSelectedIndex(i);
-        break;
-      }
-    }
   }
 
   public void showComboBoxCard() {

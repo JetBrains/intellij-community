@@ -638,6 +638,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doTestReturnTypeChanged(PsiType.INT);
   }
 
+  public void testReassignFinalFieldInside() throws Exception {
+    doTestReturnTypeChanged(PsiType.INT);
+  }
+
   public void testPassFieldAsParameterAndMakeStatic() throws Exception {
     doTestPassFieldsAsParams();
   }

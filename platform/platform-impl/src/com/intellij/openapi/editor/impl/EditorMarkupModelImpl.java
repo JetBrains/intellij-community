@@ -36,7 +36,6 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
@@ -719,7 +718,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER));
       }
       else {
-        g.setColor(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
+        g.setColor(getEditor().getColorsScheme().getDefaultBackground());
         g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
       }
     }

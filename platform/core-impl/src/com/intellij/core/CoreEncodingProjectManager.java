@@ -93,11 +93,6 @@ public class CoreEncodingProjectManager extends EncodingProjectManager {
 
   }
 
-  @Override
-  public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) {
-
-  }
-
   @Nullable
   @Override
   public Charset getCachedCharsetFromContent(@NotNull Document document) {

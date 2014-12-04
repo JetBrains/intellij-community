@@ -969,9 +969,14 @@ public class StringUtil extends StringUtilRt {
   @NotNull
   @Contract(pure = true)
   public static String trimLeading(@NotNull String string) {
+    return trimLeading((CharSequence)string).toString();
+  }
+  @NotNull
+  @Contract(pure = true)
+  public static CharSequence trimLeading(@NotNull CharSequence string) {
     int index = 0;
     while (index < string.length() && Character.isWhitespace(string.charAt(index))) index++;
-    return string.substring(index);
+    return string.subSequence(index, string.length());
   }
 
   @NotNull
@@ -985,9 +990,15 @@ public class StringUtil extends StringUtilRt {
   @NotNull
   @Contract(pure = true)
   public static String trimTrailing(@NotNull String string) {
+    return trimTrailing((CharSequence)string).toString();
+  }
+
+  @NotNull
+  @Contract(pure = true)
+  public static CharSequence trimTrailing(@NotNull CharSequence string) {
     int index = string.length() - 1;
     while (index >= 0 && Character.isWhitespace(string.charAt(index))) index--;
-    return string.substring(0, index + 1);
+    return string.subSequence(0, index + 1);
   }
 
   @Contract(pure = true)
@@ -1184,6 +1195,11 @@ public class StringUtil extends StringUtilRt {
   public static List<String> split(@NotNull String s, @NotNull String separator) {
     return split(s, separator, true);
   }
+  @NotNull
+  @Contract(pure = true)
+  public static List<CharSequence> split(@NotNull CharSequence s, @NotNull CharSequence separator) {
+    return split(s, separator, true, true);
+  }
 
   @NotNull
   @Contract(pure = true)
@@ -1196,23 +1212,29 @@ public class StringUtil extends StringUtilRt {
   @Contract(pure = true)
   public static List<String> split(@NotNull String s, @NotNull String separator,
                                    boolean excludeSeparator, boolean excludeEmptyStrings) {
-    if (separator.isEmpty()) {
+    return (List)split((CharSequence)s,separator,excludeSeparator,excludeEmptyStrings);
+  }
+  @NotNull
+  @Contract(pure = true)
+  public static List<CharSequence> split(@NotNull CharSequence s, @NotNull CharSequence separator,
+                                   boolean excludeSeparator, boolean excludeEmptyStrings) {
+    if (separator.length() == 0) {
       return Collections.singletonList(s);
     }
-    List<String> result = new ArrayList<String>();
+    List<CharSequence> result = new ArrayList<CharSequence>();
     int pos = 0;
     while (true) {
-      int index = s.indexOf(separator, pos);
+      int index = indexOf(s,separator, pos);
       if (index == -1) break;
       final int nextPos = index + separator.length();
-      String token = s.substring(pos, excludeSeparator ? index : nextPos);
-      if (!token.isEmpty() || !excludeEmptyStrings) {
+      CharSequence token = s.subSequence(pos, excludeSeparator ? index : nextPos);
+      if (token.length() != 0 || !excludeEmptyStrings) {
         result.add(token);
       }
       pos = nextPos;
     }
     if (pos < s.length() || !excludeEmptyStrings && pos == s.length()) {
-      result.add(s.substring(pos, s.length()));
+      result.add(s.subSequence(pos, s.length()));
     }
     return result;
   }
@@ -1828,7 +1850,12 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(pure = true)
   public static int indexOf(@NotNull CharSequence sequence, @NotNull CharSequence infix) {
-    for (int i = 0; i <= sequence.length() - infix.length(); i++) {
+    return indexOf(sequence, infix, 0);
+  }
+
+  @Contract(pure = true)
+  public static int indexOf(@NotNull CharSequence sequence, @NotNull CharSequence infix, int start) {
+    for (int i = start; i <= sequence.length() - infix.length(); i++) {
       if (startsWith(sequence, i, infix)) {
         return i;
       }
