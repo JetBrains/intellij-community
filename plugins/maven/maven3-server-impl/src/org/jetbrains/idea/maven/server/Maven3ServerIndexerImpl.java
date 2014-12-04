@@ -120,6 +120,17 @@ public class Maven3ServerIndexerImpl extends MavenRemoteObject implements MavenS
   }
 
   @Override
+  public boolean indexExists(File dir) throws RemoteException {
+    try {
+      return IndexReader.indexExists(dir);
+    }
+    catch (Exception e) {
+      Maven3ServerGlobals.getLogger().warn(e);
+    }
+    return false;
+  }
+
+  @Override
   public int getIndexCount() throws RemoteException {
     return myIndexer.getIndexingContexts().size();
   }
