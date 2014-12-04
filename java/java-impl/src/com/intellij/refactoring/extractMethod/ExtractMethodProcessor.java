@@ -783,6 +783,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
   }
 
+  @Nullable
   private DuplicatesFinder initDuplicates() {
     List<PsiElement> elements = new ArrayList<PsiElement>();
     for (PsiElement element : myElements) {
@@ -1671,9 +1672,11 @@ public class ExtractMethodProcessor implements MatchProvider {
     final DuplicatesFinder finder = initDuplicates();
 
     if (hasDuplicates()) return true;
-    final PsiManager psiManager = PsiManager.getInstance(myProject);
-    for (VirtualFile file : files) {
-      if (!finder.findDuplicates(psiManager.findFile(file)).isEmpty()) return true;
+    if (finder != null) {
+      final PsiManager psiManager = PsiManager.getInstance(myProject);
+      for (VirtualFile file : files) {
+        if (!finder.findDuplicates(psiManager.findFile(file)).isEmpty()) return true;
+      }
     }
     return false;
   }
