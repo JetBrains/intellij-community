@@ -184,10 +184,6 @@ public class GitPullDialog extends DialogWrapper {
     validateDialog();
   }
 
-  private static boolean belongsToRemote(@NotNull GitBranch branch, @NotNull String remote) {
-    return branch.getName().startsWith(remote + "/");
-  }
-
   private void updateRemotes() {
     GitRepository repository = getRepository();
     if (repository == null) {
