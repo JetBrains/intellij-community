@@ -27,19 +27,12 @@ import com.intellij.debugger.engine.evaluation.expression.Modifier;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JdkVersionUtil;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.extractMethodObject.ExtractLightMethodObjectHandler;
-import com.intellij.util.PathsList;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.org.objectweb.asm.ClassReader;
@@ -55,9 +48,9 @@ import java.util.*;
 /**
 * @author egor
 */
-public class CompilingEvaluator implements ExpressionEvaluator {
-  @NotNull private final PsiElement myPsiContext;
-  @NotNull private final ExtractLightMethodObjectHandler.ExtractedData myData;
+public abstract class CompilingEvaluator implements ExpressionEvaluator {
+  @NotNull protected final PsiElement myPsiContext;
+  @NotNull protected final ExtractLightMethodObjectHandler.ExtractedData myData;
 
   public CompilingEvaluator(@NotNull PsiElement context, @NotNull ExtractLightMethodObjectHandler.ExtractedData data) {
     myPsiContext = context;
@@ -203,25 +196,8 @@ public class CompilingEvaluator implements ExpressionEvaluator {
   //private static final String GEN_CLASS_FULL_NAME = GEN_CLASS_PACKAGE + '.' + GEN_CLASS_NAME;
   //private static final String GEN_METHOD_NAME = "invoke";
 
-  private String getClassCode() {
-    return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-      @Override
-      public String compute() {
-        return myData.getGeneratedInnerClass().getContainingFile().getText();
-      }
-    });
-  }
 
-  private String getMainClassName() {
-    return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-      @Override
-      public String compute() {
-        return FileUtil.getNameWithoutExtension(myData.getGeneratedInnerClass().getContainingFile().getName());
-      }
-    });
-  }
-
-  private String getGenClassQName() {
+  protected String getGenClassQName() {
     return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
       @Override
       public String compute() {
@@ -250,57 +226,13 @@ public class CompilingEvaluator implements ExpressionEvaluator {
   ///////////////// Compiler stuff
 
   @NotNull
-  private Collection<OutputFileObject> compile(String target) throws EvaluateException {
-    if (!SystemInfo.isJavaVersionAtLeast(target)) {
-      throw new EvaluateException("Unable to compile for target level " + target + ". Need to run IDEA on java version at least " + target + ", currently running on " + SystemInfo.JAVA_RUNTIME_VERSION);
-    }
-    JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
-    MemoryFileManager manager = new MemoryFileManager(compiler);
-    DiagnosticCollector<JavaFileObject> diagnostic = new DiagnosticCollector<JavaFileObject>();
-    Module module = ApplicationManager.getApplication().runReadAction(new Computable<Module>() {
-      @Override
-      public Module compute() {
-        return ModuleUtilCore.findModuleForPsiElement(myPsiContext);
-      }
-    });
-    List<String> options = new ArrayList<String>();
-    if (module != null) {
-      options.add("-cp");
-      PathsList cp = ModuleRootManager.getInstance(module).orderEntries().compileOnly().recursively().exportedOnly().withoutSdk().getPathsList();
-      options.add(cp.getPathsString());
-    }
-    if (!StringUtil.isEmpty(target)) {
-      options.add("-source");
-      options.add(target);
-      options.add("-target");
-      options.add(target);
-    }
-    try {
-      if (!compiler.getTask(null,
-                            manager,
-                            diagnostic,
-                            options,
-                            null,
-                            Collections.singletonList(new SourceFileObject(getMainClassName(), JavaFileObject.Kind.SOURCE, getClassCode()))
-      ).call()) {
-        StringBuilder res = new StringBuilder("Compilation failed:\n");
-        for (Diagnostic<? extends JavaFileObject> d : diagnostic.getDiagnostics()) {
-          res.append(d);
-        }
-        throw new EvaluateException(res.toString());
-      }
-    }
-    catch (Exception e) {
-      throw new EvaluateException(e.getMessage());
-    }
-    return manager.classes;
-  }
+  protected abstract Collection<OutputFileObject> compile(String target) throws EvaluateException;
 
   private static URI getUri(String name, JavaFileObject.Kind kind) {
     return URI.create("memo:///" + name.replace('.', '/') + kind.extension);
   }
 
-  private static class SourceFileObject extends SimpleJavaFileObject {
+  protected static class SourceFileObject extends SimpleJavaFileObject {
     private final String myContent;
 
     SourceFileObject(String name, Kind kind, String content) {
@@ -314,7 +246,7 @@ public class CompilingEvaluator implements ExpressionEvaluator {
     }
   }
 
-  private static class OutputFileObject extends SimpleJavaFileObject {
+  protected static class OutputFileObject extends SimpleJavaFileObject {
     private final ByteArrayOutputStream myStream = new ByteArrayOutputStream();
     private final String myOrigName;
 
@@ -333,8 +265,8 @@ public class CompilingEvaluator implements ExpressionEvaluator {
     }
   }
 
-  private static class MemoryFileManager extends ForwardingJavaFileManager<StandardJavaFileManager> {
-    private final Collection<OutputFileObject> classes = new ArrayList<OutputFileObject>();
+  protected static class MemoryFileManager extends ForwardingJavaFileManager<StandardJavaFileManager> {
+    protected final Collection<OutputFileObject> classes = new ArrayList<OutputFileObject>();
 
     MemoryFileManager(JavaCompiler compiler) {
       super(compiler.getStandardFileManager(null, null, null));
