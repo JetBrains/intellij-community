@@ -55,7 +55,7 @@ public abstract class ColumnInfo <Item, Aspect> {
     return myName;
   }
 
-  public Class getColumnClass() {
+  public Class<?> getColumnClass() {
     return String.class;
   }
 

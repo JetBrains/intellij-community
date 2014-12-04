@@ -47,6 +47,7 @@ import java.io.File;
 public class NewDirectoryProjectAction extends AnAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance(NewDirectoryProjectAction.class);
 
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     NewDirectoryProjectDialog dlg = new NewDirectoryProjectDialog(project);

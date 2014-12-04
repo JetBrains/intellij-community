@@ -629,6 +629,15 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doTestReturnTypeChanged(PsiType.getJavaLangObject(getPsiManager(), GlobalSearchScope.allScope(getProject())));
   }
 
+  public void testMakeVoidMethodReturnVariable() throws Exception {
+    doTestReturnTypeChanged(PsiType.INT);
+  }
+
+  public void testMultipleVarsInMethodNoReturnStatementAndAssignment() throws Exception {
+    //return type should not be suggested but still 
+    doTestReturnTypeChanged(PsiType.INT);
+  }
+
   public void testPassFieldAsParameterAndMakeStatic() throws Exception {
     doTestPassFieldsAsParams();
   }

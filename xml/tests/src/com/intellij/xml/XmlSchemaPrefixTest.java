@@ -15,14 +15,14 @@
  */
 package com.intellij.xml;
 
-import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.xml.refactoring.SchemaPrefixRenameHandler;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class XmlSchemaPrefixTest extends CodeInsightFixtureTestCase {
+public class XmlSchemaPrefixTest extends LightCodeInsightFixtureTestCase {
 
   public void testPrefixUsages() throws Exception {
     doFindUsages("usages.xml", 16);
@@ -49,14 +49,8 @@ public class XmlSchemaPrefixTest extends CodeInsightFixtureTestCase {
     return "/xml/tests/testData/schemaPrefix";
   }
 
-  @Override
-  protected boolean isCommunity() {
-    return true;
-  }
-
   protected void doFindUsages(String filename, int usages) {
-    final int size = myFixture.testFindUsages(filename).size();
-    assert size == usages : "Threre should be " + usages + " usages, but found " + size + ". File: " + filename;
+    assertSize(usages, myFixture.testFindUsages(filename));
   }
 
 }

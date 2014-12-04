@@ -22,7 +22,7 @@ import com.intellij.psi.*;
  * Nikolay.Tropin
  * 2014-11-25
  */
-interface SimpleGetterProvider {
+public interface SimpleGetterProvider {
   ExtensionPointName<SimpleGetterProvider> EP_NAME = ExtensionPointName.create("com.intellij.debugger.simpleGetterProvider");
 
   boolean isSimpleGetter(PsiMethod method);

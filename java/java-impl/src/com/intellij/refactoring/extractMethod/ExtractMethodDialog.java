@@ -41,6 +41,7 @@ import com.intellij.ui.EditorTextField;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.ui.SeparatorFactory;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.MultiMap;
@@ -240,14 +241,28 @@ public class ExtractMethodDialog extends DialogWrapper implements AbstractExtrac
     return main;
   }
 
+  protected boolean isVoidReturn() {
+    return false;
+  }
+  
   @Nullable
   private JPanel createReturnTypePanel() {
     if (TypeConversionUtil.isPrimitiveWrapper(myReturnType) && myNullness == Nullness.NULLABLE) {
       return null;
     }
-    mySelector = new TypeSelectorManagerImpl(myProject, myReturnType, findOccurrences(), areTypesDirected()).getTypeSelector();
+    final TypeSelectorManagerImpl manager = new TypeSelectorManagerImpl(myProject, myReturnType, findOccurrences(), areTypesDirected()) {
+      @Override
+      public PsiType[] getTypesForAll(boolean direct) {
+        final PsiType[] types = super.getTypesForAll(direct);
+        return !isVoidReturn() ? types : ArrayUtil.prepend(PsiType.VOID, types);
+      }
+    };
+    mySelector = manager.getTypeSelector();
     final JComponent component = mySelector.getComponent();
     if (component instanceof JComboBox) {
+      if (isVoidReturn()) {
+        mySelector.selectType(PsiType.VOID);
+      }
       final JPanel returnTypePanel = new JPanel(new BorderLayout(2, 0));
       final JLabel label = new JLabel(RefactoringBundle.message("changeSignature.return.type.prompt"));
       returnTypePanel.add(label, BorderLayout.NORTH);
