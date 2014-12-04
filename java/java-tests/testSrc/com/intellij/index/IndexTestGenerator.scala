@@ -182,7 +182,8 @@ case class IndexTestSeq(actions: List[Action]) {
           printCommit
           sb.append(
              s"""L:{
-                |  def cls = JavaPsiFacade.getInstance(project).findClass(lastPsiName, scope)
+                |  def cls = (psiClass != null && psiClass.valid ? psiClass :
+                |    JavaPsiFacade.getInstance(project).findClass(lastPsiName, scope))
                 |  cls.replace(cls.copy())
                 |}
                 |""".stripMargin)
@@ -194,7 +195,8 @@ case class IndexTestSeq(actions: List[Action]) {
         case UpdatePsiFileRef(load) =>
           sb.append("psiFile = " + (if (load) "psiManager.findFile(vFile)" else "null") + "\n")
         case UpdateASTNodeRef(load) =>
-          sb.append("astNode = " + (if (load) "JavaPsiFacade.getInstance(project).findClass(lastPsiName, scope).node" else "null") + "\n")
+          sb.append("astNode = " + (if (load) "(psiClass != null && psiClass.valid ? psiClass :\n" +
+            "  JavaPsiFacade.getInstance(project).findClass(lastPsiName, scope)).node" else "null") + "\n")
         case UpdateDocumentRef(load) =>
           sb.append("document = " + (if (load) "FileDocumentManager.instance.getDocument(vFile)" else "null") + "\n")
         case TextChange(viaDocument, withImport) =>
