@@ -120,7 +120,7 @@ public class CodeInspectionAction extends BaseAnalysisAction {
       public void actionPerformed(ActionEvent e) {
         final IDEInspectionToolsConfigurable errorConfigurable = createConfigurable(projectProfileManager, profileManager);
         final MySingleConfigurableEditor editor = new MySingleConfigurableEditor(project, errorConfigurable, manager);
-        errorConfigurable.selectProfile(((Profile)profiles.getSelectedItem()).getName());
+        errorConfigurable.selectProfile(((Profile)profiles.getSelectedItem()));
         if (editor.showAndGet()) {
           reloadProfiles(profiles, profileManager, projectProfileManager, manager);
         }
