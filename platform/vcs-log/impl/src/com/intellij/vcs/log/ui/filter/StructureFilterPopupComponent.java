@@ -191,6 +191,10 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
     myFilterModel.setFilter(new VcsLogFileFilter(null, new VcsLogRootFilterImpl(visibleRoots)));
   }
 
+  private void setVisibleOnly(@NotNull VirtualFile root) {
+    myFilterModel.setFilter(new VcsLogFileFilter(null, new VcsLogRootFilterImpl(Collections.singleton(root))));
+  }
+
   private String getStructureActionText(@NotNull VcsLogStructureFilter filter) {
     return getText(filter.getFiles(), "items", false, filter.getFiles().isEmpty());
   }
@@ -226,7 +230,11 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
 
     @Override
     public void setSelected(AnActionEvent e, boolean state) {
-      setVisible(myRoot, state);
+      if (!isEnabled()) {
+        setVisibleOnly(myRoot);
+      } else {
+        setVisible(myRoot, state);
+      }
     }
 
     @Override
@@ -234,8 +242,12 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
       super.update(e);
 
       Presentation presentation = e.getPresentation();
-      myIcon.prepare(isSelected(e));
+      myIcon.prepare(isSelected(e) && isEnabled());
       presentation.setIcon(myIcon);
+    }
+
+    private boolean isEnabled() {
+      return myFilterModel.getFilter() == null || (myFilterModel.getFilter().getStructureFilter() == null);
     }
   }
 
@@ -317,7 +329,8 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
       Presentation presentation = e.getPresentation();
       if (isSelected(e)) {
         presentation.setIcon(myIcon);
-      } else {
+      }
+      else {
         presentation.setIcon(myEmptyIcon);
       }
     }
