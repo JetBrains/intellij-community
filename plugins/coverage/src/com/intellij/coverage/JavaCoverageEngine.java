@@ -584,7 +584,7 @@ public class JavaCoverageEngine extends CoverageEngine {
               return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
                 public String compute() {
                   final PsiClass psiClass = ClassUtil.findPsiClassByJVMName(PsiManager.getInstance(project), classname);
-                  return psiClass != null ? psiClass.getContainingFile().getText() : "";
+                  return psiClass != null ? psiClass.getNavigationElement().getContainingFile().getText() : "";
                 }
               });
             }
