@@ -17,7 +17,6 @@ package com.intellij.vcs.log.ui;
 
 import com.intellij.ide.util.treeView.AbstractTreeUi;
 import com.intellij.ide.util.treeView.NodeDescriptor;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -29,10 +28,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.ui.VirtualFileListCellRenderer;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -71,7 +67,8 @@ import java.util.List;
 public class VcsStructureChooser extends DialogWrapper {
   private final static int MAX_FOLDERS = 100;
   public static final Border BORDER = IdeBorderFactory.createBorder(SideBorder.TOP | SideBorder.LEFT);
-  public static final String CAN_NOT_ADD_TEXT = "<html>Selected: <font color=red>(You have added " + MAX_FOLDERS + " elements. No more is allowed.)</font></html>";
+  public static final String CAN_NOT_ADD_TEXT =
+    "<html>Selected: <font color=red>(You have added " + MAX_FOLDERS + " elements. No more is allowed.)</font></html>";
 
   @NotNull private final Project myProject;
 
@@ -174,22 +171,23 @@ public class VcsStructureChooser extends DialogWrapper {
     myTree.setShowsRootHandles(true);
     myTree.setRootVisible(true);
     myTree.getExpandableItemsHandler().setEnabled(false);
-    final MyCheckboxTreeCellRenderer cellRenderer = new MyCheckboxTreeCellRenderer(mySelectionManager, myModulesSet, myProject,
-                                                                                   myTree, myRoots);
-    final FileSystemTreeImpl fileSystemTree = new FileSystemTreeImpl(myProject, descriptor, myTree, cellRenderer, null, new Convertor<TreePath, String>() {
-      @Override
-      public String convert(TreePath o) {
-        final DefaultMutableTreeNode lastPathComponent = ((DefaultMutableTreeNode) o.getLastPathComponent());
-        final Object uo = lastPathComponent.getUserObject();
-        if (uo instanceof FileNodeDescriptor) {
-          final VirtualFile file = ((FileNodeDescriptor)uo).getElement().getFile();
-          final String module = myModulesSet.get(file);
-          if (module != null) return module;
-          return file == null ? "" : file.getName();
+    final MyCheckboxTreeCellRenderer cellRenderer =
+      new MyCheckboxTreeCellRenderer(mySelectionManager, myModulesSet, myProject, myTree, myRoots);
+    final FileSystemTreeImpl fileSystemTree =
+      new FileSystemTreeImpl(myProject, descriptor, myTree, cellRenderer, null, new Convertor<TreePath, String>() {
+        @Override
+        public String convert(TreePath o) {
+          final DefaultMutableTreeNode lastPathComponent = ((DefaultMutableTreeNode)o.getLastPathComponent());
+          final Object uo = lastPathComponent.getUserObject();
+          if (uo instanceof FileNodeDescriptor) {
+            final VirtualFile file = ((FileNodeDescriptor)uo).getElement().getFile();
+            final String module = myModulesSet.get(file);
+            if (module != null) return module;
+            return file == null ? "" : file.getName();
+          }
+          return o.toString();
         }
-        return o.toString();
-      }
-    });
+      });
     final AbstractTreeUi ui = fileSystemTree.getTreeBuilder().getUi();
     ui.setNodeDescriptorComparator(new Comparator<NodeDescriptor>() {
       @Override
@@ -235,7 +233,7 @@ public class VcsStructureChooser extends DialogWrapper {
           if (treePath == null) return;
           final Object o = treePath.getLastPathComponent();
           if (myRoot == o || getFile(o) == null) return;
-           mySelectionManager.toggleSelection((DefaultMutableTreeNode)o);
+          mySelectionManager.toggleSelection((DefaultMutableTreeNode)o);
           myTree.revalidate();
           myTree.repaint();
           e.consume();
@@ -260,7 +258,8 @@ public class VcsStructureChooser extends DialogWrapper {
         checkEmptyness();
         if (mySelectionManager.canAddSelection()) {
           mySelectedLabel.setText("");
-        } else {
+        }
+        else {
           mySelectedLabel.setText(CAN_NOT_ADD_TEXT);
         }
         mySelectedLabel.revalidate();
@@ -277,7 +276,7 @@ public class VcsStructureChooser extends DialogWrapper {
 
   @Nullable
   private static VirtualFile getFile(final Object node) {
-    if (! (((DefaultMutableTreeNode)node).getUserObject() instanceof FileNodeDescriptor)) return null;
+    if (!(((DefaultMutableTreeNode)node).getUserObject() instanceof FileNodeDescriptor)) return null;
     final FileNodeDescriptor descriptor = (FileNodeDescriptor)((DefaultMutableTreeNode)node).getUserObject();
     if (descriptor.getElement().getFile() == null) return null;
     return descriptor.getElement().getFile();
@@ -293,8 +292,11 @@ public class VcsStructureChooser extends DialogWrapper {
     private final JLabel myEmpty;
     private final JList myFictive;
 
-    private MyCheckboxTreeCellRenderer(final SelectionManager selectionManager, Map<VirtualFile, String> modulesSet, final Project project,
-                                       final JTree tree, final Collection<VirtualFile> roots) {
+    private MyCheckboxTreeCellRenderer(final SelectionManager selectionManager,
+                                       Map<VirtualFile, String> modulesSet,
+                                       final Project project,
+                                       final JTree tree,
+                                       final Collection<VirtualFile> roots) {
       super(new BorderLayout());
       mySelectionManager = selectionManager;
       myModulesSet = modulesSet;
@@ -361,6 +363,9 @@ public class VcsStructureChooser extends DialogWrapper {
       final TreeNodeState state = mySelectionManager.getState(node);
       myCheckbox.setEnabled(TreeNodeState.CLEAR.equals(state) || TreeNodeState.SELECTED.equals(state));
       myCheckbox.setSelected(!TreeNodeState.CLEAR.equals(state));
+      myCheckbox.setOpaque(false);
+      myCheckbox.setBackground(null);
+      setBackground(null);
       myTextRenderer.getListCellRendererComponent(myFictive, file, 0, selected, hasFocus);
       revalidate();
       return this;
@@ -402,10 +407,12 @@ public class VcsStructureChooser extends DialogWrapper {
       final String module = myModules.get(path.getVirtualFile());
       if (module != null) {
         setIcon(PlatformIcons.CONTENT_ROOT_ICON_CLOSED);
-      } else {
+      }
+      else {
         if (path.isDirectory()) {
           setIcon(PlatformIcons.DIRECTORY_CLOSED_ICON);
-        } else {
+        }
+        else {
           setIcon(path.getFileType().getIcon());
         }
       }
