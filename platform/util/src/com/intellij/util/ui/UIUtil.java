@@ -3236,4 +3236,13 @@ public class UIUtil {
   public static Window getWindow(Component component) {
     return component instanceof Window ? (Window)component : SwingUtilities.getWindowAncestor(component);
   }
+
+  public static Image getDebugImage(Component component) {
+    BufferedImage image = createImage(component.getWidth(), component.getHeight(), BufferedImage.TYPE_INT_ARGB);
+    Graphics2D graphics = image.createGraphics();
+    graphics.setColor(Color.RED);
+    graphics.fillRect(0, 0, component.getWidth() + 1, component.getHeight() + 1);
+    component.paint(graphics);
+    return image;
+  }
 }
