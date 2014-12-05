@@ -72,7 +72,6 @@ public class ProjectSettingsStepBase extends AbstractActionWithPanel implements 
     final JPanel mainPanel = new JPanel(new BorderLayout());
     final JPanel scrollPanel = new JPanel(new BorderLayout());
 
-    //mainPanel.setPreferredSize(new Dimension(mainPanel.getPreferredSize().width, height));
     myErrorLabel = new JLabel("");
     myErrorLabel.setForeground(JBColor.RED);
     myCreateButton = new JButton("Create");
@@ -124,24 +123,19 @@ public class ProjectSettingsStepBase extends AbstractActionWithPanel implements 
     final JPanel panel = new JPanel(new GridBagLayout());
     final GridBagConstraints c = new GridBagConstraints();
     c.fill = GridBagConstraints.HORIZONTAL;
-    c.anchor = GridBagConstraints.NORTHWEST;
-    c.weightx = 0;
-    c.insets = new Insets(2, 2, 2, 2);
+    c.anchor = GridBagConstraints.SOUTHWEST;
     myLocationField = new TextFieldWithBrowseButton();
     myLocationField.setText(myProjectDirectory.toString());
 
     final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     myLocationField.addBrowseFolderListener("Select base directory", "Select base directory for the Project",
                                             null, descriptor);
-    final JLabel locationLabel = new JLabel("Location:");
+    final LabeledComponent<TextFieldWithBrowseButton> component = LabeledComponent.create(myLocationField, "Location");
+    component.setLabelLocation(BorderLayout.WEST);
     c.gridx = 0;
     c.gridy = 0;
-    panel.add(locationLabel, c);
-
-    c.gridx = 1;
-    c.gridy = 0;
     c.weightx = 1.;
-    panel.add(myLocationField, c);
+    panel.add(component, c);
 
     return panel;
   }
