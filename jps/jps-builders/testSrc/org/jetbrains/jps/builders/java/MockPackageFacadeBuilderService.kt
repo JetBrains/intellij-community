@@ -101,10 +101,11 @@ class MockPackageFacadeGenerator : ModuleLevelBuilder(BuilderCategory.SOURCE_PRO
 
       val getParentFile: (File) -> File = { it.getParentFile() }
       val dirsToCheck = filesToCompile[target].mapTo(THashSet(FileUtil.FILE_HASHING_STRATEGY), getParentFile)
-      packagesFromDeletedFiles.flatMap { mappings.getClassSources(mappings.getName(StringUtil.getQualifiedName(it, "PackageFacade"))) }.mapNotNullTo(dirsToCheck, getParentFile)
+      packagesFromDeletedFiles.flatMap { mappings.getClassSources(mappings.getName(StringUtil.getQualifiedName(it, "PackageFacade"))) }
+                              .map(getParentFile).filterNotNullTo(dirsToCheck)
 
       for (packageName in packagesToGenerate) {
-        val files = dirsToCheck.mapNotNull { it.listFiles() }.flatMap { it.toList() }.filter { isCompilable(it) && packageName == getPackageName(it) }
+        val files = dirsToCheck.map { it.listFiles() }.filterNotNull().flatMap { it.toList() }.filter { isCompilable(it) && packageName == getPackageName(it) }
         if (files.isEmpty()) continue
 
         val classNames = files.map { FileUtilRt.getNameWithoutExtension(it.getName()) }.sort()

@@ -20,7 +20,7 @@ import com.intellij.lang.xml.XMLLanguage;
 /**
  * @author max
  */
-public class HTMLLanguage extends XMLLanguage {
+public class HTMLLanguage extends XMLLanguage implements HtmlCompatibleLanguage {
 
   public static final HTMLLanguage INSTANCE = new HTMLLanguage();
 

@@ -195,9 +195,6 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
       JComponent actualComponent = new OpaquePanel(new BorderLayout());
       actualComponent.add(myComponent, BorderLayout.CENTER);
       if (isAwtTooltip()) {
-        fixActualPoint(actualPoint);
-
-
         int inset = BalloonImpl.getNormalInset();
         actualComponent.setBorder(new LineBorder(hintHint.getTextBackground(), inset));
         actualComponent.setBackground(hintHint.getTextBackground());

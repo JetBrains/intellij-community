@@ -125,6 +125,15 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     return DEFAULT_TEST_TIME;
   }
 
+  /**
+   * If a temp directory is reused from some previous test run, there might be cached children in its VFS.
+   * Ensure they're removed
+   */
+  public static void synchronizeTempDirVfs(VirtualFile tempDir) {
+    tempDir.getChildren();
+    tempDir.refresh(false, true);
+  }
+
   @Nullable
   protected String getApplicationConfigDirPath() throws Exception {
     return null;

@@ -15,6 +15,7 @@
  */
 package com.intellij.debugger.engine;
 
+import com.sun.jdi.ReferenceType;
 import com.sun.jdi.TypeComponent;
 import com.sun.jdi.VirtualMachine;
 
@@ -25,7 +26,22 @@ import com.sun.jdi.VirtualMachine;
 public class DefaultSyntheticProvider implements SyntheticTypeComponentProvider {
   @Override
   public boolean isSynthetic(TypeComponent typeComponent) {
+    String name = typeComponent.name();
+    if (name.startsWith(LambdaMethodFilter.LAMBDA_METHOD_PREFIX)) {
+      return false;
+    }
+    else {
+      ReferenceType type = typeComponent.declaringType();
+      if (type.name().contains("$$Lambda$")) {
+        return true;
+      }
+    }
     VirtualMachine machine = typeComponent.virtualMachine();
-    return machine != null && machine.canGetSyntheticAttribute() && typeComponent.isSynthetic();
+    if (machine != null && machine.canGetSyntheticAttribute() && typeComponent.isSynthetic()) {
+      return true;
+    }
+    else {
+      return name.contains("$");
+    }
   }
 }

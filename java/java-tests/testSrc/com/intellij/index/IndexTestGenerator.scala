@@ -47,6 +47,8 @@ object IndexTestGenerator {
     const(ForceReloadPsi),
     const(AddEnum),
     const(CheckStamps),
+    const(RenameVirtualFile),
+    const(RenamePsiFile),
     for (withImport <- arbitrary[Boolean];
          viaDocument <- arbitrary[Boolean])
       yield TextChange(viaDocument, withImport),
@@ -151,6 +153,19 @@ case class IndexTestSeq(actions: List[Action]) {
                |""".stripMargin)
         case Commit =>
           printCommit
+        case RenameVirtualFile =>
+          sb.append(
+            s"""vFile.rename(this, vFile.nameWithoutExtension + "1.java")
+               |""".stripMargin)
+        case RenamePsiFile =>
+          sb.append(
+            s"""L:{
+               |  def newName = vFile.nameWithoutExtension + "1.java"
+               |  psiManager.findFile(vFile).setName(newName)
+               |  assert psiManager.findFile(vFile).name == newName
+               |  assert vFile.name == newName
+               |}
+               |""".stripMargin)
         case PsiChange =>
           printCommit
           sb.append(
@@ -167,7 +182,8 @@ case class IndexTestSeq(actions: List[Action]) {
           printCommit
           sb.append(
              s"""L:{
-                |  def cls = JavaPsiFacade.getInstance(project).findClass(lastPsiName, scope)
+                |  def cls = (psiClass != null && psiClass.valid ? psiClass :
+                |    JavaPsiFacade.getInstance(project).findClass(lastPsiName, scope))
                 |  cls.replace(cls.copy())
                 |}
                 |""".stripMargin)
@@ -179,7 +195,8 @@ case class IndexTestSeq(actions: List[Action]) {
         case UpdatePsiFileRef(load) =>
           sb.append("psiFile = " + (if (load) "psiManager.findFile(vFile)" else "null") + "\n")
         case UpdateASTNodeRef(load) =>
-          sb.append("astNode = " + (if (load) "JavaPsiFacade.getInstance(project).findClass(lastPsiName, scope).node" else "null") + "\n")
+          sb.append("astNode = " + (if (load) "(psiClass != null && psiClass.valid ? psiClass :\n" +
+            "  JavaPsiFacade.getInstance(project).findClass(lastPsiName, scope)).node" else "null") + "\n")
         case UpdateDocumentRef(load) =>
           sb.append("document = " + (if (load) "FileDocumentManager.instance.getDocument(vFile)" else "null") + "\n")
         case TextChange(viaDocument, withImport) =>
@@ -283,4 +300,6 @@ case object Reformat extends Action
 case object CheckStamps extends Action
 case object ForceReloadPsi extends Action
 case object AddEnum extends Action
+case object RenameVirtualFile extends Action
+case object RenamePsiFile extends Action
 case class ChangeLanguageLevel(highest: Boolean) extends Action

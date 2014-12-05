@@ -95,10 +95,6 @@
       <add-to-group group-id="VcsGlobalGroup" anchor="after" relative-to-action="Vcs.Specific"/>
     </group>
 
-    <group id="Hg.LogContextMenu">
-      <separator/>
-    </group>
-
     <action class="org.zmlx.hg4idea.action.HgUpdateToFromLogAction" id="hg4idea.UpdateToRevision" text="Update to Revision"/>
     <action class="org.zmlx.hg4idea.action.HgCreateTagFromLogAction" id="hg4idea.CreateNewTag" text="New Tag..."
             description="Create new tag pointing to this commit"/>

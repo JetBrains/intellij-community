@@ -15,7 +15,6 @@
  */
 package com.intellij.ide.util.projectWizard;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.module.WebModuleBuilder;
 import com.intellij.openapi.module.WebModuleType;
 import com.intellij.openapi.ui.ValidationInfo;
@@ -58,7 +57,7 @@ public abstract class WebProjectTemplate<T> extends WebProjectGenerator<T> imple
   }
 
   public Icon getLogo() {
-    return AllIcons.Nodes.PpWeb;
+    return getIcon();
   }
 
   @NotNull

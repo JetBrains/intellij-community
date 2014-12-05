@@ -109,8 +109,7 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
       assertDataEquals(index.getFilesByWord("h"));
     }
     finally {
-      indexStorage.close();
-      FileUtil.delete(storageFile);
+      index.dispose()
     }
   }
 

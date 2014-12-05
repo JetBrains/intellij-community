@@ -36,16 +36,11 @@ public class ManageButton extends ComboBoxAction implements DumbAware {
   public ManageButton(final ManageButtonBuilder builder) {
     myBuilder = builder;
     getTemplatePresentation().setText("Manage");
+    setSmallVariant(false);
   }
 
   public JComponent build() {
-    final JComponent component = createCustomComponent(getTemplatePresentation());
-    if (SystemInfo.isMac) {
-      component.setBorder(BorderFactory.createEmptyBorder(3, 0, 4, 0));
-    } else {
-      component.setBorder(BorderFactory.createEmptyBorder(0, 0, 1, 0));
-    }
-    return component;
+    return createCustomComponent(getTemplatePresentation());
   }
 
   @NotNull

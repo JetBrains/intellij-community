@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package hg4idea.test.branch;
+package com.intellij.tasks.vcs;
 
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.project.Project;
@@ -22,7 +22,6 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.tasks.vcs.TaskBranchesTest;
 import com.intellij.util.ObjectUtils;
 import hg4idea.test.HgExecutor;
 import hg4idea.test.HgPlatformTest;

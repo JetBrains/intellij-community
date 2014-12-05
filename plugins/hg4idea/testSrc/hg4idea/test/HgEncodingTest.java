@@ -50,6 +50,7 @@ public class HgEncodingTest extends HgPlatformTest {
     HgCommitCommand commitCommand = new HgCommitCommand(myProject, myRepository, comment);
     commitCommand.execute();
     HgLogCommand logCommand = new HgLogCommand(myProject);
+    myRepository.refresh(false, true);
     VirtualFile file = myRepository.findChild(fileName);
     assert file != null;
     List<HgFileRevision> revisions = logCommand.execute(new HgFile(myProject, file), 1, false);
