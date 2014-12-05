@@ -39,13 +39,13 @@ class VisiblePackBuilder {
   private static final Logger LOG = Logger.getInstance(VisiblePackBuilder.class);
 
   @NotNull private final VcsLogHashMap myHashMap;
-  @NotNull private final Map<Hash, VcsCommitMetadata> myTopCommitsDetailsCache;
+  @NotNull private final Map<Integer, VcsCommitMetadata> myTopCommitsDetailsCache;
   @NotNull private final CommitDetailsGetter myCommitDetailsGetter;
   @NotNull private final Map<VirtualFile, VcsLogProvider> myLogProviders;
 
   VisiblePackBuilder(@NotNull Map<VirtualFile, VcsLogProvider> providers,
                      @NotNull VcsLogHashMap hashMap,
-                     @NotNull Map<Hash, VcsCommitMetadata> topCommitsDetailsCache,
+                     @NotNull Map<Integer, VcsCommitMetadata> topCommitsDetailsCache,
                      @NotNull CommitDetailsGetter detailsGetter) {
     myHashMap = hashMap;
     myTopCommitsDetailsCache = topCommitsDetailsCache;
@@ -186,15 +186,14 @@ class VisiblePackBuilder {
 
   @Nullable
   private VcsCommitMetadata getDetailsFromCache(final int commitIndex) {
-    final Hash hash = myHashMap.getHash(commitIndex);
-    VcsCommitMetadata details = myTopCommitsDetailsCache.get(hash);
+    VcsCommitMetadata details = myTopCommitsDetailsCache.get(commitIndex);
     if (details != null) {
       return details;
     }
     return UIUtil.invokeAndWaitIfNeeded(new Computable<VcsCommitMetadata>() {
       @Override
       public VcsCommitMetadata compute() {
-        return myCommitDetailsGetter.getCommitDataIfAvailable(hash);
+        return myCommitDetailsGetter.getCommitDataIfAvailable(commitIndex);
       }
     });
   }

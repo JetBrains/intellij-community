@@ -107,9 +107,14 @@ public class GraphTableModel extends AbstractTableModel {
     return new GraphCommitCell(message, refs);
   }
 
+  @NotNull
+  public Integer getCommitIdAtRow(int row) {
+    return myDataPack.getVisibleGraph().getRowInfo(row).getCommit();
+  }
+
   @Nullable
   public Hash getHashAtRow(int row) {
-    return myDataHolder.getHash(myDataPack.getVisibleGraph().getRowInfo(row).getCommit());
+    return myDataHolder.getHash(getCommitIdAtRow(row));
   }
 
   public int getRowOfCommit(@NotNull final Hash hash) {
