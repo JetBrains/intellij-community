@@ -159,6 +159,7 @@ public abstract class VcsRootPlatformTest extends UsefulTestCase {
       cd(project.getBaseDir().getPath());
       File f = new File(project.getBaseDir().getPath(), path);
       f.mkdirs();
+      LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f);
     }
   }
 
@@ -204,6 +205,7 @@ public abstract class VcsRootPlatformTest extends UsefulTestCase {
       mockDir.mkdirs();
       myFilesToDelete.add(mockDir);
       mockDir.deleteOnExit();
+      LocalFileSystem.getInstance().refreshAndFindFileByIoFile(mockDir);
     }
   }
 
