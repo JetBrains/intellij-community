@@ -423,24 +423,30 @@ public class StringUtil extends StringUtilRt {
   @NotNull
   @Contract(pure = true)
   public static String wordsToBeginFromUpperCase(@NotNull String s) {
-    return toTitleCase(s, ourPrepositions);
+    return fixCapitalization(s, ourPrepositions, true);
+  }
+
+  @NotNull
+  @Contract(pure = true)
+  public static String wordsToBeginFromLowerCase(@NotNull String s) {
+    return fixCapitalization(s, ourPrepositions, false);
   }
 
   @NotNull
   @Contract(pure = true)
   public static String toTitleCase(@NotNull String s) {
-    return toTitleCase(s, ArrayUtil.EMPTY_STRING_ARRAY);
+    return fixCapitalization(s, ArrayUtil.EMPTY_STRING_ARRAY, true);
   }
 
   @NotNull
-  private static String toTitleCase(@NotNull String s, @NotNull String[] prepositions) {
+  private static String fixCapitalization(@NotNull String s, @NotNull String[] prepositions, boolean title) {
     StringBuilder buffer = null;
     for (int i = 0; i < s.length(); i++) {
       char prevChar = i == 0 ? ' ' : s.charAt(i - 1);
       char currChar = s.charAt(i);
       if (!Character.isLetterOrDigit(prevChar) && prevChar != '\'') {
         if (Character.isLetterOrDigit(currChar)) {
-          if (!Character.isUpperCase(currChar)) {
+          if (title || Character.isUpperCase(currChar)) {
             int j = i;
             for (; j < s.length(); j++) {
               if (!Character.isLetterOrDigit(s.charAt(j))) {
@@ -451,7 +457,7 @@ public class StringUtil extends StringUtilRt {
               if (buffer == null) {
                 buffer = new StringBuilder(s);
               }
-              buffer.setCharAt(i, toUpperCase(currChar));
+              buffer.setCharAt(i, title ? toUpperCase(currChar) : toLowerCase(currChar));
             }
           }
         }

@@ -30,4 +30,15 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.CLASS)
 @Target({ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER, ElementType.LOCAL_VARIABLE, ElementType.TYPE, ElementType.PACKAGE})
 public @interface Nls {
+
+  enum Capitalization {
+
+    NotSpecified,
+    /** e.g. This Is a Title */
+    Title,
+    /** e.g. This is a sentence */
+    Sentence
+  }
+
+  Capitalization capitalization() default Capitalization.NotSpecified;
 }
