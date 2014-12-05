@@ -2242,6 +2242,9 @@ public class ContainerUtil extends ContainerUtilRt {
    * - faster modification in the uncontended case
    * - less memory
    * - slower modification in highly contented case (which is the kind of situation you shouldn't use COWAL anyway)
+   *
+   * N.B. Avoid using <code>list.toArray(new T[list.size()])</code> on this list because it is inherently racey and
+   * therefore can return array with null elements at the end.
    */
   @NotNull
   @Contract(pure=true)
@@ -2330,6 +2333,9 @@ public class ContainerUtil extends ContainerUtilRt {
     return new ConcurrentWeakHashMap<K, V>(initialCapacity, loadFactor, concurrencyLevel, hashingStrategy);
   }
 
+  /**
+   * @see {@link #createLockFreeCopyOnWriteList()}
+   */
   @NotNull
   @Contract(pure=true)
   public static <T> ConcurrentList<T> createConcurrentList() {

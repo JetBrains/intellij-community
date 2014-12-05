@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.lang.reflect.Array;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
@@ -852,5 +853,19 @@ public class ArrayUtil extends ArrayUtilRt {
     for (T t : src) {
       dst[i++] = t;
     }
+  }
+
+  @NotNull
+  public static <T> T[] stripTrailingNulls(T[] array) {
+    return array.length != 0 && array[array.length-1] == null ? Arrays.copyOf(array, trailingNullsIndex(array)) : array;
+  }
+
+  private static <T> int trailingNullsIndex(T[] array) {
+    for (int i=array.length-1; i>=0; i--) {
+      if (array[i] != null) {
+        return i+1;
+      }
+    }
+    return 0;
   }
 }

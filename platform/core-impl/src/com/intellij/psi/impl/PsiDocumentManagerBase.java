@@ -43,10 +43,7 @@ import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.text.BlockSupportImpl;
 import com.intellij.psi.text.BlockSupport;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.FileContentUtilCore;
-import com.intellij.util.Processor;
-import com.intellij.util.SmartList;
-import com.intellij.util.SystemProperties;
+import com.intellij.util.*;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
@@ -574,7 +571,8 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   @NotNull
   public Document[] getUncommittedDocuments() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    return myUncommittedDocuments.toArray(new Document[myUncommittedDocuments.size()]);
+    Document[] documents = myUncommittedDocuments.toArray(new Document[myUncommittedDocuments.size()]);
+    return ArrayUtil.stripTrailingNulls(documents);
   }
 
   boolean isInUncommittedSet(@NotNull Document document) {

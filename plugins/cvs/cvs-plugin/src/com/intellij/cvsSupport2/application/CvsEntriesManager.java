@@ -287,15 +287,13 @@ public class CvsEntriesManager extends VirtualFileAdapter {
   }
 
   private void onEntriesChanged(final VirtualFile parent) {
-    final CvsEntriesListener[] listeners = myEntriesListeners.toArray(new CvsEntriesListener[myEntriesListeners.size()]);
-    for (CvsEntriesListener listener : listeners) {
+    for (CvsEntriesListener listener : myEntriesListeners) {
       listener.entriesChanged(parent);
     }
   }
 
   private void onEntryChanged(final VirtualFile file) {
-    final CvsEntriesListener[] listeners = myEntriesListeners.toArray(new CvsEntriesListener[myEntriesListeners.size()]);
-    for (CvsEntriesListener listener : listeners) {
+    for (CvsEntriesListener listener : myEntriesListeners) {
       listener.entryChanged(file);
     }
   }
