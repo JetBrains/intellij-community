@@ -61,7 +61,6 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
   private HgRepositoryImpl(@NotNull VirtualFile rootDir, @NotNull HgVcs vcs,
                            @NotNull Disposable parentDisposable) {
     super(vcs.getProject(), rootDir, parentDisposable);
-    rootDir.refresh(false, true);
     myHgDir = rootDir.findChild(HgUtil.DOT_HG);
     assert myHgDir != null : ".hg directory wasn't found under " + rootDir.getPresentableUrl();
     myReader = new HgRepositoryReader(vcs, VfsUtilCore.virtualToIoFile(myHgDir));

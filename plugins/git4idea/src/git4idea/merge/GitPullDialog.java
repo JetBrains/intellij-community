@@ -24,7 +24,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import git4idea.GitBranch;
 import git4idea.GitRemoteBranch;
 import git4idea.GitUtil;
 import git4idea.commands.GitCommand;
@@ -175,7 +174,7 @@ public class GitPullDialog extends DialogWrapper {
     myBranchChooser.setElements(ContainerUtil.mapNotNull(remoteBranches, new Function<GitRemoteBranch, String>() {
       @Override
       public String fun(GitRemoteBranch branch) {
-        return branch.getRemote().getName().equals(selectedRemote) ? branch.getName() : null;
+        return branch.getRemote().getName().equals(selectedRemote) ? branch.getNameForLocalOperations() : null;
       }
     }), false);
     if (currentRemoteBranch != null && currentRemoteBranch.getRemote().getName().equals(selectedRemote)) {

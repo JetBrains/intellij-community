@@ -2272,6 +2272,45 @@ public class Mappings {
               return true;
             }
           });
+          
+          // some classes may be associated with multiple sources.
+          // In case some of these sources was not compiled, but the class was changed, we need to update
+          // sourceToClasses mapping for such sources to include the updated ClassRepr version of the changed class
+          final THashSet<File> unchangedSources = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
+          delta.mySourceFileToClasses.forEachEntry(new TObjectObjectProcedure<File, Collection<ClassRepr>>() {
+            @Override
+            public boolean execute(File source, Collection<ClassRepr> b) {
+              unchangedSources.add(source);
+              return true;
+            }
+          });
+          unchangedSources.removeAll(delta.getChangedFiles());
+          if (!unchangedSources.isEmpty()) {
+            unchangedSources.forEach(new TObjectProcedure<File>() {
+              @Override
+              public boolean execute(File file) {
+                final Collection<ClassRepr> updatedClasses = delta.mySourceFileToClasses.get(file);
+                if (updatedClasses != null && !updatedClasses.isEmpty()) {
+                  final List<ClassRepr> classesToAdd = new ArrayList<ClassRepr>();
+                  classesToAdd.addAll(updatedClasses);
+                  Collection<ClassRepr> currentClasses = mySourceFileToClasses.get(file);
+                  if (currentClasses != null) {
+                    final TIntHashSet updatedClassNames = new TIntHashSet();
+                    for (ClassRepr aClass : updatedClasses) {
+                      updatedClassNames.add(aClass.name);
+                    }
+                    for (ClassRepr aClass : currentClasses) {
+                      if (!updatedClassNames.contains(aClass.name)) {
+                        classesToAdd.add(aClass);
+                      }
+                    }
+                  }
+                  mySourceFileToClasses.replace(file, classesToAdd);
+                }
+                return true;
+              }
+            });
+          }
         }
         else {
           myClassToSubclasses.putAll(delta.myClassToSubclasses);
