@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Interner;
 import com.intellij.util.io.*;
 import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.VcsUserRegistry;
@@ -52,15 +53,17 @@ public class VcsUserRegistryImpl implements Disposable, VcsUserRegistry {
   };
 
   @Nullable private final PersistentEnumerator<VcsUser> myPersistentEnumerator;
+  @NotNull private final Interner<VcsUser> myInterner;
 
   VcsUserRegistryImpl(@NotNull Project project) {
     final File mapFile = new File(USER_CACHE_APP_DIR, project.getName() + "." + project.getLocationHash());
     Disposer.register(project, this);
     myPersistentEnumerator = initEnumerator(mapFile);
+    myInterner = new Interner<VcsUser>();
   }
 
   @Nullable
-  private static PersistentEnumerator<VcsUser> initEnumerator(@NotNull final File mapFile) {
+  private PersistentEnumerator<VcsUser> initEnumerator(@NotNull final File mapFile) {
     try {
       return IOUtil.openCleanOrResetBroken(new ThrowableComputable<PersistentEnumerator<VcsUser>, IOException>() {
         @Override
@@ -73,6 +76,12 @@ public class VcsUserRegistryImpl implements Disposable, VcsUserRegistry {
       LOG.warn(e);
       return null;
     }
+  }
+
+  @NotNull
+  @Override
+  public VcsUser createUser(@NotNull String name, @NotNull String email) {
+    return myInterner.intern(new VcsUserImpl(name, email));
   }
 
   public void addUser(@NotNull VcsUser user) {
@@ -125,7 +134,7 @@ public class VcsUserRegistryImpl implements Disposable, VcsUserRegistry {
     }
   }
 
-  private static class MyDescriptor implements KeyDescriptor<VcsUser> {
+  private class MyDescriptor implements KeyDescriptor<VcsUser> {
     @Override
     public void save(@NotNull DataOutput out, VcsUser value) throws IOException {
       IOUtil.writeUTF(out, value.getName());
@@ -136,7 +145,7 @@ public class VcsUserRegistryImpl implements Disposable, VcsUserRegistry {
     public VcsUser read(@NotNull DataInput in) throws IOException {
       String name = IOUtil.readUTF(in);
       String email = IOUtil.readUTF(in);
-      return new VcsUserImpl(name, email);
+      return createUser(name, email);
     }
 
     @Override
