@@ -88,6 +88,10 @@ public class SafeDeleteTest extends MultiFileTestCase {
     doSingleFileTest();
   }
 
+  public void testDeleteConstructorParameterWithAnonymousClassUsage() throws Exception {
+    doSingleFileTest();
+  }
+
   public void testParameterInHierarchy() throws Exception {
     doTest("C2");
   }
