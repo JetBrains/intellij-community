@@ -90,6 +90,7 @@ class SvnChangeProviderContext implements StatusReceiver {
     LocalFileSystem.getInstance().refreshIoFiles(filesToRefresh, true, false, null);
   }
 
+  @NotNull
   public ChangelistBuilder getBuilder() {
     return myChangelistBuilder;
   }
@@ -122,8 +123,10 @@ class SvnChangeProviderContext implements StatusReceiver {
     return false;
   }
 
-  public boolean isCanceled() {
-    return (myProgress != null) && myProgress.isCanceled();
+  public void checkCanceled() {
+    if (myProgress != null) {
+      myProgress.checkCanceled();
+    }
   }
 
   /**
