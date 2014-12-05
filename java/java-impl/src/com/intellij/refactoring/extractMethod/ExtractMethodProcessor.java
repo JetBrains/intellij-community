@@ -47,7 +47,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.impl.source.codeStyle.JavaCodeStyleManagerImpl;
 import com.intellij.psi.scope.processor.VariablesProcessor;
@@ -725,6 +728,11 @@ public class ExtractMethodProcessor implements MatchProvider {
     myVariableDatum[i].passAsParameter = false;
   }
 
+  @TestOnly
+  public void changeParamName(int i, String param) {
+    myVariableDatum[i].name = param;
+  }
+
   /**
    * Invoked in command and in atomic action
    */
@@ -783,6 +791,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
   }
 
+  @Nullable
   private DuplicatesFinder initDuplicates() {
     List<PsiElement> elements = new ArrayList<PsiElement>();
     for (PsiElement element : myElements) {
@@ -1239,7 +1248,10 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   private void renameInputVariables() throws IncorrectOperationException {
-    for (VariableData data : myVariableDatum) {
+    //when multiple input variables should have the same name, unique names are generated
+    //without reverse, the second rename would rename variable without a prefix into second one though it was already renamed
+    for (int i = myVariableDatum.length - 1; i >= 0;  i--) {
+      VariableData data = myVariableDatum[i];
       PsiVariable variable = data.variable;
       if (!data.name.equals(variable.getName())) {
         for (PsiElement element : myElements) {
@@ -1659,18 +1671,33 @@ public class ExtractMethodProcessor implements MatchProvider {
     return myExtractedMethod;
   }
 
-  public boolean hasDuplicates() {
-    final List<Match> duplicates = getDuplicates();
-    return duplicates != null && !duplicates.isEmpty();
+  public Boolean hasDuplicates() {
+    List<Match> duplicates = getDuplicates();
+    if (duplicates != null && !duplicates.isEmpty()) {
+      return true;
+    }
+    final ExtractMethodSignatureSuggester suggester = new ExtractMethodSignatureSuggester(myProject, myExtractedMethod, myMethodCall, myVariableDatum);
+    duplicates = suggester.getDuplicates(myExtractedMethod, myMethodCall);
+    if (duplicates != null && !duplicates.isEmpty()) {
+      myDuplicates      = duplicates;
+      myExtractedMethod = suggester.getExtractedMethod();
+      myMethodCall      = suggester.getMethodCall();
+      myVariableDatum   = suggester.getVariableData();
+      return null;
+    }
+    return false;
   }
 
   public boolean hasDuplicates(Set<VirtualFile> files) {
     final DuplicatesFinder finder = initDuplicates();
 
-    if (hasDuplicates()) return true;
-    final PsiManager psiManager = PsiManager.getInstance(myProject);
-    for (VirtualFile file : files) {
-      if (!finder.findDuplicates(psiManager.findFile(file)).isEmpty()) return true;
+    final Boolean hasDuplicates = hasDuplicates();
+    if (hasDuplicates == null || hasDuplicates) return true;
+    if (finder != null) {
+      final PsiManager psiManager = PsiManager.getInstance(myProject);
+      for (VirtualFile file : files) {
+        if (!finder.findDuplicates(psiManager.findFile(file)).isEmpty()) return true;
+      }
     }
     return false;
   }

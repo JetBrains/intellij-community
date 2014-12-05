@@ -16,37 +16,41 @@
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.codeInsight.generation.surroundWith.JavaWithTryCatchSurrounder;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.codeInsight.template.postfix.templates.PostfixTemplatesUtils.selectorTopmost;
-import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.JAVA_PSI_INFO;
-
-public class TryStatementPostfixTemplate extends PostfixTemplateWithExpressionSelector {
-
-  public static Condition<PsiElement> HAS_TYPE = new Condition<PsiElement>() {
-    @Override
-    public boolean value(@Nullable PsiElement element) {
-      return element instanceof PsiExpression && ((PsiExpression)element).getType() != null;
-    }
-  };
+public class TryStatementPostfixTemplate extends PostfixTemplate {
 
   protected TryStatementPostfixTemplate() {
-    super("try", "try { exp } catch(Exception e)", JAVA_PSI_INFO, selectorTopmost(HAS_TYPE));
+    super("try", "try { exp } catch(Exception e)");
   }
 
+  @Override
+  public boolean isApplicable(@NotNull PsiElement context, @NotNull Document copyDocument, int newOffset) {
+    PsiStatement statementParent = PsiTreeUtil.getNonStrictParentOfType(context, PsiStatement.class);
+    if (statementParent == null ||
+        newOffset != statementParent.getTextRange().getEndOffset()) return false;
+
+    if (statementParent instanceof PsiDeclarationStatement) return true;
+
+    if (statementParent instanceof PsiExpressionStatement) {
+      PsiExpression expression = ((PsiExpressionStatement)statementParent).getExpression();
+      return null != expression.getType();
+    }
+
+    return false;
+  }
 
   @Override
-  public void expandForChooseExpression(@NotNull PsiElement context, @NotNull Editor editor) {
-    PsiExpression expr = (PsiExpression)context;
-    PsiStatement statement = PsiTreeUtil.getParentOfType(expr, PsiStatement.class, false);
+  public void expand(@NotNull PsiElement context, @NotNull Editor editor) {
+    PsiStatement statement = PsiTreeUtil.getNonStrictParentOfType(context, PsiStatement.class);
     assert statement != null;
 
     PsiFile file = statement.getContainingFile();
