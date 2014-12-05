@@ -1219,6 +1219,8 @@ public class ExtractMethodProcessor implements MatchProvider {
           }
           methodCallExpression.getArgumentList().add(val);
         }
+      } else {
+        methodCallExpression.getArgumentList().add(myElementFactory.createExpressionFromText(data.variable.getName(), methodCallExpression));
       }
     }
     return match.replace(myExtractedMethod, methodCallExpression, myOutputVariable);
