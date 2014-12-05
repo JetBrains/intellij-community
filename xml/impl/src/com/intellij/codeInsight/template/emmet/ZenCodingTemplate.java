@@ -533,7 +533,7 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
                 @Override
                 public void renderElement(LookupElementPresentation presentation) {
                   super.renderElement(presentation);
-                  presentation.setTailText("\temmet abbreviation", true);
+                  presentation.setTailText("\tEmmet abbreviation", true);
                 }
               };
             
