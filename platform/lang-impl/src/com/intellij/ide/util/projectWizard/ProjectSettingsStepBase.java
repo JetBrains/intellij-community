@@ -80,6 +80,10 @@ public class ProjectSettingsStepBase extends AbstractActionWithPanel implements 
       public void actionPerformed(ActionEvent e) {
         boolean isValid = checkValid();
         if (isValid && myCallback != null) {
+          final DialogWrapper dialog = DialogWrapper.findInstance(myCreateButton);
+          if (dialog != null) {
+            dialog.close(DialogWrapper.OK_EXIT_CODE);
+          }
           myCallback.consume(ProjectSettingsStepBase.this);
         }
       }
