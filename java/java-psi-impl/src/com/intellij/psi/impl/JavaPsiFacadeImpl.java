@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +16,11 @@
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ReadActionProcessor;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.FileIndexFacade;
-import com.intellij.openapi.roots.PackageIndex;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.file.impl.JavaFileManager;
@@ -34,20 +29,15 @@ import com.intellij.psi.impl.source.JavaDummyHolder;
 import com.intellij.psi.impl.source.JavaDummyHolderFactory;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.stubs.StubTreeLoader;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.messages.MessageBus;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
@@ -162,7 +152,6 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   @NotNull
   private PsiElementFinder[] calcFinders() {
     List<PsiElementFinder> elementFinders = new ArrayList<PsiElementFinder>();
-    elementFinders.add(new PsiElementFinderImpl());
     ContainerUtil.addAll(elementFinders, myProject.getExtensions(PsiElementFinder.EP_NAME));
     return elementFinders.toArray(new PsiElementFinder[elementFinders.size()]);
   }
@@ -177,7 +166,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   public PsiPackage findPackage(@NotNull String qualifiedName) {
     ConcurrentMap<String, PsiPackage> cache = SoftReference.dereference(myPackageCache);
     if (cache == null) {
-      myPackageCache = new SoftReference<ConcurrentMap<String, PsiPackage>>(cache = new ConcurrentHashMap<String, PsiPackage>());
+      myPackageCache = new SoftReference<ConcurrentMap<String, PsiPackage>>(cache = ContainerUtil.newConcurrentMap());
     }
 
     PsiPackage aPackage = cache.get(qualifiedName);
@@ -273,146 +262,6 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
       }
     }
     return result.values().toArray(new PsiPackage[result.size()]);
-  }
-
-  public PsiClass[] findClassByShortName(String name, PsiPackage psiPackage, GlobalSearchScope scope) {
-    List<PsiClass> result = null;
-    for (PsiElementFinder finder : filteredFinders()) {
-      PsiClass[] classes = finder.getClasses(name, psiPackage, scope);
-      if (classes.length == 0) continue;
-      if (result == null) result = new ArrayList<PsiClass>();
-      ContainerUtil.addAll(result, classes);
-    }
-
-    return result == null ? PsiClass.EMPTY_ARRAY : result.toArray(new PsiClass[result.size()]);
-  }
-
-  private class PsiElementFinderImpl extends PsiElementFinder implements DumbAware {
-    @Override
-    public PsiClass findClass(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
-      return myFileManager.findClass(qualifiedName, scope);
-    }
-
-    @Override
-    @NotNull
-    public PsiClass[] findClasses(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
-      return myFileManager.findClasses(qualifiedName, scope);
-    }
-
-    @Override
-    public PsiPackage findPackage(@NotNull String qualifiedName) {
-      return myFileManager.findPackage(qualifiedName);
-    }
-
-    @Override
-    @NotNull
-    public PsiPackage[] getSubPackages(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
-      final Map<String, PsiPackage> packagesMap = new HashMap<String, PsiPackage>();
-      final String qualifiedName = psiPackage.getQualifiedName();
-      for (PsiDirectory dir : psiPackage.getDirectories(scope)) {
-        PsiDirectory[] subDirs = dir.getSubdirectories();
-        for (PsiDirectory subDir : subDirs) {
-          final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(subDir);
-          if (aPackage != null) {
-            final String subQualifiedName = aPackage.getQualifiedName();
-            if (subQualifiedName.startsWith(qualifiedName) && !packagesMap.containsKey(subQualifiedName)) {
-              packagesMap.put(aPackage.getQualifiedName(), aPackage);
-            }
-          }
-        }
-      }
-
-      packagesMap.remove(qualifiedName);    // avoid SOE caused by returning a package as a subpackage of itself
-      return packagesMap.values().toArray(new PsiPackage[packagesMap.size()]);
-    }
-
-    @Override
-    @NotNull
-    public PsiClass[] getClasses(@NotNull PsiPackage psiPackage, @NotNull final GlobalSearchScope scope) {
-      return getClasses(null, psiPackage, scope);
-    }
-
-    @Override
-    @NotNull
-    public PsiClass[] getClasses(@Nullable String shortName, @NotNull PsiPackage psiPackage, @NotNull final GlobalSearchScope scope) {
-      List<PsiClass> list = null;
-      String packageName = psiPackage.getQualifiedName();
-      for (PsiDirectory dir : psiPackage.getDirectories(scope)) {
-        PsiClass[] classes = JavaDirectoryService.getInstance().getClasses(dir);
-        if (classes.length == 0) continue;
-        if (list == null) list = new ArrayList<PsiClass>();
-        for (PsiClass aClass : classes) {
-          // class file can be located in wrong place inside file system
-          String qualifiedName = aClass.getQualifiedName();
-          if (qualifiedName != null) qualifiedName = StringUtil.getPackageName(qualifiedName);
-          if (Comparing.strEqual(qualifiedName, packageName)) {
-            if (shortName == null || shortName.equals(aClass.getName())) list.add(aClass);
-          }
-        }
-      }
-      if (list == null) {
-        return PsiClass.EMPTY_ARRAY;
-      }
-
-      if (list.size() > 1) {
-        ContainerUtil.quickSort(list, new Comparator<PsiClass>() {
-          @Override
-          public int compare(PsiClass o1, PsiClass o2) {
-            VirtualFile file1 = PsiUtilCore.getVirtualFile(o1);
-            VirtualFile file2 = PsiUtilCore.getVirtualFile(o2);
-            return file1 == null ? file2 == null ? 0 : -1 : file2 == null ? 1 : scope.compare(file2, file1);
-          }
-        });
-      }
-
-      return list.toArray(new PsiClass[list.size()]);
-    }
-
-    @NotNull
-    @Override
-    public Set<String> getClassNames(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
-      Set<String> names = null;
-      FileIndexFacade facade = FileIndexFacade.getInstance(myProject);
-      for (PsiDirectory dir : psiPackage.getDirectories(scope)) {
-        for (PsiFile file : dir.getFiles()) {
-          if (file instanceof PsiClassOwner && file.getViewProvider().getLanguages().size() == 1) {
-            VirtualFile vFile = file.getVirtualFile();
-            if (vFile != null &&
-                !(file instanceof PsiCompiledElement) &&
-                !facade.isInSourceContent(vFile) &&
-                (!scope.isForceSearchingInLibrarySources() ||
-                 !StubTreeLoader.getInstance().canHaveStub(vFile))) {
-              continue;
-            }
-
-            Set<String> inFile = file instanceof PsiClassOwnerEx ? ((PsiClassOwnerEx)file).getClassNames() : getClassNames(((PsiClassOwner)file).getClasses());
-
-            if (inFile.isEmpty()) continue;
-            if (names == null) names = new HashSet<String>();
-            names.addAll(inFile);
-          }
-        }
-
-      }
-      return names == null ? Collections.<String>emptySet() : names;
-    }
-
-    @Override
-    public boolean processPackageDirectories(@NotNull PsiPackage psiPackage,
-                                             @NotNull final GlobalSearchScope scope,
-                                             @NotNull final Processor<PsiDirectory> consumer,
-                                             boolean includeLibrarySources) {
-      final PsiManager psiManager = PsiManager.getInstance(getProject());
-      return PackageIndex.getInstance(getProject()).getDirsByPackageName(psiPackage.getQualifiedName(), includeLibrarySources)
-        .forEach(new ReadActionProcessor<VirtualFile>() {
-          @Override
-          public boolean processInReadAction(final VirtualFile dir) {
-            if (!scope.contains(dir)) return true;
-            PsiDirectory psiDir = psiManager.findDirectory(dir);
-            return psiDir == null || consumer.process(psiDir);
-          }
-        });
-    }
   }
 
   @Override
