@@ -86,21 +86,18 @@ public class SvnChangeProvider implements ChangeProvider {
 
     try {
       final SvnChangeProviderContext context = new SvnChangeProviderContext(myVcs, builder, progress);
-
-      final StatusWalkerPartner partner = new StatusWalkerPartner(myVcs, progress);
       final NestedCopiesBuilder nestedCopiesBuilder = new NestedCopiesBuilder(myVcs, mySvnFileUrlMapping);
-
       final EventDispatcher<StatusReceiver> statusReceiver = EventDispatcher.create(StatusReceiver.class);
       statusReceiver.addListener(context);
       statusReceiver.addListener(nestedCopiesBuilder);
 
-      final SvnRecursiveStatusWalker walker = new SvnRecursiveStatusWalker(myVcs, statusReceiver.getMulticaster(), partner);
+      final SvnRecursiveStatusWalker walker = new SvnRecursiveStatusWalker(myVcs, statusReceiver.getMulticaster(), progress);
 
       for (FilePath path : zipper.getRecursiveDirs()) {
         walker.go(path, Depth.INFINITY);
       }
 
-      partner.setFileProvider(fileProvider);
+      walker.setFileProvider(fileProvider);
       for (SvnScopeZipper.MyDirNonRecursive item : nonRecursiveMap.values()) {
         walker.go(item.getDir(), Depth.IMMEDIATES);
       }
@@ -200,8 +197,7 @@ public class SvnChangeProvider implements ChangeProvider {
   public void getChanges(@NotNull FilePath path, boolean recursive, @NotNull ChangelistBuilder builder)
     throws SVNException, SvnBindException {
     final SvnChangeProviderContext context = new SvnChangeProviderContext(myVcs, builder, null);
-    final StatusWalkerPartner partner = new StatusWalkerPartner(myVcs, ProgressManager.getInstance().getProgressIndicator());
-    final SvnRecursiveStatusWalker walker = new SvnRecursiveStatusWalker(myVcs, context, partner);
+    SvnRecursiveStatusWalker walker = new SvnRecursiveStatusWalker(myVcs, context, ProgressManager.getInstance().getProgressIndicator());
     walker.go(path, recursive ? Depth.INFINITY : Depth.IMMEDIATES);
     processCopiedAndDeleted(context, null);
   }

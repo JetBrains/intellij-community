@@ -18,6 +18,7 @@ package org.jetbrains.idea.svn;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
@@ -25,6 +26,8 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
@@ -32,14 +35,18 @@ import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.ProgressEvent;
+import org.jetbrains.idea.svn.api.ProgressTracker;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.status.Status;
 import org.jetbrains.idea.svn.status.StatusClient;
 import org.jetbrains.idea.svn.status.StatusConsumer;
 import org.jetbrains.idea.svn.status.StatusType;
+import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.wc.ISVNStatusFileProvider;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.io.File;
@@ -47,20 +54,29 @@ import java.util.LinkedList;
 
 public class SvnRecursiveStatusWalker {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.SvnRecursiveStatusWalker");
-  private final StatusWalkerPartner myPartner;
   private final SvnVcs myVcs;
   private final Project myProject;
+  private final ProjectLevelVcsManager myVcsManager;
+  private final ChangeListManager myChangeListManager;
+  private final ProgressIndicator myProgress;
   private final StatusReceiver myReceiver;
   private final LinkedList<MyItem> myQueue;
   private final MyHandler myHandler;
+  private ISVNStatusFileProvider myFileProvider;
 
-  public SvnRecursiveStatusWalker(final SvnVcs vcs, final StatusReceiver receiver, final StatusWalkerPartner partner) {
+  public SvnRecursiveStatusWalker(final SvnVcs vcs, final StatusReceiver receiver, final ProgressIndicator progress) {
     myVcs = vcs;
     myProject = vcs.getProject();
+    myVcsManager = ProjectLevelVcsManager.getInstance(myVcs.getProject());
+    myChangeListManager = ChangeListManager.getInstance(myVcs.getProject());
     myReceiver = receiver;
-    myPartner = partner;
+    myProgress = progress;
     myQueue = new LinkedList<MyItem>();
     myHandler = new MyHandler();
+  }
+
+  public void setFileProvider(final ISVNStatusFileProvider fileProvider) {
+    myFileProvider = fileProvider;
   }
 
   public void go(final FilePath rootPath, final Depth depth) throws SvnBindException {
@@ -68,7 +84,7 @@ public class SvnRecursiveStatusWalker {
     myQueue.add(root);
 
     while (! myQueue.isEmpty()) {
-      myPartner.checkCanceled();
+      checkCanceled();
 
       final MyItem item = myQueue.removeFirst();
       final FilePath path = item.getPath();
@@ -99,11 +115,31 @@ public class SvnRecursiveStatusWalker {
     }
   }
 
+  public void checkCanceled() {
+    if (myProgress != null) {
+      myProgress.checkCanceled();
+    }
+  }
+
+  public boolean isIgnoredByVcs(final VirtualFile vFile) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+      @Override
+      public Boolean compute() {
+        if (myVcs.getProject().isDisposed()) throw new ProcessCanceledException();
+        return myVcsManager.isIgnored(vFile);
+      }
+    });
+  }
+
+  public boolean isIgnoredIdeaLevel(VirtualFile vFile) {
+    return myChangeListManager.isIgnoredFile(vFile);
+  }
+
   private void handleStatusException(MyItem item, FilePath path, SvnBindException e) throws SvnBindException {
     if (e.contains(SVNErrorCode.WC_NOT_DIRECTORY) || e.contains(SVNErrorCode.WC_NOT_FILE)) {
       final VirtualFile virtualFile = path.getVirtualFile();
       if (virtualFile != null) {
-        if (! myPartner.isIgnoredByVcs(virtualFile)) {
+        if (!isIgnoredByVcs(virtualFile)) {
           // self is unversioned
           myReceiver.processUnversioned(virtualFile);
 
@@ -152,7 +188,7 @@ public class SvnRecursiveStatusWalker {
 
   private void processRecursively(final VirtualFile vFile, final Depth prevDepth) {
     if (Depth.EMPTY.equals(prevDepth)) return;
-    if (myPartner.isIgnoredIdeaLevel(vFile)) {
+    if (isIgnoredIdeaLevel(vFile)) {
       myReceiver.processIgnored(vFile);
       return;
     }
@@ -169,7 +205,7 @@ public class SvnRecursiveStatusWalker {
         path.refresh();
         path.hardRefresh();
         VirtualFile vf = path.getVirtualFile();
-        if (vf != null && myPartner.isIgnoredIdeaLevel(vf)) {
+        if (vf != null && isIgnoredIdeaLevel(vf)) {
           lastIgnored.set(file);
           myReceiver.processIgnored(vf);
           return true;
@@ -214,10 +250,23 @@ public class SvnRecursiveStatusWalker {
 
   @NotNull
   private MyItem createItem(@NotNull FilePath path, @NotNull Depth depth, boolean isInnerCopyRoot) {
-    StatusClient statusClient =
-      myVcs.getFactory(path.getIOFile()).createStatusClient(myPartner.getFileProvider(), myPartner.getEventHandler());
+    StatusClient statusClient = myVcs.getFactory(path.getIOFile()).createStatusClient(myFileProvider, createEventHandler());
 
     return new MyItem(path, depth, isInnerCopyRoot, statusClient);
+  }
+
+  @NotNull
+  public ProgressTracker createEventHandler() {
+    return new ProgressTracker() {
+      @Override
+      public void consume(ProgressEvent event) throws SVNException {
+      }
+
+      @Override
+      public void checkCancelled() throws SVNCancelException {
+        SvnRecursiveStatusWalker.this.checkCanceled();
+      }
+    };
   }
 
   private class MyHandler implements StatusConsumer {
@@ -273,20 +322,13 @@ public class SvnRecursiveStatusWalker {
 
     @Override
     public void consume(final Status status) throws SVNException {
-      myPartner.checkCanceled();
+      checkCanceled();
       final File ioFile = status.getFile();
       checkIfCopyRootWasReported(status, ioFile);
 
       final VirtualFile vFile = getVirtualFile(ioFile);
       if (vFile != null) {
-        final Boolean excluded = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-          @Override
-          public Boolean compute() {
-            if (myProject.isDisposed()) return null;
-            return myPartner.isIgnoredByVcs(vFile);
-          }
-        });
-        if (Boolean.TRUE.equals(excluded)) return;
+        if (isIgnoredByVcs(vFile)) return;
       }
       if (myProject.isDisposed()) throw new ProcessCanceledException();
 
