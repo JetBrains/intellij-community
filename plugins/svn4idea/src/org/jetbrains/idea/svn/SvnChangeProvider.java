@@ -23,6 +23,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.NotNullFactory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
@@ -56,6 +57,14 @@ public class SvnChangeProvider implements ChangeProvider {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.SvnChangeProvider");
   public static final String ourDefaultListName = VcsBundle.message("changes.default.changelist.name");
   public static final String PROPERTY_LAYER = "Property";
+
+  private static final NotNullFactory<Map<String, File>> NAME_TO_FILE_MAP_FACTORY = new NotNullFactory<Map<String, File>>() {
+    @NotNull
+    @Override
+    public Map<String, File> create() {
+      return ContainerUtil.newHashMap();
+    }
+  };
 
   @NotNull private final SvnVcs myVcs;
   @NotNull private final VcsContextFactory myFactory;
@@ -149,21 +158,30 @@ public class SvnChangeProvider implements ChangeProvider {
 
   @NotNull
   private static ISVNStatusFileProvider createFileProvider(@NotNull Map<String, SvnScopeZipper.MyDirNonRecursive> nonRecursiveMap) {
-    final Map<String, Map<String, File>> preparedMap = ContainerUtil.newHashMap();
+    final Map<String, Map<String, File>> result = ContainerUtil.newHashMap();
 
     for (SvnScopeZipper.MyDirNonRecursive item : nonRecursiveMap.values()) {
-      Map<String, File> result = ContainerUtil.newHashMap();
+      File file = item.getDir().getIOFile();
 
+      Map<String, File> fileMap = ContainerUtil.getOrCreate(result, file.getAbsolutePath(), NAME_TO_FILE_MAP_FACTORY);
       for (FilePath path : item.getChildrenList()) {
-        result.put(path.getName(), path.getIOFile());
+        fileMap.put(path.getName(), path.getIOFile());
       }
-      preparedMap.put(item.getDir().getIOFile().getAbsolutePath(), result);
+
+      // also add currently processed file to the map of its parent, as there are cases when SVNKit calls ISVNStatusFileProvider with file
+      // parent (and not file that was passed to doStatus()), gets null result and does not provide any status
+      // see http://issues.tmatesoft.com/issue/SVNKIT-567 for details
+      if (file.getParentFile() != null) {
+        Map<String, File> parentMap = ContainerUtil.getOrCreate(result, file.getParentFile().getAbsolutePath(), NAME_TO_FILE_MAP_FACTORY);
+
+        parentMap.put(file.getName(), file);
+      }
     }
 
     return new ISVNStatusFileProvider() {
       @Override
       public Map<String, File> getChildrenFiles(File parent) {
-        return preparedMap.get(parent.getAbsolutePath());
+        return result.get(parent.getAbsolutePath());
       }
     };
   }
