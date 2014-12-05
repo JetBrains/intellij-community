@@ -135,6 +135,8 @@ public class JpsGantProjectBuilder {
       return;
     }
 
+    long cleanOutputStart = System.currentTimeMillis();
+
     for (JpsModule module : myModel.getProject().getModules()) {
       for (boolean test : new boolean[]{false, true}) {
         File output = JpsJavaExtensionService.getInstance().getOutputDirectory(module, test);
@@ -143,6 +145,10 @@ public class JpsGantProjectBuilder {
         }
       }
     }
+
+    myBuildInfoPrinter.printStatisticsMessage(this, "Cleaning output time, ms",
+                                              String.valueOf(System.currentTimeMillis() - cleanOutputStart));
+
     myCompiledModules.clear();
     myCompiledModuleTests.clear();
   }
