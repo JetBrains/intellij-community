@@ -292,7 +292,7 @@ class TestSpecialCases(unittest.TestCase):
             import __builtin__ as the_builtins
 
             self.builtins_name = the_builtins.__name__
-        self.m = ModuleRedeclarator(the_builtins, None, '/dev/null', doing_builtins=True)
+        self.m = ModuleRedeclarator(the_builtins, None, None, doing_builtins=True)
 
     def _testBuiltinFuncName(self, func_name, expected):
         class_name = None
