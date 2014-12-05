@@ -95,7 +95,11 @@ public class TextDiffTypeFactory {
         Color bg = ((EditorEx)editor).getBackgroundColor();
         return getMiddleColor(fg, bg);
       }
-      return attributes.getBackgroundColor().brighter();
+      else {
+        Color fg = attributes.getBackgroundColor();
+        Color bg = EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground();
+        return getMiddleColor(fg, bg);
+      }
     }
 
     @NotNull
