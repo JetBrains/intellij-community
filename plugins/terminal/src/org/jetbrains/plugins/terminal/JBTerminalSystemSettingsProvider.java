@@ -408,7 +408,7 @@ public class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvi
     }
 
     public void updateGlobalScheme(EditorColorsScheme scheme) {
-      myFontsMap.clear();
+      myFontsMap = null;
       myGlobalScheme = scheme == null ? EditorColorsManager.getInstance().getGlobalScheme() : scheme;
     }
 
