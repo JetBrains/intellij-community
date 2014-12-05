@@ -107,7 +107,7 @@ public abstract class JiraRestApi extends JiraRemoteApi {
     myRepository.executeMethod(method);
   }
 
-  @NotNull
+  @Nullable
   protected abstract String getRequestForStateTransition(@NotNull CustomTaskState state);
 
   protected static RequestEntity createJsonEntity(String requestBody) {

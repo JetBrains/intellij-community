@@ -8,9 +8,9 @@ import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.jira.JiraRepository;
 import com.intellij.tasks.jira.rest.JiraRestApi;
-import com.intellij.tasks.jira.rest.api2.model.JiraCustomTaskState;
 import com.intellij.tasks.jira.rest.api2.model.JiraIssueApi2;
-import com.intellij.tasks.jira.rest.api2.model.JiraTransitionsWrapper;
+import com.intellij.tasks.jira.rest.api2.model.JiraTransitionsWrapperApi2;
+import com.intellij.tasks.jira.rest.model.JiraCustomTaskState;
 import com.intellij.tasks.jira.rest.model.JiraIssue;
 import com.intellij.tasks.jira.rest.model.JiraResponseWrapper;
 import org.apache.commons.httpclient.methods.GetMethod;
@@ -72,8 +72,9 @@ public class JiraRestApi2 extends JiraRestApi {
   protected String getRequestForStateTransition(@NotNull CustomTaskState state) {
     final JiraCustomTaskState transition = (JiraCustomTaskState)state;
     assert StringUtil.isNotEmpty(state.getId());
-    if (transition.hasResolutionId()) {
-      return "{\"transition\": {\"id\": \"" + state.getId() + "\"}, \"fields\": {\"resolution\": {\"id\": \"" + transition.getResolutionId() + "\"}}}";
+    final String resolutionName = transition.getResolutionName();
+    if (resolutionName != null) {
+      return "{\"transition\": {\"id\": \"" + state.getId() + "\"}, \"fields\": {\"resolution\": {\"name\": \"" + resolutionName + "\"}}}";
     }
     else {
       return "{\"transition\": {\"id\": \"" + state.getId() + "\"}}";
@@ -86,7 +87,7 @@ public class JiraRestApi2 extends JiraRestApi {
     final GetMethod method = new GetMethod(myRepository.getRestUrl("issue", task.getId(), "transitions"));
     method.setQueryString("expand=transitions.fields");
     final String response = myRepository.executeMethod(method);
-    final JiraTransitionsWrapper wrapper = JiraRepository.GSON.fromJson(response, JiraTransitionsWrapper.class);
+    final JiraTransitionsWrapperApi2 wrapper = JiraRepository.GSON.fromJson(response, JiraTransitionsWrapperApi2.class);
     return wrapper.getTransitions();
   }
 

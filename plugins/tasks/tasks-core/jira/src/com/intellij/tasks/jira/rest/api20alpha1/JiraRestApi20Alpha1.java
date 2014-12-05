@@ -2,11 +2,7 @@ package com.intellij.tasks.jira.rest.api20alpha1;
 
 import com.google.gson.reflect.TypeToken;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.tasks.CustomTaskState;
-import com.intellij.tasks.LocalTask;
-import com.intellij.tasks.Task;
-import com.intellij.tasks.TaskBundle;
+import com.intellij.tasks.*;
 import com.intellij.tasks.jira.JiraRepository;
 import com.intellij.tasks.jira.rest.JiraRestApi;
 import com.intellij.tasks.jira.rest.JiraRestTask;
@@ -14,10 +10,11 @@ import com.intellij.tasks.jira.rest.api20alpha1.model.JiraIssueApi20Alpha1;
 import com.intellij.tasks.jira.rest.model.JiraIssue;
 import com.intellij.tasks.jira.rest.model.JiraResponseWrapper;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -38,7 +35,11 @@ public class JiraRestApi20Alpha1 extends JiraRestApi {
   @NotNull
   @Override
   public Set<CustomTaskState> getPossibleStates(@NotNull Task task) throws Exception {
-    return Collections.emptySet();
+    final HashSet<CustomTaskState> result = new HashSet<CustomTaskState>();
+    result.add(TaskState.IN_PROGRESS);
+    result.add(TaskState.RESOLVED);
+    result.add(TaskState.REOPENED);
+    return result;
   }
 
   @Override
@@ -66,12 +67,22 @@ public class JiraRestApi20Alpha1 extends JiraRestApi {
     return updatedIssues;
   }
 
-  @NotNull
+  @Nullable
   @Override
   protected String getRequestForStateTransition(@NotNull CustomTaskState state) {
-    final String stateId = state.getId();
-    assert StringUtil.isNotEmpty(stateId);
-    return "{\"transition\": \"" + stateId + "\"}";
+    // REST API of JIRA 4.x for retrieving possible transitions is very limited: we can't fetch possible resolutions and
+    // names of transition destinations. So we have no other options than to hardcode them.
+    switch ((TaskState)state) {
+      case IN_PROGRESS:
+        return  "{\"transition\": \"4\"}";
+      case RESOLVED:
+        // 5 for "Resolved", 2 for "Closed"
+        return  "{\"transition\": \"5\", \"resolution\": \"Fixed\"}";
+      case REOPENED:
+        return  "{\"transition\": \"3\"}";
+      default:
+        return null;
+    }
   }
 
   @Override

@@ -193,7 +193,7 @@ public abstract class TaskRepository {
 
 
   /**
-   * @deprecated Use {@link #setTaskState(Task, CustomTaskState)} instead
+   * @deprecated Use {@link #setTaskState(Task, CustomTaskState)} instead.
    */
   @Deprecated
   public void setTaskState(@NotNull Task task, @NotNull TaskState state) throws Exception {
@@ -201,8 +201,10 @@ public abstract class TaskRepository {
   }
 
   /**
-   * Update state of the task on server. Don't forget to add {@link #STATE_UPDATING} in {@link #getFeatures()} and
-   * supported states in {@link TaskRepositoryType#getPossibleTaskStates()}.
+   * Update state of the task on server. It's guaranteed that only issues returned by {@link #getPossibleStates(Task)}
+   * will be passed here.
+   * <p/>
+   * Don't forget to add {@link #STATE_UPDATING} in {@link #getFeatures()} and supported states in {@link #getPossibleStates(Task)}.
    *
    * @param task  issue to update
    * @param state new state of the issue
