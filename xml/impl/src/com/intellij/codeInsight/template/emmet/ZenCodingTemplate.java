@@ -19,6 +19,7 @@ import com.intellij.application.options.emmet.EmmetOptions;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.codeInsight.completion.CompletionResultSet;
+import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.template.*;
 import com.intellij.codeInsight.template.emmet.filters.SingleLineEmmetFilter;
 import com.intellij.codeInsight.template.emmet.filters.ZenCodingFilter;
@@ -510,8 +511,8 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
           }
         }).isEmpty();
         
-        CompletionResultSet resultSet = result.withPrefixMatcher(result.getPrefixMatcher().cloneWithPrefix(templatePrefix));
-        resultSet.restartCompletionOnPrefixChange(StandardPatterns.string().startsWith(templatePrefix));
+        result = result.withPrefixMatcher(result.getPrefixMatcher().cloneWithPrefix(templatePrefix));
+        result.restartCompletionOnPrefixChange(StandardPatterns.string().startsWith(templatePrefix));
         if (!regularTemplateWithSamePrefixExists) {
           // exclude perfect matches with existing templates because LiveTemplateCompletionContributor handles it
           final Collection<SingleLineEmmetFilter> extraFilters = ContainerUtil.newLinkedList(new SingleLineEmmetFilter());
@@ -526,8 +527,17 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
             template.setKey(templatePrefix);
             template.setDescription(template.getTemplateText());
 
-            resultSet.addElement(new CustomLiveTemplateLookupElement(this, template.getKey(), template.getKey(), template.getDescription(), 
-              !LiveTemplateCompletionContributor.shouldShowAllTemplates(), true));
+            final CustomLiveTemplateLookupElement lookupElement =
+              new CustomLiveTemplateLookupElement(this, template.getKey(), template.getKey(), template.getDescription(),
+                                                  !LiveTemplateCompletionContributor.shouldShowAllTemplates(), true) {
+                @Override
+                public void renderElement(LookupElementPresentation presentation) {
+                  super.renderElement(presentation);
+                  presentation.setTailText("\temmet abbreviation", true);
+                }
+              };
+            
+            result.addElement(lookupElement);
           }
         }
       }
