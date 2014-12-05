@@ -60,7 +60,7 @@ public class StudyIntroductionCourseAction extends AnAction {
         introCourse = StudyUtils.getFirst(courses.keySet());
       }
       generator.setSelectedCourse(introCourse);
-      final ProjectSpecificSettingsStep step = new ProjectSpecificSettingsStep(generator, callback, true);
+      final ProjectSpecificSettingsStep step = new ProjectSpecificSettingsStep(generator, callback);
 
       step.createPanel(); // initialize panel to set location
       step.setLocation(projectDir.toString());
