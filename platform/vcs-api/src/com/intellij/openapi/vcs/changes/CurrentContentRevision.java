@@ -72,7 +72,7 @@ public class CurrentContentRevision implements ContentRevision {
   }
 
   @NotNull
-  public static ContentRevision create(FilePath file) {
+  public static ContentRevision create(@NotNull FilePath file) {
     if (file.getFileType().isBinary()) {
       return new CurrentBinaryContentRevision(file);
     }
