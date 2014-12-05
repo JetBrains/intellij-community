@@ -20,10 +20,8 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.fileEditor.UniqueVFilePathBuilder;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.InternalFileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFilePathWrapper;
@@ -109,17 +107,12 @@ public class ProjectUtil {
   }
 
   public static boolean isProjectOrWorkspaceFile(final VirtualFile file) {
-    return isProjectOrWorkspaceFile(file, file.getFileType());
+    // do not use file.getFileType() to avoid autodetection by content loading for arbitrary files
+    return isProjectOrWorkspaceFile(file, FileTypeManager.getInstance().getFileTypeByFileName(file.getName()));
   }
 
   public static boolean isProjectOrWorkspaceFile(@NotNull VirtualFile file, @Nullable FileType fileType) {
-    if (fileType instanceof InternalFileType) return true;
-    VirtualFile parent = file.isDirectory() ? file: file.getParent();
-    while (parent != null) {
-      if (Comparing.equal(parent.getNameSequence(), ProjectCoreUtil.DIRECTORY_BASED_PROJECT_DIR, SystemInfoRt.isFileSystemCaseSensitive)) return true;
-      parent = parent.getParent();
-    }
-    return false;
+    return ProjectCoreUtil.isProjectOrWorkspaceFile(file, fileType);
   }
 
   @NotNull
