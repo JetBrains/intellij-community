@@ -41,7 +41,6 @@ import com.intellij.util.PlatformIcons;
 import com.intellij.util.PlusMinus;
 import com.intellij.util.TreeNodeState;
 import com.intellij.util.containers.Convertor;
-import com.intellij.util.containers.hash.HashSet;
 import com.intellij.util.treeWithCheckedNodes.SelectionManager;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -71,14 +70,14 @@ public class VcsStructureChooser extends DialogWrapper {
     "<html>Selected: <font color=red>(You have added " + MAX_FOLDERS + " elements. No more is allowed.)</font></html>";
 
   @NotNull private final Project myProject;
+  @NotNull private final List<VirtualFile> myInitialRoots;
+  @NotNull private final Map<VirtualFile, String> myModulesSet = new HashMap<VirtualFile, String>();
+  @NotNull private final Set<VirtualFile> mySelectedFiles = new HashSet<VirtualFile>();
+
+  @NotNull private final SelectionManager mySelectionManager;
 
   private Set<VirtualFile> myRoots;
-  private Map<VirtualFile, String> myModulesSet;
-  private final Set<VirtualFile> mySelectedFiles = new java.util.HashSet<VirtualFile>();
-  private final List<VirtualFile> myInitialRoots;
-
   private JLabel mySelectedLabel;
-  private final SelectionManager mySelectionManager;
   private DefaultMutableTreeNode myRoot;
   private Tree myTree;
 
@@ -87,13 +86,16 @@ public class VcsStructureChooser extends DialogWrapper {
                              Collection<VirtualFile> initialSelection,
                              @NotNull List<VirtualFile> initialRoots) {
     super(project, true);
-    myInitialRoots = initialRoots;
     setTitle(title);
     myProject = project;
-    mySelectionManager = new SelectionManager(MAX_FOLDERS, 500, MyNodeConvertor.getInstance());
+    myInitialRoots = initialRoots;
+    mySelectionManager = new SelectionManager(MAX_FOLDERS, 500, MyNodeConverter.getInstance());
+
     init();
+
     mySelectionManager.setSelection(initialSelection);
-    checkEmptyness();
+
+    checkEmpty();
   }
 
   private void calculateRoots() {
@@ -109,7 +111,6 @@ public class VcsStructureChooser extends DialogWrapper {
     myRoots = new HashSet<VirtualFile>();
     myRoots.addAll(myInitialRoots);
     checkSet.addAll(myInitialRoots);
-    myModulesSet = new HashMap<VirtualFile, String>();
     for (Module module : modules) {
       final VirtualFile[] files = ModuleRootManager.getInstance(module).getContentRoots();
       for (VirtualFile file : files) {
@@ -122,16 +123,12 @@ public class VcsStructureChooser extends DialogWrapper {
     }
   }
 
-  public Map<VirtualFile, String> getModulesSet() {
-    return myModulesSet;
-  }
-
   @NotNull
   public Collection<VirtualFile> getSelectedFiles() {
     return mySelectedFiles;
   }
 
-  private void checkEmptyness() {
+  private void checkEmpty() {
     setOKActionEnabled(!mySelectedFiles.isEmpty());
   }
 
@@ -259,7 +256,7 @@ public class VcsStructureChooser extends DialogWrapper {
       }
 
       private void recalculateErrorText() {
-        checkEmptyness();
+        checkEmpty();
         if (mySelectionManager.canAddSelection()) {
           mySelectedLabel.setText("");
         }
@@ -376,10 +373,10 @@ public class VcsStructureChooser extends DialogWrapper {
     }
   }
 
-  private static class MyNodeConvertor implements Convertor<DefaultMutableTreeNode, VirtualFile> {
-    private final static MyNodeConvertor ourInstance = new MyNodeConvertor();
+  private static class MyNodeConverter implements Convertor<DefaultMutableTreeNode, VirtualFile> {
+    private final static MyNodeConverter ourInstance = new MyNodeConverter();
 
-    public static MyNodeConvertor getInstance() {
+    public static MyNodeConverter getInstance() {
       return ourInstance;
     }
 
