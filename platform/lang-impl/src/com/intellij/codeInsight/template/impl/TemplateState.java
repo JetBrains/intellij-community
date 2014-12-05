@@ -1112,7 +1112,7 @@ public class TemplateState implements Disposable {
       // and reformat wouldn't be able to fix them
       if (myTemplate.isToIndent()) {
         if (!myTemplateIndented) {
-          LOG.assertTrue(myTemplateRange.isValid());
+          LOG.assertTrue(myTemplateRange.isValid(), presentTemplate(myTemplate));
           smartIndent(myTemplateRange.getStartOffset(), myTemplateRange.getEndOffset());
           myTemplateIndented = true;
         }
