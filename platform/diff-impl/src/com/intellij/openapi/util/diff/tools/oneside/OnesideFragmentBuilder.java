@@ -43,10 +43,11 @@ class OnesideFragmentBuilder {
 
   private boolean myEqual = false;
 
-  private int lastProcessedLine1 = -1;
-  private int lastProcessedLine2 = -1;
+  private int lastProcessedLine1 = -2;
+  private int lastProcessedLine2 = -2;
   private int totalLines = 0;
 
+  // assert: lastProcessedLine1 == -2 ^ lastProcessedLine2 == -2
   public void exec() {
     if (myFragments.getFragments().isEmpty()) {
       myEqual = true;
@@ -85,7 +86,7 @@ class OnesideFragmentBuilder {
   }
 
   private void connectToPrevious(@NotNull LineFragment fragment) {
-    assert lastProcessedLine1 != -1;
+    assert lastProcessedLine1 != -2;
 
     int startLine1 = lastProcessedLine1 + 1;
     int startLine2 = lastProcessedLine2 + 1;
@@ -117,7 +118,7 @@ class OnesideFragmentBuilder {
       int endOffset = myDocument1.getLineEndOffset(endLine1);
 
       int start = myBuilder.length();
-      appendText(Side.LEFT, startOffset, endOffset, lines1, startLine1, -1);
+      appendText(Side.LEFT, startOffset, endOffset, lines1, startLine1, -2);
       int end = myBuilder.length();
 
       blockStartOffset1 = start;
@@ -133,7 +134,7 @@ class OnesideFragmentBuilder {
       int endOffset = myDocument2.getLineEndOffset(endLine2);
 
       int start = myBuilder.length();
-      appendText(Side.RIGHT, startOffset, endOffset, lines2, -1, startLine2);
+      appendText(Side.RIGHT, startOffset, endOffset, lines2, -2, startLine2);
       int end = myBuilder.length();
 
       blockStartOffset2 = start;
@@ -159,7 +160,7 @@ class OnesideFragmentBuilder {
   }
 
   private void flushLast() {
-    if (lastProcessedLine1 == -1) return;
+    if (lastProcessedLine1 == -2) return;
 
     int startLine1 = lastProcessedLine1 + 1;
     int startLine2 = lastProcessedLine2 + 1;
@@ -170,12 +171,12 @@ class OnesideFragmentBuilder {
 
     appendTextMaster(startLine1, startLine2, endLine1, endLine2);
 
-    lastProcessedLine1 = -1;
-    lastProcessedLine2 = -1;
+    lastProcessedLine1 = -2;
+    lastProcessedLine2 = -2;
   }
 
   private boolean isConnectedToLast(@NotNull LineFragment fragment) {
-    if (lastProcessedLine1 == -1) return false;
+    if (lastProcessedLine1 == -2) return false;
 
     if (myContextRange == -1) return true;
     if (lastProcessedLine1 + 2 * myContextRange + 1 >= fragment.getStartLine1()) return true;
@@ -206,10 +207,10 @@ class OnesideFragmentBuilder {
     myBuilder.append(document.getCharsSequence().subSequence(offset1, offset2));
     appendText("\n", 0);
 
-    if (startLine1 != -1) {
+    if (startLine1 != -2) {
       myConvertor.put1(totalLines, totalLines + lines + 1, startLine1);
     }
-    if (startLine2 != -1) {
+    if (startLine2 != -2) {
       myConvertor.put2(totalLines, totalLines + lines + 1, startLine2);
     }
 
