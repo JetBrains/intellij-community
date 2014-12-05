@@ -254,13 +254,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   }
 
   public static boolean isProjectOrWorkspaceFile(@NotNull VirtualFile file, @Nullable FileType fileType) {
-    if (fileType instanceof InternalFileType) return true;
-    VirtualFile parent = file.isDirectory() ? file: file.getParent();
-    while (parent != null) {
-      if (Comparing.equal(parent.getNameSequence(), ProjectCoreUtil.DIRECTORY_BASED_PROJECT_DIR, SystemInfoRt.isFileSystemCaseSensitive)) return true;
-      parent = parent.getParent();
-    }
-    return false;
+    return ProjectCoreUtil.isProjectOrWorkspaceFile(file, fileType);
   }
 
   @Override
