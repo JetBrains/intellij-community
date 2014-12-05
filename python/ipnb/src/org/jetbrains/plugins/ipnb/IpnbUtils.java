@@ -228,6 +228,7 @@ public class IpnbUtils {
     }
     catch (SAXException e) {
       LOG.error(e);
+      LOG.info("formula text " + formulaText);
     }
     catch (ParserConfigurationException e) {
       LOG.error(e);
