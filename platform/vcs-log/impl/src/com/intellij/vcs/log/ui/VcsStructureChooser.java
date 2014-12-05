@@ -229,11 +229,15 @@ public class VcsStructureChooser extends DialogWrapper {
     myTree.addKeyListener(new KeyAdapter() {
       public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_SPACE) {
-          TreePath treePath = myTree.getLeadSelectionPath();
-          if (treePath == null) return;
-          final Object o = treePath.getLastPathComponent();
-          if (myRoot == o || getFile(o) == null) return;
-          mySelectionManager.toggleSelection((DefaultMutableTreeNode)o);
+          TreePath[] paths = myTree.getSelectionPaths();
+          if (paths == null) return;
+          for (TreePath path : paths) {
+            if (path == null) continue;
+            final Object o = path.getLastPathComponent();
+            if (myRoot == o || getFile(o) == null) return;
+            mySelectionManager.toggleSelection((DefaultMutableTreeNode)o);
+          }
+
           myTree.revalidate();
           myTree.repaint();
           e.consume();
