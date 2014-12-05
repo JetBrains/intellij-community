@@ -100,7 +100,8 @@ public class PersistentHashMapValueStorage {
     if (mySize == 0) {
       appendBytes(new ByteSequence("Header Record For PersistentHashMapValueStorage".getBytes()), 0);
 
-      // avoid corruption issue when disk fails to write first record synchronously, code depends on correct value of mySize (IDEA-106306)
+      // avoid corruption issue when disk fails to write first record synchronously or unexpected first write file increase (IDEA-106306),
+      // code depends on correct value of mySize
       CacheValue<DataOutputStream> streamCacheValue = ourAppendersCache.getIfCached(myPath);
       if (streamCacheValue != null) {
         try {
@@ -385,7 +386,7 @@ public class PersistentHashMapValueStorage {
 
   private long readPrevChunkAddress(long chunk) throws IOException {
     final long prevOffsetDiff = DataInputOutputUtil.readLONG(myBufferDataStreamWrapper);
-    assert prevOffsetDiff < chunk;
+    assert prevOffsetDiff < chunk:chunk + "," + prevOffsetDiff + "," + mySize;
     return prevOffsetDiff != 0 ? chunk - prevOffsetDiff : 0;
   }
 
