@@ -244,6 +244,7 @@ public class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvi
     private final FontPreferences myFontPreferences = new FontPreferences();
     private final HashMap<TextAttributesKey, TextAttributes> myOwnAttributes = new HashMap<TextAttributesKey, TextAttributes>();
     private final HashMap<ColorKey, Color> myOwnColors = new HashMap<ColorKey, Color>();
+    private final EditorColorsScheme myCustomGlobalScheme;
     private Map<EditorFontType, Font> myFontsMap = null;
     private String myFaceName = null;
     private EditorColorsScheme myGlobalScheme;
@@ -251,7 +252,8 @@ public class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvi
     private int myConsoleFontSize = -1;
 
     private MyColorSchemeDelegate(@Nullable final EditorColorsScheme globalScheme) {
-      updateGlobalScheme(globalScheme);
+      myCustomGlobalScheme = globalScheme;
+      updateGlobalScheme();
       initFonts();
     }
 
@@ -311,10 +313,10 @@ public class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvi
     @NotNull
     @Override
     public Color getDefaultForeground() {
-      Color foregroundColor = getGlobal().getAttributes(ConsoleViewContentType.NORMAL_OUTPUT_KEY).getForegroundColor();
-      return foregroundColor != null ? foregroundColor: getGlobal().getDefaultForeground();
+      return getGlobal().getDefaultForeground();
     }
 
+    @Nullable
     @Override
     public Color getColor(ColorKey key) {
       if (myOwnColors.containsKey(key)) return myOwnColors.get(key);
@@ -408,9 +410,8 @@ public class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvi
     public void writeExternal(Element element) throws WriteExternalException {
     }
 
-    public void updateGlobalScheme(EditorColorsScheme scheme) {
-      myFontsMap = null;
-      myGlobalScheme = scheme == null ? EditorColorsManager.getInstance().getGlobalScheme() : scheme;
+    public void updateGlobalScheme() {
+      myGlobalScheme = myCustomGlobalScheme == null ? EditorColorsManager.getInstance().getGlobalScheme() : myCustomGlobalScheme;
     }
 
     @NotNull
