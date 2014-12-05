@@ -591,6 +591,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  public void testIncompleteExpression() throws Exception {
+    doTest();
+  }
+
   public void testTwoFromThreeEqStatements() throws Exception {
     doDuplicatesTest();
   }

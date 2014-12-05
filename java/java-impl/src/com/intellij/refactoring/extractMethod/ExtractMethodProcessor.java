@@ -259,6 +259,9 @@ public class ExtractMethodProcessor implements MatchProvider {
       }
       else {
         expressionType = RefactoringUtil.getTypeByExpressionWithExpectedType(myExpression);
+        if (expressionType == null && !(myExpression.getParent() instanceof PsiExpressionStatement)) {
+          expressionType = PsiType.getJavaLangObject(myExpression.getManager(), GlobalSearchScope.allScope(myProject));
+        }
       }
     }
     if (expressionType == null) {
