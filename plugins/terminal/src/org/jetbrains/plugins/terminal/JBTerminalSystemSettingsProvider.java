@@ -305,7 +305,7 @@ public class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvi
     @NotNull
     @Override
     public Color getDefaultForeground() {
-      return getGlobal().getDefaultForeground();
+      return getGlobal().getAttributes(ConsoleViewContentType.NORMAL_OUTPUT_KEY).getForegroundColor();
     }
 
     @Override
