@@ -26,6 +26,7 @@ import com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame;
 import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,7 +43,6 @@ public abstract class AbstractNewProjectDialog extends DialogWrapper {
   public AbstractNewProjectDialog() {
     super(ProjectManager.getInstance().getDefaultProject());
     init();
-    myList.repaint();
   }
 
   @Nullable
@@ -64,7 +64,12 @@ public abstract class AbstractNewProjectDialog extends DialogWrapper {
       }
     }.registerCustomShortcutSet(KeyEvent.VK_ESCAPE, 0, component);
     myList = panel.second;
-    myList.setMaximumSize(myList.getPreferredSize());
+    UiNotifyConnector.doWhenFirstShown(myList, new Runnable() {
+      @Override
+      public void run() {
+        ListScrollingUtil.ensureSelectionExists(myList);
+      }
+    });
     ListScrollingUtil.ensureSelectionExists(myList);
     return component;
   }
