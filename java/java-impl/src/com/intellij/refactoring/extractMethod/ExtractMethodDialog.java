@@ -19,9 +19,6 @@ import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.dataFlow.Nullness;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.editor.event.DocumentAdapter;
-import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Splitter;
@@ -37,7 +34,6 @@ import com.intellij.refactoring.ui.*;
 import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.refactoring.util.ParameterTablePanel;
 import com.intellij.refactoring.util.VariableData;
-import com.intellij.ui.EditorTextField;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.ui.SeparatorFactory;
@@ -75,7 +71,7 @@ public class ExtractMethodDialog extends DialogWrapper implements AbstractExtrac
   private final PsiElement[] myElementsToExtract;
   private final String myHelpId;
 
-  private final EditorTextField myNameField;
+  private final NameSuggestionsField myNameField;
   private final MethodSignatureComponent mySignature;
   private final JCheckBox myMakeStatic;
   protected JCheckBox myMakeVarargs;
@@ -99,10 +95,9 @@ public class ExtractMethodDialog extends DialogWrapper implements AbstractExtrac
                              PsiClass targetClass, final InputVariables inputVariables, PsiType returnType,
                              PsiTypeParameterList typeParameterList, PsiType[] exceptions, boolean isStatic, boolean canBeStatic,
                              final boolean canBeChainedConstructor,
-                             String initialMethodName,
                              String title,
                              String helpId,
-                             Nullness nullness, 
+                             Nullness nullness,
                              final PsiElement[] elementsToExtract) {
     super(project, true);
     myProject = project;
@@ -121,7 +116,7 @@ public class ExtractMethodDialog extends DialogWrapper implements AbstractExtrac
     mySignature.setMinimumSize(new Dimension(500, 100));
     setTitle(title);
 
-    myNameField = createNameField(initialMethodName);
+    myNameField = new NameSuggestionsField(suggestMethodNames(), myProject);
     
     myMakeStatic = new NonFocusableCheckBox();
     myMakeStatic.setText(RefactoringBundle.message("declare.static.checkbox"));
@@ -132,12 +127,10 @@ public class ExtractMethodDialog extends DialogWrapper implements AbstractExtrac
     init();
   }
 
-  protected EditorTextField createNameField(String initialMethodName) {
-    EditorTextField field = new EditorTextField(initialMethodName, myProject, StdFileTypes.JAVA);
-    field.selectAll();
-    return field;
+  protected String[] suggestMethodNames() {
+    return ArrayUtil.EMPTY_STRING_ARRAY;
   }
-
+  
   protected boolean areTypesDirected() {
     return true;
   }
@@ -161,7 +154,7 @@ public class ExtractMethodDialog extends DialogWrapper implements AbstractExtrac
   }
 
   public String getChosenMethodName() {
-    return myNameField.getText();
+    return myNameField.getEnteredName();
   }
 
   public VariableData[] getChosenParameters() {
@@ -214,8 +207,9 @@ public class ExtractMethodDialog extends DialogWrapper implements AbstractExtrac
     namePanel.add(myNameField);
     nameLabel.setLabelFor(myNameField);
 
-    myNameField.getDocument().addDocumentListener(new DocumentAdapter() {
-      public void documentChanged(DocumentEvent e) {
+    myNameField.addDataChangedListener(new NameSuggestionsField.DataChanged() {
+      @Override
+      public void dataChanged() {
         update();
       }
     });
@@ -234,7 +228,7 @@ public class ExtractMethodDialog extends DialogWrapper implements AbstractExtrac
     main.add(visibilityAndName, BorderLayout.CENTER);
     setOKActionEnabled(false);
 
-    setOKActionEnabled(PsiNameHelper.getInstance(myProject).isIdentifier(myNameField.getText()));
+    setOKActionEnabled(PsiNameHelper.getInstance(myProject).isIdentifier(myNameField.getEnteredName()));
     final JPanel options = new JPanel(new BorderLayout());
     options.add(createOptionsPanel(), BorderLayout.WEST);
     main.add(options, BorderLayout.SOUTH);
@@ -431,7 +425,7 @@ public class ExtractMethodDialog extends DialogWrapper implements AbstractExtrac
       myMakeStatic.setEnabled(!myStaticFlag && myCanBeStatic && !isChainedConstructor());
     }
     updateSignature();
-    setOKActionEnabled(PsiNameHelper.getInstance(myProject).isIdentifier(myNameField.getText()) ||
+    setOKActionEnabled(PsiNameHelper.getInstance(myProject).isIdentifier(myNameField.getEnteredName()) ||
                        isChainedConstructor());
   }
 
@@ -553,7 +547,7 @@ public class ExtractMethodDialog extends DialogWrapper implements AbstractExtrac
     else {
       buffer.append(PsiFormatUtil.formatType(mySelector != null ? mySelector.getSelectedType() : myReturnType, 0, PsiSubstitutor.EMPTY));
       buffer.append(" ");
-      buffer.append(myNameField.getText());
+      buffer.append(myNameField.getEnteredName());
     }
     buffer.append("(");
 
@@ -604,7 +598,7 @@ public class ExtractMethodDialog extends DialogWrapper implements AbstractExtrac
     PsiMethod prototype;
     try {
       PsiElementFactory factory = JavaPsiFacade.getInstance(myProject).getElementFactory();
-      prototype = factory.createMethod(myNameField.getText().trim(), myReturnType);
+      prototype = factory.createMethod(myNameField.getEnteredName().trim(), myReturnType);
       if (myTypeParameterList != null) prototype.getTypeParameterList().replace(myTypeParameterList);
       for (VariableData data : myInputVariables) {
         if (data.passAsParameter) {

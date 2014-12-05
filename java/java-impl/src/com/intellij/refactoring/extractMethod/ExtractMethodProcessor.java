@@ -47,10 +47,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.impl.source.codeStyle.JavaCodeStyleManagerImpl;
 import com.intellij.psi.scope.processor.VariablesProcessor;
@@ -551,10 +548,14 @@ public class ExtractMethodProcessor implements MatchProvider {
     final PsiType returnType = myArtificialOutputVariable != null ? myArtificialOutputVariable.getType() : myReturnType;
     return new ExtractMethodDialog(myProject, myTargetClass, myInputVariables, returnType, getTypeParameterList(),
                                    getThrownExceptions(), isStatic(), isCanBeStatic(), myCanBeChainedConstructor,
-                                                         suggestInitialMethodName(),
                                                          myRefactoringName, myHelpId, myNullness, myElements) {
       protected boolean areTypesDirected() {
         return direct;
+      }
+
+      @Override
+      protected String[] suggestMethodNames() {
+        return suggestInitialMethodName();
       }
 
       @Override
@@ -640,39 +641,48 @@ public class ExtractMethodProcessor implements MatchProvider {
     return null;
   }
 
-  protected String suggestInitialMethodName() {
+  protected String[] suggestInitialMethodName() {
     if (StringUtil.isEmpty(myInitialMethodName)) {
-      final String initialMethodName;
+      final Set<String> initialMethodNames = new LinkedHashSet<String>();
       final JavaCodeStyleManagerImpl codeStyleManager = (JavaCodeStyleManagerImpl)JavaCodeStyleManager.getInstance(myProject);
-      final String[] names = codeStyleManager.suggestVariableName(VariableKind.FIELD, null, myExpression, myReturnType).names;
-      if (names.length > 0) {
-        initialMethodName = codeStyleManager.variableNameToPropertyName(names[0], VariableKind.FIELD);
-      } else {
-        return myInitialMethodName;
-      }
-
-      if (myReturnType != null && !(myReturnType instanceof PsiPrimitiveType)) {
-        return PropertyUtil.suggestGetterName(initialMethodName, myReturnType);
-      } else if (myExpression != null) {
-        if (myExpression instanceof PsiMethodCallExpression) {
-          PsiExpression qualifierExpression = ((PsiMethodCallExpression)myExpression).getMethodExpression().getQualifierExpression();
-          if (qualifierExpression != null && PsiUtil.resolveGenericsClassInType(qualifierExpression.getType()) != myTargetClass) {
-            return initialMethodName;
-          }
-        } else {
-          return initialMethodName;
+      if (myExpression != null || !(myReturnType instanceof PsiPrimitiveType)) {
+        final String[] names = codeStyleManager.suggestVariableName(VariableKind.FIELD, null, myExpression, myReturnType).names;
+        for (String name : names) {
+          initialMethodNames.add(codeStyleManager.variableNameToPropertyName(name, VariableKind.FIELD));
         }
       }
 
-      PsiElement prevSibling = PsiTreeUtil.skipSiblingsBackward(myElements[0], PsiWhiteSpace.class);
-      if (prevSibling instanceof PsiComment && ((PsiComment)prevSibling).getTokenType() == JavaTokenType.END_OF_LINE_COMMENT) {
-        final String text = StringUtil.decapitalize(StringUtil.capitalizeWords(prevSibling.getText().trim().substring(2), true)).replaceAll(" ", "");
-        if (PsiNameHelper.getInstance(myProject).isIdentifier(text) && text.length() < 20) {
-          return text;
+      if (myOutputVariable != null) {
+        final VariableKind outKind = codeStyleManager.getVariableKind(myOutputVariable);
+        final SuggestedNameInfo nameInfo = codeStyleManager
+          .suggestVariableName(VariableKind.FIELD, codeStyleManager.variableNameToPropertyName(myOutputVariable.getName(), outKind), null, myOutputVariable.getType());
+        for (String name : nameInfo.names) {
+          initialMethodNames.add(codeStyleManager.variableNameToPropertyName(name, VariableKind.FIELD));
         }
+      }
+
+      final String nameByComment = getNameByComment();
+      final List<String> getters = new ArrayList<String>(ContainerUtil.map(initialMethodNames, new Function<String, String>() {
+        @Override
+        public String fun(String propertyName) {
+          return PropertyUtil.suggestGetterName(propertyName, myReturnType);
+        }
+      }));
+      ContainerUtil.addIfNotNull(nameByComment, getters);
+      return ArrayUtil.toStringArray(getters);
+    }
+    return new String[] {myInitialMethodName};
+  }
+
+  private String getNameByComment() {
+    PsiElement prevSibling = PsiTreeUtil.skipSiblingsBackward(myElements[0], PsiWhiteSpace.class);
+    if (prevSibling instanceof PsiComment && ((PsiComment)prevSibling).getTokenType() == JavaTokenType.END_OF_LINE_COMMENT) {
+      final String text = StringUtil.decapitalize(StringUtil.capitalizeWords(prevSibling.getText().trim().substring(2), true)).replaceAll(" ", "");
+      if (PsiNameHelper.getInstance(myProject).isIdentifier(text) && text.length() < 20) {
+        return text;
       }
     }
-    return myInitialMethodName;
+    return null;
   }
 
   public boolean isOutputVariable(PsiVariable var) {
