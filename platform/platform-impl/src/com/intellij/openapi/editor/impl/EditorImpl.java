@@ -959,6 +959,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       public void componentResized(@NotNull ComponentEvent e) {
         myMarkupModel.recalcEditorDimensions();
         myMarkupModel.repaint(-1, -1);
+        myGutterComponent.updateSize();
       }
     });
   }
@@ -6752,17 +6753,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     private MyScrollPane() {
       super(0);
       setupCorners();
-    }
-
-    @Override
-    public void layout() {
-      super.layout();
-      if (isInDistractionFreeMode()) {
-        // re-calc gutter extra size after editor size is set
-        // & layout once again to avoid blinking
-        myGutterComponent.updateSize();
-        super.layout();
-      }
     }
 
     @Override
