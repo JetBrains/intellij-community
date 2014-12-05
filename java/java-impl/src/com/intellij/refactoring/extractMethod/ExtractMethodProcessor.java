@@ -344,7 +344,7 @@ public class ExtractMethodProcessor implements MatchProvider {
 
   @Nullable
   private PsiVariable getArtificialOutputVariable() {
-    if (myOutputVariables.length == 0) {
+    if (myOutputVariables.length == 0 && myExitStatements.isEmpty()) {
       if (myCanBeChainedConstructor) {
         final Set<PsiField> fields = new HashSet<PsiField>();
         for (PsiElement element : myElements) {
@@ -616,7 +616,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     final List<PsiStatement> filter = ContainerUtil.filter(myExitStatements, new Condition<PsiStatement>() {
       @Override
       public boolean value(PsiStatement statement) {
-        return statement instanceof PsiReturnStatement;
+        return statement instanceof PsiReturnStatement && ((PsiReturnStatement)statement).getReturnValue() != null;
       }
     });
     final List<PsiExpression> map = ContainerUtil.map(filter, new Function<PsiStatement, PsiExpression>() {

@@ -666,6 +666,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doTestReturnTypeChanged(PsiType.INT);
   }
 
+  public void testNoReturnTypesSuggested() throws Exception {
+    doTestReturnTypeChanged(PsiType.INT);
+  }
+
   public void testMultipleVarsInMethodNoReturnStatementAndAssignment() throws Exception {
     //return type should not be suggested but still 
     doTestReturnTypeChanged(PsiType.INT);
