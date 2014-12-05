@@ -28,10 +28,14 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry
+import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.*
+import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.impl.PsiManagerEx
+import com.intellij.psi.impl.file.impl.FileManagerImpl
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiSearchHelper
+import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import com.intellij.util.indexing.MapIndexStorage
@@ -278,6 +282,59 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
     undoManager.undo(selectedEditor);
 
     assertNotNull(findClass("Foo"));
+  }
+
+  public void "_test rename unsaved file"() {
+    def psiFile = myFixture.addFileToProject("Foo.java", "class Foo {}")
+    def scope = GlobalSearchScope.allScope(project)
+
+    assert !FileDocumentManager.instance.unsavedDocuments
+
+    ((PsiJavaFile)psiFile).importList.add(elementFactory.createImportStatementOnDemand("java.io"))
+
+    PlatformTestUtil.tryGcSoftlyReachableObjects()
+
+    def astNode = JavaPsiFacade.getInstance(project).findClass("Foo", scope).node
+
+    assert !((FileManagerImpl) psiManager.fileManager).getCachedDirectory(psiFile.virtualFile.parent)
+    assert psiFile.setName("Foo1.java") == psiFile
+
+    assert FileDocumentManager.instance.unsavedDocuments
+    assert JavaPsiFacade.getInstance(project).findClass("Foo", scope)
+  }
+
+  public void "_test rename dir with unsaved file"() {
+    def psiFile = myFixture.addFileToProject("foo/Foo.java", "package pkg; class Foo {}")
+    def scope = GlobalSearchScope.allScope(project)
+
+    assert !FileDocumentManager.instance.unsavedDocuments
+
+    ((PsiJavaFile)psiFile).importList.add(elementFactory.createImportStatementOnDemand("java.io"))
+
+    PlatformTestUtil.tryGcSoftlyReachableObjects()
+
+    def astNode = JavaPsiFacade.getInstance(project).findClass("pkg.Foo", scope).node
+
+    def dir = psiFile.virtualFile.parent
+    assert !((FileManagerImpl) psiManager.fileManager).getCachedDirectory(dir)
+    dir.rename(this, "bar")
+
+    assert FileDocumentManager.instance.unsavedDocuments
+    assert JavaPsiFacade.getInstance(project).findClass("pkg.Foo", scope)
+  }
+
+  public void "_test language level change"() {
+    def psiFile = myFixture.addFileToProject("Foo.java", "class Foo {}")
+    def scope = GlobalSearchScope.allScope(project)
+
+    psiFile.add(elementFactory.createEnum("SomeEnum"))
+
+    CodeStyleManager.getInstance(getProject()).reformat(psiFile)
+    assert JavaPsiFacade.getInstance(project).findClass("Foo", scope)
+
+    IdeaTestUtil.setModuleLanguageLevel(myFixture.module, LanguageLevel.JDK_1_3)
+
+    assert ((PsiJavaFile)psiFile).importList.node
   }
 
   public void "test changing a file without psi makes the document committed and updates index"() {
