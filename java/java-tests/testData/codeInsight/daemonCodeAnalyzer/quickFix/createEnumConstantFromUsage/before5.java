@@ -1,4 +1,4 @@
-// "Create 'enum' constant 'Bean3'" "true"
+// "Create enum constant 'Bean3'" "true"
 @interface BeanAware {
     BeanName[] value();
 }

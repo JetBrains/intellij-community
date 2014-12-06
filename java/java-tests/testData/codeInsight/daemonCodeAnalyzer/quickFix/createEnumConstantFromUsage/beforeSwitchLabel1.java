@@ -1,4 +1,4 @@
-// "Create 'enum' constant 'D3'" "true"
+// "Create enum constant 'D3'" "true"
 public enum Demo {
 }
 
