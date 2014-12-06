@@ -1853,7 +1853,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     configureByFile(BASE_PATH + testName + ".xml");
     Collection<HighlightInfo> infos = doDoTest(true, false);
 
-    findAndInvokeIntentionAction(infos, "Change Root Tag Name to xxx", myEditor, myFile);
+    findAndInvokeIntentionAction(infos, "Change root tag name to xxx", myEditor, myFile);
     checkResultByFile(BASE_PATH + testName + "_after.xml");
   }
 
