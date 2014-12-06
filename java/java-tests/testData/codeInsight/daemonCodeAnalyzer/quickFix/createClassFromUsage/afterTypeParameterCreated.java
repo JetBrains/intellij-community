@@ -1,4 +1,4 @@
-// "Create Class 'Foo'" "true"
+// "Create class 'Foo'" "true"
 public class Test {
   <R> void foo(Foo<R, String> f){}
 }
