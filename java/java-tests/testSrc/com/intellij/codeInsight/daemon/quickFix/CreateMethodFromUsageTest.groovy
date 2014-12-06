@@ -40,7 +40,7 @@ class SomeOuterClassWithLongName {
 }
 """
     TemplateManagerImpl.setTemplateTesting(project, testRootDisposable);
-    doAction("Create Method 'addSubGroup'")
+    doAction("Create method 'addSubGroup'")
     def state = TemplateManagerImpl.getTemplateState(getEditor())
     //skip void return type
     state.nextTab()
@@ -90,7 +90,7 @@ class Usage {
 }
 """
     TemplateManagerImpl.setTemplateTesting(project, testRootDisposable);
-    doAction("Create Method 'getInstance'")
+    doAction("Create method 'getInstance'")
     def state = TemplateManagerImpl.getTemplateState(getEditor())
     // parameter type
     assert LookupManager.getActiveLookup(editor)?.currentItem?.lookupString == 'Singleton'

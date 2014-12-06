@@ -48,11 +48,11 @@ public class JavaFXQuickfixTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testCreateControllerMethod() throws Exception {
-    doTest("Create Method 'void bar(ActionEvent)'", ".java");
+    doTest("Create method 'void bar(ActionEvent)'", ".java");
   }
 
   public void testCreateControllerMethodInGroovy() throws Exception {
-    doTest("Create Method 'void bar(ActionEvent)'", ".groovy");
+    doTest("Create method 'void bar(ActionEvent)'", ".groovy");
   }
 
   public void testCreateField() throws Exception {

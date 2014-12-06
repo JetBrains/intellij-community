@@ -981,7 +981,7 @@ class A {
 }
 ''')
 
-    assertNotNull(myFixture.findSingleIntention("Create Method 'abc'"))
+    assertNotNull(myFixture.findSingleIntention("Create method 'abc'"))
   }
 
   void testTypeParameterIsCorrect() {

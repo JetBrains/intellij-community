@@ -1,4 +1,4 @@
-// "Create Method 'f'" "true"
+// "Create method 'f'" "true"
 class A {
     {
          assert false: f();
