@@ -82,7 +82,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
   private static final String BASE_PATH = "/xml/";
 
   private boolean myTestJustJaxpValidation;
-  @NonNls private static final String CREATE_NAMESPACE_DECLARATION_INTENTION_NAME = "Create Namespace Declaration";
+  @NonNls private static final String CREATE_NAMESPACE_DECLARATION_INTENTION_NAME = "Create namespace declaration";
   private boolean old;
   private String myOldDoctype;
 
