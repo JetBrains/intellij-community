@@ -69,7 +69,7 @@ public class BindFieldsFromParametersAction extends BaseIntentionAction implemen
         LOG.assertTrue(psiParameter != null);
       }
 
-      setText(CodeInsightBundle.message("intention.bind.fields.from.parameters.text", method.isConstructor() ? "Constructor" : "Method"));
+      setText(CodeInsightBundle.message("intention.bind.fields.from.parameters.text", method.isConstructor() ? "constructor" : "method"));
     }
     return isAvailable(psiParameter);
   }
