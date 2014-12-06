@@ -1,4 +1,4 @@
-// "Bring 'int j' into Scope" "true"
+// "Bring 'int j' into scope" "true"
 class a {
     void foo() {
         int j;
