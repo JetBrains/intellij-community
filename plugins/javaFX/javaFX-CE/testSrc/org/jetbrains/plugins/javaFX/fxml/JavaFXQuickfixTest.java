@@ -56,13 +56,13 @@ public class JavaFXQuickfixTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testCreateField() throws Exception {
-    doTest("Create Field 'btn'", ".java");
+    doTest("Create field 'btn'", ".java");
   }
 
   public void testCreateFieldEmptyName() throws Exception {
     String path = getTestName(true) + ".fxml";
     final IntentionAction intention =
-      myFixture.getAvailableIntention("Create Field 'btn'", path, getTestName(false) + ".java");
+      myFixture.getAvailableIntention("Create field 'btn'", path, getTestName(false) + ".java");
     assertNull(intention);
   }
 
