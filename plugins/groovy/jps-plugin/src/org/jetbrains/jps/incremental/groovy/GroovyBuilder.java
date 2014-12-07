@@ -40,7 +40,6 @@ import org.jetbrains.jps.builders.FileProcessor;
 import org.jetbrains.jps.builders.java.JavaBuilderUtil;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
-import org.jetbrains.jps.builders.java.dependencyView.Mappings;
 import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
 import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
@@ -162,8 +161,8 @@ public class GroovyBuilder extends ModuleLevelBuilder {
         context.processMessage(message);
       }
 
-      if (!myForStubs && updateDependencies(context, chunk, dirtyFilesHolder, toCompile, compiled, outputConsumer, this)) {
-        return ExitCode.ADDITIONAL_PASS_REQUIRED;
+      if (!myForStubs) {
+        updateDependencies(context, toCompile, compiled, outputConsumer, this);
       }
       return hasFilesToCompileForNextRound(context) ? ExitCode.ADDITIONAL_PASS_REQUIRED : ExitCode.OK;
     }
@@ -429,17 +428,14 @@ public class GroovyBuilder extends ModuleLevelBuilder {
     return toCompile;
   }
 
-  public static boolean updateDependencies(CompileContext context,
-                                            ModuleChunk chunk,
-                                            DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,
-                                            List<File> toCompile,
-                                            Map<ModuleBuildTarget, Collection<GroovycOSProcessHandler.OutputItem>> successfullyCompiled,
-                                            OutputConsumer outputConsumer, Builder builder) throws IOException {
-    final Mappings delta = context.getProjectDescriptor().dataManager.getMappings().createDelta();
-    final List<File> successfullyCompiledFiles = new ArrayList<File>();
+  public static void updateDependencies(CompileContext context,
+                                        List<File> toCompile,
+                                        Map<ModuleBuildTarget, Collection<GroovycOSProcessHandler.OutputItem>> successfullyCompiled,
+                                        OutputConsumer outputConsumer, Builder builder) throws IOException {
+    JavaBuilderUtil.registerFilesToCompile(context, toCompile);
     if (!successfullyCompiled.isEmpty()) {
 
-      final Callbacks.Backend callback = delta.getCallback();
+      final Callbacks.Backend callback = JavaBuilderUtil.getDependenciesRegistrar(context);
 
       for (Map.Entry<ModuleBuildTarget, Collection<GroovycOSProcessHandler.OutputItem>> entry : successfullyCompiled.entrySet()) {
         final ModuleBuildTarget target = entry.getKey();
@@ -465,12 +461,10 @@ public class GroovyBuilder extends ModuleLevelBuilder {
               builder.getPresentableName(), BuildMessage.Kind.WARNING, message + "\n" + CompilerMessage.getTextFromThrowable(e), sourcePath)
             );
           }
-          successfullyCompiledFiles.add(srcFile);
+          JavaBuilderUtil.registerSuccessfullyCompiled(context, srcFile);
         }
       }
     }
-
-    return JavaBuilderUtil.updateMappings(context, delta, dirtyFilesHolder, chunk, toCompile, successfullyCompiledFiles);
   }
 
   private static String readClassName(byte[] classBytes) throws IOException{

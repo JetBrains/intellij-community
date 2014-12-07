@@ -147,9 +147,7 @@ public class GreclipseBuilder extends ModuleLevelBuilder {
         context.processMessage(new CompilerMessage(getPresentableName(), BuildMessage.Kind.ERROR, "Compilation failed"));
       }
 
-      if (GroovyBuilder.updateDependencies(context, chunk, dirtyFilesHolder, toCompile, successfullyCompiled, outputConsumer, this)) {
-        return ExitCode.ADDITIONAL_PASS_REQUIRED;
-      }
+      GroovyBuilder.updateDependencies(context, toCompile, successfullyCompiled, outputConsumer, this);
       return ExitCode.OK;
 
     }
