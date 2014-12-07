@@ -50,6 +50,7 @@ import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.vcs.log.TimedVcsCommit;
 import org.intellij.images.editor.ImageFileEditor;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,10 +59,9 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.Callable;
 
-/**
- * @author Kirill Likhodedov
- */
 public class DvcsUtil {
+
+  private static final Logger LOG = Logger.getInstance(DvcsUtil.class);
 
   private static final Logger LOGGER = Logger.getInstance(DvcsUtil.class);
   private static final int IO_RETRIES = 3; // number of retries before fail if an IOException happens during file read.
@@ -216,9 +216,9 @@ public class DvcsUtil {
     }
   };
 
-  public static void assertFileExists(File file, String message) {
+  public static void assertFileExists(File file, String message) throws IllegalStateException {
     if (!file.exists()) {
-      throw new RepoStateException(message);
+      throw new IllegalStateException(message);
     }
   }
 
@@ -231,7 +231,7 @@ public class DvcsUtil {
    * @return file content.
    */
   @NotNull
-  public static String tryLoadFile(@NotNull final File file) {
+  public static String tryLoadFile(@NotNull final File file) throws RepoStateException {
     return tryOrThrow(new Callable<String>() {
       @Override
       public String call() throws Exception {
@@ -240,20 +240,32 @@ public class DvcsUtil {
     }, file);
   }
 
+  @Nullable
+  @Contract("_ , !null -> !null")
+  public static String tryLoadFileOrReturn(@NotNull final File file, @Nullable String defaultValue) {
+    try {
+      return tryLoadFile(file);
+    }
+    catch (RepoStateException e) {
+      LOG.error(e);
+      return defaultValue;
+    }
+  }
+
   /**
    * Tries to execute the given action.
    * If an IOException happens, tries again up to 3 times, and then throws a {@link RepoStateException}.
    * If an other exception happens, rethrows it as a {@link RepoStateException}.
    * In the case of success returns the result of the task execution.
    */
-  public static <T> T tryOrThrow(Callable<T> actionToTry, File fileToLoad) {
+  public static <T> T tryOrThrow(Callable<T> actionToTry, File fileToLoad) throws RepoStateException {
     IOException cause = null;
     for (int i = 0; i < IO_RETRIES; i++) {
       try {
         return actionToTry.call();
       }
       catch (IOException e) {
-        LOGGER.info("IOException while loading " + fileToLoad, e);
+        LOG.info("IOException while loading " + fileToLoad, e);
         cause = e;
       }
       catch (Exception e) {    // this shouldn't happen since only IOExceptions are thrown in clients.
