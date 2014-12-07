@@ -54,8 +54,8 @@ class GitRepositoryReader {
   private static final Logger LOG = Logger.getInstance(GitRepositoryReader.class);
 
   private static Pattern BRANCH_PATTERN          = Pattern.compile("ref: refs/heads/(\\S+)"); // branch reference in .git/HEAD
-  // this format shouldn't appear, but we don't want to fail because of a space
-  private static Pattern BRANCH_WEAK_PATTERN     = Pattern.compile(" *(ref:)? */?refs/heads/(\\S+)");
+  // allows spacing issues & omitting refs/heads/ prefix
+  private static Pattern BRANCH_WEAK_PATTERN     = Pattern.compile(" *(?:ref:)? */?((?:refs/heads/|refs/remotes/)?\\S+)");
   private static Pattern COMMIT_PATTERN          = Pattern.compile("[0-9a-fA-F]+"); // commit hash
 
   @NonNls private static final String REFS_HEADS_PREFIX = "refs/heads/";
@@ -83,7 +83,7 @@ class GitRepositoryReader {
       return hash == null ? null : HashImpl.build(hash);
     }
     catch (Throwable t) {
-      LOG.info(t);
+      LOG.warn(t);
       return null;
     }
   }
@@ -305,11 +305,13 @@ class GitRepositoryReader {
   @NotNull 
   GitBranchesCollection readBranches(@NotNull Collection<GitRemote> remotes) {
     Map<String, String> data = readBranchRefsFromFiles();
-    return createBranchesFromData(remotes, data);
+    Map<String, Hash> resolvedRefs = resolveRefs(data);
+    return createBranchesFromData(remotes, resolvedRefs);
   }
 
+  @NotNull
   private Map<String, String> readBranchRefsFromFiles() {
-    Map<String, String> result = readFromPackedRefs(); // reading from packed-refs first to overwrite values by values from unpacked refs
+    Map<String, String> result = ContainerUtil.newHashMap(readFromPackedRefs()); // reading from packed-refs first to overwrite values by values from unpacked refs
     for (Map.Entry<String, File> entry : findLocalBranches().entrySet()) {
       String branchName = entry.getKey();
       File file = entry.getValue();
@@ -323,27 +325,23 @@ class GitRepositoryReader {
   }
 
   @NotNull
-  private static GitBranchesCollection createBranchesFromData(@NotNull Collection<GitRemote> remotes, @NotNull Map<String, String> data) {
-    Set<GitLocalBranch> localBranches = new HashSet<GitLocalBranch>();
-    Set<GitRemoteBranch> remoteBranches = new HashSet<GitRemoteBranch>();
-    for (Map.Entry<String, String> entry : data.entrySet()) {
+  private static GitBranchesCollection createBranchesFromData(@NotNull Collection<GitRemote> remotes, @NotNull Map<String, Hash> data) {
+    Set<GitLocalBranch> localBranches = ContainerUtil.newHashSet();
+    Set<GitRemoteBranch> remoteBranches = ContainerUtil.newHashSet();
+    for (Map.Entry<String, Hash> entry : data.entrySet()) {
       String refName = entry.getKey();
-      String value = entry.getValue();
-
-      Hash hash = createHash(value);
-      if (hash != null) {
-        if (refName.startsWith(REFS_HEADS_PREFIX)) {
-          localBranches.add(new GitLocalBranch(refName, hash));
-        }
-        else if (refName.startsWith(REFS_REMOTES_PREFIX)) {
-          GitRemoteBranch remoteBranch = parseRemoteBranch(refName, hash, remotes);
-          if (remoteBranch != null) {
-            remoteBranches.add(remoteBranch);
-          }
+      Hash hash = entry.getValue();
+      if (refName.startsWith(REFS_HEADS_PREFIX)) {
+        localBranches.add(new GitLocalBranch(refName, hash));
+      }
+      else if (refName.startsWith(REFS_REMOTES_PREFIX)) {
+        GitRemoteBranch remoteBranch = parseRemoteBranch(refName, hash, remotes);
+        if (remoteBranch != null) {
+          remoteBranches.add(remoteBranch);
         }
       }
       else {
-        LOG.warn("Couldn't parse hash from [" + value + "]");
+        LOG.warn("Unexpected ref format: " + refName);
       }
     }
     return new GitBranchesCollection(localBranches, remoteBranches);
@@ -380,7 +378,7 @@ class GitRepositoryReader {
   }
 
   @NotNull
-  private Map<String, String> readFromPackedRefs() {
+  private Map<String, String>  readFromPackedRefs() {
     if (!myPackedRefsFile.exists()) {
       return Collections.emptyMap();
     }
@@ -522,6 +520,94 @@ class GitRepositoryReader {
       this.hash = hash;
       this.name = name;
     }
+  }
+
+  @NotNull
+  private static Map<String, Hash> resolveRefs(@NotNull Map<String, String> data) {
+    final Map<String, Hash> resolved = getResolvedHashes(data);
+    Map<String, String> unresolved = ContainerUtil.filter(data, new Condition<String>() {
+      @Override
+      public boolean value(String refName) {
+        return !resolved.containsKey(refName);
+      }
+    });
+
+    boolean progressed = true;
+    while (progressed && !unresolved.isEmpty()) {
+      progressed = false;
+      for (Iterator<Map.Entry<String, String>> iterator = unresolved.entrySet().iterator(); iterator.hasNext(); ) {
+        Map.Entry<String, String> entry = iterator.next();
+        String refName = entry.getKey();
+        String refValue = entry.getValue();
+        String link = getTarget(refValue);
+        if (link != null) {
+          if (duplicateEntry(resolved, refName, refValue)) {
+            iterator.remove();
+          }
+          else if (!resolved.containsKey(link)) {
+            LOG.debug("Unresolved symbolic link [" + refName + "] pointing to [" + refValue + "]"); // transitive link
+          }
+          else {
+            Hash targetValue = resolved.get(link);
+            resolved.put(refName, targetValue);
+            iterator.remove();
+            progressed = true;
+          }
+        }
+        else {
+          LOG.warn("Unexpected record [" + refName + "] -> [" + refValue + "]");
+          iterator.remove();
+        }
+      }
+    }
+    if (!unresolved.isEmpty()) {
+      LOG.warn("Cyclic symbolic links among .git/refs: " + unresolved);
+    }
+    return resolved;
+  }
+
+  @NotNull
+  private static Map<String, Hash> getResolvedHashes(@NotNull Map<String, String> data) {
+    Map<String, Hash> resolved = ContainerUtil.newHashMap();
+    for (Map.Entry<String, String> entry : data.entrySet()) {
+      String refName = entry.getKey();
+      Hash hash = parseHash(entry.getValue());
+      if (hash != null && !duplicateEntry(resolved, refName, hash)) {
+        resolved.put(refName, hash);
+      }
+    }
+    return resolved;
+  }
+
+  @Nullable
+  private static String getTarget(@NotNull String refName) {
+    Matcher matcher = BRANCH_WEAK_PATTERN.matcher(refName);
+    if (!matcher.matches()) {
+      return null;
+    }
+    String target = matcher.group(1);
+    if (!target.startsWith(REFS_HEADS_PREFIX) && !target.startsWith(REFS_REMOTES_PREFIX)) {
+      target = REFS_HEADS_PREFIX + target;
+    }
+    return target;
+  }
+
+  @Nullable
+  private static Hash parseHash(@NotNull String value) {
+    try {
+      return HashImpl.build(value);
+    }
+    catch (Exception e) {
+      return null;
+    }
+  }
+
+  private static boolean duplicateEntry(@NotNull Map<String, Hash> resolved, @NotNull String refName, @NotNull Object newValue) {
+    if (resolved.containsKey(refName)) {
+      LOG.error("Duplicate entry for [" + refName + "]. resolved: [" + resolved.get(refName).asString() + "], current: " + newValue + "]");
+      return true;
+    }
+    return false;
   }
 
   /**
