@@ -20,7 +20,9 @@ import com.intellij.dvcs.repo.RepoStateException;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.Hash;
@@ -114,8 +116,8 @@ class GitRepositoryReader {
 
     // look in /refs/heads/<branch name>
     File branchFile = null;
-    for (Map.Entry<String, File> entry : readLocalBranches().entrySet()) {
-      if (entry.getKey().equals(head.ref)) {
+    for (Map.Entry<String, File> entry : findLocalBranches().entrySet()) {
+      if (GitBranchUtil.stripRefsPrefix(entry.getKey()).equals(head.ref)) {
         branchFile = entry.getValue();
       }
     }
@@ -280,7 +282,7 @@ class GitRepositoryReader {
    * @return the list of local branches in this Git repository.
    *         key is the branch name, value is the file.
    */
-  private Map<String, File> readLocalBranches() {
+  private Map<String, File> findLocalBranches() {
     final Map<String, File> branches = new HashMap<String, File>();
     if (!myRefsHeadsDir.exists()) {
       return branches;
@@ -289,7 +291,7 @@ class GitRepositoryReader {
       @Override
       public boolean process(File file) {
         if (!file.isDirectory()) {
-          String relativePath = FileUtil.getRelativePath(myRefsHeadsDir, file);
+          String relativePath = FileUtil.getRelativePath(myGitDir, file);
           if (relativePath != null) {
             branches.put(FileUtil.toSystemIndependentName(relativePath), file);
           }
@@ -300,40 +302,51 @@ class GitRepositoryReader {
     return branches;
   }
 
-  /**
-   * @return all branches in this repository. local/remote/active information is stored in branch objects themselves.
-   * @param remotes
-   */
+  @NotNull 
   GitBranchesCollection readBranches(@NotNull Collection<GitRemote> remotes) {
-    Set<GitLocalBranch> localBranches = readUnpackedLocalBranches();
-    Set<GitRemoteBranch> remoteBranches = readUnpackedRemoteBranches(remotes);
-    try {
-      GitBranchesCollection packedBranches = readPackedBranches(remotes);
-      localBranches.addAll(packedBranches.getLocalBranches());
-      remoteBranches.addAll(packedBranches.getRemoteBranches());
-    }
-    catch (RepoStateException e) {
-      LOG.error(e);
-    }
-    return new GitBranchesCollection(localBranches, remoteBranches);
+    Map<String, String> data = readBranchRefsFromFiles();
+    return createBranchesFromData(remotes, data);
   }
 
-  /**
-   * @return list of branches from refs/heads. active branch is not marked as active - the caller should do this.
-   */
-  @NotNull
-  private Set<GitLocalBranch> readUnpackedLocalBranches() {
-    Set<GitLocalBranch> branches = new HashSet<GitLocalBranch>();
-    for (Map.Entry<String, File> entry : readLocalBranches().entrySet()) {
+  private Map<String, String> readBranchRefsFromFiles() {
+    Map<String, String> result = readFromPackedRefs(); // reading from packed-refs first to overwrite values by values from unpacked refs
+    for (Map.Entry<String, File> entry : findLocalBranches().entrySet()) {
       String branchName = entry.getKey();
-      File branchFile = entry.getValue();
-      String hash = loadHashFromBranchFile(branchFile);
-      Hash h = createHash(hash);
-      if (h != null) {
-        branches.add(new GitLocalBranch(branchName, h));
+      File file = entry.getValue();
+      String value = loadHashFromBranchFile(file);
+      if (value != null) {
+        result.put(branchName, value);
       }
     }
-    return branches;
+    result.putAll(readUnpackedRemoteBranches());
+    return result;
+  }
+
+  @NotNull
+  private static GitBranchesCollection createBranchesFromData(@NotNull Collection<GitRemote> remotes, @NotNull Map<String, String> data) {
+    Set<GitLocalBranch> localBranches = new HashSet<GitLocalBranch>();
+    Set<GitRemoteBranch> remoteBranches = new HashSet<GitRemoteBranch>();
+    for (Map.Entry<String, String> entry : data.entrySet()) {
+      String refName = entry.getKey();
+      String value = entry.getValue();
+
+      Hash hash = createHash(value);
+      if (hash != null) {
+        if (refName.startsWith(REFS_HEADS_PREFIX)) {
+          localBranches.add(new GitLocalBranch(refName, hash));
+        }
+        else if (refName.startsWith(REFS_REMOTES_PREFIX)) {
+          GitRemoteBranch remoteBranch = parseRemoteBranch(refName, hash, remotes);
+          if (remoteBranch != null) {
+            remoteBranches.add(remoteBranch);
+          }
+        }
+      }
+      else {
+        LOG.warn("Couldn't parse hash from [" + value + "]");
+      }
+    }
+    return new GitBranchesCollection(localBranches, remoteBranches);
   }
 
   @Nullable
@@ -341,70 +354,49 @@ class GitRepositoryReader {
     return DvcsUtil.tryLoadFileOrReturn(branchFile, null);
   }
 
-  /**
-   * @return list of branches from refs/remotes.
-   * @param remotes
-   */
   @NotNull
-  private Set<GitRemoteBranch> readUnpackedRemoteBranches(@NotNull final Collection<GitRemote> remotes) {
-    final Set<GitRemoteBranch> branches = new HashSet<GitRemoteBranch>();
+  private Map<String, String> readUnpackedRemoteBranches() {
     if (!myRefsRemotesDir.exists()) {
-      return branches;
+      return Collections.emptyMap();
     }
+    final Map<String, String> result = new HashMap<String, String>();
     FileUtil.processFilesRecursively(myRefsRemotesDir, new Processor<File>() {
       @Override
       public boolean process(File file) {
         if (!file.isDirectory() && !file.getName().equalsIgnoreCase(GitRepositoryFiles.HEAD)) {
-          final String relativePath = FileUtil.getRelativePath(myGitDir, file);
+          String relativePath = FileUtil.getRelativePath(myGitDir, file);
           if (relativePath != null) {
             String branchName = FileUtil.toSystemIndependentName(relativePath);
             String hash = loadHashFromBranchFile(file);
-            Hash h = createHash(hash);
-            if (h != null) {
-              GitRemoteBranch remoteBranch = parseRemoteBranch(branchName, h, remotes);
-              if (remoteBranch != null) {
-                branches.add(remoteBranch);
-              }
+            if (hash != null) {
+              result.put(branchName, hash);
             }
           }
         }
         return true;
       }
     });
-    return branches;
+    return result;
   }
 
-  /**
-   * @return list of local and remote branches from packed-refs. Active branch is not marked as active.
-   * @param remotes
-   */
   @NotNull
-  private GitBranchesCollection readPackedBranches(@NotNull final Collection<GitRemote> remotes) throws RepoStateException {
-    final Set<GitLocalBranch> localBranches = new HashSet<GitLocalBranch>();
-    final Set<GitRemoteBranch> remoteBranches = new HashSet<GitRemoteBranch>();
+  private Map<String, String> readFromPackedRefs() {
     if (!myPackedRefsFile.exists()) {
-      return GitBranchesCollection.EMPTY;
+      return Collections.emptyMap();
     }
-
-    List<HashAndName> hashAndNames = readPackedRefsFile(null);
-    for (HashAndName hashAndName : hashAndNames) {
-      Hash hash = createHash(hashAndName.hash);
-      if (hash == null) {
-        continue;
-      }
-      String branchName = hashAndName.name;
-
-      if (branchName.startsWith(REFS_HEADS_PREFIX)) {
-        localBranches.add(new GitLocalBranch(branchName, hash));
-      }
-      else if (branchName.startsWith(REFS_REMOTES_PREFIX)) {
-        GitRemoteBranch remoteBranch = parseRemoteBranch(branchName, hash, remotes);
-        if (remoteBranch != null) {
-          remoteBranches.add(remoteBranch);
+    try {
+      List<HashAndName> hashAndNames = readPackedRefsFile(null);
+      return ContainerUtil.map2Map(hashAndNames, new Function<HashAndName, Pair<String, String>>() {
+        @Override
+        public Pair<String, String> fun(HashAndName value) {
+          return Pair.create(value.name, value.hash);
         }
-      }
+      });
     }
-    return new GitBranchesCollection(localBranches, remoteBranches);
+    catch (RepoStateException e) {
+      LOG.error(e);
+      return Collections.emptyMap();
+    }
   }
 
   @Nullable
@@ -431,7 +423,7 @@ class GitRepositoryReader {
       return new GitStandardRemoteBranch(remote, branchName, hash);
     }
   }
-  
+
   @Nullable
   private static String readBranchFile(@NotNull File branchFile) {
     return DvcsUtil.tryLoadFileOrReturn(branchFile, null);
@@ -544,6 +536,4 @@ class GitRepositoryReader {
       this.ref = ref;
     }
   }
-
-
 }
