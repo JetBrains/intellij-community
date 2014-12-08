@@ -87,8 +87,6 @@ public class MatcherImpl {
   }
 
   public static void validate(Project project, MatchOptions options) {
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
-
     synchronized(MatcherImpl.class) {
       final LastMatchData data = new LastMatchData();
       data.lastPattern =  PatternCompiler.compilePattern(project, options);
