@@ -38,6 +38,7 @@ import org.zmlx.hg4idea.HgNameWithHashInfo;
 import org.zmlx.hg4idea.HgRevisionNumber;
 import org.zmlx.hg4idea.action.HgCommandResultNotifier;
 import org.zmlx.hg4idea.command.HgBookmarkCommand;
+import org.zmlx.hg4idea.command.HgBranchCloseCommand;
 import org.zmlx.hg4idea.command.HgBranchCreateCommand;
 import org.zmlx.hg4idea.command.HgWorkingCopyRevisionsCommand;
 import org.zmlx.hg4idea.execution.HgCommandException;
@@ -49,6 +50,7 @@ import org.zmlx.hg4idea.util.HgErrorUtil;
 
 import java.util.*;
 
+import static org.zmlx.hg4idea.util.HgUtil.getCloseBranchCommitMessageFromUser;
 import static org.zmlx.hg4idea.util.HgUtil.getNamesWithoutHashes;
 import static org.zmlx.hg4idea.util.HgUtil.getNewBranchNameFromUser;
 
@@ -67,6 +69,7 @@ public class HgBranchPopupActions {
     popupGroup.addAction(new HgNewBranchAction(myProject, Collections.singletonList(myRepository), myRepository));
     popupGroup.addAction(new HgNewBookmarkAction(myProject, Collections.singletonList(myRepository), myRepository));
     popupGroup.addAction(new HgShowUnnamedHeadsForCurrentBranchAction(myProject, myRepository));
+    popupGroup.addAction(new HgCloseBranchAction(myProject, myRepository));
     if (toInsert != null) {
       popupGroup.addAll(toInsert);
     }
@@ -127,6 +130,53 @@ public class HgBranchPopupActions {
         catch (HgCommandException exception) {
           HgErrorUtil.handleException(myProject, "Can't create new branch: ", exception);
         }
+      }
+    }
+  }
+
+  public static class HgCloseBranchAction extends DumbAwareAction {
+    @NotNull protected Project myProject;
+    @NotNull final HgRepository myPreselectedRepo;
+
+    HgCloseBranchAction(@NotNull Project project, @NotNull HgRepository preselectedRepo) {
+      super("Close current branch", "Close current branch", null);
+      myProject = project;
+      myPreselectedRepo = preselectedRepo;
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      final String commitMessage = getCloseBranchCommitMessageFromUser(myPreselectedRepo);
+      if (commitMessage == null) {
+        return;
+      }
+
+      closeBranch(commitMessage);
+    }
+
+    private void closeBranch(@NotNull String commitMessage) {
+      try {
+        new HgBranchCloseCommand(myProject, myPreselectedRepo.getRoot(), commitMessage).execute(new HgCommandResultHandler() {
+          @Override
+          public void process(@Nullable HgCommandResult result) {
+            myPreselectedRepo.update();
+            if (HgErrorUtil.hasErrorsInCommandExecution(result)) {
+              new HgCommandResultNotifier(myProject)
+                .notifyError(result, "Close branch failed", "Branch close failed");
+            }
+          }
+        });
+      }
+      catch (HgCommandException exception) {
+        HgErrorUtil.handleException(myProject, "Can't close branch: ", exception);
+      }
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      if (!myPreselectedRepo.getOpenedBranches().contains(myPreselectedRepo.getCurrentBranch())) {
+        e.getPresentation().setEnabled(false);
+        e.getPresentation().setDescription("Current branch is not opened");
       }
     }
   }
