@@ -1868,15 +1868,46 @@ public class Mappings {
         // checking if this newly added class duplicates already existing one
         for (ClassRepr c : addedClasses) {
           if (!c.isLocal() && !c.isAnonymous() && isEmpty(c.getOuterClassName())) {
-            final Collection<File> currentSources = myClassToSourceFile.get(c.name);
-            final File currentlyMappedTo = currentSources != null && currentSources.size() == 1? currentSources.iterator().next() : null;
-            // only check, if exactly one file is mapped
-            if (currentlyMappedTo != null && !myCompiledFiles.contains(currentlyMappedTo) && !FileUtil.filesEqual(currentlyMappedTo, srcFile) && currentlyMappedTo.exists() && myFilter.belongsToCurrentTargetChunk(currentlyMappedTo)) {
-              // Same classes from different source files.
+            final Set<File> candidates = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
+            final Collection<File> currentlyMapped = myClassToSourceFile.get(c.name);
+            if (currentlyMapped != null) {
+              candidates.addAll(currentlyMapped);
+            }
+            candidates.removeAll(myCompiledFiles);
+            final Collection<File> newSources = myDelta.myClassToSourceFile.get(c.name);
+            if (newSources != null) {
+              candidates.removeAll(newSources);
+            }
+            final Set<File> nonExistentOrOutOfScope = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
+            for (final File candidate : candidates) {
+              if (!candidate.exists() || !myFilter.belongsToCurrentTargetChunk(candidate)) {
+                nonExistentOrOutOfScope.add(candidate);
+              }
+            }
+            candidates.removeAll(nonExistentOrOutOfScope);
+
+            if (!candidates.isEmpty()) {
+              // Possibly duplicate classes from different sets of source files
               // Schedule for recompilation both to make possible 'duplicate sources' error evident
-              debug("Scheduling for recompilation duplicated sources: ", currentlyMappedTo.getPath() + "; " + srcFile.getPath());
-              myAffectedFiles.add(currentlyMappedTo);
-              myAffectedFiles.add(srcFile);
+              candidates.clear(); // just reusing the container
+              if (currentlyMapped != null) {
+                candidates.addAll(currentlyMapped);
+              }
+              if (newSources != null) {
+                candidates.addAll(newSources);
+              }
+              candidates.removeAll(nonExistentOrOutOfScope);
+
+              if (myDebugS.isDebugEnabled()) {
+                final StringBuilder msg = new StringBuilder();
+                msg.append("Possibly duplicated classes; Scheduling for recompilation sources: ");
+                for (File file : candidates) {
+                  msg.append(file.getPath()).append("; ");
+                }
+                debug(msg.toString());
+              }
+
+              myAffectedFiles.addAll(candidates);
               return; // do not process this file because it should not be integrated
             }
           }
@@ -2241,6 +2272,45 @@ public class Mappings {
               return true;
             }
           });
+          
+          // some classes may be associated with multiple sources.
+          // In case some of these sources was not compiled, but the class was changed, we need to update
+          // sourceToClasses mapping for such sources to include the updated ClassRepr version of the changed class
+          final THashSet<File> unchangedSources = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
+          delta.mySourceFileToClasses.forEachEntry(new TObjectObjectProcedure<File, Collection<ClassRepr>>() {
+            @Override
+            public boolean execute(File source, Collection<ClassRepr> b) {
+              unchangedSources.add(source);
+              return true;
+            }
+          });
+          unchangedSources.removeAll(delta.getChangedFiles());
+          if (!unchangedSources.isEmpty()) {
+            unchangedSources.forEach(new TObjectProcedure<File>() {
+              @Override
+              public boolean execute(File file) {
+                final Collection<ClassRepr> updatedClasses = delta.mySourceFileToClasses.get(file);
+                if (updatedClasses != null && !updatedClasses.isEmpty()) {
+                  final List<ClassRepr> classesToAdd = new ArrayList<ClassRepr>();
+                  classesToAdd.addAll(updatedClasses);
+                  Collection<ClassRepr> currentClasses = mySourceFileToClasses.get(file);
+                  if (currentClasses != null) {
+                    final TIntHashSet updatedClassNames = new TIntHashSet();
+                    for (ClassRepr aClass : updatedClasses) {
+                      updatedClassNames.add(aClass.name);
+                    }
+                    for (ClassRepr aClass : currentClasses) {
+                      if (!updatedClassNames.contains(aClass.name)) {
+                        classesToAdd.add(aClass);
+                      }
+                    }
+                  }
+                  mySourceFileToClasses.replace(file, classesToAdd);
+                }
+                return true;
+              }
+            });
+          }
         }
         else {
           myClassToSubclasses.putAll(delta.myClassToSubclasses);

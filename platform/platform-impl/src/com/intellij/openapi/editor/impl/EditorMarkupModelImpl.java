@@ -36,7 +36,6 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
@@ -85,7 +84,6 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   private static final int ERROR_ICON_WIDTH = 13;
   private static final int ERROR_ICON_HEIGHT = 13;
   private static final int THIN_GAP = 2;
-  private static final int PREFERRED_WIDTH = ERROR_ICON_WIDTH + 3;
   private static final int MAX_STRIPE_SIZE = 4;
   private static final int MAC_MAC_THUMB_WIDTH = 10;
 
@@ -460,7 +458,8 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       myDirtyYPositions = WHOLE_DOCUMENT;
     }
 
-    myEditor.getVerticalScrollBar().repaint(0, range.getStartOffset(), PREFERRED_WIDTH, range.getLength() + myMinMarkHeight);
+    JScrollBar bar = myEditor.getVerticalScrollBar();
+    bar.repaint(0, range.getStartOffset(), bar.getWidth(), range.getLength() + myMinMarkHeight);
   }
 
   private boolean isMirrored() {
@@ -701,7 +700,6 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
           if (myDirtyYPositions == null) myDirtyYPositions = docRange;
           repaint(imageGraphics, componentBounds.width, myDirtyYPositions);
           myDirtyYPositions = null;
-          c.repaint(); // because of model changing inside paintTrack, reschedule actual repaint with the right clip
         }
         finally {
           ((ApplicationImpl)ApplicationManager.getApplication()).editorPaintFinish();
@@ -719,7 +717,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER));
       }
       else {
-        g.setColor(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
+        g.setColor(getEditor().getColorsScheme().getDefaultBackground());
         g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
       }
     }

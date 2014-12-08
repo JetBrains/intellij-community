@@ -48,21 +48,21 @@ public class JavaFXQuickfixTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testCreateControllerMethod() throws Exception {
-    doTest("Create Method 'void bar(ActionEvent)'", ".java");
+    doTest("Create method 'void bar(ActionEvent)'", ".java");
   }
 
   public void testCreateControllerMethodInGroovy() throws Exception {
-    doTest("Create Method 'void bar(ActionEvent)'", ".groovy");
+    doTest("Create method 'void bar(ActionEvent)'", ".groovy");
   }
 
   public void testCreateField() throws Exception {
-    doTest("Create Field 'btn'", ".java");
+    doTest("Create field 'btn'", ".java");
   }
 
   public void testCreateFieldEmptyName() throws Exception {
     String path = getTestName(true) + ".fxml";
     final IntentionAction intention =
-      myFixture.getAvailableIntention("Create Field 'btn'", path, getTestName(false) + ".java");
+      myFixture.getAvailableIntention("Create field 'btn'", path, getTestName(false) + ".java");
     assertNull(intention);
   }
 

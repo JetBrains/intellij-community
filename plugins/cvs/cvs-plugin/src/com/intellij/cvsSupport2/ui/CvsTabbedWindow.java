@@ -23,6 +23,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.EditorSettings;
@@ -56,24 +57,29 @@ public class CvsTabbedWindow implements Disposable {
   public CvsTabbedWindow(Project project) {
     myProject = project;
     Disposer.register(project, this);
-    final ToolWindow toolWindow = getToolWindow();
-    final ContentManager contentManager = toolWindow.getContentManager();
-    contentManager.addContentManagerListener(new ContentManagerAdapter() {
-      public void contentRemoved(ContentManagerEvent event) {
-        final JComponent component = event.getContent().getComponent();
-        final JComponent removedComponent = component instanceof CvsTabbedWindowComponent ?
-                                      ((CvsTabbedWindowComponent)component).getComponent() : component;
-        if (removedComponent == myErrorsView) {
-          myErrorsView.dispose();
-          myErrorsView = null;
-        }
-        else if (myOutput != null && removedComponent == myOutput.getComponent()) {
-          EditorFactory.getInstance().releaseEditor(myOutput);
-          myOutput = null;
-        }
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        final ToolWindow toolWindow = getToolWindow();
+        final ContentManager contentManager = toolWindow.getContentManager();
+        contentManager.addContentManagerListener(new ContentManagerAdapter() {
+          public void contentRemoved(ContentManagerEvent event) {
+            final JComponent component = event.getContent().getComponent();
+            final JComponent removedComponent = component instanceof CvsTabbedWindowComponent ?
+                                                ((CvsTabbedWindowComponent)component).getComponent() : component;
+            if (removedComponent == myErrorsView) {
+              myErrorsView.dispose();
+              myErrorsView = null;
+            }
+            else if (myOutput != null && removedComponent == myOutput.getComponent()) {
+              EditorFactory.getInstance().releaseEditor(myOutput);
+              myOutput = null;
+            }
+          }
+        });
+        toolWindow.installWatcher(contentManager);
       }
     });
-    toolWindow.installWatcher(contentManager);
   }
 
   public void dispose() {

@@ -465,11 +465,6 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
   }
 
   @Override
-  public void removePropertyChangeListener(@NotNull PropertyChangeListener listener){
-    EncodingManager.getInstance().removePropertyChangeListener(listener);
-  }
-
-  @Override
   @Nullable
   public Charset getCachedCharsetFromContent(@NotNull Document document) {
     return EncodingManager.getInstance().getCachedCharsetFromContent(document);

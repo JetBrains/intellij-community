@@ -153,7 +153,7 @@ public class ContainingBranchesGetter implements VcsLogListener {
 
           Set<VcsRef> branchesRefs = new HashSet<VcsRef>();
           for (Integer index : branchesIndexes) {
-            branchesRefs.addAll(refs.refsToCommit(dataHolder.getHash(index)));
+            branchesRefs.addAll(refs.refsToCommit(index));
           }
 
           ArrayList<String> branchesList = new ArrayList<String>();

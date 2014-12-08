@@ -724,7 +724,7 @@
                      level="WARNING" implementationClass="com.siyeh.ig.controlflow.SwitchStatementsWithoutDefaultInspection"/>
     <localInspection language="JAVA" suppressId="RedundantIfStatement" shortName="TrivialIf" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="trivial.if.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.control.flow.issues"
-                     enabledByDefault="true" level="WARNING" implementationClass="com.siyeh.ig.controlflow.TrivialIfInspection"/>
+                     enabledByDefault="true" level="WARNING" implementationClass="com.siyeh.ig.controlflow.TrivialIfInspection" cleanupTool="true"/>
     <localInspection language="JAVA" suppressId="RedundantConditionalExpression" shortName="UnnecessaryConditionalExpression"
                      bundle="com.siyeh.InspectionGadgetsBundle" key="unnecessary.conditional.expression.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.control.flow.issues" enabledByDefault="true"

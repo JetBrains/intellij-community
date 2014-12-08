@@ -53,6 +53,7 @@ abstract class FilterPopupComponent<Filter extends VcsLogFilter> extends JPanel 
   @NotNull private final JLabel myFilterNameLabel;
   @NotNull private final JLabel myFilterValueLabel;
   @NotNull protected final FilterModel<Filter> myFilterModel;
+  protected boolean myShowDisabledActions = false;
 
   FilterPopupComponent(@NotNull String filterName,
                        @NotNull FilterModel<Filter> filterModel) {
@@ -191,7 +192,8 @@ abstract class FilterPopupComponent<Filter extends VcsLogFilter> extends JPanel 
   private void showPopupMenu() {
     ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(null, createActionGroup(),
                                                                           DataManager.getInstance().getDataContext(this),
-                                                                          JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false);
+                                                                          JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
+                                                                          myShowDisabledActions);
     popup.showUnderneathOf(this);
   }
 

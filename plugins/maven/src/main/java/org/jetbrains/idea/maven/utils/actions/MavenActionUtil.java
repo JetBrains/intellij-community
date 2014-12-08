@@ -17,14 +17,12 @@ package org.jetbrains.idea.maven.utils.actions;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.externalSystem.action.ExternalSystemActionUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.project.MavenProject;
@@ -63,19 +61,13 @@ public class MavenActionUtil {
       if (result != null) return result;
     }
 
-    Module module = getModule(context);
+    Module module = ExternalSystemActionUtil.getModule(context);
     if (module != null) {
       result = manager.findProject(module);
       if (result != null) return result;
     }
 
     return null;
-  }
-
-  @Nullable
-  private static Module getModule(DataContext context) {
-    final Module module = DataKeys.MODULE.getData(context);
-    return module != null ? module : DataKeys.MODULE_CONTEXT.getData(context);
   }
 
   @Nullable

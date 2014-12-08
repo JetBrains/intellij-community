@@ -111,7 +111,7 @@ public class ElementToWorkOn {
           if (expressions.isEmpty()) {
             editor.getSelectionModel().selectLineAtCaret();
           }
-          else if (expressions.size() == 1) {
+          else if (!IntroduceVariableBase.isChooserNeeded(expressions)) {
             expr = expressions.get(0);
           }
           else {

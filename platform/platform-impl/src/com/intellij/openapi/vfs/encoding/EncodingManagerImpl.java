@@ -306,10 +306,10 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
     });
   }
 
-  @Override
-  public void removePropertyChangeListener(@NotNull PropertyChangeListener listener){
+  private void removePropertyChangeListener(@NotNull PropertyChangeListener listener){
     myPropertyChangeSupport.removePropertyChangeListener(listener);
   }
+
   void firePropertyChange(@Nullable Document document, @NotNull String propertyName, final Object oldValue, final Object newValue) {
     Object source = document == null ? this : document;
     myPropertyChangeSupport.firePropertyChange(new PropertyChangeEvent(source, propertyName, oldValue, newValue));

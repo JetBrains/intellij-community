@@ -36,6 +36,7 @@ public class HgAnnotationTest extends HgPlatformTest {
   }
 
   public void testAnnotationWithVerboseOption() throws VcsException {
+    myRepository.refresh(false, true);
     final VirtualFile file = myRepository.findFileByRelativePath(firstCreatedFile);
     assert file != null;
     List<String> users = Arrays.asList(defaultAuthor, author1, author2);

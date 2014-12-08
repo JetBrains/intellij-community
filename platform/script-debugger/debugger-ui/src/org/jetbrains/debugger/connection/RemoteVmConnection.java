@@ -115,11 +115,13 @@ public abstract class RemoteVmConnection extends VmConnection<Vm> {
             append(itemToString.fun((T)value));
           }
         });
-        list.setSelectedIndex(selectedIndex);
+        if (selectedIndex != -1) {
+          list.setSelectedIndex(selectedIndex);
+        }
 
         JBPopupFactory.getInstance().
           createListPopupBuilder(list).
-          setTitle("Choose Page to debug").
+          setTitle("Choose Page to Debug").
           setItemChoosenCallback(new Runnable() {
             @Override
             public void run() {

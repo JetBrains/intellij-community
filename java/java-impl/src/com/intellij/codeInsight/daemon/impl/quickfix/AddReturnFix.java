@@ -41,13 +41,13 @@ public class AddReturnFix implements IntentionAction {
   @Override
   @NotNull
   public String getText() {
-    return QuickFixBundle.message("add.return.statement.family");
+    return QuickFixBundle.message("add.return.statement.text");
   }
 
   @Override
   @NotNull
   public String getFamilyName() {
-    return QuickFixBundle.message("add.return.statement.text");
+    return getText();
   }
 
   @Override

@@ -177,7 +177,13 @@ public class DescriptorComposer extends HTMLComposerImpl {
       anchor.append("</font>");
     }
 
-    String descriptionTemplate = XmlStringUtil.stripHtml(description.getDescriptionTemplate());
+    String descriptionTemplate = description.getDescriptionTemplate();
+    if (XmlStringUtil.isWrappedInHtml(descriptionTemplate)) {
+      descriptionTemplate = XmlStringUtil.stripHtml(descriptionTemplate);
+    }
+    else {
+      descriptionTemplate = XmlStringUtil.escapeString(descriptionTemplate);
+    }
     //noinspection HardCodedStringLiteral
     final String reference = "#ref";
     final boolean containsReference = descriptionTemplate.contains(reference);

@@ -26,8 +26,12 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 public class ProjectFileType implements InternalFileType {
+  public static final ProjectFileType INSTANCE = new ProjectFileType();
+
   @NonNls public static final String DEFAULT_EXTENSION = "ipr";
   @NonNls public static final String DOT_DEFAULT_EXTENSION = ".ipr";
+
+  private ProjectFileType() {}
 
   @Override
   @NotNull

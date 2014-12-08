@@ -24,7 +24,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import git4idea.GitBranch;
 import git4idea.GitRemoteBranch;
 import git4idea.GitUtil;
 import git4idea.commands.GitCommand;
@@ -156,7 +155,7 @@ public class GitPullDialog extends DialogWrapper {
   }
 
   private void updateBranches() {
-    String selectedRemote = getRemote();
+    final String selectedRemote = getRemote();
     myBranchChooser.removeAllElements();
 
     if (selectedRemote == null) {
@@ -169,24 +168,20 @@ public class GitPullDialog extends DialogWrapper {
     }
 
     GitBranchTrackInfo trackInfo = GitUtil.getTrackInfoForCurrentBranch(repository);
-    String currentRemoteBranch = trackInfo == null ? null : trackInfo.getRemoteBranch().getNameForLocalOperations();
+    GitRemoteBranch currentRemoteBranch = trackInfo == null ? null : trackInfo.getRemoteBranch();
     List<GitRemoteBranch> remoteBranches = new ArrayList<GitRemoteBranch>(repository.getBranches().getRemoteBranches());
     Collections.sort(remoteBranches);
-    myBranchChooser.setElements(ContainerUtil.map(remoteBranches, new Function<GitRemoteBranch, String>() {
+    myBranchChooser.setElements(ContainerUtil.mapNotNull(remoteBranches, new Function<GitRemoteBranch, String>() {
       @Override
       public String fun(GitRemoteBranch branch) {
-        return branch.getName();
+        return branch.getRemote().getName().equals(selectedRemote) ? branch.getNameForLocalOperations() : null;
       }
     }), false);
-    if (currentRemoteBranch != null) {
-      myBranchChooser.setElementMarked(currentRemoteBranch, true);
+    if (currentRemoteBranch != null && currentRemoteBranch.getRemote().getName().equals(selectedRemote)) {
+      myBranchChooser.setElementMarked(currentRemoteBranch.getNameForLocalOperations(), true);
     }
 
     validateDialog();
-  }
-
-  private static boolean belongsToRemote(@NotNull GitBranch branch, @NotNull String remote) {
-    return branch.getName().startsWith(remote + "/");
   }
 
   private void updateRemotes() {

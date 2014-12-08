@@ -82,7 +82,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
   private static final String BASE_PATH = "/xml/";
 
   private boolean myTestJustJaxpValidation;
-  @NonNls private static final String CREATE_NAMESPACE_DECLARATION_INTENTION_NAME = "Create Namespace Declaration";
+  @NonNls private static final String CREATE_NAMESPACE_DECLARATION_INTENTION_NAME = "Create namespace declaration";
   private boolean old;
   private String myOldDoctype;
 
@@ -1853,7 +1853,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     configureByFile(BASE_PATH + testName + ".xml");
     Collection<HighlightInfo> infos = doDoTest(true, false);
 
-    findAndInvokeIntentionAction(infos, "Change Root Tag Name to xxx", myEditor, myFile);
+    findAndInvokeIntentionAction(infos, "Change root tag name to xxx", myEditor, myFile);
     checkResultByFile(BASE_PATH + testName + "_after.xml");
   }
 

@@ -21,6 +21,7 @@ package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.ByteSequence;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.SLRUCache;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,14 +43,41 @@ public class PersistentHashMapValueStorage {
   private static final int CACHE_PROTECTED_QUEUE_SIZE = 10;
   private static final int CACHE_PROBATIONAL_QUEUE_SIZE = 20;
 
+  // cache size is twice larger than constants because (when used) it replaces two caches
+  private static final FileAccessorCache<RandomAccessFileWrapper> ourRandomAccessFileCache = new FileAccessorCache<RandomAccessFileWrapper>(
+    2*CACHE_PROTECTED_QUEUE_SIZE, 2*CACHE_PROBATIONAL_QUEUE_SIZE) {
+    @Override
+    @NotNull
+    public CacheValue<RandomAccessFileWrapper> createValue(final String path) {
+      try {
+        return new CacheValue<RandomAccessFileWrapper>(new RandomAccessFileWrapper(path)) {
+          @Override
+          protected void disposeAccessor(RandomAccessFileWrapper accessor) {
+            try {
+              accessor.close();
+            } catch (IOException ex) {
+              throw new RuntimeException(ex);
+            }
+          }
+        };
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }
+  };
+
+  private static final boolean useSingleFileDescriptor = SystemProperties.getBooleanProperty("idea.use.single.file.descriptor.for.persistent.hash.map", true);
+
   private static final FileAccessorCache<DataOutputStream> ourAppendersCache = new FileAccessorCache<DataOutputStream>(CACHE_PROTECTED_QUEUE_SIZE, CACHE_PROBATIONAL_QUEUE_SIZE) {
     @Override
     @NotNull
     public CacheValue<DataOutputStream> createValue(String path) {
       try {
-        return new CachedAppender(new DataOutputStream(new BufferedOutputStream(new FileOutputStream(path, true))));
+        OutputStream out = useSingleFileDescriptor ? new OutputStreamOverRandomAccessFileCache(path):new FileOutputStream(path, true);
+        return new CachedAppender(new DataOutputStream(new BufferedOutputStream(out)));
       }
-      catch (FileNotFoundException e) {
+      catch (IOException e) {
         throw new RuntimeException(e);
       }
     }
@@ -59,7 +87,8 @@ public class PersistentHashMapValueStorage {
     @Override
     @NotNull
     public CacheValue<RAReader> createValue(String path) {
-      return new CachedReader(new FileReader(new File(path)));
+      RAReader reader = useSingleFileDescriptor ? new ReaderOverRandomAccessFileCache(path) : new FileReader(new File(path));
+      return new CachedReader(reader);
     }
   };
 
@@ -70,7 +99,9 @@ public class PersistentHashMapValueStorage {
 
     if (mySize == 0) {
       appendBytes(new ByteSequence("Header Record For PersistentHashMapValueStorage".getBytes()), 0);
-      // avoid corruption issue when disk fails to write first record synchronously, code depends on correct value of mySize (IDEA-106306)
+
+      // avoid corruption issue when disk fails to write first record synchronously or unexpected first write file increase (IDEA-106306),
+      // code depends on correct value of mySize
       CacheValue<DataOutputStream> streamCacheValue = ourAppendersCache.getIfCached(myPath);
       if (streamCacheValue != null) {
         try {
@@ -85,8 +116,10 @@ public class PersistentHashMapValueStorage {
       }
 
       long currentLength = myFile.length();
-      if (currentLength != mySize) Logger.getInstance(getClass().getName()).info("Avoided PSHM corruption due to write failure");
-      mySize = currentLength;  // volatile write
+      if (currentLength > mySize) {  // if real file length (unexpectedly) increases
+        Logger.getInstance(getClass().getName()).info("Avoided PSHM corruption due to write failure");
+        mySize = currentLength;  // volatile write
+      }
     }
   }
 
@@ -353,7 +386,7 @@ public class PersistentHashMapValueStorage {
 
   private long readPrevChunkAddress(long chunk) throws IOException {
     final long prevOffsetDiff = DataInputOutputUtil.readLONG(myBufferDataStreamWrapper);
-    assert prevOffsetDiff < chunk;
+    assert prevOffsetDiff < chunk:chunk + "," + prevOffsetDiff + "," + mySize;
     return prevOffsetDiff != 0 ? chunk - prevOffsetDiff : 0;
   }
 
@@ -400,6 +433,8 @@ public class PersistentHashMapValueStorage {
     ourReadersCache.remove(myPath);
     ourAppendersCache.remove(myPath);
 
+    ourRandomAccessFileCache.remove(myPath);
+
     if (myCompactionModeReader != null) {
       myCompactionModeReader.dispose();
       myCompactionModeReader = null;
@@ -408,6 +443,8 @@ public class PersistentHashMapValueStorage {
 
   public void switchToCompactionMode() {
     ourReadersCache.remove(myPath);
+
+    ourRandomAccessFileCache.remove(myPath);
     // in compaction mode use faster reader
     myCompactionModeReader = new FileReader(myFile);
     myCompactionMode = true;
@@ -420,6 +457,31 @@ public class PersistentHashMapValueStorage {
   private interface RAReader {
     void get(long addr, byte[] dst, int off, int len) throws IOException;
     void dispose();
+  }
+
+  private static class ReaderOverRandomAccessFileCache implements RAReader {
+    private String myPath;
+
+    private ReaderOverRandomAccessFileCache(String path) {
+      myPath = path;
+    }
+
+    @Override
+    public void get(final long addr, final byte[] dst, final int off, final int len) throws IOException {
+      CacheValue<RandomAccessFileWrapper> fileAccessor = ourRandomAccessFileCache.get(myPath);
+
+      try {
+        RandomAccessFileWrapper file = fileAccessor.get();
+        file.seek(addr);
+        file.read(dst, off, len);
+      } finally {
+        fileAccessor.release();
+      }
+    }
+
+    @Override
+    public void dispose() {
+    }
   }
 
   private static class FileReader implements RAReader {
@@ -541,5 +603,33 @@ public class PersistentHashMapValueStorage {
     }
 
     protected abstract void disposeAccessor(T accesor);
+  }
+
+  private static class OutputStreamOverRandomAccessFileCache extends OutputStream {
+    private final String myPath;
+
+    public OutputStreamOverRandomAccessFileCache(String path) throws IOException {
+      myPath = path;
+    }
+
+    @Override
+    public void write(byte[] b, int off, int len) throws IOException {
+      CacheValue<RandomAccessFileWrapper> fileAccessor = ourRandomAccessFileCache.get(myPath);
+      RandomAccessFileWrapper file = fileAccessor.get();
+
+      try {
+        file.seek(file.length());
+        file.write(b, off, len);
+      }
+      finally {
+        fileAccessor.release();
+      }
+    }
+
+    @Override
+    public void write(int b) throws IOException {
+      byte[] r = {(byte)(b & 0xFF)};
+      write(r);
+    }
   }
 }

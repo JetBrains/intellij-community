@@ -189,7 +189,7 @@ public class MavenIndicesManager implements Disposable {
   private void addArtifact(File artifactFile, String relativePath) {
     String repositoryPath = getRepositoryUrl(artifactFile, relativePath);
 
-    MavenIndex index = getIndicesObject().find(LOCAL_REPOSITORY_ID, repositoryPath, MavenIndex.Kind.LOCAL);
+    MavenIndex index = getIndicesObject().find(repositoryPath, MavenIndex.Kind.LOCAL);
     if (index != null) {
       index.addArtifact(artifactFile);
     }

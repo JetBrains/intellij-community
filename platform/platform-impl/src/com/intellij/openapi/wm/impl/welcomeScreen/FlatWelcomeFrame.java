@@ -17,7 +17,7 @@ package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.RecentProjectsManagerBase;
+import com.intellij.ide.RecentProjectsManager;
 import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
@@ -92,7 +92,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
     setTitle("Welcome to " + ApplicationNamesInfo.getInstance().getFullProductName());
     AppUIUtil.updateWindowIcon(this);
     //Rectangle bounds = ScreenUtil.getMainScreenBounds();
-    if (RecentProjectsManagerBase.getInstance().getRecentProjectsActions(false).length > 0) {
+    if (RecentProjectsManager.getInstance().getRecentProjectsActions(false).length > 0) {
       setSize(666, 460);
     } else {
       setSize(555, 460);
@@ -176,7 +176,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
       super(new BorderLayout());
       mySlidingPanel.add("root", this);
       setBackground(getMainBackground());
-      if (RecentProjectsManagerBase.getInstance().getRecentProjectsActions(false).length > 0) {
+      if (RecentProjectsManager.getInstance().getRecentProjectsActions(false).length > 0) {
         final JComponent recentProjects = createRecentProjects();
         add(recentProjects, BorderLayout.WEST);
         final JList projectsList = UIUtil.findComponentOfType(recentProjects, JList.class);
@@ -192,7 +192,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
             }
 
             private void removeIfNeeded() {
-              if (RecentProjectsManagerBase.getInstance().getRecentProjectsActions(false).length == 0) {
+              if (RecentProjectsManager.getInstance().getRecentProjectsActions(false).length == 0) {
                 FlatWelcomeScreen.this.remove(recentProjects);
                 FlatWelcomeScreen.this.revalidate();
                 FlatWelcomeScreen.this.repaint();
@@ -337,105 +337,30 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
 
     private AnAction wrapGroups(AnAction action) {
       if (action instanceof ActionGroup && ((ActionGroup)action).isPopup()) {
-        final Pair<JPanel, Runnable> panel = createActionGroupPanel((ActionGroup)action);
+        final Pair<JPanel, JBList> panel = createActionGroupPanel((ActionGroup)action, mySlidingPanel, new Runnable() {
+          @Override
+          public void run() {
+            goBack();
+          }
+        });
+        final Runnable onDone = new Runnable() {
+          @Override
+          public void run() {
+            ListScrollingUtil.ensureSelectionExists(panel.second);
+            panel.second.requestFocus();
+          }
+        };
         final String name = action.getClass().getName();
         mySlidingPanel.add(name, panel.first);
         final Presentation p = action.getTemplatePresentation();
         return new DumbAwareAction(p.getText(), p.getDescription(), p.getIcon()) {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
-            mySlidingPanel.getLayout().swipe(mySlidingPanel, name, JBCardLayout.SwipeDirection.FORWARD, panel.second);
+            mySlidingPanel.getLayout().swipe(mySlidingPanel, name, JBCardLayout.SwipeDirection.FORWARD, onDone);
           }
         };
       }
       return action;
-    }
-
-    private Pair<JPanel, Runnable> createActionGroupPanel(ActionGroup action) {
-      JPanel actionsListPanel = new JPanel(new BorderLayout());
-      actionsListPanel.setBackground(getProjectsBackground());
-      final JBList list = new JBList(action.getChildren(null));
-      list.installCellRenderer(new NotNullFunction<AnAction, JComponent>() {
-        final JLabel label = new JLabel();
-        Map<Icon, Icon> scaled = new HashMap<Icon, Icon>();
-        {
-          label.setBorder(new EmptyBorder(new Insets(3, 7, 3, 7)));
-        }
-        @NotNull
-        @Override
-        public JComponent fun(AnAction action) {
-          label.setText(action.getTemplatePresentation().getText());
-          Icon icon = action.getTemplatePresentation().getIcon();
-          if (icon.getIconHeight() == 32) {
-            Icon scaledIcon = scaled.get(icon);
-            if (scaledIcon == null) {
-              scaledIcon = IconUtil.scale(icon, 0.5);
-              scaled.put(icon, scaledIcon);
-            }
-            icon = scaledIcon;
-          }
-          label.setIcon(icon);
-          return label;
-        }
-      });
-      JScrollPane pane = ScrollPaneFactory.createScrollPane(list, true);
-      pane.setBackground(getProjectsBackground());
-      actionsListPanel.add(pane, BorderLayout.CENTER);
-      final JLabel back = new JLabel(AllIcons.Actions.Back);
-      back.setBorder(new EmptyBorder(new Insets(3, 7, 10, 7)));
-      back.setHorizontalAlignment(SwingConstants.LEFT);
-      new ClickListener(){
-        @Override
-        public boolean onClick(@NotNull MouseEvent event, int clickCount) {
-          goBack();
-          return true;
-        }
-      }.installOn(back);
-      actionsListPanel.add(back, BorderLayout.SOUTH);
-      final Ref<Component> selected = Ref.create();
-      final JPanel main = new JPanel(new BorderLayout());
-      main.add(actionsListPanel, BorderLayout.WEST);
-
-      ListSelectionListener selectionListener = new ListSelectionListener() {
-        @Override
-        public void valueChanged(ListSelectionEvent e) {
-          if (!selected.isNull()) {
-            main.remove(selected.get());
-          }
-          Object value = list.getSelectedValue();
-          if (value instanceof AbstractActionWithPanel) {
-            JPanel panel = ((AbstractActionWithPanel)value).createPanel();
-            panel.setBorder(new EmptyBorder(7, 10, 7, 10));
-            selected.set(panel);
-            main.add(selected.get());
-
-            for (JButton button : UIUtil.findComponentsOfType(main, JButton.class)) {
-              if (button.getClientProperty(DialogWrapper.DEFAULT_ACTION) == Boolean.TRUE) {
-                mySlidingPanel.getRootPane().setDefaultButton(button);
-                break;
-              }
-            }
-
-            main.revalidate();
-            main.repaint();
-          }
-        }
-      };
-      list.addListSelectionListener(selectionListener);
-      new AnAction() {
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e) {
-          goBack();
-        }
-      }.registerCustomShortcutSet(KeyEvent.VK_ESCAPE, 0, main);
-      Runnable callback = new Runnable() {
-        @Override
-        public void run() {
-          ListScrollingUtil.ensureSelectionExists(list);
-          list.requestFocus();
-        }
-      };
-      return Pair.create(main, callback);
     }
 
     protected void goBack() {
@@ -723,5 +648,91 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
   public static class WelcomeScreenActionsPanel {
     private JPanel root;
     private JPanel actions;
+  }
+
+  public static Pair<JPanel, JBList> createActionGroupPanel(ActionGroup action, final JComponent parent, final Runnable backAction) {
+    JPanel actionsListPanel = new JPanel(new BorderLayout());
+    actionsListPanel.setBackground(getProjectsBackground());
+    final JBList list = new JBList(action.getChildren(null));
+    list.installCellRenderer(new NotNullFunction<AnAction, JComponent>() {
+      final JLabel label = new JLabel();
+      Map<Icon, Icon> scaled = new HashMap<Icon, Icon>();
+
+      {
+        label.setBorder(new EmptyBorder(new Insets(3, 7, 3, 7)));
+      }
+
+      @NotNull
+      @Override
+      public JComponent fun(AnAction action) {
+        label.setText(action.getTemplatePresentation().getText());
+        Icon icon = action.getTemplatePresentation().getIcon();
+        if (icon.getIconHeight() == 32) {
+          Icon scaledIcon = scaled.get(icon);
+          if (scaledIcon == null) {
+            scaledIcon = IconUtil.scale(icon, 0.5);
+            scaled.put(icon, scaledIcon);
+          }
+          icon = scaledIcon;
+        }
+        label.setIcon(icon);
+        return label;
+      }
+    });
+    JScrollPane pane = ScrollPaneFactory.createScrollPane(list, true);
+    pane.setBackground(getProjectsBackground());
+    actionsListPanel.add(pane, BorderLayout.CENTER);
+    if (backAction != null) {
+      final JLabel back = new JLabel(AllIcons.Actions.Back);
+      back.setBorder(new EmptyBorder(new Insets(3, 7, 10, 7)));
+      back.setHorizontalAlignment(SwingConstants.LEFT);
+      new ClickListener() {
+        @Override
+        public boolean onClick(@NotNull MouseEvent event, int clickCount) {
+          backAction.run();
+          return true;
+        }
+      }.installOn(back);
+      actionsListPanel.add(back, BorderLayout.SOUTH);
+    }
+    final Ref<Component> selected = Ref.create();
+    final JPanel main = new JPanel(new BorderLayout());
+    main.add(actionsListPanel, BorderLayout.WEST);
+
+    ListSelectionListener selectionListener = new ListSelectionListener() {
+      @Override
+      public void valueChanged(ListSelectionEvent e) {
+        if (!selected.isNull()) {
+          main.remove(selected.get());
+        }
+        Object value = list.getSelectedValue();
+        if (value instanceof AbstractActionWithPanel) {
+          JPanel panel = ((AbstractActionWithPanel)value).createPanel();
+          panel.setBorder(new EmptyBorder(7, 10, 7, 10));
+          selected.set(panel);
+          main.add(selected.get());
+
+          for (JButton button : UIUtil.findComponentsOfType(main, JButton.class)) {
+            if (button.getClientProperty(DialogWrapper.DEFAULT_ACTION) == Boolean.TRUE) {
+              parent.getRootPane().setDefaultButton(button);
+              break;
+            }
+          }
+
+          main.revalidate();
+          main.repaint();
+        }
+      }
+    };
+    list.addListSelectionListener(selectionListener);
+    if (backAction != null) {
+      new AnAction() {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e) {
+          backAction.run();
+        }
+      }.registerCustomShortcutSet(KeyEvent.VK_ESCAPE, 0, main);
+    }
+    return Pair.create(main, list);
   }
 }

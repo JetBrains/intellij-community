@@ -826,22 +826,27 @@ public class SingleInspectionProfilePanel extends JPanel {
     if (!nodes.isEmpty()) {
       final InspectionConfigTreeNode singleNode = paths.length == 1 && ((InspectionConfigTreeNode)paths[0].getLastPathComponent()).getDefaultDescriptor() != null
                                                   ? ContainerUtil.getFirstItem(nodes) : null;
-      if (singleNode != null && singleNode.getDefaultDescriptor().loadDescription() != null) {
-        // need this in order to correctly load plugin-supplied descriptions
-        final Descriptor defaultDescriptor = singleNode.getDefaultDescriptor();
-        final String description = defaultDescriptor.loadDescription();
-        try {
-          if (!readHTML(SearchUtil.markup(toHTML(description), myProfileFilter.getFilter()))) {
-            readHTML(toHTML("<b>" + UNDER_CONSTRUCTION + "</b>"));
+      if (singleNode != null) {
+        if (singleNode.getDefaultDescriptor().loadDescription() != null) {
+          // need this in order to correctly load plugin-supplied descriptions
+          final Descriptor defaultDescriptor = singleNode.getDefaultDescriptor();
+          final String description = defaultDescriptor.loadDescription();
+          try {
+            if (!readHTML(SearchUtil.markup(toHTML(description), myProfileFilter.getFilter()))) {
+              readHTML(toHTML("<b>" + UNDER_CONSTRUCTION + "</b>"));
+            }
           }
-        }
-        catch (Throwable t) {
-          LOG.error("Failed to load description for: " +
-                    defaultDescriptor.getToolWrapper().getTool().getClass() +
-                    "; description: " +
-                    description, t);
-        }
+          catch (Throwable t) {
+            LOG.error("Failed to load description for: " +
+                      defaultDescriptor.getToolWrapper().getTool().getClass() +
+                      "; description: " +
+                      description, t);
+          }
 
+        }
+        else {
+          readHTML(toHTML("Can't find inspection description."));
+        }
       }
       else {
         readHTML(toHTML("Multiple inspections are selected. You can edit them as a single inspection."));

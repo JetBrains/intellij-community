@@ -73,7 +73,6 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 
@@ -125,7 +124,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
         final List<PsiExpression> expressions = collectExpressions(file, editor, offset);
         if (expressions.isEmpty()) {
           selectionModel.selectLineAtCaret();
-        } else if (expressions.size() == 1) {
+        } else if (!isChooserNeeded(expressions)) {
           final TextRange textRange = expressions.get(0).getTextRange();
           selectionModel.setSelection(textRange.getStartOffset(), textRange.getEndOffset());
         }
@@ -147,6 +146,14 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     }
   }
 
+  public static boolean isChooserNeeded(List<PsiExpression> exprs) {
+    if (exprs.size() == 1) {
+      final PsiExpression expression = exprs.get(0);
+      return expression instanceof PsiNewExpression && ((PsiNewExpression)expression).getAnonymousClass() != null;
+    }
+    return true;
+  }
+  
   public static boolean selectLineAtCaret(int offset, PsiElement[] statementsInRange) {
     return !PsiUtil.isStatement(statementsInRange[0]) ||
             statementsInRange[0].getTextRange().getStartOffset() > offset ||

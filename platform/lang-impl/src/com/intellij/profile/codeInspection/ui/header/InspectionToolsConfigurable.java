@@ -57,6 +57,7 @@ import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.profile.codeInspection.ui.ErrorsConfigurable;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
@@ -204,6 +205,12 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
               myAuxiliaryRightPanel.showError("Name is already in use. Please change name to unique.");
             }
             return isValid;
+          }
+
+          @Override
+          public void cancel() {
+            myProfiles.showComboBoxCard();
+            myAuxiliaryRightPanel.showDescription(getSelectedObject().getDescription());
           }
         });
       }
@@ -357,27 +364,30 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
       @Override
       public void saveDescription(@NotNull String description) {
         final InspectionProfileImpl inspectionProfile = getSelectedObject();
-        if (!Comparing.equal(description, inspectionProfile.getDescription())) {
+        if (!Comparing.strEqual(description, inspectionProfile.getDescription())) {
           inspectionProfile.setDescription(description);
           inspectionProfile.setModified(true);
         }
         myAuxiliaryRightPanel.showDescription(description);
       }
+
+      @Override
+      public void cancel() {
+        myAuxiliaryRightPanel.showDescription(getSelectedObject().getDescription());
+      }
     });
 
     toolbar.setLayout(new GridBagLayout());
-    toolbar.add(new JLabel(HEADER_TITLE),
-                new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.VERTICAL, new Insets(10, 5, 0, 0), 0,
-                                       0));
-    toolbar.add(myProfiles,
-                new GridBagConstraints(1, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.VERTICAL, new Insets(10, 5, 0, 0), 0,
-                                       0));
-    toolbar.add(manageButton,
-                new GridBagConstraints(2, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.VERTICAL, new Insets(10, 5, 0, 0), 0,
-                                       0));
-    toolbar.add(myAuxiliaryRightPanel,
-                new GridBagConstraints(3, 0, 1, 1, 1.0, 0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(10, 5, 0, 0), 0,
-                                       0));
+    toolbar.add(new JLabel(HEADER_TITLE), new GridBagConstraints(0, 1, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.VERTICAL, new Insets(0, 0, 0, 0), 0, 0));
+
+    toolbar.add(myProfiles.getHintLabel(), new GridBagConstraints(1, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.VERTICAL, new Insets(0, 6, 6, 0), 0, 0));
+    toolbar.add(myProfiles, new GridBagConstraints(1, 1, 1, 1, 0, 1.0, GridBagConstraints.WEST, GridBagConstraints.VERTICAL, new Insets(0, 6, 0, 0), 0, 0));
+
+    toolbar.add(manageButton, new GridBagConstraints(2, 1, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.VERTICAL, new Insets(0, 10, 0, 0), 0, 0));
+
+    toolbar.add(myAuxiliaryRightPanel.getHintLabel(), new GridBagConstraints(3, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.VERTICAL, new Insets(0, 15, 6, 0), 0, 0));
+    toolbar.add(myAuxiliaryRightPanel, new GridBagConstraints(3, 1, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 15, 0, 0), 0, 0));
+
 
     ((InspectionManagerEx)InspectionManager.getInstance(projectProfileManager.getProject())).buildInspectionSearchIndexIfNecessary();
     myProjectProfileManager = projectProfileManager;
@@ -613,8 +623,8 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
   }
 
   @Override
-  public void selectProfile(String name) {
-    myProfiles.selectProfile(name);
+  public void selectProfile(Profile profile) {
+    myProfiles.selectProfile(profile);
   }
 
   @Override

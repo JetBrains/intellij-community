@@ -16,7 +16,6 @@
 package com.intellij.profile.codeInspection.ui.header;
 
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.profile.Profile;
 import com.intellij.ui.ListCellRendererWrapper;
 
@@ -35,7 +34,7 @@ public abstract class ProfilesConfigurableComboBox extends JPanel {
 
   private final JComboBox myProfilesComboBox;
   private final CardLayout myCardLayout;
-  private final SaveInputComponent mySubmitNameComponent;
+  private final ValidatedTextField mySubmitNameComponent;
   private final SaveInputComponentValidator.Wrapper mySaveListener;
 
   public ProfilesConfigurableComboBox(final ListCellRendererWrapper<Profile> comboBoxItemsRenderer) {
@@ -46,7 +45,7 @@ public abstract class ProfilesConfigurableComboBox extends JPanel {
     add(myProfilesComboBox, COMBO_CARD);
 
     mySaveListener = new SaveInputComponentValidator.Wrapper();
-    mySubmitNameComponent = new SaveInputComponent(mySaveListener);
+    mySubmitNameComponent = new ValidatedTextField(mySaveListener);
     add(mySubmitNameComponent, EDIT_CARD);
 
     myProfilesComboBox.setRenderer(comboBoxItemsRenderer);
@@ -69,7 +68,7 @@ public abstract class ProfilesConfigurableComboBox extends JPanel {
     mySaveListener.setDelegate(inputValidator);
     mySubmitNameComponent.setText(initialValue);
     myCardLayout.show(this, EDIT_CARD);
-    mySubmitNameComponent.requestFocusToTextField();
+    mySubmitNameComponent.requestFocus();
   }
 
   public void reset(final Collection<Profile> profiles) {
@@ -89,17 +88,12 @@ public abstract class ProfilesConfigurableComboBox extends JPanel {
     return (InspectionProfileImpl)myProfilesComboBox.getSelectedItem();
   }
 
-  public void selectProfile(InspectionProfileImpl inspectionProfile) {
-    myProfilesComboBox.setSelectedItem(inspectionProfile);
+  public JPanel getHintLabel() {
+    return mySubmitNameComponent.getHintLabel();
   }
 
-  public void selectProfile(String name) {
-    for (int i = 0; i < myProfilesComboBox.getItemCount(); i++) {
-      if (Comparing.strEqual(((InspectionProfileImpl)myProfilesComboBox.getItemAt(i)).getName(), name)) {
-        myProfilesComboBox.setSelectedIndex(i);
-        break;
-      }
-    }
+  public void selectProfile(Profile inspectionProfile) {
+    myProfilesComboBox.setSelectedItem(inspectionProfile);
   }
 
   public void showComboBoxCard() {

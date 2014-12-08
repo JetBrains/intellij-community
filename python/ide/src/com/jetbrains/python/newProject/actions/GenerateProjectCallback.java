@@ -15,13 +15,10 @@
  */
 package com.jetbrains.python.newProject.actions;
 
-import com.intellij.ide.RecentProjectsManager;
+import com.intellij.ide.util.projectWizard.ProjectSettingsStepBase;
 import com.intellij.ide.util.projectWizard.WebProjectTemplate;
-import com.intellij.internal.statistic.UsageTrigger;
-import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -30,13 +27,12 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.DirectoryProjectGenerator;
-import com.intellij.platform.PlatformProjectOpenProcessor;
-import com.intellij.projectImport.ProjectOpenedCallback;
+import com.intellij.platform.NewDirectoryProjectAction;
+import com.intellij.util.Function;
 import com.intellij.util.NullableConsumer;
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList;
 import com.jetbrains.python.newProject.PyNewProjectSettings;
@@ -48,24 +44,16 @@ import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.util.List;
 
-public class GenerateProjectCallback implements NullableConsumer<AbstractProjectSettingsStep> {
+public class GenerateProjectCallback implements NullableConsumer<ProjectSettingsStepBase> {
   private static final Logger LOG = Logger.getInstance(GenerateProjectCallback.class);
-  @Nullable private final Runnable myRunnable;
-
-  public GenerateProjectCallback(@Nullable final Runnable runnable) {
-
-    myRunnable = runnable;
-  }
 
   @Override
-  public void consume(@Nullable AbstractProjectSettingsStep settingsStep) {
-    if (myRunnable != null) {
-      myRunnable.run();
-    }
-    if (settingsStep == null) return;
+  public void consume(@Nullable ProjectSettingsStepBase step) {
+    if (!(step instanceof ProjectSpecificSettingsStep)) return;
+
+    final ProjectSpecificSettingsStep settingsStep = (ProjectSpecificSettingsStep)step;
 
     Sdk sdk = settingsStep.getSdk();
     final Project project = ProjectManager.getInstance().getDefaultProject();
@@ -104,56 +92,30 @@ public class GenerateProjectCallback implements NullableConsumer<AbstractProject
   }
 
   @Nullable
-  private static Project generateProject(@NotNull final Project project, @NotNull final AbstractProjectSettingsStep settings) {
+  private static Project generateProject(@NotNull final Project project,
+                                         @NotNull final ProjectSettingsStepBase settings) {
     final DirectoryProjectGenerator generator = settings.getProjectGenerator();
-    final File location = new File(settings.getProjectLocation());
-    if (!location.exists() && !location.mkdirs()) {
-      Messages.showErrorDialog(project, "Cannot create directory '" + location + "'", "Create Project");
-      return null;
+    return NewDirectoryProjectAction.doGenerateProject(project, settings.getProjectLocation(), generator,
+                                                       new Function<VirtualFile, Object>() {
+                                                         @Override
+                                                         public Object fun(VirtualFile file) {
+                                                           return computeProjectSettings(generator, (ProjectSpecificSettingsStep)settings);
+                                                         }
+                                                       });
+  }
+
+  public static Object computeProjectSettings(DirectoryProjectGenerator generator, ProjectSpecificSettingsStep settings) {
+    Object projectSettings = null;
+    if (generator instanceof PythonProjectGenerator) {
+      projectSettings = ((PythonProjectGenerator)generator).getProjectSettings();
     }
-
-    final VirtualFile baseDir = ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
-      public VirtualFile compute() {
-        return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(location);
-      }
-    });
-    LOG.assertTrue(baseDir != null, "Couldn't find '" + location + "' in VFS");
-    baseDir.refresh(false, true);
-
-    if (baseDir.getChildren().length > 0) {
-      int rc = Messages.showYesNoDialog(project,
-                                        "The directory '" + location +
-                                        "' is not empty. Would you like to create a project from existing sources instead?",
-                                        "Create New Project", Messages.getQuestionIcon());
-      if (rc == Messages.YES) {
-        return PlatformProjectOpenProcessor.getInstance().doOpenProject(baseDir, null, false);
-      }
+    else if (generator instanceof WebProjectTemplate) {
+      projectSettings = ((WebProjectTemplate)generator).getPeer().getSettings();
     }
-
-    String generatorName = generator == null ? "empty" : ConvertUsagesUtil.ensureProperKey(generator.getName());
-    UsageTrigger.trigger("NewDirectoryProjectAction." + generatorName);
-
-    RecentProjectsManager.getInstance().setLastProjectCreationLocation(location.getParent());
-
-    return PlatformProjectOpenProcessor.doOpenProject(baseDir, null, false, -1, new ProjectOpenedCallback() {
-      @Override
-      public void projectOpened(Project project, Module module) {
-        if (generator != null) {
-          Object projectSettings = null;
-          if (generator instanceof PythonProjectGenerator) {
-            projectSettings = ((PythonProjectGenerator)generator).getProjectSettings();
-          }
-          else if (generator instanceof WebProjectTemplate) {
-            projectSettings = ((WebProjectTemplate)generator).getPeer().getSettings();
-          }
-          if (projectSettings instanceof PyNewProjectSettings) {
-            ((PyNewProjectSettings)projectSettings).setSdk(settings.getSdk());
-            ((PyNewProjectSettings)projectSettings).setInstallFramework(settings.installFramework());
-          }
-          //noinspection unchecked
-          generator.generateProject(project, baseDir, projectSettings, module);
-        }
-      }
-    }, false);
+    if (projectSettings instanceof PyNewProjectSettings) {
+      ((PyNewProjectSettings)projectSettings).setSdk(settings.getSdk());
+      ((PyNewProjectSettings)projectSettings).setInstallFramework(settings.installFramework());
+    }
+    return projectSettings;
   }
 }
