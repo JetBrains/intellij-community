@@ -94,7 +94,7 @@ public class DfaExpressionFactory {
       return myFactory.createLiteralValue((PsiLiteralExpression)expression);
     }
 
-    if (expression instanceof PsiNewExpression) {
+    if (expression instanceof PsiNewExpression || expression instanceof PsiLambdaExpression) {
       return myFactory.createTypeValue(expression.getType(), Nullness.NOT_NULL);
     }
 

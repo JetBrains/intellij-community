@@ -73,6 +73,10 @@ String bar() { return "z"; }
     assert inferNullity(parse('Object foo() { return 1; }')) == NOT_NULL
   }
 
+  void "test null inside lambda"() {
+    assert inferNullity(parse('Object foo() { return () -> { return null; }; }')) == NOT_NULL
+  }
+
   protected abstract Nullness inferNullity(PsiMethod method)
 
   protected PsiMethod parse(String method) {
