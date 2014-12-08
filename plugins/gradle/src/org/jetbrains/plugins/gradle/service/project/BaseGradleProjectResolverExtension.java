@@ -653,6 +653,13 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
             final String classifier = matcher.group(1);
             libraryName += (":" + classifier);
           }
+          else {
+            final String artifactId = StringUtil.trimEnd(StringUtil.trimEnd(libraryFileName, moduleVersion.getVersion()), "-");
+            libraryName = String.format("%s:%s:%s",
+                                        moduleVersion.getGroup(),
+                                        artifactId,
+                                        moduleVersion.getVersion());
+          }
         }
       }
     }
