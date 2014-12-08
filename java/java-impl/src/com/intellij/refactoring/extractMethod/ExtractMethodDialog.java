@@ -200,11 +200,11 @@ public class ExtractMethodDialog extends DialogWrapper implements AbstractExtrac
 
   protected JComponent createNorthPanel() {
     final JPanel main = new JPanel(new BorderLayout());
-    final JPanel namePanel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 2, true, false));
+    final JPanel namePanel = new JPanel(new BorderLayout(0, 2));
     final JLabel nameLabel = new JLabel();
     nameLabel.setText(RefactoringBundle.message("changeSignature.name.prompt"));
-    namePanel.add(nameLabel);
-    namePanel.add(myNameField);
+    namePanel.add(nameLabel, BorderLayout.NORTH);
+    namePanel.add(myNameField, BorderLayout.SOUTH);
     nameLabel.setLabelFor(myNameField);
 
     myNameField.addDataChangedListener(new NameSuggestionsField.DataChanged() {
