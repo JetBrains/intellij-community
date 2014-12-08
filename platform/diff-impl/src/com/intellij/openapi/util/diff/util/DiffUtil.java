@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.external.DiffManagerImpl;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -17,6 +18,7 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.progress.DumbProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapperDialog;
@@ -24,14 +26,14 @@ import com.intellij.openapi.ui.WindowWrapper;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.diff.DiffDialogHints;
+import com.intellij.openapi.util.diff.comparison.ByWord;
 import com.intellij.openapi.util.diff.comparison.ComparisonPolicy;
 import com.intellij.openapi.util.diff.comparison.ComparisonUtil;
+import com.intellij.openapi.util.diff.comparison.DiffTooBigException;
 import com.intellij.openapi.util.diff.contents.DiffContent;
 import com.intellij.openapi.util.diff.contents.DocumentContent;
 import com.intellij.openapi.util.diff.contents.EmptyContent;
-import com.intellij.openapi.util.diff.fragments.FineLineFragment;
-import com.intellij.openapi.util.diff.fragments.LineFragment;
-import com.intellij.openapi.util.diff.fragments.LineFragments;
+import com.intellij.openapi.util.diff.fragments.*;
 import com.intellij.openapi.util.diff.requests.ContentDiffRequest;
 import com.intellij.openapi.util.diff.requests.DiffRequest;
 import com.intellij.openapi.util.diff.tools.util.DiffUserDataKeys;
@@ -54,9 +56,12 @@ import java.awt.*;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.BitSet;
+import java.util.Collections;
 import java.util.List;
 
 public class DiffUtil {
+  private static final Logger LOG = Logger.getInstance(DiffUtil.class);
+
   @NotNull public static final String DIFF_CONFIG = StoragePathMacros.APP_CONFIG + "/diff.xml";
 
   //
@@ -366,6 +371,19 @@ public class DiffUtil {
   //
   // Compare
   //
+
+  @NotNull
+  public static List<DiffFragment> compareWords(@NotNull CharSequence text1, @NotNull CharSequence text2, int maxLength) {
+    try {
+      if (text1.length() < maxLength && text2.length() < maxLength) {
+        return ByWord.compare(text1, text2, ComparisonPolicy.DEFAULT, DumbProgressIndicator.INSTANCE);
+      }
+    }
+    catch (DiffTooBigException e) {
+      LOG.warn(e);
+    }
+    return Collections.<DiffFragment>singletonList(new DiffFragmentImpl(0, text1.length(), 0, text2.length()));
+  }
 
   @NotNull
   public static LineFragments compareWithCache(@NotNull DiffRequest request,
