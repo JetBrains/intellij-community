@@ -42,18 +42,13 @@ public abstract class AbstractToolWindowService<T extends ExternalEntityData> im
     ExternalSystemApiUtil.executeOnEdt(false, new Runnable() {
       @Override
       public void run() {
-        ExternalSystemTasksTreeModel model = ExternalSystemUtil.getToolWindowElement(ExternalSystemTasksTreeModel.class,
-                                                                                     project,
-                                                                                     ExternalSystemDataKeys.ALL_TASKS_MODEL,
-                                                                                     toImport.iterator().next().getData().getOwner());
-        processData(toImport, project, model);
+        processData(toImport, project);
       }
     });
   }
 
   protected abstract void processData(@NotNull Collection<DataNode<T>> nodes,
-                                      @NotNull Project project,
-                                      @Nullable ExternalSystemTasksTreeModel model);
+                                      @NotNull Project project);
 
   @Override
   public void removeData(@NotNull Collection<? extends Void> toRemove, @NotNull Project project, boolean synchronous) {

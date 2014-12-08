@@ -5,27 +5,23 @@ import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.ExternalSystemUiAware;
+import com.intellij.openapi.externalSystem.model.ExternalProjectInfo;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.model.execution.ExternalTaskPojo;
 import com.intellij.openapi.externalSystem.service.ui.DefaultExternalSystemUiAware;
-import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
-import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
+import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.io.File;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Basic run configuration type for external system tasks.
@@ -133,35 +129,16 @@ public abstract class AbstractExternalSystemTaskConfigurationType implements Con
                                     @Nullable String externalProjectPath,
                                     @NotNull List<String> taskNames,
                                     @Nullable String executionName) {
-    ExternalSystemManager<?, ?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(externalSystemId);
-    assert manager != null;
-    AbstractExternalSystemSettings<?, ?,?> s = manager.getSettingsProvider().fun(project);
-    Map<String/* project dir path */, String/* project file path */> rootProjectPaths = ContainerUtilRt.newHashMap();
-    for (ExternalProjectSettings projectSettings : s.getLinkedProjectsSettings()) {
-      String path = projectSettings.getExternalProjectPath();
-      if(path == null) continue;
-      final File rootProjectPathFile = new File(path).getParentFile();
-      if(rootProjectPathFile == null) continue;
-      rootProjectPaths.put(rootProjectPathFile.getAbsolutePath(), path);
-    }
-    
+
     String rootProjectPath = null;
     if (externalProjectPath != null) {
-      if (!rootProjectPaths.containsKey(externalProjectPath)) {
-        for (File f = new File(externalProjectPath), prev = null;
-             f != null && !FileUtil.filesEqual(f, prev);
-             prev = f, f = f.getParentFile())
-        {
-          rootProjectPath = rootProjectPaths.get(f.getAbsolutePath());
-          if (rootProjectPath != null) {
-            break;
-          }
-        }
+      final ExternalProjectInfo projectInfo = ExternalSystemUtil.getExternalProjectInfo(project, externalSystemId, externalProjectPath);
+      if (projectInfo != null) {
+        rootProjectPath = projectInfo.getExternalProjectPath();
       }
     }
-    
+
     StringBuilder buffer = new StringBuilder();
-    
     final String projectName;
     if (rootProjectPath == null) {
       projectName = null;
@@ -171,24 +148,23 @@ public abstract class AbstractExternalSystemTaskConfigurationType implements Con
     }
     if (!StringUtil.isEmptyOrSpaces(projectName)) {
       buffer.append(projectName);
-      buffer.append(" ");
+      buffer.append(' ');
     } else {
       buffer.append(externalProjectPath);
-      buffer.append(" ");
+      buffer.append(' ');
     }
 
-    buffer.append("[");
+    buffer.append('[');
     if (!StringUtil.isEmpty(executionName)) {
       buffer.append(executionName);
     }
     else if (!taskNames.isEmpty()) {
       for (String taskName : taskNames) {
-        buffer.append(taskName).append(" ");
+        buffer.append(taskName).append(' ');
       }
       buffer.setLength(buffer.length() - 1);
     }
-
-    buffer.append("]");
+    buffer.append(']');
 
     return buffer.toString();
   }

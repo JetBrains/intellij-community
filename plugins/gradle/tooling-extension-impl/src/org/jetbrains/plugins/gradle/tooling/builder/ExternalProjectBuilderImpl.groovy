@@ -101,7 +101,7 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
       ExternalTask externalTask = new DefaultExternalTask()
       externalTask.name = task.name
       externalTask.description = task.description
-      externalTask.group = task.group
+      externalTask.group = task.group ?: "other"
       externalTask.QName = task.path
       result.put(externalTask.QName, externalTask)
     }
