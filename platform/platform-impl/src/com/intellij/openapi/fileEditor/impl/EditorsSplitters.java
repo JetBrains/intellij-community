@@ -95,7 +95,6 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     myManager = manager;
     myFocusWatcher = new MyFocusWatcher();
     setFocusTraversalPolicy(new MyFocusTraversalPolicy());
-    setTransferHandler(new MyTransferHandler());
     clear();
 
     if (createOwnDockableContainer) {
@@ -765,24 +764,6 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
 
       setCurrentWindow(newWindow);
       setCurrentWindow(newWindow, false);
-    }
-  }
-
-  private final class MyTransferHandler extends TransferHandler {
-    private final FileDropHandler myFileDropHandler = new FileDropHandler(null);
-
-    @Override
-    public boolean importData(JComponent comp, Transferable t) {
-      if (myFileDropHandler.canHandleDrop(t.getTransferDataFlavors())) {
-        myFileDropHandler.handleDrop(t, myManager.getProject(), myCurrentWindow);
-        return true;
-      }
-      return false;
-    }
-
-    @Override
-    public boolean canImport(JComponent comp, DataFlavor[] transferFlavors) {
-      return myFileDropHandler.canHandleDrop(transferFlavors);
     }
   }
 

@@ -31,6 +31,7 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
+import com.intellij.openapi.fileEditor.impl.text.FileDropHandler;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Queryable;
@@ -61,6 +62,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -86,6 +89,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     myProject = project;
     final ActionManager actionManager = ActionManager.getInstance();
     myTabs = new JBEditorTabs(project, actionManager, IdeFocusManager.getInstance(project), this);
+    myTabs.setTransferHandler(new MyTransferHandler());
     myTabs.setDataProvider(new MyDataProvider()).setPopupGroup(new Getter<ActionGroup>() {
       @Override
       public ActionGroup get() {
@@ -717,5 +721,22 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
       return myPinned;
     }
   }
+  
+  private final class MyTransferHandler extends TransferHandler {
+    private final FileDropHandler myFileDropHandler = new FileDropHandler(null);
 
+    @Override
+    public boolean importData(JComponent comp, Transferable t) {
+      if (myFileDropHandler.canHandleDrop(t.getTransferDataFlavors())) {
+        myFileDropHandler.handleDrop(t, myProject, myWindow);
+        return true;
+      }
+      return false;
+    }
+
+    @Override
+    public boolean canImport(JComponent comp, DataFlavor[] transferFlavors) {
+      return myFileDropHandler.canHandleDrop(transferFlavors);
+    }
+  }
 }
