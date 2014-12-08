@@ -28,7 +28,7 @@ public class JBUI {
     return isHiDPI() ? 2 * i : i;
   }
 
-  public Dimension size(int width, int height) {
+  public static JBDimension size(int width, int height) {
     return new JBDimension(width, height);
   }
 
