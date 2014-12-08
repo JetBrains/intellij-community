@@ -31,6 +31,7 @@ public class PlatformUtils {
   public static final String CLION_PREFIX = "CLion";
   public static final String PYCHARM_PREFIX = "Python";
   public static final String PYCHARM_CE_PREFIX = "PyCharmCore";
+  public static final String PYCHARM_EDU_PREFIX = "PyCharmEdu";
   public static final String RUBY_PREFIX = "Ruby";
   public static final String PHP_PREFIX = "PhpStorm";
   public static final String WEB_PREFIX = "WebStorm";
@@ -73,7 +74,7 @@ public class PlatformUtils {
   }
 
   public static boolean isPyCharm() {
-    return isPyCharmPro() || isPyCharmCommunity();
+    return isPyCharmPro() || isPyCharmCommunity() || isPyCharmEducational();
   }
 
   public static boolean isPyCharmPro() {
@@ -82,6 +83,10 @@ public class PlatformUtils {
 
   public static boolean isPyCharmCommunity() {
     return is(PYCHARM_PREFIX2);
+  }
+
+  public static boolean isPyCharmEducational() {
+    return is(PYCHARM_EDU_PREFIX);
   }
 
   public static boolean isPhpStorm() {
