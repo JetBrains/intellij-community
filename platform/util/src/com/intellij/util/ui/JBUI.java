@@ -48,16 +48,18 @@ public class JBUI {
     return JBInsets.create(insets);
   }
 
-  public static JBFont labelFont() {
-    return JBFont.create(UIManager.getFont("Label.font"));
-  }
-
-  public static JBFont labelFont(float size) {
-    return labelFont().deriveFont(scale(size));
-  }
-
   public static boolean isHiDPI() {
     return "true".equals(System.getProperty("hidpi"));
+  }
+
+  public static class Fonts {
+    public static JBFont label() {
+      return JBFont.create(UIManager.getFont("Label.font"));
+    }
+
+    public static JBFont label(float size) {
+      return label().deriveFont(scale(size));
+    }
   }
 
   public static class Borders {
