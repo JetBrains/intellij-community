@@ -344,6 +344,9 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  public void testFoldingWithFieldInvolved() throws Exception {
+    doTest();
+  }
 
   public void testIDEADEV11748() throws Exception {
     doTest();

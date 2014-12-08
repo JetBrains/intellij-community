@@ -270,7 +270,7 @@ public class ParametersFolder {
         final PsiElement resolved = expression.resolve();
         if (resolved instanceof PsiVariable) {
           final PsiVariable variable = (PsiVariable)resolved;
-          if (!inputVariables.contains(variable)) {
+          if (!(variable instanceof PsiField) && !inputVariables.contains(variable)) {
             localVarsUsed[0] = true;
             return;
           }
