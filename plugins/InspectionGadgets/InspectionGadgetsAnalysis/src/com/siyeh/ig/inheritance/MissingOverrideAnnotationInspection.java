@@ -120,6 +120,11 @@ public class MissingOverrideAnnotationInspection extends BaseInspection {
   }
 
   @Override
+  public boolean shouldInspect(PsiFile file) {
+    return PsiUtil.isLanguageLevel5OrHigher(file);
+  }
+
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new MissingOverrideAnnotationVisitor();
   }
@@ -129,9 +134,6 @@ public class MissingOverrideAnnotationInspection extends BaseInspection {
 
     @Override
     public void visitMethod(@NotNull PsiMethod method) {
-      if (!PsiUtil.isLanguageLevel5OrHigher(method)) {
-        return;
-      }
       if (method.getNameIdentifier() == null) {
         return;
       }

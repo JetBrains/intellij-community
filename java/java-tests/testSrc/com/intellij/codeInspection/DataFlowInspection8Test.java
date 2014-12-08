@@ -53,6 +53,14 @@ public class DataFlowInspection8Test extends LightCodeInsightFixtureTestCase {
     doTest();
   }
 
+  public void testUnboxingBoxingInLambdaReturn() throws Exception {
+    doTest();
+  }
+
+  public void testUnboxingInMethodReferences() throws Exception {
+    doTest();
+  }
+
   private void setupCustomAnnotations() {
     myFixture.addClass("package foo;\n\nimport java.lang.annotation.*;\n\n@Target({ElementType.TYPE_USE}) public @interface Nullable { }");
     myFixture.addClass("package foo;\n\nimport java.lang.annotation.*;\n\n@Target({ElementType.TYPE_USE}) public @interface NotNull { }");

@@ -32,17 +32,14 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created by Max Medvedev on 07/04/14
  */
 public class GrMapTypeFromNamedArgs extends GrMapType {
 
-  private final Map<String, GrExpression> myStringEntries;
+  private final LinkedHashMap<String, GrExpression> myStringEntries;
   private final List<Couple<GrExpression>> myOtherEntries;
 
   private final VolatileNotNullLazyValue<List<Couple<PsiType>>> myTypesOfOtherEntries = new VolatileNotNullLazyValue<List<Couple<PsiType>>>() {
@@ -58,11 +55,11 @@ public class GrMapTypeFromNamedArgs extends GrMapType {
     }
   };
 
-  private final VolatileNotNullLazyValue<Map<String, PsiType>> myTypesOfStringEntries = new VolatileNotNullLazyValue<Map<String,PsiType>>() {
+  private final VolatileNotNullLazyValue<LinkedHashMap<String, PsiType>> myTypesOfStringEntries = new VolatileNotNullLazyValue<LinkedHashMap<String,PsiType>>() {
     @NotNull
     @Override
-    protected Map<String, PsiType> compute() {
-      HashMap<String, PsiType> result = ContainerUtil.newHashMap();
+    protected LinkedHashMap<String, PsiType> compute() {
+      LinkedHashMap<String, PsiType> result = ContainerUtil.newLinkedHashMap();
       for (Map.Entry<String, GrExpression> entry : myStringEntries.entrySet()) {
         result.put(entry.getKey(), inferTypePreventingRecursion(entry.getValue()));
       }
@@ -78,7 +75,7 @@ public class GrMapTypeFromNamedArgs extends GrMapType {
   public GrMapTypeFromNamedArgs(@NotNull JavaPsiFacade facade, @NotNull GlobalSearchScope scope, @NotNull GrNamedArgument[] namedArgs) {
     super(facade, scope);
 
-    myStringEntries = ContainerUtil.newHashMap();
+    myStringEntries = ContainerUtil.newLinkedHashMap();
     myOtherEntries = ContainerUtil.newArrayList();
     for (GrNamedArgument namedArg : namedArgs) {
       final GrArgumentLabel label = namedArg.getLabel();
@@ -161,7 +158,7 @@ public class GrMapTypeFromNamedArgs extends GrMapType {
 
   @NotNull
   @Override
-  protected Map<String, PsiType> getStringEntries() {
+  protected LinkedHashMap<String, PsiType> getStringEntries() {
     return myTypesOfStringEntries.getValue();
   }
 

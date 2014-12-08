@@ -88,16 +88,4 @@ public class ArrayChunk {
   public Object[][] getData() {
     return myData;
   }
-
-  public boolean metaOnly() {
-    return myData == null;
-  }
-
-  public boolean containsMeta() {
-    return !mySlicePresentation.isEmpty() &&
-           myRows > 0 &&
-           myColumns > 0 &&
-           !myFormat.isEmpty() &&
-           !myType.isEmpty();
-  }
 }

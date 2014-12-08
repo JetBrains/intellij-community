@@ -48,7 +48,7 @@ public class ExecutionPointHighlighter {
   private Editor myEditor;
   private XSourcePosition mySourcePosition;
   private OpenFileDescriptor myOpenFileDescriptor;
-  private boolean myUseSelection;
+  private boolean myNotTopFrame;
   private GutterIconRenderer myGutterIconRenderer;
   private static final Key<Boolean> EXECUTION_POINT_HIGHLIGHTER_KEY = Key.create("EXECUTION_POINT_HIGHLIGHTER_KEY");
 
@@ -69,7 +69,7 @@ public class ExecutionPointHighlighter {
     }
   }
 
-  public void show(final @NotNull XSourcePosition position, final boolean useSelection,
+  public void show(final @NotNull XSourcePosition position, final boolean notTopFrame,
                    @Nullable final GutterIconRenderer gutterIconRenderer) {
     updateRequested.set(false);
     AppUIUtil.invokeLaterIfProjectAlive(myProject, new Runnable() {
@@ -85,7 +85,7 @@ public class ExecutionPointHighlighter {
         //myOpenFileDescriptor.setUseCurrentWindow(true);
 
         myGutterIconRenderer = gutterIconRenderer;
-        myUseSelection = useSelection;
+        myNotTopFrame = notTopFrame;
 
         doShow(true);
       }
@@ -170,9 +170,9 @@ public class ExecutionPointHighlighter {
       adjustCounter(myEditor, -1);
     }
 
-    if (myUseSelection && myEditor != null) {
-      myEditor.getSelectionModel().removeSelection();
-    }
+    //if (myNotTopFrame && myEditor != null) {
+    //  myEditor.getSelectionModel().removeSelection();
+    //}
 
     if (myRangeHighlighter != null) {
       myRangeHighlighter.dispose();
@@ -186,16 +186,18 @@ public class ExecutionPointHighlighter {
     Document document = myEditor.getDocument();
     if (line < 0 || line >= document.getLineCount()) return;
 
-    if (myUseSelection) {
-      myEditor.getSelectionModel().setSelection(document.getLineStartOffset(line), document.getLineEndOffset(line) + document.getLineSeparatorLength(line));
-      return;
-    }
+    //if (myNotTopFrame) {
+    //  myEditor.getSelectionModel().setSelection(document.getLineStartOffset(line), document.getLineEndOffset(line) + document.getLineSeparatorLength(line));
+    //  return;
+    //}
 
     if (myRangeHighlighter != null) return;
 
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     myRangeHighlighter = myEditor.getMarkupModel().addLineHighlighter(line, DebuggerColors.EXECUTION_LINE_HIGHLIGHTERLAYER,
-                                                                      scheme.getAttributes(DebuggerColors.EXECUTIONPOINT_ATTRIBUTES));
+                                                                      myNotTopFrame
+                                                                      ? scheme.getAttributes(DebuggerColors.NOT_TOP_FRAME_ATTRIBUTES)
+                                                                      : scheme.getAttributes(DebuggerColors.EXECUTIONPOINT_ATTRIBUTES));
     myRangeHighlighter.putUserData(EXECUTION_POINT_HIGHLIGHTER_KEY, true);
     myRangeHighlighter.setGutterIconRenderer(myGutterIconRenderer);
   }

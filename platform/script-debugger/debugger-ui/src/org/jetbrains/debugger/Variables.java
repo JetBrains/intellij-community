@@ -2,7 +2,6 @@ package org.jetbrains.debugger;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.frame.XCompositeNode;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import org.jetbrains.annotations.NotNull;
@@ -57,7 +56,7 @@ public final class Variables {
           }
         }
 
-        ContainerUtil.sort(properties, memberFilter.hasNameMappings() ? new Comparator<Variable>() {
+        Collections.sort(properties, memberFilter.hasNameMappings() ? new Comparator<Variable>() {
           @Override
           public int compare(@NotNull Variable o1, @NotNull Variable o2) {
             return naturalCompare(memberFilter.getName(o1), memberFilter.getName(o2));
@@ -144,7 +143,7 @@ public final class Variables {
   }
 
   private static void sort(@NotNull List<Variable> result) {
-    ContainerUtil.sort(result, NATURAL_NAME_COMPARATOR);
+    Collections.sort(result, NATURAL_NAME_COMPARATOR);
   }
 
   // prefixed '_' must be last, fixed case sensitive natural compare

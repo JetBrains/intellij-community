@@ -441,7 +441,10 @@ public class PyReplaceExpressionUtil implements PyElementTypes {
 
   private static int getExpressionPriority(PyElement expr) {
     int priority = 0;
-    if (expr instanceof PySubscriptionExpression || expr instanceof PySliceExpression || expr instanceof PyCallExpression) priority = 1;
+    if (expr instanceof PyReferenceExpression ||
+        expr instanceof PySubscriptionExpression ||
+        expr instanceof PySliceExpression ||
+        expr instanceof PyCallExpression) priority = 1;
     else if (expr instanceof PyPrefixExpression) {
       final IElementType opType = getOperationType(expr);
       if (opType == PLUS || opType == MINUS || opType == TILDE) priority = 2;

@@ -46,7 +46,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
   @NotNull private final VcsLogHashMap myHashMap;
   @NotNull private final Map<VirtualFile, VcsLogProvider> myProviders;
   @NotNull private final VcsUserRegistryImpl myUserRegistry;
-  @NotNull private final Map<Hash, VcsCommitMetadata> myTopCommitsDetailsCache;
+  @NotNull private final Map<Integer, VcsCommitMetadata> myTopCommitsDetailsCache;
   @NotNull private final Consumer<Exception> myExceptionHandler;
   private final int myRecentCommitCount;
 
@@ -58,7 +58,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
                              @NotNull VcsLogHashMap hashMap,
                              @NotNull Map<VirtualFile, VcsLogProvider> providers,
                              @NotNull final VcsUserRegistryImpl userRegistry,
-                             @NotNull Map<Hash, VcsCommitMetadata> topCommitsDetailsCache,
+                             @NotNull Map<Integer, VcsCommitMetadata> topCommitsDetailsCache,
                              @NotNull final Consumer<DataPack> dataPackUpdateHandler,
                              @NotNull Consumer<Exception> exceptionHandler,
                              int recentCommitsCount) {
@@ -97,7 +97,9 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
       LogInfo data = loadRecentData(new CommitCountRequirements(myRecentCommitCount).asMap(myProviders.keySet()));
       Collection<List<GraphCommit<Integer>>> commits = data.getCommits();
       Map<VirtualFile, Set<VcsRef>> refs = data.getRefs();
-      DataPack dataPack = DataPack.build(multiRepoJoin(commits), refs, myProviders, myHashMap, false);
+      List<GraphCommit<Integer>> compoundList = multiRepoJoin(commits);
+      compoundList = compoundList.subList(0, Math.min(myRecentCommitCount, compoundList.size()));
+      DataPack dataPack = DataPack.build(compoundList, refs, myProviders, myHashMap, false);
       mySingleTaskController.request(RefreshRequest.RELOAD_ALL); // build/rebuild the full log in background
       return dataPack;
     }
@@ -177,7 +179,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
     for (VcsCommitMetadata detail : metadatas) {
       myUserRegistry.addUser(detail.getAuthor());
       myUserRegistry.addUser(detail.getCommitter());
-      myTopCommitsDetailsCache.put(detail.getId(), detail);
+      myTopCommitsDetailsCache.put(myHashMap.getCommitIndex(detail.getId()), detail);
     }
   }
 

@@ -19,6 +19,7 @@ import com.google.common.collect.ImmutableSet;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
@@ -255,18 +256,22 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
       for (PsiFile f : directory.getFiles()) {
         final String filename = f.getName();
         // if we have a binary module, we'll most likely also have a stub for it in site-packages
-        if ((f instanceof PyFile && !filename.equals(PyNames.INIT_DOT_PY)) || isBinaryModule(filename)) {
+        if (!isExcluded(f) && (f instanceof PyFile && !filename.equals(PyNames.INIT_DOT_PY)) || isBinaryModule(filename)) {
           result.add(f);
         }
       }
       // dir modules
       for (PsiDirectory dir : directory.getSubdirectories()) {
-        if (PyUtil.isPackage(dir, anchor)) {
+        if (!isExcluded(dir) && PyUtil.isPackage(dir, anchor)) {
           result.add(dir);
         }
       }
     }
     return result;
+  }
+
+  private static boolean isExcluded(@NotNull PsiFileSystemItem file) {
+    return FileIndexFacade.getInstance(file.getProject()).isExcludedFile(file.getVirtualFile());
   }
 
   private static boolean isBinaryModule(String filename) {
@@ -305,11 +310,16 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
         final PsiElement resolved = member.resolve(location);
         if (resolved != null) {
           processor.execute(resolved, ResolveState.initial());
-          result.addAll(processor.getResultList());
+          final List<LookupElement> lookupList = processor.getResultList();
+          if (!lookupList.isEmpty()) {
+            final LookupElement element = lookupList.get(0);
+            if (name.equals(element.getLookupString())) {
+              result.add(element);
+              continue;
+            }
+          }
         }
-        else {
-          result.add(LookupElementBuilder.create(name).withIcon(member.getIcon()).withTypeText(member.getShortType()));
-        }
+        result.add(LookupElementBuilder.create(name).withIcon(member.getIcon()).withTypeText(member.getShortType()));
       }
     }
     if (point == PointInImport.NONE || point == PointInImport.AS_NAME) { // when not imported from, add regular attributes

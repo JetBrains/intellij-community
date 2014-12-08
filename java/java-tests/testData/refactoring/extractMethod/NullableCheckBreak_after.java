@@ -1,3 +1,5 @@
+import org.jetbrains.annotations.Nullable;
+
 import java.util.List;
 
 class Test {
@@ -11,6 +13,7 @@ class Test {
     }
   }
 
+    @Nullable
     private Pojo newMethod() {
         Pojo x = things.get(0);
 

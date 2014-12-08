@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,8 +43,9 @@ public class DeleteTagAction extends ActionOnSelectedElement{
   protected CvsHandler getCvsHandler(CvsContext context) {
     final FilePath[] selectedFiles = context.getSelectedFilePaths();
     final DeleteTagDialog deleteTagDialog = new DeleteTagDialog(selectedFiles, context.getProject());
-    deleteTagDialog.show();
-    if (!deleteTagDialog.isOK()) return CvsHandler.NULL;
+    if (!deleteTagDialog.showAndGet()) {
+      return CvsHandler.NULL;
+    }
 
     return CommandCvsHandler.createRemoveTagAction(selectedFiles, deleteTagDialog.getTagName());
   }

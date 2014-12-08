@@ -229,8 +229,7 @@ public class ServiceManagerImpl implements BaseComponent {
 
     private synchronized ComponentAdapter getDelegate() {
       if (myDelegate == null) {
-        myDelegate = new CachingComponentAdapter(new ConstructorInjectionComponentAdapter(getComponentKey(), loadClass(
-          myDescriptor.getImplementation()), null, true));
+        myDelegate = new ConstructorInjectionComponentAdapter(getComponentKey(), loadClass(myDescriptor.getImplementation()), null, true);
       }
 
       return myDelegate;
@@ -244,11 +243,6 @@ public class ServiceManagerImpl implements BaseComponent {
     @Override
     public void accept(final PicoVisitor visitor) {
       visitor.visitComponentAdapter(this);
-    }
-
-    @Override
-    public boolean isAssignableTo(Class aClass) {
-      return aClass.getName().equals(getComponentKey());
     }
 
     @Override

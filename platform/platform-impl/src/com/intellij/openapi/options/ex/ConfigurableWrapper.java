@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -134,9 +135,14 @@ public class ConfigurableWrapper implements SearchableConfigurable {
   @Override
   public String getDisplayName() {
     if (myEp.displayName == null && myEp.key == null) {
-      UnnamedConfigurable configurable = getConfigurable();
-      if (configurable instanceof Configurable) {
-        return ((Configurable)configurable).getDisplayName();
+      boolean loaded = myConfigurable != null;
+      Configurable configurable = cast(Configurable.class, this);
+      if (configurable != null) {
+        String name = configurable.getDisplayName();
+        if (!loaded) {
+          LOG.warn("configurable loaded for its name: " + name);
+        }
+        return name;
       }
     }
     return myEp.getDisplayName();
@@ -188,9 +194,14 @@ public class ConfigurableWrapper implements SearchableConfigurable {
     if (myEp.id != null) {
       return myEp.id;
     }
-    UnnamedConfigurable configurable = getConfigurable();
-    if (configurable instanceof SearchableConfigurable) {
-      return ((SearchableConfigurable)configurable).getId();
+    boolean loaded = myConfigurable != null;
+    SearchableConfigurable configurable = cast(SearchableConfigurable.class, this);
+    if (configurable != null) {
+      String id = configurable.getId();
+      if (!loaded) {
+        LOG.warn("configurable loaded for its id: " + id);
+      }
+      return id;
     }
     return myEp.instanceClass != null
            ? myEp.instanceClass
@@ -255,6 +266,10 @@ public class ConfigurableWrapper implements SearchableConfigurable {
         }
       }
       myKids = kids;
+      Configurable.SortingConfigurable sorting = cast(Configurable.SortingConfigurable.class, this);
+      if (sorting != null) {
+        Arrays.sort(myKids, sorting.getChildComparator());
+      }
     }
 
     @Override
@@ -264,7 +279,15 @@ public class ConfigurableWrapper implements SearchableConfigurable {
 
     @Override
     public ConfigurableWrapper addChild(Configurable configurable) {
-      myKids = ArrayUtil.append(myKids, configurable);
+      Configurable.SortingConfigurable sorting = cast(Configurable.SortingConfigurable.class, this);
+      if (sorting != null) {
+        final int preIndex = Arrays.binarySearch(myKids, configurable, sorting.getChildComparator());
+        LOG.assertTrue(preIndex < 0);
+        myKids = ArrayUtil.insert(myKids, -preIndex - 1, configurable);
+      }
+      else {
+        myKids = ArrayUtil.append(myKids, configurable);
+      }
       return this;
     }
   }

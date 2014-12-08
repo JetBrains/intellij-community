@@ -47,7 +47,10 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.AnnotateToggleAction;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.CommitResultHandler;
+import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.committed.*;
 import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vcs.history.*;
@@ -84,6 +87,10 @@ import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.*;
 import java.util.List;
+
+import static com.intellij.openapi.ui.Messages.getQuestionIcon;
+import static com.intellij.util.ui.ConfirmationDialog.requestForConfirmation;
+import static java.text.MessageFormat.format;
 
 public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.impl.AbstractVcsHelperImpl");
@@ -152,15 +159,14 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
 
     SelectFilesDialog dlg = SelectFilesDialog.init(myProject, files, prompt, confirmationOption, true, true, false);
     dlg.setTitle(title);
-    if (! confirmationOption.isPersistent()) {
+    if (!confirmationOption.isPersistent()) {
       dlg.setDoNotAskOption(null);
     }
-    dlg.show();
-    if (dlg.isOK()) {
+    if (dlg.showAndGet()) {
       final Collection<VirtualFile> selection = dlg.getSelectedFiles();
       // return items in the same order as they were passed to us
       final List<VirtualFile> result = new ArrayList<VirtualFile>();
-      for(VirtualFile file: files) {
+      for (VirtualFile file : files) {
         if (selection.contains(file)) {
           result.add(file);
         }
@@ -180,9 +186,9 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
                                                        @Nullable String okActionName,
                                                        @Nullable String cancelActionName) {
     if (files.size() == 1 && singleFilePromptTemplate != null) {
-      final String filePrompt = MessageFormat.format(singleFilePromptTemplate, files.get(0).getPresentableUrl());
-      if (ConfirmationDialog.requestForConfirmation(confirmationOption, myProject, filePrompt, singleFileTitle,
-                                                    Messages.getQuestionIcon(), okActionName, cancelActionName)) {
+      final String filePrompt = format(singleFilePromptTemplate, files.get(0).getPresentableUrl());
+      if (requestForConfirmation(confirmationOption, myProject, filePrompt, singleFileTitle,
+                                 getQuestionIcon(), okActionName, cancelActionName)) {
         return files;
       }
       return null;
@@ -191,11 +197,10 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     final SelectFilePathsDialog dlg =
       new SelectFilePathsDialog(myProject, files, prompt, confirmationOption, okActionName, cancelActionName, true);
     dlg.setTitle(title);
-    if (! confirmationOption.isPersistent()) {
+    if (!confirmationOption.isPersistent()) {
       dlg.setDoNotAskOption(null);
     }
-    dlg.show();
-    return dlg.isOK() ? dlg.getSelectedFiles() : null;
+    return dlg.showAndGet() ? dlg.getSelectedFiles() : null;
   }
 
   @Nullable
@@ -556,9 +561,8 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     }
     final ChangesBrowserDialog dlg = new ChangesBrowserDialog(myProject, new CommittedChangesTableModel((List<CommittedChangeList>)changes,
                                                                                                         provider.getColumns(), false),
-                                                                         ChangesBrowserDialog.Mode.Choose, null);
-    dlg.show();
-    if (dlg.isOK()) {
+                                                              ChangesBrowserDialog.Mode.Choose, null);
+    if (dlg.showAndGet()) {
       return (T)dlg.getSelectedChangeList();
     }
     else {

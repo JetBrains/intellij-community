@@ -21,6 +21,7 @@ import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.testFramework.PsiTestUtil;
 import com.jetbrains.python.documentation.DocStringFormat;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.fixtures.PyTestCase;
@@ -721,5 +722,35 @@ public class PythonCompletionTest extends PyTestCase {
     final List<String> suggested = myFixture.getLookupElementStrings();
     assertNotNull(suggested);
     assertSameElements(suggested, "VAR", "subpkg1");
+  }
+
+  // PY-14519
+  public void testOsPath() {
+    myFixture.copyDirectoryToProject("completion/" + getTestName(true), "");
+    myFixture.configureByFile("a.py");
+    myFixture.completeBasic();
+    final List<String> suggested = myFixture.getLookupElementStrings();
+    assertNotNull(suggested);
+    assertContainsElements(suggested, "path");
+  }
+
+  // PY-14331
+  public void testExcludedTopLevelPackage() {
+    myFixture.copyDirectoryToProject("completion/" + getTestName(true), "");
+    myFixture.configureByFile("a.py");
+    PsiTestUtil.addExcludedRoot(myFixture.getModule(), myFixture.findFileInTempDir("pkg1"));
+    final LookupElement[] variants = myFixture.completeBasic();
+    assertNotNull(variants);
+    assertEmpty(variants);
+  }
+
+  // PY-14331
+  public void testExcludedSubPackage() {
+    myFixture.copyDirectoryToProject("completion/" + getTestName(true), "");
+    myFixture.configureByFile("a.py");
+    PsiTestUtil.addExcludedRoot(myFixture.getModule(), myFixture.findFileInTempDir("pkg1/subpkg1"));
+    final LookupElement[] variants = myFixture.completeBasic();
+    assertNotNull(variants);
+    assertEmpty(variants);
   }
 }

@@ -669,8 +669,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
                                                       session,
                                                       getIncludedChanges(),
                                                       getCommitMessage());
-      sessionDialog.show();
-      isOK = sessionDialog.isOK();
+      isOK = sessionDialog.showAndGet();
     }
     if (isOK) {
       final DefaultListCleaner defaultListCleaner = new DefaultListCleaner();

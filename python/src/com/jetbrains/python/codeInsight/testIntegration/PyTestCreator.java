@@ -85,7 +85,8 @@ public class PyTestCreator implements TestCreator {
 
               PsiFile psiFile = PyUtil.getOrCreateFile(
                 dialog.getTargetDir() + "/" + fileName, project);
-              AddImportHelper.addImportFrom(psiFile, null, "unittest", "TestCase", null, AddImportHelper.ImportPriority.BUILTIN, null);
+              AddImportHelper.addOrUpdateFromImportStatement(psiFile, "unittest", "TestCase", null, AddImportHelper.ImportPriority.BUILTIN,
+                                                             null);
 
               PyElement createdClass = PyElementGenerator.getInstance(project).createFromText(
                 LanguageLevel.forElement(psiFile), PyClass.class,

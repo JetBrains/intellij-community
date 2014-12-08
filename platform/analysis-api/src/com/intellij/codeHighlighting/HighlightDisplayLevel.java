@@ -18,13 +18,9 @@ package com.intellij.codeHighlighting;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.ui.JBColor;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.ColorIcon;
 import org.jetbrains.annotations.NotNull;
@@ -41,8 +37,8 @@ public class HighlightDisplayLevel {
                                                                                                         createIconByKey(CodeInsightColors.GENERIC_SERVER_ERROR_OR_WARNING));
   public static final HighlightDisplayLevel ERROR = new HighlightDisplayLevel(HighlightSeverity.ERROR, createIconByKey(CodeInsightColors.ERRORS_ATTRIBUTES));
   public static final HighlightDisplayLevel WARNING = new HighlightDisplayLevel(HighlightSeverity.WARNING, createIconByKey(CodeInsightColors.WARNINGS_ATTRIBUTES));
-  public static final Color GREEN = new JBColor(new Color(30, 160, 0), new Color(30, 160, 0));
-  public static final HighlightDisplayLevel DO_NOT_SHOW = new HighlightDisplayLevel(HighlightSeverity.INFORMATION, createIconByMask(GREEN));
+  private static final Icon DO_NOT_SHOW_KEY = createIconByKey(TextAttributesKey.createTextAttributesKey("DO_NOT_SHOW"));
+  public static final HighlightDisplayLevel DO_NOT_SHOW = new HighlightDisplayLevel(HighlightSeverity.INFORMATION, DO_NOT_SHOW_KEY);
   /**
    * use #WEAK_WARNING instead
    */
@@ -100,8 +96,8 @@ public class HighlightDisplayLevel {
     return mySeverity;
   }
 
-  public static void registerSeverity(@NotNull HighlightSeverity severity, final Color renderColor) {
-    Icon severityIcon = createIconByMask(renderColor);
+  public static void registerSeverity(@NotNull HighlightSeverity severity, final TextAttributesKey key) {
+    Icon severityIcon = createIconByKey(key);
     final HighlightDisplayLevel level = ourMap.get(severity);
     if (level == null) {
       new HighlightDisplayLevel(severity, severityIcon);
@@ -111,29 +107,19 @@ public class HighlightDisplayLevel {
     }
   }
 
-  private static final int EMPTY_ICON_DIM = 12;
+  public static final int EMPTY_ICON_DIM = 13;
 
   public static Icon createIconByKey(@NotNull TextAttributesKey key) {
-    for (IconCreator creator : Extensions.getExtensions(IconCreator.EXTENSION_POINT_NAME)) {
-      Icon icon = creator.createIcon(key);
-      if (icon != null) return icon;
-    }
     return new SingleColorIcon(key);
-  }
-
-  public interface IconCreator {
-    ExtensionPointName<IconCreator> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.codeHighlighting.iconCreator");
-
-    Icon createIcon(@NotNull TextAttributesKey key);
   }
 
   @NotNull
   public static Icon createIconByMask(final Color renderColor) {
-    return new MyColorIcon(EMPTY_ICON_DIM, renderColor);
+    return new TheColorIcon(EMPTY_ICON_DIM, renderColor);
   }
 
-  private static class MyColorIcon extends ColorIcon implements ColoredIcon {
-    public MyColorIcon(int size, @NotNull Color color) {
+  public static class TheColorIcon extends ColorIcon implements ColoredIcon {
+    public TheColorIcon(int size, @NotNull Color color) {
       super(size, color);
     }
 
@@ -157,19 +143,22 @@ public class HighlightDisplayLevel {
     public Color getColor() {
       final EditorColorsManager manager = EditorColorsManager.getInstance();
       if (manager != null) {
-        final EditorColorsScheme globalScheme = manager.getGlobalScheme();
-        return globalScheme.getAttributes(myKey).getErrorStripeColor();
+        TextAttributes attributes = manager.getGlobalScheme().getAttributes(myKey);
+        Color stripe = attributes.getErrorStripeColor();
+        if (stripe != null) return stripe;
+        return attributes.getEffectColor();
       }
       TextAttributes defaultAttributes = myKey.getDefaultAttributes();
       if (defaultAttributes == null) defaultAttributes = TextAttributes.ERASE_MARKER;
-      return  defaultAttributes.getErrorStripeColor();
+      return defaultAttributes.getErrorStripeColor();
     }
 
     @Override
     public void paintIcon(final Component c, final Graphics g, final int x, final int y) {
-      final Graphics2D g2 = (Graphics2D)g;
-      g2.setColor(getColor());
-      g2.fillRect(x, y, EMPTY_ICON_DIM, EMPTY_ICON_DIM);
+      g.setColor(getColor());
+      g.translate(x, y);
+      g.fillPolygon(new int[]{0, EMPTY_ICON_DIM, EMPTY_ICON_DIM}, new int[]{0, 0, EMPTY_ICON_DIM}, 3);
+      g.translate(-x, -y);
     }
 
     @Override

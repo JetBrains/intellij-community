@@ -35,6 +35,7 @@ import java.io.File;
 import static com.intellij.openapi.vcs.Executor.*;
 import static git4idea.test.GitExecutor.git;
 import static junit.framework.Assert.assertNotNull;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assume.assumeTrue;
 
 public class GitTestUtil {
@@ -94,6 +95,8 @@ public class GitTestUtil {
 
   public static GitRepository createRepository(@NotNull Project project, @NotNull String root, boolean makeInitialCommit) {
     initRepo(root, makeInitialCommit);
+    VirtualFile gitDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(root, GitUtil.DOT_GIT));
+    assertNotNull(gitDir);
     return registerRepo(project, root);
   }
 
@@ -102,6 +105,7 @@ public class GitTestUtil {
     ProjectLevelVcsManagerImpl vcsManager = (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(project);
     vcsManager.setDirectoryMapping(root, GitVcs.NAME);
     VirtualFile file = LocalFileSystem.getInstance().findFileByIoFile(new File(root));
+    assertFalse(vcsManager.getAllVcsRoots().length == 0);
     GitRepository repository = GitUtil.getRepositoryManager(project).getRepositoryForRoot(file);
     assertNotNull("Couldn't find repository for root " + root, repository);
     return repository;

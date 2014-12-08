@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,12 @@
  */
 package com.intellij.ide.passwordSafe.impl.providers;
 
+import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jetbrains.annotations.NotNull;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
-import java.io.UnsupportedEncodingException;
 import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -224,12 +224,7 @@ public class EncryptionUtil {
     if (len < 0 || len > plain.length - 4) {
       throw new IllegalStateException("Unmatched password is used");
     }
-    try {
-      return new String(plain, 4, len, "UTF-8");
-    }
-    catch (UnsupportedEncodingException e) {
-      throw new IllegalStateException("UTF-8 is not available", e);
-    }
+    return new String(plain, 4, len, CharsetToolkit.UTF8_CHARSET);
   }
 
   /**
@@ -239,12 +234,7 @@ public class EncryptionUtil {
    * @return the UTF-8 encoded string
    */
   public static byte[] getUTF8Bytes(String string) {
-    try {
-      return string.getBytes("UTF-8");
-    }
-    catch (UnsupportedEncodingException e) {
-      throw new IllegalStateException("UTF-8 encoding is not available", e);
-    }
+    return string.getBytes(CharsetToolkit.UTF8_CHARSET);
   }
 
   /**

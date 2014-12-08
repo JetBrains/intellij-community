@@ -16,6 +16,7 @@
 package com.intellij.codeHighlighting;
 
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
+import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -26,6 +27,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,6 +60,9 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
   @Override
   public final void collectInformation(@NotNull ProgressIndicator progress) {
     if (!isValid()) return; //Document has changed.
+    if (!(progress instanceof DaemonProgressIndicator)) {
+      throw new IncorrectOperationException("Highlighting must be run under DaemonProgressIndicator, but got: "+progress);
+    }
     myDumb = DumbService.getInstance(myProject).isDumb();
     doCollectInformation(progress);
   }

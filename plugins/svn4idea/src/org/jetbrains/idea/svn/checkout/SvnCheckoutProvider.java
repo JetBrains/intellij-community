@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,13 +52,23 @@ import org.jetbrains.idea.svn.dialogs.UpgradeFormatDialog;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.*;
+import org.tmatesoft.svn.core.wc.DefaultSVNCommitHandler;
+import org.tmatesoft.svn.core.wc.ISVNCommitHandler;
+import org.tmatesoft.svn.core.wc.ISVNFileFilter;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import javax.swing.*;
 import java.io.File;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
+
+import static com.intellij.openapi.application.ApplicationManager.getApplication;
+import static com.intellij.openapi.application.ModalityState.any;
+import static com.intellij.openapi.ui.Messages.showErrorDialog;
+import static com.intellij.util.containers.ContainerUtil.getFirstItem;
+import static org.jetbrains.idea.svn.SvnBundle.message;
+import static org.jetbrains.idea.svn.WorkingCopyFormat.UNKNOWN;
 
 public class SvnCheckoutProvider implements CheckoutProvider {
 
@@ -322,27 +332,27 @@ public class SvnCheckoutProvider implements CheckoutProvider {
     @NotNull
     private WorkingCopyFormat displayUpgradeDialog() {
       final UpgradeFormatDialog dialog = new UpgradeFormatDialog(myProject, myPath, false);
-      final ModalityState dialogState = ModalityState.any();
+      final ModalityState dialogState = any();
 
       dialog.startLoading();
-      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      getApplication().executeOnPooledThread(new Runnable() {
         @Override
         public void run() {
           final List<WorkingCopyFormat> formats = loadSupportedFormats();
 
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
+          getApplication().invokeLater(new Runnable() {
             @Override
             public void run() {
               final String errorMessage = error.get();
 
               if (errorMessage != null) {
                 dialog.doCancelAction();
-                Messages.showErrorDialog(SvnBundle.message("message.text.cannot.load.supported.formats", errorMessage),
-                                         SvnBundle.message("message.title.check.out"));
+                showErrorDialog(message("message.text.cannot.load.supported.formats", errorMessage),
+                                message("message.title.check.out"));
               }
               else {
                 dialog.setSupported(formats);
-                dialog.setData(ContainerUtil.getFirstItem(formats, WorkingCopyFormat.UNKNOWN));
+                dialog.setData(getFirstItem(formats, UNKNOWN));
                 dialog.stopLoading();
               }
             }
@@ -350,9 +360,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
         }
       });
 
-      dialog.show();
-
-      return dialog.isOK() ? dialog.getUpgradeMode() : WorkingCopyFormat.UNKNOWN;
+      return dialog.showAndGet() ? dialog.getUpgradeMode() : UNKNOWN;
     }
 
     @NotNull

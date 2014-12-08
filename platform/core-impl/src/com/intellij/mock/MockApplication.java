@@ -32,8 +32,11 @@ import java.util.concurrent.Future;
 public class MockApplication extends MockComponentManager implements Application {
   private ModalityState MODALITY_STATE_NONE;
 
+  public static int INSTANCES_CREATED = 0;
+
   public MockApplication(@NotNull Disposable parentDisposable) {
     super(null, parentDisposable);
+    INSTANCES_CREATED++;
   }
 
   @Override

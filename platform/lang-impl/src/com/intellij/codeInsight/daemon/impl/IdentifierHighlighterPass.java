@@ -58,7 +58,7 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
   private final Collection<TextRange> myWriteAccessRanges = Collections.synchronizedList(new ArrayList<TextRange>());
   private final int myCaretOffset;
 
-  protected IdentifierHighlighterPass(final Project project, final PsiFile file, final Editor editor) {
+  protected IdentifierHighlighterPass(@NotNull Project project, @NotNull PsiFile file, @NotNull Editor editor) {
     super(project, editor.getDocument(), false);
     myFile = file;
     myEditor = editor;
@@ -91,9 +91,7 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
       if (!PsiDocumentManager.getInstance(myProject).isUncommited(myEditor.getDocument())) {
         // when document is committed, try to check injected stuff - it's fast
         Editor injectedEditor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(myEditor, myFile, myCaretOffset);
-        if (injectedEditor != null) {
-          myTarget = TargetElementUtilBase.getInstance().findTargetElement(injectedEditor, flags, injectedEditor.getCaretModel().getOffset()); 
-        }
+        myTarget = TargetElementUtilBase.getInstance().findTargetElement(injectedEditor, flags, injectedEditor.getCaretModel().getOffset());
       }
     }
     
@@ -123,7 +121,7 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
    * @param psiFile psi file for element
    * @return a pair where first element is read usages and second is write usages
    */
-  public static Couple<Collection<TextRange>> getHighlightUsages(@NotNull PsiElement target, PsiFile psiFile, boolean withDecls) {
+  public static Couple<Collection<TextRange>> getHighlightUsages(@NotNull PsiElement target, PsiFile psiFile, boolean withDeclarations) {
     Collection<TextRange> readRanges = new ArrayList<TextRange>();
     Collection<TextRange> writeRanges = new ArrayList<TextRange>();
     final ReadWriteAccessDetector detector = ReadWriteAccessDetector.findDetector(target);
@@ -143,7 +141,7 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
       }
     }
 
-    if (withDecls) {
+    if (withDeclarations) {
       final TextRange declRange = HighlightUsagesHandler.getNameIdentifierRange(psiFile, target);
       if (declRange != null) {
         if (detector != null && detector.isDeclarationWriteAccess(target)) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ package com.intellij.openapi.vcs.changes.shelf;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -58,7 +57,7 @@ public class UnshelveChangesAction extends AnAction {
 
     final ChangeListManager changeListManager = ChangeListManager.getInstance(project);
     final List<LocalChangeList> allChangeLists = changeListManager.getChangeListsCopy();
-    String defaultName = changeLists [0].DESCRIPTION;
+    String defaultName = changeLists[0].DESCRIPTION;
     LocalChangeList list = null;
     if (changeLists.length == 1) {
       final LocalChangeList sameNamedList = changeListManager.findChangeList(defaultName);
@@ -70,9 +69,8 @@ public class UnshelveChangesAction extends AnAction {
       list = changeListManager.getDefaultChangeList();
     }
     final ChangeListChooser chooser = new ChangeListChooser(project, allChangeLists, list,
-                                                      VcsBundle.message("unshelve.changelist.chooser.title"), defaultName);
-    chooser.show();
-    if (!chooser.isOK()) {
+                                                            VcsBundle.message("unshelve.changelist.chooser.title"), defaultName);
+    if (!chooser.showAndGet()) {
       return;
     }
 
@@ -83,8 +81,9 @@ public class UnshelveChangesAction extends AnAction {
     ProgressManager.getInstance().run(new Task.Backgroundable(project, "Unshelve changes", true, BackgroundFromStartOption.getInstance()) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        for(ShelvedChangeList changeList: changeLists) {
-          ShelveChangesManager.getInstance(project).unshelveChangeList(changeList, finalChanges, finalBinaryFiles, chooser.getSelectedList());
+        for (ShelvedChangeList changeList : changeLists) {
+          ShelveChangesManager.getInstance(project)
+            .unshelveChangeList(changeList, finalChanges, finalBinaryFiles, chooser.getSelectedList());
         }
       }
     });

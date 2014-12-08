@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ public class XmlCharsetDetector {
   @NonNls private static final byte[] XML_PROLOG_END_BYTES = CharsetToolkit.getUtf8Bytes(XML_PROLOG_END);
 
   @Nullable
-  public static String extractXmlEncodingFromProlog(final byte[] bytes) {
+  public static String extractXmlEncodingFromProlog(@NotNull byte[] bytes) {
     int index = 0;
     if (CharsetToolkit.hasUTF8Bom(bytes)) {
       index = CharsetToolkit.UTF8_BOM.length;
@@ -67,7 +67,7 @@ public class XmlCharsetDetector {
   }
 
   @Nullable
-  public static String extractXmlEncodingFromProlog(@NotNull String text) {
+  public static String extractXmlEncodingFromProlog(@NotNull CharSequence text) {
     int index = 0;
 
     index = skipWhiteSpace(index, text);
@@ -108,7 +108,7 @@ public class XmlCharsetDetector {
     return start;
   }
 
-  private static int skipWhiteSpace(int start, @NotNull String text) {
+  private static int skipWhiteSpace(int start, @NotNull CharSequence text) {
     while (start < text.length()) {
       char c = text.charAt(start);
       if (!Character.isWhitespace(c)) break;

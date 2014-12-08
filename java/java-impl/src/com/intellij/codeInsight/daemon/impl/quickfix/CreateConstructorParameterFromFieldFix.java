@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,9 +36,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.codeStyle.SuggestedNameInfo;
-import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -47,7 +45,9 @@ import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ConcurrentWeakHashMap;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
+import com.intellij.util.text.UniqueNameGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -193,7 +193,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
    @NotNull
   private Collection<SmartPsiElementPointer<PsiField>> getFieldsToFix() {
     Map<SmartPsiElementPointer<PsiField>, Boolean> fields = myClass.getUserData(FIELDS);
-    if (fields == null) myClass.putUserData(FIELDS, fields = new ConcurrentWeakHashMap<SmartPsiElementPointer<PsiField>,Boolean>(1));
+    if (fields == null) myClass.putUserData(FIELDS, fields = ContainerUtil.createConcurrentWeakMap());
     final Map<SmartPsiElementPointer<PsiField>, Boolean> finalFields = fields;
     return new AbstractCollection<SmartPsiElementPointer<PsiField>>() {
       @Override
@@ -246,14 +246,27 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
 
     int i = 0;
     final HashMap<PsiField, String> usedFields = new HashMap<PsiField, String>();
+    final MultiMap<PsiType, PsiVariable> types = new MultiMap<PsiType, PsiVariable>();
+    for (PsiVariable param : params) {
+      types.putValue(param.getType(), param);
+    }
+
+    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
+    final boolean preferLongerNames = settings.PREFER_LONGER_NAMES;
     for (PsiVariable param : params) {
       final PsiType paramType = param.getType();
       if (param instanceof PsiParameter) {
         newParamInfos[i++] = new ParameterInfoImpl(parameterList.getParameterIndex((PsiParameter)param), param.getName(), paramType, param.getName());
       } else {
-        final String uniqueParameterName = getUniqueParameterName(parameters, param, usedFields);
-        usedFields.put((PsiField)param, uniqueParameterName);
-        newParamInfos[i++] = new ParameterInfoImpl(-1, uniqueParameterName, paramType, uniqueParameterName);
+        try {
+          settings.PREFER_LONGER_NAMES = preferLongerNames || types.get(paramType).size() > 1;
+          final String uniqueParameterName = getUniqueParameterName(parameters, param, usedFields);
+          usedFields.put((PsiField)param, uniqueParameterName);
+          newParamInfos[i++] = new ParameterInfoImpl(-1, uniqueParameterName, paramType, uniqueParameterName);
+        }
+        finally {
+          settings.PREFER_LONGER_NAMES = preferLongerNames;
+        }
       }
     }
     final SmartPointerManager manager = SmartPointerManager.getInstance(project);
@@ -298,7 +311,8 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
       if (isUnique(parameters, newName, usedNames)) {
         break;
       }
-      newName = nameInfo.names[0] + n++;
+      newName = n < nameInfo.names.length && !CodeStyleSettingsManager.getSettings(variable.getProject()).PREFER_LONGER_NAMES 
+                ? nameInfo.names[n++] : nameInfo.names[0] + n++;
     }
     return newName;
   }

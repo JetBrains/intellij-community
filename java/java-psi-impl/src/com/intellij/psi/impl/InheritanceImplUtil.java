@@ -24,7 +24,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.util.containers.ConcurrentWeakHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,7 +48,7 @@ public class InheritanceImplUtil {
         @Nullable
         @Override
         public Result<Map<PsiClass, Boolean>> compute() {
-          final Map<PsiClass, Boolean> map = new ConcurrentWeakHashMap<PsiClass, Boolean>();
+          final Map<PsiClass, Boolean> map = ContainerUtil.createConcurrentWeakMap();
           return Result.create(map, candidateClass, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
         }
       });

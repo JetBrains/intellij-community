@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,6 @@ import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.openapi.vfs.encoding.EncodingRegistry;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -73,7 +72,7 @@ public class CvsContentRevision implements ContentRevision {
       byte[] content = loadContent();
       if (content != null) {
         final Charset charset = myLocalFile.getCharset();
-        myContent = charset == null ? CharsetToolkit.bytesToString(content, EncodingRegistry.getInstance().getDefaultCharset()) : CharsetToolkit.bytesToString(content, charset);
+        myContent = CharsetToolkit.bytesToString(content, charset);
       }
     }
     return myContent;

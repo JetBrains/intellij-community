@@ -1,14 +1,14 @@
 package com.siyeh.igtest.style.unnecessarily_qualified_inner_class_access;
 import java.util.Map;
-@Y(Test.X.class)
+@Y(<warning descr="'X' is unnecessarily qualified with 'Test'">Test</warning>.X.class)
 public class Test<T> {
 
     public Test(int i) {
-        Map.Entry entry;
+        <warning descr="'Entry' is unnecessarily qualified with 'Map'">Map</warning>.Entry entry;
     }
 
     public Test() {
-        final String test = Test.Inner.TEST;
+        final String test = <warning descr="'Inner' is unnecessarily qualified with 'Test'">Test</warning>.Inner.TEST;
     }
     public static class Inner {
         public static final String TEST = "test";
@@ -16,7 +16,7 @@ public class Test<T> {
 
     void foo() {
         Test<String>.X x; // no warning here, because generic parameter is needed
-        Test.Y<String> y;
+        <warning descr="'Y' is unnecessarily qualified with 'Test'">Test</warning>.Y<String> y;
     }
 
     class X {
@@ -31,7 +31,7 @@ public class Test<T> {
     Class value();
 }
 
-class Foo extends PresenterWidget<Foo.Bar> { // warning because Bar can be imported
+class Foo extends PresenterWidget<<warning descr="'Bar' is unnecessarily qualified with 'Foo'">Foo</warning>.Bar> { // warning because Bar can be imported
     interface Bar extends View { }
 }
 
@@ -60,7 +60,7 @@ class MultipleInheritance {
     }
   }
 }
-@TestAnnotation(TestOuter.TestInner.TEST_FIELD)
+@TestAnnotation(<warning descr="'TestInner' is unnecessarily qualified with 'TestOuter'">TestOuter</warning>.TestInner.TEST_FIELD)
 class TestOuter {
   public interface TestInner {
     String TEST_FIELD = "TEST";

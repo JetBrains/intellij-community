@@ -35,7 +35,6 @@
       <keyboard-shortcut keymap="$default" first-keystroke="ctrl ENTER"/>
     </action>
     <action class="org.jetbrains.plugins.ipnb.editor.actions.IpnbRunCellAction" id="IpnbRunCellAction" text="Run cell">
-      <keyboard-shortcut keymap="$default" first-keystroke="shift ENTER"/>
     </action>
     <action class="org.jetbrains.plugins.ipnb.editor.actions.IpnbSaveAction" id="IpnbSaveAction" text="Save and Checkpoint">
     </action>
@@ -53,7 +52,7 @@
     <action class="org.jetbrains.plugins.ipnb.editor.actions.IpnbMoveCellDownAction" id="IpnbMoveCellDownAction" text="Move Cell Down">
       <keyboard-shortcut keymap="$default" first-keystroke="ctrl shift DOWN"/>
     </action>
-    <action class="org.jetbrains.plugins.ipnb.editor.actions.IpnbMoveCellUpAction" id="IpnbMoveCellUpAction" text="Move Cell Up" use-shortcut-of="$MoveStatementUp">
+    <action class="org.jetbrains.plugins.ipnb.editor.actions.IpnbMoveCellUpAction" id="IpnbMoveCellUpAction" text="Move Cell Up" >
       <keyboard-shortcut keymap="$default" first-keystroke="ctrl shift UP"/>
     </action>
 

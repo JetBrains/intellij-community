@@ -27,7 +27,7 @@ import java.awt.event.MouseEvent;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class VcsLinkedTextComponent extends JLabel{
+public class VcsLinkedTextComponent extends JLabel {
   private static final Pattern HREF_PATTERN = Pattern.compile("<a(?:\\s+href\\s*=\\s*[\"']([^\"']*)[\"'])?\\s*>([^<]*)</a>");
 
   @NotNull private String myTextBefore;
@@ -37,6 +37,7 @@ public class VcsLinkedTextComponent extends JLabel{
   @Nullable private final VcsLinkListener myLinkListener;
   private boolean mySelected;
   private boolean myUnderlined;
+  private boolean myTransparent;
 
   public VcsLinkedTextComponent(@NotNull String text, @Nullable VcsLinkListener listener) {
     Matcher aMatcher = HREF_PATTERN.matcher(text);
@@ -64,15 +65,19 @@ public class VcsLinkedTextComponent extends JLabel{
   }
 
   public void render(@NotNull ColoredTreeCellRenderer renderer) {
+    boolean isActive = mySelected || myUnderlined;
+    SimpleTextAttributes linkTextAttributes = isActive ? SimpleTextAttributes.LINK_ATTRIBUTES : SimpleTextAttributes.SYNTHETIC_ATTRIBUTES;
+    isActive = isActive || !myTransparent;
+    SimpleTextAttributes wrappedTextAttributes = PushLogTreeUtil
+      .addTransparencyIfNeeded(SimpleTextAttributes.REGULAR_ATTRIBUTES, isActive);
     if (!StringUtil.isEmptyOrSpaces(myTextBefore)) {
-      renderer.append(myTextBefore, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      renderer.append(myTextBefore, wrappedTextAttributes);
       renderer.append(" ");
     }
     if (!StringUtil.isEmptyOrSpaces(myHandledLink)) {
-      renderer.append(myHandledLink,
-                      myUnderlined || mySelected ? SimpleTextAttributes.LINK_ATTRIBUTES : SimpleTextAttributes.SYNTHETIC_ATTRIBUTES, this);
+      renderer.append(myHandledLink, PushLogTreeUtil.addTransparencyIfNeeded(linkTextAttributes, isActive), this);
     }
-    renderer.append(myTextAfter, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    renderer.append(myTextAfter, wrappedTextAttributes);
   }
 
   public void setUnderlined(boolean underlined) {
@@ -81,6 +86,10 @@ public class VcsLinkedTextComponent extends JLabel{
 
   public void setSelected(boolean selected) {
     mySelected = selected;
+  }
+
+  public void setTransparent(boolean transparent) {
+    myTransparent = transparent;
   }
 
   @NotNull

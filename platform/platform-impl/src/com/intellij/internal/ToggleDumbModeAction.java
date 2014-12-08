@@ -60,10 +60,10 @@ public class ToggleDumbModeAction extends AnAction implements DumbAware {
     final Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
     presentation.setEnabled(project != null && myDumb == DumbServiceImpl.getInstance(project).isDumb());
     if (myDumb) {
-      presentation.setText("Exit dumb mode");
+      presentation.setText("Exit Dumb Mode");
     }
     else {
-      presentation.setText("Enter dumb mode");
+      presentation.setText("Enter Dumb Mode");
     }
   }
 }

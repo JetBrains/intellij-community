@@ -633,6 +633,9 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
 
   @Nullable
   public static XSourcePosition toXSourcePosition(@NotNull SourcePosition position) {
+    if (position.getFile().getVirtualFile() == null) {
+      return null;
+    }
     return new JavaXSourcePosition(position);
   }
 

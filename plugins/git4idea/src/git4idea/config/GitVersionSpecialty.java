@@ -119,6 +119,13 @@ public enum GitVersionSpecialty {
     public boolean existsIn(@NotNull GitVersion version) {
       return version.isLaterOrEqual(new GitVersion(1, 8, 3, 0));
     }
+  },
+
+  CAN_OVERRIDE_GIT_CONFIG_FOR_COMMAND {
+    @Override
+    public boolean existsIn(@NotNull GitVersion version) {
+      return version.isLaterOrEqual(new GitVersion(1, 7, 2, 0));
+    }
   };
 
   public abstract boolean existsIn(@NotNull GitVersion version);

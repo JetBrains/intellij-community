@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,6 +63,11 @@ public class WhileCanBeForeachInspectionBase extends BaseInspection {
   }
 
   @Override
+  public boolean shouldInspect(PsiFile file) {
+    return PsiUtil.isLanguageLevel5OrHigher(file);
+  }
+
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new WhileCanBeForeachVisitor();
   }
@@ -72,9 +77,6 @@ public class WhileCanBeForeachInspectionBase extends BaseInspection {
     @Override
     public void visitWhileStatement(@NotNull PsiWhileStatement whileStatement) {
       super.visitWhileStatement(whileStatement);
-      if (!PsiUtil.isLanguageLevel5OrHigher(whileStatement)) {
-        return;
-      }
       if (!isCollectionLoopStatement(whileStatement)) {
         return;
       }

@@ -3,10 +3,10 @@ File foo() {
   if (ints.empty) {
     print {return 42}
     for (x in ints) {
-      <warning descr="Cannot assign 'Integer' to 'File'">return</warning> 43
+      <warning descr="Cannot return 'Integer' from method returning 'File'">return</warning> 43
     }
   }
-  <warning descr="Cannot assign 'Integer' to 'File'">67</warning>
+  <warning descr="Cannot return 'Integer' from method returning 'File'">67</warning>
 }
 
 File bar() {

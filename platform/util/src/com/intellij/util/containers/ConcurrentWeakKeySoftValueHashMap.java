@@ -41,6 +41,7 @@ import static com.intellij.reference.SoftReference.deref;
  * Concurrent map with weak keys and strong values.
  * Null keys are NOT allowed
  * Null values are NOT allowed
+ * @deprecated Use {@link ContainerUtil#createConcurrentWeakKeySoftValueMap(int, float, int, gnu.trove.TObjectHashingStrategy)} instead
  */
 public class ConcurrentWeakKeySoftValueHashMap<K, V> implements ConcurrentMap<K, V> {
   private final ConcurrentMap<KeyReference<K,V>, ValueReference<K,V>> myMap;
@@ -49,9 +50,9 @@ public class ConcurrentWeakKeySoftValueHashMap<K, V> implements ConcurrentMap<K,
   @NotNull private final TObjectHashingStrategy<K> myHashingStrategy;
 
   public ConcurrentWeakKeySoftValueHashMap(int initialCapacity,
-                                           float loadFactor,
-                                           int concurrencyLevel,
-                                           @NotNull final TObjectHashingStrategy<K> hashingStrategy) {
+                                              float loadFactor,
+                                              int concurrencyLevel,
+                                              @NotNull final TObjectHashingStrategy<K> hashingStrategy) {
     myHashingStrategy = hashingStrategy;
     myMap = ContainerUtil.newConcurrentMap(initialCapacity, loadFactor, concurrencyLevel, ContainerUtil.<KeyReference<K,V>>canonicalStrategy());
   }

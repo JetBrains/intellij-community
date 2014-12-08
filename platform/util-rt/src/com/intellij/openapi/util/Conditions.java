@@ -48,6 +48,18 @@ public class Conditions {
     };
   }
 
+  public static <T> Condition<T> instanceOf(final Class<?>... clazz) {
+    return new Condition<T>() {
+      @Override
+      public boolean value(T t) {
+        for (Class<?> aClass : clazz) {
+          if (aClass.isInstance(t)) return true;
+        }
+        return false;
+      }
+    };
+  }
+
   public static <T> Condition<T> is(final T option) {
     return new Condition<T>() {
       @Override

@@ -110,7 +110,7 @@ public class ConcurrentMapsTest extends TestCase {
   }
 
   public void testTossedWeakValueIsRemoved() {
-    ConcurrentWeakValueHashMap<Object, Object> map = new ConcurrentWeakValueHashMap<Object, Object>();
+    ConcurrentWeakValueHashMap<Object, Object> map = (ConcurrentWeakValueHashMap<Object, Object>)ContainerUtil.createConcurrentWeakValueMap();
     map.put(new Object(), new Object());
 
     tryGcSoftlyReachableObjects(); // sometimes weak references are not collected under linux, try to stress gc to force them

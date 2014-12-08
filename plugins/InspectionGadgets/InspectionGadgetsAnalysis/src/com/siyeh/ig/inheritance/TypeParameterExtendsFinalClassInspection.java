@@ -109,18 +109,19 @@ public class TypeParameterExtendsFinalClassInspection extends BaseInspection {
   }
 
   @Override
+  public boolean shouldInspect(PsiFile file) {
+    return PsiUtil.isLanguageLevel5OrHigher(file);
+  }
+
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new TypeParameterExtendsFinalClassVisitor();
   }
 
   private static class TypeParameterExtendsFinalClassVisitor extends BaseInspectionVisitor {
-
     @Override
     public void visitTypeParameter(PsiTypeParameter classParameter) {
       super.visitTypeParameter(classParameter);
-      if (!PsiUtil.isLanguageLevel5OrHigher(classParameter)) {
-        return;
-      }
       final PsiClassType[] extendsListTypes = classParameter.getExtendsListTypes();
       if (extendsListTypes.length < 1) {
         return;
@@ -138,9 +139,6 @@ public class TypeParameterExtendsFinalClassInspection extends BaseInspection {
 
     @Override
     public void visitTypeElement(PsiTypeElement typeElement) {
-      if (!PsiUtil.isLanguageLevel5OrHigher(typeElement)) {
-        return;
-      }
       super.visitTypeElement(typeElement);
       final PsiType type = typeElement.getType();
       if (!(type instanceof PsiWildcardType)) {

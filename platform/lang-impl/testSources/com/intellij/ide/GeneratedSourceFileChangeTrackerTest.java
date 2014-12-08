@@ -18,7 +18,6 @@ package com.intellij.ide;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.GeneratedSourcesFilter;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -66,7 +65,7 @@ public class GeneratedSourceFileChangeTrackerTest extends CodeInsightFixtureTest
 
   public void testChangeGeneratedExternally() throws IOException {
     PsiFile file = myFixture.configureByText("Gen.txt", "");
-    VfsUtil.saveText(file.getVirtualFile(), "abc");
+    myFixture.saveText(file.getVirtualFile(), "abc");
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     assertFalse(isEditedGeneratedFile(file));
   }

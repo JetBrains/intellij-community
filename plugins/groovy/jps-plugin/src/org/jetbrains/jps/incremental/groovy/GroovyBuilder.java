@@ -40,11 +40,11 @@ import org.jetbrains.jps.builders.FileProcessor;
 import org.jetbrains.jps.builders.java.JavaBuilderUtil;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
-import org.jetbrains.jps.builders.java.dependencyView.Mappings;
 import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
 import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.*;
+import org.jetbrains.jps.incremental.fs.CompilationRound;
 import org.jetbrains.jps.incremental.java.ClassPostProcessor;
 import org.jetbrains.jps.incremental.java.JavaBuilder;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
@@ -161,8 +161,8 @@ public class GroovyBuilder extends ModuleLevelBuilder {
         context.processMessage(message);
       }
 
-      if (!myForStubs && updateDependencies(context, chunk, dirtyFilesHolder, toCompile, compiled, outputConsumer, this)) {
-        return ExitCode.ADDITIONAL_PASS_REQUIRED;
+      if (!myForStubs) {
+        updateDependencies(context, toCompile, compiled, outputConsumer, this);
       }
       return hasFilesToCompileForNextRound(context) ? ExitCode.ADDITIONAL_PASS_REQUIRED : ExitCode.OK;
     }
@@ -326,6 +326,16 @@ public class GroovyBuilder extends ModuleLevelBuilder {
   }
 
   @Override
+  public void buildStarted(CompileContext context) {
+    if (myForStubs) {
+      File stubRoot = getStubRoot(context);
+      if (stubRoot.exists() && !FileUtil.deleteWithRenaming(stubRoot)) {
+        context.processMessage(new CompilerMessage(myBuilderName, BuildMessage.Kind.ERROR, "External make cannot clean " + stubRoot.getPath()));
+      }
+    }
+  }
+
+  @Override
   public void chunkBuildFinished(CompileContext context, ModuleChunk chunk) {
     JavaBuilderUtil.cleanupChunkResources(context);
     STUB_TO_SRC.set(context, null);
@@ -333,10 +343,10 @@ public class GroovyBuilder extends ModuleLevelBuilder {
 
   private static Map<ModuleBuildTarget, String> getStubGenerationOutputs(ModuleChunk chunk, CompileContext context) throws IOException {
     Map<ModuleBuildTarget, String> generationOutputs = new HashMap<ModuleBuildTarget, String>();
-    File commonRoot = new File(context.getProjectDescriptor().dataManager.getDataPaths().getDataStorageRoot(), "groovyStubs");
+    File commonRoot = getStubRoot(context);
     for (ModuleBuildTarget target : chunk.getTargets()) {
       File targetRoot = new File(commonRoot, target.getModule().getName() + File.separator + target.getTargetType().getTypeId());
-      if (!FileUtil.deleteWithRenaming(targetRoot)) {
+      if (targetRoot.exists() && !FileUtil.deleteWithRenaming(targetRoot)) {
         throw new IOException("External make cannot clean " + targetRoot.getPath());
       }
       if (!targetRoot.mkdirs()) {
@@ -345,6 +355,10 @@ public class GroovyBuilder extends ModuleLevelBuilder {
       generationOutputs.put(target, targetRoot.getPath());
     }
     return generationOutputs;
+  }
+
+  private static File getStubRoot(CompileContext context) {
+    return new File(context.getProjectDescriptor().dataManager.getDataPaths().getDataStorageRoot(), "groovyStubs");
   }
 
   @Nullable
@@ -428,17 +442,14 @@ public class GroovyBuilder extends ModuleLevelBuilder {
     return toCompile;
   }
 
-  public static boolean updateDependencies(CompileContext context,
-                                            ModuleChunk chunk,
-                                            DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,
-                                            List<File> toCompile,
-                                            Map<ModuleBuildTarget, Collection<GroovycOSProcessHandler.OutputItem>> successfullyCompiled,
-                                            OutputConsumer outputConsumer, Builder builder) throws IOException {
-    final Mappings delta = context.getProjectDescriptor().dataManager.getMappings().createDelta();
-    final List<File> successfullyCompiledFiles = new ArrayList<File>();
+  public static void updateDependencies(CompileContext context,
+                                        List<File> toCompile,
+                                        Map<ModuleBuildTarget, Collection<GroovycOSProcessHandler.OutputItem>> successfullyCompiled,
+                                        OutputConsumer outputConsumer, Builder builder) throws IOException {
+    JavaBuilderUtil.registerFilesToCompile(context, toCompile);
     if (!successfullyCompiled.isEmpty()) {
 
-      final Callbacks.Backend callback = delta.getCallback();
+      final Callbacks.Backend callback = JavaBuilderUtil.getDependenciesRegistrar(context);
 
       for (Map.Entry<ModuleBuildTarget, Collection<GroovycOSProcessHandler.OutputItem>> entry : successfullyCompiled.entrySet()) {
         final ModuleBuildTarget target = entry.getKey();
@@ -464,12 +475,10 @@ public class GroovyBuilder extends ModuleLevelBuilder {
               builder.getPresentableName(), BuildMessage.Kind.WARNING, message + "\n" + CompilerMessage.getTextFromThrowable(e), sourcePath)
             );
           }
-          successfullyCompiledFiles.add(srcFile);
+          JavaBuilderUtil.registerSuccessfullyCompiled(context, srcFile);
         }
       }
     }
-
-    return JavaBuilderUtil.updateMappings(context, delta, dirtyFilesHolder, chunk, toCompile, successfullyCompiledFiles);
   }
 
   private static String readClassName(byte[] classBytes) throws IOException{
@@ -568,8 +577,8 @@ public class GroovyBuilder extends ModuleLevelBuilder {
       }
       try {
         final File groovyFile = new File(groovy);
-        if (!FSOperations.isMarkedDirty(context, groovyFile)) {
-          FSOperations.markDirty(context, groovyFile);
+        if (!FSOperations.isMarkedDirty(context, CompilationRound.CURRENT, groovyFile)) {
+          FSOperations.markDirty(context, CompilationRound.NEXT, groovyFile);
           FILES_MARKED_DIRTY_FOR_NEXT_ROUND.set(context, Boolean.TRUE);
         }
       }

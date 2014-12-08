@@ -1,4 +1,4 @@
-// "Create Local Variable 'x'" "true"
+// "Create local variable 'x'" "true"
 class other {
   public int method1() { return 1;}
   public String field1;

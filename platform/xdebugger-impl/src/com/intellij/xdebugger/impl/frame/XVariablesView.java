@@ -18,6 +18,7 @@ package com.intellij.xdebugger.impl.frame;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ObjectLongHashMap;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.frame.XStackFrame;
@@ -37,7 +38,7 @@ import static com.intellij.xdebugger.impl.ui.tree.nodes.MessageTreeNode.createIn
  */
 public class XVariablesView extends XVariablesViewBase {
   public static final Key<Map<Pair<VirtualFile, Integer>, Set<XValueNodeImpl>>> DEBUG_VARIABLES = Key.create("debug.variables");
-  public static final Key<Map<VirtualFile, Long>> DEBUG_VARIABLES_TIMESTAMPS = Key.create("debug.variables.timestamps");
+  public static final Key<ObjectLongHashMap<VirtualFile>> DEBUG_VARIABLES_TIMESTAMPS = Key.create("debug.variables.timestamps");
 
   public XVariablesView(@NotNull XDebugSessionImpl session) {
     super(session.getProject(), session.getDebugProcess().getEditorsProvider(), session.getValueMarkers());

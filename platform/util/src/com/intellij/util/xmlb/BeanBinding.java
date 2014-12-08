@@ -21,7 +21,6 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.containers.ConcurrentSoftValueHashMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.MultiMap;
@@ -42,7 +41,7 @@ import java.util.List;
 class BeanBinding extends Binding {
   private static final Logger LOG = Logger.getInstance(BeanBinding.class);
 
-  private static final Map<Class, List<Accessor>> ourAccessorCache = new ConcurrentSoftValueHashMap<Class, List<Accessor>>();
+  private static final Map<Class, List<Accessor>> ourAccessorCache = ContainerUtil.createConcurrentSoftValueMap();
 
   private final String myTagName;
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
@@ -216,13 +215,13 @@ class BeanBinding extends Binding {
         return name;
       }
     }
-    return aClass.getSimpleName();
+    String name = aClass.getSimpleName();
+    return name.isEmpty() ? aClass.getSuperclass().getSimpleName() : name;
   }
 
   private static String getTagNameFromAnnotation(Class<?> aClass) {
     Tag tag = aClass.getAnnotation(Tag.class);
-    if (tag != null && !tag.value().isEmpty()) return tag.value();
-    return null;
+    return tag != null && !tag.value().isEmpty() ? tag.value() : null;
   }
 
   @NotNull
@@ -288,6 +287,7 @@ class BeanBinding extends Binding {
              field.getAnnotation(Tag.class) != null ||
              field.getAnnotation(Attribute.class) != null ||
              field.getAnnotation(Property.class) != null ||
+             field.getAnnotation(Text.class) != null ||
              (Modifier.isPublic(modifiers) &&
               !Modifier.isFinal(modifiers) &&
               !Modifier.isTransient(modifiers) &&
@@ -333,7 +333,7 @@ class BeanBinding extends Binding {
     }
 
     Tag tag = accessor.getAnnotation(Tag.class);
-    if (tag != null && !tag.value().isEmpty()) {
+    if (tag != null) {
       return new TagBinding(accessor, tag);
     }
 

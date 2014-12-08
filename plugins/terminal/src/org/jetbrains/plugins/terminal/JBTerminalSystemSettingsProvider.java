@@ -308,6 +308,7 @@ public class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvi
       return getGlobal().getDefaultForeground();
     }
 
+    @Nullable
     @Override
     public Color getColor(ColorKey key) {
       if (myOwnColors.containsKey(key)) return myOwnColors.get(key);

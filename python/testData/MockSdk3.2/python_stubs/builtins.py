@@ -1,7 +1,7 @@
 # encoding: utf-8
 # module builtins
 # from (built-in)
-# by generator 1.135
+# by generator 1.136
 """
 Built-in functions, exceptions, and other objects.
 
@@ -59,6 +59,9 @@ def bin(number): # real signature unknown; restored from __doc__
     bin(number) -> string
     
     Return the binary representation of an integer.
+    
+       >>> bin(2796202)
+       '0b1010101010101010101010'
     """
     return ""
 
@@ -77,7 +80,6 @@ def chr(i): # real signature unknown; restored from __doc__
     chr(i) -> Unicode character
     
     Return a Unicode string of one character with ordinal i; 0 <= i <= 0x10ffff.
-    If 0x10000 <= i, a surrogate pair is returned.
     """
     return ""
 
@@ -85,7 +87,7 @@ def compile(source, filename, mode, flags=None, dont_inherit=None): # real signa
     """
     compile(source, filename, mode[, flags[, dont_inherit]]) -> code object
     
-    Compile the source string (a Python module, statement or expression)
+    Compile the source (a Python module, statement or expression)
     into a code object that can be executed by exec() or eval().
     The filename will be used for run-time error messages.
     The mode must be 'exec' to compile a module, 'single' to compile a
@@ -231,6 +233,9 @@ def hex(number): # real signature unknown; restored from __doc__
     hex(number) -> string
     
     Return the hexadecimal representation of an integer.
+    
+       >>> hex(3735928559)
+       '0xdeadbeef'
     """
     return ""
 
@@ -286,13 +291,13 @@ def iter(source, sentinel=None): # known special case of iter
     """
     pass
 
-def len(p_object): # real signature unknown; restored from __doc__
+def len(module, p_object): # real signature unknown; restored from __doc__
     """
-    len(object) -> integer
+    len(module, object)
     
     Return the number of items of a sequence or mapping.
     """
-    return 0
+    pass
 
 def license(*args, **kwargs): # real signature unknown
     """
@@ -343,13 +348,16 @@ def oct(number): # real signature unknown; restored from __doc__
     oct(number) -> string
     
     Return the octal representation of an integer.
+    
+       >>> oct(342391)
+       '0o1234567'
     """
     return ""
 
 def open(file, mode='r', buffering=None, encoding=None, errors=None, newline=None, closefd=True): # known special case of open
     """
     open(file, mode='r', buffering=-1, encoding=None,
-         errors=None, newline=None, closefd=True) -> file object
+         errors=None, newline=None, closefd=True, opener=None) -> file object
     
     Open file and return a stream.  Raise IOError upon failure.
     
@@ -362,29 +370,31 @@ def open(file, mode='r', buffering=None, encoding=None, errors=None, newline=Non
     mode is an optional string that specifies the mode in which the file
     is opened. It defaults to 'r' which means open for reading in text
     mode.  Other common values are 'w' for writing (truncating the file if
-    it already exists), and 'a' for appending (which on some Unix systems,
-    means that all writes append to the end of the file regardless of the
-    current seek position). In text mode, if encoding is not specified the
-    encoding used is platform dependent. (For reading and writing raw
-    bytes use binary mode and leave encoding unspecified.) The available
-    modes are:
+    it already exists), 'x' for creating and writing to a new file, and
+    'a' for appending (which on some Unix systems, means that all writes
+    append to the end of the file regardless of the current seek position).
+    In text mode, if encoding is not specified the encoding used is platform
+    dependent: locale.getpreferredencoding(False) is called to get the
+    current locale encoding. (For reading and writing raw bytes use binary
+    mode and leave encoding unspecified.) The available modes are:
     
     ========= ===============================================================
     Character Meaning
     --------- ---------------------------------------------------------------
     'r'       open for reading (default)
     'w'       open for writing, truncating the file first
+    'x'       create a new file and open it for writing
     'a'       open for writing, appending to the end of the file if it exists
     'b'       binary mode
     't'       text mode (default)
     '+'       open a disk file for updating (reading and writing)
-    'U'       universal newline mode (for backwards compatibility; unneeded
-              for new code)
+    'U'       universal newline mode (deprecated)
     ========= ===============================================================
     
     The default mode is 'rt' (open for reading text). For binary random
     access, the mode 'w+b' opens and truncates the file to 0 bytes, while
-    'r+b' opens the file without truncation.
+    'r+b' opens the file without truncation. The 'x' mode implies 'w' and
+    raises an `FileExistsError` if the file already exists.
     
     Python distinguishes between files opened in binary and text modes,
     even when the underlying operating system doesn't. Files opened in
@@ -393,6 +403,10 @@ def open(file, mode='r', buffering=None, encoding=None, errors=None, newline=Non
     't' is appended to the mode argument), the contents of the file are
     returned as strings, the bytes having been first decoded using a
     platform-dependent encoding or using the specified encoding if given.
+    
+    'U' mode is deprecated and will raise an exception in future versions
+    of Python.  It has no effect in Python 3.  Use newline to control
+    universal newlines mode.
     
     buffering is an optional integer used to set the buffering policy.
     Pass 0 to switch buffering off (only allowed in binary mode), 1 to select
@@ -419,8 +433,8 @@ def open(file, mode='r', buffering=None, encoding=None, errors=None, newline=Non
     'strict' to raise a ValueError exception if there is an encoding error
     (the default of None has the same effect), or pass 'ignore' to ignore
     errors. (Note that ignoring encoding errors can lead to data loss.)
-    See the documentation for codecs.register for a list of the permitted
-    encoding error strings.
+    See the documentation for codecs.register or run 'help(codecs.Codec)'
+    for a list of the permitted encoding error strings.
     
     newline controls how universal newlines works (it only applies to text
     mode). It can be None, '', '\n', '\r', and '\r\n'.  It works as
@@ -444,6 +458,12 @@ def open(file, mode='r', buffering=None, encoding=None, errors=None, newline=Non
     when the file is closed. This does not work when a file name is given
     and must be True in that case.
     
+    A custom opener can be used by passing a callable as *opener*. The
+    underlying file descriptor for the file object is then obtained by
+    calling *opener* with (*file*, *flags*). *opener* must return an open
+    file descriptor (passing os.open as *opener* results in functionality
+    similar to passing None).
+    
     open() returns a file object whose type depends on the mode, and
     through which the standard file operations such as reading and writing
     are performed. When open() is used to open a file in a text mode ('w',
@@ -465,7 +485,6 @@ def ord(c): # real signature unknown; restored from __doc__
     ord(c) -> integer
     
     Return the integer ordinal of a one-character string.
-    A valid surrogate pair is also accepted.
     """
     return 0
 
@@ -474,19 +493,20 @@ def pow(x, y, z=None): # real signature unknown; restored from __doc__
     pow(x, y[, z]) -> number
     
     With two arguments, equivalent to x**y.  With three arguments,
-    equivalent to (x**y) % z, but may be more efficient (e.g. for longs).
+    equivalent to (x**y) % z, but may be more efficient (e.g. for ints).
     """
     return 0
 
 def print(*args, sep=' ', end='\n', file=None): # known special case of print
     """
-    print(value, ..., sep=' ', end='\n', file=sys.stdout)
+    print(value, ..., sep=' ', end='\n', file=sys.stdout, flush=False)
     
     Prints the values to a stream, or to sys.stdout by default.
     Optional keyword arguments:
-    file: a file-like object (stream); defaults to the current sys.stdout.
-    sep:  string inserted between values, default a space.
-    end:  string appended after the last value, default a newline.
+    file:  a file-like object (stream); defaults to the current sys.stdout.
+    sep:   string inserted between values, default a space.
+    end:   string appended after the last value, default a newline.
+    flush: whether to forcibly flush the stream.
     """
     pass
 
@@ -529,9 +549,9 @@ def sum(iterable, start=None): # real signature unknown; restored from __doc__
     """
     sum(iterable[, start]) -> value
     
-    Returns the sum of an iterable of numbers (NOT strings) plus the value
+    Return the sum of an iterable of numbers (NOT strings) plus the value
     of parameter 'start' (which defaults to 0).  When the iterable is
-    empty, returns start.
+    empty, return start.
     """
     pass
 
@@ -552,9 +572,9 @@ def __build_class__(func, name, *bases, metaclass=None, **kwds): # real signatur
     """
     pass
 
-def __import__(name, globals={}, locals={}, fromlist=[], level=-1): # real signature unknown; restored from __doc__
+def __import__(name, globals=None, locals=None, fromlist=(), level=0): # real signature unknown; restored from __doc__
     """
-    __import__(name, globals={}, locals={}, fromlist=[], level=-1) -> module
+    __import__(name, globals=None, locals=None, fromlist=(), level=0) -> module
     
     Import a module. Because this function is meant for use by the Python
     interpreter and not for general use it is better to use
@@ -567,8 +587,7 @@ def __import__(name, globals={}, locals={}, fromlist=[], level=-1): # real signa
     When importing a module from a package, note that __import__('A.B', ...)
     returns package A when fromlist is empty, but its submodule B when
     fromlist is not empty.  Level is used to determine whether to perform 
-    absolute or relative imports.  -1 is the original strategy of attempting
-    both absolute and relative imports, 0 is absolute, a positive number
+    absolute or relative imports. 0 is absolute while a positive number
     is the number of parent directories to search relative to the current module.
     """
     pass
@@ -622,6 +641,8 @@ class __function(object):
         self.__annotations__ = {}
         self.__kwdefaults__ = {}
 
+        self.__qualname__ = ''
+
 
 class __method(object):
     '''A mock class representing method type.'''
@@ -663,53 +684,65 @@ class __namedtuple(tuple):
 
 class object:
     """ The most base type """
-    def __delattr__(self, name): # real signature unknown; restored from __doc__
-        """ x.__delattr__('name') <==> del x.name """
+    def __delattr__(self, *args, **kwargs): # real signature unknown
+        """ Implement delattr(self, name). """
         pass
 
-    def __eq__(self, y): # real signature unknown; restored from __doc__
-        """ x.__eq__(y) <==> x==y """
+    def __dir__(self): # real signature unknown; restored from __doc__
+        """
+        __dir__() -> list
+        default dir() implementation
+        """
+        return []
+
+    def __eq__(self, *args, **kwargs): # real signature unknown
+        """ Return self==value. """
         pass
 
     def __format__(self, *args, **kwargs): # real signature unknown
         """ default object formatter """
         pass
 
-    def __getattribute__(self, name): # real signature unknown; restored from __doc__
-        """ x.__getattribute__('name') <==> x.name """
+    def __getattribute__(self, *args, **kwargs): # real signature unknown
+        """ Return getattr(self, name). """
         pass
 
-    def __ge__(self, y): # real signature unknown; restored from __doc__
-        """ x.__ge__(y) <==> x>=y """
+    def __ge__(self, *args, **kwargs): # real signature unknown
+        """
+        __ge__=($self, value, /)
+        --
+        
+        Return self>=value.
+        """
         pass
 
-    def __gt__(self, y): # real signature unknown; restored from __doc__
-        """ x.__gt__(y) <==> x>y """
+    def __gt__(self, *args, **kwargs): # real signature unknown
+        """ Return self>value. """
         pass
 
-    def __hash__(self): # real signature unknown; restored from __doc__
-        """ x.__hash__() <==> hash(x) """
+    def __hash__(self, *args, **kwargs): # real signature unknown
+        """ Return hash(self). """
         pass
 
     def __init__(self): # known special case of object.__init__
-        """ x.__init__(...) initializes x; see help(type(x)) for signature """
+        """ Initialize self.  See help(type(self)) for accurate signature. """
         pass
 
-    def __le__(self, y): # real signature unknown; restored from __doc__
-        """ x.__le__(y) <==> x<=y """
+    def __le__(self, *args, **kwargs): # real signature unknown
+        """ Return self<=value. """
         pass
 
-    def __lt__(self, y): # real signature unknown; restored from __doc__
-        """ x.__lt__(y) <==> x<y """
+    def __lt__(self, *args, **kwargs): # real signature unknown
+        """ Return self<value. """
         pass
 
     @staticmethod # known case of __new__
     def __new__(cls, *more): # known special case of object.__new__
-        """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
+        """ Create and return a new object.  See help(type) for accurate signature. """
         pass
 
-    def __ne__(self, y): # real signature unknown; restored from __doc__
-        """ x.__ne__(y) <==> x!=y """
+    def __ne__(self, *args, **kwargs): # real signature unknown
+        """ Return self!=value. """
         pass
 
     def __reduce_ex__(self, *args, **kwargs): # real signature unknown
@@ -720,12 +753,12 @@ class object:
         """ helper for pickle """
         pass
 
-    def __repr__(self): # real signature unknown; restored from __doc__
-        """ x.__repr__() <==> repr(x) """
+    def __repr__(self, *args, **kwargs): # real signature unknown
+        """ Return repr(self). """
         pass
 
-    def __setattr__(self, name, value): # real signature unknown; restored from __doc__
-        """ x.__setattr__('name', value) <==> x.name = value """
+    def __setattr__(self, *args, **kwargs): # real signature unknown
+        """ Implement setattr(self, name, value). """
         pass
 
     def __sizeof__(self): # real signature unknown; restored from __doc__
@@ -735,8 +768,8 @@ class object:
         """
         return 0
 
-    def __str__(self): # real signature unknown; restored from __doc__
-        """ x.__str__() <==> str(x) """
+    def __str__(self, *args, **kwargs): # real signature unknown
+        """ Return str(self). """
         pass
 
     @classmethod # known case
@@ -757,8 +790,6 @@ class object:
     __module__ = ''
 
 
-from .object import object
-
 class BaseException(object):
     """ Common base class for all exceptions """
     def with_traceback(self, tb): # real signature unknown; restored from __doc__
@@ -768,38 +799,38 @@ class BaseException(object):
         """
         pass
 
-    def __delattr__(self, name): # real signature unknown; restored from __doc__
-        """ x.__delattr__('name') <==> del x.name """
+    def __delattr__(self, *args, **kwargs): # real signature unknown
+        """ Implement delattr(self, name). """
         pass
 
-    def __getattribute__(self, name): # real signature unknown; restored from __doc__
-        """ x.__getattribute__('name') <==> x.name """
+    def __getattribute__(self, *args, **kwargs): # real signature unknown
+        """ Return getattr(self, name). """
         pass
 
     def __init__(self, *args, **kwargs): # real signature unknown
         pass
 
     @staticmethod # known case of __new__
-    def __new__(S, *more): # real signature unknown; restored from __doc__
-        """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
+    def __new__(*args, **kwargs): # real signature unknown
+        """ Create and return a new object.  See help(type) for accurate signature. """
         pass
 
     def __reduce__(self, *args, **kwargs): # real signature unknown
         pass
 
-    def __repr__(self): # real signature unknown; restored from __doc__
-        """ x.__repr__() <==> repr(x) """
+    def __repr__(self, *args, **kwargs): # real signature unknown
+        """ Return repr(self). """
         pass
 
-    def __setattr__(self, name, value): # real signature unknown; restored from __doc__
-        """ x.__setattr__('name', value) <==> x.name = value """
+    def __setattr__(self, *args, **kwargs): # real signature unknown
+        """ Implement setattr(self, name, value). """
         pass
 
     def __setstate__(self, *args, **kwargs): # real signature unknown
         pass
 
-    def __str__(self): # real signature unknown; restored from __doc__
-        """ x.__str__() <==> str(x) """
+    def __str__(self, *args, **kwargs): # real signature unknown
+        """ Return str(self). """
         pass
 
     args = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
@@ -810,13 +841,13 @@ class BaseException(object):
     __context__ = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
     """exception context"""
 
+    __suppress_context__ = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+
     __traceback__ = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
 
 
     __dict__ = None # (!) real value is ''
 
-
-from .BaseException import BaseException
 
 class Exception(BaseException):
     """ Common base class for all non-exit exceptions. """
@@ -824,12 +855,10 @@ class Exception(BaseException):
         pass
 
     @staticmethod # known case of __new__
-    def __new__(S, *more): # real signature unknown; restored from __doc__
-        """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
+    def __new__(*args, **kwargs): # real signature unknown
+        """ Create and return a new object.  See help(type) for accurate signature. """
         pass
 
-
-from .Exception import Exception
 
 class ArithmeticError(Exception):
     """ Base class for arithmetic errors. """
@@ -837,12 +866,10 @@ class ArithmeticError(Exception):
         pass
 
     @staticmethod # known case of __new__
-    def __new__(S, *more): # real signature unknown; restored from __doc__
-        """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
+    def __new__(*args, **kwargs): # real signature unknown
+        """ Create and return a new object.  See help(type) for accurate signature. """
         pass
 
-
-from .Exception import Exception
 
 class AssertionError(Exception):
     """ Assertion failed. """
@@ -850,12 +877,10 @@ class AssertionError(Exception):
         pass
 
     @staticmethod # known case of __new__
-    def __new__(S, *more): # real signature unknown; restored from __doc__
-        """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
+    def __new__(*args, **kwargs): # real signature unknown
+        """ Create and return a new object.  See help(type) for accurate signature. """
         pass
 
-
-from .Exception import Exception
 
 class AttributeError(Exception):
     """ Attribute not found. """
@@ -863,12 +888,55 @@ class AttributeError(Exception):
         pass
 
     @staticmethod # known case of __new__
-    def __new__(S, *more): # real signature unknown; restored from __doc__
-        """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
+    def __new__(*args, **kwargs): # real signature unknown
+        """ Create and return a new object.  See help(type) for accurate signature. """
         pass
 
 
-from .object import object
+class OSError(Exception):
+    """ Base class for I/O related errors. """
+    def __init__(self, *args, **kwargs): # real signature unknown
+        pass
+
+    @staticmethod # known case of __new__
+    def __new__(*args, **kwargs): # real signature unknown
+        """ Create and return a new object.  See help(type) for accurate signature. """
+        pass
+
+    def __reduce__(self, *args, **kwargs): # real signature unknown
+        pass
+
+    def __str__(self, *args, **kwargs): # real signature unknown
+        """ Return str(self). """
+        pass
+
+    characters_written = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+
+    errno = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+    """POSIX exception code"""
+
+    filename = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+    """exception filename"""
+
+    filename2 = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+    """second exception filename"""
+
+    strerror = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+    """exception strerror"""
+
+
+
+IOError = OSError
+
+
+EnvironmentError = OSError
+
+
+class BlockingIOError(OSError):
+    """ I/O operation would block. """
+    def __init__(self, *args, **kwargs): # real signature unknown
+        pass
+
 
 class int(object):
     """
@@ -947,40 +1015,40 @@ class int(object):
         """
         pass
 
-    def __abs__(self): # real signature unknown; restored from __doc__
-        """ x.__abs__() <==> abs(x) """
+    def __abs__(self, *args, **kwargs): # real signature unknown
+        """ abs(self) """
         pass
 
-    def __add__(self, y): # real signature unknown; restored from __doc__
-        """ x.__add__(y) <==> x+y """
+    def __add__(self, *args, **kwargs): # real signature unknown
+        """ Return self+value. """
         pass
 
-    def __and__(self, y): # real signature unknown; restored from __doc__
-        """ x.__and__(y) <==> x&y """
+    def __and__(self, *args, **kwargs): # real signature unknown
+        """ Return self&value. """
         pass
 
-    def __bool__(self): # real signature unknown; restored from __doc__
-        """ x.__bool__() <==> x != 0 """
+    def __bool__(self, *args, **kwargs): # real signature unknown
+        """ self != 0 """
         pass
 
     def __ceil__(self, *args, **kwargs): # real signature unknown
         """ Ceiling of an Integral returns itself. """
         pass
 
-    def __divmod__(self, y): # real signature unknown; restored from __doc__
-        """ x.__divmod__(y) <==> divmod(x, y) """
+    def __divmod__(self, *args, **kwargs): # real signature unknown
+        """ Return divmod(self, value). """
         pass
 
-    def __eq__(self, y): # real signature unknown; restored from __doc__
-        """ x.__eq__(y) <==> x==y """
+    def __eq__(self, *args, **kwargs): # real signature unknown
+        """ Return self==value. """
         pass
 
-    def __float__(self): # real signature unknown; restored from __doc__
-        """ x.__float__() <==> float(x) """
+    def __float__(self, *args, **kwargs): # real signature unknown
+        """ float(self) """
         pass
 
-    def __floordiv__(self, y): # real signature unknown; restored from __doc__
-        """ x.__floordiv__(y) <==> x//y """
+    def __floordiv__(self, *args, **kwargs): # real signature unknown
+        """ Return self//value. """
         pass
 
     def __floor__(self, *args, **kwargs): # real signature unknown
@@ -990,27 +1058,32 @@ class int(object):
     def __format__(self, *args, **kwargs): # real signature unknown
         pass
 
-    def __getattribute__(self, name): # real signature unknown; restored from __doc__
-        """ x.__getattribute__('name') <==> x.name """
+    def __getattribute__(self, *args, **kwargs): # real signature unknown
+        """ Return getattr(self, name). """
         pass
 
     def __getnewargs__(self, *args, **kwargs): # real signature unknown
         pass
 
-    def __ge__(self, y): # real signature unknown; restored from __doc__
-        """ x.__ge__(y) <==> x>=y """
+    def __ge__(self, *args, **kwargs): # real signature unknown
+        """
+        __ge__=($self, value, /)
+        --
+        
+        Return self>=value.
+        """
         pass
 
-    def __gt__(self, y): # real signature unknown; restored from __doc__
-        """ x.__gt__(y) <==> x>y """
+    def __gt__(self, *args, **kwargs): # real signature unknown
+        """ Return self>value. """
         pass
 
-    def __hash__(self): # real signature unknown; restored from __doc__
-        """ x.__hash__() <==> hash(x) """
+    def __hash__(self, *args, **kwargs): # real signature unknown
+        """ Return hash(self). """
         pass
 
-    def __index__(self): # real signature unknown; restored from __doc__
-        """ x[y:z] <==> x[y.__index__():z.__index__()] """
+    def __index__(self, *args, **kwargs): # real signature unknown
+        """ Return self converted to an integer, if self is suitablefor use as an index into a list. """
         pass
 
     def __init__(self, x, base=10): # known special case of int.__init__
@@ -1033,93 +1106,93 @@ class int(object):
         """
         pass
 
-    def __int__(self): # real signature unknown; restored from __doc__
-        """ x.__int__() <==> int(x) """
+    def __int__(self, *args, **kwargs): # real signature unknown
+        """ int(self) """
         pass
 
-    def __invert__(self): # real signature unknown; restored from __doc__
-        """ x.__invert__() <==> ~x """
+    def __invert__(self, *args, **kwargs): # real signature unknown
+        """ ~self """
         pass
 
-    def __le__(self, y): # real signature unknown; restored from __doc__
-        """ x.__le__(y) <==> x<=y """
+    def __le__(self, *args, **kwargs): # real signature unknown
+        """ Return self<=value. """
         pass
 
-    def __lshift__(self, y): # real signature unknown; restored from __doc__
-        """ x.__lshift__(y) <==> x<<y """
+    def __lshift__(self, *args, **kwargs): # real signature unknown
+        """ Return self<<value. """
         pass
 
-    def __lt__(self, y): # real signature unknown; restored from __doc__
-        """ x.__lt__(y) <==> x<y """
+    def __lt__(self, *args, **kwargs): # real signature unknown
+        """ Return self<value. """
         pass
 
-    def __mod__(self, y): # real signature unknown; restored from __doc__
-        """ x.__mod__(y) <==> x%y """
+    def __mod__(self, *args, **kwargs): # real signature unknown
+        """ Return self%value. """
         pass
 
-    def __mul__(self, y): # real signature unknown; restored from __doc__
-        """ x.__mul__(y) <==> x*y """
+    def __mul__(self, *args, **kwargs): # real signature unknown
+        """ Return self*value. """
         pass
 
-    def __neg__(self): # real signature unknown; restored from __doc__
-        """ x.__neg__() <==> -x """
+    def __neg__(self, *args, **kwargs): # real signature unknown
+        """ -self """
         pass
 
     @staticmethod # known case of __new__
-    def __new__(S, *more): # real signature unknown; restored from __doc__
-        """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
+    def __new__(*args, **kwargs): # real signature unknown
+        """ Create and return a new object.  See help(type) for accurate signature. """
         pass
 
-    def __ne__(self, y): # real signature unknown; restored from __doc__
-        """ x.__ne__(y) <==> x!=y """
+    def __ne__(self, *args, **kwargs): # real signature unknown
+        """ Return self!=value. """
         pass
 
-    def __or__(self, y): # real signature unknown; restored from __doc__
-        """ x.__or__(y) <==> x|y """
+    def __or__(self, *args, **kwargs): # real signature unknown
+        """ Return self|value. """
         pass
 
-    def __pos__(self): # real signature unknown; restored from __doc__
-        """ x.__pos__() <==> +x """
+    def __pos__(self, *args, **kwargs): # real signature unknown
+        """ +self """
         pass
 
-    def __pow__(self, y, z=None): # real signature unknown; restored from __doc__
-        """ x.__pow__(y[, z]) <==> pow(x, y[, z]) """
+    def __pow__(self, *args, **kwargs): # real signature unknown
+        """ Return pow(self, value, mod). """
         pass
 
-    def __radd__(self, y): # real signature unknown; restored from __doc__
-        """ x.__radd__(y) <==> y+x """
+    def __radd__(self, *args, **kwargs): # real signature unknown
+        """ Return value+self. """
         pass
 
-    def __rand__(self, y): # real signature unknown; restored from __doc__
-        """ x.__rand__(y) <==> y&x """
+    def __rand__(self, *args, **kwargs): # real signature unknown
+        """ Return value&self. """
         pass
 
-    def __rdivmod__(self, y): # real signature unknown; restored from __doc__
-        """ x.__rdivmod__(y) <==> divmod(y, x) """
+    def __rdivmod__(self, *args, **kwargs): # real signature unknown
+        """ Return divmod(value, self). """
         pass
 
-    def __repr__(self): # real signature unknown; restored from __doc__
-        """ x.__repr__() <==> repr(x) """
+    def __repr__(self, *args, **kwargs): # real signature unknown
+        """ Return repr(self). """
         pass
 
-    def __rfloordiv__(self, y): # real signature unknown; restored from __doc__
-        """ x.__rfloordiv__(y) <==> y//x """
+    def __rfloordiv__(self, *args, **kwargs): # real signature unknown
+        """ Return value//self. """
         pass
 
-    def __rlshift__(self, y): # real signature unknown; restored from __doc__
-        """ x.__rlshift__(y) <==> y<<x """
+    def __rlshift__(self, *args, **kwargs): # real signature unknown
+        """ Return value<<self. """
         pass
 
-    def __rmod__(self, y): # real signature unknown; restored from __doc__
-        """ x.__rmod__(y) <==> y%x """
+    def __rmod__(self, *args, **kwargs): # real signature unknown
+        """ Return value%self. """
         pass
 
-    def __rmul__(self, y): # real signature unknown; restored from __doc__
-        """ x.__rmul__(y) <==> y*x """
+    def __rmul__(self, *args, **kwargs): # real signature unknown
+        """ Return value*self. """
         pass
 
-    def __ror__(self, y): # real signature unknown; restored from __doc__
-        """ x.__ror__(y) <==> y|x """
+    def __ror__(self, *args, **kwargs): # real signature unknown
+        """ Return value|self. """
         pass
 
     def __round__(self, *args, **kwargs): # real signature unknown
@@ -1129,52 +1202,52 @@ class int(object):
         """
         pass
 
-    def __rpow__(self, x, z=None): # real signature unknown; restored from __doc__
-        """ y.__rpow__(x[, z]) <==> pow(x, y[, z]) """
+    def __rpow__(self, *args, **kwargs): # real signature unknown
+        """ Return pow(value, self, mod). """
         pass
 
-    def __rrshift__(self, y): # real signature unknown; restored from __doc__
-        """ x.__rrshift__(y) <==> y>>x """
+    def __rrshift__(self, *args, **kwargs): # real signature unknown
+        """ Return value>>self. """
         pass
 
-    def __rshift__(self, y): # real signature unknown; restored from __doc__
-        """ x.__rshift__(y) <==> x>>y """
+    def __rshift__(self, *args, **kwargs): # real signature unknown
+        """ Return self>>value. """
         pass
 
-    def __rsub__(self, y): # real signature unknown; restored from __doc__
-        """ x.__rsub__(y) <==> y-x """
+    def __rsub__(self, *args, **kwargs): # real signature unknown
+        """ Return value-self. """
         pass
 
-    def __rtruediv__(self, y): # real signature unknown; restored from __doc__
-        """ x.__rtruediv__(y) <==> y/x """
+    def __rtruediv__(self, *args, **kwargs): # real signature unknown
+        """ Return value/self. """
         pass
 
-    def __rxor__(self, y): # real signature unknown; restored from __doc__
-        """ x.__rxor__(y) <==> y^x """
+    def __rxor__(self, *args, **kwargs): # real signature unknown
+        """ Return value^self. """
         pass
 
     def __sizeof__(self, *args, **kwargs): # real signature unknown
         """ Returns size in memory, in bytes """
         pass
 
-    def __str__(self): # real signature unknown; restored from __doc__
-        """ x.__str__() <==> str(x) """
+    def __str__(self, *args, **kwargs): # real signature unknown
+        """ Return str(self). """
         pass
 
-    def __sub__(self, y): # real signature unknown; restored from __doc__
-        """ x.__sub__(y) <==> x-y """
+    def __sub__(self, *args, **kwargs): # real signature unknown
+        """ Return self-value. """
         pass
 
-    def __truediv__(self, y): # real signature unknown; restored from __doc__
-        """ x.__truediv__(y) <==> x/y """
+    def __truediv__(self, *args, **kwargs): # real signature unknown
+        """ Return self/value. """
         pass
 
     def __trunc__(self, *args, **kwargs): # real signature unknown
         """ Truncating an Integral returns itself. """
         pass
 
-    def __xor__(self, y): # real signature unknown; restored from __doc__
-        """ x.__xor__(y) <==> x^y """
+    def __xor__(self, *args, **kwargs): # real signature unknown
+        """ Return self^value. """
         pass
 
     denominator = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
@@ -1191,8 +1264,6 @@ class int(object):
 
 
 
-from .int import int
-
 class bool(int):
     """
     bool(x) -> bool
@@ -1201,48 +1272,58 @@ class bool(int):
     The builtins True and False are the only two instances of the class bool.
     The class bool is a subclass of the class int, and cannot be subclassed.
     """
-    def __and__(self, y): # real signature unknown; restored from __doc__
-        """ x.__and__(y) <==> x&y """
+    def __and__(self, *args, **kwargs): # real signature unknown
+        """ Return self&value. """
         pass
 
     def __init__(self, x): # real signature unknown; restored from __doc__
         pass
 
     @staticmethod # known case of __new__
-    def __new__(S, *more): # real signature unknown; restored from __doc__
-        """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
+    def __new__(*args, **kwargs): # real signature unknown
+        """ Create and return a new object.  See help(type) for accurate signature. """
         pass
 
-    def __or__(self, y): # real signature unknown; restored from __doc__
-        """ x.__or__(y) <==> x|y """
+    def __or__(self, *args, **kwargs): # real signature unknown
+        """ Return self|value. """
         pass
 
-    def __rand__(self, y): # real signature unknown; restored from __doc__
-        """ x.__rand__(y) <==> y&x """
+    def __rand__(self, *args, **kwargs): # real signature unknown
+        """ Return value&self. """
         pass
 
-    def __repr__(self): # real signature unknown; restored from __doc__
-        """ x.__repr__() <==> repr(x) """
+    def __repr__(self, *args, **kwargs): # real signature unknown
+        """ Return repr(self). """
         pass
 
-    def __ror__(self, y): # real signature unknown; restored from __doc__
-        """ x.__ror__(y) <==> y|x """
+    def __ror__(self, *args, **kwargs): # real signature unknown
+        """ Return value|self. """
         pass
 
-    def __rxor__(self, y): # real signature unknown; restored from __doc__
-        """ x.__rxor__(y) <==> y^x """
+    def __rxor__(self, *args, **kwargs): # real signature unknown
+        """ Return value^self. """
         pass
 
-    def __str__(self): # real signature unknown; restored from __doc__
-        """ x.__str__() <==> str(x) """
+    def __str__(self, *args, **kwargs): # real signature unknown
+        """ Return str(self). """
         pass
 
-    def __xor__(self, y): # real signature unknown; restored from __doc__
-        """ x.__xor__(y) <==> x^y """
+    def __xor__(self, *args, **kwargs): # real signature unknown
+        """ Return self^value. """
         pass
 
 
-from .Exception import Exception
+class ConnectionError(OSError):
+    """ Connection error. """
+    def __init__(self, *args, **kwargs): # real signature unknown
+        pass
+
+
+class BrokenPipeError(ConnectionError):
+    """ Broken pipe. """
+    def __init__(self, *args, **kwargs): # real signature unknown
+        pass
+
 
 class BufferError(Exception):
     """ Buffer error. """
@@ -1250,12 +1331,10 @@ class BufferError(Exception):
         pass
 
     @staticmethod # known case of __new__
-    def __new__(S, *more): # real signature unknown; restored from __doc__
-        """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
+    def __new__(*args, **kwargs): # real signature unknown
+        """ Create and return a new object.  See help(type) for accurate signature. """
         pass
 
-
-from .object import object
 
 class bytearray(object):
     """
@@ -1298,6 +1377,22 @@ class bytearray(object):
         """
         pass
 
+    def clear(self): # real signature unknown; restored from __doc__
+        """
+        B.clear() -> None
+        
+        Remove all items from B.
+        """
+        pass
+
+    def copy(self): # real signature unknown; restored from __doc__
+        """
+        B.copy() -> bytearray
+        
+        Return a copy of B.
+        """
+        return bytearray
+
     def count(self, sub, start=None, end=None): # real signature unknown; restored from __doc__
         """
         B.count(sub[, start[, end]]) -> int
@@ -1332,9 +1427,9 @@ class bytearray(object):
         """
         return False
 
-    def expandtabs(self, tabsize=None): # real signature unknown; restored from __doc__
+    def expandtabs(self, tabsize=8): # real signature unknown; restored from __doc__
         """
-        B.expandtabs([tabsize]) -> copy of B
+        B.expandtabs(tabsize=8) -> copy of B
         
         Return a copy of B where all tab characters are expanded using spaces.
         If tabsize is not given, a tab size of 8 characters is assumed.
@@ -1587,9 +1682,9 @@ class bytearray(object):
         """
         pass
 
-    def rsplit(self, sep, maxsplit=None): # real signature unknown; restored from __doc__
+    def rsplit(self, sep=None, maxsplit=-1): # real signature unknown; restored from __doc__
         """
-        B.rsplit(sep[, maxsplit]) -> list of bytearrays
+        B.rsplit(sep=None, maxsplit=-1) -> list of bytearrays
         
         Return a list of the sections in B, using sep as the delimiter,
         starting at the end of B and working to the front.
@@ -1609,9 +1704,9 @@ class bytearray(object):
         """
         return bytearray
 
-    def split(self, sep=None, maxsplit=None): # real signature unknown; restored from __doc__
+    def split(self, sep=None, maxsplit=-1): # real signature unknown; restored from __doc__
         """
-        B.split([sep[, maxsplit]]) -> list of bytearrays
+        B.split(sep=None, maxsplit=-1) -> list of bytearrays
         
         Return a list of the sections in B, using sep as the delimiter.
         If sep is not given, B is split on ASCII whitespace characters
@@ -1697,8 +1792,8 @@ class bytearray(object):
         """
         pass
 
-    def __add__(self, y): # real signature unknown; restored from __doc__
-        """ x.__add__(y) <==> x+y """
+    def __add__(self, *args, **kwargs): # real signature unknown
+        """ Return self+value. """
         pass
 
     def __alloc__(self): # real signature unknown; restored from __doc__
@@ -1709,40 +1804,45 @@ class bytearray(object):
         """
         return 0
 
-    def __contains__(self, y): # real signature unknown; restored from __doc__
-        """ x.__contains__(y) <==> y in x """
+    def __contains__(self, *args, **kwargs): # real signature unknown
+        """ Return key in self. """
         pass
 
-    def __delitem__(self, y): # real signature unknown; restored from __doc__
-        """ x.__delitem__(y) <==> del x[y] """
+    def __delitem__(self, *args, **kwargs): # real signature unknown
+        """ Delete self[key]. """
         pass
 
-    def __eq__(self, y): # real signature unknown; restored from __doc__
-        """ x.__eq__(y) <==> x==y """
+    def __eq__(self, *args, **kwargs): # real signature unknown
+        """ Return self==value. """
         pass
 
-    def __getattribute__(self, name): # real signature unknown; restored from __doc__
-        """ x.__getattribute__('name') <==> x.name """
+    def __getattribute__(self, *args, **kwargs): # real signature unknown
+        """ Return getattr(self, name). """
         pass
 
-    def __getitem__(self, y): # real signature unknown; restored from __doc__
-        """ x.__getitem__(y) <==> x[y] """
+    def __getitem__(self, *args, **kwargs): # real signature unknown
+        """ Return self[key]. """
         pass
 
-    def __ge__(self, y): # real signature unknown; restored from __doc__
-        """ x.__ge__(y) <==> x>=y """
+    def __ge__(self, *args, **kwargs): # real signature unknown
+        """
+        __ge__=($self, value, /)
+        --
+        
+        Return self>=value.
+        """
         pass
 
-    def __gt__(self, y): # real signature unknown; restored from __doc__
-        """ x.__gt__(y) <==> x>y """
+    def __gt__(self, *args, **kwargs): # real signature unknown
+        """ Return self>value. """
         pass
 
-    def __iadd__(self, y): # real signature unknown; restored from __doc__
-        """ x.__iadd__(y) <==> x+=y """
+    def __iadd__(self, *args, **kwargs): # real signature unknown
+        """ Implement self+=value. """
         pass
 
-    def __imul__(self, y): # real signature unknown; restored from __doc__
-        """ x.__imul__(y) <==> x*=y """
+    def __imul__(self, *args, **kwargs): # real signature unknown
+        """ Implement self*=value. """
         pass
 
     def __init__(self, source=None, encoding=None, errors='strict'): # known special case of bytearray.__init__
@@ -1763,49 +1863,53 @@ class bytearray(object):
         """
         pass
 
-    def __iter__(self): # real signature unknown; restored from __doc__
-        """ x.__iter__() <==> iter(x) """
+    def __iter__(self, *args, **kwargs): # real signature unknown
+        """ Implement iter(self). """
         pass
 
-    def __len__(self): # real signature unknown; restored from __doc__
-        """ x.__len__() <==> len(x) """
+    def __len__(self, *args, **kwargs): # real signature unknown
+        """ Return len(self). """
         pass
 
-    def __le__(self, y): # real signature unknown; restored from __doc__
-        """ x.__le__(y) <==> x<=y """
+    def __le__(self, *args, **kwargs): # real signature unknown
+        """ Return self<=value. """
         pass
 
-    def __lt__(self, y): # real signature unknown; restored from __doc__
-        """ x.__lt__(y) <==> x<y """
+    def __lt__(self, *args, **kwargs): # real signature unknown
+        """ Return self<value. """
         pass
 
-    def __mul__(self, n): # real signature unknown; restored from __doc__
-        """ x.__mul__(n) <==> x*n """
+    def __mul__(self, *args, **kwargs): # real signature unknown
+        """ Return self*value.n """
         pass
 
     @staticmethod # known case of __new__
-    def __new__(S, *more): # real signature unknown; restored from __doc__
-        """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
+    def __new__(*args, **kwargs): # real signature unknown
+        """ Create and return a new object.  See help(type) for accurate signature. """
         pass
 
-    def __ne__(self, y): # real signature unknown; restored from __doc__
-        """ x.__ne__(y) <==> x!=y """
+    def __ne__(self, *args, **kwargs): # real signature unknown
+        """ Return self!=value. """
+        pass
+
+    def __reduce_ex__(self, *args, **kwargs): # real signature unknown
+        """ Return state information for pickling. """
         pass
 
     def __reduce__(self, *args, **kwargs): # real signature unknown
         """ Return state information for pickling. """
         pass
 
-    def __repr__(self): # real signature unknown; restored from __doc__
-        """ x.__repr__() <==> repr(x) """
+    def __repr__(self, *args, **kwargs): # real signature unknown
+        """ Return repr(self). """
         pass
 
-    def __rmul__(self, n): # real signature unknown; restored from __doc__
-        """ x.__rmul__(n) <==> n*x """
+    def __rmul__(self, *args, **kwargs): # real signature unknown
+        """ Return self*value. """
         pass
 
-    def __setitem__(self, i, y): # real signature unknown; restored from __doc__
-        """ x.__setitem__(i, y) <==> x[i]=y """
+    def __setitem__(self, *args, **kwargs): # real signature unknown
+        """ Set self[key] to value. """
         pass
 
     def __sizeof__(self): # real signature unknown; restored from __doc__
@@ -1816,14 +1920,12 @@ class bytearray(object):
         """
         return 0
 
-    def __str__(self): # real signature unknown; restored from __doc__
-        """ x.__str__() <==> str(x) """
+    def __str__(self, *args, **kwargs): # real signature unknown
+        """ Return str(self). """
         pass
 
     __hash__ = None
 
-
-from .object import object
 
 class bytes(object):
     """
@@ -1891,9 +1993,9 @@ class bytes(object):
         """
         return False
 
-    def expandtabs(self, tabsize=None): # real signature unknown; restored from __doc__
+    def expandtabs(self, tabsize=8): # real signature unknown; restored from __doc__
         """
-        B.expandtabs([tabsize]) -> copy of B
+        B.expandtabs(tabsize=8) -> copy of B
         
         Return a copy of B where all tab characters are expanded using spaces.
         If tabsize is not given, a tab size of 8 characters is assumed.
@@ -2103,9 +2205,9 @@ class bytes(object):
         """
         pass
 
-    def rsplit(self, sep=None, maxsplit=None): # real signature unknown; restored from __doc__
+    def rsplit(self, sep=None, maxsplit=-1): # real signature unknown; restored from __doc__
         """
-        B.rsplit([sep[, maxsplit]]) -> list of bytes
+        B.rsplit(sep=None, maxsplit=-1) -> list of bytes
         
         Return a list of the sections in B, using sep as the delimiter,
         starting at the end of B and working to the front.
@@ -2124,9 +2226,9 @@ class bytes(object):
         """
         return b""
 
-    def split(self, sep=None, maxsplit=None): # real signature unknown; restored from __doc__
+    def split(self, sep=None, maxsplit=-1): # real signature unknown; restored from __doc__
         """
-        B.split([sep[, maxsplit]]) -> list of bytes
+        B.split(sep=None, maxsplit=-1) -> list of bytes
         
         Return a list of the sections in B, using sep as the delimiter.
         If sep is not specified or is None, B is split on ASCII whitespace
@@ -2211,39 +2313,44 @@ class bytes(object):
         """
         pass
 
-    def __add__(self, y): # real signature unknown; restored from __doc__
-        """ x.__add__(y) <==> x+y """
+    def __add__(self, *args, **kwargs): # real signature unknown
+        """ Return self+value. """
         pass
 
-    def __contains__(self, y): # real signature unknown; restored from __doc__
-        """ x.__contains__(y) <==> y in x """
+    def __contains__(self, *args, **kwargs): # real signature unknown
+        """ Return key in self. """
         pass
 
-    def __eq__(self, y): # real signature unknown; restored from __doc__
-        """ x.__eq__(y) <==> x==y """
+    def __eq__(self, *args, **kwargs): # real signature unknown
+        """ Return self==value. """
         pass
 
-    def __getattribute__(self, name): # real signature unknown; restored from __doc__
-        """ x.__getattribute__('name') <==> x.name """
+    def __getattribute__(self, *args, **kwargs): # real signature unknown
+        """ Return getattr(self, name). """
         pass
 
-    def __getitem__(self, y): # real signature unknown; restored from __doc__
-        """ x.__getitem__(y) <==> x[y] """
+    def __getitem__(self, *args, **kwargs): # real signature unknown
+        """ Return self[key]. """
         pass
 
     def __getnewargs__(self, *args, **kwargs): # real signature unknown
         pass
 
-    def __ge__(self, y): # real signature unknown; restored from __doc__
-        """ x.__ge__(y) <==> x>=y """
+    def __ge__(self, *args, **kwargs): # real signature unknown
+        """
+        __ge__=($self, value, /)
+        --
+        
+        Return self>=value.
+        """
         pass
 
-    def __gt__(self, y): # real signature unknown; restored from __doc__
-        """ x.__gt__(y) <==> x>y """
+    def __gt__(self, *args, **kwargs): # real signature unknown
+        """ Return self>value. """
         pass
 
-    def __hash__(self): # real signature unknown; restored from __doc__
-        """ x.__hash__() <==> hash(x) """
+    def __hash__(self, *args, **kwargs): # real signature unknown
+        """ Return hash(self). """
         pass
 
     def __init__(self, value=b'', encoding=None, errors='strict'): # known special case of bytes.__init__
@@ -2263,53 +2370,51 @@ class bytes(object):
         """
         pass
 
-    def __iter__(self): # real signature unknown; restored from __doc__
-        """ x.__iter__() <==> iter(x) """
+    def __iter__(self, *args, **kwargs): # real signature unknown
+        """ Implement iter(self). """
         pass
 
-    def __len__(self): # real signature unknown; restored from __doc__
-        """ x.__len__() <==> len(x) """
+    def __len__(self, *args, **kwargs): # real signature unknown
+        """ Return len(self). """
         pass
 
-    def __le__(self, y): # real signature unknown; restored from __doc__
-        """ x.__le__(y) <==> x<=y """
+    def __le__(self, *args, **kwargs): # real signature unknown
+        """ Return self<=value. """
         pass
 
-    def __lt__(self, y): # real signature unknown; restored from __doc__
-        """ x.__lt__(y) <==> x<y """
+    def __lt__(self, *args, **kwargs): # real signature unknown
+        """ Return self<value. """
         pass
 
-    def __mul__(self, n): # real signature unknown; restored from __doc__
-        """ x.__mul__(n) <==> x*n """
+    def __mul__(self, *args, **kwargs): # real signature unknown
+        """ Return self*value.n """
         pass
 
     @staticmethod # known case of __new__
-    def __new__(S, *more): # real signature unknown; restored from __doc__
-        """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
+    def __new__(*args, **kwargs): # real signature unknown
+        """ Create and return a new object.  See help(type) for accurate signature. """
         pass
 
-    def __ne__(self, y): # real signature unknown; restored from __doc__
-        """ x.__ne__(y) <==> x!=y """
+    def __ne__(self, *args, **kwargs): # real signature unknown
+        """ Return self!=value. """
         pass
 
-    def __repr__(self): # real signature unknown; restored from __doc__
-        """ x.__repr__() <==> repr(x) """
+    def __repr__(self, *args, **kwargs): # real signature unknown
+        """ Return repr(self). """
         pass
 
-    def __rmul__(self, n): # real signature unknown; restored from __doc__
-        """ x.__rmul__(n) <==> n*x """
+    def __rmul__(self, *args, **kwargs): # real signature unknown
+        """ Return self*value. """
         pass
 
     def __sizeof__(self): # real signature unknown; restored from __doc__
         """ B.__sizeof__() -> size of B in memory, in bytes """
         pass
 
-    def __str__(self): # real signature unknown; restored from __doc__
-        """ x.__str__() <==> str(x) """
+    def __str__(self, *args, **kwargs): # real signature unknown
+        """ Return str(self). """
         pass
 
-
-from .Exception import Exception
 
 class Warning(Exception):
     """ Base class for warning categories. """
@@ -2317,12 +2422,10 @@ class Warning(Exception):
         pass
 
     @staticmethod # known case of __new__
-    def __new__(S, *more): # real signature unknown; restored from __doc__
-        """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
+    def __new__(*args, **kwargs): # real signature unknown
+        """ Create and return a new object.  See help(type) for accurate signature. """
         pass
 
-
-from .Warning import Warning
 
 class BytesWarning(Warning):
     """
@@ -2333,12 +2436,16 @@ class BytesWarning(Warning):
         pass
 
     @staticmethod # known case of __new__
-    def __new__(S, *more): # real signature unknown; restored from __doc__
-        """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
+    def __new__(*args, **kwargs): # real signature unknown
+        """ Create and return a new object.  See help(type) for accurate signature. """
         pass
 
 
-from .object import object
+class ChildProcessError(OSError):
+    """ Child process error. """
+    def __init__(self, *args, **kwargs): # real signature unknown
+        pass
+
 
 class classmethod(object):
     """
@@ -2362,27 +2469,25 @@ class classmethod(object):
     Class methods are different than C++ or Java static methods.
     If you want those, see the staticmethod builtin.
     """
-    def __getattribute__(self, name): # real signature unknown; restored from __doc__
-        """ x.__getattribute__('name') <==> x.name """
-        pass
-
-    def __get__(self, obj, type=None): # real signature unknown; restored from __doc__
-        """ descr.__get__(obj[, type]) -> value """
+    def __get__(self, *args, **kwargs): # real signature unknown
+        """ Return an attribute of instance, which is of type owner. """
         pass
 
     def __init__(self, function): # real signature unknown; restored from __doc__
         pass
 
     @staticmethod # known case of __new__
-    def __new__(S, *more): # real signature unknown; restored from __doc__
-        """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
+    def __new__(*args, **kwargs): # real signature unknown
+        """ Create and return a new object.  See help(type) for accurate signature. """
         pass
 
     __func__ = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
 
+    __isabstractmethod__ = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
 
 
-from .object import object
+    __dict__ = None # (!) real value is ''
+
 
 class complex(object):
     """
@@ -2395,155 +2500,160 @@ class complex(object):
         """
         complex.conjugate() -> complex
         
-        Returns the complex conjugate of its argument. (3-4j).conjugate() == 3+4j.
+        Return the complex conjugate of its argument. (3-4j).conjugate() == 3+4j.
         """
         return complex
 
-    def __abs__(self): # real signature unknown; restored from __doc__
-        """ x.__abs__() <==> abs(x) """
+    def __abs__(self, *args, **kwargs): # real signature unknown
+        """ abs(self) """
         pass
 
-    def __add__(self, y): # real signature unknown; restored from __doc__
-        """ x.__add__(y) <==> x+y """
+    def __add__(self, *args, **kwargs): # real signature unknown
+        """ Return self+value. """
         pass
 
-    def __bool__(self): # real signature unknown; restored from __doc__
-        """ x.__bool__() <==> x != 0 """
+    def __bool__(self, *args, **kwargs): # real signature unknown
+        """ self != 0 """
         pass
 
-    def __divmod__(self, y): # real signature unknown; restored from __doc__
-        """ x.__divmod__(y) <==> divmod(x, y) """
+    def __divmod__(self, *args, **kwargs): # real signature unknown
+        """ Return divmod(self, value). """
         pass
 
-    def __eq__(self, y): # real signature unknown; restored from __doc__
-        """ x.__eq__(y) <==> x==y """
+    def __eq__(self, *args, **kwargs): # real signature unknown
+        """ Return self==value. """
         pass
 
-    def __float__(self): # real signature unknown; restored from __doc__
-        """ x.__float__() <==> float(x) """
+    def __float__(self, *args, **kwargs): # real signature unknown
+        """ float(self) """
         pass
 
-    def __floordiv__(self, y): # real signature unknown; restored from __doc__
-        """ x.__floordiv__(y) <==> x//y """
+    def __floordiv__(self, *args, **kwargs): # real signature unknown
+        """ Return self//value. """
         pass
 
     def __format__(self): # real signature unknown; restored from __doc__
         """
         complex.__format__() -> str
         
-        Converts to a string according to format_spec.
+        Convert to a string according to format_spec.
         """
         return ""
 
-    def __getattribute__(self, name): # real signature unknown; restored from __doc__
-        """ x.__getattribute__('name') <==> x.name """
+    def __getattribute__(self, *args, **kwargs): # real signature unknown
+        """ Return getattr(self, name). """
         pass
 
     def __getnewargs__(self, *args, **kwargs): # real signature unknown
         pass
 
-    def __ge__(self, y): # real signature unknown; restored from __doc__
-        """ x.__ge__(y) <==> x>=y """
+    def __ge__(self, *args, **kwargs): # real signature unknown
+        """
+        __ge__=($self, value, /)
+        --
+        
+        Return self>=value.
+        """
         pass
 
-    def __gt__(self, y): # real signature unknown; restored from __doc__
-        """ x.__gt__(y) <==> x>y """
+    def __gt__(self, *args, **kwargs): # real signature unknown
+        """ Return self>value. """
         pass
 
-    def __hash__(self): # real signature unknown; restored from __doc__
-        """ x.__hash__() <==> hash(x) """
+    def __hash__(self, *args, **kwargs): # real signature unknown
+        """ Return hash(self). """
         pass
 
     def __init__(self, real, imag=None): # real signature unknown; restored from __doc__
         pass
 
-    def __int__(self): # real signature unknown; restored from __doc__
-        """ x.__int__() <==> int(x) """
+    def __int__(self, *args, **kwargs): # real signature unknown
+        """ int(self) """
         pass
 
-    def __le__(self, y): # real signature unknown; restored from __doc__
-        """ x.__le__(y) <==> x<=y """
+    def __le__(self, *args, **kwargs): # real signature unknown
+        """ Return self<=value. """
         pass
 
-    def __lt__(self, y): # real signature unknown; restored from __doc__
-        """ x.__lt__(y) <==> x<y """
+    def __lt__(self, *args, **kwargs): # real signature unknown
+        """ Return self<value. """
         pass
 
-    def __mod__(self, y): # real signature unknown; restored from __doc__
-        """ x.__mod__(y) <==> x%y """
+    def __mod__(self, *args, **kwargs): # real signature unknown
+        """ Return self%value. """
         pass
 
-    def __mul__(self, y): # real signature unknown; restored from __doc__
-        """ x.__mul__(y) <==> x*y """
+    def __mul__(self, *args, **kwargs): # real signature unknown
+        """ Return self*value. """
         pass
 
-    def __neg__(self): # real signature unknown; restored from __doc__
-        """ x.__neg__() <==> -x """
+    def __neg__(self, *args, **kwargs): # real signature unknown
+        """ -self """
         pass
 
     @staticmethod # known case of __new__
-    def __new__(S, *more): # real signature unknown; restored from __doc__
-        """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
+    def __new__(*args, **kwargs): # real signature unknown
+        """ Create and return a new object.  See help(type) for accurate signature. """
         pass
 
-    def __ne__(self, y): # real signature unknown; restored from __doc__
-        """ x.__ne__(y) <==> x!=y """
+    def __ne__(self, *args, **kwargs): # real signature unknown
+        """ Return self!=value. """
         pass
 
-    def __pos__(self): # real signature unknown; restored from __doc__
-        """ x.__pos__() <==> +x """
+    def __pos__(self, *args, **kwargs): # real signature unknown
+        """ +self """
         pass
 
-    def __pow__(self, y, z=None): # real signature unknown; restored from __doc__
-        """ x.__pow__(y[, z]) <==> pow(x, y[, z]) """
+    def __pow__(self, *args, **kwargs): # real signature unknown
+        """ Return pow(self, value, mod). """
         pass
 
-    def __radd__(self, y): # real signature unknown; restored from __doc__
-        """ x.__radd__(y) <==> y+x """
+    def __radd__(self, *args, **kwargs): # real signature unknown
+        """ Return value+self. """
         pass
 
-    def __rdivmod__(self, y): # real signature unknown; restored from __doc__
-        """ x.__rdivmod__(y) <==> divmod(y, x) """
+    def __rdivmod__(self, *args, **kwargs): # real signature unknown
+        """ Return divmod(value, self). """
         pass
 
-    def __repr__(self): # real signature unknown; restored from __doc__
-        """ x.__repr__() <==> repr(x) """
+    def __repr__(self, *args, **kwargs): # real signature unknown
+        """ Return repr(self). """
         pass
 
-    def __rfloordiv__(self, y): # real signature unknown; restored from __doc__
-        """ x.__rfloordiv__(y) <==> y//x """
+    def __rfloordiv__(self, *args, **kwargs): # real signature unknown
+        """ Return value//self. """
         pass
 
-    def __rmod__(self, y): # real signature unknown; restored from __doc__
-        """ x.__rmod__(y) <==> y%x """
+    def __rmod__(self, *args, **kwargs): # real signature unknown
+        """ Return value%self. """
         pass
 
-    def __rmul__(self, y): # real signature unknown; restored from __doc__
-        """ x.__rmul__(y) <==> y*x """
+    def __rmul__(self, *args, **kwargs): # real signature unknown
+        """ Return value*self. """
         pass
 
-    def __rpow__(self, x, z=None): # real signature unknown; restored from __doc__
-        """ y.__rpow__(x[, z]) <==> pow(x, y[, z]) """
+    def __rpow__(self, *args, **kwargs): # real signature unknown
+        """ Return pow(value, self, mod). """
         pass
 
-    def __rsub__(self, y): # real signature unknown; restored from __doc__
-        """ x.__rsub__(y) <==> y-x """
+    def __rsub__(self, *args, **kwargs): # real signature unknown
+        """ Return value-self. """
         pass
 
-    def __rtruediv__(self, y): # real signature unknown; restored from __doc__
-        """ x.__rtruediv__(y) <==> y/x """
+    def __rtruediv__(self, *args, **kwargs): # real signature unknown
+        """ Return value/self. """
         pass
 
-    def __str__(self): # real signature unknown; restored from __doc__
-        """ x.__str__() <==> str(x) """
+    def __str__(self, *args, **kwargs): # real signature unknown
+        """ Return str(self). """
         pass
 
-    def __sub__(self, y): # real signature unknown; restored from __doc__
-        """ x.__sub__(y) <==> x-y """
+    def __sub__(self, *args, **kwargs): # real signature unknown
+        """ Return self-value. """
         pass
 
-    def __truediv__(self, y): # real signature unknown; restored from __doc__
-        """ x.__truediv__(y) <==> x/y """
+    def __truediv__(self, *args, **kwargs): # real signature unknown
+        """ Return self/value. """
         pass
 
     imag = property(lambda self: 0.0)
@@ -2560,7 +2670,23 @@ class complex(object):
 
 
 
-from .Warning import Warning
+class ConnectionAbortedError(ConnectionError):
+    """ Connection aborted. """
+    def __init__(self, *args, **kwargs): # real signature unknown
+        pass
+
+
+class ConnectionRefusedError(ConnectionError):
+    """ Connection refused. """
+    def __init__(self, *args, **kwargs): # real signature unknown
+        pass
+
+
+class ConnectionResetError(ConnectionError):
+    """ Connection reset. """
+    def __init__(self, *args, **kwargs): # real signature unknown
+        pass
+
 
 class DeprecationWarning(Warning):
     """ Base class for warnings about deprecated features. """
@@ -2568,12 +2694,10 @@ class DeprecationWarning(Warning):
         pass
 
     @staticmethod # known case of __new__
-    def __new__(S, *more): # real signature unknown; restored from __doc__
-        """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
+    def __new__(*args, **kwargs): # real signature unknown
+        """ Create and return a new object.  See help(type) for accurate signature. """
         pass
 
-
-from .object import object
 
 class dict(object):
     """
@@ -2596,11 +2720,8 @@ class dict(object):
         pass
 
     @staticmethod # known case
-    def fromkeys(S, v=None): # real signature unknown; restored from __doc__
-        """
-        dict.fromkeys(S[,v]) -> New dict with keys from S and values equal to v.
-        v defaults to None.
-        """
+    def fromkeys(*args, **kwargs): # real signature unknown
+        """ Returns a new dict with keys from iterable and values equal to value. """
         pass
 
     def get(self, k, d=None): # real signature unknown; restored from __doc__
@@ -2636,9 +2757,9 @@ class dict(object):
     def update(self, E=None, **F): # known special case of dict.update
         """
         D.update([E, ]**F) -> None.  Update D from dict/iterable E and F.
-        If E present and has a .keys() method, does:     for k in E: D[k] = E[k]
-        If E present and lacks .keys() method, does:     for (k, v) in E: D[k] = v
-        In either case, this is followed by: for k in F: D[k] = F[k]
+        If E is present and has a .keys() method, then does:  for k in E: D[k] = E[k]
+        If E is present and lacks a .keys() method, then does:  for k, v in E: D[k] = v
+        In either case, this is followed by: for k in F:  D[k] = F[k]
         """
         pass
 
@@ -2646,32 +2767,37 @@ class dict(object):
         """ D.values() -> an object providing a view on D's values """
         pass
 
-    def __contains__(self, k): # real signature unknown; restored from __doc__
-        """ D.__contains__(k) -> True if D has a key k, else False """
-        return False
-
-    def __delitem__(self, y): # real signature unknown; restored from __doc__
-        """ x.__delitem__(y) <==> del x[y] """
+    def __contains__(self, *args, **kwargs): # real signature unknown
+        """ True if D has a key k, else False. """
         pass
 
-    def __eq__(self, y): # real signature unknown; restored from __doc__
-        """ x.__eq__(y) <==> x==y """
+    def __delitem__(self, *args, **kwargs): # real signature unknown
+        """ Delete self[key]. """
         pass
 
-    def __getattribute__(self, name): # real signature unknown; restored from __doc__
-        """ x.__getattribute__('name') <==> x.name """
+    def __eq__(self, *args, **kwargs): # real signature unknown
+        """ Return self==value. """
+        pass
+
+    def __getattribute__(self, *args, **kwargs): # real signature unknown
+        """ Return getattr(self, name). """
         pass
 
     def __getitem__(self, y): # real signature unknown; restored from __doc__
         """ x.__getitem__(y) <==> x[y] """
         pass
 
-    def __ge__(self, y): # real signature unknown; restored from __doc__
-        """ x.__ge__(y) <==> x>=y """
+    def __ge__(self, *args, **kwargs): # real signature unknown
+        """
+        __ge__=($self, value, /)
+        --
+        
+        Return self>=value.
+        """
         pass
 
-    def __gt__(self, y): # real signature unknown; restored from __doc__
-        """ x.__gt__(y) <==> x>y """
+    def __gt__(self, *args, **kwargs): # real signature unknown
+        """ Return self>value. """
         pass
 
     def __init__(self, seq=None, **kwargs): # known special case of dict.__init__
@@ -2689,37 +2815,37 @@ class dict(object):
         """
         pass
 
-    def __iter__(self): # real signature unknown; restored from __doc__
-        """ x.__iter__() <==> iter(x) """
+    def __iter__(self, *args, **kwargs): # real signature unknown
+        """ Implement iter(self). """
         pass
 
-    def __len__(self): # real signature unknown; restored from __doc__
-        """ x.__len__() <==> len(x) """
+    def __len__(self, *args, **kwargs): # real signature unknown
+        """ Return len(self). """
         pass
 
-    def __le__(self, y): # real signature unknown; restored from __doc__
-        """ x.__le__(y) <==> x<=y """
+    def __le__(self, *args, **kwargs): # real signature unknown
+        """ Return self<=value. """
         pass
 
-    def __lt__(self, y): # real signature unknown; restored from __doc__
-        """ x.__lt__(y) <==> x<y """
+    def __lt__(self, *args, **kwargs): # real signature unknown
+        """ Return self<value. """
         pass
 
     @staticmethod # known case of __new__
-    def __new__(S, *more): # real signature unknown; restored from __doc__
-        """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
+    def __new__(*args, **kwargs): # real signature unknown
+        """ Create and return a new object.  See help(type) for accurate signature. """
         pass
 
-    def __ne__(self, y): # real signature unknown; restored from __doc__
-        """ x.__ne__(y) <==> x!=y """
+    def __ne__(self, *args, **kwargs): # real signature unknown
+        """ Return self!=value. """
         pass
 
-    def __repr__(self): # real signature unknown; restored from __doc__
-        """ x.__repr__() <==> repr(x) """
+    def __repr__(self, *args, **kwargs): # real signature unknown
+        """ Return repr(self). """
         pass
 
-    def __setitem__(self, i, y): # real signature unknown; restored from __doc__
-        """ x.__setitem__(i, y) <==> x[i]=y """
+    def __setitem__(self, *args, **kwargs): # real signature unknown
+        """ Set self[key] to value. """
         pass
 
     def __sizeof__(self): # real signature unknown; restored from __doc__
@@ -2728,8 +2854,6 @@ class dict(object):
 
     __hash__ = None
 
-
-from .object import object
 
 class enumerate(object):
     """
@@ -2741,59 +2865,31 @@ class enumerate(object):
     enumerate is useful for obtaining an indexed list:
         (0, seq[0]), (1, seq[1]), (2, seq[2]), ...
     """
-    def __getattribute__(self, name): # real signature unknown; restored from __doc__
-        """ x.__getattribute__('name') <==> x.name """
+    def __getattribute__(self, *args, **kwargs): # real signature unknown
+        """ Return getattr(self, name). """
         pass
 
     def __init__(self, iterable, start=0): # known special case of enumerate.__init__
-        """ x.__init__(...) initializes x; see help(type(x)) for signature """
+        """ Initialize self.  See help(type(self)) for accurate signature. """
         pass
 
-    def __iter__(self): # real signature unknown; restored from __doc__
-        """ x.__iter__() <==> iter(x) """
-        pass
-
-    @staticmethod # known case of __new__
-    def __new__(S, *more): # real signature unknown; restored from __doc__
-        """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
-        pass
-
-    def __next__(self): # real signature unknown; restored from __doc__
-        """ x.__next__() <==> next(x) """
-        pass
-
-
-from .Exception import Exception
-
-class EnvironmentError(Exception):
-    """ Base class for I/O related errors. """
-    def __init__(self, *args, **kwargs): # real signature unknown
+    def __iter__(self, *args, **kwargs): # real signature unknown
+        """ Implement iter(self). """
         pass
 
     @staticmethod # known case of __new__
-    def __new__(S, *more): # real signature unknown; restored from __doc__
-        """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
+    def __new__(*args, **kwargs): # real signature unknown
+        """ Create and return a new object.  See help(type) for accurate signature. """
+        pass
+
+    def __next__(self, *args, **kwargs): # real signature unknown
+        """ Implement next(self). """
         pass
 
     def __reduce__(self, *args, **kwargs): # real signature unknown
+        """ Return state information for pickling. """
         pass
 
-    def __str__(self): # real signature unknown; restored from __doc__
-        """ x.__str__() <==> str(x) """
-        pass
-
-    errno = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
-    """exception errno"""
-
-    filename = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
-    """exception filename"""
-
-    strerror = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
-    """exception strerror"""
-
-
-
-from .Exception import Exception
 
 class EOFError(Exception):
     """ Read beyond end of file. """
@@ -2801,12 +2897,22 @@ class EOFError(Exception):
         pass
 
     @staticmethod # known case of __new__
-    def __new__(S, *more): # real signature unknown; restored from __doc__
-        """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
+    def __new__(*args, **kwargs): # real signature unknown
+        """ Create and return a new object.  See help(type) for accurate signature. """
         pass
 
 
-from .object import object
+class FileExistsError(OSError):
+    """ File already exists. """
+    def __init__(self, *args, **kwargs): # real signature unknown
+        pass
+
+
+class FileNotFoundError(OSError):
+    """ File not found. """
+    def __init__(self, *args, **kwargs): # real signature unknown
+        pass
+
 
 class filter(object):
     """
@@ -2815,28 +2921,30 @@ class filter(object):
     Return an iterator yielding those items of iterable for which function(item)
     is true. If function is None, return the items that are true.
     """
-    def __getattribute__(self, name): # real signature unknown; restored from __doc__
-        """ x.__getattribute__('name') <==> x.name """
+    def __getattribute__(self, *args, **kwargs): # real signature unknown
+        """ Return getattr(self, name). """
         pass
 
     def __init__(self, function_or_None, iterable): # real signature unknown; restored from __doc__
         pass
 
-    def __iter__(self): # real signature unknown; restored from __doc__
-        """ x.__iter__() <==> iter(x) """
+    def __iter__(self, *args, **kwargs): # real signature unknown
+        """ Implement iter(self). """
         pass
 
     @staticmethod # known case of __new__
-    def __new__(S, *more): # real signature unknown; restored from __doc__
-        """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
+    def __new__(*args, **kwargs): # real signature unknown
+        """ Create and return a new object.  See help(type) for accurate signature. """
         pass
 
-    def __next__(self): # real signature unknown; restored from __doc__
-        """ x.__next__() <==> next(x) """
+    def __next__(self, *args, **kwargs): # real signature unknown
+        """ Implement next(self). """
         pass
 
+    def __reduce__(self, *args, **kwargs): # real signature unknown
+        """ Return state information for pickling. """
+        pass
 
-from .object import object
 
 class float(object):
     """
@@ -2848,9 +2956,9 @@ class float(object):
         """
         float.as_integer_ratio() -> (int, int)
         
-        Returns a pair of integers, whose ratio is exactly equal to the original
+        Return a pair of integers, whose ratio is exactly equal to the original
         float and with a positive denominator.
-        Raises OverflowError on infinities and a ValueError on NaNs.
+        Raise OverflowError on infinities and a ValueError on NaNs.
         
         >>> (10.0).as_integer_ratio()
         (10, 1)
@@ -2862,7 +2970,7 @@ class float(object):
         pass
 
     def conjugate(self, *args, **kwargs): # real signature unknown
-        """ Returns self, the complex conjugate of any float. """
+        """ Return self, the complex conjugate of any float. """
         pass
 
     def fromhex(self, string): # real signature unknown; restored from __doc__
@@ -2873,7 +2981,7 @@ class float(object):
         >>> float.fromhex('0x1.ffffp10')
         2047.984375
         >>> float.fromhex('-0x1p-1074')
-        -4.9406564584124654e-324
+        -5e-324
         """
         return 0.0
 
@@ -2890,35 +2998,35 @@ class float(object):
         return ""
 
     def is_integer(self, *args, **kwargs): # real signature unknown
-        """ Returns True if the float is an integer. """
+        """ Return True if the float is an integer. """
         pass
 
-    def __abs__(self): # real signature unknown; restored from __doc__
-        """ x.__abs__() <==> abs(x) """
+    def __abs__(self, *args, **kwargs): # real signature unknown
+        """ abs(self) """
         pass
 
-    def __add__(self, y): # real signature unknown; restored from __doc__
-        """ x.__add__(y) <==> x+y """
+    def __add__(self, *args, **kwargs): # real signature unknown
+        """ Return self+value. """
         pass
 
-    def __bool__(self): # real signature unknown; restored from __doc__
-        """ x.__bool__() <==> x != 0 """
+    def __bool__(self, *args, **kwargs): # real signature unknown
+        """ self != 0 """
         pass
 
-    def __divmod__(self, y): # real signature unknown; restored from __doc__
-        """ x.__divmod__(y) <==> divmod(x, y) """
+    def __divmod__(self, *args, **kwargs): # real signature unknown
+        """ Return divmod(self, value). """
         pass
 
-    def __eq__(self, y): # real signature unknown; restored from __doc__
-        """ x.__eq__(y) <==> x==y """
+    def __eq__(self, *args, **kwargs): # real signature unknown
+        """ Return self==value. """
         pass
 
-    def __float__(self): # real signature unknown; restored from __doc__
-        """ x.__float__() <==> float(x) """
+    def __float__(self, *args, **kwargs): # real signature unknown
+        """ float(self) """
         pass
 
-    def __floordiv__(self, y): # real signature unknown; restored from __doc__
-        """ x.__floordiv__(y) <==> x//y """
+    def __floordiv__(self, *args, **kwargs): # real signature unknown
+        """ Return self//value. """
         pass
 
     def __format__(self, format_spec): # real signature unknown; restored from __doc__
@@ -2929,8 +3037,8 @@ class float(object):
         """
         return ""
 
-    def __getattribute__(self, name): # real signature unknown; restored from __doc__
-        """ x.__getattribute__('name') <==> x.name """
+    def __getattribute__(self, *args, **kwargs): # real signature unknown
+        """ Return getattr(self, name). """
         pass
 
     def __getformat__(self, typestr): # real signature unknown; restored from __doc__
@@ -2949,103 +3057,108 @@ class float(object):
     def __getnewargs__(self, *args, **kwargs): # real signature unknown
         pass
 
-    def __ge__(self, y): # real signature unknown; restored from __doc__
-        """ x.__ge__(y) <==> x>=y """
+    def __ge__(self, *args, **kwargs): # real signature unknown
+        """
+        __ge__=($self, value, /)
+        --
+        
+        Return self>=value.
+        """
         pass
 
-    def __gt__(self, y): # real signature unknown; restored from __doc__
-        """ x.__gt__(y) <==> x>y """
+    def __gt__(self, *args, **kwargs): # real signature unknown
+        """ Return self>value. """
         pass
 
-    def __hash__(self): # real signature unknown; restored from __doc__
-        """ x.__hash__() <==> hash(x) """
+    def __hash__(self, *args, **kwargs): # real signature unknown
+        """ Return hash(self). """
         pass
 
     def __init__(self, x): # real signature unknown; restored from __doc__
         pass
 
-    def __int__(self): # real signature unknown; restored from __doc__
-        """ x.__int__() <==> int(x) """
+    def __int__(self, *args, **kwargs): # real signature unknown
+        """ int(self) """
         pass
 
-    def __le__(self, y): # real signature unknown; restored from __doc__
-        """ x.__le__(y) <==> x<=y """
+    def __le__(self, *args, **kwargs): # real signature unknown
+        """ Return self<=value. """
         pass
 
-    def __lt__(self, y): # real signature unknown; restored from __doc__
-        """ x.__lt__(y) <==> x<y """
+    def __lt__(self, *args, **kwargs): # real signature unknown
+        """ Return self<value. """
         pass
 
-    def __mod__(self, y): # real signature unknown; restored from __doc__
-        """ x.__mod__(y) <==> x%y """
+    def __mod__(self, *args, **kwargs): # real signature unknown
+        """ Return self%value. """
         pass
 
-    def __mul__(self, y): # real signature unknown; restored from __doc__
-        """ x.__mul__(y) <==> x*y """
+    def __mul__(self, *args, **kwargs): # real signature unknown
+        """ Return self*value. """
         pass
 
-    def __neg__(self): # real signature unknown; restored from __doc__
-        """ x.__neg__() <==> -x """
+    def __neg__(self, *args, **kwargs): # real signature unknown
+        """ -self """
         pass
 
     @staticmethod # known case of __new__
-    def __new__(S, *more): # real signature unknown; restored from __doc__
-        """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
+    def __new__(*args, **kwargs): # real signature unknown
+        """ Create and return a new object.  See help(type) for accurate signature. """
         pass
 
-    def __ne__(self, y): # real signature unknown; restored from __doc__
-        """ x.__ne__(y) <==> x!=y """
+    def __ne__(self, *args, **kwargs): # real signature unknown
+        """ Return self!=value. """
         pass
 
-    def __pos__(self): # real signature unknown; restored from __doc__
-        """ x.__pos__() <==> +x """
+    def __pos__(self, *args, **kwargs): # real signature unknown
+        """ +self """
         pass
 
-    def __pow__(self, y, z=None): # real signature unknown; restored from __doc__
-        """ x.__pow__(y[, z]) <==> pow(x, y[, z]) """
+    def __pow__(self, *args, **kwargs): # real signature unknown
+        """ Return pow(self, value, mod). """
         pass
 
-    def __radd__(self, y): # real signature unknown; restored from __doc__
-        """ x.__radd__(y) <==> y+x """
+    def __radd__(self, *args, **kwargs): # real signature unknown
+        """ Return value+self. """
         pass
 
-    def __rdivmod__(self, y): # real signature unknown; restored from __doc__
-        """ x.__rdivmod__(y) <==> divmod(y, x) """
+    def __rdivmod__(self, *args, **kwargs): # real signature unknown
+        """ Return divmod(value, self). """
         pass
 
-    def __repr__(self): # real signature unknown; restored from __doc__
-        """ x.__repr__() <==> repr(x) """
+    def __repr__(self, *args, **kwargs): # real signature unknown
+        """ Return repr(self). """
         pass
 
-    def __rfloordiv__(self, y): # real signature unknown; restored from __doc__
-        """ x.__rfloordiv__(y) <==> y//x """
+    def __rfloordiv__(self, *args, **kwargs): # real signature unknown
+        """ Return value//self. """
         pass
 
-    def __rmod__(self, y): # real signature unknown; restored from __doc__
-        """ x.__rmod__(y) <==> y%x """
+    def __rmod__(self, *args, **kwargs): # real signature unknown
+        """ Return value%self. """
         pass
 
-    def __rmul__(self, y): # real signature unknown; restored from __doc__
-        """ x.__rmul__(y) <==> y*x """
+    def __rmul__(self, *args, **kwargs): # real signature unknown
+        """ Return value*self. """
         pass
 
     def __round__(self, *args, **kwargs): # real signature unknown
         """
-        Returns the Integral closest to x, rounding half toward even.
-        When an argument is passed, works like built-in round(x, ndigits).
+        Return the Integral closest to x, rounding half toward even.
+        When an argument is passed, work like built-in round(x, ndigits).
         """
         pass
 
-    def __rpow__(self, x, z=None): # real signature unknown; restored from __doc__
-        """ y.__rpow__(x[, z]) <==> pow(x, y[, z]) """
+    def __rpow__(self, *args, **kwargs): # real signature unknown
+        """ Return pow(value, self, mod). """
         pass
 
-    def __rsub__(self, y): # real signature unknown; restored from __doc__
-        """ x.__rsub__(y) <==> y-x """
+    def __rsub__(self, *args, **kwargs): # real signature unknown
+        """ Return value-self. """
         pass
 
-    def __rtruediv__(self, y): # real signature unknown; restored from __doc__
-        """ x.__rtruediv__(y) <==> y/x """
+    def __rtruediv__(self, *args, **kwargs): # real signature unknown
+        """ Return value/self. """
         pass
 
     def __setformat__(self, typestr, fmt): # real signature unknown; restored from __doc__
@@ -3059,25 +3172,25 @@ class float(object):
         'IEEE, big-endian' or 'IEEE, little-endian', and in addition can only be
         one of the latter two if it appears to match the underlying C reality.
         
-        Overrides the automatic determination of C-level floating point type.
+        Override the automatic determination of C-level floating point type.
         This affects how floats are converted to and from binary strings.
         """
         pass
 
-    def __str__(self): # real signature unknown; restored from __doc__
-        """ x.__str__() <==> str(x) """
+    def __str__(self, *args, **kwargs): # real signature unknown
+        """ Return str(self). """
         pass
 
-    def __sub__(self, y): # real signature unknown; restored from __doc__
-        """ x.__sub__(y) <==> x-y """
+    def __sub__(self, *args, **kwargs): # real signature unknown
+        """ Return self-value. """
         pass
 
-    def __truediv__(self, y): # real signature unknown; restored from __doc__
-        """ x.__truediv__(y) <==> x/y """
+    def __truediv__(self, *args, **kwargs): # real signature unknown
+        """ Return self/value. """
         pass
 
     def __trunc__(self, *args, **kwargs): # real signature unknown
-        """ Returns the Integral closest to x between 0 and x. """
+        """ Return the Integral closest to x between 0 and x. """
         pass
 
     imag = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
@@ -3088,20 +3201,16 @@ class float(object):
 
 
 
-from .ArithmeticError import ArithmeticError
-
 class FloatingPointError(ArithmeticError):
     """ Floating point operation failed. """
     def __init__(self, *args, **kwargs): # real signature unknown
         pass
 
     @staticmethod # known case of __new__
-    def __new__(S, *more): # real signature unknown; restored from __doc__
-        """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
+    def __new__(*args, **kwargs): # real signature unknown
+        """ Create and return a new object.  See help(type) for accurate signature. """
         pass
 
-
-from .object import object
 
 class frozenset(object):
     """
@@ -3158,105 +3267,108 @@ class frozenset(object):
         """
         pass
 
-    def __and__(self, y): # real signature unknown; restored from __doc__
-        """ x.__and__(y) <==> x&y """
+    def __and__(self, *args, **kwargs): # real signature unknown
+        """ Return self&value. """
         pass
 
     def __contains__(self, y): # real signature unknown; restored from __doc__
         """ x.__contains__(y) <==> y in x. """
         pass
 
-    def __eq__(self, y): # real signature unknown; restored from __doc__
-        """ x.__eq__(y) <==> x==y """
+    def __eq__(self, *args, **kwargs): # real signature unknown
+        """ Return self==value. """
         pass
 
-    def __getattribute__(self, name): # real signature unknown; restored from __doc__
-        """ x.__getattribute__('name') <==> x.name """
+    def __getattribute__(self, *args, **kwargs): # real signature unknown
+        """ Return getattr(self, name). """
         pass
 
-    def __ge__(self, y): # real signature unknown; restored from __doc__
-        """ x.__ge__(y) <==> x>=y """
+    def __ge__(self, *args, **kwargs): # real signature unknown
+        """
+        __ge__=($self, value, /)
+        --
+        
+        Return self>=value.
+        """
         pass
 
-    def __gt__(self, y): # real signature unknown; restored from __doc__
-        """ x.__gt__(y) <==> x>y """
+    def __gt__(self, *args, **kwargs): # real signature unknown
+        """ Return self>value. """
         pass
 
-    def __hash__(self): # real signature unknown; restored from __doc__
-        """ x.__hash__() <==> hash(x) """
+    def __hash__(self, *args, **kwargs): # real signature unknown
+        """ Return hash(self). """
         pass
 
     def __init__(self, seq=()): # known special case of frozenset.__init__
-        """ x.__init__(...) initializes x; see help(type(x)) for signature """
+        """ Initialize self.  See help(type(self)) for accurate signature. """
         pass
 
-    def __iter__(self): # real signature unknown; restored from __doc__
-        """ x.__iter__() <==> iter(x) """
+    def __iter__(self, *args, **kwargs): # real signature unknown
+        """ Implement iter(self). """
         pass
 
-    def __len__(self): # real signature unknown; restored from __doc__
-        """ x.__len__() <==> len(x) """
+    def __len__(self, *args, **kwargs): # real signature unknown
+        """ Return len(self). """
         pass
 
-    def __le__(self, y): # real signature unknown; restored from __doc__
-        """ x.__le__(y) <==> x<=y """
+    def __le__(self, *args, **kwargs): # real signature unknown
+        """ Return self<=value. """
         pass
 
-    def __lt__(self, y): # real signature unknown; restored from __doc__
-        """ x.__lt__(y) <==> x<y """
+    def __lt__(self, *args, **kwargs): # real signature unknown
+        """ Return self<value. """
         pass
 
     @staticmethod # known case of __new__
-    def __new__(S, *more): # real signature unknown; restored from __doc__
-        """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
+    def __new__(*args, **kwargs): # real signature unknown
+        """ Create and return a new object.  See help(type) for accurate signature. """
         pass
 
-    def __ne__(self, y): # real signature unknown; restored from __doc__
-        """ x.__ne__(y) <==> x!=y """
+    def __ne__(self, *args, **kwargs): # real signature unknown
+        """ Return self!=value. """
         pass
 
-    def __or__(self, y): # real signature unknown; restored from __doc__
-        """ x.__or__(y) <==> x|y """
+    def __or__(self, *args, **kwargs): # real signature unknown
+        """ Return self|value. """
         pass
 
-    def __rand__(self, y): # real signature unknown; restored from __doc__
-        """ x.__rand__(y) <==> y&x """
+    def __rand__(self, *args, **kwargs): # real signature unknown
+        """ Return value&self. """
         pass
 
     def __reduce__(self, *args, **kwargs): # real signature unknown
         """ Return state information for pickling. """
         pass
 
-    def __repr__(self): # real signature unknown; restored from __doc__
-        """ x.__repr__() <==> repr(x) """
+    def __repr__(self, *args, **kwargs): # real signature unknown
+        """ Return repr(self). """
         pass
 
-    def __ror__(self, y): # real signature unknown; restored from __doc__
-        """ x.__ror__(y) <==> y|x """
+    def __ror__(self, *args, **kwargs): # real signature unknown
+        """ Return value|self. """
         pass
 
-    def __rsub__(self, y): # real signature unknown; restored from __doc__
-        """ x.__rsub__(y) <==> y-x """
+    def __rsub__(self, *args, **kwargs): # real signature unknown
+        """ Return value-self. """
         pass
 
-    def __rxor__(self, y): # real signature unknown; restored from __doc__
-        """ x.__rxor__(y) <==> y^x """
+    def __rxor__(self, *args, **kwargs): # real signature unknown
+        """ Return value^self. """
         pass
 
     def __sizeof__(self): # real signature unknown; restored from __doc__
         """ S.__sizeof__() -> size of S in memory, in bytes """
         pass
 
-    def __sub__(self, y): # real signature unknown; restored from __doc__
-        """ x.__sub__(y) <==> x-y """
+    def __sub__(self, *args, **kwargs): # real signature unknown
+        """ Return self-value. """
         pass
 
-    def __xor__(self, y): # real signature unknown; restored from __doc__
-        """ x.__xor__(y) <==> x^y """
+    def __xor__(self, *args, **kwargs): # real signature unknown
+        """ Return self^value. """
         pass
 
-
-from .Warning import Warning
 
 class FutureWarning(Warning):
     """
@@ -3267,12 +3379,10 @@ class FutureWarning(Warning):
         pass
 
     @staticmethod # known case of __new__
-    def __new__(S, *more): # real signature unknown; restored from __doc__
-        """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
+    def __new__(*args, **kwargs): # real signature unknown
+        """ Create and return a new object.  See help(type) for accurate signature. """
         pass
 
-
-from .BaseException import BaseException
 
 class GeneratorExit(BaseException):
     """ Request that a generator exit. """
@@ -3280,25 +3390,30 @@ class GeneratorExit(BaseException):
         pass
 
     @staticmethod # known case of __new__
-    def __new__(S, *more): # real signature unknown; restored from __doc__
-        """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
+    def __new__(*args, **kwargs): # real signature unknown
+        """ Create and return a new object.  See help(type) for accurate signature. """
         pass
 
-
-from .Exception import Exception
 
 class ImportError(Exception):
     """ Import can't find module, or can't find name in module. """
     def __init__(self, *args, **kwargs): # real signature unknown
         pass
 
-    @staticmethod # known case of __new__
-    def __new__(S, *more): # real signature unknown; restored from __doc__
-        """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
+    def __str__(self, *args, **kwargs): # real signature unknown
+        """ Return str(self). """
         pass
 
+    msg = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+    """exception message"""
 
-from .Warning import Warning
+    name = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+    """module name"""
+
+    path = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+    """module path"""
+
+
 
 class ImportWarning(Warning):
     """ Base class for warnings about probable mistakes in module imports """
@@ -3306,25 +3421,18 @@ class ImportWarning(Warning):
         pass
 
     @staticmethod # known case of __new__
-    def __new__(S, *more): # real signature unknown; restored from __doc__
-        """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
+    def __new__(*args, **kwargs): # real signature unknown
+        """ Create and return a new object.  See help(type) for accurate signature. """
         pass
 
-
-from .Exception import Exception
 
 class SyntaxError(Exception):
     """ Invalid syntax. """
     def __init__(self, *args, **kwargs): # real signature unknown
         pass
 
-    @staticmethod # known case of __new__
-    def __new__(S, *more): # real signature unknown; restored from __doc__
-        """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
-        pass
-
-    def __str__(self): # real signature unknown; restored from __doc__
-        """ x.__str__() <==> str(x) """
+    def __str__(self, *args, **kwargs): # real signature unknown
+        """ Return str(self). """
         pass
 
     filename = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
@@ -3347,20 +3455,11 @@ class SyntaxError(Exception):
 
 
 
-from .SyntaxError import SyntaxError
-
 class IndentationError(SyntaxError):
     """ Improper indentation. """
     def __init__(self, *args, **kwargs): # real signature unknown
         pass
 
-    @staticmethod # known case of __new__
-    def __new__(S, *more): # real signature unknown; restored from __doc__
-        """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
-        pass
-
-
-from .Exception import Exception
 
 class LookupError(Exception):
     """ Base class for lookup errors. """
@@ -3368,12 +3467,10 @@ class LookupError(Exception):
         pass
 
     @staticmethod # known case of __new__
-    def __new__(S, *more): # real signature unknown; restored from __doc__
-        """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
+    def __new__(*args, **kwargs): # real signature unknown
+        """ Create and return a new object.  See help(type) for accurate signature. """
         pass
 
-
-from .LookupError import LookupError
 
 class IndexError(LookupError):
     """ Sequence index out of range. """
@@ -3381,25 +3478,22 @@ class IndexError(LookupError):
         pass
 
     @staticmethod # known case of __new__
-    def __new__(S, *more): # real signature unknown; restored from __doc__
-        """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
+    def __new__(*args, **kwargs): # real signature unknown
+        """ Create and return a new object.  See help(type) for accurate signature. """
         pass
 
 
-from .EnvironmentError import EnvironmentError
-
-class IOError(EnvironmentError):
-    """ I/O operation failed. """
+class InterruptedError(OSError):
+    """ Interrupted by signal. """
     def __init__(self, *args, **kwargs): # real signature unknown
         pass
 
-    @staticmethod # known case of __new__
-    def __new__(S, *more): # real signature unknown; restored from __doc__
-        """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
+
+class IsADirectoryError(OSError):
+    """ Operation doesn't work on directories. """
+    def __init__(self, *args, **kwargs): # real signature unknown
         pass
 
-
-from .BaseException import BaseException
 
 class KeyboardInterrupt(BaseException):
     """ Program interrupted by user. """
@@ -3407,29 +3501,20 @@ class KeyboardInterrupt(BaseException):
         pass
 
     @staticmethod # known case of __new__
-    def __new__(S, *more): # real signature unknown; restored from __doc__
-        """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
+    def __new__(*args, **kwargs): # real signature unknown
+        """ Create and return a new object.  See help(type) for accurate signature. """
         pass
 
-
-from .LookupError import LookupError
 
 class KeyError(LookupError):
     """ Mapping key not found. """
     def __init__(self, *args, **kwargs): # real signature unknown
         pass
 
-    @staticmethod # known case of __new__
-    def __new__(S, *more): # real signature unknown; restored from __doc__
-        """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
+    def __str__(self, *args, **kwargs): # real signature unknown
+        """ Return str(self). """
         pass
 
-    def __str__(self): # real signature unknown; restored from __doc__
-        """ x.__str__() <==> str(x) """
-        pass
-
-
-from .object import object
 
 class list(object):
     """
@@ -3437,15 +3522,23 @@ class list(object):
     list(iterable) -> new list initialized from iterable's items
     """
     def append(self, p_object): # real signature unknown; restored from __doc__
-        """ L.append(object) -- append object to end """
+        """ L.append(object) -> None -- append object to end """
         pass
+
+    def clear(self): # real signature unknown; restored from __doc__
+        """ L.clear() -> None -- remove all items from L """
+        pass
+
+    def copy(self): # real signature unknown; restored from __doc__
+        """ L.copy() -> list -- a shallow copy of L """
+        return []
 
     def count(self, value): # real signature unknown; restored from __doc__
         """ L.count(value) -> integer -- return number of occurrences of value """
         return 0
 
     def extend(self, iterable): # real signature unknown; restored from __doc__
-        """ L.extend(iterable) -- extend list by appending elements from the iterable """
+        """ L.extend(iterable) -> None -- extend list by appending elements from the iterable """
         pass
 
     def index(self, value, start=None, stop=None): # real signature unknown; restored from __doc__
@@ -3468,7 +3561,7 @@ class list(object):
 
     def remove(self, value): # real signature unknown; restored from __doc__
         """
-        L.remove(value) -- remove first occurrence of value.
+        L.remove(value) -> None -- remove first occurrence of value.
         Raises ValueError if the value is not present.
         """
         pass
@@ -3478,47 +3571,52 @@ class list(object):
         pass
 
     def sort(self, key=None, reverse=False): # real signature unknown; restored from __doc__
-        """ L.sort(key=None, reverse=False) -- stable sort *IN PLACE* """
+        """ L.sort(key=None, reverse=False) -> None -- stable sort *IN PLACE* """
         pass
 
-    def __add__(self, y): # real signature unknown; restored from __doc__
-        """ x.__add__(y) <==> x+y """
+    def __add__(self, *args, **kwargs): # real signature unknown
+        """ Return self+value. """
         pass
 
-    def __contains__(self, y): # real signature unknown; restored from __doc__
-        """ x.__contains__(y) <==> y in x """
+    def __contains__(self, *args, **kwargs): # real signature unknown
+        """ Return key in self. """
         pass
 
-    def __delitem__(self, y): # real signature unknown; restored from __doc__
-        """ x.__delitem__(y) <==> del x[y] """
+    def __delitem__(self, *args, **kwargs): # real signature unknown
+        """ Delete self[key]. """
         pass
 
-    def __eq__(self, y): # real signature unknown; restored from __doc__
-        """ x.__eq__(y) <==> x==y """
+    def __eq__(self, *args, **kwargs): # real signature unknown
+        """ Return self==value. """
         pass
 
-    def __getattribute__(self, name): # real signature unknown; restored from __doc__
-        """ x.__getattribute__('name') <==> x.name """
+    def __getattribute__(self, *args, **kwargs): # real signature unknown
+        """ Return getattr(self, name). """
         pass
 
     def __getitem__(self, y): # real signature unknown; restored from __doc__
         """ x.__getitem__(y) <==> x[y] """
         pass
 
-    def __ge__(self, y): # real signature unknown; restored from __doc__
-        """ x.__ge__(y) <==> x>=y """
+    def __ge__(self, *args, **kwargs): # real signature unknown
+        """
+        __ge__=($self, value, /)
+        --
+        
+        Return self>=value.
+        """
         pass
 
-    def __gt__(self, y): # real signature unknown; restored from __doc__
-        """ x.__gt__(y) <==> x>y """
+    def __gt__(self, *args, **kwargs): # real signature unknown
+        """ Return self>value. """
         pass
 
-    def __iadd__(self, y): # real signature unknown; restored from __doc__
-        """ x.__iadd__(y) <==> x+=y """
+    def __iadd__(self, *args, **kwargs): # real signature unknown
+        """ Implement self+=value. """
         pass
 
-    def __imul__(self, y): # real signature unknown; restored from __doc__
-        """ x.__imul__(y) <==> x*=y """
+    def __imul__(self, *args, **kwargs): # real signature unknown
+        """ Implement self*=value. """
         pass
 
     def __init__(self, seq=()): # known special case of list.__init__
@@ -3529,49 +3627,49 @@ class list(object):
         """
         pass
 
-    def __iter__(self): # real signature unknown; restored from __doc__
-        """ x.__iter__() <==> iter(x) """
+    def __iter__(self, *args, **kwargs): # real signature unknown
+        """ Implement iter(self). """
         pass
 
-    def __len__(self): # real signature unknown; restored from __doc__
-        """ x.__len__() <==> len(x) """
+    def __len__(self, *args, **kwargs): # real signature unknown
+        """ Return len(self). """
         pass
 
-    def __le__(self, y): # real signature unknown; restored from __doc__
-        """ x.__le__(y) <==> x<=y """
+    def __le__(self, *args, **kwargs): # real signature unknown
+        """ Return self<=value. """
         pass
 
-    def __lt__(self, y): # real signature unknown; restored from __doc__
-        """ x.__lt__(y) <==> x<y """
+    def __lt__(self, *args, **kwargs): # real signature unknown
+        """ Return self<value. """
         pass
 
-    def __mul__(self, n): # real signature unknown; restored from __doc__
-        """ x.__mul__(n) <==> x*n """
+    def __mul__(self, *args, **kwargs): # real signature unknown
+        """ Return self*value.n """
         pass
 
     @staticmethod # known case of __new__
-    def __new__(S, *more): # real signature unknown; restored from __doc__
-        """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
+    def __new__(*args, **kwargs): # real signature unknown
+        """ Create and return a new object.  See help(type) for accurate signature. """
         pass
 
-    def __ne__(self, y): # real signature unknown; restored from __doc__
-        """ x.__ne__(y) <==> x!=y """
+    def __ne__(self, *args, **kwargs): # real signature unknown
+        """ Return self!=value. """
         pass
 
-    def __repr__(self): # real signature unknown; restored from __doc__
-        """ x.__repr__() <==> repr(x) """
+    def __repr__(self, *args, **kwargs): # real signature unknown
+        """ Return repr(self). """
         pass
 
     def __reversed__(self): # real signature unknown; restored from __doc__
         """ L.__reversed__() -- return a reverse iterator over the list """
         pass
 
-    def __rmul__(self, n): # real signature unknown; restored from __doc__
-        """ x.__rmul__(n) <==> n*x """
+    def __rmul__(self, *args, **kwargs): # real signature unknown
+        """ Return self*value. """
         pass
 
-    def __setitem__(self, i, y): # real signature unknown; restored from __doc__
-        """ x.__setitem__(i, y) <==> x[i]=y """
+    def __setitem__(self, *args, **kwargs): # real signature unknown
+        """ Set self[key] to value. """
         pass
 
     def __sizeof__(self): # real signature unknown; restored from __doc__
@@ -3581,8 +3679,6 @@ class list(object):
     __hash__ = None
 
 
-from .object import object
-
 class map(object):
     """
     map(func, *iterables) --> map object
@@ -3590,28 +3686,30 @@ class map(object):
     Make an iterator that computes the function using arguments from
     each of the iterables.  Stops when the shortest iterable is exhausted.
     """
-    def __getattribute__(self, name): # real signature unknown; restored from __doc__
-        """ x.__getattribute__('name') <==> x.name """
+    def __getattribute__(self, *args, **kwargs): # real signature unknown
+        """ Return getattr(self, name). """
         pass
 
     def __init__(self, func, *iterables): # real signature unknown; restored from __doc__
         pass
 
-    def __iter__(self): # real signature unknown; restored from __doc__
-        """ x.__iter__() <==> iter(x) """
+    def __iter__(self, *args, **kwargs): # real signature unknown
+        """ Implement iter(self). """
         pass
 
     @staticmethod # known case of __new__
-    def __new__(S, *more): # real signature unknown; restored from __doc__
-        """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
+    def __new__(*args, **kwargs): # real signature unknown
+        """ Create and return a new object.  See help(type) for accurate signature. """
         pass
 
-    def __next__(self): # real signature unknown; restored from __doc__
-        """ x.__next__() <==> next(x) """
+    def __next__(self, *args, **kwargs): # real signature unknown
+        """ Implement next(self). """
         pass
 
+    def __reduce__(self, *args, **kwargs): # real signature unknown
+        """ Return state information for pickling. """
+        pass
 
-from .Exception import Exception
 
 class MemoryError(Exception):
     """ Out of memory. """
@@ -3619,12 +3717,10 @@ class MemoryError(Exception):
         pass
 
     @staticmethod # known case of __new__
-    def __new__(S, *more): # real signature unknown; restored from __doc__
-        """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
+    def __new__(*args, **kwargs): # real signature unknown
+        """ Create and return a new object.  See help(type) for accurate signature. """
         pass
 
-
-from .object import object
 
 class memoryview(object):
     """
@@ -3632,6 +3728,14 @@ class memoryview(object):
     
     Create a new memoryview object which references the given object.
     """
+    def cast(self, format, shape=None): # real signature unknown; restored from __doc__
+        """
+        M.cast(format[, shape]) -> memoryview
+        
+        Cast a memoryview to a new format or shape.
+        """
+        return memoryview
+
     def release(self): # real signature unknown; restored from __doc__
         """
         M.release() -> None
@@ -3656,78 +3760,103 @@ class memoryview(object):
         """
         return []
 
-    def __delitem__(self, y): # real signature unknown; restored from __doc__
-        """ x.__delitem__(y) <==> del x[y] """
+    def __delitem__(self, *args, **kwargs): # real signature unknown
+        """ Delete self[key]. """
         pass
 
     def __enter__(self, *args, **kwargs): # real signature unknown
         pass
 
-    def __eq__(self, y): # real signature unknown; restored from __doc__
-        """ x.__eq__(y) <==> x==y """
+    def __eq__(self, *args, **kwargs): # real signature unknown
+        """ Return self==value. """
         pass
 
     def __exit__(self, *args, **kwargs): # real signature unknown
         pass
 
-    def __getattribute__(self, name): # real signature unknown; restored from __doc__
-        """ x.__getattribute__('name') <==> x.name """
+    def __getattribute__(self, *args, **kwargs): # real signature unknown
+        """ Return getattr(self, name). """
         pass
 
-    def __getitem__(self, y): # real signature unknown; restored from __doc__
-        """ x.__getitem__(y) <==> x[y] """
+    def __getitem__(self, *args, **kwargs): # real signature unknown
+        """ Return self[key]. """
         pass
 
-    def __ge__(self, y): # real signature unknown; restored from __doc__
-        """ x.__ge__(y) <==> x>=y """
+    def __ge__(self, *args, **kwargs): # real signature unknown
+        """
+        __ge__=($self, value, /)
+        --
+        
+        Return self>=value.
+        """
         pass
 
-    def __gt__(self, y): # real signature unknown; restored from __doc__
-        """ x.__gt__(y) <==> x>y """
+    def __gt__(self, *args, **kwargs): # real signature unknown
+        """ Return self>value. """
+        pass
+
+    def __hash__(self, *args, **kwargs): # real signature unknown
+        """ Return hash(self). """
         pass
 
     def __init__(self, p_object): # real signature unknown; restored from __doc__
         pass
 
-    def __len__(self): # real signature unknown; restored from __doc__
-        """ x.__len__() <==> len(x) """
+    def __len__(self, *args, **kwargs): # real signature unknown
+        """ Return len(self). """
         pass
 
-    def __le__(self, y): # real signature unknown; restored from __doc__
-        """ x.__le__(y) <==> x<=y """
+    def __le__(self, *args, **kwargs): # real signature unknown
+        """ Return self<=value. """
         pass
 
-    def __lt__(self, y): # real signature unknown; restored from __doc__
-        """ x.__lt__(y) <==> x<y """
+    def __lt__(self, *args, **kwargs): # real signature unknown
+        """ Return self<value. """
         pass
 
     @staticmethod # known case of __new__
-    def __new__(S, *more): # real signature unknown; restored from __doc__
-        """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
+    def __new__(*args, **kwargs): # real signature unknown
+        """ Create and return a new object.  See help(type) for accurate signature. """
         pass
 
-    def __ne__(self, y): # real signature unknown; restored from __doc__
-        """ x.__ne__(y) <==> x!=y """
+    def __ne__(self, *args, **kwargs): # real signature unknown
+        """ Return self!=value. """
         pass
 
-    def __repr__(self): # real signature unknown; restored from __doc__
-        """ x.__repr__() <==> repr(x) """
+    def __repr__(self, *args, **kwargs): # real signature unknown
+        """ Return repr(self). """
         pass
 
-    def __setitem__(self, i, y): # real signature unknown; restored from __doc__
-        """ x.__setitem__(i, y) <==> x[i]=y """
+    def __setitem__(self, *args, **kwargs): # real signature unknown
+        """ Set self[key] to value. """
         pass
+
+    contiguous = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+    """A bool indicating whether the memory is contiguous."""
+
+    c_contiguous = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+    """A bool indicating whether the memory is C contiguous."""
 
     format = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
     """A string containing the format (in struct module style)
  for each element in the view."""
 
+    f_contiguous = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+    """A bool indicating whether the memory is Fortran contiguous."""
+
     itemsize = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
     """The size in bytes of each element of the memoryview."""
+
+    nbytes = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+    """The amount of space in bytes that the array would use in
+ a contiguous representation."""
 
     ndim = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
     """An integer indicating how many dimensions of a multi-dimensional
  array the memory represents."""
+
+    obj = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+    """The underlying object of the memoryview."""
 
     readonly = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
     """A bool indicating whether the memory is read only."""
@@ -3744,10 +3873,6 @@ class memoryview(object):
     """A tuple of integers used internally for PIL-style arrays."""
 
 
-    __hash__ = None
-
-
-from .Exception import Exception
 
 class NameError(Exception):
     """ Name not found globally. """
@@ -3755,12 +3880,16 @@ class NameError(Exception):
         pass
 
     @staticmethod # known case of __new__
-    def __new__(S, *more): # real signature unknown; restored from __doc__
-        """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
+    def __new__(*args, **kwargs): # real signature unknown
+        """ Create and return a new object.  See help(type) for accurate signature. """
         pass
 
 
-from .Exception import Exception
+class NotADirectoryError(OSError):
+    """ Operation only works on directories. """
+    def __init__(self, *args, **kwargs): # real signature unknown
+        pass
+
 
 class RuntimeError(Exception):
     """ Unspecified run-time error. """
@@ -3768,12 +3897,10 @@ class RuntimeError(Exception):
         pass
 
     @staticmethod # known case of __new__
-    def __new__(S, *more): # real signature unknown; restored from __doc__
-        """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
+    def __new__(*args, **kwargs): # real signature unknown
+        """ Create and return a new object.  See help(type) for accurate signature. """
         pass
 
-
-from .RuntimeError import RuntimeError
 
 class NotImplementedError(RuntimeError):
     """ Method or function hasn't been implemented yet. """
@@ -3781,25 +3908,10 @@ class NotImplementedError(RuntimeError):
         pass
 
     @staticmethod # known case of __new__
-    def __new__(S, *more): # real signature unknown; restored from __doc__
-        """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
+    def __new__(*args, **kwargs): # real signature unknown
+        """ Create and return a new object.  See help(type) for accurate signature. """
         pass
 
-
-from .EnvironmentError import EnvironmentError
-
-class OSError(EnvironmentError):
-    """ OS system call failed. """
-    def __init__(self, *args, **kwargs): # real signature unknown
-        pass
-
-    @staticmethod # known case of __new__
-    def __new__(S, *more): # real signature unknown; restored from __doc__
-        """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
-        pass
-
-
-from .ArithmeticError import ArithmeticError
 
 class OverflowError(ArithmeticError):
     """ Result too large to be represented. """
@@ -3807,12 +3919,10 @@ class OverflowError(ArithmeticError):
         pass
 
     @staticmethod # known case of __new__
-    def __new__(S, *more): # real signature unknown; restored from __doc__
-        """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
+    def __new__(*args, **kwargs): # real signature unknown
+        """ Create and return a new object.  See help(type) for accurate signature. """
         pass
 
-
-from .Warning import Warning
 
 class PendingDeprecationWarning(Warning):
     """
@@ -3823,12 +3933,22 @@ class PendingDeprecationWarning(Warning):
         pass
 
     @staticmethod # known case of __new__
-    def __new__(S, *more): # real signature unknown; restored from __doc__
-        """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
+    def __new__(*args, **kwargs): # real signature unknown
+        """ Create and return a new object.  See help(type) for accurate signature. """
         pass
 
 
-from .object import object
+class PermissionError(OSError):
+    """ Not enough permissions. """
+    def __init__(self, *args, **kwargs): # real signature unknown
+        pass
+
+
+class ProcessLookupError(OSError):
+    """ Process not found. """
+    def __init__(self, *args, **kwargs): # real signature unknown
+        pass
+
 
 class property(object):
     """
@@ -3837,6 +3957,7 @@ class property(object):
     fget is a function to be used for getting an attribute value, and likewise
     fset is a function for setting, and fdel a function for del'ing, an
     attribute.  Typical use is to define a managed attribute x:
+    
     class C(object):
         def getx(self): return self._x
         def setx(self, value): self._x = value
@@ -3844,13 +3965,18 @@ class property(object):
         x = property(getx, setx, delx, "I'm the 'x' property.")
     
     Decorators make defining new properties or modifying existing ones easy:
+    
     class C(object):
         @property
-        def x(self): return self._x
+        def x(self):
+            "I am the 'x' property."
+            return self._x
         @x.setter
-        def x(self, value): self._x = value
+        def x(self, value):
+            self._x = value
         @x.deleter
-        def x(self): del self._x
+        def x(self):
+            del self._x
     """
     def deleter(self, *args, **kwargs): # real signature unknown
         """ Descriptor to change the deleter on a property. """
@@ -3864,16 +3990,16 @@ class property(object):
         """ Descriptor to change the setter on a property. """
         pass
 
-    def __delete__(self, obj): # real signature unknown; restored from __doc__
-        """ descr.__delete__(obj) """
+    def __delete__(self, *args, **kwargs): # real signature unknown
+        """ Delete an attribute of instance. """
         pass
 
-    def __getattribute__(self, name): # real signature unknown; restored from __doc__
-        """ x.__getattribute__('name') <==> x.name """
+    def __getattribute__(self, *args, **kwargs): # real signature unknown
+        """ Return getattr(self, name). """
         pass
 
-    def __get__(self, obj, type=None): # real signature unknown; restored from __doc__
-        """ descr.__get__(obj[, type]) -> value """
+    def __get__(self, *args, **kwargs): # real signature unknown
+        """ Return an attribute of instance, which is of type owner. """
         pass
 
     def __init__(self, fget=None, fset=None, fdel=None, doc=None): # known special case of property.__init__
@@ -3883,6 +4009,7 @@ class property(object):
         fget is a function to be used for getting an attribute value, and likewise
         fset is a function for setting, and fdel a function for del'ing, an
         attribute.  Typical use is to define a managed attribute x:
+        
         class C(object):
             def getx(self): return self._x
             def setx(self, value): self._x = value
@@ -3890,25 +4017,30 @@ class property(object):
             x = property(getx, setx, delx, "I'm the 'x' property.")
         
         Decorators make defining new properties or modifying existing ones easy:
+        
         class C(object):
             @property
-            def x(self): return self._x
+            def x(self):
+                "I am the 'x' property."
+                return self._x
             @x.setter
-            def x(self, value): self._x = value
+            def x(self, value):
+                self._x = value
             @x.deleter
-            def x(self): del self._x
+            def x(self):
+                del self._x
         
         # (copied from class doc)
         """
         pass
 
     @staticmethod # known case of __new__
-    def __new__(S, *more): # real signature unknown; restored from __doc__
-        """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
+    def __new__(*args, **kwargs): # real signature unknown
+        """ Create and return a new object.  See help(type) for accurate signature. """
         pass
 
-    def __set__(self, obj, value): # real signature unknown; restored from __doc__
-        """ descr.__set__(obj, value) """
+    def __set__(self, *args, **kwargs): # real signature unknown
+        """ Set an attribute of instance to value. """
         pass
 
     fdel = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
@@ -3917,16 +4049,16 @@ class property(object):
 
     fset = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
 
+    __isabstractmethod__ = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
 
 
-from .object import object
 
 class range(object):
     """
     range(stop) -> range object
     range(start, stop[, step]) -> range object
     
-    Returns a virtual sequence of numbers from start to stop by step.
+    Return a virtual sequence of numbers from start to stop by step.
     """
     def count(self, value): # real signature unknown; restored from __doc__
         """ rangeobject.count(value) -> integer -- return number of occurrences of value """
@@ -3935,51 +4067,89 @@ class range(object):
     def index(self, value, start=None, stop=None): # real signature unknown; restored from __doc__
         """
         rangeobject.index(value, [start, [stop]]) -> integer -- return index of value.
-        Raises ValueError if the value is not present.
+        Raise ValueError if the value is not present.
         """
         return 0
 
-    def __contains__(self, y): # real signature unknown; restored from __doc__
-        """ x.__contains__(y) <==> y in x """
+    def __contains__(self, *args, **kwargs): # real signature unknown
+        """ Return key in self. """
         pass
 
-    def __getattribute__(self, name): # real signature unknown; restored from __doc__
-        """ x.__getattribute__('name') <==> x.name """
+    def __eq__(self, *args, **kwargs): # real signature unknown
+        """ Return self==value. """
         pass
 
-    def __getitem__(self, y): # real signature unknown; restored from __doc__
-        """ x.__getitem__(y) <==> x[y] """
+    def __getattribute__(self, *args, **kwargs): # real signature unknown
+        """ Return getattr(self, name). """
+        pass
+
+    def __getitem__(self, *args, **kwargs): # real signature unknown
+        """ Return self[key]. """
+        pass
+
+    def __ge__(self, *args, **kwargs): # real signature unknown
+        """
+        __ge__=($self, value, /)
+        --
+        
+        Return self>=value.
+        """
+        pass
+
+    def __gt__(self, *args, **kwargs): # real signature unknown
+        """ Return self>value. """
+        pass
+
+    def __hash__(self, *args, **kwargs): # real signature unknown
+        """ Return hash(self). """
         pass
 
     def __init__(self, stop): # real signature unknown; restored from __doc__
         pass
 
-    def __iter__(self): # real signature unknown; restored from __doc__
-        """ x.__iter__() <==> iter(x) """
+    def __iter__(self, *args, **kwargs): # real signature unknown
+        """ Implement iter(self). """
         pass
 
-    def __len__(self): # real signature unknown; restored from __doc__
-        """ x.__len__() <==> len(x) """
+    def __len__(self, *args, **kwargs): # real signature unknown
+        """ Return len(self). """
+        pass
+
+    def __le__(self, *args, **kwargs): # real signature unknown
+        """ Return self<=value. """
+        pass
+
+    def __lt__(self, *args, **kwargs): # real signature unknown
+        """ Return self<value. """
         pass
 
     @staticmethod # known case of __new__
-    def __new__(S, *more): # real signature unknown; restored from __doc__
-        """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
+    def __new__(*args, **kwargs): # real signature unknown
+        """ Create and return a new object.  See help(type) for accurate signature. """
+        pass
+
+    def __ne__(self, *args, **kwargs): # real signature unknown
+        """ Return self!=value. """
         pass
 
     def __reduce__(self, *args, **kwargs): # real signature unknown
         pass
 
-    def __repr__(self): # real signature unknown; restored from __doc__
-        """ x.__repr__() <==> repr(x) """
+    def __repr__(self, *args, **kwargs): # real signature unknown
+        """ Return repr(self). """
         pass
 
     def __reversed__(self, *args, **kwargs): # real signature unknown
-        """ Returns a reverse iterator. """
+        """ Return a reverse iterator. """
         pass
 
+    start = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
 
-from .Exception import Exception
+    step = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+
+    stop = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+
+
 
 class ReferenceError(Exception):
     """ Weak ref proxy used after referent went away. """
@@ -3987,12 +4157,10 @@ class ReferenceError(Exception):
         pass
 
     @staticmethod # known case of __new__
-    def __new__(S, *more): # real signature unknown; restored from __doc__
-        """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
+    def __new__(*args, **kwargs): # real signature unknown
+        """ Create and return a new object.  See help(type) for accurate signature. """
         pass
 
-
-from .Warning import Warning
 
 class ResourceWarning(Warning):
     """ Base class for warnings about resource usage. """
@@ -4000,12 +4168,10 @@ class ResourceWarning(Warning):
         pass
 
     @staticmethod # known case of __new__
-    def __new__(S, *more): # real signature unknown; restored from __doc__
-        """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
+    def __new__(*args, **kwargs): # real signature unknown
+        """ Create and return a new object.  See help(type) for accurate signature. """
         pass
 
-
-from .object import object
 
 class reversed(object):
     """
@@ -4013,15 +4179,15 @@ class reversed(object):
     
     Return a reverse iterator
     """
-    def __getattribute__(self, name): # real signature unknown; restored from __doc__
-        """ x.__getattribute__('name') <==> x.name """
+    def __getattribute__(self, *args, **kwargs): # real signature unknown
+        """ Return getattr(self, name). """
         pass
 
     def __init__(self, sequence): # real signature unknown; restored from __doc__
         pass
 
-    def __iter__(self): # real signature unknown; restored from __doc__
-        """ x.__iter__() <==> iter(x) """
+    def __iter__(self, *args, **kwargs): # real signature unknown
+        """ Implement iter(self). """
         pass
 
     def __length_hint__(self, *args, **kwargs): # real signature unknown
@@ -4029,16 +4195,22 @@ class reversed(object):
         pass
 
     @staticmethod # known case of __new__
-    def __new__(S, *more): # real signature unknown; restored from __doc__
-        """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
+    def __new__(*args, **kwargs): # real signature unknown
+        """ Create and return a new object.  See help(type) for accurate signature. """
         pass
 
-    def __next__(self): # real signature unknown; restored from __doc__
-        """ x.__next__() <==> next(x) """
+    def __next__(self, *args, **kwargs): # real signature unknown
+        """ Implement next(self). """
         pass
 
+    def __reduce__(self, *args, **kwargs): # real signature unknown
+        """ Return state information for pickling. """
+        pass
 
-from .Warning import Warning
+    def __setstate__(self, *args, **kwargs): # real signature unknown
+        """ Set state information for unpickling. """
+        pass
+
 
 class RuntimeWarning(Warning):
     """ Base class for warnings about dubious runtime behavior. """
@@ -4046,12 +4218,10 @@ class RuntimeWarning(Warning):
         pass
 
     @staticmethod # known case of __new__
-    def __new__(S, *more): # real signature unknown; restored from __doc__
-        """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
+    def __new__(*args, **kwargs): # real signature unknown
+        """ Create and return a new object.  See help(type) for accurate signature. """
         pass
 
-
-from .object import object
 
 class set(object):
     """
@@ -4159,32 +4329,37 @@ class set(object):
         """ Update a set with the union of itself and others. """
         pass
 
-    def __and__(self, y): # real signature unknown; restored from __doc__
-        """ x.__and__(y) <==> x&y """
+    def __and__(self, *args, **kwargs): # real signature unknown
+        """ Return self&value. """
         pass
 
     def __contains__(self, y): # real signature unknown; restored from __doc__
         """ x.__contains__(y) <==> y in x. """
         pass
 
-    def __eq__(self, y): # real signature unknown; restored from __doc__
-        """ x.__eq__(y) <==> x==y """
+    def __eq__(self, *args, **kwargs): # real signature unknown
+        """ Return self==value. """
         pass
 
-    def __getattribute__(self, name): # real signature unknown; restored from __doc__
-        """ x.__getattribute__('name') <==> x.name """
+    def __getattribute__(self, *args, **kwargs): # real signature unknown
+        """ Return getattr(self, name). """
         pass
 
-    def __ge__(self, y): # real signature unknown; restored from __doc__
-        """ x.__ge__(y) <==> x>=y """
+    def __ge__(self, *args, **kwargs): # real signature unknown
+        """
+        __ge__=($self, value, /)
+        --
+        
+        Return self>=value.
+        """
         pass
 
-    def __gt__(self, y): # real signature unknown; restored from __doc__
-        """ x.__gt__(y) <==> x>y """
+    def __gt__(self, *args, **kwargs): # real signature unknown
+        """ Return self>value. """
         pass
 
-    def __iand__(self, y): # real signature unknown; restored from __doc__
-        """ x.__iand__(y) <==> x&=y """
+    def __iand__(self, *args, **kwargs): # real signature unknown
+        """ Return self&=value. """
         pass
 
     def __init__(self, seq=()): # known special case of set.__init__
@@ -4197,87 +4372,85 @@ class set(object):
         """
         pass
 
-    def __ior__(self, y): # real signature unknown; restored from __doc__
-        """ x.__ior__(y) <==> x|=y """
+    def __ior__(self, *args, **kwargs): # real signature unknown
+        """ Return self|=value. """
         pass
 
-    def __isub__(self, y): # real signature unknown; restored from __doc__
-        """ x.__isub__(y) <==> x-=y """
+    def __isub__(self, *args, **kwargs): # real signature unknown
+        """ Return self-=value. """
         pass
 
-    def __iter__(self): # real signature unknown; restored from __doc__
-        """ x.__iter__() <==> iter(x) """
+    def __iter__(self, *args, **kwargs): # real signature unknown
+        """ Implement iter(self). """
         pass
 
-    def __ixor__(self, y): # real signature unknown; restored from __doc__
-        """ x.__ixor__(y) <==> x^=y """
+    def __ixor__(self, *args, **kwargs): # real signature unknown
+        """ Return self^=value. """
         pass
 
-    def __len__(self): # real signature unknown; restored from __doc__
-        """ x.__len__() <==> len(x) """
+    def __len__(self, *args, **kwargs): # real signature unknown
+        """ Return len(self). """
         pass
 
-    def __le__(self, y): # real signature unknown; restored from __doc__
-        """ x.__le__(y) <==> x<=y """
+    def __le__(self, *args, **kwargs): # real signature unknown
+        """ Return self<=value. """
         pass
 
-    def __lt__(self, y): # real signature unknown; restored from __doc__
-        """ x.__lt__(y) <==> x<y """
+    def __lt__(self, *args, **kwargs): # real signature unknown
+        """ Return self<value. """
         pass
 
     @staticmethod # known case of __new__
-    def __new__(S, *more): # real signature unknown; restored from __doc__
-        """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
+    def __new__(*args, **kwargs): # real signature unknown
+        """ Create and return a new object.  See help(type) for accurate signature. """
         pass
 
-    def __ne__(self, y): # real signature unknown; restored from __doc__
-        """ x.__ne__(y) <==> x!=y """
+    def __ne__(self, *args, **kwargs): # real signature unknown
+        """ Return self!=value. """
         pass
 
-    def __or__(self, y): # real signature unknown; restored from __doc__
-        """ x.__or__(y) <==> x|y """
+    def __or__(self, *args, **kwargs): # real signature unknown
+        """ Return self|value. """
         pass
 
-    def __rand__(self, y): # real signature unknown; restored from __doc__
-        """ x.__rand__(y) <==> y&x """
+    def __rand__(self, *args, **kwargs): # real signature unknown
+        """ Return value&self. """
         pass
 
     def __reduce__(self, *args, **kwargs): # real signature unknown
         """ Return state information for pickling. """
         pass
 
-    def __repr__(self): # real signature unknown; restored from __doc__
-        """ x.__repr__() <==> repr(x) """
+    def __repr__(self, *args, **kwargs): # real signature unknown
+        """ Return repr(self). """
         pass
 
-    def __ror__(self, y): # real signature unknown; restored from __doc__
-        """ x.__ror__(y) <==> y|x """
+    def __ror__(self, *args, **kwargs): # real signature unknown
+        """ Return value|self. """
         pass
 
-    def __rsub__(self, y): # real signature unknown; restored from __doc__
-        """ x.__rsub__(y) <==> y-x """
+    def __rsub__(self, *args, **kwargs): # real signature unknown
+        """ Return value-self. """
         pass
 
-    def __rxor__(self, y): # real signature unknown; restored from __doc__
-        """ x.__rxor__(y) <==> y^x """
+    def __rxor__(self, *args, **kwargs): # real signature unknown
+        """ Return value^self. """
         pass
 
     def __sizeof__(self): # real signature unknown; restored from __doc__
         """ S.__sizeof__() -> size of S in memory, in bytes """
         pass
 
-    def __sub__(self, y): # real signature unknown; restored from __doc__
-        """ x.__sub__(y) <==> x-y """
+    def __sub__(self, *args, **kwargs): # real signature unknown
+        """ Return self-value. """
         pass
 
-    def __xor__(self, y): # real signature unknown; restored from __doc__
-        """ x.__xor__(y) <==> x^y """
+    def __xor__(self, *args, **kwargs): # real signature unknown
+        """ Return self^value. """
         pass
 
     __hash__ = None
 
-
-from .object import object
 
 class slice(object):
     """
@@ -4297,48 +4470,53 @@ class slice(object):
         """
         pass
 
-    def __eq__(self, y): # real signature unknown; restored from __doc__
-        """ x.__eq__(y) <==> x==y """
+    def __eq__(self, *args, **kwargs): # real signature unknown
+        """ Return self==value. """
         pass
 
-    def __getattribute__(self, name): # real signature unknown; restored from __doc__
-        """ x.__getattribute__('name') <==> x.name """
+    def __getattribute__(self, *args, **kwargs): # real signature unknown
+        """ Return getattr(self, name). """
         pass
 
-    def __ge__(self, y): # real signature unknown; restored from __doc__
-        """ x.__ge__(y) <==> x>=y """
+    def __ge__(self, *args, **kwargs): # real signature unknown
+        """
+        __ge__=($self, value, /)
+        --
+        
+        Return self>=value.
+        """
         pass
 
-    def __gt__(self, y): # real signature unknown; restored from __doc__
-        """ x.__gt__(y) <==> x>y """
+    def __gt__(self, *args, **kwargs): # real signature unknown
+        """ Return self>value. """
         pass
 
     def __init__(self, stop): # real signature unknown; restored from __doc__
         pass
 
-    def __le__(self, y): # real signature unknown; restored from __doc__
-        """ x.__le__(y) <==> x<=y """
+    def __le__(self, *args, **kwargs): # real signature unknown
+        """ Return self<=value. """
         pass
 
-    def __lt__(self, y): # real signature unknown; restored from __doc__
-        """ x.__lt__(y) <==> x<y """
+    def __lt__(self, *args, **kwargs): # real signature unknown
+        """ Return self<value. """
         pass
 
     @staticmethod # known case of __new__
-    def __new__(S, *more): # real signature unknown; restored from __doc__
-        """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
+    def __new__(*args, **kwargs): # real signature unknown
+        """ Create and return a new object.  See help(type) for accurate signature. """
         pass
 
-    def __ne__(self, y): # real signature unknown; restored from __doc__
-        """ x.__ne__(y) <==> x!=y """
+    def __ne__(self, *args, **kwargs): # real signature unknown
+        """ Return self!=value. """
         pass
 
     def __reduce__(self, *args, **kwargs): # real signature unknown
         """ Return state information for pickling. """
         pass
 
-    def __repr__(self): # real signature unknown; restored from __doc__
-        """ x.__repr__() <==> repr(x) """
+    def __repr__(self, *args, **kwargs): # real signature unknown
+        """ Return repr(self). """
         pass
 
     start = property(lambda self: 0)
@@ -4353,8 +4531,6 @@ class slice(object):
 
     __hash__ = None
 
-
-from .object import object
 
 class staticmethod(object):
     """
@@ -4375,40 +4551,35 @@ class staticmethod(object):
     Static methods in Python are similar to those found in Java or C++.
     For a more advanced concept, see the classmethod builtin.
     """
-    def __getattribute__(self, name): # real signature unknown; restored from __doc__
-        """ x.__getattribute__('name') <==> x.name """
-        pass
-
-    def __get__(self, obj, type=None): # real signature unknown; restored from __doc__
-        """ descr.__get__(obj[, type]) -> value """
+    def __get__(self, *args, **kwargs): # real signature unknown
+        """ Return an attribute of instance, which is of type owner. """
         pass
 
     def __init__(self, function): # real signature unknown; restored from __doc__
         pass
 
     @staticmethod # known case of __new__
-    def __new__(S, *more): # real signature unknown; restored from __doc__
-        """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
+    def __new__(*args, **kwargs): # real signature unknown
+        """ Create and return a new object.  See help(type) for accurate signature. """
         pass
 
     __func__ = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
 
+    __isabstractmethod__ = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
 
 
-from .Exception import Exception
+    __dict__ = None # (!) real value is ''
+
 
 class StopIteration(Exception):
     """ Signal the end from iterator.__next__(). """
     def __init__(self, *args, **kwargs): # real signature unknown
         pass
 
-    @staticmethod # known case of __new__
-    def __new__(S, *more): # real signature unknown; restored from __doc__
-        """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
-        pass
+    value = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+    """generator return value"""
 
 
-from .object import object
 
 class str(object):
     """
@@ -4429,6 +4600,14 @@ class str(object):
         
         Return a capitalized version of S, i.e. make the first character
         have upper case and the rest lower case.
+        """
+        return ""
+
+    def casefold(self): # real signature unknown; restored from __doc__
+        """
+        S.casefold() -> str
+        
+        Return a version of S suitable for caseless comparisons.
         """
         return ""
 
@@ -4475,9 +4654,9 @@ class str(object):
         """
         return False
 
-    def expandtabs(self, tabsize=None): # real signature unknown; restored from __doc__
+    def expandtabs(self, tabsize=8): # real signature unknown; restored from __doc__
         """
-        S.expandtabs([tabsize]) -> str
+        S.expandtabs(tabsize=8) -> str
         
         Return a copy of S where all tab characters are expanded using spaces.
         If tabsize is not given, a tab size of 8 characters is assumed.
@@ -4564,6 +4743,9 @@ class str(object):
         
         Return True if S is a valid identifier according
         to the language definition.
+        
+        Use keyword.iskeyword() to test for reserved identifiers
+        such as "def" and "class".
         """
         return False
 
@@ -4658,11 +4840,10 @@ class str(object):
         """
         return ""
 
-    def maketrans(self, x, y=None, z=None): # real signature unknown; restored from __doc__
+    def maketrans(self, *args, **kwargs): # real signature unknown
         """
-        str.maketrans(x[, y[, z]]) -> dict (static method)
-        
         Return a translation table usable for str.translate().
+        
         If there is only one argument, it must be a dictionary mapping Unicode
         ordinals (integers) or characters to Unicode ordinals, strings or None.
         Character keys will be then converted to ordinals.
@@ -4671,7 +4852,7 @@ class str(object):
         character at the same position in y. If there is a third argument, it
         must be a string, whose characters will be mapped to None in the result.
         """
-        return {}
+        pass
 
     def partition(self, sep): # real signature unknown; restored from __doc__
         """
@@ -4732,9 +4913,9 @@ class str(object):
         """
         pass
 
-    def rsplit(self, sep=None, maxsplit=None): # real signature unknown; restored from __doc__
+    def rsplit(self, sep=None, maxsplit=-1): # real signature unknown; restored from __doc__
         """
-        S.rsplit([sep[, maxsplit]]) -> list of strings
+        S.rsplit(sep=None, maxsplit=-1) -> list of strings
         
         Return a list of the words in S, using sep as the
         delimiter string, starting at the end of the string and
@@ -4753,9 +4934,9 @@ class str(object):
         """
         return ""
 
-    def split(self, sep=None, maxsplit=None): # real signature unknown; restored from __doc__
+    def split(self, sep=None, maxsplit=-1): # real signature unknown; restored from __doc__
         """
-        S.split([sep[, maxsplit]]) -> list of strings
+        S.split(sep=None, maxsplit=-1) -> list of strings
         
         Return a list of the words in S, using sep as the
         delimiter string.  If maxsplit is given, at most maxsplit
@@ -4843,16 +5024,16 @@ class str(object):
         """
         return ""
 
-    def __add__(self, y): # real signature unknown; restored from __doc__
-        """ x.__add__(y) <==> x+y """
+    def __add__(self, *args, **kwargs): # real signature unknown
+        """ Return self+value. """
         pass
 
-    def __contains__(self, y): # real signature unknown; restored from __doc__
-        """ x.__contains__(y) <==> y in x """
+    def __contains__(self, *args, **kwargs): # real signature unknown
+        """ Return key in self. """
         pass
 
-    def __eq__(self, y): # real signature unknown; restored from __doc__
-        """ x.__eq__(y) <==> x==y """
+    def __eq__(self, *args, **kwargs): # real signature unknown
+        """ Return self==value. """
         pass
 
     def __format__(self, format_spec): # real signature unknown; restored from __doc__
@@ -4863,27 +5044,32 @@ class str(object):
         """
         return ""
 
-    def __getattribute__(self, name): # real signature unknown; restored from __doc__
-        """ x.__getattribute__('name') <==> x.name """
+    def __getattribute__(self, *args, **kwargs): # real signature unknown
+        """ Return getattr(self, name). """
         pass
 
-    def __getitem__(self, y): # real signature unknown; restored from __doc__
-        """ x.__getitem__(y) <==> x[y] """
+    def __getitem__(self, *args, **kwargs): # real signature unknown
+        """ Return self[key]. """
         pass
 
     def __getnewargs__(self, *args, **kwargs): # real signature unknown
         pass
 
-    def __ge__(self, y): # real signature unknown; restored from __doc__
-        """ x.__ge__(y) <==> x>=y """
+    def __ge__(self, *args, **kwargs): # real signature unknown
+        """
+        __ge__=($self, value, /)
+        --
+        
+        Return self>=value.
+        """
         pass
 
-    def __gt__(self, y): # real signature unknown; restored from __doc__
-        """ x.__gt__(y) <==> x>y """
+    def __gt__(self, *args, **kwargs): # real signature unknown
+        """ Return self>value. """
         pass
 
-    def __hash__(self): # real signature unknown; restored from __doc__
-        """ x.__hash__() <==> hash(x) """
+    def __hash__(self, *args, **kwargs): # real signature unknown
+        """ Return hash(self). """
         pass
 
     def __init__(self, value='', encoding=None, errors='strict'): # known special case of str.__init__
@@ -4902,61 +5088,59 @@ class str(object):
         """
         pass
 
-    def __iter__(self): # real signature unknown; restored from __doc__
-        """ x.__iter__() <==> iter(x) """
+    def __iter__(self, *args, **kwargs): # real signature unknown
+        """ Implement iter(self). """
         pass
 
-    def __len__(self): # real signature unknown; restored from __doc__
-        """ x.__len__() <==> len(x) """
+    def __len__(self, *args, **kwargs): # real signature unknown
+        """ Return len(self). """
         pass
 
-    def __le__(self, y): # real signature unknown; restored from __doc__
-        """ x.__le__(y) <==> x<=y """
+    def __le__(self, *args, **kwargs): # real signature unknown
+        """ Return self<=value. """
         pass
 
-    def __lt__(self, y): # real signature unknown; restored from __doc__
-        """ x.__lt__(y) <==> x<y """
+    def __lt__(self, *args, **kwargs): # real signature unknown
+        """ Return self<value. """
         pass
 
-    def __mod__(self, y): # real signature unknown; restored from __doc__
-        """ x.__mod__(y) <==> x%y """
+    def __mod__(self, *args, **kwargs): # real signature unknown
+        """ Return self%value. """
         pass
 
-    def __mul__(self, n): # real signature unknown; restored from __doc__
-        """ x.__mul__(n) <==> x*n """
+    def __mul__(self, *args, **kwargs): # real signature unknown
+        """ Return self*value.n """
         pass
 
     @staticmethod # known case of __new__
-    def __new__(S, *more): # real signature unknown; restored from __doc__
-        """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
+    def __new__(*args, **kwargs): # real signature unknown
+        """ Create and return a new object.  See help(type) for accurate signature. """
         pass
 
-    def __ne__(self, y): # real signature unknown; restored from __doc__
-        """ x.__ne__(y) <==> x!=y """
+    def __ne__(self, *args, **kwargs): # real signature unknown
+        """ Return self!=value. """
         pass
 
-    def __repr__(self): # real signature unknown; restored from __doc__
-        """ x.__repr__() <==> repr(x) """
+    def __repr__(self, *args, **kwargs): # real signature unknown
+        """ Return repr(self). """
         pass
 
-    def __rmod__(self, y): # real signature unknown; restored from __doc__
-        """ x.__rmod__(y) <==> y%x """
+    def __rmod__(self, *args, **kwargs): # real signature unknown
+        """ Return value%self. """
         pass
 
-    def __rmul__(self, n): # real signature unknown; restored from __doc__
-        """ x.__rmul__(n) <==> n*x """
+    def __rmul__(self, *args, **kwargs): # real signature unknown
+        """ Return self*value. """
         pass
 
     def __sizeof__(self): # real signature unknown; restored from __doc__
         """ S.__sizeof__() -> size of S in memory, in bytes """
         pass
 
-    def __str__(self): # real signature unknown; restored from __doc__
-        """ x.__str__() <==> str(x) """
+    def __str__(self, *args, **kwargs): # real signature unknown
+        """ Return str(self). """
         pass
 
-
-from .object import object
 
 class super(object):
     """
@@ -4974,12 +5158,12 @@ class super(object):
         def cmeth(cls, arg):
             super().cmeth(arg)
     """
-    def __getattribute__(self, name): # real signature unknown; restored from __doc__
-        """ x.__getattribute__('name') <==> x.name """
+    def __getattribute__(self, *args, **kwargs): # real signature unknown
+        """ Return getattr(self, name). """
         pass
 
-    def __get__(self, obj, type=None): # real signature unknown; restored from __doc__
-        """ descr.__get__(obj[, type]) -> value """
+    def __get__(self, *args, **kwargs): # real signature unknown
+        """ Return an attribute of instance, which is of type owner. """
         pass
 
     def __init__(self, type1=None, type2=None): # known special case of super.__init__
@@ -5003,12 +5187,12 @@ class super(object):
         pass
 
     @staticmethod # known case of __new__
-    def __new__(S, *more): # real signature unknown; restored from __doc__
-        """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
+    def __new__(*args, **kwargs): # real signature unknown
+        """ Create and return a new object.  See help(type) for accurate signature. """
         pass
 
-    def __repr__(self): # real signature unknown; restored from __doc__
-        """ x.__repr__() <==> repr(x) """
+    def __repr__(self, *args, **kwargs): # real signature unknown
+        """ Return repr(self). """
         pass
 
     __self_class__ = property(lambda self: type(object))
@@ -5031,20 +5215,16 @@ class super(object):
 
 
 
-from .Warning import Warning
-
 class SyntaxWarning(Warning):
     """ Base class for warnings about dubious syntax. """
     def __init__(self, *args, **kwargs): # real signature unknown
         pass
 
     @staticmethod # known case of __new__
-    def __new__(S, *more): # real signature unknown; restored from __doc__
-        """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
+    def __new__(*args, **kwargs): # real signature unknown
+        """ Create and return a new object.  See help(type) for accurate signature. """
         pass
 
-
-from .Exception import Exception
 
 class SystemError(Exception):
     """
@@ -5057,21 +5237,14 @@ class SystemError(Exception):
         pass
 
     @staticmethod # known case of __new__
-    def __new__(S, *more): # real signature unknown; restored from __doc__
-        """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
+    def __new__(*args, **kwargs): # real signature unknown
+        """ Create and return a new object.  See help(type) for accurate signature. """
         pass
 
-
-from .BaseException import BaseException
 
 class SystemExit(BaseException):
     """ Request to exit from the interpreter. """
     def __init__(self, *args, **kwargs): # real signature unknown
-        pass
-
-    @staticmethod # known case of __new__
-    def __new__(S, *more): # real signature unknown; restored from __doc__
-        """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
         pass
 
     code = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
@@ -5079,20 +5252,17 @@ class SystemExit(BaseException):
 
 
 
-from .IndentationError import IndentationError
-
 class TabError(IndentationError):
     """ Improper mixture of spaces and tabs. """
     def __init__(self, *args, **kwargs): # real signature unknown
         pass
 
-    @staticmethod # known case of __new__
-    def __new__(S, *more): # real signature unknown; restored from __doc__
-        """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
+
+class TimeoutError(OSError):
+    """ Timeout expired. """
+    def __init__(self, *args, **kwargs): # real signature unknown
         pass
 
-
-from .object import object
 
 class tuple(object):
     """
@@ -5112,39 +5282,44 @@ class tuple(object):
         """
         return 0
 
-    def __add__(self, y): # real signature unknown; restored from __doc__
-        """ x.__add__(y) <==> x+y """
+    def __add__(self, *args, **kwargs): # real signature unknown
+        """ Return self+value. """
         pass
 
-    def __contains__(self, y): # real signature unknown; restored from __doc__
-        """ x.__contains__(y) <==> y in x """
+    def __contains__(self, *args, **kwargs): # real signature unknown
+        """ Return key in self. """
         pass
 
-    def __eq__(self, y): # real signature unknown; restored from __doc__
-        """ x.__eq__(y) <==> x==y """
+    def __eq__(self, *args, **kwargs): # real signature unknown
+        """ Return self==value. """
         pass
 
-    def __getattribute__(self, name): # real signature unknown; restored from __doc__
-        """ x.__getattribute__('name') <==> x.name """
+    def __getattribute__(self, *args, **kwargs): # real signature unknown
+        """ Return getattr(self, name). """
         pass
 
-    def __getitem__(self, y): # real signature unknown; restored from __doc__
-        """ x.__getitem__(y) <==> x[y] """
+    def __getitem__(self, *args, **kwargs): # real signature unknown
+        """ Return self[key]. """
         pass
 
     def __getnewargs__(self, *args, **kwargs): # real signature unknown
         pass
 
-    def __ge__(self, y): # real signature unknown; restored from __doc__
-        """ x.__ge__(y) <==> x>=y """
+    def __ge__(self, *args, **kwargs): # real signature unknown
+        """
+        __ge__=($self, value, /)
+        --
+        
+        Return self>=value.
+        """
         pass
 
-    def __gt__(self, y): # real signature unknown; restored from __doc__
-        """ x.__gt__(y) <==> x>y """
+    def __gt__(self, *args, **kwargs): # real signature unknown
+        """ Return self>value. """
         pass
 
-    def __hash__(self): # real signature unknown; restored from __doc__
-        """ x.__hash__() <==> hash(x) """
+    def __hash__(self, *args, **kwargs): # real signature unknown
+        """ Return hash(self). """
         pass
 
     def __init__(self, seq=()): # known special case of tuple.__init__
@@ -5157,41 +5332,41 @@ class tuple(object):
         """
         pass
 
-    def __iter__(self): # real signature unknown; restored from __doc__
-        """ x.__iter__() <==> iter(x) """
+    def __iter__(self, *args, **kwargs): # real signature unknown
+        """ Implement iter(self). """
         pass
 
-    def __len__(self): # real signature unknown; restored from __doc__
-        """ x.__len__() <==> len(x) """
+    def __len__(self, *args, **kwargs): # real signature unknown
+        """ Return len(self). """
         pass
 
-    def __le__(self, y): # real signature unknown; restored from __doc__
-        """ x.__le__(y) <==> x<=y """
+    def __le__(self, *args, **kwargs): # real signature unknown
+        """ Return self<=value. """
         pass
 
-    def __lt__(self, y): # real signature unknown; restored from __doc__
-        """ x.__lt__(y) <==> x<y """
+    def __lt__(self, *args, **kwargs): # real signature unknown
+        """ Return self<value. """
         pass
 
-    def __mul__(self, n): # real signature unknown; restored from __doc__
-        """ x.__mul__(n) <==> x*n """
+    def __mul__(self, *args, **kwargs): # real signature unknown
+        """ Return self*value.n """
         pass
 
     @staticmethod # known case of __new__
-    def __new__(S, *more): # real signature unknown; restored from __doc__
-        """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
+    def __new__(*args, **kwargs): # real signature unknown
+        """ Create and return a new object.  See help(type) for accurate signature. """
         pass
 
-    def __ne__(self, y): # real signature unknown; restored from __doc__
-        """ x.__ne__(y) <==> x!=y """
+    def __ne__(self, *args, **kwargs): # real signature unknown
+        """ Return self!=value. """
         pass
 
-    def __repr__(self): # real signature unknown; restored from __doc__
-        """ x.__repr__() <==> repr(x) """
+    def __repr__(self, *args, **kwargs): # real signature unknown
+        """ Return repr(self). """
         pass
 
-    def __rmul__(self, n): # real signature unknown; restored from __doc__
-        """ x.__rmul__(n) <==> n*x """
+    def __rmul__(self, *args, **kwargs): # real signature unknown
+        """ Return self*value. """
         pass
 
     def __sizeof__(self): # real signature unknown; restored from __doc__
@@ -5199,10 +5374,9 @@ class tuple(object):
         pass
 
 
-from .object import object
-
 class type(object):
     """
+    type(object_or_name, bases, dict)
     type(object) -> the object's type
     type(name, bases, dict) -> a new type
     """
@@ -5213,20 +5387,28 @@ class type(object):
         """
         return []
 
-    def __call__(self, *more): # real signature unknown; restored from __doc__
-        """ x.__call__(...) <==> x(...) """
+    def __call__(self, *args, **kwargs): # real signature unknown
+        """ Call self as a function. """
         pass
 
-    def __delattr__(self, name): # real signature unknown; restored from __doc__
-        """ x.__delattr__('name') <==> del x.name """
+    def __delattr__(self, *args, **kwargs): # real signature unknown
+        """ Implement delattr(self, name). """
         pass
 
-    def __getattribute__(self, name): # real signature unknown; restored from __doc__
-        """ x.__getattribute__('name') <==> x.name """
+    def __dir__(self): # real signature unknown; restored from __doc__
+        """
+        __dir__() -> list
+        specialized __dir__ implementation for types
+        """
+        return []
+
+    def __getattribute__(self, *args, **kwargs): # real signature unknown
+        """ Return getattr(self, name). """
         pass
 
     def __init__(cls, what, bases=None, dict=None): # known special case of type.__init__
         """
+        type(object_or_name, bases, dict)
         type(object) -> the object's type
         type(name, bases, dict) -> a new type
         # (copied from class doc)
@@ -5241,8 +5423,8 @@ class type(object):
         return False
 
     @staticmethod # known case of __new__
-    def __new__(S, *more): # real signature unknown; restored from __doc__
-        """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
+    def __new__(*args, **kwargs): # real signature unknown
+        """ Create and return a new object.  See help(type) for accurate signature. """
         pass
 
     def __prepare__(self): # real signature unknown; restored from __doc__
@@ -5252,13 +5434,20 @@ class type(object):
         """
         return {}
 
-    def __repr__(self): # real signature unknown; restored from __doc__
-        """ x.__repr__() <==> repr(x) """
+    def __repr__(self, *args, **kwargs): # real signature unknown
+        """ Return repr(self). """
         pass
 
-    def __setattr__(self, name, value): # real signature unknown; restored from __doc__
-        """ x.__setattr__('name', value) <==> x.name = value """
+    def __setattr__(self, *args, **kwargs): # real signature unknown
+        """ Implement setattr(self, name, value). """
         pass
+
+    def __sizeof__(self): # real signature unknown; restored from __doc__
+        """
+        __sizeof__() -> int
+        return memory consumption of the type object
+        """
+        return 0
 
     def __subclasscheck__(self): # real signature unknown; restored from __doc__
         """
@@ -5278,7 +5467,7 @@ class type(object):
         object,
     )
     __base__ = object
-    __basicsize__ = 800
+    __basicsize__ = 824
     __dictoffset__ = 264
     __dict__ = None # (!) real value is ''
     __flags__ = 2148291584
@@ -5288,10 +5477,10 @@ class type(object):
         object,
     )
     __name__ = 'type'
+    __qualname__ = 'type'
+    __text_signature__ = None
     __weakrefoffset__ = 368
 
-
-from .Exception import Exception
 
 class TypeError(Exception):
     """ Inappropriate argument type. """
@@ -5299,12 +5488,10 @@ class TypeError(Exception):
         pass
 
     @staticmethod # known case of __new__
-    def __new__(S, *more): # real signature unknown; restored from __doc__
-        """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
+    def __new__(*args, **kwargs): # real signature unknown
+        """ Create and return a new object.  See help(type) for accurate signature. """
         pass
 
-
-from .NameError import NameError
 
 class UnboundLocalError(NameError):
     """ Local name referenced but not bound to a value. """
@@ -5312,12 +5499,10 @@ class UnboundLocalError(NameError):
         pass
 
     @staticmethod # known case of __new__
-    def __new__(S, *more): # real signature unknown; restored from __doc__
-        """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
+    def __new__(*args, **kwargs): # real signature unknown
+        """ Create and return a new object.  See help(type) for accurate signature. """
         pass
 
-
-from .Exception import Exception
 
 class ValueError(Exception):
     """ Inappropriate argument value (of correct type). """
@@ -5325,12 +5510,10 @@ class ValueError(Exception):
         pass
 
     @staticmethod # known case of __new__
-    def __new__(S, *more): # real signature unknown; restored from __doc__
-        """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
+    def __new__(*args, **kwargs): # real signature unknown
+        """ Create and return a new object.  See help(type) for accurate signature. """
         pass
 
-
-from .ValueError import ValueError
 
 class UnicodeError(ValueError):
     """ Unicode related error. """
@@ -5338,12 +5521,10 @@ class UnicodeError(ValueError):
         pass
 
     @staticmethod # known case of __new__
-    def __new__(S, *more): # real signature unknown; restored from __doc__
-        """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
+    def __new__(*args, **kwargs): # real signature unknown
+        """ Create and return a new object.  See help(type) for accurate signature. """
         pass
 
-
-from .UnicodeError import UnicodeError
 
 class UnicodeDecodeError(UnicodeError):
     """ Unicode decoding error. """
@@ -5351,12 +5532,12 @@ class UnicodeDecodeError(UnicodeError):
         pass
 
     @staticmethod # known case of __new__
-    def __new__(S, *more): # real signature unknown; restored from __doc__
-        """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
+    def __new__(*args, **kwargs): # real signature unknown
+        """ Create and return a new object.  See help(type) for accurate signature. """
         pass
 
-    def __str__(self): # real signature unknown; restored from __doc__
-        """ x.__str__() <==> str(x) """
+    def __str__(self, *args, **kwargs): # real signature unknown
+        """ Return str(self). """
         pass
 
     encoding = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
@@ -5375,8 +5556,6 @@ class UnicodeDecodeError(UnicodeError):
     """exception start"""
 
 
-
-from .UnicodeError import UnicodeError
 
 class UnicodeEncodeError(UnicodeError):
     """ Unicode encoding error. """
@@ -5384,12 +5563,12 @@ class UnicodeEncodeError(UnicodeError):
         pass
 
     @staticmethod # known case of __new__
-    def __new__(S, *more): # real signature unknown; restored from __doc__
-        """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
+    def __new__(*args, **kwargs): # real signature unknown
+        """ Create and return a new object.  See help(type) for accurate signature. """
         pass
 
-    def __str__(self): # real signature unknown; restored from __doc__
-        """ x.__str__() <==> str(x) """
+    def __str__(self, *args, **kwargs): # real signature unknown
+        """ Return str(self). """
         pass
 
     encoding = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
@@ -5408,8 +5587,6 @@ class UnicodeEncodeError(UnicodeError):
     """exception start"""
 
 
-
-from .UnicodeError import UnicodeError
 
 class UnicodeTranslateError(UnicodeError):
     """ Unicode translation error. """
@@ -5417,12 +5594,12 @@ class UnicodeTranslateError(UnicodeError):
         pass
 
     @staticmethod # known case of __new__
-    def __new__(S, *more): # real signature unknown; restored from __doc__
-        """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
+    def __new__(*args, **kwargs): # real signature unknown
+        """ Create and return a new object.  See help(type) for accurate signature. """
         pass
 
-    def __str__(self): # real signature unknown; restored from __doc__
-        """ x.__str__() <==> str(x) """
+    def __str__(self, *args, **kwargs): # real signature unknown
+        """ Return str(self). """
         pass
 
     encoding = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
@@ -5441,8 +5618,6 @@ class UnicodeTranslateError(UnicodeError):
     """exception start"""
 
 
-
-from .Warning import Warning
 
 class UnicodeWarning(Warning):
     """
@@ -5453,12 +5628,10 @@ class UnicodeWarning(Warning):
         pass
 
     @staticmethod # known case of __new__
-    def __new__(S, *more): # real signature unknown; restored from __doc__
-        """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
+    def __new__(*args, **kwargs): # real signature unknown
+        """ Create and return a new object.  See help(type) for accurate signature. """
         pass
 
-
-from .Warning import Warning
 
 class UserWarning(Warning):
     """ Base class for warnings generated by user code. """
@@ -5466,12 +5639,10 @@ class UserWarning(Warning):
         pass
 
     @staticmethod # known case of __new__
-    def __new__(S, *more): # real signature unknown; restored from __doc__
-        """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
+    def __new__(*args, **kwargs): # real signature unknown
+        """ Create and return a new object.  See help(type) for accurate signature. """
         pass
 
-
-from .ArithmeticError import ArithmeticError
 
 class ZeroDivisionError(ArithmeticError):
     """ Second argument to a division or modulo operation was zero. """
@@ -5479,12 +5650,10 @@ class ZeroDivisionError(ArithmeticError):
         pass
 
     @staticmethod # known case of __new__
-    def __new__(S, *more): # real signature unknown; restored from __doc__
-        """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
+    def __new__(*args, **kwargs): # real signature unknown
+        """ Create and return a new object.  See help(type) for accurate signature. """
         pass
 
-
-from .object import object
 
 class zip(object):
     """
@@ -5495,25 +5664,83 @@ class zip(object):
     method continues until the shortest iterable in the argument sequence
     is exhausted and then it raises StopIteration.
     """
-    def __getattribute__(self, name): # real signature unknown; restored from __doc__
-        """ x.__getattribute__('name') <==> x.name """
+    def __getattribute__(self, *args, **kwargs): # real signature unknown
+        """ Return getattr(self, name). """
         pass
 
     def __init__(self, iter1, iter2=None, *some): # real signature unknown; restored from __doc__
         pass
 
-    def __iter__(self): # real signature unknown; restored from __doc__
-        """ x.__iter__() <==> iter(x) """
+    def __iter__(self, *args, **kwargs): # real signature unknown
+        """ Implement iter(self). """
         pass
 
     @staticmethod # known case of __new__
-    def __new__(S, *more): # real signature unknown; restored from __doc__
-        """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
+    def __new__(*args, **kwargs): # real signature unknown
+        """ Create and return a new object.  See help(type) for accurate signature. """
         pass
 
-    def __next__(self): # real signature unknown; restored from __doc__
-        """ x.__next__() <==> next(x) """
+    def __next__(self, *args, **kwargs): # real signature unknown
+        """ Implement next(self). """
         pass
+
+    def __reduce__(self, *args, **kwargs): # real signature unknown
+        """ Return state information for pickling. """
+        pass
+
+
+class __loader__(object):
+    """
+    Meta path import for built-in modules.
+    
+        All methods are either class or static methods to avoid the need to
+        instantiate the class.
+    """
+    def find_module(self, *args, **kwargs): # real signature unknown
+        """
+        Find the built-in module.
+        
+                If 'path' is ever specified then the search is considered a failure.
+        
+                This method is deprecated.  Use find_spec() instead.
+        """
+        pass
+
+    def find_spec(self, *args, **kwargs): # real signature unknown
+        pass
+
+    def get_code(self, *args, **kwargs): # real signature unknown
+        """ Return None as built-in modules do not have code objects. """
+        pass
+
+    def get_source(self, *args, **kwargs): # real signature unknown
+        """ Return None as built-in modules do not have source code. """
+        pass
+
+    def is_package(self, *args, **kwargs): # real signature unknown
+        """ Return False as built-in modules are never packages. """
+        pass
+
+    def load_module(self, *args, **kwargs): # real signature unknown
+        """ Load a built-in module. """
+        pass
+
+    def module_repr(module): # reliably restored by inspect
+        """
+        Return repr for the module.
+        
+                The method is deprecated.  The import machinery does the job itself.
+        """
+        pass
+
+    def __init__(self, *args, **kwargs): # real signature unknown
+        pass
+
+    __weakref__ = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+    """list of weak references to the object (if defined)"""
+
+
+    __dict__ = None # (!) real value is ''
 
 
 # variables with complex values
@@ -5521,4 +5748,6 @@ class zip(object):
 Ellipsis = None # (!) real value is ''
 
 NotImplemented = None # (!) real value is ''
+
+__spec__ = None # (!) real value is ''
 

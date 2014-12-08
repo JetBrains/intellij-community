@@ -275,7 +275,7 @@ class Test {
     }
 }
 '''
-    assert !myFixture.filterAvailableIntentions("Import Class")
+    assert !myFixture.filterAvailableIntentions("Import class")
   }
 
   public void "test don't import class in assignment"() {
@@ -286,7 +286,7 @@ class Test {
     }
 }
 '''
-    assert !myFixture.filterAvailableIntentions("Import Class")
+    assert !myFixture.filterAvailableIntentions("Import class")
   }
 
   public void "test allow to add import from javadoc"() {
@@ -328,7 +328,7 @@ package com.rocket.test;
 
 
   private def importClass() {
-    myFixture.launchAction(myFixture.findSingleIntention("Import Class"))
+    myFixture.launchAction(myFixture.findSingleIntention("Import class"))
   }
 
   private def reimportClass() {

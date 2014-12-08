@@ -32,6 +32,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.Change;
@@ -641,4 +642,30 @@ public class VcsUtil {
     }
     return result;
   }
+
+  @NotNull
+  public static List<VcsDirectoryMapping> addMapping(@NotNull List<VcsDirectoryMapping> existingMappings,
+                                                     @NotNull String path,
+                                                     @NotNull String vcs) {
+    List<VcsDirectoryMapping> mappings = new ArrayList<VcsDirectoryMapping>(existingMappings);
+    for (Iterator<VcsDirectoryMapping> iterator = mappings.iterator(); iterator.hasNext(); ) {
+      VcsDirectoryMapping mapping = iterator.next();
+      if (mapping.isDefaultMapping() && StringUtil.isEmptyOrSpaces(mapping.getVcs())) {
+        LOG.debug("Removing <Project> -> <None> mapping");
+        iterator.remove();
+      }
+      else if (FileUtil.pathsEqual(mapping.getDirectory(), path)) {
+        if (!StringUtil.isEmptyOrSpaces(mapping.getVcs())) {
+          LOG.warn("Substituting existing mapping [" + path + "] -> [" + mapping.getVcs() + "] with [" + vcs + "]");
+        }
+        else {
+          LOG.debug("Removing [" + path + "] -> <None> mapping");
+        }
+        iterator.remove();
+      }
+    }
+    mappings.add(new VcsDirectoryMapping(path, vcs));
+    return mappings;
+  }
+
 }

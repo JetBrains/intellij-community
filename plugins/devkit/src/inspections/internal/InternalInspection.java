@@ -16,7 +16,6 @@
 package org.jetbrains.idea.devkit.inspections.internal;
 
 import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
-import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -29,15 +28,7 @@ public abstract class InternalInspection extends BaseJavaLocalInspectionTool {
   @NotNull
   @Override
   public final PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    return isAllowed(holder) ? buildInternalVisitor(holder, isOnTheFly) : PsiUtil.EMPTY_VISITOR;
-  }
-
-  @NotNull
-  @Override
-  public final PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
-                                              boolean isOnTheFly,
-                                              @NotNull LocalInspectionToolSession session) {
-    return isAllowed(holder) ? buildInternalVisitor(holder, isOnTheFly) : PsiUtil.EMPTY_VISITOR;
+    return isAllowed(holder) ? buildInternalVisitor(holder, isOnTheFly) : PsiElementVisitor.EMPTY_VISITOR;
   }
 
   private static boolean isAllowed(ProblemsHolder holder) {

@@ -12,6 +12,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.BaseOutputReader;
@@ -25,7 +26,6 @@ import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
-import java.nio.charset.Charset;
 import java.security.SecureRandom;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -109,7 +109,11 @@ public class RemoteDebugger implements ProcessDebugger {
   public String handshake() throws PyDebuggerException {
     final VersionCommand command = new VersionCommand(this, LOCAL_VERSION, SystemInfo.isUnix ? "UNIX" : "WIN");
     command.execute();
-    return command.getRemoteVersion();
+    String version = command.getRemoteVersion();
+    if (version != null) {
+      version = version.trim();
+    }
+    return version;
   }
 
   @Override
@@ -464,7 +468,7 @@ public class RemoteDebugger implements ProcessDebugger {
     synchronized (mySocketObject) {
       final InputStream myInputStream = socket.getInputStream();
       //noinspection IOResourceOpenedButNotSafelyClosed
-      final Reader reader = new InputStreamReader(myInputStream, Charset.forName("UTF-8")); //TODO: correct econding?
+      final Reader reader = new InputStreamReader(myInputStream, CharsetToolkit.UTF8_CHARSET); //TODO: correct econding?
       return new DebuggerReader(reader);
     }
   }

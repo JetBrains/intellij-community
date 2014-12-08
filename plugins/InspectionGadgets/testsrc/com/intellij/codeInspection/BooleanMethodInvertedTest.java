@@ -1,5 +1,8 @@
 package com.intellij.codeInspection;
 
+import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
+import com.intellij.openapi.roots.LanguageLevelProjectExtension;
+import com.intellij.pom.java.LanguageLevel;
 import com.siyeh.ig.IGInspectionTestCase;
 import com.intellij.codeInspection.booleanIsAlwaysInverted.BooleanMethodIsAlwaysInvertedInspection;
 
@@ -59,6 +62,18 @@ public class BooleanMethodInvertedTest extends IGInspectionTestCase {
 
   public void testOverrideLibrary() throws Exception {
     doTest();
+  }
+
+  public void testMethodReferenceIgnored() throws Exception {
+    final LanguageLevelProjectExtension projectExtension = LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject());
+    final LanguageLevel oldLevel = projectExtension.getLanguageLevel();
+    try {
+      projectExtension.setLanguageLevel(LanguageLevel.JDK_1_8);
+      doTest();
+    }
+    finally {
+      projectExtension.setLanguageLevel(oldLevel);
+    }
   }
 
   private void doTest() throws Exception {

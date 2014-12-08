@@ -174,7 +174,7 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
           buf.append(InspectionsBundle.message("inspection.export.results.field"));
           buf.append(HTMLComposerImpl.NBSP).append(HTMLComposerImpl.CODE_OPENING);
 
-          buf.append(psiField.getType().getPresentableText());
+          buf.append(XmlStringUtil.escapeString(psiField.getType().getPresentableText()));
           buf.append(HTMLComposerImpl.NBSP).append(HTMLComposerImpl.B_OPENING);
           buf.append(psiField.getName());
           buf.append(HTMLComposerImpl.B_CLOSING).append(HTMLComposerImpl.CODE_CLOSING);
@@ -201,7 +201,7 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
           buf.append(HTMLComposerImpl.NBSP).append(HTMLComposerImpl.CODE_OPENING);
 
           if (returnType != null) {
-            buf.append(returnType.getPresentableText());
+            buf.append(XmlStringUtil.escapeString(returnType.getPresentableText()));
             buf.append(HTMLComposerImpl.NBSP);
           }
 
@@ -281,7 +281,7 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
     if (refElement instanceof RefField) {
       RefField field = (RefField)refElement;
       PsiField psiField = field.getElement();
-      buf.append(psiField.getType().getPresentableText());
+      buf.append(XmlStringUtil.escapeString(psiField.getType().getPresentableText()));
       buf.append(HTMLComposerImpl.NBSP);
     }
     else if (refElement instanceof RefMethod) {
@@ -290,7 +290,7 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
       PsiType returnType = psiMethod.getReturnType();
 
       if (returnType != null) {
-        buf.append(returnType.getPresentableText());
+        buf.append(XmlStringUtil.escapeString(returnType.getPresentableText()));
         buf.append(HTMLComposerImpl.NBSP);
       }
     }
@@ -349,7 +349,7 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
     for (int i = 0; i < params.length; i++) {
       if (i != 0) buf.append(", ");
       PsiParameter param = params[i];
-      buf.append(param.getType().getPresentableText());
+      buf.append(XmlStringUtil.escapeString(param.getType().getPresentableText()));
       if (showNames) {
         buf.append(' ');
         buf.append(param.getName());

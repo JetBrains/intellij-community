@@ -19,6 +19,7 @@ import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.externalSystem.service.execution.cmd.ParametersListLexer;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.FixedSizeButton;
@@ -31,7 +32,6 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.util.TextFieldCompletionProvider;
 import com.intellij.util.execution.ParametersListUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.execution.cmd.ParametersListLexer;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 

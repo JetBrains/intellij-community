@@ -57,6 +57,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.*;
@@ -1088,6 +1089,17 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @Override
+  public void saveText(final VirtualFile file, final String text) {
+    new WriteAction() {
+      @Override
+      protected void run(@NotNull Result result) throws Throwable {
+        VfsUtil.saveText(file, text);
+      }
+    }.execute().throwException();
+
+  }
+
+  @Override
   @Nullable
   public LookupElement[] getLookupElements() {
     LookupImpl lookup = getLookup();
@@ -1177,6 +1189,10 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         catch (Exception e) {
           throw new RuntimeException(e);
         }
+
+        VirtualFile tempDir = myTempDirFixture.getFile("");
+        PlatformTestCase.synchronizeTempDirVfs(tempDir);
+
         myPsiManager = (PsiManagerImpl)PsiManager.getInstance(getProject());
         configureInspections(myInspections == null ? LocalInspectionTool.EMPTY_ARRAY : myInspections);
 

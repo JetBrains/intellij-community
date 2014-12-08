@@ -1,3 +1,5 @@
+import org.jetbrains.annotations.NotNull;
+
 class Test {
 
     void foo(Object x) {
@@ -5,6 +7,7 @@ class Test {
         if (x instanceof String) x = newMethod((String) x);
     }
 
+    @NotNull
     private String newMethod(String x) {
         return x.substring(1);
     }

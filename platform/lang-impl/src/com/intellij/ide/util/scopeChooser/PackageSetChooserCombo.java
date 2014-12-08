@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.ide.util.scopeChooser;
 
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
@@ -24,6 +23,7 @@ import com.intellij.packageDependencies.DefaultScopesProvider;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
+import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.components.editors.JBComboBoxTableCellEditorComponent;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.Nullable;
@@ -69,8 +69,7 @@ public class PackageSetChooserCombo extends ComponentWithBrowseButton<JComponent
             @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection"})
             final Map<String, PackageSet> unnamedScopes = DependencyValidationManager.getInstance(myProject).getUnnamedScopes();
             final EditUnnamedScopesDialog dlg = new EditUnnamedScopesDialog(scope);
-            dlg.show();
-            if (dlg.isOK()) {
+            if (dlg.showAndGet()) {
               final PackageSet packageSet = scope.getValue();
               LOG.assertTrue(packageSet != null);
               unnamedScopes.remove(packageSet.getText());

@@ -103,6 +103,11 @@ public class MissingDeprecatedAnnotationInspection extends BaseInspection {
   }
 
   @Override
+  public boolean shouldInspect(PsiFile file) {
+    return PsiUtil.isLanguageLevel5OrHigher(file);
+  }
+
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new MissingDeprecatedAnnotationVisitor();
   }
@@ -112,9 +117,6 @@ public class MissingDeprecatedAnnotationInspection extends BaseInspection {
     @Override
     public void visitClass(@NotNull PsiClass aClass) {
       super.visitClass(aClass);
-      if (!PsiUtil.isLanguageLevel5OrHigher(aClass)) {
-        return;
-      }
       if (hasDeprecatedAnnotation(aClass)) {
         if (warnOnMissingJavadoc && !hasDeprecatedComment(aClass, true)) {
           registerClassError(aClass, Boolean.FALSE);
@@ -127,9 +129,6 @@ public class MissingDeprecatedAnnotationInspection extends BaseInspection {
 
     @Override
     public void visitMethod(@NotNull PsiMethod method) {
-      if (!PsiUtil.isLanguageLevel5OrHigher(method)) {
-        return;
-      }
       if (method.getNameIdentifier() == null) {
         return;
       }
@@ -145,9 +144,6 @@ public class MissingDeprecatedAnnotationInspection extends BaseInspection {
 
     @Override
     public void visitField(@NotNull PsiField field) {
-      if (!PsiUtil.isLanguageLevel5OrHigher(field)) {
-        return;
-      }
       if (hasDeprecatedAnnotation(field)) {
         if (warnOnMissingJavadoc && !hasDeprecatedComment(field, true)) {
           registerFieldError(field, Boolean.FALSE);

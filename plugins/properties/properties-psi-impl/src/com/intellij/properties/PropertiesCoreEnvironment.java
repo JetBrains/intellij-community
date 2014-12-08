@@ -25,7 +25,6 @@ import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.lang.folding.LanguageFolding;
 import com.intellij.lang.properties.*;
-import com.intellij.lang.properties.ResourceBundleManager;
 import com.intellij.lang.properties.editor.PropertiesFoldingBuilder;
 import com.intellij.lang.properties.findUsages.PropertiesFindUsagesProvider;
 import com.intellij.lang.properties.parsing.PropertiesElementTypes;
@@ -33,6 +32,7 @@ import com.intellij.lang.properties.parsing.PropertiesParserDefinition;
 import com.intellij.lang.properties.psi.PropertyKeyIndex;
 import com.intellij.lang.properties.psi.impl.PropertiesASTFactory;
 import com.intellij.lang.properties.psi.impl.PropertyImpl;
+import com.intellij.lang.properties.psi.impl.PropertyKeyImpl;
 import com.intellij.lang.properties.psi.impl.PropertyValueImpl;
 import com.intellij.lang.properties.refactoring.PropertiesRefactoringSettings;
 import com.intellij.lang.properties.structureView.PropertiesSeparatorManager;
@@ -70,6 +70,7 @@ public class PropertiesCoreEnvironment {
       appEnvironment.addExplicitExtension(LanguageASTFactory.INSTANCE, PropertiesLanguage.INSTANCE, new PropertiesASTFactory());
       appEnvironment.addExplicitExtension(LanguageFolding.INSTANCE, PropertiesLanguage.INSTANCE, new PropertiesFoldingBuilder());
       appEnvironment.addExplicitExtension(ElementManipulators.INSTANCE, PropertyImpl.class, new PropertyManipulator());
+      appEnvironment.addExplicitExtension(ElementManipulators.INSTANCE, PropertyKeyImpl.class, new PropertyKeyManipulator());
       appEnvironment.addExplicitExtension(ElementManipulators.INSTANCE, PropertyValueImpl.class, new PropertyValueManipulator());
 
       final StubElementTypeHolderEP stubElementTypeHolderBean = new StubElementTypeHolderEP();

@@ -5,6 +5,7 @@ TODO: Support other params (like tags) as well.
 Supports only 2 params now: folder to search "features" for or file and "-s scenario_index"
 """
 import argparse
+import optparse
 import os
 import _bdd_utils
 
@@ -19,7 +20,7 @@ class _LettuceRunner(_bdd_utils.BddRunner):
     Lettuce runner (BddRunner for lettuce)
     """
 
-    def __init__(self, base_dir, what_to_run, scenarios):
+    def __init__(self, base_dir, what_to_run, scenarios, options):
         """
 
         :param scenarios scenario numbers to run
@@ -27,11 +28,25 @@ class _LettuceRunner(_bdd_utils.BddRunner):
         :param base_dir base directory to run tests in
         :type base_dir: str
         :param what_to_run folder or file to run
+        :type options list of optparse.Option
+        :param options optparse options passed by user
         :type what_to_run str
 
         """
         super(_LettuceRunner, self).__init__(base_dir)
-        self.__runner = lettuce.Runner(what_to_run, ",".join(scenarios))
+        # TODO: Copy/Paste with lettuce.bin, need to reuse somehow
+        tags = None
+        if options.tags:
+            tags = [tag.strip('@') for tag in options.tags]
+        self.__runner = lettuce.Runner(what_to_run, ",".join(scenarios),
+                                       random=options.random,
+                                       enable_xunit=options.enable_xunit,
+                                       xunit_filename=options.xunit_file,
+                                       enable_subunit=options.enable_subunit,
+                                       subunit_filename=options.subunit_filename,
+                                       failfast=options.failfast,
+                                       auto_pdb=options.auto_pdb,
+                                       tags=tags)
 
     def _get_features_to_run(self):
         super(_LettuceRunner, self)._get_features_to_run()
@@ -120,9 +135,82 @@ class _LettuceRunner(_bdd_utils.BddRunner):
         self._feature_or_scenario(is_started, scenario.name, scenario.described_at)
 
 
+def _get_args():
+    """
+    Get options passed by user
+
+    :return: tuple (options, args), see optparse
+    """
+    # TODO: Copy/Paste with lettuce.bin, need to reuse somehow
+    parser = optparse.OptionParser()
+    parser.add_option("-v", "--verbosity",
+                      dest="verbosity",
+                      default=4,
+                      help='The verbosity level')
+
+    parser.add_option("-s", "--scenarios",
+                      dest="scenarios",
+                      default=None,
+                      help='Comma separated list of scenarios to run')
+
+    parser.add_option("-t", "--tag",
+                      dest="tags",
+                      default=None,
+                      action='append',
+                      help='Tells lettuce to run the specified tags only; '
+                           'can be used multiple times to define more tags'
+                           '(prefixing tags with "-" will exclude them and '
+                           'prefixing with "~" will match approximate words)')
+
+    parser.add_option("-r", "--random",
+                      dest="random",
+                      action="store_true",
+                      default=False,
+                      help="Run scenarios in a more random order to avoid interference")
+
+    parser.add_option("--with-xunit",
+                      dest="enable_xunit",
+                      action="store_true",
+                      default=False,
+                      help='Output JUnit XML test results to a file')
+
+    parser.add_option("--xunit-file",
+                      dest="xunit_file",
+                      default=None,
+                      type="string",
+                      help='Write JUnit XML to this file. Defaults to '
+                           'lettucetests.xml')
+
+    parser.add_option("--with-subunit",
+                      dest="enable_subunit",
+                      action="store_true",
+                      default=False,
+                      help='Output Subunit test results to a file')
+
+    parser.add_option("--subunit-file",
+                      dest="subunit_filename",
+                      default=None,
+                      help='Write Subunit data to this file. Defaults to '
+                           'subunit.bin')
+
+    parser.add_option("--failfast",
+                      dest="failfast",
+                      default=False,
+                      action="store_true",
+                      help='Stop running in the first failure')
+
+    parser.add_option("--pdb",
+                      dest="auto_pdb",
+                      default=False,
+                      action="store_true",
+                      help='Launches an interactive debugger upon error')
+    return parser.parse_args()
+
+
 if __name__ == "__main__":
+    options, args = _get_args()
     (base_dir, scenarios, what_to_run) = _bdd_utils.get_what_to_run_by_env(os.environ)
     if len(what_to_run) > 1:
         raise Exception("Lettuce can't run more than one file now")
     _bdd_utils.fix_win_drive(what_to_run[0])
-    _LettuceRunner(base_dir, what_to_run[0], scenarios).run()
+    _LettuceRunner(base_dir, what_to_run[0], scenarios, options).run()

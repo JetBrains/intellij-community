@@ -891,8 +891,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
             try {
               run.accept(new JavaRecursiveElementWalkingVisitor() {
                 @Override
-                public void visitAnonymousClass(final PsiAnonymousClass aClass) {
-                }
+                public void visitClass(final PsiClass aClass) {}
 
                 @Override public void visitVariable(PsiVariable variable) {
                   if (name1.equals(variable.getName())) {

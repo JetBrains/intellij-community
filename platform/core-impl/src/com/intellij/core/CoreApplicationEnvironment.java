@@ -16,7 +16,10 @@
 package com.intellij.core;
 
 import com.intellij.codeInsight.folding.CodeFoldingSettings;
-import com.intellij.concurrency.*;
+import com.intellij.concurrency.AsyncFuture;
+import com.intellij.concurrency.AsyncUtil;
+import com.intellij.concurrency.Job;
+import com.intellij.concurrency.JobLauncher;
 import com.intellij.lang.*;
 import com.intellij.lang.impl.PsiBuilderFactoryImpl;
 import com.intellij.mock.MockApplication;
@@ -35,11 +38,16 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.*;
-import com.intellij.openapi.progress.*;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.ClassExtension;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.KeyedExtensionCollector;
+import com.intellij.openapi.util.StaticGetter;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileSystem;
-import com.intellij.openapi.vfs.encoding.EncodingRegistry;
+import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.impl.CoreVirtualFilePointerManager;
 import com.intellij.openapi.vfs.impl.VirtualFileManagerImpl;
 import com.intellij.openapi.vfs.impl.jar.CoreJarFileSystem;
@@ -83,12 +91,10 @@ public class CoreApplicationEnvironment {
     Extensions.cleanRootArea(myParentDisposable);
 
     myFileTypeRegistry = new CoreFileTypeRegistry();
-    CoreEncodingRegistry encodingRegistry = new CoreEncodingRegistry();
 
     myApplication = createApplication(myParentDisposable);
     ApplicationManager.setApplication(myApplication,
                                       new StaticGetter<FileTypeRegistry>(myFileTypeRegistry),
-                                      new StaticGetter<EncodingRegistry>(encodingRegistry),
                                       myParentDisposable);
     myLocalFileSystem = createLocalFileSystem();
     myJarFileSystem = createJarFileSystem();
@@ -107,6 +113,7 @@ public class CoreApplicationEnvironment {
     VirtualFileManagerImpl virtualFileManager = new VirtualFileManagerImpl(fs, MessageBusFactory.newMessageBus(myApplication));
     registerComponentInstance(appContainer, VirtualFileManager.class, virtualFileManager);
 
+    registerApplicationService(EncodingManager.class, new CoreEncodingRegistry());
     registerApplicationService(VirtualFilePointerManager.class, createVirtualFilePointerManager());
     registerApplicationService(DefaultASTFactory.class, new CoreASTFactory());
     registerApplicationService(PsiBuilderFactory.class, new PsiBuilderFactoryImpl());

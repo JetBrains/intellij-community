@@ -656,8 +656,8 @@ public class MultiStateElementsChooser<T, S> extends JPanel implements Component
         UIManager.put(UIUtil.TABLE_FOCUS_CELL_BACKGROUND_PROPERTY, color);
       }
       final MyTableModel model = (MyTableModel)table.getModel();
-      component.setEnabled(MultiStateElementsChooser.this.isEnabled() &&
-                           (!myColorUnmarkedElements || myMarkStateDescriptor.isMarked(model.getElementMarkState(row))));
+      component.setEnabled(isSelected || (MultiStateElementsChooser.this.isEnabled() &&
+                           (!myColorUnmarkedElements || myMarkStateDescriptor.isMarked(model.getElementMarkState(row)))));
       final ElementProperties properties = myElementToPropertiesMap.get(t);
       if (component instanceof JLabel) {
         final Icon icon = properties != null ? properties.getIcon() : t != null ? getItemIcon(t) : null;

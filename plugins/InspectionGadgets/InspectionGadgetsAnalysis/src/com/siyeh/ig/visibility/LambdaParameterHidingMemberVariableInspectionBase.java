@@ -17,6 +17,7 @@ package com.siyeh.ig.visibility;
 
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -61,6 +62,11 @@ public class LambdaParameterHidingMemberVariableInspectionBase extends BaseInspe
     optionsPanel.addCheckbox(InspectionGadgetsBundle.message("parameter.hides.member.variable.ignore.superclass.option"),
                              "m_ignoreInvisibleFields");
     return optionsPanel;
+  }
+
+  @Override
+  public boolean shouldInspect(PsiFile file) {
+    return PsiUtil.isLanguageLevel8OrHigher(file);
   }
 
   @Override

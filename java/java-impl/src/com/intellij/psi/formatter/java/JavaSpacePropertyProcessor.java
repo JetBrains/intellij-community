@@ -381,11 +381,13 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
 
     return true;
   }
-  
+
   private static int getMethodHeaderStartOffset(@NotNull PsiMethod method) {
-    for (PsiElement element : method.getChildren()) {
-      if (element instanceof PsiTypeElement) {
-        return element.getTextRange().getStartOffset();
+    PsiTypeParameterList typeParameterList = PsiTreeUtil.findChildOfType(method, PsiTypeParameterList.class);
+    if (typeParameterList != null) {
+      PsiElement nextNonWsElem = PsiTreeUtil.skipSiblingsForward(typeParameterList, PsiWhiteSpace.class);
+      if (nextNonWsElem != null) {
+        return nextNonWsElem.getTextRange().getStartOffset();
       }
     }
     return method.getTextRange().getStartOffset();
@@ -426,7 +428,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
       }
       else if (myRole1 == ChildRole.FIELD) {
         int blankLines = myJavaSettings.BLANK_LINES_AROUND_INITIALIZER + 1;
-        myResult = Spacing.createSpacing(0, mySettings.SPACE_BEFORE_CLASS_LBRACE ? 1 : 0, blankLines, true, mySettings.KEEP_BLANK_LINES_BEFORE_RBRACE);
+        myResult = Spacing.createSpacing(0, mySettings.SPACE_BEFORE_CLASS_LBRACE ? 1 : 0, blankLines, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_BEFORE_RBRACE);
       }
       else if (myRole1 == ChildRole.CLASS) {
         setAroundClassSpacing();
@@ -544,6 +546,10 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     if (myRole2 == ChildRole.METHOD || myChild2.getElementType() == JavaElementType.METHOD) {
       if (myRole1 == ChildRole.LBRACE) {
         myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, 0);
+      }
+      else if (myRole1 == ChildRole.CLASS_INITIALIZER) {
+        int blankLines = myJavaSettings.BLANK_LINES_AROUND_INITIALIZER + 1;
+        myResult = Spacing.createSpacing(0, Integer.MAX_VALUE, blankLines, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_BEFORE_RBRACE);
       }
       else {
         final int blankLines = getLinesAroundMethod() + 1;

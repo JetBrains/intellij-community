@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,8 +57,9 @@ public class MavenArtifactSearchDialog extends DialogWrapper {
     }
 
     MavenArtifactSearchDialog d = new MavenArtifactSearchDialog(project, className, true);
-    d.show();
-    if (!d.isOK()) return Collections.emptyList();
+    if (!d.showAndGet()) {
+      return Collections.emptyList();
+    }
 
     return d.getResult();
   }
@@ -76,8 +77,9 @@ public class MavenArtifactSearchDialog extends DialogWrapper {
     MavenArtifactSearchDialog d = new MavenArtifactSearchDialog(project, "", false);
     d.setManagedDependencies(managedDependencies);
 
-    d.show();
-    if (!d.isOK()) return Collections.emptyList();
+    if (!d.showAndGet()) {
+      return Collections.emptyList();
+    }
 
     return d.getResult();
   }

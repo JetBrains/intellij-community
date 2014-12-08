@@ -49,7 +49,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-public class PsiChangeHandler extends PsiTreeChangeAdapter implements Disposable {
+class PsiChangeHandler extends PsiTreeChangeAdapter implements Disposable {
   private static final ExtensionPointName<ChangeLocalityDetector> EP_NAME = ExtensionPointName.create("com.intellij.daemon.changeLocalityDetector");
   private /*NOT STATIC!!!*/ final Key<Boolean> UPDATE_ON_COMMIT_ENGAGED = Key.create("UPDATE_ON_COMMIT_ENGAGED");
 
@@ -57,7 +57,7 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter implements Disposable
   private final Map<Document, List<Pair<PsiElement, Boolean>>> changedElements = new THashMap<Document, List<Pair<PsiElement, Boolean>>>();
   private final FileStatusMap myFileStatusMap;
 
-  public PsiChangeHandler(@NotNull Project project,
+  PsiChangeHandler(@NotNull Project project,
                           @NotNull final PsiDocumentManagerImpl documentManager,
                           @NotNull EditorFactory editorFactory,
                           @NotNull MessageBusConnection connection,

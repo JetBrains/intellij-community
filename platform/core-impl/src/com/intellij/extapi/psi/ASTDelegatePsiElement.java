@@ -55,6 +55,11 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
   private static final List EMPTY = Collections.emptyList();
 
   @Override
+  public PsiFile getContainingFile() {
+    return SharedImplUtil.getContainingFile(getNode());
+  }
+
+  @Override
   public PsiManagerEx getManager() {
     PsiElement parent = this;
 

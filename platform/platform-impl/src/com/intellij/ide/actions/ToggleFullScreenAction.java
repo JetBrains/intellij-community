@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.IdeFrameEx;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -50,7 +51,7 @@ public class ToggleFullScreenAction extends ToggleAction implements DumbAware {
   }
 
   @Override
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     Presentation p = e.getPresentation();
 
     IdeFrameEx frame = null;
@@ -69,6 +70,9 @@ public class ToggleFullScreenAction extends ToggleAction implements DumbAware {
     Component focusOwner = IdeFocusManager.getGlobalInstance().getFocusOwner();
     if (focusOwner != null) {
       Window window = focusOwner instanceof JFrame ? (Window) focusOwner : SwingUtilities.getWindowAncestor(focusOwner);
+      if (window instanceof JDialog) {
+        window = SwingUtilities.getWindowAncestor(window);
+      }
       if (window instanceof IdeFrameEx) {
         return (IdeFrameEx)window;
       }

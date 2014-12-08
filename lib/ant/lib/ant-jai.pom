@@ -27,12 +27,13 @@
     <groupId>org.apache.ant</groupId>
     <artifactId>ant-parent</artifactId>
     <relativePath>../pom.xml</relativePath>
-    <version>1.8.2</version>
+    <version>1.9.4</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
+  <url>http://ant.apache.org/</url>
   <groupId>org.apache.ant</groupId>
   <artifactId>ant-jai</artifactId>
-  <version>1.8.2</version>
+  <version>1.9.4</version>
   <name>Apache Ant + JAI</name>
   <description>image task and corresponding types.
   </description>
@@ -40,7 +41,7 @@
     <dependency>
       <groupId>org.apache.ant</groupId>
       <artifactId>ant</artifactId>
-      <version>1.8.2</version>
+      <version>1.9.4</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
@@ -54,11 +55,12 @@
       <version>1.1.3</version>
     </dependency>
   </dependencies>
+  <!-- Central has javax.media:jai-core:1.1.3 but only com.sun.media:jai-codec:1.1.2_01 -->
   <repositories>
       <repository>
           <id>jboss</id>
           <name>JBoss</name>
-          <url>http://repository.jboss.org/maven2/</url>
+          <url>https://repository.jboss.org/nexus/content/groups/public/</url>
       </repository>
   </repositories>
   <build>
@@ -67,8 +69,6 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
         <configuration>
-          <source>1.4</source>
-          <target>1.4</target>
           <includes>
             <include>org/apache/tools/ant/taskdefs/optional/image/*</include>
             <include>org/apache/tools/ant/types/optional/image/*</include>

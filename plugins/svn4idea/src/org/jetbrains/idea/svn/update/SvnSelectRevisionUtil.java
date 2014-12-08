@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,11 +36,11 @@ public class SvnSelectRevisionUtil {
                                                               final VirtualFile root) {
     try {
       final SvnCommittedChangesTableModel model = new SvnCommittedChangesTableModel(location, project, root,
-                                                  SvnVcs.getInstance(project).getCommittedChangesProvider().getColumns());
+                                                                                    SvnVcs.getInstance(project)
+                                                                                      .getCommittedChangesProvider().getColumns());
       final ChangesBrowserDialog dlg = new ChangesBrowserDialog(project, model, ChangesBrowserDialog.Mode.Choose, null);
-      dlg.show();
-      if (dlg.isOK()) {
-        return (SvnChangeList) dlg.getSelectedChangeList();
+      if (dlg.showAndGet()) {
+        return (SvnChangeList)dlg.getSelectedChangeList();
       }
       model.onBeforeClose();
     }

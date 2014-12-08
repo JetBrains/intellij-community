@@ -25,6 +25,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.TitledSeparator;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
 import com.intellij.util.ui.ColumnInfo;
@@ -144,6 +145,7 @@ final class BrowserSettingsPanel {
   private JComponent browsersTable;
 
   private ComboBox defaultBrowserPolicyComboBox;
+  private JBCheckBox showBrowserHover;
 
   private TableModelEditor<ConfigurableWebBrowser> browsersEditor;
 
@@ -164,7 +166,7 @@ final class BrowserSettingsPanel {
     defaultBrowserPolicyComboBox.setModel(new ListComboBoxModel<DefaultBrowserPolicy>(defaultBrowserPolicies));
     defaultBrowserPolicyComboBox.addItemListener(new ItemListener() {
       @Override
-      public void itemStateChanged(ItemEvent e) {
+      public void itemStateChanged(@NotNull ItemEvent e) {
         boolean customPathEnabled = e.getItem() == DefaultBrowserPolicy.ALTERNATIVE;
         if (e.getStateChange() == ItemEvent.DESELECTED) {
           if (customPathEnabled) {
@@ -206,7 +208,7 @@ final class BrowserSettingsPanel {
 
     clearExtractedFiles.addActionListener(new ActionListener() {
       @Override
-      public void actionPerformed(ActionEvent e) {
+      public void actionPerformed(@NotNull ActionEvent e) {
         BrowserLauncherAppless.clearExtractedFiles();
       }
     });
@@ -278,7 +280,7 @@ final class BrowserSettingsPanel {
     browsersEditor = new TableModelEditor<ConfigurableWebBrowser>(COLUMNS, itemEditor, "No web browsers configured")
       .modelListener(new TableModelEditor.DataChangedListener<ConfigurableWebBrowser>() {
         @Override
-        public void tableChanged(TableModelEvent event) {
+        public void tableChanged(@NotNull TableModelEvent event) {
           update();
         }
 
@@ -321,7 +323,9 @@ final class BrowserSettingsPanel {
     GeneralSettings generalSettings = GeneralSettings.getInstance();
 
     DefaultBrowserPolicy defaultBrowserPolicy = getDefaultBrowser();
-    if (browserManager.getDefaultBrowserPolicy() != defaultBrowserPolicy || generalSettings.isConfirmExtractFiles() != confirmExtractFiles.isSelected()) {
+    if (browserManager.getDefaultBrowserPolicy() != defaultBrowserPolicy ||
+        generalSettings.isConfirmExtractFiles() != confirmExtractFiles.isSelected() ||
+        browserManager.isShowBrowserHover() != showBrowserHover.isSelected()) {
       return true;
     }
 
@@ -345,6 +349,7 @@ final class BrowserSettingsPanel {
     settings.setConfirmExtractFiles(confirmExtractFiles.isSelected());
 
     WebBrowserManager browserManager = WebBrowserManager.getInstance();
+    browserManager.setShowBrowserHover(showBrowserHover.isSelected());
     browserManager.defaultBrowserPolicy = getDefaultBrowser();
     browserManager.setList(browsersEditor.apply());
   }
@@ -354,14 +359,16 @@ final class BrowserSettingsPanel {
   }
 
   public void reset() {
-    DefaultBrowserPolicy defaultBrowserPolicy = WebBrowserManager.getInstance().getDefaultBrowserPolicy();
+    final WebBrowserManager browserManager = WebBrowserManager.getInstance();
+    DefaultBrowserPolicy defaultBrowserPolicy = browserManager.getDefaultBrowserPolicy();
     DefaultBrowserPolicy effectiveDefaultBrowserPolicy = defaultBrowserPolicy == DefaultBrowserPolicy.SYSTEM && !BrowserLauncherAppless.canUseSystemDefaultBrowserPolicy()
                                                          ? DefaultBrowserPolicy.ALTERNATIVE : defaultBrowserPolicy;
     defaultBrowserPolicyComboBox.setSelectedItem(effectiveDefaultBrowserPolicy);
 
     GeneralSettings settings = GeneralSettings.getInstance();
     confirmExtractFiles.setSelected(settings.isConfirmExtractFiles());
-    browsersEditor.reset(WebBrowserManager.getInstance().getList());
+    showBrowserHover.setSelected(browserManager.isShowBrowserHover());
+    browsersEditor.reset(browserManager.getList());
 
     customPathValue = settings.getBrowserPath();
     alternativeBrowserPathField.setEnabled(effectiveDefaultBrowserPolicy == DefaultBrowserPolicy.ALTERNATIVE);

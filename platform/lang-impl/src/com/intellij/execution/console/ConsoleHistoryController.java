@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -307,7 +307,7 @@ public class ConsoleHistoryController {
       String s1 = KeymapUtil.getFirstKeyboardShortcutText(myHistoryNext);
       String s2 = KeymapUtil.getFirstKeyboardShortcutText(myHistoryPrev);
       String title = myConsole.getTitle() + " History" +
-                     (StringUtil.isNotEmpty(s1) && StringUtil.isNotEmpty(s2) ?" (" +s1+ " and " +s2+ " while in editor)" : "");
+                     (StringUtil.isNotEmpty(s1) && StringUtil.isNotEmpty(s2) ? " (" + s1 + " and " + s2 + " while in editor)" : "");
       final ContentChooser<String> chooser = new ContentChooser<String>(myConsole.getProject(), title, true) {
 
         @Override
@@ -332,7 +332,7 @@ public class ConsoleHistoryController {
           Project project = consoleFile.getProject();
 
           PsiFile psiFile = PsiFileFactory.getInstance(project).createFileFromText(
-            "a."+consoleFile.getFileType().getDefaultExtension(),
+            "a." + consoleFile.getFileType().getDefaultExtension(),
             language,
             StringUtil.convertLineSeparators(new String(text)), false, true);
           VirtualFile virtualFile = psiFile.getViewProvider().getVirtualFile();
@@ -344,7 +344,8 @@ public class ConsoleHistoryController {
           editor.getSettings().setLineMarkerAreaShown(false);
           editor.getSettings().setIndentGuidesShown(false);
 
-          SyntaxHighlighter highlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(language, project, psiFile.getViewProvider().getVirtualFile());
+          SyntaxHighlighter highlighter =
+            SyntaxHighlighterFactory.getSyntaxHighlighter(language, project, psiFile.getViewProvider().getVirtualFile());
           editor.setHighlighter(new LexerEditorHighlighter(highlighter, editor.getColorsScheme()));
           return editor;
         }
@@ -352,8 +353,7 @@ public class ConsoleHistoryController {
       chooser.setContentIcon(null);
       chooser.setSplitterOrientation(false);
       chooser.setSelectedIndex(Math.max(getModel().getHistoryCursor(), 0));
-      chooser.show();
-      if (chooser.isOK() && myConsole.getCurrentEditor().getComponent().isShowing()) {
+      if (chooser.showAndGet() && myConsole.getCurrentEditor().getComponent().isShowing()) {
         setConsoleText(chooser.getSelectedText(), false, true);
       }
     }

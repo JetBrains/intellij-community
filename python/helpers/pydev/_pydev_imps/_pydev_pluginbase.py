@@ -96,7 +96,11 @@ def _discover_space(name, globals):
     if '__pluginbase_state__' in globals:
         return globals['__pluginbase_state__'].source
 
-    mod_name = globals.get('__name__')
+    mod_name = None
+    if globals:
+        # in unidecode package they pass [] as globals arg
+        mod_name = globals.get('__name__')
+
     if mod_name is not None and \
        mod_name.startswith(_internalspace.__name__ + '.'):
         end = mod_name.find('.', len(_internalspace.__name__) + 1)

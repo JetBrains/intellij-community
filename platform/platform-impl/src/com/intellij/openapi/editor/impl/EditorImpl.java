@@ -276,6 +276,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Nullable
   private CharSequence myPlaceholderText;
   private int myLastPaintedPlaceholderWidth;
+  private boolean myShowPlaceholderWhenFocused;
 
   private boolean myStickySelection;
   private int myStickySelectionStart;
@@ -488,36 +489,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myEditorComponent = new EditorComponentImpl(this);
     myScrollPane = new MyScrollPane();
     myVerticalScrollBar = (MyScrollBar)myScrollPane.getVerticalScrollBar();
-    ((MyScrollBar)myScrollPane.getHorizontalScrollBar()).setPersistentUI(new ButtonlessScrollBarUI() {
-      @Override
-      public boolean alwaysShowTrack() {
-        return false;
-      }
-
-      @Override
-      protected boolean isDark() {
-        return isDarkEnough();
-      }
-
-      @Override
-      protected Color adjustColor(Color c) {
-        return isMacOverlayScrollbar() ? super.adjustColor(c) : adjustThumbColor(super.adjustColor(c), isDark());
-      }
-
-      @Override
-      protected void paintThumb(Graphics g, JComponent c, Rectangle thumbBounds) {
-        if (!isMacOverlayScrollbar()) {
-          int half = getThickness() / 2;
-          int shift = half - 1;
-          g.translate(0, shift);
-          super.paintThumb(g, c, thumbBounds);
-          g.translate(0, -shift);
-        }
-        else {
-          super.paintThumb(g, c, thumbBounds);
-        }
-      }
-    });
+    myVerticalScrollBar.setOpaque(false);
     myPanel = new JPanel();
 
     UIUtil.putClientProperty(
@@ -582,7 +554,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @NotNull
   static Color adjustThumbColor(@NotNull Color base, boolean dark) {
-    return ColorUtil.withAlpha(ColorUtil.shift(base, dark ? 1.1 : 0.9), dark ? 0.85 : 0.7);
+    return dark ? ColorUtil.withAlpha(ColorUtil.shift(base, 1.35), 0.5) 
+                : ColorUtil.withAlpha(ColorUtil.shift(base, 0.68), 0.4);
   }
 
   boolean isDarkEnough() {
@@ -726,12 +699,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Override
   public void reinitSettings() {
     assertIsDispatchThread();
-    myCharHeight = -1;
-    myLineHeight = -1;
-    myDescent = -1;
-    myPlainFontMetrics = null;
-
-    clearTextWidthCache();
+    clearSettingsCache();
 
     reinitDocumentIndentOptions();
 
@@ -788,6 +756,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
+  private void clearSettingsCache() {
+    myCharHeight = -1;
+    myLineHeight = -1;
+    myDescent = -1;
+    myPlainFontMetrics = null;
+
+    clearTextWidthCache();
+  }
+
   private void reinitDocumentIndentOptions() {
     if (myProject != null && !myProject.isDisposed()) {
       CodeStyleSettingsManager.updateDocumentIndentOptions(myProject, myDocument);
@@ -819,17 +796,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myTraceableDisposable.kill(null);
 
     isReleased = true;
+    clearSettingsCache();
 
     myFoldingModel.dispose();
-
     mySoftWrapModel.release();
-
     myMarkupModel.dispose();
 
-    myLineHeight = -1;
-    myCharHeight = -1;
-    myDescent = -1;
-    myPlainFontMetrics = null;
     myScrollingModel.dispose();
     myGutterComponent.dispose();
     myMousePressedEvent = null;
@@ -1731,15 +1703,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private void bulkUpdateStarted() {
-    myFoldingModel.onBulkDocumentUpdateStarted();
+    saveCaretRelativePosition();
+    
     myCaretModel.onBulkDocumentUpdateStarted();
     mySoftWrapModel.onBulkDocumentUpdateStarted();
+    myFoldingModel.onBulkDocumentUpdateStarted();
   }
 
   private void bulkUpdateFinished() {
     myFoldingModel.onBulkDocumentUpdateFinished();
-    myCaretModel.onBulkDocumentUpdateFinished();
     mySoftWrapModel.onBulkDocumentUpdateFinished();
+    myCaretModel.onBulkDocumentUpdateFinished();
 
     clearTextWidthCache();
 
@@ -1752,6 +1726,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     updateGutterSize();
     repaintToScreenBottom(0);
     updateCaretCursor();
+    
+    restoreCaretRelativePosition();
   }
 
   private void beforeChangedUpdate(@NotNull DocumentEvent e) {
@@ -1763,9 +1739,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return;
     }
 
-    Rectangle visibleArea = getScrollingModel().getVisibleArea();
-    Point pos = visualPositionToXY(getCaretModel().getVisualPosition());
-    myCaretUpdateVShift = pos.y - visibleArea.y;
+    saveCaretRelativePosition();
 
     // We assume that size container is already notified with the visual line widths during soft wraps processing
     if (!mySoftWrapModel.isSoftWrappingEnabled()) {
@@ -1809,9 +1783,23 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       repaintLines(startLine, endLine);
     }
 
+    if (getCaretModel().getOffset() < e.getOffset() || getCaretModel().getOffset() > e.getOffset() + e.getNewLength()){
+      restoreCaretRelativePosition();
+    }
+  }
+
+  private void saveCaretRelativePosition() {
+    Rectangle visibleArea = getScrollingModel().getVisibleArea();
+    Point pos = visualPositionToXY(getCaretModel().getVisualPosition());
+    myCaretUpdateVShift = pos.y - visibleArea.y;
+  }
+
+  private void restoreCaretRelativePosition() {
     Point caretLocation = visualPositionToXY(getCaretModel().getVisualPosition());
     int scrollOffset = caretLocation.y - myCaretUpdateVShift;
+    getScrollingModel().disableAnimation();
     getScrollingModel().scrollVertically(scrollOffset);
+    getScrollingModel().enableAnimation();
   }
 
   public boolean hasTabs() {
@@ -2127,6 +2115,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myPlaceholderText = text;
   }
 
+  @Override
+  public void setShowPlaceholderWhenFocused(boolean show) {
+    myShowPlaceholderWhenFocused = show;
+  }
+
   Color getBackgroundColor(@NotNull final TextAttributes attributes) {
     final Color attrColor = attributes.getBackgroundColor();
     return Comparing.equal(attrColor, myScheme.getDefaultBackground()) ? getBackgroundColor() : attrColor;
@@ -2272,8 +2265,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                                 @NotNull VisualPosition clipStartVisualPos,
                                 int clipStartOffset, int clipEndOffset) {
     Color defaultBackground = getBackgroundColor();
-    g.setColor(defaultBackground);
-    g.fillRect(clip.x, clip.y, clip.width, clip.height);
+    if (myEditorComponent.isOpaque()) {
+      g.setColor(defaultBackground);
+      g.fillRect(clip.x, clip.y, clip.width, clip.height);
+    }
 
     int lineHeight = getLineHeight();
 
@@ -2942,8 +2937,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return false;
     }
 
-    if (KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner() == myEditorComponent &&
-      !Boolean.TRUE.equals(SHOW_PLACEHOLDER_WHEN_FOCUSED.get(this))) {
+    if (KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner() == myEditorComponent && !myShowPlaceholderWhenFocused) {
       // There is a possible case that placeholder text was painted and the editor gets focus now. We want to over-paint previously
       // used placeholder text then.
       myLastBackgroundColor = getBackgroundColor();
@@ -3609,7 +3603,26 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return 1;
     }
 
-    return getHeightWithoutCaret();
+    if (isOneLineMode()) return getLineHeight();
+
+    // Preferred height of less than a single line height doesn't make sense:
+    // at least a single line with a blinking caret on it is to be displayed
+    int size = Math.max(mySizeContainer.getContentHeight(), getLineHeight());
+
+    if (mySettings.isAdditionalPageAtBottom()) {
+      int lineHeight = getLineHeight();
+      int visibleAreaHeight = getScrollingModel().getVisibleArea().height;
+      // There is a possible case that user with 'show additional page at bottom' scrolls to that virtual page; switched to another
+      // editor (another tab); and then returns to the previously used editor (the one scrolled to virtual page). We want to preserve
+      // correct view size then because viewport position is set to the end of the original text otherwise.
+      if (visibleAreaHeight > 0 || myVirtualPageHeight <= 0) {
+        myVirtualPageHeight = Math.max(visibleAreaHeight - 2 * lineHeight, lineHeight);
+      }
+
+      return size + Math.max(myVirtualPageHeight, 0);
+    }
+
+    return size + mySettings.getAdditionalLinesCount() * getLineHeight();
   }
 
   public Dimension getPreferredSize() {
@@ -3636,39 +3649,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private Dimension getSizeWithoutCaret() {
     Dimension size = mySizeContainer.getContentSize();
-    if (isOneLineMode()) return new Dimension(size.width, getLineHeight());
-    if (mySettings.isAdditionalPageAtBottom()) {
-      int lineHeight = getLineHeight();
-      int visibleAreaHeight = getScrollingModel().getVisibleArea().height;
-      int virtualPageHeight;
-      // There is a possible case that user with 'show additional page at bottom' scrolls to that virtual page; switched to another
-      // editor (another tab); and then returns to the previously used editor (the one scrolled to virtual page). We want to preserve
-      // correct view size then because viewport position is set to the end of the original text otherwise.
-      if (visibleAreaHeight <= 0 && myVirtualPageHeight > 0) {
-        virtualPageHeight = myVirtualPageHeight;
-      }
-      else {
-        myVirtualPageHeight = virtualPageHeight = Math.max(visibleAreaHeight - 2 * lineHeight, lineHeight);
-      }
-
-      if (myVirtualPageHeight > 0) {
-        return new Dimension(size.width, size.height + virtualPageHeight);
-      }
-      return size;
-    }
-
-    return getContentSize();
-  }
-
-  private int getHeightWithoutCaret() {
-    if (isOneLineMode()) return getLineHeight();
-    int size = mySizeContainer.getContentHeight();
-    if (mySettings.isAdditionalPageAtBottom()) {
-      int lineHeight = getLineHeight();
-      return size + Math.max(getScrollingModel().getVisibleArea().height - 2 * lineHeight, lineHeight);
-    }
-
-    return size + mySettings.getAdditionalLinesCount() * getLineHeight();
+    return new Dimension(size.width, getPreferredHeight());
   }
 
   @NotNull
@@ -4095,7 +4076,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     // and, in the case of the positive answer, clear selection. Please note that there is a possible case that mouse click
     // is performed inside selection but it triggers context menu. We don't want to drop the selection then.
     if (myMousePressedEvent != null && myMousePressedEvent.getClickCount() == 1 && myMousePressedInsideSelection
-        && !myMousePressedEvent.isShiftDown() && !myMousePressedEvent.isPopupTrigger()
+        && !myMousePressedEvent.isShiftDown() 
+        && !myMousePressedEvent.isPopupTrigger()
+        && !isToggleCaretEvent(myMousePressedEvent)
         && !isCreateRectangularSelectionEvent(myMousePressedEvent)) {
       getSelectionModel().removeSelection();
     }
@@ -4622,7 +4605,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     private void paint(@NotNull Graphics g) {
-      if (!isEnabled() || !myIsShown || !IJSwingUtilities.hasFocus(getContentComponent()) || isRendererMode()) return;
+      if (!isEnabled() || !myIsShown || isRendererMode() || !IJSwingUtilities.hasFocus(getContentComponent())) return;
 
       if (myCaretModel.supportsMultipleCarets()) {
         for (CaretRectangle location : myLocations) {
@@ -4872,11 +4855,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     public void setUI(ScrollBarUI ui) {
       if (myPersistentUI == null) myPersistentUI = ui;
       super.setUI(myPersistentUI);
-    }
-
-    @Override
-    public void paint(@NotNull Graphics g) {
-      super.paint(g);
+      setOpaque(false);
     }
 
     /**
@@ -5107,6 +5086,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @NotNull
   MyScrollBar getVerticalScrollBar() {
     return myVerticalScrollBar;
+  }
+  
+  @NotNull
+  MyScrollBar getHorizontalScrollBar() {
+    return (MyScrollBar)myScrollPane.getHorizontalScrollBar();
   }
 
   private int getMouseSelectionState() {
@@ -6050,16 +6034,22 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       updateGlobalScheme();
     }
 
-    private EditorColorsScheme getGlobal() {
-      return getDelegate();
-    }
-
-    protected void initFonts() {
+    private void reinitFonts() {
       String editorFontName = getEditorFontName();
       int editorFontSize = getEditorFontSize();
 
       myFontPreferences.clear();
       myFontPreferences.register(editorFontName, editorFontSize);
+
+      EditorColorsScheme delegate = getDelegate();
+      List<String> secondaryFonts = delegate != null ? delegate.getFontPreferences().getRealFontFamilies() : ContainerUtil.<String>emptyList();
+      boolean first = true; //skip delegate's primary font
+      for (String font : secondaryFonts) {
+        if (!first) {
+          myFontPreferences.register(font, editorFontSize);
+        }
+        first = false;
+      }
 
       myFontsMap = new EnumMap<EditorFontType, Font>(EditorFontType.class);
 
@@ -6072,14 +6062,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myFontsMap.put(EditorFontType.BOLD, boldFont);
       myFontsMap.put(EditorFontType.ITALIC, italicFont);
       myFontsMap.put(EditorFontType.BOLD_ITALIC, boldItalicFont);
+    }
 
+    protected void reinitFontsAndSettings() {
+      reinitFonts();
       reinitSettings();
     }
 
     @Override
     public TextAttributes getAttributes(TextAttributesKey key) {
       if (myOwnAttributes.containsKey(key)) return myOwnAttributes.get(key);
-      return getGlobal().getAttributes(key);
+      return getDelegate().getAttributes(key);
     }
 
     @Override
@@ -6087,10 +6080,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myOwnAttributes.put(key, attributes);
     }
 
+    @Nullable
     @Override
     public Color getColor(ColorKey key) {
       if (myOwnColors.containsKey(key)) return myOwnColors.get(key);
-      return getGlobal().getColor(key);
+      return getDelegate().getColor(key);
     }
 
     @Override
@@ -6106,7 +6100,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     @Override
     public int getEditorFontSize() {
       if (myFontSize == -1) {
-        return getGlobal().getEditorFontSize();
+        return getDelegate().getEditorFontSize();
       }
       return myFontSize;
     }
@@ -6117,26 +6111,26 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (fontSize > myMaxFontSize) fontSize = myMaxFontSize;
       if (fontSize == myFontSize) return;
       myFontSize = fontSize;
-      initFonts();
+      reinitFontsAndSettings();
     }
 
     @NotNull
     @Override
     public FontPreferences getFontPreferences() {
-      return myFontPreferences.getEffectiveFontFamilies().isEmpty() ? getGlobal().getFontPreferences() : myFontPreferences;
+      return myFontPreferences.getEffectiveFontFamilies().isEmpty() ? getDelegate().getFontPreferences() : myFontPreferences;
     }
 
     @Override
     public void setFontPreferences(@NotNull FontPreferences preferences) {
       if (Comparing.equal(preferences, myFontPreferences)) return;
       preferences.copyTo(myFontPreferences);
-      reinitSettings();
+      reinitFontsAndSettings();
     }
 
     @Override
     public String getEditorFontName() {
       if (myFaceName == null) {
-        return getGlobal().getEditorFontName();
+        return getDelegate().getEditorFontName();
       }
       return myFaceName;
     }
@@ -6145,7 +6139,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     public void setEditorFontName(String fontName) {
       if (Comparing.equal(fontName, myFaceName)) return;
       myFaceName = fontName;
-      initFonts();
+      reinitFontsAndSettings();
     }
 
     @Override
@@ -6154,13 +6148,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         Font font = myFontsMap.get(key);
         if (font != null) return font;
       }
-      return getGlobal().getFont(key);
+      return getDelegate().getFont(key);
     }
 
     @Override
     public void setFont(EditorFontType key, Font font) {
       if (myFontsMap == null) {
-        initFonts();
+        reinitFontsAndSettings();
       }
       myFontsMap.put(key, font);
       reinitSettings();
@@ -6179,13 +6173,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     @Override
     public void setDelegate(@NotNull EditorColorsScheme delegate) {
       super.setDelegate(delegate);
-      int globalFontSize = getGlobal().getEditorFontSize();
+      int globalFontSize = getDelegate().getEditorFontSize();
       myMaxFontSize = Math.max(OptionsConstants.MAX_EDITOR_FONT_SIZE, globalFontSize);
+      reinitFonts();
+      clearSettingsCache();
     }
 
     @Override
     public void setConsoleFontSize(int fontSize) {
-      getGlobal().setConsoleFontSize(fontSize);
+      getDelegate().setConsoleFontSize(fontSize);
       reinitSettings();
     }
   }
@@ -6762,13 +6758,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     @Override
     public void layout() {
-      super.layout();
       if (isInDistractionFreeMode()) {
         // re-calc gutter extra size after editor size is set
         // & layout once again to avoid blinking
-        myGutterComponent.updateSize();
-        super.layout();
+        myGutterComponent.updateSize(true);
       }
+      super.layout();
     }
 
     @Override

@@ -25,6 +25,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.io.*;
 import java.nio.channels.FileChannel;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -381,7 +382,7 @@ public class FileUtilRt {
 
   @NotNull
   public static char[] loadFileText(@NotNull File file) throws IOException {
-    return loadFileText(file, null);
+    return loadFileText(file, (String)null);
   }
 
   @NotNull
@@ -389,6 +390,16 @@ public class FileUtilRt {
     InputStream stream = new FileInputStream(file);
     @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
     Reader reader = encoding == null ? new InputStreamReader(stream) : new InputStreamReader(stream, encoding);
+    try {
+      return loadText(reader, (int)file.length());
+    }
+    finally {
+      reader.close();
+    }
+  }
+  @NotNull
+  public static char[] loadFileText(@NotNull File file, @NotNull @NonNls Charset encoding) throws IOException {
+    Reader reader = new InputStreamReader(new FileInputStream(file), encoding);
     try {
       return loadText(reader, (int)file.length());
     }

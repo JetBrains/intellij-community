@@ -282,6 +282,10 @@ public class JavaFXHighlightingTest extends AbstractJavaFXTestCase {
     doTest();
   }
 
+  public void testShortNamesInRootType() throws Exception {
+    doTest();
+  }
+
   public void testLineChartInstantiation() throws Exception {
     doTest();
   }

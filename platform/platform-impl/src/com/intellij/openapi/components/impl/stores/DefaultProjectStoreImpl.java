@@ -17,10 +17,10 @@ package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.components.StateStorage.SaveSession;
-import com.intellij.openapi.options.StreamProvider;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.util.Couple;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -29,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 //todo: extends from base store class
 public class DefaultProjectStoreImpl extends ProjectStoreImpl {
@@ -62,8 +63,7 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
     ComponentManager componentManager = getComponentManager();
     final Element element = _d;
     final XmlElementStorage storage = new XmlElementStorage("", RoamingType.DISABLED, PathMacroManager.getInstance(componentManager).createTrackingSubstitutor(),
-                                                            ROOT_TAG_NAME, null,
-                                                            ComponentVersionProvider.EMPTY) {
+                                                            ROOT_TAG_NAME, null) {
       @Override
       @Nullable
       protected Element loadLocalData() {
@@ -144,10 +144,6 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
         return externalizationSession == null ? null : new MyExternalizationSession(externalizationSession);
       }
 
-      @Override
-      public void finishSave(@NotNull SaveSession saveSession) {
-      }
-
       @NotNull
       @Override
       public String expandMacros(@NotNull String file) {
@@ -167,18 +163,13 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
       }
 
       @Override
-      public void registerStreamProvider(final StreamProvider streamProvider, final RoamingType type) {
-        throw new UnsupportedOperationException("Method registerStreamProvider not implemented in " + getClass());
-      }
-
-      @Override
-      public void setStreamProvider(@Nullable com.intellij.openapi.components.impl.stores.StreamProvider streamProvider) {
+      public void setStreamProvider(@Nullable StreamProvider streamProvider) {
         throw new UnsupportedOperationException("Method setStreamProvider not implemented in " + getClass());
       }
 
       @Nullable
       @Override
-      public com.intellij.openapi.components.impl.stores.StreamProvider getStreamProvider() {
+      public StreamProvider getStreamProvider() {
         throw new UnsupportedOperationException("Method getStreamProviders not implemented in " + getClass());
       }
 
@@ -213,10 +204,10 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
       externalizationSession.setState(component, componentName, state, null);
     }
 
-    @Nullable
+    @NotNull
     @Override
-    public SaveSession createSaveSession() {
-      return externalizationSession.createSaveSession();
+    public List<SaveSession> createSaveSessions() {
+      return ContainerUtil.createMaybeSingletonList(externalizationSession.createSaveSession());
     }
   }
 }

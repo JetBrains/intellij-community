@@ -36,7 +36,7 @@ import com.intellij.profile.ProfileChangeAdapter;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.containers.ConcurrentWeakHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,7 +49,7 @@ import java.util.Map;
  * @author cdr
 */
 public class WholeFileLocalInspectionsPassFactory extends AbstractProjectComponent implements TextEditorHighlightingPassFactory {
-  private final Map<PsiFile, Boolean> myFileTools = new ConcurrentWeakHashMap<PsiFile, Boolean>();
+  private final Map<PsiFile, Boolean> myFileTools = ContainerUtil.createConcurrentWeakMap();
   public InspectionProjectProfileManager myProfileManager;
 
   public WholeFileLocalInspectionsPassFactory(Project project, TextEditorHighlightingPassRegistrar highlightingPassRegistrar,

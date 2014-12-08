@@ -66,7 +66,7 @@ public class HtmlUnknownTagInspection extends HtmlUnknownTagInspectionBase {
     final FieldPanel additionalAttributesPanel = new FieldPanel(null, null, new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent event) {
-        Messages.showTextAreaDialog(panelRef.get().getTextField(), inspection.getPanelTitle(), "HtmlUnknownTagInspection",
+        Messages.showTextAreaDialog(panelRef.get().getTextField(), StringUtil.wordsToBeginFromUpperCase(inspection.getPanelTitle()), "HtmlUnknownTagInspection",
                                     new Function<String, List<String>>() {
                                       @Override
                                       public List<String> fun(String s) {

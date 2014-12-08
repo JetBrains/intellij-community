@@ -62,7 +62,7 @@ public class TopAnomaliesAction extends ActionGroup {
 
     @Override
     public void update(AnActionEvent e) {
-      e.getPresentation().setText("Top " + LIMIT + " component parents");
+      e.getPresentation().setText("Top " + LIMIT + " Component Parents");
     }
 
     @Override
@@ -169,7 +169,7 @@ public class TopAnomaliesAction extends ActionGroup {
   };
 
 
-  private static final ResettableAction RESET_THEM_ALL = new ResettableAction("Reset statistics") {
+  private static final ResettableAction RESET_THEM_ALL = new ResettableAction("Reset Statistics") {
     @Override
     void reset() {
     }

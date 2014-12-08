@@ -29,7 +29,7 @@ public abstract class KeymapManager {
   public abstract Keymap getActiveKeymap();
 
   @Nullable
-  public abstract Keymap getKeymap(String name);
+  public abstract Keymap getKeymap(@NotNull String name);
 
   public static KeymapManager getInstance(){
     return ApplicationManager.getApplication().getComponent(KeymapManager.class);

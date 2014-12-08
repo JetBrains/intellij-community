@@ -22,57 +22,104 @@ import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTypeCastExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ConversionResult;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 /**
  * @author peter
  */
 public abstract class GrTypeConverter {
+
   public static final ExtensionPointName<GrTypeConverter> EP_NAME = ExtensionPointName.create("org.intellij.groovy.typeConverter");
 
   protected static boolean isMethodCallConversion(GroovyPsiElement context) {
     return PsiUtil.isInMethodCallContext(context);
   }
 
-  public abstract boolean isAllowedInMethodCall();
-
   @Nullable
-  public abstract Boolean isConvertible(@NotNull PsiType lType, @NotNull PsiType rType, @NotNull GroovyPsiElement context);
-
-  protected static boolean isEnum(PsiType type) {
-    if (type instanceof PsiClassType) {
-      final PsiClass resolved = ((PsiClassType)type).resolve();
-      return resolved != null && resolved.isEnum();
+  protected static GrLiteral getLiteral(@NotNull GroovyPsiElement context) {
+    final GrExpression expression;
+    if (context instanceof GrTypeCastExpression) {
+      expression = ((GrTypeCastExpression)context).getOperand();
     }
+    else if (context instanceof GrAssignmentExpression) {
+      expression = ((GrAssignmentExpression)context).getRValue();
+    }
+    else if (context instanceof GrVariable) {
+      expression = ((GrVariable)context).getInitializerGroovy();
+    }
+    else if (context instanceof GrReturnStatement) {
+      expression = ((GrReturnStatement)context).getReturnValue();
+    }
+    else {
+      expression = context instanceof GrExpression ? (GrExpression)context : null;
+    }
+    return expression instanceof GrLiteral ? (GrLiteral)expression : null;
+  }
 
+  /**
+   * @deprecated see {@link #isApplicableTo(org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter.ApplicableTo)}
+   */
+  @Deprecated
+  public boolean isAllowedInMethodCall() {
     return false;
   }
 
-  public static Boolean isConvertibleWithMethodCallConversion(@NotNull PsiType lType,
-                                                               @NotNull PsiType rType,
-                                                               @NotNull GroovyPsiElement context) {
-    for (GrTypeConverter converter : EP_NAME.getExtensions()) {
-      if (converter.isAllowedInMethodCall()) {
-        Boolean result = converter.isConvertible(lType, rType, context);
-        if (result != null) {
-          return result;
-        }
-      }
+  @SuppressWarnings("deprecation")
+  public boolean isApplicableTo(@NotNull ApplicableTo position) {
+    switch (position) {
+      case EXPLICIT_CAST:
+        return false;
+      case ASSIGNMENT:
+        return true;
+      case METHOD_PARAMETER:
+        return isAllowedInMethodCall();
+      case RETURN_VALUE:
+        return true;
+      default:
+        return false;
     }
+  }
+
+  /**
+   * @deprecated see {@link #isConvertibleEx(com.intellij.psi.PsiType, com.intellij.psi.PsiType, org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement, org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter.ApplicableTo)}
+   */
+  @Deprecated
+  @Nullable
+  public Boolean isConvertible(@NotNull PsiType lType, @NotNull PsiType rType, @NotNull GroovyPsiElement context) {
     return null;
   }
 
-  public static Boolean isConvertibleAll(@NotNull PsiType lType,
-                                       @NotNull PsiType rType,
-                                       @NotNull GroovyPsiElement context) {
-    for (GrTypeConverter converter : EP_NAME.getExtensions()) {
-      if (!converter.isAllowedInMethodCall()) {
-        Boolean result = converter.isConvertible(lType, rType, context);
-        if (result != null) {
-          return result;
-        }
-      }
-    }
-    return null;
+  /**
+   * Checks if {@code actualType} can be converted to {@code targetType}.
+   *
+   * @param targetType target type
+   * @param actualType actual type
+   * @param context    context
+   * @return {@link ConversionResult conversion result }
+   */
+  @SuppressWarnings("deprecation")
+  @Nullable
+  public ConversionResult isConvertibleEx(@NotNull PsiType targetType,
+                                          @NotNull PsiType actualType,
+                                          @NotNull GroovyPsiElement context,
+                                          @NotNull ApplicableTo currentPosition) {
+    final Boolean result = isConvertible(targetType, actualType, context);
+    return result == null ? null
+                          : result ? ConversionResult.OK
+                                   : ConversionResult.ERROR;
+  }
+
+  public enum ApplicableTo {
+    EXPLICIT_CAST,
+    ASSIGNMENT,
+    METHOD_PARAMETER,
+    RETURN_VALUE
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.template.impl;
 
+import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.lookup.RealLookupElementPresentation;
@@ -82,6 +83,11 @@ abstract public class LiveTemplateLookupElement extends LookupElement {
     else {
       presentation.setTypeText(myDescription);
     }
+  }
+
+  @Override
+  public AutoCompletionPolicy getAutoCompletionPolicy() {
+    return AutoCompletionPolicy.NEVER_AUTOCOMPLETE;
   }
 
   @Override

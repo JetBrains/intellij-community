@@ -41,11 +41,13 @@ import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPoint;
+import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -56,6 +58,7 @@ import com.intellij.psi.search.PsiNonJavaFileReferenceProcessor;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiMethodUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -78,37 +81,37 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
   @NonNls public static final String SHORT_NAME = "unused";
   @NonNls public static final String ALTERNATIVE_ID = "UnusedDeclaration";
 
-  protected final EntryPoint[] myExtensions;
+  final List<EntryPoint> myExtensions = ContainerUtil.createLockFreeCopyOnWriteList();
   private static final Logger LOG = Logger.getInstance("#" + UnusedDeclarationInspectionBase.class.getName());
   private GlobalInspectionContext myContext;
-  protected UnusedSymbolLocalInspectionBase myLocalInspectionBase = createUnusedSymbolLocalInspection();
-  private boolean myEnabledInEditor = !ApplicationManager.getApplication().isUnitTestMode();
+  final UnusedSymbolLocalInspectionBase myLocalInspectionBase = createUnusedSymbolLocalInspection();
+  private final boolean myEnabledInEditor;
 
+  @TestOnly
   public UnusedDeclarationInspectionBase(boolean enabledInEditor) {
-    this();
-    myEnabledInEditor = enabledInEditor;
-  }
-
-  public UnusedDeclarationInspectionBase() {
     ExtensionPoint<EntryPoint> point = Extensions.getRootArea().getExtensionPoint(ToolExtensionPoints.DEAD_CODE_TOOL);
     EntryPoint[] extensions = point.getExtensions();
-    final EntryPoint[] deadCodeAddins = new EntryPoint[extensions.length];
-    for (int i = 0; i < extensions.length; i++) {
-      EntryPoint entryPoint = extensions[i];
+    List<EntryPoint> deadCodeAddins = new ArrayList<EntryPoint>(extensions.length);
+    for (EntryPoint entryPoint : extensions) {
       try {
-        deadCodeAddins[i] = entryPoint.clone();
+        deadCodeAddins.add(entryPoint);
       }
-      catch (CloneNotSupportedException e) {
+      catch (Exception e) {
         LOG.error(e);
       }
     }
-    Arrays.sort(deadCodeAddins, new Comparator<EntryPoint>() {
+    Collections.sort(deadCodeAddins, new Comparator<EntryPoint>() {
       @Override
       public int compare(final EntryPoint o1, final EntryPoint o2) {
         return o1.getDisplayName().compareToIgnoreCase(o2.getDisplayName());
       }
     });
-    myExtensions = deadCodeAddins;
+    myExtensions.addAll(deadCodeAddins);
+    myEnabledInEditor = enabledInEditor;
+  }
+
+  public UnusedDeclarationInspectionBase() {
+    this(!ApplicationManager.getApplication().isUnitTestMode());
   }
 
   protected UnusedSymbolLocalInspectionBase createUnusedSymbolLocalInspection() {
@@ -430,11 +433,6 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     return myEnabledInEditor;
   }
 
-  @TestOnly
-  public void setEnabledInEditor(boolean enabledInEditor) {
-    myEnabledInEditor = enabledInEditor;
-  }
-
   private static class StrictUnreferencedFilter extends UnreferencedFilter {
     private StrictUnreferencedFilter(@NotNull UnusedDeclarationInspectionBase tool, @NotNull GlobalInspectionContext context) {
       super(tool, context);
@@ -606,21 +604,14 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
   }
 
   private EntryPointsManager getEntryPointsManager() {
-    return getContext().getExtension(GlobalJavaInspectionContext.CONTEXT).getEntryPointsManager(getContext().getRefManager());
+    return getJavaContext().getEntryPointsManager(getContext().getRefManager());
   }
 
   private static class CodeScanner extends RefJavaVisitor {
-    private final HashMap<RefClass, HashSet<RefMethod>> myClassIDtoMethods;
-    private final HashSet<RefClass> myInstantiatedClasses;
+    private final Map<RefClass, Set<RefMethod>> myClassIDtoMethods = new HashMap<RefClass, Set<RefMethod>>();
+    private final Set<RefClass> myInstantiatedClasses = new HashSet<RefClass>();
     private int myInstantiatedClassesCount;
-    private final HashSet<RefMethod> myProcessedMethods;
-
-    private CodeScanner() {
-      myClassIDtoMethods = new HashMap<RefClass, HashSet<RefMethod>>();
-      myInstantiatedClasses = new HashSet<RefClass>();
-      myProcessedMethods = new HashSet<RefMethod>();
-      myInstantiatedClassesCount = 0;
-    }
+    private final Set<RefMethod> myProcessedMethods = new HashSet<RefMethod>();
 
     @Override public void visitMethod(@NotNull RefMethod method) {
       if (!myProcessedMethods.contains(method)) {
@@ -701,7 +692,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     }
 
     private void addDelayedMethod(RefMethod refMethod) {
-      HashSet<RefMethod> methods = myClassIDtoMethods.get(refMethod.getOwnerClass());
+      Set<RefMethod> methods = myClassIDtoMethods.get(refMethod.getOwnerClass());
       if (methods == null) {
         methods = new HashSet<RefMethod>();
         myClassIDtoMethods.put(refMethod.getOwnerClass(), methods);
@@ -725,7 +716,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
       RefClass[] instClasses = myInstantiatedClasses.toArray(new RefClass[myInstantiatedClasses.size()]);
       for (RefClass refClass : instClasses) {
         if (isClassInstantiated(refClass)) {
-          HashSet<RefMethod> methods = myClassIDtoMethods.get(refClass);
+          Set<RefMethod> methods = myClassIDtoMethods.get(refClass);
           if (methods != null) {
             RefMethod[] arMethods = methods.toArray(new RefMethod[methods.size()]);
             for (RefMethod arMethod : arMethods) {
@@ -741,6 +732,36 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
   public void initialize(@NotNull GlobalInspectionContext context) {
     super.initialize(context);
     myContext = context;
+    ExtensionPoint<EntryPoint> point = Extensions.getRootArea().getExtensionPoint(ToolExtensionPoints.DEAD_CODE_TOOL);
+    point.addExtensionPointListener(new ExtensionPointListener<EntryPoint>() {
+      @Override
+      public void extensionAdded(@NotNull final EntryPoint extension, @Nullable PluginDescriptor pluginDescriptor) {
+        boolean alreadyAdded = ContainerUtil.find(myExtensions, new Condition<EntryPoint>() {
+          @Override
+          public boolean value(EntryPoint point) {
+            return point.getClass().equals(extension.getClass());
+          }
+        }) != null;
+        if (!alreadyAdded) {
+          try {
+            myExtensions.add(extension.clone());
+          }
+          catch (CloneNotSupportedException e) {
+            LOG.error(e);
+          }
+        }
+      }
+
+      @Override
+      public void extensionRemoved(@NotNull final EntryPoint extension, @Nullable PluginDescriptor pluginDescriptor) {
+        ContainerUtil.retainAll(myExtensions, new Condition<EntryPoint>() {
+          @Override
+          public boolean value(EntryPoint point) {
+            return !point.getClass().equals(extension.getClass());
+          }
+        });
+      }
+    }, getEntryPointsManager());
   }
 
   @Override

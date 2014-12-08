@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,10 +80,12 @@ public class SliceHandler implements CodeInsightActionHandler {
     AnalysisUIOptions analysisUIOptions = new AnalysisUIOptions();
     analysisUIOptions.save(storedSettingsBean.analysisUIOptions);
 
-    BaseAnalysisActionDialog dialog = new BaseAnalysisActionDialog(dialogTitle, "Analyze scope", myProject, analysisScope, name, true, analysisUIOptions,
-                                                                   element);
-    dialog.show();
-    if (!dialog.isOK()) return null;
+    BaseAnalysisActionDialog dialog =
+      new BaseAnalysisActionDialog(dialogTitle, "Analyze scope", myProject, analysisScope, name, true, analysisUIOptions,
+                                   element);
+    if (!dialog.showAndGet()) {
+      return null;
+    }
 
     AnalysisScope scope = dialog.getScope(analysisUIOptions, analysisScope, myProject, module);
     storedSettingsBean.analysisUIOptions.save(analysisUIOptions);

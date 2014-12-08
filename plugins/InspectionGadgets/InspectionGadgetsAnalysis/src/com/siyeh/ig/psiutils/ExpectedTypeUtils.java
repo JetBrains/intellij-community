@@ -399,9 +399,9 @@ public class ExpectedTypeUtils {
 
     @Override
     public void visitReturnStatement(@NotNull PsiReturnStatement returnStatement) {
-      final PsiMethod method = PsiTreeUtil.getParentOfType(returnStatement, PsiMethod.class);
-      if (method != null) {
-        expectedType = method.getReturnType();
+      final PsiElement method = PsiTreeUtil.getParentOfType(returnStatement, PsiMethod.class, PsiLambdaExpression.class);
+      if (method instanceof PsiMethod) {
+        expectedType = ((PsiMethod)method).getReturnType();
       }
     }
 

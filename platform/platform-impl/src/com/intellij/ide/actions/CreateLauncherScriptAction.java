@@ -69,8 +69,7 @@ public class CreateLauncherScriptAction extends DumbAwareAction {
 
     Project project = e.getProject();
     CreateLauncherScriptDialog dialog = new CreateLauncherScriptDialog(project);
-    dialog.show();
-    if (!dialog.isOK()) {
+    if (!dialog.showAndGet()) {
       return;
     }
 

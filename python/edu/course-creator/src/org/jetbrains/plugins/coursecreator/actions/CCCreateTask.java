@@ -22,6 +22,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.coursecreator.CCProjectService;
+import org.jetbrains.plugins.coursecreator.CCUtils;
 import org.jetbrains.plugins.coursecreator.format.Course;
 import org.jetbrains.plugins.coursecreator.format.Lesson;
 import org.jetbrains.plugins.coursecreator.format.Task;
@@ -66,6 +67,7 @@ public class CCCreateTask extends DumbAwareAction {
       public void run() {
         final PsiDirectory taskDirectory = DirectoryUtil.createSubdirectories("task" + (size + 1), lessonDir, "\\/");
         if (taskDirectory != null) {
+          CCUtils.markDirAsSourceRoot(taskDirectory.getVirtualFile(), project);
           final FileTemplate template = FileTemplateManager.getInstance().getInternalTemplate("task.html");
           final FileTemplate testsTemplate = FileTemplateManager.getInstance().getInternalTemplate("tests");
           final FileTemplate taskTemplate = FileTemplateManager.getInstance().getInternalTemplate("task.answer");

@@ -19,6 +19,7 @@ package com.intellij.lang.impl;
 import com.intellij.lang.*;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
@@ -1111,7 +1112,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     final MyComparator comparator = new MyComparator(getUserDataUnprotected(CUSTOM_COMPARATOR), treeStructure);
 
     final ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
-    BlockSupportImpl.diffTrees(oldRoot, builder, comparator, treeStructure, indicator);
+    BlockSupportImpl.diffTrees(oldRoot, builder, comparator, treeStructure, indicator == null ? new EmptyProgressIndicator() : indicator);
     return diffLog;
   }
 

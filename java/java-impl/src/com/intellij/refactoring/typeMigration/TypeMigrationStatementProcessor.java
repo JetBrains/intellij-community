@@ -179,11 +179,15 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
   public void visitReturnStatement(PsiReturnStatement statement) { // has to change method return type corresponding to new value type 
     super.visitReturnStatement(statement);
 
-    final PsiMethod method = PsiTreeUtil.getParentOfType(statement, PsiMethod.class);
+    final PsiElement method = PsiTreeUtil.getParentOfType(statement, PsiMethod.class, PsiLambdaExpression.class);
     final PsiExpression value = statement.getReturnValue();
 
     if (method != null && value != null) {
-      final PsiType returnType = method.getReturnType();
+      if (method instanceof PsiLambdaExpression) {
+        //todo [IDEA-133097]
+        return;
+      }
+      final PsiType returnType = ((PsiMethod)method).getReturnType();
       final PsiType valueType = myTypeEvaluator.evaluateType(value);
 
       if (returnType != null && valueType != null) {

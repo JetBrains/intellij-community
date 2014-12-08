@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,14 +75,17 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
   @Override
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+    if (!PsiUtil.isLanguageLevel5OrHigher(holder.getFile())) {
+      return new PsiElementVisitor() { };
+    }
     return new JavaElementVisitor() {
-      @Override public void visitMethod(PsiMethod method) {
-        if (!PsiUtil.isLanguageLevel5OrHigher(method)) return;
+      @Override
+      public void visitMethod(PsiMethod method) {
         checkNullableStuffForMethod(method, holder);
       }
 
-      @Override public void visitField(PsiField field) {
-        if (!PsiUtil.isLanguageLevel5OrHigher(field)) return;
+      @Override
+      public void visitField(PsiField field) {
         final PsiType type = field.getType();
         final Annotated annotated = check(field, holder, type);
         if (TypeConversionUtil.isPrimitiveAndNotNull(type)) {
@@ -229,8 +232,8 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
         LOG.assertTrue(parameter.isPhysical(), setter.getText());
       }
 
-      @Override public void visitParameter(PsiParameter parameter) {
-        if (!PsiUtil.isLanguageLevel5OrHigher(parameter)) return;
+      @Override
+      public void visitParameter(PsiParameter parameter) {
         check(parameter, holder, parameter.getType());
       }
 
@@ -359,7 +362,7 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
 
     if (REPORT_NOT_ANNOTATED_METHOD_OVERRIDES_NOTNULL) {
       for (PsiMethod superMethod : superMethods) {
-        if (!nullableManager.hasNullability(method) && isNotNullNotInferred(superMethod, true, false)) {
+        if (!nullableManager.hasNullability(method) && isNotNullNotInferred(superMethod, true, IGNORE_EXTERNAL_SUPER_NOTNULL)) {
           final String defaultNotNull = nullableManager.getDefaultNotNull();
           final String[] annotationsToRemove = ArrayUtil.toStringArray(nullableManager.getNullables());
           final LocalQuickFix fix = AnnotationUtil.isAnnotatingApplicable(method, defaultNotNull)
@@ -525,7 +528,7 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
     return true;
   }
 
-  private static boolean isNullableNotInferred(@NotNull PsiModifierListOwner owner, boolean checkBases) {
+  public static boolean isNullableNotInferred(@NotNull PsiModifierListOwner owner, boolean checkBases) {
     Project project = owner.getProject();
     NullableNotNullManager manager = NullableNotNullManager.getInstance(project);
     if (!manager.isNullable(owner, checkBases)) return false;

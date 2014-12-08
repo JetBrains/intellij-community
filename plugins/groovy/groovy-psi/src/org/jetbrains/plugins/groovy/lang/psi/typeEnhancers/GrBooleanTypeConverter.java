@@ -15,27 +15,44 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.typeEnhancers;
 
-import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ConversionResult;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 /**
  * @author Max Medvedev
  */
 public class GrBooleanTypeConverter extends GrTypeConverter {
+
   @Override
-  public boolean isAllowedInMethodCall() {
-    return false;
+  public boolean isApplicableTo(@NotNull ApplicableTo position) {
+    return true;
   }
 
+  @Nullable
   @Override
-  public Boolean isConvertible(@NotNull PsiType lType, @NotNull PsiType rType, @NotNull GroovyPsiElement context) {
-    if (PsiType.BOOLEAN.equals(lType) || lType.equalsToText(CommonClassNames.JAVA_LANG_BOOLEAN)) {
-      return !PsiType.NULL.equals(rType);
+  public ConversionResult isConvertibleEx(@NotNull PsiType targetType,
+                                          @NotNull PsiType actualType,
+                                          @NotNull GroovyPsiElement context,
+                                          @NotNull ApplicableTo currentPosition) {
+    if (PsiType.BOOLEAN != TypesUtil.unboxPrimitiveTypeWrapper(targetType)) return null;
+    if (PsiType.NULL == actualType) {
+      switch (currentPosition) {
+        case METHOD_PARAMETER:
+          return null;
+        case EXPLICIT_CAST:
+        case ASSIGNMENT:
+        case RETURN_VALUE:
+          return ConversionResult.OK;
+        default:
+          return null;
+      }
     }
-
-
-    return null;
+    return currentPosition == ApplicableTo.ASSIGNMENT || currentPosition == ApplicableTo.RETURN_VALUE
+           ? ConversionResult.OK
+           : null;
   }
 }

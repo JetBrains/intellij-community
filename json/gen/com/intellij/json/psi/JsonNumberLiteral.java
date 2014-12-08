@@ -7,7 +7,6 @@ import com.intellij.psi.PsiElement;
 
 public interface JsonNumberLiteral extends JsonLiteral {
 
-  @NotNull
-  PsiElement getNumber();
+  double getValue();
 
 }

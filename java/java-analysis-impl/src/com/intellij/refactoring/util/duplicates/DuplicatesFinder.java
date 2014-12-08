@@ -97,7 +97,18 @@ public class DuplicatesFinder {
   }
 
 
+  public InputVariables getParameters() {
+    return myParameters;
+  }
 
+  public PsiElement[] getPattern() {
+    return myPattern;
+  }
+
+  @Nullable
+  public ReturnValue getReturnValue() {
+    return myReturnValue;
+  }
 
   public List<Match> findDuplicates(PsiElement scope) {
     annotatePattern();
@@ -164,9 +175,7 @@ public class DuplicatesFinder {
 
   @Nullable
   private Match isDuplicateFragment(PsiElement candidate, boolean ignoreParameterTypesAndPostVariableUsages) {
-    for (PsiElement pattern : myPattern) {
-      if (PsiTreeUtil.isAncestor(pattern, candidate, false)) return null;
-    }
+    if (isSelf(candidate)) return null;
     PsiElement sibling = candidate;
     ArrayList<PsiElement> candidates = new ArrayList<PsiElement>();
     for (final PsiElement element : myPattern) {
@@ -204,6 +213,15 @@ public class DuplicatesFinder {
     if (!ignoreParameterTypesAndPostVariableUsages && checkPostVariableUsages(candidates, match)) return null;
 
     return match;
+  }
+
+  protected boolean isSelf(PsiElement candidate) {
+    for (PsiElement pattern : myPattern) {
+      if (PsiTreeUtil.isAncestor(pattern, candidate, false)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private boolean checkPostVariableUsages(final ArrayList<PsiElement> candidates, final Match match) {

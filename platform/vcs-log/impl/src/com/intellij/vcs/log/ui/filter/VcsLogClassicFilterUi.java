@@ -21,17 +21,19 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NotNullComputable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.SearchTextFieldWithStoredHistory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.*;
-import com.intellij.vcs.log.data.VcsLogDataHolder;
-import com.intellij.vcs.log.data.VcsLogUiProperties;
+import com.intellij.vcs.log.data.*;
 import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl;
 import com.intellij.vcs.log.impl.VcsLogHashFilterImpl;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
@@ -39,16 +41,22 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.text.BadLocationException;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  */
 public class VcsLogClassicFilterUi implements VcsLogFilterUi {
 
   private static final String HASH_PATTERN = "[a-fA-F0-9]{7,}";
+  private static final Logger LOG = Logger.getInstance(VcsLogClassicFilterUi.class);
 
   @NotNull private final VcsLogUiImpl myUi;
 
@@ -57,11 +65,11 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
 
   @NotNull private VcsLogDataPack myDataPack;
 
-  @NotNull private final FilterModel<VcsLogBranchFilter> myBranchFilterModel;
+  @NotNull private final BranchFilterModel myBranchFilterModel;
   @NotNull private final FilterModel<VcsLogUserFilter> myUserFilterModel;
   @NotNull private final FilterModel<VcsLogDateFilter> myDateFilterModel;
-  @NotNull private final FilterModel<VcsLogStructureFilter> myStructureFilterModel;
-  @NotNull private final FilterModel<VcsLogTextFilter> myTextFilterModel;
+  @NotNull private final FilterModel<VcsLogFileFilter> myStructureFilterModel;
+  @NotNull private final TextFilterModel myTextFilterModel;
 
   public VcsLogClassicFilterUi(@NotNull VcsLogUiImpl ui,
                                @NotNull VcsLogDataHolder logDataHolder,
@@ -79,11 +87,11 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
         return myDataPack;
       }
     };
-    myBranchFilterModel = new FilterModel<VcsLogBranchFilter>(dataPackGetter);
+    myBranchFilterModel = new BranchFilterModel(dataPackGetter);
     myUserFilterModel = new FilterModel<VcsLogUserFilter>(dataPackGetter);
     myDateFilterModel = new FilterModel<VcsLogDateFilter>(dataPackGetter);
-    myStructureFilterModel = new FilterModel<VcsLogStructureFilter>(dataPackGetter);
-    myTextFilterModel = new FilterModel<VcsLogTextFilter>(dataPackGetter);
+    myStructureFilterModel = new FilterModel<VcsLogFileFilter>(dataPackGetter);
+    myTextFilterModel = new TextFilterModel(dataPackGetter);
 
     updateUiOnFilterChange();
   }
@@ -95,6 +103,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
         @Override
         public void run() {
           myUi.applyFiltersAndUpdateUi();
+          myBranchFilterModel.onStructureFilterChanged(new HashSet<VirtualFile>(myLogDataHolder.getRoots()), myStructureFilterModel.getFilter());
         }
       });
     }
@@ -132,7 +141,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
     actionGroup.add(new FilterActionComponent(new Computable<JComponent>() {
       @Override
       public JComponent compute() {
-        return new StructureFilterPopupComponent(myStructureFilterModel);
+        return new StructureFilterPopupComponent(myStructureFilterModel, myUi.getColorManager());
       }
     }));
     return actionGroup;
@@ -148,7 +157,8 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
                                           filtersFromText.second,
                                           myDateFilterModel.getFilter(),
                                           filtersFromText.first,
-                                          myStructureFilterModel.getFilter());
+                                          myStructureFilterModel.getFilter() == null ? null : myStructureFilterModel.getFilter().getStructureFilter(),
+                                          myStructureFilterModel.getFilter() == null ? null : myStructureFilterModel.getFilter().getRootFilter());
   }
 
   @NotNull
@@ -196,9 +206,9 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
 
   private static class TextFilterComponent extends DumbAwareAction implements CustomComponentAction {
 
-    private final FilterModel<VcsLogTextFilter> myFilterModel;
+    private final TextFilterModel myFilterModel;
 
-    public TextFilterComponent(FilterModel<VcsLogTextFilter> filterModel) {
+    public TextFilterComponent(TextFilterModel filterModel) {
       myFilterModel = filterModel;
     }
 
@@ -219,11 +229,23 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
           myFilterModel.setFilter(null);
         }
       };
+      textFilter.setText(myFilterModel.getText());
       textFilter.getTextEditor().addActionListener(new ActionListener() {
         @Override
         public void actionPerformed(@NotNull ActionEvent e) {
           myFilterModel.setFilter(new VcsLogTextFilterImpl(textFilter.getText()));
           textFilter.addCurrentTextToHistory();
+        }
+      });
+      textFilter.addDocumentListener(new DocumentAdapter() {
+        @Override
+        protected void textChanged(DocumentEvent e) {
+          try {
+            myFilterModel.setUnsavedText(e.getDocument().getText(0, e.getDocument().getLength()));
+          }
+          catch (BadLocationException ex) {
+            LOG.error(ex);
+          }
         }
       });
       return textFilter;
@@ -249,6 +271,59 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
+    }
+  }
+
+  public static class BranchFilterModel extends FilterModel<VcsLogBranchFilter> {
+    @Nullable
+    private Collection<VirtualFile> myVisibleRoots;
+
+    BranchFilterModel(@NotNull Computable<VcsLogDataPack> provider) {
+      super(provider);
+    }
+
+    public void onStructureFilterChanged(@NotNull Set<VirtualFile> roots, @Nullable VcsLogFileFilter filter) {
+      if (filter == null) {
+        myVisibleRoots = null;
+      } else {
+        myVisibleRoots = VcsLogFileFilter.getAllVisibleRoots(roots, filter);
+      }
+    }
+
+    @Nullable
+    public Collection<VirtualFile> getVisibleRoots() {
+      return myVisibleRoots;
+    }
+  }
+
+  private static class TextFilterModel extends FilterModel<VcsLogTextFilter> {
+    @Nullable private String myText;
+
+    public TextFilterModel(NotNullComputable<VcsLogDataPack> dataPackProvider) {
+      super(dataPackProvider);
+    }
+
+    @NotNull
+    String getText() {
+      if (myText != null) {
+        return myText;
+      }
+      else if (getFilter() != null) {
+        return getFilter().getText();
+      }
+      else {
+        return "";
+      }
+    }
+
+    void setUnsavedText(@NotNull String text) {
+      myText = text;
+    }
+
+    @Override
+    void setFilter(@Nullable VcsLogTextFilter filter) {
+      super.setFilter(filter);
+      myText = null;
     }
   }
 }

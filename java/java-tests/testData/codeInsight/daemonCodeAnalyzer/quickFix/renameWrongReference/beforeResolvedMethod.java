@@ -1,4 +1,4 @@
-// "Rename Reference" "false"
+// "Rename reference" "false"
 class Foo {
     void bar(int x) {
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -315,8 +315,7 @@ public class PropertiesComponent extends JPanel {
       }
 
       SetKeywordsDialog dialog = new SetKeywordsDialog(project, PropertyValue.toString(propValue));
-      dialog.show();
-      if (dialog.isOK()) {
+      if (dialog.showAndGet()) {
         setProperty(SvnPropertyKeys.SVN_KEYWORDS, dialog.getKeywords(), false, false);
       }
       updateFileView(false);
@@ -352,11 +351,10 @@ public class PropertiesComponent extends JPanel {
 
     public void actionPerformed(AnActionEvent e) {
       Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
-      SetPropertyDialog dialog = new SetPropertyDialog(project, new File[] {myFile}, null,
-              myFile.isDirectory());
-      dialog.show();
+      SetPropertyDialog dialog = new SetPropertyDialog(project, new File[]{myFile}, null,
+                                                       myFile.isDirectory());
       boolean recursive = false;
-      if (dialog.isOK()) {
+      if (dialog.showAndGet()) {
         recursive = dialog.isRecursive();
         setProperty(dialog.getPropertyName(), dialog.getPropertyValue(), recursive, false);
       }
@@ -376,10 +374,9 @@ public class PropertiesComponent extends JPanel {
 
     public void actionPerformed(AnActionEvent e) {
       Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
-      SetPropertyDialog dialog = new SetPropertyDialog(project, new File[] {myFile}, getSelectedPropertyName(), myFile.isDirectory());
-      dialog.show();
+      SetPropertyDialog dialog = new SetPropertyDialog(project, new File[]{myFile}, getSelectedPropertyName(), myFile.isDirectory());
       boolean recursive = false;
-      if (dialog.isOK()) {
+      if (dialog.showAndGet()) {
         recursive = dialog.isRecursive();
         setProperty(dialog.getPropertyName(), dialog.getPropertyValue(), recursive, false);
       }

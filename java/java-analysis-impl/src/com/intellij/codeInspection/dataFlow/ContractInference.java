@@ -26,6 +26,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
@@ -34,7 +35,6 @@ import com.siyeh.ig.psiutils.SideEffectChecker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -62,7 +62,7 @@ public class ContractInference {
           }
         });
         if (result == null) result = Collections.emptyList();
-        return Result.create(result, method);
+        return Result.create(result, method, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
       }
     });
   }
@@ -89,8 +89,12 @@ class ContractInferenceInterpreter {
     
     PsiTypeElement typeElement = myMethod.getReturnTypeElement();
     final PsiType returnType = typeElement == null ? null : typeElement.getType();
-    final boolean notNull = !(returnType instanceof PsiPrimitiveType) &&
+    boolean referenceTypeReturned = !(returnType instanceof PsiPrimitiveType);
+    final boolean notNull = referenceTypeReturned && 
                             NullableNotNullManager.getInstance(myMethod.getProject()).isNotNull(myMethod, false);
+    if (referenceTypeReturned) {
+      contracts = boxReturnValues(contracts);
+    }
     return ContainerUtil.filter(contracts, new Condition<MethodContract>() {
       @Override
       public boolean value(MethodContract contract) {
@@ -101,7 +105,20 @@ class ContractInferenceInterpreter {
       }
     });
   }
-  
+
+  @NotNull
+  private static List<MethodContract> boxReturnValues(List<MethodContract> contracts) {
+    return ContainerUtil.mapNotNull(contracts, new Function<MethodContract, MethodContract>() {
+      @Override
+      public MethodContract fun(MethodContract contract) {
+        if (contract.returnValue == FALSE_VALUE || contract.returnValue == TRUE_VALUE) {
+          return new MethodContract(contract.arguments, NOT_NULL_VALUE);
+        }
+        return contract;
+      }
+    });
+  }
+
   private List<MethodContract> doInferContracts() {
     PsiCodeBlock body = myMethod.getBody();
     PsiStatement[] statements = body == null ? PsiStatement.EMPTY_ARRAY : body.getStatements();
@@ -178,7 +195,7 @@ class ContractInferenceInterpreter {
       }
     });
     if (notNull) {
-      return ContainerUtil.concat(fromDelegate, Arrays.asList(new MethodContract(myEmptyConstraints, NOT_NULL_VALUE)));
+      return ContainerUtil.concat(fromDelegate, Collections.singletonList(new MethodContract(myEmptyConstraints, NOT_NULL_VALUE)));
     }
     return fromDelegate;
   }
@@ -294,7 +311,7 @@ class ContractInferenceInterpreter {
       parameter = resolveParameter(op2);
       constraint = getLiteralConstraint(op1);
     }
-    if (parameter >= 0 && constraint != null) {
+    if (parameter >= 0 && constraint != null && constraint != NOT_NULL_VALUE) {
       List<MethodContract> result = ContainerUtil.newArrayList();
       for (ValueConstraint[] state : states) {
         ContainerUtil.addIfNotNull(result, contractWithConstraint(state, parameter, constraint, equality ? TRUE_VALUE : FALSE_VALUE));
@@ -365,7 +382,7 @@ class ContractInferenceInterpreter {
         PsiStatement elseBranch = ((PsiIfStatement)statement).getElseBranch();
         if (elseBranch != null) {
           result.addAll(visitStatements(falseStates, elseBranch));
-        } else if (alwaysReturns(thenBranch)) {
+        } else {
           states = falseStates;
           continue;
         }
@@ -404,29 +421,13 @@ class ContractInferenceInterpreter {
     return false;
   }
 
-  private static boolean alwaysReturns(@Nullable PsiStatement statement) {
-    if (statement instanceof PsiReturnStatement || statement instanceof PsiThrowStatement) return true;
-    if (statement instanceof PsiBlockStatement) {
-      for (PsiStatement child : ((PsiBlockStatement)statement).getCodeBlock().getStatements()) {
-        if (alwaysReturns(child)) {
-          return true;
-        }
-      }
-    }
-    if (statement instanceof PsiIfStatement) {
-      return alwaysReturns(((PsiIfStatement)statement).getThenBranch()) &&
-             alwaysReturns(((PsiIfStatement)statement).getElseBranch());
-    }
-    return false;
-  }
-
   @Nullable
   private static ValueConstraint getLiteralConstraint(@Nullable PsiExpression expr) {
     if (expr instanceof PsiLiteralExpression) {
       if (expr.textMatches(PsiKeyword.TRUE)) return TRUE_VALUE;
       if (expr.textMatches(PsiKeyword.FALSE)) return FALSE_VALUE;
       if (expr.textMatches(PsiKeyword.NULL)) return NULL_VALUE;
-      if (((PsiLiteralExpression)expr).getValue() instanceof String) return NOT_NULL_VALUE;
+      return NOT_NULL_VALUE;
     }
     return null;
   }

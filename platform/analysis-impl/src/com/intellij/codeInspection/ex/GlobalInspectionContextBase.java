@@ -74,7 +74,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
   private final StdJobDescriptors myStdJobDescriptors = new StdJobDescriptors();
   protected ProgressIndicator myProgressIndicator;
 
-  private InspectionProfile myExternalProfile = null;
+  private InspectionProfile myExternalProfile;
 
   protected final Map<Key, GlobalInspectionContextExtension> myExtensions = new HashMap<Key, GlobalInspectionContextExtension>();
 
@@ -87,8 +87,6 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
   public GlobalInspectionContextBase(@NotNull Project project) {
     myProject = project;
 
-    myRefManager = null;
-    myCurrentScope = null;
     for (InspectionExtensionsFactory factory : Extensions.getExtensions(InspectionExtensionsFactory.EP_NAME)) {
       final GlobalInspectionContextExtension extension = factory.createGlobalInspectionContextExtension();
       myExtensions.put(extension.getID(), extension);
@@ -107,6 +105,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
 
   @Override
   public <T> T getExtension(final Key<T> key) {
+    //noinspection unchecked
     return (T)myExtensions.get(key);
   }
 
@@ -190,20 +189,13 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
 
     cleanupTools();
 
-    Runnable runnable = new Runnable() {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
         myCurrentScope = scope;
         launchInspections(scope);
       }
-    };
-
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      runnable.run();
-    }
-    else {
-      ApplicationManager.getApplication().invokeLater(runnable);
-    }
+    }, ApplicationManager.getApplication().getDisposed());
   }
 
 
@@ -394,6 +386,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
     }
   }
 
+  @NotNull
   public Map<String, Tools> getTools() {
     return myTools;
   }
@@ -425,6 +418,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
     }
 
     Runnable cleanupRunnable = new Runnable() {
+      @Override
       public void run() {
         final List<PsiElement> psiElements = new ArrayList<PsiElement>();
         for (SmartPsiElementPointer<PsiElement> element : elements) {

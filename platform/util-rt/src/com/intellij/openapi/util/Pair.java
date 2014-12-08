@@ -27,6 +27,10 @@ public class Pair<A, B> {
     //noinspection DontUsePairConstructor
     return new Pair<A, B>(first, second);
   }
+  @NotNull
+  public static <A, B> NonNull<A, B> createNonNull(@NotNull A first, @NotNull B second) {
+    return new NonNull<A, B>(first, second);
+  }
 
   @NotNull
   @SuppressWarnings("MethodNamesDifferingOnlyByCase")
@@ -38,6 +42,7 @@ public class Pair<A, B> {
   @NotNull
   public static <A, B> Function<A, Pair<A, B>> createFunction(final B value) {
     return new Function<A, Pair<A, B>>() {
+      @Override
       public Pair<A, B> fun(A a) {
         return create(a, value);
       }
@@ -73,17 +78,26 @@ public class Pair<A, B> {
     return second;
   }
 
+  @Override
   public final boolean equals(Object o) {
     return o instanceof Pair && Comparing.equal(first, ((Pair)o).first) && Comparing.equal(second, ((Pair)o).second);
   }
 
+  @Override
   public int hashCode() {
     int result = first != null ? first.hashCode() : 0;
     result = 31 * result + (second != null ? second.hashCode() : 0);
     return result;
   }
 
+  @Override
   public String toString() {
     return "<" + first + "," + second + ">";
+  }
+
+  public static class NonNull<A, B> extends Pair<A,B> {
+    public NonNull(@NotNull A first, @NotNull B second) {
+      super(first, second);
+    }
   }
 }

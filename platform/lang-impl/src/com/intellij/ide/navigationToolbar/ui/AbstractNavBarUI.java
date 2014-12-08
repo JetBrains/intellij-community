@@ -126,8 +126,8 @@ public abstract class AbstractNavBarUI implements NavBarUI {
   }
 
   private BufferedImage drawToBuffer(NavBarItem item, boolean floating, boolean toolbarVisible, boolean selected, NavBarPanel navbar) {
-    int w = item.getWidth();
-    int h = item.getHeight();
+    int w = 2 * item.getWidth();
+    int h = 2 * item.getHeight();
     int offset = (w - getDecorationOffset());
     int h2 = h / 2;
 

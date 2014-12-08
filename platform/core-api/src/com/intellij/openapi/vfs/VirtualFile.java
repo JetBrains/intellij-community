@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vfs;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
@@ -506,6 +507,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   /**
    * @return Retrieve the charset file has been loaded with (if loaded) and would be saved with (if would).
    */
+  @NotNull
   public Charset getCharset() {
     Charset charset = getStoredCharset();
     if (charset == null) {
@@ -558,6 +560,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   }
 
   public void setBinaryContent(@NotNull byte[] content, long newModificationStamp, long newTimeStamp, Object requestor) throws IOException {
+    ApplicationManager.getApplication().assertWriteAccessAllowed();
     final OutputStream outputStream = getOutputStream(requestor, newModificationStamp, newTimeStamp);
     try {
       outputStream.write(content);

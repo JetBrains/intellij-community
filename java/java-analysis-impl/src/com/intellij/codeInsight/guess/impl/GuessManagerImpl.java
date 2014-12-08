@@ -150,7 +150,7 @@ public class GuessManagerImpl extends GuessManager {
       scope = file;
     }
 
-    DataFlowRunner runner = new DataFlowRunner(scope) {
+    DataFlowRunner runner = new DataFlowRunner() {
       @Override
       protected DfaMemoryState createMemoryState() {
         return new ExpressionTypeMemoryState(getFactory());

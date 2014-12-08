@@ -148,7 +148,7 @@ class ContractInferenceFromSourceTest extends LightCodeInsightFixtureTestCase {
     return true;
   }
 """)
-    assert c == []
+    assert c == ['null -> true']
   }
 
   void "test assertion"() {
@@ -237,6 +237,28 @@ class ContractInferenceFromSourceTest extends LightCodeInsightFixtureTestCase {
         return o1 == null;
     }""")
     assert c == []
+  }
+
+  public void "test return boxed integer"() {
+    def c = inferContracts("""
+    static Object test1(Object o1) {
+        return o1 == null ? 1 : smth();
+    }
+    
+    static native Object smth()
+    """)
+    assert c == ['null -> !null']
+  }
+
+  public void "test return boxed boolean"() {
+    def c = inferContracts("""
+    static Object test1(Object o1) {
+        return o1 == null ? false : smth();
+    }
+    
+    static native Object smth()
+    """)
+    assert c == ['null -> !null']
   }
 
   public void "test boolean autoboxing in delegation"() {
@@ -359,13 +381,13 @@ class ContractInferenceFromSourceTest extends LightCodeInsightFixtureTestCase {
 
   public void "test use delegated method notnull"() {
     def c = inferContracts("""
-    final Object foo(Object bar) {
-        return doo();
+    final Object foo(Object bar, boolean b) {
+        return b ? doo() : null;
     }
 
     @org.jetbrains.annotations.NotNull Object doo() {}
     """)
-    assert c == ['_ -> !null']
+    assert c == ['_, true -> !null', '_, false -> null']
   }
 
   public void "test use delegated method notnull with contracts"() {
@@ -379,7 +401,7 @@ class ContractInferenceFromSourceTest extends LightCodeInsightFixtureTestCase {
       return smth();
     }
     """)
-    assert c == ['_, null -> fail', '_, _ -> !null']
+    assert c == ['_, null -> fail']
   }
 
   public void "test dig into type cast"() {
@@ -389,6 +411,32 @@ class ContractInferenceFromSourceTest extends LightCodeInsightFixtureTestCase {
   }
     """)
     assert c == ['null -> null']
+  }
+
+  public void "test compare with string literal"() {
+    def c = inferContracts("""
+  String cast(String s) {
+    return s == "a" ? "b" : null;
+  }
+    """)
+    assert c == []
+  }
+
+  public void "test return after if without else"() {
+    def c = inferContracts("""
+public static boolean isBlank(String s) {
+        if (s != null) {
+            final int l = s.length();
+            for (int i = 0; i < l; i++) {
+                final char c = s.charAt(i);
+                if (c != ' ') {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }    """)
+    assert c == ['null -> true']
   }
 
   private String inferContract(String method) {

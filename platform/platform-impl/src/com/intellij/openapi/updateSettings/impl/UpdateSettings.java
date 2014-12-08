@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,23 +42,18 @@ import java.util.List;
   storageChooser = LastStorageChooserForWrite.ElementStateLastStorageChooserForWrite.class
 )
 public class UpdateSettings implements PersistentStateComponent<Element>, UserUpdateSettings {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.updateSettings.impl.UpdateSettings"); 
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.updateSettings.impl.UpdateSettings");
 
-  @SuppressWarnings({"WeakerAccess", "CanBeFinal"})
   public JDOMExternalizableStringList myPluginHosts = new JDOMExternalizableStringList();
-
-  @SuppressWarnings({"WeakerAccess", "CanBeFinal"})
   public JDOMExternalizableStringList myKnownUpdateChannels = new JDOMExternalizableStringList();
-
-  @SuppressWarnings({"WeakerAccess", "CanBeFinal"})
   public JDOMExternalizableStringList myIgnoredBuildNumbers = new JDOMExternalizableStringList();
-
   public JDOMExternalizableStringList myOutdatedPlugins = new JDOMExternalizableStringList();
 
   public boolean CHECK_NEEDED = true;
   public long LAST_TIME_CHECKED = 0;
   public String LAST_BUILD_CHECKED = "";
   public String UPDATE_CHANNEL_TYPE = ChannelStatus.RELEASE_CODE;
+  public boolean SECURE_CONNECTION = false;
 
   public static UpdateSettings getInstance() {
     return ServiceManager.getService(UpdateSettings.class);
@@ -68,18 +63,14 @@ public class UpdateSettings implements PersistentStateComponent<Element>, UserUp
     updateDefaultChannel();
   }
 
-  public void saveLastCheckedInfo() {
-    LAST_TIME_CHECKED = System.currentTimeMillis();
-    ApplicationInfo appInfo = ApplicationInfo.getInstance();
-    LAST_BUILD_CHECKED = appInfo.getBuild().asString();
-  }
-
   private void updateDefaultChannel() {
     if (ApplicationInfoImpl.getShadowInstance().isEAP()) {
       UPDATE_CHANNEL_TYPE = ChannelStatus.EAP_CODE;
     }
   }
 
+  @SuppressWarnings("deprecation")
+  @Override
   public Element getState() {
     Element element = new Element("state");
     try {
@@ -91,7 +82,9 @@ public class UpdateSettings implements PersistentStateComponent<Element>, UserUp
     return element;
   }
 
-  public void loadState(final Element state) {
+  @SuppressWarnings("deprecation")
+  @Override
+  public void loadState(Element state) {
     try {
       DefaultJDOMExternalizer.readExternal(this, state);
     }
@@ -134,16 +127,21 @@ public class UpdateSettings implements PersistentStateComponent<Element>, UserUp
     return ChannelStatus.fromCode(UPDATE_CHANNEL_TYPE);
   }
 
-  public void forceCheckForUpdateAfterRestart() {
-    LAST_TIME_CHECKED = 0;
-  }
-
   public List<String> getPluginHosts() {
-    ArrayList<String> hosts = new ArrayList<String>(myPluginHosts);
-    final String pluginHosts = System.getProperty("idea.plugin.hosts");
+    List<String> hosts = new ArrayList<String>(myPluginHosts);
+    String pluginHosts = System.getProperty("idea.plugin.hosts");
     if (pluginHosts != null) {
       ContainerUtil.addAll(hosts, pluginHosts.split(";"));
     }
     return hosts;
+  }
+
+  public void forceCheckForUpdateAfterRestart() {
+    LAST_TIME_CHECKED = 0;
+  }
+
+  public void saveLastCheckedInfo() {
+    LAST_TIME_CHECKED = System.currentTimeMillis();
+    LAST_BUILD_CHECKED = ApplicationInfo.getInstance().getBuild().asString();
   }
 }

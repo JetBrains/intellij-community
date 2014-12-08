@@ -85,6 +85,7 @@ public class CoreProjectEnvironment {
     myProject.registerService(PsiDirectoryFactory.class, new PsiDirectoryFactoryImpl(myPsiManager));
     myProject.registerService(ProjectScopeBuilder.class, createProjectScopeBuilder());
     myProject.registerService(DumbService.class, new MockDumbService(myProject));
+    myProject.registerService(CoreEncodingProjectManager.class, CoreEncodingProjectManager.class);
   }
 
   @SuppressWarnings("MethodMayBeStatic")

@@ -91,8 +91,7 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
       @Override
       public void actionPerformed(ActionEvent e) {
         myManifestAttributesDialog = new CustomManifestAttributesDialog(myWholePanel, myCustomManifestAttributes);
-        myManifestAttributesDialog.show();
-        if (myManifestAttributesDialog.isOK()) {
+        if (myManifestAttributesDialog.showAndGet()) {
           myCustomManifestAttributes = myManifestAttributesDialog.getAttrs();
         }
       }
@@ -317,7 +316,7 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
 
       @Override
       protected boolean isEmpty(JavaFxManifestAttribute element) {
-        return element.getName().isEmpty() && element.getValue().isEmpty();
+        return StringUtil.isEmpty(element.getName()) && StringUtil.isEmpty(element.getValue());
       }
 
       @Override

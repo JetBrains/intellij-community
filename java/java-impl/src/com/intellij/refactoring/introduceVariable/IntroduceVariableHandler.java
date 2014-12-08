@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,21 +61,21 @@ public class IntroduceVariableHandler extends IntroduceVariableBase {
       highlightManager = HighlightManager.getInstance(project);
       EditorColorsManager colorsManager = EditorColorsManager.getInstance();
       TextAttributes attributes = colorsManager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
-      if (occurrences.length > 1 ) {
+      if (occurrences.length > 1) {
         highlightManager.addOccurrenceHighlights(editor, occurrences, attributes, true, highlighters);
       }
     }
 
     IntroduceVariableDialog dialog = new IntroduceVariableDialog(
-            project, expr, occurrences.length, anyAssignmentLHS, declareFinalIfAll,
-            typeSelectorManager,
-            validator);
-    dialog.show();
-    if (!dialog.isOK()) {
+      project, expr, occurrences.length, anyAssignmentLHS, declareFinalIfAll,
+      typeSelectorManager,
+      validator);
+    if (!dialog.showAndGet()) {
       if (occurrences.length > 1) {
         WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
       }
-    } else {
+    }
+    else {
       if (editor != null) {
         for (RangeHighlighter highlighter : highlighters) {
           highlightManager.removeSegmentHighlighter(editor, highlighter);

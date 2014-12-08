@@ -36,7 +36,7 @@ public class AuxiliaryRightPanel extends JPanel {
 
   private final DescriptionLabel myDescriptionLabel;
   private final JLabel myErrorLabel;
-  private final SaveInputComponent mySaveInputComponent;
+  private final ValidatedTextField myValidatedTextField;
   private final CardLayout myLayout;
 
   public AuxiliaryRightPanel(final DescriptionSaveListener descriptionListener) {
@@ -48,7 +48,7 @@ public class AuxiliaryRightPanel extends JPanel {
     myErrorLabel.setOpaque(true);
     myErrorLabel.setBorder(BorderFactory.createEmptyBorder(0, 2, 0, 0));
 
-    mySaveInputComponent = new SaveInputComponent(new SaveInputComponentValidator() {
+    myValidatedTextField = new ValidatedTextField(new SaveInputComponentValidator() {
       @Override
       public void doSave(@NotNull String text) {
         descriptionListener.saveDescription(text.trim());
@@ -57,6 +57,11 @@ public class AuxiliaryRightPanel extends JPanel {
       @Override
       public boolean checkValid(@NotNull String text) {
         return true;
+      }
+
+      @Override
+      public void cancel() {
+        descriptionListener.cancel();
       }
     });
 
@@ -76,7 +81,7 @@ public class AuxiliaryRightPanel extends JPanel {
 
     add(myDescriptionLabel, SHOW_DESCRIPTION_CARD);
     add(myErrorLabel, ERROR_CARD);
-    add(mySaveInputComponent, EDIT_DESCRIPTION_CARD);
+    add(myValidatedTextField, EDIT_DESCRIPTION_CARD);
 
     showDescription(null);
   }
@@ -93,9 +98,9 @@ public class AuxiliaryRightPanel extends JPanel {
     if (startValue == null) {
       startValue = "";
     }
-    mySaveInputComponent.setText(startValue);
+    myValidatedTextField.setText(startValue);
     myLayout.show(this, EDIT_DESCRIPTION_CARD);
-    mySaveInputComponent.requestFocusToTextField();
+    myValidatedTextField.requestFocus();
   }
 
   public void showError(final @NotNull String errorText) {
@@ -103,8 +108,14 @@ public class AuxiliaryRightPanel extends JPanel {
     myLayout.show(this, ERROR_CARD);
   }
 
+  public JPanel getHintLabel() {
+    return myValidatedTextField.getHintLabel();
+  }
+
   public interface DescriptionSaveListener {
     void saveDescription(@NotNull String description);
+
+    void cancel();
   }
 
   private static class DescriptionLabel extends MultiLineLabel {

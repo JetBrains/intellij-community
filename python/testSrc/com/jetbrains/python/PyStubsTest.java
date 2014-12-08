@@ -418,11 +418,11 @@ public class PyStubsTest extends PyTestCase {
     final PyFile file = getTestFile();
     final PyClass c = file.findTopLevelClass("C");
     assertNotNull(c);
-    assertNotNull(c.getMetaClassExpression());
+    final TypeEvalContext context = TypeEvalContext.codeInsightFallback(myFixture.getProject());
+    assertNotNull(c.getMetaClassType(context));
     final PyClass d = file.findTopLevelClass("D");
     assertNotNull(d);
-    assertNull(d.getMetaClassExpression());
-    assertNotNull(d.getMetaClassType(TypeEvalContext.codeInsightFallback(c.getProject())));
+    assertNotNull(d.getMetaClassType(context));
     assertNotParsed(file);
   }
 }

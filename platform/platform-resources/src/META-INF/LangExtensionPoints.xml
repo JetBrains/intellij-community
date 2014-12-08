@@ -315,6 +315,7 @@
     <extensionPoint name="liveTemplateMacro" interface="com.intellij.codeInsight.template.Macro"/>
     <extensionPoint name="liveTemplateOptionalProcessor" interface="com.intellij.codeInsight.template.impl.TemplateOptionalProcessor"/>
     <extensionPoint name="liveTemplatePreprocessor" interface="com.intellij.codeInsight.template.impl.TemplatePreprocessor"/>
+    <extensionPoint name="liveTemplateSubstitutor" interface="com.intellij.codeInsight.template.impl.TemplateSubstitutor"/>
     <extensionPoint name="customLiveTemplate" interface="com.intellij.codeInsight.template.CustomLiveTemplate"/>
     <extensionPoint name="variableTypeCalculator" interface="com.intellij.codeInsight.template.macro.VariableTypeCalculator"/>
 
@@ -354,8 +355,6 @@
     <extensionPoint name="refactoring.moveHandler" interface="com.intellij.refactoring.move.MoveHandlerDelegate"/>
     <extensionPoint name="refactoring.moveDirectoryWithClassesHelper"
                     interface="com.intellij.refactoring.move.moveClassesOrPackages.MoveDirectoryWithClassesHelper"/>
-    <extensionPoint name="codeHighlighting.iconCreator"
-                    interface="com.intellij.codeHighlighting.HighlightDisplayLevel$IconCreator"/>
 
     <extensionPoint name="refactoring.helper" interface="com.intellij.refactoring.RefactoringHelper"/>
     <extensionPoint name="refactoring.inlineHandler" beanClass="com.intellij.lang.LanguageExtensionPoint">

@@ -56,6 +56,7 @@ public class Divider {
     }
   }
 
+  private static final PsiElement HAVE_TO_GET_CHILDREN = PsiUtilCore.NULL_PSI_ELEMENT;
   private static void divideInsideAndOutside(@NotNull PsiFile root,
                                              int startOffset,
                                              int endOffset,
@@ -76,20 +77,20 @@ public class Divider {
     final Stack<PsiElement> children = new Stack<PsiElement>(STARTING_TREE_HEIGHT);
     PsiElement element = root;
 
-    PsiElement child = PsiUtilCore.NULL_PSI_ELEMENT;
+    PsiElement child = HAVE_TO_GET_CHILDREN;
     while (true) {
       ProgressManager.checkCanceled();
 
       for (Condition<PsiElement> filter : filters) {
         if (!filter.value(element)) {
-          assert child == PsiUtilCore.NULL_PSI_ELEMENT;
+          assert child == HAVE_TO_GET_CHILDREN;
           child = null; // do not want to process children
           break;
         }
       }
 
       boolean startChildrenVisiting;
-      if (child == PsiUtilCore.NULL_PSI_ELEMENT) {
+      if (child == HAVE_TO_GET_CHILDREN) {
         startChildrenVisiting = true;
         child = element.getFirstChild();
       }
@@ -126,7 +127,7 @@ public class Divider {
         starts.push(offset);
         elements.push(element);
         element = child;
-        child = PsiUtilCore.NULL_PSI_ELEMENT;
+        child = HAVE_TO_GET_CHILDREN;
       }
     }
 

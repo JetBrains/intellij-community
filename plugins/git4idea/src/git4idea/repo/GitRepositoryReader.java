@@ -78,7 +78,7 @@ class GitRepositoryReader {
   @Nullable
   private static Hash createHash(@Nullable String hash) {
     try {
-      return hash == null ? GitBranch.DUMMY_HASH : HashImpl.build(hash);
+      return hash == null ? null : HashImpl.build(hash);
     }
     catch (Throwable t) {
       LOG.info(t);
@@ -139,7 +139,7 @@ class GitRepositoryReader {
       String branchName = head.ref;
       String hash = readCurrentRevision();  // TODO we know the branch name, so no need to read head twice
       Hash h = createHash(hash);
-      if (h == null) {
+      if (branchName == null || h == null) {
         return null;
       }
       return new GitLocalBranch(branchName, h);
@@ -168,7 +168,16 @@ class GitRepositoryReader {
     if (!headName.exists()) {
       return null;
     }
-    String branchName = DvcsUtil.tryLoadFile(headName);
+
+    String branchName;
+    try {
+      branchName = DvcsUtil.tryLoadFile(headName);
+    }
+    catch (RepoStateException e) {
+      LOG.error(e);
+      return null;
+    }
+
     File branchFile = findBranchFile(branchName);
     if (!branchFile.exists()) { // can happen when rebasing from detached HEAD: IDEA-93806
       return null;
@@ -213,14 +222,20 @@ class GitRepositoryReader {
       return null;
     }
 
-    List<HashAndName> hashAndNames = readPackedRefsFile(new Condition<HashAndName>() {
-      @Override
-      public boolean value(HashAndName hashAndName) {
-        return hashAndName.name.endsWith(ref);
-      }
-    });
-    HashAndName item = ContainerUtil.getFirstItem(hashAndNames);
-    return item == null ? null : item.hash;
+    try {
+      List<HashAndName> hashAndNames = readPackedRefsFile(new Condition<HashAndName>() {
+        @Override
+        public boolean value(HashAndName hashAndName) {
+          return hashAndName.name.endsWith(ref);
+        }
+      });
+      HashAndName item = ContainerUtil.getFirstItem(hashAndNames);
+      return item == null ? null : item.hash;
+    }
+    catch (RepoStateException e) {
+      LOG.error(e);
+      return null;
+    }
   }
 
   /**
@@ -228,7 +243,7 @@ class GitRepositoryReader {
    *                            and return a singleton list of this entry.
    *                            If null, the whole file is read, and all valid entries are returned.
    */
-  private List<HashAndName> readPackedRefsFile(@Nullable final Condition<HashAndName> firstMatchCondition) {
+  private List<HashAndName> readPackedRefsFile(@Nullable final Condition<HashAndName> firstMatchCondition) throws RepoStateException {
     return DvcsUtil.tryOrThrow(new Callable<List<HashAndName>>() {
       @Override
       public List<HashAndName> call() throws Exception {
@@ -292,9 +307,14 @@ class GitRepositoryReader {
   GitBranchesCollection readBranches(@NotNull Collection<GitRemote> remotes) {
     Set<GitLocalBranch> localBranches = readUnpackedLocalBranches();
     Set<GitRemoteBranch> remoteBranches = readUnpackedRemoteBranches(remotes);
-    GitBranchesCollection packedBranches = readPackedBranches(remotes);
-    localBranches.addAll(packedBranches.getLocalBranches());
-    remoteBranches.addAll(packedBranches.getRemoteBranches());
+    try {
+      GitBranchesCollection packedBranches = readPackedBranches(remotes);
+      localBranches.addAll(packedBranches.getLocalBranches());
+      remoteBranches.addAll(packedBranches.getRemoteBranches());
+    }
+    catch (RepoStateException e) {
+      LOG.error(e);
+    }
     return new GitBranchesCollection(localBranches, remoteBranches);
   }
 
@@ -318,13 +338,7 @@ class GitRepositoryReader {
 
   @Nullable
   private static String loadHashFromBranchFile(@NotNull File branchFile) {
-    try {
-      return DvcsUtil.tryLoadFile(branchFile);
-    }
-    catch (RepoStateException e) {  // notify about error but don't break the process
-      LOG.error("Couldn't read " + branchFile, e);
-    }
-    return null;
+    return DvcsUtil.tryLoadFileOrReturn(branchFile, null);
   }
 
   /**
@@ -365,7 +379,7 @@ class GitRepositoryReader {
    * @param remotes
    */
   @NotNull
-  private GitBranchesCollection readPackedBranches(@NotNull final Collection<GitRemote> remotes) {
+  private GitBranchesCollection readPackedBranches(@NotNull final Collection<GitRemote> remotes) throws RepoStateException {
     final Set<GitLocalBranch> localBranches = new HashSet<GitLocalBranch>();
     final Set<GitRemoteBranch> remoteBranches = new HashSet<GitRemoteBranch>();
     if (!myPackedRefsFile.exists()) {
@@ -417,15 +431,22 @@ class GitRepositoryReader {
       return new GitStandardRemoteBranch(remote, branchName, hash);
     }
   }
-
-  @NotNull
+  
+  @Nullable
   private static String readBranchFile(@NotNull File branchFile) {
-    return DvcsUtil.tryLoadFile(branchFile);
+    return DvcsUtil.tryLoadFileOrReturn(branchFile, null);
   }
 
   @NotNull
   private Head readHead() {
-    String headContent = DvcsUtil.tryLoadFile(myHeadFile);
+    String headContent;
+    try {
+      headContent = DvcsUtil.tryLoadFile(myHeadFile);
+    }
+    catch (RepoStateException e) {
+      LOG.error(e);
+      return new Head(false, null);
+    }
     Matcher matcher = BRANCH_PATTERN.matcher(headContent);
     if (matcher.matches()) {
       return new Head(true, matcher.group(1));
@@ -439,7 +460,8 @@ class GitRepositoryReader {
       LOG.info(".git/HEAD has not standard format: [" + headContent + "]. We've parsed branch [" + matcher.group(1) + "]");
       return new Head(true, matcher.group(1));
     }
-    throw new RepoStateException("Invalid format of the .git/HEAD file: [" + headContent + "]");
+    LOG.error(new RepoStateException("Invalid format of the .git/HEAD file: [" + headContent + "]"));
+    return new Head(false, null);
   }
 
   /**
@@ -514,10 +536,10 @@ class GitRepositoryReader {
    * Container to hold two information items: current .git/HEAD value and is Git on branch.
    */
   private static class Head {
-    @NotNull private final String ref;
+    @Nullable private final String ref;
     private final boolean isBranch;
 
-    Head(boolean branch, @NotNull String ref) {
+    Head(boolean branch, @Nullable String ref) {
       isBranch = branch;
       this.ref = ref;
     }

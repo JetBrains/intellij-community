@@ -26,7 +26,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.PlatformUtilsCore;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.xmlb.Accessor;
@@ -136,7 +136,7 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
 
   private void tweakPlatformDefaults() {
     // TODO[anton] consider making all IDEs use the same settings
-    if (PlatformUtilsCore.isAppCode()) {
+    if (PlatformUtils.isAppCode()) {
       SCROLL_TAB_LAYOUT_IN_EDITOR = true;
       ACTIVATE_RIGHT_EDITOR_ON_CLOSE = true;
       SHOW_ICONS_IN_MENUS = false;

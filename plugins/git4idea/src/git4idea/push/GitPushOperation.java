@@ -246,20 +246,21 @@ public class GitPushOperation {
     Map<GitRepository, GitPushRepoResult> results = ContainerUtil.newLinkedHashMap();
     for (GitRepository repository : repositories) {
       PushSpec<GitPushSource, GitPushTarget> spec = myPushSpecs.get(repository);
-      Pair<List<GitPushNativeResult>, String> resultOrError = doPush(repository, spec);
-      LOG.debug("Pushed to " + DvcsUtil.getShortRepositoryName(repository) + ": " + resultOrError);
+      ResultWithOutput resultWithOutput = doPush(repository, spec);
+      LOG.debug("Pushed to " + DvcsUtil.getShortRepositoryName(repository) + ": " + resultWithOutput);
 
       GitLocalBranch source = spec.getSource().getBranch();
       GitPushTarget target = spec.getTarget();
       GitPushRepoResult repoResult;
-      if (resultOrError.second != null) {
-        repoResult = GitPushRepoResult.error(source, target.getBranch(), resultOrError.second);
+      if (resultWithOutput.isError()) {
+        repoResult = GitPushRepoResult.error(source, target.getBranch(), resultWithOutput.getErrorAsString());
       }
       else {
-        List<GitPushNativeResult> result = resultOrError.first;
+        List<GitPushNativeResult> result = resultWithOutput.parsedResults;
         final GitPushNativeResult branchResult = getBranchResult(result);
         if (branchResult == null) {
-          LOG.error("No result for branch among: [" + result + "]");
+          LOG.error("No result for branch among: [" + result + "]\n" +
+                    "Full result: " + resultWithOutput);
           continue;
         }
         List<GitPushNativeResult> tagResults = ContainerUtil.filter(result, new Condition<GitPushNativeResult>() {
@@ -333,8 +334,7 @@ public class GitPushOperation {
   }
 
   @NotNull
-  private Pair<List<GitPushNativeResult>, String> doPush(@NotNull GitRepository repository,
-                                                         @NotNull PushSpec<GitPushSource, GitPushTarget> pushSpec) {
+  private ResultWithOutput doPush(@NotNull GitRepository repository, @NotNull PushSpec<GitPushSource, GitPushTarget> pushSpec) {
     GitPushTarget target = pushSpec.getTarget();
     GitLocalBranch sourceBranch = pushSpec.getSource().getBranch();
     GitRemoteBranch targetBranch = target.getBranch();
@@ -343,12 +343,7 @@ public class GitPushOperation {
     boolean setUpstream = pushSpec.getTarget().isNewBranchCreated() && !branchTrackingInfoIsSet(repository, sourceBranch);
     String tagMode = myTagMode == null ? null : myTagMode.getArgument();
     GitCommandResult res = myGit.push(repository, sourceBranch, targetBranch, myForce, setUpstream, tagMode, progressListener);
-
-    List<GitPushNativeResult> result = GitPushNativeResultParser.parse(res.getOutput());
-    if (result.isEmpty()) {
-      return Pair.create(null, res.getErrorOutputAsJoinedString());
-    }
-    return Pair.create(result, null);
+    return new ResultWithOutput(res);
   }
 
   private static boolean branchTrackingInfoIsSet(@NotNull GitRepository repository, @NotNull final GitLocalBranch source) {
@@ -415,4 +410,27 @@ public class GitPushOperation {
     return updateResult;
   }
 
+  private static class ResultWithOutput {
+    @NotNull private final List<GitPushNativeResult> parsedResults;
+    @NotNull private final GitCommandResult resultOutput;
+
+    ResultWithOutput(@NotNull GitCommandResult resultOutput) {
+      this.resultOutput = resultOutput;
+      this.parsedResults = GitPushNativeResultParser.parse(resultOutput.getOutput());
+    }
+
+    boolean isError() {
+      return parsedResults.isEmpty();
+    }
+
+    @NotNull
+    String getErrorAsString() {
+      return resultOutput.getErrorOutputAsJoinedString();
+    }
+
+    @Override
+    public String toString() {
+      return "Parsed results: " + parsedResults + "\nCommand output:" + resultOutput;
+    }
+  }
 }

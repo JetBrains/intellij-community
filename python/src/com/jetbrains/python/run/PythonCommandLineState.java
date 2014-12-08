@@ -269,7 +269,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
   public void addPredefinedEnvironmentVariables(Map<String, String> envs, boolean passParentEnvs) {
     final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(myConfig.getInterpreterPath());
     if (flavor != null) {
-      flavor.addPredefinedEnvironmentVariables(envs);
+      flavor.addPredefinedEnvironmentVariables(envs, myConfig.getProject());
     }
   }
 
@@ -333,7 +333,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
 
   protected Collection<String> collectPythonPath() {
     final Module module = myConfig.getModule();
-    Set<String> pythonPath = Sets.newHashSet(collectPythonPath(module, myConfig.addContentRoots(), myConfig.addSourceRoots()));
+    Set<String> pythonPath = Sets.newHashSet(collectPythonPath(module, myConfig.shouldAddContentRoots(), myConfig.shouldAddSourceRoots()));
 
     if (isDebug() && getSdkFlavor() instanceof JythonSdkFlavor) { //that fixes Jython problem changing sys.argv on execfile, see PY-8164
       pythonPath.add(PythonHelpersLocator.getHelperPath("pycharm"));

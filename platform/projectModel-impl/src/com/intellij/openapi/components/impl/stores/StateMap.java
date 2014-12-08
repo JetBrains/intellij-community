@@ -36,7 +36,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.util.Arrays;
 import java.util.Collection;
@@ -197,18 +196,8 @@ final class StateMap {
 
   @NotNull
   public static Element unarchiveState(@NotNull byte[] state) {
-    InputStream in = null;
     try {
-      try {
-        in = new SnappyInputStream(new ByteArrayInputStream(state));
-        //noinspection ConstantConditions
-        return JDOMUtil.loadDocument(in).detachRootElement();
-      }
-      finally {
-        if (in != null) {
-          in.close();
-        }
-      }
+      return JDOMUtil.load(new SnappyInputStream(new ByteArrayInputStream(state)));
     }
     catch (IOException e) {
       throw new StateStorageException(e);

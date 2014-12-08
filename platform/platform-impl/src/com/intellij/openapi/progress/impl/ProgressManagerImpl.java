@@ -56,7 +56,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class ProgressManagerImpl extends ProgressManager implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.progress.impl.ProgressManagerImpl");
-  public static final int CHECK_CANCELED_DELAY_MILLIS = 10;
+  static final int CHECK_CANCELED_DELAY_MILLIS = 10;
   private final AtomicInteger myCurrentUnsafeProgressCount = new AtomicInteger(0);
   private final AtomicInteger myCurrentModalProgressCount = new AtomicInteger(0);
 
@@ -321,19 +321,17 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable {
       Set<Thread> threads = threadsUnderIndicator.get(indicator);
       if (threads != null) {
         for (Thread thread : threads) {
-          ProgressIndicator currentIndicator = getCurrentIndicator(thread);
-          boolean underCancelledIndicator = currentIndicator == indicator;
-
-          if (!underCancelledIndicator && currentIndicator instanceof WrappedProgressIndicator) {
-            while(currentIndicator instanceof WrappedProgressIndicator) {
-              ProgressIndicator originalProgressIndicator = ((WrappedProgressIndicator)currentIndicator).getOriginalProgressIndicator();
-              if (originalProgressIndicator == indicator) {
-                underCancelledIndicator = true;
-                break;
-              }
-              currentIndicator = originalProgressIndicator;
+          boolean underCancelledIndicator = false;
+          for (ProgressIndicator currentIndicator = getCurrentIndicator(thread);
+               currentIndicator != null;
+               currentIndicator = currentIndicator instanceof WrappedProgressIndicator ?
+                                  ((WrappedProgressIndicator)currentIndicator).getOriginalProgressIndicator() : null) {
+            if (currentIndicator == indicator) {
+              underCancelledIndicator = true;
+              break;
             }
           }
+
           if (underCancelledIndicator) {
             threadsUnderCanceledIndicator.add(thread);
           }

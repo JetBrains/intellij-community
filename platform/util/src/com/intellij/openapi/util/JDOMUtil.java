@@ -22,7 +22,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.StringInterner;
 import com.intellij.util.io.URLUtil;
-import com.intellij.util.io.fs.IFile;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.CharSequenceReader;
 import com.intellij.util.text.StringFactory;
@@ -34,6 +33,7 @@ import org.jdom.input.SAXBuilder;
 import org.jdom.output.DOMOutputter;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -99,6 +99,8 @@ public class JDOMUtil {
     return addToHash(0, root);
   }
 
+  @SuppressWarnings("unused")
+  @Deprecated
   public static int getTreeHash(@NotNull Document document) {
     return getTreeHash(document.getRootElement());
   }
@@ -158,6 +160,8 @@ public class JDOMUtil {
     return list.toArray(new Element[list.size()]);
   }
 
+  @Deprecated
+  @SuppressWarnings("unused")
   @NotNull
   public static String concatTextNodesValues(@NotNull final Object[] nodes) {
     StringBuilder result = new StringBuilder();
@@ -353,14 +357,8 @@ public class JDOMUtil {
   }
 
   @NotNull
-  public static Document loadDocument(@NotNull final IFile iFile) throws IOException, JDOMException {
-    final BufferedInputStream inputStream = new BufferedInputStream(iFile.openInputStream());
-    try {
-      return loadDocument(inputStream);
-    }
-    finally {
-      inputStream.close();
-    }
+  public static Element load(@NotNull File file) throws JDOMException, IOException {
+    return load(new BufferedInputStream(new FileInputStream(file)));
   }
 
   @NotNull
@@ -371,6 +369,20 @@ public class JDOMUtil {
     }
     finally {
       reader.close();
+    }
+  }
+
+  @Contract("null -> null; !null -> !null")
+  public static Element load(InputStream stream) throws JDOMException, IOException {
+    if (stream == null) {
+      return null;
+    }
+
+    try {
+      return loadDocument(stream).detachRootElement();
+    }
+    finally {
+      stream.close();
     }
   }
 
@@ -451,7 +463,7 @@ public class JDOMUtil {
       writeDocument(document, writer, lineSeparator);
       return writer.toString();
     }
-    catch (IOException e) {
+    catch (IOException ignored) {
       // Can't be
       return "";
     }
@@ -464,8 +476,8 @@ public class JDOMUtil {
       writeParent(element, writer, lineSeparator);
       return writer.toString();
     }
-    catch (IOException ignored) {
-      throw new RuntimeException(ignored);
+    catch (IOException e) {
+      throw new RuntimeException(e);
     }
   }
 
@@ -500,8 +512,8 @@ public class JDOMUtil {
       writeElement(element, writer, lineSeparator);
       return writer.toString();
     }
-    catch (IOException ignored) {
-      throw new RuntimeException(ignored);
+    catch (IOException e) {
+      throw new RuntimeException(e);
     }
   }
 
@@ -604,6 +616,8 @@ public class JDOMUtil {
     return buffer == null ? text : buffer.toString();
   }
 
+  @SuppressWarnings("unused")
+  @Deprecated
   @NotNull
   public static List<Element> getChildrenFromAllNamespaces(@NotNull final Element element, @NotNull @NonNls final String name) {
     List<Element> result = new SmartList<Element>();
@@ -719,6 +733,8 @@ public class JDOMUtil {
     public boolean hasNullAttributes = false;
   }
 
+  @SuppressWarnings("unused")
+  @Deprecated
   public static org.w3c.dom.Element convertToDOM(@NotNull Element e) {
     try {
       final Document d = new Document();
@@ -740,6 +756,8 @@ public class JDOMUtil {
     }
   }
 
+  @SuppressWarnings("unused")
+  @Deprecated
   public static Element convertFromDOM(org.w3c.dom.Element e) {
     return new DOMBuilder().build(e);
   }
@@ -758,7 +776,9 @@ public class JDOMUtil {
     }
   }
 
+  @SuppressWarnings("unused")
   @Nullable
+  @Deprecated
   public static Element cloneElement(@NotNull Element element, @NotNull ElementFilter elementFilter) {
     Element result = new Element(element.getName(), element.getNamespace());
     List<Attribute> attributes = element.getAttributes();

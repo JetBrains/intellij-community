@@ -277,7 +277,10 @@ public class GroovyIntroduceParameterMethodUsagesProcessor implements IntroduceP
                                          @NotNull Project project) {
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(project);
 
-    final String typeText = forcedType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) || forcedType == PsiType.NULL ? null : forcedType.getCanonicalText();
+    final String typeText =
+      forcedType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) || forcedType == PsiType.NULL || forcedType == PsiType.VOID
+      ? null
+      : forcedType.getCanonicalText();
 
     GrParameter parameter = factory.createParameter(parameterName, typeText, parametersOwner);
     parameter.getModifierList().setModifierProperty(PsiModifier.FINAL, isFinal);

@@ -23,15 +23,14 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemAutoImportAware;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
-import com.intellij.openapi.externalSystem.model.DataNode;
-import com.intellij.openapi.externalSystem.model.ExternalSystemException;
-import com.intellij.openapi.externalSystem.model.Key;
-import com.intellij.openapi.externalSystem.model.ProjectSystemId;
+import com.intellij.openapi.externalSystem.model.*;
 import com.intellij.openapi.externalSystem.model.project.LibraryData;
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
 import com.intellij.openapi.externalSystem.service.ParametersEnhancer;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
+import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
+import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListener;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -46,9 +45,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.containers.Stack;
 import com.intellij.util.containers.TransferToEDTQueue;
 import com.intellij.util.lang.UrlClassLoader;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -359,6 +361,84 @@ public class ExternalSystemApiUtil {
       result.add((DataNode<T>)child);
     }
     return result == null ? Collections.<DataNode<T>>emptyList() : result;
+  }
+
+  public static void visit(@Nullable DataNode node, @NotNull Consumer<DataNode> consumer) {
+    if(node == null) return;
+
+    Stack<DataNode> toProcess = ContainerUtil.newStack(node);
+    while (!toProcess.isEmpty()) {
+      DataNode<?> node0 = toProcess.pop();
+      consumer.consume(node0);
+      for (DataNode<?> child : node0.getChildren()) {
+        toProcess.push(child);
+      }
+    }
+  }
+
+  @NotNull
+  public static <T> Collection<DataNode<T>> findAllRecursively(@Nullable final DataNode<?> node,
+                                                               @NotNull final Key<T> key) {
+    if (node == null) return Collections.emptyList();
+
+    final Collection<DataNode<?>> nodes = findAllRecursively(node.getChildren(), new BooleanFunction<DataNode<?>>() {
+      @Override
+      public boolean fun(DataNode<?> node) {
+        return node.getKey().equals(key);
+      }
+    });
+    //noinspection unchecked
+    return new SmartList(nodes);
+  }
+
+  public static Collection<DataNode<?>> findAllRecursively(@NotNull Collection<DataNode<?>> nodes) {
+    return findAllRecursively(nodes, null);
+  }
+
+  @NotNull
+  public static Collection<DataNode<?>> findAllRecursively(@Nullable DataNode<?> node,
+                                                           @Nullable BooleanFunction<DataNode<?>> predicate) {
+    if (node == null) return Collections.emptyList();
+    return findAllRecursively(node.getChildren(), predicate);
+  }
+
+  public static Collection<DataNode<?>> findAllRecursively(@NotNull Collection<DataNode<?>> nodes,
+                                                           @Nullable BooleanFunction<DataNode<?>> predicate) {
+    SmartList<DataNode<?>> result = new SmartList<DataNode<?>>();
+    for (DataNode<?> node : nodes) {
+      if (predicate == null || predicate.fun(node)) {
+        result.add(node);
+      }
+    }
+    for (DataNode<?> node : nodes) {
+      result.addAll(findAllRecursively(node.getChildren(), predicate));
+    }
+    return result;
+  }
+
+  public static DataNode<?> findFirstRecursively(@NotNull DataNode<?> parentNode,
+                                                 @NotNull BooleanFunction<DataNode<?>> predicate) {
+    Queue<DataNode<?>> queue = new LinkedList<DataNode<?>>();
+    queue.add(parentNode);
+    return findInQueue(queue, predicate);
+  }
+
+  public static DataNode<?> findFirstRecursively(@NotNull Collection<DataNode<?>> nodes,
+                                                 @NotNull BooleanFunction<DataNode<?>> predicate) {
+    return findInQueue(new LinkedList<DataNode<?>>(nodes), predicate);
+  }
+
+  private static DataNode<?> findInQueue(@NotNull Queue<DataNode<?>> queue,
+                                         @NotNull BooleanFunction<DataNode<?>> predicate) {
+    while (!queue.isEmpty()) {
+      DataNode node = (DataNode)queue.remove();
+      if (predicate.fun(node)) {
+        return node;
+      }
+      //noinspection unchecked
+      queue.addAll(node.getChildren());
+    }
+    return null;
   }
 
   public static void executeProjectChangeAction(@NotNull final DisposeAwareProjectChange task) {
@@ -683,7 +763,19 @@ public class ExternalSystemApiUtil {
   }
 
   @Nullable
+  public static String getExternalRootProjectPath(@Nullable Module module) {
+    return module != null && !module.isDisposed() ? module.getOptionValue(ExternalSystemConstants.ROOT_PROJECT_PATH_KEY) : null;
+  }
+
+  @Nullable
   public static String getExternalProjectId(@Nullable Module module) {
     return module != null && !module.isDisposed() ? module.getOptionValue(ExternalSystemConstants.LINKED_PROJECT_ID_KEY) : null;
+  }
+
+  public static void subscribe(@NotNull Project project,
+                               @NotNull ProjectSystemId systemId,
+                               @NotNull ExternalSystemSettingsListener listener) {
+    MessageBusConnection connection = project.getMessageBus().connect(project);
+    connection.subscribe(getSettings(project, systemId).getChangesTopic(), listener);
   }
 }

@@ -24,7 +24,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
-import com.intellij.util.PlatformUtilsCore;
+import com.intellij.util.PlatformUtils;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -192,10 +192,10 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
 
   private static String getProductPrefix() {
     String prefix = null;
-    if (PlatformUtilsCore.isCommunity()) {
+    if (PlatformUtils.isIdeaCommunity()) {
       prefix = "IC";
     }
-    else if (PlatformUtilsCore.isIdea()) {
+    else if (PlatformUtils.isIdeaUltimate()) {
       prefix = "IU";
     }
     return prefix;
@@ -496,7 +496,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
         ourShadowInstance.readExternal(doc.getRootElement());
       }
       catch (FileNotFoundException e) {
-        LOG.error("Resource is not in classpath or wrong platform prefix: " + System.getProperty(PlatformUtilsCore.PLATFORM_PREFIX_KEY), e);
+        LOG.error("Resource is not in classpath or wrong platform prefix: " + System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY), e);
       }
       catch (Exception e) {
         LOG.error(e);
@@ -685,26 +685,26 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
       myWhatsNewUrl = whatsnewElement.getAttributeValue(ATTRIBUTE_URL);
     }
 
-    myPluginsListUrl = DEFAULT_PLUGINS_HOST + "/plugins/list/";
-    myPluginsDownloadUrl = DEFAULT_PLUGINS_HOST + "/pluginManager/";
-
     Element pluginsElement = parentNode.getChild(ELEMENT_PLUGINS);
     if (pluginsElement != null) {
-      myPluginManagerUrl = pluginsElement.getAttributeValue(ATTRIBUTE_URL);
-      final String listUrl = pluginsElement.getAttributeValue(ATTRIBUTE_LIST_URL);
-      if (listUrl != null) {
-        myPluginsListUrl = listUrl;
-      }
-      final String downloadUrl = pluginsElement.getAttributeValue(ATTRIBUTE_DOWNLOAD_URL);
-      if (downloadUrl != null) {
-        myPluginsDownloadUrl = downloadUrl;
-      }
+      String url = pluginsElement.getAttributeValue(ATTRIBUTE_URL);
+      myPluginManagerUrl = url != null ? url : DEFAULT_PLUGINS_HOST;
+      boolean closed = StringUtil.endsWith(myPluginManagerUrl, "/");
+
+      String listUrl = pluginsElement.getAttributeValue(ATTRIBUTE_LIST_URL);
+      myPluginsListUrl = listUrl != null ? listUrl : myPluginManagerUrl + (closed ? "" : "/") + "plugins/list/";
+
+      String downloadUrl = pluginsElement.getAttributeValue(ATTRIBUTE_DOWNLOAD_URL);
+      myPluginsDownloadUrl = downloadUrl != null ? downloadUrl : myPluginManagerUrl + (closed ? "" : "/") + "pluginManager/";
+
       if (!getBuild().isSnapshot()) {
         myBuiltinPluginsUrl = pluginsElement.getAttributeValue(ATTRIBUTE_BUILTIN_URL);
       }
     }
     else {
       myPluginManagerUrl = DEFAULT_PLUGINS_HOST;
+      myPluginsListUrl = DEFAULT_PLUGINS_HOST + "/plugins/list/";
+      myPluginsDownloadUrl = DEFAULT_PLUGINS_HOST + "/pluginManager/";
     }
 
     final String pluginsHost = System.getProperty("idea.plugins.host");

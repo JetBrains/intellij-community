@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,9 @@ import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NamedJDOMExternalizable;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,8 +51,8 @@ class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationSto
       private boolean myConfigDirectoryRefreshed;
 
       @Override
-      protected StorageData createStorageData(@NotNull String storageSpec) {
-        return new FileBasedStorage.FileStorageData(ROOT_ELEMENT_NAME);
+      protected StorageData createStorageData(@NotNull String fileSpec, @NotNull String filePath) {
+        return new StorageData(ROOT_ELEMENT_NAME);
       }
 
       @Nullable
@@ -62,11 +64,6 @@ class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationSto
         else {
           return DEFAULT_STORAGE_SPEC;
         }
-      }
-
-      @Override
-      protected String getVersionsFilePath() {
-        return getConfigPath() + "/options/appComponentVersions.xml";
       }
 
       @Override
@@ -86,13 +83,7 @@ class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationSto
           try {
             VirtualFile configDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(getConfigPath());
             if (configDir != null) {
-              VfsUtilCore.visitChildrenRecursively(configDir, new VirtualFileVisitor() {
-                @Override
-                public boolean visitFile(@NotNull VirtualFile file) {
-                  return !"componentVersions".equals(file.getName());
-                }
-              });
-              VfsUtil.markDirtyAndRefresh(false, true, false, configDir);
+              VfsUtil.markDirtyAndRefresh(false, true, true, configDir);
             }
           }
           finally {

@@ -13,11 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.codeInsight.template.impl;
 
-import com.intellij.application.options.ExportSchemeAction;
-import com.intellij.application.options.SchemesToImportPopup;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
@@ -28,7 +25,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -60,14 +56,13 @@ import java.util.*;
 import java.util.List;
 
 public class TemplateListPanel extends JPanel implements Disposable {
-
   private static final String NO_SELECTION = "NoSelection";
   private static final String TEMPLATE_SETTINGS = "TemplateSettings";
   private static final TemplateImpl MOCK_TEMPLATE = new TemplateImpl("mockTemplate-xxx", "mockTemplateGroup-yyy");
   public static final String ABBREVIATION = "<abbreviation>";
   public static final Comparator<TemplateImpl> TEMPLATE_COMPARATOR = new Comparator<TemplateImpl>() {
     @Override
-    public int compare(final TemplateImpl o1, final TemplateImpl o2) {
+    public int compare(@NotNull final TemplateImpl o1, @NotNull final TemplateImpl o2) {
       return o1.getKey().compareToIgnoreCase(o2.getKey());
     }
   };
@@ -126,7 +121,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
 
     Collections.sort(groups, new Comparator<TemplateGroup>() {
       @Override
-      public int compare(final TemplateGroup o1, final TemplateGroup o2) {
+      public int compare(@NotNull TemplateGroup o1, @NotNull TemplateGroup o2) {
         return o1.getName().compareToIgnoreCase(o2.getName());
       }
     });
@@ -226,7 +221,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
     }
     Collections.sort(result, new Comparator<TemplateImpl>(){
       @Override
-      public int compare(final TemplateImpl o1, final TemplateImpl o2) {
+      public int compare(@NotNull final TemplateImpl o1, @NotNull final TemplateImpl o2) {
         final int groupsEqual = o1.getGroupName().compareToIgnoreCase(o2.getGroupName());
         if (groupsEqual != 0) {
           return groupsEqual;
@@ -289,26 +284,6 @@ public class TemplateListPanel extends JPanel implements Disposable {
     }
 
     myDetailsPanel.add(myCurrentTemplateEditor, TEMPLATE_SETTINGS);
-  }
-
-  private Iterable<? extends TemplateImpl> collectAllTemplates() {
-    ArrayList<TemplateImpl> result = new ArrayList<TemplateImpl>();
-    for (TemplateGroup templateGroup : myTemplateGroups) {
-      result.addAll(templateGroup.getElements());
-    }
-    return result;
-  }
-
-  private void exportCurrentGroup() {
-    int selected = getSingleSelectedIndex();
-    if (selected < 0) return;
-
-    ExportSchemeAction.doExport(getGroup(selected), getSchemesManager());
-
-  }
-
-  private static SchemesManager<TemplateGroup, TemplateGroup> getSchemesManager() {
-    return (TemplateSettings.getInstance()).getSchemesManager();
   }
 
   @Nullable
@@ -526,7 +501,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
 
     myTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener(){
       @Override
-      public void valueChanged(final TreeSelectionEvent e) {
+      public void valueChanged(@NotNull final TreeSelectionEvent e) {
         TemplateSettings templateSettings = TemplateSettings.getInstance();
         TemplateImpl template = getTemplate(getSingleSelectedIndex());
         if (template != null) {
@@ -549,7 +524,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
 
     myTree.registerKeyboardAction(new ActionListener() {
       @Override
-      public void actionPerformed(ActionEvent event) {
+      public void actionPerformed(@Nullable ActionEvent event) {
         myCurrentTemplateEditor.focusKey();
       }
     }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), JComponent.WHEN_FOCUSED);
@@ -576,8 +551,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
           @SuppressWarnings("unchecked") Set<String> oldGroupNames = getAllGroups((Map<TemplateImpl, DefaultMutableTreeNode>)event.getAttachedObject());
           TemplateGroup group = getDropGroup(event);
           boolean differentGroup = group != null && !oldGroupNames.contains(group.getName());
-          boolean possible = differentGroup && !getSchemesManager().isShared(group);
-          event.setDropPossible(possible, differentGroup && !possible ? "Cannot modify a shared group" : "");
+          event.setDropPossible(differentGroup, "");
           return true;
         }
       })
@@ -661,50 +635,6 @@ public class TemplateListPanel extends JPanel implements Disposable {
           return super.isEnabled() && !TemplateSettings.getInstance().getDeletedTemplates().isEmpty();
         }
       });
-    if (getSchemesManager().isExportAvailable()) {
-      decorator.addExtraAction(new AnActionButton("Share...", PlatformIcons.EXPORT_ICON) {
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e) {
-          exportCurrentGroup();
-        }
-
-        @Override
-        public void updateButton(AnActionEvent e) {
-          TemplateGroup group = getGroup(getSingleSelectedIndex());
-          e.getPresentation().setEnabled(group != null && !getSchemesManager().isShared(group));
-        }
-      });
-    }
-    if (getSchemesManager().isImportAvailable()) {
-      decorator.addExtraAction(new AnActionButton("Import Shared...", PlatformIcons.IMPORT_ICON) {
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e) {
-          new SchemesToImportPopup<TemplateGroup, TemplateGroup>(TemplateListPanel.this){
-            @Override
-            protected void onSchemeSelected(final TemplateGroup scheme) {
-              for (TemplateImpl newTemplate : scheme.getElements()) {
-                for (TemplateImpl existingTemplate : collectAllTemplates()) {
-                  if (existingTemplate.getKey().equals(newTemplate.getKey())) {
-                    Messages.showMessageDialog(
-                      TemplateListPanel.this,
-                      CodeInsightBundle
-                        .message("dialog.edit.template.error.already.exists", existingTemplate.getKey(), existingTemplate.getGroupName()),
-                      CodeInsightBundle.message("dialog.edit.template.error.title"),
-                      Messages.getErrorIcon()
-                    );
-                    return;
-                  }
-                }
-              }
-              insertNewGroup(scheme);
-              for (TemplateImpl template : scheme.getElements()) {
-                registerTemplate(template);
-              }
-            }
-          }.show(getSchemesManager(), myTemplateGroups);
-        }
-      });
-    }
     return decorator.setToolbarPosition(ActionToolbarPosition.RIGHT);
   }
 
@@ -771,11 +701,9 @@ public class TemplateListPanel extends JPanel implements Disposable {
           Set<String> oldGroups = getAllGroups(templates);
 
           removeAll();
-          SchemesManager<TemplateGroup, TemplateGroup> schemesManager = TemplateSettings.getInstance().getSchemesManager();
-
           for (TemplateGroup group : getTemplateGroups()) {
             final String newGroupName = group.getName();
-            if (!oldGroups.contains(newGroupName) && !schemesManager.isShared(group)) {
+            if (!oldGroups.contains(newGroupName)) {
               add(new DumbAwareAction(newGroupName) {
                 @Override
                 public void actionPerformed(@NotNull AnActionEvent e) {

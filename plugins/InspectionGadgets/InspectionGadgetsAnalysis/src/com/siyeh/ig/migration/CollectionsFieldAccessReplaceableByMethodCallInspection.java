@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2011 Bas Leijdekkers
+ * Copyright 2008-2014 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -181,15 +181,17 @@ public class CollectionsFieldAccessReplaceableByMethodCallInspection
     return new CollectionsFieldAccessReplaceableByMethodCallVisitor();
   }
 
+  @Override
+  public boolean shouldInspect(PsiFile file) {
+    return PsiUtil.isLanguageLevel5OrHigher(file);
+  }
+
   private static class CollectionsFieldAccessReplaceableByMethodCallVisitor
     extends BaseInspectionVisitor {
 
     @Override
     public void visitReferenceExpression(
       PsiReferenceExpression expression) {
-      if (!PsiUtil.isLanguageLevel5OrHigher(expression)) {
-        return;
-      }
       super.visitReferenceExpression(expression);
       @NonNls final String name = expression.getReferenceName();
       @NonNls final String replacement;

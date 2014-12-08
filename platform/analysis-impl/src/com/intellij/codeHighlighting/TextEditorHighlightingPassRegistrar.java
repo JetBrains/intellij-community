@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@
 
 package com.intellij.codeHighlighting;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -90,7 +90,7 @@ public abstract class TextEditorHighlightingPassRegistrar {
         ids = new int[]{Pass.UPDATE_ALL,
           Pass.UPDATE_FOLDING, Pass.UPDATE_OVERRIDEN_MARKERS,
           Pass.EXTERNAL_TOOLS,
-          Pass.LOCAL_INSPECTIONS, Pass.POPUP_HINTS, Pass.POST_UPDATE_ALL};
+          Pass.LOCAL_INSPECTIONS, Pass.POPUP_HINTS};
         break;
     }
     return registerTextEditorHighlightingPass(factory, ids, null, needAdditionalIntentionsPass, -1);

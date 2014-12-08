@@ -49,6 +49,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.impl.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrImmediateClosureSignatureImpl;
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter;
+import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter.ApplicableTo;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
@@ -167,7 +168,6 @@ public class TypesUtil {
   static {
     TYPE_TO_RANK.put(CommonClassNames.JAVA_LANG_BYTE, 1);
     TYPE_TO_RANK.put(CommonClassNames.JAVA_LANG_SHORT, 2);
-    TYPE_TO_RANK.put(CommonClassNames.JAVA_LANG_CHARACTER, 2);
     TYPE_TO_RANK.put(CommonClassNames.JAVA_LANG_INTEGER, 3);
     TYPE_TO_RANK.put(CommonClassNames.JAVA_LANG_LONG, 4);
     TYPE_TO_RANK.put(GroovyCommonClassNames.JAVA_MATH_BIG_INTEGER, 5);
@@ -186,6 +186,7 @@ public class TypesUtil {
     ourQNameToUnboxed.put(CommonClassNames.JAVA_LANG_LONG, PsiType.LONG);
     ourQNameToUnboxed.put(CommonClassNames.JAVA_LANG_FLOAT, PsiType.FLOAT);
     ourQNameToUnboxed.put(CommonClassNames.JAVA_LANG_DOUBLE, PsiType.DOUBLE);
+    ourQNameToUnboxed.put(CommonClassNames.JAVA_LANG_VOID, PsiType.VOID);
   }
 
 
@@ -203,108 +204,76 @@ public class TypesUtil {
     RANK_TO_TYPE.put(9, CommonClassNames.JAVA_LANG_NUMBER);
   }
 
+  /**
+   * @deprecated see {@link #canAssign}
+   */
+  @Deprecated
   public static boolean isAssignable(@Nullable PsiType lType, @Nullable PsiType rType, @NotNull PsiElement context) {
     if (lType == null || rType == null) {
       return false;
     }
+    return canAssign(lType, rType, context, ApplicableTo.ASSIGNMENT) == ConversionResult.OK;
+  }
 
-    if (rType instanceof PsiIntersectionType) {
-      for (PsiType child : ((PsiIntersectionType)rType).getConjuncts()) {
-        if (isAssignable(lType, child, context)) {
-          return true;
+  @NotNull
+  public static ConversionResult canAssign(@NotNull PsiType targetType,
+                                           @NotNull PsiType actualType,
+                                           @NotNull PsiElement context,
+                                           @NotNull ApplicableTo position) {
+    if (actualType instanceof PsiIntersectionType) {
+      for (PsiType child : ((PsiIntersectionType)actualType).getConjuncts()) {
+        if (canAssign(targetType, child, context, position) == ConversionResult.OK) {
+          return ConversionResult.OK;
         }
       }
-      return false;
+      return ConversionResult.ERROR;
     }
-    if (lType instanceof PsiIntersectionType) {
-      for (PsiType child : ((PsiIntersectionType)lType).getConjuncts()) {
-        if (!isAssignable(child, rType, context)) {
-          return false;
+    if (targetType instanceof PsiIntersectionType) {
+      for (PsiType child : ((PsiIntersectionType)targetType).getConjuncts()) {
+        if (canAssign(child, actualType, context, position) != ConversionResult.OK) {
+          return ConversionResult.ERROR;
         }
       }
-      return true;
+      return ConversionResult.OK;
     }
 
-    if (isAssignableWithoutConversions(lType, rType, context)) {
-      return true;
-    }
+    final ConversionResult result = areTypesConvertible(targetType, actualType, context, position);
+    if (result != null) return result;
 
-    Boolean byConversionInMethodCall = isAssignableByConversion(lType, rType, context, true);
-    if (byConversionInMethodCall != null) {
-      return byConversionInMethodCall.booleanValue();
-    }
-
-    if (lType instanceof PsiPrimitiveType && rType == PsiType.NULL) { //check it because now we will wrap primitive type.
-      return false;
+    if (isAssignableWithoutConversions(targetType, actualType, context)) {
+      return ConversionResult.OK;
     }
 
     final PsiManager manager = context.getManager();
     final GlobalSearchScope scope = context.getResolveScope();
+    targetType = boxPrimitiveType(targetType, manager, scope);
+    actualType = boxPrimitiveType(actualType, manager, scope);
 
-    lType = boxPrimitiveType(lType, manager, scope);
-    rType = boxPrimitiveType(rType, manager, scope);
-    if (lType.isAssignableFrom(rType)) {
-      return true;
+    if (targetType.isAssignableFrom(actualType)) {
+      return ConversionResult.OK;
     }
 
-    Boolean byConversion = isAssignableByConversion(lType, rType, context, false);
-    if (byConversion != null) {
-      return byConversion.booleanValue();
-    }
-
-    return false;
+    return ConversionResult.ERROR;
   }
 
-  public static boolean isAssignableByMethodCallConversion(@Nullable PsiType lType,
-                                                           @Nullable PsiType rType,
+  public static boolean isAssignableByMethodCallConversion(@Nullable PsiType targetType,
+                                                           @Nullable PsiType actualType,
                                                            @NotNull PsiElement context) {
-    if (lType == null || rType == null) {
-      return false;
-    }
 
-    if (rType instanceof PsiIntersectionType) {
-      for (PsiType child : ((PsiIntersectionType)rType).getConjuncts()) {
-        if (isAssignableByMethodCallConversion(lType, child, context)) {
-          return true;
-        }
-      }
-      return false;
-    }
-    if (lType instanceof PsiIntersectionType) {
-      for (PsiType child : ((PsiIntersectionType)lType).getConjuncts()) {
-        if (!isAssignableByMethodCallConversion(child, rType, context)) {
-          return false;
-        }
-      }
-      return true;
-    }
-
-    if (isAssignableWithoutConversions(lType, rType, context)) {
-      return true;
-    }
-
-    Boolean byConversion = isAssignableByConversion(lType, rType, context, true);
-    if (byConversion != null) {
-      return byConversion.booleanValue();
-    }
-
-    return false;
+    if (targetType == null || actualType == null) return false;
+    return canAssign(targetType, actualType, context, ApplicableTo.METHOD_PARAMETER) == ConversionResult.OK;
   }
 
   @Nullable
-  private static Boolean isAssignableByConversion(@NotNull PsiType lType,
-                                                  @NotNull PsiType rType,
-                                                  @NotNull PsiElement context,
-                                                  boolean inMethodCall) {
-    if (context instanceof GroovyPsiElement) {
-      for (GrTypeConverter converter : GrTypeConverter.EP_NAME.getExtensions()) {
-        if (inMethodCall == converter.isAllowedInMethodCall()) {
-          final Boolean result = converter.isConvertible(lType, rType, (GroovyPsiElement)context);
-          if (result != null) {
-            return result;
-          }
-        }
-      }
+  private static ConversionResult areTypesConvertible(@NotNull PsiType targetType,
+                                                      @NotNull PsiType actualType,
+                                                      @NotNull PsiElement context,
+                                                      @NotNull ApplicableTo position) {
+    if (!(context instanceof GroovyPsiElement)) return null;
+    for (GrTypeConverter converter : GrTypeConverter.EP_NAME.getExtensions()) {
+      if (!converter.isApplicableTo(position)) continue;
+      final ConversionResult result = converter.isConvertibleEx(targetType, actualType, (GroovyPsiElement)context, position);
+      if (result != null) return result;
     }
     return null;
   }
@@ -418,6 +387,20 @@ public class TypesUtil {
       if (!isAssignableWithoutConversions(typeLeft, typeRight, context)) return Boolean.FALSE;
     }
     return Boolean.TRUE;
+  }
+
+  @NotNull
+  public static ConversionResult canCast(@NotNull PsiType targetType, @NotNull PsiType actualType, @NotNull PsiElement context) {
+    final ConversionResult result = areTypesConvertible(targetType, actualType, context, ApplicableTo.EXPLICIT_CAST);
+    if (result != null) return result;
+    return TypeConversionUtil.areTypesConvertible(targetType, actualType) ? ConversionResult.OK : ConversionResult.ERROR;
+  }
+
+  @NotNull
+  public static ConversionResult canAssignWithinMultipleAssignment(@NotNull PsiType targetType,
+                                                                   @NotNull PsiType actualType,
+                                                                   @NotNull PsiElement context) {
+    return isAssignableWithoutConversions(targetType, actualType, context) ? ConversionResult.OK : ConversionResult.ERROR;
   }
 
   public static boolean isNumericType(@Nullable PsiType type) {
@@ -724,14 +707,11 @@ public class TypesUtil {
   }
 
   @Nullable
-  public static PsiType substituteBoxAndNormalizeType(@Nullable PsiType type,
-                                                      @NotNull PsiSubstitutor substitutor,
-                                                      @Nullable SpreadState state, @NotNull GrExpression expression) {
+  public static PsiType substituteAndNormalizeType(@Nullable PsiType type,
+                                                   @NotNull PsiSubstitutor substitutor,
+                                                   @Nullable SpreadState state, @NotNull GrExpression expression) {
     if (type == null) return null;
-    GlobalSearchScope resolveScope = expression.getResolveScope();
-    PsiManager manager = expression.getManager();
     type = substitutor.substitute(type);
-    type = boxPrimitiveType(type, manager, resolveScope);
     if (type == null) return null;
     type = PsiImplUtil.normalizeWildcardTypeByPosition(type, expression);
     type = SpreadState.apply(type, state, expression.getProject());
@@ -874,4 +854,11 @@ public class TypesUtil {
     return null;
   }
 
+  public static boolean isEnum(PsiType type) {
+    if (type instanceof PsiClassType) {
+      final PsiClass resolved = ((PsiClassType)type).resolve();
+      return resolved != null && resolved.isEnum();
+    }
+    return false;
+  }
 }

@@ -330,6 +330,14 @@ public class NewMethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testVarargsParametersCountComparison() throws Exception {
+    doTest(true);
+  }
+
+  public void testPotentialCompatibilityWithInvalidShape() throws Exception {
+    doTest(true);
+  }
+
   private void doTest() {
     doTest(false);
   }

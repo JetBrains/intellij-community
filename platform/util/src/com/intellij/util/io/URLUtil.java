@@ -21,7 +21,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.Base64Converter;
 import gnu.trove.TIntArrayList;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +30,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.nio.charset.Charset;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
@@ -51,23 +49,23 @@ public class URLUtil {
   private URLUtil() { }
 
   /**
-   * Opens a url stream. The semantics is the sames as {@link java.net.URL#openStream()}. The
+   * Opens a url stream. The semantics is the sames as {@link URL#openStream()}. The
    * separate method is needed, since jar URLs open jars via JarFactory and thus keep them
    * mapped into memory.
    */
   @NotNull
   public static InputStream openStream(@NotNull URL url) throws IOException {
-    @NonNls String protocol = url.getProtocol();
+    String protocol = url.getProtocol();
     return protocol.equals(JAR_PROTOCOL) ? openJarStream(url) : url.openStream();
   }
 
   @NotNull
-  public static InputStream openResourceStream(final URL url) throws IOException {
+  public static InputStream openResourceStream(@NotNull URL url) throws IOException {
     try {
       return openStream(url);
     }
-    catch(FileNotFoundException ex) {
-      @NonNls final String protocol = url.getProtocol();
+    catch (FileNotFoundException ex) {
+      String protocol = url.getProtocol();
       String file = null;
       if (protocol.equals(FILE_PROTOCOL)) {
         file = url.getFile();
@@ -75,7 +73,7 @@ public class URLUtil {
       else if (protocol.equals(JAR_PROTOCOL)) {
         int pos = url.getFile().indexOf("!");
         if (pos >= 0) {
-          file = url.getFile().substring(pos+1);
+          file = url.getFile().substring(pos + 1);
         }
       }
       if (file != null && file.startsWith("/")) {
@@ -101,18 +99,18 @@ public class URLUtil {
     }
 
     return new FilterInputStream(zipFile.getInputStream(zipEntry)) {
-        @Override
-        public void close() throws IOException {
-          super.close();
-          zipFile.close();
-        }
-      };
+      @Override
+      public void close() throws IOException {
+        super.close();
+        zipFile.close();
+      }
+    };
   }
 
   /**
    * Splits .jar URL along a separator and strips "jar" and "file" prefixes if any.
    * Returns a pair of path to a .jar file and entry name inside a .jar, or null if the URL does not contain a separator.
-   *
+   * <p/>
    * E.g. "jar:file:///path/to/jar.jar!/resource.xml" is converted into ["/path/to/jar.jar", "resource.xml"].
    */
   @Nullable
@@ -169,7 +167,7 @@ public class URLUtil {
           for (int j = 0; j < bytes.size(); j++) {
             bytesArray[j] = (byte)bytes.getQuick(j);
           }
-          decoded.append(new String(bytesArray, Charset.forName("UTF-8")));
+          decoded.append(new String(bytesArray, CharsetToolkit.UTF8_CHARSET));
           continue;
         }
       }
@@ -181,13 +179,10 @@ public class URLUtil {
   }
 
   private static int decode(char c) {
-      if ((c >= '0') && (c <= '9'))
-          return c - '0';
-      if ((c >= 'a') && (c <= 'f'))
-          return c - 'a' + 10;
-      if ((c >= 'A') && (c <= 'F'))
-          return c - 'A' + 10;
-      return -1;
+    if ((c >= '0') && (c <= '9')) return c - '0';
+    if ((c >= 'a') && (c <= 'f')) return c - 'a' + 10;
+    if ((c >= 'A') && (c <= 'F')) return c - 'A' + 10;
+    return -1;
   }
 
   public static boolean containsScheme(@NotNull String url) {
@@ -211,7 +206,9 @@ public class URLUtil {
     if (matcher.matches()) {
       try {
         String content = matcher.group(4);
-        return ";base64".equalsIgnoreCase(matcher.group(3)) ? Base64Converter.decode(content.getBytes(CharsetToolkit.UTF8_CHARSET)) : content.getBytes(CharsetToolkit.UTF8_CHARSET);
+        return ";base64".equalsIgnoreCase(matcher.group(3))
+               ? Base64Converter.decode(content.getBytes(CharsetToolkit.UTF8_CHARSET))
+               : content.getBytes(CharsetToolkit.UTF8_CHARSET);
       }
       catch (IllegalArgumentException e) {
         return null;

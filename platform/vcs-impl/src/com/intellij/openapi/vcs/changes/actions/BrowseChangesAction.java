@@ -48,16 +48,18 @@ public class BrowseChangesAction extends AnAction implements DumbAware {
       vcsConfiguration.CHANGE_BROWSER_SETTINGS.put(vcs.getName(), settings);
     }
     CommittedChangesFilterDialog dlg = new CommittedChangesFilterDialog(project, provider.createFilterUI(true), settings);
-    dlg.show();
-    if (!dlg.isOK()) return;
+    if (!dlg.showAndGet()) {
+      return;
+    }
 
     int maxCount = 0;
     if (!settings.isAnyFilterSpecified()) {
-      int rc = Messages.showYesNoCancelDialog(project, VcsBundle.message("browse.changes.no.filter.prompt"), VcsBundle.message("browse.changes.title"),
-                                     VcsBundle.message("browse.changes.show.recent.button"),
-                                     VcsBundle.message("browse.changes.show.all.button"),
-                                     CommonBundle.getCancelButtonText(),
-                                    Messages.getQuestionIcon());
+      int rc = Messages
+        .showYesNoCancelDialog(project, VcsBundle.message("browse.changes.no.filter.prompt"), VcsBundle.message("browse.changes.title"),
+                               VcsBundle.message("browse.changes.show.recent.button"),
+                               VcsBundle.message("browse.changes.show.all.button"),
+                               CommonBundle.getCancelButtonText(),
+                               Messages.getQuestionIcon());
       if (rc == Messages.CANCEL) {
         return;
       }

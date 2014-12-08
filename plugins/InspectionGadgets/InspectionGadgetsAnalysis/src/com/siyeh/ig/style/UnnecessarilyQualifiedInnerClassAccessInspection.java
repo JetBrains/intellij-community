@@ -156,9 +156,8 @@ public class UnnecessarilyQualifiedInnerClassAccessInspection extends BaseInspec
       if (referenceClass == null) {
         return;
       }
-      if (!referenceClass.equals(qualifierTarget) ||
-          PsiTreeUtil.isAncestor(referenceClass.getModifierList(),
-                                 reference, true)) {
+      final PsiElement brace = referenceClass.getLBrace();
+      if (!referenceClass.equals(qualifierTarget) || brace != null && brace.getTextOffset() > reference.getTextOffset()) {
         if (ignoreReferencesNeedingImport &&
             (PsiTreeUtil.isAncestor(referenceClass, qualifierTarget,
                                     true) ||

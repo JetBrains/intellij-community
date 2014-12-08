@@ -1,4 +1,4 @@
-// "Create Local Variable 'foo'" "true"
+// "Create local variable 'foo'" "true"
 import java.util.*;
 class Test {
   {

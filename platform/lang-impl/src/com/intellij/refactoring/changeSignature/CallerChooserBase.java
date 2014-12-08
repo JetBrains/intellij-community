@@ -53,10 +53,7 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Enumeration;
-import java.util.Set;
+import java.util.*;
 
 public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrapper {
   private final M myMethod;
@@ -74,6 +71,14 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
   protected abstract MethodNodeBase<M> createTreeNode(M method, HashSet<M> called, Runnable cancelCallback);
 
   protected abstract M[] findDeepestSuperMethods(M method);
+
+  protected String getEmptyCalleeText() {
+    return "";
+  }
+
+  protected String getEmptyCallerText() {
+    return "";
+  }
 
   public CallerChooserBase(M method, Project project, String title, Tree previousTree, String fileName, Consumer<Set<M>> callback) {
     super(true);
@@ -139,9 +144,9 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
 
   private void updateEditorTexts(final MethodNodeBase<M> node) {
     final MethodNodeBase<M> parentNode = (MethodNodeBase)node.getParent();
-    final String callerText = node != myRoot ? getText(node.getMethod()) : "";
+    final String callerText = node != myRoot ? getText(node.getMethod()) : getEmptyCallerText();
     final Document callerDocument = myCallerEditor.getDocument();
-    final String calleeText = node != myRoot ? getText(parentNode.getMethod()) : "";
+    final String calleeText = node != myRoot ? getText(parentNode.getMethod()) : getEmptyCalleeText();
     final Document calleeDocument = myCalleeEditor.getDocument();
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -264,6 +269,10 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
     return tree;
   }
 
+  protected M getTopMethod() {
+    return myMethod;
+  }
+  
   private void getSelectedMethods(Set<M> methods) {
     MethodNodeBase<M> node = myRoot;
     getSelectedMethodsInner(node, methods);
@@ -284,6 +293,22 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
       final Enumeration children = node.children();
       while (children.hasMoreElements()) {
         getSelectedMethodsInner((MethodNodeBase)children.nextElement(), allMethods);
+      }
+    }
+  }
+
+  protected Set<MethodNodeBase<M>> getSelectedNodes() {
+    final Set<MethodNodeBase<M>> nodes = new LinkedHashSet<MethodNodeBase<M>>();
+    collectSelectedNodes(myRoot, nodes);
+    return nodes;
+  }
+  
+  private void collectSelectedNodes(final MethodNodeBase<M> node, final Set<MethodNodeBase<M>> nodes) {
+    if (node.isChecked()) {
+      nodes.add(node);
+      final Enumeration children = node.children();
+      while (children.hasMoreElements()) {
+        collectSelectedNodes((MethodNodeBase)children.nextElement(), nodes);
       }
     }
   }

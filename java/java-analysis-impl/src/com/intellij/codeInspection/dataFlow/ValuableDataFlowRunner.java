@@ -34,7 +34,7 @@ import java.util.Set;
 public class ValuableDataFlowRunner extends DataFlowRunner {
 
   protected ValuableDataFlowRunner(PsiElement block) {
-    super(block);
+    super();
   }
 
   @Override

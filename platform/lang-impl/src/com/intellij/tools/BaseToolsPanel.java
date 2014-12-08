@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -134,8 +134,7 @@ public abstract class BaseToolsPanel<T extends Tool> extends JPanel {
         tool.setShownInSearchResultsPopup(true);
         tool.setEnabled(true);
         dlg.setData(tool, getGroups());
-        dlg.show();
-        if (dlg.isOK()) {
+        if (dlg.showAndGet()) {
           insertNewTool(dlg.getData(), true);
         }
         myTree.requestFocus();
@@ -173,8 +172,7 @@ public abstract class BaseToolsPanel<T extends Tool> extends JPanel {
           Tool toolCopy = new Tool();
           toolCopy.copyFrom(originalTool);
           dlg.setData(toolCopy, getGroups());
-          dlg.show();
-          if (dlg.isOK()) {
+          if (dlg.showAndGet()) {
             insertNewTool(dlg.getData(), true);
           }
           myTree.requestFocus();
@@ -451,8 +449,7 @@ public abstract class BaseToolsPanel<T extends Tool> extends JPanel {
         String oldGroupName = selected.getGroup();
         ToolEditorDialog dlg = createToolEditorDialog(ToolsBundle.message("tools.edit.title"));
         dlg.setData(selected, getGroups());
-        dlg.show();
-        if (dlg.isOK()) {
+        if (dlg.showAndGet()) {
           selected.copyFrom(dlg.getData());
           String newGroupName = selected.getGroup();
           if (!Comparing.equal(oldGroupName, newGroupName)) {

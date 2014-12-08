@@ -177,9 +177,11 @@ public class VcsFileStatusProvider implements FileStatusProvider, VcsBaseContent
       String content = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
         @Override
         public String compute() {
+          if (!file.isValid()) return null;
           return LoadTextUtil.loadText(file).toString();
         }
       });
+      if (content == null) return null;
       return Pair.create(VcsRevisionNumber.NULL, content);
     }
 

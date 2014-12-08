@@ -179,7 +179,7 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
             @Override
             public void visitReturnStatement(final PsiReturnStatement statement) {
               super.visitReturnStatement(statement);
-              if (PsiTreeUtil.getParentOfType(statement, PsiMethod.class) != myMethod) return;
+              if (PsiTreeUtil.getParentOfType(statement, PsiMethod.class, PsiLambdaExpression.class) != myMethod) return;
               final PsiExpression returnValue = statement.getReturnValue();
               if (returnValue != null) {
                 returnTypes.add(returnValue.getType());

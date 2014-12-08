@@ -27,10 +27,12 @@ import java.util.*;
 
 /**
  * A drop-in replacement of {@link org.picocontainer.defaults.ConstructorInjectionComponentAdapter}
- * The same code (generified and cleaned up) but without constructor caching (hence taking up less memory)
+ * The same code (generified and cleaned up) but without constructor caching (hence taking up less memory).
+ * This class also inlines instance caching (e.g. it doesn't need to be wrapped in a CachingComponentAdapter).
  */
 @SuppressWarnings("ClassNameSameAsAncestorName")
 public class ConstructorInjectionComponentAdapter extends org.picocontainer.defaults.ConstructorInjectionComponentAdapter {
+  private Object myInstance;
 
   public ConstructorInjectionComponentAdapter(final Object componentKey, final Class componentImplementation, Parameter[] parameters, boolean allowNonPublicClasses, ComponentMonitor monitor, LifecycleStrategy lifecycleStrategy) throws AssignabilityRegistrationException, NotConcreteRegistrationException {
     super(componentKey, componentImplementation, parameters, allowNonPublicClasses, monitor, lifecycleStrategy);
@@ -46,6 +48,17 @@ public class ConstructorInjectionComponentAdapter extends org.picocontainer.defa
 
   public ConstructorInjectionComponentAdapter(Object componentKey, Class componentImplementation) throws AssignabilityRegistrationException, NotConcreteRegistrationException {
     this(componentKey, componentImplementation, null);
+  }
+
+  @Override
+  public Object getComponentInstance(PicoContainer container) throws PicoInitializationException, PicoIntrospectionException,
+                                                                     AssignabilityRegistrationException, NotConcreteRegistrationException {
+    Object instance = myInstance;
+    if (instance == null) {
+      instance = super.getComponentInstance(container);
+      myInstance = instance;
+    }
+    return instance;
   }
 
   protected Constructor getGreediestSatisfiableConstructor(PicoContainer container) throws

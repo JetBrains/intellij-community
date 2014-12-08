@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,9 @@ package com.intellij.ide.todo;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.NamedComponent;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.editor.colors.EditorColorsListener;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
@@ -38,7 +41,7 @@ import java.util.List;
 /**
  * @author Vladimir Kondratyev
  */
-public class TodoConfiguration implements NamedComponent, JDOMExternalizable {
+public class TodoConfiguration implements NamedComponent, JDOMExternalizable, Disposable {
   private TodoPattern[] myTodoPatterns;
   private TodoFilter[] myTodoFilters;
   private IndexPattern[] myIndexPatterns;
@@ -51,12 +54,19 @@ public class TodoConfiguration implements NamedComponent, JDOMExternalizable {
   @NonNls private static final String ELEMENT_FILTER = "filter";
   private final MessageBus myMessageBus;
 
-  /**
-   * public for upsource
-   */
-  public TodoConfiguration(@NotNull MessageBus messageBus) {
+  public TodoConfiguration(@NotNull MessageBus messageBus, EditorColorsManager manager) {
     myMessageBus = messageBus;
+    manager.addEditorColorsListener(new EditorColorsListener() {
+      @Override
+      public void globalSchemeChange(EditorColorsScheme scheme) {
+        colorSettingsChanged();
+      }
+    }, this);
     resetToDefaultTodoPatterns();
+  }
+
+  @Override
+  public void dispose() {
   }
 
   public void resetToDefaultTodoPatterns() {
@@ -147,12 +157,18 @@ public class TodoConfiguration implements NamedComponent, JDOMExternalizable {
     myPropertyChangeMulticaster.getMulticaster().propertyChange(new PropertyChangeEvent(this, PROP_TODO_FILTERS, oldFilters, filters));
   }
 
+  /**
+   * @deprecated use {@link TodoConfiguration#addPropertyChangeListener(PropertyChangeListener, Disposable)} instead
+   */
   public void addPropertyChangeListener(@NotNull PropertyChangeListener listener) {
     myPropertyChangeMulticaster.addListener(listener);
   }
   public void addPropertyChangeListener(@NotNull PropertyChangeListener listener, @NotNull Disposable parentDisposable) {
     myPropertyChangeMulticaster.addListener(listener,parentDisposable);
   }
+  /**
+   * @deprecated use {@link TodoConfiguration#addPropertyChangeListener(PropertyChangeListener, Disposable)} instead
+   */
   public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) {
     myPropertyChangeMulticaster.removeListener(listener);
   }

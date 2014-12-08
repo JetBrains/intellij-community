@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.maddyhome.idea.copyright;
 
 import com.intellij.profile.ProfileEx;
+import com.intellij.util.xmlb.SmartSerializer;
 import com.maddyhome.idea.copyright.pattern.EntityUtil;
 
 public class CopyrightProfile extends ProfileEx {
+  @SuppressWarnings("SpellCheckingInspection")
   public static final String DEFAULT_COPYRIGHT_NOTICE =
     EntityUtil.encode("Copyright (c) $today.year. Lorem ipsum dolor sit amet, consectetur adipiscing elit. \n" +
                       "Morbi non lorem porttitor neque feugiat blandit. Ut vitae ipsum eget quam lacinia accumsan. \n" +
@@ -27,17 +28,17 @@ public class CopyrightProfile extends ProfileEx {
                       "Proin dapibus sapien vel ante. Aliquam erat volutpat. Pellentesque sagittis ligula eget metus. \n" +
                       "Vestibulum commodo. Ut rhoncus gravida arcu. ");
 
-  public String notice = DEFAULT_COPYRIGHT_NOTICE;
-  public String keyword = EntityUtil.encode("Copyright");
-  public String allowReplaceKeyword = "";
+  private String notice = DEFAULT_COPYRIGHT_NOTICE;
+  private String keyword = EntityUtil.encode("Copyright");
+  private String allowReplaceKeyword = "";
 
   //read external
   public CopyrightProfile() {
-    super("");
+    super("", new SmartSerializer());
   }
 
   public CopyrightProfile(String profileName) {
-    super(profileName);
+    super(profileName, new SmartSerializer());
   }
 
   public String getNotice() {

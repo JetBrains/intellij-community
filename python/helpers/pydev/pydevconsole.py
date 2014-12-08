@@ -39,10 +39,13 @@ from pydev_console_utils import BaseInterpreterInterface, BaseStdIn
 from pydev_console_utils import CodeFragment
 
 IS_PYTHON_3K = False
+IS_PY24 = False
 
 try:
     if sys.version_info[0] == 3:
         IS_PYTHON_3K = True
+    elif sys.version_info[0] == 2 and sys.version_info[1] == 4:
+        IS_PY24 = True
 except:
     #That's OK, not all versions of python have sys.version_info
     pass
@@ -272,10 +275,13 @@ def start_server(host, port, interpreter):
     from pydev_imports import SimpleXMLRPCServer as XMLRPCServer  #@Reimport
 
     try:
-        server = XMLRPCServer((host, port), logRequests=False, allow_none=True)
+        if IS_PY24:
+            server = XMLRPCServer((host, port), logRequests=False)
+        else:
+            server = XMLRPCServer((host, port), logRequests=False, allow_none=True)
 
     except:
-        sys.stderr.write('Error starting server with host: %s, port: %s, client_port: %s\n' % (host, port, client_port))
+        sys.stderr.write('Error starting server with host: %s, port: %s, client_port: %s\n' % (host, port, interpreter.client_port))
         raise
 
     # Tell UMD the proper default namespace
@@ -303,7 +309,7 @@ def start_server(host, port, interpreter):
         (h, port) = server.socket.getsockname()
 
         print(port)
-        print(client_port)
+        print(interpreter.client_port)
 
 
     sys.stderr.write(interpreter.get_greeting_msg())

@@ -212,5 +212,7 @@ public class FileUtilLightTest {
     assertThat(FileUtil.sanitizeFileName("12_"), sameInstance("12_"));
     assertThat(FileUtil.sanitizeFileName("12_  123"), equalTo("12___123"));
     assertThat(FileUtil.sanitizeFileName(" 12\u2026123"), equalTo("_12123"));
+
+    assertThat(FileUtil.sanitizeFileName("a+b+c"), equalTo("a_b_c"));
   }
 }

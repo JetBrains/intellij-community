@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2013 Bas Leijdekkers
+ * Copyright 2011-2014 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -124,18 +124,19 @@ public class HtmlTagCanBeJavadocTagInspection extends BaseInspection {
   }
 
   @Override
+  public boolean shouldInspect(PsiFile file) {
+    return PsiUtil.isLanguageLevel5OrHigher(file);
+  }
+
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new HtmlTagCanBeJavaDocTagVisitor();
   }
 
   private static class HtmlTagCanBeJavaDocTagVisitor extends BaseInspectionVisitor {
-
     @Override
     public void visitDocToken(PsiDocToken token) {
       super.visitDocToken(token);
-      if (!PsiUtil.isLanguageLevel5OrHigher(token)) {
-        return;
-      }
       final IElementType tokenType = token.getTokenType();
       if (!JavaDocTokenType.DOC_COMMENT_DATA.equals(tokenType)) {
         return;

@@ -289,7 +289,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
         }
         try {
           myEventRequestManager.deleteEventRequest(request);
-        } catch (Exception e) {
+        } catch (ArrayIndexOutOfBoundsException e) {
           LOG.error("Exception in EventRequestManager.deleteEventRequest", e, ThreadDumper.dumpThreadsToString());
         }
       }

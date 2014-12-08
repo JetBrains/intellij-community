@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@
 package com.intellij;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.containers.ConcurrentSoftValueHashMap;
 import com.intellij.util.containers.ConcurrentWeakFactoryMap;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -73,7 +73,7 @@ public abstract class AbstractBundle {
     new ConcurrentWeakFactoryMap<ClassLoader, Map<String, ResourceBundle>>() {
       @Override
       protected Map<String, ResourceBundle> create(ClassLoader key) {
-        return new ConcurrentSoftValueHashMap<String, ResourceBundle>();
+        return ContainerUtil.createConcurrentSoftValueMap();
       }
     };
 

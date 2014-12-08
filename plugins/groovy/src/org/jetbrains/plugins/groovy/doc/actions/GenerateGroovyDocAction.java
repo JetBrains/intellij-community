@@ -53,8 +53,7 @@ public final class GenerateGroovyDocAction extends AnAction implements DumbAware
     }
 
     final GenerateGroovyDocDialog dialog = new GenerateGroovyDocDialog(project, configuration);
-    dialog.show();
-    if (!dialog.isOK()) {
+    if (!dialog.showAndGet()) {
       return;
     }
 

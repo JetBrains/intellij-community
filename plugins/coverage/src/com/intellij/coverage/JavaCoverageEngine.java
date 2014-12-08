@@ -389,6 +389,15 @@ public class JavaCoverageEngine extends CoverageEngine {
     }
     buf.append(lineData.getHits()).append("\n");
 
+
+    for (JavaCoverageEngineExtension extension : Extensions.getExtensions(JavaCoverageEngineExtension.EP_NAME)) {
+      String report = extension.generateBriefReport(editor, psiFile, lineNumber, startOffset, endOffset, lineData);
+      if (report != null) {
+        buf.append(report);
+        return report;
+      }
+    }
+
     final List<PsiExpression> expressions = new ArrayList<PsiExpression>();
 
     final Project project = editor.getProject();
@@ -584,7 +593,7 @@ public class JavaCoverageEngine extends CoverageEngine {
               return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
                 public String compute() {
                   final PsiClass psiClass = ClassUtil.findPsiClassByJVMName(PsiManager.getInstance(project), classname);
-                  return psiClass != null ? psiClass.getContainingFile().getText() : "";
+                  return psiClass != null ? psiClass.getNavigationElement().getContainingFile().getText() : "";
                 }
               });
             }

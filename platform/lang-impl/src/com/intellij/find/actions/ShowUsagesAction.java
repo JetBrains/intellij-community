@@ -539,8 +539,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
                                        Editor editor,
                                        int maxUsages) {
     AbstractFindUsagesDialog dialog = handler.getFindUsagesDialog(false, false, false);
-    dialog.show();
-    if (dialog.isOK()) {
+    if (dialog.showAndGet()) {
       dialog.calcFindUsagesOptions();
       FindUsagesOptions options = handler.getFindUsagesOptions(DataManager.getInstance().getDataContext());
       showElementUsages(editor, popupPosition, handler, maxUsages, options);

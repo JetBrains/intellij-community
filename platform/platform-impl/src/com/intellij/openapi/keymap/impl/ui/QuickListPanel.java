@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,12 +20,12 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ex.QuickList;
-import com.intellij.openapi.actionSystem.ex.QuickListsManager;
 import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.KeymapManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -33,19 +33,19 @@ import java.awt.event.MouseEvent;
 
 public class QuickListPanel {
   private JPanel myPanel;
-  private JBList myActionsList;
+  private final JBList myActionsList;
   private JTextField myDisplayName;
   private JTextField myDescription;
   private JPanel myListPanel;
   private final QuickList[] myAllQuickLists;
 
-  public QuickListPanel(QuickList origin, final QuickList[] allQuickLists, Project project) {
+  public QuickListPanel(QuickList origin, final QuickList[] allQuickLists) {
     myAllQuickLists = allQuickLists;
 
     myActionsList = new JBList(new DefaultListModel());
     myActionsList.setCellRenderer(new MyListCellRenderer());
     myActionsList.getEmptyText().setText(KeyMapBundle.message("no.actions"));
-    myActionsList.setEnabled(!QuickListsManager.getInstance().getSchemesManager().isShared(origin));
+    myActionsList.setEnabled(true);
 
     new DoubleClickListener() {
       @Override
@@ -64,7 +64,7 @@ public class QuickListPanel {
           }
         }).addExtraAction(new AnActionButton("Add Separator", AllIcons.General.SeparatorH) {
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@Nullable AnActionEvent e) {
           addSeparator();
         }
       }).setButtonComparator("Add", "Add Separator", "Remove", "Up", "Down").createPanel(), BorderLayout.CENTER);
@@ -95,9 +95,7 @@ public class QuickListPanel {
 
   private void includeSelectedAction() {
     final ChooseActionsDialog dlg = new ChooseActionsDialog(myActionsList, KeymapManager.getInstance().getActiveKeymap(), myAllQuickLists);
-    dlg.show();
-
-    if (dlg.isOK()) {
+    if (dlg.showAndGet()) {
       String[] ids = dlg.getTreeSelectedActionIds();
       for (String id : ids) {
         includeActionId(id);
@@ -118,8 +116,7 @@ public class QuickListPanel {
   }
 
   private void addSeparator() {
-    DefaultListModel model = (DefaultListModel)myActionsList.getModel();
-    model.addElement(QuickList.SEPARATOR_ID);
+    ((DefaultListModel)myActionsList.getModel()).addElement(QuickList.SEPARATOR_ID);
   }
 
   public JList getActionsList() {
@@ -136,7 +133,9 @@ public class QuickListPanel {
 
   private void includeActionId(String id) {
     DefaultListModel model = (DefaultListModel)myActionsList.getModel();
-    if (!QuickList.SEPARATOR_ID.equals(id) && model.contains(id)) return;
+    if (!QuickList.SEPARATOR_ID.equals(id) && model.contains(id)) {
+      return;
+    }
     model.addElement(id);
   }
 
@@ -146,7 +145,9 @@ public class QuickListPanel {
   }
 
   private static class MyListCellRenderer extends DefaultListCellRenderer {
-    public Component getListCellRendererComponent(JList list,
+    @NotNull
+    @Override
+    public Component getListCellRendererComponent(@NotNull JList list,
                                                   Object value,
                                                   int index,
                                                   boolean isSelected,

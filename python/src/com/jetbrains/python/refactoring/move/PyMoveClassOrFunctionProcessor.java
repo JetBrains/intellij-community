@@ -29,11 +29,13 @@ import com.intellij.refactoring.ui.UsageViewDescriptorAdapter;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
-import com.jetbrains.python.codeInsight.imports.PyImportOptimizer;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
@@ -81,38 +83,54 @@ public class PyMoveClassOrFunctionProcessor extends BaseRefactoringProcessor {
   @NotNull
   @Override
   protected UsageInfo[] findUsages() {
-    final List<UsageInfo> usages = new ArrayList<UsageInfo>();
-    for (PsiNamedElement element : myElements) {
-      usages.addAll(PyRefactoringUtil.findUsages(element, false));
+    final List<UsageInfo> result = new ArrayList<UsageInfo>();
+    for (final PsiNamedElement element : myElements) {
+      result.addAll(ContainerUtil.map(PyRefactoringUtil.findUsages(element, false), new Function<UsageInfo, MyUsageInfo>() {
+        @Override
+        public MyUsageInfo fun(UsageInfo usageInfo) {
+          return new MyUsageInfo(usageInfo, element);
+        }
+      }));
     }
-    return usages.toArray(new UsageInfo[usages.size()]);
+    return result.toArray(new UsageInfo[result.size()]);
   }
 
   @Override
   protected void performRefactoring(final UsageInfo[] usages) {
+    final MultiMap<PsiElement, UsageInfo> usagesByElement = MultiMap.create();
+    for (UsageInfo usage : usages) {
+      usagesByElement.putValue(((MyUsageInfo)usage).myMovedElement, usage);
+    }
     CommandProcessor.getInstance().executeCommand(myElements[0].getProject(), new Runnable() {
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
             final PyFile destination = PyUtil.getOrCreateFile(myDestination, myProject);
             CommonRefactoringUtil.checkReadOnlyStatus(myProject, destination);
-            for (PsiNamedElement e: myElements) {
+            for (final PsiNamedElement e : myElements) {
               // TODO: Check for resulting circular imports
               CommonRefactoringUtil.checkReadOnlyStatus(myProject, e);
               assert e instanceof PyClass || e instanceof PyFunction;
               if (e instanceof PyClass && destination.findTopLevelClass(e.getName()) != null) {
                 throw new IncorrectOperationException(PyBundle.message("refactoring.move.class.or.function.error.destination.file.contains.class.$0",
-                                                                       e.getName()));
+                                                                        e.getName()));
               }
               if (e instanceof PyFunction && destination.findTopLevelFunction(e.getName()) != null) {
                 throw new IncorrectOperationException(PyBundle.message("refactoring.move.class.or.function.error.destination.file.contains.function.$0",
-                                                                       e.getName()));
+                                                                        e.getName()));
               }
-              checkValidImportableFile(destination, e.getContainingFile().getVirtualFile());
-              checkValidImportableFile(e, destination.getVirtualFile());
-            }
-            for (PsiNamedElement oldElement: myElements) {
-              moveElement(oldElement, Arrays.asList(usages), destination);
+              final Collection<UsageInfo> usageInfos = usagesByElement.get(e);
+              final boolean usedFromOutside = ContainerUtil.exists(usageInfos, new Condition<UsageInfo>() {
+                @Override
+                public boolean value(UsageInfo usageInfo) {
+                  final PsiElement element = usageInfo.getElement();
+                  return element != null && !PsiTreeUtil.isAncestor(e, element, false);
+                }
+              });
+              if (usedFromOutside) {
+                checkValidImportableFile(e, destination.getVirtualFile());
+              }
+              moveElement(e, usageInfos, destination);
             }
           }
         });
@@ -241,7 +259,19 @@ public class PyMoveClassOrFunctionProcessor extends BaseRefactoringProcessor {
   private static void checkValidImportableFile(PsiElement anchor, VirtualFile file) {
     final QualifiedName qName = QualifiedNameFinder.findShortestImportableQName(anchor, file);
     if (!PyClassRefactoringUtil.isValidQualifiedName(qName)) {
-      throw new IncorrectOperationException(PyBundle.message("refactoring.move.class.or.function.error.cannot.use.module.name.$0", qName));
+      throw new IncorrectOperationException(PyBundle.message("refactoring.move.class.or.function.error.cannot.use.module.name.$0",
+                                                             file.getName()));
+    }
+  }
+
+  /**
+   * Additionally contains referenced element.
+   */
+  private static class MyUsageInfo extends UsageInfo {
+    private final PsiElement myMovedElement;
+    public MyUsageInfo(@NotNull UsageInfo usageInfo, @NotNull PsiElement element) {
+      super(usageInfo.getSmartPointer(), usageInfo.getPsiFileRange(), usageInfo.isDynamicUsage(), usageInfo.isNonCodeUsage);
+      myMovedElement = element;
     }
   }
 }

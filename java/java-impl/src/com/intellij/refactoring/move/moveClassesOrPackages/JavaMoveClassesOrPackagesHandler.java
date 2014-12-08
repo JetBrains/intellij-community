@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.file.JavaDirectoryServiceImpl;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.MoveCallback;
@@ -120,8 +121,9 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
     if (canMoveOrRearrangePackages(elements) ) {
       System.arraycopy(elements, 0, directories, 0, directories.length);
       SelectMoveOrRearrangePackageDialog dialog = new SelectMoveOrRearrangePackageDialog(project, directories, targetContainer == null);
-      dialog.show();
-      if (!dialog.isOK()) return;
+      if (!dialog.showAndGet()) {
+        return;
+      }
 
       if (dialog.isPackageRearrageSelected()) {
         MoveClassesOrPackagesImpl.doRearrangePackage(project, directories);
@@ -214,11 +216,11 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
       final MoveClassesOrPackagesToNewDirectoryDialog dlg =
         new MoveClassesOrPackagesToNewDirectoryDialog(directories[0], new PsiElement[0], false, callback) {
           @Override
-          protected void performRefactoring(Project project,
-                                            final PsiDirectory targetDirectory,
-                                            PsiPackage aPackage,
-                                            boolean searchInComments,
-                                            boolean searchForTextOccurences) {
+          protected BaseRefactoringProcessor createRefactoringProcessor(Project project,
+                                                                        final PsiDirectory targetDirectory,
+                                                                        PsiPackage aPackage,
+                                                                        boolean searchInComments,
+                                                                        boolean searchForTextOccurences) {
             try {
               for (PsiDirectory dir: directories) {
                 MoveFilesOrDirectoriesUtil.checkIfMoveIntoSelf(dir, targetDirectory);
@@ -226,17 +228,9 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
             }
             catch (IncorrectOperationException e) {
               Messages.showErrorDialog(project, e.getMessage(), RefactoringBundle.message("cannot.move"));
-              return;
+              return null;
             }
-            final MoveDirectoryWithClassesProcessor processor =
-              new MoveDirectoryWithClassesProcessor(project, directories, targetDirectory, searchInComments, searchForTextOccurences,
-                                                    true, callback);
-            processor.setPrepareSuccessfulSwingThreadCallback(new Runnable() {
-              @Override
-              public void run() {
-              }
-            });
-            processor.run();
+            return new MoveDirectoryWithClassesProcessor(project, directories, targetDirectory, searchInComments, searchForTextOccurences, true, callback);
           }
         };
       dlg.show();

@@ -16,6 +16,8 @@
 package org.jetbrains.plugins.gradle.importing;
 
 import com.intellij.compiler.server.BuildManager;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
@@ -27,23 +29,16 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.gradle.util.GradleVersion;
 import org.gradle.wrapper.GradleWrapperMain;
-import org.hamcrest.CoreMatchers;
-import org.hamcrest.CustomMatcher;
-import org.hamcrest.Matcher;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.VersionMatcherRule;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
-import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions;
-import org.jetbrains.plugins.gradle.tooling.util.VersionMatcher;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.junit.Rule;
 import org.junit.rules.TestName;
-import org.junit.rules.TestWatcher;
-import org.junit.runner.Description;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
@@ -146,7 +141,13 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
     assert wrapperJarFrom != null;
 
     final VirtualFile wrapperJarFromTo = createProjectSubFile("gradle/wrapper/gradle-wrapper.jar");
-    wrapperJarFromTo.setBinaryContent(wrapperJarFrom.contentsToByteArray());
+    new WriteAction() {
+      @Override
+      protected void run(@NotNull Result result) throws Throwable {
+        wrapperJarFromTo.setBinaryContent(wrapperJarFrom.contentsToByteArray());
+      }
+    }.execute().throwException();
+
 
     Properties properties = new Properties();
     properties.setProperty("distributionBase", "GRADLE_USER_HOME");
@@ -173,29 +174,5 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
       throw new RuntimeException(String.format("Cannot determine classpath for wrapper JAR from codebase '%s'.", location));
     }
     return new File(location.getPath());
-  }
-
-  private static class VersionMatcherRule extends TestWatcher {
-
-    @Nullable
-    private CustomMatcher myMatcher;
-
-    @NotNull
-    public Matcher getMatcher() {
-      return myMatcher != null ? myMatcher : CoreMatchers.anything();
-    }
-
-    @Override
-    protected void starting(Description d) {
-      final TargetVersions targetVersions = d.getAnnotation(TargetVersions.class);
-      if (targetVersions == null) return;
-
-      myMatcher = new CustomMatcher<String>("Gradle version '" + targetVersions.value() + "'") {
-        @Override
-        public boolean matches(Object item) {
-          return item instanceof String && new VersionMatcher(GradleVersion.version(item.toString())).isVersionMatch(targetVersions);
-        }
-      };
-    }
   }
 }

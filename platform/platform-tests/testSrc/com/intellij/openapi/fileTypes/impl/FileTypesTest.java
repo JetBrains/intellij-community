@@ -17,12 +17,17 @@ package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.highlighter.ProjectFileType;
+import com.intellij.ide.highlighter.custom.SyntaxTable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -33,22 +38,29 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.PatternUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.TestCase;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
 public class FileTypesTest extends PlatformTestCase {
   private FileTypeManagerImpl myFileTypeManager;
   private String myOldIgnoredFilesList;
+
+  public FileTypesTest() {
+    initPlatformLangPrefix();
+  }
 
   @Override
   protected void setUp() throws Exception {
@@ -278,14 +290,16 @@ public class FileTypesTest extends PlatformTestCase {
   }
 
   public void testReDetectOnContentsChange() throws IOException {
-    FileType fileType = FileTypeRegistry.getInstance().getFileTypeByFileName("x" + ModuleFileType.DOT_DEFAULT_EXTENSION);
+    final FileTypeRegistry fileTypeManager = FileTypeRegistry.getInstance();
+    assertTrue(fileTypeManager.getClass().getName(), fileTypeManager instanceof FileTypeManagerImpl);
+    FileType fileType = fileTypeManager.getFileTypeByFileName("x" + ModuleFileType.DOT_DEFAULT_EXTENSION);
     assertTrue(fileType.toString(), fileType instanceof ModuleFileType);
-    fileType = FileTypeRegistry.getInstance().getFileTypeByFileName("x" + ProjectFileType.DOT_DEFAULT_EXTENSION);
+    fileType = fileTypeManager.getFileTypeByFileName("x" + ProjectFileType.DOT_DEFAULT_EXTENSION);
     assertTrue(fileType.toString(), fileType instanceof ProjectFileType);
-    FileType module = FileTypeRegistry.getInstance().findFileTypeByName("IDEA_MODULE");
+    FileType module = fileTypeManager.findFileTypeByName("IDEA_MODULE");
     assertNotNull(module);
     assertFalse(module.equals(PlainTextFileType.INSTANCE));
-    FileType project = FileTypeRegistry.getInstance().findFileTypeByName("IDEA_PROJECT");
+    FileType project = fileTypeManager.findFileTypeByName("IDEA_PROJECT");
     assertNotNull(project);
     assertFalse(project.equals(PlainTextFileType.INSTANCE));
 
@@ -296,7 +310,7 @@ public class FileTypesTest extends PlatformTestCase {
       public FileType detect(@NotNull VirtualFile file, @NotNull ByteSequence firstBytes, @Nullable CharSequence firstCharsIfText) {
         detectorCalled.add(file);
         String text = firstCharsIfText.toString();
-        FileType result = text.startsWith("TYPE:") ? FileTypeRegistry.getInstance().findFileTypeByName(StringUtil.trimStart(text, "TYPE:")) : null;
+        FileType result = text.startsWith("TYPE:") ? fileTypeManager.findFileTypeByName(StringUtil.trimStart(text, "TYPE:")) : null;
         System.out.println("T: my detector run for "+file.getName()+"; result: "+(result == null ? null : result.getName()));
         return result;
       }
@@ -308,6 +322,7 @@ public class FileTypesTest extends PlatformTestCase {
     };
     Extensions.getRootArea().getExtensionPoint(FileTypeRegistry.FileTypeDetector.EP_NAME).registerExtension(detector);
     try {
+      System.out.println("T: ------");
       File d = createTempDirectory();
       File f = new File(d, "xx.asfdasdfas");
       FileUtil.writeToFile(f, "akjdhfksdjgf");
@@ -315,13 +330,16 @@ public class FileTypesTest extends PlatformTestCase {
       ensureRedetected(vFile, detectorCalled);
       assertTrue(vFile.getFileType().toString(), vFile.getFileType() instanceof PlainTextFileType);
 
+      System.out.println("T: ------");
       VfsUtil.saveText(vFile, "TYPE:IDEA_MODULE");
       ensureRedetected(vFile, detectorCalled);
       assertTrue(vFile.getFileType().toString(), vFile.getFileType() instanceof ModuleFileType);
 
+      System.out.println("T: ------");
       VfsUtil.saveText(vFile, "TYPE:IDEA_PROJECT");
       ensureRedetected(vFile, detectorCalled);
       assertTrue(vFile.getFileType().toString(), vFile.getFileType() instanceof ProjectFileType);
+      System.out.println("T: ------");
     }
     finally {
       Extensions.getRootArea().getExtensionPoint(FileTypeRegistry.FileTypeDetector.EP_NAME).unregisterExtension(detector);
@@ -330,11 +348,113 @@ public class FileTypesTest extends PlatformTestCase {
 
   private void ensureRedetected(VirtualFile vFile, Set<VirtualFile> detectorCalled) {
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    System.out.println("T: ensureRedetected: commit");
     UIUtil.dispatchAllInvocationEvents();
+    System.out.println("T: ensureRedetected: dispatch");
     myFileTypeManager.drainReDetectQueue();
+    System.out.println("T: ensureRedetected: drain");
     UIUtil.dispatchAllInvocationEvents();
+    System.out.println("T: ensureRedetected: dispatch");
     vFile.getFileType();
+    System.out.println("T: ensureRedetected: getFileType");
     assertTrue(detectorCalled.contains(vFile));
     detectorCalled.clear();
+    System.out.println("T: ensureRedetected: clear");
+  }
+
+  public void testReassignedPredefinedFileType() throws Exception {
+
+    FileType perlFileType = myFileTypeManager.getFileTypeByFileName("foo.pl");
+    assertEquals("Perl", perlFileType.getName());
+    assertEquals(PlainTextFileType.INSTANCE, myFileTypeManager.getFileTypeByFileName("foo.cgi"));
+    myFileTypeManager.associatePattern(perlFileType, "*.cgi");
+    assertEquals(perlFileType, myFileTypeManager.getFileTypeByFileName("foo.cgi"));
+
+    Element element = new Element("foo");
+    myFileTypeManager.writeExternal(element);
+    myFileTypeManager.readExternal(element);
+    myFileTypeManager.initComponent();
+    assertEquals(perlFileType, myFileTypeManager.getFileTypeByFileName("foo.cgi"));
+
+    myFileTypeManager.removeAssociatedExtension(perlFileType, "*.cgi");
+  }
+
+  // for IDEA-114804 File types mapped to text are not remapped when corresponding plugin is installed
+  public void testRemappingToInstalledPluginExtension() throws WriteExternalException, InvalidDataException {
+    myFileTypeManager.associatePattern(PlainTextFileType.INSTANCE, "*.fromPlugin");
+    Element element = new Element("foo");
+    myFileTypeManager.writeExternal(element);
+    String s = JDOMUtil.writeElement(element);
+    System.out.println(s);
+
+    final AbstractFileType typeFromPlugin = new AbstractFileType(new SyntaxTable());
+    PlatformTestUtil.registerExtension(FileTypeFactory.FILE_TYPE_FACTORY_EP, new FileTypeFactory() {
+      @Override
+      public void createFileTypes(@NotNull FileTypeConsumer consumer) {
+        consumer.consume(typeFromPlugin, "fromPlugin");
+      }
+    }, getTestRootDisposable());
+    myFileTypeManager.initStandardFileTypes();
+    myFileTypeManager.readExternal(element);
+
+    myFileTypeManager.initComponent();
+    Map<FileNameMatcher, Pair<FileType, Boolean>> mappings = myFileTypeManager.getRemovedMappings();
+    assertEquals(1, mappings.size());
+    assertEquals(typeFromPlugin, mappings.values().iterator().next().first);
+  }
+
+  public void testPreserveUninstalledPluginAssociations() throws Exception {
+    final AbstractFileType typeFromPlugin = new AbstractFileType(new SyntaxTable()) {
+      @NotNull
+      @Override
+      public String getName() {
+        return "Foo files";
+      }
+    };
+    FileTypeFactory factory = new FileTypeFactory() {
+      @Override
+      public void createFileTypes(@NotNull FileTypeConsumer consumer) {
+        consumer.consume(typeFromPlugin, "fromPlugin");
+      }
+    };
+    Element element = new Element("foo");
+    myFileTypeManager.writeExternal(element);
+    try {
+      Extensions.getRootArea().getExtensionPoint(FileTypeFactory.FILE_TYPE_FACTORY_EP).registerExtension(factory);
+      myFileTypeManager.initStandardFileTypes();
+      myFileTypeManager.readExternal(element);
+      myFileTypeManager.initComponent();
+
+      myFileTypeManager.associatePattern(typeFromPlugin, "*.foo");
+
+      element = new Element("foo");
+      myFileTypeManager.writeExternal(element);
+      System.out.println(JDOMUtil.writeElement(element));
+
+      Extensions.getRootArea().getExtensionPoint(FileTypeFactory.FILE_TYPE_FACTORY_EP).unregisterExtension(factory);
+      myFileTypeManager.clearForTests();
+      myFileTypeManager.initStandardFileTypes();
+      myFileTypeManager.readExternal(element);
+      myFileTypeManager.initComponent();
+
+      element = new Element("foo");
+      myFileTypeManager.writeExternal(element);
+      System.out.println(JDOMUtil.writeElement(element));
+
+      Extensions.getRootArea().getExtensionPoint(FileTypeFactory.FILE_TYPE_FACTORY_EP).registerExtension(factory);
+      myFileTypeManager.clearForTests();
+      myFileTypeManager.initStandardFileTypes();
+      myFileTypeManager.readExternal(element);
+      myFileTypeManager.initComponent();
+
+      element = new Element("foo");
+      myFileTypeManager.writeExternal(element);
+      System.out.println(JDOMUtil.writeElement(element));
+
+      assertEquals(typeFromPlugin, myFileTypeManager.getFileTypeByFileName("foo.foo"));
+    }
+    finally {
+      Extensions.getRootArea().getExtensionPoint(FileTypeFactory.FILE_TYPE_FACTORY_EP).unregisterExtension(factory);
+    }
   }
 }

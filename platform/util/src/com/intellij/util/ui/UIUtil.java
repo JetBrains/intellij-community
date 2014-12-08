@@ -39,7 +39,6 @@ import javax.sound.sampled.Clip;
 import javax.swing.*;
 import javax.swing.Timer;
 import javax.swing.border.Border;
-import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import javax.swing.plaf.ButtonUI;
@@ -227,8 +226,8 @@ public class UIUtil {
   private static final Color INACTIVE_HEADER_COLOR = Gray._128;
   private static final Color BORDER_COLOR = Color.LIGHT_GRAY;
 
-  public static final Color AQUA_SEPARATOR_FOREGROUND_COLOR = Gray._190;
-  public static final Color AQUA_SEPARATOR_BACKGROUND_COLOR = Gray._240;
+  public static final Color AQUA_SEPARATOR_FOREGROUND_COLOR = new JBColor(Gray._190, Gray.x51);
+  public static final Color AQUA_SEPARATOR_BACKGROUND_COLOR = new JBColor(Gray._240, Gray.x51);
   public static final Color TRANSPARENT_COLOR = new Color(0, 0, 0, 0);
 
   public static final int DEFAULT_HGAP = 10;
@@ -515,7 +514,11 @@ public class UIUtil {
     char c = e.getKeyChar();
     if (c < 0x20 || c == 0x7F) return false;
 
-    return !e.isMetaDown() && !e.isAltDown() && !e.isControlDown();
+    if (SystemInfo.isMac) {
+      return !e.isMetaDown() && !e.isControlDown();
+    }
+
+    return !e.isAltDown() && !e.isControlDown();
   }
 
   public static int getStringY(@NotNull final String string, @NotNull final Rectangle bounds, @NotNull final Graphics2D g) {
@@ -2886,13 +2889,29 @@ public class UIUtil {
     }
   }
 
+  /**
+   * Adds an empty border with the specified insets to the specified component.
+   * If the component already has a border it will be preserved.
+   *
+   * @param component the component to which border added
+   * @param top       the inset from the top
+   * @param left      the inset from the left
+   * @param bottom    the inset from the bottom
+   * @param right     the inset from the right
+   */
+  public static void addInsets(@NotNull JComponent component, int top, int left, int bottom, int right) {
+    addBorder(component, BorderFactory.createEmptyBorder(top, left, bottom, right));
+  }
+
+  /**
+   * Adds an empty border with the specified insets to the specified component.
+   * If the component already has a border it will be preserved.
+   *
+   * @param component the component to which border added
+   * @param insets    the top, left, bottom, and right insets
+   */
   public static void addInsets(@NotNull JComponent component, @NotNull Insets insets) {
-    if (component.getBorder() != null) {
-      component.setBorder(new CompoundBorder(new EmptyBorder(insets), component.getBorder()));
-    }
-    else {
-      component.setBorder(new EmptyBorder(insets));
-    }
+    addInsets(component, insets.top, insets.left, insets.bottom, insets.right);
   }
 
   public static Dimension addInsets(@NotNull Dimension dimension, @NotNull Insets insets) {
@@ -2943,13 +2962,20 @@ public class UIUtil {
     return null;
   }
 
+  /**
+   * Adds the specified border to the specified component.
+   * If the component already has a border it will be preserved.
+   * If component or border is not specified nothing happens.
+   *
+   * @param component the component to which border added
+   * @param border    the border to add to the component
+   */
   public static void addBorder(JComponent component, Border border) {
-    if (component == null) return;
-
-    if (component.getBorder() != null) {
-      component.setBorder(new CompoundBorder(border, component.getBorder()));
-    }
-    else {
+    if (component != null && border != null) {
+      Border old = component.getBorder();
+      if (old != null) {
+        border = BorderFactory.createCompoundBorder(border, old);
+      }
       component.setBorder(border);
     }
   }
@@ -2993,11 +3019,19 @@ public class UIUtil {
     return JOptionPane.getRootFrame();
   }
 
+  public static void suppressFocusStealing (Window window) {
+    // Focus stealing is not a problem on Mac
+    if (SystemInfo.isMac) return;
+    if (Registry.is("suppress.focus.stealing")) {
+      setAutoRequestFocus(window, false);
+    }
+  }
+
   public static void setAutoRequestFocus (final Window onWindow, final boolean set){
     if (SystemInfo.isMac) return;
     if (SystemInfo.isJavaVersionAtLeast("1.7")) {
       try {
-        Method setAutoRequestFocusMethod  = onWindow.getClass().getMethod("setAutoRequestFocus",new Class [] {boolean.class});
+        Method setAutoRequestFocusMethod  = onWindow.getClass().getMethod("setAutoRequestFocus", boolean.class);
         setAutoRequestFocusMethod.invoke(onWindow, set);
       }
       catch (NoSuchMethodException e) { LOG.debug(e); }
@@ -3189,5 +3223,26 @@ public class UIUtil {
     textField.setHorizontalAlignment(SwingConstants.TRAILING);
 
     textField.setColumns(4);
+  }
+
+  /**
+   * Returns the first window ancestor of the component.
+   * Note that this method returns the component itself if it is a window.
+   *
+   * @param component the component used to find corresponding window
+   * @return the first window ancestor of the component; or {@code null}
+   *         if the component is not a window and is not contained inside a window
+   */
+  public static Window getWindow(Component component) {
+    return component instanceof Window ? (Window)component : SwingUtilities.getWindowAncestor(component);
+  }
+
+  public static Image getDebugImage(Component component) {
+    BufferedImage image = createImage(component.getWidth(), component.getHeight(), BufferedImage.TYPE_INT_ARGB);
+    Graphics2D graphics = image.createGraphics();
+    graphics.setColor(Color.RED);
+    graphics.fillRect(0, 0, component.getWidth() + 1, component.getHeight() + 1);
+    component.paint(graphics);
+    return image;
   }
 }

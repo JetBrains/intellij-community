@@ -165,6 +165,10 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
     assertEquals(exampleHtmlFileText(getTestName(true)), StringUtil.convertLineSeparators(docInfo.trim()));
   }
 
+  public void testLambdaParameter() throws Exception {
+    doTestLamabdaParameter();
+  }
+
   private void doTestField() throws Exception {
     PsiClass psiClass = getTestClass();
     PsiField field = psiClass.getFields() [0];
@@ -175,6 +179,13 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
     PsiClass psiClass = getTestClass();
     PsiMethod method = psiClass.getMethods() [0];
     verifyJavaDoc(method);
+  }
+
+  private void doTestLamabdaParameter() throws Exception {
+    PsiClass psiClass = getTestClass();
+    final PsiLambdaExpression lambdaExpression = PsiTreeUtil.findChildOfType(psiClass, PsiLambdaExpression.class);
+    assertNotNull(lambdaExpression);
+    verifyJavaDoc(lambdaExpression.getParameterList().getParameters()[0]);
   }
 
   private PsiClass getTestClass() throws Exception{

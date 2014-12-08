@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
+import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.conflictResolvers.JavaMethodsConflictResolver;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -87,8 +88,7 @@ public class RedundantLambdaCodeBlockInspection extends BaseJavaBatchLocalInspec
                     final List<CandidateInfo> info = new ArrayList<CandidateInfo>(Arrays.asList(candidates));
                     final LanguageLevel level = PsiUtil.getLanguageLevel(parent);
                     final JavaMethodsConflictResolver conflictResolver = new JavaMethodsConflictResolver((PsiExpressionList)parent, level);
-                    final int applicability = conflictResolver.checkApplicability(info);
-                    conflictResolver.checkSpecifics(info, applicability, level);
+                    conflictResolver.checkSpecifics(info, MethodCandidateInfo.ApplicabilityLevel.FIXED_ARITY, level);
                     if (info.size() > 1) {
                       return;
                     }

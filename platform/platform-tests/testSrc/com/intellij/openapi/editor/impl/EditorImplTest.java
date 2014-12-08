@@ -111,6 +111,16 @@ public class EditorImplTest extends AbstractEditorTest {
 
     assertEquals(new VisualPosition(0, 5), myEditor.logicalToVisualPosition(new LogicalPosition(0, 3)));
   }
+  
+  public void testNavigationIntoFoldedRegionWithSoftWrapsEnabled() throws Exception {
+    init("something");
+    addCollapsedFoldRegion(4, 8, "...");
+    EditorTestUtil.configureSoftWraps(myEditor, 1000);
+    
+    myEditor.getCaretModel().moveToOffset(5);
+    
+    assertEquals(new VisualPosition(0, 5), myEditor.getCaretModel().getVisualPosition());
+  }
 
   private void init(String text) throws IOException {
     configureFromFileText(getTestName(false) + ".txt", text);

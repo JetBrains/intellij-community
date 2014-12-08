@@ -37,7 +37,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.ui.*;
+import com.intellij.ui.ColorUtil;
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.UIBundle;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBOptionButton;
 import com.intellij.ui.components.JBScrollPane;
@@ -457,7 +460,8 @@ public abstract class DialogWrapper {
     List<JButton> buttons = new ArrayList<JButton>();
 
     boolean hasHelpToMoveToLeftSide = false;
-    if (UIUtil.isUnderAquaLookAndFeel() && Arrays.asList(actions).contains(getHelpAction())) {
+    if ((UIUtil.isUnderAquaLookAndFeel() || (UIUtil.isUnderDarcula() && SystemInfo.isMac)) 
+        && Arrays.asList(actions).contains(getHelpAction())) {
       hasHelpToMoveToLeftSide = true;
       actions = ArrayUtil.remove(actions, getHelpAction());
     }
@@ -531,10 +535,8 @@ public abstract class DialogWrapper {
 
     if (hasHelpToMoveToLeftSide) {
       JButton helpButton = new JButton(getHelpAction());
-      if (!UIUtil.isUnderDarcula()) {
-        helpButton.putClientProperty("JButton.buttonType", "help");
-        helpButton.setText("");
-      }
+      helpButton.putClientProperty("JButton.buttonType", "help");
+      helpButton.setText("");
       helpButton.setMargin(insets);
       helpButton.setToolTipText(ActionsBundle.actionDescription("HelpTopics"));
       panel.add(helpButton, BorderLayout.WEST);
@@ -1176,9 +1178,7 @@ public abstract class DialogWrapper {
   }
 
   protected void init() {
-    if (!SwingUtilities.isEventDispatchThread()) {
-      LOG.error("Dialog must be init in EDT only: "+Thread.currentThread());
-    }
+    ensureEventDispatchThread();
     myErrorText = new ErrorText();
     myErrorText.setVisible(false);
 
@@ -1197,17 +1197,17 @@ public abstract class DialogWrapper {
     final CustomShortcutSet sc = new CustomShortcutSet(SHOW_OPTION_KEYSTROKE);
     final AnAction toggleShowOptions = new AnAction() {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         expandNextOptionButton();
       }
     };
     toggleShowOptions.registerCustomShortcutSet(sc, root);
 
-    final JPanel northSection = new JPanel(new BorderLayout());
-    root.add(northSection, BorderLayout.NORTH);
-
     JComponent titlePane = createTitlePane();
     if (titlePane != null) {
+      JPanel northSection = new JPanel(new BorderLayout());
+      root.add(northSection, BorderLayout.NORTH);
+
       northSection.add(titlePane, BorderLayout.CENTER);
     }
 
@@ -1548,10 +1548,13 @@ public abstract class DialogWrapper {
    * @throws IllegalStateException if the dialog is invoked not on the event dispatch thread
    */
   public void show() {
-    showAndGetOk();
+    invokeShow();
   }
 
   public boolean showAndGet() {
+    if (!isModal()) {
+      throw new IllegalStateException("The showAndGet() method is for modal dialogs only");
+    }
     show();
     return isOK();
   }
@@ -1559,15 +1562,22 @@ public abstract class DialogWrapper {
   /**
    * You need this method ONLY for NON-MODAL dialogs. Otherwise, use {@link #show()} or {@link #showAndGet()}.
    *
-   * @return result callback
+   * @return result callback which set to "Done" on dialog close, and then its {@code getResult()} will contain {@code isOK()}
    */
   @NotNull
   public AsyncResult<Boolean> showAndGetOk() {
+    if (isModal()) {
+      throw new IllegalStateException("The showAndGetOk() method is for modeless dialogs only");
+    }
+    return invokeShow();
+  }
+
+  @NotNull
+  private AsyncResult<Boolean> invokeShow() {
     final AsyncResult<Boolean> result = new AsyncResult<Boolean>();
 
     ensureEventDispatchThread();
     registerKeyboardShortcuts();
-
 
     final Disposable uiParent = Disposer.get("ui");
     if (uiParent != null) { // may be null if no app yet (license agreement)
@@ -1600,7 +1610,6 @@ public abstract class DialogWrapper {
   }
 
   private void registerKeyboardShortcuts() {
-
     final JRootPane rootPane = getRootPane();
 
     if (rootPane == null) return;
@@ -1669,20 +1678,6 @@ public abstract class DialogWrapper {
             }
             final StackingPopupDispatcher popupDispatcher = StackingPopupDispatcher.getInstance();
             if (popupDispatcher != null && !popupDispatcher.isPopupFocused()) {
-              Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-              
-              JTree tree = UIUtil.getParentOfType(JTree.class, focusOwner);
-              JTable table = UIUtil.getParentOfType(JTable.class, focusOwner);
-
-              if (tree != null && tree.isEditing()) {
-                tree.cancelEditing();
-                return;
-              }
-              if (table != null && table.isEditing()) {
-                TableUtil.stopEditing(table);
-                return;
-              }
-              
               doCancelAction(e);
             }
           }
@@ -2010,7 +2005,7 @@ public abstract class DialogWrapper {
    */
   private static void ensureEventDispatchThread() {
     if (!EventQueue.isDispatchThread()) {
-      throw new IllegalStateException("The DialogWrapper can be used only on event dispatch thread.");
+      throw new IllegalStateException("The DialogWrapper can only be used in event dispatch thread. Current thread: "+Thread.currentThread());
     }
   }
 
@@ -2121,7 +2116,7 @@ public abstract class DialogWrapper {
       return true;
     }
 
-    public void setValidationInfo(@Nullable ValidationInfo info) {
+    private void setValidationInfo(@Nullable ValidationInfo info) {
       myInfo = info;
     }
   }

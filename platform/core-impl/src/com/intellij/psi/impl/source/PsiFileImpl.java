@@ -324,6 +324,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     VirtualFile file = viewProvider.getVirtualFile();
     msg += "; file stamp: " + file.getModificationStamp();
     msg += "; file modCount: " + file.getModificationCount();
+    msg += "; file length: " + file.getLength();
 
     Document document = FileDocumentManager.getInstance().getCachedDocument(file);
     if (document != null) {
@@ -332,6 +333,8 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       msg += "; doc size: " + document.getTextLength();
       msg += "; committed: " + PsiDocumentManager.getInstance(getProject()).isCommitted(document);
     }
+    
+    msg += "\nindexing info: " + StubTreeLoader.getInstance().getIndexingStampDebugInfo(file);
 
     throw new AssertionError(msg + "\n------------\n");
   }
@@ -389,6 +392,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
         DebugUtil.finishPsiModification();
       }
     }
+    myViewProvider.contentsSynchronized();
   }
 
   private void clearStub(@NotNull String reason) {

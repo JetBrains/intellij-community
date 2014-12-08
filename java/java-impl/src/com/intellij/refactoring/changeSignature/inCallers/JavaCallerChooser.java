@@ -40,4 +40,14 @@ public class JavaCallerChooser extends CallerChooserBase<PsiMethod> {
   protected PsiMethod[] findDeepestSuperMethods(PsiMethod method) {
     return method.findDeepestSuperMethods();
   }
+
+  @Override
+  protected String getEmptyCallerText() {
+    return "Caller method text \nwith highlighted callee call would be shown here";
+  }
+
+  @Override
+  protected String getEmptyCalleeText() {
+    return "Callee method text would be shown here";
+  }
 }

@@ -88,7 +88,7 @@ public class SliderSelectorAction extends DumbAwareAction {
       });
     }
 
-    final JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(result, slider).createPopup();
+    final JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(result, slider).setMovable(true).createPopup();
     final Runnable finalRunnable = new Runnable() {
       @Override
       public void run() {
@@ -105,6 +105,10 @@ public class SliderSelectorAction extends DumbAwareAction {
     };
     popup.setFinalRunnable(finalRunnable);
     InputEvent inputEvent = e.getInputEvent();
+    show(e, result, popup, inputEvent);
+  }
+
+  protected void show(AnActionEvent e, JPanel result, JBPopup popup, InputEvent inputEvent) {
     if (inputEvent instanceof MouseEvent) {
       int width = result.getPreferredSize().width;
       MouseEvent inputEvent1 = (MouseEvent)inputEvent;

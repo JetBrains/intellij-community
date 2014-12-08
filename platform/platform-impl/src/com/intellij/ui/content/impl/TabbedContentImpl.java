@@ -51,9 +51,12 @@ public class TabbedContentImpl extends ContentImpl implements TabbedContent {
 
   @Override
   public void setComponent(JComponent component) {
-    Container parent = getComponent().getParent();
-    parent.remove(getComponent());
-    parent.add(component);
+    JComponent currentComponent = getComponent();
+    Container parent = currentComponent == null ? null : currentComponent.getParent();
+    if (parent != null) {
+      parent.remove(currentComponent);
+      parent.add(component);
+    }
 
     super.setComponent(component);
   }
@@ -67,7 +70,19 @@ public class TabbedContentImpl extends ContentImpl implements TabbedContent {
         break;
       }
     }
-    myTabs.remove(toRemove);
+    int index = myTabs.indexOf(toRemove);
+    if (index != -1) {
+      myTabs.remove(index);
+      index = index > 0 ? index-1 : index;
+      if (index < myTabs.size()) {
+        selectContent(index);
+      }
+    }
+  }
+
+  @Override
+  public String getDisplayName() {
+    return getTabName();
   }
 
   @Override
@@ -81,7 +96,7 @@ public class TabbedContentImpl extends ContentImpl implements TabbedContent {
   public String getTabName() {
     String selected = findTabNameByComponent(getComponent());
     if (myPrefix != null) {
-      selected = myPrefix + selected;
+      selected = myPrefix + ": " + selected;
     }
     return selected;
   }

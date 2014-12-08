@@ -7,8 +7,11 @@ import com.intellij.dupLocator.iterators.SiblingNodeIterator;
 import com.intellij.dupLocator.util.DuplocatorUtil;
 import com.intellij.dupLocator.util.NodeFilter;
 import com.intellij.lang.Language;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.tree.IElementType;
@@ -131,7 +134,14 @@ public class NodeSpecificHasherBase extends NodeSpecificHasher {
 
   @Override
   public void visitNode(@NotNull PsiElement node) {
-    final Language language = node.getLanguage();
+    Language language = null;
+    if (node instanceof PsiFile) {
+      FileType fileType = ((PsiFile)node).getFileType();
+      if (fileType instanceof LanguageFileType) {
+        language = ((LanguageFileType)fileType).getLanguage();
+      }
+    }
+    if (language == null) language = node.getLanguage();
     if ((myForIndexing || mySettings.SELECTED_PROFILES.contains(language.getDisplayName())) &&
         myDuplicatesProfile.isMyLanguage(language)) {
 

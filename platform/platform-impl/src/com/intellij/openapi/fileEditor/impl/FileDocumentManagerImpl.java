@@ -67,7 +67,6 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Function;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.ThrowableRunnable;
-import com.intellij.util.containers.ConcurrentWeakValueHashMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
@@ -95,7 +94,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
   private static final Key<Boolean> MUST_RECOMPUTE_FILE_TYPE = Key.create("Must recompute file type");
 
   private final Set<Document> myUnsavedDocuments = ContainerUtil.newConcurrentSet();
-  private final Map<VirtualFile, Document> myDocuments = new ConcurrentWeakValueHashMap<VirtualFile, Document>();
+  private final Map<VirtualFile, Document> myDocuments = ContainerUtil.createConcurrentWeakValueMap();
 
   private final MessageBus myBus;
 
@@ -749,7 +748,8 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
   @Override
   public void beforeContentsChange(@NotNull VirtualFileEvent event) {
     VirtualFile virtualFile = event.getFile();
-    if (virtualFile.getFileType() == UnknownFileType.INSTANCE && virtualFile.getLength() == 0) {
+    // check file type in second order to avoid content detection running
+    if (virtualFile.getLength() == 0 && virtualFile.getFileType() == UnknownFileType.INSTANCE) {
       virtualFile.putUserData(MUST_RECOMPUTE_FILE_TYPE, Boolean.TRUE);
     }
   }
@@ -850,7 +850,8 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
       @Override
       protected void createDefaultActions() {
         super.createDefaultActions();
-        myOKAction.putValue(Action.NAME, UIBundle.message(myOnClose ? "cannot.save.files.dialog.ignore.changes" : "cannot.save.files.dialog.revert.changes"));
+        myOKAction.putValue(Action.NAME, UIBundle
+          .message(myOnClose ? "cannot.save.files.dialog.ignore.changes" : "cannot.save.files.dialog.revert.changes"));
         myOKAction.putValue(DEFAULT_ACTION, null);
 
         if (!myOnClose) {
@@ -868,15 +869,14 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
         area.setText(text);
         area.setEditable(false);
         area.setMinimumSize(new Dimension(area.getMinimumSize().width, 50));
-        panel.add(new JBScrollPane(area, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER), BorderLayout.CENTER);
+        panel.add(new JBScrollPane(area, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER),
+                  BorderLayout.CENTER);
 
         return panel;
       }
     };
 
-    dialog.show();
-
-    if (dialog.isOK()) {
+    if (dialog.showAndGet()) {
       for (Document document : failures.keySet()) {
         reloadFromDisk(document);
       }

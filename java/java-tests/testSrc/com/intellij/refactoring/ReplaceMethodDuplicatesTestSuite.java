@@ -20,6 +20,7 @@ public class ReplaceMethodDuplicatesTestSuite {
     testSuite.addTestSuite(FindMethodDuplicatesMiscTest.class);
     testSuite.addTestSuite(FindMethodDuplicatesTest.class);
     testSuite.addTestSuite(SuggestedParamTypesTest.class);
+    testSuite.addTestSuite(SuggestedReturnTypesTest.class);
     return testSuite;
   }
 }

@@ -19,9 +19,11 @@
  */
 package com.intellij.psi;
 
+import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
+import com.intellij.codeInsight.daemon.impl.DefaultHighlightVisitor;
+import com.intellij.codeInsight.daemon.impl.HighlightVisitor;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.ex.PathManagerEx;
@@ -31,7 +33,10 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.testFramework.*;
+import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.SkipSlowTestLocally;
+import com.intellij.testFramework.Timings;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -40,7 +45,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 @SkipSlowTestLocally
-public class PsiConcurrencyStressTest extends PsiTestCase {
+public class PsiConcurrencyStressTest extends DaemonAnalyzerTestCase {
   private volatile PsiJavaFile myFile;
   private volatile boolean writeActionInProgress;
 
@@ -173,7 +178,7 @@ public class PsiConcurrencyStressTest extends PsiTestCase {
             super.visitElement(element);
 
             final HighlightInfoHolder infoHolder = new HighlightInfoHolder(myFile);
-            final HighlightVisitorImpl visitor = new HighlightVisitorImpl(PsiResolveHelper.SERVICE.getInstance(getProject()));
+            final HighlightVisitor visitor = new DefaultHighlightVisitor(getProject());
             visitor.analyze(myFile, true, infoHolder, new Runnable() {
               @Override
               public void run() {

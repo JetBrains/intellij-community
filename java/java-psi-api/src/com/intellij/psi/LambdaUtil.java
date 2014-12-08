@@ -18,9 +18,11 @@ package com.intellij.psi;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.*;
+import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,7 +38,7 @@ public class LambdaUtil {
   private static final Logger LOG = Logger.getInstance("#" + LambdaUtil.class.getName());
 
   @Nullable
-  public static PsiType getFunctionalInterfaceReturnType(PsiLambdaExpression expr) {
+  public static PsiType getFunctionalInterfaceReturnType(PsiFunctionalExpression expr) {
     return getFunctionalInterfaceReturnType(expr.getFunctionalInterfaceType());
   }
 
@@ -61,9 +63,7 @@ public class LambdaUtil {
 
   public static PsiMethod getFunctionalInterfaceMethod(@Nullable PsiElement element) {
     if (element instanceof PsiFunctionalExpression) {
-      final PsiType samType = element instanceof PsiLambdaExpression
-                              ? ((PsiLambdaExpression)element).getFunctionalInterfaceType()
-                              : ((PsiMethodReferenceExpression)element).getFunctionalInterfaceType();
+      final PsiType samType = ((PsiFunctionalExpression)element).getFunctionalInterfaceType();
       return getFunctionalInterfaceMethod(samType);
     }
     return null;
@@ -287,6 +287,15 @@ public class LambdaUtil {
       element = parent;
       parent = parent.getParent();
     }
+
+    final Map<PsiElement, PsiType> map = ourFunctionTypes.get();
+    if (map != null) {
+      final PsiType type = map.get(expression);
+      if (type != null) {
+        return type;
+      }
+    }
+
     if (parent instanceof PsiArrayInitializerExpression) {
       final PsiType psiType = ((PsiArrayInitializerExpression)parent).getType();
       if (psiType instanceof PsiArrayType) {
@@ -326,13 +335,6 @@ public class LambdaUtil {
             final int finalLambdaIdx = adjustLambdaIdx(lambdaIdx, properties.getMethod(), parameters);
             if (finalLambdaIdx < parameters.length) {
               return properties.getSubstitutor().substitute(getNormalizedType(parameters[finalLambdaIdx]));
-            }
-          }
-          final Map<PsiElement, PsiType> map = ourFunctionTypes.get();
-          if (map != null) {
-            final PsiType type = map.get(expression);
-            if (type != null) {
-              return type;
             }
           }
           final JavaResolveResult resolveResult = contextCall.resolveMethodGenerics();
@@ -493,6 +495,41 @@ public class LambdaUtil {
       expression = ((PsiExpressionStatement)body).getExpression();
     }
     return expression;
+  }
+
+  // http://docs.oracle.com/javase/specs/jls/se8/html/jls-15.html#jls-15.12.2.1
+  // A lambda expression or a method reference expression is potentially compatible with a type variable 
+  // if the type variable is a type parameter of the candidate method.
+  public static boolean isPotentiallyCompatibleWithTypeParameter(PsiFunctionalExpression expression,
+                                                                 PsiExpressionList argsList,
+                                                                 PsiMethod method) {
+    if (!Registry.is("JDK8042508.bug.fixed", false)) {
+      final PsiCallExpression callExpression = PsiTreeUtil.getParentOfType(argsList, PsiCallExpression.class);
+      if (callExpression == null || callExpression.getTypeArguments().length > 0) {
+        return false;
+      }
+    }
+
+    final int lambdaIdx = getLambdaIdx(argsList, expression);
+    if (lambdaIdx >= 0) {
+      final PsiParameter[] parameters = method.getParameterList().getParameters();
+      final PsiParameter lambdaParameter = parameters[Math.min(lambdaIdx, parameters.length - 1)];
+      final PsiClass paramClass = PsiUtil.resolveClassInType(lambdaParameter.getType());
+      if (paramClass instanceof PsiTypeParameter && ((PsiTypeParameter)paramClass).getOwner() == method) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @NotNull
+  public static Map<PsiElement, PsiType> getFunctionalTypeMap() {
+    Map<PsiElement, PsiType> map = ourFunctionTypes.get();
+    if (map == null) {
+      map = new HashMap<PsiElement, PsiType>();
+      ourFunctionTypes.set(map);
+    }
+    return map;
   }
 
   public static class TypeParamsChecker extends PsiTypeVisitor<Boolean> {

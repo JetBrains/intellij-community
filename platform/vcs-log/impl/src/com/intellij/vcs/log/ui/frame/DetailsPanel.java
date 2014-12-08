@@ -50,8 +50,17 @@ import javax.swing.border.CompoundBorder;
 import javax.swing.border.MatteBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.text.BadLocationException;
 import javax.swing.text.DefaultCaret;
+import javax.swing.text.Document;
+import javax.swing.text.Position;
+import javax.swing.text.html.HTMLEditorKit;
+import javax.swing.text.html.parser.ParserDelegator;
 import java.awt.*;
+import java.io.IOException;
+import java.io.Reader;
+import java.io.StringReader;
+import java.io.StringWriter;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -156,9 +165,8 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       ((CardLayout)getLayout()).show(this, STANDARD_LAYER);
       int row = rows[0];
       GraphTableModel tableModel = (GraphTableModel)myGraphTable.getModel();
-      Hash hash = tableModel.getHashAtRow(row);
       VcsFullCommitDetails commitData = myLogDataHolder.getCommitDetailsGetter().getCommitData(row, tableModel);
-      if (commitData == null || hash == null) {
+      if (commitData == null) {
         showMessage("No commits selected");
         return;
       }
@@ -171,14 +179,14 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       else {
         myLoadingPanel.stopLoading();
         myCommitDetailsPanel.setData(commitData);
-        myRefsPanel.setRefs(sortRefs(hash, commitData.getRoot()));
+        myRefsPanel.setRefs(sortRefs(commitData.getId(), commitData.getRoot()));
         updateDetailsBorder(commitData);
         newCommitDetails = commitData;
       }
 
       List<String> branches = null;
       if (!(commitData instanceof LoadingDetails)) {
-        branches = myLogDataHolder.getContainingBranchesGetter().requestContainingBranches(commitData.getRoot(), hash);
+        branches = myLogDataHolder.getContainingBranchesGetter().requestContainingBranches(commitData.getRoot(), commitData.getId());
       }
       myCommitDetailsPanel.setBranches(branches);
 
@@ -313,6 +321,47 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
         authorText += " (committed at " + DateFormatUtil.formatDateTime(commit.getCommitTime()) + ")";
       }
       return authorText;
+    }
+
+    @Override
+    public String getSelectedText() {
+      Document doc = getDocument();
+      int start = getSelectionStart();
+      int end = getSelectionEnd();
+
+      try {
+        Position p0 = doc.createPosition(start);
+        Position p1 = doc.createPosition(end);
+        StringWriter sw = new StringWriter(p1.getOffset() - p0.getOffset());
+        getEditorKit().write(sw, doc, p0.getOffset(), p1.getOffset() - p0.getOffset());
+
+        MyHtml2Text parser = new MyHtml2Text();
+        parser.parse(new StringReader(sw.toString()));
+        return parser.getText();
+      }
+      catch (BadLocationException e) {
+      }
+      catch (IOException e) {
+      }
+      return super.getSelectedText();
+    }
+
+    private static class MyHtml2Text extends HTMLEditorKit.ParserCallback {
+      @NotNull private StringBuffer myBuffer;
+
+      public void parse(Reader in) throws IOException {
+        myBuffer = new StringBuffer();
+        new ParserDelegator().parse(in, this, Boolean.TRUE);
+      }
+
+      public void handleText(char[] text, int pos) {
+        myBuffer.append(text);
+        myBuffer.append("\n");
+      }
+
+      public String getText() {
+        return myBuffer.toString();
+      }
     }
 
     @Override

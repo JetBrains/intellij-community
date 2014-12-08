@@ -33,8 +33,9 @@ import java.util.Map;
  * Concurrent soft key:K -> strong value:V map
  * Null keys are allowed
  * Null values are NOT allowed
+ * @deprecated Use {@link ContainerUtil#createConcurrentSoftMap()} instead
  */
-public final class ConcurrentSoftHashMap<K, V> extends ConcurrentRefHashMap<K, V> {
+final class ConcurrentSoftHashMap<K, V> extends ConcurrentRefHashMap<K, V> {
   private static class SoftKey<K, V> extends SoftReference<K> implements KeyReference<K, V> {
     private final int myHash; // Hashcode of key, stored here since the key may be tossed by the GC
     private final TObjectHashingStrategy<K> myStrategy;

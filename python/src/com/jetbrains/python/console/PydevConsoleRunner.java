@@ -64,7 +64,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.encoding.EncodingManager;
+import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.FileElement;
@@ -85,6 +85,7 @@ import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.console.completion.PydevConsoleElement;
 import com.jetbrains.python.console.parsing.PythonConsoleData;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
+import com.jetbrains.python.console.pydev.ConsoleCommunicationListener;
 import com.jetbrains.python.debugger.PyDebugRunner;
 import com.jetbrains.python.debugger.PySourcePosition;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
@@ -243,10 +244,10 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     myStatementsToExecute = statementsToExecute;
   }
 
-  public static Map<String, String> addDefaultEnvironments(Sdk sdk, Map<String, String> envs) {
-    Charset defaultCharset = EncodingManager.getInstance().getDefaultCharset();
+  public static Map<String, String> addDefaultEnvironments(Sdk sdk, Map<String, String> envs, @NotNull Project project) {
+    Charset defaultCharset = EncodingProjectManager.getInstance(project).getDefaultCharset();
 
-    final String encoding = defaultCharset != null ? defaultCharset.name() : "utf-8";
+    final String encoding = defaultCharset.name();
     setPythonIOEncoding(setPythonUnbuffered(envs), encoding);
 
     PythonSdkFlavor.initPythonPath(envs, true, PythonCommandLineState.getAddedPaths(sdk));
@@ -392,7 +393,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
 
       @Override
       public Map<String, String> getAdditionalEnvs() {
-        return addDefaultEnvironments(sdk, environmentVariables);
+        return addDefaultEnvironments(sdk, environmentVariables,getProject());
       }
     };
   }
@@ -485,13 +486,22 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
   private static int readInt(Scanner s, Process process) throws ExecutionException {
     long started = System.currentTimeMillis();
 
+    StringBuilder sb = new StringBuilder();
+    boolean flag = false;
+
     while (System.currentTimeMillis() - started < PORTS_WAITING_TIMEOUT) {
       if (s.hasNextLine()) {
         String line = s.nextLine();
+        sb.append(line).append("\n");
         try {
-          return Integer.parseInt(line);
+          int i =  Integer.parseInt(line);
+          if (flag) {
+            LOG.warn("Unexpected strings in output:\n" + sb.toString());
+          }
+          return i;
         }
         catch (NumberFormatException ignored) {
+          flag = true;
           continue;
         }
       }
@@ -501,10 +511,10 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
       if (process.exitValue() != 0) {
         String error;
         try {
-          error = "Console process terminated with error:\n" + StreamUtil.readText(process.getErrorStream());
+          error = "Console process terminated with error:\n" + StreamUtil.readText(process.getErrorStream()) + sb.toString();
         }
         catch (Exception ignored) {
-          error = "Console process terminated with exit code " + process.exitValue();
+          error = "Console process terminated with exit code " + process.exitValue() + ", output:" + sb.toString();
         }
         throw new ExecutionException(error);
       }
@@ -997,7 +1007,18 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
                                       consoleDebugProcessHandler);
 
           PythonDebugConsoleCommunication communication =
-            PyDebugRunner.initDebugConsoleView(getProject(), consoleDebugProcess, debugConsoleView, consoleDebugProcessHandler);
+            PyDebugRunner.initDebugConsoleView(getProject(), consoleDebugProcess, debugConsoleView, consoleDebugProcessHandler, session);
+
+          communication.addCommunicationListener(new ConsoleCommunicationListener() {
+            @Override
+            public void commandExecuted(boolean more) {
+              session.rebuildViews();
+            }
+
+            @Override
+            public void inputRequested() {
+            }
+          });
 
           myPydevConsoleCommunication.setDebugCommunication(communication);
           debugConsoleView.attachToProcess(consoleDebugProcessHandler);

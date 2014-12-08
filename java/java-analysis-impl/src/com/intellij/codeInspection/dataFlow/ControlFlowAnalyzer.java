@@ -96,6 +96,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
     PsiElement parent = codeFragment.getParent();
     if (parent instanceof PsiLambdaExpression && codeFragment instanceof PsiExpression) {
+      generateBoxingUnboxingInstructionFor((PsiExpression)codeFragment, 
+                                           LambdaUtil.getFunctionalInterfaceReturnType((PsiLambdaExpression)parent));
       addInstruction(new CheckReturnValueInstruction(codeFragment));
     }
 
@@ -569,9 +571,15 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     PsiExpression returnValue = statement.getReturnValue();
     if (returnValue != null) {
       returnValue.accept(this);
-      PsiMethod method = PsiTreeUtil.getParentOfType(statement, PsiMethod.class, true, PsiMember.class);
+      PsiMethod method = PsiTreeUtil.getParentOfType(statement, PsiMethod.class, true, PsiMember.class, PsiLambdaExpression.class);
       if (method != null) {
         generateBoxingUnboxingInstructionFor(returnValue, method.getReturnType());
+      }
+      else {
+        final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(statement, PsiLambdaExpression.class, true, PsiMember.class);
+        if (lambdaExpression != null) {
+          generateBoxingUnboxingInstructionFor(returnValue, LambdaUtil.getFunctionalInterfaceReturnType(lambdaExpression));
+        }
       }
       addInstruction(new CheckReturnValueInstruction(returnValue));
     }
@@ -1482,10 +1490,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     final PsiAnnotation contractAnno = findContractAnnotation(method);
     final int paramCount = method.getParameterList().getParametersCount();
     if (contractAnno != null) {
-      if (AnnotationUtil.isInferredAnnotation(contractAnno) && PsiUtil.canBeOverriden(method)) {
-        return Collections.emptyList();
-      }
-
       return CachedValuesManager.getCachedValue(contractAnno, new CachedValueProvider<List<MethodContract>>() {
         @Nullable
         @Override

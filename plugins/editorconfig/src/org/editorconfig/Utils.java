@@ -24,11 +24,11 @@ public class Utils {
   }
 
   public static void invalidConfigMessage(Project project, String configValue, String configKey, String filePath) {
-    EditorConfigNotifier.getInstance().error(project, configValue, "\"" + configValue + "\" is not a valid value" + (!configKey.isEmpty() ? " for " + configKey : "") + " for file " + filePath);
-  }
-
-  public static void appliedConfigMessage(Project project, String configValue, String configKey, String filePath) {
-    EditorConfigNotifier.getInstance().info(project, "Applied .editorconfig settings");
+    final String message = configValue != null ?
+                            "\"" + configValue + "\" is not a valid value" + (!configKey.isEmpty() ? " for " + configKey : "") + " for file " + filePath :
+                            "Failed to read .editorconfig file";
+    configValue = configValue != null ? configValue : "ioError";
+    EditorConfigNotifier.getInstance().error(project, configValue, message);
   }
 
   public static String getFilePath(Project project, VirtualFile file) {

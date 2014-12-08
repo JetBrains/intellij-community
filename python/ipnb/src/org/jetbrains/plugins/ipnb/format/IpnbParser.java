@@ -289,6 +289,7 @@ public class IpnbParser {
         else {
           raw.html = ((IpnbHtmlOutputCell)outputCell).getHtmls();
         }
+        raw.output_type = nbformat == 4 ? "execute_result" : "pyout";
         raw.text = outputCell.getText();
       }
       else if (outputCell instanceof IpnbErrorOutputCell) {

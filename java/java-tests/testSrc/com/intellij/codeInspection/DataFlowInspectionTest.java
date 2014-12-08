@@ -184,8 +184,11 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testUnknownFloatMayBeNaN() { doTest(); }
   public void testFloatEquality() { doTest(); }
   public void testLastConstantConditionInAnd() { doTest(); }
+  
+  public void testCompileTimeConstant() { doTest(); }
 
   public void testTransientFinalField() { doTest(); }
+  public void testRememberLocalTransientFieldState() { doTest(); }
   public void testFinalFieldDuringInitialization() { doTest(); }
   public void testFinalFieldDuringSuperInitialization() { doTest(); }
   public void _testSymmetricUncheckedCast() { doTest(); } // http://youtrack.jetbrains.com/issue/IDEABKL-6871
@@ -267,6 +270,7 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testSameComparisonTwice() { doTest(); }
   public void testRootThrowableCause() { doTest(); }
 
+  public void testOverridingInferredNotNullMethod() { doTest(); }
   public void testUseInferredContracts() { doTest(); }
   public void testContractWithNoArgs() { doTest(); }
   public void testContractInferenceBewareOverriding() { doTest(); }

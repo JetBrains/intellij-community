@@ -41,7 +41,6 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
@@ -76,8 +75,6 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, DataProvider {
   private static final String FULL_SCREEN = "FullScreen";
 
   private static boolean myUpdatingTitle;
-
-  private static String xdgCurrentDesktop = System.getenv("XDG_CURRENT_DESKTOP");
 
   private String myTitle;
   private String myFileTitle;
@@ -116,10 +113,6 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, DataProvider {
 
     myBalloonLayout = new BalloonLayoutImpl(myRootPane, new Insets(8, 8, 8, 8));
 
-    if (!Registry.is("ide.windowSystem.focusAppOnStartup") && !isThereActiveFrame()) {
-      setFocusableWindowState(false);
-    }
-
     // to show window thumbnail under Macs
     // http://lists.apple.com/archives/java-dev/2009/Dec/msg00240.html
     if (SystemInfo.isMac) setIconImage(null);
@@ -143,6 +136,9 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, DataProvider {
     });
 
     IdeMenuBar.installAppMenuIfNeeded(this);
+
+    // UIUtil.suppressFocusStealing();
+
   }
 
   private void updateBorder() {
@@ -202,22 +198,12 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, DataProvider {
     return null;
   }
 
-  public static boolean isThereActiveFrame() {
-    Frame[] all = Frame.getFrames();
-    for (Frame each : all) {
-      if (each.isActive()) {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
   @SuppressWarnings({"deprecation", "SSBasedInspection"})
   @Override
   public void show() {
     super.show();
     SwingUtilities.invokeLater(new Runnable() {
+      @Override
       public void run() {
         setFocusableWindowState(true);
       }
@@ -497,6 +483,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, DataProvider {
 
     if (myProject != null) {
       PropertiesComponent.getInstance(myProject).setValue(FULL_SCREEN, String.valueOf(state));
+      doLayout();
     }
   }
 

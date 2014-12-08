@@ -6,7 +6,7 @@ import string
 import time
 
 
-VERSION = "1.135"
+VERSION = "1.136"
 
 OUT_ENCODING = 'utf-8'
 

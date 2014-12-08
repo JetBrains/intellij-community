@@ -19,6 +19,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
@@ -28,6 +29,8 @@ import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileContent;
 import com.intellij.util.indexing.ID;
 import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.io.DataInputOutputUtil;
+import com.intellij.util.io.IOUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
@@ -113,11 +116,11 @@ public class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
     return new DataExternalizer<XsdNamespaceBuilder>() {
       @Override
       public void save(@NotNull DataOutput out, XsdNamespaceBuilder value) throws IOException {
-        out.writeUTF(value.getNamespace() == null ? "" : value.getNamespace());
-        out.writeUTF(value.getVersion() == null ? "" : value.getVersion());
-        out.writeInt(value.getTags().size());
+        IOUtil.writeUTF(out, value.getNamespace() == null ? "" : value.getNamespace());
+        IOUtil.writeUTF(out, value.getVersion() == null ? "" : value.getVersion());
+        DataInputOutputUtil.writeINT(out, value.getTags().size());
         for (String s : value.getTags()) {
-          out.writeUTF(s);
+          IOUtil.writeUTF(out, s);
         }
       }
 
@@ -125,9 +128,10 @@ public class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
       public XsdNamespaceBuilder read(@NotNull DataInput in) throws IOException {
 
         int count;
-        XsdNamespaceBuilder builder = new XsdNamespaceBuilder(in.readUTF(), in.readUTF(), new ArrayList<String>(count = in.readInt()));
+        XsdNamespaceBuilder builder = new XsdNamespaceBuilder(IOUtil.readUTF(in), IOUtil.readUTF(in),
+                                                              new ArrayList<String>(count = DataInputOutputUtil.readINT(in)));
         for (int i = 0; i < count; i++) {
-          builder.getTags().add(in.readUTF());
+          builder.getTags().add(IOUtil.readUTF(in));
         }
         return builder;
       }
@@ -136,13 +140,14 @@ public class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
 
   @Override
   public int getVersion() {
-    return 2;
+    return 3;
   }
 
   @Nullable
   public static IndexedRelevantResource<String, XsdNamespaceBuilder> guessSchema(String namespace,
                                                                                  @Nullable final String tagName,
                                                                                  @Nullable final String version,
+                                                                                 @Nullable String schemaLocation,
                                                                                  @Nullable Module module,
                                                                                  @NotNull Project project) {
 
@@ -150,14 +155,19 @@ public class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
       resources = getResourcesByNamespace(namespace, project, module);
 
     if (resources.isEmpty()) return null;
-
-    return Collections
-      .max(resources, new Comparator<IndexedRelevantResource<String, XsdNamespaceBuilder>>() {
+    if (resources.size() == 1) return resources.get(0);
+    final String fileName = schemaLocation == null ? null : new File(schemaLocation).getName();
+    return Collections.max(resources, new Comparator<IndexedRelevantResource<String, XsdNamespaceBuilder>>() {
         @Override
         public int compare(IndexedRelevantResource<String, XsdNamespaceBuilder> o1,
                            IndexedRelevantResource<String, XsdNamespaceBuilder> o2) {
           int i = o1.compareTo(o2);
-          return i == 0 ? o1.getValue().getRating(tagName, version) - o2.getValue().getRating(tagName, version) : i;
+          if (i != 0) return i;
+          if (fileName != null) {
+            i = Comparing.compare(fileName.equals(o1.getFile().getName()), fileName.equals(o2.getFile().getName()));
+            if (i != 0) return i;
+          }
+          return o1.getValue().getRating(tagName, version) - o2.getValue().getRating(tagName, version);
         }
       });
   }
@@ -166,12 +176,13 @@ public class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
   public static XmlFile guessSchema(String namespace,
                                     @Nullable final String tagName,
                                     @Nullable final String version,
+                                    @Nullable String schemaLocation,
                                     @NotNull PsiFile file) {
 
     if (DumbService.isDumb(file.getProject()) || XmlUtil.isStubBuilding()) return null;
 
     IndexedRelevantResource<String,XsdNamespaceBuilder> resource =
-      guessSchema(namespace, tagName, version, ModuleUtilCore.findModuleForPsiElement(file), file.getProject());
+      guessSchema(namespace, tagName, version, schemaLocation, ModuleUtilCore.findModuleForPsiElement(file), file.getProject());
     if (resource == null) return null;
     return findSchemaFile(resource.getFile(), file);
   }

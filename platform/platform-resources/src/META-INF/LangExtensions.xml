@@ -108,8 +108,6 @@
                         serviceImplementation="com.intellij.psi.impl.source.codeStyle.PersistableCodeStyleSchemes"/>
     <applicationService serviceInterface="com.intellij.psi.impl.source.codeStyle.LegacyCodeStyleSchemesSettings"
                         serviceImplementation="com.intellij.psi.impl.source.codeStyle.LegacyCodeStyleSchemesSettings"/>
-    <exportable serviceInterface="com.intellij.psi.codeStyle.CodeStyleSchemes"/>
-    <schemeOwner serviceInterface="com.intellij.psi.codeStyle.CodeStyleSchemes"/>
 
     <applicationService serviceInterface="com.intellij.openapi.roots.libraries.LibraryTablesRegistrar"
                         serviceImplementation="com.intellij.openapi.roots.impl.libraries.LibraryTablesRegistrarImpl"/>
@@ -353,7 +351,7 @@
     <projectService serviceInterface="com.intellij.semantic.SemService" serviceImplementation="com.intellij.semantic.SemServiceImpl"/>
 
     <!-- Global Code Style -->
-    <projectConfigurable groupId="editor" groupWeight="170" dynamic="true" displayName="Code Style" instance="com.intellij.application.options.CodeStyleSchemesConfigurable" order="after colors"/>
+    <projectConfigurable groupId="editor" groupWeight="170" dynamic="true" displayName="Code Style" id="preferences.sourceCode" instance="com.intellij.application.options.CodeStyleSchemesConfigurable" order="after colors"/>
     <applicationService serviceInterface="com.intellij.application.options.codeStyle.CodeStyleSchemesUIConfiguration"
                         serviceImplementation="com.intellij.application.options.codeStyle.CodeStyleSchemesUIConfiguration"/>
 
@@ -598,7 +596,7 @@
 
     <!-- Colors & Fonts-->
     <applicationConfigurable groupId="editor" groupWeight="180" dynamic="true" instance="com.intellij.application.options.colors.ColorAndFontOptions"
-                           id="reference.settingsdialog.IDE.editor.colors"/>
+                           id="reference.settingsdialog.IDE.editor.colors" key="title.colors.and.fonts" bundle="messages.ApplicationBundle"/>
     <editorOptionsProvider instance="com.intellij.application.options.editor.EditorTabsConfigurable" id="editor.preferences.tabs"
                            displayName="Editor Tabs"/>
     <editorOptionsProvider instance="com.intellij.application.options.editor.CodeFoldingConfigurable" id="editor.preferences.folding"
@@ -737,7 +735,7 @@
     <psi.fileReferenceHelper implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.HttpFileReferenceHelper"/>
     <psi.fileReferenceHelper implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.NullFileReferenceHelper" order="last"/>
 
-    <projectConfigurable groupId="editor" groupWeight="140" key="file.encodings.configurable" bundle="messages.IdeBundle" instance="com.intellij.openapi.vfs.encoding.FileEncodingConfigurable"/>
+    <projectConfigurable groupId="editor" groupWeight="140" key="file.encodings.configurable" bundle="messages.IdeBundle" id="File.Encoding" instance="com.intellij.openapi.vfs.encoding.FileEncodingConfigurable"/>
     <projectConfigurable groupId="appearance" groupWeight="112" instance="com.intellij.ui.tabs.FileColorsConfigurable" id="reference.settings.ide.settings.file-colors" displayName="File Colors"/>
 
     <uiDebuggerExtension implementation="com.intellij.ui.debugger.extensions.PlaybackDebugger"/>

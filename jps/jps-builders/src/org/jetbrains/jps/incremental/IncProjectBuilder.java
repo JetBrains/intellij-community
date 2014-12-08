@@ -49,6 +49,7 @@ import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
 import org.jetbrains.jps.cmdline.BuildRunner;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
+import org.jetbrains.jps.incremental.fs.CompilationRound;
 import org.jetbrains.jps.incremental.messages.*;
 import org.jetbrains.jps.incremental.storage.BuildTargetConfiguration;
 import org.jetbrains.jps.incremental.storage.OneToManyPathsMapping;
@@ -1048,7 +1049,7 @@ public class IncProjectBuilder {
               for (String formPath : boundForms) {
                 final File formFile = new File(formPath);
                 if (formFile.exists()) {
-                  FSOperations.markDirty(context, formFile);
+                  FSOperations.markDirty(context, CompilationRound.CURRENT, formFile);
                 }
               }
               sourceToFormMap.remove(deletedSource);
@@ -1134,55 +1135,63 @@ public class IncProjectBuilder {
             continue;
           }
 
-          for (ModuleLevelBuilder builder : builders) {
-            processDeletedPaths(context, chunk.getTargets());
-            long start = System.nanoTime();
-            final ModuleLevelBuilder.ExitCode buildResult = builder.build(context, chunk, dirtyFilesHolder, outputConsumer);
-            incBuilderElapsedTime(builder, System.nanoTime() - start);
-
-            doneSomething |= (buildResult != ModuleLevelBuilder.ExitCode.NOTHING_DONE);
-
-            if (buildResult == ModuleLevelBuilder.ExitCode.ABORT) {
-              throw new StopBuildException("Builder " + builder.getPresentableName() + " requested build stop");
-            }
-            context.checkCanceled();
-            if (buildResult == ModuleLevelBuilder.ExitCode.ADDITIONAL_PASS_REQUIRED) {
-              if (!nextPassRequired) {
-                // recalculate basis
-                myTargetsProcessed -= (buildersPassed * modulesInChunk) / stageCount;
-                stageCount += myTotalModuleLevelBuilderCount;
-                myTargetsProcessed += (buildersPassed * modulesInChunk) / stageCount;
+          try {
+            for (ModuleLevelBuilder builder : builders) {
+              processDeletedPaths(context, chunk.getTargets());
+              long start = System.nanoTime();
+              final ModuleLevelBuilder.ExitCode buildResult = builder.build(context, chunk, dirtyFilesHolder, outputConsumer);
+              incBuilderElapsedTime(builder, System.nanoTime() - start);
+  
+              doneSomething |= (buildResult != ModuleLevelBuilder.ExitCode.NOTHING_DONE);
+  
+              if (buildResult == ModuleLevelBuilder.ExitCode.ABORT) {
+                throw new StopBuildException("Builder " + builder.getPresentableName() + " requested build stop");
               }
+              context.checkCanceled();
+              if (buildResult == ModuleLevelBuilder.ExitCode.ADDITIONAL_PASS_REQUIRED) {
+                nextPassRequired = true;
+              }
+              else if (buildResult == ModuleLevelBuilder.ExitCode.CHUNK_REBUILD_REQUIRED) {
+                if (!rebuildFromScratchRequested && !JavaBuilderUtil.isForcedRecompilationAllJavaModules(context)) {
+                  LOG.info("Builder " + builder.getPresentableName() + " requested rebuild of module chunk " + chunk.getName());
+                  // allow rebuild from scratch only once per chunk
+                  rebuildFromScratchRequested = true;
+                  try {
+                    // forcibly mark all files in the chunk dirty
+                    context.getProjectDescriptor().fsState.clearContextRoundData(context);
+                    FSOperations.markDirty(context, CompilationRound.NEXT, chunk, null);
+                    // reverting to the beginning
+                    myTargetsProcessed -= (buildersPassed * modulesInChunk) / stageCount;
+                    stageCount = myTotalModuleLevelBuilderCount;
+                    buildersPassed = 0;
+                    nextPassRequired = true;
+                    outputConsumer.clear();
+                    break BUILDER_CATEGORY_LOOP;
+                  }
+                  catch (Exception e) {
+                    throw new ProjectBuildException(e);
+                  }
+                }
+                else {
+                  LOG.debug("Builder " + builder.getPresentableName() + " requested second chunk rebuild");
+                }
+              }
+  
+              buildersPassed++;
+              updateDoneFraction(context, modulesInChunk / (stageCount));
+            }
+          }
+          finally {
+            final boolean moreToCompile = JavaBuilderUtil.updateMappingsOnRoundCompletion(context, dirtyFilesHolder, chunk);
+            if (moreToCompile) {
               nextPassRequired = true;
             }
-            else if (buildResult == ModuleLevelBuilder.ExitCode.CHUNK_REBUILD_REQUIRED) {
-              if (!rebuildFromScratchRequested && !JavaBuilderUtil.isForcedRecompilationAllJavaModules(context)) {
-                LOG.info("Builder " + builder.getPresentableName() + " requested rebuild of module chunk " + chunk.getName());
-                // allow rebuild from scratch only once per chunk
-                rebuildFromScratchRequested = true;
-                try {
-                  // forcibly mark all files in the chunk dirty
-                  context.getProjectDescriptor().fsState.clearContextRoundData(context);
-                  FSOperations.markDirty(context, chunk, null);
-                  // reverting to the beginning
-                  myTargetsProcessed -= (buildersPassed * modulesInChunk) / stageCount;
-                  stageCount = myTotalModuleLevelBuilderCount;
-                  buildersPassed = 0;
-                  nextPassRequired = true;
-                  outputConsumer.clear();
-                  break BUILDER_CATEGORY_LOOP;
-                }
-                catch (Exception e) {
-                  throw new ProjectBuildException(e);
-                }
-              }
-              else {
-                LOG.debug("Builder " + builder.getPresentableName() + " requested second chunk rebuild");
-              }
+            if (nextPassRequired && !rebuildFromScratchRequested) {
+              // recalculate basis
+              myTargetsProcessed -= (buildersPassed * modulesInChunk) / stageCount;
+              stageCount += myTotalModuleLevelBuilderCount;
+              myTargetsProcessed += (buildersPassed * modulesInChunk) / stageCount;
             }
-
-            buildersPassed++;
-            updateDoneFraction(context, modulesInChunk / (stageCount));
           }
         }
       }

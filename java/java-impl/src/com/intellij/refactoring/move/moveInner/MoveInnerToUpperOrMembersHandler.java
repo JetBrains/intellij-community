@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,8 +50,7 @@ public class MoveInnerToUpperOrMembersHandler extends MoveHandlerDelegate {
 
   public void doMove(final Project project, final PsiElement[] elements, final PsiElement targetContainer, final MoveCallback callback) {
     SelectInnerOrMembersRefactoringDialog dialog = new SelectInnerOrMembersRefactoringDialog((PsiClass)elements[0], project);
-    dialog.show();
-    if (!dialog.isOK()) {
+    if (!dialog.showAndGet()) {
       return;
     }
     MoveHandlerDelegate delegate = dialog.getRefactoringHandler();
@@ -65,13 +64,12 @@ public class MoveInnerToUpperOrMembersHandler extends MoveHandlerDelegate {
     if (isStaticInnerClass(element) && !JavaMoveClassesOrPackagesHandler.isReferenceInAnonymousClass(reference)) {
       FeatureUsageTracker.getInstance().triggerFeatureUsed("refactoring.move.moveInner");
       final PsiElement targetContainer = LangDataKeys.TARGET_PSI_ELEMENT.getData(dataContext);
-      PsiClass aClass = (PsiClass) element;
+      PsiClass aClass = (PsiClass)element;
       SelectInnerOrMembersRefactoringDialog dialog = new SelectInnerOrMembersRefactoringDialog(aClass, project);
-      dialog.show();
-      if (dialog.isOK()) {
+      if (dialog.showAndGet()) {
         final MoveHandlerDelegate moveHandlerDelegate = dialog.getRefactoringHandler();
         if (moveHandlerDelegate != null) {
-          moveHandlerDelegate.doMove(project, new PsiElement[] { aClass }, targetContainer, null);
+          moveHandlerDelegate.doMove(project, new PsiElement[]{aClass}, targetContainer, null);
         }
       }
       return true;

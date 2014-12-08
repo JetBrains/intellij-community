@@ -33,6 +33,7 @@ import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -49,12 +50,12 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
   VcsLogFiltererImpl(@NotNull final Project project,
                      @NotNull Map<VirtualFile, VcsLogProvider> providers,
                      @NotNull VcsLogHashMap hashMap,
-                     @NotNull Map<Hash, VcsCommitMetadata> topCommitsDetailsCache,
+                     @NotNull Map<Integer, VcsCommitMetadata> topCommitsDetailsCache,
                      @NotNull CommitDetailsGetter detailsGetter,
                      @NotNull final PermanentGraph.SortType initialSortType,
                      @NotNull final Consumer<VisiblePack> visiblePackConsumer) {
     myVisiblePackBuilder = new VisiblePackBuilder(providers, hashMap, topCommitsDetailsCache, detailsGetter);
-    myFilters = new VcsLogFilterCollectionImpl(null, null, null, null, null, null);
+    myFilters = new VcsLogFilterCollectionImpl(null, null, null, null, null, null, null);
     mySortType = initialSortType;
 
     myTaskController = new SingleTaskController<Request, VisiblePack>(visiblePackConsumer) {
@@ -100,10 +101,13 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
     public void run(@NotNull ProgressIndicator indicator) {
       VisiblePack visiblePack = null;
       List<Request> requests;
+      List<MoreCommitsRequest> requestsToRun = new ArrayList<MoreCommitsRequest>();
       while (!(requests = myTaskController.popRequests()).isEmpty()) {
         RefreshRequest refreshRequest = ContainerUtil.findLastInstance(requests, RefreshRequest.class);
         FilterRequest filterRequest = ContainerUtil.findLastInstance(requests, FilterRequest.class);
         SortTypeRequest sortTypeRequest = ContainerUtil.findLastInstance(requests, SortTypeRequest.class);
+        List<MoreCommitsRequest> moreCommitsRequests = ContainerUtil.findAll(requests, MoreCommitsRequest.class);
+        requestsToRun.addAll(moreCommitsRequests);
 
         if (refreshRequest != null) {
           myDataPack = refreshRequest.dataPack;
@@ -119,10 +123,11 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
           continue;
         }
 
-        if (filterRequest != null) { // "more commits needed" has no effect if filter changes; it also can't come after filter change request
+        if (filterRequest != null) {
+          // "more commits needed" has no effect if filter changes; it also can't come after filter change request
           myCommitCount = CommitCountStage.INITIAL;
         }
-        else if (ContainerUtil.findInstance(requests, MoreCommitsRequest.class) != null) {
+        else if (!moreCommitsRequests.isEmpty()) {
           myCommitCount = myCommitCount.next();
         }
 
@@ -133,6 +138,10 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
 
       // visible pack can be null (e.g. when filter is set during initialization) => we just remember filters set by user
       myTaskController.taskCompleted(visiblePack);
+
+      for (MoreCommitsRequest request : requestsToRun) {
+        request.onLoaded.run();
+      }
     }
   }
 
@@ -141,6 +150,7 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
 
   private static final class RefreshRequest implements Request {
     private final DataPack dataPack;
+
     RefreshRequest(DataPack dataPack) {
       this.dataPack = dataPack;
     }
@@ -148,6 +158,7 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
 
   private static final class FilterRequest implements Request {
     private final VcsLogFilterCollection filters;
+
     FilterRequest(VcsLogFilterCollection filters) {
       this.filters = filters;
     }
@@ -155,14 +166,16 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
 
   private static final class SortTypeRequest implements Request {
     private final PermanentGraph.SortType sortType;
+
     SortTypeRequest(PermanentGraph.SortType sortType) {
       this.sortType = sortType;
     }
   }
 
   private static final class MoreCommitsRequest implements Request {
-    private final Runnable onLoaded;
-    MoreCommitsRequest(Runnable onLoaded) {
+    @NotNull private final Runnable onLoaded;
+
+    MoreCommitsRequest(@NotNull Runnable onLoaded) {
       this.onLoaded = onLoaded;
     }
   }

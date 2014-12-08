@@ -656,12 +656,7 @@ public class IdeEventQueue extends EventQueue {
               try {
                 Object owner = getNativeFocusOwner.invoke(mgr);
                 if (owner instanceof Component) {
-                  Component nativeFocusOwner = (Component)owner;
-                  if (nativeFocusOwner instanceof Window) {
-                    showingWindow = (Window)nativeFocusOwner;
-                  } else {
-                    showingWindow = SwingUtilities.getWindowAncestor(nativeFocusOwner);
-                  }
+                  showingWindow = UIUtil.getWindow((Component)owner);
                 }
               }
               catch (Exception e1) {
@@ -996,7 +991,7 @@ public class IdeEventQueue extends EventQueue {
                 @Override
                 public void run() {
                   try {
-                    final Window window = component instanceof Window ? (Window)component : SwingUtilities.windowForComponent(component);
+                    final Window window = UIUtil.getWindow(component);
                     if (window == null || !window.isActive()) {
                       return;
                     }

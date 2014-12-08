@@ -47,9 +47,11 @@ import com.intellij.util.containers.StringInterner;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.GraphGenerator;
+import com.intellij.util.xmlb.annotations.Attribute;
+import com.intellij.util.xmlb.annotations.Tag;
+import com.intellij.util.xmlb.annotations.Transient;
 import gnu.trove.THashMap;
 import org.jdom.Element;
-import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,37 +69,34 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.InspectionProfileImpl");
   @NonNls private static final String VALID_VERSION = "1.0";
   @NonNls private static final String VERSION_TAG = "version";
-  @NonNls private static final String PROFILE_NAME_TAG = "profile_name";
-  @NonNls private static final String ROOT_ELEMENT_TAG = "inspections";
   @NonNls private static final String USED_LEVELS = "used_levels";
-  @NonNls private static final String IS_LOCKED = "is_locked";
-  @NonNls private static final String DESCRIPTION = "description";
   @TestOnly
   public static boolean INIT_INSPECTIONS = false;
   private static Map<String, InspectionElementsMerger> ourMergers = null;
-  final InspectionToolRegistrar myRegistrar;
+  private final InspectionToolRegistrar myRegistrar;
   @NotNull
-  private final Map<String, Element> myDeinstalledInspectionsSettings;
+  private final Map<String, Element> myUninstalledInspectionsSettings;
   private final ExternalInfo myExternalInfo = new ExternalInfo();
   protected InspectionProfileImpl mySource;
   private Map<String, ToolsImpl> myTools = new THashMap<String, ToolsImpl>();
   private Map<String, Boolean> myDisplayLevelMap;
-  private boolean myLockedProfile = false;
+  @Attribute("is_locked")
+  private boolean myLockedProfile;
   private InspectionProfileImpl myBaseProfile = null;
   private String myEnabledTool = null;
-  private String[] myScopesOrder = null;
+  private String[] myScopesOrder;
   private String myDescription;
-  private boolean myModified = false;
+  private boolean myModified;
   private volatile boolean myInitialized;
 
   InspectionProfileImpl(@NotNull InspectionProfileImpl inspectionProfile) {
     super(inspectionProfile.getName());
 
     myRegistrar = inspectionProfile.myRegistrar;
-    myDeinstalledInspectionsSettings = new LinkedHashMap<String, Element>(inspectionProfile.myDeinstalledInspectionsSettings);
+    myUninstalledInspectionsSettings = new LinkedHashMap<String, Element>(inspectionProfile.myUninstalledInspectionsSettings);
 
     myBaseProfile = inspectionProfile.myBaseProfile;
-    myLocal = inspectionProfile.myLocal;
+    setProjectLevel(inspectionProfile.isProjectLevel());
     myLockedProfile = inspectionProfile.myLockedProfile;
     mySource = inspectionProfile;
     setProfileManager(inspectionProfile.getProfileManager());
@@ -111,14 +110,14 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     myRegistrar = registrar;
     myBaseProfile = getDefaultProfile();
     setProfileManager(profileManager);
-    myDeinstalledInspectionsSettings = new TreeMap<String, Element>();
+    myUninstalledInspectionsSettings = new TreeMap<String, Element>();
   }
 
   public InspectionProfileImpl(@NotNull @NonNls String profileName) {
     super(profileName);
     myRegistrar = InspectionToolRegistrar.getInstance();
     setProfileManager(InspectionProfileManager.getInstance());
-    myDeinstalledInspectionsSettings = new TreeMap<String, Element>();
+    myUninstalledInspectionsSettings = new TreeMap<String, Element>();
   }
 
   private static synchronized Map<String, InspectionElementsMerger> getMergers() {
@@ -252,29 +251,19 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   @Override
   public void readExternal(@NotNull Element element) throws InvalidDataException {
     super.readExternal(element);
-    final String locked = element.getAttributeValue(IS_LOCKED);
-    if (locked != null) {
-      myLockedProfile = Boolean.parseBoolean(locked);
-    }
+
     if (!ApplicationManager.getApplication().isUnitTestMode() || myBaseProfile == null) {
       // todo remove this strange side effect
       myBaseProfile = getDefaultProfile();
     }
     final String version = element.getAttributeValue(VERSION_TAG);
     if (version == null || !version.equals(VALID_VERSION)) {
-      try {
-        element = InspectionProfileConvertor.convertToNewFormat(element, this);
-      }
-      catch (IOException e) {
-        LOG.error(e);
-      }
-      catch (JDOMException e) {
-        LOG.error(e);
-      }
+      element = InspectionProfileConvertor.convertToNewFormat(element, this);
     }
 
     final Element highlightElement = element.getChild(USED_LEVELS);
-    if (highlightElement != null) { //from old profiles
+    if (highlightElement != null) {
+      // from old profiles
       ((SeverityProvider)getProfileManager()).getOwnSeverityRegistrar().readExternal(highlightElement);
     }
 
@@ -283,12 +272,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
       // make clone to avoid retaining memory via o.parent pointers
       toolElement = toolElement.clone();
       JDOMUtil.internElement(toolElement, interner);
-      myDeinstalledInspectionsSettings.put(toolElement.getAttributeValue(CLASS_TAG), toolElement);
-    }
-
-    final Element descriptionElement = element.getChild(DESCRIPTION);
-    if (descriptionElement != null) {
-      myDescription = descriptionElement.getText();
+      myUninstalledInspectionsSettings.put(toolElement.getAttributeValue(CLASS_TAG), toolElement);
     }
   }
 
@@ -305,46 +289,52 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   }
 
   @Override
-  public void writeExternal(@NotNull Element element) throws WriteExternalException {
-    super.writeExternal(element);
+  public void serializeInto(@NotNull Element element, boolean preserveCompatibility) {
+    // must be first - compatibility
     element.setAttribute(VERSION_TAG, VALID_VERSION);
-    element.setAttribute(IS_LOCKED, String.valueOf(myLockedProfile));
-    if (myDescription != null) {
-      element.addContent(new Element(DESCRIPTION).addContent(myDescription));
-    }
+
+    super.serializeInto(element, preserveCompatibility);
+
     synchronized (myExternalInfo) {
-    if (!myInitialized) {
-        for (Element el : myDeinstalledInspectionsSettings.values()) {
+      if (!myInitialized) {
+        for (Element el : myUninstalledInspectionsSettings.values()) {
           element.addContent(el.clone());
         }
-      return;
-    }
+        return;
+      }
     }
 
     Map<String, Boolean> diffMap = getDisplayLevelMap();
     if (diffMap != null) {
 
       diffMap = new TreeMap<String, Boolean>(diffMap);
-      for (String toolName : myDeinstalledInspectionsSettings.keySet()) {
+      for (String toolName : myUninstalledInspectionsSettings.keySet()) {
         diffMap.put(toolName, false);
       }
 
-      for (final String toolName : diffMap.keySet()) {
+      for (String toolName : diffMap.keySet()) {
         if (!myLockedProfile && diffMap.get(toolName).booleanValue()) {
           markSettingsMerged(toolName, element);
           continue;
         }
-        final Element toolElement = myDeinstalledInspectionsSettings.get(toolName);
+
+        Element toolElement = myUninstalledInspectionsSettings.get(toolName);
         if (toolElement == null) {
-          final ToolsImpl toolList = myTools.get(toolName);
+          ToolsImpl toolList = myTools.get(toolName);
           LOG.assertTrue(toolList != null);
-          final Element inspectionElement = new Element(INSPECTION_TOOL_TAG);
+          Element inspectionElement = new Element(INSPECTION_TOOL_TAG);
           inspectionElement.setAttribute(CLASS_TAG, toolName);
-          toolList.writeExternal(inspectionElement);
+          try {
+            toolList.writeExternal(inspectionElement);
+          }
+          catch (WriteExternalException e) {
+            LOG.error(e);
+            continue;
+          }
 
-          if (areSettingsMerged(toolName, inspectionElement)) continue;
-
-          element.addContent(inspectionElement);
+          if (!areSettingsMerged(toolName, inspectionElement)) {
+            element.addContent(inspectionElement);
+          }
         }
         else {
           element.addContent(toolElement.clone());
@@ -356,9 +346,9 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   private void markSettingsMerged(String toolName, Element element) {
     //add marker if already merged but result is now default (-> empty node)
     final String mergedName = InspectionElementsMerger.getMergedMarkerName(toolName);
-    if (!myDeinstalledInspectionsSettings.containsKey(mergedName)) {
+    if (!myUninstalledInspectionsSettings.containsKey(mergedName)) {
       final InspectionElementsMerger merger = getMergers().get(toolName);
-      if (merger != null && merger.markSettingsMerged(myDeinstalledInspectionsSettings)) {
+      if (merger != null && merger.markSettingsMerged(myUninstalledInspectionsSettings)) {
         element.addContent(new Element(INSPECTION_TOOL_TAG).setAttribute(CLASS_TAG, mergedName));
       }
     }
@@ -367,7 +357,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   private boolean areSettingsMerged(String toolName, Element inspectionElement) {
     //skip merged settings as they could be restored from already provided data
     final InspectionElementsMerger merger = getMergers().get(toolName);
-    return merger != null && merger.areSettingsMerged(myDeinstalledInspectionsSettings, inspectionElement);
+    return merger != null && merger.areSettingsMerged(myUninstalledInspectionsSettings, inspectionElement);
   }
 
   public void collectDependentInspections(@NotNull InspectionToolWrapper toolWrapper,
@@ -378,13 +368,12 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     if (mainToolId != null) {
       InspectionToolWrapper dependentEntryWrapper = getInspectionTool(mainToolId, project);
 
-      if (dependentEntryWrapper != null) {
-        if (!dependentEntries.add(dependentEntryWrapper)) {
-          collectDependentInspections(dependentEntryWrapper, dependentEntries, project);
-        }
+      if (dependentEntryWrapper == null) {
+        LOG.error("Can't find main tool: '" + mainToolId+"' which was specified in "+toolWrapper);
+        return;
       }
-      else {
-        LOG.error("Can't find main tool: " + mainToolId);
+      if (!dependentEntries.add(dependentEntryWrapper)) {
+        collectDependentInspections(dependentEntryWrapper, dependentEntries, project);
       }
     }
   }
@@ -483,6 +472,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   }
 
   @Override
+  @Transient
   public boolean isProfileLocked() {
     return myLockedProfile;
   }
@@ -560,7 +550,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     try {
       tools = createTools(project);
     }
-    catch (ProcessCanceledException e) {
+    catch (ProcessCanceledException ignored) {
       return false;
     }
     final Map<String, List<String>> dependencies = new HashMap<String, List<String>>();
@@ -588,15 +578,15 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
       HighlightDisplayLevel level = myBaseProfile != null ? myBaseProfile.getErrorLevel(key, project) : toolWrapper.getDefaultLevel();
       boolean enabled = myBaseProfile != null ? myBaseProfile.isToolEnabled(key) : toolWrapper.isEnabledByDefault();
       final ToolsImpl toolsList = new ToolsImpl(toolWrapper, level, !myLockedProfile && enabled, enabled);
-      final Element element = myDeinstalledInspectionsSettings.remove(shortName);
+      final Element element = myUninstalledInspectionsSettings.remove(shortName);
       try {
         if (element != null) {
           toolsList.readExternal(element, this, dependencies);
         }
-        else if (!myDeinstalledInspectionsSettings.containsKey(InspectionElementsMerger.getMergedMarkerName(shortName))) {
+        else if (!myUninstalledInspectionsSettings.containsKey(InspectionElementsMerger.getMergedMarkerName(shortName))) {
           final InspectionElementsMerger merger = getMergers().get(shortName);
           if (merger != null) {
-            final Element merged = merger.merge(myDeinstalledInspectionsSettings);
+            final Element merged = merger.merge(myUninstalledInspectionsSettings);
             if (merged != null) {
               toolsList.readExternal(merged, this, dependencies);
             }
@@ -633,6 +623,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   }
 
   @Nullable
+  @Transient
   public String[] getScopesOrder() {
     return myScopesOrder;
   }
@@ -652,6 +643,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
         }
       });
     }
+    //noinspection TestOnlyProblems
     return myRegistrar.createTools();
   }
 
@@ -672,8 +664,8 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   @Override
   public void copyFrom(@NotNull InspectionProfile profile) {
     super.copyFrom(profile);
-    final InspectionProfileImpl inspectionProfile = (InspectionProfileImpl)profile;
-    myBaseProfile = inspectionProfile.myBaseProfile;
+
+    myBaseProfile = ((InspectionProfileImpl)profile).myBaseProfile;
   }
 
   private void copyToolsConfigurations(@NotNull InspectionProfileImpl profile, @Nullable Project project) {
@@ -798,7 +790,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   private void commit(@NotNull InspectionProfileImpl inspectionProfile) {
     setName(inspectionProfile.getName());
     setDescription(inspectionProfile.getDescription());
-    myLocal = inspectionProfile.myLocal;
+    setProjectLevel(inspectionProfile.isProjectLevel());
     myLockedProfile = inspectionProfile.myLockedProfile;
     myDisplayLevelMap = inspectionProfile.myDisplayLevelMap;
     myBaseProfile = inspectionProfile.myBaseProfile;
@@ -810,29 +802,13 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     InspectionProfileManager.getInstance().fireProfileChanged(inspectionProfile);
   }
 
+  @Tag
   public String getDescription() {
     return myDescription;
   }
 
   public void setDescription(String description) {
-    if (Comparing.strEqual(description, myDescription)) {
-      return;
-    }
-    setModified(true);
     myDescription = description;
-  }
-
-  public Element saveToDocument() throws WriteExternalException {
-    if (isLocal()) {
-      Element root = new Element(ROOT_ELEMENT_TAG);
-      root.setAttribute(PROFILE_NAME_TAG, myName);
-      writeExternal(root);
-      //myVisibleTreeState.writeExternal(root);
-      return root;
-    }
-    else {
-      return null;
-    }
   }
 
   @Override
@@ -945,14 +921,6 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     }
   }
 
-  public void removeAllScopes(@NotNull String toolId, Project project) {
-    getTools(toolId, project).removeAllScopes();
-  }
-
-  public void moveScope(@NotNull String toolId, int idx, int dir, Project project) {
-    getTools(toolId, project).moveScope(idx, dir);
-  }
-
   /**
    * @return null if it has no base profile
    */
@@ -975,6 +943,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   }
   
   @NotNull
+  @Transient
   public HighlightDisplayLevel getErrorLevel(@NotNull HighlightDisplayKey key, NamedScope scope, Project project) {
     final ToolsImpl tools = getTools(key.toString(), project);
     return tools != null ? tools.getLevel(scope, project) : HighlightDisplayLevel.WARNING;
@@ -1015,6 +984,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     }
   }
 
+  @Override
   @NotNull
   public String toString() {
     return mySource == null ? getName() : getName() + " (copy)";
@@ -1028,5 +998,4 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   private static class InspectionProfileImplHolder {
     private static final InspectionProfileImpl DEFAULT_PROFILE = new InspectionProfileImpl("Default");
   }
-
 }

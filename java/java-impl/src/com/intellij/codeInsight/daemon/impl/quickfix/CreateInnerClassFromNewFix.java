@@ -18,7 +18,6 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -35,7 +34,7 @@ public class CreateInnerClassFromNewFix extends CreateClassFromNewFix {
 
   @Override
   public String getText(String varName) {
-    return QuickFixBundle.message("create.inner.class.from.usage.text", StringUtil.capitalize(CreateClassKind.CLASS.getDescription()), varName);
+    return QuickFixBundle.message("create.inner.class.from.usage.text", CreateClassKind.CLASS.getDescription(), varName);
   }
 
   @Override

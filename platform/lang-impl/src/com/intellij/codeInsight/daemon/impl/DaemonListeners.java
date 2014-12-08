@@ -140,7 +140,8 @@ public class DaemonListeners implements Disposable {
                          @NotNull UndoManager undoManager,
                          @NotNull ProjectLevelVcsManager projectLevelVcsManager,
                          @NotNull VcsDirtyScopeManager vcsDirtyScopeManager,
-                         @NotNull FileStatusManager fileStatusManager) {
+                         @NotNull FileStatusManager fileStatusManager,
+                         @NotNull EditorColorsManager colorsManager) {
     Disposer.register(project, this);
     myProject = project;
     myDaemonCodeAnalyzer = daemonCodeAnalyzer;
@@ -296,6 +297,12 @@ public class DaemonListeners implements Disposable {
       }
     });
 
+    colorsManager.addEditorColorsListener(new EditorColorsListener() {
+      @Override
+      public void globalSchemeChange(EditorColorsScheme scheme) {
+        stopDaemonAndRestartAllFiles();
+      }
+    }, this);
 
     commandProcessor.addCommandListener(new MyCommandListener(), this);
     application.addApplicationListener(new MyApplicationListener(), this);
@@ -365,6 +372,15 @@ public class DaemonListeners implements Disposable {
         });
       }
     });
+    if (RefResolveService.ENABLED) {
+      RefResolveService resolveService = RefResolveService.getInstance(project);
+      resolveService.addListener(this, new RefResolveService.Listener() {
+        @Override
+        public void allFilesResolved() {
+          stopDaemon(true, "RefResolveService is up to date");
+        }
+      });
+    }
   }
   
   static boolean isUnderIgnoredAction(@Nullable Object action) {

@@ -25,7 +25,6 @@ import com.intellij.openapi.keymap.KeymapManagerListener;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.util.IdRunnable;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.ScreenUtil;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -38,44 +37,45 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 public abstract class ToolbarUpdater implements Activatable {
-  private final KeymapManagerListener myKeymapManagerListener;
-  private final WeakTimerListener myWeakTimerListener;
-  /** @noinspection FieldCanBeLocal*/
-  private final TimerListener myTimerListener;
   private final ActionManagerEx myActionManager;
   private final KeymapManagerEx myKeymapManager;
   private final JComponent myComponent;
+
+  private final KeymapManagerListener myKeymapManagerListener = new MyKeymapManagerListener();
+  private final TimerListener myTimerListener = new MyTimerListener();
+  private final WeakTimerListener myWeakTimerListener;
+
+  private boolean myListenersArmed;
 
   public ToolbarUpdater(@NotNull JComponent component) {
     this(ActionManagerEx.getInstanceEx(), KeymapManagerEx.getInstanceEx(), component);
   }
 
   public ToolbarUpdater(@NotNull ActionManagerEx actionManager, @NotNull KeymapManagerEx keymapManager, @NotNull JComponent component) {
-    new UiNotifyConnector(component, this);
     myActionManager = actionManager;
     myKeymapManager = keymapManager;
     myComponent = component;
-    myKeymapManagerListener = new MyKeymapManagerListener();
-    keymapManager.addWeakListener(myKeymapManagerListener);
-    myTimerListener = new MyTimerListener();
     myWeakTimerListener = new WeakTimerListener(actionManager, myTimerListener);
+    new UiNotifyConnector(component, this);
   }
 
   @Override
   public void showNotify() {
+    if (myListenersArmed) return;
+    myListenersArmed = true;
     myActionManager.addTimerListener(500, myWeakTimerListener);
     myActionManager.addTransparentTimerListener(500, myWeakTimerListener);
+    myKeymapManager.addWeakListener(myKeymapManagerListener);
+    updateActionTooltips();
   }
 
   @Override
   public void hideNotify() {
-    //noinspection ConstantConditions
-    if (myActionManager == null) return; // not yet initialized
+    if (!myListenersArmed) return;
+    myListenersArmed = false;
     myActionManager.removeTimerListener(myWeakTimerListener);
     myActionManager.removeTransparentTimerListener(myWeakTimerListener);
-    if (ScreenUtil.isStandardAddRemoveNotify(myComponent)) {
-      myKeymapManager.removeWeakListener(myKeymapManagerListener);
-    }
+    myKeymapManager.removeWeakListener(myKeymapManagerListener);
   }
 
   @NotNull

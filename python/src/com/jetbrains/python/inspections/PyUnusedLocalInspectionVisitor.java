@@ -101,6 +101,9 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
     for (Instruction instruction : instructions) {
       final PsiElement element = instruction.getElement();
       if (element instanceof PyFunction && owner instanceof PyFunction) {
+        if (PyKnownDecoratorUtil.hasUnknownDecorator((PyFunction)element, myTypeEvalContext)) {
+          continue;
+        }
         if (!myUsedElements.contains(element)) {
           myUnusedElements.add(element);
         }
@@ -123,6 +126,9 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
         }
         // Ignore arguments of import statement
         if (PyImportStatementNavigator.getImportStatementByElement(element) != null) {
+          continue;
+        }
+        if (PyAugAssignmentStatementNavigator.getStatementByTarget(element) != null) {
           continue;
         }
         if (!myUsedElements.contains(element)) {

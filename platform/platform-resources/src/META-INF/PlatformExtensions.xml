@@ -146,7 +146,6 @@
     <applicationService serviceInterface="com.intellij.openapi.editor.colors.EditorColorsManager"
                         serviceImplementation="com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl"/>
     <exportable serviceInterface="com.intellij.openapi.editor.colors.EditorColorsManager"/>
-    <schemeOwner serviceInterface="com.intellij.openapi.editor.colors.EditorColorsManager"/>
 
     <applicationService serviceInterface="com.intellij.openapi.roots.ui.FileAppearanceService"
                         serviceImplementation="com.intellij.openapi.roots.ui.FileAppearanceServiceImpl"/>
@@ -230,14 +229,14 @@
                              key="title.customizations" bundle="messages.IdeBundle"/>
 
     <!-- Notifications -->
-    <applicationConfigurable groupId="appearance" groupWeight="110" displayName="Notifications" instance="com.intellij.notification.impl.NotificationsConfigurable"/>
+    <applicationConfigurable groupId="appearance" groupWeight="110" displayName="Notifications" id="reference.settings.ide.settings.notifications" instance="com.intellij.notification.impl.NotificationsConfigurable"/>
 
     <!-- Plugins -->
     <applicationConfigurable groupId="root" groupWeight="55" instance="com.intellij.ide.plugins.PluginManagerConfigurable" id="preferences.pluginManager"
                              displayName="Plugins"/>
     <actionFromOptionDescriptorProvider implementation="com.intellij.ide.plugins.InstalledPluginsManagerMain$PluginsActionFromOptionDescriptorProvider"/>
     <applicationConfigurable parentId="preferences.general" instance="com.intellij.util.net.HttpProxyConfigurable" id="http.proxy" displayName="HTTP Proxy"/>
-    <applicationConfigurable groupId="tools" displayName="Server Certificates" instance="com.intellij.util.net.ssl.CertificateConfigurable"/>
+    <applicationConfigurable groupId="tools" displayName="Server Certificates" id="http.certificates" instance="com.intellij.util.net.ssl.CertificateConfigurable"/>
     <applicationConfigurable groupId="tools" instance="com.intellij.openapi.diff.impl.external.DiffOptionsForm" id="diff" displayName="External Diff Tools"/>
     <!--<applicationConfigurable instance="com.intellij.ui.switcher.QuickAccessConfigurable"/>-->
 
@@ -300,9 +299,6 @@
 
     <projectService serviceInterface="com.intellij.openapi.wm.impl.ProjectFrameBounds"
                     serviceImplementation="com.intellij.openapi.wm.impl.ProjectFrameBounds"/>
-    <exceptionFilter implementation="com.intellij.execution.filters.ExceptionBaseFilterFactory"/>
-    <exceptionFilter implementation="com.intellij.execution.filters.ExceptionExFilterFactory"/>
-    <exceptionFilter implementation="com.intellij.openapi.vcs.contentAnnotation.VcsContentAnnotationExceptionFilterFactory"/>
 
     <applicationService serviceInterface="com.intellij.ide.TypePresentationService"
                         serviceImplementation="com.intellij.ide.TypePresentationServiceImpl"/>

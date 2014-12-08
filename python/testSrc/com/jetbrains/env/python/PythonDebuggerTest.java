@@ -510,6 +510,112 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     });
   }
 
+  public void testPyQtQThreadInheritor() throws Exception {
+    runPythonTest(new PyDebuggerTask("/debug", "test_pyqt1.py") {
+      @Override
+      protected void init() {
+        setMultiprocessDebug(true);
+      }
+
+      @Override
+      public void before() throws Exception {
+        toggleBreakpoint(getScriptPath(), 8);
+      }
+
+      @Override
+      public void testing() throws Exception {
+
+        waitForPause();
+
+        eval("i").hasValue("0");
+
+        resume();
+
+        waitForPause();
+
+        eval("i").hasValue("1");
+
+        resume();
+      }
+
+      @Override
+      public Set<String> getTags() {
+        return Sets.newHashSet("pyqt5");
+      }
+    });
+  }
+
+  public void testPyQtMoveToThread() throws Exception {
+    runPythonTest(new PyDebuggerTask("/debug", "test_pyqt2.py") {
+      @Override
+      protected void init() {
+        setMultiprocessDebug(true);
+      }
+
+      @Override
+      public void before() throws Exception {
+        toggleBreakpoint(getScriptPath(), 10);
+      }
+
+      @Override
+      public void testing() throws Exception {
+
+        waitForPause();
+
+        eval("i").hasValue("0");
+
+        resume();
+
+        waitForPause();
+
+        eval("i").hasValue("1");
+
+        resume();
+      }
+
+      @Override
+      public Set<String> getTags() {
+        return Sets.newHashSet("pyqt5");
+      }
+    });
+  }
+
+
+  public void testPyQtQRunnableInheritor() throws Exception {
+    runPythonTest(new PyDebuggerTask("/debug", "test_pyqt3.py") {
+      @Override
+      protected void init() {
+        setMultiprocessDebug(true);
+      }
+
+      @Override
+      public void before() throws Exception {
+        toggleBreakpoint(getScriptPath(), 9);
+      }
+
+      @Override
+      public void testing() throws Exception {
+
+        waitForPause();
+
+        eval("i").hasValue("0");
+
+        resume();
+
+        waitForPause();
+
+        eval("i").hasValue("1");
+
+        resume();
+      }
+
+      @Override
+      public Set<String> getTags() {
+        return Sets.newHashSet("pyqt5");
+      }
+    });
+  }
+
 
   //TODO: fix me as I don't work properly sometimes (something connected with process termination on agent)
   //public void testResume() throws Exception {

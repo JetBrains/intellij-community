@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,18 +23,21 @@ package com.intellij.debugger.actions;
 import com.intellij.debugger.ui.DebuggerPanelsManager;
 import com.intellij.debugger.ui.impl.MainWatchPanel;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 public class NewWatchAction extends DebuggerAction {
   public void actionPerformed(final AnActionEvent e) {
-    Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
-    if(project == null) return;
+    getWatchPanel(e).newWatch();
+  }
 
-    final MainWatchPanel watchPanel = DebuggerPanelsManager.getInstance(project).getWatchPanel();
-    if (watchPanel != null) {
-      watchPanel.newWatch();
-    }
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    e.getPresentation().setEnabled(getWatchPanel(e) != null);
+  }
+
+  private static MainWatchPanel getWatchPanel(AnActionEvent e) {
+    Project project = e.getProject();
+    return project != null ? DebuggerPanelsManager.getInstance(project).getWatchPanel() : null;
   }
 }

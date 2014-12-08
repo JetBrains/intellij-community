@@ -136,7 +136,7 @@ public class JavaParametersUtil {
     }
     final boolean isJdk = JavaSdk.checkForJdk(new File(jreHome));
     if (isJdk) {
-      throw new CantRunException("Jre expected but jdk found");
+      throw new CantRunException("Alternative JRE path needs to point to a JRE, not to a complete JDK installation");
     }
     final Sdk jdk = JavaSdk.getInstance().createJdk("", jreHome);
     if (jdk == null) throw CantRunException.noJdkConfigured();

@@ -525,10 +525,9 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
     else {
       logicalPositionToUse = new LogicalPosition(line, column);
     }
-    setCurrentLogicalCaret(logicalPositionToUse);
-    final int offset = myEditor.logicalPositionToOffset(myLogicalCaret);
+    final int offset = myEditor.logicalPositionToOffset(logicalPositionToUse);
     if (debugBuffer != null) {
-      debugBuffer.append("Resulting logical position to use: ").append(myLogicalCaret).append(". It's mapped to offset ").append(offset).append("\n");
+      debugBuffer.append("Resulting logical position to use: ").append(logicalPositionToUse).append(". It's mapped to offset ").append(offset).append("\n");
     }
 
     FoldRegion collapsedAt = myEditor.getFoldingModel().getCollapsedRegionAtOffset(offset);
@@ -554,8 +553,10 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
       finally {
         mySkipChangeRequests = false;
       }
+      logicalPositionToUse = logicalPositionToUse.visualPositionAware ? logicalPositionToUse.withoutVisualPositionInfo() : logicalPositionToUse;
     }
 
+    setCurrentLogicalCaret(logicalPositionToUse);
     setLastColumnNumber(myLogicalCaret.column);
     myDesiredSelectionStartColumn = myDesiredSelectionEndColumn = -1;
     myVisibleCaret = myEditor.logicalToVisualPosition(myLogicalCaret);
@@ -748,8 +749,8 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
     }
   }
 
-  private void assertIsDispatchThread() {
-    myEditor.assertIsDispatchThread();
+  private static void assertIsDispatchThread() {
+    EditorImpl.assertIsDispatchThread();
   }
 
   private void validateCallContext() {

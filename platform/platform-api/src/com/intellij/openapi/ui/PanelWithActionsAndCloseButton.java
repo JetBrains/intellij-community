@@ -17,12 +17,7 @@ package com.intellij.openapi.ui;
 
 import com.intellij.ide.actions.CloseTabToolbarAction;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.ui.content.Content;
-import com.intellij.ui.content.ContentManager;
-import com.intellij.ui.content.ContentManagerAdapter;
-import com.intellij.ui.content.ContentManagerEvent;
-import com.intellij.ui.tabs.impl.JBTabsImpl;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.ui.content.*;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -110,18 +105,13 @@ public abstract class PanelWithActionsAndCloseButton extends JPanel implements D
       if (myContentManager != null) {
         Content content = myContentManager.getContent(PanelWithActionsAndCloseButton.this);
         if (content != null) {
-          myContentManager.removeContent(content, true);
-        } else {
-          final JBTabsImpl tabs = UIUtil.getParentOfType(JBTabsImpl.class, PanelWithActionsAndCloseButton.this);
-          if (tabs != null && tabs.getSelectedInfo() != null) {
-            tabs.removeTab(tabs.getSelectedInfo());
-            if (tabs.getTabCount() == 0) {
-              Content tabbedContent = myContentManager.getContent(tabs);
-              if (tabbedContent == null) tabbedContent = myContentManager.getContent(tabs.getComponent()); // one more try for wrappers
-              if (tabbedContent != null) {
-                myContentManager.removeContent(tabbedContent, true);
-              }
-            }
+          if (content instanceof TabbedContent && ((TabbedContent)content).getTabs().size() > 1) {
+            final TabbedContent tabbedContent = (TabbedContent)content;
+            final JComponent component = content.getComponent();
+            tabbedContent.removeContent(component);
+            myContentManager.setSelectedContent(content, true, true); //we should request focus here
+          } else {
+            myContentManager.removeContent(content, true);
           }
         }
       }

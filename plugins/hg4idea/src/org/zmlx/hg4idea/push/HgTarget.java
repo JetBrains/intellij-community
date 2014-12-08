@@ -21,9 +21,11 @@ import org.zmlx.hg4idea.util.HgUtil;
 
 public class HgTarget implements PushTarget {
   @NotNull String myTarget;
+  @NotNull String myBranchName;
 
-  public HgTarget(@NotNull String name) {
+  public HgTarget(@NotNull String name, @NotNull String branchName) {
     myTarget = name;
+    myBranchName = branchName;
   }
 
   @NotNull
@@ -36,5 +38,30 @@ public class HgTarget implements PushTarget {
   public boolean hasSomethingToPush() {
     // push is always allowed except invalid target
     return true;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof HgTarget)) return false;
+
+    HgTarget hgTarget = (HgTarget)o;
+
+    if (!myBranchName.equals(hgTarget.myBranchName)) return false;
+    if (!myTarget.equals(hgTarget.myTarget)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = myTarget.hashCode();
+    result = 31 * result + myBranchName.hashCode();
+    return result;
+  }
+
+  @NotNull
+  public String getBranchName() {
+    return myBranchName;
   }
 }

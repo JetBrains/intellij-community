@@ -1,4 +1,4 @@
-// "Create Class 'Generic'" "true"
+// "Create class 'Generic'" "true"
 class Test {
   void foo () {
     new Generic<String> ();

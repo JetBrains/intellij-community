@@ -417,6 +417,10 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testMethodCallTypeErasedWhenUncheckedConversionWasAppliedDuringApplicabilityCheck() {
     doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);
   }
+  
+  public void testMethodCallTypeNotErasedWhenUncheckedConversionWasAppliedButNoTypeParamsProvided() {
+    doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);
+  }
 
   public void testInferredParameterInBoundsInRecursiveGenerics() {
     doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);

@@ -38,4 +38,20 @@ public class ReturnPostfixTemplateTest extends PostfixTemplateTestCase {
   public void testComposite2() {
     doTest();
   }
+
+  public void testIncompleteExpression() {
+    doTest();
+  }
+
+  public void testIncompleteConstructor() {
+    doTest();
+  }
+
+  public void testIncompleteExpressionWithParam() {
+    doTest();
+  }
+
+  public void testIncompleteParentheses() {
+    doTest();
+  }
 }

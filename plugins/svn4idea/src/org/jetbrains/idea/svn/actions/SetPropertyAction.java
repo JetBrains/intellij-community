@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,9 +66,7 @@ public class SetPropertyAction extends BasicAction {
     }
 
     SetPropertyDialog dialog = new SetPropertyDialog(project, ioFiles, null, true);
-    dialog.show();
-
-    if (dialog.isOK()) {
+    if (dialog.showAndGet()) {
       String name = dialog.getPropertyName();
       String value = dialog.getPropertyValue();
       boolean recursive = dialog.isRecursive();
@@ -81,13 +79,15 @@ public class SetPropertyAction extends BasicAction {
         // TODO: or "empty" depth, and not "infinity" or "files" depth. But previous logic used SVNDepth.fromRecursive implicitly
         client.setProperty(ioFile, name, PropertyValue.create(value), Depth.allOrFiles(recursive), false);
       }
-      for(int i = 0; i < file.length; i++) {
+      for (int i = 0; i < file.length; i++) {
         if (recursive && file[i].isDirectory()) {
           VcsDirtyScopeManager.getInstance(project).dirDirtyRecursively(file[i], true);
-        } else {
+        }
+        else {
           VcsDirtyScopeManager.getInstance(project).fileDirty(file[i]);
         }
       }
+      ;
     }
   }
 

@@ -17,6 +17,7 @@
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.FileASTNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
@@ -65,7 +66,7 @@ public class SharedImplUtil {
   }
 
   public static PsiFile getContainingFile(ASTNode thisElement) {
-    TreeElement element = findFileElement(thisElement);
+    FileASTNode element = findFileElement(thisElement);
     PsiElement psiElement = element == null ? null : element.getPsi();
     if (psiElement == null) return null;
     return psiElement.getContainingFile();
@@ -82,7 +83,7 @@ public class SharedImplUtil {
     return file == null || file.isWritable();
   }
 
-  public static FileElement findFileElement(@NotNull ASTNode element) {
+  public static FileASTNode findFileElement(@NotNull ASTNode element) {
     if (CHECK_FOR_READ_ACTION && element instanceof ElementBase) {
       ApplicationManager.getApplication().assertReadAccessAllowed();
     }
@@ -92,8 +93,8 @@ public class SharedImplUtil {
       parent = parent.getTreeParent();
     }
 
-    if (element instanceof FileElement) {
-      return (FileElement)element;
+    if (element instanceof FileASTNode) {
+      return (FileASTNode)element;
     }
     return null;
   }

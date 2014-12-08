@@ -28,6 +28,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.IntArrayList;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -106,8 +107,8 @@ public class ControlFlowWrapper {
     }
 
     if (myExitPoints.size() != 1) {
-      areExitStatementsTheSame();
       myGenerateConditionalExit = true;
+      areExitStatementsTheSame();
     }
     return myExitStatements;
   }
@@ -142,9 +143,15 @@ public class ControlFlowWrapper {
   public static class ExitStatementsNotSameException extends Exception {}
 
 
+  @NotNull
   public PsiVariable[] getOutputVariables() {
+    return getOutputVariables(myGenerateConditionalExit);
+  }
+
+  @NotNull
+  public PsiVariable[] getOutputVariables(boolean collectVariablesAtExitPoints) {
     PsiVariable[] myOutputVariables = ControlFlowUtil.getOutputVariables(myControlFlow, myFlowStart, myFlowEnd, myExitPoints.toArray());
-    if (myGenerateConditionalExit) {
+    if (collectVariablesAtExitPoints) {
       //variables declared in selected block used in return statements are to be considered output variables when extracting guard methods
       final Set<PsiVariable> outputVariables = new HashSet<PsiVariable>(Arrays.asList(myOutputVariables));
       for (PsiStatement statement : myExitStatements) {

@@ -170,7 +170,7 @@ public class NullableNotNullManager implements PersistentStateComponent<Element>
   @Nullable 
   private PsiAnnotation findNullabilityAnnotation(@NotNull PsiModifierListOwner owner, boolean checkBases, boolean nullable) {
     Set<String> qNames = ContainerUtil.newHashSet(nullable ? getNullables() : getNotNulls());
-    PsiAnnotation annotation = checkBases && (owner instanceof PsiClass || owner instanceof PsiMethod)
+    PsiAnnotation annotation = checkBases && owner instanceof PsiMethod
                                ? AnnotationUtil.findAnnotationInHierarchy(owner, qNames)
                                : AnnotationUtil.findAnnotation(owner, qNames);
     if (annotation != null) {
@@ -184,6 +184,11 @@ public class NullableNotNullManager implements PersistentStateComponent<Element>
     if (AnnotationUtil.isAnnotated(owner, nullable ? Arrays.asList(DEFAULT_NOT_NULLS) : Arrays.asList(DEFAULT_NULLABLES), checkBases, false)) {
       return null;
     }
+    
+    if (!nullable && InferredAnnotationsManager.getInstance(owner.getProject()).ignoreInference(owner, AnnotationUtil.NOT_NULL)) {
+      return null;
+    }
+
     return findNullabilityDefaultInHierarchy(owner, nullable);
   }
 

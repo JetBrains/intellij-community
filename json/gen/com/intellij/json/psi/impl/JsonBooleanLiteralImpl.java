@@ -21,4 +21,8 @@ public class JsonBooleanLiteralImpl extends JsonLiteralImpl implements JsonBoole
     else super.accept(visitor);
   }
 
+  public boolean getValue() {
+    return JsonPsiImplUtils.getValue(this);
+  }
+
 }

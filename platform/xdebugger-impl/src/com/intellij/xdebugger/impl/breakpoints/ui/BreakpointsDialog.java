@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.xdebugger.impl.breakpoints.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
@@ -31,8 +32,10 @@ import com.intellij.ui.popup.util.DetailViewImpl;
 import com.intellij.ui.popup.util.ItemWrapper;
 import com.intellij.ui.popup.util.MasterController;
 import com.intellij.util.Function;
+import com.intellij.util.SingleAlarm;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
@@ -50,8 +53,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
-import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.List;
 
@@ -81,6 +84,15 @@ public class BreakpointsDialog extends DialogWrapper {
   private final DetailController myDetailController = new DetailController(myMasterController);
 
   private final Collection<BreakpointItem> myBreakpointItems = new ArrayList<BreakpointItem>();
+
+  private final SingleAlarm myRebuildAlarm = new SingleAlarm(new Runnable() {
+    @Override
+    public void run() {
+      collectItems();
+      myTreeController.rebuildTree(myBreakpointItems);
+      myDetailController.doUpdateDetailView(true);
+    }
+  }, 100, myDisposable);
 
   private final List<XBreakpointGroupingRule> myRulesAvailable = new ArrayList<XBreakpointGroupingRule>();
 
@@ -146,10 +158,14 @@ public class BreakpointsDialog extends DialogWrapper {
   }
 
   void initSelection(Collection<BreakpointItem> breakpoints) {
-    boolean found = selectBreakpoint(myInitialBreakpoint);
-    if (!found && !breakpoints.isEmpty()) {
-      myTreeController.selectFirstBreakpointItem();
+    XBreakpointsDialogState settings = (getBreakpointManager()).getBreakpointsDialogSettings();
+    if (settings != null && settings.getTreeState() != null) {
+      settings.getTreeState().applyTo(myTreeController.getTreeView());
     }
+    else {
+      TreeUtil.expandAll(myTreeController.getTreeView());
+    }
+    selectBreakpoint(myInitialBreakpoint);
   }
 
   @Nullable
@@ -262,7 +278,7 @@ public class BreakpointsDialog extends DialogWrapper {
         navigate(true);
         close(OK_EXIT_CODE);
       }
-    }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)), tree);
+    }.registerCustomShortcutSet(CommonShortcuts.ENTER, tree);
 
     new AnAction("BreakpointDialog.ShowSource") {
       @Override
@@ -329,9 +345,7 @@ public class BreakpointsDialog extends DialogWrapper {
     final BreakpointPanelProvider.BreakpointsListener listener = new BreakpointPanelProvider.BreakpointsListener() {
       @Override
       public void breakpointsChanged() {
-        collectItems();
-        myTreeController.rebuildTree(myBreakpointItems);
-        myDetailController.doUpdateDetailView(true);
+        myRebuildAlarm.cancelAndRequest();
       }
     };
 
@@ -379,6 +393,7 @@ public class BreakpointsDialog extends DialogWrapper {
 
   private void saveBreakpointsDialogState() {
     final XBreakpointsDialogState dialogState = new XBreakpointsDialogState();
+    saveTreeState(dialogState);
     final List<XBreakpointGroupingRule> rulesEnabled = ContainerUtil.filter(myRulesEnabled, new Condition<XBreakpointGroupingRule>() {
       @Override
       public boolean value(XBreakpointGroupingRule rule) {
@@ -395,6 +410,10 @@ public class BreakpointsDialog extends DialogWrapper {
     getBreakpointManager().setBreakpointsDialogSettings(dialogState);
   }
 
+  private void saveTreeState(XBreakpointsDialogState state) {
+    JTree tree = myTreeController.getTreeView();
+    state.setTreeState(TreeState.createOn(tree, (DefaultMutableTreeNode)tree.getModel().getRoot()));
+  }
 
   @Override
   protected void dispose() {
@@ -444,10 +463,12 @@ public class BreakpointsDialog extends DialogWrapper {
   }
 
   private boolean selectBreakpoint(Object breakpoint) {
-    for (BreakpointItem item : myBreakpointItems) {
-      if (item.getBreakpoint() == breakpoint) {
-        myTreeController.selectBreakpointItem(item, null);
-        return true;
+    if (breakpoint != null) {
+      for (BreakpointItem item : myBreakpointItems) {
+        if (item.getBreakpoint() == breakpoint) {
+          myTreeController.selectBreakpointItem(item, null);
+          return true;
+        }
       }
     }
     return false;

@@ -16,11 +16,16 @@
 
 package com.intellij.execution.testframework.actions;
 
-import com.intellij.execution.testframework.*;
+import com.intellij.execution.testframework.AbstractTestProxy;
+import com.intellij.execution.testframework.TestFrameworkRunningModel;
+import com.intellij.execution.testframework.TestTreeView;
+import com.intellij.execution.testframework.TestTreeViewAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import org.jetbrains.annotations.NonNls;
 
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,13 +33,20 @@ public class ViewAssertEqualsDiffAction extends AnAction implements TestTreeView
   @NonNls public static final String ACTION_ID = "openAssertEqualsDiff";
 
   public void actionPerformed(final AnActionEvent e) {
-    final AbstractTestProxy testProxy = AbstractTestProxy.DATA_KEY.getData(e.getDataContext());
+    if (!openDiff(e.getDataContext())) {
+      final Component component = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
+      Messages.showInfoMessage(component, "Comparison error was not found", "No Comparison Data Found");
+    }
+  }
+
+  public static boolean openDiff(DataContext context) {
+    final AbstractTestProxy testProxy = AbstractTestProxy.DATA_KEY.getData(context);
     if (testProxy != null) {
       final AbstractTestProxy.AssertEqualsDiffViewerProvider diffViewerProvider = testProxy.getDiffViewerProvider();
       if (diffViewerProvider != null) {
-        final Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
+        final Project project = CommonDataKeys.PROJECT.getData(context);
         if (diffViewerProvider instanceof AbstractTestProxy.AssertEqualsMultiDiffViewProvider) {
-          final TestFrameworkRunningModel runningModel = TestTreeView.MODEL_DATA_KEY.getData(e.getDataContext());
+          final TestFrameworkRunningModel runningModel = TestTreeView.MODEL_DATA_KEY.getData(context);
           final List<AbstractTestProxy.AssertEqualsMultiDiffViewProvider> providers = collectAvailableProviders(runningModel);
           final MyAssertEqualsDiffChain diffChain =
             providers.size() > 1 ? new MyAssertEqualsDiffChain(providers, (AbstractTestProxy.AssertEqualsMultiDiffViewProvider)diffViewerProvider) : null;
@@ -42,8 +54,10 @@ public class ViewAssertEqualsDiffAction extends AnAction implements TestTreeView
         } else {
           diffViewerProvider.openDiff(project);
         }
+        return true;
       }
     }
+    return false;
   }
 
   private static List<AbstractTestProxy.AssertEqualsMultiDiffViewProvider> collectAvailableProviders(TestFrameworkRunningModel model) {
@@ -71,7 +85,15 @@ public class ViewAssertEqualsDiffAction extends AnAction implements TestTreeView
     else {
       final AbstractTestProxy test = AbstractTestProxy.DATA_KEY.getData(dataContext);
       if (test != null) {
-        enabled = test.getDiffViewerProvider() != null;
+        if (test.isLeaf()) {
+          enabled = test.getDiffViewerProvider() != null;
+        }
+        else if (test.isDefect()) {
+          enabled = true;
+        }
+        else {
+          enabled = false;
+        }
       }
       else {
         enabled = false;

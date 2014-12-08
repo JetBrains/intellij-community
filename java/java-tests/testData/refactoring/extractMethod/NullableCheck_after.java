@@ -1,3 +1,5 @@
+import org.jetbrains.annotations.Nullable;
+
 class Test {
    Object foo() {
        Object o = newMethod();
@@ -6,6 +8,7 @@ class Test {
       return o;
    }
 
+    @Nullable
     private Object newMethod() {
         Object o = "";
         for (int i = 0; i < 5; i++) {

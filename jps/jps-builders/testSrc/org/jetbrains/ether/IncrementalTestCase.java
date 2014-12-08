@@ -181,45 +181,16 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
 
       assertNotNull(result);
       
-      final ByteArrayOutputStream makeDump = new ByteArrayOutputStream();
-
-      if (result.isSuccessful()) {
-        final PrintStream stream = new PrintStream(makeDump);
-        try {
-          pd.dataManager.getMappings().toStream(stream);
-        }
-        finally {
-          stream.close();
-        }
-      }
-
-      makeDump.close();
-
       File logFile = new File(baseDir.getAbsolutePath() + ".log");
       if (!logFile.exists()) {
         logFile = new File(baseDir, "build.log");
       }
-      final String expected = StringUtil.convertLineSeparators(FileUtil.loadFile(logFile));
       final String actual = log.toString();
 
-      assertEquals(expected, actual);
+      assertSameLinesWithFile(logFile.getAbsolutePath(), actual);
 
       if (result.isSuccessful()) {
-        doBuild(pd, CompileScopeTestBuilder.rebuild().allModules()).assertSuccessful();
-  
-        final ByteArrayOutputStream rebuildDump = new ByteArrayOutputStream();
-
-        final PrintStream stream = new PrintStream(rebuildDump);
-        try {
-          pd.dataManager.getMappings().toStream(stream);
-        }
-        finally {
-          stream.close();
-        }
-
-        rebuildDump.close();
-  
-        assertEquals(rebuildDump.toString(), makeDump.toString());
+        checkMappingsAreSameAfterRebuild(result);
       }
       return result;
     }

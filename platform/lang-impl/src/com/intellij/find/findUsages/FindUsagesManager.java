@@ -203,8 +203,9 @@ public class FindUsagesManager {
     boolean singleFile = scopeFile != null;
     AbstractFindUsagesDialog dialog = handler.getFindUsagesDialog(singleFile, shouldOpenInNewTab(), mustOpenInNewTab());
     if (showDialog) {
-      dialog.show();
-      if (!dialog.isOK()) return;
+      if (!dialog.showAndGet()) {
+        return;
+      }
     }
     else {
       dialog.close(DialogWrapper.OK_EXIT_CODE);

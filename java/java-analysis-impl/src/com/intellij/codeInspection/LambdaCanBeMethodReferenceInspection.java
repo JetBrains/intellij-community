@@ -101,7 +101,7 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
       final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(callExpression.getProject());
       final PsiMethodReferenceExpression methodReferenceExpression = 
         (PsiMethodReferenceExpression)elementFactory.createExpressionFromText(methodReferenceText, callExpression);
-      final Map<PsiMethodReferenceExpression, PsiType> map = PsiMethodReferenceUtil.getFunctionalTypeMap();
+      final Map<PsiElement, PsiType> map = LambdaUtil.getFunctionalTypeMap();
       try {
         map.put(methodReferenceExpression, functionalInterfaceType);
         final JavaResolveResult result = methodReferenceExpression.advancedResolve(false);
@@ -120,7 +120,7 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
     return null;
   }
 
-  private static boolean isSimpleCall(PsiParameter[] parameters, PsiCallExpression callExpression, PsiMethod psiMethod) {
+  private static boolean isSimpleCall(final PsiParameter[] parameters, PsiCallExpression callExpression, PsiMethod psiMethod) {
     final PsiExpressionList argumentList = callExpression.getArgumentList();
     if (argumentList == null) {
       return false;
@@ -155,7 +155,28 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
       }
     }
 
-    return offset == 0 || resolvesToParameter(qualifier, parameters[0]);
+    if (offset == 0) {
+      if (qualifier != null) {
+        final boolean[] parameterUsed = new boolean[] {false};
+        qualifier.accept(new JavaRecursiveElementWalkingVisitor() {
+          @Override
+          public void visitElement(PsiElement element) {
+            if (parameterUsed[0]) return;
+            super.visitElement(element);
+          }
+
+          @Override
+          public void visitReferenceExpression(PsiReferenceExpression expression) {
+            super.visitReferenceExpression(expression);
+            parameterUsed[0] |= ArrayUtil.find(parameters, expression.resolve()) >= 0;
+          }
+        });
+        return !parameterUsed[0];
+      }
+      return true;
+    }
+
+    return resolvesToParameter(qualifier, parameters[0]);
   }
 
   private static boolean resolvesToParameter(PsiExpression expression, PsiParameter parameter) {
@@ -164,7 +185,21 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
 
   public static PsiCallExpression extractMethodCallFromBlock(PsiElement body) {
     final PsiExpression expression = LambdaUtil.extractSingleExpressionFromBody(body);
-    return expression instanceof PsiCallExpression ? (PsiCallExpression)expression : null;
+    if (expression instanceof PsiNewExpression) {
+      if (checkQualifier(((PsiNewExpression)expression).getQualifier())) {
+        return (PsiCallExpression)expression;
+      }
+    }
+    if (expression instanceof PsiMethodCallExpression) {
+      if (checkQualifier(((PsiMethodCallExpression)expression).getMethodExpression().getQualifier())) {
+        return (PsiCallExpression)expression;
+      }
+    }
+    return null;
+  }
+
+  private static boolean checkQualifier(PsiElement qualifier) {
+    return !(qualifier instanceof PsiCallExpression);
   }
 
   @Nullable

@@ -21,6 +21,7 @@ import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.util.JDOMExternalizable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
@@ -36,6 +37,7 @@ public interface EditorColorsScheme extends Cloneable, JDOMExternalizable, TextA
   @NotNull
   Color getDefaultForeground();
 
+  @Nullable
   Color getColor(ColorKey key);
   void setColor(ColorKey key, Color color);
 

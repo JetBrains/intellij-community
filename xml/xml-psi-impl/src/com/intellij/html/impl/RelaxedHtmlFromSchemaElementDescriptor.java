@@ -36,7 +36,7 @@ public class RelaxedHtmlFromSchemaElementDescriptor extends XmlElementDescriptor
   }
 
   public static XmlAttributeDescriptor[] getCommonAttributeDescriptors(XmlTag context) {
-    final XmlNSDescriptor nsDescriptor = context != null ? context.getNSDescriptor("", false) : null;
+    final XmlNSDescriptor nsDescriptor = context != null ? context.getNSDescriptor(context.getNamespace(), false) : null;
     if (nsDescriptor != null) {
       for (XmlElementDescriptor descriptor : nsDescriptor.getRootElementsDescriptors(null)) {
         final String name = descriptor.getName();

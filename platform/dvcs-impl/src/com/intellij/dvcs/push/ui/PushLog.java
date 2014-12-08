@@ -47,7 +47,7 @@ import java.util.List;
 
 public class PushLog extends JPanel implements TypeSafeDataProvider {
 
-  private final static String COMMIT_MENU = "Vcs.Push.ContextMenu";
+  private final static String CONTEXT_MENU = "Vcs.Push.ContextMenu";
   private static final String START_EDITING = "startEditing";
   private final ChangesBrowser myChangesBrowser;
   private final CheckboxTree myTree;
@@ -159,12 +159,23 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
         updateChangesView();
       }
     });
+    myTree.addFocusListener(new FocusAdapter() {
+      @Override
+      public void focusLost(FocusEvent e) {
+        DefaultMutableTreeNode node = (DefaultMutableTreeNode)myTree.getLastSelectedPathComponent();
+        if (node != null && node instanceof RepositoryNode && myTree.isEditing()) {
+          //need to force repaint foreground  for non-focused editing node
+          myTree.getCellEditor().getTreeCellEditorComponent(myTree, node, true, false, false, myTree.getRowForPath(
+            TreeUtil.getPathFromRoot(node)));
+        }
+      }
+    });
     myTree.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0), START_EDITING);
     //override default tree behaviour.
     myTree.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "");
 
     ToolTipManager.sharedInstance().registerComponent(myTree);
-    PopupHandler.installPopupHandler(myTree, VcsLogUiImpl.POPUP_ACTION_GROUP, COMMIT_MENU);
+    PopupHandler.installPopupHandler(myTree, VcsLogUiImpl.POPUP_ACTION_GROUP, CONTEXT_MENU);
 
     myChangesBrowser =
       new ChangesBrowser(project, null, Collections.<Change>emptyList(), null, false, true, null, ChangesBrowser.MyUseCase.LOCAL_CHANGES,

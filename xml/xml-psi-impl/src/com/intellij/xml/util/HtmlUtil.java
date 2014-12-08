@@ -455,16 +455,16 @@ public class HtmlUtil {
     private static final TerminateException INSTANCE = new TerminateException();
   }
 
-  public static Charset detectCharsetFromMetaTag(@NotNull String content) {
+  public static Charset detectCharsetFromMetaTag(@NotNull CharSequence content) {
     // check for <meta http-equiv="charset=CharsetName" > or <meta charset="CharsetName"> and return Charset
     // because we will lightly parse and explicit charset isn't used very often do quick check for applicability
-    int charPrefix = content.indexOf(CHARSET);
+    int charPrefix = StringUtil.indexOf(content, CHARSET);
     do {
       if (charPrefix == -1) return null;
       int charsetPrefixEnd = charPrefix + CHARSET.length();
       while (charsetPrefixEnd < content.length() && Character.isWhitespace(content.charAt(charsetPrefixEnd))) ++charsetPrefixEnd;
       if (charsetPrefixEnd < content.length() && content.charAt(charsetPrefixEnd) == '=') break;
-      charPrefix = content.indexOf(CHARSET, charsetPrefixEnd);
+      charPrefix = StringUtil.indexOf(content,CHARSET, charsetPrefixEnd);
     } while(true);
 
     final Ref<String> charsetNameRef = new Ref<String>();

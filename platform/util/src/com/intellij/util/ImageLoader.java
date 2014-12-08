@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.io.URLUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -72,7 +73,7 @@ public class ImageLoader implements Serializable {
 
   @Nullable
   public static Image loadFromUrl(URL url, boolean dark, boolean retina) {
-    for (Pair<String, Integer> each : getFileNames(url.toString(), dark, retina)) {
+    for (Pair<String, Integer> each : getFileNames(url.toString(), dark, retina || JBUI.isHiDPI())) {
       try {
         return loadFromStream(URLUtil.openStream(new URL(each.first)), each.second);
       }
@@ -101,7 +102,7 @@ public class ImageLoader implements Serializable {
   }
 
   public static List<Pair<String, Integer>> getFileNames(@NotNull String file) {
-    return getFileNames(file, UIUtil.isUnderDarcula(), UIUtil.isRetina());
+    return getFileNames(file, UIUtil.isUnderDarcula(), UIUtil.isRetina() || JBUI.isHiDPI());
   }
 
   public static List<Pair<String, Integer>> getFileNames(@NotNull String file, boolean dark, boolean retina) {

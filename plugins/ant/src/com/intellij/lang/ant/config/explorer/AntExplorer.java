@@ -727,8 +727,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
       final ExecuteCompositeTargetEvent event = new ExecuteCompositeTargetEvent(targets);
       final SaveMetaTargetDialog dialog = new SaveMetaTargetDialog(myTree, event, AntConfigurationBase.getInstance(myProject), buildFile);
       dialog.setTitle(e.getPresentation().getText());
-      dialog.show();
-      if (dialog.isOK()) {
+      if (dialog.showAndGet()) {
         myBuilder.queueUpdate();
         myTree.repaint();
       }

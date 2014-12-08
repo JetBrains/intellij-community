@@ -167,61 +167,35 @@ public class NumpyArrayTable {
   }
 
   public void init() {
-    init(myValue.getName(), false);
+    init(getDebugValue().getEvaluationExpression(), false);
   }
 
   public void init(final String slice, final boolean inPlace) {
     initComponent();
 
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-
-      final ExecutorService myExecutorService = Executors.newSingleThreadExecutor();
-
       @Override
       public void run() {
         final PyDebugValue value = getDebugValue();
         PyDebugValue parent = value.getParent();
-        String sl = slice;
-
-        if (slice.contains(".")) {
-          sl = slice.substring(slice.lastIndexOf(".") + 1);
-        }
-
         final PyDebugValue slicedValue =
-          new PyDebugValue(sl, value.getType(), value.getValue(), value.isContainer(), value.isErrorOnEval(),
+          new PyDebugValue(slice, value.getType(), value.getValue(), value.isContainer(), value.isErrorOnEval(),
                            parent, value.getFrameAccessor());
 
         final String format = getFormat().isEmpty() ? "%" : getFormat();
 
-        final ListenableFutureTask<ArrayChunk> task = ListenableFutureTask.create(new Callable<ArrayChunk>() {
-          @Override
-          public ArrayChunk call() throws Exception {
-            return value.getFrameAccessor()
-              .getArrayItems(slicedValue, 0, 0, -1, -1, format);
-          }
-        });
-
-        task.addListener(new Runnable() {
-          @Override
-          public void run() {
-            if (task.isDone()) {
-              try {
-                initUi(task.get(), inPlace);
-              }
-              catch (Exception e) {
-                showError(e.getMessage());
-              }
-            }
-          }
-        }, myExecutorService);
-
-        myExecutorService.execute(task);
+        try {
+          initUi(value.getFrameAccessor()
+                   .getArrayItems(slicedValue, 0, 0, -1, -1, format), inPlace);
+        }
+        catch (PyDebuggerException e) {
+          showError(e.getMessage());
+        }
       }
     });
   }
 
   private void initUi(@NotNull final ArrayChunk chunk, final boolean inPlace) {
-    if (chunk.containsMeta()) {
       myPagingModel = new AsyncArrayTableModel(Math.min(chunk.getRows(), ROWS_IN_DEFAULT_VIEW),
                                                Math.min(chunk.getColumns(), COLUMNS_IN_DEFAULT_VIEW), this);
       myPagingModel.addToCache(chunk);
@@ -255,10 +229,6 @@ public class NumpyArrayTable {
           }
         }
       });
-    }
-    else {
-      showError("Bad metadata for array " + chunk.getValue());
-    }
   }
 
   private static String getTitlePresentation(String slice) {
@@ -372,15 +342,6 @@ public class NumpyArrayTable {
     initTableModel(true);
   }
 
-  public void setBusy(final boolean busy) {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        myComponent.setBusy(busy);
-      }
-    });
-  }
-
   /**
    * @return double presentation from [0:1] range
    */
@@ -433,14 +394,7 @@ public class NumpyArrayTable {
   }
 
   public String getNodeFullName() {
-    String fullName = getDebugValue().getName();
-    PyDebugValue child = getDebugValue();
-    while (child.getParent() != null) {
-      child = child.getParent();
-      fullName = child.getName() + "." + fullName;
-    }
-
-    return fullName;
+    return getDebugValue().getEvaluationExpression();
   }
 
   public String getFormat() {

@@ -42,7 +42,7 @@ public class GenerateToStringConfigurable implements Configurable {
   }
 
   public String getHelpTopic() {
-      return null;
+      return "editing.altInsert.tostring.settings";
   }
 
   public JComponent createComponent() {

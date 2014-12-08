@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
+import com.intellij.execution.filters.LineNumbersMapping;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThreeState;
@@ -59,6 +60,7 @@ public class CompoundPositionManager extends PositionManagerEx {
 
   @Override
   public SourcePosition getSourcePosition(Location location) {
+    if (location == null) return null;
     SourcePosition res = mySourcePositionCache.get(location);
     if (res != null) return res;
 
@@ -109,23 +111,14 @@ public class CompoundPositionManager extends PositionManagerEx {
     return Collections.emptyList();
   }
 
-  private static int mapToOriginalLine(int line, int[] mapping) {
-    for (int i = 0; i < mapping.length; i += 2) {
-      if (mapping[i + 1] == line) {
-        return mapping[i];
-      }
-    }
-    return -1;
-  }
-
   @Override
   @NotNull
   public List<Location> locationsOfLine(@NotNull ReferenceType type, @NotNull SourcePosition position) {
     VirtualFile file = position.getFile().getVirtualFile();
     if (file != null) {
-      int[] data = file.getUserData(LINE_NUMBERS_MAPPING_KEY);
-      if (data != null) {
-        int line = mapToOriginalLine(position.getLine() + 1, data);
+      LineNumbersMapping mapping = file.getUserData(LineNumbersMapping.LINE_NUMBERS_MAPPING_KEY);
+      if (mapping != null) {
+        int line = mapping.sourceToBytecode(position.getLine() + 1);
         if (line > -1) {
           position = SourcePosition.createFromLine(position.getFile(), line - 1);
         }

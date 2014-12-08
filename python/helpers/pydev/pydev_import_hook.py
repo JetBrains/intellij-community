@@ -1,6 +1,5 @@
 
 import sys
-from pydevd_constants import IS_PY24, IS_PY3K
 from pydevd_constants import DictContains
 from types import ModuleType
 
@@ -14,22 +13,17 @@ class ImportHookManager(ModuleType):
     def add_module_name(self, module_name, activate_function):
         self._modules_to_patch[module_name] = activate_function
 
-    def do_import(self, name, globals=None, locals=None, fromlist=None, level=-2):
-        if level == -2:
-            # fake impossible value; default value depends on version
-            if IS_PY24:
-                # the level parameter was added in version 2.5
-                return self._system_import(name, globals, locals, fromlist)
-            elif IS_PY3K:
-                # default value for level parameter in python 3
-                level = 0
-            else:
-                # default value for level parameter in other versions
-                level = -1
-        module = self._system_import(name, globals, locals, fromlist, level)
+    def do_import(self, name, *args, **kwargs):
+        activate_func = None
         if DictContains(self._modules_to_patch, name):
-            self._modules_to_patch[name]() #call activate function
-            self._modules_to_patch.pop(name)
+            activate_func = self._modules_to_patch.pop(name)
+
+        module = self._system_import(name, *args, **kwargs)
+        try:
+            if activate_func:
+                activate_func() #call activate function
+        except:
+            sys.stderr.write("Matplotlib support failed")
         return module
 
 try:

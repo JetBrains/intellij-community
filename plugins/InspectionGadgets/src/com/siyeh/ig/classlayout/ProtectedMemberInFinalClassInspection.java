@@ -17,7 +17,6 @@ package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
@@ -37,6 +36,9 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RemoveModifierFix;
 import org.jetbrains.annotations.NotNull;
+
+import static com.intellij.openapi.application.WriteAction.start;
+import static com.intellij.psi.PsiModifier.PRIVATE;
 
 public class ProtectedMemberInFinalClassInspection extends ProtectedMemberInFinalClassInspectionBase {
 
@@ -134,17 +136,16 @@ public class ProtectedMemberInFinalClassInspection extends ProtectedMemberInFina
         final ConflictsDialog conflictsDialog = new ConflictsDialog(member.getProject(), conflicts, new Runnable() {
           @Override
           public void run() {
-            final AccessToken token = WriteAction.start();
+            final AccessToken token = start();
             try {
-              modifierList.setModifierProperty(PsiModifier.PRIVATE, true);
+              modifierList.setModifierProperty(PRIVATE, true);
             }
             finally {
               token.finish();
             }
           }
         });
-        conflictsDialog.show();
-        conflictsDialogOK = conflictsDialog.isOK();
+        conflictsDialogOK = conflictsDialog.showAndGet();
       }
       if (conflictsDialogOK) {
         modifierList.setModifierProperty(PsiModifier.PRIVATE, true);

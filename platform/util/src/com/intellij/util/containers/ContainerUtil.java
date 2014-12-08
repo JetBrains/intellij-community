@@ -58,7 +58,7 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   @Contract(pure=true)
-  public static <K, V> Map<K, V> newHashMap(@NotNull Pair<K, V> first, Pair<K, V>... entries) {
+  public static <K, V> Map<K, V> newHashMap(@NotNull Pair<K, V> first, @NotNull Pair<K, V>... entries) {
     return ContainerUtilRt.newHashMap(first, entries);
   }
 
@@ -100,7 +100,7 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   @Contract(pure=true)
-  public static <K, V> LinkedHashMap<K, V> newLinkedHashMap(@NotNull Pair<K, V> first, Pair<K, V>... entries) {
+  public static <K, V> LinkedHashMap<K, V> newLinkedHashMap(@NotNull Pair<K, V> first, @NotNull Pair<K, V>... entries) {
     return ContainerUtilRt.newLinkedHashMap(first, entries);
   }
 
@@ -1221,13 +1221,31 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   /**
+   * @deprecated Use {@link #append(java.util.List, java.lang.Object[])} or {@link #prepend(java.util.List, java.lang.Object[])} instead
    * @param appendTail specify whether additional values should be appended in front or after the list
    * @return read-only list consisting of the elements from specified list with some additional values
    */
+  @Deprecated
   @NotNull
   @Contract(pure=true)
-  public static <T> List<T> concat(boolean appendTail, @NotNull List<? extends T> list, T... values) {
+  public static <T> List<T> concat(boolean appendTail, @NotNull List<? extends T> list, @NotNull T... values) {
     return appendTail ? concat(list, list(values)) : concat(list(values), list);
+  }
+
+  @NotNull
+  @Contract(pure=true)
+  public static <T> List<T> append(@NotNull List<? extends T> list, @NotNull T... values) {
+    return concat(list, list(values));
+  }
+
+  /**
+   * prepend values in front of the list
+   * @return read-only list consisting of values and the elements from specified list
+   */
+  @NotNull
+  @Contract(pure=true)
+  public static <T> List<T> prepend(@NotNull List<? extends T> list, @NotNull T... values) {
+    return concat(list(values), list);
   }
 
   /**
@@ -1408,8 +1426,8 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   @Contract(pure=true)
-  public static <T> T getFirstItem(@Nullable final Collection<T> items, @Nullable final T def) {
-    return items == null || items.isEmpty() ? def : items.iterator().next();
+  public static <T> T getFirstItem(@Nullable final Collection<T> items, @Nullable final T defaultResult) {
+    return items == null || items.isEmpty() ? defaultResult : items.iterator().next();
   }
 
   /**
@@ -2224,6 +2242,9 @@ public class ContainerUtil extends ContainerUtilRt {
    * - faster modification in the uncontended case
    * - less memory
    * - slower modification in highly contented case (which is the kind of situation you shouldn't use COWAL anyway)
+   *
+   * N.B. Avoid using <code>list.toArray(new T[list.size()])</code> on this list because it is inherently racey and
+   * therefore can return array with null elements at the end.
    */
   @NotNull
   @Contract(pure=true)
@@ -2240,15 +2261,81 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <V> ConcurrentIntObjectMap<V> createConcurrentIntObjectMap() {
+    //noinspection deprecation
     return new ConcurrentIntObjectHashMap<V>();
   }
 
   @NotNull
   @Contract(pure=true)
+  public static <V> ConcurrentIntObjectMap<V> createConcurrentIntObjectSoftValueMap() {
+    //noinspection deprecation
+    return new ConcurrentSoftValueIntObjectHashMap<V>();
+  }
+
+  @NotNull
+  @Contract(pure=true)
   public static <V> ConcurrentLongObjectMap<V> createConcurrentLongObjectMap() {
+    //noinspection deprecation
     return new ConcurrentLongObjectHashMap<V>();
   }
 
+  @NotNull
+  @Contract(pure=true)
+  public static <K,V> ConcurrentMap<K,V> createConcurrentWeakValueMap() {
+    //noinspection deprecation
+    return new ConcurrentWeakValueHashMap<K, V>();
+  }
+
+  @NotNull
+  @Contract(pure=true)
+  public static <V> ConcurrentIntObjectMap<V> createConcurrentIntObjectWeakValueMap() {
+    //noinspection deprecation
+    return new ConcurrentWeakValueIntObjectHashMap<V>();
+  }
+
+  @NotNull
+  @Contract(pure=true)
+  public static <K,V> ConcurrentMap<K,V> createConcurrentWeakKeySoftValueMap(int initialCapacity,
+                                                                             float loadFactor,
+                                                                             int concurrencyLevel,
+                                                                             @NotNull final TObjectHashingStrategy<K> hashingStrategy) {
+    //noinspection deprecation
+    return new ConcurrentWeakKeySoftValueHashMap<K, V>(initialCapacity, loadFactor, concurrencyLevel, hashingStrategy);
+  }
+
+  @NotNull
+  @Contract(pure=true)
+  public static <K,V> ConcurrentMap<K,V> createConcurrentSoftValueMap() {
+    //noinspection deprecation
+    return new ConcurrentSoftValueHashMap<K, V>();
+  }
+
+  @NotNull
+  @Contract(pure=true)
+  public static <K,V> ConcurrentMap<K,V> createConcurrentSoftMap() {
+    //noinspection deprecation
+    return new ConcurrentSoftHashMap<K, V>();
+  }
+
+  @NotNull
+  @Contract(pure=true)
+  public static <K,V> ConcurrentMap<K,V> createConcurrentWeakMap() {
+    //noinspection deprecation
+    return new ConcurrentWeakHashMap<K, V>();
+  }
+  @NotNull
+  @Contract(pure=true)
+  public static <K,V> ConcurrentMap<K,V> createConcurrentWeakMap(int initialCapacity,
+                                 float loadFactor,
+                                 int concurrencyLevel,
+                                 @NotNull TObjectHashingStrategy<K> hashingStrategy) {
+    //noinspection deprecation
+    return new ConcurrentWeakHashMap<K, V>(initialCapacity, loadFactor, concurrencyLevel, hashingStrategy);
+  }
+
+  /**
+   * @see {@link #createLockFreeCopyOnWriteList()}
+   */
   @NotNull
   @Contract(pure=true)
   public static <T> ConcurrentList<T> createConcurrentList() {

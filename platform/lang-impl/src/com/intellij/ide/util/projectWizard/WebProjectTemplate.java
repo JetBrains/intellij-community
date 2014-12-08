@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.ide.util.projectWizard;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.module.WebModuleBuilder;
 import com.intellij.openapi.module.WebModuleType;
 import com.intellij.openapi.ui.ValidationInfo;
@@ -58,7 +57,7 @@ public abstract class WebProjectTemplate<T> extends WebProjectGenerator<T> imple
   }
 
   public Icon getLogo() {
-    return AllIcons.Nodes.PpWebLogo;
+    return getIcon();
   }
 
   @NotNull

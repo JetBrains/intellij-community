@@ -46,6 +46,11 @@ public class PrimitiveArrayArgumentToVariableArgMethodInspection extends BaseIns
   }
 
   @Override
+  public boolean shouldInspect(PsiFile file) {
+    return PsiUtil.isLanguageLevel5OrHigher(file);
+  }
+
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new PrimitiveArrayArgumentToVariableArgVisitor();
   }
@@ -55,9 +60,6 @@ public class PrimitiveArrayArgumentToVariableArgMethodInspection extends BaseIns
     @Override
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
       super.visitMethodCallExpression(call);
-      if (!PsiUtil.isLanguageLevel5OrHigher(call)) {
-        return;
-      }
       final PsiExpressionList argumentList = call.getArgumentList();
       final PsiExpression[] arguments = argumentList.getExpressions();
       if (arguments.length == 0) {

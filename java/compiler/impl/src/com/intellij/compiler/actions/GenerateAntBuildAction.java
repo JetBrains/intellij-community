@@ -32,10 +32,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -50,8 +47,7 @@ public class GenerateAntBuildAction extends CompileActionBase {
   protected void doAction(DataContext dataContext, final Project project) {
     ((CompilerConfigurationImpl)CompilerConfiguration.getInstance(project)).convertPatterns();
     final GenerateAntBuildDialog dialog = new GenerateAntBuildDialog(project);
-    dialog.show();
-    if (dialog.isOK()) {
+    if (dialog.showAndGet()) {
       final String[] names = dialog.getRepresentativeModuleNames();
       final GenerationOptionsImpl[] genOptions = new GenerationOptionsImpl[1];
       if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
@@ -61,8 +57,8 @@ public class GenerateAntBuildAction extends CompileActionBase {
             @Override
             public GenerationOptionsImpl compute() {
               return new GenerationOptionsImpl(project, dialog.isGenerateSingleFileBuild(), dialog.isFormsCompilationEnabled(),
-                                          dialog.isBackupFiles(), dialog.isForceTargetJdk(), dialog.isRuntimeClasspathInlined(),
-                                          dialog.isIdeaHomeGenerated(), names, dialog.getOutputFileName());
+                                               dialog.isBackupFiles(), dialog.isForceTargetJdk(), dialog.isRuntimeClasspathInlined(),
+                                               dialog.isIdeaHomeGenerated(), names, dialog.getOutputFileName());
             }
           });
         }
@@ -275,7 +271,7 @@ public class GenerateAntBuildAction extends CompileActionBase {
    * @throws FileNotFoundException        if file not found
    */
   private static PrintWriter makeWriter(final File buildxmlFile) throws UnsupportedEncodingException, FileNotFoundException {
-    return new PrintWriter(new OutputStreamWriter(new FileOutputStream(buildxmlFile), "UTF-8"));
+    return new PrintWriter(new OutputStreamWriter(new FileOutputStream(buildxmlFile), CharsetToolkit.UTF8_CHARSET));
   }
 
   private void ensureFilesWritable(Project project, File[] files) throws IOException {

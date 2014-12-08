@@ -24,9 +24,9 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.configurations.ParamsGroup;
 import com.intellij.execution.executors.DefaultDebugExecutor;
+import com.intellij.execution.process.CommandLineArgumentsProvider;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.execution.process.CommandLineArgumentsProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.io.FileUtil;
@@ -142,28 +142,31 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
       }
 
       try {
-        GeneralCommandLine cmd = generateCommandLine(myPatchers);
+        final GeneralCommandLine cmd = generateCommandLine(myPatchers);
         args.addAll(cmd.getParametersList().getList());
+
+        return new CommandLineArgumentsProvider() {
+          @Override
+          public String[] getArguments() {
+            return ArrayUtil.toStringArray(args);
+          }
+
+          @Override
+          public boolean passParentEnvs() {
+            return false;
+          }
+
+          @Override
+          public Map<String, String> getAdditionalEnvs() {
+            Map<String, String> map = addDefaultEnvironments(sdk, environmentVariables,getProject());
+            map.putAll(cmd.getEnvironment());
+            return map;
+          }
+        };
       }
       catch (Exception e) {
-        //pass
+        throw new IllegalStateException(e);
       }
-      return new CommandLineArgumentsProvider() {
-        @Override
-        public String[] getArguments() {
-          return ArrayUtil.toStringArray(args);
-        }
-
-        @Override
-        public boolean passParentEnvs() {
-          return false;
-        }
-
-        @Override
-        public Map<String, String> getAdditionalEnvs() {
-          return addDefaultEnvironments(sdk, environmentVariables);
-        }
-      };
     }
   }
 }

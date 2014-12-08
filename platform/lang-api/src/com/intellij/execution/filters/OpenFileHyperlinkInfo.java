@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,12 +56,22 @@ public final class OpenFileHyperlinkInfo implements FileHyperlinkInfo {
       return null;
     }
 
-    int offset = calculateOffset(myFile, myDocumentLine, myDocumentColumn);
+    int line = myDocumentLine;
+    FileDocumentManager.getInstance().getDocument(myFile); // need to load decompiler text
+    LineNumbersMapping mapping = myFile.getUserData(LineNumbersMapping.LINE_NUMBERS_MAPPING_KEY);
+    if (mapping != null) {
+      line = mapping.bytecodeToSource(myDocumentLine + 1) - 1;
+      if (line < 0) {
+        line = myDocumentLine;
+      }
+    }
+
+    int offset = calculateOffset(myFile, line, myDocumentColumn);
     if (offset != UNDEFINED_OFFSET) {
       return new OpenFileDescriptor(myProject, myFile, offset);
     }
     // although document position != logical position, it seems better than returning 'null'
-    return new OpenFileDescriptor(myProject, myFile, myDocumentLine, myDocumentColumn);
+    return new OpenFileDescriptor(myProject, myFile, line, myDocumentColumn);
   }
 
   @Override

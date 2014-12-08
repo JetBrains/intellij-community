@@ -1,4 +1,4 @@
-// "Replace Implements with Static Import" "true"
+// "Replace implements with static import" "true"
 interface I<caret>n {
     int FOO = 0;
 }

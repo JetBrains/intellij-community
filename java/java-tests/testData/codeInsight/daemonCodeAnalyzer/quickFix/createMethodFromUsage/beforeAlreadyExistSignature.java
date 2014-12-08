@@ -1,4 +1,4 @@
-// "Create Method 'f'" "false"
+// "Create method 'f'" "false"
 public class Foo {
     void foo(Bar f) {
         f.<caret>f(2);

@@ -108,5 +108,4 @@ public class UniqueNameGenerator implements Condition<String> {
   public String generateUniqueName(final String defaultName) {
     return generateUniqueName(defaultName, "", "");
   }
-
 }

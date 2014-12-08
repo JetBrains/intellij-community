@@ -191,6 +191,23 @@ public class UsageInfo {
     return range.getStartOffset() + rangeInElement.getStartOffset();
   }
 
+  public Segment getNavigationRange() {
+    if (myPsiFileRange  != null) {
+      final Segment range = myPsiFileRange.getRange();
+      if (range != null) {
+        return range;
+      }
+    }
+
+    PsiElement element = getElement();
+    if (element == null) return null;
+    TextRange range = element.getTextRange();
+
+    TextRange rangeInElement = getRangeInElement();
+    if (rangeInElement == null) return null;
+    return rangeInElement.shiftRight(range.getStartOffset());
+  }
+
   public boolean isValid() {
     return getSegment() != null;
   }

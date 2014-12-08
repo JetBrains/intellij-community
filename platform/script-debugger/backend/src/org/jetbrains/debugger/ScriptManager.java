@@ -13,7 +13,7 @@ public interface ScriptManager {
   String VM_SCHEME = "vm";
 
   @NotNull
-  AsyncResult<String> getSource(@NotNull Script script);
+  Promise<String> getSource(@NotNull Script script);
 
   boolean hasSource(Script script);
 
