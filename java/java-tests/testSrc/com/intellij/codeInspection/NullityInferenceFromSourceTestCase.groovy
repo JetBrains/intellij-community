@@ -68,7 +68,7 @@ String bar() { return "z"; }
   }
 
   void "test delegation to nullable means nothing"() {
-    assert inferNullity(parse('String foo() { return bar(); }; String bar() { if (equals(2)) return null; return "a"; }; ')) == UNKNOWN
+    assert inferNullity(parse('String foo() { return bar("2"); }; String bar(String s) { if (s != "2") return null; return "a"; }; ')) == UNKNOWN
   }
 
   void "test return boxed boolean constant"() {
