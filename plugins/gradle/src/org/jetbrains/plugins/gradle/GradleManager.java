@@ -44,6 +44,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
@@ -152,6 +153,8 @@ public class GradleManager
       public GradleExecutionSettings fun(Pair<Project, String> pair) {
         GradleSettings settings = GradleSettings.getInstance(pair.first);
         File gradleHome = myInstallationManager.getGradleHome(pair.first, pair.second);
+        Sdk gradleJdk = myInstallationManager.getGradleJdk(pair.first, pair.second);
+
         String localGradlePath = null;
         if (gradleHome != null) {
           try {
@@ -183,11 +186,17 @@ public class GradleManager
         for (GradleProjectResolverExtension extension : RESOLVER_EXTENSIONS.getValue()) {
           result.addResolverExtensionClass(ClassHolder.from(extension.getClass()));
         }
-        String javaHome = myJavaHelper.getJdkHome(pair.first);
-        if (!StringUtil.isEmpty(javaHome)) {
-          LOG.info("Instructing gradle to use java from " + javaHome);
+
+        if (gradleJdk != null) {
+          result.setJavaHome(gradleJdk.getHomePath());
+        } else {
+          String javaHome = myJavaHelper.getJdkHome(pair.first);
+          if (!StringUtil.isEmpty(javaHome)) {
+            LOG.info("Instructing gradle to use java from " + javaHome);
+          }
+          result.setJavaHome(javaHome);
         }
-        result.setJavaHome(javaHome);
+
         return result;
       }
     };
