@@ -1,4 +1,4 @@
-package org.jetbrains.idea.maven.execution.cmd;
+package com.intellij.openapi.externalSystem.service.execution.cmd;
 
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.CompletionResultSet;
