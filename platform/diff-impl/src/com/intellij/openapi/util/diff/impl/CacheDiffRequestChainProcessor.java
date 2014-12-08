@@ -1,5 +1,6 @@
 package com.intellij.openapi.util.diff.impl;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
@@ -9,7 +10,9 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.diff.DiffManagerEx;
@@ -25,6 +28,7 @@ import com.intellij.openapi.util.diff.requests.DiffRequest;
 import com.intellij.openapi.util.diff.requests.ErrorDiffRequest;
 import com.intellij.openapi.util.diff.requests.NoDiffRequest;
 import com.intellij.openapi.util.diff.tools.ErrorDiffTool;
+import com.intellij.openapi.util.diff.tools.external.ExternalDiffTool;
 import com.intellij.openapi.util.diff.tools.util.DiffDataKeys;
 import com.intellij.openapi.util.diff.tools.util.DiffUserDataKeys;
 import com.intellij.openapi.util.diff.tools.util.PrevNextDifferenceIterable;
@@ -288,7 +292,9 @@ public abstract class CacheDiffRequestChainProcessor implements Disposable {
     List<AnAction> requestContextActions = myActiveRequest.getUserData(DiffUserDataKeys.CONTEXT_ACTIONS);
     DiffUtil.addActionBlock(group, requestContextActions);
 
-    DiffUtil.addActionBlock(group, ActionManager.getInstance().getAction(IdeActions.ACTION_CONTEXT_HELP));
+    DiffUtil.addActionBlock(group,
+                            new ShowInExternalToolAction(),
+                            ActionManager.getInstance().getAction(IdeActions.ACTION_CONTEXT_HELP));
 
     return group;
   }
@@ -481,6 +487,32 @@ public abstract class CacheDiffRequestChainProcessor implements Disposable {
         }
       }
     });
+  }
+
+  private class ShowInExternalToolAction extends DumbAwareAction {
+    public ShowInExternalToolAction() {
+      super("Show in external tool", null, AllIcons.General.ExternalToolsSmall);
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      if (!ExternalDiffTool.isEnabled()) {
+        e.getPresentation().setVisible(false);
+        return;
+      }
+      e.getPresentation().setEnabled(ExternalDiffTool.canShow(myActiveRequest));
+      e.getPresentation().setVisible(true);
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      try {
+        ExternalDiffTool.showRequest(e.getProject(), myActiveRequest);
+      }
+      catch (Throwable ex) {
+        Messages.showErrorDialog(e.getProject(), ex.getMessage(), "Can't Show Diff In External Tool");
+      }
+    }
   }
 
   // Other

@@ -23,6 +23,7 @@ import com.intellij.openapi.util.diff.chains.SimpleDiffRequestChain;
 import com.intellij.openapi.util.diff.impl.DiffWindow;
 import com.intellij.openapi.util.diff.requests.DiffRequest;
 import com.intellij.openapi.util.diff.tools.binary.BinaryDiffTool;
+import com.intellij.openapi.util.diff.tools.external.ExternalDiffTool;
 import com.intellij.openapi.util.diff.tools.oneside.OnesideDiffTool;
 import com.intellij.openapi.util.diff.tools.simple.SimpleDiffTool;
 import org.jetbrains.annotations.NotNull;
@@ -43,7 +44,10 @@ public class DiffManagerImpl extends DiffManagerEx {
 
   @Override
   public void showDiff(@Nullable Project project, @NotNull DiffRequestChain requests, @NotNull DiffDialogHints hints) {
-    // TODO: external diff tool
+    if (ExternalDiffTool.isDefault()) {
+      ExternalDiffTool.show(project, requests, hints);
+      return;
+    }
 
     showDiffBuiltin(project, requests, hints);
   }

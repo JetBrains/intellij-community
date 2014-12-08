@@ -87,8 +87,12 @@
                         serviceImplementation="com.intellij.openapi.util.diff.tools.util.base.TextDiffSettingsHolder"/>
     <applicationService serviceInterface="com.intellij.openapi.util.diff.tools.oneside.OnesideDiffSettingsHolder"
                         serviceImplementation="com.intellij.openapi.util.diff.tools.oneside.OnesideDiffSettingsHolder"/>
+    <applicationService serviceInterface="com.intellij.openapi.util.diff.tools.external.ExternalDiffSettings"
+                        serviceImplementation="com.intellij.openapi.util.diff.tools.external.ExternalDiffSettings"/>
     <applicationConfigurable groupId="tools" id="diff.base" displayName="Diff"
                              instance="com.intellij.openapi.util.diff.settings.DiffSettingsConfigurable" />
+    <applicationConfigurable groupId="tools" id="diff.external" displayName="External Diff Tools" parentId="diff.base"
+                             instance="com.intellij.openapi.util.diff.settings.ExternalDiffSettingsConfigurable" />
 
     <applicationService serviceInterface="com.intellij.ui.SystemNotifications"
                         serviceImplementation="com.intellij.ui.SystemNotificationsImpl"/>
