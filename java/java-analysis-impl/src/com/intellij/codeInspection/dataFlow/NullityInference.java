@@ -120,7 +120,7 @@ public class NullityInference {
         return Nullness.NULLABLE;
       }
       
-      if (hasErrors.get() || delegates.size() > 1) {
+      if (hasErrors.get() || hasUnknowns.get() || delegates.size() > 1) {
         return Nullness.UNKNOWN;
       }
 
@@ -128,10 +128,6 @@ public class NullityInference {
         if (NullableNotNullManager.isNotNull(delegates.iterator().next())) {
           return Nullness.NOT_NULL;
         }
-        return Nullness.UNKNOWN;
-      }
-
-      if (hasUnknowns.get()) {
         return Nullness.UNKNOWN;
       }
 

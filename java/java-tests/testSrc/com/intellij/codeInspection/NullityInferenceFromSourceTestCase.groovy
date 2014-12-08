@@ -53,6 +53,16 @@ String bar() { return "z"; }
 ''')) == NOT_NULL
   }
 
+  void "test unknown wins over a single delegate"() {
+    assert inferNullity(parse('''
+String foo() { 
+  if (equals(3)) return bar();
+  return smth; 
+}
+String bar() { return "z"; }
+''')) == UNKNOWN
+  }
+
   void "test if branch returns null"() {
     assert inferNullity(parse('String bar() { if (equals(2)) return null; return "a"; }; ')) == NULLABLE
   }
