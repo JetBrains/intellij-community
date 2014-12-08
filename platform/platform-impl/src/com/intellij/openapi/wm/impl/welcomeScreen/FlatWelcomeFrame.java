@@ -47,8 +47,7 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.util.IconUtil;
 import com.intellij.util.NotNullFunction;
-import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -93,9 +92,9 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
     AppUIUtil.updateWindowIcon(this);
     //Rectangle bounds = ScreenUtil.getMainScreenBounds();
     if (RecentProjectsManager.getInstance().getRecentProjectsActions(false).length > 0) {
-      setSize(666, 460);
+      setSize(JBUI.size(666, 460));
     } else {
-      setSize(555, 460);
+      setSize(JBUI.size(555, 460));
     }
     setResizable(false);
     //int x = bounds.x + (bounds.width - getWidth()) / 2;
@@ -115,7 +114,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
       }
     });
 
-    myBalloonLayout = new BalloonLayoutImpl(rootPane, new Insets(8, 8, 8, 8));
+    myBalloonLayout = new BalloonLayoutImpl(rootPane, new JBInsets(8, 8, 8, 8));
 
     WelcomeFrame.setupCloseAction(this);
     new MnemonicHelper().register(this);
@@ -246,11 +245,11 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
           ActionLink registerLink = new ActionLink("Register", register);
           registerLink.setNormalColor(getLinkNormalColor());
           NonOpaquePanel button = new NonOpaquePanel(new BorderLayout());
-          button.setBorder(new EmptyBorder(4, 10, 4, 10));
+          button.setBorder(IdeBorderFactory.createEmptyBorder(4, 10, 4, 10));
           button.add(registerLink);
           installFocusable(button, register, KeyEvent.VK_UP, KeyEvent.VK_RIGHT, true);
           NonOpaquePanel wrap = new NonOpaquePanel();
-          wrap.setBorder(new EmptyBorder(0, 10, 0, 0));
+          wrap.setBorder(IdeBorderFactory.createEmptyBorder(0, 10, 0, 0));
           wrap.add(button);
           panel.add(wrap, BorderLayout.WEST);
           registeredVisible = true;
@@ -264,7 +263,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
       panel.add(toolbar, BorderLayout.EAST);
 
 
-      panel.setBorder(new EmptyBorder(0,0,8,11));
+      panel.setBorder(IdeBorderFactory.createEmptyBorder(0, 0, 8, 11));
       return panel;
     }
 
@@ -285,7 +284,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
       ref.get().setPaintUnderline(false);
       ref.get().setNormalColor(getLinkNormalColor());
       NonOpaquePanel panel = new NonOpaquePanel(new BorderLayout());
-      panel.setBorder(new EmptyBorder(4, 6, 4, 6));
+      panel.setBorder(IdeBorderFactory.createEmptyBorder(4, 6, 4, 6));
       panel.add(ref.get());
       panel.add(createArrow(ref.get()), BorderLayout.EAST);
       installFocusable(panel, action, KeyEvent.VK_UP, KeyEvent.VK_DOWN, focusListOnLeft);
@@ -294,7 +293,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
 
     private JComponent createActionPanel() {
       JPanel actions = new NonOpaquePanel();
-      actions.setBorder(new EmptyBorder(0, 10, 0, 0));
+      actions.setBorder(IdeBorderFactory.createEmptyBorder(0, 10, 0, 0));
       actions.setLayout(new BoxLayout(actions, BoxLayout.Y_AXIS));
       ActionManager actionManager = ActionManager.getInstance();
       ActionGroup quickStart = (ActionGroup)actionManager.getAction(IdeActions.GROUP_WELCOME_SCREEN_QUICKSTART);
@@ -304,7 +303,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
       for (AnAction action : group.getChildren(null)) {
         JPanel button = new JPanel(new BorderLayout());
         button.setOpaque(false);
-        button.setBorder(new EmptyBorder(8, 20, 8, 20));
+        button.setBorder(IdeBorderFactory.createEmptyBorder(8, 20, 8, 20));
         Presentation presentation = action.getTemplatePresentation();
         action.update(new AnActionEvent(null, DataManager.getInstance().getDataContext(this),
                                         ActionPlaces.WELCOME_SCREEN, presentation, ActionManager.getInstance(), 0));
@@ -314,8 +313,8 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
             text = text.substring(0, text.length() - 3);
           }
           Icon icon = presentation.getIcon();
-          if (icon.getIconHeight() != 16 || icon.getIconWidth() != 16) {
-            icon = EmptyIcon.ICON_16;
+          if (icon.getIconHeight() != JBUI.scale(16) || icon.getIconWidth() != JBUI.scale(16)) {
+            icon = JBUI.emptyIcon(16);
           }
           action = wrapGroups(action);
           ActionLink link = new ActionLink(text, icon, action, createUsageTracker(action));
@@ -392,7 +391,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
       JLabel appName = new JLabel(ApplicationNamesInfo.getInstance().getFullProductName());
       Font font = getProductFont();
       appName.setForeground(JBColor.foreground());
-      appName.setFont(font.deriveFont(36f).deriveFont(Font.PLAIN));
+      appName.setFont(font.deriveFont(JBUI.scale(36f)).deriveFont(Font.PLAIN));
       appName.setHorizontalAlignment(SwingConstants.CENTER);
       String appVersion = "Version " + app.getFullVersion();
 
@@ -401,13 +400,13 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
       }
 
       JLabel version = new JLabel(appVersion);
-      version.setFont(getProductFont().deriveFont(16f));
+      version.setFont(getProductFont().deriveFont(JBUI.scale(16f)));
       version.setHorizontalAlignment(SwingConstants.CENTER);
       version.setForeground(Gray._128);
 
       panel.add(appName);
       panel.add(version, BorderLayout.SOUTH);
-      panel.setBorder(new EmptyBorder(0, 0, 20, 0));
+      panel.setBorder(JBUI.emptyBorder(0, 0, 20, 0));
       return panel;
     }
 
@@ -438,7 +437,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
       JPanel panel = new JPanel(new BorderLayout());
       panel.add(new NewRecentProjectPanel(this), BorderLayout.CENTER);
       panel.setBackground(getProjectsBackground());
-      panel.setBorder(new CustomLineBorder(getSeparatorColor(), 0,0,0,1));
+      panel.setBorder(new CustomLineBorder(getSeparatorColor(), JBUI.insets(0, 0, 0, 1)));
       return panel;
     }
 
