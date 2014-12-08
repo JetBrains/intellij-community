@@ -54,64 +54,71 @@ import java.util.LinkedList;
 
 public class SvnRecursiveStatusWalker {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.SvnRecursiveStatusWalker");
-  private final SvnVcs myVcs;
-  private final Project myProject;
-  private final ProjectLevelVcsManager myVcsManager;
-  private final ChangeListManager myChangeListManager;
-  private final ProgressIndicator myProgress;
-  private final StatusReceiver myReceiver;
-  private final LinkedList<MyItem> myQueue;
-  private final MyHandler myHandler;
-  private ISVNStatusFileProvider myFileProvider;
 
-  public SvnRecursiveStatusWalker(final SvnVcs vcs, final StatusReceiver receiver, final ProgressIndicator progress) {
+  @NotNull private final SvnVcs myVcs;
+  @NotNull private final Project myProject;
+  @NotNull private final ProjectLevelVcsManager myVcsManager;
+  @NotNull private final ChangeListManager myChangeListManager;
+  @Nullable private final ProgressIndicator myProgress;
+  @NotNull private final StatusReceiver myReceiver;
+  @NotNull private final LinkedList<MyItem> myQueue;
+  @NotNull private final MyHandler myHandler;
+  @Nullable private ISVNStatusFileProvider myFileProvider;
+
+  public SvnRecursiveStatusWalker(@NotNull SvnVcs vcs, @NotNull StatusReceiver receiver, @Nullable ProgressIndicator progress) {
     myVcs = vcs;
     myProject = vcs.getProject();
-    myVcsManager = ProjectLevelVcsManager.getInstance(myVcs.getProject());
-    myChangeListManager = ChangeListManager.getInstance(myVcs.getProject());
+    myVcsManager = ProjectLevelVcsManager.getInstance(myProject);
+    myChangeListManager = ChangeListManager.getInstance(myProject);
     myReceiver = receiver;
     myProgress = progress;
     myQueue = new LinkedList<MyItem>();
     myHandler = new MyHandler();
   }
 
-  public void setFileProvider(final ISVNStatusFileProvider fileProvider) {
+  public void setFileProvider(@Nullable ISVNStatusFileProvider fileProvider) {
     myFileProvider = fileProvider;
   }
 
-  public void go(final FilePath rootPath, final Depth depth) throws SvnBindException {
-    final MyItem root = createItem(rootPath, depth, false);
-    myQueue.add(root);
+  public void go(@NotNull FilePath rootPath, @NotNull Depth depth) throws SvnBindException {
+    myQueue.add(createItem(rootPath, depth, false));
 
-    while (! myQueue.isEmpty()) {
+    while (!myQueue.isEmpty()) {
       checkCanceled();
 
-      final MyItem item = myQueue.removeFirst();
-      final FilePath path = item.getPath();
-      final File ioFile = path.getIOFile();
-
-      if (path.isDirectory()) {
-        myHandler.setCurrentItem(item);
-        try {
-          final StatusClient client = item.getClient();
-          client.doStatus(ioFile, SVNRevision.WORKING, item.getDepth(), false, false, true, true, myHandler, null);
-          myHandler.checkIfCopyRootWasReported(null, ioFile);
+      MyItem item = myQueue.removeFirst();
+      try {
+        if (item.getPath().isDirectory()) {
+          processDirectory(item);
         }
-        catch (SvnBindException e) {
-          handleStatusException(item, path, e);
-        }
-      } else {
-        try {
-          final Status status = item.getClient().doStatus(ioFile, false);
-          myReceiver.process(path, status);
-        }
-        catch (SvnBindException e) {
-          handleStatusException(item, path, e);
-        }
-        catch (SVNException e) {
-          handleStatusException(item, path, new SvnBindException(e));
+        else {
+          processFile(item);
         }
       }
+      catch (SvnBindException e) {
+        handleStatusException(item, e);
+      }
+    }
+  }
+
+  private void processDirectory(@NotNull MyItem item) throws SvnBindException {
+    File ioFile = item.getPath().getIOFile();
+
+    myHandler.setCurrentItem(item);
+    item.getClient().doStatus(ioFile, SVNRevision.WORKING, item.getDepth(), false, false, true, true, myHandler, null);
+
+    // check if current item was already processed - not to request its status once again
+    if (!myHandler.myMetCurrentItem) {
+      myHandler.checkIfCopyRootWasReported(myHandler.getCurrentItemStatus());
+    }
+  }
+
+  private void processFile(@NotNull MyItem item) throws SvnBindException {
+    try {
+      myReceiver.process(item.getPath(), item.getClient().doStatus(item.getPath().getIOFile(), false));
+    }
+    catch (SVNException e) {
+      throw new SvnBindException(e);
     }
   }
 
@@ -121,7 +128,7 @@ public class SvnRecursiveStatusWalker {
     }
   }
 
-  public boolean isIgnoredByVcs(final VirtualFile vFile) {
+  public boolean isIgnoredByVcs(@NotNull final VirtualFile vFile) {
     return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
       @Override
       public Boolean compute() {
@@ -131,24 +138,23 @@ public class SvnRecursiveStatusWalker {
     });
   }
 
-  public boolean isIgnoredIdeaLevel(VirtualFile vFile) {
+  public boolean isIgnoredIdeaLevel(@NotNull VirtualFile vFile) {
     return myChangeListManager.isIgnoredFile(vFile);
   }
 
-  private void handleStatusException(MyItem item, FilePath path, SvnBindException e) throws SvnBindException {
+  private void handleStatusException(@NotNull MyItem item, @NotNull SvnBindException e) throws SvnBindException {
     if (e.contains(SVNErrorCode.WC_NOT_DIRECTORY) || e.contains(SVNErrorCode.WC_NOT_FILE)) {
-      final VirtualFile virtualFile = path.getVirtualFile();
-      if (virtualFile != null) {
-        if (!isIgnoredByVcs(virtualFile)) {
-          // self is unversioned
-          myReceiver.processUnversioned(virtualFile);
+      final VirtualFile virtualFile = item.getPath().getVirtualFile();
+      if (virtualFile != null && !isIgnoredByVcs(virtualFile)) {
+        // self is unversioned
+        myReceiver.processUnversioned(virtualFile);
 
-          if (virtualFile.isDirectory()) {
-            processRecursively(virtualFile, item.getDepth());
-          }
+        if (virtualFile.isDirectory()) {
+          processRecursively(virtualFile, item.getDepth());
         }
       }
-    } else {
+    }
+    else {
       throw e;
     }
   }
@@ -186,7 +192,7 @@ public class SvnRecursiveStatusWalker {
     }
   }
 
-  private void processRecursively(final VirtualFile vFile, final Depth prevDepth) {
+  private void processRecursively(@NotNull VirtualFile vFile, @NotNull Depth prevDepth) {
     if (Depth.EMPTY.equals(prevDepth)) return;
     if (isIgnoredIdeaLevel(vFile)) {
       myReceiver.processIgnored(vFile);
@@ -202,18 +208,16 @@ public class SvnRecursiveStatusWalker {
       @Override
       public boolean process(File file) {
         final FilePathImpl path = new FilePathImpl(file, true);
-        path.refresh();
         path.hardRefresh();
         VirtualFile vf = path.getVirtualFile();
         if (vf != null && isIgnoredIdeaLevel(vf)) {
           lastIgnored.set(file);
           myReceiver.processIgnored(vf);
-          return true;
         }
-        if (file.isDirectory() && new File(file, SVNFileUtil.getAdminDirectoryName()).exists()) {
-          final MyItem childItem = createItem(path, newDepth, true);
-          myQueue.add(childItem);
-        } else if (vf != null) {
+        else if (file.isDirectory() && new File(file, SVNFileUtil.getAdminDirectoryName()).exists()) {
+          myQueue.add(createItem(path, newDepth, true));
+        }
+        else if (vf != null) {
           myReceiver.processUnversioned(vf);
         }
         return true;
@@ -273,48 +277,52 @@ public class SvnRecursiveStatusWalker {
     private MyItem myCurrentItem;
     private boolean myMetCurrentItem;
 
-    public void setCurrentItem(MyItem currentItem) {
+    public void setCurrentItem(@NotNull MyItem currentItem) {
       myCurrentItem = currentItem;
       myMetCurrentItem = false;
     }
 
-    public void checkIfCopyRootWasReported(@Nullable final Status ioFileStatus, final File ioFile) {
-      File itemFile = myCurrentItem.getPath().getIOFile();
-      if (! myMetCurrentItem && FileUtil.filesEqual(ioFile, itemFile)) {
+    public void checkIfCopyRootWasReported(@Nullable Status status) {
+      if (!myMetCurrentItem && status != null && FileUtil.filesEqual(status.getFile(), myCurrentItem.getPath().getIOFile())) {
         myMetCurrentItem = true;
-        Status statusInner;
-        try {
-          statusInner = ioFileStatus != null ? ioFileStatus : myCurrentItem.getClient().doStatus(itemFile, false);
-        }
-        catch (SvnBindException e) {
-          LOG.info(e);
-          statusInner = null;
-        }
-        if (statusInner == null)  return;
 
-        final StatusType status = statusInner.getNodeStatus();
-        final VirtualFile vf = myCurrentItem.getPath().getVirtualFile();
-        if (StatusType.STATUS_IGNORED.equals(status)) {
-          if (vf != null) {
-            myReceiver.processIgnored(vf);
-          }
-          return;
+        processCurrentItem(status);
+      }
+    }
+
+    @Nullable
+    public Status getCurrentItemStatus() {
+      Status result = null;
+
+      try {
+        result = myCurrentItem.getClient().doStatus(myCurrentItem.getPath().getIOFile(), false);
+      }
+      catch (SvnBindException e) {
+        LOG.info(e);
+      }
+
+      return result;
+    }
+
+    public void processCurrentItem(@NotNull Status status) {
+      StatusType nodeStatus = status.getNodeStatus();
+      FilePath path = myCurrentItem.getPath();
+      VirtualFile vf = path.getVirtualFile();
+
+      if (vf != null) {
+        if (StatusType.STATUS_IGNORED.equals(nodeStatus)) {
+          myReceiver.processIgnored(vf);
         }
-        if (StatusType.STATUS_UNVERSIONED.equals(status) || StatusType.UNKNOWN.equals(status)) {
-          if (vf != null) {
-            myReceiver.processUnversioned(vf);
-            processRecursively(vf, myCurrentItem.getDepth());
-          }
-          return;
+        else if (StatusType.STATUS_UNVERSIONED.equals(nodeStatus) || StatusType.UNKNOWN.equals(nodeStatus)) {
+          myReceiver.processUnversioned(vf);
+          processRecursively(vf, myCurrentItem.getDepth());
         }
-        if (StatusType.OBSTRUCTED.equals(status) || StatusType.STATUS_NONE.equals(status)) {
-          return;
-        }
-        if (vf != null) {
+        else if (!StatusType.OBSTRUCTED.equals(nodeStatus) && !StatusType.STATUS_NONE.equals(nodeStatus)) {
           if (myCurrentItem.isIsInnerCopyRoot()) {
-            myReceiver.processCopyRoot(vf, statusInner.getURL(), myVcs.getWorkingCopyFormat(ioFile), statusInner.getRepositoryRootURL());
-          } else {
-            myReceiver.bewareRoot(vf, statusInner.getURL());
+            myReceiver.processCopyRoot(vf, status.getURL(), myVcs.getWorkingCopyFormat(path.getIOFile()), status.getRepositoryRootURL());
+          }
+          else {
+            myReceiver.bewareRoot(vf, status.getURL());
           }
         }
       }
@@ -324,39 +332,25 @@ public class SvnRecursiveStatusWalker {
     public void consume(final Status status) throws SVNException {
       checkCanceled();
       final File ioFile = status.getFile();
-      checkIfCopyRootWasReported(status, ioFile);
+      checkIfCopyRootWasReported(status);
 
-      final VirtualFile vFile = getVirtualFile(ioFile);
-      if (vFile != null) {
-        if (isIgnoredByVcs(vFile)) return;
-      }
+      VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioFile);
+      if (vFile != null && isIgnoredByVcs(vFile)) return;
       if (myProject.isDisposed()) throw new ProcessCanceledException();
 
-      if ((vFile != null) && (status.is(StatusType.STATUS_UNVERSIONED))) {
+      if (vFile != null && status.is(StatusType.STATUS_UNVERSIONED)) {
         if (vFile.isDirectory()) {
-          if (FileUtil.filesEqual(myCurrentItem.getPath().getIOFile(), ioFile)) {
-            //myReceiver.processUnversioned(vFile);
-            //processRecursively(vFile, myCurrentItem.getDepth());
-          } else {
-            final MyItem childItem = createItem(new FilePathImpl(vFile), Depth.INFINITY, true);
-            myQueue.add(childItem);
+          if (!FileUtil.filesEqual(myCurrentItem.getPath().getIOFile(), ioFile)) {
+            myQueue.add(createItem(new FilePathImpl(vFile), Depth.INFINITY, true));
           }
-        } else {
+        }
+        else {
           myReceiver.processUnversioned(vFile);
         }
-      } else {
-        final FilePath path = VcsUtil.getFilePath(ioFile, status.getKind().isDirectory());
-        myReceiver.process(path, status);
+      }
+      else {
+        myReceiver.process(VcsUtil.getFilePath(ioFile, status.getKind().isDirectory()), status);
       }
     }
-  }
-
-  private static VirtualFile getVirtualFile(File ioFile) {
-    final LocalFileSystem lfs = LocalFileSystem.getInstance();
-    VirtualFile vFile = lfs.findFileByIoFile(ioFile);
-    if (vFile == null) {
-      vFile = lfs.refreshAndFindFileByIoFile(ioFile);
-    }
-    return vFile;
   }
 }
