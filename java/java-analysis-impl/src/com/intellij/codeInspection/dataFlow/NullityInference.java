@@ -83,14 +83,15 @@ public class NullityInference {
               hasNotNulls.set(true);
             }
           }
-          else if (value.getType() instanceof PsiPrimitiveType) {
+          else if (value instanceof PsiLambdaExpression || value.getType() instanceof PsiPrimitiveType) {
             hasNotNulls.set(true);
           }
           else if (value instanceof PsiMethodCallExpression) {
             PsiMethod target = ((PsiMethodCallExpression)value).resolveMethod();
             if (target == null) {
               hasUnknowns.set(true);
-            } else {
+            }
+            else {
               delegates.add(target);
             }
           }
@@ -98,6 +99,14 @@ public class NullityInference {
             hasUnknowns.set(true);
           }
           super.visitReturnStatement(statement);
+        }
+
+        @Override
+        public void visitClass(PsiClass aClass) {
+        }
+
+        @Override
+        public void visitLambdaExpression(PsiLambdaExpression expression) {
         }
 
         @Override

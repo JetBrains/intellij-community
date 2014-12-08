@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.svn.lock;
 
+import com.intellij.openapi.vcs.changes.LogicalLock;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNLock;
@@ -68,6 +69,11 @@ public class Lock {
 
   public String getOwner() {
     return myOwner;
+  }
+
+  @NotNull
+  public LogicalLock toLogicalLock(boolean isLocal) {
+    return new LogicalLock(isLocal, myOwner, myComment, myCreationDate, myExpirationDate);
   }
 
   @XmlAccessorType(XmlAccessType.NONE)

@@ -711,6 +711,12 @@ public class SystemBuilder {
             system.addSubtypeConstraint(evaluateType(retExpr, system), reType);
           }
         }
+
+        @Override
+        public void visitClass(PsiClass aClass) {}
+
+        @Override
+        public void visitLambdaExpression(PsiLambdaExpression expression) {}
       });
 
       return;

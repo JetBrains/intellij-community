@@ -58,7 +58,7 @@ class MockPackageFacadeGenerator : ModuleLevelBuilder(BuilderCategory.SOURCE_PRO
     }
 
     val allFilesToCompile = ArrayList(filesToCompile.values())
-    if (allFilesToCompile.isEmpty()) return ModuleLevelBuilder.ExitCode.NOTHING_DONE
+    if (allFilesToCompile.isEmpty() && chunk.getTargets().all { dirtyFilesHolder.getRemovedFiles(it).all { !isCompilable(File(it)) } }) return ModuleLevelBuilder.ExitCode.NOTHING_DONE
 
     if (JavaBuilderUtil.isCompileJavaIncrementally(context)) {
       val logger = context.getLoggingManager().getProjectBuilderLogger()
@@ -70,8 +70,7 @@ class MockPackageFacadeGenerator : ModuleLevelBuilder(BuilderCategory.SOURCE_PRO
     }
 
     val mappings = context.getProjectDescriptor().dataManager.getMappings()
-    val delta = mappings.createDelta()
-    val callback = delta.getCallback()
+    val callback = JavaBuilderUtil.getDependenciesRegistrar(context)
 
     fun generateClass(packageName: String, className: String, target: ModuleBuildTarget, sources: Collection<String>, generate: (ClassWriter.() -> Unit)? = null) {
       val writer = ClassWriter(ClassWriter.COMPUTE_FRAMES)
@@ -122,11 +121,8 @@ class MockPackageFacadeGenerator : ModuleLevelBuilder(BuilderCategory.SOURCE_PRO
         }
       }
     }
-    if (JavaBuilderUtil.updateMappings(context, delta, dirtyFilesHolder, chunk, allFilesToCompile, allFilesToCompile)) {
-      return ModuleLevelBuilder.ExitCode.ADDITIONAL_PASS_REQUIRED
-    }
-
-
+    JavaBuilderUtil.registerFilesToCompile(context, allFilesToCompile)
+    JavaBuilderUtil.registerSuccessfullyCompiled(context, allFilesToCompile)
     return ModuleLevelBuilder.ExitCode.OK
   }
 

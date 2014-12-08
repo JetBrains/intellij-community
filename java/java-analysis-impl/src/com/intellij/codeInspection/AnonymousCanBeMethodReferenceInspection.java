@@ -80,7 +80,7 @@ public class AnonymousCanBeMethodReferenceInspection extends BaseJavaBatchLocalI
           if (callExpression != null) {
             final PsiMethod resolveMethod = callExpression.resolveMethod();
             if (resolveMethod != method &&
-                !AnonymousCanBeLambdaInspection.functionalInterfaceMethodReferenced(resolveMethod, aClass)) {
+                !AnonymousCanBeLambdaInspection.functionalInterfaceMethodReferenced(resolveMethod, aClass, callExpression)) {
               final PsiElement parent = aClass.getParent();
               if (parent instanceof PsiNewExpression) {
                 final PsiJavaCodeReferenceElement classReference = ((PsiNewExpression)parent).getClassOrAnonymousClassReference();

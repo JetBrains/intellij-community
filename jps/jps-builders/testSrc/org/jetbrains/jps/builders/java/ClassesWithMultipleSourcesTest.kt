@@ -27,7 +27,7 @@ import org.jetbrains.jps.builders.BuildResult
  */
 public class ClassesWithMultipleSourcesTest: JpsBuildTestCase() {
 /*
-  todo[fix]
+//  todo[fix]
   public fun testAddFile() {
     doTest {
       createFile("src/a.p")
@@ -38,6 +38,8 @@ public class ClassesWithMultipleSourcesTest: JpsBuildTestCase() {
   }
 */
 
+/*
+  //todo[fix]
   public fun testDeleteFile() {
     doTest {
       createFile("src/a.p")
@@ -47,6 +49,7 @@ public class ClassesWithMultipleSourcesTest: JpsBuildTestCase() {
       }
     }
   }
+*/
 
   public fun testDeletePackage() {
     doTest {
@@ -75,7 +78,7 @@ public class ClassesWithMultipleSourcesTest: JpsBuildTestCase() {
   }
 
 /*
-  todo[fix]
+//  todo[fix]
   public fun testChangeTargetPackage() {
     doTest {
       createFile("src/a.p")
