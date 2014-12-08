@@ -2041,7 +2041,11 @@ public class Mappings {
           myDelta.mySourceFileToClasses.forEachEntry(new TObjectObjectProcedure<File, Collection<ClassRepr>>() {
             @Override
             public boolean execute(File fileName, Collection<ClassRepr> classes) {
-              newClasses.add(new FileClasses(fileName, classes));
+              if (myFilesToCompile == null || myFilesToCompile.contains(fileName)) {
+                // Consider only files actually compiled in this round.
+                // For other sources the list of classes taken from this map will be possibly incomplete.
+                newClasses.add(new FileClasses(fileName, classes));
+              }
               return true;
             }
           });
