@@ -115,7 +115,7 @@ class PortUnificationServerHandler extends Decoder {
               if (message instanceof HttpResponse) {
                 //BuiltInServer.LOG.debug("OUT HTTP:\n" + message);
                 HttpResponse response = (HttpResponse)message;
-                BuiltInServer.LOG.debug("OUT HTTP: " + response.status().code() + " " + response.headers().get(CONTENT_TYPE));
+                BuiltInServer.LOG.debug("OUT HTTP: " + response.getStatus().code() + " " + response.headers().get(CONTENT_TYPE));
               }
               super.write(context, message, promise);
             }

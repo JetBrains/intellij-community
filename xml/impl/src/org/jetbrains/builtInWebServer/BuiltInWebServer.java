@@ -75,12 +75,12 @@ public final class BuiltInWebServer extends HttpRequestHandler {
 
   @Override
   public boolean isSupported(@NotNull FullHttpRequest request) {
-    return super.isSupported(request) || request.method() == HttpMethod.POST || request.method() == HttpMethod.OPTIONS;
+    return super.isSupported(request) || request.getMethod() == HttpMethod.POST || request.getMethod() == HttpMethod.OPTIONS;
   }
 
   @Override
   public boolean process(@NotNull QueryStringDecoder urlDecoder, @NotNull FullHttpRequest request, @NotNull ChannelHandlerContext context) {
-    if (request.method() == HttpMethod.OPTIONS) {
+    if (request.getMethod() == HttpMethod.OPTIONS) {
       sendOptionsResponse("GET, POST, HEAD, OPTIONS", request, context);
       return true;
     }
@@ -136,7 +136,7 @@ public final class BuiltInWebServer extends HttpRequestHandler {
   }
 
   private static boolean doProcess(@NotNull FullHttpRequest request, @NotNull ChannelHandlerContext context, @Nullable String projectName) {
-    final String decodedPath = URLUtil.unescapePercentSequences(UriUtil.trimParameters(request.uri()));
+    final String decodedPath = URLUtil.unescapePercentSequences(UriUtil.trimParameters(request.getUri()));
     int offset;
     boolean emptyPath;
     boolean isCustomHost = projectName != null;

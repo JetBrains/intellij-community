@@ -30,47 +30,47 @@ public final class PooledThreadExecutor  {
   private static final AtomicInteger seq = new AtomicInteger();
   private static final int ourReasonableThreadPoolSize = Registry.intValue("core.pooled.threads");
 
+  public static final ThreadFactory ourThreadFactory = new ThreadFactory() {
+    @NotNull
+    @Override
+    public Thread newThread(@NotNull Runnable r) {
+      final int count = myAliveThreads.incrementAndGet();
+      final Thread thread = new Thread(r, "ApplicationImpl pooled thread " + seq.incrementAndGet()) {
+        @Override
+        public void interrupt() {
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Interrupted worker, will remove from pool");
+          }
+          super.interrupt();
+        }
+
+        @Override
+        public void run() {
+          try {
+            super.run();
+          }
+          catch (Throwable t) {
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("Worker exits due to exception", t);
+            }
+          }
+          myAliveThreads.decrementAndGet();
+        }
+      };
+      if (ApplicationInfoImpl.getShadowInstance().isEAP() && count > ourReasonableThreadPoolSize) {
+        LOG.info("Not enough pooled threads; dumping threads into a file");
+        PerformanceWatcher.getInstance().dumpThreads(true);
+      }
+      thread.setPriority(Thread.NORM_PRIORITY - 1);
+      return thread;
+    }
+  };
   private static final ExecutorService ourThreadExecutorsService = new ThreadPoolExecutor(
     3,
     Integer.MAX_VALUE,
     5 * 60L,
     TimeUnit.SECONDS,
-    new SynchronousQueue<Runnable>(),
-    new ThreadFactory() {
-      @NotNull
-      @Override
-      public Thread newThread(@NotNull Runnable r) {
-        final int count = myAliveThreads.incrementAndGet();
-        final Thread thread = new Thread(r, "ApplicationImpl pooled thread "+seq.incrementAndGet()) {
-          @Override
-          public void interrupt() {
-            if (LOG.isDebugEnabled()) {
-              LOG.debug("Interrupted worker, will remove from pool");
-            }
-            super.interrupt();
-          }
-
-          @Override
-          public void run() {
-            try {
-              super.run();
-            }
-            catch (Throwable t) {
-              if (LOG.isDebugEnabled()) {
-                LOG.debug("Worker exits due to exception", t);
-              }
-            }
-            myAliveThreads.decrementAndGet();
-          }
-        };
-        if (ApplicationInfoImpl.getShadowInstance().isEAP() && count > ourReasonableThreadPoolSize) {
-          LOG.info("Not enough pooled threads; dumping threads into a file");
-          PerformanceWatcher.getInstance().dumpThreads(true);
-        }
-        thread.setPriority(Thread.NORM_PRIORITY - 1);
-        return thread;
-      }
-    }
+    new SynchronousQueue<Runnable>(), ourThreadFactory
   );
 
   private PooledThreadExecutor() {

@@ -57,7 +57,7 @@ public class BuiltInServer implements Disposable {
       throw new IllegalStateException("server already started");
     }
 
-    NioEventLoopGroup eventLoopGroup = new NioEventLoopGroup(workerCount, PooledThreadExecutor.INSTANCE);
+    NioEventLoopGroup eventLoopGroup = new NioEventLoopGroup(workerCount, PooledThreadExecutor.ourThreadFactory);
     ServerBootstrap bootstrap = createServerBootstrap(eventLoopGroup, channelRegistrar, null);
     int port = bind(firstPort, portsCount, tryAnyPort, bootstrap);
     bindCustomPorts(firstPort, port, eventLoopGroup);
@@ -175,7 +175,7 @@ public class BuiltInServer implements Disposable {
 
     @Override
     protected boolean process(ChannelHandlerContext context, FullHttpRequest request, QueryStringDecoder urlDecoder) throws IOException {
-      return (request.method() == HttpMethod.POST || request.method() == HttpMethod.OPTIONS) &&
+      return (request.getMethod() == HttpMethod.POST || request.getMethod() == HttpMethod.OPTIONS) &&
              XmlRpcServer.SERVICE.getInstance().process(urlDecoder.path(), request, context, handlers);
     }
   }

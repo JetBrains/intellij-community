@@ -26,6 +26,7 @@ import io.netty.handler.codec.protobuf.ProtobufDecoder;
 import io.netty.handler.codec.protobuf.ProtobufEncoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
+import io.netty.util.concurrent.DefaultThreadFactory;
 import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.xml.DOMConfigurator;
@@ -78,7 +79,7 @@ public class BuildMain {
     // IDEA-123132, let's try again
     for (int attempt = 0; attempt < 3; attempt++) {
       try {
-        ourEventLoopGroup = new NioEventLoopGroup(1, SharedThreadPool.getInstance());
+        ourEventLoopGroup = new NioEventLoopGroup(1, new DefaultThreadFactory("fuck667"));
         break;
       }
       catch (IllegalStateException e) {

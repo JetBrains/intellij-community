@@ -25,6 +25,7 @@ import io.netty.handler.codec.protobuf.ProtobufDecoder;
 import io.netty.handler.codec.protobuf.ProtobufEncoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
+import io.netty.util.concurrent.DefaultThreadFactory;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.RequestFuture;
 
@@ -51,7 +52,7 @@ public class SimpleProtobufClient<T extends ProtobufResponseHandler> {
 
   public SimpleProtobufClient(final MessageLite msgDefaultInstance, final Executor asyncExec, final UUIDGetter uuidGetter) {
     myMessageHandler = new ProtobufClientMessageHandler<T>(uuidGetter, this, asyncExec);
-    myEventLoopGroup = new NioEventLoopGroup(1, asyncExec);
+    myEventLoopGroup = new NioEventLoopGroup(1, new DefaultThreadFactory("fuck666"));
     myChannelInitializer = new ChannelInitializer() {
       @Override
       protected void initChannel(Channel channel) throws Exception {

@@ -36,7 +36,7 @@ public class ProjectSetRequestHandler extends HttpRequestHandler {
 
   @Override
   public boolean isSupported(@NotNull FullHttpRequest request) {
-    return request.method() == HttpMethod.POST && "/openProjectSet".equals(request.uri());
+    return request.getMethod() == HttpMethod.POST && "/openProjectSet".equals(request.getUri());
   }
 
   @Override

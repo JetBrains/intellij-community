@@ -29,6 +29,7 @@ import io.netty.handler.codec.protobuf.ProtobufEncoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import io.netty.util.AttributeKey;
+import io.netty.util.concurrent.DefaultThreadFactory;
 import io.netty.util.concurrent.ImmediateEventExecutor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,7 +65,7 @@ public class ExternalJavacServer {
   private int myListenPort = DEFAULT_SERVER_PORT;
 
   public void start(int listenPort) {
-    final ServerBootstrap bootstrap = new ServerBootstrap().group(new NioEventLoopGroup(1, SharedThreadPool.getInstance())).channel(NioServerSocketChannel.class);
+    final ServerBootstrap bootstrap = new ServerBootstrap().group(new NioEventLoopGroup(1, new DefaultThreadFactory("fuck669"))).channel(NioServerSocketChannel.class);
     bootstrap.childOption(ChannelOption.TCP_NODELAY, true).childOption(ChannelOption.SO_KEEPALIVE, true);
     myChannelRegistrar = new ChannelRegistrar();
     final ChannelHandler compilationRequestsHandler = new CompilationRequestsHandler();

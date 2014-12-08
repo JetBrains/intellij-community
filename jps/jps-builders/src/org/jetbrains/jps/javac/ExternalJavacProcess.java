@@ -23,6 +23,7 @@ import io.netty.handler.codec.protobuf.ProtobufDecoder;
 import io.netty.handler.codec.protobuf.ProtobufEncoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
+import io.netty.util.concurrent.DefaultThreadFactory;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 import io.netty.util.internal.logging.Log4JLoggerFactory;
 import org.apache.log4j.ConsoleAppender;
@@ -63,7 +64,7 @@ public class ExternalJavacProcess {
   public ExternalJavacProcess() {
     final JavacRemoteProto.Message msgDefaultInstance = JavacRemoteProto.Message.getDefaultInstance();
     
-    myEventLoopGroup = new NioEventLoopGroup(1, SharedThreadPool.getInstance());
+    myEventLoopGroup = new NioEventLoopGroup(1, new DefaultThreadFactory("fuck668"));
     myChannelInitializer = new ChannelInitializer() {
       @Override
       protected void initChannel(Channel channel) throws Exception {

@@ -158,14 +158,14 @@ public final class NettyUtil {
   }
 
   public static Bootstrap oioClientBootstrap() {
-    Bootstrap bootstrap = new Bootstrap().group(new OioEventLoopGroup(1, PooledThreadExecutor.INSTANCE)).channel(OioSocketChannel.class);
+    Bootstrap bootstrap = new Bootstrap().group(new OioEventLoopGroup(1, PooledThreadExecutor.ourThreadFactory)).channel(OioSocketChannel.class);
     bootstrap.option(ChannelOption.TCP_NODELAY, true).option(ChannelOption.SO_KEEPALIVE, true);
     return bootstrap;
   }
 
   @SuppressWarnings("UnusedDeclaration")
   public static Bootstrap nioClientBootstrap() {
-    return nioClientBootstrap(new NioEventLoopGroup(1, PooledThreadExecutor.INSTANCE));
+    return nioClientBootstrap(new NioEventLoopGroup(1, PooledThreadExecutor.ourThreadFactory));
   }
 
   public static Bootstrap nioClientBootstrap(@NotNull EventLoopGroup eventLoopGroup) {

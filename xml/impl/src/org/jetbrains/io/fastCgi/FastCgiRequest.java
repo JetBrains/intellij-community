@@ -82,8 +82,8 @@ public class FastCgiRequest {
   }
 
   public void writeHeaders(FullHttpRequest request, Channel clientChannel) {
-    addHeader("REQUEST_URI", request.uri());
-    addHeader("REQUEST_METHOD", request.method().name());
+    addHeader("REQUEST_URI", request.getUri());
+    addHeader("REQUEST_METHOD", request.getMethod().name());
 
     InetSocketAddress remote = (InetSocketAddress)clientChannel.remoteAddress();
     addHeader("REMOTE_ADDR", remote.getAddress().getHostAddress());
@@ -97,16 +97,16 @@ public class FastCgiRequest {
     addHeader("SERVER_PORT", Integer.toString(local.getPort()));
 
     addHeader("GATEWAY_INTERFACE", "CGI/1.1");
-    addHeader("SERVER_PROTOCOL", request.protocolVersion().text());
+    addHeader("SERVER_PROTOCOL", request.getProtocolVersion().text());
     addHeader("CONTENT_TYPE", request.headers().get(HttpHeaders.Names.CONTENT_TYPE));
 
     // PHP only, required if PHP was built with --enable-force-cgi-redirect
     addHeader("REDIRECT_STATUS", "200");
 
     String queryString = "";
-    int queryIndex = request.uri().indexOf('?');
+    int queryIndex = request.getUri().indexOf('?');
     if (queryIndex != -1) {
-      queryString = request.uri().substring(queryIndex + 1);
+      queryString = request.getUri().substring(queryIndex + 1);
     }
     addHeader("QUERY_STRING", queryString);
 

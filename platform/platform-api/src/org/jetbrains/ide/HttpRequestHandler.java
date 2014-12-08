@@ -42,7 +42,7 @@ public abstract class HttpRequestHandler {
   }
 
   public boolean isSupported(@NotNull FullHttpRequest request) {
-    return request.method() == HttpMethod.GET || request.method() == HttpMethod.HEAD;
+    return request.getMethod() == HttpMethod.GET || request.getMethod() == HttpMethod.HEAD;
   }
 
   /**

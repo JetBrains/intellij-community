@@ -419,7 +419,7 @@ public class BuildManager implements ApplicationComponent{
   }
 
   @Nullable
-  private static String getProjectPath(final Project project) {
+  protected String getProjectPath(final Project project) {
     final String url = project.getPresentableUrl();
     if (url == null) {
       return null;
@@ -766,7 +766,7 @@ public class BuildManager implements ApplicationComponent{
     final String vmExecutablePath;
     JavaSdkVersion sdkVersion = null;
 
-    final String forcedCompiledJdkHome = Registry.stringValue(COMPILER_PROCESS_JDK_PROPERTY);
+    final String forcedCompiledJdkHome = getForcedCompilerJdkHome();
 
     if (StringUtil.isEmptyOrSpaces(forcedCompiledJdkHome)) {
       // choosing sdk with which the build process should be run
@@ -811,14 +811,15 @@ public class BuildManager implements ApplicationComponent{
         }
       }
 
-      final Sdk internalJdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
+      JavaAwareProjectJdkTableImpl jdkTable = JavaAwareProjectJdkTableImpl.getInstanceEx();
+      final Sdk internalJdk = jdkTable == null ? null : jdkTable.getInternalJdk();
       if (projectJdk == null || sdkVersion == null || !sdkVersion.isAtLeast(JavaSdkVersion.JDK_1_6)) {
         projectJdk = internalJdk;
       }
 
       // validate tools.jar presence
       final JavaSdkType projectJdkType = (JavaSdkType)projectJdk.getSdkType();
-      if (projectJdk.equals(internalJdk)) {
+      if (projectJdk != null && projectJdk.equals(internalJdk)) {
         // important: because internal JDK can be either JDK or JRE,
         // this is the most universal way to obtain tools.jar path in this particular case
         final JavaCompiler systemCompiler = ToolProvider.getSystemJavaCompiler();
@@ -968,6 +969,10 @@ public class BuildManager implements ApplicationComponent{
     };
   }
 
+  protected String getForcedCompilerJdkHome() {
+    return Registry.stringValue(COMPILER_PROCESS_JDK_PROPERTY);
+  }
+
   public File getBuildSystemDirectory() {
     return new File(mySystemDirectory, SYSTEM_ROOT);
   }
@@ -1011,7 +1016,7 @@ public class BuildManager implements ApplicationComponent{
   }
 
   private int startListening() throws Exception {
-    final ServerBootstrap bootstrap = NettyUtil.nioServerBootstrap(new NioEventLoopGroup(1, PooledThreadExecutor.INSTANCE));
+    final ServerBootstrap bootstrap = NettyUtil.nioServerBootstrap(new NioEventLoopGroup(1, PooledThreadExecutor.ourThreadFactory));
     bootstrap.childHandler(new ChannelInitializer() {
       @Override
       protected void initChannel(Channel channel) throws Exception {

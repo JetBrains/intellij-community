@@ -28,14 +28,20 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.util.SystemProperties;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nullable;
 
 @State(
   name = "ProjectJdkTable",
   storages = {@Storage(file = StoragePathMacros.APP_CONFIG + "/jdk.table.xml", roamingType = RoamingType.DISABLED)}
 )
 public class JavaAwareProjectJdkTableImpl extends ProjectJdkTableImpl {
+  @Nullable
   public static JavaAwareProjectJdkTableImpl getInstanceEx() {
-    return (JavaAwareProjectJdkTableImpl)ServiceManager.getService(ProjectJdkTable.class);
+    ProjectJdkTable jdkTable = ServiceManager.getService(ProjectJdkTable.class);
+    if (jdkTable instanceof JavaAwareProjectJdkTableImpl) {
+      return (JavaAwareProjectJdkTableImpl)jdkTable;
+    }
+    return null;
   }
 
   private final JavaSdk myJavaSdk;
