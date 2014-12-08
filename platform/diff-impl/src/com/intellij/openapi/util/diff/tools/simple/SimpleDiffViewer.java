@@ -682,13 +682,16 @@ class SimpleDiffViewer extends TwosideTextDiffViewer {
 
     @Override
     protected void processHelper(@NotNull ScrollHelper helper) {
+      assert myEditor1 != null && myEditor2 != null;
+
+      if (!helper.process(0, 0)) return;
       for (SimpleDiffChange diffChange : myDiffChanges) {
         LineFragment fragment = diffChange.getFragment();
 
         if (!helper.process(fragment.getStartLine1(), fragment.getStartLine2())) return;
         if (!helper.process(fragment.getEndLine1(), fragment.getEndLine2())) return;
       }
-      helper.process(-1, -1);
+      helper.process(myEditor1.getDocument().getLineCount(), myEditor2.getDocument().getLineCount());
     }
   }
 

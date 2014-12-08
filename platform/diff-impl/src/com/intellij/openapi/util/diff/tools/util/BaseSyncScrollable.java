@@ -21,8 +21,9 @@ import org.jetbrains.annotations.NotNull;
 public abstract class BaseSyncScrollable implements SyncScrollSupport.SyncScrollable {
   /*
    * should call handler on pairs of lines, that represent boundaries of blocks, that are 'similar'
+   * pairs should not form "crossings": x1 <= x2 <=> y1 <= y2
    *
-   * last pair should be (-1, -1)
+   * first pair should be (0, 0), last pair should be (lineCount1, lineCount2)
    *
    * handler will return false if precessing should be aborted
    */
@@ -37,12 +38,15 @@ public abstract class BaseSyncScrollable implements SyncScrollSupport.SyncScroll
     int slave1 = helper.getSlave1();
     int slave2 = helper.getSlave2();
 
-    // TODO: old algorithm could cause less jumping. Use it here?
-    if (master1 == -1) return line;
-    if (master2 == -1) return line - master1 + slave1;
-    if (master1 == master2) return slave1;
+    if (master1 == line) return slave1;
+    if (master2 == line) return slave2;
+    if (master2 < line) return (line - master2) + slave2;
 
-    return (slave2 - slave1) / (master2 - master1) * (line - master1) + slave1;
+    assert master1 != master2;
+
+    // TODO: Is new algorithm actually better here ?
+    return Math.min(slave1 + (line - master1), slave2); // old
+    //return (line - master1) * (slave2 - slave1) / (master2 - master1) + slave1; // new
   }
 
   protected static class ScrollHelper {
@@ -54,11 +58,14 @@ public abstract class BaseSyncScrollable implements SyncScrollSupport.SyncScroll
       myLine = line;
     }
 
-    private int myLeft1 = -1;
-    private int myLeft2 = -1;
-    private int myRight1 = -1;
-    private int myRight2 = -1;
+    private int myLeft1 = 0;
+    private int myLeft2 = 0;
+    private int myRight1 = 0;
+    private int myRight2 = 0;
 
+    /*
+     * false - stop processing
+     */
     public boolean process(int left, int right) {
       myLeft1 = myLeft2;
       myRight1 = myRight2;
@@ -66,7 +73,7 @@ public abstract class BaseSyncScrollable implements SyncScrollSupport.SyncScroll
       myLeft2 = left;
       myRight2 = right;
 
-      return mySide.isLeft() ? myLine >= left : myLine >= right;
+      return myLine > mySide.select(left, right);
     }
 
     public int getMaster1() {
