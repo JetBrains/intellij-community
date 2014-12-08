@@ -23,10 +23,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.*;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo;
-import com.intellij.vcs.log.graph.impl.facade.bek.BekChecker;
 import com.intellij.vcs.log.graph.impl.facade.bek.BekIntMap;
 import com.intellij.vcs.log.graph.impl.facade.bek.BekSorter;
-import com.intellij.vcs.log.graph.impl.facade.bek.DelegatedPermanentGraphInfo;
 import com.intellij.vcs.log.graph.impl.permanent.*;
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
 import org.jetbrains.annotations.NotNull;
@@ -85,7 +83,7 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
   @NotNull
   private final ContainingBranchesGetter myBranchesGetter;
   @NotNull
-  private final PermanentGraphInfo<CommitId> myBekGraphInfo;
+  private final BekIntMap myBekIntMap;
 
   public PermanentGraphImpl(@NotNull PermanentLinearGraphImpl permanentLinearGraph,
                             @NotNull GraphLayoutImpl permanentGraphLayout,
@@ -99,7 +97,7 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
     myBranchesCommitId = branchesCommitId;
     myBranchNodeIds = permanentCommitsInfo.convertToNodeIds(branchesCommitId);
     myBranchesGetter = new ContainingBranchesGetter(permanentLinearGraph, myBranchNodeIds);
-    myBekGraphInfo = createBekSort();
+    myBekIntMap = BekSorter.createBekMap(myPermanentLinearGraph, myPermanentGraphLayout, myPermanentCommitsInfo.getTimestampGetter());
   }
 
   @NotNull
@@ -107,7 +105,13 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
   public VisibleGraph<CommitId> createVisibleGraph(@NotNull SortType sortType,
                                                    @Nullable Set<CommitId> headsOfVisibleBranches,
                                                    @Nullable Condition<CommitId> filter) {
-    BaseLinearGraphController controller = new BaseLinearGraphController(this);
+    CascadeLinearGraphController controller;
+    if (sortType == SortType.Bek) {
+      controller = new BekBaseLinearGraphController(this, myBekIntMap);
+    }
+    else {
+      controller = new BaseLinearGraphController(this);
+    }
     return new VisibleGraphImpl<CommitId>(controller, this);
     //
     //if (filter == null) {
@@ -115,26 +119,6 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
     //} else {
     //  return FilterVisibleGraph.newInstance(getBekPermanentGraphInfo(sortType), headsOfVisibleBranches, filter);
     //}
-  }
-
-  @NotNull
-  private PermanentGraphInfo<CommitId> getBekPermanentGraphInfo(@NotNull SortType sortType) {
-    if (sortType == SortType.Normal)
-      return this;
-    else
-      return myBekGraphInfo;
-  }
-
-  @NotNull
-  private PermanentGraphInfo<CommitId> createBekSort() {
-    if (!BekSorter.isBekEnabled())
-      return this;
-
-    BekIntMap bekMap = BekSorter.createBekMap(myPermanentLinearGraph, myPermanentGraphLayout, myPermanentCommitsInfo.getTimestampGetter());
-
-    DelegatedPermanentGraphInfo<CommitId> graphInfo = new DelegatedPermanentGraphInfo<CommitId>(this, bekMap);
-    assert BekChecker.checkLinearGraph(graphInfo.getPermanentLinearGraph());
-    return graphInfo;
   }
 
   @NotNull
