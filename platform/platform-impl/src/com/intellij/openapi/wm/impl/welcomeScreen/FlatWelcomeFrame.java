@@ -406,7 +406,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
 
       panel.add(appName);
       panel.add(version, BorderLayout.SOUTH);
-      panel.setBorder(JBUI.emptyBorder(0, 0, 20, 0));
+      panel.setBorder(JBUI.Borders.empty(0, 0, 20, 0));
       return panel;
     }
 

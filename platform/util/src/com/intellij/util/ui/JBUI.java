@@ -32,10 +32,6 @@ public class JBUI {
     return new JBDimension(width, height);
   }
 
-  public static Border emptyBorder(int top, int left, int bottom, int right) {
-    return new EmptyBorder(insets(top, left, bottom, right));
-  }
-
   public static JBInsets insets(int top, int left, int bottom, int right) {
     return new JBInsets(top, left, bottom, right);
   }
@@ -62,5 +58,11 @@ public class JBUI {
 
   public static boolean isHiDPI() {
     return "true".equals(System.getProperty("hidpi"));
+  }
+
+  public static class Borders {
+    public static Border empty(int top, int left, int bottom, int right) {
+      return new EmptyBorder(insets(top, left, bottom, right));
+    }
   }
 }

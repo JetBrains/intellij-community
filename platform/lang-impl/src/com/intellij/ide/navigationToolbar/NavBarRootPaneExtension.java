@@ -147,7 +147,7 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
         myRunPanel.setOpaque(false);
         myRunPanel.add(component, BorderLayout.CENTER);
 
-        myRunPanel.setBorder(JBUI.emptyBorder(0, needGap ? 5 : 1, 0, 0));
+        myRunPanel.setBorder(JBUI.Borders.empty(0, needGap ? 5 : 1, 0, 0));
         myWrapperPanel.add(myRunPanel, BorderLayout.EAST);
       }
     }
