@@ -389,6 +389,15 @@ public class JavaCoverageEngine extends CoverageEngine {
     }
     buf.append(lineData.getHits()).append("\n");
 
+
+    for (JavaCoverageEngineExtension extension : Extensions.getExtensions(JavaCoverageEngineExtension.EP_NAME)) {
+      String report = extension.generateBriefReport(editor, psiFile, lineNumber, startOffset, endOffset, lineData);
+      if (report != null) {
+        buf.append(report);
+        return report;
+      }
+    }
+
     final List<PsiExpression> expressions = new ArrayList<PsiExpression>();
 
     final Project project = editor.getProject();

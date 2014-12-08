@@ -269,13 +269,13 @@ public abstract class CoverageEngine {
   /**
    * Content of brief report which will be shown by click on coverage icon
    *
-   * @param editor
-   * @param psiFile
-   * @param lineNumber
-   * @param startOffset
-   * @param endOffset
-   * @param lineData
-   * @return
+   * @param editor the editor in which the gutter is displayed.
+   * @param psiFile the file shown in the editor.
+   * @param lineNumber the line number which was clicked.
+   * @param startOffset the start offset of that line in the PSI file.
+   * @param endOffset the end offset of that line in the PSI file.
+   * @param lineData the coverage data for the line.
+   * @return the text to show.
    */
   public String generateBriefReport(@NotNull Editor editor,
                                     @NotNull PsiFile psiFile,
