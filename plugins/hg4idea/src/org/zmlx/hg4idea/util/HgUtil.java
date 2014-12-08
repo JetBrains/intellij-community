@@ -23,6 +23,7 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.ShutDownTracker;
@@ -330,6 +331,28 @@ public abstract class HgUtil {
                                                 @NotNull String dialogTitle) {
     return Messages.showInputDialog(repository.getProject(), "Enter the name of new branch:", dialogTitle, Messages.getQuestionIcon(), "",
                                     HgReferenceValidator.newInstance(repository));
+  }
+
+  /**
+   * Shows a message dialog to enter commit message to close branch.
+   *
+   * @return commit message or {@code null} if user has cancelled the dialog.
+   */
+  @Nullable
+  public static String getCloseBranchCommitMessageFromUser(@NotNull HgRepository repository) {
+    String dialogTitle = String.format("Closing branch %s", repository.getCurrentBranch());
+    return Messages.showInputDialog(repository.getProject(), "Enter the commit message:", dialogTitle, Messages.getQuestionIcon(),
+                                    dialogTitle, new InputValidator() {
+        @Override
+        public boolean checkInput(String inputString) {
+          return !StringUtil.isEmptyOrSpaces(inputString);
+        }
+
+        @Override
+        public boolean canClose(String inputString) {
+          return checkInput(inputString);
+        }
+      });
   }
 
   /**
