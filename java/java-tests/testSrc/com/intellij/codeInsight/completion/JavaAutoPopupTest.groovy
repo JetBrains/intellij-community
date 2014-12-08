@@ -1115,6 +1115,21 @@ public class UTest {
     assert myFixture.lookupElementStrings == ['new', 'nextWord']
   }
 
+  public void testExactMatchesTemplateFirst() {
+    LiveTemplateCompletionContributor.setShowTemplatesInTests(true, getTestRootDisposable())
+    myFixture.configureByText("a.java", """
+public class Test {
+    void itar() {}
+
+    void foo() {
+        ita<caret>
+    }
+}""")
+    type 'r'
+    assert myFixture.lookupElementStrings == ['itar', 'itar']
+    assert myFixture.lookup.currentItem instanceof LiveTemplateLookupElement
+  }
+
   public void testUpdatePrefixMatchingOnTyping() {
     myFixture.addClass("class CertificateEncodingException {}")
     myFixture.addClass("class CertificateException {}")
