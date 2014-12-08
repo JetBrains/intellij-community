@@ -35,14 +35,13 @@ public abstract class CascadeLinearGraphController implements LinearGraphControl
   private final CascadeLinearGraphController myDelegateLinearGraphController;
   @NotNull
   protected final PermanentGraphInfo myPermanentGraphInfo;
-  @NotNull
+  @Nullable
   private PrintElementManagerImpl myPrintElementManager;
 
   protected CascadeLinearGraphController(@Nullable CascadeLinearGraphController delegateLinearGraphController,
                                          @NotNull PermanentGraphInfo permanentGraphInfo) {
     myDelegateLinearGraphController = delegateLinearGraphController;
     myPermanentGraphInfo = permanentGraphInfo;
-    myPrintElementManager = createPrintElementManager(myPermanentGraphInfo);
   }
 
   @NotNull
@@ -62,6 +61,9 @@ public abstract class CascadeLinearGraphController implements LinearGraphControl
   @NotNull
   @Override
   public PrintElementsManager getPrintElementManager() {
+    if (myPrintElementManager == null) {
+      myPrintElementManager = createPrintElementManager(myPermanentGraphInfo);
+    }
     return myPrintElementManager;
   }
 
