@@ -2,6 +2,7 @@ package com.intellij.structuralsearch.plugin;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceDialog;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.ui.SearchContext;
@@ -19,6 +20,12 @@ public class StructuralReplaceAction extends AnAction {
   }
 
   public static void triggerAction(Configuration config, SearchContext searchContext) {
+    final Project project = searchContext.getProject();
+    if (project == null) {
+      return;
+    }
+    PsiDocumentManager.getInstance(project).commitAllDocuments();
+
     ReplaceDialog replaceDialog = new ReplaceDialog(searchContext);
 
     if (config!=null) {
