@@ -178,6 +178,17 @@ public class SafeDeleteTest extends MultiFileTestCase {
     }
   }
 
+  public void testAmbiguityAfterParameterDelete() throws Exception {
+    try {
+      doSingleFileTest();
+      fail("Conflict was not detected");
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      String message = e.getMessage();
+      assertEquals("Method foo() is already defined in the class <b><code>Test</code></b>", message);
+    }
+  }
+
   public void testFunctionalInterfaceDefaultMethod() throws Exception {
     LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_8);
     doSingleFileTest();
