@@ -21,7 +21,7 @@ public class TextDiffSettingsHolder implements PersistentStateComponent<TextDiff
     private boolean ENABLE_SYNC_SCROLL = true;
 
     // Diff settings
-    private boolean INLINE_HIGHLIGHT = true;
+    private HighlightPolicy HIGHLIGHT_POLICY = HighlightPolicy.BY_WORD;
     private ComparisonPolicy COMPARISON_POLICY = ComparisonPolicy.DEFAULT;
 
     // TODO: allow to change defaults
@@ -35,9 +35,9 @@ public class TextDiffSettingsHolder implements PersistentStateComponent<TextDiff
     }
 
     public TextDiffSettings(boolean ENABLE_SYNC_SCROLL,
-                            boolean INLINE_HIGHLIGHT, @NotNull ComparisonPolicy COMPARISON_POLICY,
+                            @NotNull HighlightPolicy HIGHLIGHT_POLICY, @NotNull ComparisonPolicy COMPARISON_POLICY,
                             boolean SHOW_WHITESPACES, boolean SHOW_LINE_NUMBERS, boolean SHOW_INDENT_LINES, boolean USE_SOFT_WRAPS) {
-      this.INLINE_HIGHLIGHT = INLINE_HIGHLIGHT;
+      this.HIGHLIGHT_POLICY = HIGHLIGHT_POLICY;
       this.COMPARISON_POLICY = COMPARISON_POLICY;
       this.ENABLE_SYNC_SCROLL = ENABLE_SYNC_SCROLL;
       this.SHOW_WHITESPACES = SHOW_WHITESPACES;
@@ -49,7 +49,7 @@ public class TextDiffSettingsHolder implements PersistentStateComponent<TextDiff
     @NotNull
     private TextDiffSettings copy() {
       return new TextDiffSettings(ENABLE_SYNC_SCROLL,
-                                  INLINE_HIGHLIGHT, COMPARISON_POLICY,
+                                  HIGHLIGHT_POLICY, COMPARISON_POLICY,
                                   SHOW_WHITESPACES, SHOW_LINE_NUMBERS, SHOW_INDENT_LINES, USE_SOFT_WRAPS);
     }
 
@@ -65,12 +65,13 @@ public class TextDiffSettingsHolder implements PersistentStateComponent<TextDiff
 
     // Diff settings
 
-    public boolean isInlineHighlight() {
-      return INLINE_HIGHLIGHT;
+    @NotNull
+    public HighlightPolicy getHighlightPolicy() {
+      return HIGHLIGHT_POLICY;
     }
 
-    public void setInlineHighlight(boolean value) {
-      INLINE_HIGHLIGHT = value;
+    public void setHighlightPolicy(@NotNull HighlightPolicy value) {
+      HIGHLIGHT_POLICY = value;
     }
 
     @NotNull

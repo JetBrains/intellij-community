@@ -38,6 +38,7 @@ import com.intellij.openapi.util.diff.requests.ContentDiffRequest;
 import com.intellij.openapi.util.diff.requests.DiffRequest;
 import com.intellij.openapi.util.diff.tools.util.DiffUserDataKeys;
 import com.intellij.openapi.util.diff.tools.util.LineFragmentCache;
+import com.intellij.openapi.util.diff.tools.util.base.HighlightPolicy;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -723,12 +724,12 @@ public class DiffUtil {
       this.squashFragments = squashFragments;
     }
 
-    public DiffConfig(@NotNull ComparisonPolicy policy) {
-      this(policy, false);
+    public DiffConfig(@NotNull ComparisonPolicy comparisonPolicy, @NotNull HighlightPolicy highlightPolicy) {
+      this(comparisonPolicy, highlightPolicy.isFineFragments(), highlightPolicy.isShouldSquash());
     }
 
-    public DiffConfig(@NotNull ComparisonPolicy policy, boolean fineFragments) {
-      this(policy, fineFragments, true);
+    public DiffConfig(@NotNull ComparisonPolicy policy) {
+      this(policy, HighlightPolicy.BY_LINE);
     }
   }
 }

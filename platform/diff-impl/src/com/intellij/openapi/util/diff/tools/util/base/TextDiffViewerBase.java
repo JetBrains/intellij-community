@@ -167,29 +167,65 @@ public abstract class TextDiffViewerBase extends ListenerDiffViewerBase {
   // Actions
   //
 
-  protected class MyInlineHighlightSettingAction extends ToggleAction implements DumbAware {
-    public MyInlineHighlightSettingAction() {
-      super("Highlight Inline Differences", null, AllIcons.General.TodoDefault); // TODO: new icon
+  protected class MyHighlightPolicySettingAction extends ComboBoxAction implements DumbAware {
+    @NotNull private final DefaultActionGroup myChildren;
+
+    public MyHighlightPolicySettingAction() {
+      // TODO: pretty icons ?
       setEnabledInModalContext(true);
+
+      // TODO: hide "Do not highlight" in oneside mode
+      myChildren = new DefaultActionGroup();
+      for (HighlightPolicy policy : HighlightPolicy.values()) {
+        myChildren.add(new MyPolicyAction(policy));
+      }
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
-      return getTextSettings().isInlineHighlight();
+    public void update(AnActionEvent e) {
+      Presentation presentation = e.getPresentation();
+
+      presentation.setText(getTextSettings().getHighlightPolicy().getText());
+
+      presentation.setEnabled(true);
     }
 
+    @NotNull
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
-      if (getTextSettings().isInlineHighlight() == state) return;
-      getTextSettings().setInlineHighlight(state);
-      rediff();
+    protected DefaultActionGroup createPopupActionGroup(JComponent button) {
+      return myChildren;
+    }
+
+    private class MyPolicyAction extends AnAction implements DumbAware {
+      @NotNull private final HighlightPolicy myPolicy;
+
+      public MyPolicyAction(@NotNull HighlightPolicy policy) {
+        super(policy.getText());
+        setEnabledInModalContext(true);
+        myPolicy = policy;
+      }
+
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        if (getTextSettings().getHighlightPolicy() == myPolicy) return;
+        getTextSettings().setHighlightPolicy(myPolicy);
+        MyHighlightPolicySettingAction.this.update(e);
+        rediff();
+      }
     }
   }
 
   protected class MyComparisonPolicySettingAction extends ComboBoxAction implements DumbAware {
+    @NotNull private final DefaultActionGroup myChildren;
+
     public MyComparisonPolicySettingAction() {
       // TODO: pretty icons ?
       setEnabledInModalContext(true);
+
+      myChildren = new DefaultActionGroup();
+      for (ComparisonPolicy policy : ComparisonPolicy.values()) {
+        myChildren.add(new MyPolicyAction(policy));
+      }
     }
 
     @Override
@@ -204,13 +240,7 @@ public abstract class TextDiffViewerBase extends ListenerDiffViewerBase {
     @NotNull
     @Override
     protected DefaultActionGroup createPopupActionGroup(JComponent button) {
-      DefaultActionGroup group = new DefaultActionGroup();
-
-      for (ComparisonPolicy policy : ComparisonPolicy.values()) {
-        group.add(new MyPolicyAction(policy));
-      }
-
-      return group;
+      return myChildren;
     }
 
     private class MyPolicyAction extends AnAction implements DumbAware {

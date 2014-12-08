@@ -33,6 +33,7 @@ import com.intellij.openapi.util.diff.requests.ContentDiffRequest;
 import com.intellij.openapi.util.diff.requests.DiffRequest;
 import com.intellij.openapi.util.diff.tools.util.*;
 import com.intellij.openapi.util.diff.tools.util.DiffUserDataKeys.ScrollToPolicy;
+import com.intellij.openapi.util.diff.tools.util.base.HighlightPolicy;
 import com.intellij.openapi.util.diff.tools.util.twoside.TwosideTextDiffViewer;
 import com.intellij.openapi.util.diff.util.CalledInAwt;
 import com.intellij.openapi.util.diff.util.DiffUtil;
@@ -87,7 +88,7 @@ class SimpleDiffViewer extends TwosideTextDiffViewer {
     List<AnAction> group = new ArrayList<AnAction>();
 
     group.add(new MyComparisonPolicySettingAction());
-    group.add(new MyInlineHighlightSettingAction());
+    group.add(new MyHighlightPolicySettingAction());
     group.add(new MyToggleAutoScrollAction());
     group.add(myEditorSettingsAction);
 
@@ -168,9 +169,12 @@ class SimpleDiffViewer extends TwosideTextDiffViewer {
         }
       });
 
-      LineFragments lineFragments = DiffUtil.compareWithCache(myRequest, data, getDiffConfig(), indicator);
+      LineFragments lineFragments = null;
+      if (getHighlightPolicy().isShouldCompare()) {
+        lineFragments = DiffUtil.compareWithCache(myRequest, data, getDiffConfig(), indicator);
+      }
 
-      boolean isEqualContents = lineFragments.getFragments().isEmpty() &&
+      boolean isEqualContents = (lineFragments == null || lineFragments.getFragments().isEmpty()) &&
                                 StringUtil.equals(document1.getCharsSequence(), document2.getCharsSequence());
 
       return apply(new CompareData(lineFragments, isEqualContents, data.getStamp1(), data.getStamp2()));
@@ -227,8 +231,10 @@ class SimpleDiffViewer extends TwosideTextDiffViewer {
 
         if (data.isEqualContent()) myPanel.addContentsEqualNotification();
 
-        for (LineFragment fragment : data.getFragments().getFragments()) {
-          myDiffChanges.add(new SimpleDiffChange(fragment, myEditor1, myEditor2, getTextSettings().isInlineHighlight()));
+        if (data.getFragments() != null) {
+          for (LineFragment fragment : data.getFragments().getFragments()) {
+            myDiffChanges.add(new SimpleDiffChange(fragment, myEditor1, myEditor2, getHighlightPolicy().isFineFragments()));
+          }
         }
 
         scrollOnRediff();
@@ -247,9 +253,12 @@ class SimpleDiffViewer extends TwosideTextDiffViewer {
 
   @NotNull
   private DiffUtil.DiffConfig getDiffConfig() {
-    return new DiffUtil.DiffConfig(getTextSettings().getComparisonPolicy(),
-                                   getTextSettings().isInlineHighlight(),
-                                   !getTextSettings().isInlineHighlight());
+    return new DiffUtil.DiffConfig(getTextSettings().getComparisonPolicy(), getHighlightPolicy());
+  }
+
+  @NotNull
+  private HighlightPolicy getHighlightPolicy() {
+    return getTextSettings().getHighlightPolicy();
   }
 
   //
@@ -743,19 +752,19 @@ class SimpleDiffViewer extends TwosideTextDiffViewer {
   }
 
   private static class CompareData {
-    @NotNull private final LineFragments myFragments;
+    @Nullable private final LineFragments myFragments;
     private final boolean myEqualContent;
     private final long myStamp1;
     private final long myStamp2;
 
-    public CompareData(@NotNull LineFragments fragments, boolean equalContent, long stamp1, long stamp2) {
+    public CompareData(@Nullable LineFragments fragments, boolean equalContent, long stamp1, long stamp2) {
       myFragments = fragments;
       myEqualContent = equalContent;
       myStamp1 = stamp1;
       myStamp2 = stamp2;
     }
 
-    @NotNull
+    @Nullable
     public LineFragments getFragments() {
       return myFragments;
     }

@@ -44,6 +44,7 @@ import com.intellij.openapi.util.diff.tools.util.DiffUserDataKeys;
 import com.intellij.openapi.util.diff.tools.util.DiffUserDataKeys.ScrollToPolicy;
 import com.intellij.openapi.util.diff.tools.util.PrevNextDifferenceIterable;
 import com.intellij.openapi.util.diff.tools.util.ScrollToLineHelper;
+import com.intellij.openapi.util.diff.tools.util.base.HighlightPolicy;
 import com.intellij.openapi.util.diff.tools.util.base.TextDiffViewerBase;
 import com.intellij.openapi.util.diff.util.CalledInAwt;
 import com.intellij.openapi.util.diff.util.DiffUtil;
@@ -148,7 +149,7 @@ class OnesideDiffViewer extends TextDiffViewerBase {
     List<AnAction> group = new ArrayList<AnAction>();
 
     group.add(new MyComparisonPolicySettingAction());
-    group.add(new MyInlineHighlightSettingAction());
+    group.add(new MyHighlightPolicySettingAction());
     group.add(new MyContextRangeSettingAction());
     group.add(myEditorSettingsAction);
 
@@ -239,7 +240,7 @@ class OnesideDiffViewer extends TextDiffViewerBase {
       indicator.checkCanceled();
       OnesideFragmentBuilder builder = new OnesideFragmentBuilder(fragments, document1, document2,
                                                                   mySettings.getContextRange(),
-                                                                  getTextSettings().isInlineHighlight(),
+                                                                  getHighlightPolicy().isFineFragments(),
                                                                   myMasterSide);
       builder.exec();
 
@@ -452,7 +453,14 @@ class OnesideDiffViewer extends TextDiffViewerBase {
 
   @NotNull
   private DiffUtil.DiffConfig getDiffConfig() {
-    return new DiffUtil.DiffConfig(getTextSettings().getComparisonPolicy(), getTextSettings().isInlineHighlight(), true);
+    return new DiffUtil.DiffConfig(getTextSettings().getComparisonPolicy(), getHighlightPolicy());
+  }
+
+  @NotNull
+  private HighlightPolicy getHighlightPolicy() {
+    HighlightPolicy policy = getTextSettings().getHighlightPolicy();
+    if (policy == HighlightPolicy.DO_NOT_HIGHLIGHT) return HighlightPolicy.BY_LINE;
+    return policy;
   }
 
   //
