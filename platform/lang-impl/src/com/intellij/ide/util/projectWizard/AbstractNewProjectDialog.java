@@ -70,7 +70,6 @@ public abstract class AbstractNewProjectDialog extends DialogWrapper {
         ListScrollingUtil.ensureSelectionExists(myList);
       }
     });
-    ListScrollingUtil.ensureSelectionExists(myList);
     return component;
   }
 
