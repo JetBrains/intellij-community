@@ -85,8 +85,10 @@ public class PersistentHashMapValueStorage {
       }
 
       long currentLength = myFile.length();
-      if (currentLength != mySize) Logger.getInstance(getClass().getName()).info("Avoided PSHM corruption due to write failure");
-      mySize = currentLength;  // volatile write
+      if (currentLength > mySize) {  // if real file length (unexpectedly) increases
+        Logger.getInstance(getClass().getName()).info("Avoided PSHM corruption due to write failure");
+        mySize = currentLength;  // volatile write
+      }
     }
   }
 
@@ -353,7 +355,7 @@ public class PersistentHashMapValueStorage {
 
   private long readPrevChunkAddress(long chunk) throws IOException {
     final long prevOffsetDiff = DataInputOutputUtil.readLONG(myBufferDataStreamWrapper);
-    assert prevOffsetDiff < chunk;
+    assert prevOffsetDiff < chunk:chunk + "," + prevOffsetDiff + "," + mySize;
     return prevOffsetDiff != 0 ? chunk - prevOffsetDiff : 0;
   }
 

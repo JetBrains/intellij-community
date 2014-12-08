@@ -134,10 +134,16 @@ public class SearchTextField extends JPanel {
       }
     });
 
-    if (isSearchControlUISupported() || UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) {
-      myTextField.putClientProperty("JTextField.variant", "search");
-    }
     if (isSearchControlUISupported()) {
+      myTextField.putClientProperty("JTextField.variant", "search");
+      myTextField.putClientProperty("JTextField.Search.CancelAction", new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          myTextField.setText("");
+          onFieldCleared();
+        }
+      });
+
       if (historyEnabled) {
         myNativeSearchPopup = new JBPopupMenu();
         myNoItems = new JBMenuItem("No recent searches");
