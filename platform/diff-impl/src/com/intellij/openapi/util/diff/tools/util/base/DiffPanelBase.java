@@ -3,7 +3,7 @@ package com.intellij.openapi.util.diff.tools.util.base;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.diff.api.DiffTool;
+import com.intellij.openapi.util.diff.api.FrameDiffTool;
 import com.intellij.openapi.util.diff.comparison.DiffTooBigException;
 import com.intellij.ui.EditorNotificationPanel;
 import org.jetbrains.annotations.NonNls;
@@ -25,7 +25,7 @@ public abstract class DiffPanelBase extends JPanel implements DataProvider {
 
   @Nullable protected final Project myProject;
   @NotNull private final DataProvider myDataProvider;
-  @NotNull protected final DiffTool.DiffContext.DiffWindow myContextWindow;
+  @NotNull protected final FrameDiffTool.DiffContext.DiffWindow myContextWindow;
 
   @NotNull protected final JPanel myContentPanel;
   @NotNull protected final JPanel myNotificationsPanel;
@@ -36,7 +36,7 @@ public abstract class DiffPanelBase extends JPanel implements DataProvider {
 
   public DiffPanelBase(@Nullable Project project,
                        @NotNull DataProvider provider,
-                       @NotNull DiffTool.DiffContext context) {
+                       @NotNull FrameDiffTool.DiffContext context) {
     super(new BorderLayout());
     myProject = project;
     myDataProvider = provider;

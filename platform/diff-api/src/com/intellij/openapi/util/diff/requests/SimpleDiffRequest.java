@@ -1,11 +1,7 @@
 package com.intellij.openapi.util.diff.requests;
 
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.util.diff.contents.DiffContent;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class SimpleDiffRequest extends DiffRequestBase implements ContentDiffRequest {
   @NotNull private final DiffContent[] myContents;

@@ -2,7 +2,7 @@ package com.intellij.openapi.util.diff.tools.util;
 
 import com.intellij.openapi.diff.DiffNavigationContext;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.diff.api.DiffTool;
+import com.intellij.openapi.util.diff.api.FrameDiffTool.DiffContext;
 import com.intellij.openapi.util.diff.requests.DiffRequest;
 import com.intellij.openapi.util.diff.tools.util.DiffUserDataKeys.ScrollToPolicy;
 import com.intellij.openapi.util.diff.util.Side;
@@ -16,7 +16,7 @@ public class ScrollToLineHelper {
   @Nullable protected Pair<Side, Integer> myScrollToLine;
   @Nullable protected DiffNavigationContext myNavigationContext;
 
-  public void processContext(@NotNull DiffTool.DiffContext context, @NotNull DiffRequest request) {
+  public void processContext(@NotNull DiffContext context, @NotNull DiffRequest request) {
     myScrollToChange = context.getUserData(DiffUserDataKeys.SCROLL_TO_CHANGE);
     myScrollToLine = request.getUserData(DiffUserDataKeys.SCROLL_TO_LINE);
     myNavigationContext = request.getUserData(DiffUserDataKeys.NAVIGATION_CONTEXT);

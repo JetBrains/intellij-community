@@ -3,7 +3,6 @@ package com.intellij.openapi.util.diff.tools.util;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.diff.DiffNavigationContext;
-import com.intellij.openapi.diff.impl.GenericDataProvider;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.diff.util.Side;

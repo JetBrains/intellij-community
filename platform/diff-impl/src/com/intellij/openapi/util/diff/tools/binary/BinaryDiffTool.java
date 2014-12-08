@@ -15,11 +15,11 @@
  */
 package com.intellij.openapi.util.diff.tools.binary;
 
-import com.intellij.openapi.util.diff.api.DiffTool;
+import com.intellij.openapi.util.diff.api.FrameDiffTool;
 import com.intellij.openapi.util.diff.requests.DiffRequest;
 import org.jetbrains.annotations.NotNull;
 
-public class BinaryDiffTool implements DiffTool {
+public class BinaryDiffTool implements FrameDiffTool {
   public static final BinaryDiffTool INSTANCE = new BinaryDiffTool();
 
   @NotNull

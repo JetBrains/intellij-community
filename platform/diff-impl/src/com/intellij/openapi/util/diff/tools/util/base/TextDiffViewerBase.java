@@ -10,7 +10,7 @@ import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.diff.actions.impl.SetEditorSettingsAction;
-import com.intellij.openapi.util.diff.api.DiffTool.DiffContext;
+import com.intellij.openapi.util.diff.api.FrameDiffTool.DiffContext;
 import com.intellij.openapi.util.diff.comparison.ComparisonPolicy;
 import com.intellij.openapi.util.diff.requests.ContentDiffRequest;
 import com.intellij.openapi.util.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings;

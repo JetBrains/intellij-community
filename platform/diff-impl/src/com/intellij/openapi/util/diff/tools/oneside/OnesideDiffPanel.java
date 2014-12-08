@@ -3,7 +3,7 @@ package com.intellij.openapi.util.diff.tools.oneside;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.diff.api.DiffTool.DiffContext;
+import com.intellij.openapi.util.diff.api.FrameDiffTool.DiffContext;
 import com.intellij.openapi.util.diff.comparison.DiffTooBigException;
 import com.intellij.openapi.util.diff.tools.util.base.DiffPanelBase;
 import com.intellij.util.ui.AsyncProcessIcon;

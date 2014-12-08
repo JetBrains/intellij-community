@@ -23,7 +23,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.diff.actions.BufferedLineIterator;
 import com.intellij.openapi.util.diff.actions.NavigationContextChecker;
-import com.intellij.openapi.util.diff.api.DiffTool.DiffContext;
+import com.intellij.openapi.util.diff.api.FrameDiffTool.DiffContext;
 import com.intellij.openapi.util.diff.comparison.DiffTooBigException;
 import com.intellij.openapi.util.diff.contents.DocumentContent;
 import com.intellij.openapi.util.diff.fragments.LineFragment;

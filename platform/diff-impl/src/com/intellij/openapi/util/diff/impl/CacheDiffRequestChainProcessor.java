@@ -15,8 +15,8 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.diff.DiffManagerEx;
 import com.intellij.openapi.util.diff.actions.impl.*;
 import com.intellij.openapi.util.diff.api.DiffTool;
-import com.intellij.openapi.util.diff.api.DiffTool.DiffContext;
-import com.intellij.openapi.util.diff.api.DiffTool.DiffViewer;
+import com.intellij.openapi.util.diff.api.FrameDiffTool;
+import com.intellij.openapi.util.diff.api.FrameDiffTool.DiffContext;
 import com.intellij.openapi.util.diff.chains.DiffRequestChain;
 import com.intellij.openapi.util.diff.chains.DiffRequestPresentable;
 import com.intellij.openapi.util.diff.chains.DiffRequestPresentableException;
@@ -52,7 +52,7 @@ public abstract class CacheDiffRequestChainProcessor implements Disposable {
   @Nullable private final Project myProject;
   @NotNull private final DiffRequestChain myRequestChain;
 
-  @NotNull private final DiffContext myContext;
+  @NotNull private final FrameDiffTool.DiffContext myContext;
 
   @NotNull private final SoftHardCacheMap<DiffRequestPresentable, DiffRequest> myRequestCache =
     new SoftHardCacheMap<DiffRequestPresentable, DiffRequest>(5, 5);
@@ -70,8 +70,8 @@ public abstract class CacheDiffRequestChainProcessor implements Disposable {
   @Nullable private final JLabel myTitleLabel;
 
   @NotNull private DiffRequest myActiveRequest;
-  @Nullable private DiffViewer myActiveViewer;
-  @Nullable private DiffTool myActiveTool;
+  @Nullable private FrameDiffTool.DiffViewer myActiveViewer;
+  @Nullable private FrameDiffTool myActiveTool;
 
   public CacheDiffRequestChainProcessor(@Nullable Project project, @NotNull DiffRequestChain requestChain, boolean useShortHeader) {
     myProject = project;
@@ -171,8 +171,8 @@ public abstract class CacheDiffRequestChainProcessor implements Disposable {
 
   private void setupSuitableTool() {
     for (DiffTool tool : myToolOrder) {
-      if (tool.canShow(myContext, myActiveRequest)) {
-        myActiveTool = tool;
+      if (tool instanceof FrameDiffTool && tool.canShow(myContext, myActiveRequest)) {
+        myActiveTool = (FrameDiffTool)tool;
         return;
       }
     }
@@ -201,7 +201,7 @@ public abstract class CacheDiffRequestChainProcessor implements Disposable {
   private void initActiveViewer() {
     assert myActiveViewer != null;
 
-    DiffTool.ToolbarComponents toolbarComponents = myActiveViewer.init();
+    FrameDiffTool.ToolbarComponents toolbarComponents = myActiveViewer.init();
 
     DefaultActionGroup group = buildToolbar(toolbarComponents.toolbarActions);
     myToolbarPanel.setContent(DiffUtil.createToolbar(group).getComponent());
@@ -652,7 +652,7 @@ public abstract class CacheDiffRequestChainProcessor implements Disposable {
     }
   }
 
-  private class MyDiffContext implements DiffTool.DiffContext {
+  private class MyDiffContext implements FrameDiffTool.DiffContext {
     @Nullable
     @Override
     public Project getProject() {

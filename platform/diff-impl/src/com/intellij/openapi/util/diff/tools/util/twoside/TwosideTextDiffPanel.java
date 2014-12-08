@@ -1,7 +1,7 @@
 package com.intellij.openapi.util.diff.tools.util.twoside;
 
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.util.diff.api.DiffTool.DiffContext;
+import com.intellij.openapi.util.diff.api.FrameDiffTool.DiffContext;
 import com.intellij.openapi.util.diff.tools.util.EditorsDiffPanelBase;
 import org.jetbrains.annotations.NotNull;
 

@@ -1,6 +1,6 @@
 package com.intellij.openapi.util.diff.tools;
 
-import com.intellij.openapi.util.diff.api.DiffTool;
+import com.intellij.openapi.util.diff.api.FrameDiffTool;
 import com.intellij.openapi.util.diff.requests.DiffRequest;
 import com.intellij.openapi.util.diff.requests.ErrorDiffRequest;
 import com.intellij.openapi.util.diff.requests.NoDiffRequest;
@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-public class ErrorDiffTool implements DiffTool {
+public class ErrorDiffTool implements FrameDiffTool {
   public static final ErrorDiffTool INSTANCE = new ErrorDiffTool();
 
   @NotNull

@@ -3,7 +3,6 @@ package com.intellij.openapi.util.diff.tools.util.base;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -14,10 +13,11 @@ import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.openapi.util.diff.api.DiffTool;
+import com.intellij.openapi.util.diff.api.FrameDiffTool;
+import com.intellij.openapi.util.diff.api.FrameDiffTool.DiffContext;
+import com.intellij.openapi.util.diff.api.FrameDiffTool.DiffViewer;
 import com.intellij.openapi.util.diff.requests.ContentDiffRequest;
 import com.intellij.openapi.util.diff.tools.util.DiffDataKeys;
-import com.intellij.openapi.util.diff.tools.util.DiffUserDataKeys;
 import com.intellij.openapi.util.diff.util.CalledInAwt;
 import com.intellij.openapi.util.diff.util.CalledInBackground;
 import com.intellij.util.Alarm;
@@ -32,7 +32,7 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-public abstract class DiffViewerBase implements DiffTool.DiffViewer, DataProvider {
+public abstract class DiffViewerBase implements DiffViewer, DataProvider {
   protected static final Logger LOG = Logger.getInstance(DiffViewerBase.class);
   private static final Runnable TOO_SLOW_OPERATION = new EmptyRunnable();
 
@@ -40,7 +40,7 @@ public abstract class DiffViewerBase implements DiffTool.DiffViewer, DataProvide
   private static final int ASYNC_REDIFF_POSTPONE_DELAY = ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS;
 
   @Nullable protected final Project myProject;
-  @NotNull protected final DiffTool.DiffContext myContext;
+  @NotNull protected final DiffContext myContext;
   @NotNull protected final ContentDiffRequest myRequest;
 
   private int myModificationStamp = 0;
@@ -50,18 +50,18 @@ public abstract class DiffViewerBase implements DiffTool.DiffViewer, DataProvide
 
   private volatile boolean myDisposed = false;
 
-  public DiffViewerBase(@NotNull DiffTool.DiffContext context, @NotNull ContentDiffRequest request) {
+  public DiffViewerBase(@NotNull DiffContext context, @NotNull ContentDiffRequest request) {
     myProject = context.getProject();
     myContext = context;
     myRequest = request;
   }
 
   @NotNull
-  public final DiffTool.ToolbarComponents init() {
+  public final FrameDiffTool.ToolbarComponents init() {
     onInit();
     rediff();
 
-    DiffTool.ToolbarComponents components = new DiffTool.ToolbarComponents();
+    FrameDiffTool.ToolbarComponents components = new FrameDiffTool.ToolbarComponents();
     components.toolbarActions = createToolbarActions();
     components.statusPanel = getStatusPanel();
     return components;

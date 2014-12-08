@@ -30,7 +30,7 @@ import com.intellij.openapi.util.diff.actions.BufferedLineIterator;
 import com.intellij.openapi.util.diff.actions.NavigationContextChecker;
 import com.intellij.openapi.util.diff.actions.impl.OpenInEditorWithMouseAction;
 import com.intellij.openapi.util.diff.actions.impl.SetEditorSettingsAction;
-import com.intellij.openapi.util.diff.api.DiffTool.DiffContext;
+import com.intellij.openapi.util.diff.api.FrameDiffTool.DiffContext;
 import com.intellij.openapi.util.diff.comparison.DiffTooBigException;
 import com.intellij.openapi.util.diff.contents.DiffContent;
 import com.intellij.openapi.util.diff.contents.DocumentContent;

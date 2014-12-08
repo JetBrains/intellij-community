@@ -15,7 +15,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.diff.actions.impl.FocusOppositePaneAction;
 import com.intellij.openapi.util.diff.actions.impl.OpenInEditorWithMouseAction;
-import com.intellij.openapi.util.diff.api.DiffTool.DiffContext;
+import com.intellij.openapi.util.diff.api.FrameDiffTool.DiffContext;
 import com.intellij.openapi.util.diff.contents.DiffContent;
 import com.intellij.openapi.util.diff.contents.DocumentContent;
 import com.intellij.openapi.util.diff.contents.EmptyContent;
