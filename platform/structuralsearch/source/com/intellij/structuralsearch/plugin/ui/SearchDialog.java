@@ -8,6 +8,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -172,9 +173,9 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
       @Override
       public void run() {
         try {
-          new WriteAction(){
+          ApplicationManager.getApplication().runReadAction(new Runnable() {
             @Override
-            protected void run(Result result) {
+            public void run() {
               if (!isValid()) {
                 getOKAction().setEnabled(false);
               }
@@ -183,7 +184,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
                 reportMessage(null, null);
               }
             }
-          }.execute();
+          });
         }
         catch (RuntimeException e) {
           Logger.getInstance(SearchDialog.class).error(e);
