@@ -29,6 +29,7 @@ import java.util.Arrays;
  */
 public class HashImpl implements Hash {
 
+  private static final int BASE = 16;
   private static final int SHORT_HASH_LENGTH = 7;
 
   @NotNull
@@ -60,22 +61,24 @@ public class HashImpl implements Hash {
     int length = inputStr.length();
     byte even = (byte)(length % 2);
     byte[] data = new byte[length / 2 + 1 + even];
-    final int base = 16;
     data[0] = even;
-    try {
-      for (int i = 0; i < length / 2; i++) {
-        int k = Character.digit(inputStr.charAt(2 * i), base) * base + Character.digit(inputStr.charAt(2 * i + 1), base);
-        data[i + 1] = (byte)(k - 128);
-      }
-      if (even == 1) {
-        int k = Character.digit(inputStr.charAt(length - 1), base);
-        data[length / 2 + 1] = (byte)(k - 128);
-      }
+    for (int i = 0; i < length / 2; i++) {
+      int k = parseChar(inputStr, 2 * i) * BASE + parseChar(inputStr, 2 * i + 1);
+      data[i + 1] = (byte)(k - 128);
     }
-    catch (NumberFormatException e) {
-      throw new IllegalArgumentException("bad hash string: " + inputStr);
+    if (even == 1) {
+      int k = parseChar(inputStr, length - 1);
+      data[length / 2 + 1] = (byte)(k - 128);
     }
     return data;
+  }
+
+  private static int parseChar(@NotNull String inputString, int index) {
+    int k = Character.digit(inputString.charAt(index), BASE);
+    if (k < 0) {
+      throw new IllegalArgumentException("bad hash string: " + inputString);
+    }
+    return k;
   }
 
   private HashImpl(@NotNull byte[] hash) {
