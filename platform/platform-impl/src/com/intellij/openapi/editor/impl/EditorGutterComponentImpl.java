@@ -544,8 +544,12 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   public void updateSize() {
+    updateSize(false);
+  }
+
+  void updateSize(boolean onLayout) {
     int prevHash = sizeHash();
-    updateSizeInner();
+    updateSizeInner(onLayout);
 
     if (prevHash != sizeHash()) {
       fireResized();
@@ -553,9 +557,11 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     repaint();
   }
 
-  private void updateSizeInner() {
-    calcIconAreaWidth();
-    calcAnnotationsSize();
+  private void updateSizeInner(boolean onLayout) {
+    if (!onLayout) {
+      calcIconAreaWidth();
+      calcAnnotationsSize();
+    }
     calcAnnotationExtraSize();
   }
 
