@@ -18,6 +18,7 @@ package org.jetbrains.idea.devkit.inspections.internal;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
@@ -56,21 +57,36 @@ public class OCSerializableCheckInspection extends InternalInspection {
       }
 
       private void checkSerializable(@NotNull PsiMember member, @NotNull PsiElement place) {
-        if (member.hasModifierProperty(PsiModifier.PUBLIC) && !isInInitializer(place)) {
+        if (member.hasModifierProperty(PsiModifier.PUBLIC) && !member.hasModifierProperty(PsiModifier.STATIC) && !isInSerializer(place)) {
           PsiClass aClass = member.getContainingClass();
-          if (aClass != null && !PsiTreeUtil.isAncestor(aClass, place, true)) {
-            PsiModifierList modifierList = aClass.getModifierList();
-            if (modifierList != null && modifierList.findAnnotation(SERIALIZABLE) != null) {
+          if (aClass == null) return;
+          PsiModifierList modifierList = aClass.getModifierList();
+          if (modifierList != null && modifierList.findAnnotation(SERIALIZABLE) != null) {
+            if (checkIsNotSelfOrInheritorClass(place, aClass)) {
               String message = DevKitBundle.message("serialization.only.member.used.explicitly");
               holder.registerProblem(place, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
             }
           }
         }
       }
+
+      private boolean checkIsNotSelfOrInheritorClass(@NotNull PsiElement place, @NotNull PsiClass aClass) {
+        while (true) {
+          PsiClass containingClass = PsiTreeUtil.getParentOfType(place, PsiClass.class);
+          if (containingClass == null) {
+            return true;
+          }
+          if (InheritanceUtil.isInheritorOrSelf(containingClass, aClass, true)) {
+            return false;
+          }
+
+          place = containingClass;
+        }
+      }
     };
   }
 
-  private static boolean isInInitializer(PsiElement place) {
+  private static boolean isInSerializer(PsiElement place) {
     while (true) {
       place = PsiTreeUtil.getParentOfType(place, PsiClass.class);
       if (place == null) return false;

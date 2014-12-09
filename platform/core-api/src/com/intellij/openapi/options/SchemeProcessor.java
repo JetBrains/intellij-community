@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 
 /**
- * Please extend {@link com.intellij.openapi.options.BaseSchemeProcessor} to avoid compatibility issues
+ * Please extend {@link BaseSchemeProcessor} to avoid compatibility issues
  */
 public interface SchemeProcessor<T extends ExternalizableScheme> {
   @Deprecated

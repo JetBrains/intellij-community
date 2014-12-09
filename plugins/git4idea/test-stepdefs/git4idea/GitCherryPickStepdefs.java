@@ -37,7 +37,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.openapi.vcs.Executor.echo;
@@ -242,8 +241,7 @@ public class GitCherryPickStepdefs {
       }
     }), myProjectDir);
 
-    new GitCherryPicker(myProject, myGit, myPlatformFacade, mySettings.isAutoCommitOnCherryPick())
-        .cherryPick(Collections.singletonMap(myRepository, commits));
+    new GitCherryPicker(myProject).cherryPick(commits);
   }
 
   private static List<VcsFullCommitDetails> loadDetails(List<String> hashes, @NotNull VirtualFile root) throws VcsException {

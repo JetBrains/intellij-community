@@ -214,10 +214,17 @@ public class HgRepositoryReader {
     return new File(myHgDir, "rebasestate").exists();
   }
 
+  private boolean isCherryPickInProgress() {
+    return new File(myHgDir, "graftstate").exists();
+  }
+
   @NotNull
   public Repository.State readState() {
     if (isRebaseInProgress()) {
       return Repository.State.REBASING;
+    }
+    else if (isCherryPickInProgress()) {
+      return Repository.State.GRAFTING;
     }
     return isMergeInProgress() ? Repository.State.MERGING : Repository.State.NORMAL;
   }

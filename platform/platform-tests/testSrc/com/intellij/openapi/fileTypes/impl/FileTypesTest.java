@@ -67,12 +67,12 @@ public class FileTypesTest extends PlatformTestCase {
     super.setUp();
     myFileTypeManager = (FileTypeManagerImpl)FileTypeManagerEx.getInstanceEx();
     myOldIgnoredFilesList = myFileTypeManager.getIgnoredFilesList();
-    myFileTypeManager.reDetectAsync(true);
+    FileTypeManagerImpl.reDetectAsync(true);
   }
 
   @Override
   protected void tearDown() throws Exception {
-    myFileTypeManager.reDetectAsync(false);
+    FileTypeManagerImpl.reDetectAsync(false);
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
@@ -323,9 +323,7 @@ public class FileTypesTest extends PlatformTestCase {
     Extensions.getRootArea().getExtensionPoint(FileTypeRegistry.FileTypeDetector.EP_NAME).registerExtension(detector);
     try {
       System.out.println("T: ------");
-      File d = createTempDirectory();
-      File f = new File(d, "xx.asfdasdfas");
-      FileUtil.writeToFile(f, "akjdhfksdjgf");
+      File f = createTempFile("xx.asfdasdfas", "akjdhfksdjgf");
       VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f);
       ensureRedetected(vFile, detectorCalled);
       assertTrue(vFile.getFileType().toString(), vFile.getFileType() instanceof PlainTextFileType);
@@ -355,15 +353,14 @@ public class FileTypesTest extends PlatformTestCase {
     System.out.println("T: ensureRedetected: drain");
     UIUtil.dispatchAllInvocationEvents();
     System.out.println("T: ensureRedetected: dispatch");
-    vFile.getFileType();
-    System.out.println("T: ensureRedetected: getFileType");
+    FileType type = vFile.getFileType();
+    System.out.println("T: ensureRedetected: getFileType ("+type.getName()+")");
     assertTrue(detectorCalled.contains(vFile));
     detectorCalled.clear();
     System.out.println("T: ensureRedetected: clear");
   }
 
   public void testReassignedPredefinedFileType() throws Exception {
-
     FileType perlFileType = myFileTypeManager.getFileTypeByFileName("foo.pl");
     assertEquals("Perl", perlFileType.getName());
     assertEquals(PlainTextFileType.INSTANCE, myFileTypeManager.getFileTypeByFileName("foo.cgi"));
@@ -377,6 +374,28 @@ public class FileTypesTest extends PlatformTestCase {
     assertEquals(perlFileType, myFileTypeManager.getFileTypeByFileName("foo.cgi"));
 
     myFileTypeManager.removeAssociatedExtension(perlFileType, "*.cgi");
+  }
+
+  public void testRenamedPropertiesToUnknownAndBack() throws Exception {
+    FileType propFileType = myFileTypeManager.getFileTypeByFileName("xx.properties");
+    assertEquals("Properties", propFileType.getName());
+    File file = createTempFile("xx.properties", "xx=yy");
+    VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+    assertEquals(propFileType, myFileTypeManager.getFileTypeByFile(vFile));
+
+    rename(vFile, "xx.zxmcnbzmxnbc");
+    UIUtil.dispatchAllInvocationEvents();
+    assertEquals(PlainTextFileType.INSTANCE, myFileTypeManager.getFileTypeByFile(vFile));
+
+    rename(vFile, "xx.properties");
+    myFileTypeManager.drainReDetectQueue();
+    for (int i=0; i<100;i++) {
+      PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+      UIUtil.dispatchAllInvocationEvents();
+
+      assertEquals(propFileType, myFileTypeManager.getFileTypeByFile(vFile));
+      assertEmpty(myFileTypeManager.dumpReDetectQueue());
+    }
   }
 
   // for IDEA-114804 File types mapped to text are not remapped when corresponding plugin is installed

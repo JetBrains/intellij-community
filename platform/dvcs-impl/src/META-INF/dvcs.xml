@@ -2,7 +2,9 @@
   <extensionPoints>
     <extensionPoint name="pushSupport"
                     interface="com.intellij.dvcs.push.PushSupport" area="IDEA_PROJECT"/>
-  </extensionPoints>
+    <extensionPoint name="cherryPicker"
+                    interface="com.intellij.dvcs.cherrypick.VcsCherryPicker" area="IDEA_PROJECT"/>
+</extensionPoints>
   <actions>
     <!--<action id="Vcs.Push" class="">-->
       <!--<keyboard-shortcut first-keystroke="control shift K" keymap="$default"/>-->

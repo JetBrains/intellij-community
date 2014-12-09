@@ -35,7 +35,7 @@ import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.util.net.HttpConfigurable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.incremental.groovy.GroovycOSProcessHandler;
+import org.jetbrains.jps.incremental.groovy.GroovycOutputParser;
 import org.jetbrains.plugins.groovy.config.GroovyFacetUtil;
 import org.jetbrains.plugins.groovy.grape.GrabDependencies;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
@@ -121,10 +121,10 @@ public class DefaultGroovyScriptRunner extends GroovyScriptRunner {
       addClasspathFromRootModel(module, tests, params, true);
     }
 
-    if (params.getVMParametersList().getPropertyValue(GroovycOSProcessHandler.GRAPE_ROOT) == null) {
-      String sysRoot = System.getProperty(GroovycOSProcessHandler.GRAPE_ROOT);
+    if (params.getVMParametersList().getPropertyValue(GroovycOutputParser.GRAPE_ROOT) == null) {
+      String sysRoot = System.getProperty(GroovycOutputParser.GRAPE_ROOT);
       if (sysRoot != null) {
-        params.getVMParametersList().defineProperty(GroovycOSProcessHandler.GRAPE_ROOT, sysRoot);
+        params.getVMParametersList().defineProperty(GroovycOutputParser.GRAPE_ROOT, sysRoot);
       }
     }
   }

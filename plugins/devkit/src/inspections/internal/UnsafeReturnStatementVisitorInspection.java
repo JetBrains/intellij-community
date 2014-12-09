@@ -51,7 +51,7 @@ public class UnsafeReturnStatementVisitorInspection extends InternalInspection {
               final String[] methods;
               final String name;
               if (!skipLambdaFound ^ !skipClassFound) {
-                if (!skipClassFound) {
+                if (!skipLambdaFound) {
                   name = "Insert visitLambdaExpression method";
                   methods = new String[]{EMPTY_LAMBDA};
                 } else {

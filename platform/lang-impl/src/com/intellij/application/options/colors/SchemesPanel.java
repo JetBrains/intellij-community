@@ -185,8 +185,4 @@ public class SchemesPanel extends JPanel implements SkipSelfSearchComponent {
   public void addListener(ColorAndFontSettingsListener listener) {
     myDispatcher.addListener(listener);
   }
-
-  public void disposeUIResources() {
-    
-  }
 }

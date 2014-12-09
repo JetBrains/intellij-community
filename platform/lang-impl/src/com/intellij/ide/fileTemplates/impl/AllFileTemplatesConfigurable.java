@@ -65,19 +65,20 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
   private static final String TEMPLATES_TITLE = IdeBundle.message("tab.filetemplates.templates");
   private static final String INCLUDES_TITLE = IdeBundle.message("tab.filetemplates.includes");
   private static final String CODE_TITLE = IdeBundle.message("tab.filetemplates.code");
-  private static final String J2EE_TITLE = IdeBundle.message("tab.filetemplates.j2ee");
+  private static final String OTHER_TITLE = IdeBundle.message("tab.filetemplates.j2ee");
 
   private JPanel myMainPanel;
   private FileTemplateTab myCurrentTab;
   private FileTemplateTab myTemplatesList;
   private FileTemplateTab myIncludesList;
   private FileTemplateTab myCodeTemplatesList;
-  private FileTemplateTab myJ2eeTemplatesList;
+  private FileTemplateTab myOtherTemplatesList;
   private JComponent myToolBar;
   private TabbedPaneWrapper myTabbedPane;
   private FileTemplateConfigurable myEditor;
   private boolean myModified = false;
   private JComponent myEditorComponent;
+  private JPanel myLeftPanel;
   private FileTemplateTab[] myTabs;
   private Disposable myUIDisposable;
   private final Set<String> myInternalTemplateNames = new HashSet<String>();
@@ -177,6 +178,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
   @Override
   public JComponent createComponent() {
     myUIDisposable = Disposer.newDisposable();
+
     myTemplatesList = new FileTemplateTabAsList(TEMPLATES_TITLE) {
       @Override
       public void onTemplateSelected() {
@@ -207,7 +209,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
     ContainerUtil.addAll(factories, Extensions.getExtensions(FileTemplateGroupDescriptorFactory.EXTENSION_POINT_NAME));
 
     if (!factories.isEmpty()) {
-      myJ2eeTemplatesList = new FileTemplateTabAsTree(J2EE_TITLE) {
+      myOtherTemplatesList = new FileTemplateTabAsTree(OTHER_TITLE) {
         @Override
         public void onTemplateSelected() {
           onListSelectionChanged();
@@ -238,13 +240,27 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
                                       }));
         }
       };
-      allTabs.add(myJ2eeTemplatesList);
+      allTabs.add(myOtherTemplatesList);
     }
+
+    myEditor = new FileTemplateConfigurable();
+    myEditor.addChangeListener(new ChangeListener() {
+      @Override
+      public void stateChanged(ChangeEvent e) {
+        onEditorChanged();
+      }
+    });
+    myEditorComponent = myEditor.createComponent();
+
     myTabs = allTabs.toArray(new FileTemplateTab[allTabs.size()]);
     myTabbedPane = new TabbedPaneWrapper(myUIDisposable);
     myTabbedPane.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
+    myLeftPanel = new JPanel(new CardLayout());
     for (FileTemplateTab tab : myTabs) {
-      myTabbedPane.addTab(tab.getTitle(), ScrollPaneFactory.createScrollPane(tab.getComponent()));
+      myLeftPanel.add(ScrollPaneFactory.createScrollPane(tab.getComponent()), tab.getTitle());
+      JPanel fakePanel = new JPanel();
+      fakePanel.setPreferredSize(new Dimension(0, 0));
+      myTabbedPane.addTab(tab.getTitle(), fakePanel);
     }
 
     myTabbedPane.addChangeListener(new ChangeListener() {
@@ -277,7 +293,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
       @Override
       public void update(AnActionEvent e) {
         super.update(e);
-        e.getPresentation().setEnabled(!(myCurrentTab == myCodeTemplatesList || myCurrentTab == myJ2eeTemplatesList));
+        e.getPresentation().setEnabled(!(myCurrentTab == myCodeTemplatesList || myCurrentTab == myOtherTemplatesList));
       }
     };
     AnAction cloneAction = new AnAction(IdeBundle.message("action.copy.template"), null, PlatformIcons.COPY_ICON) {
@@ -290,7 +306,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
       public void update(AnActionEvent e) {
         super.update(e);
         e.getPresentation().setEnabled(myCurrentTab != myCodeTemplatesList
-                                       && myCurrentTab != myJ2eeTemplatesList
+                                       && myCurrentTab != myOtherTemplatesList
                                        && myCurrentTab.getSelectedTemplate() != null);
       }
     };
@@ -317,24 +333,17 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
 
     myToolBar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true).getComponent();
 
-    myEditor = new FileTemplateConfigurable();
-
-    myEditor.addChangeListener(new ChangeListener() {
-      @Override
-      public void stateChanged(ChangeEvent e) {
-        onEditorChanged();
-      }
-    });
+    JPanel centerPanel = new JPanel(new BorderLayout());
+    centerPanel.add(myTabbedPane.getComponent(), BorderLayout.NORTH);
+    //leftPanel.add(myTabbedPane.getComponent(), BorderLayout.CENTER);
+    Splitter splitter = new Splitter(false, 0.3f);
+    splitter.setFirstComponent(myLeftPanel);
+    splitter.setSecondComponent(myEditorComponent);
+    centerPanel.add(splitter, BorderLayout.CENTER);
 
     myMainPanel = new JPanel(new BorderLayout());
-    Splitter splitter = new Splitter(false, 0.3f);
-    JPanel leftPanel = new JPanel(new BorderLayout());
-    leftPanel.add(myToolBar, BorderLayout.NORTH);
-    leftPanel.add(myTabbedPane.getComponent(), BorderLayout.CENTER);
-    splitter.setFirstComponent(leftPanel);
-    myEditorComponent = myEditor.createComponent();
-    splitter.setSecondComponent(myEditorComponent);
-    myMainPanel.add(splitter, BorderLayout.CENTER);
+    myMainPanel.add(myToolBar, BorderLayout.NORTH);
+    myMainPanel.add(centerPanel, BorderLayout.CENTER);
     return myMainPanel;
   }
 
@@ -363,6 +372,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
     if (0 <= selectedIndex && selectedIndex < myTabs.length) {
       myCurrentTab = myTabs[selectedIndex];
     }
+    ((CardLayout)myLeftPanel.getLayout()).show(myLeftPanel, myCurrentTab.getTitle());
     onListSelectionChanged();
   }
 
@@ -430,7 +440,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
     if (Comparing.strEqual(templateTabTitle, CODE_TITLE)) {
       return true;
     }
-    if (Comparing.strEqual(templateTabTitle, J2EE_TITLE)) {
+    if (Comparing.strEqual(templateTabTitle, OTHER_TITLE)) {
       return true;
     }
     if (Comparing.strEqual(templateTabTitle, INCLUDES_TITLE)) {
@@ -462,8 +472,8 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
     if (myCodeTemplatesList != null) {
       myCodeTemplatesList.init(templateManager.getAllCodeTemplates());
     }
-    if (myJ2eeTemplatesList != null) {
-      myJ2eeTemplatesList.init(templateManager.getAllJ2eeTemplates());
+    if (myOtherTemplatesList != null) {
+      myOtherTemplatesList.init(templateManager.getAllJ2eeTemplates());
     }
   }
 
@@ -560,8 +570,8 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
     if (myCodeTemplatesList != null) {
       templatesManager.setTemplates(FileTemplateManager.CODE_TEMPLATES_CATEGORY, Arrays.asList(myCodeTemplatesList.getTemplates()));
     }
-    if (myJ2eeTemplatesList != null) {
-      templatesManager.setTemplates(FileTemplateManager.J2EE_TEMPLATES_CATEGORY, Arrays.asList(myJ2eeTemplatesList.getTemplates()));
+    if (myOtherTemplatesList != null) {
+      templatesManager.setTemplates(FileTemplateManager.J2EE_TEMPLATES_CATEGORY, Arrays.asList(myOtherTemplatesList.getTemplates()));
     }
 
     if (myEditor != null) {
@@ -633,7 +643,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
     myTemplatesList = null;
     myCodeTemplatesList = null;
     myIncludesList = null;
-    myJ2eeTemplatesList = null;
+    myOtherTemplatesList = null;
   }
 
   public void createNewTemplate(@NotNull String preferredName, @NotNull String extension, @NotNull String text) {
