@@ -37,7 +37,7 @@ import java.util.*;
  * @author: Dmitry.Krasilschikov
  * @date: 16.04.2007
  */
-abstract class GroovycOSProcessHandler {
+public abstract class GroovycOutputParser {
   private static final String GROOVY_COMPILER_IN_OPERATION = "Groovy compiler in operation...";
   public static final String GRAPE_ROOT = "grape.root";
   private final List<OutputItem> myCompiledItems = new ArrayList<OutputItem>();
