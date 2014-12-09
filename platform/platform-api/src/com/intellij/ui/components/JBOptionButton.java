@@ -364,17 +364,13 @@ public class JBOptionButton extends JButton implements MouseMotionListener, Weig
     int off = dark ? 6 : 0;
     AllIcons.General.ArrowDown.paintIcon(this, g, myMoreRec.x - off, myMoreRec.y);
     if (dark) return;
-    int y1 = myMoreRec.y - 2;
-    int y2 = myMoreRec.y + myMoreRec.height + 2;
 
     final Insets insets = getInsets();
+    int y1 = myMoreRec.y - 2;
+    int y2 = getHeight() - insets.bottom - 2;
 
     if (y1 < getInsets().top) {
       y1 = insets.top;
-    }
-
-    if (y2 > getHeight() - insets.bottom) {
-      y2 = getHeight() - insets.bottom;
     }
 
     final int x = myMoreRec.x - 4;
