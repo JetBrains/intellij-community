@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 
 /**
- * The graph returns an instance of the GraphAnswer as a reaction to {@link #performAction(GraphAction)}.
+ * The graph returns an instance of the GraphAnswer as a reaction to {@link ActionController#performAction(GraphAction)}.
  */
 public interface GraphAnswer<CommitId> {
 
