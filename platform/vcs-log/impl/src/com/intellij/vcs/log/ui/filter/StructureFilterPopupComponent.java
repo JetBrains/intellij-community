@@ -54,7 +54,6 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
   public StructureFilterPopupComponent(@NotNull FilterModel<VcsLogFileFilter> filterModel, @NotNull VcsLogColorManager colorManager) {
     super("Paths", filterModel);
     myColorManager = colorManager;
-    myShowDisabledActions = true;
   }
 
   @NotNull
