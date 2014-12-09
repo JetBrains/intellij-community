@@ -419,6 +419,12 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
   @NotNull
   @Override
+  public ListPopup createListPopup(@NotNull ListPopupStep step, int maxRowCount) {
+    return new ListPopupImpl(step, maxRowCount);
+  }
+
+  @NotNull
+  @Override
   public TreePopup createTree(JBPopup parent, @NotNull TreePopupStep aStep, Object parentValue) {
     return new TreePopupImpl(parent, aStep, parentValue);
   }
