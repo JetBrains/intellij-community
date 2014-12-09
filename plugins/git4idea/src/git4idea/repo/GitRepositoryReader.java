@@ -368,7 +368,7 @@ class GitRepositoryReader {
       branch = line.substring(start, i);
     }
 
-    if (branch == null || branch.startsWith(GitTag.REFS_TAGS_PREFIX)) {
+    if (branch == null || !branch.startsWith(REFS_HEADS_PREFIX) && !branch.startsWith(REFS_REMOTES_PREFIX)) {
       LOG.debug("Ignoring packed-refs line: [" + line + "]");
       return null;
     }
