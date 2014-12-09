@@ -61,10 +61,10 @@ public class GraphAdditionEdges {
 
   public void createEdge(int mainNodeId, int additionId, GraphEdgeType edgeType) {
     if (edgeType.isNormalEdge()) {
-      myAdditionEdges.putValue(mainNodeId, compactEdge(additionId, edgeType));
-      myAdditionEdges.putValue(additionId, compactEdge(mainNodeId, edgeType));
+      myAdditionEdges.putValue(mainNodeId, compressEdge(additionId, edgeType));
+      myAdditionEdges.putValue(additionId, compressEdge(mainNodeId, edgeType));
     } else {
-      myAdditionEdges.putValue(mainNodeId, compactEdge(additionId, edgeType));
+      myAdditionEdges.putValue(mainNodeId, compressEdge(additionId, edgeType));
     }
   }
 
@@ -75,25 +75,25 @@ public class GraphAdditionEdges {
 
   public void removeEdge(int mainNodeId, int additionId, GraphEdgeType edgeType) {
     if (edgeType.isNormalEdge()) {
-      myAdditionEdges.remove(mainNodeId, compactEdge(additionId, edgeType));
-      myAdditionEdges.remove(additionId, compactEdge(mainNodeId, edgeType));
+      myAdditionEdges.remove(mainNodeId, compressEdge(additionId, edgeType));
+      myAdditionEdges.remove(additionId, compressEdge(mainNodeId, edgeType));
     } else {
-      myAdditionEdges.remove(mainNodeId, compactEdge(additionId, edgeType));
+      myAdditionEdges.remove(mainNodeId, compressEdge(additionId, edgeType));
     }
   }
 
   public void addToResultAdditionEdges(List<GraphEdge> result, int nodeIndex) {
-    for (int compactEdge : myAdditionEdges.get(myGetNodeIdByIndex.fun(nodeIndex))) {
-      GraphEdge edge = createEdge(nodeIndex, compactEdge);
+    for (int compressEdge : myAdditionEdges.get(myGetNodeIdByIndex.fun(nodeIndex))) {
+      GraphEdge edge = decompressEdge(nodeIndex, compressEdge);
       if (edge != null)
         result.add(edge);
     }
   }
 
   @Nullable
-  private GraphEdge createEdge(int nodeIndex, int compactEdge) {
-    GraphEdgeType edgeType = retrievedType(compactEdge);
-    int retrievedId = retrievedNodeIndex(compactEdge);
+  private GraphEdge decompressEdge(int nodeIndex, int compressedEdge) {
+    GraphEdgeType edgeType = retrievedType(compressedEdge);
+    int retrievedId = retrievedNodeIndex(compressedEdge);
     switch (edgeType) {
       case DOTTED:
       case USUAL:
@@ -128,20 +128,20 @@ public class GraphAdditionEdges {
     }
   }
 
-  private static int compactEdge(int nodeIndex, GraphEdgeType edgeType) {
+  private static int compressEdge(int nodeIndex, GraphEdgeType edgeType) {
     assert nodeIndex < 0xffffff || nodeIndex > 0x80ffffff;
     byte type = edgeType.getType();
     return (type << 24) | (0xffffff & nodeIndex);
   }
 
   @NotNull
-  private static GraphEdgeType retrievedType(int compactEdge) {
-    int type = compactEdge >> 24; // not important >> or >>>
+  private static GraphEdgeType retrievedType(int compressEdge) {
+    int type = compressEdge >> 24; // not important >> or >>>
     return GraphEdgeType.getByType((byte) type);
   }
 
-  private static int retrievedNodeIndex(int compactEdge) {
-    return (compactEdge << 8) >> 8;
+  private static int retrievedNodeIndex(int compressEdge) {
+    return (compressEdge << 8) >> 8;
   }
 
 }
