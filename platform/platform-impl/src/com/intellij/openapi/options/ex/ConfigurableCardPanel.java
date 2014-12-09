@@ -23,9 +23,7 @@ import com.intellij.ui.CardLayoutPanel;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.GradientViewport;
 
-import javax.swing.BorderFactory;
-import javax.swing.JComponent;
-import javax.swing.JScrollPane;
+import javax.swing.*;
 
 /**
  * @author Sergey.Malenkov
@@ -41,7 +39,7 @@ public class ConfigurableCardPanel extends CardLayoutPanel<Configurable, JCompon
           configurable.reset();
           if (ConfigurableWrapper.cast(MasterDetails.class, configurable) == null) {
             if (ConfigurableWrapper.cast(Configurable.NoMargin.class, configurable) == null) {
-              component.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+              component.setBorder(BorderFactory.createEmptyBorder(5, 10, 10, 10));
             }
             if (ConfigurableWrapper.cast(Configurable.NoScroll.class, configurable) == null) {
               JScrollPane scroll = ScrollPaneFactory.createScrollPane(null, true);
