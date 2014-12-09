@@ -698,6 +698,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     }
   }
 
+  public void testInferredNotNull() throws Exception {
+    doTest();
+  }
+
   public void testCantPassFieldAsParameter() throws Exception {
     try {
       doTestPassFieldsAsParams();

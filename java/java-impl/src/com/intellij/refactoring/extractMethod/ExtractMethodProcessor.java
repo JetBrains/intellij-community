@@ -630,7 +630,7 @@ public class ExtractMethodProcessor implements MatchProvider {
 
   private Nullness initNullness() {
     if (!PsiUtil.isLanguageLevel5OrHigher(myElements[0]) || PsiUtil.resolveClassInType(myReturnType) == null) return null;
-    final PsiMethod emptyMethod = generateEmptyMethod(getThrownExceptions(), isStatic(), "name");
+    final PsiMethod emptyMethod = (PsiMethod)myTargetClass.copy().add(generateEmptyMethod(getThrownExceptions(), isStatic(), "name"));
     prepareMethodBody(emptyMethod, false);
     final NullableNotNullManager manager = NullableNotNullManager.getInstance(myProject);
     final PsiClass nullableAnnotationClass = JavaPsiFacade.getInstance(myProject)
