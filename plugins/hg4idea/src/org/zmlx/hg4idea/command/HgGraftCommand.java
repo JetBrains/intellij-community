@@ -28,12 +28,12 @@ import java.util.List;
 
 public class HgGraftCommand {
 
-  @NotNull private final Project project;
-  @NotNull private final HgRepository repo;
+  @NotNull private final Project myProject;
+  @NotNull private final HgRepository myRepository;
 
   public HgGraftCommand(@NotNull Project project, @NotNull HgRepository repo) {
-    this.project = project;
-    this.repo = repo;
+    myProject = project;
+    myRepository = repo;
   }
 
   @Nullable
@@ -51,17 +51,17 @@ public class HgGraftCommand {
     List<String> args = new ArrayList<String>();
     args.add("--log");
     args.addAll(params);
-    AccessToken token = DvcsUtil.workingTreeChangeStarted(project);
+    AccessToken token = DvcsUtil.workingTreeChangeStarted(myProject);
     try {
       HgCommandResult result =
-        new HgCommandExecutor(project)
-          .executeInCurrentThread(repo.getRoot(), "graft", args);
-      repo.update();
-      project.getMessageBus().syncPublisher(HgVcs.BRANCH_TOPIC).update(project, null);
+        new HgCommandExecutor(myProject)
+          .executeInCurrentThread(myRepository.getRoot(), "graft", args);
+      myRepository.update();
+      myProject.getMessageBus().syncPublisher(HgVcs.BRANCH_TOPIC).update(myProject, null);
       return result;
     }
     finally {
-      DvcsUtil.workingTreeChangeFinished(project, token);
+      DvcsUtil.workingTreeChangeFinished(myProject, token);
     }
   }
 }

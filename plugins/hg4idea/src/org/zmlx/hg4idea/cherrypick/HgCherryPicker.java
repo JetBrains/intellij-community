@@ -66,7 +66,6 @@ public class HgCherryPicker extends VcsCherryPicker {
                                                                                .asString();
                                                                            }
                                                                          }));
-      //todo  should process grafting ;
     }
   }
 
