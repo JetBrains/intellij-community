@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.github.api;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -23,11 +24,11 @@ import java.util.List;
  * @author Aleksey Pivovarov
  */
 @SuppressWarnings("UnusedDeclaration")
-class GithubErrorMessageRaw {
+public class GithubErrorMessage {
   @Nullable public String message;
   @Nullable public List<Error> errors;
 
-  private static class Error {
+  public static class Error {
     @Nullable public String resource;
     @Nullable public String field;
     @Nullable public String code;
@@ -40,12 +41,34 @@ class GithubErrorMessageRaw {
       return message;
     }
     else {
-      StringBuilder s = new StringBuilder(message);
+      StringBuilder s = new StringBuilder();
+      s.append(message);
       for (Error e : errors) {
         s.append(String.format("<br/>[%s; %s]%s: %s", e.resource, e.field, e.code, e.message));
       }
       return s.toString();
     }
+  }
+
+  public boolean containsReasonMessage(@NotNull String reason) {
+    if (message == null) return false;
+    return message.contains(reason);
+  }
+
+  public boolean containsErrorCode(@NotNull String code) {
+    if (errors == null) return false;
+    for (Error error : errors) {
+      if (error.code != null && error.code.contains(code)) return true;
+    }
+    return false;
+  }
+
+  public boolean containsErrorMessage(@NotNull String message) {
+    if (errors == null) return false;
+    for (Error error : errors) {
+      if (error.code != null && error.code.contains(message)) return true;
+    }
+    return false;
   }
 }
 
