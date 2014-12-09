@@ -81,7 +81,9 @@ public class VcsUserRegistryImpl implements Disposable, VcsUserRegistry {
   @NotNull
   @Override
   public VcsUser createUser(@NotNull String name, @NotNull String email) {
-    return myInterner.intern(new VcsUserImpl(name, email));
+    synchronized (myInterner) {
+      return myInterner.intern(new VcsUserImpl(name, email));
+    }
   }
 
   public void addUser(@NotNull VcsUser user) {

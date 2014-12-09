@@ -3604,9 +3604,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     if (isOneLineMode()) return getLineHeight();
-    
-    int size = mySizeContainer.getContentHeight();
-    
+
+    // Preferred height of less than a single line height doesn't make sense:
+    // at least a single line with a blinking caret on it is to be displayed
+    int size = Math.max(mySizeContainer.getContentHeight(), getLineHeight());
+
     if (mySettings.isAdditionalPageAtBottom()) {
       int lineHeight = getLineHeight();
       int visibleAreaHeight = getScrollingModel().getVisibleArea().height;
@@ -6756,13 +6758,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     @Override
     public void layout() {
-      super.layout();
       if (isInDistractionFreeMode()) {
         // re-calc gutter extra size after editor size is set
         // & layout once again to avoid blinking
-        myGutterComponent.updateSize();
-        super.layout();
+        myGutterComponent.updateSize(true);
       }
+      super.layout();
     }
 
     @Override

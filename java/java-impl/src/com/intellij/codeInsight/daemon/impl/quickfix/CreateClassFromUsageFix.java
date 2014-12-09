@@ -23,7 +23,6 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
@@ -41,7 +40,7 @@ public class CreateClassFromUsageFix extends CreateClassFromUsageBaseFix {
 
   @Override
   public String getText(String varName) {
-    return QuickFixBundle.message("create.class.from.usage.text", StringUtil.capitalize(myKind.getDescription()), varName);
+    return QuickFixBundle.message("create.class.from.usage.text", myKind.getDescription(), varName);
   }
 
 

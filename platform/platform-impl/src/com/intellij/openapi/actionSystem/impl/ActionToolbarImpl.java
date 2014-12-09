@@ -43,6 +43,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.switcher.SwitchTarget;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -742,7 +743,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
       for (int i = getComponentCount() - 1, j = 1; i > 0; i--, j++) {
         final Component component = getComponent(i);
         if (component instanceof JComponent && ((JComponent)component).getClientProperty(RIGHT_ALIGN_KEY) == Boolean.TRUE) {
-          bounds.set(bounds.size() - j, new Rectangle(size2Fit.width - j * 25, 0, 25, maxHeight));
+          bounds.set(bounds.size() - j, new Rectangle(size2Fit.width - j * JBUI.scale(25), 0, JBUI.scale(25), maxHeight));
         }
       }
     }

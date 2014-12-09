@@ -1,4 +1,4 @@
-// "Create Inner Class 'MyTableModel'" "true"
+// "Create inner class 'MyTableModel'" "true"
 import javax.swing.*;
 
 public class Test {

@@ -237,13 +237,10 @@ public class Mappings {
   private void runPostPasses() {
     final Set<Pair<ClassRepr, File>> deleted = myDeletedClasses;
     if (deleted != null) {
-      final TIntHashSet added = new TIntHashSet();
-      for (ClassRepr aClass : myAddedClasses) {
-        added.add(aClass.name);
-      }
       for (Pair<ClassRepr, File> pair : deleted) {
         final int deletedClassName = pair.first.name;
-        if (!added.contains(deletedClassName)) {
+        final Collection<File> sources = myClassToSourceFile.get(deletedClassName);
+        if (sources == null || sources.isEmpty()) { // if really deleted and not e.g. moved 
           myChangedClasses.remove(deletedClassName);
         }
       }
@@ -2041,7 +2038,11 @@ public class Mappings {
           myDelta.mySourceFileToClasses.forEachEntry(new TObjectObjectProcedure<File, Collection<ClassRepr>>() {
             @Override
             public boolean execute(File fileName, Collection<ClassRepr> classes) {
-              newClasses.add(new FileClasses(fileName, classes));
+              if (myFilesToCompile == null || myFilesToCompile.contains(fileName)) {
+                // Consider only files actually compiled in this round.
+                // For other sources the list of classes taken from this map will be possibly incomplete.
+                newClasses.add(new FileClasses(fileName, classes));
+              }
               return true;
             }
           });
@@ -2288,24 +2289,29 @@ public class Mappings {
           if (!unchangedSources.isEmpty()) {
             unchangedSources.forEach(new TObjectProcedure<File>() {
               @Override
-              public boolean execute(File file) {
-                final Collection<ClassRepr> updatedClasses = delta.mySourceFileToClasses.get(file);
+              public boolean execute(File unchangedSource) {
+                final Collection<ClassRepr> updatedClasses = delta.mySourceFileToClasses.get(unchangedSource);
                 if (updatedClasses != null && !updatedClasses.isEmpty()) {
-                  final List<ClassRepr> classesToAdd = new ArrayList<ClassRepr>();
-                  classesToAdd.addAll(updatedClasses);
-                  Collection<ClassRepr> currentClasses = mySourceFileToClasses.get(file);
-                  if (currentClasses != null) {
-                    final TIntHashSet updatedClassNames = new TIntHashSet();
-                    for (ClassRepr aClass : updatedClasses) {
+                  final List<ClassRepr> classesToPut = new ArrayList<ClassRepr>();
+                  final TIntHashSet updatedClassNames = new TIntHashSet();
+                  for (ClassRepr aClass : updatedClasses) {
+                    // from all generated classes on this round consider only 'differentiated' ones, for
+                    // which we can reliably say that the class has changed. Keep classes, for which no such checks were made,
+                    // to make it possible to create a diff and compare changes on next compilation rounds. 
+                    if (delta.getChangedClasses().contains(aClass.name)) {
+                      classesToPut.add(aClass);
                       updatedClassNames.add(aClass.name);
                     }
+                  }
+                  Collection<ClassRepr> currentClasses = mySourceFileToClasses.get(unchangedSource);
+                  if (currentClasses != null) {
                     for (ClassRepr aClass : currentClasses) {
                       if (!updatedClassNames.contains(aClass.name)) {
-                        classesToAdd.add(aClass);
+                        classesToPut.add(aClass);
                       }
                     }
                   }
-                  mySourceFileToClasses.replace(file, classesToAdd);
+                  mySourceFileToClasses.replace(unchangedSource, classesToPut);
                 }
                 return true;
               }

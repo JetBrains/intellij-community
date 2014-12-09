@@ -69,7 +69,7 @@ import java.util.jar.Manifest;
  * @since 6/30/2014
  */
 public abstract class ExternalSystemTestCase extends UsefulTestCase {
-  private static File ourTempDir;
+  private File ourTempDir;
 
   protected IdeaProjectTestFixture myTestFixture;
 

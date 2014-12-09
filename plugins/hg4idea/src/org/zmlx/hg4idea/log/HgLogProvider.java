@@ -233,7 +233,7 @@ public class HgLogProvider implements VcsLogProvider {
     }
 
     if (filterCollection.getStructureFilter() != null) {
-      for (VirtualFile file : filterCollection.getStructureFilter().getFiles(root)) {
+      for (VirtualFile file : filterCollection.getStructureFilter().getFiles()) {
         filterParameters.add(file.getPath());
       }
     }

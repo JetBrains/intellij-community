@@ -571,6 +571,10 @@ public class ControlFlowUtils {
     }
 
     @Override
+    public void visitLambdaExpression(PsiLambdaExpression expression) {
+    }
+
+    @Override
     public void visitReturnStatement(@NotNull PsiReturnStatement returnStatement) {
       if (m_found) {
         return;

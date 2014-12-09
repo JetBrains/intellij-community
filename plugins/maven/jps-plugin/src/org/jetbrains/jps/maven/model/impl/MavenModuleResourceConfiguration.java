@@ -69,6 +69,9 @@ public class MavenModuleResourceConfiguration {
   @OptionTag
   public String outputDirectory = null;
 
+  @OptionTag
+  public String testOutputDirectory = null;
+
   @Tag("resources")
   @AbstractCollection(surroundWithTag = false, elementTag = "resource")
   public List<ResourceRootConfiguration> resources = new ArrayList<ResourceRootConfiguration>();
@@ -108,6 +111,7 @@ public class MavenModuleResourceConfiguration {
     result = 31 * result + filteringExclusions.hashCode();
     result = 31 * result + (escapeString != null ? escapeString.hashCode() : 0);
     result = 31 * result + (outputDirectory != null ? outputDirectory.hashCode() : 0);
+    result = 31 * result + (testOutputDirectory != null ? testOutputDirectory.hashCode() : 0);
     result = 31 * result + (escapeWindowsPaths ? 1 : 0);
     result = 31 * result + (overwrite ? 1 : 0);
     return result;

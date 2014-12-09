@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.controlflow;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -37,7 +38,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-public class TrivialIfInspection extends BaseInspection {
+public class TrivialIfInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
   @NotNull

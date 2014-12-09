@@ -16,31 +16,28 @@
 package com.intellij.openapi.externalSystem.action;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
-import com.intellij.openapi.externalSystem.model.project.ExternalProjectPojo;
+import com.intellij.openapi.externalSystem.model.project.AbstractExternalEntityData;
+import com.intellij.openapi.externalSystem.model.project.ModuleData;
+import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.project.PlatformFacade;
-import com.intellij.openapi.externalSystem.service.task.ui.ExternalSystemRecentTasksList;
-import com.intellij.openapi.externalSystem.service.task.ui.ExternalSystemTasksTreeModel;
-import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings;
-import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
-import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
-import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
+import com.intellij.openapi.externalSystem.view.ExternalSystemNode;
+import com.intellij.openapi.externalSystem.view.ProjectNode;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
@@ -49,63 +46,71 @@ import java.util.List;
  * @author Denis Zhdanov
  * @since 6/13/13 5:42 PM
  */
-public class DetachExternalProjectAction extends AnAction implements DumbAware {
+public class DetachExternalProjectAction extends ExternalSystemNodeAction<AbstractExternalEntityData> implements DumbAware {
 
   public DetachExternalProjectAction() {
+    super(AbstractExternalEntityData.class);
     getTemplatePresentation().setText(ExternalSystemBundle.message("action.detach.external.project.text", "external"));
     getTemplatePresentation().setDescription(ExternalSystemBundle.message("action.detach.external.project.description"));
     getTemplatePresentation().setIcon(SystemInfoRt.isMac ? AllIcons.ToolbarDecorator.Mac.Remove : AllIcons.ToolbarDecorator.Remove);
   }
 
   @Override
-  public void update(AnActionEvent e) {
-    ExternalActionUtil.MyInfo info = ExternalActionUtil.getProcessingInfo(e.getDataContext());
-    e.getPresentation().setEnabled(info.externalProject != null);
+  protected boolean isEnabled(AnActionEvent e) {
+    if (!super.isEnabled(e)) return false;
+    final List<ExternalSystemNode> selectedNodes = ExternalSystemDataKeys.SELECTED_NODES.getData(e.getDataContext());
+    if (selectedNodes == null || selectedNodes.size() != 1) return false;
+    final Object externalData = selectedNodes.get(0).getData();
+    return (externalData instanceof ProjectData || externalData instanceof ModuleData);
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
-    ExternalActionUtil.MyInfo info = ExternalActionUtil.getProcessingInfo(e.getDataContext());
-    if (info.settings == null || info.localSettings == null || info.externalProject == null || info.ideProject == null
-        || info.externalSystemId == null)
-    {
-      return;
-    }
-    
+  public void perform(@NotNull final Project project,
+                      @NotNull ProjectSystemId projectSystemId,
+                      @NotNull AbstractExternalEntityData entityData,
+                      @NotNull AnActionEvent e) {
+
     e.getPresentation().setText(
-      ExternalSystemBundle.message("action.detach.external.project.text",info.externalSystemId.getReadableName())
+      ExternalSystemBundle.message("action.detach.external.project.text", projectSystemId.getReadableName())
     );
 
-    ExternalSystemTasksTreeModel allTasksModel = ExternalSystemDataKeys.ALL_TASKS_MODEL.getData(e.getDataContext());
-    if (allTasksModel != null) {
-      allTasksModel.pruneNodes(info.externalProject);
-    }
 
-    ExternalSystemRecentTasksList recentTasksList = ExternalSystemDataKeys.RECENT_TASKS_LIST.getData(e.getDataContext());
-    if (recentTasksList != null) {
-      recentTasksList.getModel().forgetTasksFrom(info.externalProject.getPath());
-    }
-    
-    info.localSettings.forgetExternalProjects(Collections.singleton(info.externalProject.getPath()));
-    info.settings.unlinkExternalProject(info.externalProject.getPath());
+    final List<ExternalSystemNode> selectedNodes = ExternalSystemDataKeys.SELECTED_NODES.getData(e.getDataContext());
+    final ExternalSystemNode<?> externalSystemNode = ContainerUtil.getFirstItem(selectedNodes);
+    assert externalSystemNode != null;
+    final ProjectNode projectNode =
+      externalSystemNode instanceof ProjectNode ? (ProjectNode)externalSystemNode : externalSystemNode.findParent(ProjectNode.class);
+    assert projectNode != null;
+
+    final ProjectData projectData = projectNode.getData();
+    assert projectData != null;
+    ExternalSystemApiUtil.getLocalSettings(project, projectSystemId).
+      forgetExternalProjects(Collections.singleton(projectData.getLinkedExternalProjectPath()));
+    ExternalSystemApiUtil.getSettings(project, projectSystemId).unlinkExternalProject(projectData.getLinkedExternalProjectPath());
+
+    ExternalProjectsManager.getInstance(project).forgetExternalProjectData(projectSystemId, projectData.getLinkedExternalProjectPath());
 
     // Process orphan modules.
     PlatformFacade platformFacade = ServiceManager.getService(PlatformFacade.class);
-    String externalSystemIdAsString = info.externalSystemId.toString();
     List<Module> orphanModules = ContainerUtilRt.newArrayList();
-    for (Module module : platformFacade.getModules(info.ideProject)) {
-      String systemId = module.getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY);
-      if (!externalSystemIdAsString.equals(systemId)) {
-        continue;
-      }
-      String path = module.getOptionValue(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY);
-      if (info.externalProject.getPath().equals(path)) {
+    for (Module module : platformFacade.getModules(project)) {
+      if (!ExternalSystemApiUtil.isExternalSystemAwareModule(projectSystemId, module)) continue;
+
+      String path = ExternalSystemApiUtil.getExternalRootProjectPath(module);
+      if (projectData.getLinkedExternalProjectPath().equals(path)) {
         orphanModules.add(module);
       }
     }
 
     if (!orphanModules.isEmpty()) {
-      ExternalSystemUtil.ruleOrphanModules(orphanModules, info.ideProject, info.externalSystemId);
+      ExternalSystemUtil.ruleOrphanModules(orphanModules, project, projectSystemId, new Consumer<Boolean>() {
+        @Override
+        public void consume(Boolean result) {
+          if (result != null && result) {
+            projectNode.getGroup().remove(projectNode);
+          }
+        }
+      });
     }
   }
 }

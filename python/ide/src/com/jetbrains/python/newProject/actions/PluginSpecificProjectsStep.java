@@ -29,16 +29,12 @@ import java.util.List;
 public class PluginSpecificProjectsStep extends DefaultActionGroup implements DumbAware {
 
   public PluginSpecificProjectsStep(@NotNull final NullableConsumer<ProjectSettingsStepBase> callback,
-                                    @NotNull final List<DirectoryProjectGenerator> projectGenerators, boolean isWelcomeScreen) {
+                                    @NotNull final List<DirectoryProjectGenerator> projectGenerators) {
     super("Plugin-specific", true);
     getTemplatePresentation().setIcon(AllIcons.Nodes.PluginLogo);
     for (DirectoryProjectGenerator generator : projectGenerators) {
       ProjectSpecificAction action = new ProjectSpecificAction(generator, new ProjectSpecificSettingsStep(generator, callback));
-      if (isWelcomeScreen) {
-        addAll(action.getChildren(null));
-      } else {
-        add(action);
-      }
+      addAll(action.getChildren(null));
     }
   }
 }

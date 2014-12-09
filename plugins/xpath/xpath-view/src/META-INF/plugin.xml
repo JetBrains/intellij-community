@@ -19,8 +19,7 @@
   <!-- Plugin version -->
   <version>4</version>
 
-  <!-- Plugin's vendor -->
-  <vendor email="sascha.weinreuter@cit.de">Sascha Weinreuter</vendor>
+  <vendor>JetBrains</vendor>
 
   <change-notes>
     <![CDATA[

@@ -31,5 +31,5 @@ public interface VcsLogRefs {
   Collection<VcsRef> getBranches();
 
   @NotNull
-  Collection<VcsRef> refsToCommit(@NotNull Hash hash);
+  Collection<VcsRef> refsToCommit(int commitId);
 }

@@ -338,6 +338,7 @@ public class GitLogProvider implements VcsLogProvider {
   @NotNull
   private Set<VcsRef> readBranches(@NotNull GitRepository repository) {
     VirtualFile root = repository.getRoot();
+    repository.update();
     Collection<GitLocalBranch> localBranches = repository.getBranches().getLocalBranches();
     Collection<GitRemoteBranch> remoteBranches = repository.getBranches().getRemoteBranches();
     Set<VcsRef> refs = new THashSet<VcsRef>(localBranches.size() + remoteBranches.size());
@@ -440,10 +441,13 @@ public class GitLogProvider implements VcsLogProvider {
 
     // note: structure filter must be the last parameter, because it uses "--" which separates parameters from paths
     if (filterCollection.getStructureFilter() != null) {
-      filterParameters.add("--simplify-merges");
-      filterParameters.add("--");
-      for (VirtualFile file : filterCollection.getStructureFilter().getFiles(root)) {
-        filterParameters.add(file.getPath());
+      Collection<VirtualFile> files = filterCollection.getStructureFilter().getFiles();
+      if (!files.isEmpty()) {
+        filterParameters.add("--simplify-merges");
+        filterParameters.add("--");
+        for (VirtualFile file : files) {
+          filterParameters.add(file.getPath());
+        }
       }
     }
 

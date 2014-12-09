@@ -41,7 +41,6 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
@@ -484,6 +483,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, DataProvider {
 
     if (myProject != null) {
       PropertiesComponent.getInstance(myProject).setValue(FULL_SCREEN, String.valueOf(state));
+      doLayout();
     }
   }
 

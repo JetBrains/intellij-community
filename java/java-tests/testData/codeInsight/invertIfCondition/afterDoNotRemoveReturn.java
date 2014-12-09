@@ -1,4 +1,4 @@
-// "Invert If Condition" "true"
+// "Invert 'if' condition" "true"
 class Test {
     public static int create() {
         if (true) {

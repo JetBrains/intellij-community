@@ -34,8 +34,7 @@ public class CmdAnnotateClient extends BaseSvnClient implements AnnotateClient {
                        @Nullable final AnnotationConsumer handler) throws VcsException {
     List<String> parameters = new ArrayList<String>();
     CommandUtil.put(parameters, target);
-    parameters.add("--revision");
-    parameters.add(startRevision + ":" + endRevision);
+    CommandUtil.put(parameters, startRevision, endRevision);
     CommandUtil.put(parameters, includeMergedRevisions, "--use-merge-history");
     CommandUtil.put(parameters, diffOptions);
     parameters.add("--xml");

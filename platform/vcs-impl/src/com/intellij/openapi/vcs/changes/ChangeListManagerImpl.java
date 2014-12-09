@@ -1217,6 +1217,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         final CheckinEnvironment environment = vcs.getCheckinEnvironment();
         if (environment != null) {
           final Set<VirtualFile> descendant = new HashSet<VirtualFile>();
+          final Set<VirtualFile> parents = new HashSet<VirtualFile>();
           for (VirtualFile item : items) {
             final Processor<VirtualFile> addProcessor = new Processor<VirtualFile>() {
               @Override
@@ -1227,12 +1228,29 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
                 return true;
               }
             };
+
             VcsRootIterator.iterateVfUnderVcsRoot(myProject, item, addProcessor);
+            collectParentsToBeAdded(vcs, parents, item, statusChecker);
           }
           final List<VcsException> result = environment.scheduleUnversionedFilesForAddition(new ArrayList<VirtualFile>(descendant));
           allProcessedFiles.addAll(descendant);
+          allProcessedFiles.addAll(parents);
           if (result != null) {
             exceptions.addAll(result);
+          }
+        }
+      }
+
+      public void collectParentsToBeAdded(@NotNull AbstractVcs vcs,
+                                          @NotNull Set<VirtualFile> parents,
+                                          @NotNull VirtualFile item,
+                                          @NotNull Condition<FileStatus> statusChecker) {
+        if (vcs.areDirectoriesVersionedItems()) {
+          VirtualFile parent = item.getParent();
+
+          while (parent != null && statusChecker.value(getStatus(parent))) {
+            parents.add(parent);
+            parent = parent.getParent();
           }
         }
       }

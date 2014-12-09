@@ -88,9 +88,15 @@ public class ModelBuildScriptClasspathBuilderImpl implements ModelBuilderService
         configurations.add(configuration);
       }
       else {
-        configuration = configurations.maybeCreate(UUID.randomUUID().toString());
+        String confName = project.getPath() + ":" + classpathConfiguration.getName();
+        if(configurations.findByName(confName) != null) {
+          confName += (":" + UUID.randomUUID().toString());
+        }
+
+        configuration = configurations.maybeCreate(confName);
         configuration.getDependencies().addAll(classpathConfiguration.getAllDependencies());
         configuration.getArtifacts().addAll(classpathConfiguration.getAllArtifacts());
+        project.getRepositories().addAll(project.getBuildscript().getRepositories());
       }
 
       Collection<Configuration> plusConfigurations = Collections.singletonList(configuration);

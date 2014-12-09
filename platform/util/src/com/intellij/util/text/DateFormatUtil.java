@@ -34,6 +34,7 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
+import java.util.TimeZone;
 
 public class DateFormatUtil {
   private static final Logger LOG = Logger.getInstance("com.intellij.util.text.DateFormatUtil");
@@ -46,6 +47,8 @@ public class DateFormatUtil {
   public static final long MONTH = DAY * 30;
   public static final long YEAR = DAY * 365;
   public static final long DAY_FACTOR = 24L * 60 * 60 * 1000;
+
+  public static final SyncDateFormat ISO8601_DATE_FORMAT = new SyncDateFormat(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ"));
 
   // do not expose this constants - they are very likely to be changed in future
   private static final SyncDateFormat DATE_FORMAT;
@@ -60,6 +63,8 @@ public class DateFormatUtil {
     TIME_WITH_SECONDS_FORMAT = formats[2];
     DATE_TIME_FORMAT = formats[3];
     ABOUT_DATE_FORMAT = new SyncDateFormat(DateFormat.getDateInstance(DateFormat.LONG, Locale.US));
+
+    ISO8601_DATE_FORMAT.setTimeZone(TimeZone.getTimeZone("UTC"));
   }
 
   private static final long[] DENOMINATORS = {YEAR, MONTH, WEEK, DAY, HOUR, MINUTE};

@@ -652,9 +652,9 @@ public class UIUtil {
     int defSize = getLabelFont().getSize();
     switch (size) {
       case SMALL:
-        return Math.max(defSize - 2f, 11f);
+        return Math.max(defSize - JBUI.scale(2f), JBUI.scale(11f));
       case MINI:
-        return Math.max(defSize - 4f, 9f);
+        return Math.max(defSize - JBUI.scale(4f), JBUI.scale(9f));
       default:
         return defSize;
     }
@@ -3235,5 +3235,14 @@ public class UIUtil {
    */
   public static Window getWindow(Component component) {
     return component instanceof Window ? (Window)component : SwingUtilities.getWindowAncestor(component);
+  }
+
+  public static Image getDebugImage(Component component) {
+    BufferedImage image = createImage(component.getWidth(), component.getHeight(), BufferedImage.TYPE_INT_ARGB);
+    Graphics2D graphics = image.createGraphics();
+    graphics.setColor(Color.RED);
+    graphics.fillRect(0, 0, component.getWidth() + 1, component.getHeight() + 1);
+    component.paint(graphics);
+    return image;
   }
 }

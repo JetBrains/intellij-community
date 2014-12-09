@@ -1,4 +1,4 @@
-// "Create Local Variable 'a'" "true"
+// "Create local variable 'a'" "true"
 public class A {
     void foo() {
         Class<?>[] a = get();

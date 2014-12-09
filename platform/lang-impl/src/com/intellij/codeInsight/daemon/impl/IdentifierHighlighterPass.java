@@ -58,7 +58,7 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
   private final Collection<TextRange> myWriteAccessRanges = Collections.synchronizedList(new ArrayList<TextRange>());
   private final int myCaretOffset;
 
-  protected IdentifierHighlighterPass(final Project project, final PsiFile file, final Editor editor) {
+  protected IdentifierHighlighterPass(@NotNull Project project, @NotNull PsiFile file, @NotNull Editor editor) {
     super(project, editor.getDocument(), false);
     myFile = file;
     myEditor = editor;
@@ -91,9 +91,7 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
       if (!PsiDocumentManager.getInstance(myProject).isUncommited(myEditor.getDocument())) {
         // when document is committed, try to check injected stuff - it's fast
         Editor injectedEditor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(myEditor, myFile, myCaretOffset);
-        if (injectedEditor != null) {
-          myTarget = TargetElementUtilBase.getInstance().findTargetElement(injectedEditor, flags, injectedEditor.getCaretModel().getOffset()); 
-        }
+        myTarget = TargetElementUtilBase.getInstance().findTargetElement(injectedEditor, flags, injectedEditor.getCaretModel().getOffset());
       }
     }
     

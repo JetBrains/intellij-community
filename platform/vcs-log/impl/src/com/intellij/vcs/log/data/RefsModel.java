@@ -68,6 +68,7 @@ public class RefsModel implements VcsLogRefs {
     return Collections.emptyList();
   }
 
+  @Override
   @NotNull
   public Collection<VcsRef> refsToCommit(int index) {
     return myRefsToIndices.containsKey(index) ? myRefsToIndices.get(index) : Collections.<VcsRef>emptyList();

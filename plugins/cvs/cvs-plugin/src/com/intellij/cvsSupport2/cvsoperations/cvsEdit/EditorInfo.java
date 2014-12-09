@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -84,17 +84,7 @@ public class EditorInfo {
   }
 
   public String toString() {
-    final StringBuilder result = new StringBuilder();
-    result.append(myUserName);
-    result.append('\t');
-    result.append(DATE_FORMAT.format(myEditDate));
-    result.append('\t');
-    result.append(myHostName);
-    result.append('\t');
-    result.append(myPath);
-    result.append('\t');
-
-    return result.toString();
+    return myUserName + '\t' + DATE_FORMAT.format(myEditDate) + '\t' + myHostName + '\t' + myPath + '\t';
   }
 
   public String getUserName() { return myUserName; }

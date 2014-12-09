@@ -15,8 +15,8 @@
  */
 package com.intellij.cvsSupport2.actions;
 
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.actions.cvsContext.CvsContext;
-import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.cvsSupport2.cvshandlers.CommandCvsHandler;
 import com.intellij.cvsSupport2.cvshandlers.CvsHandler;
 import com.intellij.cvsSupport2.cvsoperations.cvsEdit.EditorInfo;
@@ -24,8 +24,10 @@ import com.intellij.cvsSupport2.cvsoperations.cvsEdit.EditorsOperation;
 import com.intellij.cvsSupport2.cvsoperations.cvsEdit.ui.EditorsPanel;
 import com.intellij.cvsSupport2.ui.CvsTabbedWindow;
 import com.intellij.cvsSupport2.util.CvsVfsUtil;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.CvsBundle;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.vcs.actions.VcsContext;
+import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 
 import java.util.List;
 
@@ -41,7 +43,7 @@ public class ViewEditorsAction extends AbstractActionFromEditGroup {
 
   protected CvsHandler getCvsHandler(CvsContext context) {
     myEditorsOperation = new EditorsOperation(context.getSelectedFiles());
-    return new CommandCvsHandler(com.intellij.CvsBundle.getViewEditorsOperationName(), myEditorsOperation);
+    return new CommandCvsHandler(CvsBundle.getViewEditorsOperationName(), myEditorsOperation);
   }
 
   protected void onActionPerformed(CvsContext context,
@@ -52,11 +54,17 @@ public class ViewEditorsAction extends AbstractActionFromEditGroup {
     if (successfully){
       List<EditorInfo> editors = myEditorsOperation.getEditors();
       String filePath = CvsVfsUtil.getFileFor(context.getSelectedFile()).getAbsolutePath();
+      final Project project = context.getProject();
+      if (project == null) {
+        return;
+      }
       if (editors.isEmpty()){
-        Messages.showMessageDialog(CvsBundle.message("message.error.no.editors.for.file", filePath) , CvsBundle.message("message.error.no.editors.for.file.title"), Messages.getInformationIcon());
+        VcsBalloonProblemNotifier.showOverChangesView(project,
+                                                      CvsBundle.message("message.error.no.editors.for.file", filePath),
+                                                      MessageType.INFO);
       } else {
         tabbedWindow.addTab(CvsBundle.message("message.editors.for.file", filePath),
-                            new EditorsPanel(context.getProject(), editors), true, true, true, true, null, "cvs.editors");
+                            new EditorsPanel(project, editors), true, true, true, true, null, "cvs.editors");
       }
     }
   }

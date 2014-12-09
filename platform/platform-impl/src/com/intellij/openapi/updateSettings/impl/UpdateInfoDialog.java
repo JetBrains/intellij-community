@@ -233,7 +233,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
         configureMessageArea(myMessageArea);
       }
 
-      if (mySubscribtionLicense && myLicenseInfo != null) {
+      if (mySubscriptionLicense && myLicenseInfo != null) {
         configureMessageArea(myLicenseArea, myLicenseInfo, myPaidUpgrade ? JBColor.RED : null, null);
       }
     }

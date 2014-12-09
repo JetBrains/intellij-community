@@ -1,6 +1,6 @@
 import static In.FOO;
 
-// "Replace Implements with Static Import" "true"
+// "Replace implements with static import" "true"
 interface In {
     int FOO = 0;
 }

@@ -24,7 +24,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.text.CharArrayUtil;
-import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.StringLiteralExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -77,7 +76,7 @@ public class PyLineWrapPositionStrategy extends GenericLineWrapPositionStrategy 
     int wrapPosition =
       super.calculateWrapPosition(document, project, startOffset, endOffset, maxPreferredOffset, allowToBeyondMaxPreferredOffset, virtual);
     if (wrapPosition < 0) return wrapPosition;
-    final CharSequence text = document.getCharsSequence();
+    final CharSequence text = document.getImmutableCharSequence();
 
     if (wrapPosition > 0) {
       char charBefore = text.charAt(wrapPosition - 1);
@@ -86,7 +85,7 @@ public class PyLineWrapPositionStrategy extends GenericLineWrapPositionStrategy 
         return wrapPosition + 1;
       }
     }
-
+    if (wrapPosition >= text.length()) return wrapPosition;
     char c = text.charAt(wrapPosition);
     if (!StringUtil.isWhiteSpace(c) || project == null) {
       return wrapPosition;

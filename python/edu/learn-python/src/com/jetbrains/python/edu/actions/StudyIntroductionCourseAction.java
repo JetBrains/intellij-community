@@ -47,7 +47,7 @@ public class StudyIntroductionCourseAction extends AnAction {
       ProjectUtil.openProject(projectDir.getPath(), null, false);
     }
     else {
-      final GenerateProjectCallback callback = new GenerateProjectCallback(null);
+      final GenerateProjectCallback callback = new GenerateProjectCallback();
       final StudyDirectoryProjectGenerator generator = new StudyDirectoryProjectGenerator();
       final Map<CourseInfo, File> courses = generator.getCourses();
       CourseInfo introCourse = null;

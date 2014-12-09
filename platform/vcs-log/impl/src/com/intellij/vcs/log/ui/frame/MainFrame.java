@@ -273,6 +273,10 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
     return myGraphTable.getModel() instanceof GraphTableModel && myGraphTable.getRowCount() > 0;
   }
 
+  public void onFiltersChange(@NotNull VcsLogFilterCollection filters) {
+    myBranchesPanel.onFiltersChange(filters);
+  }
+
   private class CommitSelectionListener implements ListSelectionListener {
     private final ChangesBrowser myChangesBrowser;
 

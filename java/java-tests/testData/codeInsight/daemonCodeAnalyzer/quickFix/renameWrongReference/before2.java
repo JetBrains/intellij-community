@@ -1,4 +1,4 @@
-// "Rename Reference" "true"
+// "Rename reference" "true"
 class c {
  void foo(boolean b) {
    if (b) {

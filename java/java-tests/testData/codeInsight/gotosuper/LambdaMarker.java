@@ -4,6 +4,6 @@ interface I {
 
 class Foo {
   {
-    I i = ()<caret> -> {};
+    I i = <caret>() -> {};
   }
 }

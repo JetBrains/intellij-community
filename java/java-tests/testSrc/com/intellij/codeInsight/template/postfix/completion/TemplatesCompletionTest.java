@@ -31,19 +31,14 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Set;
 
 public class TemplatesCompletionTest extends CompletionAutoPopupTestCase {
-  private boolean shotTemplatesInTestsOldValue;
-
   @Override
   public void setUp() {
     super.setUp();
-    shotTemplatesInTestsOldValue = LiveTemplateCompletionContributor.ourShowTemplatesInTests;
-    LiveTemplateCompletionContributor.ourShowTemplatesInTests = false;
+    LiveTemplateCompletionContributor.setShowTemplatesInTests(false, getTestRootDisposable());
   }
 
   @Override
   public void tearDown() throws Exception {
-    LiveTemplateCompletionContributor.ourShowTemplatesInTests = shotTemplatesInTestsOldValue;
-
     PostfixTemplatesSettings settings = PostfixTemplatesSettings.getInstance();
     assertNotNull(settings);
     settings.setLangDisabledTemplates(ContainerUtil.<String, Set<String>>newHashMap());
@@ -53,13 +48,12 @@ public class TemplatesCompletionTest extends CompletionAutoPopupTestCase {
   }
 
   public void testSimpleCompletionList() {
-    LiveTemplateCompletionContributor.ourShowTemplatesInTests = true;
-
+    LiveTemplateCompletionContributor.setShowTemplatesInTests(true, getTestRootDisposable());
     doAutoPopupTest("ins", InstanceofExpressionPostfixTemplate.class);
   }
 
   public void testAutopopupWithEnabledLiveTemplatesInCompletion() {
-    LiveTemplateCompletionContributor.ourShowTemplatesInTests = true;
+    LiveTemplateCompletionContributor.setShowTemplatesInTests(false, getTestRootDisposable());
 
     configureByFile();
     type("instanceof");
@@ -127,14 +121,14 @@ public class TemplatesCompletionTest extends CompletionAutoPopupTestCase {
   }
 
   public void testDoNotAutoCompleteCompletionElementIfTemplateUnique() {
-    LiveTemplateCompletionContributor.ourShowTemplatesInTests = true;
+    LiveTemplateCompletionContributor.setShowTemplatesInTests(true, getTestRootDisposable());
     configureByFile();
     myFixture.completeBasic();
     checkResultByFile();
   }
 
   public void testDoNotCompleteTemplateInMultiCaretMode() {
-    LiveTemplateCompletionContributor.ourShowTemplatesInTests = true;
+    LiveTemplateCompletionContributor.setShowTemplatesInTests(true, getTestRootDisposable());
     configureByFile();
     assertEmpty(myFixture.complete(CompletionType.BASIC));
     checkResultByFile();
@@ -190,7 +184,7 @@ public class TemplatesCompletionTest extends CompletionAutoPopupTestCase {
   }
 
   public void testTabCompletionWithTemplatesInAutopopup() {
-    LiveTemplateCompletionContributor.ourShowTemplatesInTests = true;
+    LiveTemplateCompletionContributor.setShowTemplatesInTests(true, getTestRootDisposable());
 
     configureByFile();
     type(".");

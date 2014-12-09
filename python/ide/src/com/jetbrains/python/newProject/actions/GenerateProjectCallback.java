@@ -48,17 +48,9 @@ import java.util.List;
 
 public class GenerateProjectCallback implements NullableConsumer<ProjectSettingsStepBase> {
   private static final Logger LOG = Logger.getInstance(GenerateProjectCallback.class);
-  @Nullable private final Runnable myRunnable;
-
-  public GenerateProjectCallback(@Nullable final Runnable runnable) {
-    myRunnable = runnable;
-  }
 
   @Override
   public void consume(@Nullable ProjectSettingsStepBase step) {
-    if (myRunnable != null) {
-      myRunnable.run();
-    }
     if (!(step instanceof ProjectSpecificSettingsStep)) return;
 
     final ProjectSpecificSettingsStep settingsStep = (ProjectSpecificSettingsStep)step;

@@ -88,6 +88,10 @@ public class SafeDeleteTest extends MultiFileTestCase {
     doSingleFileTest();
   }
 
+  public void testDeleteConstructorParameterWithAnonymousClassUsage() throws Exception {
+    doSingleFileTest();
+  }
+
   public void testParameterInHierarchy() throws Exception {
     doTest("C2");
   }
@@ -171,6 +175,17 @@ public class SafeDeleteTest extends MultiFileTestCase {
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
       String message = e.getMessage();
       assertEquals("class <b><code>SAM</code></b> has 1 usage that is not safe to delete.", message);
+    }
+  }
+
+  public void testAmbiguityAfterParameterDelete() throws Exception {
+    try {
+      doSingleFileTest();
+      fail("Conflict was not detected");
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      String message = e.getMessage();
+      assertEquals("Method foo() is already defined in the class <b><code>Test</code></b>", message);
     }
   }
 
