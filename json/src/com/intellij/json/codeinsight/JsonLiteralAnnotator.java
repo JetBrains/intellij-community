@@ -7,6 +7,7 @@ import com.intellij.json.psi.JsonPsiUtil;
 import com.intellij.json.psi.JsonStringLiteral;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -27,13 +28,20 @@ public class JsonLiteralAnnotator implements Annotator {
 
   @Override
   public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
+    final String text;
+    final InjectedLanguageManager manager = InjectedLanguageManager.getInstance(element.getProject());
+    if (manager.isInjectedFragment(element.getContainingFile())) {
+      text = manager.getUnescapedText(element);
+    }
+    else {
+      text = element.getText();
+    }
     if (element instanceof JsonStringLiteral) {
       final JsonStringLiteral stringLiteral = (JsonStringLiteral)element;
       final int elementOffset = element.getTextOffset();
       if (JsonPsiUtil.isPropertyKey(element)) {
         holder.createInfoAnnotation(element, DEBUG ? "property key" : null).setTextAttributes(JsonSyntaxHighlighterFactory.JSON_PROPERTY_KEY);
       }
-      final String text = element.getText();
       final int length = text.length();
 
       // Check that string literal is closed properly
@@ -57,7 +65,7 @@ public class JsonLiteralAnnotator implements Annotator {
       }
     }
     else if (element instanceof JsonNumberLiteral) {
-      if (!VALID_NUMBER_LITERAL.matcher(element.getText()).matches()) {
+      if (!VALID_NUMBER_LITERAL.matcher(text).matches()) {
         holder.createErrorAnnotation(element, JsonBundle.message("msg.illegal.floating.point.literal"));
       }
     }
