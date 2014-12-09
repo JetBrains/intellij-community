@@ -19,14 +19,20 @@ import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.cherrypick.VcsCherryPicker;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsKey;
+import com.intellij.openapi.vcs.update.UpdatedFiles;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsLog;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgVcs;
+import org.zmlx.hg4idea.action.HgCommandResultNotifier;
 import org.zmlx.hg4idea.command.HgGraftCommand;
+import org.zmlx.hg4idea.execution.HgCommandResult;
+import org.zmlx.hg4idea.provider.update.HgConflictResolver;
 import org.zmlx.hg4idea.repo.HgRepository;
+import org.zmlx.hg4idea.util.HgErrorUtil;
 import org.zmlx.hg4idea.util.HgUtil;
 
 import java.util.List;
@@ -56,17 +62,44 @@ public class HgCherryPicker extends VcsCherryPicker {
     Map<HgRepository, List<VcsFullCommitDetails>> commitsInRoots = DvcsUtil.groupCommitsByRoots(
       HgUtil.getRepositoryManager(myProject), commits);
     for (Map.Entry<HgRepository, List<VcsFullCommitDetails>> entry : commitsInRoots.entrySet()) {
-      new HgGraftCommand(myProject,
-                         entry.getKey()).startGrafting(ContainerUtil.map(entry.getValue(),
-                                                                         new Function<VcsFullCommitDetails, String>() {
-                                                                           @Override
-                                                                           public String fun(
-                                                                             VcsFullCommitDetails commitDetails) {
-                                                                             return commitDetails.getId()
-                                                                               .asString();
-                                                                           }
-                                                                         }));
+      processGrafting(entry.getKey(), ContainerUtil.map(entry.getValue(),
+                                                        new Function<VcsFullCommitDetails, String>() {
+                                                          @Override
+                                                          public String fun(
+                                                            VcsFullCommitDetails commitDetails) {
+                                                            return commitDetails.getId()
+                                                              .asString();
+                                                          }
+                                                        }));
     }
+  }
+
+
+  private static void processGrafting(@NotNull HgRepository repository, @NotNull List<String> hashes) {
+    Project project = repository.getProject();
+    VirtualFile root = repository.getRoot();
+    HgGraftCommand command = new HgGraftCommand(project, repository);
+    HgCommandResult result = command.startGrafting(hashes);
+    boolean hasConflicts = !HgConflictResolver.findConflicts(project, root).isEmpty();
+    if (!hasConflicts && HgErrorUtil.isCommandExecutionFailed(result)) {
+      new HgCommandResultNotifier(project).notifyError(result, "Hg Error", "Couldn't  graft.");
+      return;
+    }
+    while (hasConflicts) {
+      final UpdatedFiles updatedFiles = UpdatedFiles.create();
+      new HgConflictResolver(project, updatedFiles).resolve(root);
+      hasConflicts = !HgConflictResolver.findConflicts(project, root).isEmpty();
+      if (!hasConflicts) {
+        result = command.continueGrafting();
+      }
+      hasConflicts = !HgConflictResolver.findConflicts(project, root).isEmpty();
+      if (hasConflicts) {
+        new HgCommandResultNotifier(project).notifyError(result, "Hg Error", "Couldn't continue grafting");
+        break;
+      }
+    }
+    repository.update();
+    root.refresh(true, true);
   }
 
   @Override
