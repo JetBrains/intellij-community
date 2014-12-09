@@ -83,9 +83,9 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
   };
 
-  private static final int MAX_WIDTH = 500;
-  private static final int MAX_HEIGHT = 300;
-  private static final int MIN_HEIGHT = 45;
+  private static final int PREFERRED_WIDTH_EM = 37;
+  private static final int PREFERRED_HEIGHT_MIN_EM = 7;
+  private static final int PREFERRED_HEIGHT_MAX_EM = 20;
 
   private DocumentationManager myManager;
   private SmartPsiElementPointer myElement;
@@ -157,16 +157,23 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     myEditorPane = new JEditorPane(UIUtil.HTML_MIME, "") {
       @Override
       public Dimension getPreferredScrollableViewportSize() {
+        int em = myEditorPane.getFont().getSize();
+        int prefWidth = PREFERRED_WIDTH_EM * em;
+        int prefHeightMin = PREFERRED_HEIGHT_MIN_EM * em;
+        int prefHeightMax = PREFERRED_HEIGHT_MAX_EM * em;
+
         if (getWidth() == 0 || getHeight() == 0) {
-          setSize(MAX_WIDTH, MAX_HEIGHT);
+          setSize(prefWidth, prefHeightMax);
         }
+
         Insets ins = myEditorPane.getInsets();
         View rootView = myEditorPane.getUI().getRootView(myEditorPane);
-        rootView.setSize(MAX_WIDTH,
-                         MAX_HEIGHT);  // Necessary! Without this line, size will not increase then you go from small page to bigger one
-        int prefHeight = (int)rootView.getPreferredSpan(View.Y_AXIS);
-        prefHeight += ins.bottom + ins.top + myScrollPane.getHorizontalScrollBar().getMaximumSize().height;
-        return new Dimension(MAX_WIDTH, Math.max(MIN_HEIGHT, Math.min(MAX_HEIGHT, prefHeight)));
+        rootView.setSize(prefWidth, prefHeightMax);  // Necessary! Without this line, the size won't increase when the content does
+
+        int prefHeight = (int)rootView.getPreferredSpan(View.Y_AXIS) + ins.bottom + ins.top +
+                         myScrollPane.getHorizontalScrollBar().getMaximumSize().height;
+        prefHeight = Math.max(prefHeightMin, Math.min(prefHeightMax, prefHeight));
+        return new Dimension(prefWidth, prefHeight);
       }
 
       {
