@@ -1604,7 +1604,7 @@ public class ExtractMethodProcessor implements MatchProvider {
       myCanBeStatic = false;
     }
 
-    myInputVariables = new InputVariables(inputVariables, myProject, new LocalSearchScope(myElements), true);
+    myInputVariables = new InputVariables(inputVariables, myProject, new LocalSearchScope(myElements), isFoldingApplicable());
     myInputVariables.setUsedInstanceFields(fields);
 
     if (!checkExitPoints()){
@@ -1616,6 +1616,10 @@ public class ExtractMethodProcessor implements MatchProvider {
     if (extractPass != null) {
       extractPass.pass(this);
     }
+    return true;
+  }
+
+  protected boolean isFoldingApplicable() {
     return true;
   }
 
