@@ -834,6 +834,9 @@ public class BuildManager implements ApplicationComponent{
     // launching build process from projectTaskQueue ensures that no other build process for this project is currently running
     return projectTaskQueue.submit(new Callable<Pair<RequestFuture<PreloadedProcessMessageHandler>, OSProcessHandler>>() {
       public Pair<RequestFuture<PreloadedProcessMessageHandler>, OSProcessHandler> call() throws Exception {
+        if (project.isDisposed()) {
+          throw new Exception("project " + project.getName()+ " already disposed");
+        }
         final RequestFuture<PreloadedProcessMessageHandler> future = new RequestFuture<PreloadedProcessMessageHandler>(new PreloadedProcessMessageHandler(), UUID.randomUUID(), new CancelBuildSessionAction<PreloadedProcessMessageHandler>());
         try {
           myMessageDispatcher.registerBuildMessageHandler(future, null);
@@ -845,9 +848,9 @@ public class BuildManager implements ApplicationComponent{
           processHandler.startNotify();
           return Pair.create(future, processHandler);
         }
-        catch (ExecutionException e) {
+        catch (Throwable e) {
           handleProcessExecutionFailure(future.getRequestID(), e);
-          throw e;
+          throw e instanceof Exception? (Exception)e : new RuntimeException(e);
         }
       }
     });
