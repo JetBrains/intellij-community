@@ -164,7 +164,7 @@ public class ImportMavenRepositoriesTask implements Runnable {
           notificationData.setListener("#open", new NotificationListener.Adapter() {
             @Override
             protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
-              ShowSettingsUtil.getInstance().showSettingsDialog(myProject, MavenRepositoriesConfigurable.class);
+              ShowSettingsUtil.getInstance().showSettingsDialog(myProject, "Repositories");
             }
           });
 
@@ -181,8 +181,9 @@ public class ImportMavenRepositoriesTask implements Runnable {
                                          "Disable Notification", CommonBundle.getCancelButtonText(),
                                          Messages.getWarningIcon());
               if (result == Messages.YES) {
-                NotificationsConfigurationImpl.getNotificationsConfigurationImpl().changeSettings(UNINDEXED_MAVEN_REPOSITORIES_NOTIFICATION_GROUP,
-                                                                                NotificationDisplayType.NONE, false, false);
+                NotificationsConfigurationImpl.getNotificationsConfigurationImpl().changeSettings(
+                  UNINDEXED_MAVEN_REPOSITORIES_NOTIFICATION_GROUP,
+                  NotificationDisplayType.NONE, false, false);
 
                 notification.hideBalloon();
               }
