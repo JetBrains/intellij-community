@@ -31,6 +31,7 @@ import javax.swing.*;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 import java.awt.*;
+import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
 import java.util.HashSet;
@@ -64,7 +65,7 @@ public class JBOptionButton extends JButton implements MouseMotionListener, Weig
 
     myUnderPopup = fillMenu(true);
     myAbovePopup = fillMenu(false);
-    enableEvents(MouseEvent.MOUSE_EVENT_MASK | MouseEvent.MOUSE_MOTION_EVENT_MASK);
+    enableEvents(AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK);
   }
 
   @Override
@@ -99,7 +100,8 @@ public class JBOptionButton extends JButton implements MouseMotionListener, Weig
   public void mouseMoved(MouseEvent e) {
     final MouseEvent event = SwingUtilities.convertMouseEvent(e.getComponent(), e, getParent());
     final boolean insideRec = getBounds().contains(event.getPoint());
-    boolean buttonsNotPressed = (e.getModifiersEx() & (MouseEvent.BUTTON1_DOWN_MASK | MouseEvent.BUTTON2_DOWN_MASK | MouseEvent.BUTTON3_DOWN_MASK)) == 0;
+    boolean buttonsNotPressed = (e.getModifiersEx() & (InputEvent.BUTTON1_DOWN_MASK | InputEvent.BUTTON2_DOWN_MASK |
+                                                       InputEvent.BUTTON3_DOWN_MASK)) == 0;
     if (!myPopupIsShowing && insideRec && buttonsNotPressed) {
       showPopup(null, false);
     } else if (myPopupIsShowing && !insideRec) {
