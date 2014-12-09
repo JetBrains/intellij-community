@@ -539,15 +539,11 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     private PopupHandler myHandler;
     private JButton myErrorStripeButton;
     @Nullable private BufferedImage myCachedTrack;
-    private ComponentAdapter myResizeListener = new ComponentAdapter() {
-      @Override
-      public void componentResized(ComponentEvent e) {
-        dropCache();
-      }
-    };
+    private int myCachedHeight = -1;
 
     public void dropCache() {
       myCachedTrack = null;
+      myCachedHeight = -1;
     }
 
     @NotNull
@@ -571,14 +567,12 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     @Override
     public void installUI(JComponent c) {
       super.installUI(c);
-      c.addComponentListener(myResizeListener);
       dropCache();
     }
 
     @Override
     public void uninstallUI(@NotNull JComponent c) {
       super.uninstallUI(c);
-      c.removeComponentListener(myResizeListener);
       dropCache();
     }
 
@@ -698,9 +692,10 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       if (clip.height == 0) return;
 
       Rectangle componentBounds = c.getBounds();
-      ProperTextRange docRange = ProperTextRange.create(0, (int)componentBounds.getHeight());
-      if (myCachedTrack == null) {
+      ProperTextRange docRange = ProperTextRange.create(0, componentBounds.height);
+      if (myCachedTrack == null || myCachedHeight != componentBounds.height) {
         myCachedTrack = UIUtil.createImage(componentBounds.width, componentBounds.height, BufferedImage.TYPE_INT_ARGB);
+        myCachedHeight = componentBounds.height;
         myDirtyYPositions = docRange;
         paintTrackBasement(myCachedTrack.getGraphics(), new Rectangle(0, 0, componentBounds.width, componentBounds.height));
       }
