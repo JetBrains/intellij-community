@@ -12,8 +12,7 @@
 import os
 import sys
 
-from pydevd_constants import IS_PY24, IS_PY3K, IS_JYTHON
-
+from pydevd_constants import IS_PY24, IS_PY3K, IS_JYTHON, DictContains, DictPop
 
 if IS_PY24:
     from _pydev_imps._pydev_uuid_old import uuid4
@@ -406,6 +405,16 @@ class _ImportHook(ModuleType):
         ModuleType.__init__(self, name)
         self._system_import = system_import
         self.enabled = True
+        self._modules_to_patch = {}
+        self._add_modules_for_patching()
+
+    def _add_modules_for_patching(self):
+        try:
+            from _pydev_imps._pydev_django_oscar_patch import \
+                patch_oscar_loading
+            self._modules_to_patch['oscar.core.loading'] = patch_oscar_loading
+        except:
+            sys.stderr.write("Adding modules to patch in pluginbase failed\n")
 
     def enable(self):
         """Enables the import hook which drives the plugin base system.
@@ -423,15 +432,19 @@ class _ImportHook(ModuleType):
     def plugin_import(self, name, globals=None, locals=None,
                       fromlist=None, level=-2):
         import_name = name
-        if self.enabled:
-            ref_globals = globals
-            if ref_globals is None:
-                ref_globals = sys._getframe(1).f_globals
-            space = _discover_space(name, ref_globals)
-            if space is not None:
-                actual_name = space._rewrite_module_path(name)
-                if actual_name is not None:
-                    import_name = actual_name
+        try:
+            if self.enabled:
+                ref_globals = globals
+                if ref_globals is None:
+                    ref_globals = sys._getframe(1).f_globals
+                space = _discover_space(name, ref_globals)
+                if space is not None:
+                    actual_name = space._rewrite_module_path(name)
+                    if actual_name is not None:
+                        import_name = actual_name
+        except:
+            sys.stderr.write("Failed to get import name for name %s\n" % name)
+
         if level == -2:
             # fake impossible value; default value depends on version
             if IS_PY24:
@@ -445,8 +458,18 @@ class _ImportHook(ModuleType):
                 level = -1
         if IS_JYTHON:
             import_name = name
-        return self._system_import(import_name, globals, locals,
-                                   fromlist, level)
+
+        activate_func = None
+        if name == import_name and DictContains(self._modules_to_patch, name):
+            activate_func = DictPop(self._modules_to_patch, name)
+
+        module = self._system_import(import_name, globals, locals, fromlist, level)
+        try:
+            if activate_func:
+                activate_func() #call activate function
+        except:
+            sys.stderr.write("Patching modules in pluginbase failed\n")
+        return module
 
 
 try:
