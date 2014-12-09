@@ -16,6 +16,8 @@
 package org.jetbrains.jps.incremental.groovy;
 
 
+import com.intellij.execution.process.BaseOSProcessHandler;
+import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
@@ -23,7 +25,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -236,21 +237,28 @@ public class GroovyBuilder extends ModuleLevelBuilder {
     );
 
     final Process process = Runtime.getRuntime().exec(ArrayUtil.toStringArray(cmd));
-    final Consumer<String> updater = new Consumer<String>() {
-      public void consume(String s) {
-        context.processMessage(new ProgressMessage(s + " [" + chunk.getPresentableShortName() + "]"));
+    final GroovycOSProcessHandler parser = new GroovycOSProcessHandler() {
+      @Override
+      protected void updateStatus(@NotNull String status) {
+        context.processMessage(new ProgressMessage(status + " [" + chunk.getPresentableShortName() + "]"));;
       }
     };
-    final GroovycOSProcessHandler handler = new GroovycOSProcessHandler(process, updater) {
+    ProcessHandler handler = new BaseOSProcessHandler(process, null, null) {
       @Override
       protected Future<?> executeOnPooledThread(Runnable task) {
         return SharedThreadPool.getInstance().executeOnPooledThread(task);
+      }
+
+      @Override
+      public void notifyTextAvailable(String text, Key outputType) {
+        parser.notifyTextAvailable(text, outputType);
       }
     };
 
     handler.startNotify();
     handler.waitFor();
-    return handler;
+    parser.notifyFinished(process.exitValue());
+    return parser;
   }
 
   private static boolean checkChunkRebuildNeeded(CompileContext context, GroovycOSProcessHandler handler) {

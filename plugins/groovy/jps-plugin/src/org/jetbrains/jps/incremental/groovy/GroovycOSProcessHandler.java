@@ -16,15 +16,14 @@
 
 package org.jetbrains.jps.incremental.groovy;
 
-import com.intellij.execution.process.BaseOSProcessHandler;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.groovy.compiler.rt.GroovyCompilerMessageCategories;
 import org.jetbrains.groovy.compiler.rt.GroovyRtConstants;
@@ -38,25 +37,17 @@ import java.util.*;
  * @author: Dmitry.Krasilschikov
  * @date: 16.04.2007
  */
-public class GroovycOSProcessHandler extends BaseOSProcessHandler {
-  public static final String GROOVY_COMPILER_IN_OPERATION = "Groovy compiler in operation...";
+abstract class GroovycOSProcessHandler {
+  private static final String GROOVY_COMPILER_IN_OPERATION = "Groovy compiler in operation...";
   public static final String GRAPE_ROOT = "grape.root";
   private final List<OutputItem> myCompiledItems = new ArrayList<OutputItem>();
-  private final Set<File> toRecompileFiles = new HashSet<File>();
   private final List<CompilerMessage> compilerMessages = new ArrayList<CompilerMessage>();
   private final StringBuffer stdErr = new StringBuffer();
 
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.groovy.GroovycOSProcessHandler");
-  private final Consumer<String> myStatusUpdater;
-
-  public GroovycOSProcessHandler(Process process, Consumer<String> statusUpdater) {
-    super(process, null, null);
-    myStatusUpdater = statusUpdater;
-  }
+  private int myExitCode;
 
   public void notifyTextAvailable(final String text, final Key outputType) {
-    super.notifyTextAvailable(text, outputType);
-
     if (LOG.isDebugEnabled()) {
       LOG.debug("Received from groovyc " + outputType + ": " + text);
     }
@@ -76,9 +67,7 @@ public class GroovycOSProcessHandler extends BaseOSProcessHandler {
 
   private final StringBuffer outputBuffer = new StringBuffer();
 
-  protected void updateStatus(@Nullable String status) {
-    myStatusUpdater.consume(status == null ? GROOVY_COMPILER_IN_OPERATION : status);
-  }
+  protected abstract void updateStatus(@NotNull String status);
 
   private void parseOutput(String text) {
     final String trimmed = text.trim();
@@ -89,7 +78,7 @@ public class GroovycOSProcessHandler extends BaseOSProcessHandler {
     }
 
     if (GroovyRtConstants.CLEAR_PRESENTABLE.equals(trimmed)) {
-      updateStatus(null);
+      updateStatus(GROOVY_COMPILER_IN_OPERATION);
       return;
     }
 
@@ -114,12 +103,6 @@ public class GroovycOSProcessHandler extends BaseOSProcessHandler {
         }
         myCompiledItems.add(item);
 
-      }
-      else if (outputBuffer.indexOf(GroovyRtConstants.TO_RECOMPILE_START) != -1) {
-        if (outputBuffer.indexOf(GroovyRtConstants.TO_RECOMPILE_END) != -1) {
-          String url = handleOutputBuffer(GroovyRtConstants.TO_RECOMPILE_START, GroovyRtConstants.TO_RECOMPILE_END);
-          toRecompileFiles.add(new File(url));
-        }
       }
       else if (outputBuffer.indexOf(GroovyRtConstants.MESSAGES_START) != -1) {
         if (outputBuffer.indexOf(GroovyRtConstants.MESSAGES_END) == -1) {
@@ -191,12 +174,8 @@ public class GroovycOSProcessHandler extends BaseOSProcessHandler {
     return myCompiledItems;
   }
 
-  public Set<File> getToRecompileFiles() {
-    return toRecompileFiles;
-  }
-
   public boolean shouldRetry() {
-    if (getProcess().exitValue() != 0) {
+    if (myExitCode != 0) {
       LOG.debug("Non-zero exit code");
       return true;
     }
@@ -227,14 +206,13 @@ public class GroovycOSProcessHandler extends BaseOSProcessHandler {
 
     }
 
-    final int exitValue = getProcess().exitValue();
-    if (exitValue != 0) {
+    if (myExitCode != 0) {
       for (CompilerMessage message : messages) {
         if (message.getKind() == BuildMessage.Kind.ERROR) {
           return messages;
         }
       }
-      messages.add(new CompilerMessage("Groovyc", BuildMessage.Kind.ERROR, "Internal groovyc error: code " + exitValue));
+      messages.add(new CompilerMessage("Groovyc", BuildMessage.Kind.ERROR, "Internal groovyc error: code " + myExitCode));
     }
 
     return messages;
@@ -293,15 +271,11 @@ public class GroovycOSProcessHandler extends BaseOSProcessHandler {
     return tempFile;
   }
 
-  public static GroovycOSProcessHandler runGroovyc(Process process, Consumer<String> updater) {
-    GroovycOSProcessHandler processHandler = new GroovycOSProcessHandler(process, updater);
-
-    processHandler.startNotify();
-    processHandler.waitFor();
-    return processHandler;
+  void notifyFinished(int exitCode) {
+    myExitCode = exitCode;
   }
 
-  public static class OutputItem {
+  static class OutputItem {
     public final String outputPath;
     public final String sourcePath;
 
