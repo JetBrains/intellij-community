@@ -181,7 +181,7 @@ public class ImportMavenRepositoriesTask implements Runnable {
                                          "Disable Notification", CommonBundle.getCancelButtonText(),
                                          Messages.getWarningIcon());
               if (result == Messages.YES) {
-                NotificationsConfigurationImpl.getInstanceImpl().changeSettings(UNINDEXED_MAVEN_REPOSITORIES_NOTIFICATION_GROUP,
+                NotificationsConfigurationImpl.getNotificationsConfigurationImpl().changeSettings(UNINDEXED_MAVEN_REPOSITORIES_NOTIFICATION_GROUP,
                                                                                 NotificationDisplayType.NONE, false, false);
 
                 notification.hideBalloon();
