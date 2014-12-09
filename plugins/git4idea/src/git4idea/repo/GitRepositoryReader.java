@@ -500,8 +500,8 @@ class GitRepositoryReader {
       branch = line.substring(start, i);
     }
 
-    if (branch == null) {
-      LOG.warn("Ignoring invalid packed-refs line: [" + line + "]");
+    if (branch == null || branch.startsWith(GitTag.REFS_TAGS_PREFIX)) {
+      LOG.debug("Ignoring packed-refs line: [" + line + "]");
       return null;
     }
     return new HashAndName(shortBuffer(hash.trim()), shortBuffer(branch));
