@@ -16,14 +16,14 @@
 package org.jetbrains.jps.incremental.groovy;
 
 import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.UrlClassLoader;
+import org.jetbrains.annotations.NotNull;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.PrintStream;
+import java.io.*;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -37,7 +37,7 @@ class InProcessGroovyc {
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   static void runGroovycInThisProcess(Collection<String> compilationClassPath,
                                       List<String> programParams,
-                                      GroovycOutputParser parser)
+                                      final GroovycOutputParser parser)
     throws MalformedURLException {
     List<URL> urls = ContainerUtil.newArrayList();
     for (String s : compilationClassPath) {
@@ -49,11 +49,8 @@ class InProcessGroovyc {
     PrintStream oldErr = System.err;
     ClassLoader oldLoader = Thread.currentThread().getContextClassLoader();
     
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    ByteArrayOutputStream err = new ByteArrayOutputStream();
-    
-    System.setOut(new PrintStream(out));
-    System.setErr(new PrintStream(err));
+    System.setOut(createStream(parser, ProcessOutputTypes.STDOUT, oldOut));
+    System.setErr(createStream(parser, ProcessOutputTypes.STDERR, oldErr));
     Thread.currentThread().setContextClassLoader(loader);
     try {
       Class<?> runnerClass = loader.loadClass("org.jetbrains.groovy.compiler.rt.GroovycRunner");
@@ -65,16 +62,51 @@ class InProcessGroovyc {
       throw new RuntimeException(e);
     }
     finally {
+      System.out.flush();
+      System.err.flush();
+      
       System.setOut(oldOut);
       System.setErr(oldErr);
       Thread.currentThread().setContextClassLoader(oldLoader);
     }
+  }
 
-    for (String line : StringUtil.splitByLines(out.toString())) {
-      parser.notifyTextAvailable(line, ProcessOutputTypes.STDOUT);
-    }
-    for (String line : StringUtil.splitByLines(err.toString())) {
-      parser.notifyTextAvailable(line, ProcessOutputTypes.STDERR);
-    }
+  @NotNull
+  private static PrintStream createStream(final GroovycOutputParser parser, final Key type, final PrintStream overridden) {
+    final Thread thread = Thread.currentThread();
+    return new PrintStream(new OutputStream() {
+      ByteArrayOutputStream line = new ByteArrayOutputStream();
+      boolean hasLineSeparator = false;
+      
+      @Override
+      public void write(int b) throws IOException {
+        if (Thread.currentThread() != thread) {
+          overridden.write(b);
+          return;
+        }
+
+        if (hasLineSeparator && !isLineSeparator(b)) {
+          flush();
+        }
+        else {
+          hasLineSeparator |= isLineSeparator(b);
+        }
+        line.write(b);
+      }
+
+      private boolean isLineSeparator(int b) {
+        return b == '\n' || b == '\r';
+      }
+
+      @Override
+      public void flush() throws IOException {
+        if (line.size() > 0) {
+          parser.notifyTextAvailable(StringUtil.convertLineSeparators(line.toString()), type);
+          line = new ByteArrayOutputStream();
+          hasLineSeparator = false;
+        }
+      }
+
+    });
   }
 }
