@@ -753,8 +753,7 @@ public class SystemBuilder {
           @Override public void visitReturnStatement(final PsiReturnStatement statement) {
             super.visitReturnStatement(statement);
 
-            final PsiMethod method = PsiTreeUtil.getParentOfType(statement, PsiMethod.class);
-
+            final PsiMethod method = PsiTreeUtil.getParentOfType(statement, PsiMethod.class, true, PsiLambdaExpression.class);
             if (method != null) {
               system.addSubtypeConstraint(evaluateType(statement.getReturnValue(), system), getType(method));
             }
