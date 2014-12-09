@@ -63,8 +63,7 @@ import org.jetbrains.org.objectweb.asm.ClassReader;
 import org.jetbrains.org.objectweb.asm.ClassVisitor;
 import org.jetbrains.org.objectweb.asm.Opcodes;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 import java.util.concurrent.Future;
 
@@ -80,6 +79,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
   private static final Key<Boolean> FILES_MARKED_DIRTY_FOR_NEXT_ROUND = Key.create("SRC_MARKED_DIRTY");
   private static final String GROOVY_EXTENSION = "groovy";
   private static final String GPP_EXTENSION = "gpp";
+  private static final Object ourInProcessGroovycLock = new Object();
   private final boolean myForStubs;
   private final String myBuilderName;
 
@@ -119,8 +119,9 @@ public class GroovyBuilder extends ModuleLevelBuilder {
 
       JpsSdk<JpsDummyElement> jdk = getJdk(chunk);
       String version = jdk == null ? SystemInfo.JAVA_RUNTIME_VERSION : jdk.getVersionString();
+      boolean inProcess = "true".equals(System.getProperty("groovyc.in.process"));
       boolean mayDependOnUtilJar = version != null && StringUtil.compareVersionNumbers(version, "1.6") >= 0;
-      boolean optimizeClassLoading = mayDependOnUtilJar && ourOptimizeThreshold != 0 && toCompilePaths.size() >= ourOptimizeThreshold;
+      boolean optimizeClassLoading = !inProcess && mayDependOnUtilJar && ourOptimizeThreshold != 0 && toCompilePaths.size() >= ourOptimizeThreshold;
 
       Map<String, String> class2Src = buildClassToSourceMap(chunk, context, toCompilePaths, finalOutputs);
 
@@ -144,7 +145,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
         compilerOutput, toCompilePaths, finalOutputs.values(), class2Src, encoding, patchers,
         optimizeClassLoading ? StringUtil.join(classpath, File.pathSeparator) : ""
       );
-      final GroovycOutputParser parser = runGroovyc(context, chunk, tempFile, settings, classpath, optimizeClassLoading);
+      final GroovycOutputParser parser = runGroovyc(context, chunk, tempFile, settings, classpath, optimizeClassLoading, inProcess);
 
       Map<ModuleBuildTarget, Collection<GroovycOutputParser.OutputItem>>
         compiled = processCompiledFiles(context, chunk, generationOutputs, compilerOutput, parser.getSuccessfullyCompiled());
@@ -200,7 +201,37 @@ public class GroovyBuilder extends ModuleLevelBuilder {
                                              File tempFile,
                                              final JpsGroovySettings settings,
                                              Collection<String> compilationClassPath,
-                                             boolean optimizeClassLoading) throws IOException {
+                                             boolean optimizeClassLoading, boolean inProcess) throws IOException {
+    List<String> programParams = ContainerUtilRt.newArrayList(optimizeClassLoading ? GroovyRtConstants.OPTIMIZE : "do_not_optimize",
+                                                              myForStubs ? "stubs" : "groovyc",
+                                                              tempFile.getPath());
+    if (settings.invokeDynamic) {
+      programParams.add("--indy");
+    }
+
+    final GroovycOutputParser parser = new GroovycOutputParser() {
+      @Override
+      protected void updateStatus(@NotNull String status) {
+        context.processMessage(new ProgressMessage(status + " [" + chunk.getPresentableShortName() + "]"));
+      }
+    };
+
+    if (inProcess) {
+      synchronized (ourInProcessGroovycLock) {
+        InProcessGroovyc.runGroovycInThisProcess(compilationClassPath, programParams, parser);
+      }
+    } else {
+      forkGroovycProcess(chunk, settings, compilationClassPath, optimizeClassLoading, programParams, parser);
+    }
+
+    return parser;
+  }
+
+  private static void forkGroovycProcess(ModuleChunk chunk,
+                                         JpsGroovySettings settings,
+                                         Collection<String> compilationClassPath,
+                                         boolean optimizeClassLoading, List<String> programParams, final GroovycOutputParser parser)
+    throws IOException {
     List<String> classpath = new ArrayList<String>();
     if (optimizeClassLoading) {
       classpath.add(getGroovyRtRoot().getPath());
@@ -209,13 +240,6 @@ public class GroovyBuilder extends ModuleLevelBuilder {
       classpath.add(ClasspathBootstrap.getResourceFile(THashMap.class).getPath());
     } else {
       classpath.addAll(compilationClassPath);
-    }
-
-    List<String> programParams = ContainerUtilRt.newArrayList(optimizeClassLoading ? GroovyRtConstants.OPTIMIZE : "do_not_optimize",
-                                                              myForStubs ? "stubs" : "groovyc",
-                                                              tempFile.getPath());
-    if (settings.invokeDynamic) {
-      programParams.add("--indy");
     }
 
     List<String> vmParams = ContainerUtilRt.newArrayList();
@@ -235,14 +259,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
       vmParams,
       programParams
     );
-
     final Process process = Runtime.getRuntime().exec(ArrayUtil.toStringArray(cmd));
-    final GroovycOutputParser parser = new GroovycOutputParser() {
-      @Override
-      protected void updateStatus(@NotNull String status) {
-        context.processMessage(new ProgressMessage(status + " [" + chunk.getPresentableShortName() + "]"));
-      }
-    };
     ProcessHandler handler = new BaseOSProcessHandler(process, null, null) {
       @Override
       protected Future<?> executeOnPooledThread(Runnable task) {
@@ -258,7 +275,6 @@ public class GroovyBuilder extends ModuleLevelBuilder {
     handler.startNotify();
     handler.waitFor();
     parser.notifyFinished(process.exitValue());
-    return parser;
   }
 
   private static boolean checkChunkRebuildNeeded(CompileContext context, GroovycOutputParser parser) {

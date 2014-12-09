@@ -389,7 +389,7 @@ public class DependentGroovycRunner {
   static GroovyClassLoader buildClassLoaderFor(final CompilerConfiguration compilerConfiguration, final AstAwareResourceLoader resourceLoader) {
     GroovyClassLoader classLoader = AccessController.doPrivileged(new PrivilegedAction<GroovyClassLoader>() {
       public GroovyClassLoader run() {
-        return new GroovyClassLoader(getClass().getClassLoader(), compilerConfiguration) {
+        return new GroovyClassLoader(Thread.currentThread().getContextClassLoader(), compilerConfiguration) {
           public Class loadClass(String name, boolean lookupScriptFiles, boolean preferClassOverScript)
             throws ClassNotFoundException, CompilationFailedException {
             Class aClass;
