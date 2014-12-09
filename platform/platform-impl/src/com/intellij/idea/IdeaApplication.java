@@ -319,9 +319,13 @@ public class IdeaApplication {
       app.invokeLater(new Runnable() {
         @Override
         public void run() {
+          Project projectFromCommandLine = null;
           if (myPerformProjectLoad) {
-            loadProject();
+            projectFromCommandLine = loadProjectFromExternalCommandLine();
           }
+
+          final MessageBus bus = ApplicationManager.getApplication().getMessageBus();
+          bus.syncPublisher(AppLifecycleListener.TOPIC).appStarting(projectFromCommandLine);
 
           //noinspection SSBasedInspection
           SwingUtilities.invokeLater(new Runnable() {
@@ -338,15 +342,13 @@ public class IdeaApplication {
     }
   }
 
-  private void loadProject() {
+  private Project loadProjectFromExternalCommandLine() {
     Project project = null;
     if (myArgs != null && myArgs.length > 0 && myArgs[0] != null) {
       LOG.info("IdeaApplication.loadProject");
       project = CommandLineProcessor.processExternalCommandLine(Arrays.asList(myArgs), null);
     }
-
-    final MessageBus bus = ApplicationManager.getApplication().getMessageBus();
-    bus.syncPublisher(AppLifecycleListener.TOPIC).appStarting(project);
+    return project;
   }
 
   public String[] getCommandLineArguments() {
