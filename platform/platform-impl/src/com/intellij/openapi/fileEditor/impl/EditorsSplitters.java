@@ -25,7 +25,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.impl.text.FileDropHandler;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapManagerListener;
@@ -58,8 +57,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.datatransfer.DataFlavor;
-import java.awt.datatransfer.Transferable;
 import java.awt.event.ContainerEvent;
 import java.io.File;
 import java.util.*;
@@ -80,7 +77,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
   private static final EditorEmptyTextPainter ourPainter = ServiceManager.getService(EditorEmptyTextPainter.class);
 
   private EditorWindow myCurrentWindow;
-  final Set<EditorWindow> myWindows = new CopyOnWriteArraySet<EditorWindow>();
+  private final Set<EditorWindow> myWindows = new CopyOnWriteArraySet<EditorWindow>();
 
   private final FileEditorManagerImpl myManager;
   private Element mySplittersElement;  // temporarily used during initialization
@@ -459,6 +456,9 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
   }
 
   private void setCurrentWindow(@Nullable final EditorWindow currentWindow) {
+    if (currentWindow != null && !myWindows.contains(currentWindow)) {
+      throw new IllegalArgumentException(currentWindow + " is not a member of this container");
+    }
     myCurrentWindow = currentWindow;
   }
 
@@ -653,6 +653,21 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     } else {
       fireRunnable.run();
     }
+  }
+
+  void addWindow(EditorWindow window) {
+    myWindows.add(window);
+  }
+
+  void removeWindow(EditorWindow window) {
+    myWindows.remove(window);
+    if (myCurrentWindow == window) {
+      myCurrentWindow = null;
+    }
+  }
+
+  boolean containsWindow(EditorWindow window) {
+    return myWindows.contains(window);
   }
 
   //---------------------------------------------------------

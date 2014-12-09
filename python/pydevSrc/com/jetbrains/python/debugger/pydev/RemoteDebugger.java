@@ -522,9 +522,6 @@ public class RemoteDebugger implements ProcessDebugger {
           recordCallSignature(ProtocolParser.parseCallSignature(frame.getPayload()));
         }
         else {
-          if (AbstractCommand.isErrorEvent(frame.getCommand())) {
-            LOG.error("Error response from debugger: " + frame.getPayload());
-          }
           placeResponse(frame.getSequence(), frame);
         }
       }

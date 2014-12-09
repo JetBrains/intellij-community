@@ -103,7 +103,7 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
     if (color == null) {
       color = JBColor.GRAY;
     }
-    new HighlightDisplayLevel(severity, new HighlightDisplayLevel.TheColorIcon(HighlightDisplayLevel.EMPTY_ICON_DIM, color));
+    new HighlightDisplayLevel(severity, new HighlightDisplayLevel.TheColorIcon(HighlightDisplayLevel.getEmptyIconDim(), color));
     severitiesChanged();
   }
 

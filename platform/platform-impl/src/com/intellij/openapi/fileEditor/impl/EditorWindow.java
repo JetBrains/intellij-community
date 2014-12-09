@@ -104,7 +104,7 @@ public class EditorWindow {
       setTabLayoutPolicy(JTabbedPane.WRAP_TAB_LAYOUT);
     }
 
-    getWindows().add(this);
+    myOwner.addWindow(this);
     if (myOwner.getCurrentWindow() == null) {
       myOwner.setCurrentWindow(this, false);
     }
@@ -238,14 +238,10 @@ public class EditorWindow {
     }
   }
 
-  private Set<EditorWindow> getWindows() {
-    return myOwner.myWindows;
-  }
-
   void dispose() {
     try {
       disposeTabs();
-      getWindows ().remove(this);
+      myOwner.removeWindow(this);
     }
     finally {
       myIsDisposed = true;
@@ -641,7 +637,7 @@ public class EditorWindow {
   }
 
   private void checkConsistency() {
-    LOG.assertTrue(getWindows().contains(this), "EditorWindow not in collection");
+    LOG.assertTrue(myOwner.containsWindow(this), "EditorWindow not in collection");
   }
 
   public EditorWithProviderComposite getSelectedEditor() {
@@ -897,7 +893,7 @@ public class EditorWindow {
     final ArrayList<EditorWindow> res = new ArrayList<EditorWindow>();
     if (myPanel.getParent() instanceof Splitter) {
       final Splitter splitter = (Splitter)myPanel.getParent();
-      for (final EditorWindow win : getWindows()) {
+      for (final EditorWindow win : myOwner.getWindows()) {
         if (win != this && SwingUtilities.isDescendingFrom(win.myPanel, splitter)) {
           res.add(win);
         }
