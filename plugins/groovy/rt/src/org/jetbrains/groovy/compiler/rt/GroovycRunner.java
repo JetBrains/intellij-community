@@ -105,7 +105,9 @@ public class GroovycRunner {
     if (loader == null) {
       return 1;
     }
-    Thread.currentThread().setContextClassLoader(loader);
+    if (optimize) {
+      Thread.currentThread().setContextClassLoader(loader);
+    }
 
     try {
       Class.forName("org.codehaus.groovy.control.CompilationUnit", true, loader);
