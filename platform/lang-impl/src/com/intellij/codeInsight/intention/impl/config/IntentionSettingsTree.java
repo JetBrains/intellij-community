@@ -26,11 +26,9 @@ import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.ui.OnePixelDivider;
 import com.intellij.openapi.util.Ref;
 import com.intellij.packageDependencies.ui.TreeExpansionMonitor;
 import com.intellij.ui.*;
-import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.ui.UIUtil;
@@ -98,8 +96,7 @@ public abstract class IntentionSettingsTree {
 
     myFilter = new MyFilterComponent();
     myComponent = new JPanel(new BorderLayout());
-    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTree);
-    scrollPane.setBorder(new CustomLineBorder(OnePixelDivider.BACKGROUND, 1, 0, 0, 1));
+    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTree, 1, 0, 0, 1);
     myNorthPanel = new JPanel(new BorderLayout());
     myNorthPanel.add(myFilter, BorderLayout.CENTER);
 

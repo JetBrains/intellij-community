@@ -17,6 +17,8 @@ package com.intellij.ui;
 
 
 
+import com.intellij.openapi.ui.OnePixelDivider;
+import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBScrollPane;
 import org.intellij.lang.annotations.MagicConstant;
 
@@ -60,6 +62,12 @@ public class ScrollPaneFactory implements ScrollPaneConstants {
       scrollPane.setBorder(IdeBorderFactory.createEmptyBorder()); // set empty border, because setting null doesn't always take effect
       scrollPane.setViewportBorder(IdeBorderFactory.createEmptyBorder());
     }
+    return scrollPane;
+  }
+
+  public static JScrollPane createScrollPane(Component view, int top, int left, int bottom, int right) {
+    JBScrollPane scrollPane = new JBScrollPane(view);
+    scrollPane.setBorder(new CustomLineBorder(OnePixelDivider.BACKGROUND, top, left, bottom, right));
     return scrollPane;
   }
 
