@@ -220,6 +220,7 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
       super(root.getName(), root.getPresentableUrl(), null);
       myRoot = root;
       myIcon = new CheckboxColorIcon(CHECKBOX_ICON_SIZE, VcsLogGraphTable.getRootBackgroundColor(myRoot, myColorManager));
+      getTemplatePresentation().setIcon(EmptyIcon.create(CHECKBOX_ICON_SIZE)); // see PopupFactoryImpl.calcMaxIconSize
     }
 
     @Override
