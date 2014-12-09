@@ -204,6 +204,11 @@ public class ExtractLightMethodObjectHandler {
       protected AbstractExtractDialog createExtractMethodObjectDialog(MyExtractMethodProcessor processor) {
         return new LightExtractMethodObjectDialog(this, methodName);
       }
+
+      @Override
+      protected boolean isFoldingApplicable() {
+        return false;
+      }
     };
     extractMethodObjectProcessor.getExtractProcessor().setShowErrorDialogs(false);
 

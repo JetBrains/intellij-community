@@ -28,7 +28,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -62,7 +61,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
@@ -648,6 +646,10 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
   public PsiClass getInnerClass() {
     return myInnerClass;
   }
+  
+  protected boolean isFoldingApplicable() {
+    return true;
+  }
 
   public class MyExtractMethodProcessor extends ExtractMethodProcessor {
 
@@ -816,6 +818,11 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
       else {
         super.declareNecessaryVariablesAfterCall(outputVariable);
       }
+    }
+
+    @Override
+    protected boolean isFoldingApplicable() {
+      return ExtractMethodObjectProcessor.this.isFoldingApplicable();
     }
 
     private void rebindExitStatement(final String objectName) {
