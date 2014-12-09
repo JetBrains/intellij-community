@@ -2,6 +2,7 @@ package com.jetbrains.python.edu;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -11,6 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.edu.course.Course;
 import com.jetbrains.python.edu.course.Task;
 import com.jetbrains.python.sdk.PythonSdkType;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.util.Map;
@@ -29,7 +31,7 @@ public class StudyTestRunner {
     myTaskDir = taskDir;
   }
 
-  public Process launchTests(Project project, String executablePath) throws ExecutionException {
+  public Process createCheckProcess(Project project, String executablePath) throws ExecutionException {
     Sdk sdk = PythonSdkType.findPythonSdk(ModuleManager.getInstance(project).getModules()[0]);
     File testRunner = new File(myTaskDir.getPath(), myTask.getTestFile());
     GeneralCommandLine commandLine = new GeneralCommandLine();
@@ -60,29 +62,18 @@ public class StudyTestRunner {
   }
 
 
-  public String getPassedTests(Process p) {
-    InputStream testOutput = p.getInputStream();
-    BufferedReader testOutputReader = new BufferedReader(new InputStreamReader(testOutput));
-    String line;
-    try {
-      while ((line = testOutputReader.readLine()) != null) {
-        if (line.contains(STUDY_PREFIX)) {
-          if (line.contains(TEST_OK)) {
-            continue;
-          }
-          int messageStart = line.indexOf(TEST_FAILED);
-          String res = line.substring(messageStart + TEST_FAILED.length());
-          StudyUtils.closeSilently(testOutputReader);
-          return res;
+  @NotNull
+  public String getTestsOutput(@NotNull final ProcessOutput processOutput) {
+    for (String line : processOutput.getStdoutLines()) {
+      if (line.contains(STUDY_PREFIX)) {
+        if (line.contains(TEST_OK)) {
+          continue;
         }
+        int messageStart = line.indexOf(TEST_FAILED);
+        return line.substring(messageStart + TEST_FAILED.length());
       }
     }
-    catch (IOException e) {
-      LOG.error(e);
-    }
-    finally {
-      StudyUtils.closeSilently(testOutputReader);
-    }
+
     return TEST_OK;
   }
 }
