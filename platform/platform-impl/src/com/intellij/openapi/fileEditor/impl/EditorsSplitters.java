@@ -118,6 +118,9 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
   }
 
   public void clear() {
+    for (EditorWindow window : myWindows) {
+      window.dispose();
+    }
     removeAll();
     myWindows.clear();
     setCurrentWindow(null);

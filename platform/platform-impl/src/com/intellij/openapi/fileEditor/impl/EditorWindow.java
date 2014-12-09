@@ -242,7 +242,7 @@ public class EditorWindow {
     return myOwner.myWindows;
   }
 
-  private void dispose() {
+  void dispose() {
     try {
       disposeTabs();
       getWindows ().remove(this);
