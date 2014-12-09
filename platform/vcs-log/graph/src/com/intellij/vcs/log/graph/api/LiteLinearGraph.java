@@ -38,6 +38,8 @@ public interface LiteLinearGraph {
       this.down = down;
     }
 
-
+    public static NodeFilter filter(boolean toUp) {
+      return toUp ? UP : DOWN;
+    }
   }
 }
