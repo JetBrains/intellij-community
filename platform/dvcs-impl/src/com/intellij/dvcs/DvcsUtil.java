@@ -239,7 +239,7 @@ public class DvcsUtil {
     return tryOrThrow(new Callable<String>() {
       @Override
       public String call() throws Exception {
-        return StringUtil.convertLineSeparators(FileUtil.loadFile(file).trim());
+        return StringUtil.convertLineSeparators(FileUtil.loadFile(file)).trim();
       }
     }, file);
   }
