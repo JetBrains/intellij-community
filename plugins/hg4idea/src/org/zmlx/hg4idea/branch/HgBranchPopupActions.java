@@ -24,6 +24,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.InputValidator;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
@@ -47,7 +49,6 @@ import org.zmlx.hg4idea.util.HgErrorUtil;
 
 import java.util.*;
 
-import static org.zmlx.hg4idea.util.HgUtil.getCloseBranchCommitMessageFromUser;
 import static org.zmlx.hg4idea.util.HgUtil.getNamesWithoutHashes;
 import static org.zmlx.hg4idea.util.HgUtil.getNewBranchNameFromUser;
 
@@ -136,14 +137,27 @@ public class HgBranchPopupActions {
     @NotNull final HgRepository myPreselectedRepo;
 
     HgCloseBranchAction(@NotNull Project project, @NotNull HgRepository preselectedRepo) {
-      super("Close current branch", "Close current branch", null);
+      super("Close current branch", String.format("Close %s branch", preselectedRepo.getCurrentBranch()), null);
       myProject = project;
       myPreselectedRepo = preselectedRepo;
     }
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      final String commitMessage = getCloseBranchCommitMessageFromUser(myPreselectedRepo);
+      String dialogTitle = String.format("Closing branch %s", myPreselectedRepo.getCurrentBranch());
+      final String commitMessage = Messages
+        .showInputDialog(myProject, "Enter the commit message:", dialogTitle, Messages.getQuestionIcon(), dialogTitle,
+                         new InputValidator() {
+                           @Override
+                           public boolean checkInput(String inputString) {
+                             return !StringUtil.isEmptyOrSpaces(inputString);
+                           }
+
+                           @Override
+                           public boolean canClose(String inputString) {
+                             return checkInput(inputString);
+                           }
+                         });
       if (commitMessage == null) {
         return;
       }
@@ -159,7 +173,7 @@ public class HgBranchPopupActions {
             myPreselectedRepo.update();
             if (HgErrorUtil.hasErrorsInCommandExecution(result)) {
               new HgCommandResultNotifier(myProject)
-                .notifyError(result, "Close branch failed", "Branch close failed");
+                .notifyError(result, "Hg Error", "Close branch failed");
             }
           }
         });

@@ -334,28 +334,6 @@ public abstract class HgUtil {
   }
 
   /**
-   * Shows a message dialog to enter commit message to close branch.
-   *
-   * @return commit message or {@code null} if user has cancelled the dialog.
-   */
-  @Nullable
-  public static String getCloseBranchCommitMessageFromUser(@NotNull HgRepository repository) {
-    String dialogTitle = String.format("Closing branch %s", repository.getCurrentBranch());
-    return Messages.showInputDialog(repository.getProject(), "Enter the commit message:", dialogTitle, Messages.getQuestionIcon(),
-                                    dialogTitle, new InputValidator() {
-        @Override
-        public boolean checkInput(String inputString) {
-          return !StringUtil.isEmptyOrSpaces(inputString);
-        }
-
-        @Override
-        public boolean canClose(String inputString) {
-          return checkInput(inputString);
-        }
-      });
-  }
-
-  /**
    * Checks is a merge operation is in progress on the given repository.
    * Actually gets the number of parents of the current revision. If there are 2 parents, then a merge is going on. Otherwise there is
    * only one parent.
