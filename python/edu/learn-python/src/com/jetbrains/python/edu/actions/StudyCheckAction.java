@@ -221,13 +221,23 @@ public class StudyCheckAction extends DumbAwareAction {
               if (taskDir == null) return;
               task.setStatus(StudyStatus.Failed, oldStatus);
               for (Map.Entry<String, TaskFile> entry : taskFiles.entrySet()) {
-                String name = entry.getKey();
-                TaskFile taskFile = entry.getValue();
+                final String name = entry.getKey();
+                final TaskFile taskFile = entry.getValue();
                 if (taskFile.getTaskWindows().size() < 2) {
                   taskFile.setStatus(StudyStatus.Failed, StudyStatus.Unchecked);
                   continue;
                 }
-                runSmartTestProcess(taskDir, testRunner, name, taskFile, project);
+                CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
+                  @Override
+                  public void run() {
+                    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+                      @Override
+                      public void run() {
+                        runSmartTestProcess(taskDir, testRunner, name, taskFile, project);
+                      }
+                    });
+                  }
+                });
               }
               showTestResultPopUp(failedMessage, MessageType.ERROR.getPopupBackground(), project);
               navigateToFailedTaskWindow(studyState, task, taskDir, project);
