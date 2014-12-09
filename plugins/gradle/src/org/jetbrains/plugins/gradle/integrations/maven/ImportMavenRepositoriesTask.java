@@ -45,6 +45,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.indices.IndicesBundle;
 import org.jetbrains.idea.maven.indices.MavenIndex;
 import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager;
 import org.jetbrains.idea.maven.indices.MavenRepositoriesConfigurable;
@@ -164,7 +165,7 @@ public class ImportMavenRepositoriesTask implements Runnable {
           notificationData.setListener("#open", new NotificationListener.Adapter() {
             @Override
             protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
-              ShowSettingsUtil.getInstance().showSettingsDialog(myProject, "Repositories");
+              ShowSettingsUtil.getInstance().showSettingsDialog(myProject, IndicesBundle.message("maven.repositories.title"));
             }
           });
 
