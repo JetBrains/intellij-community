@@ -9,19 +9,17 @@ def get_file_text(path):
     return text
 
 
-def get_file_output():
-    """ Returns answer file output using import system """
-    saved_stdout = sys.stdout
-    try:
-        from StringIO import StringIO
+def get_file_output(encoding="utf-8", path=sys.argv[-1]):
+    """
+    Returns answer file output
+    :param encoding: to decode output in python3
+    :param path: path of file to execute
+    :return: list of strings
+    """
+    import subprocess
 
-        out = StringIO()
-        sys.stdout = out
-        import_task_file()
-        output = out.getvalue().strip()
-        return output
-    finally:
-        sys.stdout = saved_stdout
+    proc = subprocess.Popen([sys.executable, path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    return list(map(lambda x: x.decode(encoding), proc.communicate()[0].splitlines()))
 
 
 def test_file_importable():
@@ -55,6 +53,7 @@ def import_file(path):
     """ Returns imported file """
     if sys.version_info[0] == 2 or sys.version_info[1] < 3:
         import imp
+
         return imp.load_source("tmp", path)
     elif sys.version_info[0] == 3:
         import importlib.machinery
