@@ -452,7 +452,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
 
   public static void updateDependencies(CompileContext context,
                                         List<File> toCompile,
-                                        Map<ModuleBuildTarget, Collection<GroovycOSProcessHandler.OutputItem>> successfullyCompiled,
+                                        Map<ModuleBuildTarget, Collection<GroovycOutputParser.OutputItem>> successfullyCompiled,
                                         OutputConsumer outputConsumer, Builder builder) throws IOException {
     JavaBuilderUtil.registerFilesToCompile(context, toCompile);
     if (!successfullyCompiled.isEmpty()) {
