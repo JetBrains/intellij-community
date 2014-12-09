@@ -152,8 +152,6 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
       return false;
     }
 
-    if (!CommonRefactoringUtil.checkReadOnlyStatus(project, method)) return false;
-
     final PsiType typeByExpression = invokedOnDeclaration ? null : RefactoringUtil.getTypeByExpressionWithExpectedType(expr);
     if (!invokedOnDeclaration && (typeByExpression == null || LambdaUtil.notInferredType(typeByExpression))) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("type.of.the.selected.expression.cannot.be.determined"));
@@ -171,6 +169,9 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
     if (validEnclosingMethods.isEmpty()) {
       return false;
     }
+
+    if (!CommonRefactoringUtil.checkReadOnlyStatus(project, method)) return false;
+
     final Introducer introducer = new Introducer(project, expr, localVar, editor);
     final boolean unitTestMode = ApplicationManager.getApplication().isUnitTestMode();
     if (validEnclosingMethods.size() == 1 || unitTestMode) {
