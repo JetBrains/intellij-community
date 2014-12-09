@@ -31,9 +31,9 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.util.ArrayUtil;
@@ -59,7 +59,7 @@ import java.util.List;
  * Time: 12:44:56 PM
  */
 
-public class AllFileTemplatesConfigurable implements SearchableConfigurable, Configurable.NoScroll {
+public class AllFileTemplatesConfigurable implements SearchableConfigurable, Configurable.NoMargin, Configurable.NoScroll {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.fileTemplates.impl.AllFileTemplatesConfigurable");
 
   private static final String TEMPLATES_TITLE = IdeBundle.message("tab.filetemplates.templates");
@@ -251,13 +251,14 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
       }
     });
     myEditorComponent = myEditor.createComponent();
+    myEditorComponent.setBorder(BorderFactory.createEmptyBorder(0, 10, 10, 10));
 
     myTabs = allTabs.toArray(new FileTemplateTab[allTabs.size()]);
     myTabbedPane = new TabbedPaneWrapper(myUIDisposable);
     myTabbedPane.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
     myLeftPanel = new JPanel(new CardLayout());
     for (FileTemplateTab tab : myTabs) {
-      myLeftPanel.add(ScrollPaneFactory.createScrollPane(tab.getComponent()), tab.getTitle());
+      myLeftPanel.add(ScrollPaneFactory.createScrollPane(tab.getComponent(), 1, 0, 0, 0), tab.getTitle());
       JPanel fakePanel = new JPanel();
       fakePanel.setPreferredSize(new Dimension(0, 0));
       myTabbedPane.addTab(tab.getTitle(), fakePanel);
@@ -336,7 +337,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
     JPanel centerPanel = new JPanel(new BorderLayout());
     centerPanel.add(myTabbedPane.getComponent(), BorderLayout.NORTH);
     //leftPanel.add(myTabbedPane.getComponent(), BorderLayout.CENTER);
-    Splitter splitter = new Splitter(false, 0.3f);
+    OnePixelSplitter splitter = new OnePixelSplitter(false, 0.3f);
     splitter.setFirstComponent(myLeftPanel);
     splitter.setSecondComponent(myEditorComponent);
     centerPanel.add(splitter, BorderLayout.CENTER);
