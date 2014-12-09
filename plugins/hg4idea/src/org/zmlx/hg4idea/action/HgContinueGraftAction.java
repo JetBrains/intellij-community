@@ -21,17 +21,17 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.zmlx.hg4idea.command.HgRebaseCommand;
+import org.zmlx.hg4idea.command.HgGraftCommand;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.util.HgErrorUtil;
 
 import java.util.Collection;
 
-public class HgContinueRebaseAction extends HgProcessStateAction {
+public class HgContinueGraftAction extends HgProcessStateAction {
 
-  public HgContinueRebaseAction() {
-    super(Repository.State.REBASING);
+  public HgContinueGraftAction() {
+    super(Repository.State.GRAFTING);
   }
 
   @Override
@@ -39,14 +39,14 @@ public class HgContinueRebaseAction extends HgProcessStateAction {
                          @NotNull Collection<HgRepository> repositories,
                          @Nullable final HgRepository selectedRepo) {
 
-    new Task.Backgroundable(project, "Continue Rebasing...") {
+    new Task.Backgroundable(project, "Continue Grafting...") {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         if (selectedRepo != null) {
-          HgRebaseCommand rebaseCommand = new HgRebaseCommand(project, selectedRepo);
-          HgCommandResult result = rebaseCommand.continueRebase();
+          HgGraftCommand graftCommand = new HgGraftCommand(project, selectedRepo);
+          HgCommandResult result = graftCommand.continueGrafting();
           if (HgErrorUtil.isAbort(result)) {
-            new HgCommandResultNotifier(project).notifyError(result, "Hg Error", "Couldn't continue rebasing");
+            new HgCommandResultNotifier(project).notifyError(result, "Hg Error", "Couldn't continue grafting");
           }
           HgErrorUtil.markDirtyAndHandleErrors(project, selectedRepo.getRoot());
         }
