@@ -16,39 +16,47 @@
 package org.jetbrains.jps.incremental.groovy;
 
 import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * @author peter
  */
 class InProcessGroovyc {
+  private static final Pattern GROOVY_ALL_JAR_PATTERN = Pattern.compile("groovy-all(-(.*))?\\.jar");
+  private static SoftReference<Pair<String, ClassLoader>> ourParentLoaderCache;
+
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   static void runGroovycInThisProcess(Collection<String> compilationClassPath,
                                       List<String> programParams,
                                       final GroovycOutputParser parser)
     throws MalformedURLException {
-    List<URL> urls = ContainerUtil.newArrayList();
-    for (String s : compilationClassPath) {
-      urls.add(new File(s).toURI().toURL());
-    }
-    UrlClassLoader loader = UrlClassLoader.build().urls(urls).useCache().get();
+
+    ClassLoader parent = obtainParentLoader(compilationClassPath);
+
+    UrlClassLoader loader = UrlClassLoader.build().urls(toUrls(compilationClassPath)).parent(parent).useCache().get();
 
     PrintStream oldOut = System.out;
     PrintStream oldErr = System.err;
     ClassLoader oldLoader = Thread.currentThread().getContextClassLoader();
-    
+
     System.setOut(createStream(parser, ProcessOutputTypes.STDOUT, oldOut));
     System.setErr(createStream(parser, ProcessOutputTypes.STDERR, oldErr));
     Thread.currentThread().setContextClassLoader(loader);
@@ -69,6 +77,42 @@ class InProcessGroovyc {
       System.setErr(oldErr);
       Thread.currentThread().setContextClassLoader(oldLoader);
     }
+  }
+
+  @Nullable
+  private static ClassLoader obtainParentLoader(Collection<String> compilationClassPath) throws MalformedURLException {
+    if (!"true".equals(System.getProperty("groovyc.reuse.compiler.classes"))) {
+      return null;
+    }
+
+    String groovyAll = ContainerUtil.find(compilationClassPath, new Condition<String>() {
+      @Override
+      public boolean value(String s) {
+        return GROOVY_ALL_JAR_PATTERN.matcher(StringUtil.getShortName(s, '/')).matches();
+      }
+    });
+    if (groovyAll == null) {
+      return null;
+    }
+
+    Pair<String, ClassLoader> pair = SoftReference.dereference(ourParentLoaderCache);
+    if (pair != null && pair.first.equals(groovyAll)) {
+      return pair.second;
+    }
+
+    ClassLoader result =
+      UrlClassLoader.build().urls(toUrls(Arrays.asList(GroovyBuilder.getGroovyRtRoot().getPath(), groovyAll))).useCache().get();
+    ourParentLoaderCache = new SoftReference<Pair<String, ClassLoader>>(Pair.create(groovyAll, result));
+    return result;
+  }
+
+  @NotNull
+  private static List<URL> toUrls(Collection<String> paths) throws MalformedURLException {
+    List<URL> urls = ContainerUtil.newArrayList();
+    for (String s : paths) {
+      urls.add(new File(s).toURI().toURL());
+    }
+    return urls;
   }
 
   @NotNull

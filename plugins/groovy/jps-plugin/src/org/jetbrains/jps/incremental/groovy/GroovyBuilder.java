@@ -532,7 +532,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
     return cp;
   }
 
-  private static File getGroovyRtRoot() {
+  static File getGroovyRtRoot() {
     File root = ClasspathBootstrap.getResourceFile(GroovyBuilder.class);
     if (root.isFile()) {
       return new File(root.getParentFile(), "groovy_rt.jar");
