@@ -56,6 +56,13 @@ class GitRepositoryReader {
   private static Pattern BRANCH_WEAK_PATTERN     = Pattern.compile(" *(ref:)? */?refs/heads/(\\S+)");
   private static Pattern COMMIT_PATTERN          = Pattern.compile("[0-9a-fA-F]+"); // commit hash
 
+  private static final Processor<File> NOT_HIDDEN_DIRECTORIES = new Processor<File>() {
+    @Override
+    public boolean process(File dir) {
+      return !isHidden(dir);
+    }
+  };
+
   @NonNls private static final String REFS_HEADS_PREFIX = "refs/heads/";
   @NonNls private static final String REFS_REMOTES_PREFIX = "refs/remotes/";
 
@@ -288,7 +295,7 @@ class GitRepositoryReader {
     FileUtil.processFilesRecursively(myRefsHeadsDir, new Processor<File>() {
       @Override
       public boolean process(File file) {
-        if (!file.isDirectory()) {
+        if (!file.isDirectory() && !isHidden(file)) {
           String relativePath = FileUtil.getRelativePath(myRefsHeadsDir, file);
           if (relativePath != null) {
             branches.put(FileUtil.toSystemIndependentName(relativePath), file);
@@ -296,8 +303,12 @@ class GitRepositoryReader {
         }
         return true;
       }
-    });
+    }, NOT_HIDDEN_DIRECTORIES);
     return branches;
+  }
+
+  private static boolean isHidden(@NotNull File file) {
+    return file.getName().startsWith(".");
   }
 
   /**
@@ -354,7 +365,7 @@ class GitRepositoryReader {
     FileUtil.processFilesRecursively(myRefsRemotesDir, new Processor<File>() {
       @Override
       public boolean process(File file) {
-        if (!file.isDirectory() && !file.getName().equalsIgnoreCase(GitRepositoryFiles.HEAD)) {
+        if (!file.isDirectory() && !file.getName().equalsIgnoreCase(GitRepositoryFiles.HEAD) && !isHidden(file)) {
           final String relativePath = FileUtil.getRelativePath(myGitDir, file);
           if (relativePath != null) {
             String branchName = FileUtil.toSystemIndependentName(relativePath);
@@ -370,7 +381,7 @@ class GitRepositoryReader {
         }
         return true;
       }
-    });
+    }, NOT_HIDDEN_DIRECTORIES);
     return branches;
   }
 
