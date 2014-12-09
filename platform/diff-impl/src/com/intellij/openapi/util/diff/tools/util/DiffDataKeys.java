@@ -8,7 +8,6 @@ import com.intellij.openapi.util.diff.requests.DiffRequest;
 
 public interface DiffDataKeys {
   DataKey<DiffRequest> DIFF_REQUEST = DataKey.create("diff_request");
-  DataKey<Editor> CURRENT_EDITOR = DataKey.create("diff_current_editor");
   DataKey<FrameDiffTool.DiffViewer> DIFF_VIEWER = DataKey.create("diff_frame_viewer");
   DataKey<OpenFileDescriptor> OPEN_FILE_DESCRIPTOR = DataKey.create("diff_open_file_descriptor");
 

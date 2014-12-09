@@ -17,6 +17,7 @@ import com.intellij.openapi.util.diff.actions.impl.*;
 import com.intellij.openapi.util.diff.api.DiffTool;
 import com.intellij.openapi.util.diff.api.FrameDiffTool;
 import com.intellij.openapi.util.diff.api.FrameDiffTool.DiffContext;
+import com.intellij.openapi.util.diff.api.FrameDiffTool.DiffViewer;
 import com.intellij.openapi.util.diff.chains.DiffRequestChain;
 import com.intellij.openapi.util.diff.chains.DiffRequestPresentable;
 import com.intellij.openapi.util.diff.chains.DiffRequestPresentableException;
@@ -38,6 +39,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -70,8 +72,8 @@ public abstract class CacheDiffRequestChainProcessor implements Disposable {
   @Nullable private final JLabel myTitleLabel;
 
   @NotNull private DiffRequest myActiveRequest;
-  @Nullable private FrameDiffTool.DiffViewer myActiveViewer;
-  @Nullable private FrameDiffTool myActiveTool;
+
+  @NotNull private ViewerState myState = new EmptyState();
 
   public CacheDiffRequestChainProcessor(@Nullable Project project, @NotNull DiffRequestChain requestChain, boolean useShortHeader) {
     myProject = project;
@@ -141,77 +143,42 @@ public abstract class CacheDiffRequestChainProcessor implements Disposable {
     DiffRequest request = loadRequest();
     if (!force && request == myActiveRequest) return;
 
-    resetState();
+    myState.destroy();
+    myToolbarStatusPanel.setContent(null);
+    myToolbarPanel.setContent(null);
+    myContentPanel.setContent(null);
 
-    setupActiveRequest(request);
+    myActiveRequest.onAssigned(false);
+    myActiveRequest = request;
+    myActiveRequest.onAssigned(true);
 
-    setupSuitableTool();
-
-    setupActiveViewer();
-
-    initActiveViewer();
+    myState = createState();
+    myState.init();
 
     if (hadFocus) requestFocus();
   }
 
-  private void resetState() {
-    myActiveRequest.onAssigned(false);
-    myActiveRequest = NoDiffRequest.INSTANCE;
-
-    myActiveTool = null;
-
-    if (myActiveViewer != null) Disposer.dispose(myActiveViewer);
-    myActiveViewer = null;
-  }
-
-  private void setupActiveRequest(@NotNull DiffRequest request) {
-    request.onAssigned(true);
-    myActiveRequest = request;
-  }
-
-  private void setupSuitableTool() {
+  @NotNull
+  private ViewerState createState() {
+    FrameDiffTool frameTool = null;
     for (DiffTool tool : myToolOrder) {
       if (tool instanceof FrameDiffTool && tool.canShow(myContext, myActiveRequest)) {
-        myActiveTool = (FrameDiffTool)tool;
-        return;
+        frameTool = (FrameDiffTool)tool;
+        break;
       }
     }
 
-    myActiveTool = ErrorDiffTool.INSTANCE;
-  }
+    if (frameTool == null) frameTool = ErrorDiffTool.INSTANCE;
 
-  private void setupActiveViewer() {
-    assert myActiveTool != null;
+    DiffViewer viewer = frameTool.createComponent(myContext, myActiveRequest);
 
-    myActiveViewer = myActiveTool.createComponent(myContext, myActiveRequest);
-
-
-    myContentPanel.setContent(myActiveViewer.getComponent());
-
-    if (myTitleLabel != null) {
-      myTitleLabel.setText(myActiveRequest.getWindowTitle());
+    DiffViewerWrapper wrapper = myActiveRequest.getUserData(DiffViewerWrapper.KEY);
+    if (wrapper == null) {
+      return new DefaultState(viewer, frameTool);
     }
     else {
-      setWindowTitle(myActiveRequest.getWindowTitle());
+      return new WrapperState(viewer, frameTool, wrapper);
     }
-
-    myPanel.validate();
-  }
-
-  private void initActiveViewer() {
-    assert myActiveViewer != null;
-
-    FrameDiffTool.ToolbarComponents toolbarComponents = myActiveViewer.init();
-
-    DefaultActionGroup group = buildToolbar(toolbarComponents.toolbarActions);
-    myToolbarPanel.setContent(DiffUtil.createToolbar(group).getComponent());
-    for (AnAction action : group.getChildren(null)) {
-      action.registerCustomShortcutSet(action.getShortcutSet(), myPanel);
-    }
-
-    myToolbarStatusPanel.setContent(toolbarComponents.statusPanel);
-
-    myPanel.validate();
   }
 
   @NotNull
@@ -290,7 +257,12 @@ public abstract class CacheDiffRequestChainProcessor implements Disposable {
 
         myRequestCache.clear();
 
-        resetState();
+        myState.destroy();
+        myToolbarStatusPanel.setContent(null);
+        myToolbarPanel.setContent(null);
+        myContentPanel.setContent(null);
+
+        myActiveRequest.onAssigned(false);
       }
     });
   }
@@ -332,7 +304,7 @@ public abstract class CacheDiffRequestChainProcessor implements Disposable {
 
   @Nullable
   public JComponent getPreferredFocusedComponent() {
-    JComponent component = myActiveViewer != null ? myActiveViewer.getPreferredFocusedComponent() : null;
+    JComponent component = myState.getPreferredFocusedComponent();
     return component != null ? component : myToolbarPanel;
   }
 
@@ -359,7 +331,7 @@ public abstract class CacheDiffRequestChainProcessor implements Disposable {
 
   private enum IterationState {NEXT, PREV, NONE}
 
-  @NotNull private IterationState myState = IterationState.NONE;
+  @NotNull private IterationState myIterationState = IterationState.NONE;
 
   private class MyNextDifferenceAction extends NextDifferenceAction {
     @Override
@@ -391,13 +363,13 @@ public abstract class CacheDiffRequestChainProcessor implements Disposable {
         return;
       }
 
-      if (iterable != null && myState != IterationState.NEXT) {
+      if (iterable != null && myIterationState != IterationState.NEXT) {
         iterable.notify("Press again to go to the next change"); // TODO: "Change" is a bad word
-        myState = IterationState.NEXT;
+        myIterationState = IterationState.NEXT;
         return;
       }
 
-      myState = IterationState.NONE;
+      myIterationState = IterationState.NONE;
       myRequestChain.setIndex(myRequestChain.getIndex() + 1);
       myContext.putUserData(DiffUserDataKeys.SCROLL_TO_CHANGE, FIRST_CHANGE);
       updateRequest();
@@ -434,13 +406,13 @@ public abstract class CacheDiffRequestChainProcessor implements Disposable {
         return;
       }
 
-      if (iterable != null && myState != IterationState.PREV) {
+      if (iterable != null && myIterationState != IterationState.PREV) {
         iterable.notify("Press again to go to the previous change");
-        myState = IterationState.PREV;
+        myIterationState = IterationState.PREV;
         return;
       }
 
-      myState = IterationState.NONE;
+      myIterationState = IterationState.NONE;
       myRequestChain.setIndex(myRequestChain.getIndex() - 1);
       myContext.putUserData(DiffUserDataKeys.SCROLL_TO_CHANGE, LAST_CHANGE);
       updateRequest();
@@ -523,19 +495,15 @@ public abstract class CacheDiffRequestChainProcessor implements Disposable {
     public void update(AnActionEvent e) {
       Presentation presentation = e.getPresentation();
 
-      if (myActiveTool != null) {
-        presentation.setText(myActiveTool.getName());
-      }
-      else {
-        presentation.setText("<Unknown>");
-      }
+      DiffTool activeTool = myState.getActiveTool();
+      presentation.setText(activeTool.getName());
 
-      if (myActiveTool == ErrorDiffTool.INSTANCE) {
+      if (activeTool == ErrorDiffTool.INSTANCE) {
         presentation.setEnabledAndVisible(false);
       }
 
       for (DiffTool tool : myAvailableTools) {
-        if (tool != myActiveTool && tool.canShow(myContext, myActiveRequest)) {
+        if (tool != activeTool && tool.canShow(myContext, myActiveRequest)) {
           presentation.setEnabledAndVisible(true);
           return;
         }
@@ -568,7 +536,7 @@ public abstract class CacheDiffRequestChainProcessor implements Disposable {
 
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
-        if (myActiveTool == myDiffTool) return;
+        if (myState.getActiveTool() == myDiffTool) return;
 
         myToolOrder.remove(myDiffTool);
         int index;
@@ -601,9 +569,6 @@ public abstract class CacheDiffRequestChainProcessor implements Disposable {
       else if (DiffDataKeys.DIFF_REQUEST.is(dataId)) {
         return myActiveRequest;
       }
-      else if (DiffDataKeys.DIFF_VIEWER.is(dataId)) {
-        return myActiveViewer;
-      }
       else if (CommonDataKeys.PROJECT.is(dataId)) {
         return myProject;
       }
@@ -615,19 +580,23 @@ public abstract class CacheDiffRequestChainProcessor implements Disposable {
           return "reference.dialogs.diff.file";
         }
       }
-      else {
-        DataProvider contextProvider = myContext.getUserData(DiffUserDataKeys.DATA_PROVIDER);
-        if (contextProvider != null) {
-          Object data = contextProvider.getData(dataId);
-          if (data != null) return data;
-        }
-        DataProvider requestProvider = myActiveRequest.getUserData(DiffUserDataKeys.DATA_PROVIDER);
-        if (requestProvider != null) {
-          Object data = requestProvider.getData(dataId);
-          if (data != null) return data;
-        }
-        return null;
+
+      Object data = myState.getData(dataId);
+      if (data != null) return data;
+
+      DataProvider contextProvider = myContext.getUserData(DiffUserDataKeys.DATA_PROVIDER);
+      if (contextProvider != null) {
+        data = contextProvider.getData(dataId);
+        if (data != null) return data;
       }
+
+      DataProvider requestProvider = myActiveRequest.getUserData(DiffUserDataKeys.DATA_PROVIDER);
+      if (requestProvider != null) {
+        data = requestProvider.getData(dataId);
+        if (data != null) return data;
+      }
+
+      return null;
     }
   }
 
@@ -674,6 +643,187 @@ public abstract class CacheDiffRequestChainProcessor implements Disposable {
     @Override
     public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
       myRequestChain.putUserData(key, value);
+    }
+  }
+
+  //
+  // States
+  //
+
+  private interface ViewerState {
+    void init();
+
+    void destroy();
+
+    @Nullable
+    JComponent getPreferredFocusedComponent();
+
+    @Nullable
+    Object getData(@NonNls String dataId);
+
+    @NotNull
+    DiffTool getActiveTool();
+  }
+
+  private static class EmptyState implements ViewerState {
+    @Override
+    public void init() {
+    }
+
+    @Override
+    public void destroy() {
+    }
+
+    @Nullable
+    @Override
+    public JComponent getPreferredFocusedComponent() {
+      return null;
+    }
+
+    @Nullable
+    @Override
+    public Object getData(@NonNls String dataId) {
+      return null;
+    }
+
+    @NotNull
+    @Override
+    public DiffTool getActiveTool() {
+      return ErrorDiffTool.INSTANCE;
+    }
+  }
+
+  private class DefaultState implements ViewerState {
+    @NotNull private final DiffViewer myViewer;
+    @NotNull private final FrameDiffTool myTool;
+
+    public DefaultState(@NotNull DiffViewer viewer, @NotNull FrameDiffTool tool) {
+      myViewer = viewer;
+      myTool = tool;
+    }
+
+    @Override
+    public void init() {
+      myContentPanel.setContent(myViewer.getComponent());
+
+      if (myTitleLabel != null) {
+        myTitleLabel.setText(myActiveRequest.getWindowTitle());
+      }
+      else {
+        setWindowTitle(myActiveRequest.getWindowTitle());
+      }
+
+      myPanel.validate();
+
+      FrameDiffTool.ToolbarComponents toolbarComponents = myViewer.init();
+
+      DefaultActionGroup group = buildToolbar(toolbarComponents.toolbarActions);
+      myToolbarPanel.setContent(DiffUtil.createToolbar(group).getComponent());
+      for (AnAction action : group.getChildren(null)) {
+        action.registerCustomShortcutSet(action.getShortcutSet(), myPanel);
+      }
+
+      myToolbarStatusPanel.setContent(toolbarComponents.statusPanel);
+
+      myPanel.validate();
+    }
+
+    @Override
+    public void destroy() {
+      Disposer.dispose(myViewer);
+    }
+
+    @Nullable
+    @Override
+    public JComponent getPreferredFocusedComponent() {
+      return myViewer.getPreferredFocusedComponent();
+    }
+
+    @NotNull
+    @Override
+    public DiffTool getActiveTool() {
+      return myTool;
+    }
+
+    @Nullable
+    @Override
+    public Object getData(@NonNls String dataId) {
+      if (DiffDataKeys.DIFF_VIEWER.is(dataId)) {
+        return myViewer;
+      }
+      return null;
+    }
+  }
+
+  private class WrapperState implements ViewerState {
+    @NotNull private final DiffViewer myViewer;
+    @NotNull private final FrameDiffTool myTool;
+
+    @NotNull private DiffViewer myWrapperViewer;
+
+    public WrapperState(@NotNull DiffViewer viewer, @NotNull FrameDiffTool tool, @NotNull DiffViewerWrapper wrapper) {
+      myViewer = viewer;
+      myTool = tool;
+      myWrapperViewer = wrapper.createComponent(myContext, myActiveRequest, myViewer);
+    }
+
+    @Override
+    public void init() {
+      myContentPanel.setContent(myWrapperViewer.getComponent());
+
+      if (myTitleLabel != null) {
+        myTitleLabel.setText(myActiveRequest.getWindowTitle());
+      }
+      else {
+        setWindowTitle(myActiveRequest.getWindowTitle());
+      }
+
+      myPanel.validate();
+
+
+      FrameDiffTool.ToolbarComponents toolbarComponents1 = myViewer.init();
+      FrameDiffTool.ToolbarComponents toolbarComponents2 = myWrapperViewer.init();
+
+      List<AnAction> toolbarActions = new ArrayList<AnAction>();
+      if (toolbarComponents1.toolbarActions != null) toolbarActions.addAll(toolbarComponents1.toolbarActions);
+      if (toolbarComponents2.toolbarActions != null) toolbarActions.addAll(toolbarComponents2.toolbarActions);
+
+      DefaultActionGroup group = buildToolbar(toolbarActions);
+      myToolbarPanel.setContent(DiffUtil.createToolbar(group).getComponent());
+      for (AnAction action : group.getChildren(null)) {
+        action.registerCustomShortcutSet(action.getShortcutSet(), myPanel);
+      }
+
+      myToolbarStatusPanel.setContent(toolbarComponents2.statusPanel); // TODO: combine both panels ?
+
+      myPanel.validate();
+    }
+
+    @Override
+    public void destroy() {
+      Disposer.dispose(myViewer);
+      Disposer.dispose(myWrapperViewer);
+    }
+
+    @Nullable
+    @Override
+    public JComponent getPreferredFocusedComponent() {
+      return myWrapperViewer.getPreferredFocusedComponent();
+    }
+
+    @NotNull
+    @Override
+    public DiffTool getActiveTool() {
+      return myTool;
+    }
+
+    @Nullable
+    @Override
+    public Object getData(@NonNls String dataId) {
+      if (DiffDataKeys.DIFF_VIEWER.is(dataId)) {
+        return myWrapperViewer;
+      }
+      return null;
     }
   }
 }
