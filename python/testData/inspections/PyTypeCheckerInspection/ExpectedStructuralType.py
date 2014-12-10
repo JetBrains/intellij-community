@@ -9,8 +9,8 @@ def g(x):
 def test(x):
     x.foo
     f(x)
-    g(<warning descr="Expected type '{lower}', got '{foo}' instead">x</warning>)
+    g(x)
 
     z = 'foo'
-    f(<warning descr="Expected type '{foo, bar}, got 'str' instead">x</warning>)
-    g(x)
+    f(<warning descr="Expected type '{foo, bar}', got 'str' instead">z</warning>)
+    g(z)

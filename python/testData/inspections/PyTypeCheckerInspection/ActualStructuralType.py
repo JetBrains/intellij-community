@@ -15,5 +15,5 @@ def test(x, y):
     g(x)
 
     y.foo()
-    f(<warning descr="Expected type 'str', got '{foo}' instead">y</warning>)
-    g(<warning descr="Expected type '{lower}', got '{foo}' instead">y</warning>)
+    f(y)
+    g(y)
