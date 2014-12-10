@@ -1432,9 +1432,20 @@ public class StringUtil extends StringUtilRt {
   @NotNull
   @Contract(pure = true)
   public static String stripQuotesAroundValue(@NotNull String text) {
-    if (startsWithChar(text, '\"') || startsWithChar(text, '\'')) text = text.substring(1);
-    if (endsWithChar(text, '\"') || endsWithChar(text, '\'')) text = text.substring(0, text.length() - 1);
+    final int len = text.length();
+    if (len > 0) {
+      final int from = isQuoteAt(text, 0) ? 1 : 0;
+      final int to = len > 1 && isQuoteAt(text, len - 1) ? len - 1 : len;
+      if (from > 0 || to < len) {
+        return text.substring(from, to);
+      };
+    }
     return text;
+  }
+
+  private static boolean isQuoteAt(@NotNull String text, int ind) {
+    char ch = text.charAt(ind);
+    return ch == '\'' || ch == '\"';
   }
 
   @Contract(pure = true)

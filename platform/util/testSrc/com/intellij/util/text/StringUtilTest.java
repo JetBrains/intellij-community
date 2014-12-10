@@ -168,6 +168,24 @@ public class StringUtilTest extends TestCase {
     assertEquals("\"foo\'", StringUtil.unquoteString("\"foo\'"));
   }
 
+  public void testStripQuotesAroundValue() {
+    assertEquals("", StringUtil.stripQuotesAroundValue(""));
+    assertEquals("", StringUtil.stripQuotesAroundValue("'"));
+    assertEquals("", StringUtil.stripQuotesAroundValue("\""));
+    assertEquals("", StringUtil.stripQuotesAroundValue("''"));
+    assertEquals("", StringUtil.stripQuotesAroundValue("\"\""));
+    assertEquals("", StringUtil.stripQuotesAroundValue("'\""));
+    assertEquals("foo", StringUtil.stripQuotesAroundValue("'foo'"));
+    assertEquals("foo", StringUtil.stripQuotesAroundValue("'foo"));
+    assertEquals("foo", StringUtil.stripQuotesAroundValue("foo'"));
+    assertEquals("f'o'o", StringUtil.stripQuotesAroundValue("'f'o'o'"));
+    assertEquals("f\"o'o", StringUtil.stripQuotesAroundValue("\"f\"o'o'"));
+    assertEquals("f\"o'o", StringUtil.stripQuotesAroundValue("f\"o'o"));
+    assertEquals("\"'f\"o'o\"", StringUtil.stripQuotesAroundValue("\"\"'f\"o'o\"\""));
+    assertEquals("''f\"o'o''", StringUtil.stripQuotesAroundValue("'''f\"o'o'''"));
+    assertEquals("foo' 'bar", StringUtil.stripQuotesAroundValue("foo' 'bar"));
+  }
+
   public void testUnqoteWithQuotationChar() {
     assertEquals("", StringUtil.unquoteString("", '|'));
     assertEquals("|", StringUtil.unquoteString("|", '|'));
