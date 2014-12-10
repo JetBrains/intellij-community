@@ -26,7 +26,6 @@ import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitLocalBranch;
 import git4idea.GitPlatformFacade;
 import git4idea.GitRemoteBranch;
-import git4idea.GitSvnRemoteBranch;
 import git4idea.branch.GitBranchUtil;
 import org.ini4j.Ini;
 import org.ini4j.Profile;
@@ -40,28 +39,15 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * <p>Reads information from the {@code .git/config} file, and parses it to actual objects.</p>
- *
- * <p>Currently doesn't read all the information: general information about remotes and branch tracking</p>
- *
- * <p>Parsing is performed with the help of <a href="http://ini4j.sourceforge.net/">ini4j</a> library.</p>
+ * Reads information from the {@code .git/config} file, and parses it to actual objects.
+ * <p/>
+ * Currently doesn't read all the information: just general information about remotes and branch tracking.
+ * <p/>
+ * Parsing is performed with the help of <a href="http://ini4j.sourceforge.net/">ini4j</a> library.
  *
  * TODO: note, that other git configuration files (such as ~/.gitconfig) are not handled yet.
- * 
- * @author Kirill Likhodedov
  */
 public class GitConfig {
-
-  /**
-   * Special remote typical for git-svn configuration:
-   * <pre>[branch "trunk]
-   *   remote = .
-   *   merge = refs/remotes/trunk
-   * </pre>
-   * @deprecated Use {@link GitSvnRemoteBranch}
-   */
-  @Deprecated
-  public static final String DOT_REMOTE = ".";
 
   private static final Logger LOG = Logger.getInstance(GitConfig.class);
 
