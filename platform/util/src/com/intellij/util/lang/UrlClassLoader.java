@@ -29,6 +29,7 @@ import sun.misc.Resource;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -39,6 +40,20 @@ import java.util.List;
 
 public class UrlClassLoader extends ClassLoader {
   @NonNls static final String CLASS_EXTENSION = ".class";
+
+  static {
+    // todo[r.sh] drop condition in IDEA 15
+    // todo[r.sh] drop reflection after migrating to Java 7+
+    boolean parallelLoader = Boolean.parseBoolean(System.getProperty("idea.parallel.class.loader", "false"));
+    if (parallelLoader) {
+      try {
+        Method registerAsParallelCapable = ClassLoader.class.getDeclaredMethod("registerAsParallelCapable");
+        registerAsParallelCapable.setAccessible(true);
+        registerAsParallelCapable.invoke(null);
+      }
+      catch (Exception ignored) { }
+    }
+  }
 
   public static final class Builder {
     private List<URL> myURLs = ContainerUtil.emptyList();
