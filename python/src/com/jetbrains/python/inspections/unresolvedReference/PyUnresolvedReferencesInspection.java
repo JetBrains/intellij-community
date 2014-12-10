@@ -705,6 +705,9 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         // this almost always means that we don't know the type, so don't show an error in this case
         return true;
       }
+      if (type instanceof PyStructuralType && ((PyStructuralType)type).isInferredFromUsages()) {
+        return true;
+      }
       if (type instanceof PyImportedModuleType) {
         PyImportedModule module = ((PyImportedModuleType)type).getImportedModule();
         if (module.resolve() == null) {
