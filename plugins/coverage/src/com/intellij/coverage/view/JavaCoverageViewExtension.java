@@ -56,14 +56,7 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
         } else {
           final PackageAnnotator.ClassCoverageInfo classCoverageInfo = getClassCoverageInfo(((PsiClass)childValue));
           if (classCoverageInfo != null) {
-            info.coveredClassCount += classCoverageInfo.coveredMethodCount > 0 ? 1 : 0;
-            info.totalClassCount ++;
-
-            info.coveredMethodCount += classCoverageInfo.coveredMethodCount;
-            info.totalMethodCount += classCoverageInfo.totalMethodCount;
-
-            info.coveredLineCount += classCoverageInfo.partiallyCoveredLineCount + classCoverageInfo.fullyCoveredLineCount;
-            info.totalLineCount += classCoverageInfo.totalLineCount;
+            info.appendClass(classCoverageInfo);
           }
         }
       }

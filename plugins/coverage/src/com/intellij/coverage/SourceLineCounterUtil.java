@@ -21,12 +21,12 @@ public class SourceLineCounterUtil {
 
     SourceLineCounter counter = new SourceLineCounter(null, excludeLines, null);
     reader.accept(counter, 0);
-    classCoverageInfo.totalLineCount += counter.getNSourceLines();
-    classCoverageInfo.totalMethodCount += counter.getNMethodsWithCode();
-    packageCoverageInfo.totalLineCount += counter.getNSourceLines();
-    packageCoverageInfo.totalMethodCount += counter.getNMethodsWithCode();
+    classCoverageInfo.setTotalLineCount(classCoverageInfo.getTotalLineCount() + counter.getNSourceLines());
+    classCoverageInfo.setTotalMethodCount(classCoverageInfo.getTotalMethodCount() + counter.getNMethodsWithCode());
+    packageCoverageInfo.setTotalLineCount(packageCoverageInfo.getTotalLineCount() + counter.getNSourceLines());
+    packageCoverageInfo.setTotalMethodCount(packageCoverageInfo.getTotalMethodCount() + counter.getNMethodsWithCode());
     if (!counter.isInterface()) {
-      packageCoverageInfo.totalClassCount++;
+      packageCoverageInfo.setTotalClassCount(packageCoverageInfo.getTotalClassCount() + 1);
     }
     return false;
   }

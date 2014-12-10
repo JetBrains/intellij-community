@@ -31,6 +31,6 @@
     <orderEntry type="module" module-name="java-psi-impl" />
     <orderEntry type="module" module-name="lang-impl" />
     <orderEntry type="module" module-name="java-impl" />
+    <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
   </component>
 </module>
-
