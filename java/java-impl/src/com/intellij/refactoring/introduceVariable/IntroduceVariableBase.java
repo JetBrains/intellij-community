@@ -432,11 +432,11 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
 
       final String fakeInitializer = "intellijidearulezzz";
       final int[] refIdx = new int[1];
-      final PsiExpression toBeExpression = createReplacement(fakeInitializer, project, prefix, suffix, parent, rangeMarker, refIdx);
+      final PsiElement toBeExpression = createReplacement(fakeInitializer, project, prefix, suffix, parent, rangeMarker, refIdx);
       toBeExpression.accept(errorsVisitor);
       if (hasErrors[0]) return null;
-      if (literalExpression != null) {
-        PsiType type = toBeExpression.getType();
+      if (literalExpression != null && toBeExpression instanceof PsiExpression) {
+        PsiType type = ((PsiExpression)toBeExpression).getType();
         if (type != null && !type.equals(literalExpression.getType())) {
           return null;
         }
@@ -1014,7 +1014,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     }
   }
 
-  private static PsiExpression createReplacement(final String refText, final Project project,
+  private static PsiElement createReplacement(final String refText, final Project project,
                                                  final String prefix,
                                                  final String suffix,
                                                  final PsiElement parent, final RangeMarker rangeMarker, int[] refIdx) {
@@ -1035,7 +1035,8 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       refIdx[0] = start.length();
       text = start + refText + (suffix != null ? suffix : "") + end;
     }
-    return JavaPsiFacade.getInstance(project).getElementFactory().createExpressionFromText(text, parent);
+    final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+    return parent instanceof PsiStatement || parent instanceof PsiCodeBlock ? factory.createStatementFromText(text, parent) : factory.createExpressionFromText(text, parent);
   }
 
   private boolean parentStatementNotFound(final Project project, Editor editor) {

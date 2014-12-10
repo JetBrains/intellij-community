@@ -21,6 +21,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.AnnotatedMembersSearch;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -39,6 +40,42 @@ public class FunctionalInterfaceSuggester {
       @Override
       public PsiType fun(PsiClass aClass) {
         return composeAcceptableType(aClass, expression);
+      }
+    });
+  }
+
+  public static Collection<? extends PsiType> suggestFunctionalInterfaces(final @NotNull PsiMethod method) {
+    if (method.isConstructor()) {
+      return Collections.emptyList();
+    }
+
+    return suggestFunctionalInterfaces(method, new NullableFunction<PsiClass, PsiType>() {
+      @Nullable
+      @Override
+      public PsiType fun(PsiClass aClass) {
+        final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(aClass);
+        if (interfaceMethod != null) {
+          final PsiParameter[] parameters = method.getParameterList().getParameters();
+          final PsiParameter[] interfaceMethodParameters = interfaceMethod.getParameterList().getParameters();
+          if (parameters.length != interfaceMethodParameters.length) {
+            return null;
+          }
+          for (int i = 0; i < interfaceMethodParameters.length; i++) {
+            if (!TypeConversionUtil.isAssignable(parameters[i].getType(), interfaceMethodParameters[i].getType())) {
+              return null;
+            }
+          }
+
+          final PsiType returnType = method.getReturnType();
+          if (!TypeConversionUtil.isAssignable(interfaceMethod.getReturnType(), returnType)) {
+            return null;
+          }
+
+          final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(aClass.getProject());
+          final PsiType type = elementFactory.createType(aClass, PsiSubstitutor.EMPTY);
+          return type;
+        }
+        return null;
       }
     });
   }
