@@ -23,6 +23,7 @@ import com.intellij.openapi.util.diff.chains.SimpleDiffRequestChain;
 import com.intellij.openapi.util.diff.impl.DiffWindow;
 import com.intellij.openapi.util.diff.requests.DiffRequest;
 import com.intellij.openapi.util.diff.tools.binary.BinaryDiffTool;
+import com.intellij.openapi.util.diff.tools.dir.DirDiffTool;
 import com.intellij.openapi.util.diff.tools.external.ExternalDiffTool;
 import com.intellij.openapi.util.diff.tools.oneside.OnesideDiffTool;
 import com.intellij.openapi.util.diff.tools.simple.SimpleDiffTool;
@@ -75,6 +76,7 @@ public class DiffManagerImpl extends DiffManagerEx {
     result.add(SimpleDiffTool.INSTANCE);
     result.add(OnesideDiffTool.INSTANCE);
     result.add(BinaryDiffTool.INSTANCE);
+    result.add(DirDiffTool.INSTANCE);
 
     for (DiffTool tool : DiffTool.EP_NAME.getExtensions()) {
       result.add(tool);
