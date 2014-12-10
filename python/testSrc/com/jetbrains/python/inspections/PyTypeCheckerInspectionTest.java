@@ -254,4 +254,8 @@ public class PyTypeCheckerInspectionTest extends PyTestCase {
   public void testStructuralTypesForNestedCalls() {
     doTest();
   }
+
+  public void testIterateOverParamWithNoAttributes() {
+    doTest();
+  }
 }
