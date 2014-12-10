@@ -967,6 +967,16 @@ public class PyTypeTest extends PyTestCase {
            "    expr = x\n");
   }
 
+  public void testOnlyRelatedNestedAttributes() {
+    doTest("{foo}",
+           "def g(x):\n" +
+           "    x.bar\n" +
+           "\n" +
+           "def f(x, y):\n" +
+           "    x.foo + g(y)\n" +
+           "    expr = x\n");
+  }
+
   private static TypeEvalContext getTypeEvalContext(@NotNull PyExpression element) {
     return TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing();
   }

@@ -315,11 +315,14 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
               }
             }
             else {
-              final PyNamedParameter parameter = getParameterByCallArgument(expr, context);
-              if (parameter != null) {
-                final PyType type = context.getType(parameter);
-                if (type instanceof PyStructuralType) {
-                  result.addAll(((PyStructuralType)type).getAttributeNames());
+              final PsiReference ref = expr.getReference();
+              if (ref != null && ref.isReferenceTo(PyNamedParameterImpl.this)) {
+                final PyNamedParameter parameter = getParameterByCallArgument(expr, context);
+                if (parameter != null) {
+                  final PyType type = context.getType(parameter);
+                  if (type instanceof PyStructuralType) {
+                    result.addAll(((PyStructuralType)type).getAttributeNames());
+                  }
                 }
               }
             }
