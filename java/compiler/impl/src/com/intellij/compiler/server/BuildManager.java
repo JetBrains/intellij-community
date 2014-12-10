@@ -612,7 +612,7 @@ public class BuildManager implements ApplicationComponent{
 
           final CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings globals =
             CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings.newBuilder()
-              .setGlobalOptionsPath(PathManager.getOptionsPath())
+              .setGlobalOptionsPath(getOptionsPath())
               .build();
           CmdlineRemoteProto.Message.ControllerMessage.FSEvent currentFSChanges;
           final SequentialTaskExecutor projectTaskQueue;
@@ -744,6 +744,10 @@ public class BuildManager implements ApplicationComponent{
     }
 
     return null;
+  }
+
+  protected String getOptionsPath() {
+    return PathManager.getOptionsPath();
   }
 
   @Override

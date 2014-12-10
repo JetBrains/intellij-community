@@ -182,45 +182,53 @@ public class CompilerManagerImpl extends CompilerManager {
   }
 
   public void compile(@NotNull Module module, CompileStatusNotification callback) {
-    new CompileDriver(myProject).compile(createModuleCompileScope(module, false), new ListenerNotificator(callback));
+    getCompileDriver().compile(createModuleCompileScope(module, false), new ListenerNotificator(callback));
   }
 
   public void compile(@NotNull CompileScope scope, CompileStatusNotification callback) {
-    new CompileDriver(myProject).compile(scope, new ListenerNotificator(callback));
+    getCompileDriver().compile(scope, new ListenerNotificator(callback));
   }
 
   public void make(CompileStatusNotification callback) {
-    new CompileDriver(myProject).make(createProjectCompileScope(myProject), new ListenerNotificator(callback));
+    getCompileDriver().make(createProjectCompileScope(myProject), new ListenerNotificator(callback));
   }
 
   public void make(@NotNull Module module, CompileStatusNotification callback) {
-    new CompileDriver(myProject).make(createModuleCompileScope(module, true), new ListenerNotificator(callback));
+    getCompileDriver().make(createModuleCompileScope(module, true), new ListenerNotificator(callback));
   }
 
   public void make(@NotNull Project project, @NotNull Module[] modules, CompileStatusNotification callback) {
-    new CompileDriver(myProject).make(createModuleGroupCompileScope(project, modules, true), new ListenerNotificator(callback));
+    getCompileDriver().make(createModuleGroupCompileScope(project, modules, true), new ListenerNotificator(callback));
+  }
+
+  protected CompileDriver getCompileDriver() {
+    return new CompileDriver(myProject);
+  }
+
+  protected Project getProject() {
+    return myProject;
   }
 
   public void make(@NotNull CompileScope scope, CompileStatusNotification callback) {
-    new CompileDriver(myProject).make(scope, new ListenerNotificator(callback));
+    getCompileDriver().make(scope, new ListenerNotificator(callback));
   }
 
   public void make(@NotNull CompileScope scope, CompilerFilter filter, @Nullable CompileStatusNotification callback) {
-    final CompileDriver compileDriver = new CompileDriver(myProject);
+    final CompileDriver compileDriver = getCompileDriver();
     compileDriver.setCompilerFilter(filter);
     compileDriver.make(scope, new ListenerNotificator(callback));
   }
 
   public boolean isUpToDate(@NotNull final CompileScope scope) {
-    return new CompileDriver(myProject).isUpToDate(scope);
+    return getCompileDriver().isUpToDate(scope);
   }
 
   public void rebuild(CompileStatusNotification callback) {
-    new CompileDriver(myProject).rebuild(new ListenerNotificator(callback));
+    getCompileDriver().rebuild(new ListenerNotificator(callback));
   }
 
   public void executeTask(@NotNull CompileTask task, @NotNull CompileScope scope, String contentName, Runnable onTaskFinished) {
-    final CompileDriver compileDriver = new CompileDriver(myProject);
+    final CompileDriver compileDriver = getCompileDriver();
     compileDriver.executeCompileTask(task, scope, contentName, onTaskFinished);
   }
 

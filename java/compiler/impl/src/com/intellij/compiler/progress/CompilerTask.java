@@ -213,7 +213,7 @@ public class CompilerTask extends Task.Backgroundable {
     }
   }
 
-  private void prepareMessageView() {
+  protected void prepareMessageView() {
     if (!myIndicator.isRunning()) {
       return;
     }
@@ -443,7 +443,7 @@ public class CompilerTask extends Task.Backgroundable {
   }
 
   // error tree view initialization must be invoked from event dispatch thread
-  private void openMessageView() {
+  protected void openMessageView() {
     if (isHeadlessMode()) {
       return;
     }

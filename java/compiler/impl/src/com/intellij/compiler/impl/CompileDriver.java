@@ -126,7 +126,7 @@ public class CompileDriver {
       LOG.debug("isUpToDate operation started");
     }
 
-    final CompilerTask task = new CompilerTask(myProject, "Classes up-to-date check", true, false, false, isCompilationStartedAutomatically(scope));
+    final CompilerTask task = getCompilerTask("Classes up-to-date check", true, false, false, scope);
     final CompileContextImpl compileContext = new CompileContextImpl(myProject, task, scope, true, false);
 
     final Ref<ExitStatus> result = new Ref<ExitStatus>();
@@ -166,6 +166,19 @@ public class CompileDriver {
     return ExitStatus.UP_TO_DATE.equals(result.get());
   }
 
+  protected CompilerTask getCompilerTask(String contentName,
+                                         final boolean headlessMode,
+                                         boolean forceAsync,
+                                         boolean waitForPreviousSession,
+                                         CompileScope scope) {
+    return new CompilerTask(myProject, contentName, headlessMode, forceAsync, waitForPreviousSession,
+                            isCompilationStartedAutomatically(scope));
+  }
+
+  protected Project getProject() {
+    return myProject;
+  }
+
   public void compile(CompileScope scope, CompileStatusNotification callback) {
     if (validateCompilerConfiguration(scope)) {
       startup(scope, false, true, callback, null);
@@ -189,7 +202,7 @@ public class CompileDriver {
     scope.putUserData(COMPILATION_STARTED_AUTOMATICALLY, Boolean.TRUE);
   }
 
-  private static boolean isCompilationStartedAutomatically(CompileScope scope) {
+  protected static boolean isCompilationStartedAutomatically(CompileScope scope) {
     return Boolean.TRUE.equals(scope.getUserData(COMPILATION_STARTED_AUTOMATICALLY));
   }
 
@@ -357,7 +370,7 @@ public class CompileDriver {
     final String contentName =
       forceCompile ? CompilerBundle.message("compiler.content.name.compile") : CompilerBundle.message("compiler.content.name.make");
     final boolean isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
-    final CompilerTask compileTask = new CompilerTask(myProject, contentName, isUnitTestMode, true, true, isCompilationStartedAutomatically(scope));
+    final CompilerTask compileTask = getCompilerTask(contentName, isUnitTestMode, true, true, scope);
 
     StatusBar.Info.set("", myProject, "Compiler");
     // ensure the project model seen by build process is up-to-date
@@ -579,7 +592,7 @@ public class CompileDriver {
   }
 
   public void executeCompileTask(final CompileTask task, final CompileScope scope, final String contentName, final Runnable onTaskFinished) {
-    final CompilerTask progressManagerTask = new CompilerTask(myProject, contentName, false, false, true, isCompilationStartedAutomatically(scope));
+    final CompilerTask progressManagerTask = getCompilerTask(contentName, false, false, true, scope);
     final CompileContextImpl compileContext = new CompileContextImpl(myProject, progressManagerTask, scope, false, false);
 
     FileDocumentManager.getInstance().saveAllDocuments();
