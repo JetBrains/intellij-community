@@ -11,8 +11,10 @@ class Test {
   }
   
   void foo(int i, Consumer<Integer> anObject) {
+    if (i > 0) {
 
-      anObject.accept(i);
+        anObject.accept(i);
 
+    }
   }
 }

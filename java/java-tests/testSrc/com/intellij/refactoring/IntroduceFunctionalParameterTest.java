@@ -33,6 +33,10 @@ public class IntroduceFunctionalParameterTest extends LightRefactoringTestCase  
     doTest(null);
   }
 
+  public void testIntConsumerFromIfStatement() throws Exception {
+    doTest(null);
+  }
+
   @NotNull
   @Override
   protected String getTestDataPath() {

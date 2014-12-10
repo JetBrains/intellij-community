@@ -1036,7 +1036,9 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       text = start + refText + (suffix != null ? suffix : "") + end;
     }
     final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
-    return parent instanceof PsiStatement || parent instanceof PsiCodeBlock ? factory.createStatementFromText(text, parent) : factory.createExpressionFromText(text, parent);
+    return parent instanceof PsiStatement ? factory.createStatementFromText(text, parent) :
+                                            parent instanceof PsiCodeBlock ? factory.createCodeBlockFromText(text, parent) 
+                                                                           : factory.createExpressionFromText(text, parent);
   }
 
   private boolean parentStatementNotFound(final Project project, Editor editor) {
