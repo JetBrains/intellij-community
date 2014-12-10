@@ -26,15 +26,19 @@ import org.jetbrains.annotations.NotNull;
 @TestDataPath("$CONTENT_ROOT/testData")
 public class IntroduceFunctionalParameterTest extends LightRefactoringTestCase  {
   public void testSampleRunnable() throws Exception {
-    doTest(null);
+    doTest();
   }
 
   public void testIntConsumer() throws Exception {
-    doTest(null);
+    doTest();
   }
 
   public void testIntConsumerFromIfStatement() throws Exception {
-    doTest(null);
+    doTest();
+  }
+
+  public void testIntPredicateConditionalExit() throws Exception {
+    doTest();
   }
 
   @NotNull
@@ -51,6 +55,10 @@ public class IntroduceFunctionalParameterTest extends LightRefactoringTestCase  
   @Override
   protected Sdk getProjectJDK() {
     return IdeaTestUtil.getMockJdk18();
+  }
+
+  private void doTest() {
+    doTest(null);
   }
 
   private void doTest(String conflict) {

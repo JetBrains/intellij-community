@@ -1,7 +1,7 @@
 import java.util.function.Consumer;
 
 class Test {
-    void bar() {
+  void bar() {
     foo(1, new Consumer<Integer>() {
         public void accept(Integer i) {
             System.out.println(i);
