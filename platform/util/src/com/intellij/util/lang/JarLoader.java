@@ -69,7 +69,8 @@ class JarLoader extends Loader {
   }
 
   @Override
-  void buildCache(ClasspathCache.LoaderData loaderData) throws IOException {
+  public ClasspathLoaderIndex buildIndex() throws IOException {
+    ClasspathLoaderIndex loaderData = new ClasspathLoaderIndex();
     ZipFile zipFile = acquireZipFile();
     try {
       Enumeration<? extends ZipEntry> entries = zipFile.entries();
@@ -83,6 +84,7 @@ class JarLoader extends Loader {
     finally {
       releaseZipFile(zipFile);
     }
+    return loaderData;
   }
 
   @Override

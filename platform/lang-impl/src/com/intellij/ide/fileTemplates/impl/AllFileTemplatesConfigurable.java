@@ -33,6 +33,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SideBorder;
@@ -68,6 +69,8 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
   private static final String CODE_TITLE = IdeBundle.message("tab.filetemplates.code");
   private static final String OTHER_TITLE = IdeBundle.message("tab.filetemplates.j2ee");
 
+  private final Project myProject;
+  private final FileTemplateManager myManager;
   private JPanel myMainPanel;
   private FileTemplateTab myCurrentTab;
   private FileTemplateTab myTemplatesList;
@@ -86,6 +89,11 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
 
   private static final String CURRENT_TAB = "FileTemplates.CurrentTab";
   private static final String SELECTED_TEMPLATE = "FileTemplates.SelectedTemplate";
+
+  public AllFileTemplatesConfigurable(Project project) {
+    myProject = project;
+    myManager = FileTemplateManager.getInstance(project);
+  }
 
   private void onRemove() {
     myCurrentTab.removeSelected();
@@ -195,7 +203,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
     myCurrentTab = myTemplatesList;
 
     final List<FileTemplateTab> allTabs = new ArrayList<FileTemplateTab>(Arrays.asList(myTemplatesList, myIncludesList));
-    if (FileTemplateManager.getInstance().getAllCodeTemplates().length > 0) {
+    if (myManager.getAllCodeTemplates().length > 0) {
       myCodeTemplatesList = new FileTemplateTabAsList(CODE_TITLE) {
         @Override
         public void onTemplateSelected() {
@@ -329,22 +337,34 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
     group.add(removeAction);
     group.add(cloneAction);
     group.add(resetAction);
+
     addAction.registerCustomShortcutSet(CommonShortcuts.INSERT, myCurrentTab.getComponent());
     removeAction.registerCustomShortcutSet(CommonShortcuts.getDelete(),
                                            myCurrentTab.getComponent());
 
     myToolBar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true).getComponent();
+    myToolBar.setBorder(IdeBorderFactory.createEmptyBorder());
+
+    JPanel toolbarPanel = new JPanel(new BorderLayout());
+    toolbarPanel.add(myToolBar, BorderLayout.WEST);
+    //JComponent schemaComponent =
+    //  ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, new DefaultCompactActionGroup(new ChangeSchemaCombo()), true)
+    //    .getComponent();
+    //JPanel schemaPanel = new JPanel(new BorderLayout());
+    //schemaPanel.add(schemaComponent, BorderLayout.EAST);
+    //schemaPanel.add(new JLabel("Schema:"), BorderLayout.WEST);
+    //toolbarPanel.add(schemaPanel, BorderLayout.EAST);
+
 
     JPanel centerPanel = new JPanel(new BorderLayout());
     centerPanel.add(myTabbedPane.getComponent(), BorderLayout.NORTH);
-    //leftPanel.add(myTabbedPane.getComponent(), BorderLayout.CENTER);
     OnePixelSplitter splitter = new OnePixelSplitter(false, 0.3f);
     splitter.setFirstComponent(myLeftPanel);
     splitter.setSecondComponent(myEditorComponent);
     centerPanel.add(splitter, BorderLayout.CENTER);
 
     myMainPanel = new JPanel(new BorderLayout());
-    myMainPanel.add(myToolBar, BorderLayout.NORTH);
+    myMainPanel.add(toolbarPanel, BorderLayout.NORTH);
     myMainPanel.add(centerPanel, BorderLayout.CENTER);
     return myMainPanel;
   }
@@ -388,7 +408,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
         return;
       }
       if (selectedValue == null) {
-        myEditor.setTemplate(null, FileTemplateManagerImpl.getInstanceImpl().getDefaultTemplateDescription());
+        myEditor.setTemplate(null, FileTemplateManagerImpl.getInstanceImpl(myProject).getDefaultTemplateDescription());
         myEditorComponent.repaint();
       }
       else {
@@ -418,10 +438,10 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
   private void selectTemplate(FileTemplate template) {
     URL defDesc = null;
     if (myCurrentTab == myTemplatesList) {
-      defDesc = FileTemplateManagerImpl.getInstanceImpl().getDefaultTemplateDescription();
+      defDesc = FileTemplateManagerImpl.getInstanceImpl(myProject).getDefaultTemplateDescription();
     }
     else if (myCurrentTab == myIncludesList) {
-      defDesc = FileTemplateManagerImpl.getInstanceImpl().getDefaultIncludeDescription();
+      defDesc = FileTemplateManagerImpl.getInstanceImpl(myProject).getDefaultIncludeDescription();
     }
     if (myEditor.getTemplate() != template) {
       myEditor.setTemplate(template, defDesc);
@@ -461,7 +481,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
   }
 
   private void initLists() {
-    final FileTemplateManager templateManager = FileTemplateManager.getInstance();
+    final FileTemplateManager templateManager = myManager;
 
     final FileTemplate[] internalTemplates = templateManager.getInternalTemplates();
     myInternalTemplateNames.clear();
@@ -552,7 +572,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
       checkCanApply(list);
     }
 
-    final FileTemplateManager templatesManager = FileTemplateManager.getInstance();
+    final FileTemplateManager templatesManager = myManager;
     // Apply templates
 
     final List<FileTemplate> templates = new ArrayList<FileTemplate>();
@@ -666,7 +686,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
 
   public static void editCodeTemplate(@NotNull final String templateId, Project project) {
     final ShowSettingsUtil util = ShowSettingsUtil.getInstance();
-    final AllFileTemplatesConfigurable configurable = new AllFileTemplatesConfigurable();
+    final AllFileTemplatesConfigurable configurable = new AllFileTemplatesConfigurable(project);
     util.editConfigurable(project, configurable, new Runnable() {
       @Override
       public void run() {

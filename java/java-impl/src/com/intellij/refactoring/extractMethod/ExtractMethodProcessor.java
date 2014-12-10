@@ -622,7 +622,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     final List<PsiExpression> map = ContainerUtil.map(filter, new Function<PsiStatement, PsiExpression>() {
       @Override
       public PsiExpression fun(PsiStatement statement) {
-        return ((PsiReturnStatement) statement).getReturnValue();
+        return ((PsiReturnStatement)statement).getReturnValue();
       }
     });
     return map.toArray(new PsiExpression[map.size()]);
@@ -630,7 +630,7 @@ public class ExtractMethodProcessor implements MatchProvider {
 
   private Nullness initNullness() {
     if (!PsiUtil.isLanguageLevel5OrHigher(myElements[0]) || PsiUtil.resolveClassInType(myReturnType) == null) return null;
-    final PsiMethod emptyMethod = (PsiMethod)myTargetClass.copy().add(generateEmptyMethod(getThrownExceptions(), isStatic(), "name"));
+    final PsiMethod emptyMethod = (PsiMethod)myTargetClass.copy().add(generateEmptyMethod("name"));
     prepareMethodBody(emptyMethod, false);
     final NullableNotNullManager manager = NullableNotNullManager.getInstance(myProject);
     final PsiClass nullableAnnotationClass = JavaPsiFacade.getInstance(myProject)
@@ -833,7 +833,7 @@ public class ExtractMethodProcessor implements MatchProvider {
 
   public void doExtract() throws IncorrectOperationException {
 
-    PsiMethod newMethod = generateEmptyMethod(getThrownExceptions(), isStatic());
+    PsiMethod newMethod = generateEmptyMethod();
 
     myExpression = myInputVariables.replaceWrappedReferences(myElements, myExpression);
     renameInputVariables();
@@ -1239,7 +1239,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     return match.replace(myExtractedMethod, methodCallExpression, myOutputVariable);
   }
 
-  private void deleteExtracted() throws IncorrectOperationException {
+  protected void deleteExtracted() throws IncorrectOperationException {
     if (myEnclosingBlockStatement == null) {
       myElements[0].getParent().deleteChildRange(myElements[0], myElements[myElements.length - 1]);
     }
@@ -1284,20 +1284,18 @@ public class ExtractMethodProcessor implements MatchProvider {
     return myReturnType;
   }
 
-  private PsiMethod generateEmptyMethod(PsiClassType[] exceptions, boolean isStatic) throws IncorrectOperationException {
-    return generateEmptyMethod(exceptions, isStatic, myMethodName);
+  private PsiMethod generateEmptyMethod() throws IncorrectOperationException {
+    return generateEmptyMethod(myMethodName);
   }
 
-  private PsiMethod generateEmptyMethod(PsiClassType[] exceptions,
-                                        boolean isStatic,
-                                        String methodName) throws IncorrectOperationException {
+  public PsiMethod generateEmptyMethod(String methodName) throws IncorrectOperationException {
     PsiMethod newMethod;
     if (myIsChainedConstructor) {
       newMethod = myElementFactory.createConstructor();
     }
     else {
       newMethod = myElementFactory.createMethod(methodName, myReturnType);
-      PsiUtil.setModifierProperty(newMethod, PsiModifier.STATIC, isStatic);
+      PsiUtil.setModifierProperty(newMethod, PsiModifier.STATIC, isStatic());
     }
     PsiUtil.setModifierProperty(newMethod, myMethodVisibility, true);
     if (getTypeParameterList() != null) {
@@ -1336,7 +1334,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
 
     PsiReferenceList throwsList = newMethod.getThrowsList();
-    for (PsiClassType exception : exceptions) {
+    for (PsiClassType exception : getThrownExceptions()) {
       throwsList.add(JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory().createReferenceElementByType(exception));
     }
 

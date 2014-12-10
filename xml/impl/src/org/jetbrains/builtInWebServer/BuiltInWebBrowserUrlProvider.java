@@ -2,6 +2,9 @@ package org.jetbrains.builtInWebServer;
 
 import com.intellij.ide.browsers.OpenInBrowserRequest;
 import com.intellij.ide.browsers.WebBrowserUrlProvider;
+import com.intellij.lang.Language;
+import com.intellij.lang.html.HTMLLanguage;
+import com.intellij.lang.xhtml.XHTMLLanguage;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -12,9 +15,9 @@ import com.intellij.util.Url;
 import com.intellij.util.Urls;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.HtmlUtil;
-import org.jetbrains.ide.BuiltInServerManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.ide.BuiltInServerManager;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -63,7 +66,13 @@ public class BuiltInWebBrowserUrlProvider extends WebBrowserUrlProvider implemen
 
   @Override
   public boolean canHandleElement(@NotNull OpenInBrowserRequest request) {
-    return request.getFile().getViewProvider().isPhysical() && !(request.getVirtualFile() instanceof LightVirtualFile) && isMyLanguage(request.getFile());
+    if (request.getFile().getViewProvider().isPhysical() && !(request.getVirtualFile() instanceof LightVirtualFile)) {
+      // we must use base language because we serve file - not part of file, but the whole file
+      // handlebars, for example, contains HTML and HBS psi trees, so, regardless of context, we should not handle such file
+      Language language = request.getFile().getViewProvider().getBaseLanguage();
+      return language == HTMLLanguage.INSTANCE || language == XHTMLLanguage.INSTANCE;
+    }
+    return false;
   }
 
   protected boolean isMyLanguage(PsiFile psiFile) {

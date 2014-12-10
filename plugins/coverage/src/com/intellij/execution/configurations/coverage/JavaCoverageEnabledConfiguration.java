@@ -72,18 +72,24 @@ public class JavaCoverageEnabledConfiguration extends CoverageEnabledConfigurati
     return null;
   }
 
-  public void appendCoverageArgument(final SimpleJavaParameters javaParameters) {
+  public void appendCoverageArgument(RunConfigurationBase configuration, final SimpleJavaParameters javaParameters) {
     final CoverageRunner runner = getCoverageRunner();
     try {
       if (runner != null && runner instanceof JavaCoverageRunner) {
         final String path = getCoverageFilePath();
         assert path != null; // cannot be null here if runner != null
 
+        String sourceMapPath = null;
+        if (myCoverageProvider.isSourceMapNeeded(configuration)) {
+          sourceMapPath = getSourceMapPath(path);
+        }
+
         ((JavaCoverageRunner)runner).appendCoverageArgument(new File(path).getCanonicalPath(),
                                                             getPatterns(),
                                                             javaParameters,
                                                             isTrackPerTestCoverage() && !isSampling(),
-                                                            isSampling());
+                                                            isSampling(),
+                                                            sourceMapPath);
       }
     }
     catch (IOException e) {
@@ -91,6 +97,9 @@ public class JavaCoverageEnabledConfiguration extends CoverageEnabledConfigurati
     }
   }
 
+  public static String getSourceMapPath(String coverageDataFilePath) {
+    return coverageDataFilePath + ".sourceMap";
+  }
 
   @NotNull
   public JavaCoverageEngine getCoverageProvider() {

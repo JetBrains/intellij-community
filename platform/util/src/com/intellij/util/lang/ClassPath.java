@@ -24,6 +24,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.io.URLUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import sun.misc.Resource;
 
@@ -49,12 +50,14 @@ public class ClassPath {
   private final boolean myCanUseCache;
   private final boolean myAcceptUnescapedUrls;
   private final boolean myPreloadJarContents;
+  private final LoaderIndexProvider myIndexProvider;
 
-  public ClassPath(List<URL> urls, boolean canLockJars, boolean canUseCache, boolean acceptUnescapedUrls, boolean preloadJarContents) {
+  public ClassPath(List<URL> urls, boolean canLockJars, boolean canUseCache, boolean acceptUnescapedUrls, boolean preloadJarContents, @NotNull LoaderIndexProvider indexProvider) {
     myCanLockJars = canLockJars;
     myCanUseCache = canUseCache;
     myAcceptUnescapedUrls = acceptUnescapedUrls;
     myPreloadJarContents = preloadJarContents;
+    myIndexProvider = indexProvider;
     push(urls);
   }
 
@@ -181,9 +184,7 @@ public class ClassPath {
     }
 
     if (loader != null && myCanUseCache) {
-      ClasspathCache.LoaderData loaderData = new ClasspathCache.LoaderData(loader);
-      loader.buildCache(loaderData);
-      myCache.applyLoaderData(loaderData);
+      myCache.applyLoaderData(myIndexProvider.getLoaderData(loader), loader);
     }
 
     return loader;

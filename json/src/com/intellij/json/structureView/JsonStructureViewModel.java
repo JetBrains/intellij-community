@@ -7,6 +7,7 @@ import com.intellij.json.psi.JsonArray;
 import com.intellij.json.psi.JsonFile;
 import com.intellij.json.psi.JsonObject;
 import com.intellij.json.psi.JsonProperty;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +35,8 @@ public class JsonStructureViewModel extends StructureViewModelBase implements St
 
   @Override
   public boolean isAutoExpand(@NotNull StructureViewTreeElement element) {
-    return true;
+    // TODO Actually root element for file won't be collapsed even without the following check. Find out how to fix it.
+    return element.getValue() instanceof PsiFile || ApplicationManager.getApplication().isUnitTestMode();
   }
 
   @Override

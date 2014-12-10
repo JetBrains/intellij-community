@@ -2596,10 +2596,13 @@ public class ContainerUtil extends ContainerUtilRt {
     return o1.size() < o2.size() ? -1 : o1.size() == o2.size() ? 0 : 1;
   }
 
+  /**
+   * Returns a String representation of the given map, by listing all key-value pairs contained in the map.
+   */
   @NotNull
   @Contract(pure = true)
   public static String toString(@NotNull Map<?, ?> map) {
-    StringBuilder sb = new StringBuilder("}");
+    StringBuilder sb = new StringBuilder("{");
     for (Iterator<? extends Map.Entry<?, ?>> iterator = map.entrySet().iterator(); iterator.hasNext(); ) {
       Map.Entry<?, ?> entry = iterator.next();
       sb.append(entry.getKey()).append('=').append(entry.getValue());
@@ -2607,7 +2610,7 @@ public class ContainerUtil extends ContainerUtilRt {
         sb.append(", ");
       }
     }
-    sb.append('{');
+    sb.append('}');
     return sb.toString();
   }
 }

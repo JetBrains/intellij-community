@@ -33,7 +33,7 @@ public class ConfigureTemplatesDialog extends SingleConfigurableEditor{
   private static final String DIMENSION_KEY = "#com.intellij.ide.fileTemplates.ui.ConfigureTemplatesDialog";
 
   public ConfigureTemplatesDialog(Project project){
-    this(project, new AllFileTemplatesConfigurable());
+    this(project, new AllFileTemplatesConfigurable(project));
   }
 
   public ConfigureTemplatesDialog(Project project, AllFileTemplatesConfigurable fileTemplatesConfigurable){

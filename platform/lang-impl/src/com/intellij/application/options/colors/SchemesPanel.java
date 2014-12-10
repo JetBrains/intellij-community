@@ -79,7 +79,7 @@ public class SchemesPanel extends JPanel implements SkipSelfSearchComponent {
 
     int gridx = 0;
 
-    panel.add(new JLabel(ApplicationBundle.message("combobox.scheme.name")),
+    panel.add(new JLabel(ApplicationBundle.message("editbox.scheme.name")),
               new GridBagConstraints(gridx++, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new JBInsets(0, 0, 5, 5),
                                      0, 0));
 
