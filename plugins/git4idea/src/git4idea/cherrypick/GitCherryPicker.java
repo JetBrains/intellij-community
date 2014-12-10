@@ -525,11 +525,13 @@ public class GitCherryPicker extends VcsCherryPicker {
     return step == 0 ? name : name + "-" + step;
   }
 
+  @NotNull
   @Override
   public VcsKey getSupportedVcs() {
     return GitVcs.getKey();
   }
 
+  @NotNull
   @Override
   public String getPreferredActionTitle() {
     return isAutoCommit() ? NAME : NAME + "...";

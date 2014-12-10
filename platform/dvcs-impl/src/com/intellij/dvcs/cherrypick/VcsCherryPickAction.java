@@ -26,11 +26,13 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerEx;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashMap;
 import com.intellij.vcs.log.*;
@@ -42,7 +44,7 @@ import java.util.*;
 
 public class VcsCherryPickAction extends DumbAwareAction {
 
-  private static final String NAME = "Cherry-Pick/Graft";
+  private static final String NAME = "Cherry-Pick";
   private static final Logger LOG = Logger.getInstance(VcsCherryPickAction.class);
 
   @NotNull private final Set<Hash> myIdsInProgress;
@@ -134,13 +136,13 @@ public class VcsCherryPickAction extends DumbAwareAction {
     e.getPresentation().setVisible(true);
     final VcsLog log = e.getData(VcsLogDataKeys.VCS_LOG);
     Project project = getEventProject(e);
-    if (project == null || log == null || !logHasSupportedCherryPickers(project, log)) {
+    final List<VcsCherryPicker> cherryPickers = getActiveCherryPickersForProject(project);
+    if (log == null || cherryPickers.isEmpty()) {
       e.getPresentation().setEnabledAndVisible(false);
       return;
     }
 
     final List<VcsFullCommitDetails> details = log.getSelectedDetails();
-    final VcsCherryPicker[] cherryPickers = Extensions.getExtensions(VcsCherryPicker.EXTENSION_POINT_NAME, project);
     VcsCherryPicker enabledCherryPicker = ContainerUtil.find(cherryPickers, new Condition<VcsCherryPicker>() {
       @Override
       public boolean value(VcsCherryPicker picker) {
@@ -149,8 +151,33 @@ public class VcsCherryPickAction extends DumbAwareAction {
       }
     });
     e.getPresentation().setEnabled(enabledCherryPicker != null);
-    //todo: modify name if nothing is selected according to active vcses from directory mappings
-    e.getPresentation().setText(enabledCherryPicker == null ? NAME : enabledCherryPicker.getPreferredActionTitle());
+    e.getPresentation().setText(
+      enabledCherryPicker == null ? concatActionNamesForAllAvailable(cherryPickers) : enabledCherryPicker.getPreferredActionTitle());
+  }
+
+  @NotNull
+  private String concatActionNamesForAllAvailable(@NotNull final List<VcsCherryPicker> pickers) {
+    return StringUtil.join(pickers, new Function<VcsCherryPicker, String>() {
+      @Override
+      public String fun(VcsCherryPicker picker) {
+        return picker.getPreferredActionTitle();
+      }
+    }, "/");
+  }
+
+  @NotNull
+  private List<VcsCherryPicker> getActiveCherryPickersForProject(@Nullable final Project project) {
+    if (project != null) {
+      final ProjectLevelVcsManager projectLevelVcsManager = ProjectLevelVcsManager.getInstance(project);
+      AbstractVcs[] vcss = projectLevelVcsManager.getAllActiveVcss();
+      return ContainerUtil.mapNotNull(vcss, new Function<AbstractVcs, VcsCherryPicker>() {
+        @Override
+        public VcsCherryPicker fun(AbstractVcs vcs) {
+          return vcs != null ? getCherryPickerFor(project, vcs.getKeyInstanceMethod()) : null;
+        }
+      });
+    }
+    return ContainerUtil.emptyList();
   }
 
   @Nullable
@@ -161,19 +188,5 @@ public class VcsCherryPickAction extends DumbAwareAction {
     if (vcs == null) return null;
     VcsKey key = vcs.getKeyInstanceMethod();
     return getCherryPickerFor(project, key);
-  }
-
-  public boolean logHasSupportedCherryPickers(@NotNull Project project, @NotNull VcsLog log) {
-    final VcsCherryPicker[] cherryPickers = Extensions.getExtensions(VcsCherryPicker.EXTENSION_POINT_NAME, project);
-    // at least for one log provider exist appropriate cherryPicker
-    return ContainerUtil.exists(log.getLogProviders(), new Condition<VcsLogProvider>() {
-      @Override
-      public boolean value(VcsLogProvider logProvider) {
-        for (VcsCherryPicker picker : cherryPickers) {
-          if (logProvider.getSupportedVcs().equals(picker.getSupportedVcs())) return true;
-        }
-        return false;
-      }
-    });
   }
 }

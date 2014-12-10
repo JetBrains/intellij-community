@@ -47,11 +47,13 @@ public class HgCherryPicker extends VcsCherryPicker {
   }
 
 
+  @NotNull
   @Override
   public VcsKey getSupportedVcs() {
     return HgVcs.getKey();
   }
 
+  @NotNull
   @Override
   public String getPreferredActionTitle() {
     return "Graft";
