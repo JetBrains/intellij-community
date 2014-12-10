@@ -267,6 +267,9 @@ public class PyQualifiedReference extends PyReferenceImpl {
     if (qualifierType != null) {
       Collection<Object> variants = new ArrayList<Object>();
       Collections.addAll(variants, getVariantFromHasAttr(qualifier));
+      if (qualifierType instanceof PyStructuralType && ((PyStructuralType)qualifierType).isInferredFromUsages()) {
+        Collections.addAll(variants, getUntypedVariants());
+      }
       if (qualifier instanceof PyQualifiedExpression) {
         Collection<PyExpression> attrs = collectAssignedAttributes((PyQualifiedExpression)qualifier);
         for (PyExpression ex : attrs) {
@@ -423,7 +426,8 @@ public class PyQualifiedReference extends PyReferenceImpl {
       final PyExpression qualifier = myElement.getQualifier();
       if (qualifier != null) {
         final PyType qualifierType = resolveContext.getTypeEvalContext().getType(qualifier);
-        if (qualifierType == null) {
+        if (qualifierType == null ||
+            (qualifierType instanceof PyStructuralType && ((PyStructuralType)qualifierType).isInferredFromUsages())) {
           return true;
         }
       }
