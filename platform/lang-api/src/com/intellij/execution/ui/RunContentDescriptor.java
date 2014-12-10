@@ -37,6 +37,7 @@ public class RunContentDescriptor implements Disposable {
   private final String myDisplayName;
   private final Icon myIcon;
   private final String myHelpId;
+  private RunnerLayoutUi myRunnerLayoutUi = null;
 
   private boolean myActivateToolWindowWhenAdded = true;
   private boolean myReuseToolWindowActivation = false;
@@ -72,6 +73,7 @@ public class RunContentDescriptor implements Disposable {
   public RunContentDescriptor(@NotNull RunProfile profile, @NotNull ExecutionResult executionResult, @NotNull RunnerLayoutUi ui) {
     this(executionResult.getExecutionConsole(), executionResult.getProcessHandler(), ui.getComponent(), profile.getName(),
          profile.getIcon());
+    myRunnerLayoutUi = ui;
     if (executionResult instanceof DefaultExecutionResult) {
       myRestartActions = ((DefaultExecutionResult)executionResult).getRestartActions();
     }
@@ -208,5 +210,18 @@ public class RunContentDescriptor implements Disposable {
 
   public void setAutoFocusContent(boolean autoFocusContent) {
     myAutoFocusContent = autoFocusContent;
+  }
+
+  /**
+   * Returns the runner layout UI interface that can be used to manage the sub-tabs in this run/debug tab, if available.
+   * (The runner layout UI is used, for example, by debugger tabs which have multiple sub-tabs, but is not used by other tabs
+   * which only display a single piece of content.
+   *
+   * @since 14.1
+   * @return the RunnerLayoutUi instance or null if this tab does not use RunnerLayoutUi for managing its contents.
+   */
+  @Nullable
+  RunnerLayoutUi getRunnerLayoutUi() {
+    return myRunnerLayoutUi;
   }
 }
