@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
+import com.intellij.debugger.engine.SourcePositionProvider;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
 import com.intellij.debugger.ui.breakpoints.FieldBreakpoint;
@@ -161,8 +162,7 @@ public class ToggleFieldBreakpointAction extends AnAction {
           public void threadAction() {
             ApplicationManager.getApplication().runReadAction(new Runnable() {
               public void run() {
-                final FieldDescriptorImpl descriptor = (FieldDescriptorImpl)selectedNode.getDescriptor();
-                positionRef.set(descriptor.getSourcePosition(project, debuggerContext));
+                positionRef.set(SourcePositionProvider.getSourcePosition(selectedNode.getDescriptor(), project, debuggerContext));
               }
             });
           }

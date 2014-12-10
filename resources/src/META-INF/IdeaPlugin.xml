@@ -119,6 +119,9 @@
     <extensionPoint name="debugger.frameExtraVarsProvider"
                     interface="com.intellij.debugger.engine.FrameExtraVariablesProvider"/>
 
+    <extensionPoint name="debugger.sourcePositionProvider"
+                    interface="com.intellij.debugger.engine.SourcePositionProvider"/>
+
     <extensionPoint name="debugger.simpleGetterProvider"
                     interface="com.intellij.debugger.engine.SimpleGetterProvider"/>
 
@@ -1465,6 +1468,7 @@
     <debugger.jvmSmartStepIntoHandler implementation="com.intellij.debugger.actions.JavaSmartStepIntoHandler"/>
     <debugger.simpleGetterProvider implementation="com.intellij.debugger.engine.JavaSimpleGetterProvider"/>
     <debugger.syntheticProvider implementation="com.intellij.debugger.engine.DefaultSyntheticProvider"/>
+    <debugger.sourcePositionProvider implementation="com.intellij.debugger.engine.DefaultSourcePositionProvider" order="last"/>
 
     <applicationService serviceInterface="com.intellij.remoteServer.runtime.deployment.debug.JavaDebuggerLauncher"
                         serviceImplementation="com.intellij.remoteServer.impl.runtime.deployment.debug.JavaDebuggerLauncherImpl"/>
