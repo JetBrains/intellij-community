@@ -25,15 +25,15 @@ import java.io.RandomAccessFile;
  * Replacement of RandomAccessFile("rw") with shadow file pointer / size, valid when file manipulations happen in with this class only.
  * Note that sharing policy is the same as RandomAccessFile
  */
-class RandomAccessFileWrapper extends RandomAccessFile {
-  private static final Logger LOG = Logger.getInstance(RandomAccessFileWrapper.class.getName());
+class RandomAccessFileWithLengthAndSizeTracking extends RandomAccessFile {
+  private static final Logger LOG = Logger.getInstance(RandomAccessFileWithLengthAndSizeTracking.class.getName());
   private static final boolean doAssertions = SystemProperties.getBooleanProperty("idea.do.random.access.wrapper.assertions", false);
 
   private final String myPath;
   private volatile long mySize;
   private volatile long myPointer;
 
-  public RandomAccessFileWrapper(String name) throws IOException {
+  public RandomAccessFileWithLengthAndSizeTracking(String name) throws IOException {
     super(name, "rw");
     mySize = super.length();
     myPath = name;
