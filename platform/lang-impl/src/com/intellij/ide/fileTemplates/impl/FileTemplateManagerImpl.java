@@ -62,6 +62,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Pers
 
   private final State myState = new State();
   private final FileTypeManagerEx myTypeManager;
+  private final Project myProject;
 
   private final FileTemplatesScheme myProjectScheme;
   private FileTemplatesScheme myScheme = FileTemplatesScheme.DEFAULT;
@@ -84,6 +85,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Pers
                                  @SuppressWarnings("UnusedParameters") ProjectManager pm,
                                  final Project project) {
     myTypeManager = typeManager;
+    myProject = project;
     ExportableFileTemplateSettings templateSettings = ExportableFileTemplateSettings.getInstance();
     assert templateSettings != null : "Can not instantiate " + ExportableFileTemplateSettings.class.getName();
 
@@ -189,6 +191,8 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Pers
     props.setProperty("PRODUCT_NAME", ApplicationNamesInfo.getInstance().getFullProductName());
 
     props.setProperty("DS", "$"); // Dollar sign, strongly needed for PHP, JS, etc. See WI-8979
+
+    props.setProperty("PROJECT_NAME", myProject.getName());
 
     return props;
   }

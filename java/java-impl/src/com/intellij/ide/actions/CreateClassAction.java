@@ -55,7 +55,7 @@ public class CreateClassAction extends JavaCreateTemplateInPackageAction<PsiClas
       builder.addKind("Annotation", PlatformIcons.ANNOTATION_TYPE_ICON, JavaTemplateUtil.INTERNAL_ANNOTATION_TYPE_TEMPLATE_NAME);
     }
     
-    for (FileTemplate template : FileTemplateManager.getInstance().getAllTemplates()) {
+    for (FileTemplate template : FileTemplateManager.getInstance(project).getAllTemplates()) {
       final JavaCreateFromTemplateHandler handler = new JavaCreateFromTemplateHandler();
       if (handler.handlesTemplate(template) && JavaCreateFromTemplateHandler.canCreate(directory)) {
         builder.addKind(template.getName(), JavaFileType.INSTANCE.getIcon(), template.getName());

@@ -70,6 +70,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
   private static final String OTHER_TITLE = IdeBundle.message("tab.filetemplates.j2ee");
 
   private final Project myProject;
+  private final FileTemplateManager myManager;
   private JPanel myMainPanel;
   private FileTemplateTab myCurrentTab;
   private FileTemplateTab myTemplatesList;
@@ -91,6 +92,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
 
   public AllFileTemplatesConfigurable(Project project) {
     myProject = project;
+    myManager = FileTemplateManager.getInstance(project);
   }
 
   private void onRemove() {
@@ -201,7 +203,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
     myCurrentTab = myTemplatesList;
 
     final List<FileTemplateTab> allTabs = new ArrayList<FileTemplateTab>(Arrays.asList(myTemplatesList, myIncludesList));
-    if (FileTemplateManager.getInstance().getAllCodeTemplates().length > 0) {
+    if (myManager.getAllCodeTemplates().length > 0) {
       myCodeTemplatesList = new FileTemplateTabAsList(CODE_TITLE) {
         @Override
         public void onTemplateSelected() {
@@ -479,7 +481,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
   }
 
   private void initLists() {
-    final FileTemplateManager templateManager = FileTemplateManager.getInstance();
+    final FileTemplateManager templateManager = myManager;
 
     final FileTemplate[] internalTemplates = templateManager.getInternalTemplates();
     myInternalTemplateNames.clear();
@@ -570,7 +572,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
       checkCanApply(list);
     }
 
-    final FileTemplateManager templatesManager = FileTemplateManager.getInstance();
+    final FileTemplateManager templatesManager = myManager;
     // Apply templates
 
     final List<FileTemplate> templates = new ArrayList<FileTemplate>();

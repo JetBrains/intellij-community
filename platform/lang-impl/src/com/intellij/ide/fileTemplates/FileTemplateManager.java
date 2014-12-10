@@ -55,6 +55,10 @@ public abstract class FileTemplateManager{
   /** Use {@link #getInstance(Project)} instead */
   @Deprecated
   public static FileTemplateManager getInstance(){
+    return getDefaultInstance();
+  }
+
+  public static FileTemplateManager getDefaultInstance(){
     return getInstance(ProjectManager.getInstance().getDefaultProject());
   }
 
@@ -74,6 +78,7 @@ public abstract class FileTemplateManager{
   @NotNull 
   public abstract Properties getDefaultProperties();
 
+  @Deprecated /** Use {@link #getDefaultProperties()} instead */
   @NotNull
   public Properties getDefaultProperties(@NotNull Project project) {
     Properties properties = getDefaultProperties();

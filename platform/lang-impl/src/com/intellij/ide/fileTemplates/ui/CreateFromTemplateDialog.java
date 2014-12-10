@@ -62,7 +62,7 @@ public class CreateFromTemplateDialog extends DialogWrapper {
     myTemplate = template;
     setTitle(IdeBundle.message("title.new.from.template", template.getName()));
 
-    myDefaultProperties = defaultProperties == null ? FileTemplateManager.getInstance().getDefaultProperties(project) : defaultProperties;
+    myDefaultProperties = defaultProperties == null ? FileTemplateManager.getInstance(project).getDefaultProperties() : defaultProperties;
     FileTemplateUtil.fillDefaultProperties(myDefaultProperties, directory);
     boolean mustEnterName = FileTemplateUtil.findHandler(template).isNameRequired();
     if (attributesDefaults != null && attributesDefaults.isFixedName()) {
