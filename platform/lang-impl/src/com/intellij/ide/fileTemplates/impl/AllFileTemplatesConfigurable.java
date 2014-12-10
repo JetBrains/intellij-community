@@ -35,6 +35,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.SideBorder;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
@@ -258,7 +259,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
     myTabbedPane.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
     myLeftPanel = new JPanel(new CardLayout());
     for (FileTemplateTab tab : myTabs) {
-      myLeftPanel.add(ScrollPaneFactory.createScrollPane(tab.getComponent(), 1, 0, 0, 0), tab.getTitle());
+      myLeftPanel.add(ScrollPaneFactory.createScrollPane(tab.getComponent(), SideBorder.TOP), tab.getTitle());
       JPanel fakePanel = new JPanel();
       fakePanel.setPreferredSize(new Dimension(0, 0));
       myTabbedPane.addTab(tab.getTitle(), fakePanel);
