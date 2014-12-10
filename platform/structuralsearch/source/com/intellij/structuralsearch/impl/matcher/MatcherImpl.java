@@ -31,6 +31,7 @@ import com.intellij.structuralsearch.impl.matcher.iterators.SsrFilteringNodeIter
 import com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.util.CollectingMatchResultSink;
+import com.intellij.structuralsearch.plugin.util.DuplicateFilteringResultSink;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.SmartList;
@@ -170,7 +171,7 @@ public class MatcherImpl {
     visitor.setMatchContext(matchContext);
 
     matchContext.setSink(
-      new MatchConstraintsSink(
+      new DuplicateFilteringResultSink(
         new MatchResultSink() {
           public void newMatch(MatchResult result) {
             processor.process(result, configuration);
@@ -188,10 +189,7 @@ public class MatcherImpl {
           public ProgressIndicator getProgressIndicator() {
             return null;
           }
-        },
-        options.getMaxMatchesCount(),
-        options.isDistinct(),
-        options.isCaseSensitiveMatch()
+        }
       )
     );
     options.setScope(scope);
@@ -348,14 +346,7 @@ public class MatcherImpl {
     }
 
     matchContext.clear();
-    matchContext.setSink(
-      new MatchConstraintsSink(
-        sink,
-        options.getMaxMatchesCount(),
-        options.isDistinct(),
-        options.isCaseSensitiveMatch()
-      )
-    );
+    matchContext.setSink(new DuplicateFilteringResultSink(sink));
     matchContext.setOptions(options);
     matchContext.setMatcher(visitor);
     visitor.setMatchContext(matchContext);
