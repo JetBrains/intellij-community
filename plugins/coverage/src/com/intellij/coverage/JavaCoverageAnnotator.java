@@ -74,8 +74,6 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator {
   }
 
   protected Runnable createRenewRequest(@NotNull final CoverageSuitesBundle suite, @NotNull final CoverageDataManager dataManager) {
-
-
     final Project project = getProject();
     final List<PsiPackage> packages = new ArrayList<PsiPackage>();
     final List<PsiClass> classes = new ArrayList<PsiClass>();
@@ -92,7 +90,7 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator {
 
     return new Runnable() {
       public void run() {
-        final PackageAnnotator.Annotator annotator = new PackageAnnotator.Annotator() {
+        final PackageAnnotator.AnnotationConsumer annotationConsumer = new PackageAnnotator.AnnotationConsumer() {
           public void annotatePackage(String packageQualifiedName, PackageAnnotator.PackageCoverageInfo packageCoverageInfo) {
             myPackageCoverageInfos.put(packageQualifiedName, packageCoverageInfo);
           }
@@ -125,7 +123,7 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator {
           }
         };
         for (PsiPackage aPackage : packages) {
-          new PackageAnnotator(aPackage).annotate(suite, annotator);
+          new PackageAnnotator(suite, aPackage, annotationConsumer).annotate();
         }
         for (final PsiClass aClass : classes) {
           Runnable runnable = new Runnable() {
@@ -133,7 +131,7 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator {
               final String packageName = ((PsiClassOwner)aClass.getContainingFile()).getPackageName();
               final PsiPackage psiPackage = JavaPsiFacade.getInstance(project).findPackage(packageName);
               if (psiPackage == null) return;
-              new PackageAnnotator(psiPackage).annotateFilteredClass(aClass, suite, annotator);
+              new PackageAnnotator(suite, psiPackage, annotationConsumer).annotateFilteredClass(aClass);
             }
           };
           ApplicationManager.getApplication().runReadAction(runnable);

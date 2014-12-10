@@ -39,19 +39,27 @@ import java.util.Map;
 public class PackageAnnotator {
 
   private static final Logger LOG = Logger.getInstance("#" + PackageAnnotator.class.getName());
+  private final CoverageSuitesBundle mySuite;
+  private final ProjectData myProjectData;
   private final PsiPackage myPackage;
+  private final String myRootPackageVMName;
+  private final AnnotationConsumer myConsumer;
   private final Project myProject;
   private final PsiManager myManager;
   private final CoverageDataManager myCoverageManager;
 
-  public PackageAnnotator(final PsiPackage aPackage) {
+  public PackageAnnotator(CoverageSuitesBundle suite, final PsiPackage aPackage, AnnotationConsumer consumer) {
+    mySuite = suite;
+    myProjectData = suite.getCoverageData();
     myPackage = aPackage;
+    myRootPackageVMName = myPackage.getQualifiedName().replaceAll("\\.", "/");
+    myConsumer = consumer;
     myProject = myPackage.getProject();
     myManager = PsiManager.getInstance(myProject);
     myCoverageManager = CoverageDataManager.getInstance(myProject);
   }
 
-  public interface Annotator {
+  public interface AnnotationConsumer {
     void annotateSourceDirectory(VirtualFile virtualFile, PackageCoverageInfo packageCoverageInfo, Module module);
 
     void annotateTestDirectory(VirtualFile virtualFile, PackageCoverageInfo packageCoverageInfo, Module module);
@@ -93,36 +101,22 @@ public class PackageAnnotator {
   }
 
   //get read lock myself when needed
-  public void annotate(final CoverageSuitesBundle suite, Annotator annotator) {
-    final ProjectData data = suite.getCoverageData();
+  public void annotate() {
+    if (myProjectData == null) return;
 
-    if (data == null) return;
+    if (!isPackageAcceptedByFilters()) return;
 
-    final String qualifiedName = myPackage.getQualifiedName();
-    boolean filtered = false;
-    for (CoverageSuite coverageSuite : suite.getSuites()) {
-      if (((JavaCoverageSuite)coverageSuite).isPackageFiltered(qualifiedName)) {
-        filtered = true;
-        break;
-      }
-
-    }
-    if (!filtered) return;
-
-    final GlobalSearchScope scope = suite.getSearchScope(myProject);
+    final GlobalSearchScope scope = mySuite.getSearchScope(myProject);
     final Module[] modules = myCoverageManager.doInReadActionIfProjectOpen(new Computable<Module[]>() {
       public Module[] compute() {
         return ModuleManager.getInstance(myProject).getModules();
       }
     });
 
-    if (modules == null) return;
-
     Map<String, PackageCoverageInfo> packageCoverageMap = new HashMap<String, PackageCoverageInfo>();
     Map<String, PackageCoverageInfo> flattenPackageCoverageMap = new HashMap<String, PackageCoverageInfo>();
     for (final Module module : modules) {
       if (!scope.isSearchInModuleContent(module)) continue;
-      final String rootPackageVMName = qualifiedName.replaceAll("\\.", "/");
       final VirtualFile output = myCoverageManager.doInReadActionIfProjectOpen(new Computable<VirtualFile>() {
         @Nullable
         public VirtualFile compute() {
@@ -132,15 +126,13 @@ public class PackageAnnotator {
 
 
       if (output != null) {
-        File outputRoot = findRelativeFile(rootPackageVMName, output);
+        File outputRoot = findRelativeFile(myRootPackageVMName, output);
         if (outputRoot.exists()) {
-          collectCoverageInformation(outputRoot, packageCoverageMap, flattenPackageCoverageMap, data, rootPackageVMName, annotator, module,
-                                     suite.isTrackTestFolders(), false);
+          collectCoverageInformation(outputRoot, packageCoverageMap, flattenPackageCoverageMap, myRootPackageVMName, module, false);
         }
-
       }
 
-      if (suite.isTrackTestFolders()) {
+      if (mySuite.isTrackTestFolders()) {
         final VirtualFile testPackageRoot = myCoverageManager.doInReadActionIfProjectOpen(new Computable<VirtualFile>() {
           @Nullable
           public VirtualFile compute() {
@@ -149,10 +141,9 @@ public class PackageAnnotator {
         });
 
         if (testPackageRoot != null) {
-          final File outputRoot = findRelativeFile(rootPackageVMName, testPackageRoot);
+          final File outputRoot = findRelativeFile(myRootPackageVMName, testPackageRoot);
           if (outputRoot.exists()) {
-            collectCoverageInformation(outputRoot, packageCoverageMap, flattenPackageCoverageMap, data, rootPackageVMName, annotator, module,
-                                         suite.isTrackTestFolders(), true);
+            collectCoverageInformation(outputRoot, packageCoverageMap, flattenPackageCoverageMap, myRootPackageVMName, module, true);
           }
         }
       }
@@ -161,14 +152,23 @@ public class PackageAnnotator {
     for (Map.Entry<String, PackageCoverageInfo> entry : packageCoverageMap.entrySet()) {
       final String packageFQName = entry.getKey().replaceAll("/", ".");
       final PackageCoverageInfo info = entry.getValue();
-      annotator.annotatePackage(packageFQName, info);
+      myConsumer.annotatePackage(packageFQName, info);
     }
 
     for (Map.Entry<String, PackageCoverageInfo> entry : flattenPackageCoverageMap.entrySet()) {
       final String packageFQName = entry.getKey().replaceAll("/", ".");
       final PackageCoverageInfo info = entry.getValue();
-      annotator.annotatePackage(packageFQName, info, true);
+      myConsumer.annotatePackage(packageFQName, info, true);
     }
+  }
+
+  private boolean isPackageAcceptedByFilters() {
+    for (CoverageSuite coverageSuite : mySuite.getSuites()) {
+      if (((JavaCoverageSuite)coverageSuite).isPackageFiltered(myPackage.getQualifiedName())) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static File findRelativeFile(String rootPackageVMName, VirtualFile output) {
@@ -177,9 +177,8 @@ public class PackageAnnotator {
     return outputRoot;
   }
 
-  public void annotateFilteredClass(PsiClass psiClass, CoverageSuitesBundle bundle, Annotator annotator) {
-    final ProjectData data = bundle.getCoverageData();
-    if (data == null) return;
+  public void annotateFilteredClass(PsiClass psiClass) {
+    if (myProjectData == null) return;
     final Module module = ModuleUtil.findModuleForPsiElement(psiClass);
     if (module != null) {
       final boolean isInTests = ProjectRootManager.getInstance(module.getProject()).getFileIndex()
@@ -190,8 +189,7 @@ public class PackageAnnotator {
       if (outputPath != null) {
         final String qualifiedName = psiClass.getQualifiedName();
         if (qualifiedName == null) return;
-        final String packageVMName = StringUtil.getPackageName(qualifiedName).replace('.', '/');
-        final File packageRoot = findRelativeFile(packageVMName, outputPath);
+        final File packageRoot = findRelativeFile(myRootPackageVMName, outputPath);
         if (packageRoot != null && packageRoot.exists()) {
           Map<String, ClassCoverageInfo> toplevelClassCoverage = new HashMap<String, ClassCoverageInfo>();
           final File[] files = packageRoot.listFiles();
@@ -199,16 +197,16 @@ public class PackageAnnotator {
             for (File child : files) {
               if (isClassFile(child)) {
                 final String childName = getClassName(child);
-                final String classFqVMName = packageVMName.length() > 0 ? packageVMName + "/" + childName : childName;
+                final String classFqVMName = myRootPackageVMName.length() > 0 ? myRootPackageVMName + "/" + childName : childName;
                 final String toplevelClassSrcFQName = getSourceToplevelFQName(classFqVMName);
                 if (toplevelClassSrcFQName.equals(qualifiedName)) {
-                  collectClassCoverageInformation(child, new PackageCoverageInfo(), data, toplevelClassCoverage, classFqVMName.replace("/", "."), toplevelClassSrcFQName);
+                  collectClassCoverageInformation(child, new PackageCoverageInfo(), toplevelClassCoverage, classFqVMName.replace("/", "."), toplevelClassSrcFQName);
                 }
               }
             }
           }
           for (ClassCoverageInfo coverageInfo : toplevelClassCoverage.values()) {
-            annotator.annotateClass(qualifiedName, coverageInfo);
+            myConsumer.annotateClass(qualifiedName, coverageInfo);
           }
         }
       }
@@ -219,11 +217,8 @@ public class PackageAnnotator {
   private DirCoverageInfo[] collectCoverageInformation(final File packageOutputRoot,
                                                        final Map<String, PackageCoverageInfo> packageCoverageMap,
                                                        Map<String, PackageCoverageInfo> flattenPackageCoverageMap,
-                                                       final ProjectData projectInfo,
                                                        final String packageVMName,
-                                                       final Annotator annotator,
                                                        final Module module,
-                                                       final boolean trackTestFolders,
                                                        final boolean isTestHierarchy) {
     final List<DirCoverageInfo> dirs = new ArrayList<DirCoverageInfo>();
     final ContentEntry[] contentEntries = ModuleRootManager.getInstance(module).getContentEntries();
@@ -247,8 +242,8 @@ public class PackageAnnotator {
         final String childName = child.getName();
         final String childPackageVMName = packageVMName.length() > 0 ? packageVMName + "/" + childName : childName;
         final DirCoverageInfo[] childCoverageInfo =
-          collectCoverageInformation(child, packageCoverageMap, flattenPackageCoverageMap, projectInfo, childPackageVMName, annotator, module,
-                                     trackTestFolders, isTestHierarchy);
+          collectCoverageInformation(child, packageCoverageMap, flattenPackageCoverageMap, childPackageVMName, module,
+                                     isTestHierarchy);
         if (childCoverageInfo != null) {
           for (int i = 0; i < childCoverageInfo.length; i++) {
             DirCoverageInfo coverageInfo = childCoverageInfo[i];
@@ -280,13 +275,13 @@ public class PackageAnnotator {
               }
               final ModuleFileIndex fileIndex = ModuleRootManager.getInstance(module).getFileIndex();
               return fileIndex.isUnderSourceRootOfType(containingFile[0], JavaModuleSourceRootTypes.SOURCES)
-                     && (trackTestFolders || !fileIndex.isInTestSourceContent(containingFile[0]));
+                     && (mySuite.isTrackTestFolders() || !fileIndex.isInTestSourceContent(containingFile[0]));
             }
           });
           if (isInSource != null && isInSource.booleanValue()) {
             for (DirCoverageInfo dirCoverageInfo : dirs) {
               if (dirCoverageInfo.sourceRoot != null && VfsUtil.isAncestor(dirCoverageInfo.sourceRoot, containingFile[0], false)) {
-                collectClassCoverageInformation(child, dirCoverageInfo, projectInfo, toplevelClassCoverage, classFqVMName.replace("/", "."), toplevelClassSrcFQName);
+                collectClassCoverageInformation(child, dirCoverageInfo, toplevelClassCoverage, classFqVMName.replace("/", "."), toplevelClassSrcFQName);
                 break;
               }
             }
@@ -298,7 +293,7 @@ public class PackageAnnotator {
     for (Map.Entry<String, ClassCoverageInfo> entry : toplevelClassCoverage.entrySet()) {
       final String toplevelClassName = entry.getKey();
       final ClassCoverageInfo coverageInfo = entry.getValue();
-      annotator.annotateClass(toplevelClassName, coverageInfo);
+      myConsumer.annotateClass(toplevelClassName, coverageInfo);
     }
 
     PackageCoverageInfo flattenPackageCoverageInfo = getOrCreateCoverageInfo(flattenPackageCoverageMap, packageVMName);
@@ -324,10 +319,10 @@ public class PackageAnnotator {
       packageCoverageInfo.totalMethodCount += dir.totalMethodCount;
 
       if (isTestHierarchy) {
-        annotator.annotateTestDirectory(dir.sourceRoot, dir, module);
+        myConsumer.annotateTestDirectory(dir.sourceRoot, dir, module);
       }
       else {
-        annotator.annotateSourceDirectory(dir.sourceRoot, dir, module);
+        myConsumer.annotateSourceDirectory(dir.sourceRoot, dir, module);
       }
     }
 
@@ -352,13 +347,13 @@ public class PackageAnnotator {
     return coverageInfo;
   }
 
-  private void collectClassCoverageInformation(final File classFile, final PackageCoverageInfo packageCoverageInfo, final ProjectData projectInfo,
+  private void collectClassCoverageInformation(final File classFile, final PackageCoverageInfo packageCoverageInfo,
                                                final Map<String, ClassCoverageInfo> toplevelClassCoverage,
                                                final String className,
                                                final String toplevelClassSrcFQName) {
     final ClassCoverageInfo toplevelClassCoverageInfo = new ClassCoverageInfo();
 
-    final ClassData classData = projectInfo.getClassData(className);
+    final ClassData classData = myProjectData.getClassData(className);
 
     if (classData != null && classData.getLines() != null) {
       final Object[] lines = classData.getLines();
