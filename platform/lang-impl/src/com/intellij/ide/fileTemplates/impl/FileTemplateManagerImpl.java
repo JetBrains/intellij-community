@@ -23,16 +23,19 @@ import com.intellij.ide.fileTemplates.FileTemplatesScheme;
 import com.intellij.ide.fileTemplates.InternalTemplateBean;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.text.DateFormatUtil;
-import org.jdom.Element;
+import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,14 +50,17 @@ import java.util.*;
  * @author MYakovlev
  *         Date: Jul 24
  * @author 2002
- *
- * locking policy: if the class needs to take a read or write action, the LOCK lock must be taken
- * _inside_, not outside of the read action
  */
-public class FileTemplateManagerImpl extends FileTemplateManager {
+@State(
+  name = "FileTemplateManagerImpl",
+  storages = {
+    @Storage(file = StoragePathMacros.WORKSPACE_FILE)
+  }
+)
+public class FileTemplateManagerImpl extends FileTemplateManager implements PersistentStateComponent<FileTemplateManagerImpl.State> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.fileTemplates.impl.FileTemplateManagerImpl");
 
-  private final RecentTemplatesManager myRecentList = new RecentTemplatesManager();
+  private final State myState = new State();
   private final FileTypeManagerEx myTypeManager;
 
   private final FileTemplatesScheme myProjectScheme;
@@ -202,12 +208,12 @@ public class FileTemplateManagerImpl extends FileTemplateManager {
   @NotNull
   public Collection<String> getRecentNames() {
     validateRecentNames(); // todo: no need to do it lazily
-    return myRecentList.getRecentNames(RECENT_TEMPLATES_SIZE);
+    return myState.getRecentNames(RECENT_TEMPLATES_SIZE);
   }
 
   @Override
   public void addRecentName(@NotNull @NonNls String name) {
-    myRecentList.addName(name);
+    myState.addName(name);
   }
 
   private void validateRecentNames() {
@@ -216,7 +222,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager {
     for (FileTemplate fileTemplate : allTemplates) {
       allNames.add(fileTemplate.getName());
     }
-    myRecentList.validateNames(allNames);
+    myState.validateNames(allNames);
   }
 
   @Override
@@ -395,8 +401,19 @@ public class FileTemplateManagerImpl extends FileTemplateManager {
     myTestDate = testDate;
   }
 
-  private static class RecentTemplatesManager implements JDOMExternalizable {
-    public JDOMExternalizableStringList RECENT_TEMPLATES = new JDOMExternalizableStringList();
+  @Nullable
+  @Override
+  public State getState() {
+    return myState;
+  }
+
+  @Override
+  public void loadState(State state) {
+    XmlSerializerUtil.copyBean(state, myState);
+  }
+
+  public static class State {
+    public List<String> RECENT_TEMPLATES = new ArrayList<String>();
 
     public void addName(@NotNull @NonNls String name) {
       RECENT_TEMPLATES.remove(name);
@@ -412,16 +429,6 @@ public class FileTemplateManagerImpl extends FileTemplateManager {
 
     public void validateNames(List<String> validNames) {
       RECENT_TEMPLATES.retainAll(validNames);
-    }
-
-    @Override
-    public void readExternal(Element element) throws InvalidDataException {
-      DefaultJDOMExternalizer.readExternal(this, element);
-    }
-
-    @Override
-    public void writeExternal(Element element) throws WriteExternalException {
-      DefaultJDOMExternalizer.writeExternal(this, element);
     }
   }
 }
