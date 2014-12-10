@@ -46,7 +46,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.stubs.StubUpdatingIndex");
 
   // todo remove once we don't need this for stub-ast mismatch debug info
-  private static final FileAttribute INDEXED_STAMP = new FileAttribute("stubIndexStamp", 1, false);
+  private static final FileAttribute INDEXED_STAMP = new FileAttribute("stubIndexStamp", 2, false);
 
   public static final ID<Integer, SerializedStubTree> INDEX_ID = ID.create("Stubs");
 
@@ -127,7 +127,13 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
             if (rootStub == null) return;
 
             VirtualFile file = inputData.getFile();
-            int contentLength = file.getFileType().isBinary() ? -1 : inputData.getContentAsText().length();
+            int contentLength;
+            if (file.getFileType().isBinary()) {
+              contentLength = -1;
+            }
+            else {
+              contentLength = ((FileContentImpl)inputData).getPsiFileForPsiDependentIndex().getTextLength();
+            }
             rememberIndexingStamp(file, contentLength);
 
             final BufferExposingByteArrayOutputStream bytes = new BufferExposingByteArrayOutputStream();
