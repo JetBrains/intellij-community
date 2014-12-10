@@ -35,10 +35,25 @@ public abstract class VcsCherryPicker {
   @NotNull
   public abstract VcsKey getSupportedVcs();
 
+  /**
+   * @return CherryPick Action name for supported vcs
+   */
   @NotNull
-  public abstract String getPreferredActionTitle();
+  public abstract String getActionTitle();
 
+  /**
+   * Cherry-pick selected commits to current branch of appropriate repository
+   *
+   * @param commits to cherry-pick
+   */
   public abstract void cherryPick(@NotNull final List<VcsFullCommitDetails> commits);
 
+  /**
+   * Return true if all selected commits can be cherry-picked by this cherry-picker
+   *
+   * @param log     additional log information
+   * @param details commits to cherry-pick
+   * @return
+   */
   public abstract boolean isEnabled(@NotNull VcsLog log, @NotNull List<VcsFullCommitDetails> details);
 }

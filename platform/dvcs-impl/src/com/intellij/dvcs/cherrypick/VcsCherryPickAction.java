@@ -152,21 +152,21 @@ public class VcsCherryPickAction extends DumbAwareAction {
     });
     e.getPresentation().setEnabled(enabledCherryPicker != null);
     e.getPresentation().setText(
-      enabledCherryPicker == null ? concatActionNamesForAllAvailable(cherryPickers) : enabledCherryPicker.getPreferredActionTitle());
+      enabledCherryPicker == null ? concatActionNamesForAllAvailable(cherryPickers) : enabledCherryPicker.getActionTitle());
   }
 
   @NotNull
-  private String concatActionNamesForAllAvailable(@NotNull final List<VcsCherryPicker> pickers) {
+  private static String concatActionNamesForAllAvailable(@NotNull final List<VcsCherryPicker> pickers) {
     return StringUtil.join(pickers, new Function<VcsCherryPicker, String>() {
       @Override
       public String fun(VcsCherryPicker picker) {
-        return picker.getPreferredActionTitle();
+        return picker.getActionTitle();
       }
     }, "/");
   }
 
   @NotNull
-  private List<VcsCherryPicker> getActiveCherryPickersForProject(@Nullable final Project project) {
+  private static List<VcsCherryPicker> getActiveCherryPickersForProject(@Nullable final Project project) {
     if (project != null) {
       final ProjectLevelVcsManager projectLevelVcsManager = ProjectLevelVcsManager.getInstance(project);
       AbstractVcs[] vcss = projectLevelVcsManager.getAllActiveVcss();

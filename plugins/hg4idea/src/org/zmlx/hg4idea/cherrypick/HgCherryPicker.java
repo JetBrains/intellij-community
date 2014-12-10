@@ -55,7 +55,7 @@ public class HgCherryPicker extends VcsCherryPicker {
 
   @NotNull
   @Override
-  public String getPreferredActionTitle() {
+  public String getActionTitle() {
     return "Graft";
   }
 
