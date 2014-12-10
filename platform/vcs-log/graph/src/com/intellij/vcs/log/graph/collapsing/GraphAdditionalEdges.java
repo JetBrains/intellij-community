@@ -26,16 +26,16 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 
-public class GraphAdditionEdges {
-  public static GraphAdditionEdges newInstance(@NotNull Function<Integer, Integer> getNodeIndexById,
+public class GraphAdditionalEdges {
+  public static GraphAdditionalEdges newInstance(@NotNull Function<Integer, Integer> getNodeIndexById,
                                                @NotNull Function<Integer, Integer> getNodeIdByIndex) {
-    return new GraphAdditionEdges(getNodeIndexById, getNodeIdByIndex, new IntIntMultiMap());
+    return new GraphAdditionalEdges(getNodeIndexById, getNodeIdByIndex, new IntIntMultiMap());
   }
 
-  public static GraphAdditionEdges updateInstance(@NotNull GraphAdditionEdges prevAdditionEdges,
+  public static GraphAdditionalEdges updateInstance(@NotNull GraphAdditionalEdges prevAdditionEdges,
                                                   @NotNull Function<Integer, Integer> getNodeIndexById,
                                                   @NotNull Function<Integer, Integer> getNodeIdByIndex) {
-    return new GraphAdditionEdges(getNodeIndexById, getNodeIdByIndex, prevAdditionEdges.myAdditionEdges);
+    return new GraphAdditionalEdges(getNodeIndexById, getNodeIdByIndex, prevAdditionEdges.myAdditionEdges);
   }
 
   @NotNull
@@ -45,9 +45,9 @@ public class GraphAdditionEdges {
   @NotNull
   private final IntIntMultiMap myAdditionEdges;
 
-  private GraphAdditionEdges(@NotNull Function<Integer, Integer> getNodeIndexById,
-                             @NotNull Function<Integer, Integer> getNodeIdByIndex,
-                             @NotNull IntIntMultiMap additionEdges) {
+  private GraphAdditionalEdges(@NotNull Function<Integer, Integer> getNodeIndexById,
+                               @NotNull Function<Integer, Integer> getNodeIdByIndex,
+                               @NotNull IntIntMultiMap additionEdges) {
     myGetNodeIndexById = getNodeIndexById;
     myGetNodeIdByIndex = getNodeIdByIndex;
     myAdditionEdges = additionEdges;
