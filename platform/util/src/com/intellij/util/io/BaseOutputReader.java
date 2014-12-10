@@ -123,7 +123,7 @@ public abstract class BaseOutputReader extends BaseDataReader {
 
   @Override
   protected boolean readAvailable() throws IOException {
-    return readAvailableNonBlocking();
+    return mySleepingPolicy == SleepingPolicy.BLOCKING ? readAvailableBlocking() : readAvailableNonBlocking();
   }
 
   @Override

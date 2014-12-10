@@ -69,6 +69,14 @@ public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor
     return false;
   }
 
+  /**
+   * Override this method to read process output and error streams in blocking mode
+   * @return true to read non-blocking but sleeping, false for blocking read
+   */
+  protected boolean useNonBlockingRead() {
+    return true;
+  }
+
   protected boolean processHasSeparateErrorStream() {
     return true;
   }
@@ -117,7 +125,13 @@ public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor
   }
 
   private BaseDataReader.SleepingPolicy getPolicy() {
-    return useAdaptiveSleepingPolicyWhenReadingOutput() ? new AdaptiveSleepingPolicy() : BaseDataReader.SleepingPolicy.SIMPLE;
+    if (useNonBlockingRead()) {
+      return useAdaptiveSleepingPolicyWhenReadingOutput() ? new AdaptiveSleepingPolicy() : BaseDataReader.SleepingPolicy.SIMPLE;
+    }
+    else {
+      //use blocking read policy
+      return BaseDataReader.SleepingPolicy.BLOCKING;
+    }
   }
 
   @NotNull
@@ -143,10 +157,10 @@ public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor
   }
 
   private Reader createInputStreamReader(InputStream streamToRead) {
-    final Charset charset = getCharset();
+    Charset charset = getCharset();
     if (charset == null) {
       // use default charset
-      return new InputStreamReader(streamToRead);
+      charset = Charset.defaultCharset();
     }
     return new InputStreamReader(streamToRead, charset);
   }
