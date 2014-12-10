@@ -40,12 +40,38 @@ public abstract class BaseOutputReader extends BaseDataReader {
     myReader = reader;
   }
 
+  private void processLine(char[] buffer, StringBuilder token, int n) {
+    for (int i = 0; i < n; i++) {
+      char c = buffer[i];
+      if (skipLF && c != '\n') {
+        token.append('\r');
+      }
+
+      if (c == '\r') {
+        skipLF = true;
+      }
+      else {
+        skipLF = false;
+        token.append(c);
+      }
+
+      if (c == '\n') {
+        onTextAvailable(token.toString());
+        token.setLength(0);
+      }
+    }
+  }
+
+
   /**
    * Reads as much data as possible without blocking.
+   * Relies on InputStream.ready method.
+   * In case of doubts look at #readAvailableBlocking
+   *
    * @return true if non-zero amount of data has been read
    * @exception  IOException  If an I/O error occurs
    */
-  protected final boolean readAvailable() throws IOException {
+  protected final boolean readAvailableNonBlocking() throws IOException {
     char[] buffer = myBuffer;
     StringBuilder token = myTextBuffer;
     token.setLength(0);
@@ -56,25 +82,7 @@ public abstract class BaseOutputReader extends BaseDataReader {
       if (n <= 0) break;
       read = true;
 
-      for (int i = 0; i < n; i++) {
-        char c = buffer[i];
-        if (skipLF && c != '\n') {
-          token.append('\r');
-        }
-
-        if (c == '\r') {
-          skipLF = true;
-        }
-        else {
-          skipLF = false;
-          token.append(c);
-        }
-
-        if (c == '\n') {
-          onTextAvailable(token.toString());
-          token.setLength(0);
-        }
-      }
+      processLine(buffer, token, n);
     }
 
     if (token.length() != 0) {
@@ -82,6 +90,40 @@ public abstract class BaseOutputReader extends BaseDataReader {
       token.setLength(0);
     }
     return read;
+  }
+
+  /**
+   * Reads data with blocking.
+   * Should be used in case when ready method always returns false for your input stream.
+   * Should be used if we want to to make our reader exit when end of stream reached.
+   * Could be used if we prefer IO-blocking over CPU sleeping.
+   *
+   * @return true if non-zero amount of data has been read, false if end of the stream is reached
+   * @exception  IOException  If an I/O error occurs
+   */
+  protected final boolean readAvailableBlocking() throws IOException {
+    char[] buffer = myBuffer;
+    StringBuilder token = myTextBuffer;
+    token.setLength(0);
+
+    boolean read = false;
+    int n;
+    while ((n = myReader.read(buffer)) > 0) {
+      read = true;
+
+      processLine(buffer, token, n);
+    }
+
+    if (token.length() != 0) {
+      onTextAvailable(token.toString());
+      token.setLength(0);
+    }
+    return read;
+  }
+
+  @Override
+  protected boolean readAvailable() throws IOException {
+    return readAvailableNonBlocking();
   }
 
   @Override
