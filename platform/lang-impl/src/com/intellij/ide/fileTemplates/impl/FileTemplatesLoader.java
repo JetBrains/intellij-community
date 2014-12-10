@@ -182,6 +182,7 @@ public class FileTemplatesLoader {
             final URL templateUrl = UrlClassLoader.internProtocol(new URL(root.toExternalForm() + "/" + path));
             final String descriptionPath = getDescriptionPath(prefix, templateName, extension, descriptionPaths);
             final URL descriptionUrl = descriptionPath != null ? UrlClassLoader.internProtocol(new URL(root.toExternalForm() + "/" + descriptionPath)) : null;
+            assert templateUrl != null;
             entry.getValue().addDefaultTemplate(new DefaultTemplate(templateName, extension, templateUrl, descriptionUrl));
           }
           break; // FTManagers loop
