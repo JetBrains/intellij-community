@@ -60,19 +60,35 @@ public class FunctionalInterfaceSuggester {
           if (parameters.length != interfaceMethodParameters.length) {
             return null;
           }
+
+          final PsiType[] left = new PsiType[parameters.length];
+          final PsiType[] right = new PsiType[parameters.length];
+
+          for (int i = 0; i < parameters.length; i++) {
+            left[i]  = interfaceMethodParameters[i].getType();
+            right[i] = parameters[i].getType();
+          }
+
+          final PsiTypeParameter[] typeParameters = aClass.getTypeParameters();
+          final PsiSubstitutor substitutor = PsiResolveHelper.SERVICE.getInstance(aClass.getProject())
+            .inferTypeArguments(typeParameters, left, right, PsiUtil.getLanguageLevel(method));
+          if (PsiUtil.isRawSubstitutor(aClass, substitutor)) {
+            return null;
+          }
+
           for (int i = 0; i < interfaceMethodParameters.length; i++) {
-            if (!TypeConversionUtil.isAssignable(parameters[i].getType(), interfaceMethodParameters[i].getType())) {
+            if (!TypeConversionUtil.isAssignable(parameters[i].getType(), substitutor.substitute(interfaceMethodParameters[i].getType()))) {
               return null;
             }
           }
 
           final PsiType returnType = method.getReturnType();
-          if (!TypeConversionUtil.isAssignable(interfaceMethod.getReturnType(), returnType)) {
+          if (!TypeConversionUtil.isAssignable(substitutor.substitute(interfaceMethod.getReturnType()), returnType)) {
             return null;
           }
 
           final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(aClass.getProject());
-          final PsiType type = elementFactory.createType(aClass, PsiSubstitutor.EMPTY);
+          final PsiType type = elementFactory.createType(aClass, substitutor);
           return type;
         }
         return null;

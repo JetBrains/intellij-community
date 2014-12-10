@@ -587,9 +587,11 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
     final PsiElement commonParent = PsiTreeUtil.findCommonParent(elements);
     final RangeMarker marker = editor.getDocument().createRangeMarker(elements[0].getTextOffset(),
                                                                       elements[elements.length - 1].getTextRange().getEndOffset());
-    final PsiClass wrapperClass = PsiUtil.resolveClassInType(selectedType);
+    final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(selectedType);
+    final PsiClass wrapperClass = resolveResult.getElement();
     LOG.assertTrue(wrapperClass != null);
 
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     final Ref<String> methodCallText = new Ref<String>();
     final Ref<String> methodText = new Ref<String>();
     WriteCommandAction.runWriteCommandAction(project, new Runnable() {
@@ -602,6 +604,16 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
         processor.doExtract();
 
         final PsiMethod extractedMethod = processor.getExtractedMethod();
+        final PsiParameter[] parameters = extractedMethod.getParameterList().getParameters();
+        final PsiParameter[] interfaceParameters = method.getParameterList().getParameters();
+        final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
+        for (int i = 0; i < interfaceParameters.length; i++) {
+          final PsiTypeElement typeAfterInterface = factory.createTypeElement(substitutor.substitute(interfaceParameters[i].getType()));
+          final PsiTypeElement typeElement = parameters[i].getTypeElement();
+          if (typeElement != null) {
+            typeElement.replace(typeAfterInterface);
+          }
+        }
         methodText.set(extractedMethod.getText());
 
         final PsiMethodCallExpression methodCall = processor.getMethodCall();
@@ -612,8 +624,9 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
       }
     });
 
-    final PsiExpression expression = JavaPsiFacade.getElementFactory(project)
-      .createExpressionFromText("new " + wrapperClass.getQualifiedName() + "() {" + methodText.get() + "}",
+    
+    final PsiExpression expression = factory
+      .createExpressionFromText("new " + selectedType.getCanonicalText() + "() {" + methodText.get() + "}",
                                 methodToIntroduceParameter);
     expression.putUserData(ElementToWorkOn.PARENT, commonParent);
     expression.putUserData(ElementToWorkOn.SUFFIX, "." + methodCallText.get() + ";");
