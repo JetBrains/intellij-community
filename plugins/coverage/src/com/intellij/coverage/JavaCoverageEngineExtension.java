@@ -62,4 +62,12 @@ public abstract class JavaCoverageEngineExtension {
   public String generateBriefReport(Editor editor, PsiFile file, int lineNumber, int startOffset, int endOffset, LineData lineData) {
     return null;
   }
+
+  /**
+   * Returns true if this configuration requires the generation of a source map to match the compiled .class files to
+   * corresponding sources.
+   */
+  public boolean isSourceMapNeeded(RunConfigurationBase runConfiguration) {
+    return false;
+  }
 }
