@@ -19,7 +19,7 @@ def get_file_output(encoding="utf-8", path=sys.argv[-1]):
     import subprocess
 
     proc = subprocess.Popen([sys.executable, path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    return list(map(lambda x: x.decode(encoding), proc.communicate()[0].splitlines()))
+    return list(map(lambda x: str(x.decode(encoding)), proc.communicate()[0].splitlines()))
 
 
 def test_file_importable():
