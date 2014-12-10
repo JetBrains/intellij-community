@@ -41,6 +41,14 @@ public class IntroduceFunctionalParameterTest extends LightRefactoringTestCase  
     doTest();
   }
 
+  public void testExceptionPreventFromCompatibility() throws Exception {
+    doTest();
+  }
+  
+  public void testThrownExceptionsAgree() throws Exception {
+    doTest();
+  }
+
   @NotNull
   @Override
   protected String getTestDataPath() {
