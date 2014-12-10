@@ -15,7 +15,10 @@
  */
 package com.intellij.openapi.diff.impl.dir;
 
-import com.intellij.ide.diff.*;
+import com.intellij.ide.diff.DiffElement;
+import com.intellij.ide.diff.DiffErrorElement;
+import com.intellij.ide.diff.DiffType;
+import com.intellij.ide.diff.DirDiffSettings;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.SortedList;
 import org.jetbrains.annotations.NotNull;

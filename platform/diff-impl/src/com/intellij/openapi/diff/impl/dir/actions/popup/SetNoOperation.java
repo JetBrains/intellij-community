@@ -15,10 +15,10 @@
  */
 package com.intellij.openapi.diff.impl.dir.actions.popup;
 
+import com.intellij.ide.diff.DirDiffOperation;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diff.impl.dir.DirDiffElementImpl;
-import com.intellij.ide.diff.DirDiffOperation;
 import com.intellij.openapi.diff.impl.dir.DirDiffTableModel;
 
 import javax.swing.*;
