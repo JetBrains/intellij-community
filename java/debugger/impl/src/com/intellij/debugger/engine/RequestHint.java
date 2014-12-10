@@ -243,6 +243,10 @@ public class RequestHint {
             }
           }
         }
+
+        for (ExtraSteppingFilter filter : ExtraSteppingFilter.EP_NAME.getExtensions()) {
+          if (filter.isApplicable(context)) return filter.stepRequestDepth(context);
+        }
       }
       // smart step feature
       if (res == STOP && myMethodFilter != null) {
