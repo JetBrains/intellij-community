@@ -10,7 +10,7 @@ import java.util.List;
 import static com.intellij.openapi.util.text.StringUtil.isWhiteSpace;
 
 @SuppressWarnings({"Duplicates", "unused", "TypeParameterExplicitlyExtendsObject"})
-class TrimUtil {
+public class TrimUtil {
   private static final String PUNCTUATION = "(){}[],./?`~!@#$%^&*-=+|\\;:'\"<>";
   private static final TIntHashSet PUNCTUATION_SET = new TIntHashSet();
 

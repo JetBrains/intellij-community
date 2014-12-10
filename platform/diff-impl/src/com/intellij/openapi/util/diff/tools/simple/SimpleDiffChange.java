@@ -131,7 +131,7 @@ class SimpleDiffChange {
 
     int start = side.getStartOffset(myFragment);
     int end = side.getEndOffset(myFragment);
-    TextDiffType type = getDiffType(myFragment);
+    TextDiffType type = DiffUtil.getLineDiffType(myFragment);
 
     myHighlighters.add(DiffDrawUtil.createHighlighter(editor, start, end, type, ignored));
 
@@ -153,7 +153,7 @@ class SimpleDiffChange {
 
     int start = side.getStartOffset(fragment);
     int end = side.getEndOffset(fragment);
-    TextDiffType type = getDiffType(fragment);
+    TextDiffType type = DiffUtil.getDiffType(fragment);
 
     int startOffset = side.getStartOffset(myFragment);
     start += startOffset;
@@ -163,39 +163,6 @@ class SimpleDiffChange {
     myHighlighters.add(highlighter);
   }
 
-  //
-  // Types
-  //
-
-  @NotNull
-  private static TextDiffType getDiffType(@NotNull LineFragment fragment) {
-    boolean left = fragment.getEndOffset1() != fragment.getStartOffset1() || fragment.getStartLine1() != fragment.getEndLine1();
-    boolean right = fragment.getEndOffset2() != fragment.getStartOffset2() || fragment.getStartLine2() != fragment.getEndLine2();
-    return getType(left, right);
-  }
-
-  @NotNull
-  private static TextDiffType getDiffType(@NotNull DiffFragment fragment) {
-    boolean left = fragment.getEndOffset1() != fragment.getStartOffset1();
-    boolean right = fragment.getEndOffset2() != fragment.getStartOffset2();
-    return getType(left, right);
-  }
-
-  private static TextDiffType getType(boolean left, boolean right) {
-    if (left && right) {
-      return TextDiffType.MODIFIED;
-    }
-    else if (left) {
-      return TextDiffType.DELETED;
-    }
-    else if (right) {
-      return TextDiffType.INSERTED;
-    }
-    else {
-      throw new IllegalArgumentException();
-    }
-  }
-
   @NotNull
   public LineFragment getFragment() {
     return myShiftedFragment != null ? myShiftedFragment : myFragment;
@@ -203,7 +170,7 @@ class SimpleDiffChange {
 
   @NotNull
   public TextDiffType getDiffType() {
-    return getDiffType(myFragment);
+    return DiffUtil.getLineDiffType(myFragment);
   }
 
   //

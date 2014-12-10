@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.markup.*;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.awt.geom.CubicCurve2D;
@@ -102,7 +103,7 @@ public class DiffDrawUtil {
 
   @NotNull
   public static TextAttributes getTextAttributes(@NotNull final TextDiffType type,
-                                                 @NotNull final Editor editor,
+                                                 @Nullable final Editor editor,
                                                  final boolean ignored,
                                                  final boolean showStripes) {
     return new TextAttributes() {
