@@ -285,17 +285,9 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
         assertConsistency(ignoreCase, "");
         return getArraySafely();
       }
-    }
 
-    final boolean wasChildrenLoaded = ourPersistence.areChildrenLoaded(this);
-    final FSRecords.NameId[] childrenIds = ourPersistence.listAll(this);
-
-    synchronized (myData) {
-      if (allChildrenLoaded()) {
-        assertConsistency(ignoreCase, "");
-        return getArraySafely();
-      }
-
+      final boolean wasChildrenLoaded = ourPersistence.areChildrenLoaded(this);
+      final FSRecords.NameId[] childrenIds = ourPersistence.listAll(this);
       int[] result;
       if (childrenIds.length == 0) {
         result = ArrayUtil.EMPTY_INT_ARRAY;
