@@ -439,10 +439,8 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable {
     return result;
   }
 
-  private static void systemNotify(final Task.NotificationInfo notificationInfo) {
-    SystemNotifications.getInstance().notify(notificationInfo.getNotificationName(),
-                                             notificationInfo.getNotificationTitle(),
-                                             notificationInfo.getNotificationText());
+  private static void systemNotify(Task.NotificationInfo info) {
+    SystemNotifications.getInstance().notify(info.getNotificationName(), info.getNotificationTitle(), info.getNotificationText());
   }
 
   @Override

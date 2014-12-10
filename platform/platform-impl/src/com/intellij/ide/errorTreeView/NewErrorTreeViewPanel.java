@@ -544,14 +544,12 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
     DefaultActionGroup rightUpdateableActionGroup = new DefaultActionGroup();
     fillRightToolbarGroup(rightUpdateableActionGroup);
 
-    JPanel toolbarPanel = new JPanel(new GridLayout(1, 2));
-    final ActionManager actionManager = ActionManager.getInstance();
-    myLeftToolbar =
-      actionManager.createActionToolbar(ActionPlaces.COMPILER_MESSAGES_TOOLBAR, leftUpdateableActionGroup, false);
-    toolbarPanel.add(myLeftToolbar.getComponent());
-    myRightToolbar =
-      actionManager.createActionToolbar(ActionPlaces.COMPILER_MESSAGES_TOOLBAR, rightUpdateableActionGroup, false);
-    toolbarPanel.add(myRightToolbar.getComponent());
+    JPanel toolbarPanel = new JPanel(new BorderLayout());
+    ActionManager actionManager = ActionManager.getInstance();
+    myLeftToolbar = actionManager.createActionToolbar(ActionPlaces.COMPILER_MESSAGES_TOOLBAR, leftUpdateableActionGroup, false);
+    myRightToolbar = actionManager.createActionToolbar(ActionPlaces.COMPILER_MESSAGES_TOOLBAR, rightUpdateableActionGroup, false);
+    toolbarPanel.add(myLeftToolbar.getComponent(), BorderLayout.WEST);
+    toolbarPanel.add(myRightToolbar.getComponent(), BorderLayout.CENTER);
 
     return toolbarPanel;
   }
