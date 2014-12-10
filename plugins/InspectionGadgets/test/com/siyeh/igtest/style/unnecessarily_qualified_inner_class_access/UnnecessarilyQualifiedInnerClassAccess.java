@@ -1,24 +1,25 @@
 package com.siyeh.igtest.style.unnecessarily_qualified_inner_class_access;
 import java.util.Map;
-@Y(<warning descr="'X' is unnecessarily qualified with 'Test'">Test</warning>.X.class)
-public class Test<T> {
 
-    public Test(int i) {
+@Y( <warning descr="'X' is unnecessarily qualified with 'UnnecessarilyQualifiedInnerClassAccess'">UnnecessarilyQualifiedInnerClassAccess</warning> .X.class)
+public class UnnecessarilyQualifiedInnerClassAccess<T> {
+
+    public UnnecessarilyQualifiedInnerClassAccess(int i) {
         <warning descr="'Entry' is unnecessarily qualified with 'Map'">Map</warning>.Entry entry;
     }
 
-    public Test() {
-        final String test = <warning descr="'Inner' is unnecessarily qualified with 'Test'">Test</warning>.Inner.TEST;
+    public UnnecessarilyQualifiedInnerClassAccess() {
+        final String test =  <warning descr="'Inner' is unnecessarily qualified with 'UnnecessarilyQualifiedInnerClassAccess'">UnnecessarilyQualifiedInnerClassAccess</warning> .Inner.TEST;
     }
     public static class Inner {
         public static final String TEST = "test";
     }
 
     void foo() {
-        Test<String>.X x; // no warning here, because generic parameter is needed
-        <warning descr="'Y' is unnecessarily qualified with 'Test'">Test</warning>.Y<String> y;
+        UnnecessarilyQualifiedInnerClassAccess<String>.X x; // no warning here, because generic parameter is needed
+         <warning descr="'Y' is unnecessarily qualified with 'UnnecessarilyQualifiedInnerClassAccess'">UnnecessarilyQualifiedInnerClassAccess</warning> .Y<String> y;
     }
-
+¡
     class X {
         T t;
     }
