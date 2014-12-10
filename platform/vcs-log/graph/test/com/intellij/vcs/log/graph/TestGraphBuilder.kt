@@ -24,19 +24,10 @@ import com.intellij.vcs.log.graph.utils.LinearGraphUtils
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.containers.HashMap
 import com.intellij.vcs.log.graph.api.elements.GraphNodeType
+import com.intellij.vcs.log.graph.BaseTestGraphBuilder.SimpleEdge
+import com.intellij.vcs.log.graph.BaseTestGraphBuilder.SimpleNode
 
-class TestGraphBuilder {
-  private val nodes = ArrayList<NodeWithEdges>()
-
-  fun done(): LinearGraph = TestLinearGraph(nodes)
-
-  fun Int.invoke() = newNode(asSimpleNode())
-  fun Int.invoke(vararg edge: Int) = newNode(asSimpleNode(), edge.asSimpleEdges())
-  fun Int.invoke(vararg edge: SimpleEdge) = newNode(asSimpleNode(), edge.toList())
-  fun SimpleNode.invoke() = newNode(this)
-  fun SimpleNode.invoke(vararg edge: Int) = newNode(this, edge.asSimpleEdges())
-  fun SimpleNode.invoke(vararg edge: SimpleEdge) = newNode(this, edge.toList())
-
+trait BaseTestGraphBuilder {
   val Int.U: SimpleNode get() = SimpleNode(this, GraphNodeType.USUAL)
   val Int.G: SimpleNode get() = SimpleNode(this, GraphNodeType.GRAY)
   val Int.NOT_LOAD: SimpleNode get() = SimpleNode(this, GraphNodeType.NOT_LOAD_COMMIT)
@@ -49,6 +40,19 @@ class TestGraphBuilder {
 
   class SimpleEdge(val toNode: Int?, val type: GraphEdgeType = GraphEdgeType.USUAL)
   class SimpleNode(val nodeId: Int, val type: GraphNodeType = GraphNodeType.USUAL)
+}
+
+class TestGraphBuilder: BaseTestGraphBuilder {
+  private val nodes = ArrayList<NodeWithEdges>()
+
+  fun done(): LinearGraph = TestLinearGraph(nodes)
+
+  fun Int.invoke() = newNode(asSimpleNode())
+  fun Int.invoke(vararg edge: Int) = newNode(asSimpleNode(), edge.asSimpleEdges())
+  fun Int.invoke(vararg edge: SimpleEdge) = newNode(asSimpleNode(), edge.toList())
+  fun SimpleNode.invoke() = newNode(this)
+  fun SimpleNode.invoke(vararg edge: Int) = newNode(this, edge.asSimpleEdges())
+  fun SimpleNode.invoke(vararg edge: SimpleEdge) = newNode(this, edge.toList())
 
   private class NodeWithEdges(val nodeId: Int, val edges: List<SimpleEdge>, val type: GraphNodeType = GraphNodeType.USUAL)
 

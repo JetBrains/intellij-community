@@ -22,11 +22,22 @@ import com.intellij.vcs.log.graph.api.elements.GraphEdgeType;
 import com.intellij.vcs.log.graph.utils.IntIntMultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
+import java.util.Collection;
 import java.util.List;
 
 
 public class GraphAdditionalEdges {
+  private static final int EDGE_TYPE_BITS = 4;
+  private static final int EDGE_BITS_OFFSET = Integer.SIZE - EDGE_TYPE_BITS;
+  private static final int COMPRESSED_NODE_ID_MASK = 0xffffffff >>> EDGE_TYPE_BITS;
+  private static final int MAX_EDGE_TYPE_COUNT = 1 << EDGE_TYPE_BITS;
+  private static final int MAX_NODE_ID = Integer.MAX_VALUE >> EDGE_TYPE_BITS;
+  private static final int MIN_NODE_ID = Integer.MIN_VALUE >> EDGE_TYPE_BITS;
+
+  public static final int NULL_ID = MIN_NODE_ID;
+
   public static GraphAdditionalEdges newInstance(@NotNull Function<Integer, Integer> getNodeIndexById,
                                                @NotNull Function<Integer, Integer> getNodeIdByIndex) {
     return new GraphAdditionalEdges(getNodeIndexById, getNodeIdByIndex, new IntIntMultiMap());
@@ -38,12 +49,9 @@ public class GraphAdditionalEdges {
     return new GraphAdditionalEdges(getNodeIndexById, getNodeIdByIndex, prevAdditionEdges.myAdditionEdges);
   }
 
-  @NotNull
-  private final Function<Integer, Integer> myGetNodeIndexById;
-  @NotNull
-  private final Function<Integer, Integer> myGetNodeIdByIndex;
-  @NotNull
-  private final IntIntMultiMap myAdditionEdges;
+  @NotNull private final Function<Integer, Integer> myGetNodeIndexById;
+  @NotNull private final Function<Integer, Integer> myGetNodeIdByIndex;
+  @NotNull private final IntIntMultiMap myAdditionEdges;
 
   private GraphAdditionalEdges(@NotNull Function<Integer, Integer> getNodeIndexById,
                                @NotNull Function<Integer, Integer> getNodeIdByIndex,
@@ -51,6 +59,8 @@ public class GraphAdditionalEdges {
     myGetNodeIndexById = getNodeIndexById;
     myGetNodeIdByIndex = getNodeIdByIndex;
     myAdditionEdges = additionEdges;
+
+    assert GraphEdgeType.values().length <= MAX_EDGE_TYPE_COUNT;
   }
 
 
@@ -63,7 +73,8 @@ public class GraphAdditionalEdges {
     if (edgeType.isNormalEdge()) {
       myAdditionEdges.putValue(mainNodeId, compressEdge(additionId, edgeType));
       myAdditionEdges.putValue(additionId, compressEdge(mainNodeId, edgeType));
-    } else {
+    }
+    else {
       myAdditionEdges.putValue(mainNodeId, compressEdge(additionId, edgeType));
     }
   }
@@ -77,38 +88,37 @@ public class GraphAdditionalEdges {
     if (edgeType.isNormalEdge()) {
       myAdditionEdges.remove(mainNodeId, compressEdge(additionId, edgeType));
       myAdditionEdges.remove(additionId, compressEdge(mainNodeId, edgeType));
-    } else {
+    }
+    else {
       myAdditionEdges.remove(mainNodeId, compressEdge(additionId, edgeType));
     }
   }
 
-  public void addToResultAdditionEdges(List<GraphEdge> result, int nodeIndex) {
+  @TestOnly
+  public int[] getKnownIds() {
+    return myAdditionEdges.keys();
+  }
+
+  public void appendAdditionalEdges(List<GraphEdge> result, int nodeIndex) {
     for (int compressEdge : myAdditionEdges.get(myGetNodeIdByIndex.fun(nodeIndex))) {
       GraphEdge edge = decompressEdge(nodeIndex, compressEdge);
-      if (edge != null)
-        result.add(edge);
+      if (edge != null) result.add(edge);
     }
   }
 
   @Nullable
   private GraphEdge decompressEdge(int nodeIndex, int compressedEdge) {
     GraphEdgeType edgeType = retrievedType(compressedEdge);
-    int retrievedId = retrievedNodeIndex(compressedEdge);
-    switch (edgeType) {
-      case DOTTED:
-      case USUAL:
-        int anotherNodeIndex = myGetNodeIndexById.fun(retrievedId);
-        if (anotherNodeIndex == -1)
-          return null; // todo edge to hide node
-        return GraphEdge.createNormalEdge(nodeIndex, anotherNodeIndex, edgeType);
+    int retrievedId = retrievedNodeId(compressedEdge);
+    if (edgeType.isNormalEdge()) {
+      assert retrievedId != NULL_ID;
+      int anotherNodeIndex = myGetNodeIndexById.fun(retrievedId);
+      if (anotherNodeIndex == -1) return null; // todo edge to hide node
 
-      case DOTTED_ARROW_DOWN:
-      case DOTTED_ARROW_UP:
-      case NOT_LOAD_COMMIT:
-        return GraphEdge.createEdgeWithAdditionInfo(nodeIndex, retrievedId, edgeType);
-
-      default:
-        throw new IllegalStateException("Unexpected edgeType: " + edgeType);
+      return GraphEdge.createNormalEdge(nodeIndex, anotherNodeIndex, edgeType);
+    }
+    else {
+      return GraphEdge.createEdgeWithAdditionInfo(nodeIndex, retrievedId != NULL_ID ? retrievedId : null, edgeType);
     }
   }
 
@@ -118,30 +128,35 @@ public class GraphAdditionalEdges {
       Integer mainId = myGetNodeIdByIndex.fun(graphEdge.getUpNodeIndex());
       if (graphEdge.getDownNodeIndex() != null) {
         return Pair.create(mainId, myGetNodeIdByIndex.fun(graphEdge.getDownNodeIndex()));
-      } else {
-        assert graphEdge.getAdditionInfo() != null;
-        return Pair.create(mainId, graphEdge.getAdditionInfo());
       }
-    } else {
-      assert graphEdge.getDownNodeIndex() != null && graphEdge.getAdditionInfo() != null;
-      return Pair.create(myGetNodeIdByIndex.fun(graphEdge.getDownNodeIndex()), graphEdge.getAdditionInfo());
+      else {
+        return Pair.create(mainId, convertToInt(graphEdge.getAdditionInfo()));
+      }
+    }
+    else {
+      assert graphEdge.getDownNodeIndex() != null;
+      return Pair.create(myGetNodeIdByIndex.fun(graphEdge.getDownNodeIndex()), convertToInt(graphEdge.getAdditionInfo()));
     }
   }
 
-  private static int compressEdge(int nodeIndex, GraphEdgeType edgeType) {
-    assert nodeIndex < 0xffffff || nodeIndex > 0x80ffffff;
-    byte type = edgeType.getType();
-    return (type << 24) | (0xffffff & nodeIndex);
+  private static int convertToInt(@Nullable Integer value) {
+    return value == null ? NULL_ID : value;
+  }
+
+  private static int compressEdge(int nodeId, GraphEdgeType edgeType) {
+    assert nodeId == NULL_ID || (nodeId < MAX_NODE_ID && nodeId > MIN_NODE_ID);
+    int type = edgeType.ordinal();
+    return (type << EDGE_BITS_OFFSET) | (COMPRESSED_NODE_ID_MASK & nodeId);
   }
 
   @NotNull
   private static GraphEdgeType retrievedType(int compressEdge) {
-    int type = compressEdge >> 24; // not important >> or >>>
-    return GraphEdgeType.getByType((byte) type);
+    int type = compressEdge >>> EDGE_BITS_OFFSET;
+    return GraphEdgeType.values()[type];
   }
 
-  private static int retrievedNodeIndex(int compressEdge) {
-    return (compressEdge << 8) >> 8;
+  private static int retrievedNodeId(int compressEdge) {
+    return (compressEdge << EDGE_TYPE_BITS) >> EDGE_TYPE_BITS;
   }
 
 }
