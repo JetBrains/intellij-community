@@ -960,6 +960,13 @@ public class PyTypeTest extends PyTestCase {
            "        expr = x\n");
   }
 
+  public void testStructuralType() {
+    doTest("{foo, bar}",
+           "def f(x):\n" +
+           "    x.foo + x.bar()\n" +
+           "    expr = x\n");
+  }
+
   private static TypeEvalContext getTypeEvalContext(@NotNull PyExpression element) {
     return TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing();
   }

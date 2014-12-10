@@ -42,9 +42,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author yole
@@ -276,6 +274,12 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
             return PyUnionType.createWeakType(PyUnionType.union(types));
           }
         }
+        if (context.maySwitchToAST(this)) {
+          final Set<String> attributes = collectUsedAttributes();
+          if (!attributes.isEmpty()) {
+            return new PyStructuralType(attributes, true);
+          }
+        }
       }
     }
     return null;
@@ -284,6 +288,38 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
   @Override
   public ItemPresentation getPresentation() {
     return new PyElementPresentation(this);
+  }
+
+  @NotNull
+  private Set<String> collectUsedAttributes() {
+    final Set<String> result = new LinkedHashSet<String>();
+    final ScopeOwner owner = ScopeUtil.getScopeOwner(this);
+    final String name = getName();
+    if (owner != null && name != null) {
+      owner.accept(new PyRecursiveElementVisitor() {
+        @Override
+        public void visitPyElement(PyElement node) {
+          if (node instanceof ScopeOwner && node != owner) {
+            return;
+          }
+          if (node instanceof PyQualifiedExpression) {
+            final PyQualifiedExpression expr = (PyQualifiedExpression)node;
+            final PyExpression qualifier = expr.getQualifier();
+            if (qualifier != null) {
+              final PsiReference ref = qualifier.getReference();
+              if (ref != null && ref.isReferenceTo(PyNamedParameterImpl.this)) {
+                final String attributeName = expr.getReferencedName();
+                if (attributeName != null && !result.contains(attributeName)) {
+                  result.add(attributeName);
+                }
+              }
+            }
+          }
+          super.visitPyElement(node);
+        }
+      });
+    }
+    return result;
   }
 
   private static void processLocalCalls(@NotNull PyFunction function, @NotNull Processor<PyCallExpression> processor) {
