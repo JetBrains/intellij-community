@@ -242,4 +242,16 @@ public class PyTypeCheckerInspectionTest extends PyTestCase {
   public void testRecursiveDictAttribute() {
     doTest();
   }
+
+  public void testExpectedStructuralType() {
+    doTest();
+  }
+
+  public void testActualStructuralType() {
+    doTest();
+  }
+
+  public void testStructuralTypesForNestedCalls() {
+    doTest();
+  }
 }

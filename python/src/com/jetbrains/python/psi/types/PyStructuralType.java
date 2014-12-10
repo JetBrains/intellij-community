@@ -84,4 +84,8 @@ public class PyStructuralType implements PyType {
   public boolean isInferredFromUsages() {
     return myInferredFromUsages;
   }
+
+  public Set<String> getAttributeNames() {
+    return myAttributes;
+  }
 }

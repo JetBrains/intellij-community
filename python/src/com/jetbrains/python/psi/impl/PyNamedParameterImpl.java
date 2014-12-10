@@ -275,7 +275,7 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
           }
         }
         if (context.maySwitchToAST(this)) {
-          final Set<String> attributes = collectUsedAttributes();
+          final Set<String> attributes = collectUsedAttributes(context);
           if (!attributes.isEmpty()) {
             return new PyStructuralType(attributes, true);
           }
@@ -291,7 +291,7 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
   }
 
   @NotNull
-  private Set<String> collectUsedAttributes() {
+  private Set<String> collectUsedAttributes(@NotNull final TypeEvalContext context) {
     final Set<String> result = new LinkedHashSet<String>();
     final ScopeOwner owner = ScopeUtil.getScopeOwner(this);
     final String name = getName();
@@ -314,12 +314,39 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
                 }
               }
             }
+            else {
+              final PyNamedParameter parameter = getParameterByCallArgument(expr, context);
+              if (parameter != null) {
+                final PyType type = context.getType(parameter);
+                if (type instanceof PyStructuralType) {
+                  result.addAll(((PyStructuralType)type).getAttributeNames());
+                }
+              }
+            }
           }
           super.visitPyElement(node);
         }
       });
     }
     return result;
+  }
+
+  @Nullable
+  private static PyNamedParameter getParameterByCallArgument(@NotNull PsiElement element, @NotNull TypeEvalContext context) {
+    final PyCallExpression call = PsiTreeUtil.getParentOfType(element, PyCallExpression.class);
+    if (call != null) {
+      final PyArgumentList argumentList = call.getArgumentList();
+      if (argumentList != null) {
+        final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+        final CallArgumentsMapping mapping = argumentList.analyzeCall(resolveContext);
+        for (Map.Entry<PyExpression, PyNamedParameter> entry : mapping.getPlainMappedParams().entrySet()) {
+          if (entry.getKey() == element) {
+            return entry.getValue();
+          }
+        }
+      }
+    }
+    return null;
   }
 
   private static void processLocalCalls(@NotNull PyFunction function, @NotNull Processor<PyCallExpression> processor) {
