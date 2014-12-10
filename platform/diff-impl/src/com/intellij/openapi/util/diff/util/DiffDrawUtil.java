@@ -118,6 +118,17 @@ public class DiffDrawUtil {
     };
   }
 
+  @NotNull
+  public static TextAttributes getStripeTextAttributes(@NotNull final TextDiffType type,
+                                                       @NotNull final Editor editor) {
+    return new TextAttributes() {
+      @Override
+      public Color getErrorStripeColor() {
+        return type.getMarkerColor(editor);
+      }
+    };
+  }
+
   //
   // Highlighters
   //
@@ -183,8 +194,10 @@ public class DiffDrawUtil {
   @NotNull
   public static RangeHighlighter createLineMarker(@NotNull final Editor editor, int line, @NotNull final TextDiffType type,
                                                   @NotNull final SeparatorPlacement placement, final boolean doubleLine) {
+    TextAttributes attributes = getStripeTextAttributes(type, editor);
+
     int offset = DocumentUtil.getFirstNonSpaceCharOffset(editor.getDocument(), line);
-    RangeHighlighter marker = editor.getMarkupModel().addRangeHighlighter(offset, offset, HighlighterLayer.SELECTION - 1, null,
+    RangeHighlighter marker = editor.getMarkupModel().addRangeHighlighter(offset, offset, HighlighterLayer.SELECTION - 1, attributes,
                                                                           HighlighterTargetArea.LINES_IN_RANGE);
     // We won't use addLineHighlighter as it will fail to add marker into empty document.
     //RangeHighlighter marker = editor.getMarkupModel().addLineHighlighter(line, HighlighterLayer.SELECTION - 1, null);
