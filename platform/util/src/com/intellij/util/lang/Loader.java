@@ -21,25 +21,31 @@ import sun.misc.Resource;
 import java.io.IOException;
 import java.net.URL;
 
-abstract class Loader {
+/**
+ * An object responsible for loading classes and resources from a particular classpath element: a jar or a directory.
+ * 
+ * @see JarLoader
+ * @see FileLoader
+ */
+public abstract class Loader {
   private final URL myURL;
-  private final int myIndex;
+  private final int myOrderNumber;
 
-  Loader(URL url, int index) {
+  Loader(URL url, int orderNumber) {
     myURL = url;
-    myIndex = index;
+    myOrderNumber = orderNumber;
   }
 
-  URL getBaseURL() {
+  public URL getBaseURL() {
     return myURL;
   }
 
   @Nullable
   abstract Resource getResource(String name, boolean flag);
+  
+  public abstract ClasspathLoaderIndex buildIndex() throws IOException;
 
-  abstract void buildCache(ClasspathCache.LoaderData loaderData) throws IOException;
-
-  int getIndex() {
-    return myIndex;
+  int getOrderNumber() {
+    return myOrderNumber;
   }
 }

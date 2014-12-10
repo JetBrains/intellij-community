@@ -145,7 +145,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
         compilerOutput, toCompilePaths, finalOutputs.values(), class2Src, encoding, patchers,
         optimizeClassLoading ? StringUtil.join(classpath, File.pathSeparator) : ""
       );
-      final GroovycOutputParser parser = runGroovyc(context, chunk, tempFile, settings, classpath, optimizeClassLoading, inProcess);
+      final GroovycOutputParser parser = runGroovyc(context, chunk, tempFile, settings, classpath, optimizeClassLoading, inProcess, finalOutputs.values());
 
       Map<ModuleBuildTarget, Collection<GroovycOutputParser.OutputItem>>
         compiled = processCompiledFiles(context, chunk, generationOutputs, compilerOutput, parser.getSuccessfullyCompiled());
@@ -201,7 +201,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
                                              File tempFile,
                                              final JpsGroovySettings settings,
                                              Collection<String> compilationClassPath,
-                                             boolean optimizeClassLoading, boolean inProcess) throws IOException {
+                                             boolean optimizeClassLoading, boolean inProcess, Collection<String> outputs) throws IOException {
     List<String> programParams = ContainerUtilRt.newArrayList(optimizeClassLoading ? GroovyRtConstants.OPTIMIZE : "do_not_optimize",
                                                               myForStubs ? "stubs" : "groovyc",
                                                               tempFile.getPath());
@@ -218,7 +218,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
 
     if (inProcess) {
       synchronized (ourInProcessGroovycLock) {
-        InProcessGroovyc.runGroovycInThisProcess(compilationClassPath, programParams, parser);
+        InProcessGroovyc.runGroovycInThisProcess(compilationClassPath, outputs, programParams, parser);
       }
     } else {
       forkGroovycProcess(chunk, settings, compilationClassPath, optimizeClassLoading, programParams, parser);

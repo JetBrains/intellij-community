@@ -28,7 +28,6 @@ import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.Nullable;
 import sun.misc.Resource;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -54,36 +53,19 @@ public class ClasspathCache {
     myDebugInfo = doDebug ? new DebugInfo() : new NullDebugInfo();
   }
 
-  public static class LoaderData {
-    private final List<String> myResourcePaths = new ArrayList<String>();
-    private final List<String> myNames = new ArrayList<String>();
-    private final Loader myLoader;
-
-    public LoaderData(Loader loader) {
-      myLoader = loader;
-    }
-
-    public void addResourceEntry(String resourcePath) {
-      myResourcePaths.add(resourcePath);
-    }
-
-    public void addNameEntry(String name) {
-      myNames.add(transformName(name));
-    }
-  }
-
   private final ReadWriteLock myLock = new ReentrantReadWriteLock();
 
-  public void applyLoaderData(LoaderData loaderData) {
+  void applyLoaderData(ClasspathLoaderIndex loaderData, final Loader loader) {
     myLock.writeLock().lock();
     try {
-      for(String resourceEntry:loaderData.myResourcePaths) {
-        addResourceEntry(resourceEntry, loaderData.myLoader);
+      for (String resourceEntry : loaderData.getResourcePaths()) {
+        addResourceEntry(resourceEntry, loader);
       }
-      for(String name:loaderData.myNames) {
-        addNameEntry(name, loaderData.myLoader);
+      for (String name : loaderData.getNames()) {
+        addNameEntry(name, loader);
       }
-    } finally {
+    }
+    finally {
       myLock.writeLock().unlock();
     }
   }
@@ -378,7 +360,7 @@ public class ClasspathCache {
 
     private static int hashFromNameAndLoader(String name, Loader loader, int n) {
       int hash = StringHash.murmur(name, n);
-      int i = loader.getIndex();
+      int i = loader.getOrderNumber();
       while (i > 0) {
         hash = hash * n + ((i % 10) + '0');
         i /= 10;
@@ -421,7 +403,7 @@ public class ClasspathCache {
 
     protected static int hashFromNameAndLoader(String name, Loader loader) {
       int hash = name.hashCode();
-      int i = loader.getIndex();
+      int i = loader.getOrderNumber();
       while(i > 0) {
         hash = hash * 31 + ((i % 10) + '0');
         i /= 10;

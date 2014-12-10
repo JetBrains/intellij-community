@@ -35,7 +35,7 @@ class FileLoader extends Loader {
     myRootDirAbsolutePath = myRootDir.getAbsolutePath();
   }
 
-  private void buildPackageCache(final File dir, ClasspathCache.LoaderData loaderData) {
+  private void buildPackageCache(final File dir, ClasspathLoaderIndex loaderData) {
     loaderData.addResourceEntry(getRelativeResourcePath(dir));
 
     final File[] files = dir.listFiles();
@@ -110,7 +110,8 @@ class FileLoader extends Loader {
   }
 
   @Override
-  void buildCache(ClasspathCache.LoaderData loaderData) throws IOException {
+  public ClasspathLoaderIndex buildIndex() throws IOException {
+    ClasspathLoaderIndex loaderData = new ClasspathLoaderIndex();
     File index = new File(myRootDir, "classpath.index");
     if (index.exists()) {
       BufferedReader reader = new BufferedReader(new FileReader(index));
@@ -132,6 +133,7 @@ class FileLoader extends Loader {
       loaderData.addResourceEntry("bar.properties");
       buildPackageCache(myRootDir, loaderData);
     }
+    return loaderData;
   }
 
   private class MyResource extends Resource {

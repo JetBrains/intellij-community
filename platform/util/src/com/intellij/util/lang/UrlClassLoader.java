@@ -38,6 +38,10 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
 
+/**
+ * A class loader that allows for various customizations, e.g. not locking jars or using a special cache to speed up class loading.
+ * Should be constructed using {@link #build()} method.
+ */
 public class UrlClassLoader extends ClassLoader {
   @NonNls static final String CLASS_EXTENSION = ".class";
 
@@ -63,6 +67,7 @@ public class UrlClassLoader extends ClassLoader {
     private boolean myAcceptUnescaped = false;
     private boolean myPreload = true;
     private boolean myAllowBootstrapResources = false;
+    @NotNull private LoaderIndexProvider myIndexProvider = LoaderIndexProvider.DEFAULT_INSTANCE;
 
     private Builder() { }
 
@@ -73,6 +78,15 @@ public class UrlClassLoader extends ClassLoader {
     public Builder allowLock(boolean lockJars) { myLockJars = lockJars; return this; }
     public Builder useCache() { myUseCache = true; return this; }
     public Builder useCache(boolean useCache) { myUseCache = useCache; return this; }
+
+    /**
+     * Requests the class loader being built to use cache and to obtain the necessary classpath index from a custom index provider. 
+     * 
+     * @param provider a custom index provider
+     * @return the same instance
+     * @see LoaderIndexProvider
+     */
+    public Builder useCache(@NotNull LoaderIndexProvider provider) { myUseCache = true; myIndexProvider = provider; return this; }
     public Builder allowUnescaped() { myAcceptUnescaped = true; return this; }
     public Builder noPreload() { myPreload = false; return this; }
     public Builder allowBootstrapResources() { myAllowBootstrapResources = true; return this; }
@@ -117,7 +131,7 @@ public class UrlClassLoader extends ClassLoader {
         return internProtocol(url);
       }
     });
-    myClassPath = new ClassPath(myURLs, lockJars, useCache, allowUnescaped, preload);
+    myClassPath = new ClassPath(myURLs, lockJars, useCache, allowUnescaped, preload, LoaderIndexProvider.DEFAULT_INSTANCE);
     myAllowBootstrapResources = false;
   }
 
@@ -129,7 +143,7 @@ public class UrlClassLoader extends ClassLoader {
         return internProtocol(url);
       }
     });
-    myClassPath = new ClassPath(myURLs, builder.myLockJars, builder.myUseCache, builder.myAcceptUnescaped, builder.myPreload);
+    myClassPath = new ClassPath(myURLs, builder.myLockJars, builder.myUseCache, builder.myAcceptUnescaped, builder.myPreload, builder.myIndexProvider);
     myAllowBootstrapResources = builder.myAllowBootstrapResources;
   }
 
