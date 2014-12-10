@@ -7,10 +7,10 @@ import com.intellij.ui.SimpleTextAttributes;
 /**
  * @author Roman.Chernyatchik
  */
-public abstract class AbstractCoverageProvejctViewNodeDecorator implements ProjectViewNodeDecorator {
+public abstract class AbstractCoverageProjectViewNodeDecorator implements ProjectViewNodeDecorator {
   private final CoverageDataManager myCoverageDataManager;
     
-  public AbstractCoverageProvejctViewNodeDecorator(final CoverageDataManager coverageDataManager) {
+  public AbstractCoverageProjectViewNodeDecorator(final CoverageDataManager coverageDataManager) {
     myCoverageDataManager = coverageDataManager;
   }
 
