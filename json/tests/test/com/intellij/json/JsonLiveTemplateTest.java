@@ -1,11 +1,18 @@
 package com.intellij.json;
 
+import com.intellij.codeInsight.lookup.Lookup;
+import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
+import com.intellij.codeInsight.template.impl.TemplateSettings;
+import com.intellij.codeInsight.template.impl.actions.ListTemplatesAction;
 import com.intellij.json.liveTemplates.JsonContextType;
+import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -14,10 +21,10 @@ import org.jetbrains.annotations.NotNull;
  */
 public class JsonLiveTemplateTest extends JsonTestCase {
 
-  private void doExpandabilityTest(@NotNull String originalText, boolean canBeExpanded) {
-    myFixture.configureByText(JsonFileType.INSTANCE, originalText);
+  private boolean isApplicableContextUnderCaret(@NotNull String text) {
+    myFixture.configureByText(JsonFileType.INSTANCE, text);
     final Template template = createJsonTemplate("foo", "foo", "[42]");
-    assertEquals(canBeExpanded, TemplateManagerImpl.isApplicable(myFixture.getFile(), myFixture.getCaretOffset(), (TemplateImpl)template));
+    return TemplateManagerImpl.isApplicable(myFixture.getFile(), myFixture.getCaretOffset(), (TemplateImpl)template);
   }
 
   @NotNull
@@ -28,18 +35,39 @@ public class JsonLiveTemplateTest extends JsonTestCase {
     final TemplateContextType context = ContainerUtil.findInstance(TemplateContextType.EP_NAME.getExtensions(), JsonContextType.class);
     assertNotNull(context);
     ((TemplateImpl)template).getTemplateContext().setEnabled(context, true);
+
+    TemplateSettings.getInstance().addTemplate(template);
     return template;
   }
 
   public void testNotExpandableInsideStringLiteral() {
-    doExpandabilityTest("{\"bar\": \"fo<caret>o\"}", false);
+    assertFalse(isApplicableContextUnderCaret("{\"bar\": \"fo<caret>o\"}"));
   }
 
   public void testNotExpandableInsidePropertyKey() {
-    doExpandabilityTest("{fo<caret>o: \"bar\"}", false);
+    assertFalse(isApplicableContextUnderCaret("{fo<caret>o: \"bar\"}"));
   }
 
   public void testExpandableAtTopLevel() {
-    doExpandabilityTest("fo<caret>o", true);
+    assertTrue(isApplicableContextUnderCaret("fo<caret>o"));
+  }
+
+  public void testCustomTemplateExpansion() {
+    final String templateContent = "{\n" +
+                                   "  \"foo\": \"$1$\"\n" +
+                                   "}";
+    createJsonTemplate("foo", "foo", templateContent);
+    myFixture.configureByText(JsonFileType.INSTANCE, "foo<caret>");
+    final Editor editor = myFixture.getEditor();
+    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
+      @Override
+      public void run() {
+        new ListTemplatesAction().actionPerformedImpl(getProject(), editor);
+        final LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
+        assertNotNull(lookup);
+        lookup.finishLookup(Lookup.NORMAL_SELECT_CHAR);
+      }
+    });
+    myFixture.checkResult(templateContent.replaceAll("\\$.*?\\$", ""));
   }
 }
