@@ -15,19 +15,16 @@
  */
 package com.intellij.openapi.util.diff.tools.util;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.Divider;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.diff.util.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
 
 
 public class DiffSplitter extends Splitter {
-  private boolean myQueued = false;
   @Nullable private Painter myPainter;
 
   public DiffSplitter() {
@@ -46,22 +43,6 @@ public class DiffSplitter extends Splitter {
   @CalledInAwt
   public void setPainter(@Nullable Painter painter) {
     myPainter = painter;
-  }
-
-  public void repaintDivider() {
-    if (myQueued) return;
-
-    final JPanel divider = getDivider();
-    divider.repaint();
-    myQueued = true;
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        // TODO: is it OK to use paintImmediately? Maybe we can do better with simplified painting ?
-        divider.paintImmediately(0, 0, divider.getWidth(), divider.getHeight());
-        myQueued = false;
-      }
-    });
   }
 
   public interface Painter {

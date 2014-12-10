@@ -44,7 +44,7 @@ public class SyncScrollSupport {
   @NotNull private final MyScrollHelper myHelper1;
   @NotNull private final MyScrollHelper myHelper2;
 
-  private boolean ourDuringSyncScroll = false;
+  public boolean ourDuringSyncScroll = false;
 
   public SyncScrollSupport(@NotNull Editor editor1, @NotNull Editor editor2, @NotNull SyncScrollable scrollable) {
     myEditor1 = editor1;
