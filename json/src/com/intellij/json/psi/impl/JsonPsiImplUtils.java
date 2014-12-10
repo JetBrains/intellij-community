@@ -3,6 +3,7 @@ package com.intellij.json.psi.impl;
 import com.intellij.icons.AllIcons;
 import com.intellij.json.JsonBundle;
 import com.intellij.json.JsonParserDefinition;
+import com.intellij.json.codeinsight.JsonStandardComplianceInspection;
 import com.intellij.json.psi.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
@@ -31,7 +32,7 @@ public class JsonPsiImplUtils {
    * but for compatibility with JavaScript integration any JSON literals as well as identifiers (unquoted words)
    * are possible and highlighted as error later.
    *
-   * @see com.intellij.json.codeinsight.JsonStandardComplianceInspection
+   * @see JsonStandardComplianceInspection
    */
   @NotNull
   public static JsonValue getNameElement(@NotNull JsonProperty property) {
@@ -67,6 +68,12 @@ public class JsonPsiImplUtils {
       @Nullable
       @Override
       public Icon getIcon(boolean unused) {
+        if (property.getValue() instanceof JsonArray) {
+          return AllIcons.Json.Property_brackets;
+        }
+        if (property.getValue() instanceof JsonObject) {
+          return AllIcons.Json.Property_braces;
+        }
         return PlatformIcons.PROPERTY_ICON;
       }
     };
