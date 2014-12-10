@@ -119,7 +119,7 @@ public class ExternalDiffTool {
     DiffContent[] contents = ((ContentDiffRequest)request).getContents();
     String[] titles = ((ContentDiffRequest)request).getContentTitles();
 
-    ExternalDiffToolUtil.execute(settings, contents, titles);
+    ExternalDiffToolUtil.execute(settings, contents, titles, request.getWindowTitle());
 
     request.onAssigned(false);
   }

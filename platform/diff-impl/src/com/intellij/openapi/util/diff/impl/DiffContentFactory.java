@@ -69,15 +69,15 @@ public class DiffContentFactory {
                                                    @NotNull String path,
                                                    @NotNull byte[] content) throws IOException {
     // TODO: create mock VirtualFile
-    return createTemporalFile(project, name, name, content);
+    return createTemporalFile(project, "tmp", name, content);
   }
 
   @NotNull
   public static BinaryFileContentImpl createTemporalFile(@Nullable Project project,
-                                                         @NotNull String name,
-                                                         @NotNull String ext,
+                                                         @NotNull String prefix,
+                                                         @NotNull String suffix,
                                                          @NotNull byte[] content) throws IOException {
-    File tempFile = FileUtil.createTempFile(name, "." + ext, true);
+    File tempFile = FileUtil.createTempFile(prefix + "_", "_" + suffix, true);
     if (content.length != 0) {
       FileUtil.writeToFile(tempFile, content);
     }

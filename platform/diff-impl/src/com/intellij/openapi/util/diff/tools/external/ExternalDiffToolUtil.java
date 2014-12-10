@@ -30,11 +30,11 @@ public class ExternalDiffToolUtil {
   }
 
   @NotNull
-  public static String createFile(@NotNull DiffContent content, @NotNull String title)
+  public static String createFile(@NotNull DiffContent content, @NotNull String title, @NotNull String windowTitle)
     throws IOException {
 
     if (content instanceof EmptyContent) {
-      return createFile(new byte[0], null, "empty").getPath();
+      return createFile(new byte[0], "empty").getPath();
     }
     else if (content instanceof FileContent) {
       VirtualFile file = ((FileContent)content).getFile();
@@ -43,7 +43,7 @@ public class ExternalDiffToolUtil {
       }
 
       byte[] bytes = file.contentsToByteArray();
-      return createFile(bytes, content.getContentType(), title).getPath();
+      return createFile(bytes, getFileName(title, windowTitle, content.getContentType())).getPath();
     }
     else if (content instanceof DocumentContent) {
       final DocumentContent documentContent = (DocumentContent)content;
@@ -66,7 +66,7 @@ public class ExternalDiffToolUtil {
       }
 
       byte[] bytes = contentData.getBytes(charset);
-      return createFile(bytes, content.getContentType(), title).getPath();
+      return createFile(bytes, getFileName(title, windowTitle, content.getContentType())).getPath();
     }
     else if (content instanceof DirectoryContent) {
       VirtualFile file = ((DirectoryContent)content).getFile();
@@ -81,25 +81,28 @@ public class ExternalDiffToolUtil {
   }
 
   @NotNull
-  public static File createFile(@NotNull byte[] bytes,
-                                @Nullable FileType type,
-                                @NotNull String title) throws IOException {
+  public static String getFileName(@NotNull String title, @NotNull String windowTitle, @Nullable FileType fileType) {
+    // TODO: keep file name in DiffContent ?
+    String ext = fileType != null ? fileType.getDefaultExtension() : ".tmp";
+    return title + "." + ext;
+  }
+
+  @NotNull
+  public static File createFile(@NotNull byte[] bytes, @NotNull String name) throws IOException {
     // TODO Could we make cancelable IO ?
-
-    if (StringUtil.isEmptyOrSpaces(title)) {
-      title = "." + (type == null ? "tmp" : type.getDefaultExtension());
-    }
-
-    File tempFile = FileUtil.createTempFile("", title, true);
+    File tempFile = FileUtil.createTempFile("tmp_", "_" + name, true);
     FileUtil.writeToFile(tempFile, bytes);
     return tempFile;
   }
 
-  public static void execute(@NotNull ExternalDiffSettings settings, @NotNull DiffContent[] contents, @NotNull String[] titles)
+  public static void execute(@NotNull ExternalDiffSettings settings,
+                             @NotNull DiffContent[] contents,
+                             @NotNull String[] titles,
+                             @NotNull String windowTitle)
     throws IOException, ExecutionException {
     List<String> files = new ArrayList<String>();
     for (int i = 0; i < contents.length; i++) {
-      files.add(createFile(contents[i], titles[i]));
+      files.add(createFile(contents[i], titles[i], windowTitle));
     }
 
     List<String> args = new ArrayList<String>();
