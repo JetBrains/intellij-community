@@ -60,6 +60,15 @@ public class DiffDrawUtil {
                                         int start1, int end1,
                                         int start2, int end2,
                                         @NotNull Color color) {
+    drawCurveTrapezium(g, x1, x2, start1, end1, start2, end2, color, true);
+  }
+
+  public static void drawCurveTrapezium(@NotNull Graphics2D g,
+                                        int x1, int x2,
+                                        int start1, int end1,
+                                        int start2, int end2,
+                                        @NotNull Color color,
+                                        boolean drawBorders) {
     Shape upperCurve = makeCurve(x1, x2, start1, start2, true);
     Shape lowerCurve = makeCurve(x1, x2, end1, end2, false);
 
@@ -69,9 +78,11 @@ public class DiffDrawUtil {
     g.setColor(color);
     g.fill(path);
 
-    g.setColor(getFramingColor(color));
-    g.draw(upperCurve);
-    g.draw(lowerCurve);
+    if (drawBorders) {
+      g.setColor(getFramingColor(color));
+      g.draw(upperCurve);
+      g.draw(lowerCurve);
+    }
   }
 
   public static final double CTRL_PROXIMITY_X = 0.3;
