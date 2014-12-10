@@ -159,7 +159,14 @@ public class RemoteDebugger implements ProcessDebugger {
   }
 
   @Override
-  public ArrayChunk loadArrayItems(String  threadId, String frameId, PyDebugValue var, int rowOffset, int colOffset, int rows, int cols, String format) throws PyDebuggerException {
+  public ArrayChunk loadArrayItems(String threadId,
+                                   String frameId,
+                                   PyDebugValue var,
+                                   int rowOffset,
+                                   int colOffset,
+                                   int rows,
+                                   int cols,
+                                   String format) throws PyDebuggerException {
     final GetArrayCommand command = new GetArrayCommand(this, threadId, frameId, var, rowOffset, colOffset, rows, cols, format);
     command.execute();
     return command.getArray();
@@ -486,13 +493,18 @@ public class RemoteDebugger implements ProcessDebugger {
     protected void doRun() {
       try {
         while (true) {
-          boolean read = readAvailable();
+          boolean read = readAvailableBlocking();
 
-          if (isStopped) {
+          if (!read) {
             break;
           }
+          else {
+            if (isStopped) {
+              break;
+            }
 
-          TimeoutUtil.sleep(mySleepingPolicy.getTimeToSleep(read));
+            TimeoutUtil.sleep(mySleepingPolicy.getTimeToSleep(true));
+          }
         }
       }
       catch (Exception e) {
