@@ -24,6 +24,7 @@
  */
 package com.intellij.refactoring.introduceParameter;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.FunctionalInterfaceSuggester;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
@@ -83,7 +84,6 @@ import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -114,7 +114,13 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
       @Override
       public void pass(final ElementToWorkOn elementToWorkOn) {
         if (elementToWorkOn == null) {
-          introduceStrategy(project, editor, file);
+          return;
+        }
+
+        if (elementToWorkOn.getLocalVariable() == null && elementToWorkOn.getExpression() == null) {
+          if (!introduceStrategy(project, editor, file)) {
+            ElementToWorkOn.showNothingSelectedErrorMessage(editor, REFACTORING_NAME, HelpID.INTRODUCE_PARAMETER, project);
+          }
           return;
         }
 
@@ -507,7 +513,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
     return myInplaceIntroduceParameterPopup;
   }
 
-  @TestOnly
+  @VisibleForTesting
   public boolean introduceStrategy(final Project project, final Editor editor, PsiFile file) {
     final SelectionModel selectionModel = editor.getSelectionModel();
     if (selectionModel.hasSelection()) {
