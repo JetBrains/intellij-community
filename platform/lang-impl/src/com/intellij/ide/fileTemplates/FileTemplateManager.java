@@ -18,6 +18,7 @@ package com.intellij.ide.fileTemplates;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -47,11 +48,25 @@ public abstract class FileTemplateManager{
   public static final String CODE_TEMPLATES_CATEGORY = "Code";
   public static final String J2EE_TEMPLATES_CATEGORY = "J2EE";
 
-  public static FileTemplateManager getInstance(){
-    return ServiceManager.getService(FileTemplateManager.class);
+  public static FileTemplateManager getInstance(@NotNull Project project){
+    return ServiceManager.getService(project, FileTemplateManager.class);
   }
 
-  @NotNull 
+  /** Use {@link #getInstance(Project)} instead */
+  @Deprecated
+  public static FileTemplateManager getInstance(){
+    return getInstance(ProjectManager.getInstance().getDefaultProject());
+  }
+
+  @NotNull
+  public abstract FileTemplatesScheme getCurrentScheme();
+
+  public abstract void setCurrentScheme(@NotNull FileTemplatesScheme scheme);
+
+  @NotNull
+  public abstract FileTemplatesScheme getProjectScheme();
+
+  @NotNull
   public abstract FileTemplate[] getAllTemplates();
 
   public abstract FileTemplate getTemplate(@NotNull @NonNls String templateName);
@@ -100,11 +115,15 @@ public abstract class FileTemplateManager{
   @NotNull
   public abstract String internalTemplateToSubject(@NotNull @NonNls String templateName);
 
+  @Deprecated
   @NotNull
   public abstract String localizeInternalTemplateName(@NotNull FileTemplate template);
 
   public abstract FileTemplate getPattern(@NotNull @NonNls String name);
 
+  /**
+   * Returns template with default (bundled) text.
+   */
   @NotNull
   public abstract FileTemplate getDefaultTemplate(@NotNull @NonNls String name);
 

@@ -35,7 +35,7 @@ public class SearchableOptionsTest extends LightPlatformLangTestCase {
       SearchableOptionsRegistrar.getInstance().getConfigurables(new ConfigurableGroup[]{new IdeConfigurablesGroup()}, DocumentEvent.EventType.INSERT, null, "method", getProject());
     final Set<Configurable> configurableSet = configurables.getAll();
     for (Configurable configurable : configurableSet) {
-      if (configurable.getDisplayName().equals(new AllFileTemplatesConfigurable().getDisplayName())) {
+      if (configurable.getDisplayName().equals(new AllFileTemplatesConfigurable(getProject()).getDisplayName())) {
         return;
       }
     }

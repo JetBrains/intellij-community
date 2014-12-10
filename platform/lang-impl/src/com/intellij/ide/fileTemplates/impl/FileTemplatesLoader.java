@@ -22,14 +22,11 @@ import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.text.MessageFormat;
@@ -90,7 +87,7 @@ public class FileTemplatesLoader {
 
     loadDefaultTemplates();
     for (FTManager child : myAllManagers) {
-      loadCustomizedContent(child);
+      child.loadCustomizedContent();
     }
   }
 
@@ -190,57 +187,6 @@ public class FileTemplatesLoader {
           break; // FTManagers loop
         }
       }
-    }
-  }
-
-  void loadCustomizedContent(FTManager manager) {
-    final File configRoot = manager.getConfigRoot(false);
-    final File[] configFiles = configRoot.listFiles();
-    if (configFiles == null) {
-      return;
-    }
-
-    final List<File> templateWithDefaultExtension = new ArrayList<File>();
-    final Set<String> processedNames = new HashSet<String>();
-
-    for (File file : configFiles) {
-      if (file.isDirectory() || myTypeManager.isFileIgnored(file.getName()) || file.isHidden()) {
-        continue;
-      }
-      final String name = file.getName();
-      if (name.endsWith(FTManager.TEMPLATE_EXTENSION_SUFFIX)) {
-        templateWithDefaultExtension.add(file);
-      }
-      else {
-        processedNames.add(name);
-        addTemplateFromFile(manager, name, file);
-      }
-    }
-
-    for (File file : templateWithDefaultExtension) {
-      String name = file.getName();
-      // cut default template extension
-      name = name.substring(0, name.length() - FTManager.TEMPLATE_EXTENSION_SUFFIX.length());
-      if (!processedNames.contains(name)) {
-        addTemplateFromFile(manager, name, file);
-      }
-      FileUtil.delete(file);
-    }
-  }
-
-  private static void addTemplateFromFile(FTManager manager, String fileName, File file) {
-    Pair<String,String> nameExt = FTManager.decodeFileName(fileName);
-    final String extension = nameExt.second;
-    final String templateQName = nameExt.first;
-    if (templateQName.length() == 0) {
-      return;
-    }
-    try {
-      final String text = FileUtil.loadFile(file, CharsetToolkit.UTF8_CHARSET);
-      manager.addTemplate(templateQName, extension).setText(text);
-    }
-    catch (IOException e) {
-      LOG.error(e);
     }
   }
 

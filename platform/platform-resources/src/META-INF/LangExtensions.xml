@@ -25,8 +25,8 @@
 
     <applicationService serviceImplementation="com.intellij.packageDependencies.DependencyUISettings"/>
 
-    <applicationService serviceInterface="com.intellij.ide.fileTemplates.FileTemplateManager"
-                        serviceImplementation="com.intellij.ide.fileTemplates.impl.FileTemplateManagerImpl"/>
+    <projectService serviceInterface="com.intellij.ide.fileTemplates.FileTemplateManager"
+                    serviceImplementation="com.intellij.ide.fileTemplates.impl.FileTemplateManagerImpl"/>
     <applicationService serviceInterface="com.intellij.ide.fileTemplates.impl.ExportableFileTemplateSettings"
                         serviceImplementation="com.intellij.ide.fileTemplates.impl.ExportableFileTemplateSettings"/>
     <exportable serviceInterface="com.intellij.ide.fileTemplates.impl.ExportableFileTemplateSettings"/>
@@ -370,7 +370,7 @@
                     serviceImplementation="com.intellij.codeInsight.template.impl.TemplateManagerImpl"/>
 
     <!-- File Templates-->
-    <applicationConfigurable groupId="editor" groupWeight="150" instance="com.intellij.ide.fileTemplates.impl.AllFileTemplatesConfigurable" id="fileTemplates"
+    <projectConfigurable groupId="editor" groupWeight="150" instance="com.intellij.ide.fileTemplates.impl.AllFileTemplatesConfigurable" id="fileTemplates"
                              key="title.file.templates" bundle="messages.IdeBundle"/>
 
     <!-- T.O.D.O -->

@@ -19,13 +19,14 @@ package com.intellij.ide.fileTemplates.impl;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
+import com.intellij.ide.fileTemplates.FileTemplatesScheme;
 import com.intellij.ide.fileTemplates.InternalTemplateBean;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
@@ -37,6 +38,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import java.io.File;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -49,19 +51,15 @@ import java.util.*;
  * locking policy: if the class needs to take a read or write action, the LOCK lock must be taken
  * _inside_, not outside of the read action
  */
-public class FileTemplateManagerImpl extends FileTemplateManager implements JDOMExternalizable {
+public class FileTemplateManagerImpl extends FileTemplateManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.fileTemplates.impl.FileTemplateManagerImpl");
 
   private final RecentTemplatesManager myRecentList = new RecentTemplatesManager();
-
-  @NonNls private static final String ELEMENT_DELETED_TEMPLATES = "deleted_templates";
-  @NonNls private static final String ELEMENT_DELETED_INCLUDES = "deleted_includes";
-  @NonNls private static final String ELEMENT_RECENT_TEMPLATES = "recent_templates";
-  @NonNls private static final String ELEMENT_TEMPLATES = "templates";
-
   private final FileTypeManagerEx myTypeManager;
 
-  private final ExportableFileTemplateSettings myTemplateSettings;
+  private final FileTemplatesScheme myProjectScheme;
+  private FileTemplatesScheme myScheme = FileTemplatesScheme.DEFAULT;
+
   private final FTManager myInternalTemplatesManager;
   private final FTManager myDefaultTemplatesManager;
   private final FTManager myPatternsManager;
@@ -71,23 +69,26 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements JDOM
   private final URL myDefaultTemplateDescription;
   private final URL myDefaultIncludeDescription;
 
-  public static FileTemplateManagerImpl getInstanceImpl() {
-    return (FileTemplateManagerImpl)ServiceManager.getService(FileTemplateManager.class);
+  public static FileTemplateManagerImpl getInstanceImpl(Project project) {
+    return (FileTemplateManagerImpl)getInstance(project);
   }
 
-  public FileTemplateManagerImpl(@NotNull FileTypeManagerEx typeManager, ProjectManager pm /*need this to ensure disposal of the service _after_ project manager*/) {
+  public FileTemplateManagerImpl(@NotNull FileTypeManagerEx typeManager,
+                                 /*need this to ensure disposal of the service _after_ project manager*/
+                                 @SuppressWarnings("UnusedParameters") ProjectManager pm,
+                                 final Project project) {
     myTypeManager = typeManager;
-    myTemplateSettings = ExportableFileTemplateSettings.getInstance();
-    assert myTemplateSettings != null : "Can not instantiate " + ExportableFileTemplateSettings.class.getName();
+    ExportableFileTemplateSettings templateSettings = ExportableFileTemplateSettings.getInstance();
+    assert templateSettings != null : "Can not instantiate " + ExportableFileTemplateSettings.class.getName();
 
-    myInternalTemplatesManager = myTemplateSettings.getInternalTemplatesManager();
-    myDefaultTemplatesManager = myTemplateSettings.getDefaultTemplatesManager();
-    myPatternsManager = myTemplateSettings.getPatternsManager();
-    myCodeTemplatesManager = myTemplateSettings.getCodeTemplatesManager();
-    myJ2eeTemplatesManager = myTemplateSettings.getJ2eeTemplatesManager();
-    myAllManagers = myTemplateSettings.getAllManagers();
-    myDefaultTemplateDescription = myTemplateSettings.getDefaultTemplateDescription();
-    myDefaultIncludeDescription = myTemplateSettings.getDefaultIncludeDescription();
+    myInternalTemplatesManager = templateSettings.getInternalTemplatesManager();
+    myDefaultTemplatesManager = templateSettings.getDefaultTemplatesManager();
+    myPatternsManager = templateSettings.getPatternsManager();
+    myCodeTemplatesManager = templateSettings.getCodeTemplatesManager();
+    myJ2eeTemplatesManager = templateSettings.getJ2eeTemplatesManager();
+    myAllManagers = templateSettings.getAllManagers();
+    myDefaultTemplateDescription = templateSettings.getDefaultTemplateDescription();
+    myDefaultIncludeDescription = templateSettings.getDefaultIncludeDescription();
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       for (String tname : Arrays.asList("Class", "AnnotationType", "Enum", "Interface")) {
@@ -102,6 +103,33 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements JDOM
       }
     }
 
+    myProjectScheme = new FileTemplatesScheme("Project") {
+      @NotNull
+      @Override
+      public String getTemplatesDir() {
+        return new File(project.getBasePath(), TEMPLATES_DIR).getPath();
+      }
+    };
+  }
+
+  @NotNull
+  @Override
+  public FileTemplatesScheme getCurrentScheme() {
+    return myScheme;
+  }
+
+  @Override
+  public void setCurrentScheme(@NotNull FileTemplatesScheme scheme) {
+    myScheme = scheme;
+    for (FTManager manager : myAllManagers) {
+      manager.setScheme(scheme);
+    }
+  }
+
+  @NotNull
+  @Override
+  public FileTemplatesScheme getProjectScheme() {
+    return myProjectScheme;
   }
 
   @Override
@@ -181,127 +209,6 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements JDOM
   public void addRecentName(@NotNull @NonNls String name) {
     myRecentList.addName(name);
   }
-
-  @Override
-  public void readExternal(Element element) throws InvalidDataException {
-    final Element recentElement = element.getChild(ELEMENT_RECENT_TEMPLATES);
-    if (recentElement != null) {
-      myRecentList.readExternal(recentElement);
-    }
-
-    // support older format
-    final DeletedTemplatesManager deletedDefaults = new DeletedTemplatesManager();
-    Element deletedTemplatesElement = element.getChild(ELEMENT_DELETED_TEMPLATES);
-    if (deletedTemplatesElement != null) {
-      deletedDefaults.readExternal(deletedTemplatesElement);
-    }
-
-    final DeletedTemplatesManager deletedIncludes = new DeletedTemplatesManager();
-    Element deletedIncludesElement = element.getChild(ELEMENT_DELETED_INCLUDES);
-    if (deletedIncludesElement != null) {
-      deletedIncludes.readExternal(deletedIncludesElement);
-    }
-
-    final Set<String> templateNamesWithReformatOff = new HashSet<String>();
-    final Element templatesElement = element.getChild(ELEMENT_TEMPLATES);
-    if (templatesElement != null) {
-      final List children = templatesElement.getChildren();
-      for (final Object child : children) {
-        final Element childElement = (Element)child;
-        boolean reformat =
-          Boolean.TRUE.toString().equals(childElement.getAttributeValue(ExportableFileTemplateSettings.ATTRIBUTE_REFORMAT));
-        if (!reformat) {
-          final String name = childElement.getAttributeValue(ExportableFileTemplateSettings.ATTRIBUTE_NAME);
-          templateNamesWithReformatOff.add(name);
-        }
-      }
-    }
-
-    if (!myTemplateSettings.isLoaded()) {
-      myTemplateSettings.doLoad(element);
-    }
-
-    // apply data loaded from older format
-    final boolean hasDeletedDefaultsInOlderFormat = !deletedDefaults.DELETED_DEFAULT_TEMPLATES.isEmpty();
-    final boolean hasDeletedincludesinOlderFormat = !deletedIncludes.DELETED_DEFAULT_TEMPLATES.isEmpty();
-    final boolean hasTemplatesWithReformatAttibuteAltered = !templateNamesWithReformatOff.isEmpty();
-    final boolean hasSettingsInOlderFormat = hasDeletedDefaultsInOlderFormat ||
-                                             hasDeletedincludesinOlderFormat ||
-                                             hasTemplatesWithReformatAttibuteAltered;
-    if (hasSettingsInOlderFormat) {
-      final Collection<FileTemplateBase> allDefaults = myDefaultTemplatesManager.getAllTemplates(true);
-      if (hasDeletedDefaultsInOlderFormat) {
-        applyDeletedState(deletedDefaults, allDefaults);
-      }
-      if (hasDeletedincludesinOlderFormat) {
-        applyDeletedState(deletedIncludes, myPatternsManager.getAllTemplates(true));
-      }
-      if (hasTemplatesWithReformatAttibuteAltered) {
-        applyReformatState(templateNamesWithReformatOff, allDefaults);
-        applyReformatState(templateNamesWithReformatOff, myInternalTemplatesManager.getAllTemplates(true));
-      }
-    }
-  }
-
-  // need this to support options from older format
-  private static void applyReformatState(@NotNull Set<String> templateNamesWithReformatOff, @NotNull Collection<FileTemplateBase> templates) {
-    for (FileTemplateBase template : templates) {
-      if (templateNamesWithReformatOff.contains(template.getName())) {
-        template.setReformatCode(false);
-      }
-    }
-  }
-
-  // need this to support options from older format
-  private static void applyDeletedState(@NotNull DeletedTemplatesManager deletedDefaults, @NotNull Collection<FileTemplateBase> templates) {
-    for (FileTemplateBase template : templates) {
-      if (template instanceof BundledFileTemplate && deletedDefaults.contains(template.getQualifiedName())) {
-        ((BundledFileTemplate)template).setEnabled(false);
-      }
-    }
-  }
-
-  @Override
-  public void writeExternal(Element element) throws WriteExternalException {
-    for (FTManager child : myAllManagers) {
-      child.saveTemplates();
-    }
-    validateRecentNames();
-    final Element recentElement = new Element(ELEMENT_RECENT_TEMPLATES);
-    element.addContent(recentElement);
-    myRecentList.writeExternal(recentElement);
-
-    //Element deletedTemplatesElement = new Element(ELEMENT_DELETED_TEMPLATES);
-    //element.addContent(deletedTemplatesElement);
-    //myDefaultTemplatesManager.getDeletedTemplates().writeExternal(deletedTemplatesElement);
-    //
-    //Element deletedIncludesElement = new Element(ELEMENT_DELETED_INCLUDES);
-    //element.addContent(deletedIncludesElement);
-    //myPatternsManager.getDeletedTemplates().writeExternal(deletedIncludesElement);
-    //
-    //Element recentElement = new Element(ELEMENT_RECENT_TEMPLATES);
-    //element.addContent(recentElement);
-    //myRecentList.writeExternal(recentElement);
-    //
-    //Element templatesElement = new Element(ELEMENT_TEMPLATES);
-    //element.addContent(templatesElement);
-    //myDefaultTemplatesManager.invalidate();
-    //
-    //for (FileTemplate internal : getInternalTemplates()) {
-    //  templatesElement.addContent(createElement(internal, true));
-    //}
-    //
-    //for (FileTemplate fileTemplate : getAllTemplates()) {
-    //  templatesElement.addContent(createElement(fileTemplate, false));
-    //}
-  }
-
-  //private static Element createElement(FileTemplate template, boolean isInternal) {
-  //  Element templateElement = new Element(isInternal ? ELEMENT_INTERNAL_TEMPLATE : ELEMENT_TEMPLATE);
-  //  templateElement.setAttribute(ATTRIBUTE_NAME, template.getName());
-  //  templateElement.setAttribute(ATTRIBUTE_REFORMAT, Boolean.toString(template.isReformatCode()));
-  //  return templateElement;
-  //}
 
   private void validateRecentNames() {
     final Collection<FileTemplateBase> allTemplates = myDefaultTemplatesManager.getAllTemplates(false);
@@ -516,7 +423,5 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements JDOM
     public void writeExternal(Element element) throws WriteExternalException {
       DefaultJDOMExternalizer.writeExternal(this, element);
     }
-
   }
-
 }
