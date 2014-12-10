@@ -201,7 +201,8 @@ public class PyTypeChecker {
   }
 
   public static boolean isUnknown(@Nullable PyType type) {
-    if (type == null || type instanceof PyGenericType) {
+    if (type == null || type instanceof PyGenericType ||
+        (type instanceof PyStructuralType && ((PyStructuralType)type).isInferredFromUsages())) {
       return true;
     }
     if (type instanceof PyUnionType) {
