@@ -21,14 +21,14 @@ import com.intellij.find.FindBundle;
 import com.intellij.find.FindModel;
 import com.intellij.find.FindSettings;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
+import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.PlainTextFileType;
+import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -49,7 +49,6 @@ import com.intellij.ui.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
-import org.intellij.lang.regexp.RegExpFileType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -673,7 +672,16 @@ public class FindDialog extends DialogWrapper {
 
     if (editorComponent instanceof EditorTextField) {
       boolean isRegexp = myCbRegularExpressions.isSelectedWhenSelectable();
-      FileType fileType = isRegexp ? RegExpFileType.INSTANCE : PlainTextFileType.INSTANCE;
+      FileType fileType = PlainTextFileType.INSTANCE;
+      if (isRegexp) {
+        Language regexpLanguage = Language.findLanguageByID("RegExp");
+        if (regexpLanguage != null) {
+          LanguageFileType regexpFileType = regexpLanguage.getAssociatedFileType();
+          if (regexpFileType != null) {
+            fileType = regexpFileType;
+          }
+        }
+      }
       String fileName = isRegexp ? "a.regexp" : "a.txt";
       final PsiFile file = PsiFileFactory.getInstance(myProject).createFileFromText(fileName, fileType, ((EditorTextField)editorComponent).getText(), -1, true);
 
