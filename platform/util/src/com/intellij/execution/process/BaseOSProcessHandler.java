@@ -18,6 +18,7 @@ package com.intellij.execution.process;
 import com.intellij.execution.TaskExecutor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.io.BaseDataReader;
@@ -71,10 +72,11 @@ public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor
 
   /**
    * Override this method to read process output and error streams in blocking mode
+   *
    * @return true to read non-blocking but sleeping, false for blocking read
    */
   protected boolean useNonBlockingRead() {
-    return true;
+    return !Registry.is("output.reader.blocking.mode", false);
   }
 
   protected boolean processHasSeparateErrorStream() {
