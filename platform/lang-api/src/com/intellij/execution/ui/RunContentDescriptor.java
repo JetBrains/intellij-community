@@ -221,7 +221,7 @@ public class RunContentDescriptor implements Disposable {
    * @return the RunnerLayoutUi instance or null if this tab does not use RunnerLayoutUi for managing its contents.
    */
   @Nullable
-  RunnerLayoutUi getRunnerLayoutUi() {
+  public RunnerLayoutUi getRunnerLayoutUi() {
     return myRunnerLayoutUi;
   }
 }
