@@ -24,6 +24,8 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 public class JBUI {
+  private static boolean IS_HIDPI = "true".equals(System.getProperty("hidpi"));
+
   public static int scale(int i) {
     return isHiDPI() ? 2 * i : i;
   }
@@ -49,7 +51,7 @@ public class JBUI {
   }
 
   public static boolean isHiDPI() {
-    return "true".equals(System.getProperty("hidpi"));
+    return IS_HIDPI;
   }
 
   public static class Fonts {
