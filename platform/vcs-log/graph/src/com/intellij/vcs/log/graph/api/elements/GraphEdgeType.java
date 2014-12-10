@@ -15,40 +15,20 @@
  */
 package com.intellij.vcs.log.graph.api.elements;
 
-import org.jetbrains.annotations.NotNull;
-
 public enum GraphEdgeType {
-  USUAL(0, true),  // between visible delegate nodes
-  DOTTED(1, true), // collapsed fragment
-  NOT_LOAD_COMMIT(-2, false), // edge to not load commit
-  DOTTED_ARROW_UP(2, false),
-  DOTTED_ARROW_DOWN(3, false);
+  USUAL(true),  // between visible delegate nodes
+  DOTTED(true), // collapsed fragment
+  NOT_LOAD_COMMIT(false), // edge to not load commit
+  DOTTED_ARROW_UP(false),
+  DOTTED_ARROW_DOWN(false);
 
-  private final byte myType;
   private final boolean myIsNormalEdge;
 
-  GraphEdgeType(int type, boolean isNormalEdge) {
+  GraphEdgeType(boolean isNormalEdge) {
     this.myIsNormalEdge = isNormalEdge;
-    this.myType = (byte) type;
-  }
-
-  public byte getType() {
-    return myType;
   }
 
   public boolean isNormalEdge() {
     return myIsNormalEdge;
-  }
-
-  @NotNull
-  public static GraphEdgeType getByType(byte type) {
-    switch (type) {
-      case 0: return USUAL;
-      case 1: return DOTTED;
-      case 2: return DOTTED_ARROW_UP;
-      case 3: return DOTTED_ARROW_DOWN;
-      case -2: return NOT_LOAD_COMMIT;
-    }
-    throw new IllegalArgumentException("Unknown type: " + type);
   }
 }
