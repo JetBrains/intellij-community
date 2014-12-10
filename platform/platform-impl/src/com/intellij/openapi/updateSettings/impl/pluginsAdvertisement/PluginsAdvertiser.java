@@ -258,7 +258,7 @@ public class PluginsAdvertiser implements StartupActivity {
           @Override
           public void run() {
             try {
-              myAllPlugins = RepositoryHelper.loadPluginsFromRepository(null);
+              myAllPlugins = RepositoryHelper.loadPlugins(null);
               if (project.isDisposed()) return;
               if (extensions == null) {
                 loadSupportedExtensions(myAllPlugins);

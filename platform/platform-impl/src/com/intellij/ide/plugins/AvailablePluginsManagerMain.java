@@ -50,6 +50,8 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
   public static final String MANAGE_REPOSITORIES = "Manage repositories...";
   public static final String N_A = "N/A";
 
+  private static final InstalledPluginsState ourState = InstalledPluginsState.getInstance();
+
   private final PluginManagerMain installed;
   private final String myVendorFilter;
 
@@ -134,12 +136,12 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
         if (descr instanceof PluginNode) {
           enabled &= !PluginManagerColumnInfo.isDownloaded((PluginNode)descr);
           if (((PluginNode)descr).getStatus() == PluginNode.STATUS_INSTALLED) {
-            enabled &= InstalledPluginsTableModel.hasNewerVersion(descr.getPluginId());
+            enabled &= ourState.hasNewerVersion(descr.getPluginId());
           }
         }
         else if (descr instanceof IdeaPluginDescriptorImpl) {
           PluginId id = descr.getPluginId();
-          enabled &= InstalledPluginsTableModel.hasNewerVersion(id);
+          enabled &= ourState.hasNewerVersion(id);
         }
       }
       if (enabled) {
