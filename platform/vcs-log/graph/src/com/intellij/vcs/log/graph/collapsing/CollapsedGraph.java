@@ -33,20 +33,20 @@ public class CollapsedGraph {
     UnsignedBitSet visibleNodesId = initVisibility.clone();
     Flags delegateNodesVisibility = createDelegateNodesVisibility(delegateGraph, visibleNodesId);
     UpdatableIntToIntMap nodesMap = ListIntToIntMap.newInstance(delegateNodesVisibility);
-    GraphAdditionEdges graphAdditionEdges = GraphAdditionEdges.newInstance(createGetNodeIndexById(delegateGraph, visibleNodesId, nodesMap),
-                                                                           createGetNodeIdByIndex(delegateGraph, nodesMap));
-    return new CollapsedGraph(delegateGraph, visibleNodesId, delegateNodesVisibility, nodesMap, graphAdditionEdges);
+    GraphAdditionalEdges graphAdditionalEdges = GraphAdditionalEdges
+      .newInstance(createGetNodeIndexById(delegateGraph, visibleNodesId, nodesMap), createGetNodeIdByIndex(delegateGraph, nodesMap));
+    return new CollapsedGraph(delegateGraph, visibleNodesId, delegateNodesVisibility, nodesMap, graphAdditionalEdges);
   }
 
   public static CollapsedGraph updateInstance(@NotNull CollapsedGraph prevCollapsedGraph, @NotNull LinearGraph delegateGraph) {
     UnsignedBitSet visibleNodesId = prevCollapsedGraph.myVisibleNodesId;
     Flags delegateNodesVisibility = createDelegateNodesVisibility(delegateGraph, visibleNodesId);
     UpdatableIntToIntMap nodesMap = ListIntToIntMap.newInstance(delegateNodesVisibility);
-    GraphAdditionEdges graphAdditionEdges =
-      GraphAdditionEdges.updateInstance(prevCollapsedGraph.myGraphAdditionEdges,
-                                        createGetNodeIndexById(delegateGraph, visibleNodesId, nodesMap),
-                                        createGetNodeIdByIndex(delegateGraph, nodesMap));
-    return new CollapsedGraph(delegateGraph, visibleNodesId, delegateNodesVisibility, nodesMap, graphAdditionEdges);
+    GraphAdditionalEdges graphAdditionalEdges =
+      GraphAdditionalEdges
+        .updateInstance(prevCollapsedGraph.myGraphAdditionalEdges, createGetNodeIndexById(delegateGraph, visibleNodesId, nodesMap),
+                        createGetNodeIdByIndex(delegateGraph, nodesMap));
+    return new CollapsedGraph(delegateGraph, visibleNodesId, delegateNodesVisibility, nodesMap, graphAdditionalEdges);
   }
 
   @NotNull
@@ -113,7 +113,7 @@ public class CollapsedGraph {
   @NotNull
   private final IntToIntMap myNodesMap;
   @NotNull
-  private final GraphAdditionEdges myGraphAdditionEdges;
+  private final GraphAdditionalEdges myGraphAdditionalEdges;
   @NotNull
   private final CompiledGraph myCompiledGraph;
 
@@ -122,12 +122,12 @@ public class CollapsedGraph {
                         @NotNull UnsignedBitSet visibleNodesId,
                         @NotNull Flags delegateNodesVisibility,
                         @NotNull IntToIntMap nodesMap,
-                        @NotNull GraphAdditionEdges graphAdditionEdges) {
+                        @NotNull GraphAdditionalEdges graphAdditionalEdges) {
     myDelegateGraph = delegateGraph;
     myVisibleNodesId = visibleNodesId;
     myDelegateNodesVisibility = delegateNodesVisibility;
     myNodesMap = nodesMap;
-    myGraphAdditionEdges = graphAdditionEdges;
+    myGraphAdditionalEdges = graphAdditionalEdges;
     myCompiledGraph = new CompiledGraph();
   }
 
@@ -141,8 +141,8 @@ public class CollapsedGraph {
   }
 
   @NotNull
-  public UnsignedBitSet getVisibleNodesId() {
-    return myVisibleNodesId;
+  public GraphAdditionalEdges getGraphAdditionalEdges() {
+    return myGraphAdditionalEdges;
   }
 
   @NotNull
@@ -206,7 +206,7 @@ public class CollapsedGraph {
           result.add(createEdge(delegateEdge, compiledUpIndex, compiledDownIndex));
       }
 
-      myGraphAdditionEdges.addToResultAdditionEdges(result, nodeIndex);
+      myGraphAdditionalEdges.addToResultAdditionEdges(result, nodeIndex);
 
       return result;
     }
