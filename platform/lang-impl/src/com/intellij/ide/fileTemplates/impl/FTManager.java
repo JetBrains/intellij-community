@@ -40,7 +40,6 @@ class FTManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.fileTemplates.impl.FTManager");
   public static final String DEFAULT_TEMPLATE_EXTENSION = "ft";
   public static final String TEMPLATE_EXTENSION_SUFFIX = "." + DEFAULT_TEMPLATE_EXTENSION;
-  public static final String CONTENT_ENCODING = CharsetToolkit.UTF8;
   private static final String ENCODED_NAME_EXT_DELIMITER = "\u0F0Fext\u0F0F.";
 
   private final String myName;
@@ -216,7 +215,7 @@ class FTManager {
         continue;
       }
       final String name = file.getName();
-      if (name.endsWith(FTManager.TEMPLATE_EXTENSION_SUFFIX)) {
+      if (name.endsWith(TEMPLATE_EXTENSION_SUFFIX)) {
         templateWithDefaultExtension.add(file);
       }
       else {
@@ -228,7 +227,7 @@ class FTManager {
     for (File file : templateWithDefaultExtension) {
       String name = file.getName();
       // cut default template extension
-      name = name.substring(0, name.length() - FTManager.TEMPLATE_EXTENSION_SUFFIX.length());
+      name = name.substring(0, name.length() - TEMPLATE_EXTENSION_SUFFIX.length());
       if (!processedNames.contains(name)) {
         addTemplateFromFile(name, file);
       }
@@ -237,7 +236,7 @@ class FTManager {
   }
 
   private void addTemplateFromFile(String fileName, File file) {
-    Pair<String,String> nameExt = FTManager.decodeFileName(fileName);
+    Pair<String,String> nameExt = decodeFileName(fileName);
     final String extension = nameExt.second;
     final String templateQName = nameExt.first;
     if (templateQName.length() == 0) {
