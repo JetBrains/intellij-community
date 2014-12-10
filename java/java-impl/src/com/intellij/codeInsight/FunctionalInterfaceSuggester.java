@@ -15,14 +15,17 @@
  */
 package com.intellij.codeInsight;
 
+import com.intellij.codeInspection.java15api.Java15APIUsageInspectionBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.AnnotatedMembersSearch;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.NullableFunction;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -31,18 +34,28 @@ import java.util.Set;
 
 public class FunctionalInterfaceSuggester {
   public static Collection<? extends PsiType> suggestFunctionalInterfaces(final @NotNull PsiFunctionalExpression expression) {
+    return suggestFunctionalInterfaces(expression, new NullableFunction<PsiClass, PsiType>() {
+      @Nullable
+      @Override
+      public PsiType fun(PsiClass aClass) {
+        return composeAcceptableType(aClass, expression);
+      }
+    });
+  }
 
-    final Project project = expression.getProject();
-    final PsiClass functionalInterfaceClass = JavaPsiFacade.getInstance(project).findClass(CommonClassNames.JAVA_LANG_FUNCTIONAL_INTERFACE, GlobalSearchScope.allScope(project));
+  private static <T extends PsiElement> Collection<? extends PsiType> suggestFunctionalInterfaces(final @NotNull T element, final NullableFunction<PsiClass, PsiType> acceptanceChecker) {
+    final Project project = element.getProject();
+    final PsiClass functionalInterfaceClass = JavaPsiFacade.getInstance(project).findClass(CommonClassNames.JAVA_LANG_FUNCTIONAL_INTERFACE,
+                                                                                           GlobalSearchScope.allScope(project));
     if (functionalInterfaceClass == null) {
       return Collections.emptyList();
     }
     final Set<PsiType> types = new LinkedHashSet<PsiType>();
-    AnnotatedMembersSearch.search(functionalInterfaceClass, expression.getResolveScope()).forEach(new Processor<PsiMember>() {
+    AnnotatedMembersSearch.search(functionalInterfaceClass, element.getResolveScope()).forEach(new Processor<PsiMember>() {
       @Override
       public boolean process(PsiMember member) {
-        if (member instanceof PsiClass) {
-          ContainerUtil.addIfNotNull(types, composeAcceptableType((PsiClass)member, expression));
+        if (member instanceof PsiClass && !Java15APIUsageInspectionBase.isForbiddenApiUsage(member, PsiUtil.getLanguageLevel(element))) {
+          ContainerUtil.addIfNotNull(types, acceptanceChecker.fun((PsiClass)member));
         }
         return true;
       }
