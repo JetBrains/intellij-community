@@ -15,6 +15,7 @@
  */
 package com.intellij.ui;
 
+import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
@@ -31,9 +32,15 @@ public class SystemNotificationsImpl extends SystemNotifications {
 
   private final Notifier myNotifier = getPlatformNotifier();
 
+  public boolean isAvailable() {
+    return myNotifier != null;
+  }
+
   @Override
   public void notify(@NotNull String notificationName, @NotNull String title, @NotNull String text) {
-    if (myNotifier != null && !ApplicationManager.getApplication().isActive()) {
+    if (myNotifier != null &&
+        NotificationsConfigurationImpl.getInstanceImpl().SYSTEM_NOTIFICATIONS &&
+        !ApplicationManager.getApplication().isActive()) {
       myNotifier.notify(notificationName, title, text);
     }
   }
