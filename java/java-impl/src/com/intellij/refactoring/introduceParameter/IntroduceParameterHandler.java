@@ -624,10 +624,12 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
       }
     });
 
-    
-    final PsiExpression expression = factory
+
+    PsiExpression expression = factory
       .createExpressionFromText("new " + selectedType.getCanonicalText() + "() {" + methodText.get() + "}",
                                 methodToIntroduceParameter);
+    expression = (PsiExpression)JavaCodeStyleManager.getInstance(project).shortenClassReferences(expression);
+
     expression.putUserData(ElementToWorkOn.PARENT, commonParent);
     expression.putUserData(ElementToWorkOn.SUFFIX, "." + methodCallText.get() + ";");
 
