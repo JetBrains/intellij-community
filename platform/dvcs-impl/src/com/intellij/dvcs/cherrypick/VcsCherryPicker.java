@@ -32,8 +32,10 @@ public abstract class VcsCherryPicker {
   /**
    * @return - return vcs for current cherryPicker
    */
+  @NotNull
   public abstract VcsKey getSupportedVcs();
 
+  @NotNull
   public abstract String getPreferredActionTitle();
 
   public abstract void cherryPick(@NotNull final List<VcsFullCommitDetails> commits);
