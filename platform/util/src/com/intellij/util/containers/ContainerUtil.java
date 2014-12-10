@@ -2596,6 +2596,9 @@ public class ContainerUtil extends ContainerUtilRt {
     return o1.size() < o2.size() ? -1 : o1.size() == o2.size() ? 0 : 1;
   }
 
+  /**
+   * Returns a String representation of the given map, by listing all key-value pairs contained in the map.
+   */
   @NotNull
   @Contract(pure = true)
   public static String toString(@NotNull Map<?, ?> map) {
