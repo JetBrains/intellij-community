@@ -206,7 +206,7 @@ public class CollapsedGraph {
           result.add(createEdge(delegateEdge, compiledUpIndex, compiledDownIndex));
       }
 
-      myGraphAdditionalEdges.addToResultAdditionEdges(result, nodeIndex);
+      myGraphAdditionalEdges.appendAdditionalEdges(result, nodeIndex);
 
       return result;
     }
