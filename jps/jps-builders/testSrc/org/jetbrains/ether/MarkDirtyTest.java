@@ -58,14 +58,13 @@ public class MarkDirtyTest extends IncrementalTestCase {
   }
 
   public void testDoNotMarkDirtyCompiledChunks() {
-    //'b.Client' from production sources of 'b' may not depend on 'a.ShortName' from module 'a' so it shouldn't be marked as dirty.
+    //'b.Client' from production sources of 'b' cannot depend on 'a.ShortName' from module 'a' so it shouldn't be marked as dirty.
     //Otherwise we can get 'dirty' sources after full make if production of 'b' was compiled before 'a'
     JpsModule b = addModule("b", "moduleB/src");
     addTestRoot(b, "moduleB/testSrc");
     JpsModule a = addModule("a", "moduleA/src");
     addTestRoot(a, "moduleA/testSrc");
     JpsModuleRootModificationUtil.addDependency(b, a, JpsJavaDependencyScope.TEST, false);
-    doTestBuild(1).assertSuccessful();
-    //makeAll().assertUpToDate();
+    doTestBuild(2).assertSuccessful();
   }
 }
