@@ -371,7 +371,7 @@ public abstract class CacheDiffRequestChainProcessor implements Disposable {
       }
 
       if (iterable != null && myIterationState != IterationState.NEXT) {
-        iterable.notify("Press again to go to the next change"); // TODO: "Change" is a bad word
+        iterable.notify("Press again to go to the next file"); // TODO: provide "change" word in chain UserData - for tests/etc
         myIterationState = IterationState.NEXT;
         return;
       }
@@ -414,7 +414,7 @@ public abstract class CacheDiffRequestChainProcessor implements Disposable {
       }
 
       if (iterable != null && myIterationState != IterationState.PREV) {
-        iterable.notify("Press again to go to the previous change");
+        iterable.notify("Press again to go to the previous file");
         myIterationState = IterationState.PREV;
         return;
       }
