@@ -6,7 +6,7 @@ import java.util.Map;
 public class KeySetIterationMayUseEntrySet {
 
   void foo(Map<String, String> m) {
-    for (String k : m.keySet()) {
+    for (String k : <warning descr="Iteration over 'm.keySet()' may be replaced with 'entrySet()' iteration">m.keySet()</warning>) {
       System.out.println(m.get(k));
     }
   }
