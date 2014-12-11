@@ -41,7 +41,7 @@ public class TwosideContentPanel extends JPanel {
   }
 
   public void repaintDivider() {
-    if (mySplitter != null) mySplitter.getDivider().repaint();
+    if (mySplitter != null) mySplitter.repaintDivider();
   }
 
   private static class MyPanel extends JPanel {

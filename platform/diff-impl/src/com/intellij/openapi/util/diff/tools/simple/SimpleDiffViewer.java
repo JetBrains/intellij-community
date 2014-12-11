@@ -239,7 +239,7 @@ class SimpleDiffViewer extends TwosideTextDiffViewer {
 
         scrollOnRediff();
 
-        myContentPanel.repaint();
+        myContentPanel.repaintDivider();
         myStatusPanel.update();
       }
     };

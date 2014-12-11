@@ -404,13 +404,8 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
   private class MyVisibleAreaListener implements VisibleAreaListener {
     @Override
     public void visibleAreaChanged(VisibleAreaEvent e) {
-      if (mySyncScrollListener != null) {
-        mySyncScrollListener.visibleAreaChanged(e);
-        if (!mySyncScrollListener.ourDuringSyncScroll) myContentPanel.repaint();
-      }
-      else {
-        myContentPanel.repaintDivider();
-      }
+      if (mySyncScrollListener != null) mySyncScrollListener.visibleAreaChanged(e);
+      myContentPanel.repaintDivider();
     }
   }
 
