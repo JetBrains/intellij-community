@@ -194,7 +194,6 @@ public class ProjectSpecificSettingsStep extends ProjectSettingsStepBase impleme
   @Override
   protected JPanel createBasePanel() {
     final JPanel panel = super.createBasePanel();
-    final GridBagConstraints c = new GridBagConstraints();
 
     final Project project = ProjectManager.getInstance().getDefaultProject();
     final List<Sdk> sdks = PyConfigurableInterpreterList.getInstance(project).getAllPythonSdks();
@@ -222,16 +221,10 @@ public class ProjectSpecificSettingsStep extends ProjectSettingsStepBase impleme
     final LabeledComponent<PythonSdkChooserCombo> labeled = LabeledComponent.create(mySdkCombo, "Interpreter");
     labeled.setLabelLocation(BorderLayout.WEST);
     UIUtil.mergeComponentsWithAnchor(labeled, (PanelWithAnchor)panel.getComponent(0));
-    c.gridx = 0;
-    c.gridy = 1;
-    c.weightx = 1.;
-    panel.add(labeled, c);
+    panel.add(labeled);
     final JPanel basePanelExtension = extendBasePanel();
     if (basePanelExtension != null) {
-      c.gridwidth = 2;
-      c.gridy = 2;
-      c.gridx = 0;
-      panel.add(basePanelExtension, c);
+      panel.add(basePanelExtension);
     }
 
     return panel;
