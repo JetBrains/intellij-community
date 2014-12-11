@@ -310,7 +310,7 @@ public class EditorActionUtil {
         caretModel.moveToVisualPosition(new VisualPosition(currentVisCaret.line, 0));
       }
       setupSelection(editor, isWithSelection, selectionStart, blockSelectionStart);
-      editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+      EditorModificationUtil.scrollToCaret(editor);
       return;
     }
 
@@ -355,7 +355,7 @@ public class EditorActionUtil {
     }
 
     setupSelection(editor, isWithSelection, selectionStart, blockSelectionStart);
-    editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+    EditorModificationUtil.scrollToCaret(editor);
   }
 
   private static void moveCaretToStartOfSoftWrappedLine(@NotNull Editor editor, VisualPosition currentVisual, int softWrappedLines) {
@@ -531,7 +531,7 @@ public class EditorActionUtil {
       LogicalPosition pos = new LogicalPosition(lineNumber, 0);
       editor.getCaretModel().moveToLogicalPosition(pos);
       setupSelection(editor, isWithSelection, selectionStart, blockSelectionStart);
-      editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+      EditorModificationUtil.scrollToCaret(editor);
       return;
     }
     VisualPosition currentVisualCaret = editor.getCaretModel().getVisualPosition();
@@ -588,7 +588,7 @@ public class EditorActionUtil {
       caretModel.moveToOffset(newOffset);
     }
 
-    editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+    EditorModificationUtil.scrollToCaret(editor);
 
     setupSelection(editor, isWithSelection, selectionStart, blockSelectionStart);
   }
