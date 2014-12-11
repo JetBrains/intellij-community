@@ -137,6 +137,10 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     }
   }
 
+  public boolean acceptsSlashR() {
+    return myAcceptSlashR;
+  }
+
   private LineSet getLineSet() {
     LineSet lineSet = myLineSet;
     if (lineSet == null) {

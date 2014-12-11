@@ -140,6 +140,10 @@ abstract class AbstractMappingStrategy<T> implements MappingStrategy<T> {
       int column = offset - lineStartOffset;
       position.visualColumn = column;
       position.logicalColumn = column;
+      position.softWrapLinesBefore += position.softWrapLinesCurrent;
+      position.softWrapLinesCurrent = 0;
+      position.softWrapColumnDiff = 0;
+      position.foldingColumnDiff = 0;
     }
     position.offset = offset;
     return null;
