@@ -301,8 +301,24 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       int separator = fullMessage.indexOf("\n\n");
       String subject = separator > 0 ? fullMessage.substring(0, separator) : fullMessage;
       String description = fullMessage.substring(subject.length());
-      return "<b>" + IssueLinkHtmlRenderer.formatTextWithLinks(myProject, subject) + "</b>" +
-             IssueLinkHtmlRenderer.formatTextWithLinks(myProject, description);
+      return "<b>" + escapeMultipleSpaces(IssueLinkHtmlRenderer.formatTextWithLinks(myProject, subject)) + "</b>" +
+             escapeMultipleSpaces(IssueLinkHtmlRenderer.formatTextWithLinks(myProject, description));
+    }
+
+    private String escapeMultipleSpaces(String text) {
+      StringBuilder result = new StringBuilder();
+      for (int i = 0; i < text.length(); i++) {
+        if (text.charAt(i) == ' ') {
+          if (i == text.length() - 1 || text.charAt(i+1) != ' ') {
+            result.append(' ');
+          } else {
+            result.append("&nbsp;");
+          }
+        } else {
+          result.append(text.charAt(i));
+        }
+      }
+      return result.toString();
     }
 
     private static String getAuthorText(VcsFullCommitDetails commit) {
