@@ -18,6 +18,7 @@ package com.intellij.codeInsight;
 import com.intellij.codeInspection.java15api.Java15APIUsageInspectionBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.AnnotatedMembersSearch;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -122,6 +123,9 @@ public class FunctionalInterfaceSuggester {
       @Override
       public boolean process(PsiMember member) {
         if (member instanceof PsiClass && !Java15APIUsageInspectionBase.isForbiddenApiUsage(member, PsiUtil.getLanguageLevel(element))) {
+          if (!JavaResolveUtil.isAccessible(member, null, member.getModifierList(), element, null, null)) {
+            return true;
+          }
           ContainerUtil.addIfNotNull(types, acceptanceChecker.fun((PsiClass)member));
         }
         return true;
