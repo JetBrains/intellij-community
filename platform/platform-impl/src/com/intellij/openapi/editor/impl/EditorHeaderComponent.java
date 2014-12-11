@@ -28,10 +28,9 @@ import java.awt.*;
  * @author gregsh
  */
 public class EditorHeaderComponent extends JPanel {
-
   public EditorHeaderComponent() {
     super(new BorderLayout(0, 0));
-    setBorder(new CustomLineBorder(JBColor.border(), 0, UIUtil.isUnderGTKLookAndFeel()? 0 : 1, 1, 0));
+    setBorder(new CustomLineBorder(JBColor.border(), 0, 0, 1, 0));
   }
 
   @Override
