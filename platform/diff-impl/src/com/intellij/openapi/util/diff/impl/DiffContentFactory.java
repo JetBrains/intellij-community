@@ -46,11 +46,8 @@ public class DiffContentFactory {
   @NotNull
   public static DiffContent create(@Nullable Project project, @NotNull VirtualFile file) {
     if (file.isDirectory()) return new DirectoryContentImpl(project, file);
-    if (DiffContentUtil.isTextFile(file)) {
-      Document document = FileDocumentManager.getInstance().getDocument(file);
-      if (document != null) return new FileDocumentContentImpl(project, document, file);
-      LOG.warn("Document not found for text file");
-    }
+    Document document = FileDocumentManager.getInstance().getDocument(file);
+    if (document != null) return new FileDocumentContentImpl(project, document, file);
     return new BinaryFileContentImpl(project, file);
   }
 
