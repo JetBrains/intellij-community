@@ -294,6 +294,7 @@ public abstract class CacheDiffRequestChainProcessor implements Disposable {
 
     DiffUtil.addActionBlock(group,
                             new ShowInExternalToolAction(),
+                            new ShowOldDiffAction(),
                             ActionManager.getInstance().getAction(IdeActions.ACTION_CONTEXT_HELP));
 
     return group;
