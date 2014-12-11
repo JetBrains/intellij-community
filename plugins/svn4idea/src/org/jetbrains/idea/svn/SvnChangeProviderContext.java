@@ -20,7 +20,10 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.FilePathImpl;
+import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -274,13 +277,7 @@ class SvnChangeProviderContext implements StatusReceiver {
       final String switchUrl = status.getURL().toString();
       final VirtualFile vcsRoot = ProjectLevelVcsManager.getInstance(myVcs.getProject()).getVcsRootFor(virtualFile);
       if (vcsRoot != null) {  // it will be null if we walked into an excluded directory
-        String baseUrl = null;
-        try {
-          baseUrl = myBranchConfigurationManager.get(vcsRoot).getBaseName(switchUrl);
-        }
-        catch (VcsException e) {
-          LOG.info(e);
-        }
+        String baseUrl = myBranchConfigurationManager.get(vcsRoot).getBaseName(switchUrl);
         myChangelistBuilder.processSwitchedFile(virtualFile, baseUrl == null ? switchUrl : baseUrl, true);
       }
     }
