@@ -6819,9 +6819,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         }
         else {
           g.setColor(UIUtil.getPanelBackground());
-          g.drawLine(x, y, x + width, y);
-          g.setColor(Gray._0.withAlpha(90));
-          g.drawLine(x, y, x + width, y);
+          g.fillRect(x, y, width, 1);
+          g.setColor(Gray._50.withAlpha(90));
+          g.fillRect(x, y, width, 1);
         }
       }
     }
