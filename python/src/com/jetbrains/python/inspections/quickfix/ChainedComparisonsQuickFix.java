@@ -23,6 +23,7 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.PyBinaryExpression;
 import com.jetbrains.python.psi.PyElementGenerator;
+import com.jetbrains.python.psi.PyElementType;
 import com.jetbrains.python.psi.PyExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,6 +38,7 @@ import static com.jetbrains.python.psi.PyUtil.as;
  * For instance, a < b and b < c  --> a < b < c
  */
 public class ChainedComparisonsQuickFix implements LocalQuickFix {
+
   boolean myIsLeftLeft;
   boolean myIsRightLeft;
   boolean getInnerRight;
@@ -69,12 +71,11 @@ public class ChainedComparisonsQuickFix implements LocalQuickFix {
     if (expression != null && expression.isWritable()) {
       final PyBinaryExpression rightExpression = as(expression.getRightExpression(), PyBinaryExpression.class);
       PyBinaryExpression leftExpression = as(expression.getLeftExpression(), PyBinaryExpression.class);
-      if (rightExpression != null && leftExpression != null && expression.getOperator() == PyTokenTypes.AND_KEYWORD) {
-        if (getInnerRight && leftExpression.getRightExpression() instanceof PyBinaryExpression &&
-            leftExpression.getOperator() == PyTokenTypes.AND_KEYWORD) {
+      if (rightExpression != null && leftExpression != null && isLogicalAndExpression(expression)) {
+        if (getInnerRight && leftExpression.getRightExpression() instanceof PyBinaryExpression && isLogicalAndExpression(leftExpression)) {
           leftExpression = (PyBinaryExpression)leftExpression.getRightExpression();
         }
-        checkOperator(leftExpression, rightExpression, project);
+        checkOperator(assertNotNull(leftExpression), rightExpression, project);
       }
     }
   }
@@ -126,7 +127,7 @@ public class ChainedComparisonsQuickFix implements LocalQuickFix {
   @NotNull
   private static PsiElement getLeftestOperator(@NotNull PyBinaryExpression expression) {
     PsiElement op = expression.getPsiOperator();
-    while (expression.getLeftExpression() instanceof PyBinaryExpression) {
+    while (isComparisonExpression(expression.getLeftExpression())) {
       expression = (PyBinaryExpression)expression.getLeftExpression();
       op = expression.getPsiOperator();
     }
@@ -139,7 +140,7 @@ public class ChainedComparisonsQuickFix implements LocalQuickFix {
     final PsiElement operator = leftExpression.getPsiOperator();
     final PyExpression right = leftExpression.getRightExpression();
     PyExpression left = leftExpression.getLeftExpression();
-    if (left instanceof PyBinaryExpression) {
+    if (isComparisonExpression(left)) {
       left = invertExpression((PyBinaryExpression)left, elementGenerator);
     }
     final String newOperator = invertOperator(assertNotNull(operator));
@@ -169,12 +170,24 @@ public class ChainedComparisonsQuickFix implements LocalQuickFix {
     PyExpression left = expression.getLeftExpression();
     PyExpression right = expression.getRightExpression();
     PsiElement operator = expression.getPsiOperator();
-    while (left instanceof PyBinaryExpression) {
+    while (isComparisonExpression(left)) {
       assert operator != null;
       right = elementGenerator.createBinaryExpression(operator.getText(), ((PyBinaryExpression)left).getRightExpression(), right);
       operator = ((PyBinaryExpression)left).getPsiOperator();
       left = ((PyBinaryExpression)left).getLeftExpression();
     }
     return right;
+  }
+
+  private static boolean isComparisonExpression(@Nullable PyExpression expression) {
+    if (!(expression instanceof PyBinaryExpression)) {
+      return false;
+    }
+    final PyElementType operator = ((PyBinaryExpression)expression).getOperator();
+    return PyTokenTypes.RELATIONAL_OPERATIONS.contains(operator) || PyTokenTypes.EQUALITY_OPERATIONS.contains(operator);
+  }
+
+  private static boolean isLogicalAndExpression(@Nullable PyExpression expression) {
+    return expression instanceof PyBinaryExpression && ((PyBinaryExpression)expression).getOperator() == PyTokenTypes.AND_KEYWORD;
   }
 }
