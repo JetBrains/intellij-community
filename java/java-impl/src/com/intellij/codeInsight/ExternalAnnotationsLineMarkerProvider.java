@@ -60,7 +60,7 @@ public class ExternalAnnotationsLineMarkerProvider implements LineMarkerProvider
   @Override
   public LineMarkerInfo getLineMarkerInfo(@NotNull final PsiElement element) {
     //todo: make an option?
-    if (Registry.is("ide.java.hide.contract.icons")) {
+    if (Registry.is("ide.java.hide.contract.icons") && !(element instanceof PsiCompiledElement)) {
       return null;
     }
 

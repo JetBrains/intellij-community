@@ -23,6 +23,6 @@
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="jps-plugin-system" />
+    <orderEntry type="library" name="Log4J" level="project" />
   </component>
 </module>
-

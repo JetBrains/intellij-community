@@ -278,7 +278,7 @@ public class CvsChangeProvider implements ChangeProvider {
     }
     final CvsInfo info = myEntriesManager.getCvsInfoFor(dir);
     if (info.getRepository() == null) {
-      if (info.getIgnoreFilter().shouldBeIgnored(dir.getName())) {
+      if (info.getIgnoreFilter().shouldBeIgnored(dir)) {
         builder.processIgnoredFile(dir);
       }
       else {
@@ -492,7 +492,7 @@ public class CvsChangeProvider implements ChangeProvider {
       }
       else {
         if (isInContent(unknown)) {
-          final boolean isIgnored = result.getCvsInfo().getIgnoreFilter().shouldBeIgnored(unknown.getName());
+          final boolean isIgnored = result.getCvsInfo().getIgnoreFilter().shouldBeIgnored(unknown);
           if (isIgnored) {
             result.addIgnoredFile(unknown);
           }
