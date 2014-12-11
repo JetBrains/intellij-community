@@ -68,6 +68,8 @@ public interface FoldingModel {
   /**
    * Checks if the specified offset in the document belongs to a folded region. The region must contain given offset or be located right
    * after given offset, i.e. the following condition must hold: foldStartOffset <= offset < foldEndOffset.
+   * <br>
+   * This method can return incorrect data if it's invoked in the context of {@link #runBatchFoldingOperation(Runnable)} invocation.
    *
    * @param offset the offset to check.
    * @return true if the offset belongs to a folded region, false otherwise.
@@ -79,6 +81,8 @@ public interface FoldingModel {
   /**
    * Returns collapsed folded region at a given offset or <code>null</code> if there's no such region. Returned region will satisfy the
    * following condition: region.getStartOffset() <= offset < region.getEndOffset()
+   * <br>
+   * This method can return incorrect data if it's invoked in the context of {@link #runBatchFoldingOperation(Runnable)} invocation.
    *
    * @see #isOffsetCollapsed(int)
    */
