@@ -15,38 +15,24 @@
  */
 package com.intellij.util.lang;
 
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import sun.misc.Resource;
 
-import java.io.IOException;
 import java.net.URL;
+import java.util.Map;
 
 /**
- * An object responsible for loading classes and resources from a particular classpath element: a jar or a directory.
- * 
- * @see JarLoader
- * @see FileLoader
+ * @author peter
  */
-abstract class Loader {
-  private final URL myURL;
-  private final int myIndex;
-
-  Loader(URL url, int index) {
-    myURL = url;
-    myIndex = index;
-  }
-
-  URL getBaseURL() {
-    return myURL;
-  }
-
-  @Nullable
-  abstract Resource getResource(String name, boolean flag);
+class CachePoolImpl implements UrlClassLoader.CachePool {
+  private final Map<URL, ClasspathCache.LoaderData> myLoaderIndexCache = ContainerUtil.newConcurrentMap();
   
-  @NotNull abstract ClasspathCache.LoaderData buildData() throws IOException;
-
-  int getIndex() {
-    return myIndex;
+  void cacheData(@NotNull URL url, @NotNull ClasspathCache.LoaderData data) {
+    myLoaderIndexCache.put(url, data);
   }
+
+  ClasspathCache.LoaderData getCachedData(@NotNull URL url) {
+    return myLoaderIndexCache.get(url);
+  }
+
 }
