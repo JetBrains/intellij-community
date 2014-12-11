@@ -337,7 +337,7 @@ public class CvsEntriesManager extends VirtualFileAdapter {
       return false;
     }
     if (CvsUtil.fileIsUnderCvs(file)) return false;
-    return getFilter(parent).shouldBeIgnored(file.getName());
+    return getFilter(parent).shouldBeIgnored(file);
   }
 
   private void ensureFilesCached() {
