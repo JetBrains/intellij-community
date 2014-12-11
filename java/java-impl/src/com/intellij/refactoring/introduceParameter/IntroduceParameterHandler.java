@@ -50,12 +50,15 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
@@ -559,7 +562,10 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
               classes.put(PsiUtil.resolveClassInType(type), type);
             }
             final PsiClass[] psiClasses = classes.keySet().toArray(new PsiClass[classes.size()]);
-            NavigationUtil.getPsiElementPopup(psiClasses, new PsiClassListCellRenderer(), "Choose Applicable Functional Interface",
+            final String methodSignature =
+              PsiFormatUtil.formatMethod(emptyMethod, PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_PARAMETERS, PsiFormatUtilBase.SHOW_TYPE);
+            final String title = "Choose Applicable Functional Interface: " + methodSignature + " -> {}";
+            NavigationUtil.getPsiElementPopup(psiClasses, new PsiClassListCellRenderer(), title,
                                               new PsiElementProcessor<PsiClass>() {
                                                 @Override
                                                 public boolean execute(@NotNull PsiClass psiClass) {
