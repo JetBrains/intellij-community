@@ -22,6 +22,7 @@ import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.TestFileType;
 
 import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertFalse;
 
 /**
  * @author max
@@ -177,5 +178,12 @@ public class FoldingTest extends AbstractEditorTest {
     assertEquals(0, myModel.getLastCollapsedRegionBefore(5));
     assertEquals(1, myModel.getLastCollapsedRegionBefore(6));
     assertEquals(1, myModel.getLastCollapsedRegionBefore(7));
+  }
+  
+  public void testSelectionIsRemovedWhenInterruptedByFolding() {
+    myEditor.getSelectionModel().setSelection(0, 5);
+    addCollapsedFoldRegion(3, 6, "...");
+    
+    assertFalse(myEditor.getSelectionModel().hasSelection());
   }
 }
