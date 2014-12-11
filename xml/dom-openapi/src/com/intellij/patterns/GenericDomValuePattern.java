@@ -50,7 +50,7 @@ public class GenericDomValuePattern<T> extends DomElementPattern<GenericDomValue
     return with(new PatternCondition<GenericDomValue<T>>("withStringValue") {
       @Override
       public boolean accepts(@NotNull final GenericDomValue<T> genericDomValue, final ProcessingContext context) {
-        return pattern.getCondition().accepts(genericDomValue.getStringValue(), context);
+        return pattern.accepts(genericDomValue.getStringValue(), context);
       }
 
     });
@@ -64,7 +64,7 @@ public class GenericDomValuePattern<T> extends DomElementPattern<GenericDomValue
     return with(new PatternCondition<GenericDomValue<T>>("withValue") {
       @Override
       public boolean accepts(@NotNull final GenericDomValue<T> genericDomValue, final ProcessingContext context) {
-        return pattern.getCondition().accepts(genericDomValue.getValue(), context);
+        return pattern.accepts(genericDomValue.getValue(), context);
       }
     });
   }

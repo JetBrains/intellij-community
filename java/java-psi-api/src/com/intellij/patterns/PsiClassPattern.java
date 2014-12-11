@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ public class PsiClassPattern extends PsiMemberPattern<PsiClass, PsiClassPattern>
 
   private static boolean isInheritor(PsiClass psiClass, ElementPattern pattern, final ProcessingContext matchingContext, boolean checkThisClass) {
     if (psiClass == null) return false;
-    if (checkThisClass && pattern.getCondition().accepts(psiClass, matchingContext)) return true;
+    if (checkThisClass && pattern.accepts(psiClass, matchingContext)) return true;
     if (isInheritor(psiClass.getSuperClass(), pattern, matchingContext, true)) return true;
     for (final PsiClass aClass : psiClass.getInterfaces()) {
       if (isInheritor(aClass, pattern, matchingContext, true)) return true;

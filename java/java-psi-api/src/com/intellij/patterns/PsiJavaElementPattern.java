@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,7 +75,7 @@ public class PsiJavaElementPattern<T extends PsiElement,Self extends PsiJavaElem
         if (parent instanceof PsiMethod && t != ((PsiMethod) parent).getNameIdentifier()) return false;
         if (parent instanceof PsiVariable && t != ((PsiVariable) parent).getNameIdentifier()) return false;
 
-        return pattern.getCondition().accepts(parent, context);
+        return pattern.accepts(parent, context);
       }
     });
   }
@@ -95,7 +95,7 @@ public class PsiJavaElementPattern<T extends PsiElement,Self extends PsiJavaElem
             final JavaResolveResult[] results = ((PsiMethodCallExpression)element).getMethodExpression().multiResolve(false);
             for (JavaResolveResult result : results) {
               final PsiElement psiElement = result.getElement();
-              if (methodPattern.getCondition().accepts(psiElement, context)) {
+              if (methodPattern.accepts(psiElement, context)) {
                 return true;
               }
             }

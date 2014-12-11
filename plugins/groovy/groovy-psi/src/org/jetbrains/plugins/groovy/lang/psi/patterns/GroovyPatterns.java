@@ -85,7 +85,7 @@ public class GroovyPatterns extends PsiJavaPatterns {
 
         if (((GrAssignmentExpression)parent).getRValue() != o) return false;
 
-        return assignment.getCondition().accepts(parent, context) && value.getCondition().accepts(o, context);
+        return assignment.accepts(parent, context) && value.accepts(o, context);
       }
     });
   }
