@@ -471,15 +471,12 @@ public class SvnUtil {
 
   @Nullable
   public static SVNURL getBranchForUrl(final SvnVcs vcs, final VirtualFile vcsRoot, final String urlPath) {
-    final SvnBranchConfigurationNew configuration;
     try {
       final SVNURL url = SVNURL.parseURIEncoded(urlPath);
-      configuration = SvnBranchConfigurationManager.getInstance(vcs.getProject()).get(vcsRoot);
-      return (configuration == null) ? null : configuration.getWorkingBranch(url);
+      SvnBranchConfigurationNew configuration = SvnBranchConfigurationManager.getInstance(vcs.getProject()).get(vcsRoot);
+      return configuration.getWorkingBranch(url);
     }
     catch (SVNException e) {
-      return null;
-    } catch (VcsException e1) {
       return null;
     }
   }

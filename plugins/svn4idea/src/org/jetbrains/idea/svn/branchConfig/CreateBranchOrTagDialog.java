@@ -198,15 +198,9 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
   }
 
   private void updateBranchTagBases() {
-    try {
-      myBranchConfiguration = SvnBranchConfigurationManager.getInstance(myProject).get(mySrcVirtualFile);
-      final String[] strings = ArrayUtil.toStringArray(myBranchConfiguration.getBranchUrls());
-      myBranchTagBaseComboBox.getComboBox().setModel(new DefaultComboBoxModel(strings));
-    }
-    catch (VcsException e) {
-      LOG.info(e);
-      myBranchTagBaseComboBox.setEnabled(false);
-    }
+    myBranchConfiguration = SvnBranchConfigurationManager.getInstance(myProject).get(mySrcVirtualFile);
+    final String[] strings = ArrayUtil.toStringArray(myBranchConfiguration.getBranchUrls());
+    myBranchTagBaseComboBox.getComboBox().setModel(new DefaultComboBoxModel(strings));
   }
 
   private void updateToURL() {
