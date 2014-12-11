@@ -273,7 +273,7 @@ public abstract class PluginManagerMain implements Disposable {
     requireShutdown |= val;
   }
 
-  public ArrayList<IdeaPluginDescriptorImpl> getDependentList(IdeaPluginDescriptorImpl pluginDescriptor) {
+  public List<IdeaPluginDescriptorImpl> getDependentList(IdeaPluginDescriptorImpl pluginDescriptor) {
     return pluginsModel.dependent(pluginDescriptor);
   }
 

@@ -267,8 +267,8 @@ public class InstalledPluginsTableModel extends PluginTableModel {
   }
 
   @Override
-  protected ArrayList<IdeaPluginDescriptor> toProcess() {
-    ArrayList<IdeaPluginDescriptor> toProcess = super.toProcess();
+  protected List<IdeaPluginDescriptor> toProcess() {
+    List<IdeaPluginDescriptor> toProcess = super.toProcess();
     for (IdeaPluginDescriptor descriptor : myInstalled) {
       if (!toProcess.contains(descriptor)) {
         toProcess.add(descriptor);

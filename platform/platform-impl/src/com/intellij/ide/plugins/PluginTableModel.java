@@ -113,8 +113,8 @@ abstract public class PluginTableModel extends AbstractTableModel implements Sor
     fireTableCellUpdated(rowIndex, columnIndex);
   }
 
-  public ArrayList<IdeaPluginDescriptorImpl> dependent(IdeaPluginDescriptorImpl plugin) {
-    ArrayList<IdeaPluginDescriptorImpl> list = new ArrayList<IdeaPluginDescriptorImpl>();
+  public List<IdeaPluginDescriptorImpl> dependent(IdeaPluginDescriptorImpl plugin) {
+    List<IdeaPluginDescriptorImpl> list = new ArrayList<IdeaPluginDescriptorImpl>();
     for (IdeaPluginDescriptor any : getAllPlugins()) {
       if (any instanceof IdeaPluginDescriptorImpl) {
         PluginId[] dep = any.getDependentPluginIds();
@@ -160,7 +160,7 @@ abstract public class PluginTableModel extends AbstractTableModel implements Sor
     filter(desc);
   }
 
-  protected ArrayList<IdeaPluginDescriptor> toProcess() {
+  protected List<IdeaPluginDescriptor> toProcess() {
     return new ArrayList<IdeaPluginDescriptor>(view);
   }
 
