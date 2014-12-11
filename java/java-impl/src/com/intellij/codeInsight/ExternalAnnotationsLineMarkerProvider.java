@@ -32,6 +32,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
@@ -55,6 +56,11 @@ public class ExternalAnnotationsLineMarkerProvider implements LineMarkerProvider
   @Nullable
   @Override
   public LineMarkerInfo getLineMarkerInfo(@NotNull final PsiElement element) {
+    //todo: make an option?
+    if (Registry.is("ide.java.hide.contract.icons")) {
+      return null;
+    }
+
     PsiElement owner = element.getParent();
     if (!(owner instanceof PsiModifierListOwner) || !(owner instanceof PsiNameIdentifierOwner)) return null;
     if (owner instanceof PsiParameter || owner instanceof PsiLocalVariable) return null;
