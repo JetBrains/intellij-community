@@ -29,10 +29,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.*;
 
 public class FunctionalInterfaceSuggester {
   public static Collection<? extends PsiType> suggestFunctionalInterfaces(final @NotNull PsiFunctionalExpression expression) {
@@ -84,7 +81,7 @@ public class FunctionalInterfaceSuggester {
           }
 
           final PsiType returnType = method.getReturnType();
-          if (!TypeConversionUtil.isAssignable(substitutor.substitute(interfaceMethod.getReturnType()), returnType)) {
+          if (returnType != null && !TypeConversionUtil.isAssignable(returnType, substitutor.substitute(interfaceMethod.getReturnType()))) {
             return null;
           }
 
@@ -119,7 +116,7 @@ public class FunctionalInterfaceSuggester {
     if (functionalInterfaceClass == null) {
       return Collections.emptyList();
     }
-    final Set<PsiType> types = new LinkedHashSet<PsiType>();
+    final Set<PsiType> types = new HashSet<PsiType>();
     AnnotatedMembersSearch.search(functionalInterfaceClass, element.getResolveScope()).forEach(new Processor<PsiMember>() {
       @Override
       public boolean process(PsiMember member) {
@@ -129,7 +126,14 @@ public class FunctionalInterfaceSuggester {
         return true;
       }
     });
-    return types;
+    final ArrayList<PsiType> typesToSuggest = new ArrayList<PsiType>(types);
+    Collections.sort(typesToSuggest, new Comparator<PsiType>() {
+      @Override
+      public int compare(PsiType o1, PsiType o2) {
+        return o1.getCanonicalText().compareTo(o2.getCanonicalText());
+      }
+    });
+    return typesToSuggest;
   }
 
   private static PsiType composeAcceptableType(@NotNull PsiClass interface2Consider, @NotNull PsiFunctionalExpression expression) {
