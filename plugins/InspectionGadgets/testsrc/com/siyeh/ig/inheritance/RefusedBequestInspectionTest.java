@@ -15,4 +15,15 @@ public class RefusedBequestInspectionTest extends LightInspectionTestCase {
   protected InspectionProfileEntry getInspection() {
     return new RefusedBequestInspection();
   }
+
+  @Override
+  protected String[] getEnvironmentClasses() {
+    return new String[] {
+      "package org.junit;\n" +
+      "@Retention(RetentionPolicy.RUNTIME)\n" +
+      "@Target(ElementType.METHOD)\n" +
+      "public @interface Before {\n" +
+      "}"
+    };
+  }
 }

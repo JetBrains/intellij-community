@@ -1,5 +1,7 @@
 package com.siyeh.igtest.inheritance.refused_bequest;
 
+import org.junit.Before;
+
 import java.util.ArrayList;
 
 public class RefusedBequest extends ArrayList {
@@ -20,5 +22,15 @@ class B extends A {
   @Override
   public String toString() {
     return "B.toString";
+  }
+}
+class C {
+  @Before
+  public void setUp() {}
+}
+class D extends C {
+  @Override
+  public void <warning descr="Method 'setUp()' ignores defined method in superclass">setUp</warning>() {
+
   }
 }
