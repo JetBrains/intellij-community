@@ -119,6 +119,9 @@
     <extensionPoint name="debugger.frameExtraVarsProvider"
                     interface="com.intellij.debugger.engine.FrameExtraVariablesProvider"/>
 
+    <extensionPoint name="debugger.sourcePositionProvider"
+                    interface="com.intellij.debugger.engine.SourcePositionProvider"/>
+
     <extensionPoint name="debugger.simpleGetterProvider"
                     interface="com.intellij.debugger.engine.SimpleGetterProvider"/>
 

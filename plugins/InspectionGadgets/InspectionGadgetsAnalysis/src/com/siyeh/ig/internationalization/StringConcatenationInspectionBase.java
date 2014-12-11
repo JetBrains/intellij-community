@@ -246,7 +246,7 @@ public class StringConcatenationInspectionBase extends BaseInspection {
         }
       }
       if (ignoreInToString) {
-        final PsiMethod method = PsiTreeUtil.getParentOfType(expression, PsiMethod.class, true, PsiClass.class);
+        final PsiMethod method = PsiTreeUtil.getParentOfType(expression, PsiMethod.class, true, PsiClass.class, PsiLambdaExpression.class);
         if (MethodUtils.isToString(method)) {
           return;
         }

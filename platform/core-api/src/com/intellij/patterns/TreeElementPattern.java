@@ -95,7 +95,7 @@ public abstract class TreeElementPattern<ParentType, T extends ParentType, Self 
         if (parent != null) {
           final ParentType[] children = getChildren(parent);
           for (ParentType child : children) {
-            if (pattern.getCondition().accepts(child, context)) {
+            if (pattern.accepts(child, context)) {
               return child == t;
             }
           }
@@ -157,8 +157,8 @@ public abstract class TreeElementPattern<ParentType, T extends ParentType, Self 
       public boolean accepts(@NotNull T t, ProcessingContext context) {
         ParentType element = strict ? getParent(t) : t;
         while (element != null) {
-          if (stopAt.getCondition().accepts(element, context)) return false;
-          if (pattern.getCondition().accepts(element, context)) return true;
+          if (stopAt.accepts(element, context)) return false;
+          if (pattern.accepts(element, context)) return true;
           element = getParent(element);
         }
         return false;

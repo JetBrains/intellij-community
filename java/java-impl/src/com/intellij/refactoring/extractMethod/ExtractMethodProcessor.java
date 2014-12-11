@@ -129,8 +129,8 @@ public class ExtractMethodProcessor implements MatchProvider {
   protected PsiStatement myFirstExitStatementCopy;
   private PsiMethod myExtractedMethod;
   private PsiMethodCallExpression myMethodCall;
-  private boolean myNullConditionalCheck = false;
-  private boolean myNotNullConditionalCheck = false;
+  protected boolean myNullConditionalCheck = false;
+  protected boolean myNotNullConditionalCheck = false;
   private Nullness myNullness;
 
   public ExtractMethodProcessor(Project project,

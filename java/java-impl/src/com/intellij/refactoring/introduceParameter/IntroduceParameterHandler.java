@@ -24,6 +24,7 @@
  */
 package com.intellij.refactoring.introduceParameter;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.FunctionalInterfaceSuggester;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
@@ -46,6 +47,7 @@ import com.intellij.openapi.ui.popup.JBPopupAdapter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -83,7 +85,6 @@ import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -114,7 +115,13 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
       @Override
       public void pass(final ElementToWorkOn elementToWorkOn) {
         if (elementToWorkOn == null) {
-          introduceStrategy(project, editor, file);
+          return;
+        }
+
+        if (elementToWorkOn.getLocalVariable() == null && elementToWorkOn.getExpression() == null) {
+          if (!introduceStrategy(project, editor, file)) {
+            ElementToWorkOn.showNothingSelectedErrorMessage(editor, REFACTORING_NAME, HelpID.INTRODUCE_PARAMETER, project);
+          }
           return;
         }
 
@@ -507,7 +514,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
     return myInplaceIntroduceParameterPopup;
   }
 
-  @TestOnly
+  @VisibleForTesting
   public boolean introduceStrategy(final Project project, final Editor editor, PsiFile file) {
     final SelectionModel selectionModel = editor.getSelectionModel();
     if (selectionModel.hasSelection()) {
@@ -523,12 +530,20 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
           return false;
         }
 
-        final MyExtractMethodProcessor processor = new MyExtractMethodProcessor(project, editor, elements);
+        final PsiFile copy = PsiFileFactory.getInstance(project)
+          .createFileFromText(file.getName(), file.getFileType(), file.getText(), file.getModificationStamp(), false);
+
+        final PsiElement[] elementsCopy = CodeInsightUtil.findStatementsInRange(copy,
+                                                                                elements[0].getTextRange().getStartOffset(),
+                                                                                elements[elements.length - 1].getTextRange().getEndOffset());
+        final MyExtractMethodProcessor processor = new MyExtractMethodProcessor(project, editor, elementsCopy);
         try {
-          processor.prepare();
+          if (!processor.prepare()) return false;
           processor.showDialog();
 
-          final PsiMethod emptyMethod = processor.generateEmptyMethod("name");
+          //provide context for generated method to check exceptions compatibility
+          final PsiMethod emptyMethod = JavaPsiFacade.getElementFactory(project)
+            .createMethodFromText(processor.generateEmptyMethod("name").getText(), elements[0]);
           final Collection<? extends PsiType> types = FunctionalInterfaceSuggester.suggestFunctionalInterfaces(emptyMethod);
           if (types.isEmpty()) {
             return false;
@@ -536,7 +551,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
 
           if (types.size() == 1 || ApplicationManager.getApplication().isUnitTestMode()) {
             final PsiType next = types.iterator().next();
-            functionalInterfaceSelected(next, enclosingMethods, project, editor, processor);
+            functionalInterfaceSelected(next, enclosingMethods, project, editor, processor, elements);
           }
           else {
             final Map<PsiClass, PsiType> classes = new LinkedHashMap<PsiClass, PsiType>();
@@ -544,11 +559,11 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
               classes.put(PsiUtil.resolveClassInType(type), type);
             }
             final PsiClass[] psiClasses = classes.keySet().toArray(new PsiClass[classes.size()]);
-            NavigationUtil.getPsiElementPopup(psiClasses, new PsiClassListCellRenderer(), "Choose From Applicable Functional Interfaces",
+            NavigationUtil.getPsiElementPopup(psiClasses, new PsiClassListCellRenderer(), "Choose Applicable Functional Interface",
                                               new PsiElementProcessor<PsiClass>() {
                                                 @Override
                                                 public boolean execute(@NotNull PsiClass psiClass) {
-                                                  functionalInterfaceSelected(classes.get(psiClass), enclosingMethods, project, editor, processor);
+                                                  functionalInterfaceSelected(classes.get(psiClass), enclosingMethods, project, editor, processor, elements);
                                                   return true;
                                                 }
                                               }).showInBestPositionFor(editor);
@@ -565,14 +580,15 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
   }
 
   private void functionalInterfaceSelected(final PsiType selectedType,
-                                           final List<PsiMethod> enclosingMethods, 
+                                           final List<PsiMethod> enclosingMethods,
                                            final Project project,
                                            final Editor editor,
-                                           final MyExtractMethodProcessor processor) {
+                                           final MyExtractMethodProcessor processor, 
+                                           final PsiElement[] elements) {
     final PairConsumer<PsiMethod, PsiMethod> consumer = new PairConsumer<PsiMethod, PsiMethod>() {
       @Override
       public void consume(PsiMethod methodToIntroduceParameter, PsiMethod methodToSearchFor) {
-        introduceWrappedCodeBlockParameter(methodToIntroduceParameter, methodToSearchFor, editor, project, selectedType, processor);
+        introduceWrappedCodeBlockParameter(methodToIntroduceParameter, methodToSearchFor, editor, project, selectedType, processor, elements);
       }
     };
     chooseMethodToIntroduceParameter(editor, enclosingMethods, consumer);
@@ -582,17 +598,29 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
                                                   PsiMethod methodToSearchFor, Editor editor,
                                                   final Project project,
                                                   final PsiType selectedType,
-                                                  final MyExtractMethodProcessor processor) {
-    final PsiElement[] elements = processor.getElements();
-    final PsiElement commonParent = PsiTreeUtil.findCommonParent(elements);
-    final RangeMarker marker = editor.getDocument().createRangeMarker(elements[0].getTextOffset(),
-                                                                      elements[elements.length - 1].getTextRange().getEndOffset());
+                                                  final MyExtractMethodProcessor processor, 
+                                                  final PsiElement[] elements) {
+    final PsiElement commonParent = elements.length > 1 ? PsiTreeUtil.findCommonParent(elements) : elements[0].getParent();
+    if (commonParent == null) {
+      LOG.error("Should have common parent:" + Arrays.toString(elements));
+      return;
+    }
+    final RangeMarker marker = editor.getDocument().createRangeMarker(commonParent.getTextRange());
+
+    final PsiElement[] copyElements = processor.getElements();
+    final PsiElement containerCopy = copyElements.length > 1 ? PsiTreeUtil.findCommonParent(copyElements) : copyElements[0].getParent();
+    if (containerCopy == null) {
+      LOG.error("Should have common parent:" + Arrays.toString(copyElements));
+      return;
+    }
+
     final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(selectedType);
     final PsiClass wrapperClass = resolveResult.getElement();
     LOG.assertTrue(wrapperClass != null);
 
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-    final Ref<String> methodCallText = new Ref<String>();
+    final Ref<String> suffixText = new Ref<String>();
+    final Ref<String> prefixText = new Ref<String>();
     final Ref<String> methodText = new Ref<String>();
     WriteCommandAction.runWriteCommandAction(project, new Runnable() {
       @Override
@@ -617,10 +645,8 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
         methodText.set(extractedMethod.getText());
 
         final PsiMethodCallExpression methodCall = processor.getMethodCall();
-        methodCallText.set(methodCall.getText());
-
-        methodCall.delete();
-        extractedMethod.delete();
+        prefixText.set(containerCopy.getText().substring(0, methodCall.getTextRange().getStartOffset() - containerCopy.getTextRange().getStartOffset()));
+        suffixText.set("." + methodCall.getText() + containerCopy.getText().substring(methodCall.getTextRange().getEndOffset() - containerCopy.getTextRange().getStartOffset()));
       }
     });
 
@@ -631,9 +657,10 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
     expression = (PsiExpression)JavaCodeStyleManager.getInstance(project).shortenClassReferences(expression);
 
     expression.putUserData(ElementToWorkOn.PARENT, commonParent);
-    expression.putUserData(ElementToWorkOn.SUFFIX, "." + methodCallText.get() + ";");
-
+    expression.putUserData(ElementToWorkOn.PREFIX, prefixText.get());
+    expression.putUserData(ElementToWorkOn.SUFFIX, suffixText.get());
     expression.putUserData(ElementToWorkOn.TEXT_RANGE, marker);
+
     new Introducer(project, expression, null, editor)
       .introduceParameter(methodToIntroduceParameter, methodToSearchFor);
   }
@@ -658,7 +685,15 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
     }
 
     @Override
-    protected void deleteExtracted() throws IncorrectOperationException {}
+    public boolean prepare(@Nullable Pass<ExtractMethodProcessor> pass) throws PrepareFailedException {
+      final boolean prepare = super.prepare(pass);
+      if (prepare) {
+        if (myNotNullConditionalCheck || myNullConditionalCheck) {
+          return false;
+        }
+      }
+      return prepare;
+    }
 
     private class MyAbstractExtractDialog implements AbstractExtractDialog {
       @Override

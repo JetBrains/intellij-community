@@ -268,7 +268,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     @NotNull
     @Override
     public Insets getBorderInsets(Component c) {
-      return JBInsets.NONE;
+      return (Insets)JBInsets.NONE.clone();
     }
 
     @Override

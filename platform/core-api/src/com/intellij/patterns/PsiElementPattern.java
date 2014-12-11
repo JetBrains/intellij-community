@@ -177,8 +177,8 @@ public abstract class PsiElementPattern<T extends PsiElement,Self extends PsiEle
             continue;
           }
 
-          if (!skip.getCondition().accepts(element, context)) {
-            return pattern.getCondition().accepts(element, context);
+          if (!skip.accepts(element, context)) {
+            return pattern.accepts(element, context);
           }
         }
       }
@@ -197,8 +197,8 @@ public abstract class PsiElementPattern<T extends PsiElement,Self extends PsiEle
             continue;
           }
 
-          if (!skip.getCondition().accepts(element, context)) {
-            return pattern.getCondition().accepts(element, context);
+          if (!skip.accepts(element, context)) {
+            return pattern.accepts(element, context);
           }
         }
       }
@@ -212,7 +212,7 @@ public abstract class PsiElementPattern<T extends PsiElement,Self extends PsiEle
       public boolean accepts(@NotNull T t, final ProcessingContext context) {
         PsiElement element = t;
         while (element != null) {
-          if (pattern.getCondition().accepts(element, context)) {
+          if (pattern.accepts(element, context)) {
             return element.getTextRange().getStartOffset() == t.getTextRange().getStartOffset();
           }
           element = element.getContext();

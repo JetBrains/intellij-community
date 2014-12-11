@@ -34,15 +34,13 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
-/**
- * User: zolotov
- * Date: 9/24/13
- */
 public class EmmetCompositeConfigurable extends CompositeConfigurable<UnnamedConfigurable> implements SearchableConfigurable {
-  private JPanel myRootPanel;
-  private JPanel myGeneratorSettingsPanel;
   private TemplateExpandShortcutPanel myTemplateExpandShortcutPanel;
-  
+
+  public EmmetCompositeConfigurable() {
+    myTemplateExpandShortcutPanel = new TemplateExpandShortcutPanel(XmlBundle.message("emmet.expand.abbreviation.with"));
+  }
+
   @Nls
   @Override
   public String getDisplayName() {
@@ -59,20 +57,27 @@ public class EmmetCompositeConfigurable extends CompositeConfigurable<UnnamedCon
   @Override
   public JComponent createComponent() {
     final List<UnnamedConfigurable> configurables = getConfigurables();
-    myGeneratorSettingsPanel.setLayout(new GridLayoutManager(configurables.size(), 1, new Insets(0, 0, 10, 0), -1, -1));
+    final JPanel rootPanel = new JPanel(new GridLayoutManager(configurables.size() + 1, 1, new Insets(0, 0, 0, 0), -1, -1, false, false));
+    rootPanel.add(myTemplateExpandShortcutPanel, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_NORTH,
+                                                                     GridConstraints.FILL_HORIZONTAL,
+                                                                     GridConstraints.SIZEPOLICY_CAN_GROW |
+                                                                     GridConstraints.SIZEPOLICY_CAN_SHRINK,
+                                                                     GridConstraints.SIZEPOLICY_FIXED, null, null, null));
     for (int i = 0; i < configurables.size(); i++) {
       UnnamedConfigurable configurable = configurables.get(i);
       final JComponent component = configurable.createComponent();
       assert component != null;
-      myGeneratorSettingsPanel.add(component,
-                                   new GridConstraints(i, 0, 1, 1, 0, GridConstraints.FILL_HORIZONTAL, 
-                                                       GridConstraints.SIZEPOLICY_CAN_GROW | GridConstraints.SIZEPOLICY_WANT_GROW | GridConstraints.SIZEPOLICY_CAN_SHRINK,
-                                                       GridConstraints.SIZEPOLICY_CAN_GROW | GridConstraints.SIZEPOLICY_CAN_SHRINK, 
-                                                       new Dimension(-1, -1),  new Dimension(-1, -1), new Dimension(-1, -1)));
+      int vSizePolicy = GridConstraints.SIZEPOLICY_CAN_GROW | GridConstraints.SIZEPOLICY_CAN_SHRINK;
+      if (i + 1 == configurables.size()) {
+        vSizePolicy |= GridConstraints.SIZEPOLICY_WANT_GROW;
+      }
+      rootPanel.add(component, new GridConstraints(i + 1, 0, 1, 1, GridConstraints.ANCHOR_NORTHWEST, GridConstraints.FILL_BOTH,
+                                                   GridConstraints.SIZEPOLICY_CAN_GROW | GridConstraints.SIZEPOLICY_WANT_GROW |
+                                                   GridConstraints.SIZEPOLICY_CAN_SHRINK,
+                                                   vSizePolicy, null, null, null));
     }
-    myGeneratorSettingsPanel.revalidate();
-    myRootPanel.revalidate();
-    return myRootPanel;
+    rootPanel.revalidate();
+    return rootPanel;
   }
 
   @Override
@@ -96,7 +101,7 @@ public class EmmetCompositeConfigurable extends CompositeConfigurable<UnnamedCon
 
   @Override
   public void disposeUIResources() {
-    myGeneratorSettingsPanel.removeAll();
+    myTemplateExpandShortcutPanel = null;
     super.disposeUIResources();
   }
 
@@ -125,9 +130,5 @@ public class EmmetCompositeConfigurable extends CompositeConfigurable<UnnamedCon
   @Override
   public Runnable enableSearch(String option) {
     return null;
-  }
-
-  private void createUIComponents() {
-    myTemplateExpandShortcutPanel = new TemplateExpandShortcutPanel(XmlBundle.message("emmet.expand.abbreviation.with"));
   }
 }

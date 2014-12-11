@@ -22,7 +22,10 @@ import com.jetbrains.python.debugger.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
@@ -159,7 +162,14 @@ public class RemoteDebugger implements ProcessDebugger {
   }
 
   @Override
-  public ArrayChunk loadArrayItems(String  threadId, String frameId, PyDebugValue var, int rowOffset, int colOffset, int rows, int cols, String format) throws PyDebuggerException {
+  public ArrayChunk loadArrayItems(String threadId,
+                                   String frameId,
+                                   PyDebugValue var,
+                                   int rowOffset,
+                                   int colOffset,
+                                   int rows,
+                                   int cols,
+                                   String format) throws PyDebuggerException {
     final GetArrayCommand command = new GetArrayCommand(this, threadId, frameId, var, rowOffset, colOffset, rows, cols, format);
     command.execute();
     return command.getArray();
@@ -466,33 +476,36 @@ public class RemoteDebugger implements ProcessDebugger {
 
   public DebuggerReader createReader(@NotNull Socket socket) throws IOException {
     synchronized (mySocketObject) {
-      final InputStream myInputStream = socket.getInputStream();
       //noinspection IOResourceOpenedButNotSafelyClosed
-      final Reader reader = new InputStreamReader(myInputStream, CharsetToolkit.UTF8_CHARSET); //TODO: correct econding?
-      return new DebuggerReader(reader);
+      return new DebuggerReader(socket.getInputStream());
     }
   }
 
   private class DebuggerReader extends BaseOutputReader {
-    private Reader myReader;
     private StringBuilder myTextBuilder = new StringBuilder();
+    private final InputStream myInputStream;
 
-    private DebuggerReader(final Reader reader) throws IOException {
-      super(reader);
-      myReader = reader;
+    private DebuggerReader(final InputStream stream) throws IOException {
+      super(new InputStreamReader(stream, CharsetToolkit.UTF8_CHARSET)); //TODO: correct econding?);
+      myInputStream = stream;
       start();
     }
 
     protected void doRun() {
       try {
         while (true) {
-          boolean read = readAvailable();
+          boolean read = readAvailableBlocking();
 
-          if (isStopped) {
+          if (!read) {
             break;
           }
+          else {
+            if (isStopped) {
+              break;
+            }
 
-          TimeoutUtil.sleep(mySleepingPolicy.getTimeToSleep(read));
+            TimeoutUtil.sleep(mySleepingPolicy.getTimeToSleep(true));
+          }
         }
       }
       catch (Exception e) {
@@ -597,21 +610,18 @@ public class RemoteDebugger implements ProcessDebugger {
       return ProtocolParser.parseThread(frame.getPayload(), myDebugProcess.getPositionConverter());
     }
 
-    private void closeReader(Reader reader) {
-      try {
-        reader.close();
-      }
-      catch (IOException ignore) {
-      }
-    }
-
     @Override
     protected Future<?> executeOnPooledThread(Runnable runnable) {
       return ApplicationManager.getApplication().executeOnPooledThread(runnable);
     }
 
     public void close() {
-      closeReader(myReader);
+      try {
+        myInputStream.close();
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
     }
 
     @Override

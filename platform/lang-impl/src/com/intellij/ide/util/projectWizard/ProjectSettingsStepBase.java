@@ -124,10 +124,7 @@ public class ProjectSettingsStepBase extends AbstractActionWithPanel implements 
   }
 
   protected JPanel createBasePanel() {
-    final JPanel panel = new JPanel(new GridBagLayout());
-    final GridBagConstraints c = new GridBagConstraints();
-    c.fill = GridBagConstraints.HORIZONTAL;
-    c.anchor = GridBagConstraints.SOUTHWEST;
+    final JPanel panel = new JPanel(new VerticalFlowLayout(0, 2));
     myLocationField = new TextFieldWithBrowseButton();
     myLocationField.setText(myProjectDirectory.toString());
 
@@ -136,10 +133,7 @@ public class ProjectSettingsStepBase extends AbstractActionWithPanel implements 
                                             null, descriptor);
     final LabeledComponent<TextFieldWithBrowseButton> component = LabeledComponent.create(myLocationField, "Location");
     component.setLabelLocation(BorderLayout.WEST);
-    c.gridx = 0;
-    c.gridy = 0;
-    c.weightx = 1.;
-    panel.add(component, c);
+    panel.add(component);
 
     return panel;
   }

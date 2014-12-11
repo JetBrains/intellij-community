@@ -19,12 +19,14 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
-import org.jetbrains.jps.ProjectPaths;
 import org.jetbrains.jps.builders.BuildRootIndex;
+import org.jetbrains.jps.builders.BuildTarget;
+import org.jetbrains.jps.builders.BuildTargetIndex;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.builders.java.dependencyView.Mappings;
@@ -339,16 +341,16 @@ public class JavaBuilderUtil {
 
   private static class ModulesBasedFileFilter implements Mappings.DependentFilesFilter {
     private final CompileContext myContext;
-    private final Set<JpsModule> myChunkModules;
-    private final Set<ModuleBuildTarget> myChunkTargets;
-    private final Map<JpsModule, Set<JpsModule>> myCache = new HashMap<JpsModule, Set<JpsModule>>();
+    private final Set<? extends BuildTarget<?>> myChunkTargets;
+    private final Map<BuildTarget<?>, Set<BuildTarget<?>>> myCache = new HashMap<BuildTarget<?>, Set<BuildTarget<?>>>();
     private final BuildRootIndex myBuildRootIndex;
+    private final BuildTargetIndex myBuildTargetIndex;
 
     private ModulesBasedFileFilter(CompileContext context, ModuleChunk chunk) {
       myContext = context;
-      myChunkModules = chunk.getModules();
       myChunkTargets = chunk.getTargets();
       myBuildRootIndex = context.getProjectDescriptor().getBuildRootIndex();
+      myBuildTargetIndex = context.getProjectDescriptor().getBuildTargetIndex();
     }
 
     @Override
@@ -357,16 +359,16 @@ public class JavaBuilderUtil {
       if (rd == null) {
         return true;
       }
-      final JpsModule moduleOfFile = rd.target.getModule();
-      if (myChunkModules.contains(moduleOfFile)) {
+      final ModuleBuildTarget targetOfFile = rd.target;
+      if (myChunkTargets.contains(targetOfFile)) {
         return true;
       }
-      Set<JpsModule> moduleOfFileWithDependencies = myCache.get(moduleOfFile);
-      if (moduleOfFileWithDependencies == null) {
-        moduleOfFileWithDependencies = ProjectPaths.getModulesWithDependentsRecursively(moduleOfFile, true);
-        myCache.put(moduleOfFile, moduleOfFileWithDependencies);
+      Set<BuildTarget<?>> targetOfFileWithDependencies = myCache.get(targetOfFile);
+      if (targetOfFileWithDependencies == null) {
+        targetOfFileWithDependencies = myBuildTargetIndex.getDependenciesRecursively(targetOfFile, myContext);
+        myCache.put(targetOfFile, targetOfFileWithDependencies);
       }
-      return Utils.intersects(moduleOfFileWithDependencies, myChunkModules);
+      return ContainerUtil.intersects(targetOfFileWithDependencies, myChunkTargets);
     }
 
     @Override

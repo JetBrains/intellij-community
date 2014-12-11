@@ -295,6 +295,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
                                     @NotNull final HighlightInfoHolder holder,
                                     final int i,
                                     @NotNull final Runnable action) {
+    final boolean[] success = {true};
     if (i == visitors.length) {
       action.run();
     }
@@ -302,13 +303,13 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       if (!visitors[i].analyze(myFile, myUpdateAll, holder, new Runnable() {
         @Override
         public void run() {
-          analyzeByVisitors(visitors, holder, i+1, action);
+          success[0] = analyzeByVisitors(visitors, holder, i + 1, action);
         }
       })) {
-        return false;
+        success[0] = false;
       }
     }
-    return true;
+    return success[0];
   }
 
   private void runVisitors(@NotNull List<PsiElement> elements,

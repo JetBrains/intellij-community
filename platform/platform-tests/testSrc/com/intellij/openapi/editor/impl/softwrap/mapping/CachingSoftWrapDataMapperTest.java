@@ -717,9 +717,7 @@ public class CachingSoftWrapDataMapperTest {
           new TextChangeImpl('\n' + mySoftWrapBuffer.toString(), softWrapStartOffset),
           mySoftWrapBuffer.length() + 1/* for 'after soft wrap' drawing */,
           (mySoftWrapBuffer.length() * SPACE_SIZE) + SOFT_WRAP_DRAWING_WIDTH
-        ),
-        false
-      );
+        ));
       mySoftWrapBuffer.setLength(0);
       insideSoftWrap = false;
       x += SOFT_WRAP_DRAWING_WIDTH;

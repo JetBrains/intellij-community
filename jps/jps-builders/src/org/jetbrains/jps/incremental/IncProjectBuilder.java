@@ -73,6 +73,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -119,6 +120,7 @@ public class IncProjectBuilder {
   private final int myTotalModuleLevelBuilderCount;
   private final List<Future> myAsyncTasks = Collections.synchronizedList(new ArrayList<Future>());
   private final ConcurrentMap<Builder, AtomicLong> myElapsedTimeNanosByBuilder = ContainerUtil.newConcurrentMap();
+  private final ConcurrentMap<Builder, AtomicInteger> myNumberOfSourcesProcessedByBuilder = ContainerUtil.newConcurrentMap();
 
   public IncProjectBuilder(ProjectDescriptor pd, BuilderRegistry builderRegistry, Map<String, String> builderParams, CanceledStatus cs,
                            @Nullable Callbacks.ConstantAffectionResolver constantSearch, final boolean isTestMode) {
@@ -372,7 +374,9 @@ public class IncProjectBuilder {
 
   private void sendElapsedTimeMessages(CompileContext context) {
     for (Map.Entry<Builder, AtomicLong> entry : myElapsedTimeNanosByBuilder.entrySet()) {
-      context.processMessage(new BuilderStatisticsMessage(entry.getKey().getPresentableName(), entry.getValue().get()/1000000));
+      AtomicInteger processedSourcesRef = myNumberOfSourcesProcessedByBuilder.get(entry.getKey());
+      int processedSources = processedSourcesRef != null ? processedSourcesRef.get() : 0;
+      context.processMessage(new BuilderStatisticsMessage(entry.getKey().getPresentableName(), processedSources, entry.getValue().get()/1000000));
     }
   }
 
@@ -854,7 +858,7 @@ public class IncProjectBuilder {
       BuildOutputConsumerImpl outputConsumer = new BuildOutputConsumerImpl(target, context);
       long start = System.nanoTime();
       ((TargetBuilder<R, T>)builder).build(target, holder, outputConsumer, context);
-      incBuilderElapsedTime(builder, System.nanoTime() - start);
+      storeBuilderStatistics(builder, System.nanoTime() - start, outputConsumer.getNumberOfProcessedSources());
       outputConsumer.fireFileGeneratedEvent();
       context.checkCanceled();
     }
@@ -1139,8 +1143,10 @@ public class IncProjectBuilder {
             for (ModuleLevelBuilder builder : builders) {
               processDeletedPaths(context, chunk.getTargets());
               long start = System.nanoTime();
+              int processedSourcesBefore = outputConsumer.getNumberOfProcessedSources();
               final ModuleLevelBuilder.ExitCode buildResult = builder.build(context, chunk, dirtyFilesHolder, outputConsumer);
-              incBuilderElapsedTime(builder, System.nanoTime() - start);
+              storeBuilderStatistics(builder, System.nanoTime() - start,
+                                     outputConsumer.getNumberOfProcessedSources() - processedSourcesBefore);
   
               doneSomething |= (buildResult != ModuleLevelBuilder.ExitCode.NOTHING_DONE);
   
@@ -1211,11 +1217,16 @@ public class IncProjectBuilder {
     return doneSomething;
   }
 
-  private void incBuilderElapsedTime(Builder builder, long timeNanos) {
+  private void storeBuilderStatistics(Builder builder, long elapsedTime, int processedFiles) {
     if (!myElapsedTimeNanosByBuilder.containsKey(builder)) {
       myElapsedTimeNanosByBuilder.putIfAbsent(builder, new AtomicLong());
     }
-    myElapsedTimeNanosByBuilder.get(builder).addAndGet(timeNanos);
+    myElapsedTimeNanosByBuilder.get(builder).addAndGet(elapsedTime);
+
+    if (!myNumberOfSourcesProcessedByBuilder.containsKey(builder)) {
+      myNumberOfSourcesProcessedByBuilder.putIfAbsent(builder, new AtomicInteger());
+    }
+    myNumberOfSourcesProcessedByBuilder.get(builder).addAndGet(processedFiles);
   }
 
   private static void saveInstrumentedClasses(ChunkBuildOutputConsumerImpl outputConsumer) throws IOException {

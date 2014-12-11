@@ -232,12 +232,11 @@ public class JavaCoverageEngine extends CoverageEngine {
   }
 
   public static boolean isUnderFilteredPackages(final PsiClassOwner javaFile, final List<PsiPackage> packages) {
-    final String hisPackageName = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-      public String compute() {
-        return javaFile.getPackageName();
+    final PsiPackage hisPackage = ApplicationManager.getApplication().runReadAction(new Computable<PsiPackage>() {
+      public PsiPackage compute() {
+        return JavaPsiFacade.getInstance(javaFile.getProject()).findPackage(javaFile.getPackageName());
       }
     });
-    PsiPackage hisPackage = JavaPsiFacade.getInstance(javaFile.getProject()).findPackage(hisPackageName);
     if (hisPackage == null) return false;
     for (PsiPackage aPackage : packages) {
       if (PsiTreeUtil.isAncestor(aPackage, hisPackage, false)) return true;
@@ -675,5 +674,14 @@ public class JavaCoverageEngine extends CoverageEngine {
                                                            CoverageSuitesBundle suiteBundle,
                                                            CoverageViewManager.StateBean stateBean) {
     return new JavaCoverageViewExtension((JavaCoverageAnnotator)getCoverageAnnotator(project), project, suiteBundle, stateBean);
+  }
+
+  public boolean isSourceMapNeeded(RunConfigurationBase configuration) {
+    for (final JavaCoverageEngineExtension extension : Extensions.getExtensions(JavaCoverageEngineExtension.EP_NAME)) {
+      if (extension.isSourceMapNeeded(configuration)) {
+        return true;
+      }
+    }
+    return false;
   }
 }

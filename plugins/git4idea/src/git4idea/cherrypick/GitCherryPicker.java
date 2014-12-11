@@ -21,7 +21,6 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -88,10 +87,10 @@ public class GitCherryPicker extends VcsCherryPicker {
   @NotNull private final ChangeListManager myChangeListManager;
   private final boolean myAutoCommit;
 
-  public GitCherryPicker(@NotNull Project project) {
+  public GitCherryPicker(@NotNull Project project, @NotNull Git git, @NotNull GitPlatformFacade platformFacade) {
     myProject = project;
-    myGit = ServiceManager.getService(Git.class);
-    myPlatformFacade = ServiceManager.getService(GitPlatformFacade.class);
+    myGit = git;
+    myPlatformFacade = platformFacade;
     myAutoCommit = isAutoCommit();
     myChangeListManager = myPlatformFacade.getChangeListManager(myProject);
   }
@@ -533,11 +532,11 @@ public class GitCherryPicker extends VcsCherryPicker {
 
   @NotNull
   @Override
-  public String getPreferredActionTitle() {
+  public String getActionTitle() {
     return isAutoCommit() ? NAME : NAME + "...";
   }
 
-  public boolean isAutoCommit() {
+  private boolean isAutoCommit() {
     return GitVcsSettings.getInstance(myProject).isAutoCommitOnCherryPick();
   }
 
@@ -684,5 +683,4 @@ public class GitCherryPicker extends VcsCherryPicker {
       return myOriginalCommit.getSubject();
     }
   }
-
 }

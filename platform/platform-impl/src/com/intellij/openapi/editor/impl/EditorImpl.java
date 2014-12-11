@@ -458,12 +458,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
 
       @Override
-      public void softWrapAdded(@NotNull SoftWrap softWrap) {
-        mySoftWrapsChanged = true;
-      }
-
-      @Override
-      public void softWrapsRemoved() {
+      public void softWrapsChanged() {
         mySoftWrapsChanged = true;
       }
     });
@@ -3631,7 +3626,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     final Dimension draft = getSizeWithoutCaret();
-    final int additionalSpace = mySoftWrapModel.isRespectAdditionalColumns()
+    final int additionalSpace = shouldRespectAdditionalColumns()
                                 ? mySettings.getAdditionalColumnsCount() * EditorUtil.getSpaceWidth(Font.PLAIN, this)
                                 : 0;
 
@@ -3645,6 +3640,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
     draft.width += additionalSpace;
     return draft;
+  }
+  
+  private boolean shouldRespectAdditionalColumns() {
+    return !mySoftWrapModel.isSoftWrappingEnabled() 
+           || mySoftWrapModel.isRespectAdditionalColumns() 
+           || mySizeContainer.getContentSize().getWidth() > myScrollingModel.getVisibleArea().getWidth();
   }
 
   private Dimension getSizeWithoutCaret() {
@@ -6818,9 +6819,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         }
         else {
           g.setColor(UIUtil.getPanelBackground());
-          g.drawLine(x, y, x + width, y);
-          g.setColor(Gray._0.withAlpha(90));
-          g.drawLine(x, y, x + width, y);
+          g.fillRect(x, y, width, 1);
+          g.setColor(Gray._50.withAlpha(90));
+          g.fillRect(x, y, width, 1);
         }
       }
     }

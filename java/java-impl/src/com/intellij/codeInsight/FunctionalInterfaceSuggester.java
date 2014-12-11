@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.AnnotatedMembersSearch;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.NullableFunction;
@@ -85,6 +86,21 @@ public class FunctionalInterfaceSuggester {
           final PsiType returnType = method.getReturnType();
           if (!TypeConversionUtil.isAssignable(substitutor.substitute(interfaceMethod.getReturnType()), returnType)) {
             return null;
+          }
+
+          final PsiClassType[] interfaceThrownTypes = interfaceMethod.getThrowsList().getReferencedTypes();
+          final PsiClassType[] thrownTypes = method.getThrowsList().getReferencedTypes();
+          for (PsiClassType thrownType : thrownTypes) {
+            if (!ExceptionUtil.isHandledBy(thrownType, interfaceThrownTypes, substitutor)) {
+              return null;
+            }
+          }
+
+          for (PsiClassType thrownType : interfaceThrownTypes) {
+            final PsiCodeBlock codeBlock = PsiTreeUtil.getContextOfType(method, PsiCodeBlock.class);
+            if (codeBlock == null || !ExceptionUtil.isHandled(thrownType, codeBlock)) {
+              return null;
+            }
           }
 
           final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(aClass.getProject());

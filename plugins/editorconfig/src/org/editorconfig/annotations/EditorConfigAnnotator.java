@@ -3,6 +3,7 @@ package org.editorconfig.annotations;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
@@ -34,7 +35,7 @@ public class EditorConfigAnnotator implements Annotator {
   @Override
   public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
     PsiFile file = ObjectUtils.tryCast(element, PsiFile.class);
-    if (file == null) {
+    if (file == null || file.getVirtualFile() instanceof VirtualFileWindow) {
       return;
     }
     final Project project = file.getProject();
