@@ -483,11 +483,9 @@ public class RemoteDebugger implements ProcessDebugger {
 
   private class DebuggerReader extends BaseOutputReader {
     private StringBuilder myTextBuilder = new StringBuilder();
-    private final InputStream myInputStream;
 
     private DebuggerReader(final InputStream stream) throws IOException {
-      super(new InputStreamReader(stream, CharsetToolkit.UTF8_CHARSET)); //TODO: correct econding?);
-      myInputStream = stream;
+      super(stream, CharsetToolkit.UTF8_CHARSET); //TODO: correct encoding?
       start();
     }
 
@@ -615,11 +613,12 @@ public class RemoteDebugger implements ProcessDebugger {
       return ApplicationManager.getApplication().executeOnPooledThread(runnable);
     }
 
-    public void close() {
+    @Override
+    protected void close() {
       try {
-        myInputStream.close();
+        super.close();
       }
-      catch (Exception e) {
+      catch (IOException e) {
         LOG.error(e);
       }
     }
