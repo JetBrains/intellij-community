@@ -206,14 +206,14 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
     else {
       JBColor color = VcsLogGraphTable.getRootBackgroundColor(data.getRoot(), myColorManager);
       myMainContentPanel.setBorder(new CompoundBorder(new MatteBorder(0, VcsLogGraphTable.ROOT_INDICATOR_COLORED_WIDTH, 0, 0, color),
-                                                  new MatteBorder(0, VcsLogGraphTable.ROOT_INDICATOR_WHITE_WIDTH, 0, 0,
-                                                                  new JBColor(new NotNullProducer<Color>() {
-                                                                    @NotNull
-                                                                    @Override
-                                                                    public Color produce() {
-                                                                      return getDetailsBackground();
-                                                                    }
-                                                                  }))));
+                                                      new MatteBorder(0, VcsLogGraphTable.ROOT_INDICATOR_WHITE_WIDTH, 0, 0,
+                                                                      new JBColor(new NotNullProducer<Color>() {
+                                                                        @NotNull
+                                                                        @Override
+                                                                        public Color produce() {
+                                                                          return getDetailsBackground();
+                                                                        }
+                                                                      }))));
     }
   }
 
@@ -257,7 +257,8 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
               myExpanded = true;
               update();
             }
-          } else {
+          }
+          else {
             BrowserHyperlinkListener.INSTANCE.hyperlinkUpdate(e);
           }
         }
@@ -311,15 +312,24 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       if (myBranches == null) {
         return "<i>In branches: loading...</i>";
       }
-      return "<i>In " + myBranches.size() + " branch" + (myBranches.size() > 1 ? "es" : "") + ":</i> " + getCollapsedBranches(myBranches, myExpanded);
+      return "<i>In " +
+             myBranches.size() +
+             " branch" +
+             (myBranches.size() > 1 ? "es" : "") +
+             ":</i> " +
+             getCollapsedBranches(myBranches, myExpanded);
     }
 
     @NotNull
     private static String getCollapsedBranches(@NotNull List<String> branches, boolean expanded) {
       if (branches.size() <= BRANCHES_LIMIT || expanded) {
         return StringUtil.join(branches, ", ");
-      } else {
-        return StringUtil.join(ContainerUtil.getFirstItems(branches, BRANCHES_LIMIT), ", ") + ", ... <a href=\"" + SHOW_ALL_BRANCHES + "\"><i>Show All</i></a>";
+      }
+      else {
+        return StringUtil.join(ContainerUtil.getFirstItems(branches, BRANCHES_LIMIT), ", ") +
+               ", ... <a href=\"" +
+               SHOW_ALL_BRANCHES +
+               "\"><i>Show All</i></a>";
       }
     }
 
@@ -343,12 +353,14 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       StringBuilder result = new StringBuilder();
       for (int i = 0; i < text.length(); i++) {
         if (text.charAt(i) == ' ') {
-          if (i == text.length() - 1 || text.charAt(i+1) != ' ') {
+          if (i == text.length() - 1 || text.charAt(i + 1) != ' ') {
             result.append(' ');
-          } else {
+          }
+          else {
             result.append("&nbsp;");
           }
-        } else {
+        }
+        else {
           result.append(text.charAt(i));
         }
       }
