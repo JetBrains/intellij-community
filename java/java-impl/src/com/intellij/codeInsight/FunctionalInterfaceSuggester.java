@@ -33,11 +33,13 @@ import java.util.*;
 
 public class FunctionalInterfaceSuggester {
   public static Collection<? extends PsiType> suggestFunctionalInterfaces(final @NotNull PsiFunctionalExpression expression) {
+    final PsiType qualifierType = expression instanceof PsiMethodReferenceExpression 
+                                  ? PsiMethodReferenceUtil.getQualifierType((PsiMethodReferenceExpression)expression) : null;
     return suggestFunctionalInterfaces(expression, new NullableFunction<PsiClass, PsiType>() {
       @Nullable
       @Override
       public PsiType fun(PsiClass aClass) {
-        return composeAcceptableType(aClass, expression);
+        return composeAcceptableType(aClass, expression, qualifierType);
       }
     });
   }
@@ -101,8 +103,7 @@ public class FunctionalInterfaceSuggester {
           }
 
           final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(aClass.getProject());
-          final PsiType type = elementFactory.createType(aClass, substitutor);
-          return type;
+          return elementFactory.createType(aClass, substitutor);
         }
         return null;
       }
@@ -136,48 +137,52 @@ public class FunctionalInterfaceSuggester {
     return typesToSuggest;
   }
 
-  private static PsiType composeAcceptableType(@NotNull PsiClass interface2Consider, @NotNull PsiFunctionalExpression expression) {
+  private static PsiType composeAcceptableType(@NotNull PsiClass interface2Consider,
+                                               @NotNull PsiFunctionalExpression expression,
+                                               PsiType qualifierType) {
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(interface2Consider.getProject());
     final PsiType type = elementFactory.createType(interface2Consider, PsiSubstitutor.EMPTY);
     if (expression.isAcceptable(type)) {
       return type;
     }
 
-    return composeAcceptableType(interface2Consider, expression, elementFactory);
+    return composeAcceptableType(interface2Consider, expression, qualifierType, elementFactory);
   }
 
   private static PsiType composeAcceptableType(final PsiClass interface2Consider,
                                                final PsiFunctionalExpression expression,
-                                               final PsiElementFactory elementFactory) {
+                                               PsiType qualifierType, final PsiElementFactory elementFactory) {
 
     if (interface2Consider.hasTypeParameters()) {
       final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(interface2Consider);
       if (interfaceMethod != null) {
         final PsiParameter[] parameters = interfaceMethod.getParameterList().getParameters();
-        final PsiParameter[] functionalExprParameters;
+        PsiParameter[] functionalExprParameters;
+        int offset = 0;
+        final PsiType[] left = new PsiType[parameters.length];
+        final PsiType[] right = new PsiType[parameters.length];
         if (expression instanceof PsiLambdaExpression && ((PsiLambdaExpression)expression).hasFormalParameterTypes()) {
           functionalExprParameters = ((PsiLambdaExpression)expression).getParameterList().getParameters();
-        }
-        else if (expression instanceof PsiMethodReferenceExpression && ((PsiMethodReferenceExpression)expression).isExact()) {
-          final PsiElement exactMethod = ((PsiMethodReferenceExpression)expression).resolve();
-          if (!(exactMethod instanceof PsiMethod)) {
+          if (parameters.length != functionalExprParameters.length) {
             return null;
           }
-          functionalExprParameters = ((PsiMethod)exactMethod).getParameterList().getParameters();
+        }
+        else if (expression instanceof PsiMethodReferenceExpression) {
+          final PsiMethod method = getTargetMethod((PsiMethodReferenceExpression)expression, qualifierType, parameters, left, right);
+          if (method == null) {
+            return null;
+          }
+          functionalExprParameters = method.getParameterList().getParameters();
+          if (PsiMethodReferenceUtil.isStaticallyReferenced((PsiMethodReferenceExpression)expression) && !method.hasModifierProperty(PsiModifier.STATIC)) {
+            offset = 1;
+          }
         } else {
           return null;
         }
 
-        if (parameters.length != functionalExprParameters.length) {
-          return null;
-        }
-
-        final PsiType[] left = new PsiType[parameters.length];
-        final PsiType[] right = new PsiType[parameters.length];
-
-        for (int i = 0; i < parameters.length; i++) {
-          left[i]  = parameters[i].getType();
-          right[i] = functionalExprParameters[i].getType();
+        for (int i = 0; i < functionalExprParameters.length; i++) {
+          left [i + offset] = parameters[i + offset].getType();
+          right[i + offset] = functionalExprParameters[i].getType();
         }
 
         final PsiSubstitutor substitutor = PsiResolveHelper.SERVICE.getInstance(interface2Consider.getProject())
@@ -187,6 +192,35 @@ public class FunctionalInterfaceSuggester {
 
         if (expression.isAcceptable(type)) {
           return type;
+        }
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static PsiMethod getTargetMethod(PsiMethodReferenceExpression expression,
+                                           PsiType qualifierType, 
+                                           PsiParameter[] parameters,
+                                           PsiType[] left,
+                                           PsiType[] right) {
+    final boolean staticallyReferenced = PsiMethodReferenceUtil.isStaticallyReferenced(expression);
+    final JavaResolveResult[] results = expression.multiResolve(true);
+    for (JavaResolveResult result : results) {
+      final PsiElement element = result.getElement();
+      if (element instanceof PsiMethod) {
+        int offset = staticallyReferenced && !((PsiMethod)element).hasModifierProperty(PsiModifier.STATIC) ? 1 : 0;
+        final PsiParameter[] functionalExprParameters = ((PsiMethod)element).getParameterList().getParameters();
+        if (functionalExprParameters.length + offset == parameters.length) {
+          if (offset > 0) {
+            if (qualifierType == null) {
+              continue;
+            }
+
+            left[0]  = parameters[0].getType();
+            right[0] = qualifierType;
+          }
+          return (PsiMethod)element;
         }
       }
     }
