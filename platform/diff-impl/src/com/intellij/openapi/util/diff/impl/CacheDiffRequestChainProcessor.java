@@ -31,6 +31,7 @@ import com.intellij.openapi.util.diff.tools.ErrorDiffTool;
 import com.intellij.openapi.util.diff.tools.external.ExternalDiffTool;
 import com.intellij.openapi.util.diff.tools.util.DiffDataKeys;
 import com.intellij.openapi.util.diff.tools.util.DiffUserDataKeys;
+import com.intellij.openapi.util.diff.tools.util.DiffUserDataKeys.ScrollToPolicy;
 import com.intellij.openapi.util.diff.tools.util.PrevNextDifferenceIterable;
 import com.intellij.openapi.util.diff.tools.util.SoftHardCacheMap;
 import com.intellij.openapi.util.diff.util.DiffUtil;
@@ -46,9 +47,6 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
-
-import static com.intellij.openapi.util.diff.tools.util.DiffUserDataKeys.ScrollToPolicy.FIRST_CHANGE;
-import static com.intellij.openapi.util.diff.tools.util.DiffUserDataKeys.ScrollToPolicy.LAST_CHANGE;
 
 public abstract class CacheDiffRequestChainProcessor implements Disposable {
   private static final Logger LOG = Logger.getInstance(CacheDiffRequestChainProcessor.class);
@@ -138,14 +136,16 @@ public abstract class CacheDiffRequestChainProcessor implements Disposable {
   //
 
   public void updateRequest() {
-    updateRequest(false);
+    updateRequest(false, null);
   }
 
-  public void updateRequest(boolean force) {
+  public void updateRequest(boolean force, @Nullable ScrollToPolicy scrollToChangePolicy) {
     boolean hadFocus = isFocused();
 
     DiffRequest request = loadRequest();
     if (!force && request == myActiveRequest) return;
+
+    request.putUserData(DiffUserDataKeys.SCROLL_TO_CHANGE, scrollToChangePolicy);
 
     myState.destroy();
     myToolbarStatusPanel.setContent(null);
@@ -371,15 +371,15 @@ public abstract class CacheDiffRequestChainProcessor implements Disposable {
       }
 
       if (myIterationState != IterationState.NEXT) {
-        if (iterable != null) iterable.notify("Press again to go to the next file"); // TODO: provide "change" word in chain UserData - for tests/etc
+        // TODO: provide "change" word in chain UserData - for tests/etc
+        if (iterable != null) iterable.notify("Press again to go to the next file");
         myIterationState = IterationState.NEXT;
         return;
       }
 
       myIterationState = IterationState.NONE;
       myRequestChain.setIndex(myRequestChain.getIndex() + 1);
-      myContext.putUserData(DiffUserDataKeys.SCROLL_TO_CHANGE, FIRST_CHANGE);
-      updateRequest();
+      updateRequest(false, ScrollToPolicy.FIRST_CHANGE);
     }
   }
 
@@ -421,8 +421,7 @@ public abstract class CacheDiffRequestChainProcessor implements Disposable {
 
       myIterationState = IterationState.NONE;
       myRequestChain.setIndex(myRequestChain.getIndex() - 1);
-      myContext.putUserData(DiffUserDataKeys.SCROLL_TO_CHANGE, LAST_CHANGE);
-      updateRequest();
+      updateRequest(false, ScrollToPolicy.LAST_CHANGE);
     }
   }
 
@@ -447,7 +446,6 @@ public abstract class CacheDiffRequestChainProcessor implements Disposable {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       myRequestChain.setIndex(myRequestChain.getIndex() + 1);
-      myContext.putUserData(DiffUserDataKeys.SCROLL_TO_CHANGE, null);
       updateRequest();
     }
   }
@@ -471,7 +469,6 @@ public abstract class CacheDiffRequestChainProcessor implements Disposable {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       myRequestChain.setIndex(myRequestChain.getIndex() - 1);
-      myContext.putUserData(DiffUserDataKeys.SCROLL_TO_CHANGE, null);
       updateRequest();
     }
   }
@@ -483,7 +480,6 @@ public abstract class CacheDiffRequestChainProcessor implements Disposable {
       public void consume(Integer index) {
         if (index >= 0 && index != myRequestChain.getIndex()) {
           myRequestChain.setIndex(index);
-          myContext.putUserData(DiffUserDataKeys.SCROLL_TO_CHANGE, null);
           updateRequest();
         }
       }
@@ -578,8 +574,7 @@ public abstract class CacheDiffRequestChainProcessor implements Disposable {
         }
         myToolOrder.add(index, myDiffTool);
 
-        myContext.putUserData(DiffUserDataKeys.SCROLL_TO_CHANGE, null);
-        updateRequest(true);
+        updateRequest(true, null);
       }
     }
   }

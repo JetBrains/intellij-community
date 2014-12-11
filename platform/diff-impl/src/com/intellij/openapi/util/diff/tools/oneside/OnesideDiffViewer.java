@@ -10,10 +10,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.DiffNavigationContext;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -25,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.diff.actions.BufferedLineIterator;
 import com.intellij.openapi.util.diff.actions.NavigationContextChecker;
@@ -43,7 +41,6 @@ import com.intellij.openapi.util.diff.tools.util.DiffDataKeys;
 import com.intellij.openapi.util.diff.tools.util.DiffUserDataKeys;
 import com.intellij.openapi.util.diff.tools.util.DiffUserDataKeys.ScrollToPolicy;
 import com.intellij.openapi.util.diff.tools.util.PrevNextDifferenceIterable;
-import com.intellij.openapi.util.diff.tools.util.ScrollToLineHelper;
 import com.intellij.openapi.util.diff.tools.util.base.HighlightPolicy;
 import com.intellij.openapi.util.diff.tools.util.base.TextDiffViewerBase;
 import com.intellij.openapi.util.diff.util.CalledInAwt;
@@ -135,13 +132,11 @@ class OnesideDiffViewer extends TextDiffViewerBase {
     Side side = myContext.getUserData(DiffUserDataKeys.PREFERRED_FOCUS_SIDE);
     if (side != null) myMasterSide = side;
 
-    myScrollToLineHelper.processContext(myContext, myRequest);
+    myScrollToLineHelper.processContext();
   }
 
   private void updateContextHints() {
-    int onesideLine = DiffUtil.getLineToScroll(myEditor);
-    Pair<Side, Integer> pair = transferLineFromOneside(onesideLine);
-    myRequest.putUserData(DiffUserDataKeys.SCROLL_TO_LINE, pair);
+    myScrollToLineHelper.updateContext();
   }
 
   @NotNull
@@ -368,7 +363,7 @@ class OnesideDiffViewer extends TextDiffViewerBase {
         myChangedBlockData = new ChangedBlockData(diffChanges, convertor, invertedConvertor, diffSeparators);
 
         // TODO: remember current in current caret position position on rediff rather than positon in combined file
-        myScrollToLineHelper.scrollOnRediff();
+        myScrollToLineHelper.onRediff();
 
         myStatusPanel.update();
         myPanel.setGoodContent();
@@ -387,40 +382,46 @@ class OnesideDiffViewer extends TextDiffViewerBase {
   }
 
   @CalledInAwt
-  private Pair<Side, Integer> transferLineFromOneside(int line) {
-    if (myChangedBlockData == null) return Pair.create(myMasterSide, line);
+  private Pair<int[], Side> transferLineFromOneside(int line) {
+    int[] lines = new int[2];
+
+    if (myChangedBlockData == null) {
+      lines[0] = myActualContent1 != null ? line : 0;
+      lines[1] = myActualContent2 != null ? line : 0;
+      return Pair.create(lines, myMasterSide);
+    }
 
     LineNumberConvertor lineConvertor = myChangedBlockData.getLineNumberConvertor();
     TIntFunction convertor1 = lineConvertor.getConvertor1();
     TIntFunction convertor2 = lineConvertor.getConvertor2();
 
-    int line1 = convertor1.execute(line);
-    int line2 = convertor2.execute(line);
+    lines[0] = convertor1.execute(line);
+    lines[1] = convertor2.execute(line);
 
-    if (line1 == -1 && line2 == -1) {
-      line1 = convertor1.execute(line - 1);
-      line2 = convertor2.execute(line - 1);
-      if (line1 != -1) line1++;
-      if (line2 != -1) line2++;
+    if (lines[0] == -1 && lines[1] == -1) {
+      lines[0] = convertor1.execute(line - 1);
+      lines[1] = convertor2.execute(line - 1);
+      if (lines[0] != -1) lines[0]++;
+      if (lines[1] != -1) lines[1]++;
     }
-    if (line1 == -1 && line2 == -1) {
-      line1 = convertor1.execute(line + 1);
-      line2 = convertor2.execute(line + 1);
-      if (line1 > 0) line1--;
-      if (line2 > 0) line2--;
-    }
-
-    if (line1 == -1 && line2 == -1) {
-      return Pair.create(myMasterSide, line);
-    }
-    if (line1 == -1) {
-      return Pair.create(Side.RIGHT, line2);
-    }
-    if (line2 == -1) {
-      return Pair.create(Side.LEFT, line1);
+    if (lines[0] == -1 && lines[1] == -1) {
+      lines[0] = convertor1.execute(line + 1);
+      lines[1] = convertor2.execute(line + 1);
+      if (lines[0] > 0) lines[0]--;
+      if (lines[1] > 0) lines[1]--;
     }
 
-    return myMasterSide.isLeft() ? Pair.create(Side.LEFT, line1) : Pair.create(Side.RIGHT, line2);
+    if (lines[0] == -1 && lines[1] == -1) {
+      return Pair.create(lines, myMasterSide);
+    }
+    if (lines[0] == -1) {
+      return Pair.create(lines, Side.RIGHT);
+    }
+    if (lines[1] == -1) {
+      return Pair.create(lines, Side.LEFT);
+    }
+
+    return Pair.create(lines, myMasterSide);
   }
 
   @CalledInAwt
@@ -529,12 +530,12 @@ class OnesideDiffViewer extends TextDiffViewerBase {
       if (descriptor != null) return descriptor;
     }
     else {
-      Pair<Side, Integer> pair = transferLineFromOneside(myEditor.offsetToLogicalPosition(offset).line);
+      Pair<int[], Side> pair = transferLineFromOneside(myEditor.offsetToLogicalPosition(offset).line);
       OpenFileDescriptor descriptor1 = myActualContent1.getOpenFileDescriptor(offset);
       OpenFileDescriptor descriptor2 = myActualContent2.getOpenFileDescriptor(offset);
       if (descriptor1 == null) return descriptor2;
       if (descriptor2 == null) return descriptor1;
-      return pair.first.select(descriptor1, descriptor2);
+      pair.second.select(descriptor1, descriptor2);
     }
 
     return null;
@@ -934,28 +935,91 @@ class OnesideDiffViewer extends TextDiffViewerBase {
     }
   }
 
-  private class MyScrollToLineHelper extends ScrollToLineHelper {
-    public void scrollOnRediff() {
-      if (myShouldScroll && myScrollToChange != null) if (doScrollToChange(myScrollToChange)) onSuccessfulScroll();
-      if (myShouldScroll && myScrollToLine != null) if (doScrollToLine(myScrollToLine)) onSuccessfulScroll();
-      if (myShouldScroll && myNavigationContext != null) if (doScrollToContext(myNavigationContext)) onSuccessfulScroll();
-      if (myShouldScroll) doScrollToChange(ScrollToPolicy.FIRST_CHANGE);
-      onSuccessfulScroll();
+  private class MyScrollToLineHelper {
+    protected boolean myShouldScroll = true;
+
+    @Nullable private ScrollToPolicy myScrollToChange;
+    @Nullable private EditorPosition myEditorPosition;
+    @Nullable private LogicalPosition[] myCaretPosition;
+    @Nullable private DiffNavigationContext myNavigationContext;
+
+    public void processContext() {
+      myScrollToChange = myRequest.getUserData(DiffUserDataKeys.SCROLL_TO_CHANGE);
+      myEditorPosition = myRequest.getUserData(EditorPosition.KEY);
+      myCaretPosition = myRequest.getUserData(DiffUserDataKeys.EDITORS_CARET_POSITION);
+      myNavigationContext = myRequest.getUserData(DiffUserDataKeys.NAVIGATION_CONTEXT);
     }
 
-    private boolean doScrollToLine(@NotNull Pair<Side, Integer> scrollToLine) {
-      int onesideLine = transferLineToOneside(scrollToLine.first, scrollToLine.second);
-      DiffUtil.scrollToLine(myEditor, onesideLine);
+    public void updateContext() {
+      LogicalPosition position = myEditor.getCaretModel().getLogicalPosition();
+      Pair<int[], Side> pair = transferLineFromOneside(position.line);
+      LogicalPosition[] carets = new LogicalPosition[2];
+      carets[0] = getPosition(pair.first[0], position.column);
+      carets[1] = getPosition(pair.first[1], position.column);
+
+      EditorPosition editorsPosition = new EditorPosition(carets, getPoint(myEditor));
+
+      myRequest.putUserData(DiffUserDataKeys.SCROLL_TO_CHANGE, null);
+      myRequest.putUserData(EditorPosition.KEY, editorsPosition);
+      myRequest.putUserData(DiffUserDataKeys.EDITORS_CARET_POSITION, carets);
+      myRequest.putUserData(DiffUserDataKeys.NAVIGATION_CONTEXT, null);
+    }
+
+    public void onRediff() {
+      if (myShouldScroll && myScrollToChange != null) {
+        myShouldScroll = !doScrollToChange(myScrollToChange);
+      }
+      if (myShouldScroll && myNavigationContext != null) {
+        myShouldScroll = !doScrollToContext(myNavigationContext);
+      }
+      if (myShouldScroll && myCaretPosition != null && myCaretPosition.length == 2) {
+        if (myEditorPosition != null && myEditorPosition.isSame(myCaretPosition)) {
+          scrollToPoint(myEditor, myEditorPosition.myPoint);
+        }
+        else {
+          doScrollToLine(myMasterSide, myMasterSide.selectN(myCaretPosition));
+        }
+      }
+      if (myShouldScroll) {
+        doScrollToChange(ScrollToPolicy.FIRST_CHANGE);
+      }
+      myShouldScroll = false;
+    }
+
+    @NotNull
+    private LogicalPosition getPosition(int line, int column) {
+      if (line == -1) return new LogicalPosition(0, 0);
+      return new LogicalPosition(line, column);
+    }
+
+    @NotNull
+    private Point getPoint(@Nullable Editor editor) {
+      if (editor == null) return new Point(0, 0);
+      ScrollingModel model = editor.getScrollingModel();
+      return new Point(model.getHorizontalScrollOffset(), model.getVerticalScrollOffset());
+    }
+
+    private void scrollToPoint(@Nullable Editor editor, @NotNull Point point) {
+      if (editor == null) return;
+      editor.getScrollingModel().disableAnimation();
+      editor.getScrollingModel().scrollHorizontally(point.x);
+      editor.getScrollingModel().scrollVertically(point.y);
+      editor.getScrollingModel().enableAnimation();
+    }
+
+    private boolean doScrollToLine(@NotNull Side side, @NotNull LogicalPosition position) {
+      int onesideLine = transferLineToOneside(side, position.line);
+      DiffUtil.scrollEditor(myEditor, onesideLine, position.column);
       return true;
     }
 
-    private boolean doScrollToChange(@NotNull ScrollToPolicy scrollToPolicy) {
+    private boolean doScrollToChange(@NotNull ScrollToPolicy scrollToChangePolicy) {
       if (myChangedBlockData == null) return false;
       List<OnesideDiffChange> changes = myChangedBlockData.getDiffChanges();
       if (changes.isEmpty()) return false;
 
       OnesideDiffChange targetChange;
-      switch (scrollToPolicy) {
+      switch (scrollToChangePolicy) {
         case FIRST_CHANGE:
           targetChange = changes.get(0);
           break;
@@ -963,10 +1027,10 @@ class OnesideDiffViewer extends TextDiffViewerBase {
           targetChange = changes.get(changes.size() - 1);
           break;
         default:
-          throw new IllegalArgumentException(scrollToPolicy.name());
+          throw new IllegalArgumentException(scrollToChangePolicy.name());
       }
 
-      DiffUtil.scrollToLine(myEditor, targetChange.getLine1());
+      DiffUtil.scrollEditor(myEditor, targetChange.getLine1());
       return true;
     }
 
@@ -986,7 +1050,28 @@ class OnesideDiffViewer extends TextDiffViewerBase {
       }
       if (line == -1) return false;
 
-      return doScrollToLine(Pair.create(Side.RIGHT, line));
+      return doScrollToLine(Side.RIGHT, new LogicalPosition(line, 0));
+    }
+  }
+
+  private static class EditorPosition {
+    public static final Key<EditorPosition> KEY = Key.create("Diff.OnesideEditorPosition");
+
+    @NotNull public final LogicalPosition[] myCaretPosition;
+    @NotNull public final Point myPoint;
+
+    public EditorPosition(@NotNull LogicalPosition[] caretPosition, @NotNull Point point) {
+      myCaretPosition = caretPosition;
+      myPoint = point;
+    }
+
+    public boolean isSame(@Nullable LogicalPosition[] caretPosition) {
+      // TODO: allow small fluctuations ?
+      if (caretPosition == null) return true;
+      if (caretPosition.length != 2) return false;
+      if (!caretPosition[0].equals(myCaretPosition[0])) return false;
+      if (!caretPosition[1].equals(myCaretPosition[1])) return false;
+      return true;
     }
   }
 }

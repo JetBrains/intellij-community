@@ -3,16 +3,13 @@ package com.intellij.openapi.util.diff.tools.util.twoside;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffNavigationContext;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.VisibleAreaEvent;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.diff.actions.impl.FocusOppositePaneAction;
 import com.intellij.openapi.util.diff.actions.impl.OpenInEditorWithMouseAction;
 import com.intellij.openapi.util.diff.api.FrameDiffTool.DiffContext;
@@ -23,7 +20,6 @@ import com.intellij.openapi.util.diff.requests.ContentDiffRequest;
 import com.intellij.openapi.util.diff.requests.DiffRequest;
 import com.intellij.openapi.util.diff.tools.util.DiffUserDataKeys;
 import com.intellij.openapi.util.diff.tools.util.DiffUserDataKeys.ScrollToPolicy;
-import com.intellij.openapi.util.diff.tools.util.ScrollToLineHelper;
 import com.intellij.openapi.util.diff.tools.util.SyncScrollSupport;
 import com.intellij.openapi.util.diff.tools.util.base.TextDiffViewerBase;
 import com.intellij.openapi.util.diff.util.CalledInAwt;
@@ -122,8 +118,8 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
       if (side != null) myCurrentSide = side;
     }
 
-    myScrollToLineHelper.processContext(myContext, myRequest);
-    myScrollToLineHelper.scrollOnInit();
+    myScrollToLineHelper.processContext();
+    myScrollToLineHelper.onInit();
   }
 
   private void updateContextHints() {
@@ -131,9 +127,7 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
       myContext.putUserData(DiffUserDataKeys.PREFERRED_FOCUS_SIDE, myCurrentSide);
     }
 
-    Side side = getCurrentSide();
-    int line = DiffUtil.getLineToScroll(getCurrentEditor());
-    myRequest.putUserData(DiffUserDataKeys.SCROLL_TO_LINE, Pair.create(side, line));
+    myScrollToLineHelper.updateContext();
   }
 
   @NotNull
@@ -166,7 +160,7 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
 
   @CalledInAwt
   protected void scrollOnRediff() {
-    myScrollToLineHelper.scrollOnRediff();
+    myScrollToLineHelper.onRediff();
   }
 
   //
@@ -273,21 +267,15 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
   //
 
   @CalledInAwt
-  protected boolean doScrollToLine(@NotNull Pair<Side, Integer> scrollToLine) {
-    Side side = scrollToLine.first;
-    Integer line = scrollToLine.second;
-
+  protected void scrollToLine(@NotNull Side side, int line) {
     Editor editor = side.select(myEditor1, myEditor2);
-    if (editor != null && line != -1) {
-      DiffUtil.scrollToLine(editor, line);
-      myCurrentSide = side;
-      return true;
-    }
-    return false;
+    if (editor == null) return;
+    DiffUtil.scrollEditor(editor, line);
+    myCurrentSide = side;
   }
 
   @CalledInAwt
-  protected boolean doScrollToChange(@NotNull ScrollToPolicy scrollToPolicy) {
+  protected boolean doScrollToChange(@NotNull ScrollToPolicy scrollToChangePolicy) {
     return false;
   }
 
@@ -409,19 +397,108 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
     }
   }
 
-  private class MyScrollToLineHelper extends ScrollToLineHelper {
-    public void scrollOnInit() {
-      if (myShouldScroll && myScrollToLine != null && myScrollToChange == null) if (doScrollToLine(myScrollToLine)) onSuccessfulScroll();
+  private class MyScrollToLineHelper {
+    protected boolean myShouldScroll = true;
+
+    @Nullable private ScrollToPolicy myScrollToChange;
+    @Nullable private EditorsPosition myEditorsPosition;
+    @Nullable private LogicalPosition[] myCaretPosition;
+    @Nullable private DiffNavigationContext myNavigationContext;
+
+    public void processContext() {
+      myScrollToChange = myRequest.getUserData(DiffUserDataKeys.SCROLL_TO_CHANGE);
+      myEditorsPosition = myRequest.getUserData(EditorsPosition.KEY);
+      myCaretPosition = myRequest.getUserData(DiffUserDataKeys.EDITORS_CARET_POSITION);
+      myNavigationContext = myRequest.getUserData(DiffUserDataKeys.NAVIGATION_CONTEXT);
     }
 
-    public void scrollOnRediff() {
-      EditorEx editor = getCurrentEditor();
-      if (editor.getCaretModel().getOffset() != 0 || editor.getScrollingModel().getVerticalScrollOffset() != 0) return;
+    public void updateContext() {
+      LogicalPosition[] carets = new LogicalPosition[2];
+      carets[0] = getPosition(myEditor1);
+      carets[1] = getPosition(myEditor2);
 
-      if (myShouldScroll && myScrollToChange != null) if (doScrollToChange(myScrollToChange)) onSuccessfulScroll();
-      if (myShouldScroll && myNavigationContext != null) if (doScrollToContext(myNavigationContext)) onSuccessfulScroll();
-      if (myShouldScroll) doScrollToChange(ScrollToPolicy.FIRST_CHANGE);
-      onSuccessfulScroll();
+      EditorsPosition editorsPosition = new EditorsPosition(carets, getPoint(myEditor1), getPoint(myEditor2));
+
+      myRequest.putUserData(DiffUserDataKeys.SCROLL_TO_CHANGE, null);
+      myRequest.putUserData(EditorsPosition.KEY, editorsPosition);
+      myRequest.putUserData(DiffUserDataKeys.EDITORS_CARET_POSITION, carets);
+      myRequest.putUserData(DiffUserDataKeys.NAVIGATION_CONTEXT, null);
+    }
+
+    public void onInit() {
+      if (!myShouldScroll) return;
+      if (myScrollToChange != null) return;
+      if (myNavigationContext != null) return;
+
+      if (myCaretPosition != null && myCaretPosition.length == 2) {
+        if (myEditor1 != null) myEditor1.getCaretModel().moveToLogicalPosition(myCaretPosition[0]);
+        if (myEditor2 != null) myEditor2.getCaretModel().moveToLogicalPosition(myCaretPosition[1]);
+
+        if (myEditorsPosition != null && myEditorsPosition.isSame(myCaretPosition)) {
+          scrollToPoint(myEditor1, myEditorsPosition.myPoint1);
+          scrollToPoint(myEditor2, myEditorsPosition.myPoint2);
+        }
+        else {
+          getCurrentEditor().getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+        }
+        myShouldScroll = false;
+      }
+    }
+
+    public void onRediff() {
+      if (myShouldScroll && myScrollToChange != null) {
+        myShouldScroll = !doScrollToChange(myScrollToChange);
+      }
+      if (myShouldScroll && myNavigationContext != null) {
+        myShouldScroll = !doScrollToContext(myNavigationContext);
+      }
+      if (myShouldScroll) {
+        doScrollToChange(ScrollToPolicy.FIRST_CHANGE);
+      }
+      myShouldScroll = false;
+    }
+
+    @NotNull
+    private LogicalPosition getPosition(@Nullable Editor editor) {
+      return editor != null ? editor.getCaretModel().getLogicalPosition() : new LogicalPosition(0, 0);
+    }
+
+    @NotNull
+    private Point getPoint(@Nullable Editor editor) {
+      if (editor == null) return new Point(0, 0);
+      ScrollingModel model = editor.getScrollingModel();
+      return new Point(model.getHorizontalScrollOffset(), model.getVerticalScrollOffset());
+    }
+
+    private void scrollToPoint(@Nullable Editor editor, @NotNull Point point) {
+      if (editor == null) return;
+      editor.getScrollingModel().disableAnimation();
+      editor.getScrollingModel().scrollHorizontally(point.x);
+      editor.getScrollingModel().scrollVertically(point.y);
+      editor.getScrollingModel().enableAnimation();
+    }
+  }
+
+  private static class EditorsPosition {
+    public static final Key<EditorsPosition> KEY = Key.create("Diff.EditorsPosition");
+
+    @NotNull public final LogicalPosition[] myCaretPosition;
+    @NotNull public final Point myPoint1;
+    @NotNull public final Point myPoint2;
+
+    public EditorsPosition(@NotNull LogicalPosition[] caretPosition, @NotNull Point point1, @NotNull Point point2) {
+      myCaretPosition = caretPosition;
+      myPoint1 = point1;
+      myPoint2 = point2;
+    }
+
+    public boolean isSame(@Nullable LogicalPosition[] caretPosition) {
+      // TODO: allow small fluctuations ?
+      if (caretPosition == null) return true;
+      if (caretPosition.length != 2) return false;
+      if (!caretPosition[0].equals(myCaretPosition[0])) return false;
+      if (!caretPosition[1].equals(myCaretPosition[1])) return false;
+      return true;
     }
   }
 }

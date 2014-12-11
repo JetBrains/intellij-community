@@ -3,23 +3,22 @@ package com.intellij.openapi.util.diff.tools.util;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.diff.DiffNavigationContext;
+import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.diff.util.Side;
 
 import javax.swing.*;
 import java.util.List;
 
 public interface DiffUserDataKeys {
-  /*
-   * Scroll priority: SCROLL_TO_CHANGE > SCROLL_TO_LINE > NAVIGATION_CONTEXT > DEFAULT(FIRST_CHANGE)
-   */
-
   //
   // DiffRequest
   //
 
-  Key<Pair<Side, Integer>> SCROLL_TO_LINE = Key.create("Diff.ScrollToLine");
+  enum ScrollToPolicy {FIRST_CHANGE, LAST_CHANGE}
+
+  Key<ScrollToPolicy> SCROLL_TO_CHANGE = Key.create("Diff.ScrollToChange");
+  Key<LogicalPosition[]> EDITORS_CARET_POSITION = Key.create("Diff.EditorsCaretPosition");
   Key<DiffNavigationContext> NAVIGATION_CONTEXT = Key.create("Diff.NavigationContext");
 
   Key<String> HELP_ID = Key.create("Diff.HelpId");
@@ -30,9 +29,6 @@ public interface DiffUserDataKeys {
   //
 
   Key<Side> PREFERRED_FOCUS_SIDE = Key.create("Diff.PreferredFocusSide");
-
-  Key<ScrollToPolicy> SCROLL_TO_CHANGE = Key.create("Diff.ScrollSoChange");
-  enum ScrollToPolicy {FIRST_CHANGE, LAST_CHANGE}
 
   //
   // DiffChain

@@ -345,7 +345,7 @@ class SimpleDiffViewer extends TwosideTextDiffViewer {
 
     EditorEx editor = getCurrentEditor();
     int line = getCurrentSide().getStartLine(targetChange.getFragment());
-    DiffUtil.scrollToLine(editor, line);
+    DiffUtil.scrollEditor(editor, line);
 
     return true;
   }
@@ -366,7 +366,8 @@ class SimpleDiffViewer extends TwosideTextDiffViewer {
     }
     if (line == -1) return false;
 
-    return doScrollToLine(Pair.create(Side.RIGHT, line));
+    scrollToLine(Side.RIGHT, line);
+    return true;
   }
 
   //

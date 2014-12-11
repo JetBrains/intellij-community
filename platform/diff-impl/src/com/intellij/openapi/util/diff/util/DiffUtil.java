@@ -146,10 +146,18 @@ public class DiffUtil {
     editor.reinitSettings();
   }
 
-  public static void scrollToLine(@Nullable final Editor editor, int line) {
+  public static void scrollEditor(@Nullable final Editor editor, int line) {
+    scrollEditor(editor, line, 0);
+  }
+
+  public static void scrollEditor(@Nullable final Editor editor, int line, int column) {
+    scrollEditor(editor, new LogicalPosition(line, column));
+  }
+
+  public static void scrollEditor(@Nullable final Editor editor, @NotNull LogicalPosition position) {
     if (editor == null) return;
     editor.getCaretModel().removeSecondaryCarets();
-    editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(line, 0));
+    editor.getCaretModel().moveToLogicalPosition(position);
     ScrollingModel scrollingModel = editor.getScrollingModel();
     scrollingModel.disableAnimation();
     scrollingModel.scrollToCaret(ScrollType.CENTER);
@@ -162,11 +170,6 @@ public class DiffUtil {
     editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(line, 0));
     ScrollingModel scrollingModel = editor.getScrollingModel();
     scrollingModel.scrollToCaret(ScrollType.CENTER);
-  }
-
-  public static int getLineToScroll(@NotNull Editor editor) {
-    // TODO: scroll to visible area, not caret
-    return editor.getCaretModel().getLogicalPosition().line;
   }
 
   //
