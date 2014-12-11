@@ -5,7 +5,7 @@ import java.util.ArrayList;
 public class RefusedBequest extends ArrayList {
 
   @Override
-  public int size() {
+  public int <warning descr="Method 'size()' ignores defined method in superclass">size</warning>() {
     return 0;
   }
 }
