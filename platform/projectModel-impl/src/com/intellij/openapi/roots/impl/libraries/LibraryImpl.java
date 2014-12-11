@@ -174,8 +174,13 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
   public VirtualFile[] getFiles(@NotNull OrderRootType rootType) {
     checkDisposed();
 
-    final List<VirtualFile> expanded = new ArrayList<VirtualFile>();
-    for (VirtualFile file : myRoots.get(rootType).getFiles()) {
+    VirtualFilePointerContainer container = myRoots.get(rootType);
+    if (container == null) {
+      return VirtualFile.EMPTY_ARRAY;
+    }
+
+    List<VirtualFile> expanded = new SmartList<VirtualFile>();
+    for (VirtualFile file : container.getFiles()) {
       if (file.isDirectory()) {
         if (myJarDirectories.contains(rootType, file.getUrl())) {
           collectJarFiles(file, expanded, myJarDirectories.isRecursive(rootType, file.getUrl()));
