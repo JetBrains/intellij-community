@@ -231,8 +231,8 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
 
     @NotNull private final Project myProject;
     private final boolean myMultiRoot;
-    @Nullable private String myBranchesText = null;
     private String myMainText;
+    @Nullable private List<String> myBranches;
 
     DataPanel(@NotNull Project project, boolean multiRoot) {
       super(UIUtil.HTML_MIME, "");
@@ -262,10 +262,10 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
 
     void setBranches(@Nullable List<String> branches) {
       if (branches == null) {
-        myBranchesText = null;
+        myBranches = null;
       }
       else {
-        myBranchesText = StringUtil.join(branches, ", ");
+        myBranches = branches;
       }
       update();
     }
@@ -281,8 +281,10 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
                 myMainText +
                 "<br/>" +
                 "<br/>" +
-                "<i>Contained in branches:</i> " +
-                (myBranchesText == null ? "<i>loading...</i>" : myBranchesText) +
+                "<i>In " +
+                (myBranches == null ? "" : myBranches.size() + " ") +
+                "branche" + (myBranches == null || myBranches.size() > 1 ? "s" : "" ) + ":</i> " +
+                (myBranches == null ? "<i>loading...</i>" : StringUtil.join(myBranches, ", ")) +
                 "</body></html>");
       }
       revalidate();
