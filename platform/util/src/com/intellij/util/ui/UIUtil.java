@@ -239,11 +239,9 @@ public class UIUtil {
 
 
   public static final Border DEBUG_MARKER_BORDER = new Border() {
-    private final Insets empty = new Insets(0, 0, 0, 0);
-
     @Override
     public Insets getBorderInsets(Component c) {
-      return empty;
+      return new Insets(0, 0, 0, 0);
     }
 
     @Override
