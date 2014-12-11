@@ -559,6 +559,9 @@ public class PyTypeChecker {
     else if (type instanceof PyCallableType) {
       return ((PyCallableType) type).isCallable();
     }
+    else if (type instanceof PyStructuralType && ((PyStructuralType)type).isInferredFromUsages()) {
+      return true;
+    }
     return false;
   }
 
