@@ -16,10 +16,7 @@
 package com.intellij.openapi.util.diff.actions.impl;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.ShortcutSet;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,7 +33,7 @@ public class FocusOppositePaneAction extends AnAction implements DumbAware {
   }
 
   public void setupAction(@NotNull JComponent component, @NotNull Disposable disposable) {
-    ShortcutSet shortcutSet = ActionManager.getInstance().getAction("Diff.FocusOppositePane").getShortcutSet();
+    ShortcutSet shortcutSet = CustomShortcutSet.fromString("control TAB"); // TODO: allow to change shortcut
     registerCustomShortcutSet(shortcutSet, component, disposable);
   }
 }
