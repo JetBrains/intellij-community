@@ -242,4 +242,9 @@ public class PyTypeCheckerInspectionTest extends PyTestCase {
   public void testRecursiveDictAttribute() {
     doTest();
   }
+
+  // PY-13394
+  public void testContainsArguments() {
+    doTest();
+  }
 }
