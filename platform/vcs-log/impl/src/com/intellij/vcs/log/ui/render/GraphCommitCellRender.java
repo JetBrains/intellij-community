@@ -135,7 +135,7 @@ public class GraphCommitCellRender extends ColoredTableCellRenderer {
       return Collections.emptyMap();
     }
     VirtualFile root = refs.iterator().next().getRoot(); // all refs are from the same commit => they have the same root
-    refs = ContainerUtil.sorted(refs, myDataHolder.getLogProvider(root).getReferenceManager().getComparator());
+    refs = ContainerUtil.sorted(refs, myDataHolder.getLogProvider(root).getReferenceManager().getLabelsOrderComparator());
     List<VcsRef> branches = getBranches(refs);
     Collection<VcsRef> tags = ContainerUtil.subtract(refs, branches);
     return getLabelsForRefs(branches, tags);

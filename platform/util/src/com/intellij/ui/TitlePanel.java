@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package com.intellij.ui;
 
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -42,12 +43,12 @@ public class TitlePanel extends CaptionPanel {
 
     myLabel = new EngravedLabel();
     if (UIUtil.isUnderAquaLookAndFeel()) {
-      myLabel.setFont(myLabel.getFont().deriveFont(12f));
+      myLabel.setFont(JBUI.Fonts.label(12));
     }
     myLabel.setForeground(JBColor.foreground());
     myLabel.setHorizontalAlignment(SwingConstants.CENTER);
     myLabel.setVerticalAlignment(SwingConstants.CENTER);
-    myLabel.setBorder(new EmptyBorder(1, 2, 2, 2));
+    myLabel.setBorder(JBUI.Borders.empty(1, 2, 2, 2));
 
     add(myLabel, BorderLayout.CENTER);
 

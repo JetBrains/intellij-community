@@ -17,6 +17,8 @@ package com.intellij.util.io;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.net.HttpConfigurable;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,6 +41,8 @@ import java.util.zip.GZIPInputStream;
  * }</pre>
  */
 public final class HttpRequests {
+  private static final boolean ourParallelLoader = SystemProperties.getBooleanProperty("idea.parallel.class.loader", true);
+
   public interface Request {
     @NotNull URLConnection getConnection() throws IOException;
     @NotNull InputStream getInputStream() throws IOException;
@@ -54,6 +58,7 @@ public final class HttpRequests {
     private int myTimeout = HttpConfigurable.READ_TIMEOUT;
     private int myRedirectLimit = HttpConfigurable.REDIRECT_LIMIT;
     private boolean myGzip = true;
+    private boolean myForceHttps = false;
 
     private RequestBuilder(@NotNull String url) {
       myUrl = url;
@@ -83,8 +88,20 @@ public final class HttpRequests {
       return this;
     }
 
+    @NotNull
+    public RequestBuilder forceHttps(boolean forceHttps) {
+      myForceHttps = forceHttps;
+      return this;
+    }
+
     public <T> T connect(@NotNull RequestProcessor<T> processor) throws IOException {
-      return process(this, processor);
+      // todo[r.sh] drop condition in IDEA 15
+      if (ourParallelLoader) {
+        return process(this, processor);
+      }
+      else {
+        return wrapAndProcess(this, processor);
+      }
     }
   }
 
@@ -93,19 +110,19 @@ public final class HttpRequests {
     return new RequestBuilder(url);
   }
 
-  private static <T> T process(RequestBuilder builder, RequestProcessor<T> processor) throws IOException {
+  private static <T> T wrapAndProcess(RequestBuilder builder, RequestProcessor<T> processor) throws IOException {
     // hack-around for class loader lock in sun.net.www.protocol.http.NegotiateAuthentication (IDEA-131621)
     ClassLoader oldClassLoader = Thread.currentThread().getContextClassLoader();
     Thread.currentThread().setContextClassLoader(new URLClassLoader(new URL[0], oldClassLoader));
     try {
-      return doProcess(builder, processor);
+      return process(builder, processor);
     }
     finally {
       Thread.currentThread().setContextClassLoader(oldClassLoader);
     }
   }
 
-  private static <T> T doProcess(final RequestBuilder builder, RequestProcessor<T> processor) throws IOException {
+  private static <T> T process(final RequestBuilder builder, RequestProcessor<T> processor) throws IOException {
     class RequestImpl implements Request {
       private URLConnection myConnection;
       private InputStream myInputStream;
@@ -153,6 +170,10 @@ public final class HttpRequests {
 
   private static URLConnection openConnection(RequestBuilder builder) throws IOException {
     String url = builder.myUrl;
+
+    if (builder.myForceHttps && StringUtil.startsWith(url, "http:")) {
+      url = "https:" + url.substring(5);
+    }
 
     for (int i = 0; i < builder.myRedirectLimit; i++) {
       URLConnection connection;

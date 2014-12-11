@@ -97,6 +97,7 @@ public class TaskFile implements Stateful {
   }
 
   public void drawAllWindows(Editor editor) {
+    editor.getMarkupModel().removeAllHighlighters();
     for (TaskWindow taskWindow : taskWindows) {
       taskWindow.draw(editor, false, false);
     }

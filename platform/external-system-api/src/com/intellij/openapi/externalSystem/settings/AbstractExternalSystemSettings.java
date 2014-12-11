@@ -82,7 +82,6 @@ public abstract class AbstractExternalSystemSettings<
   public abstract void subscribe(@NotNull ExternalSystemSettingsListener<PS> listener);
 
   public void copyFrom(@NotNull SS settings) {
-    myLinkedProjectsSettings.clear();
     for (PS projectSettings : settings.getLinkedProjectsSettings()) {
       myLinkedProjectsSettings.put(projectSettings.getExternalProjectPath(), projectSettings);
     }

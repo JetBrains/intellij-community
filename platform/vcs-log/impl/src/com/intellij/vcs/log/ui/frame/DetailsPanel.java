@@ -165,9 +165,8 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       ((CardLayout)getLayout()).show(this, STANDARD_LAYER);
       int row = rows[0];
       GraphTableModel tableModel = (GraphTableModel)myGraphTable.getModel();
-      Hash hash = tableModel.getHashAtRow(row);
       VcsFullCommitDetails commitData = myLogDataHolder.getCommitDetailsGetter().getCommitData(row, tableModel);
-      if (commitData == null || hash == null) {
+      if (commitData == null) {
         showMessage("No commits selected");
         return;
       }
@@ -180,14 +179,14 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       else {
         myLoadingPanel.stopLoading();
         myCommitDetailsPanel.setData(commitData);
-        myRefsPanel.setRefs(sortRefs(hash, commitData.getRoot()));
+        myRefsPanel.setRefs(sortRefs(commitData.getId(), commitData.getRoot()));
         updateDetailsBorder(commitData);
         newCommitDetails = commitData;
       }
 
       List<String> branches = null;
       if (!(commitData instanceof LoadingDetails)) {
-        branches = myLogDataHolder.getContainingBranchesGetter().requestContainingBranches(commitData.getRoot(), hash);
+        branches = myLogDataHolder.getContainingBranchesGetter().requestContainingBranches(commitData.getRoot(), commitData.getId());
       }
       myCommitDetailsPanel.setBranches(branches);
 
@@ -225,7 +224,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
   @NotNull
   private List<VcsRef> sortRefs(@NotNull Hash hash, @NotNull VirtualFile root) {
     Collection<VcsRef> refs = myDataPack.getRefsModel().refsToCommit(hash);
-    return ContainerUtil.sorted(refs, myLogDataHolder.getLogProvider(root).getReferenceManager().getComparator());
+    return ContainerUtil.sorted(refs, myLogDataHolder.getLogProvider(root).getReferenceManager().getLabelsOrderComparator());
   }
 
   private static class DataPanel extends JEditorPane {

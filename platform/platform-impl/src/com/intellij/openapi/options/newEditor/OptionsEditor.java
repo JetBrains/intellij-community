@@ -147,7 +147,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
       }
     };
     if (Registry.is("ide.new.settings.dialog")) {
-      mySearch.setBackground(SettingsTreeView.BACKGROUND);
+      mySearch.setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
       mySearch.setBorder(new EmptyBorder(5, 10, 2, 10));
     }
 

@@ -77,6 +77,7 @@ public class JavaAPIUsagesInspectionTest extends InspectionTestCase {
 
   //generate apiXXX.txt
   /*
+  //todo exclude inheritors of ConcurrentMap#putIfAbsent
   public void testCollectSinceApiUsages() {
     final String version = "1.8";
     final LinkedHashSet<String> notDocumented = new LinkedHashSet<String>();

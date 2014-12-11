@@ -126,14 +126,14 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
   }
 
   public void setShowInternalMessage(String message) {
+    myTopPanel.removeAll();
     if (message == null) {
-      myTopPanel.removeAll();
       myTopPanel.add(new JLabel(IdeBundle.message("label.name")),
                      new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.NONE,
                                             new Insets(0, 0, 0, 2), 0, 0));
       myTopPanel.add(myNameField,
                      new GridBagConstraints(1, 0, 1, 1, 1.0, 0.0, GridBagConstraints.CENTER,
-                                            GridBagConstraints.HORIZONTAL, new Insets(0, 2, 0, 2), 0, 0));
+                                            GridBagConstraints.HORIZONTAL, new Insets(3, 2, 3, 2), 0, 0));
       myTopPanel.add(new JLabel(IdeBundle.message("label.extension")),
                      new GridBagConstraints(2, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.NONE,
                                             new Insets(0, 2, 0, 2), 0, 0));
@@ -141,15 +141,6 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
                      new GridBagConstraints(3, 0, 1, 1, .3, 0.0, GridBagConstraints.CENTER,
                                             GridBagConstraints.HORIZONTAL, new Insets(0, 2, 0, 0), 0, 0));
       myExtensionField.setColumns(7);
-    }
-    else {
-      myTopPanel.removeAll();
-      myTopPanel.add(new JLabel(message),
-                     new GridBagConstraints(0, 0, 4, 1, 1.0, 0.0, GridBagConstraints.WEST,
-                                            GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
-      myTopPanel.add(Box.createVerticalStrut(myNameField.getPreferredSize().height),
-                     new GridBagConstraints(4, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST,
-                                            GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
     }
     myMainPanel.revalidate();
     myTopPanel.repaint();
@@ -175,13 +166,13 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
     myNameField = new JTextField();
     myExtensionField = new JTextField();
     mySplitter = new Splitter(true, 0.4f);
+    myAdjustBox = new JCheckBox(IdeBundle.message("checkbox.reformat.according.to.style"));
 
     myTemplateEditor = createEditor();
 
     myDescriptionComponent = new JEditorPane(UIUtil.HTML_MIME, EMPTY_HTML);
     myDescriptionComponent.setEditable(false);
 
-    myAdjustBox = new JCheckBox(IdeBundle.message("checkbox.reformat.according.to.style"));
     myTopPanel = new JPanel(new GridBagLayout());
 
     myDescriptionPanel = new JPanel(new GridBagLayout());
@@ -194,13 +185,13 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
 
     myMainPanel.add(myTopPanel,
                     new GridBagConstraints(0, 0, 4, 1, 1.0, 0.0, GridBagConstraints.CENTER,
-                                           GridBagConstraints.HORIZONTAL, new Insets(0, 0, 2, 0), 0, 0));
-    myMainPanel.add(myAdjustBox,
-                    new GridBagConstraints(0, 1, 4, 1, 0.0, 0.0, GridBagConstraints.WEST,
-                                           GridBagConstraints.HORIZONTAL, new Insets(2, 0, 2, 0), 0, 0));
+                                           GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+    //myMainPanel.add(myAdjustBox,
+    //                new GridBagConstraints(0, 1, 4, 1, 0.0, 0.0, GridBagConstraints.WEST,
+    //                                       GridBagConstraints.HORIZONTAL, new Insets(2, 0, 2, 0), 0, 0));
     myMainPanel.add(mySplitter,
                     new GridBagConstraints(0, 2, 4, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH,
-                                           new Insets(2, 0, 0, 0), 0, 0));
+                                           new Insets(0, 0, 0, 0), 0, 0));
 
     mySplitter.setSecondComponent(myDescriptionPanel);
     setShowInternalMessage(null);
@@ -255,7 +246,11 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
     hyperlinkLabel.setHyperlinkText("", "Apache Velocity", " template language is used");
     hyperlinkLabel.setHyperlinkTarget(
       "http://velocity.apache.org/engine/devel/user-guide.html#Velocity_Template_Language_VTL:_An_Introduction");
-    topPanel.add(hyperlinkLabel, BorderLayout.SOUTH);
+    JPanel southPanel = new JPanel(new BorderLayout());
+    southPanel.add(myAdjustBox, BorderLayout.WEST);
+    southPanel.add(hyperlinkLabel, BorderLayout.EAST);
+
+    topPanel.add(southPanel, BorderLayout.SOUTH);
     topPanel.add(editor.getComponent(), BorderLayout.CENTER);
     mySplitter.setFirstComponent(topPanel);
     return editor;
@@ -391,7 +386,7 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
     if (fileType == FileTypes.UNKNOWN) return null;
 
     final PsiFile file = PsiFileFactory.getInstance(myProject).createFileFromText(name + ".txt.ft", fileType, text, 0, true);
-    file.getViewProvider().putUserData(FileTemplateManager.DEFAULT_TEMPLATE_PROPERTIES, FileTemplateManager.getInstance().getDefaultProperties(myProject));
+    file.getViewProvider().putUserData(FileTemplateManager.DEFAULT_TEMPLATE_PROPERTIES, FileTemplateManager.getInstance(myProject).getDefaultProperties());
     return file;
   }
 

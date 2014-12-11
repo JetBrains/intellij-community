@@ -710,9 +710,6 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
         try {
           super.disposeUIResources();
           Disposer.dispose(myDisposable);
-          if (myRootSchemesPanel != null) {
-            myRootSchemesPanel.disposeUIResources();
-          }
         }
         finally {
           myDisposeCompleted = true;

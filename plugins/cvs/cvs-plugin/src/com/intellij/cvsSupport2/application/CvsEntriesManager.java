@@ -287,15 +287,13 @@ public class CvsEntriesManager extends VirtualFileAdapter {
   }
 
   private void onEntriesChanged(final VirtualFile parent) {
-    final CvsEntriesListener[] listeners = myEntriesListeners.toArray(new CvsEntriesListener[myEntriesListeners.size()]);
-    for (CvsEntriesListener listener : listeners) {
+    for (CvsEntriesListener listener : myEntriesListeners) {
       listener.entriesChanged(parent);
     }
   }
 
   private void onEntryChanged(final VirtualFile file) {
-    final CvsEntriesListener[] listeners = myEntriesListeners.toArray(new CvsEntriesListener[myEntriesListeners.size()]);
-    for (CvsEntriesListener listener : listeners) {
+    for (CvsEntriesListener listener : myEntriesListeners) {
       listener.entryChanged(file);
     }
   }
@@ -339,7 +337,7 @@ public class CvsEntriesManager extends VirtualFileAdapter {
       return false;
     }
     if (CvsUtil.fileIsUnderCvs(file)) return false;
-    return getFilter(parent).shouldBeIgnored(file.getName());
+    return getFilter(parent).shouldBeIgnored(file);
   }
 
   private void ensureFilesCached() {

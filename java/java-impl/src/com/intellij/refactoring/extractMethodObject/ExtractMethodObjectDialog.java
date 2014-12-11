@@ -239,6 +239,7 @@ public class ExtractMethodObjectDialog extends DialogWrapper implements Abstract
         myInputVariables = myVariableData.getInputVariables().toArray(new VariableData[myVariableData.getInputVariables().size()]);
         myParametersTableContainer.removeAll();
         myParametersTableContainer.add(createParametersPanel(), BorderLayout.CENTER);
+        myParametersTableContainer.revalidate();
         updateSignature();
         updateVarargsEnabled();
       }

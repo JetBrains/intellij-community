@@ -16,6 +16,7 @@
 package git4idea.cherrypick;
 
 import com.intellij.dvcs.DvcsUtil;
+import com.intellij.dvcs.cherrypick.VcsCherryPicker;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.application.AccessToken;
@@ -25,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
@@ -36,11 +38,15 @@ import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.VcsLog;
+import git4idea.GitLocalBranch;
 import git4idea.GitPlatformFacade;
+import git4idea.GitVcs;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitSimpleEventDetector;
 import git4idea.commands.GitUntrackedFilesOverwrittenByOperationDetector;
+import git4idea.config.GitVcsSettings;
 import git4idea.merge.GitConflictResolver;
 import git4idea.repo.GitRepository;
 import git4idea.util.UntrackedFilesNotifier;
@@ -64,7 +70,7 @@ import static com.intellij.openapi.util.text.StringUtil.pluralize;
 import static git4idea.commands.GitSimpleEventDetector.Event.CHERRY_PICK_CONFLICT;
 import static git4idea.commands.GitSimpleEventDetector.Event.LOCAL_CHANGES_OVERWRITTEN_BY_CHERRY_PICK;
 
-public class GitCherryPicker {
+public class GitCherryPicker extends VcsCherryPicker {
 
   /**
    * Name of the {@code .git/CHERRY_PICK_HEAD} file which is stored under {@code .git} when cherry-pick is in progress,
@@ -73,6 +79,7 @@ public class GitCherryPicker {
   private static final String CHERRY_PICK_HEAD_FILE = "CHERRY_PICK_HEAD";
 
   private static final Logger LOG = Logger.getInstance(GitCherryPicker.class);
+  private static final String NAME = "Cherry-Pick";
 
   @NotNull private final Project myProject;
   @NotNull private final Git myGit;
@@ -80,15 +87,17 @@ public class GitCherryPicker {
   @NotNull private final ChangeListManager myChangeListManager;
   private final boolean myAutoCommit;
 
-  public GitCherryPicker(@NotNull Project project, @NotNull Git git, @NotNull GitPlatformFacade platformFacade, boolean autoCommit) {
+  public GitCherryPicker(@NotNull Project project, @NotNull Git git, @NotNull GitPlatformFacade platformFacade) {
     myProject = project;
     myGit = git;
     myPlatformFacade = platformFacade;
-    myAutoCommit = autoCommit;
+    myAutoCommit = isAutoCommit();
     myChangeListManager = myPlatformFacade.getChangeListManager(myProject);
   }
 
-  public void cherryPick(@NotNull Map<GitRepository, List<VcsFullCommitDetails>> commitsInRoots) {
+  public void cherryPick(@NotNull List<VcsFullCommitDetails> commits) {
+    Map<GitRepository, List<VcsFullCommitDetails>> commitsInRoots =
+      DvcsUtil.groupCommitsByRoots(myPlatformFacade.getRepositoryManager(myProject), commits);
     List<GitCommitWrapper> successfulCommits = ContainerUtil.newArrayList();
     List<GitCommitWrapper> alreadyPicked = ContainerUtil.newArrayList();
     AccessToken token = DvcsUtil.workingTreeChangeStarted(myProject);
@@ -515,6 +524,42 @@ public class GitCherryPicker {
     return step == 0 ? name : name + "-" + step;
   }
 
+  @NotNull
+  @Override
+  public VcsKey getSupportedVcs() {
+    return GitVcs.getKey();
+  }
+
+  @NotNull
+  @Override
+  public String getActionTitle() {
+    return isAutoCommit() ? NAME : NAME + "...";
+  }
+
+  private boolean isAutoCommit() {
+    return GitVcsSettings.getInstance(myProject).isAutoCommitOnCherryPick();
+  }
+
+  @Override
+  public boolean isEnabled(@NotNull VcsLog log, @NotNull List<VcsFullCommitDetails> details) {
+    if (details.isEmpty()) {
+      return false;
+    }
+    for (VcsFullCommitDetails commit : details) {
+      GitRepository repository = myPlatformFacade.getRepositoryManager(myProject).getRepositoryForRoot(commit.getRoot());
+      if (repository == null) {
+        return false;
+      }
+      GitLocalBranch currentBranch = repository.getCurrentBranch();
+      Collection<String> containingBranches = log.getContainingBranches(commit.getId());
+      if (currentBranch != null && containingBranches != null && containingBranches.contains(currentBranch.getName())) {
+        // already is contained in the current branch
+        return false;
+      }
+    }
+    return true;
+  }
+
   private static class CherryPickData {
     @NotNull private final LocalChangeList myChangeList;
     @NotNull private final String myCommitMessage;
@@ -638,5 +683,4 @@ public class GitCherryPicker {
       return myOriginalCommit.getSubject();
     }
   }
-
 }

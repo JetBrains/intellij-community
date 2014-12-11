@@ -1,15 +1,12 @@
 package com.intellij.openapi.externalSystem.service.project;
 
-import com.intellij.openapi.externalSystem.model.project.LibraryData;
-import com.intellij.openapi.externalSystem.model.project.ModuleData;
-import com.intellij.openapi.externalSystem.model.project.ModuleDependencyData;
+import com.intellij.openapi.externalSystem.model.project.*;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -77,6 +74,25 @@ public class ProjectStructureHelper {
             dependency.getScope().equals(candidate.getScope())) {
           return candidate;
         }
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  public OrderEntry findIdeModuleOrderEntry(LibraryDependencyData data, Project project) {
+    Module ownerIdeModule = findIdeModule(data.getOwnerModule(), project);
+    if (ownerIdeModule == null) return null;
+
+    ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(ownerIdeModule);
+
+    for (OrderEntry entry : moduleRootManager.getOrderEntries()) {
+      if (entry instanceof LibraryOrderEntry) {
+        if (((LibraryOrderEntry)entry).isModuleLevel() && data.getLevel() != LibraryLevel.MODULE) continue;
+      }
+
+      if (data.getInternalName().equals(entry.getPresentableName())) {
+        return entry;
       }
     }
     return null;

@@ -24,6 +24,8 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.util.Consumer;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.Stack;
@@ -73,11 +75,6 @@ public class ProjectDataManager {
   }
 
   @Nullable
-  public List<ProjectDataService<?, ?>> getDataServices(Key<?> key) {
-    return myServices.getValue().get(key);
-  }
-
-  @Nullable
   public ProjectDataService<?, ?> getDataService(Key<?> key) {
     final List<ProjectDataService<?, ?>> dataServices = myServices.getValue().get(key);
     assert dataServices == null || dataServices.isEmpty() || dataServices.size() == 1;
@@ -86,7 +83,7 @@ public class ProjectDataManager {
 
   @SuppressWarnings("unchecked")
   public <T> void importData(@NotNull Collection<DataNode<?>> nodes, @NotNull Project project, boolean synchronous) {
-    if(project.isDisposed()) return;
+    if (project.isDisposed()) return;
 
     Map<Key<?>, List<DataNode<?>>> grouped = ExternalSystemApiUtil.group(nodes);
     for (Map.Entry<Key<?>, List<DataNode<?>>> entry : grouped.entrySet()) {
@@ -101,9 +98,9 @@ public class ProjectDataManager {
 
   @SuppressWarnings("unchecked")
   public <T> void importData(@NotNull Key<T> key, @NotNull Collection<DataNode<T>> nodes, @NotNull Project project, boolean synchronous) {
-    if(project.isDisposed()) return;
+    if (project.isDisposed()) return;
 
-    ensureTheDataIsReadyToUse(nodes);
+    ensureTheDataIsReadyToUse((Collection)nodes);
     List<ProjectDataService<?, ?>> services = myServices.getValue().get(key);
     if (services == null) {
       LOG.warn(String.format(
@@ -124,22 +121,33 @@ public class ProjectDataManager {
     importData(children, project, synchronous);
   }
 
-  @SuppressWarnings("unchecked")
-  private <T> void ensureTheDataIsReadyToUse(@NotNull Collection<DataNode<T>> nodes) {
-    Map<Key<?>, List<ProjectDataService<?, ?>>> servicesByKey = myServices.getValue();
-    Stack<DataNode<T>> toProcess = ContainerUtil.newStack(nodes);
-    while (!toProcess.isEmpty()) {
-      DataNode<T> node = toProcess.pop();
-      List<ProjectDataService<?, ?>> services = servicesByKey.get(node.getKey());
-      if (services != null) {
-        for (ProjectDataService<?, ?> service : services) {
-          node.prepareData(service.getClass().getClassLoader());
+  public void ensureTheDataIsReadyToUse(DataNode dataNode) {
+    final Map<Key<?>, List<ProjectDataService<?, ?>>> servicesByKey = myServices.getValue();
+    ExternalSystemApiUtil.visit(dataNode, new Consumer<DataNode>() {
+      @Override
+      public void consume(DataNode dataNode) {
+        List<ProjectDataService<?, ?>> services = servicesByKey.get(dataNode.getKey());
+        if (services != null) {
+          try {
+            dataNode.prepareData(ContainerUtil.map2Array(services, ClassLoader.class, new Function<ProjectDataService<?, ?>, ClassLoader>() {
+              @Override
+              public ClassLoader fun(ProjectDataService<?, ?> service) {
+                return service.getClass().getClassLoader();
+              }
+            }));
+          }
+          catch (Exception e) {
+            LOG.debug(e);
+            dataNode.clear(true);
+          }
         }
       }
+    });
+  }
 
-      for (DataNode<?> dataNode : node.getChildren()) {
-        toProcess.push((DataNode<T>)dataNode);
-      }
+  private void ensureTheDataIsReadyToUse(@NotNull Collection<DataNode<?>> nodes) {
+    for (DataNode<?> node : nodes) {
+      ensureTheDataIsReadyToUse(node);
     }
   }
 
@@ -152,13 +160,21 @@ public class ProjectDataManager {
   }
 
   public void updateExternalProjectData(@NotNull Project project, @NotNull ExternalProjectInfo externalProjectInfo) {
-    if(!project.isDisposed()) {
-      ExternalProjectsDataStorage.getInstance(project).add(externalProjectInfo);
+    if (!project.isDisposed()) {
+      ExternalProjectsManager.getInstance(project).updateExternalProjectData(externalProjectInfo);
     }
   }
 
   @Nullable
-  public ExternalProjectInfo getExternalProjectData(@NotNull Project project, @NotNull ProjectSystemId projectSystemId, @NotNull String externalProjectPath) {
+  public ExternalProjectInfo getExternalProjectData(@NotNull Project project,
+                                                    @NotNull ProjectSystemId projectSystemId,
+                                                    @NotNull String externalProjectPath) {
     return !project.isDisposed() ? ExternalProjectsDataStorage.getInstance(project).get(projectSystemId, externalProjectPath) : null;
+  }
+
+  @NotNull
+  public Collection<ExternalProjectInfo> getExternalProjectsData(@NotNull Project project, @NotNull ProjectSystemId projectSystemId) {
+    return !project.isDisposed() ?
+           ExternalProjectsDataStorage.getInstance(project).list(projectSystemId) : ContainerUtil.<ExternalProjectInfo>emptyList();
   }
 }

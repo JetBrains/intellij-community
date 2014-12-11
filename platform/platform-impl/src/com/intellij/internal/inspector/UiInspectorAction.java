@@ -34,6 +34,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.ColorIcon;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.PlatformColors;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -261,7 +262,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
   private static class ComponentTreeCellRenderer extends JLabel implements TreeCellRenderer {
     private ComponentTreeCellRenderer() {
       setOpaque(true);
-      setFont(UIUtil.getLabelFont().deriveFont(11f));
+      setFont(JBUI.Fonts.label(11));
       setBorder(BorderFactory.createEmptyBorder(0, 3, 0, 3));
     }
 

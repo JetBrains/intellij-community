@@ -23,12 +23,15 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Condition;
 import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.HideableDecorator;
+import com.intellij.ui.PanelWithAnchor;
 import com.intellij.util.NullableConsumer;
+import com.intellij.util.ui.UIUtil;
 import com.jetbrains.python.PythonSdkChooserCombo;
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList;
 import com.jetbrains.python.configuration.VirtualEnvProjectFilter;
@@ -49,6 +52,7 @@ import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
+import java.util.List;
 
 public class ProjectSpecificSettingsStep extends ProjectSettingsStepBase implements DumbAware {
   private PythonSdkChooserCombo mySdkCombo;
@@ -190,26 +194,9 @@ public class ProjectSpecificSettingsStep extends ProjectSettingsStepBase impleme
   @Override
   protected JPanel createBasePanel() {
     final JPanel panel = super.createBasePanel();
-    final GridBagConstraints c = new GridBagConstraints();
-
-    final JLabel interpreterLabel = new JLabel("Interpreter:", SwingConstants.LEFT) {
-      @Override
-      public Dimension getMinimumSize() {
-        return new JLabel("Project name:").getPreferredSize();
-      }
-
-      @Override
-      public Dimension getPreferredSize() {
-        return getMinimumSize();
-      }
-    };
-    c.gridx = 0;
-    c.gridy = 1;
-    c.weightx = 0;
-    panel.add(interpreterLabel, c);
 
     final Project project = ProjectManager.getInstance().getDefaultProject();
-    final java.util.List<Sdk> sdks = PyConfigurableInterpreterList.getInstance(project).getAllPythonSdks();
+    final List<Sdk> sdks = PyConfigurableInterpreterList.getInstance(project).getAllPythonSdks();
     VirtualEnvProjectFilter.removeAllAssociated(sdks);
     Sdk compatibleSdk = sdks.isEmpty() ? null : sdks.iterator().next();
     DirectoryProjectGenerator generator = getProjectGenerator();
@@ -231,16 +218,13 @@ public class ProjectSpecificSettingsStep extends ProjectSettingsStepBase impleme
     });
     mySdkCombo.setButtonIcon(PythonIcons.Python.InterpreterGear);
 
-    c.gridx = 1;
-    c.gridy = 1;
-    c.weightx = 1.;
-    panel.add(mySdkCombo, c);
+    final LabeledComponent<PythonSdkChooserCombo> labeled = LabeledComponent.create(mySdkCombo, "Interpreter");
+    labeled.setLabelLocation(BorderLayout.WEST);
+    UIUtil.mergeComponentsWithAnchor(labeled, (PanelWithAnchor)panel.getComponent(0));
+    panel.add(labeled);
     final JPanel basePanelExtension = extendBasePanel();
     if (basePanelExtension != null) {
-      c.gridwidth = 2;
-      c.gridy = 2;
-      c.gridx = 0;
-      panel.add(basePanelExtension, c);
+      panel.add(basePanelExtension);
     }
 
     return panel;

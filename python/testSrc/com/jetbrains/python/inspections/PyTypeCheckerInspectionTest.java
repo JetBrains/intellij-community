@@ -243,6 +243,11 @@ public class PyTypeCheckerInspectionTest extends PyTestCase {
     doTest();
   }
 
+  // PY-13394
+  public void testContainsArguments() {
+    doTest();
+  }
+
   public void testExpectedStructuralType() {
     doTest();
   }

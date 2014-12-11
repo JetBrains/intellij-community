@@ -213,7 +213,7 @@ public class UnusedDefineInspection extends BaseInspection {
       @Override
       @NotNull
       public String getName() {
-        return "Remove Define";
+        return "Remove define";
       }
 
       @Override

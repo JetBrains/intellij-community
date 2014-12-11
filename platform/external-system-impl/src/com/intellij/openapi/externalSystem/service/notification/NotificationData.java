@@ -42,6 +42,7 @@ public class NotificationData {
   private int myLine;
   private int myColumn;
   private boolean myBalloonNotification;
+  @Nullable private String myBalloonGroup;
 
   private final Map<String, NotificationListener> myListenerMap;
 
@@ -172,5 +173,14 @@ public class NotificationData {
 
   public void setNavigatable(@Nullable Navigatable navigatable) {
     this.navigatable = navigatable;
+  }
+
+  @Nullable
+  public String getBalloonGroup() {
+    return myBalloonGroup;
+  }
+
+  public void setBalloonGroup(@Nullable String balloonGroup) {
+    myBalloonGroup = balloonGroup;
   }
 }

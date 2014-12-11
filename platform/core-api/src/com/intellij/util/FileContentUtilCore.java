@@ -30,14 +30,27 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 /**
+ * Utility functions to trigger file reparsing programmatically.
+ *
  * @author peter
  */
 public class FileContentUtilCore {
   @NonNls public static final String FORCE_RELOAD_REQUESTOR = "FileContentUtilCore.saveOrReload";
 
+  /**
+   * Forces a reparse of the specified array of files.
+   *
+   * @param files the files to reparse.
+   */
   public static void reparseFiles(@NotNull VirtualFile... files) {
     reparseFiles(Arrays.asList(files));
   }
+
+  /**
+   * Forces a reparse of the specified collection of files.
+   *
+   * @param files the files to reparse.
+   */
   public static void reparseFiles(@NotNull final Collection<VirtualFile> files) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override

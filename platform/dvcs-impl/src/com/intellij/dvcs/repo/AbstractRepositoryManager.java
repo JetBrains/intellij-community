@@ -216,7 +216,7 @@ public abstract class AbstractRepositoryManager<T extends Repository> extends Ab
             T repository = createRepository(root);
             repositories.put(root, repository);
           }
-          catch (RepoStateException e) {
+          catch (IllegalStateException e) {
             LOG.error("Couldn't initialize Repository in " + root.getPresentableUrl(), e);
           }
         }

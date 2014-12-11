@@ -20,5 +20,5 @@ package com.intellij.openapi.externalSystem.service.notification;
  * @since 3/28/14
  */
 public enum NotificationSource {
-  PROJECT_SYNC
+  PROJECT_SYNC, TASK_EXECUTION
 }

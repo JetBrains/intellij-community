@@ -19,8 +19,15 @@ import com.intellij.codeInsight.JavaPsiEquivalenceUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diff.DiffManager;
+import com.intellij.openapi.diff.SimpleContent;
+import com.intellij.openapi.diff.SimpleDiffRequest;
+import com.intellij.openapi.diff.ex.DiffPanelEx;
+import com.intellij.openapi.diff.ex.DiffPanelOptions;
+import com.intellij.openapi.diff.impl.ComparisonPolicy;
+import com.intellij.openapi.diff.impl.processing.HighlightMode;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
@@ -33,13 +40,17 @@ import com.intellij.refactoring.util.VariableData;
 import com.intellij.refactoring.util.duplicates.DuplicatesFinder;
 import com.intellij.refactoring.util.duplicates.Match;
 import com.intellij.refactoring.util.duplicates.MethodDuplicatesHandler;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.text.UniqueNameGenerator;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 
 public class ExtractMethodSignatureSuggester {
   private static final Logger LOG = Logger.getInstance("#" + ExtractMethodSignatureSuggester.class.getName());
@@ -78,9 +89,8 @@ public class ExtractMethodSignatureSuggester {
   public List<Match> getDuplicates(final PsiMethod method, final PsiMethodCallExpression methodCall) {
     final List<Match> duplicates = findDuplicatesSignature(method);
     if (duplicates != null && !duplicates.isEmpty()) {
-      if (ApplicationManager.getApplication().isUnitTestMode() ||
-          Messages.showYesNoDialog(myProject, "No exact duplicates found.\nWould you like to apply suggested changes to replace " + duplicates.size() + " duplicates?", "Extract Parameters to Replace Duplicates",
-                                   Messages.getQuestionIcon()) == Messages.YES) {
+      if (ApplicationManager.getApplication().isUnitTestMode() || 
+          new PreviewDialog(method, myExtractedMethod, methodCall, myMethodCall, duplicates.size()).showAndGet()) {
         WriteCommandAction.runWriteCommandAction(myProject, new Runnable() {
           @Override
           public void run() {
@@ -324,5 +334,58 @@ public class ExtractMethodSignatureSuggester {
     }
 
     return new InputVariables(inputVariables, myExtractedMethod.getProject(), new LocalSearchScope(myExtractedMethod), false);
+  }
+
+  private static class PreviewDialog extends DialogWrapper {
+    private final PsiMethod myOldMethod;
+    private final PsiMethod myNewMethod;
+    private final PsiMethodCallExpression myOldCall;
+    private final PsiMethodCallExpression myNewCall;
+    private final int myDuplicatesNumber;
+
+    public PreviewDialog(PsiMethod oldMethod,
+                         PsiMethod newMethod,
+                         PsiMethodCallExpression oldMethodCall,
+                         PsiMethodCallExpression newMethodCall,
+                         int duplicatesNumber) {
+      super(oldMethod.getProject());
+      myOldMethod = oldMethod;
+      myNewMethod = newMethod;
+      myOldCall = oldMethodCall;
+      myNewCall = newMethodCall;
+      myDuplicatesNumber = duplicatesNumber;
+      setTitle("Extract Parameters to Replace Duplicates");
+      setOKButtonText("Accept Signature Change");
+      init();
+    }
+
+    @Nullable
+    @Override
+    protected JComponent createNorthPanel() {
+      return new JLabel("<html><b>No exact method duplicates were found</b>, though changed method as shown below has " + myDuplicatesNumber + " duplicate" + (myDuplicatesNumber > 1 ? "s" : "") + " </html>");
+    }
+
+    @Nullable
+    @Override
+    protected JComponent createCenterPanel() {
+      final Project project = myOldMethod.getProject();
+      final DiffPanelEx diffPanel = (DiffPanelEx)DiffManager.getInstance().createDiffPanel(null, project, getDisposable(), null);
+      diffPanel.setComparisonPolicy(ComparisonPolicy.IGNORE_SPACE);
+      diffPanel.setHighlightMode(HighlightMode.BY_WORD);
+      DiffPanelOptions diffPanelOptions = diffPanel.getOptions();
+      diffPanelOptions.setShowSourcePolicy(DiffPanelOptions.ShowSourcePolicy.OPEN_EDITOR);
+      diffPanelOptions.setRequestFocusOnNewContent(false);
+      SimpleDiffRequest request = new SimpleDiffRequest(project, null);
+      final String oldContent = myOldMethod.getText() + "\n\n\nmethod call:\n " + myOldCall.getText();
+      final String newContent = myNewMethod.getText() + "\n\n\nmethod call:\n " + myNewCall.getText();
+      request.setContents(new SimpleContent(oldContent), new SimpleContent(newContent));
+      request.setContentTitles("Before", "After");
+      diffPanel.setDiffRequest(request);
+      
+      final JPanel panel = new JPanel(new BorderLayout());
+      panel.add(diffPanel.getComponent(), BorderLayout.CENTER);
+      panel.setBorder(IdeBorderFactory.createEmptyBorder(new Insets(5, 0, 0, 0)));
+      return panel;
+    }
   }
 }

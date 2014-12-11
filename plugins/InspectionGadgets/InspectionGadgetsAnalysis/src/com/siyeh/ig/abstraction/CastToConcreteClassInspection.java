@@ -74,7 +74,7 @@ public class CastToConcreteClassInspection extends BaseInspection {
         return;
       }
       if (ignoreInEquals) {
-        final PsiMethod method = PsiTreeUtil.getParentOfType(expression, PsiMethod.class, true, PsiClass.class);
+        final PsiMethod method = PsiTreeUtil.getParentOfType(expression, PsiMethod.class, true, PsiClass.class, PsiLambdaExpression.class);
         if (MethodUtils.isEquals(method)) {
           return;
         }
@@ -117,7 +117,7 @@ public class CastToConcreteClassInspection extends BaseInspection {
         return;
       }
       if (ignoreInEquals) {
-        final PsiMethod method = PsiTreeUtil.getParentOfType(expression, PsiMethod.class, true, PsiClass.class);
+        final PsiMethod method = PsiTreeUtil.getParentOfType(expression, PsiMethod.class, true, PsiClass.class, PsiLambdaExpression.class);
         if (MethodUtils.isEquals(method)) {
           return;
         }

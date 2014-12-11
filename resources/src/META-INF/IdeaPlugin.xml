@@ -119,11 +119,17 @@
     <extensionPoint name="debugger.frameExtraVarsProvider"
                     interface="com.intellij.debugger.engine.FrameExtraVariablesProvider"/>
 
+    <extensionPoint name="debugger.sourcePositionProvider"
+                    interface="com.intellij.debugger.engine.SourcePositionProvider"/>
+
     <extensionPoint name="debugger.simpleGetterProvider"
                     interface="com.intellij.debugger.engine.SimpleGetterProvider"/>
 
     <extensionPoint name="debugger.syntheticProvider"
                     interface="com.intellij.debugger.engine.SyntheticTypeComponentProvider"/>
+
+    <extensionPoint name="debugger.extraSteppingFilter"
+                    interface="com.intellij.debugger.engine.ExtraSteppingFilter"/>
 
     <extensionPoint name="allOverridingMethodsSearch" interface="com.intellij.util.QueryExecutor"/>
     <extensionPoint name="annotatedElementsSearch" interface="com.intellij.util.QueryExecutor"/>

@@ -20,7 +20,7 @@ import com.jetbrains.python.newProject.actions.PyCharmNewProjectStep;
 
 public class PyCharmNewProjectDialog extends AbstractNewProjectDialog {
   @Override
-  protected PyCharmNewProjectStep createRootStep(Runnable runnable, final String name) {
-    return new PyCharmNewProjectStep(name, runnable);
+  protected PyCharmNewProjectStep createRootStep() {
+    return new PyCharmNewProjectStep();
   }
 }

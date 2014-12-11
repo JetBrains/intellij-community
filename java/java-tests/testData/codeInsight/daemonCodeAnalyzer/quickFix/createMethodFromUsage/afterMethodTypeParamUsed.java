@@ -1,4 +1,4 @@
-// "Create Method 'f'" "true"
+// "Create method 'f'" "true"
 class A {
     <T> T foo(){
        B<T> x = f();

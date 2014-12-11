@@ -23,7 +23,6 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.model.project.ExternalProjectPojo;
-import com.intellij.openapi.externalSystem.service.task.ui.ExternalSystemTasksTreeModel;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
@@ -32,7 +31,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -62,8 +60,7 @@ public class ToolWindowModuleService extends AbstractToolWindowService<ModuleDat
 
   @Override
   protected void processData(@NotNull final Collection<DataNode<ModuleData>> nodes,
-                             @NotNull Project project,
-                             @Nullable final ExternalSystemTasksTreeModel model)
+                             @NotNull Project project)
   {
     if (nodes.isEmpty()) {
       return;

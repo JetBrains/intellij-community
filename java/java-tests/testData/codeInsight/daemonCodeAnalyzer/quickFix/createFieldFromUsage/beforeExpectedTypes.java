@@ -1,4 +1,4 @@
-// "Create Field 'panel'" "true"
+// "Create field 'panel'" "true"
 import javax.swing.*;
 
 class Test {

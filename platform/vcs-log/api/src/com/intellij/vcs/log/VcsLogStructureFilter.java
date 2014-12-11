@@ -26,12 +26,11 @@ import java.util.Collection;
 public interface VcsLogStructureFilter extends VcsLogDetailsFilter {
 
   /**
-   * <p>Returns files from the given VCS root, which are affected by matching commits, and folders containing such files.</p>
+   * <p>Returns files which are affected by matching commits, and folders containing such files.</p>
    *
    * <p>That is: the commit A (made in the given VCS root) modifying file f.txt matches this filter,
    *    if this method returns a set which includes a folder containing f.txt, or the file f.txt itself.</p>
    */
   @NotNull
-  Collection<VirtualFile> getFiles(@NotNull VirtualFile root);
-
+  Collection<VirtualFile> getFiles();
 }

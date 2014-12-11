@@ -34,10 +34,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.reference.SoftReference;
-import com.intellij.util.DocumentUtil;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.LocalTimeCounter;
-import com.intellij.util.Processor;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.text.CharArrayUtil;
@@ -138,6 +135,10 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     finally {
       myAcceptSlashR = accept;
     }
+  }
+
+  public boolean acceptsSlashR() {
+    return myAcceptSlashR;
   }
 
   private LineSet getLineSet() {
@@ -945,7 +946,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   private DocumentListener[] getCachedListeners() {
     DocumentListener[] cachedListeners = myCachedDocumentListeners.get();
     if (cachedListeners == null) {
-      DocumentListener[] listeners = myDocumentListeners.toArray(new DocumentListener[myDocumentListeners.size()]);
+      DocumentListener[] listeners = ArrayUtil.stripTrailingNulls(myDocumentListeners.toArray(new DocumentListener[myDocumentListeners.size()]));
       Arrays.sort(listeners, PrioritizedDocumentListener.COMPARATOR);
       cachedListeners = listeners;
       myCachedDocumentListeners.set(cachedListeners);

@@ -27,8 +27,6 @@ public class GroovyRtConstants {
   public static final String SRC_FILE = "src_file";
   public static final String COMPILED_START = "%%c";
   public static final String COMPILED_END = "/%c";
-  public static final String TO_RECOMPILE_START = "%%rc";
-  public static final String TO_RECOMPILE_END = "/%rc";
   public static final String MESSAGES_START = "%%m";
   public static final String MESSAGES_END = "/%m";
   public static final String SEPARATOR = "#%%#%%%#%%%%%%%%%#";

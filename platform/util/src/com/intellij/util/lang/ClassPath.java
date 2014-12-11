@@ -49,12 +49,22 @@ public class ClassPath {
   private final boolean myCanUseCache;
   private final boolean myAcceptUnescapedUrls;
   private final boolean myPreloadJarContents;
+  @Nullable private final CachePoolImpl myCachePool;
+  @Nullable private final UrlClassLoader.CachingCondition myCachingCondition;
 
-  public ClassPath(List<URL> urls, boolean canLockJars, boolean canUseCache, boolean acceptUnescapedUrls, boolean preloadJarContents) {
+  public ClassPath(List<URL> urls,
+                   boolean canLockJars,
+                   boolean canUseCache,
+                   boolean acceptUnescapedUrls,
+                   boolean preloadJarContents,
+                   @Nullable CachePoolImpl cachePool,
+                   @Nullable UrlClassLoader.CachingCondition cachingCondition) {
     myCanLockJars = canLockJars;
     myCanUseCache = canUseCache;
     myAcceptUnescapedUrls = acceptUnescapedUrls;
     myPreloadJarContents = preloadJarContents;
+    myCachePool = cachePool;
+    myCachingCondition = cachingCondition;
     push(urls);
   }
 
@@ -181,9 +191,14 @@ public class ClassPath {
     }
 
     if (loader != null && myCanUseCache) {
-      ClasspathCache.LoaderData loaderData = new ClasspathCache.LoaderData(loader);
-      loader.buildCache(loaderData);
-      myCache.applyLoaderData(loaderData);
+      ClasspathCache.LoaderData data = myCachePool == null ? null : myCachePool.getCachedData(url);
+      if (data == null) {
+        data = loader.buildData();
+        if (myCachePool != null && myCachingCondition != null && myCachingCondition.shouldCacheData(url)) {
+          myCachePool.cacheData(url, data);
+        }
+      }
+      myCache.applyLoaderData(data, loader);
     }
 
     return loader;

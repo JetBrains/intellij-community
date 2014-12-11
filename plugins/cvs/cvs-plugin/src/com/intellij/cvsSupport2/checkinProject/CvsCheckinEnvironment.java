@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,9 @@ import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutor;
 import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutorCallback;
 import com.intellij.cvsSupport2.cvshandlers.CommandCvsHandler;
 import com.intellij.cvsSupport2.cvshandlers.CvsHandler;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
@@ -34,6 +36,7 @@ import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
+import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.FunctionUtil;
@@ -122,6 +125,17 @@ public class CvsCheckinEnvironment implements CheckinEnvironment {
   }
 
   public List<VcsException> scheduleMissingFileForDeletion(List<FilePath> files) {
+    for (FilePath file : files) {
+      if (file.isDirectory()) {
+        VcsBalloonProblemNotifier.showOverChangesView(myProject,
+                                                      "Locally deleted directories cannot be removed from CVS. To remove a locally " +
+                                                      "deleted directory from CVS, first invoke Rollback and then use " +
+                                                      ApplicationNamesInfo.getInstance().getFullProductName() +
+                                                      "'s Delete.",
+                                                      MessageType.WARNING);
+        break;
+      }
+    }
     final CvsHandler handler = RemoveLocallyFileOrDirectoryAction.getDefaultHandler(myProject, ChangesUtil.filePathsToFiles(files));
     final CvsOperationExecutor executor = new CvsOperationExecutor(myProject);
     executor.performActionSync(handler, CvsOperationExecutorCallback.EMPTY);

@@ -37,7 +37,7 @@ public class MoveCaretUpWithSelectionAction extends EditorAction {
 
   private static class Handler extends EditorActionHandler {
     @Override
-    public void doExecute(Editor editor, @Nullable Caret caret, DataContext dataContext) {
+    public void doExecute(final Editor editor, @Nullable Caret caret, DataContext dataContext) {
       if (!editor.getCaretModel().supportsMultipleCarets()) {
         editor.getCaretModel().moveCaretRelatively(0, -1, true, editor.isColumnMode(), true);
         return;
@@ -49,7 +49,7 @@ public class MoveCaretUpWithSelectionAction extends EditorAction {
         CaretAction caretAction = new CaretAction() {
           @Override
           public void perform(Caret caret) {
-            caret.moveCaretRelatively(0, -1, true, true);
+            caret.moveCaretRelatively(0, -1, true, caret == editor.getCaretModel().getPrimaryCaret());
           }
         };
         if (caret == null) {

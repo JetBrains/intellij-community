@@ -79,11 +79,13 @@ public class SettingsProviderComponent implements ApplicationComponent {
       public Result<Set<String>> compute() {
         final Set<String> dirs = new HashSet<String>();
         final VirtualFile projectBase = project.getBaseDir();
-        dirs.add(project.getBasePath());
-        for (Module module : ModuleManager.getInstance(project).getModules()) {
-          for (VirtualFile root : ModuleRootManager.getInstance(module).getContentRoots()) {
-            if (!VfsUtilCore.isAncestor(projectBase, root, false)) {
-              dirs.add(root.getPath());
+        if (projectBase != null) {
+          dirs.add(project.getBasePath());
+          for (Module module : ModuleManager.getInstance(project).getModules()) {
+            for (VirtualFile root : ModuleRootManager.getInstance(module).getContentRoots()) {
+              if (!VfsUtilCore.isAncestor(projectBase, root, false)) {
+                dirs.add(root.getPath());
+              }
             }
           }
         }

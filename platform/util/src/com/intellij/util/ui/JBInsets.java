@@ -19,6 +19,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
+import static com.intellij.util.ui.JBUI.scale;
+
 /**
  * @author Konstantin Bulenkov
  */
@@ -34,7 +36,7 @@ public class JBInsets extends Insets {
    * @param right  the inset from the right.
    */
   public JBInsets(int top, int left, int bottom, int right) {
-    super(top, left, bottom, right);
+    super(scale(top), scale(left), scale(bottom), scale(right));
   }
   
   public int width() {

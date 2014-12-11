@@ -344,6 +344,9 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  public void testFoldingWithFieldInvolved() throws Exception {
+    doTest();
+  }
 
   public void testIDEADEV11748() throws Exception {
     doTest();
@@ -591,6 +594,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  public void testIncompleteExpression() throws Exception {
+    doTest();
+  }
+
   public void testTwoFromThreeEqStatements() throws Exception {
     doDuplicatesTest();
   }
@@ -627,6 +634,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doDuplicatesTest();
   }
 
+  public void testSuggestChangeSignatureInitialParameterUnused() throws Exception {
+    doDuplicatesTest();
+  }
+
   public void testSuggestChangeSignatureWithChangedParameterName() throws Exception {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
     boolean success = performExtractMethod(true, true, getEditor(), getFile(), getProject(), false, null, false, "p");
@@ -658,6 +669,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doTestReturnTypeChanged(PsiType.INT);
   }
 
+  public void testNoReturnTypesSuggested() throws Exception {
+    doTestReturnTypeChanged(PsiType.INT);
+  }
+
   public void testMultipleVarsInMethodNoReturnStatementAndAssignment() throws Exception {
     //return type should not be suggested but still 
     doTestReturnTypeChanged(PsiType.INT);
@@ -681,6 +696,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     finally {
       settings.LOCAL_VARIABLE_NAME_PREFIX = oldPrefix;
     }
+  }
+
+  public void testInferredNotNull() throws Exception {
+    doTest();
   }
 
   public void testCantPassFieldAsParameter() throws Exception {

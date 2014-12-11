@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ public class PsiExpressionPattern<T extends PsiExpression, Self extends PsiExpre
   public Self ofType(@NotNull final ElementPattern pattern) {
     return with(new PatternCondition<T>("ofType") {
       public boolean accepts(@NotNull final T t, final ProcessingContext context) {
-        return pattern.getCondition().accepts(t.getType(), context);
+        return pattern.accepts(t.getType(), context);
       }
     });
   }
@@ -41,7 +41,7 @@ public class PsiExpressionPattern<T extends PsiExpression, Self extends PsiExpre
       public boolean accepts(@NotNull PsiMethodCallExpression callExpression, ProcessingContext context) {
         final JavaResolveResult[] results = callExpression.getMethodExpression().multiResolve(true);
         for (JavaResolveResult result : results) {
-          if (method.getCondition().accepts(result.getElement(), context)) {
+          if (method.accepts(result.getElement(), context)) {
             return true;
           }
         }

@@ -31,7 +31,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PropertyUtil;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.RefactorJBundle;
@@ -140,7 +139,7 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
     }
     final String returnType = calculateReturnTypeString();
     usages.add(new ChangeReturnType(psiMethod, returnType));
-    psiMethod.accept(new ReturnSearchVisitor(usages, returnType, psiMethod));
+    psiMethod.accept(new ReturnSearchVisitor(usages, returnType));
   }
 
   private String calculateReturnTypeString() {
@@ -179,12 +178,16 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
             @Override
             public void visitReturnStatement(final PsiReturnStatement statement) {
               super.visitReturnStatement(statement);
-              if (PsiTreeUtil.getParentOfType(statement, PsiMethod.class, PsiLambdaExpression.class) != myMethod) return;
               final PsiExpression returnValue = statement.getReturnValue();
               if (returnValue != null) {
                 returnTypes.add(returnValue.getType());
               }
             }
+
+            @Override
+            public void visitClass(PsiClass aClass) {}
+            @Override
+            public void visitLambdaExpression(PsiLambdaExpression expression) {}
           });
         }
 
@@ -316,23 +319,19 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
   private class ReturnSearchVisitor extends JavaRecursiveElementWalkingVisitor {
     private final List<FixableUsageInfo> usages;
     private final String type;
-    private final PsiMethod myMethod;
 
-    ReturnSearchVisitor(List<FixableUsageInfo> usages, String type, final PsiMethod psiMethod) {
+    ReturnSearchVisitor(List<FixableUsageInfo> usages, String type) {
       super();
       this.usages = usages;
       this.type = type;
-      myMethod = psiMethod;
     }
 
     @Override
-    public void visitLambdaExpression(PsiLambdaExpression expression) {
-    }
+    public void visitClass(PsiClass aClass) {}
+    public void visitLambdaExpression(PsiLambdaExpression expression) {}
 
     public void visitReturnStatement(PsiReturnStatement statement) {
       super.visitReturnStatement(statement);
-
-      if (PsiTreeUtil.getParentOfType(statement, PsiMethod.class) != myMethod) return;
 
       final PsiExpression returnValue = statement.getReturnValue();
       if (myUseExistingClass && returnValue instanceof PsiMethodCallExpression) {

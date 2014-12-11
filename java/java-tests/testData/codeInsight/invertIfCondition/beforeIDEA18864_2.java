@@ -1,4 +1,4 @@
-// "Invert If Condition" "true"
+// "Invert 'if' condition" "true"
 class A {
     public static void foo() {
         <caret>if (1 + 2 == 3) {

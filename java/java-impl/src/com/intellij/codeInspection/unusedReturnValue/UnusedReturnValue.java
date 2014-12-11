@@ -211,6 +211,12 @@ public class UnusedReturnValue extends GlobalJavaBatchInspectionTool{
             super.visitReturnStatement(statement);
             returnStatements.add(statement);
           }
+
+          @Override
+          public void visitClass(PsiClass aClass) {}
+
+          @Override
+          public void visitLambdaExpression(PsiLambdaExpression expression) {}
         });
         final PsiStatement[] psiStatements = body.getStatements();
         final PsiStatement lastStatement = psiStatements[psiStatements.length - 1];

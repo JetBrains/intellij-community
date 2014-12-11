@@ -18,6 +18,7 @@ package com.intellij.execution.process;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.configurations.PtyCommandLine;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -34,8 +35,11 @@ public class ColoredProcessHandler extends OSProcessHandler implements AnsiEscap
 
   private final List<AnsiEscapeDecoder.ColoredTextAcceptor> myColoredTextListeners = ContainerUtil.newArrayList();
 
+  private boolean myHasPty = false;
+
   public ColoredProcessHandler(final GeneralCommandLine commandLine) throws ExecutionException {
     super(commandLine.createProcess(), commandLine.getCommandLineString(), commandLine.getCharset());
+    myHasPty = commandLine instanceof PtyCommandLine;
   }
 
   public ColoredProcessHandler(Process process, String commandLine) {
@@ -46,6 +50,25 @@ public class ColoredProcessHandler extends OSProcessHandler implements AnsiEscap
                                final String commandLine,
                                @NotNull final Charset charset) {
     super(process, commandLine, charset);
+  }
+
+  /**
+   * In case of pty this process handler will use blocking read. The value should be set before
+   * startNotify invocation. It is set by default in case of using GeneralCommandLine based constructor.
+   *
+   * @param hasPty true if process is pty based
+   */
+  public void setHasPty(boolean hasPty) {
+    myHasPty = hasPty;
+  }
+
+  @Override
+  protected boolean useNonBlockingRead() {
+    if (myHasPty) {
+      // blocking read in case of pty based process
+      return false;
+    }
+    return super.useNonBlockingRead();
   }
 
   @Override

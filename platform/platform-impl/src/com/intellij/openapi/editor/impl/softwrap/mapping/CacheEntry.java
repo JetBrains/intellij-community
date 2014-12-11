@@ -23,6 +23,7 @@ import gnu.trove.TIntObjectProcedure;
 import gnu.trove.TObjectProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -57,8 +58,6 @@ class CacheEntry implements Comparable<CacheEntry>, Cloneable {
   public int endSoftWrapColumnDiff;
   public int endFoldedLines;
   public int endFoldingColumnDiff;
-
-  public boolean locked;
 
   private final Editor myEditor;
 
@@ -129,20 +128,26 @@ class CacheEntry implements Comparable<CacheEntry>, Cloneable {
   }
 
   /**
-   * Removes fold data for all fold regions that start at or after the given offset.
+   * Removes data for all tabs and fold regions that start at or after the given offset.
    * 
    * @param offset  target offset
    */
-  public void removeAllFoldDataAtOrAfter(final int offset) {
-    if (myFoldingData == DUMMY || myFoldingData.isEmpty()) {
-      return;
+  public void removeAllDataAtOrAfter(final int offset) {
+    if (myFoldingData != DUMMY && !myFoldingData.isEmpty()) {
+      myFoldingData.retainEntries(new TIntObjectProcedure<FoldingData>() {
+        @Override
+        public boolean execute(int a, FoldingData b) {
+          return a < offset;
+        }
+      });
     }
-    myFoldingData.retainEntries(new TIntObjectProcedure<FoldingData>() {
-      @Override
-      public boolean execute(int a, FoldingData b) {
-        return a < offset;
+    int i;
+    for (i = 0; i < myTabPositions.size(); i++) {
+      if (myTabPositions.get(i).offset >= offset) {
+        break;
       }
-    });
+    }
+    myTabPositions.subList(i, myTabPositions.size()).clear();
   }
   
   @Nullable
@@ -214,19 +219,9 @@ class CacheEntry implements Comparable<CacheEntry>, Cloneable {
     myFoldingData = newFoldingData;
   }
 
-  /**
-   * Asks current entry to update its state in a way to set start line data to the end line data.
-   */
-  public void collapse() {
-    endOffset = startOffset;
-    endLogicalLine = startLogicalLine;
-    endLogicalColumn = startLogicalColumn;
-    endVisualColumn = 0;
-    endSoftWrapLinesBefore = startSoftWrapLinesBefore;
-    endSoftWrapLinesCurrent = startSoftWrapLinesCurrent;
-    endSoftWrapColumnDiff = startSoftWrapColumnDiff;
-    endFoldedLines = startFoldedLines;
-    endFoldingColumnDiff = startFoldingColumnDiff;
+  @TestOnly
+  public TIntObjectHashMap<FoldingData> getFoldingData() {
+    return myFoldingData;
   }
 
   @Override

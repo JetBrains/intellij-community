@@ -13,16 +13,17 @@ import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.model.LocationAwareExternalSystemException;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
+import com.intellij.openapi.externalSystem.view.ExternalProjectsView;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -148,8 +149,15 @@ public class ExternalSystemNotificationManager {
           }
         }
 
-        final NotificationGroup group = ExternalSystemUtil.getToolWindowElement(
-          NotificationGroup.class, myProject, ExternalSystemDataKeys.NOTIFICATION_GROUP, externalSystemId);
+        NotificationGroup group;
+        if (notificationData.getBalloonGroup() == null) {
+          ExternalProjectsView externalProjectsView = ExternalProjectsManager.getInstance(myProject).getExternalProjectsView(externalSystemId);
+          group = externalProjectsView != null ? externalProjectsView.getNotificationGroup() : null;
+        }
+        else {
+          final NotificationGroup registeredGroup = NotificationGroup.findRegisteredGroup(notificationData.getBalloonGroup());
+          group = registeredGroup != null ? registeredGroup : NotificationGroup.balloonGroup(notificationData.getBalloonGroup());
+        }
         if (group == null) return;
 
         final Notification notification = group.createNotification(
@@ -359,6 +367,10 @@ public class ExternalSystemNotificationManager {
       case PROJECT_SYNC:
         contentDisplayName =
           ExternalSystemBundle.message("notification.messages.project.sync.tab.name", externalSystemId.getReadableName());
+        break;
+      case TASK_EXECUTION:
+        contentDisplayName =
+          ExternalSystemBundle.message("notification.messages.task.execution.tab.name", externalSystemId.getReadableName());
         break;
       default:
         throw new AssertionError("unsupported notification source found: " + notificationSource);

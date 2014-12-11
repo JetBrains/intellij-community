@@ -72,9 +72,17 @@ public class TrelloUtil {
 
   private static class LabelColorDeserializer implements JsonDeserializer<LabelColor> {
     @Override
-    public LabelColor deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
-      throws JsonParseException {
-      return LabelColor.valueOf(json.getAsString().toUpperCase());
+    public LabelColor deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+      final String colorName = json.getAsString().toUpperCase();
+      if (colorName.isEmpty()) {
+        return LabelColor.NO_COLOR;
+      }
+      try {
+        return LabelColor.valueOf(colorName);
+      }
+      catch (IllegalArgumentException e) {
+        return LabelColor.NO_COLOR;
+      }
     }
   }
 }

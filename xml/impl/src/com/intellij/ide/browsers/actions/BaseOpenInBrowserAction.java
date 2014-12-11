@@ -30,13 +30,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.AsyncResult;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.Consumer;
@@ -74,7 +72,7 @@ public abstract class BaseOpenInBrowserAction extends DumbAwareAction {
       return;
     }
 
-    Pair<OpenInBrowserRequest, WebBrowserUrlProvider> result = doUpdate(e);
+    OpenInBrowserRequest result = doUpdate(e);
     if (result == null) {
       return;
     }
@@ -85,9 +83,11 @@ public abstract class BaseOpenInBrowserAction extends DumbAwareAction {
       builder.append(" (");
       Shortcut[] shortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts("WebOpenInAction");
       boolean exists = shortcuts.length > 0;
-      if (exists) builder.append(KeymapUtil.getShortcutText(shortcuts[0]));
+      if (exists) {
+        builder.append(KeymapUtil.getShortcutText(shortcuts[0]));
+      }
 
-      if (HtmlUtil.isHtmlFile(result.first.getFile())) {
+      if (HtmlUtil.isHtmlFile(result.getFile())) {
         builder.append(exists ? ", " : "").append("hold Shift to open URL of local file");
       }
       builder.append(')');
@@ -146,20 +146,11 @@ public abstract class BaseOpenInBrowserAction extends DumbAwareAction {
   }
 
   @Nullable
-  public static Pair<OpenInBrowserRequest, WebBrowserUrlProvider> doUpdate(@NotNull AnActionEvent event) {
+  public static OpenInBrowserRequest doUpdate(@NotNull AnActionEvent event) {
     OpenInBrowserRequest request = createRequest(event.getDataContext());
-    boolean applicable = false;
-    WebBrowserUrlProvider provider = null;
-    if (request != null) {
-      applicable = WebBrowserServiceImpl.isHtmlOrXmlFile(request.getFile()) && !(request.getVirtualFile() instanceof LightVirtualFile);
-      if (!applicable) {
-        provider = WebBrowserServiceImpl.getProvider(request);
-        applicable = provider != null;
-      }
-    }
-
+    boolean applicable = request != null && WebBrowserServiceImpl.getProvider(request) != null;
     event.getPresentation().setEnabledAndVisible(applicable);
-    return applicable ? Pair.create(request, provider) : null;
+    return applicable ? request : null;
   }
 
   public static void open(@NotNull AnActionEvent event, @Nullable WebBrowser browser) {

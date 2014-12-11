@@ -30,6 +30,10 @@ class ConvertCatchToThrowsPredicate implements PsiElementPredicate {
       return false;
     }
     final PsiElement owner = PsiTreeUtil.getParentOfType(parent, PsiMethod.class, PsiClass.class, PsiLambdaExpression.class);
-    return owner instanceof PsiMethod || owner instanceof PsiLambdaExpression;
+    if (owner instanceof PsiLambdaExpression) {
+      final PsiMethod method = LambdaUtil.getFunctionalInterfaceMethod(owner);
+      return !(method instanceof PsiCompiledElement);
+    }
+    return owner instanceof PsiMethod;
   }
 }

@@ -47,10 +47,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.impl.source.codeStyle.JavaCodeStyleManagerImpl;
 import com.intellij.psi.scope.processor.VariablesProcessor;
@@ -132,8 +129,8 @@ public class ExtractMethodProcessor implements MatchProvider {
   protected PsiStatement myFirstExitStatementCopy;
   private PsiMethod myExtractedMethod;
   private PsiMethodCallExpression myMethodCall;
-  private boolean myNullConditionalCheck = false;
-  private boolean myNotNullConditionalCheck = false;
+  protected boolean myNullConditionalCheck = false;
+  protected boolean myNotNullConditionalCheck = false;
   private Nullness myNullness;
 
   public ExtractMethodProcessor(Project project,
@@ -262,6 +259,9 @@ public class ExtractMethodProcessor implements MatchProvider {
       }
       else {
         expressionType = RefactoringUtil.getTypeByExpressionWithExpectedType(myExpression);
+        if (expressionType == null && !(myExpression.getParent() instanceof PsiExpressionStatement)) {
+          expressionType = PsiType.getJavaLangObject(myExpression.getManager(), GlobalSearchScope.allScope(myProject));
+        }
       }
     }
     if (expressionType == null) {
@@ -344,7 +344,7 @@ public class ExtractMethodProcessor implements MatchProvider {
 
   @Nullable
   private PsiVariable getArtificialOutputVariable() {
-    if (myOutputVariables.length == 0) {
+    if (myOutputVariables.length == 0 && myExitStatements.isEmpty()) {
       if (myCanBeChainedConstructor) {
         final Set<PsiField> fields = new HashSet<PsiField>();
         for (PsiElement element : myElements) {
@@ -551,10 +551,14 @@ public class ExtractMethodProcessor implements MatchProvider {
     final PsiType returnType = myArtificialOutputVariable != null ? myArtificialOutputVariable.getType() : myReturnType;
     return new ExtractMethodDialog(myProject, myTargetClass, myInputVariables, returnType, getTypeParameterList(),
                                    getThrownExceptions(), isStatic(), isCanBeStatic(), myCanBeChainedConstructor,
-                                                         suggestInitialMethodName(),
                                                          myRefactoringName, myHelpId, myNullness, myElements) {
       protected boolean areTypesDirected() {
         return direct;
+      }
+
+      @Override
+      protected String[] suggestMethodNames() {
+        return suggestInitialMethodName();
       }
 
       @Override
@@ -612,13 +616,13 @@ public class ExtractMethodProcessor implements MatchProvider {
     final List<PsiStatement> filter = ContainerUtil.filter(myExitStatements, new Condition<PsiStatement>() {
       @Override
       public boolean value(PsiStatement statement) {
-        return statement instanceof PsiReturnStatement;
+        return statement instanceof PsiReturnStatement && ((PsiReturnStatement)statement).getReturnValue() != null;
       }
     });
     final List<PsiExpression> map = ContainerUtil.map(filter, new Function<PsiStatement, PsiExpression>() {
       @Override
       public PsiExpression fun(PsiStatement statement) {
-        return ((PsiReturnStatement) statement).getReturnValue();
+        return ((PsiReturnStatement)statement).getReturnValue();
       }
     });
     return map.toArray(new PsiExpression[map.size()]);
@@ -626,7 +630,7 @@ public class ExtractMethodProcessor implements MatchProvider {
 
   private Nullness initNullness() {
     if (!PsiUtil.isLanguageLevel5OrHigher(myElements[0]) || PsiUtil.resolveClassInType(myReturnType) == null) return null;
-    final PsiMethod emptyMethod = generateEmptyMethod(getThrownExceptions(), isStatic(), "name");
+    final PsiMethod emptyMethod = (PsiMethod)myTargetClass.copy().add(generateEmptyMethod("name"));
     prepareMethodBody(emptyMethod, false);
     final NullableNotNullManager manager = NullableNotNullManager.getInstance(myProject);
     final PsiClass nullableAnnotationClass = JavaPsiFacade.getInstance(myProject)
@@ -640,39 +644,48 @@ public class ExtractMethodProcessor implements MatchProvider {
     return null;
   }
 
-  protected String suggestInitialMethodName() {
+  protected String[] suggestInitialMethodName() {
     if (StringUtil.isEmpty(myInitialMethodName)) {
-      final String initialMethodName;
+      final Set<String> initialMethodNames = new LinkedHashSet<String>();
       final JavaCodeStyleManagerImpl codeStyleManager = (JavaCodeStyleManagerImpl)JavaCodeStyleManager.getInstance(myProject);
-      final String[] names = codeStyleManager.suggestVariableName(VariableKind.FIELD, null, myExpression, myReturnType).names;
-      if (names.length > 0) {
-        initialMethodName = codeStyleManager.variableNameToPropertyName(names[0], VariableKind.FIELD);
-      } else {
-        return myInitialMethodName;
-      }
-
-      if (myReturnType != null && !(myReturnType instanceof PsiPrimitiveType)) {
-        return PropertyUtil.suggestGetterName(initialMethodName, myReturnType);
-      } else if (myExpression != null) {
-        if (myExpression instanceof PsiMethodCallExpression) {
-          PsiExpression qualifierExpression = ((PsiMethodCallExpression)myExpression).getMethodExpression().getQualifierExpression();
-          if (qualifierExpression != null && PsiUtil.resolveGenericsClassInType(qualifierExpression.getType()) != myTargetClass) {
-            return initialMethodName;
-          }
-        } else {
-          return initialMethodName;
+      if (myExpression != null || !(myReturnType instanceof PsiPrimitiveType)) {
+        final String[] names = codeStyleManager.suggestVariableName(VariableKind.FIELD, null, myExpression, myReturnType).names;
+        for (String name : names) {
+          initialMethodNames.add(codeStyleManager.variableNameToPropertyName(name, VariableKind.FIELD));
         }
       }
 
-      PsiElement prevSibling = PsiTreeUtil.skipSiblingsBackward(myElements[0], PsiWhiteSpace.class);
-      if (prevSibling instanceof PsiComment && ((PsiComment)prevSibling).getTokenType() == JavaTokenType.END_OF_LINE_COMMENT) {
-        final String text = StringUtil.decapitalize(StringUtil.capitalizeWords(prevSibling.getText().trim().substring(2), true)).replaceAll(" ", "");
-        if (PsiNameHelper.getInstance(myProject).isIdentifier(text) && text.length() < 20) {
-          return text;
+      if (myOutputVariable != null) {
+        final VariableKind outKind = codeStyleManager.getVariableKind(myOutputVariable);
+        final SuggestedNameInfo nameInfo = codeStyleManager
+          .suggestVariableName(VariableKind.FIELD, codeStyleManager.variableNameToPropertyName(myOutputVariable.getName(), outKind), null, myOutputVariable.getType());
+        for (String name : nameInfo.names) {
+          initialMethodNames.add(codeStyleManager.variableNameToPropertyName(name, VariableKind.FIELD));
         }
+      }
+
+      final String nameByComment = getNameByComment();
+      final List<String> getters = new ArrayList<String>(ContainerUtil.map(initialMethodNames, new Function<String, String>() {
+        @Override
+        public String fun(String propertyName) {
+          return PropertyUtil.suggestGetterName(propertyName, myReturnType);
+        }
+      }));
+      ContainerUtil.addIfNotNull(nameByComment, getters);
+      return ArrayUtil.toStringArray(getters);
+    }
+    return new String[] {myInitialMethodName};
+  }
+
+  private String getNameByComment() {
+    PsiElement prevSibling = PsiTreeUtil.skipSiblingsBackward(myElements[0], PsiWhiteSpace.class);
+    if (prevSibling instanceof PsiComment && ((PsiComment)prevSibling).getTokenType() == JavaTokenType.END_OF_LINE_COMMENT) {
+      final String text = StringUtil.decapitalize(StringUtil.capitalizeWords(prevSibling.getText().trim().substring(2), true)).replaceAll(" ", "");
+      if (PsiNameHelper.getInstance(myProject).isIdentifier(text) && text.length() < 20) {
+        return text;
       }
     }
-    return myInitialMethodName;
+    return null;
   }
 
   public boolean isOutputVariable(PsiVariable var) {
@@ -820,7 +833,7 @@ public class ExtractMethodProcessor implements MatchProvider {
 
   public void doExtract() throws IncorrectOperationException {
 
-    PsiMethod newMethod = generateEmptyMethod(getThrownExceptions(), isStatic());
+    PsiMethod newMethod = generateEmptyMethod();
 
     myExpression = myInputVariables.replaceWrappedReferences(myElements, myExpression);
     renameInputVariables();
@@ -1219,12 +1232,14 @@ public class ExtractMethodProcessor implements MatchProvider {
           }
           methodCallExpression.getArgumentList().add(val);
         }
+      } else {
+        methodCallExpression.getArgumentList().add(myElementFactory.createExpressionFromText(data.variable.getName(), methodCallExpression));
       }
     }
     return match.replace(myExtractedMethod, methodCallExpression, myOutputVariable);
   }
 
-  private void deleteExtracted() throws IncorrectOperationException {
+  protected void deleteExtracted() throws IncorrectOperationException {
     if (myEnclosingBlockStatement == null) {
       myElements[0].getParent().deleteChildRange(myElements[0], myElements[myElements.length - 1]);
     }
@@ -1269,20 +1284,18 @@ public class ExtractMethodProcessor implements MatchProvider {
     return myReturnType;
   }
 
-  private PsiMethod generateEmptyMethod(PsiClassType[] exceptions, boolean isStatic) throws IncorrectOperationException {
-    return generateEmptyMethod(exceptions, isStatic, myMethodName);
+  private PsiMethod generateEmptyMethod() throws IncorrectOperationException {
+    return generateEmptyMethod(myMethodName);
   }
 
-  private PsiMethod generateEmptyMethod(PsiClassType[] exceptions,
-                                        boolean isStatic,
-                                        String methodName) throws IncorrectOperationException {
+  public PsiMethod generateEmptyMethod(String methodName) throws IncorrectOperationException {
     PsiMethod newMethod;
     if (myIsChainedConstructor) {
       newMethod = myElementFactory.createConstructor();
     }
     else {
       newMethod = myElementFactory.createMethod(methodName, myReturnType);
-      PsiUtil.setModifierProperty(newMethod, PsiModifier.STATIC, isStatic);
+      PsiUtil.setModifierProperty(newMethod, PsiModifier.STATIC, isStatic());
     }
     PsiUtil.setModifierProperty(newMethod, myMethodVisibility, true);
     if (getTypeParameterList() != null) {
@@ -1321,7 +1334,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
 
     PsiReferenceList throwsList = newMethod.getThrowsList();
-    for (PsiClassType exception : exceptions) {
+    for (PsiClassType exception : getThrownExceptions()) {
       throwsList.add(JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory().createReferenceElementByType(exception));
     }
 
@@ -1589,7 +1602,7 @@ public class ExtractMethodProcessor implements MatchProvider {
       myCanBeStatic = false;
     }
 
-    myInputVariables = new InputVariables(inputVariables, myProject, new LocalSearchScope(myElements), true);
+    myInputVariables = new InputVariables(inputVariables, myProject, new LocalSearchScope(myElements), isFoldingApplicable());
     myInputVariables.setUsedInstanceFields(fields);
 
     if (!checkExitPoints()){
@@ -1601,6 +1614,10 @@ public class ExtractMethodProcessor implements MatchProvider {
     if (extractPass != null) {
       extractPass.pass(this);
     }
+    return true;
+  }
+
+  protected boolean isFoldingApplicable() {
     return true;
   }
 

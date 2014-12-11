@@ -92,7 +92,6 @@
       <separator/>
     </group>
 
-    <action id="Git.CherryPick" class="git4idea.cherrypick.GitCherryPickAction" icon="Git4ideaIcons.CherryPick"/>
     <action class="git4idea.actions.GitCheckoutRevisionAction" id="Git.CheckoutRevision" text="Checkout Revision"/>
     <action class="git4idea.actions.GitCreateNewBranchAction" id="Git.CreateNewBranch" text="New Branch..."
             description="Create new branch starting from the selected commit"/>
@@ -102,7 +101,6 @@
 
     <group id="Git.Log.ContextMenu">
       <separator/>
-      <reference id="Git.CherryPick" />
       <reference id="Git.CheckoutRevision"/>
       <reference id="Git.CreateNewBranch" />
       <reference id="Git.CreateNewTag" />
@@ -112,7 +110,6 @@
     </group>
 
     <group id="Git.Log.Toolbar">
-      <reference id="Git.CherryPick"/>
       <action id="Git.Log.DeepCompare" class="git4idea.branch.DeepCompareAction" text="Highlight non-picked commits"
               icon="Git4ideaIcons.DeepCompare"
               description="Dims those commits which have equivalent changes in the current branch"/>
@@ -126,7 +123,6 @@
     <component>
       <interface-class>git4idea.repo.GitRepositoryManager</interface-class>
       <implementation-class>git4idea.repo.GitRepositoryManager</implementation-class>
-      <headless-implementation-class>git4idea.test.GitTestRepositoryManager</headless-implementation-class>
     </component>
   </project-components>
 
@@ -143,6 +139,7 @@
     <logProvider implementation="git4idea.log.GitLogProvider"/>
     <vcsChangesViewRefresher implementation="git4idea.changes.GitChangesViewRefresher" />
     <pushSupport implementation="git4idea.push.GitPushSupport"/>
+    <cherryPicker implementation="git4idea.cherrypick.GitCherryPicker"/>
     
     <projectService
         serviceInterface="git4idea.annotate.GitAnnotationProvider"
