@@ -48,6 +48,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.MatteBorder;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.text.BadLocationException;
@@ -228,23 +230,38 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
   }
 
   private static class DataPanel extends JEditorPane {
+    public static final int BRANCHES_LIMIT = 6;
+    @NotNull private static String SHOW_ALL_BRANCHES = "Show All Branches";
 
     @NotNull private final Project myProject;
     private final boolean myMultiRoot;
     private String myMainText;
     @Nullable private List<String> myBranches;
+    private boolean myExpanded = false;
 
     DataPanel(@NotNull Project project, boolean multiRoot) {
       super(UIUtil.HTML_MIME, "");
       myProject = project;
       myMultiRoot = multiRoot;
       setEditable(false);
-      addHyperlinkListener(BrowserHyperlinkListener.INSTANCE);
       setOpaque(false);
       putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, Boolean.TRUE);
 
-      final DefaultCaret caret = (DefaultCaret)getCaret();
+      DefaultCaret caret = (DefaultCaret)getCaret();
       caret.setUpdatePolicy(DefaultCaret.NEVER_UPDATE);
+
+      addHyperlinkListener(new HyperlinkListener() {
+        public void hyperlinkUpdate(HyperlinkEvent e) {
+          if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED && SHOW_ALL_BRANCHES.equals(e.getDescription())) {
+            if (!myExpanded) {
+              myExpanded = true;
+              update();
+            }
+          } else {
+            BrowserHyperlinkListener.INSTANCE.hyperlinkUpdate(e);
+          }
+        }
+      });
     }
 
     void setData(@Nullable VcsFullCommitDetails commit) {
@@ -267,6 +284,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       else {
         myBranches = branches;
       }
+      myExpanded = false;
       update();
     }
 
@@ -281,14 +299,28 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
                 myMainText +
                 "<br/>" +
                 "<br/>" +
-                "<i>In " +
-                (myBranches == null ? "" : myBranches.size() + " ") +
-                "branche" + (myBranches == null || myBranches.size() > 1 ? "s" : "" ) + ":</i> " +
-                (myBranches == null ? "<i>loading...</i>" : StringUtil.join(myBranches, ", ")) +
+                getBranchesText() +
                 "</body></html>");
       }
       revalidate();
       repaint();
+    }
+
+    @NotNull
+    private String getBranchesText() {
+      if (myBranches == null) {
+        return "<i>In branches: loading...</i>";
+      }
+      return "<i>In " + myBranches.size() + " branch" + (myBranches.size() > 1 ? "es" : "") + ":</i> " + getCollapsedBranches(myBranches, myExpanded);
+    }
+
+    @NotNull
+    private static String getCollapsedBranches(@NotNull List<String> branches, boolean expanded) {
+      if (branches.size() <= BRANCHES_LIMIT || expanded) {
+        return StringUtil.join(branches, ", ");
+      } else {
+        return StringUtil.join(ContainerUtil.getFirstItems(branches, BRANCHES_LIMIT), ", ") + ", ... <a href=\"" + SHOW_ALL_BRANCHES + "\"><i>Show All</i></a>";
+      }
     }
 
     @Override
