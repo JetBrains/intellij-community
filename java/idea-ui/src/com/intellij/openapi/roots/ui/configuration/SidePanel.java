@@ -65,7 +65,7 @@ public class SidePanel extends JPanel {
     myModel = new DefaultListModel();
     myList = new JBList(myModel);
     if (Registry.is("ide.new.project.settings")) {
-      myList.setBackground(UIUtil.getSidePanelColor());
+      myList.setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
       myList.setBorder(new EmptyBorder(5, 0, 0, 0));
     }
     final ListItemDescriptor descriptor = new ListItemDescriptor() {
@@ -193,7 +193,7 @@ public class SidePanel extends JPanel {
 
       @Override
       protected Color getBackground() {
-        return Registry.is("ide.new.project.settings") ? UIUtil.getSidePanelColor() : super.getBackground();
+        return Registry.is("ide.new.project.settings") ? UIUtil.SIDE_PANEL_BACKGROUND : super.getBackground();
       }
     });
 
@@ -269,7 +269,7 @@ public class SidePanel extends JPanel {
 
     @Override
     protected void paintComponent(Graphics g) {
-      g.setColor(isSelected() ? UIUtil.getListSelectionBackground() : UIUtil.getSidePanelColor());
+      g.setColor(isSelected() ? UIUtil.getListSelectionBackground() : UIUtil.SIDE_PANEL_BACKGROUND);
       g.fillRect(0, 0, getWidth(), getHeight());
       if (StringUtil.isEmpty(getText())) return;
       final JBColor deepBlue = new JBColor(new Color(0x97A4B2), new Color(92, 98, 113));

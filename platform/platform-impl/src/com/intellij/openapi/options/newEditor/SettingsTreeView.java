@@ -72,7 +72,6 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
   private static final Color WRONG_CONTENT = JBColor.RED;
   private static final Color MODIFIED_CONTENT = JBColor.BLUE;
   public static final Color FOREGROUND = new JBColor(Gray.x1A, Gray.xBB);
-  public static final Color BACKGROUND = new JBColor(0xE6EBF0, 0x3E434C);
 
   final SimpleTree myTree;
   final FilteringTreeBuilder myBuilder;
@@ -93,7 +92,7 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
     myRoot = new MyRoot(groups);
     myTree = new MyTree();
     myTree.putClientProperty(WideSelectionTreeUI.TREE_TABLE_TREE_KEY, Boolean.TRUE);
-    myTree.setBackground(BACKGROUND);
+    myTree.setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
     myTree.getInputMap().clear();
     TreeUtil.installActions(myTree);
 
@@ -134,9 +133,9 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
       }
     });
     myScroller.getVerticalScrollBar().setUI(ButtonlessScrollBarUI.createTransparent());
-    myScroller.setBackground(BACKGROUND);
-    myScroller.getViewport().setBackground(BACKGROUND);
-    myScroller.getVerticalScrollBar().setBackground(BACKGROUND);
+    myScroller.setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
+    myScroller.getViewport().setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
+    myScroller.getVerticalScrollBar().setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
     add(myScroller);
 
     myTree.addComponentListener(new ComponentAdapter() {
