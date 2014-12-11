@@ -247,7 +247,7 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
 
         myScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
         myScrollPane.setHorizontalScrollBar(null);
-        myScrollPane.setBorder(new NavBarBorder(true, 0));
+        myScrollPane.setBorder(new NavBarBorder());
         myScrollPane.setOpaque(false);
         myScrollPane.getViewport().setOpaque(false);
         myScrollPane.setViewportBorder(null);
