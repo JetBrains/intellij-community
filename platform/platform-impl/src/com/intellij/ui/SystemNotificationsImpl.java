@@ -32,6 +32,7 @@ public class SystemNotificationsImpl extends SystemNotifications {
 
   private final Notifier myNotifier = getPlatformNotifier();
 
+  @Override
   public boolean isAvailable() {
     return myNotifier != null;
   }

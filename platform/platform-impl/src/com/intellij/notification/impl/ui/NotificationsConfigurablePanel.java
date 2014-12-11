@@ -61,12 +61,11 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
       public void actionPerformed(ActionEvent e) {
         myTable.repaint();
       }
-
     });
 
     mySystemNotifications = new JCheckBox("Enable system notifications");
     mySystemNotifications.setMnemonic('s');
-    mySystemNotifications.setVisible(((SystemNotificationsImpl)SystemNotifications.getInstance()).isAvailable());
+    mySystemNotifications.setVisible(SystemNotifications.getInstance().isAvailable());
 
     JPanel boxes = new JPanel();
     boxes.setLayout(new BoxLayout(boxes, BoxLayout.Y_AXIS));
