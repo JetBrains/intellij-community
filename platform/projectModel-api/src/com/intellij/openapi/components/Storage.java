@@ -28,6 +28,8 @@ public @interface Storage {
   @NonNls String file() default "";
   StorageScheme scheme() default StorageScheme.DEFAULT;
 
+  boolean deprecated() default false;
+
   /**
    * You must not store components with different roaming types in one file ({@link #file()}).
    */

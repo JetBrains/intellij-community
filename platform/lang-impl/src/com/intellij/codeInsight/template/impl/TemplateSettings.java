@@ -44,10 +44,9 @@ import java.util.*;
 @State(
   name = "TemplateSettings",
   storages = {
-    @Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml"),
-    @Storage(file = StoragePathMacros.APP_CONFIG + "/templates.xml")
+    @Storage(file = StoragePathMacros.APP_CONFIG + "/templates.xml"),
+    @Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml", deprecated = true)
   },
-  storageChooser = LastStorageChooserForWrite.class,
   additionalExportFile = TemplateSettings.TEMPLATES_DIR_PATH
 )
 public class TemplateSettings implements PersistentStateComponent<TemplateSettings.State> {
