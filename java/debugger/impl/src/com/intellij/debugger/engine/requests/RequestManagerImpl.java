@@ -16,23 +16,18 @@
 package com.intellij.debugger.engine.requests;
 
 import com.intellij.debugger.DebuggerBundle;
-import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.intellij.debugger.engine.events.DebuggerCommandImpl;
-import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.debugger.requests.RequestManager;
 import com.intellij.debugger.requests.Requestor;
 import com.intellij.debugger.settings.DebuggerSettings;
-import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.breakpoints.FilteredRequestor;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiClass;
@@ -265,6 +260,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
 
   public void deleteRequest(Requestor requestor) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
+    myRequestWarnings.remove(requestor);
     if(!myDebugProcess.isAttached()) {
       return;
     }
@@ -417,56 +413,6 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
         requestor.processClassPrepare(myDebugProcess, refType);
       }
     }
-  }
-
-  private interface AllProcessesCommand {
-    void action(DebugProcessImpl process);
-  }
-
-  private static void invoke(Project project, final AllProcessesCommand command) {
-    for (DebuggerSession debuggerSession : (DebuggerManagerEx.getInstanceEx(project)).getSessions()) {
-      final DebugProcessImpl process = debuggerSession.getProcess();
-      if (process != null) {
-        process.getManagerThread().invoke(new DebuggerCommandImpl() {
-          protected void action() throws Exception {
-            command.action(process);
-          }
-        });
-      }
-    }
-  }
-
-  public static void createRequests(final Breakpoint breakpoint) {
-    invoke(breakpoint.getProject(), new AllProcessesCommand (){
-      public void action(DebugProcessImpl process)  {
-        breakpoint.createRequest(process);
-      }
-    });
-  }
-
-  public static void updateRequests(final Breakpoint breakpoint) {
-    invoke(breakpoint.getProject(), new AllProcessesCommand (){
-      public void action(DebugProcessImpl process)  {
-        process.getRequestsManager().myRequestWarnings.remove(breakpoint);
-        process.getRequestsManager().deleteRequest(breakpoint);
-        breakpoint.createRequest(process);
-      }
-    });
-  }
-
-  public static void deleteRequests(final Breakpoint breakpoint) {
-    invoke(breakpoint.getProject(), new AllProcessesCommand() {
-      public void action(DebugProcessImpl process) {
-        process.getRequestsManager().myRequestWarnings.remove(breakpoint);
-        process.getRequestsManager().deleteRequest(breakpoint);
-      }
-    });
-  }
-
-  public void deleteBreakpoint(final Breakpoint breakpoint) {
-    DebuggerManagerThreadImpl.assertIsManagerThread();
-    myRequestWarnings.remove(breakpoint);
-    deleteRequest(breakpoint);
   }
 
   public void clearWarnings() {

@@ -64,7 +64,7 @@ public class NewGroovyClassAction extends JavaCreateTemplateInPackageAction<GrTy
       .addKind("Enum", JetgroovyIcons.Groovy.Enum, GroovyTemplates.GROOVY_ENUM)
       .addKind("Annotation", JetgroovyIcons.Groovy.AnnotationType, GroovyTemplates.GROOVY_ANNOTATION);
 
-    for (FileTemplate template : FileTemplateManager.getInstance().getAllTemplates()) {
+    for (FileTemplate template : FileTemplateManager.getInstance(project).getAllTemplates()) {
       FileType fileType = FileTypeManagerEx.getInstanceEx().getFileTypeByExtension(template.getExtension());
       if (fileType.equals(GroovyFileType.GROOVY_FILE_TYPE) && JavaDirectoryService.getInstance().getPackage(directory) != null) {
         builder.addKind(template.getName(), JetgroovyIcons.Groovy.Class, template.getName());

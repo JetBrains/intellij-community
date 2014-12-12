@@ -72,7 +72,7 @@ public class JavaBreakpointHandler extends XBreakpointHandler {
       myProcess.getManagerThread().schedule(new DebuggerCommandImpl() {
         @Override
         protected void action() throws Exception {
-          myProcess.getRequestsManager().deleteBreakpoint(javaBreakpoint);
+          myProcess.getRequestsManager().deleteRequest(javaBreakpoint);
         }
 
         @Override

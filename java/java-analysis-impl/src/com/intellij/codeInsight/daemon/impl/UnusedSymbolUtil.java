@@ -119,10 +119,10 @@ public class UnusedSymbolUtil {
                                            @NotNull GlobalUsageHelper helper) {
     if (helper.isLocallyUsed(method)) return true;
 
-    boolean aPrivate = method.hasModifierProperty(PsiModifier.PRIVATE);
+    boolean isPrivate = method.hasModifierProperty(PsiModifier.PRIVATE);
     PsiClass containingClass = method.getContainingClass();
     if (JavaHighlightUtil.isSerializationRelatedMethod(method, containingClass)) return true;
-    if (aPrivate) {
+    if (isPrivate) {
       if (isIntentionalPrivateConstructor(method, containingClass)) {
         return true;
       }
@@ -261,6 +261,7 @@ public class UnusedSymbolUtil {
       options.isSearchForTextOccurrences = true;
     }
     options.isUsages = true;
+    options.searchScope = useScope;
     return JavaFindUsagesHelper.processElementUsages(member, options, usageInfoProcessor);
   }
 

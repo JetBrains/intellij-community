@@ -412,8 +412,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
         return;
       }
 
-      if (e.getClickCount() == 1) {
-        if (expandOrCollapseRoots(e)) return;
+      if (e.getClickCount() == 1 && !expandOrCollapseRoots(e)) {
         performAction(e, MyGraphMouseAction.Type.CLICK);
       }
     }

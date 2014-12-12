@@ -249,7 +249,7 @@ public class SaveProjectAsTemplateAction extends AnAction {
                                           Project project,
                                           Map<String, String> parameters) throws IOException {
     String text = VfsUtilCore.loadText(virtualFile);
-    final FileTemplate template = FileTemplateManager.getInstance().getDefaultTemplate(FileTemplateManager.FILE_HEADER_TEMPLATE_NAME);
+    final FileTemplate template = FileTemplateManager.getInstance(project).getDefaultTemplate(FileTemplateManager.FILE_HEADER_TEMPLATE_NAME);
     final String templateText = template.getText();
     final Pattern pattern = FileHeaderChecker.getTemplatePattern(template, project, new TIntObjectHashMap<String>());
     String result = convertTemplates(text, pattern, templateText);

@@ -16,20 +16,19 @@
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.SourcePosition;
-import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.openapi.extensions.ExtensionPointName;
 
 import java.util.Set;
 
 /**
- * Nikolay.Tropin
- * 2014-11-27
+ * @author Nikolay.Tropin
  */
 public interface FrameExtraVariablesProvider {
   ExtensionPointName<FrameExtraVariablesProvider> EP_NAME = ExtensionPointName.create("com.intellij.debugger.frameExtraVarsProvider");
 
-  boolean isAvailable(SourcePosition sourcePosition, EvaluationContextImpl evalContext);
+  boolean isAvailable(SourcePosition sourcePosition, EvaluationContext evalContext);
 
-  Set<TextWithImports> collectVariables(SourcePosition sourcePosition, EvaluationContextImpl evalContext, Set<String> alreadyCollected);
+  Set<TextWithImports> collectVariables(SourcePosition sourcePosition, EvaluationContext evalContext, Set<String> alreadyCollected);
 }

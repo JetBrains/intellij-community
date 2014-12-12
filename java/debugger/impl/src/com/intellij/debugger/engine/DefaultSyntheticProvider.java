@@ -20,8 +20,7 @@ import com.sun.jdi.TypeComponent;
 import com.sun.jdi.VirtualMachine;
 
 /**
- * Nikolay.Tropin
- * 2014-11-27
+ * @author Nikolay.Tropin
  */
 public class DefaultSyntheticProvider implements SyntheticTypeComponentProvider {
   @Override

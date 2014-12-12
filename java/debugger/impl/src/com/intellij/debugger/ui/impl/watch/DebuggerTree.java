@@ -474,7 +474,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
             if (thisRefType instanceof ClassType && thisRefType.equals(location.declaringType()) && thisRefType.name().contains("$")) { // makes sense for nested classes only
               final ClassType clsType = (ClassType)thisRefType;
               for (Field field : clsType.fields()) {
-                if ((!DebuggerUtils.isSynthetic(field)) && StringUtil.startsWith(field.name(), FieldDescriptorImpl.OUTER_LOCAL_VAR_FIELD_PREFIX)) {
+                if (DebuggerUtils.isSynthetic(field) && StringUtil.startsWith(field.name(), FieldDescriptorImpl.OUTER_LOCAL_VAR_FIELD_PREFIX)) {
                   final FieldDescriptorImpl fieldDescriptor = myNodeManager.getFieldDescriptor(stackDescriptor, thisObjectReference, field);
                   myChildren.add(myNodeManager.createNode(fieldDescriptor, evaluationContext));
                 }

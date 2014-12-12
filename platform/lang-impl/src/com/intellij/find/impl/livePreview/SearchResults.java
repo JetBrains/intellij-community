@@ -454,8 +454,10 @@ public class SearchResults implements DocumentListener {
   }
 
   static boolean insideVisibleArea(Editor e, TextRange r) {
+    int startOffset = r.getStartOffset();
+    if (startOffset > e.getDocument().getTextLength()) return false;
     Rectangle visibleArea = e.getScrollingModel().getVisibleArea();
-    Point point = e.logicalPositionToXY(e.offsetToLogicalPosition(r.getStartOffset()));
+    Point point = e.logicalPositionToXY(e.offsetToLogicalPosition(startOffset));
 
     return visibleArea.contains(point);
   }

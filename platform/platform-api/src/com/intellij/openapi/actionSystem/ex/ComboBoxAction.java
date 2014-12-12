@@ -22,6 +22,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
@@ -245,7 +246,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       DataContext context = getDataContext();
       myDataContext = null;
       final ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
-        myPopupTitle, group, context, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false, onDispose, getMaxRows());
+        myPopupTitle, group, context, false, false, false, onDispose, getMaxRows(), getPreselectCondition());
       popup.setMinimumSize(new Dimension(getMinWidth(), getMinHeight()));
       return popup;
     }
@@ -452,4 +453,6 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       setSize(getPreferredSize());
     }
   }
+
+  protected Condition<AnAction> getPreselectCondition() { return null; }
 }

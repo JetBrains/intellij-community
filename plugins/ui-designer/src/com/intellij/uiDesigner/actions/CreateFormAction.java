@@ -56,7 +56,7 @@ public class CreateFormAction extends AbstractCreateFormAction {
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       public void run() {
         // to prevent deadlocks, this code must run while not holding the ActionManager lock
-        FileTemplateManager manager = FileTemplateManager.getInstance();
+        FileTemplateManager manager = FileTemplateManager.getDefaultInstance();
         final FileTemplate template = manager.getTemplate("GUI Form");
         //noinspection HardCodedStringLiteral
         if (template != null && template.getExtension().equals("form")) {
