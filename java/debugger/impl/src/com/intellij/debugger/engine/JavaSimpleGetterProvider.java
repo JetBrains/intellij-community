@@ -18,8 +18,7 @@ package com.intellij.debugger.engine;
 import com.intellij.psi.*;
 
 /**
- * Nikolay.Tropin
- * 2014-11-25
+ * @author Nikolay.Tropin
  */
 public class JavaSimpleGetterProvider implements SimpleGetterProvider {
   @Override

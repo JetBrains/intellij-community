@@ -245,7 +245,7 @@ public class RequestHint {
         }
 
         for (ExtraSteppingFilter filter : ExtraSteppingFilter.EP_NAME.getExtensions()) {
-          if (filter.isApplicable(context)) return filter.stepRequestDepth(context);
+          if (filter.isApplicable(context)) return filter.getStepRequestDepth(context);
         }
       }
       // smart step feature
