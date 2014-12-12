@@ -139,7 +139,7 @@ class VisiblePackBuilder {
     }
 
     Set<Integer> filteredByFile = getMatchingHeads(refs, VcsLogFileFilter
-      .getAllVisibleRoots(roots, filters.getRootFilter(), filters.getStructureFilter()));
+      .getAllVisibleRoots(roots, rootFilter, structureFilter));
 
     if (filteredByBranch == null) return filteredByFile;
     if (filteredByFile == null) return filteredByBranch;
