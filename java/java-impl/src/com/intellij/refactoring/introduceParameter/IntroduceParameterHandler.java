@@ -564,7 +564,9 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
             final PsiClass[] psiClasses = classes.keySet().toArray(new PsiClass[classes.size()]);
             final String methodSignature =
               PsiFormatUtil.formatMethod(emptyMethod, PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_PARAMETERS, PsiFormatUtilBase.SHOW_TYPE);
-            final String title = "Choose Applicable Functional Interface: " + methodSignature + " -> {}";
+            final PsiType returnType = emptyMethod.getReturnType();
+            LOG.assertTrue(returnType != null);
+            final String title = "Choose Applicable Functional Interface: " + methodSignature + " -> " + returnType.getPresentableText();
             NavigationUtil.getPsiElementPopup(psiClasses, new PsiClassListCellRenderer(), title,
                                               new PsiElementProcessor<PsiClass>() {
                                                 @Override
