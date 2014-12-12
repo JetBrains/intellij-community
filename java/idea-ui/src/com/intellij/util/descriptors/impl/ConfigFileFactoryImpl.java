@@ -57,8 +57,8 @@ public class ConfigFileFactoryImpl extends ConfigFileFactory {
     return new ConfigFileContainerImpl(project, metaDataProvider, (ConfigFileInfoSetImpl)configuration);
   }
 
-  private static String getText(final String templateName, Project project) throws IOException {
-    final FileTemplateManager templateManager = FileTemplateManager.getInstance(project);
+  private static String getText(final String templateName, @Nullable Project project) throws IOException {
+    final FileTemplateManager templateManager = project == null ? FileTemplateManager.getDefaultInstance() : FileTemplateManager.getInstance(project);
     final FileTemplate template = templateManager.getJ2eeTemplate(templateName);
     if (template == null) {
       return "";
