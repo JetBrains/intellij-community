@@ -262,7 +262,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
         return null;
       }
     }
-    Properties properties = FileTemplateManager.getInstance().getDefaultProperties();
+    Properties properties = FileTemplateManager.getDefaultInstance().getDefaultProperties();
     for (WizardInputField field : myAdditionalFields) {
       properties.putAll(field.getValues());
     }
