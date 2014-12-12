@@ -44,8 +44,11 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
+import com.intellij.util.Processor;
+import gnu.trove.THashSet;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -72,12 +75,13 @@ public class AnalysisScope {
   @MagicConstant(intValues = {PROJECT, DIRECTORY, FILE, MODULE, INVALID, MODULES, CUSTOM, VIRTUAL_FILES, UNCOMMITTED_FILES})
   public @interface Type { }
 
+  @NotNull
   private final Project myProject;
   protected List<Module> myModules;
   protected Module myModule;
   protected PsiElement myElement;
   private SearchScope myScope;
-  private boolean mySearchInLibraries = false;
+  private boolean mySearchInLibraries;
   @Type protected int myType;
 
   private final Set<VirtualFile> myVFiles;  // initial files and directories the scope is configured on
@@ -96,7 +100,7 @@ public class AnalysisScope {
   }
 
   public AnalysisScope(@NotNull Module module) {
-    myProject = null;
+    myProject = module.getProject();
     myElement = null;
     myModules = null;
     myScope = null;
@@ -108,7 +112,7 @@ public class AnalysisScope {
   public AnalysisScope(@NotNull Module[] modules) {
     myModules = Arrays.asList(modules);
     myModule = null;
-    myProject = null;
+    myProject = modules[0].getProject();
     myElement = null;
     myScope = null;
     myType = MODULES;
@@ -116,7 +120,7 @@ public class AnalysisScope {
   }
 
   public AnalysisScope(@NotNull PsiDirectory psiDirectory) {
-    myProject = null;
+    myProject = psiDirectory.getProject();
     myModules = null;
     myModule = null;
     myScope = null;
@@ -126,7 +130,7 @@ public class AnalysisScope {
   }
 
   public AnalysisScope(@NotNull PsiFile psiFile) {
-    myProject = null;
+    myProject = psiFile.getProject();
     myElement = psiFile;
     myModule = null;
     myModules = null;
@@ -170,33 +174,17 @@ public class AnalysisScope {
 
   @NotNull
   protected PsiElementVisitor createFileSearcher() {
-    final FileIndex fileIndex;
-    if (myModule != null) {
-      fileIndex = ModuleRootManager.getInstance(myModule).getFileIndex();
-    }
-    else if (myModules != null && !myModules.isEmpty()) {
-      fileIndex = ProjectRootManager.getInstance(myModules.get(0).getProject()).getFileIndex();
-    }
-    else if (myElement != null) {
-      fileIndex = ProjectRootManager.getInstance(myElement.getProject()).getFileIndex();
-    }
-    else if (myProject != null) {
-      fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
-    }
-    else {
-      //can't be
-      fileIndex = null;
-    }
+    final FileIndex fileIndex = getFileIndex();
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
 
-    return new PsiRecursiveElementVisitor() {
+    return new PsiElementVisitor() {
       @Override
       public void visitFile(@NotNull PsiFile file) {
-        if (/*file instanceof PsiJavaFile && */mySearchInLibraries || !(file instanceof PsiCompiledElement)) {
+        if (mySearchInLibraries || !(file instanceof PsiCompiledElement)) {
           final VirtualFile virtualFile = file.getVirtualFile();
           if (virtualFile == null) return;
           if (!myIncludeTestSource) {
-            if (fileIndex == null || fileIndex.isInTestSourceContent(virtualFile)) {
+            if (fileIndex.isInTestSourceContent(virtualFile)) {
               return;
             }
           }
@@ -211,6 +199,18 @@ public class AnalysisScope {
         }
       }
     };
+  }
+
+  @NotNull
+  private FileIndex getFileIndex() {
+    final FileIndex fileIndex;
+    if (myModule != null) {
+      fileIndex = ModuleRootManager.getInstance(myModule).getFileIndex();
+    }
+    else {
+      fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
+    }
+    return fileIndex;
   }
 
   private static String displayProjectRelativePath(@NotNull VirtualFile virtualFile, @NotNull Project project) {
@@ -278,16 +278,26 @@ public class AnalysisScope {
   }
 
   protected void accept(@NotNull final PsiElementVisitor visitor, final boolean needReadAction) {
+    final PsiManager psiManager = PsiManager.getInstance(myProject);
+    final FileIndex fileIndex = getFileIndex();
+    accept(new Processor<VirtualFile>() {
+      @Override
+      public boolean process(VirtualFile file) {
+        return processFile(file, visitor, fileIndex, psiManager, needReadAction);
+      }
+    });
+  }
+
+  public boolean accept(@NotNull final Processor<VirtualFile> processor) {
     if (myType == VIRTUAL_FILES) {
-      final PsiManager psiManager = PsiManager.getInstance(myProject);
       final FileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
       for (final VirtualFile file : myFilesSet) {
         if (!myIncludeTestSource && index.isInTestSourceContent(file)) continue;
-        if (!processFile(file, visitor, psiManager, needReadAction)) return;
+        if (!processor.process(file)) return false;
       }
+      return true;
     }
-    else if (myScope instanceof GlobalSearchScope) {
-      final PsiManager psiManager = PsiManager.getInstance(myProject);
+    if (myScope instanceof GlobalSearchScope) {
       final FileIndex projectFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
       final ContentIterator contentIterator = new ContentIterator() {
         @Override
@@ -300,86 +310,77 @@ public class AnalysisScope {
               return ((GlobalSearchScope)myScope).contains(fileOrDir);
             }
           }).booleanValue();
-          return !isInScope || AnalysisScope.processFile(fileOrDir, visitor, psiManager, needReadAction);
+          return !isInScope || processor.process(fileOrDir);
         }
       };
-      projectFileIndex.iterateContent(contentIterator);
+      if (!projectFileIndex.iterateContent(contentIterator)) return false;
       if (mySearchInLibraries) {
         final VirtualFile[] libraryRoots = LibraryUtil.getLibraryRoots(myProject, false, false);
         for (VirtualFile libraryRoot : libraryRoots) {
-          VfsUtilCore.iterateChildrenRecursively(libraryRoot, VirtualFileFilter.ALL, contentIterator);
+          if (!VfsUtilCore.iterateChildrenRecursively(libraryRoot, VirtualFileFilter.ALL, contentIterator)) return false;
         }
       }
+      return true;
     }
-    else if (myScope instanceof LocalSearchScope) {
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        @Override
-        public void run() {
-          final PsiElement[] psiElements = ((LocalSearchScope)myScope).getScope();
-          final Set<PsiFile> files = new LinkedHashSet<PsiFile>();
-          for (PsiElement element : psiElements) {
-            final PsiFile file = element.getContainingFile();
-            if (file != null && files.add(file)) {
-              file.accept(visitor);
-            }
-          }
-        }
-      });
-    }
-    else if (myModule != null) {
-      final FileIndex moduleFileIndex = ModuleRootManager.getInstance(myModule).getFileIndex();
-      final PsiManager psiManager = PsiManager.getInstance(myModule.getProject());
-      moduleFileIndex.iterateContent(new ContentIterator() {
-        @Override
-        public boolean processFile(@NotNull VirtualFile fileOrDir) {
-          return AnalysisScope.this.processFile(fileOrDir, visitor, moduleFileIndex, psiManager, needReadAction);
-        }
-      });
-    }
-    else if (myModules != null) {
-      for (final Module module : myModules) {
-        final PsiManager psiManager = PsiManager.getInstance(module.getProject());
-        final FileIndex moduleFileIndex = ModuleRootManager.getInstance(module).getFileIndex();
-        moduleFileIndex.iterateContent(new ContentIterator() {
+    if (myScope instanceof LocalSearchScope) {
+      final PsiElement[] psiElements = ((LocalSearchScope)myScope).getScope();
+      final Set<VirtualFile> files = new THashSet<VirtualFile>();
+      for (final PsiElement element : psiElements) {
+        VirtualFile file = ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile>() {
           @Override
-          public boolean processFile(@NotNull VirtualFile fileOrDir) {
-            return AnalysisScope.this.processFile(fileOrDir, visitor, moduleFileIndex, psiManager, needReadAction);
+          public VirtualFile compute() {
+            return PsiUtilCore.getVirtualFile(element);
           }
         });
+        if (file != null && files.add(file)) {
+          if (!processor.process(file)) return false;
+        }
       }
+      return true;
     }
-    else if (myElement instanceof PsiDirectory) {
-      accept((PsiDirectory)myElement, visitor, needReadAction);
+    List<Module> modules = myModule != null ? Collections.<Module>singletonList(myModule) : myModules;
+    if (modules != null) {
+      for (final Module module : modules) {
+        final FileIndex moduleFileIndex = ModuleRootManager.getInstance(module).getFileIndex();
+        if (!moduleFileIndex.iterateContent(new ContentIterator() {
+          @Override
+          public boolean processFile(@NotNull VirtualFile fileOrDir) {
+            return processor.process(fileOrDir);
+          }
+        })) return false;
+      }
+      return true;
     }
-    else if (myElement != null) {
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
+
+    if (myElement instanceof PsiDirectory) {
+      return accept((PsiDirectory)myElement, processor);
+    }
+    if (myElement != null) {
+      VirtualFile file = ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile>() {
         @Override
-        public void run() {
-          myElement.accept(visitor);
+        public VirtualFile compute() {
+          return PsiUtilCore.getVirtualFile(myElement);
         }
       });
+      return file == null || processor.process(file);
     }
-    else if (myProject != null) {
-      final PsiManager psiManager = PsiManager.getInstance(myProject);
-      final FileIndex projectFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
-      projectFileIndex.iterateContent(new ContentIterator() {
-        @Override
-        public boolean processFile(@NotNull final VirtualFile fileOrDir) {
-          return AnalysisScope.this.processFile(fileOrDir, visitor, projectFileIndex, psiManager, needReadAction);
-        }
-      });
-    }
+    final FileIndex projectFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
+    return projectFileIndex.iterateContent(new ContentIterator() {
+      @Override
+      public boolean processFile(@NotNull final VirtualFile fileOrDir) {
+        return processor.process(fileOrDir);
+      }
+    });
   }
 
-  @SuppressWarnings({"SimplifiableIfStatement"})
   private boolean processFile(@NotNull final VirtualFile fileOrDir,
                               @NotNull final PsiElementVisitor visitor,
-                              @NotNull final FileIndex projectFileIndex,
+                              @NotNull final FileIndex fileIndex,
                               @NotNull final PsiManager psiManager,
                               final boolean needReadAction) {
     if (fileOrDir.isDirectory()) return true;
     if (ProjectCoreUtil.isProjectOrWorkspaceFile(fileOrDir)) return true;
-    if (projectFileIndex.isInContent(fileOrDir) && (myIncludeTestSource || !projectFileIndex.isInTestSourceContent(fileOrDir))
+    if (fileIndex.isInContent(fileOrDir) && (myIncludeTestSource || !fileIndex.isInTestSourceContent(fileOrDir))
         && !isInGeneratedSources(fileOrDir, psiManager.getProject())) {
       return processFile(fileOrDir, visitor, psiManager, needReadAction);
     }
@@ -436,7 +437,7 @@ public class AnalysisScope {
     return ProblemHighlightFilter.shouldProcessFileInBatch(file);
   }
 
-  public boolean containsModule(Module module) {
+  public boolean containsModule(@NotNull Module module) {
     switch (myType) {
       case PROJECT:
         return true;
@@ -455,20 +456,19 @@ public class AnalysisScope {
     InjectedLanguageManager.getInstance(file.getProject()).dropFileCaches(file);
   }
 
-  protected void accept(@NotNull final PsiDirectory dir, @NotNull final PsiElementVisitor visitor, final boolean needReadAction) {
+  protected boolean accept(@NotNull final PsiDirectory dir, @NotNull final Processor<VirtualFile> processor) {
     final Project project = dir.getProject();
-    final PsiManager psiManager = PsiManager.getInstance(project);
     final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
     //we should analyze generated source files only if the action is explicitly invoked for a directory located under generated roots
     final boolean processGeneratedFiles = isInGeneratedSources(dir.getVirtualFile(), project);
-    VfsUtilCore.iterateChildrenRecursively(dir.getVirtualFile(), VirtualFileFilter.ALL, new ContentIterator() {
+    return VfsUtilCore.iterateChildrenRecursively(dir.getVirtualFile(), VirtualFileFilter.ALL, new ContentIterator() {
       @Override
       @SuppressWarnings({"SimplifiableIfStatement"})
       public boolean processFile(@NotNull final VirtualFile fileOrDir) {
         if (!myIncludeTestSource && index.isInTestSourceContent(fileOrDir)) return true;
         if (!processGeneratedFiles && isInGeneratedSources(fileOrDir, project)) return true;
         if (!fileOrDir.isDirectory()) {
-          return AnalysisScope.processFile(fileOrDir, visitor, psiManager, needReadAction);
+          return processor.process(fileOrDir);
         }
         return true;
       }
@@ -476,15 +476,17 @@ public class AnalysisScope {
   }
 
   public boolean isValid() {
-    if (myProject != null) return true;
-    if (myModule != null && !myModule.isDisposed()) return true;
     if (myModules != null){
       for (Module module : myModules) {
         if (module.isDisposed()) return false;
       }
       return true;
     }
-    return myType == VIRTUAL_FILES || myType == CUSTOM || myElement != null && myElement.isValid();
+    if (myModule != null) return !myModule.isDisposed();
+    if (myElement != null) {
+      return myElement.isValid();
+    }
+    return myType == VIRTUAL_FILES || myType == CUSTOM || myType == PROJECT;
   }
 
   @Type
