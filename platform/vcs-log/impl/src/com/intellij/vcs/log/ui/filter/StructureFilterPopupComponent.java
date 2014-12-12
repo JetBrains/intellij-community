@@ -62,7 +62,8 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
     Collection<VirtualFile> roots = filter.getRootFilter() == null ? getAllRoots() : filter.getRootFilter().getRoots();
     Collection<VirtualFile> files =
       filter.getStructureFilter() == null ? Collections.<VirtualFile>emptySet() : filter.getStructureFilter().getFiles();
-    Collection<VirtualFile> visibleRoots = VcsLogFileFilter.getAllVisibleRoots(getAllRoots(), filter);
+    Collection<VirtualFile> visibleRoots =
+      VcsLogFileFilter.getAllVisibleRoots(getAllRoots(), filter.getRootFilter(), filter.getStructureFilter());
 
     if (files.isEmpty()) {
       return getText(roots, "roots", true, visibleRoots.size() == getAllRoots().size());
