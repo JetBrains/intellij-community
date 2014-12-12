@@ -21,6 +21,8 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiPackage;
+import com.intellij.rt.coverage.data.ClassData;
+import com.intellij.rt.coverage.data.LineCoverage;
 import com.intellij.testFramework.ModuleTestCase;
 import com.intellij.util.containers.hash.HashMap;
 
@@ -30,7 +32,7 @@ import java.util.Map;
 /**
  * @author yole
  */
-public class PackageAnnotatorTest extends ModuleTestCase {
+public class CoverageIntegrationTest extends ModuleTestCase {
   private static String getTestDataPath() {
     return PluginPathManager.getPluginHomePath("coverage") + "/testData/simple";
   }
@@ -44,18 +46,29 @@ public class PackageAnnotatorTest extends ModuleTestCase {
   }
 
   public void testSimple() {
-    File coverageFile = new File(getTestDataPath(), "simple$foo_in_simple.coverage");
-    IDEACoverageRunner runner = CoverageRunner.getInstance(IDEACoverageRunner.class);
-    CoverageFileProvider fileProvider = new DefaultCoverageFileProvider(coverageFile);
-    CoverageSuite suite =
-      JavaCoverageEngine.getInstance().createCoverageSuite(runner, "Simple", fileProvider, null, -1, null, false, false, false);
-    CoverageSuitesBundle bundle = new CoverageSuitesBundle(suite);
+    CoverageSuitesBundle bundle = loadCoverageSuite(IDEACoverageRunner.class, "simple$foo_in_simple.coverage");
     PsiPackage psiPackage = JavaPsiFacade.getInstance(myProject).findPackage("foo");
     PackageAnnotator annotator = new PackageAnnotator(psiPackage);
     PackageAnnotationConsumer consumer = new PackageAnnotationConsumer();
     annotator.annotate(bundle, consumer);
     PackageAnnotator.ClassCoverageInfo fooClassCoverage = consumer.myClassCoverageInfo.get("foo.FooClass");
     assertNotNull(fooClassCoverage);
+  }
+
+  public void testJaCoCo() {
+    CoverageSuitesBundle bundle = loadCoverageSuite(JaCoCoCoverageRunner.class, "simple$foo_in_simple.jacoco.coverage");
+    ClassData classData = bundle.getCoverageData().getClassData("foo.FooClass");
+    // getStatus() never returns full coverage; it can only distinguish between none and partial
+    assertEquals(LineCoverage.PARTIAL, classData.getStatus("method1()I").intValue());
+  }
+
+  private CoverageSuitesBundle loadCoverageSuite(Class<? extends CoverageRunner> coverageRunnerClass, String coverageDataPath) {
+    File coverageFile = new File(getTestDataPath(), coverageDataPath);
+    CoverageRunner runner = CoverageRunner.getInstance(coverageRunnerClass);
+    CoverageFileProvider fileProvider = new DefaultCoverageFileProvider(coverageFile);
+    CoverageSuite suite =
+      JavaCoverageEngine.getInstance().createCoverageSuite(runner, "Simple", fileProvider, null, -1, null, false, false, false, myProject);
+    return new CoverageSuitesBundle(suite);
   }
 
   private static class PackageAnnotationConsumer implements PackageAnnotator.Annotator {
