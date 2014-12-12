@@ -342,7 +342,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
     });
   }
 
-  private boolean expandOrCollapseRoots(MouseEvent e) {
+  private boolean expandOrCollapseRoots(@NotNull MouseEvent e) {
     TableColumn column = getRootColumnOrNull(e);
     if (column != null) {
       myUI.setShowRootNames(!myUI.isShowRootNames());
@@ -357,7 +357,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
   }
 
   @Nullable
-  private TableColumn getRootColumnOrNull(MouseEvent e) {
+  private TableColumn getRootColumnOrNull(@NotNull MouseEvent e) {
     if (!myLogDataHolder.isMultiRoot()) return null;
     int column = convertColumnIndexToModel(columnAtPoint(e.getPoint()));
     if (column == GraphTableModel.ROOT_COLUMN) {
