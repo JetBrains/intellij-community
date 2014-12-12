@@ -35,6 +35,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
@@ -165,8 +166,8 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
   public String[] getUrls(@NotNull OrderRootType rootType) {
     checkDisposed();
 
-    final VirtualFilePointerContainer result = myRoots.get(rootType);
-    return result.getUrls();
+    VirtualFilePointerContainer result = myRoots.get(rootType);
+    return result == null ? ArrayUtilRt.EMPTY_STRING_ARRAY : result.getUrls();
   }
 
   @Override
