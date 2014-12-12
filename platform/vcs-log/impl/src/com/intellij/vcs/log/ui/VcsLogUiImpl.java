@@ -390,15 +390,18 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
 
   @Override
   public void addLogListener(@NotNull VcsLogListener listener) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     myLogListeners.add(listener);
   }
 
   @Override
   public void removeLogListener(@NotNull VcsLogListener listener) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     myLogListeners.remove(listener);
   }
 
   private void fireFilterChangeEvent(@NotNull VisiblePack visiblePack, boolean refresh) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     Collection<VcsLogListener> logListeners = new ArrayList<VcsLogListener>(myLogListeners);
 
     for (VcsLogListener listener : logListeners) {
