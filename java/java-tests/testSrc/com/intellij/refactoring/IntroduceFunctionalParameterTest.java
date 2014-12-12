@@ -33,6 +33,10 @@ public class IntroduceFunctionalParameterTest extends LightRefactoringTestCase  
     doTest();
   }
 
+  public void testFunction() throws Exception {
+    doTest();
+  }
+
   public void testIntConsumerFromIfStatement() throws Exception {
     doTest();
   }

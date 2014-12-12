@@ -1,9 +1,9 @@
-import java.util.function.IntPredicate;
+import java.util.function.Function;
 
 class Test {
   void bar() {
-    foo(1, new IntPredicate() {
-        public boolean test(int i) {
+    foo(1, new Function<Integer,Boolean>() {
+        public boolean apply(Integer i) {
             if (i > 0) {
                 System.out.println(i);
                 System.out.println(i);
@@ -14,9 +14,9 @@ class Test {
     });
   }
 
-  void foo(int i, IntPredicate anObject) {
+  void foo(int i, Function<Integer, Boolean> anObject) {
 
-      if (anObject.test(i)) return;
+      if (anObject.apply(i)) return;
 
       System.out.println("Hi");
   }

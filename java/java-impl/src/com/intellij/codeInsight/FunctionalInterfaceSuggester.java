@@ -93,13 +93,16 @@ public class FunctionalInterfaceSuggester {
             return null;
           }
 
-          final PsiType[] left = new PsiType[parameters.length];
-          final PsiType[] right = new PsiType[parameters.length];
+          final PsiType[] left = new PsiType[parameters.length + 1];
+          final PsiType[] right = new PsiType[parameters.length + 1];
 
           for (int i = 0; i < parameters.length; i++) {
             left[i]  = interfaceMethodParameters[i].getType();
             right[i] = parameters[i].getType();
           }
+
+          left[parameters.length] = method.getReturnType();
+          right[parameters.length] = interfaceMethod.getReturnType();
 
           final PsiTypeParameter[] typeParameters = aClass.getTypeParameters();
           final PsiSubstitutor substitutor = PsiResolveHelper.SERVICE.getInstance(aClass.getProject())
@@ -203,15 +206,19 @@ public class FunctionalInterfaceSuggester {
         final PsiParameter[] parameters = interfaceMethod.getParameterList().getParameters();
         PsiParameter[] functionalExprParameters;
         int offset = 0;
-        final PsiType[] left = new PsiType[parameters.length];
-        final PsiType[] right = new PsiType[parameters.length];
+        final PsiType[] left;
+        final PsiType[] right;
         if (expression instanceof PsiLambdaExpression && ((PsiLambdaExpression)expression).hasFormalParameterTypes()) {
+          left = new PsiType[parameters.length];
+          right = new PsiType[parameters.length];
           functionalExprParameters = ((PsiLambdaExpression)expression).getParameterList().getParameters();
           if (parameters.length != functionalExprParameters.length) {
             return null;
           }
         }
         else if (expression instanceof PsiMethodReferenceExpression) {
+          left = new PsiType[parameters.length + 1];
+          right = new PsiType[parameters.length + 1];
           final PsiMethod method = getTargetMethod((PsiMethodReferenceExpression)expression, qualifierType, parameters, left, right);
           if (method == null) {
             return null;
@@ -220,6 +227,9 @@ public class FunctionalInterfaceSuggester {
           if (PsiMethodReferenceUtil.isStaticallyReferenced((PsiMethodReferenceExpression)expression) && !method.hasModifierProperty(PsiModifier.STATIC)) {
             offset = 1;
           }
+
+          left[parameters.length] = method.getReturnType();
+          right[parameters.length] = interfaceMethod.getReturnType();
         } else {
           return null;
         }
