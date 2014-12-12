@@ -30,8 +30,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PackageScope;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.psi.util.FileTypeUtils;
+import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
@@ -114,7 +115,7 @@ public class JavaAnalysisScope extends AnalysisScope {
   }
 
   @Override
-  protected void accept(@NotNull final PsiElementVisitor visitor, final boolean needReadAction) {
+  public boolean accept(@NotNull Processor<VirtualFile> processor) {
     if (myElement instanceof PsiPackage) {
       final PsiPackage pack = (PsiPackage)myElement;
       final Set<PsiDirectory> dirs = new HashSet<PsiDirectory>();
@@ -125,12 +126,11 @@ public class JavaAnalysisScope extends AnalysisScope {
         }
       });
       for (PsiDirectory dir : dirs) {
-        accept(dir, visitor, needReadAction);
+        if (!accept(dir, processor)) return false;
       }
+      return true;
     }
-    else {
-      super.accept(visitor, needReadAction);
-    }
+    return super.accept(processor);
   }
 
   @NotNull
