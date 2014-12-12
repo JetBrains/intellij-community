@@ -125,7 +125,7 @@ class VisiblePackBuilder {
   }
 
   @Nullable
-  private Set<Integer> getMatchingHeads(@NotNull VcsLogRefs refs, Set<VirtualFile> roots, @NotNull VcsLogFilterCollection filters) {
+  private Set<Integer> getMatchingHeads(@NotNull VcsLogRefs refs, @NotNull Set<VirtualFile> roots, @NotNull VcsLogFilterCollection filters) {
     VcsLogBranchFilter branchFilter = filters.getBranchFilter();
     VcsLogRootFilter rootFilter = filters.getRootFilter();
     VcsLogStructureFilter structureFilter = filters.getStructureFilter();
