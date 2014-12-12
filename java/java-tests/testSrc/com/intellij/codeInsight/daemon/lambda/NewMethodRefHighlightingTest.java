@@ -336,6 +336,10 @@ public class NewMethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest(true);
   }
 
+  public void testSiteSubstitutionOfNonReceiverReference() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }
