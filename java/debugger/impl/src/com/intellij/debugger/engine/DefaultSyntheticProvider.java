@@ -36,8 +36,8 @@ public class DefaultSyntheticProvider implements SyntheticTypeComponentProvider 
       }
     }
     VirtualMachine machine = typeComponent.virtualMachine();
-    if (machine != null && machine.canGetSyntheticAttribute() && typeComponent.isSynthetic()) {
-      return true;
+    if (machine != null && machine.canGetSyntheticAttribute()) {
+      return typeComponent.isSynthetic();
     }
     else {
       return name.contains("$");
