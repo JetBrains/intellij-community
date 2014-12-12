@@ -231,7 +231,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
 
   private static class DataPanel extends JEditorPane {
     public static final int BRANCHES_LIMIT = 6;
-    @NotNull private static String SHOW_ALL_BRANCHES = "Show All Branches";
+    @NotNull private static String SHOW_OR_HIDE_BRANCHES = "Show or Hide Branches";
 
     @NotNull private final Project myProject;
     private final boolean myMultiRoot;
@@ -252,11 +252,9 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
 
       addHyperlinkListener(new HyperlinkListener() {
         public void hyperlinkUpdate(HyperlinkEvent e) {
-          if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED && SHOW_ALL_BRANCHES.equals(e.getDescription())) {
-            if (!myExpanded) {
-              myExpanded = true;
-              update();
-            }
+          if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED && SHOW_OR_HIDE_BRANCHES.equals(e.getDescription())) {
+            myExpanded = !myExpanded;
+            update();
           }
           else {
             BrowserHyperlinkListener.INSTANCE.hyperlinkUpdate(e);
@@ -322,13 +320,16 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
 
     @NotNull
     private static String getCollapsedBranches(@NotNull List<String> branches, boolean expanded) {
-      if (branches.size() <= BRANCHES_LIMIT || expanded) {
+      if (branches.size() <= BRANCHES_LIMIT) {
         return StringUtil.join(branches, ", ");
+      }
+      else if (expanded) {
+        return StringUtil.join(branches, ", ") + " <a href=\"" + SHOW_OR_HIDE_BRANCHES + "\"><i>Hide</i></a>";
       }
       else {
         return StringUtil.join(ContainerUtil.getFirstItems(branches, BRANCHES_LIMIT), ", ") +
                ", ... <a href=\"" +
-               SHOW_ALL_BRANCHES +
+               SHOW_OR_HIDE_BRANCHES +
                "\"><i>Show All</i></a>";
       }
     }
