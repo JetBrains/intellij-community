@@ -24,7 +24,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.VcsLogProvider;
@@ -33,7 +32,6 @@ import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -101,7 +99,7 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
     public void run(@NotNull ProgressIndicator indicator) {
       VisiblePack visiblePack = null;
       List<Request> requests;
-      List<MoreCommitsRequest> requestsToRun = new ArrayList<MoreCommitsRequest>();
+      List<MoreCommitsRequest> requestsToRun = ContainerUtil.newArrayList();
       while (!(requests = myTaskController.popRequests()).isEmpty()) {
         RefreshRequest refreshRequest = ContainerUtil.findLastInstance(requests, RefreshRequest.class);
         FilterRequest filterRequest = ContainerUtil.findLastInstance(requests, FilterRequest.class);
