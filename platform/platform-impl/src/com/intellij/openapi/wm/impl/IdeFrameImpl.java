@@ -221,7 +221,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, DataProvider {
           if (insets.left != 0) mask |= SideBorder.LEFT;
           if (insets.bottom != 0) mask |= SideBorder.BOTTOM;
           if (insets.right != 0) mask |= SideBorder.RIGHT;
-          myRootPane.setBorder(new SideBorder(JBColor.BLACK, mask, false, 3));
+          myRootPane.setBorder(new SideBorder(JBColor.BLACK, mask, 3));
           break;
         }
       }
