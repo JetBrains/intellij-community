@@ -138,9 +138,9 @@ public class CapturingProcessHandler extends OSProcessHandler {
         ProgressManager.checkCanceled();
       }
       catch (ProcessCanceledException e) {
-        //if (!isProcessTerminating() && !isProcessTerminated()) {
-        //  destroyProcess();
-        //}
+        if (!isProcessTerminating() && !isProcessTerminated()) {
+          destroyProcess();
+        }
         throw e;
       }
     }
