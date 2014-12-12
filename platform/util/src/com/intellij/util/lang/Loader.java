@@ -15,6 +15,7 @@
  */
 package com.intellij.util.lang;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import sun.misc.Resource;
 
@@ -27,25 +28,25 @@ import java.net.URL;
  * @see JarLoader
  * @see FileLoader
  */
-public abstract class Loader {
+abstract class Loader {
   private final URL myURL;
-  private final int myOrderNumber;
+  private final int myIndex;
 
-  Loader(URL url, int orderNumber) {
+  Loader(URL url, int index) {
     myURL = url;
-    myOrderNumber = orderNumber;
+    myIndex = index;
   }
 
-  public URL getBaseURL() {
+  URL getBaseURL() {
     return myURL;
   }
 
   @Nullable
   abstract Resource getResource(String name, boolean flag);
   
-  public abstract ClasspathLoaderIndex buildIndex() throws IOException;
+  @NotNull abstract ClasspathCache.LoaderData buildData() throws IOException;
 
-  int getOrderNumber() {
-    return myOrderNumber;
+  int getIndex() {
+    return myIndex;
   }
 }

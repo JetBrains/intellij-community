@@ -35,7 +35,6 @@ import java.net.URL;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.regex.Pattern;
 
 /**
@@ -44,7 +43,7 @@ import java.util.regex.Pattern;
 class InProcessGroovyc {
   private static final Pattern GROOVY_ALL_JAR_PATTERN = Pattern.compile("groovy-all(-(.*))?\\.jar");
   private static SoftReference<Pair<String, ClassLoader>> ourParentLoaderCache;
-  private static final Map<URL, ClasspathLoaderIndex> ourLoaderIndexCache = ContainerUtil.newConcurrentMap();
+  private static final UrlClassLoader.CachePool ourLoaderCachePool = UrlClassLoader.createCachePool();
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   static void runGroovycInThisProcess(Collection<String> compilationClassPath,
@@ -55,29 +54,20 @@ class InProcessGroovyc {
 
     ClassLoader parent = obtainParentLoader(compilationClassPath);
 
-    UrlClassLoader loader = UrlClassLoader.build().urls(toUrls(compilationClassPath)).parent(parent).useCache(new LoaderIndexProvider() {
-      @NotNull
-      @Override
-      public ClasspathLoaderIndex getLoaderData(@NotNull Loader loader) throws IOException {
-        URL url = loader.getBaseURL();
-        ClasspathLoaderIndex index = ourLoaderIndexCache.get(url);
-        if (index != null) {
-          return index;
-        }
-
-        index = loader.buildIndex();
-        String file = url.getFile();
-        for (String output : outputs) {
-          if (FileUtil.startsWith(output + "/", file)) {
-            return index; // don't cache outputs
+    UrlClassLoader loader = UrlClassLoader.build().
+      urls(toUrls(compilationClassPath)).parent(parent).
+      useCache(ourLoaderCachePool, new UrlClassLoader.CachingCondition() {
+        @Override
+        public boolean shouldCacheData(@NotNull URL url) {
+          String file = url.getFile();
+          for (String output : outputs) {
+            if (FileUtil.startsWith(output + "/", file)) {
+              return false;
+            }
           }
+          return true;
         }
-
-        ourLoaderIndexCache.put(url, index);
-        return index;
-
-      }
-    }).get();
+      }).get();
 
     PrintStream oldOut = System.out;
     PrintStream oldErr = System.err;

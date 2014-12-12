@@ -17,14 +17,12 @@
 package com.intellij.ide.fileTemplates.impl;
 
 import com.intellij.codeInsight.template.impl.TemplateColors;
-import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.lexer.FlexAdapter;
 import com.intellij.lexer.Lexer;
 import com.intellij.lexer.MergingLexerAdapter;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -46,7 +44,6 @@ import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
@@ -106,9 +103,8 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
   private final FileType myVelocityFileType = FileTypeManager.getInstance().getFileTypeByExtension("ft");
   private JPanel myDescriptionPanel;
 
-  public FileTemplateConfigurable() {
-    Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
-    myProject = project != null ? project : ProjectManager.getInstance().getDefaultProject();
+  public FileTemplateConfigurable(Project project) {
+    myProject = project;
   }
 
   public FileTemplate getTemplate() {

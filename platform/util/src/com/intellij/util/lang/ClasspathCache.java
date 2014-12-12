@@ -28,6 +28,7 @@ import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.Nullable;
 import sun.misc.Resource;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -53,19 +54,31 @@ public class ClasspathCache {
     myDebugInfo = doDebug ? new DebugInfo() : new NullDebugInfo();
   }
 
+  static class LoaderData {
+    private final List<String> myResourcePaths = new ArrayList<String>();
+    private final List<String> myNames = new ArrayList<String>();
+
+    public void addResourceEntry(String resourcePath) {
+      myResourcePaths.add(resourcePath);
+    }
+
+    public void addNameEntry(String name) {
+      myNames.add(transformName(name));
+    }
+  }
+
   private final ReadWriteLock myLock = new ReentrantReadWriteLock();
 
-  void applyLoaderData(ClasspathLoaderIndex loaderData, final Loader loader) {
+  public void applyLoaderData(LoaderData loaderData, Loader loader) {
     myLock.writeLock().lock();
     try {
-      for (String resourceEntry : loaderData.getResourcePaths()) {
+      for(String resourceEntry:loaderData.myResourcePaths) {
         addResourceEntry(resourceEntry, loader);
       }
-      for (String name : loaderData.getNames()) {
+      for(String name:loaderData.myNames) {
         addNameEntry(name, loader);
       }
-    }
-    finally {
+    } finally {
       myLock.writeLock().unlock();
     }
   }
@@ -360,7 +373,7 @@ public class ClasspathCache {
 
     private static int hashFromNameAndLoader(String name, Loader loader, int n) {
       int hash = StringHash.murmur(name, n);
-      int i = loader.getOrderNumber();
+      int i = loader.getIndex();
       while (i > 0) {
         hash = hash * n + ((i % 10) + '0');
         i /= 10;
@@ -403,7 +416,7 @@ public class ClasspathCache {
 
     protected static int hashFromNameAndLoader(String name, Loader loader) {
       int hash = name.hashCode();
-      int i = loader.getOrderNumber();
+      int i = loader.getIndex();
       while(i > 0) {
         hash = hash * 31 + ((i % 10) + '0');
         i /= 10;

@@ -43,8 +43,6 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.event.TableModelEvent;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.ArrayList;
@@ -137,8 +135,6 @@ final class BrowserSettingsPanel {
 
   private TextFieldWithBrowseButton alternativeBrowserPathField;
 
-  private JCheckBox confirmExtractFiles;
-  private JButton clearExtractedFiles;
   private JPanel defaultBrowserPanel;
 
   @SuppressWarnings("UnusedDeclaration")
@@ -205,13 +201,6 @@ final class BrowserSettingsPanel {
     if (UIUtil.isUnderAquaLookAndFeel()) {
       defaultBrowserPolicyComboBox.setBorder(new EmptyBorder(3, 0, 0, 0));
     }
-
-    clearExtractedFiles.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(@NotNull ActionEvent e) {
-        BrowserLauncherAppless.clearExtractedFiles();
-      }
-    });
   }
 
   private void updateCustomPathTextFieldValue(@NotNull DefaultBrowserPolicy browser) {
@@ -324,7 +313,6 @@ final class BrowserSettingsPanel {
 
     DefaultBrowserPolicy defaultBrowserPolicy = getDefaultBrowser();
     if (browserManager.getDefaultBrowserPolicy() != defaultBrowserPolicy ||
-        generalSettings.isConfirmExtractFiles() != confirmExtractFiles.isSelected() ||
         browserManager.isShowBrowserHover() != showBrowserHover.isSelected()) {
       return true;
     }
@@ -346,8 +334,6 @@ final class BrowserSettingsPanel {
       settings.setBrowserPath(alternativeBrowserPathField.getText());
     }
 
-    settings.setConfirmExtractFiles(confirmExtractFiles.isSelected());
-
     WebBrowserManager browserManager = WebBrowserManager.getInstance();
     browserManager.setShowBrowserHover(showBrowserHover.isSelected());
     browserManager.defaultBrowserPolicy = getDefaultBrowser();
@@ -366,7 +352,6 @@ final class BrowserSettingsPanel {
     defaultBrowserPolicyComboBox.setSelectedItem(effectiveDefaultBrowserPolicy);
 
     GeneralSettings settings = GeneralSettings.getInstance();
-    confirmExtractFiles.setSelected(settings.isConfirmExtractFiles());
     showBrowserHover.setSelected(browserManager.isShowBrowserHover());
     browsersEditor.reset(browserManager.getList());
 

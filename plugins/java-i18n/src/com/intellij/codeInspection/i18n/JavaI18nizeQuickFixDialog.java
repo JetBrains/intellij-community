@@ -139,7 +139,7 @@ public class JavaI18nizeQuickFixDialog extends I18nizeQuickFixDialog {
       link.addHyperlinkListener(new HyperlinkListener() {
         @Override
         public void hyperlinkUpdate(HyperlinkEvent e) {
-          final FileTemplateConfigurable configurable = new FileTemplateConfigurable();
+          final FileTemplateConfigurable configurable = new FileTemplateConfigurable(myProject);
           final FileTemplate template = FileTemplateManager.getInstance().getCodeTemplate(templateName);
           SwingUtilities.invokeLater(new Runnable() {
             @Override

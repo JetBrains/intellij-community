@@ -42,6 +42,7 @@ public abstract class FileTemplateManager{
   public static final String INTERNAL_XHTML_TEMPLATE_NAME = "Xhtml";
   @NonNls 
   public static final String FILE_HEADER_TEMPLATE_NAME = "File Header";
+
   public static final String DEFAULT_TEMPLATES_CATEGORY = "Default";
   public static final String INTERNAL_TEMPLATES_CATEGORY = "Internal";
   public static final String INCLUDES_TEMPLATES_CATEGORY = "Includes";
@@ -69,6 +70,8 @@ public abstract class FileTemplateManager{
 
   @NotNull
   public abstract FileTemplatesScheme getProjectScheme();
+
+  public abstract FileTemplate[] getTemplates(String category);
 
   @NotNull
   public abstract FileTemplate[] getAllTemplates();

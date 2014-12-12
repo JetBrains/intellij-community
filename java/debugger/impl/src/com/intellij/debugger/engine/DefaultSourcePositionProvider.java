@@ -36,16 +36,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class DefaultSourcePositionProvider extends SourcePositionProvider {
-
-  private static final DefaultSourcePositionProvider ourInstance = new DefaultSourcePositionProvider();
-
-  private DefaultSourcePositionProvider() {
-  }
-
-  public static SourcePositionProvider getInstance() {
-    return ourInstance;
-  }
-
   @Nullable
   @Override
   protected SourcePosition computeSourcePosition(@NotNull NodeDescriptor descriptor,

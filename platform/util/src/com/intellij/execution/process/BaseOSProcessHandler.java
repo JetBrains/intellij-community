@@ -22,6 +22,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.io.BaseDataReader;
+import com.intellij.util.io.BaseInputStreamReader;
 import com.intellij.util.io.BaseOutputReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -159,12 +160,17 @@ public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor
   }
 
   private Reader createInputStreamReader(InputStream streamToRead) {
+    Charset charset = charsetNotNull();
+    return new BaseInputStreamReader(streamToRead, charset);
+  }
+
+  private Charset charsetNotNull() {
     Charset charset = getCharset();
     if (charset == null) {
       // use default charset
       charset = Charset.defaultCharset();
     }
-    return new InputStreamReader(streamToRead, charset);
+    return charset;
   }
 
   @Override
