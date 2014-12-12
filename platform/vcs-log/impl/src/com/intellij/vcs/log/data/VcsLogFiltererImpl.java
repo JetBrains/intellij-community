@@ -15,6 +15,7 @@
  */
 package com.intellij.vcs.log.data;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
@@ -44,6 +45,7 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
   @NotNull private PermanentGraph.SortType mySortType;
   @NotNull private CommitCountStage myCommitCount = CommitCountStage.INITIAL;
   @Nullable private DataPack myDataPack;
+  @NotNull private List<MoreCommitsRequest> myRequestsToRun = ContainerUtil.newArrayList();
 
   VcsLogFiltererImpl(@NotNull final Project project,
                      @NotNull Map<VirtualFile, VcsLogProvider> providers,
@@ -99,13 +101,12 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
     public void run(@NotNull ProgressIndicator indicator) {
       VisiblePack visiblePack = null;
       List<Request> requests;
-      List<MoreCommitsRequest> requestsToRun = ContainerUtil.newArrayList();
       while (!(requests = myTaskController.popRequests()).isEmpty()) {
         RefreshRequest refreshRequest = ContainerUtil.findLastInstance(requests, RefreshRequest.class);
         FilterRequest filterRequest = ContainerUtil.findLastInstance(requests, FilterRequest.class);
         SortTypeRequest sortTypeRequest = ContainerUtil.findLastInstance(requests, SortTypeRequest.class);
         List<MoreCommitsRequest> moreCommitsRequests = ContainerUtil.findAll(requests, MoreCommitsRequest.class);
-        requestsToRun.addAll(moreCommitsRequests);
+        myRequestsToRun.addAll(moreCommitsRequests);
 
         if (refreshRequest != null) {
           myDataPack = refreshRequest.dataPack;
@@ -137,8 +138,18 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
       // visible pack can be null (e.g. when filter is set during initialization) => we just remember filters set by user
       myTaskController.taskCompleted(visiblePack);
 
-      for (MoreCommitsRequest request : requestsToRun) {
-        request.onLoaded.run();
+      if (visiblePack != null) {
+        final List<MoreCommitsRequest> requestsToRun = myRequestsToRun;
+        myRequestsToRun = ContainerUtil.newArrayList();
+
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            for (MoreCommitsRequest request : requestsToRun) {
+              request.onLoaded.run();
+            }
+          }
+        });
       }
     }
   }
