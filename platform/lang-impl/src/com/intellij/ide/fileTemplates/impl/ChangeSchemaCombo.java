@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.util.Condition;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -47,6 +48,16 @@ public class ChangeSchemaCombo extends ComboBoxAction implements DumbAware {
   protected DefaultActionGroup createPopupActionGroup(JComponent button) {
     return new DefaultActionGroup(new ChangeSchemaAction(FileTemplatesScheme.DEFAULT),
                                   new ChangeSchemaAction(myConfigurable.getManager().getProjectScheme()));
+  }
+
+  @Override
+  protected Condition<AnAction> getPreselectCondition() {
+    return new Condition<AnAction>() {
+      @Override
+      public boolean value(AnAction action) {
+        return myConfigurable.getCurrentScheme().getName().equals(action.getTemplatePresentation().getText());
+      }
+    };
   }
 
   private class ChangeSchemaAction extends AnAction {
