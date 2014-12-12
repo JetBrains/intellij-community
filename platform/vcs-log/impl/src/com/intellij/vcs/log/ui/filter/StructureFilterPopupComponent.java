@@ -81,7 +81,7 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
       return "No " + category;
     }
     else {
-      VirtualFile firstFile = ContainerUtil.sorted(files, shorten ? FILE_BY_NAME_COMPARATOR : FILE_BY_PATH_COMPARATOR).iterator().next();
+      VirtualFile firstFile = Collections.min(files, shorten ? FILE_BY_NAME_COMPARATOR : FILE_BY_PATH_COMPARATOR);
       String firstFileName =
         shorten ? firstFile.getName() : StringUtil.shortenPathWithEllipsis(firstFile.getPresentableUrl(), FILTER_LABEL_LENGTH);
       if (files.size() == 1) {
