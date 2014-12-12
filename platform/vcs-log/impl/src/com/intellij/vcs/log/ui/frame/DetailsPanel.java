@@ -231,6 +231,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
 
   private static class DataPanel extends JEditorPane {
     public static final int BRANCHES_LIMIT = 6;
+    public static final int BRANCHES_TABLE_SIZE = 3;
     @NotNull private static String SHOW_OR_HIDE_BRANCHES = "Show or Hide Branches";
 
     @NotNull private final Project myProject;
@@ -310,27 +311,45 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       if (myBranches == null) {
         return "<i>In branches: loading...</i>";
       }
-      return "<i>In " +
-             myBranches.size() +
-             " branch" +
-             (myBranches.size() > 1 ? "es" : "") +
-             ":</i> " +
-             getCollapsedBranches(myBranches, myExpanded);
-    }
+      if (myExpanded) {
+        int columnHeight = myBranches.size() / BRANCHES_TABLE_SIZE;
+        StringBuilder builder = new StringBuilder();
 
-    @NotNull
-    private static String getCollapsedBranches(@NotNull List<String> branches, boolean expanded) {
-      if (branches.size() <= BRANCHES_LIMIT) {
-        return StringUtil.join(branches, ", ");
-      }
-      else if (expanded) {
-        return StringUtil.join(branches, ", ") + " <a href=\"" + SHOW_OR_HIDE_BRANCHES + "\"><i>Hide</i></a>";
+        builder.append("<table>");
+        for (int i = 0; i < columnHeight; i++) {
+          builder.append("<tr><td>");
+          if (i == 0) {
+            builder.append("<i>In ").append(myBranches.size()).append(" branches, </i><a href=\"").append(SHOW_OR_HIDE_BRANCHES)
+              .append("\"><i>hide</i></a>: ");
+          }
+          builder.append("</td>");
+
+          for (int j = 0; j < BRANCHES_TABLE_SIZE; j++) {
+            builder.append("<td align=\"left\">");
+            int index = columnHeight * j + i;
+            if (index >= myBranches.size()) break;
+            builder.append(myBranches.get(index));
+            if (index != myBranches.size() - 1) builder.append(",").append(StringUtil.repeat("&nbsp;", 20));
+            builder.append("</td>");
+          }
+          builder.append("</tr>");
+        }
+        builder.append("</table>");
+
+        return builder.toString();
       }
       else {
-        return StringUtil.join(ContainerUtil.getFirstItems(branches, BRANCHES_LIMIT), ", ") +
-               ", ... <a href=\"" +
-               SHOW_OR_HIDE_BRANCHES +
-               "\"><i>Show All</i></a>";
+        String branchText;
+        if (myBranches.size() <= BRANCHES_LIMIT) {
+          branchText = StringUtil.join(myBranches, ", ");
+        }
+        else {
+          branchText = StringUtil.join(ContainerUtil.getFirstItems(myBranches, BRANCHES_LIMIT), ", ") +
+                       ", ... <a href=\"" +
+                       SHOW_OR_HIDE_BRANCHES +
+                       "\"><i>Show All</i></a>";
+        }
+        return "<i>In " + myBranches.size() + " branch" + (myBranches.size() > 1 ? "es" : "") + ":</i> " + branchText;
       }
     }
 
