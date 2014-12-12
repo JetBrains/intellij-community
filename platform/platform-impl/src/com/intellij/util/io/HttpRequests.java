@@ -17,11 +17,17 @@ package com.intellij.util.io;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.net.HttpConfigurable;
+import com.intellij.util.net.ssl.CertificateManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.io.Responses;
 
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLSession;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
@@ -41,6 +47,8 @@ import java.util.zip.GZIPInputStream;
  * }</pre>
  */
 public final class HttpRequests {
+  private static final Logger LOG = Logger.getInstance(HttpRequests.class);
+
   private static final boolean ourParallelLoader = SystemProperties.getBooleanProperty("idea.parallel.class.loader", true);
 
   public interface Request {
@@ -58,7 +66,8 @@ public final class HttpRequests {
     private int myTimeout = HttpConfigurable.READ_TIMEOUT;
     private int myRedirectLimit = HttpConfigurable.REDIRECT_LIMIT;
     private boolean myGzip = true;
-    private boolean myForceHttps = false;
+    private boolean myForceHttps;
+    private boolean myDisableHostVerification;
 
     private RequestBuilder(@NotNull String url) {
       myUrl = url;
@@ -91,6 +100,12 @@ public final class HttpRequests {
     @NotNull
     public RequestBuilder forceHttps(boolean forceHttps) {
       myForceHttps = forceHttps;
+      return this;
+    }
+
+    @NotNull
+    public RequestBuilder disableHostVerification() {
+      myDisableHostVerification = true;
       return this;
     }
 
@@ -186,6 +201,30 @@ public final class HttpRequests {
 
       connection.setConnectTimeout(builder.myConnectTimeout);
       connection.setReadTimeout(builder.myTimeout);
+
+      String userAgent = Responses.getServerHeaderValue();
+      if (userAgent != null) {
+        connection.setRequestProperty("User-Agent", userAgent);
+      }
+
+      if (connection instanceof HttpsURLConnection) {
+        try {
+          HttpsURLConnection httpsConnection = (HttpsURLConnection)connection;
+          if (builder.myDisableHostVerification) {
+            httpsConnection.setHostnameVerifier(new HostnameVerifier() {
+              @Override
+              public boolean verify(String hostname, SSLSession session) {
+                return true;
+              }
+            });
+          }
+          httpsConnection.setSSLSocketFactory(CertificateManager.getInstance().getSslContext().getSocketFactory());
+        }
+        catch (Exception e) {
+          LOG.warn(e);
+        }
+      }
+
       if (builder.myGzip) {
         connection.setRequestProperty("Accept-Encoding", "gzip");
       }
