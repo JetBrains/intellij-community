@@ -202,7 +202,7 @@ public class RequestHint {
 
       final DebuggerSettings settings = DebuggerSettings.getInstance();
 
-      if ((settings.SKIP_SYNTHETIC_METHODS || myMethodFilter != null)&& frameProxy != null) {
+      if ((myMethodFilter != null || (settings.SKIP_SYNTHETIC_METHODS && !myIgnoreFilters))&& frameProxy != null) {
         final Location location = frameProxy.location();
         if (location != null) {
           if (DebuggerUtils.isSynthetic(location.method())) {
