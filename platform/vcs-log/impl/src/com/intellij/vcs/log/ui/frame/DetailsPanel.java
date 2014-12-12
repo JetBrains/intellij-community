@@ -409,7 +409,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
     }
 
     private static class MyHtml2Text extends HTMLEditorKit.ParserCallback {
-      @NotNull private StringBuffer myBuffer;
+      @NotNull private StringBuffer myBuffer = new StringBuffer();
 
       public void parse(Reader in) throws IOException {
         myBuffer = new StringBuffer();
