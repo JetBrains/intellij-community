@@ -691,6 +691,11 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
     }
 
     @Override
+    public boolean isStatic() {
+      return false;
+    }
+
+    @Override
     public boolean prepare(@Nullable Pass<ExtractMethodProcessor> pass) throws PrepareFailedException {
       final boolean prepare = super.prepare(pass);
       if (prepare) {
