@@ -1323,6 +1323,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
               TIntIntHashMap rightEdges = new TIntIntHashMap();
               int h = myEditor.getLineHeight() - 2;
               for (RangeHighlighterEx ex : myHighlighters) {
+                if (!ex.isValid()) continue;
                 int hEndOffset = ex.getAffectedAreaEndOffset();
                 Object tooltip = ex.getErrorStripeTooltip();
                 if (tooltip == null) continue;
