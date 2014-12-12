@@ -448,7 +448,8 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
 
         StateStorage.ExternalizationSession session = getExternalizationSession(stateStorage);
         if (session != null) {
-          session.setState(component, componentName, state, storageSpec);
+          // empty element as null state, so, will be deleted
+          session.setState(component, componentName, storageSpec.deprecated() ? new Element("empty") : state, storageSpec);
         }
       }
     }

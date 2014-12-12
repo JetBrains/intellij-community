@@ -164,13 +164,8 @@ public class ExportSettingsAction extends AnAction implements DumbAware {
 
           int storageIndex;
           Storage[] storages = stateAnnotation.storages();
-          if (storages.length == 1) {
+          if (storages.length == 1 || (storages.length > 1 && stateAnnotation.storageChooser() == StateStorageChooser.class)) {
             storageIndex = 0;
-          }
-          else if (storages.length > 1 &&
-                   (stateAnnotation.storageChooser() == LastStorageChooserForWrite.class ||
-                    stateAnnotation.storageChooser() == LastStorageChooserForWrite.ElementStateLastStorageChooserForWrite.class)) {
-            storageIndex = storages.length - 1;
           }
           else {
             return true;

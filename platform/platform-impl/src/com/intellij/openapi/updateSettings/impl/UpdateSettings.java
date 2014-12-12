@@ -30,16 +30,12 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author yole
- */
 @State(
   name = "UpdatesConfigurable",
   storages = {
-    @Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml"),
-    @Storage(file = StoragePathMacros.APP_CONFIG + "/updates.xml", roamingType = RoamingType.DISABLED)
-  },
-  storageChooser = LastStorageChooserForWrite.ElementStateLastStorageChooserForWrite.class
+    @Storage(file = StoragePathMacros.APP_CONFIG + "/updates.xml", roamingType = RoamingType.DISABLED),
+    @Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml", deprecated = true)
+  }
 )
 public class UpdateSettings implements PersistentStateComponent<Element>, UserUpdateSettings {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.updateSettings.impl.UpdateSettings"); 

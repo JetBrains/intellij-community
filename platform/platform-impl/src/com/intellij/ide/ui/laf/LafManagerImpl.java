@@ -81,17 +81,12 @@ import java.security.AccessController;
 import java.util.*;
 import java.util.List;
 
-/**
- * @author Eugene Belyaev
- * @author Vladimir Kondratyev
- */
 @State(
   name = "LafManager",
   storages = {
-    @Storage(file = StoragePathMacros.APP_CONFIG + "/options.xml"),
-    @Storage(file = StoragePathMacros.APP_CONFIG + "/laf.xml", roamingType = RoamingType.PER_PLATFORM)
-  },
-  storageChooser = LastStorageChooserForWrite.ElementStateLastStorageChooserForWrite.class
+    @Storage(file = StoragePathMacros.APP_CONFIG + "/laf.xml", roamingType = RoamingType.PER_PLATFORM),
+    @Storage(file = StoragePathMacros.APP_CONFIG + "/options.xml", deprecated = true)
+  }
 )
 public final class LafManagerImpl extends LafManager implements ApplicationComponent, PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.ui.LafManager");
