@@ -22,7 +22,6 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -35,11 +34,9 @@ import com.intellij.vcs.log.impl.HashImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgNameWithHashInfo;
-import org.zmlx.hg4idea.HgRevisionNumber;
 import org.zmlx.hg4idea.action.HgCommandResultNotifier;
 import org.zmlx.hg4idea.command.HgBookmarkCommand;
 import org.zmlx.hg4idea.command.HgBranchCreateCommand;
-import org.zmlx.hg4idea.command.HgWorkingCopyRevisionsCommand;
 import org.zmlx.hg4idea.execution.HgCommandException;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.execution.HgCommandResultHandler;
@@ -172,35 +169,27 @@ public class HgBranchPopupActions {
       myRepository = repository;
       myCurrentBranchName = repository.getCurrentBranch();
       getTemplatePresentation().setText(String.format("Unnamed heads for %s", myCurrentBranchName));
-      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-        @Override
-        public void run() {
           myHeads = filterUnnamedHeads();
         }
-      });
-    }
 
     @NotNull
     private Collection<Hash> filterUnnamedHeads() {
       Collection<Hash> branchWithHashes = myRepository.getBranches().get(myCurrentBranchName);
-      if (branchWithHashes == null) {
-        // repository is fresh or branch is fresh.
+      String currentHead = myRepository.getCurrentRevision();
+      if (branchWithHashes == null || currentHead == null || myRepository.getState() != Repository.State.NORMAL) {
+        // repository is fresh or branch is fresh or complex state
         return Collections.emptySet();
       }
       else {
-        List<HgRevisionNumber> parents = new HgWorkingCopyRevisionsCommand(myRepository.getProject()).parents(myRepository.getRoot());
-        if (parents.size() == 1) {
           Collection<Hash> bookmarkHashes = ContainerUtil.map(myRepository.getBookmarks(), new Function<HgNameWithHashInfo, Hash>() {
-
             @Override
             public Hash fun(HgNameWithHashInfo info) {
               return info.getHash();
             }
           });
           branchWithHashes.removeAll(bookmarkHashes);
-          branchWithHashes.remove(HashImpl.build(parents.get(0).getChangeset()));
+        branchWithHashes.remove(HashImpl.build(currentHead));
         }
-      }
       return branchWithHashes;
     }
 
