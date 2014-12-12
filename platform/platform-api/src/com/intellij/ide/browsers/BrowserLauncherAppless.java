@@ -24,11 +24,9 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.util.ArrayUtil;
@@ -174,14 +172,6 @@ public class BrowserLauncherAppless extends BrowserLauncher {
     else {
       browse(uri, project);
     }
-  }
-
-  private static File getExtractedFilesDir() {
-    return new File(PathManager.getSystemPath(), "ExtractedFiles");
-  }
-
-  public static void clearExtractedFiles() {
-    FileUtil.delete(getExtractedFilesDir());
   }
 
   @Override
