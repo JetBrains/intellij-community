@@ -15,6 +15,9 @@
  */
 package com.intellij.ide.fileTemplates.impl;
 
+import com.intellij.ide.fileTemplates.FileTemplatesScheme;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.project.DumbAware;
@@ -27,13 +30,38 @@ import javax.swing.*;
  */
 public class ChangeSchemaCombo extends ComboBoxAction implements DumbAware {
 
-  public ChangeSchemaCombo() {
-//    getTemplatePresentation().setText(current.getName());
+  private final AllFileTemplatesConfigurable myConfigurable;
+
+  public ChangeSchemaCombo(AllFileTemplatesConfigurable configurable) {
+    myConfigurable = configurable;
+  }
+
+  @Override
+  public void update(AnActionEvent e) {
+    super.update(e);
+    e.getPresentation().setText(myConfigurable.getCurrentScheme().getName());
   }
 
   @NotNull
   @Override
   protected DefaultActionGroup createPopupActionGroup(JComponent button) {
-    return new DefaultActionGroup();
+    return new DefaultActionGroup(new ChangeSchemaAction(FileTemplatesScheme.DEFAULT),
+                                  new ChangeSchemaAction(myConfigurable.getManager().getProjectScheme()));
+  }
+
+  private class ChangeSchemaAction extends AnAction {
+
+    private final FileTemplatesScheme myScheme;
+
+    public ChangeSchemaAction(FileTemplatesScheme scheme) {
+      super(scheme.getName());
+      myScheme = scheme;
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      myConfigurable.changeScheme(myScheme);
+      ChangeSchemaCombo.this.getTemplatePresentation().setText(myScheme.getName());
+    }
   }
 }
