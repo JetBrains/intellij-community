@@ -76,7 +76,7 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
   public int EDITOR_TAB_LIMIT = 10;
   public int EDITOR_TAB_TITLE_LIMIT = 100;
   public boolean ANIMATE_WINDOWS = true;
-  public int ANIMATION_SPEED = 4000; // Pixels per second
+  public int ANIMATION_DURATION = 300; // Milliseconds
   public boolean SHOW_TOOL_WINDOW_NUMBERS = true;
   public boolean HIDE_TOOL_STRIPES = true;
   public boolean WIDESCREEN_SUPPORT = false;
