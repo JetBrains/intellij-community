@@ -18,6 +18,7 @@ package com.intellij.util.io;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.net.HttpConfigurable;
@@ -49,7 +50,8 @@ import java.util.zip.GZIPInputStream;
 public final class HttpRequests {
   private static final Logger LOG = Logger.getInstance(HttpRequests.class);
 
-  private static final boolean ourParallelLoader = SystemProperties.getBooleanProperty("idea.parallel.class.loader", true);
+  private static final boolean ourWrapClassLoader =
+    SystemInfo.isJavaVersionAtLeast("1.7") && !SystemProperties.getBooleanProperty("idea.parallel.class.loader", true);
 
   public interface Request {
     @NotNull URLConnection getConnection() throws IOException;
@@ -111,11 +113,11 @@ public final class HttpRequests {
 
     public <T> T connect(@NotNull RequestProcessor<T> processor) throws IOException {
       // todo[r.sh] drop condition in IDEA 15
-      if (ourParallelLoader) {
-        return process(this, processor);
+      if (ourWrapClassLoader) {
+        return wrapAndProcess(this, processor);
       }
       else {
-        return wrapAndProcess(this, processor);
+        return process(this, processor);
       }
     }
   }
