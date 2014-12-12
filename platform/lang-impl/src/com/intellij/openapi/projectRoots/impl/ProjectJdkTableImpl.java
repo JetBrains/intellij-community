@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.*;
@@ -61,13 +62,17 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements PersistentSt
     myListenerList = new MessageListenerList<Listener>(myMessageBus, JDK_TABLE_TOPIC);
     // support external changes to jdk libraries (Endorsed Standards Override)
     VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileAdapter() {
+      private FileTypeManager myFileTypeManager = FileTypeManager.getInstance();
+
       @Override
       public void fileCreated(@NotNull VirtualFileEvent event) {
         updateJdks(event.getFile());
       }
 
       private void updateJdks(VirtualFile file) {
-        if (file.isDirectory() || !FileTypes.ARCHIVE.equals(file.getFileType())) {
+        if (file.isDirectory() ||
+            // avoid calling getFileType() because it will try to detect file type from content for unknown/text file types
+            !FileTypes.ARCHIVE.equals(myFileTypeManager.getFileTypeByFileName(file.getName()))) {
           // consider only archive files that may contain libraries
           return;
         }
