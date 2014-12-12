@@ -669,6 +669,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
     @Override
     public void dispose() {
+      super.dispose();
       myTreeModel.removeEditorPositionListener(myFileEditorPositionListener);
     }
 
