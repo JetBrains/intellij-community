@@ -206,7 +206,10 @@ public class HgBranchPopupActions {
 
     @Override
     public void update(final AnActionEvent e) {
-      if (myRepository.isFresh() || !Repository.State.NORMAL.equals(myRepository.getState())) {
+      if (myRepository.isFresh() || myHeads.isEmpty()) {
+        e.getPresentation().setEnabledAndVisible(false);
+      }
+      else if (!Repository.State.NORMAL.equals(myRepository.getState())) {
         e.getPresentation().setEnabled(false);
       }
     }
