@@ -977,6 +977,15 @@ public class PyTypeTest extends PyTestCase {
            "    expr = x\n");
   }
 
+  public void testNoContainsInContainsArgumentForStructuralType() {
+    doTest("{foo, __getitem__}",
+           "def f(x):\n" +
+           "   x in []\n" +
+           "   x.foo\n" +
+           "   x[0]" +
+           "   expr = x\n");
+  }
+
   private static TypeEvalContext getTypeEvalContext(@NotNull PyExpression element) {
     return TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing();
   }

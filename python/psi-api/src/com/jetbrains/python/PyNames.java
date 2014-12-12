@@ -472,7 +472,7 @@ public class PyNames {
   }
 
   public static boolean isRightOperatorName(@Nullable String name) {
-    return name != null && name.matches("__r[a-z]+__");
+    return name != null && (name.matches("__r[a-z]+__") || CONTAINS.equals(name));
   }
 
   /**

@@ -306,11 +306,15 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
             final PyQualifiedExpression expr = (PyQualifiedExpression)node;
             final PyExpression qualifier = expr.getQualifier();
             if (qualifier != null) {
-              final PsiReference ref = qualifier.getReference();
-              if (ref != null && ref.isReferenceTo(PyNamedParameterImpl.this)) {
-                final String attributeName = expr.getReferencedName();
-                if (attributeName != null && !result.contains(attributeName)) {
-                  result.add(attributeName);
+              final String attributeName = expr.getReferencedName();
+              final PyExpression referencedExpr = node instanceof PyBinaryExpression && PyNames.isRightOperatorName(attributeName) ?
+                                                  ((PyBinaryExpression)node).getRightExpression() : qualifier;
+              if (referencedExpr != null) {
+                final PsiReference ref = referencedExpr.getReference();
+                if (ref != null && ref.isReferenceTo(PyNamedParameterImpl.this)) {
+                  if (attributeName != null && !result.contains(attributeName)) {
+                    result.add(attributeName);
+                  }
                 }
               }
             }
