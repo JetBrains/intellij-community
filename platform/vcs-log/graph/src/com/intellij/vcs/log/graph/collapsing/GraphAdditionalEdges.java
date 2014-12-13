@@ -38,13 +38,13 @@ public class GraphAdditionalEdges {
   public static final int NULL_ID = MIN_NODE_ID;
 
   public static GraphAdditionalEdges newInstance(@NotNull Function<Integer, Integer> getNodeIndexById,
-                                               @NotNull Function<Integer, Integer> getNodeIdByIndex) {
+                                                 @NotNull Function<Integer, Integer> getNodeIdByIndex) {
     return new GraphAdditionalEdges(getNodeIndexById, getNodeIdByIndex, new IntIntMultiMap());
   }
 
   public static GraphAdditionalEdges updateInstance(@NotNull GraphAdditionalEdges prevAdditionEdges,
-                                                  @NotNull Function<Integer, Integer> getNodeIndexById,
-                                                  @NotNull Function<Integer, Integer> getNodeIdByIndex) {
+                                                    @NotNull Function<Integer, Integer> getNodeIndexById,
+                                                    @NotNull Function<Integer, Integer> getNodeIdByIndex) {
     return new GraphAdditionalEdges(getNodeIndexById, getNodeIdByIndex, prevAdditionEdges.myAdditionEdges);
   }
 
@@ -102,6 +102,13 @@ public class GraphAdditionalEdges {
     for (int compressEdge : myAdditionEdges.get(myGetNodeIdByIndex.fun(nodeIndex))) {
       GraphEdge edge = decompressEdge(nodeIndex, compressEdge);
       if (edge != null) result.add(edge);
+    }
+  }
+
+  public void removeAdditionalEdges(List<GraphEdge> result, int nodeIndex) {
+    for (int compressedEdge : myAdditionEdges.get(myGetNodeIdByIndex.fun(nodeIndex))) {
+      GraphEdge edge = decompressEdge(nodeIndex, compressedEdge);
+      if (edge != null) result.remove(edge);
     }
   }
 
