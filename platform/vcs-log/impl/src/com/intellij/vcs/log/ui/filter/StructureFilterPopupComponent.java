@@ -138,7 +138,7 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
     Set<VirtualFile> roots = getAllRoots();
 
     List<AnAction> rootActions = new ArrayList<AnAction>();
-    if (roots.size() <= 10) {
+    if (roots.size() <= 10 && myColorManager.isMultipleRoots()) {
       for (VirtualFile root : ContainerUtil.sorted(roots, FILE_BY_NAME_COMPARATOR)) {
         rootActions.add(new SelectVisibleRootAction(root));
       }
