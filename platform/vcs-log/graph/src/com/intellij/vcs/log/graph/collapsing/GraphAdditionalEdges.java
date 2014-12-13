@@ -112,6 +112,15 @@ public class GraphAdditionalEdges {
     }
   }
 
+  public boolean hasEdge(int fromIndex, int toIndex) {
+    for (int compressedEdge : myAdditionEdges.get(myGetNodeIdByIndex.fun(fromIndex))) {
+      int retrievedId = retrievedNodeId(compressedEdge);
+      int anotherNodeIndex = myGetNodeIndexById.fun(retrievedId);
+      if (anotherNodeIndex == toIndex) return true;
+    }
+    return false;
+  }
+
   @Nullable
   private GraphEdge decompressEdge(int nodeIndex, int compressedEdge) {
     GraphEdgeType edgeType = retrievedType(compressedEdge);
