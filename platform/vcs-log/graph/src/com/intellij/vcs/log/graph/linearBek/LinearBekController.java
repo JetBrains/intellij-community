@@ -25,13 +25,14 @@ import com.intellij.vcs.log.graph.api.printer.PrintElementWithGraphElement;
 import com.intellij.vcs.log.graph.collapsing.GraphAdditionalEdges;
 import com.intellij.vcs.log.graph.impl.facade.BaseLinearGraphController;
 import com.intellij.vcs.log.graph.impl.facade.CascadeLinearGraphController;
+import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
 import com.intellij.vcs.log.graph.utils.impl.BitSetFlags;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
-
-import static com.intellij.vcs.log.graph.utils.LinearGraphUtils.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.PriorityQueue;
 
 public class LinearBekController extends CascadeLinearGraphController {
   @NotNull private final LinearGraph myCompiledGraph;
@@ -42,8 +43,7 @@ public class LinearBekController extends CascadeLinearGraphController {
   }
 
   static LinearGraph compileGraph(@NotNull final LinearGraph graph, @NotNull final GraphLayout graphLayout) {
-    final GraphAdditionalEdges missingEdges = createSimpleAdditionalEdges();
-    final GraphAdditionalEdges newEdges = createSimpleAdditionalEdges();
+    final WorkingGraph workingGraph = new WorkingGraph(graph);
 
     GraphVisitorAlgorithm graphVisitorAlgorithm = new GraphVisitorAlgorithm(true);
 
@@ -54,13 +54,13 @@ public class LinearBekController extends CascadeLinearGraphController {
 
       @Override
       public void leaveSubtree(int currentNodeIndex, BitSetFlags visited) {
-        List<Integer> upNodes = getUpNodes(graph, currentNodeIndex);
+        List<Integer> upNodes = workingGraph.getUpNodes(currentNodeIndex);
         if (upNodes.size() != 1) return;
         int parent = upNodes.get(0);
-        if (getDownNodes(graph, parent).size() != 2) {
+        if (workingGraph.getDownNodes(parent).size() != 2) {
           return;
         }
-        int firstChildIndex = getDownNodes(graph, parent).get(0);
+        int firstChildIndex = workingGraph.getDownNodes(parent).get(0);
         if (firstChildIndex == currentNodeIndex) return;
 
         int x = graphLayout.getLayoutIndex(firstChildIndex);
@@ -68,75 +68,135 @@ public class LinearBekController extends CascadeLinearGraphController {
 
         int k = 1;
         PriorityQueue<Integer> queue = new PriorityQueue<Integer>();
-        queue.addAll(getDownNodes(graph, currentNodeIndex));
+        queue.addAll(workingGraph.getDownNodes(currentNodeIndex));
         while (!queue.isEmpty()) {
           Integer next = queue.poll();
           if (next > currentNodeIndex + k || !visited.get(next)) {
             break;
-          } else if (next < currentNodeIndex + k) {
+          }
+          else if (next < currentNodeIndex + k) {
             continue;
           }
           k++;
-          queue.addAll(getDownNodes(graph, next));
+          queue.addAll(workingGraph.getDownNodes(next));
         }
 
-        List<GraphEdge> edgesToRemove = new ArrayList<GraphEdge>();
-        List<GraphEdge> dottedEdgesToRemove = new ArrayList<GraphEdge>();
-        List<Integer> tails = new ArrayList<Integer>();
-
+        workingGraph.clear();
         for (int i = currentNodeIndex; i < currentNodeIndex + k; i++) {
-          boolean isTail = true;
 
-          for (int upNode : getUpNodes(graph, i)) {
+          for (int upNode : workingGraph.getUpNodes(i)) {
             if (upNode >= currentNodeIndex + k || upNode < currentNodeIndex - 1) {
               return;
             }
           }
 
-          for (int downNode : getDownNodes(graph, i)) {
+          boolean isTail = true;
+          for (int downNode : workingGraph.getDownNodes(i)) {
             if (!visited.get(downNode)) {
               int li = graphLayout.getLayoutIndex(downNode);
               if (li < x || li >= y) {
                 return;
               }
-              edgesToRemove.add(getEdge(graph, i, downNode));
+              workingGraph.removeEdge(i, downNode);
             }
             else {
               isTail = false;
             }
           }
+
           if (isTail) {
-            tails.add(i);
-          }
-
-          ArrayList<GraphEdge> dottedEdges = new ArrayList<GraphEdge>();
-          newEdges.appendAdditionalEdges(dottedEdges, i);
-          for (GraphEdge dottedEdge : dottedEdges) {
-            if (dottedEdge.getUpNodeIndex() == i) {
-              int li = graphLayout.getLayoutIndex(dottedEdge.getDownNodeIndex());
-              if (li >= x && li < y) {
-                dottedEdgesToRemove.add(dottedEdge);
-              }
-            }
+            workingGraph.addEdge(i, firstChildIndex);
           }
         }
 
-        // replace edges!
-        missingEdges.createEdge(getEdge(graph, parent, firstChildIndex));
-        for (Integer t : tails) {
-          newEdges.createEdge(new GraphEdge(t, firstChildIndex, null, GraphEdgeType.DOTTED));
-        }
+        workingGraph.removeEdge(parent, firstChildIndex);
 
-        for (GraphEdge edge : edgesToRemove) {
-          missingEdges.createEdge(edge);
-        }
-        for (GraphEdge edge : dottedEdgesToRemove) {
-          newEdges.removeEdge(edge);
-        }
+        workingGraph.apply();
       }
     });
 
-    return new LinearBekGraph(graph, missingEdges, newEdges);
+    return workingGraph.createLinearBekGraph();
+  }
+
+  private static class WorkingGraph {
+    private final GraphAdditionalEdges myHiddenEdges = createSimpleAdditionalEdges();
+    private final GraphAdditionalEdges myDottedEdges = createSimpleAdditionalEdges();
+    private final LinearGraph myGraph;
+
+    private final List<GraphEdge> myToAdd = new ArrayList<GraphEdge>();
+    private final List<GraphEdge> myToRemove = new ArrayList<GraphEdge>();
+    private final List<GraphEdge> myDottedToRemove = new ArrayList<GraphEdge>();
+
+    private WorkingGraph(LinearGraph graph) {
+      myGraph = graph;
+    }
+
+    public void addEdge(int from, int to) {
+      myToAdd.add(new GraphEdge(from, to, null, GraphEdgeType.DOTTED));
+    }
+
+    public void removeEdge(int from, int to) {
+      if (myDottedEdges.hasEdge(from, to)) {
+        myDottedToRemove.add(new GraphEdge(from, to, null, GraphEdgeType.DOTTED));
+      } else {
+        myToRemove.add(LinearGraphUtils.getEdge(myGraph, from, to));
+      }
+    }
+
+    public List<Integer> getUpNodes(int index) {
+      List<GraphEdge> edges = getGraphEdges(index);
+
+      List<Integer> result = new ArrayList<Integer>();
+      for (GraphEdge e : edges) {
+        if (e.getUpNodeIndex() != index) {
+          result.add(e.getUpNodeIndex());
+        }
+      }
+      return result;
+    }
+
+    public List<Integer> getDownNodes(int index) {
+      List<GraphEdge> edges = getGraphEdges(index);
+
+      List<Integer> result = new ArrayList<Integer>();
+      for (GraphEdge e : edges) {
+        if (e.getDownNodeIndex() != index) {
+          result.add(e.getDownNodeIndex());
+        }
+      }
+      return result;
+    }
+
+    private List<GraphEdge> getGraphEdges(int index) {
+      List<GraphEdge> edges = myGraph.getAdjacentEdges(index);
+      myHiddenEdges.removeAdditionalEdges(edges, index);
+      myDottedEdges.appendAdditionalEdges(edges, index);
+      return edges;
+    }
+
+    public void apply() {
+      for (GraphEdge e : myToAdd) {
+        myDottedEdges.createEdge(e);
+      }
+      for (GraphEdge e : myToRemove) {
+        myHiddenEdges.createEdge(e);
+      }
+      for (GraphEdge e : myDottedToRemove) {
+        myDottedEdges.removeEdge(e);
+      }
+
+      clear();
+    }
+
+    public void clear() {
+      myToAdd.clear();
+      myToRemove.clear();
+      myDottedToRemove.clear();
+    }
+
+    public LinearBekGraph createLinearBekGraph() {
+      return new LinearBekGraph(myGraph, myHiddenEdges, myDottedEdges);
+    }
   }
 
   @Override
