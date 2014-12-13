@@ -384,7 +384,7 @@ public class XWatchesViewImpl extends XDebugView implements DnDNativeTarget, XWa
     updateSessionData();
   }
 
-  private void updateSessionData() {
+  public void updateSessionData() {
     List<XExpression> watchExpressions = new ArrayList<XExpression>();
     final List<? extends WatchNode> children = myRootNode.getAllChildren();
     if (children != null) {
