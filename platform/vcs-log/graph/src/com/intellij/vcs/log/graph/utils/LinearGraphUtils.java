@@ -144,4 +144,16 @@ public class LinearGraphUtils {
 
     return new LinearGraphController.LinearGraphAnswer(null, cursor, null);
   }
+
+  @Nullable
+  public static GraphEdge getEdge(@NotNull LinearGraph graph, int up, int down) {
+    List<GraphEdge> edges = graph.getAdjacentEdges(up);
+    for (GraphEdge edge : edges) {
+      if (edge.getDownNodeIndex() != null && edge.getDownNodeIndex() == down) {
+        return edge;
+      }
+    }
+    return null;
+  }
+
 }
