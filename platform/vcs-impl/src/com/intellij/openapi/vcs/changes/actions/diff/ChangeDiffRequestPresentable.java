@@ -274,7 +274,7 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
         if (content == null) {
           throw new DiffRequestPresentableException("Can't get binary revision content");
         }
-        return DiffContentFactory.createBinary(project, filePath.getName(), filePath.getPath(), content);
+        return DiffContentFactory.createBinary(project, filePath.getName(), filePath.getFileType(), content);
       }
 
       String revisionContent = revision.getContent();

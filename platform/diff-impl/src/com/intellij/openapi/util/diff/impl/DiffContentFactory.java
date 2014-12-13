@@ -12,6 +12,7 @@ import com.intellij.openapi.util.diff.contents.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.BinaryLightVirtualFile;
 import com.intellij.util.LineSeparator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -63,10 +64,9 @@ public class DiffContentFactory {
   @NotNull
   public static BinaryFileContentImpl createBinary(@Nullable Project project,
                                                    @NotNull String name,
-                                                   @NotNull String path,
+                                                   @NotNull FileType type,
                                                    @NotNull byte[] content) throws IOException {
-    // TODO: create mock VirtualFile
-    return createTemporalFile(project, "tmp", name, content);
+    return new BinaryFileContentImpl(project, new BinaryLightVirtualFile(name, type, content));
   }
 
   @NotNull
