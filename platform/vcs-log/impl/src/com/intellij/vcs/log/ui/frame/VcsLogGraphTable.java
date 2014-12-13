@@ -378,7 +378,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
       @NotNull
       @Override
       public Color produce() {
-        return ColorUtil.mix(rootColor, UIUtil.getTableBackground(), 1 - (50.0 / 255));
+        return ColorUtil.mix(rootColor, UIUtil.getTableBackground(), 0.75);
       }
     });
   }
