@@ -35,6 +35,7 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.net.HttpConfigurable;
+import com.intellij.util.net.IdeaWideProxySelector;
 import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.GitVcs;
 import git4idea.config.GitVcsApplicationSettings;
@@ -442,7 +443,7 @@ public abstract class GitHandler {
         LOG.debug(String.format("handler=%s, port=%s", myHandlerNo, port));
 
         final HttpConfigurable httpConfigurable = HttpConfigurable.getInstance();
-        boolean useHttpProxy = httpConfigurable.USE_HTTP_PROXY;
+        boolean useHttpProxy = httpConfigurable.USE_HTTP_PROXY && !isSshUrlExcluded(httpConfigurable, myUrl);
         myEnv.put(GitSSHHandler.SSH_USE_PROXY_ENV, String.valueOf(useHttpProxy));
 
         if (useHttpProxy) {
@@ -483,6 +484,33 @@ public abstract class GitHandler {
       cleanupEnv();
       myListeners.getMulticaster().startFailed(t);
     }
+  }
+
+  protected static boolean isSshUrlExcluded(@NotNull HttpConfigurable httpConfigurable, @NotNull String url) {
+    String host = getHostFromSshUrl(url);
+    return ((IdeaWideProxySelector)httpConfigurable.getOnlyBySettingsSelector()).isProxyException(host);
+  }
+
+  @NotNull
+  private static String getHostFromSshUrl(@NotNull String url) {
+    // [ssh://]git@github.com:user/project.git
+    String host = url;
+    int at = host.lastIndexOf("@");
+    if (at > 0) {
+      host = host.substring(at + 1);
+    }
+    else {
+      int firstColon = url.indexOf(":");
+      if (firstColon > 0) {
+        host = host.substring(firstColon + 1);
+      }
+    }
+
+    int colon = host.indexOf(":");
+    if (colon > 0) {
+      host = host.substring(0, colon);
+    }
+    return host;
   }
 
   private void addAuthListener(@NotNull final GitHttpAuthenticator authenticator) {
