@@ -98,7 +98,7 @@ public class VcsLogDataHolder implements Disposable, VcsLogDataProvider {
     myContainingBranchesGetter = new ContainingBranchesGetter(this, this);
 
     myFilterer = new VcsLogFiltererImpl(myProject, myLogProviders, myHashMap, myTopCommitsDetailsCache, myDetailsGetter,
-                                                       uiProperties.isBek() ? PermanentGraph.SortType.Bek : PermanentGraph.SortType.Normal,
+                                                       uiProperties.isBek() ? (uiProperties.isLinearBek() ? PermanentGraph.SortType.LinearBek : PermanentGraph.SortType.Bek) : PermanentGraph.SortType.Normal,
                                                        visiblePackConsumer);
 
     myDataPackUpdateHandler = new Consumer<DataPack>() {

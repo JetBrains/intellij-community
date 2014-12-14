@@ -20,6 +20,7 @@ import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.ColorIcon;
 import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
@@ -58,8 +59,12 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
   @NotNull private final JComponent myToolbar;
   @NotNull private final RepositoryChangesBrowser myChangesBrowser;
 
-  public MainFrame(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogUiImpl vcsLogUI, @NotNull Project project,
-                   @NotNull VcsLogSettings settings, @NotNull VcsLogUiProperties uiProperties, @NotNull VcsLog log,
+  public MainFrame(@NotNull VcsLogDataHolder logDataHolder,
+                   @NotNull VcsLogUiImpl vcsLogUI,
+                   @NotNull Project project,
+                   @NotNull VcsLogSettings settings,
+                   @NotNull VcsLogUiProperties uiProperties,
+                   @NotNull VcsLog log,
                    @NotNull VisiblePack initialDataPack) {
     // collect info
     myLogDataHolder = logDataHolder;
@@ -122,6 +127,7 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
   /**
    * Informs components that the actual DataPack has been updated (e.g. due to a log refresh). <br/>
    * Components may want to update their fields and/or rebuild.
+   *
    * @param dataPack new data pack.
    */
   public void updateDataPack(@NotNull VisiblePack dataPack) {
@@ -178,6 +184,7 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
 
   private JComponent createActionsToolbar() {
     AnAction bekAction = new BekAction();
+    AnAction linearBekAction = new LinearBekAction();
 
     AnAction hideBranchesAction = new GraphAction("Collapse linear branches", "Collapse linear branches", VcsLogIcons.CollapseBranches) {
       @Override
@@ -210,8 +217,8 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
 
     refreshAction.registerShortcutOn(this);
 
-    DefaultActionGroup toolbarGroup = new DefaultActionGroup(bekAction, hideBranchesAction, showBranchesAction, showFullPatchAction, refreshAction,
-                                                             showDetailsAction);
+    DefaultActionGroup toolbarGroup =
+      new DefaultActionGroup(bekAction, linearBekAction, hideBranchesAction, showBranchesAction, showFullPatchAction, refreshAction, showDetailsAction);
     toolbarGroup.add(ActionManager.getInstance().getAction(VcsLogUiImpl.TOOLBAR_ACTION_GROUP));
 
     DefaultActionGroup mainGroup = new DefaultActionGroup();
@@ -326,6 +333,29 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
       super.update(e);
       e.getPresentation().setVisible(BekSorter.isBekEnabled());
       e.getPresentation().setEnabled(areGraphActionsEnabled());
+    }
+  }
+
+  private class LinearBekAction extends ToggleAction implements DumbAware {
+    public LinearBekAction() {
+      super("Linear BEK", "Linear BEK", new ColorIcon(16, new Color(0, 90, 120)));
+    }
+
+    @Override
+    public boolean isSelected(AnActionEvent e) {
+      return myUI.isLinearBek();
+    }
+
+    @Override
+    public void setSelected(AnActionEvent e, boolean state) {
+      myUI.setLinearBek(state);
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      super.update(e);
+      e.getPresentation().setVisible(BekSorter.isBekEnabled());
+      e.getPresentation().setEnabled(areGraphActionsEnabled() && myUI.isBek());
     }
   }
 

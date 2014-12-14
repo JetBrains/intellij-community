@@ -25,7 +25,10 @@ import com.intellij.vcs.log.VcsLogSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
+import java.util.List;
 
 /**
  * Stores UI configuration based on user activity and preferences.
@@ -43,6 +46,7 @@ public class VcsLogUiProperties implements PersistentStateComponent<VcsLogUiProp
     public boolean SHOW_DETAILS = true;
     public boolean LONG_EDGES_VISIBLE = false;
     public boolean BEK_SORT = false;
+    public boolean LINEAR_BEK_SORT = false;
     public boolean SHOW_ROOT_NAMES = false;
     public Deque<UserGroup> RECENTLY_FILTERED_USER_GROUPS = new ArrayDeque<UserGroup>();
     public Deque<UserGroup> RECENTLY_FILTERED_BRANCH_GROUPS = new ArrayDeque<UserGroup>();
@@ -125,6 +129,14 @@ public class VcsLogUiProperties implements PersistentStateComponent<VcsLogUiProp
 
   public void setBek(boolean isBek) {
     myState.BEK_SORT = isBek;
+  }
+
+  public boolean isLinearBek() {
+    return myState.LINEAR_BEK_SORT;
+  }
+
+  public void setLinearBek(boolean isBek) {
+    myState.LINEAR_BEK_SORT = isBek;
   }
 
   public boolean isShowRootNames() {

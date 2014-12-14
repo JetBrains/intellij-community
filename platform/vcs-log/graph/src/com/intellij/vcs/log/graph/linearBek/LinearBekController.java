@@ -24,6 +24,7 @@ import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo;
 import com.intellij.vcs.log.graph.api.printer.PrintElementWithGraphElement;
 import com.intellij.vcs.log.graph.collapsing.GraphAdditionalEdges;
 import com.intellij.vcs.log.graph.impl.facade.BaseLinearGraphController;
+import com.intellij.vcs.log.graph.impl.facade.BekBaseLinearGraphController;
 import com.intellij.vcs.log.graph.impl.facade.CascadeLinearGraphController;
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
 import com.intellij.vcs.log.graph.utils.impl.BitSetFlags;
@@ -35,9 +36,9 @@ import java.util.*;
 public class LinearBekController extends CascadeLinearGraphController {
   @NotNull private final LinearGraph myCompiledGraph;
 
-  public LinearBekController(@NotNull PermanentGraphInfo bekSortedGraph) {
-    super(new BaseLinearGraphController(bekSortedGraph), bekSortedGraph);
-    myCompiledGraph = compileGraph(getDelegateLinearGraphController().getCompiledGraph(), bekSortedGraph.getPermanentGraphLayout());
+  public LinearBekController(@NotNull BekBaseLinearGraphController controller, @NotNull PermanentGraphInfo permanentGraphInfo) {
+    super(controller, permanentGraphInfo);
+    myCompiledGraph = compileGraph(getDelegateLinearGraphController().getCompiledGraph(), permanentGraphInfo.getPermanentGraphLayout());
   }
 
   static LinearGraph compileGraph(@NotNull final LinearGraph graph, @NotNull final GraphLayout graphLayout) {
