@@ -177,6 +177,15 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
     return myUiProperties.isBek();
   }
 
+  public void setLinearBek(boolean bek) {
+    myUiProperties.setLinearBek(bek);
+    myFilterer.onSortTypeChange(bek ? PermanentGraph.SortType.LinearBek : PermanentGraph.SortType.Bek);
+  }
+
+  public boolean isLinearBek() {
+    return myUiProperties.isLinearBek();
+  }
+
   public void setShowRootNames(boolean isShowRootNames) {
     myUiProperties.setShowRootNames(isShowRootNames);
     myMainFrame.getGraphTable().rootColumnUpdated();
