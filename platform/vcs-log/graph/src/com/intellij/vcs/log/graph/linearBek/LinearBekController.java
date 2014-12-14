@@ -23,9 +23,9 @@ import com.intellij.vcs.log.graph.api.elements.GraphEdgeType;
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo;
 import com.intellij.vcs.log.graph.api.printer.PrintElementWithGraphElement;
 import com.intellij.vcs.log.graph.collapsing.GraphAdditionalEdges;
-import com.intellij.vcs.log.graph.impl.facade.BaseLinearGraphController;
 import com.intellij.vcs.log.graph.impl.facade.BekBaseLinearGraphController;
 import com.intellij.vcs.log.graph.impl.facade.CascadeLinearGraphController;
+import com.intellij.vcs.log.graph.impl.facade.bek.BekIntMap;
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
 import com.intellij.vcs.log.graph.utils.impl.BitSetFlags;
 import org.jetbrains.annotations.NotNull;
@@ -38,7 +38,9 @@ public class LinearBekController extends CascadeLinearGraphController {
 
   public LinearBekController(@NotNull BekBaseLinearGraphController controller, @NotNull PermanentGraphInfo permanentGraphInfo) {
     super(controller, permanentGraphInfo);
-    myCompiledGraph = compileGraph(getDelegateLinearGraphController().getCompiledGraph(), permanentGraphInfo.getPermanentGraphLayout());
+    myCompiledGraph =
+      compileGraph(getDelegateLinearGraphController().getCompiledGraph(),
+                   new BekGraphLayout(permanentGraphInfo.getPermanentGraphLayout(), controller.getBekIntMap()));
   }
 
   static LinearGraph compileGraph(@NotNull final LinearGraph graph, @NotNull final GraphLayout graphLayout) {
@@ -206,5 +208,36 @@ public class LinearBekController extends CascadeLinearGraphController {
 
   public static GraphAdditionalEdges createSimpleAdditionalEdges() {
     return GraphAdditionalEdges.newInstance(new Function.Self<Integer, Integer>(), new Function.Self<Integer, Integer>());
+  }
+
+  private static class BekGraphLayout implements GraphLayout {
+    private final GraphLayout myGraphLayout;
+    private final BekIntMap myBekIntMap;
+
+    public BekGraphLayout(GraphLayout graphLayout, BekIntMap bekIntMap) {
+      myGraphLayout = graphLayout;
+      myBekIntMap = bekIntMap;
+    }
+
+    @Override
+    public int getLayoutIndex(int nodeIndex) {
+      return myGraphLayout.getLayoutIndex(myBekIntMap.getUsualIndex(nodeIndex));
+    }
+
+    @Override
+    public int getOneOfHeadNodeIndex(int nodeIndex) {
+      int usualIndex = myGraphLayout.getOneOfHeadNodeIndex(myBekIntMap.getUsualIndex(nodeIndex));
+      return myBekIntMap.getBekIndex(usualIndex);
+    }
+
+    @NotNull
+    @Override
+    public List<Integer> getHeadNodeIndex() {
+      List<Integer> bekIndexes = new ArrayList<Integer>();
+      for (int head : myGraphLayout.getHeadNodeIndex()) {
+        bekIndexes.add(myBekIntMap.getBekIndex(head));
+      }
+      return bekIndexes;
+    }
   }
 }
