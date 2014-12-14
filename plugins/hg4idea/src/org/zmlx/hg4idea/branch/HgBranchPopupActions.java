@@ -42,7 +42,6 @@ import org.zmlx.hg4idea.action.HgCommandResultNotifier;
 import org.zmlx.hg4idea.command.HgBookmarkCommand;
 import org.zmlx.hg4idea.command.HgBranchCloseCommand;
 import org.zmlx.hg4idea.command.HgBranchCreateCommand;
-import org.zmlx.hg4idea.command.HgWorkingCopyRevisionsCommand;
 import org.zmlx.hg4idea.execution.HgCommandException;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.execution.HgCommandResultHandler;
