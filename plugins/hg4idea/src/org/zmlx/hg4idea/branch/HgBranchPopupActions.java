@@ -28,6 +28,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.actions.CommonCheckinProjectAction;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.PlatformIcons;
@@ -39,10 +41,7 @@ import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgNameWithHashInfo;
 import org.zmlx.hg4idea.HgRevisionNumber;
 import org.zmlx.hg4idea.action.HgCommandResultNotifier;
-import org.zmlx.hg4idea.command.HgBookmarkCommand;
-import org.zmlx.hg4idea.command.HgBranchCloseCommand;
-import org.zmlx.hg4idea.command.HgBranchCreateCommand;
-import org.zmlx.hg4idea.command.HgWorkingCopyRevisionsCommand;
+import org.zmlx.hg4idea.command.*;
 import org.zmlx.hg4idea.execution.HgCommandException;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.execution.HgCommandResultHandler;
@@ -147,25 +146,29 @@ public class HgBranchPopupActions {
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      String dialogTitle = String.format("Closing branch %s", myPreselectedRepo.getCurrentBranch());
-      final String commitMessage = Messages
-        .showInputDialog(myProject, "Enter the commit message:", dialogTitle, Messages.getQuestionIcon(), dialogTitle,
-                         new InputValidator() {
-                           @Override
-                           public boolean checkInput(String inputString) {
-                             return !StringUtil.isEmptyOrSpaces(inputString);
-                           }
+      if (ChangeListManager.getInstance(myProject).getChangesIn(myPreselectedRepo.getRoot()).isEmpty()) {
+        String dialogTitle = String.format("Closing branch %s", myPreselectedRepo.getCurrentBranch());
+        final String commitMessage = Messages
+          .showInputDialog(myProject, "Enter the commit message:", dialogTitle, Messages.getQuestionIcon(), dialogTitle,
+                           new InputValidator() {
+                             @Override
+                             public boolean checkInput(String inputString) {
+                               return !StringUtil.isEmptyOrSpaces(inputString);
+                             }
 
-                           @Override
-                           public boolean canClose(String inputString) {
-                             return checkInput(inputString);
-                           }
-                         });
-      if (commitMessage == null) {
-        return;
+                             @Override
+                             public boolean canClose(String inputString) {
+                               return checkInput(inputString);
+                             }
+                           });
+        if (commitMessage == null) {
+          return;
+        }
+        closeBranch(commitMessage);
+      } else {
+        new CommonCheckinProjectAction().actionPerformed(e);
       }
 
-      closeBranch(commitMessage);
     }
 
     private void closeBranch(@NotNull String commitMessage) {

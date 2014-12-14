@@ -51,16 +51,22 @@ public class HgCommitCommand {
   private final String myMessage;
   @NotNull private final Charset myCharset;
   private final boolean myAmend;
+  private final boolean myCloseBranch;
 
   private Set<HgFile> myFiles = Collections.emptySet();
   @NotNull private List<String> mySubrepos = Collections.emptyList();
 
-  public HgCommitCommand(Project project, @NotNull VirtualFile root, String message, boolean amend) {
+  public HgCommitCommand(Project project, @NotNull VirtualFile root, String message, boolean amend, boolean closeBranch) {
     myProject = project;
     myRoot = root;
     myMessage = message;
     myCharset = HgEncodingUtil.getDefaultCharset(myProject);
     myAmend = amend;
+    myCloseBranch = closeBranch;
+  }
+
+  public HgCommitCommand(Project project, @NotNull VirtualFile root, String message, boolean amend) {
+    this(project, root, message, amend, false);
   }
 
   public HgCommitCommand(Project project, @NotNull VirtualFile root, String message) {
@@ -94,12 +100,12 @@ public class HgCommitCommand {
       List<List<String>> chunkedCommits = VcsFileUtil.chunkRelativePaths(relativePaths);
       int size = chunkedCommits.size();
       // commit with subrepo should be first, because it's not possible to amend with --subrepos argument;
-      commitChunkFiles(chunkedCommits.get(0), myAmend, !mySubrepos.isEmpty());
+      commitChunkFiles(chunkedCommits.get(0), myAmend, !mySubrepos.isEmpty(), myCloseBranch);
       HgVcs vcs = HgVcs.getInstance(myProject);
       boolean amendCommit = vcs != null && vcs.getVersion().isAmendSupported();
       for (int i = 1; i < size; i++) {
         List<String> chunk = chunkedCommits.get(i);
-        commitChunkFiles(chunk, amendCommit);
+        commitChunkFiles(chunk, amendCommit, false, myCloseBranch);
       }
     }
     if (!myProject.isDisposed()) {
@@ -112,10 +118,11 @@ public class HgCommitCommand {
   }
 
   private void commitChunkFiles(@NotNull List<String> chunk, boolean amendCommit) throws VcsException {
-    commitChunkFiles(chunk, amendCommit, false);
+    commitChunkFiles(chunk, amendCommit, false, false);
   }
 
-  private void commitChunkFiles(@NotNull List<String> chunk, boolean amendCommit, boolean withSubrepos) throws VcsException {
+  private void commitChunkFiles(@NotNull List<String> chunk, boolean amendCommit, boolean withSubrepos, boolean closeBranch)
+      throws VcsException {
     List<String> parameters = new LinkedList<String>();
     parameters.add("--logfile");
     parameters.add(saveCommitMessage().getAbsolutePath());
@@ -126,6 +133,9 @@ public class HgCommitCommand {
     }
     else if (amendCommit) {
       parameters.add("--amend");
+    }
+    if (closeBranch) {
+      parameters.add("--close-branch");
     }
     parameters.addAll(chunk);
     HgCommandExecutor executor = new HgCommandExecutor(myProject);
