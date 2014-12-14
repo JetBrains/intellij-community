@@ -62,6 +62,10 @@ public class BekBaseLinearGraphController extends CascadeLinearGraphController {
     return null;
   }
 
+  public BekIntMap getBekIntMap() {
+    return myBekIntMap;
+  }
+
   @NotNull
   @Override
   public LinearGraph getCompiledGraph() {
