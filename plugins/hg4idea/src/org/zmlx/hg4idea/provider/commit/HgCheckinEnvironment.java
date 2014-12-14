@@ -60,6 +60,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
   private boolean myNextCommitIsPushed;
   private boolean myNextCommitAmend; // If true, the next commit is amended
   private boolean myShouldCommitSubrepos;
+  private boolean myCloseBranch;
 
   public HgCheckinEnvironment(Project project) {
     myProject = project;
@@ -95,7 +96,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
       HgRepository repo = entry.getKey();
       Set<HgFile> selectedFiles = entry.getValue();
       HgCommitCommand command =
-        new HgCommitCommand(myProject, repo.getRoot(), preparedComment, myNextCommitAmend);
+        new HgCommitCommand(myProject, repo.getRoot(), preparedComment, myNextCommitAmend, myCloseBranch);
 
       if (isMergeCommit(repo.getRoot())) {
         //partial commits are not allowed during merges
@@ -281,6 +282,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
    */
   private class HgCommitAdditionalComponent extends DvcsCommitAdditionalComponent {
     @NotNull private final JCheckBox myCommitSubrepos;
+    @NotNull private final JCheckBox myCloseBranchCheckBox;
 
     public HgCommitAdditionalComponent(@NotNull Project project, @NotNull CheckinProjectPanel panel) {
       super(project, panel);
@@ -311,6 +313,27 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
       }));
       myCommitSubrepos.addActionListener(new MySelectionListener(myAmend));
       myAmend.addActionListener(new MySelectionListener(myCommitSubrepos));
+      // close branch checkbox
+      c = new GridBagConstraints();
+      c.anchor = GridBagConstraints.CENTER;
+      c.insets = insets;
+      c.gridx = 1;
+      c.gridy = 3;
+      c.weightx = 1;
+      c.fill = GridBagConstraints.HORIZONTAL;
+      myCloseBranchCheckBox = new JCheckBox("Close branch", false);
+      myCloseBranchCheckBox.setToolTipText(XmlStringUtil.wrapInHtml(
+        "Close current branch.<br>" +
+        " <code>hg ci --close-branch</code>"
+      ));
+      myCloseBranchCheckBox.setMnemonic('c');
+      myCloseBranchCheckBox.setEnabled(ContainerUtil.exists(repos, new Condition<HgRepository>() {
+        @Override
+        public boolean value(HgRepository repository) {
+          return repository.getOpenedBranches().contains(repository.getCurrentBranch());
+        }
+      }));
+      myPanel.add(myCloseBranchCheckBox, c);
     }
 
     @Override
@@ -323,12 +346,14 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
     public void saveState() {
       myNextCommitAmend = myAmend.isSelected();
       myShouldCommitSubrepos = myCommitSubrepos.isSelected();
+      myCloseBranch = myCloseBranchCheckBox.isSelected();
     }
 
     @Override
     public void restoreState() {
       myNextCommitAmend = false;
       myShouldCommitSubrepos = false;
+      myCloseBranch = false;
     }
 
     @NotNull
