@@ -252,7 +252,7 @@ public class ClassPath {
         }
         else {
           while ((loader = getLoader(myIndex++)) != null) {
-            if (!myCache.loaderHasName(myName, myShortName, loader)) continue;
+            if (myCanUseCache && !myCache.loaderHasName(myName, myShortName, loader)) continue;
             myRes = loader.getResource(myName, myCheck);
             if (myRes != null) return true;
           }

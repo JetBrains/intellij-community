@@ -1,6 +1,6 @@
 @FunctionalInterface
 interface I<T> {
-  void foo(T t);
+  T foo(T t);
 }
 
 class Foo {

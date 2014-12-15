@@ -72,6 +72,10 @@ import java.util.*;
 public class JavaCoverageEngine extends CoverageEngine {
   private static final Logger LOG = Logger.getInstance(JavaCoverageEngine.class.getName());
 
+  public static JavaCoverageEngine getInstance() {
+    return Extensions.findExtension(EP_NAME, JavaCoverageEngine.class);
+  }
+
   @Override
   public boolean isApplicableTo(@Nullable final RunConfigurationBase conf) {
     if (conf instanceof CommonJavaRunConfigurationParameters) {

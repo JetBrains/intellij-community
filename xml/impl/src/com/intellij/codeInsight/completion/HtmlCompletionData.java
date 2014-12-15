@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.lang.Language;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.filters.AndFilter;
 import com.intellij.psi.filters.ElementFilter;
@@ -39,7 +40,6 @@ import org.jetbrains.annotations.NonNls;
 public class HtmlCompletionData extends XmlCompletionData {
   private boolean myCaseInsensitive;
   private static final @NonNls String JAVASCRIPT_LANGUAGE_ID = "JavaScript";
-  private static final @NonNls String STYLE_TAG = "style";
 
   public HtmlCompletionData() {
     this(true);
@@ -98,7 +98,7 @@ public class HtmlCompletionData extends XmlCompletionData {
           return true;
         }
 
-        if (equalNames(name, STYLE_TAG) ||
+        if (equalNames(name, HtmlUtil.STYLE_TAG_NAME) ||
             equalNames(name, HtmlUtil.SCRIPT_TAG_NAME)) {
           return false;
         }
@@ -155,14 +155,7 @@ public class HtmlCompletionData extends XmlCompletionData {
 
   private boolean isStyleAttributeContext(PsiElement position) {
     XmlAttribute parentOfType = PsiTreeUtil.getParentOfType(position, XmlAttribute.class, false);
-
-    if (parentOfType != null) {
-      String name = parentOfType.getName();
-      if (myCaseInsensitive) return STYLE_TAG.equalsIgnoreCase(name);
-      return STYLE_TAG.equals(name); //name.endsWith("style");
-    }
-
-    return false;
+    return parentOfType != null && Comparing.strEqual(parentOfType.getName(), HtmlUtil.STYLE_TAG_NAME, !myCaseInsensitive);
   }
 
   @Override

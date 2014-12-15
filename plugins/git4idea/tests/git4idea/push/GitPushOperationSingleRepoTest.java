@@ -28,6 +28,7 @@ import com.intellij.util.containers.ContainerUtil;
 import git4idea.branch.GitBranchUtil;
 import git4idea.config.UpdateMethod;
 import git4idea.repo.GitRepository;
+import git4idea.test.GitTestUtil;
 import git4idea.test.TestDialogHandler;
 import git4idea.update.GitUpdateResult;
 import org.jetbrains.annotations.NotNull;
@@ -75,7 +76,7 @@ public class GitPushOperationSingleRepoTest extends GitPushOperationBaseTest {
   }
 
   public void test_successful_push() throws IOException {
-    String hash = makeCommit("file.txt");
+    String hash = GitTestUtil.makeCommit("file.txt");
     GitPushResult result = push("master", "origin/master");
 
     assertResult(SUCCESS, 1, "master", "origin/master", result);
@@ -154,7 +155,7 @@ public class GitPushOperationSingleRepoTest extends GitPushOperationBaseTest {
   public void test_push_is_rejected_too_many_times() throws IOException {
     pushCommitFromBro();
     cd(myRepository);
-    String hash = makeCommit("afile.txt");
+    String hash = GitTestUtil.makeCommit("afile.txt");
 
     agreeToUpdate(GitRejectedPushUpdateDialog.MERGE_EXIT_CODE);
 
@@ -185,7 +186,7 @@ public class GitPushOperationSingleRepoTest extends GitPushOperationBaseTest {
   public void test_force_push() throws IOException {
     String lostHash = pushCommitFromBro();
     cd(myRepository);
-    String hash = makeCommit("anyfile.txt");
+    String hash = GitTestUtil.makeCommit("anyfile.txt");
 
     GitPushResult result = push("master", "origin/master", true);
 
@@ -200,7 +201,7 @@ public class GitPushOperationSingleRepoTest extends GitPushOperationBaseTest {
   public void test_merge_after_rejected_push() throws IOException {
     String broHash = pushCommitFromBro();
     cd(myRepository);
-    String hash = makeCommit("file.txt");
+    String hash = GitTestUtil.makeCommit("file.txt");
 
     agreeToUpdate(GitRejectedPushUpdateDialog.MERGE_EXIT_CODE);
 
@@ -220,12 +221,12 @@ public class GitPushOperationSingleRepoTest extends GitPushOperationBaseTest {
   public void test_update_with_conflicts_cancels_push() throws IOException {
     cd(myBroRepo.getPath());
     append("bro.txt", "bro content");
-    makeCommit("msg");
+    GitTestUtil.makeCommit("msg");
     git("push origin master:master");
 
     cd(myRepository);
     append("bro.txt", "main content");
-    makeCommit("msg");
+    GitTestUtil.makeCommit("msg");
 
     agreeToUpdate(GitRejectedPushUpdateDialog.REBASE_EXIT_CODE);
 
@@ -260,7 +261,7 @@ public class GitPushOperationSingleRepoTest extends GitPushOperationBaseTest {
 
   private String pushCommitFromBro() throws IOException {
     cd(myBroRepo.getPath());
-    String hash = makeCommit("bro.txt");
+    String hash = GitTestUtil.makeCommit("bro.txt");
     git("push");
     return hash;
   }

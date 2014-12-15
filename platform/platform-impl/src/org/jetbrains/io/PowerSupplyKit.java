@@ -15,28 +15,11 @@
  */
 package org.jetbrains.io;
 
-import com.intellij.util.lang.UrlClassLoader;
-
-
 public class PowerSupplyKit {
 
-    static {
-        UrlClassLoader.loadPlatformLibrary("MacNativeKit");
+
+    public static void checkPowerSupply() {
+
     }
 
-    public static native void startListenPowerSupply (PowerSupplyKitCallback callback);
-    private static native String[] getInfo ();
-
-    public static boolean hasDiscreteCard() {
-        String [] models =  getInfo();
-
-        if (models.length > 1) {
-            return true;
-            //for (String model : models) {
-            //    if (model.contains("Radeon")) return true;
-            //}
-        }
-
-        return false;
-    }
 }

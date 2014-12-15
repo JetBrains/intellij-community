@@ -8,7 +8,7 @@ class Test {
     });
   }
   
-  void foo(Runnable anObject) {
+  static void foo(Runnable anObject) {
 
       anObject.run();
 

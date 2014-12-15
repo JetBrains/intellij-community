@@ -60,11 +60,12 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
-import com.intellij.util.ContentsUtil;
+import com.intellij.util.ContentUtilEx;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.EditorAdapter;
 import org.jdom.Attribute;
 import org.jdom.DataConversionException;
@@ -507,11 +508,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
       return null;  // content manager is made null during dispose; flag is set later
     }
     final UpdateInfoTree updateInfoTree = new UpdateInfoTree(contentManager, myProject, updatedFiles, displayActionName, actionInfo);
-    Content content = ContentFactory.SERVICE.getInstance().createContent(updateInfoTree, canceled ?
-      VcsBundle.message("toolwindow.title.update.action.canceled.info", displayActionName) :
-      VcsBundle.message("toolwindow.title.update.action.info", displayActionName), true);
-    Disposer.register(content, updateInfoTree);
-    ContentsUtil.addContent(contentManager, content, true);
+    ContentUtilEx.addTabbedContent(contentManager, updateInfoTree, "Update Info", DateFormatUtil.formatDateTime(System.currentTimeMillis()), true, updateInfoTree);
     ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.VCS).activate(null);
     updateInfoTree.expandRootChildren();
     return updateInfoTree;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,8 +71,6 @@ import java.util.List;
 public class LineBreakpoint extends BreakpointWithHighlighter {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.breakpoints.LineBreakpoint");
 
-  @Nullable
-  private String myOwnerMethodName;
   public static final @NonNls Key<LineBreakpoint> CATEGORY = BreakpointCategory.lookup("line_breakpoints");
 
   protected LineBreakpoint(Project project, XBreakpoint xBreakpoint) {
@@ -119,16 +117,6 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
   @Override
   public Key<LineBreakpoint> getCategory() {
     return CATEGORY;
-  }
-
-  @Override
-  protected void reload(PsiFile file) {
-    super.reload(file);
-    XSourcePosition position = myXBreakpoint.getSourcePosition();
-    if (position != null) {
-      int offset = position.getOffset();
-      myOwnerMethodName = findOwnerMethod(file, offset);
-    }
   }
 
   @Override
@@ -530,7 +518,11 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
 
   @Nullable
   public String getMethodName() {
-    return myOwnerMethodName;
+    XSourcePosition position = myXBreakpoint.getSourcePosition();
+    if (position != null) {
+      int offset = position.getOffset();
+      return findOwnerMethod(getPsiFile(), offset);
+    }
+    return null;
   }
-
 }

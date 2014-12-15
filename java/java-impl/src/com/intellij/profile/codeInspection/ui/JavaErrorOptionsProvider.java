@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ public class JavaErrorOptionsProvider implements ErrorOptionsProvider {
   public JComponent createComponent() {
     mySuppressWay = new JCheckBox(ApplicationBundle.message("checkbox.suppress.with.suppresswarnings"));
     final JPanel panel = new JPanel(new BorderLayout());
-    panel.add(mySuppressWay, BorderLayout.EAST);
+    panel.add(mySuppressWay, BorderLayout.WEST);
     return panel;
   }
 

@@ -33,6 +33,37 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class FunctionalInterfaceSuggester {
+  public static final String[] FUNCTIONAL_INTERFACES = {
+    //old jdk without annotations
+    CommonClassNames.JAVA_LANG_RUNNABLE,
+    CommonClassNames.JAVA_UTIL_CONCURRENT_CALLABLE,
+    CommonClassNames.JAVA_UTIL_COMPARATOR,
+
+    //IDEA
+    "com.intellij.util.Function",
+    "com.intellij.util.Consumer",
+    "com.intellij.openapi.util.Computable",
+    "com.intellij.openapi.util.Condition",
+    "com.intellij.util.Processor",
+    "com.intellij.util.Producer",
+
+    //guava
+    "com.google.common.base.Function",
+    "com.google.common.base.Predicate",
+    "com.google.common.base.Supplier",
+
+    //common collections
+    "org.apache.commons.collections.Closure",
+    "org.apache.commons.collections.Factory",
+    "org.apache.commons.collections.Predicate",
+    "org.apache.commons.collections.Transformer",
+
+    //trove
+    "gnu.trove.TObjectFunction",
+    "gnu.trove.TObjectProcedure",
+    "gnu.trove.TObjectObjectProcedure",
+    };
+
   public static Collection<? extends PsiType> suggestFunctionalInterfaces(final @NotNull PsiFunctionalExpression expression) {
     final PsiType qualifierType = expression instanceof PsiMethodReferenceExpression 
                                   ? PsiMethodReferenceUtil.getQualifierType((PsiMethodReferenceExpression)expression) : null;
@@ -62,13 +93,16 @@ public class FunctionalInterfaceSuggester {
             return null;
           }
 
-          final PsiType[] left = new PsiType[parameters.length];
-          final PsiType[] right = new PsiType[parameters.length];
+          final PsiType[] left = new PsiType[parameters.length + 1];
+          final PsiType[] right = new PsiType[parameters.length + 1];
 
           for (int i = 0; i < parameters.length; i++) {
             left[i]  = interfaceMethodParameters[i].getType();
             right[i] = parameters[i].getType();
           }
+
+          left[parameters.length] = method.getReturnType();
+          right[parameters.length] = interfaceMethod.getReturnType();
 
           final PsiTypeParameter[] typeParameters = aClass.getTypeParameters();
           final PsiSubstitutor substitutor = PsiResolveHelper.SERVICE.getInstance(aClass.getProject())
@@ -113,13 +147,8 @@ public class FunctionalInterfaceSuggester {
 
   private static <T extends PsiElement> Collection<? extends PsiType> suggestFunctionalInterfaces(final @NotNull T element, final NullableFunction<PsiClass, PsiType> acceptanceChecker) {
     final Project project = element.getProject();
-    final PsiClass functionalInterfaceClass = JavaPsiFacade.getInstance(project).findClass(CommonClassNames.JAVA_LANG_FUNCTIONAL_INTERFACE,
-                                                                                           GlobalSearchScope.allScope(project));
-    if (functionalInterfaceClass == null) {
-      return Collections.emptyList();
-    }
     final Set<PsiType> types = new HashSet<PsiType>();
-    AnnotatedMembersSearch.search(functionalInterfaceClass, element.getResolveScope()).forEach(new Processor<PsiMember>() {
+    final Processor<PsiMember> consumer = new Processor<PsiMember>() {
       @Override
       public boolean process(PsiMember member) {
         if (member instanceof PsiClass && !Java15APIUsageInspectionBase.isForbiddenApiUsage(member, PsiUtil.getLanguageLevel(element))) {
@@ -130,7 +159,21 @@ public class FunctionalInterfaceSuggester {
         }
         return true;
       }
-    });
+    };
+    final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+    final GlobalSearchScope allScope = GlobalSearchScope.allScope(project);
+    final PsiClass functionalInterfaceClass = psiFacade.findClass(CommonClassNames.JAVA_LANG_FUNCTIONAL_INTERFACE, allScope);
+    if (functionalInterfaceClass != null) {
+      AnnotatedMembersSearch.search(functionalInterfaceClass, element.getResolveScope()).forEach(consumer);
+    }
+
+    for (String functionalInterface : FUNCTIONAL_INTERFACES) {
+      final PsiClass aClass = psiFacade.findClass(functionalInterface, allScope);
+      if (aClass != null) {
+        consumer.process(aClass);
+      }
+    }
+
     final ArrayList<PsiType> typesToSuggest = new ArrayList<PsiType>(types);
     Collections.sort(typesToSuggest, new Comparator<PsiType>() {
       @Override
@@ -163,15 +206,19 @@ public class FunctionalInterfaceSuggester {
         final PsiParameter[] parameters = interfaceMethod.getParameterList().getParameters();
         PsiParameter[] functionalExprParameters;
         int offset = 0;
-        final PsiType[] left = new PsiType[parameters.length];
-        final PsiType[] right = new PsiType[parameters.length];
+        final PsiType[] left;
+        final PsiType[] right;
         if (expression instanceof PsiLambdaExpression && ((PsiLambdaExpression)expression).hasFormalParameterTypes()) {
+          left = new PsiType[parameters.length];
+          right = new PsiType[parameters.length];
           functionalExprParameters = ((PsiLambdaExpression)expression).getParameterList().getParameters();
           if (parameters.length != functionalExprParameters.length) {
             return null;
           }
         }
         else if (expression instanceof PsiMethodReferenceExpression) {
+          left = new PsiType[parameters.length + 1];
+          right = new PsiType[parameters.length + 1];
           final PsiMethod method = getTargetMethod((PsiMethodReferenceExpression)expression, qualifierType, parameters, left, right);
           if (method == null) {
             return null;
@@ -180,6 +227,9 @@ public class FunctionalInterfaceSuggester {
           if (PsiMethodReferenceUtil.isStaticallyReferenced((PsiMethodReferenceExpression)expression) && !method.hasModifierProperty(PsiModifier.STATIC)) {
             offset = 1;
           }
+
+          left[parameters.length] = method.getReturnType();
+          right[parameters.length] = interfaceMethod.getReturnType();
         } else {
           return null;
         }

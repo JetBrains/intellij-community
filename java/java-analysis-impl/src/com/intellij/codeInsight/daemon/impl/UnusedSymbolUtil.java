@@ -315,7 +315,6 @@ public class UnusedSymbolUtil {
 
   private static boolean isIntentionalPrivateConstructor(@NotNull PsiMethod method, PsiClass containingClass) {
     return method.isConstructor() &&
-           method.getParameterList().getParametersCount() == 0 &&
            containingClass != null &&
            containingClass.getConstructors().length == 1;
   }

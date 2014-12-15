@@ -125,7 +125,7 @@ class VisiblePackBuilder {
   }
 
   @Nullable
-  private Set<Integer> getMatchingHeads(@NotNull VcsLogRefs refs, Set<VirtualFile> roots, @NotNull VcsLogFilterCollection filters) {
+  private Set<Integer> getMatchingHeads(@NotNull VcsLogRefs refs, @NotNull Set<VirtualFile> roots, @NotNull VcsLogFilterCollection filters) {
     VcsLogBranchFilter branchFilter = filters.getBranchFilter();
     VcsLogRootFilter rootFilter = filters.getRootFilter();
     VcsLogStructureFilter structureFilter = filters.getStructureFilter();
@@ -138,7 +138,8 @@ class VisiblePackBuilder {
       filteredByBranch = getMatchingHeads(refs, branchFilter);
     }
 
-    Set<Integer> filteredByFile = getMatchingHeads(refs, VcsLogFileFilter.getAllVisibleRoots(roots, filters));
+    Set<Integer> filteredByFile = getMatchingHeads(refs, VcsLogFileFilter
+      .getAllVisibleRoots(roots, rootFilter, structureFilter));
 
     if (filteredByBranch == null) return filteredByFile;
     if (filteredByFile == null) return filteredByBranch;
@@ -229,7 +230,8 @@ class VisiblePackBuilder {
   private static List<Hash> getFilteredDetailsFromTheVcs(@NotNull Map<VirtualFile, VcsLogProvider> providers,
                                                          @NotNull VcsLogFilterCollection filterCollection,
                                                          int maxCount) throws VcsException {
-    Set<VirtualFile> visibleRoots = VcsLogFileFilter.getAllVisibleRoots(providers.keySet(), filterCollection);
+    Set<VirtualFile> visibleRoots =
+      VcsLogFileFilter.getAllVisibleRoots(providers.keySet(), filterCollection.getRootFilter(), filterCollection.getStructureFilter());
 
     Collection<List<TimedVcsCommit>> logs = ContainerUtil.newArrayList();
     for (Map.Entry<VirtualFile, VcsLogProvider> entry : providers.entrySet()) {
