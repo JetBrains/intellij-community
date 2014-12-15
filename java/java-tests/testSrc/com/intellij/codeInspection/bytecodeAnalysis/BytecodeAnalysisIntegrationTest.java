@@ -57,12 +57,10 @@ import java.util.List;
  */
 public class BytecodeAnalysisIntegrationTest extends JavaCodeInsightFixtureTestCase {
   public static final String ORG_JETBRAINS_ANNOTATIONS_CONTRACT = Contract.class.getName();
-  private static final String HIDE_ICONS_KEY = "ide.java.hide.contract.icons";
 
   private MessageDigest myMessageDigest;
   private List<String> diffs = new ArrayList<String>();
   private boolean nullableMethodRegistryValue;
-  private boolean hideIcons;
 
   @Override
   protected void setUp() throws Exception {
@@ -71,14 +69,11 @@ public class BytecodeAnalysisIntegrationTest extends JavaCodeInsightFixtureTestC
     RegistryValue registryValue = Registry.get(ProjectBytecodeAnalysis.NULLABLE_METHOD);
     nullableMethodRegistryValue = registryValue.asBoolean();
     registryValue.setValue(true);
-    hideIcons = Registry.is(HIDE_ICONS_KEY);
-    Registry.get(HIDE_ICONS_KEY).setValue(false);
   }
 
   @Override
   protected void tearDown() throws Exception {
     Registry.get(ProjectBytecodeAnalysis.NULLABLE_METHOD).setValue(nullableMethodRegistryValue);
-    Registry.get(HIDE_ICONS_KEY).setValue(hideIcons);
     super.tearDown();
   }
 
