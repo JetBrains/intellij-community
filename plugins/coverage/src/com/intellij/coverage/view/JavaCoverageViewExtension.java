@@ -34,7 +34,7 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
   public String getSummaryForNode(AbstractTreeNode node) {
     final String coverageInformationString = myAnnotator
       .getPackageCoverageInformationString((PsiPackage)node.getValue(), null, myCoverageDataManager, myStateBean.myFlattenPackages);
-    return "Coverage Summary for Package \'" + node.toString() + "\': " + getNotCoveredMessage(coverageInformationString);
+    return getNotCoveredMessage(coverageInformationString) + " in package \'" + node.toString() + "\'";
   }
 
   @Override
@@ -69,12 +69,12 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
       }
       coverageInformationString = JavaCoverageAnnotator.getCoverageInformationString(info, false);
     }
-    return "Coverage Summary for \'all classes in scope\': " + getNotCoveredMessage(coverageInformationString);
+    return getNotCoveredMessage(coverageInformationString) + " in 'all classes in scope'";
   }
 
   private static String getNotCoveredMessage(String coverageInformationString) {
     if (coverageInformationString == null) {
-      coverageInformationString = "not covered";
+      coverageInformationString = "No coverage";
     }
     return coverageInformationString;
   }
