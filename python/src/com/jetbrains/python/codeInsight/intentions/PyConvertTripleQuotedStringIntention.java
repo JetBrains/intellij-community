@@ -18,6 +18,7 @@ package com.jetbrains.python.codeInsight.intentions;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -93,17 +94,15 @@ public class PyConvertTripleQuotedStringIntention extends BaseIntentionAction {
     final PyStringLiteralExpression string = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyStringLiteralExpression.class);
     final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
     if (string != null) {
-      final PsiElement parent = string.getParent();
-      String stringText = string.getText();
+      final String stringText = string.getText();
       final int prefixLength = PyStringLiteralExpressionImpl.getPrefixLength(stringText);
       final String prefix = stringText.substring(0, prefixLength);
-      stringText = stringText.substring(prefixLength);
-      final char firstQuote = stringText.charAt(0);
+      final char firstQuote = stringText.charAt(prefixLength);
 
-      List<String> lines = StringUtil.split(stringText, "\n", true, false);
-      final String lastLine = lines.get(lines.size() - 1);
+      final String stringContent = extractStringContent(string);
+      List<String> lines = StringUtil.split(stringContent, "\n", true, false);
       boolean lastLineExcluded = false;
-      if (lastLine.equals(TRIPLE_SINGLE_QUOTE) || lastLine.equals(TRIPLE_DOUBLE_QUOTE)) {
+      if (lines.get(lines.size() - 1).isEmpty()) {
         lastLineExcluded = true;
         lines = lines.subList(0, lines.size() - 1);
       }
@@ -133,6 +132,7 @@ public class PyConvertTripleQuotedStringIntention extends BaseIntentionAction {
       final PyExpressionStatement e = elementGenerator.createFromText(LanguageLevel.forElement(string), PyExpressionStatement.class, result.toString());
 
       PyExpression expression = e.getExpression();
+      final PsiElement parent = string.getParent();
       if ((parent instanceof PyParenthesizedExpression || parent instanceof PyTupleExpression)
           && expression instanceof PyParenthesizedExpression) {
         expression = ((PyParenthesizedExpression)expression).getContainedExpression();
@@ -141,6 +141,16 @@ public class PyConvertTripleQuotedStringIntention extends BaseIntentionAction {
         string.replace(expression);
       }
     }
+  }
+
+  @NotNull
+  private static String extractStringContent(@NotNull PyStringLiteralExpression pyString) {
+    final String text = pyString.getText();
+    final StringBuilder result = new StringBuilder();
+    for (TextRange range : pyString.getStringValueTextRanges()) {
+      result.append(range.substring(text));
+    }
+    return result.toString();
   }
 
   @NotNull
