@@ -21,10 +21,9 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationListener;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
+import com.intellij.internal.statistic.configurable.StatisticsConfigurable;
+import com.intellij.internal.statistic.updater.StatisticsNotificationManager;
+import com.intellij.notification.*;
 import com.intellij.notification.impl.IdeNotificationArea;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
@@ -38,6 +37,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -54,6 +54,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.openapi.wm.ex.StatusBarEx;
+import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.status.*;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.ui.*;
@@ -152,52 +153,9 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, DataProvider {
   @Override
   public void addNotify() {
     super.addNotify();
-    checkPowerSupply();
+    PowerSupplyKit.checkPowerSupply();
   }
 
-  private void checkPowerSupply() {
-
-    if (!shouldCheckDiscreteCard) return;
-
-    new Thread() {
-      @Override
-      public void run() {
-          PowerSupplyKit.startListenPowerSupply(new PowerSupplyKitCallback() {
-          @Override
-          public void call() {
-
-            final NotificationType type = NotificationType.INFORMATION;
-
-            final NotificationListener listener = new NotificationListener() {
-              @Override
-              public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-                notification.expire();
-              }
-            };
-
-            final String message =  "We have noticed that your computer power cord is disconnected and you are using" +
-                       " a discrete video card on  you MacBook Pro. You can switch " +
-                       " to the integrated video card. This significantly extend your battery life." +
-                       " <a href=\"doNotShow\">Do no show</a> this message anymore";
-
-            final Notification notification = new Notification("POWER_SUPPLY_GROUP_ID", "Discrete video card warning", message, type, listener);
-
-            ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-              @Override
-              public void run() {
-                ApplicationManager.getApplication().getMessageBus().syncPublisher(Notifications.TOPIC).notify(notification);
-              }
-            });
-          }
-
-        });
-      }
-    }.start();
-
-    shouldCheckDiscreteCard = false;
-  }
-
-  private static boolean shouldCheckDiscreteCard = Registry.is("check.power.supply.for.mbp") && SystemInfo.isMacIntel64 && PowerSupplyKit.hasDiscreteCard();
 
 
   private void updateBorder() {
