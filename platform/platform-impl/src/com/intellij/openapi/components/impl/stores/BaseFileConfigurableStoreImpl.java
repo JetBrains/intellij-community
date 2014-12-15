@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,41 +49,37 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
   }
 
   protected static class BaseStorageData extends FileBasedStorage.FileStorageData {
-    protected int myVersion;
+    private int myVersion = ProjectManagerImpl.CURRENT_FORMAT_VERSION;
 
-    public BaseStorageData(final String rootElementName) {
+    public BaseStorageData(@NotNull String rootElementName) {
       super(rootElementName);
     }
 
     protected BaseStorageData(BaseStorageData storageData) {
       super(storageData);
-
-      myVersion = ProjectManagerImpl.CURRENT_FORMAT_VERSION;
     }
 
     @Override
     public void load(@NotNull Element rootElement, @Nullable PathMacroSubstitutor pathMacroSubstitutor, boolean intern) {
       super.load(rootElement, pathMacroSubstitutor, intern);
 
-      final String v = rootElement.getAttributeValue(VERSION_OPTION);
-      if (v != null) {
-        myVersion = Integer.parseInt(v);
-      }
-      else {
-        myVersion = ProjectManagerImpl.CURRENT_FORMAT_VERSION;
-      }
+      String v = rootElement.getAttributeValue(VERSION_OPTION);
+      myVersion = v == null ? ProjectManagerImpl.CURRENT_FORMAT_VERSION : Integer.parseInt(v);
     }
 
     @Override
     @NotNull
-    protected Element save(@NotNull Map<String, Element> newLiveStates) {
+    protected final Element save(@NotNull Map<String, Element> newLiveStates) {
       Element root = super.save(newLiveStates);
       if (root == null) {
         root = new Element(myRootElementName);
       }
-
-      root.setAttribute(VERSION_OPTION, Integer.toString(myVersion));
+      writeOptions(root, Integer.toString(myVersion));
       return root;
+    }
+
+    protected void writeOptions(@NotNull Element root, @NotNull String versionString) {
+      root.setAttribute(VERSION_OPTION, versionString);
     }
 
     @Override
@@ -102,6 +98,7 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
     }
   }
 
+  @NotNull
   protected abstract XmlElementStorage getMainStorage();
 
   @Nullable
@@ -114,7 +111,7 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
     getMainStorageData(); //load it
   }
 
-  public BaseStorageData getMainStorageData() throws StateStorageException {
+  public BaseStorageData getMainStorageData() {
     return (BaseStorageData)getMainStorage().getStorageData();
   }
 
@@ -126,7 +123,7 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
 
   @NotNull
   @Override
-  public StateStorageManager getStateStorageManager() {
+  public final StateStorageManager getStateStorageManager() {
     if (myStateStorageManager == null) {
       myStateStorageManager = createStateStorageManager();
     }

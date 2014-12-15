@@ -383,6 +383,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     return myProject.isDefault() ? "" : ((FileBasedStorage)getProjectFileStorage()).getFilePath();
   }
 
+  @NotNull
   @Override
   protected XmlElementStorage getMainStorage() {
     return getProjectFileStorage();
