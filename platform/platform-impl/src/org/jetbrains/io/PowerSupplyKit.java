@@ -29,7 +29,7 @@ import javax.swing.event.HyperlinkEvent;
 public class PowerSupplyKit {
 
 
-    private static final String POWER_SUPPLY_GROUP_ID = "POWER_SUPPLY_GROUP_ID";
+    private static final String POWER_SUPPLY_GROUP_ID = "Power Supply Integration";
     private static boolean shouldCheckCordUnplug = Registry.is("check.power.supply.for.mbp") && SystemInfo.isMacIntel64;
     //private static boolean shouldCheckDiscreteCard =
     // Registry.is("check.power.supply.for.mbp") && SystemInfo.isMacIntel64 && hasDiscreteCard();
