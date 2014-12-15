@@ -21,6 +21,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.ResolveResult;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import org.jetbrains.annotations.NotNull;
@@ -564,6 +565,31 @@ public class PyTypeChecker {
       return true;
     }
     return false;
+  }
+
+  public static boolean overridesGetAttr(@NotNull PyClass cls, @NotNull TypeEvalContext context) {
+    PsiElement method = resolveClassMember(cls, PyNames.GETATTR, context);
+    if (method != null) {
+      return true;
+    }
+    method = resolveClassMember(cls, PyNames.GETATTRIBUTE, context);
+    if (method != null && !PyBuiltinCache.getInstance(cls).isBuiltin(method)) {
+      return true;
+    }
+    return false;
+  }
+
+  @Nullable
+  private static PsiElement resolveClassMember(@NotNull PyClass cls, @NotNull String name, @NotNull TypeEvalContext context) {
+    final PyType type = context.getType(cls);
+    if (type != null) {
+      final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+      final List<? extends RatedResolveResult> results = type.resolveMember(name, null, AccessDirection.READ, resolveContext);
+      if (results != null && !results.isEmpty()) {
+        return results.get(0).getElement();
+      }
+    }
+    return null;
   }
 
   public static class AnalyzeCallResults {
