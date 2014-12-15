@@ -38,6 +38,8 @@ import java.util.Map;
 public class PackageAnnotator {
 
   private static final Logger LOG = Logger.getInstance("#" + PackageAnnotator.class.getName());
+  static final String DEFAULT_CONSTRUCTOR_NAME_SIGNATURE = "<init>()V";
+
   private final PsiPackage myPackage;
   private final Project myProject;
   private final PsiManager myManager;
@@ -405,7 +407,7 @@ public class PackageAnnotator {
         return;
       }
     } else {
-      if (!collectNonCoveredClassInfo(classFile, toplevelClassCoverageInfo, packageCoverageInfo)) return;
+      if (!collectNonCoveredClassInfo(classFile, psiClass, toplevelClassCoverageInfo, packageCoverageInfo)) return;
     }
 
     ClassCoverageInfo classCoverageInfo = getOrCreateClassCoverageInfo(toplevelClassCoverage, toplevelClassSrcFQName);
@@ -425,19 +427,23 @@ public class PackageAnnotator {
    * in the bytecode, so we need to look at the PSI to see if the class defines such a constructor.
    */
   private static boolean isGeneratedDefaultConstructor(final PsiClass aClass, String nameAndSig) {
-    if ("<init>()V".equals(nameAndSig)) {
-      return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-        public Boolean compute() {
-          for (PsiMethod method : aClass.getConstructors()) {
-            if (method.getParameterList().getParametersCount() == 0) {
-              return false;
-            }
-          }
-          return true;
-        }
-      });
+    if (DEFAULT_CONSTRUCTOR_NAME_SIGNATURE.equals(nameAndSig)) {
+      return !hasDefaultConstructor(aClass);
     }
     return false;
+  }
+
+  private static boolean hasDefaultConstructor(final PsiClass aClass) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+      public Boolean compute() {
+        for (PsiMethod method : aClass.getConstructors()) {
+          if (method.getParameterList().getParametersCount() == 0) {
+            return true;
+          }
+        }
+        return false;
+      }
+    });
   }
 
   private static ClassCoverageInfo getOrCreateClassCoverageInfo(final Map<String, ClassCoverageInfo> toplevelClassCoverage,
@@ -465,6 +471,7 @@ public class PackageAnnotator {
     return true if there is executable code in the class
    */
   private boolean collectNonCoveredClassInfo(final File classFile,
+                                             PsiClass psiClass,
                                              final ClassCoverageInfo classCoverageInfo,
                                              final PackageCoverageInfo packageCoverageInfo) {
     final byte[] content = myCoverageManager.doInReadActionIfProjectOpen(new Computable<byte[]>() {
@@ -480,6 +487,7 @@ public class PackageAnnotator {
     final CoverageSuitesBundle coverageSuite = CoverageDataManager.getInstance(myProject).getCurrentSuitesBundle();
     if (coverageSuite == null) return false;
     return SourceLineCounterUtil
-      .collectNonCoveredClassInfo(classCoverageInfo, packageCoverageInfo, content, coverageSuite.isTracingEnabled());
+      .collectNonCoveredClassInfo(classCoverageInfo, packageCoverageInfo, content, coverageSuite.isTracingEnabled(),
+                                  hasDefaultConstructor(psiClass));
   }
 }

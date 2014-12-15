@@ -51,9 +51,14 @@ public class CoverageIntegrationTest extends ModuleTestCase {
     PackageAnnotator annotator = new PackageAnnotator(psiPackage);
     PackageAnnotationConsumer consumer = new PackageAnnotationConsumer();
     annotator.annotate(bundle, consumer);
-    PackageAnnotator.ClassCoverageInfo fooClassCoverage = consumer.myClassCoverageInfo.get("foo.bar.BarClass");
-    assertEquals(3, fooClassCoverage.totalMethodCount);
-    assertEquals(1, fooClassCoverage.coveredMethodCount);
+    PackageAnnotator.ClassCoverageInfo barClassCoverage = consumer.myClassCoverageInfo.get("foo.bar.BarClass");
+    assertEquals(3, barClassCoverage.totalMethodCount);
+    assertEquals(1, barClassCoverage.coveredMethodCount);
+    PackageAnnotator.PackageCoverageInfo barPackageCoverage = consumer.myPackageCoverage.get("foo.bar");
+    assertEquals(2, barPackageCoverage.coveredLineCount);
+    assertEquals(9, barPackageCoverage.totalLineCount);
+    assertEquals(1, barPackageCoverage.coveredMethodCount);
+    assertEquals(7, barPackageCoverage.totalMethodCount);
   }
 
   public void testJaCoCo() {
@@ -69,7 +74,9 @@ public class CoverageIntegrationTest extends ModuleTestCase {
     CoverageFileProvider fileProvider = new DefaultCoverageFileProvider(coverageFile);
     CoverageSuite suite =
       JavaCoverageEngine.getInstance().createCoverageSuite(runner, "Simple", fileProvider, null, -1, null, false, false, false, myProject);
-    return new CoverageSuitesBundle(suite);
+    CoverageSuitesBundle bundle = new CoverageSuitesBundle(suite);
+    CoverageDataManager.getInstance(myProject).chooseSuitesBundle(bundle);
+    return bundle;
   }
 
   private static class PackageAnnotationConsumer implements PackageAnnotator.Annotator {
