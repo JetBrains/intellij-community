@@ -59,6 +59,9 @@ public class CoverageIntegrationTest extends ModuleTestCase {
     assertEquals(9, barPackageCoverage.totalLineCount);
     assertEquals(1, barPackageCoverage.coveredMethodCount);
     assertEquals(7, barPackageCoverage.totalMethodCount);
+    PackageAnnotator.ClassCoverageInfo uncoveredClassInfo = consumer.myClassCoverageInfo.get("foo.bar.UncoveredClass");
+    assertEquals(4, uncoveredClassInfo.totalMethodCount);
+    assertEquals(0, uncoveredClassInfo.coveredMethodCount);
   }
 
   public void testJaCoCo() {
