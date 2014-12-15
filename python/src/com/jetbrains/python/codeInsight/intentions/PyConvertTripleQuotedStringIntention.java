@@ -16,14 +16,16 @@
 package com.jetbrains.python.codeInsight.intentions;
 
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl;
@@ -65,104 +67,117 @@ public class PyConvertTripleQuotedStringIntention extends BaseIntentionAction {
       return false;
     }
 
-    final PyStringLiteralExpression string =
-      PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyStringLiteralExpression.class);
+    final int caretOffset = editor.getCaretModel().getOffset();
+    final PyStringLiteralExpression string = PsiTreeUtil.getParentOfType(file.findElementAt(caretOffset), PyStringLiteralExpression.class);
     if (string != null) {
       final PyDocStringOwner docStringOwner = PsiTreeUtil.getParentOfType(string, PyDocStringOwner.class);
       if (docStringOwner != null) {
         if (docStringOwner.getDocStringExpression() == string) return false;
       }
-      String stringText = string.getText();
 
-      final int prefixLength = PyStringLiteralExpressionImpl.getPrefixLength(stringText);
-      final String prefix = stringText.substring(0, prefixLength);
-      if (StringUtil.containsIgnoreCase(prefix, "r")) {
-        return false;
-      }
-      stringText = stringText.substring(prefixLength);
-      if (stringText.length() >= 6) {
-        if (stringText.startsWith(TRIPLE_SINGLE_QUOTE) && stringText.endsWith(TRIPLE_SINGLE_QUOTE) ||
-            stringText.startsWith(TRIPLE_DOUBLE_QUOTE) && stringText.endsWith(TRIPLE_DOUBLE_QUOTE)) {
-          return true;
+      boolean insideTripleQuotedString = false;
+      for (StringNodeInfo info : extractStringNodesInfo(string)) {
+        // Can't handle triple quoted raw strings: there is no obvious way to insert linefeed or escape quote inside them
+        if (StringUtil.containsIgnoreCase(info.prefix, "r") && info.isTripleQuoted) {
+          return false;
+        }
+        if (info.isTripleQuoted && info.node.getTextRange().contains(caretOffset)) {
+          insideTripleQuotedString = true;
         }
       }
+      return insideTripleQuotedString;
     }
     return false;
   }
 
   public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) throws IncorrectOperationException {
-    final PyStringLiteralExpression string = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyStringLiteralExpression.class);
+    final PyStringLiteralExpression pyString = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyStringLiteralExpression.class);
     final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
-    if (string != null) {
-      final String stringText = string.getText();
-      final int prefixLength = PyStringLiteralExpressionImpl.getPrefixLength(stringText);
-      final String prefix = stringText.substring(0, prefixLength);
-      final char firstQuote = stringText.charAt(prefixLength);
-
-      final String stringContent = extractStringContent(string);
-      List<String> lines = StringUtil.split(stringContent, "\n", true, false);
-      boolean lastLineExcluded = false;
-      if (lines.get(lines.size() - 1).isEmpty()) {
-        lastLineExcluded = true;
-        lines = lines.subList(0, lines.size() - 1);
-      }
-
+    if (pyString != null) {
       final StringBuilder result = new StringBuilder();
-      if (lines.size() != 1) {
-        result.append("(");
-      }
-      for (int i = 0; i < lines.size(); i++) {
-        final String validSubstring = convertToValidSubString(lines.get(i), firstQuote);
+      final List<StringNodeInfo> nodeInfos = extractStringNodesInfo(pyString);
+      for (int i = 0; i < nodeInfos.size(); i++) {
+        final StringNodeInfo info = nodeInfos.get(i);
+        List<String> lines = StringUtil.split(info.content, "\n", true, false);
+        boolean lastLineExcluded = false;
+        if (lines.size() > 1 && lines.get(lines.size() - 1).isEmpty()) {
+          lastLineExcluded = true;
+          lines = lines.subList(0, lines.size() - 1);
+        }
 
-        final boolean isLastLine = i == lines.size() - 1;
-        result.append(prefix);
-        result.append(firstQuote);
-        result.append(validSubstring);
-        if (!isLastLine || lastLineExcluded) {
-          result.append("\\n");
-        }
-        result.append(firstQuote);
-        if (!isLastLine) {
-          result.append("\n");
+        final boolean inLastNode = i == nodeInfos.size() - 1;
+        for (int j = 0; j < lines.size(); j++) {
+
+          final boolean inLastLine = j == lines.size() - 1;
+          result.append(info.prefix);
+          result.append(info.quote);
+          result.append(convertToValidSubString(lines.get(j), info.quote, info.isTripleQuoted));
+          if (!inLastLine || lastLineExcluded) {
+            result.append("\\n");
+          }
+          result.append(info.quote);
+          if (!(inLastNode && inLastLine)) {
+            result.append("\n");
+          }
         }
       }
-      if (lines.size() != 1) {
+      if (result.indexOf("\n") >= 0) {
+        result.insert(0, "(");
         result.append(")");
       }
-      final PyExpressionStatement e = elementGenerator.createFromText(LanguageLevel.forElement(string), PyExpressionStatement.class, result.toString());
+      PyExpression expression = elementGenerator.createExpressionFromText(LanguageLevel.forElement(pyString), result.toString());
 
-      PyExpression expression = e.getExpression();
-      final PsiElement parent = string.getParent();
+      final PsiElement parent = pyString.getParent();
       if ((parent instanceof PyParenthesizedExpression || parent instanceof PyTupleExpression)
           && expression instanceof PyParenthesizedExpression) {
         expression = ((PyParenthesizedExpression)expression).getContainedExpression();
       }
       if (expression != null) {
-        string.replace(expression);
+        pyString.replace(expression);
       }
     }
   }
 
   @NotNull
-  private static String extractStringContent(@NotNull PyStringLiteralExpression pyString) {
-    final String text = pyString.getText();
-    final StringBuilder result = new StringBuilder();
-    for (TextRange range : pyString.getStringValueTextRanges()) {
-      result.append(range.substring(text));
+  private static String convertToValidSubString(@NotNull String content, char newQuote, boolean isMultiline) {
+    return isMultiline ? StringUtil.escapeChar(content, newQuote) : content;
+  }
+
+  private static boolean isTripleQuotedString(@NotNull String text) {
+    final int prefixLength = PyStringLiteralExpressionImpl.getPrefixLength(text);
+    text = text.substring(prefixLength);
+    if (text.length() < 6) {
+      return false;
     }
-    return result.toString();
+    return (text.startsWith(TRIPLE_SINGLE_QUOTE) && text.endsWith(TRIPLE_SINGLE_QUOTE)) ||
+           (text.startsWith(TRIPLE_DOUBLE_QUOTE) && text.endsWith(TRIPLE_DOUBLE_QUOTE));
   }
 
   @NotNull
-  private static String convertToValidSubString(@NotNull String s, char firstQuote) {
-    if (s.startsWith(TRIPLE_SINGLE_QUOTE) || s.startsWith(TRIPLE_DOUBLE_QUOTE)) {
-      return convertToValidSubString(s.substring(3), firstQuote);
-    }
-    else if (s.endsWith(TRIPLE_SINGLE_QUOTE) || s.endsWith(TRIPLE_DOUBLE_QUOTE)) {
-      return convertToValidSubString(s.substring(0, s.length() - 3), firstQuote);
-    }
-    else {
-      return StringUtil.escapeChar(s, firstQuote);
+  private static List<StringNodeInfo> extractStringNodesInfo(@NotNull PyStringLiteralExpression expression) {
+    return ContainerUtil.map(expression.getStringNodes(), new Function<ASTNode, StringNodeInfo>() {
+      @Override
+      public StringNodeInfo fun(ASTNode node) {
+        return new StringNodeInfo(node);
+      }
+    });
+  }
+
+  private static class StringNodeInfo {
+    final ASTNode node;
+    final String prefix;
+    final String content;
+    final char quote;
+    final boolean isTripleQuoted;
+
+    public StringNodeInfo(@NotNull ASTNode node) {
+      this.node = node;
+      final String nodeText = node.getText();
+      final int prefixLength = PyStringLiteralExpressionImpl.getPrefixLength(nodeText);
+      prefix = nodeText.substring(0, prefixLength);
+      content = PyStringLiteralExpressionImpl.getNodeTextRange(nodeText).substring(nodeText);
+      quote = nodeText.charAt(prefixLength);
+      isTripleQuoted = isTripleQuotedString(nodeText.substring(prefixLength));
     }
   }
 }

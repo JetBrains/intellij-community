@@ -1,3 +1,6 @@
-s = ("foo\n"
-     "barbaz\n"
-     "quux\n")
+s = (u"foo\n"
+     u"bar"
+     r'baz"'
+     "\n"
+     "quux\n"
+     '')
