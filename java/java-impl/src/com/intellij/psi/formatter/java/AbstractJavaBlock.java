@@ -30,7 +30,7 @@ import com.intellij.psi.formatter.common.AbstractBlock;
 import com.intellij.psi.formatter.java.wrap.JavaWrapManager;
 import com.intellij.psi.formatter.java.wrap.ReservedWrapsProvider;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.codeStyle.*;
+import com.intellij.psi.impl.source.codeStyle.ShiftIndentInsideHelper;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.impl.source.tree.java.ClassElement;
@@ -41,10 +41,12 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 import static com.intellij.psi.formatter.java.JavaFormatterUtil.getWrapType;
-import static com.intellij.psi.formatter.java.MultipleFieldDeclarationHelper.*;
+import static com.intellij.psi.formatter.java.MultipleFieldDeclarationHelper.findLastFieldInGroup;
 
 public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlock, ReservedWrapsProvider {
 
@@ -436,9 +438,8 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       myIsAfterClassKeyword = true;
     }
     if (childType == JavaElementType.METHOD_CALL_EXPRESSION) {
-      result.add(createMethodCallExpressionBlock(child,
-                                                 arrangeChildWrap(child, defaultWrap),
-                                                 arrangeChildAlignment(child, alignmentStrategy), childIndent));
+      Alignment alignment = shouldAlignChild(child) ? alignmentStrategy.getAlignment(childType) : null;
+      result.add(createMethodCallExpressionBlock(child, arrangeChildWrap(child, defaultWrap), alignment, childIndent));
     }
     else {
       IElementType nodeType = myNode.getElementType();
@@ -505,7 +506,11 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
         result.add(new SimpleJavaBlock(child, defaultWrap, alignmentStrategy, childIndent, mySettings, myJavaSettings));
       }
       else {
-        AlignmentStrategy alignmentStrategyToUse = AlignmentStrategy.wrap(arrangeChildAlignment(child, alignmentStrategy));
+        Alignment alignment = alignmentStrategy.getAlignment(childType);
+        AlignmentStrategy alignmentStrategyToUse = shouldAlignChild(child)
+                                                   ? AlignmentStrategy.wrap(alignment)
+                                                   : AlignmentStrategy.getNullStrategy();
+
         if (myAlignmentStrategy.getAlignment(nodeType, childType) != null &&
             (nodeType == JavaElementType.IMPLEMENTS_LIST || nodeType == JavaElementType.CLASS)) {
           alignmentStrategyToUse = myAlignmentStrategy;
@@ -646,54 +651,52 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     }
   }
 
-  @Nullable
-  private Alignment arrangeChildAlignment(@NotNull final ASTNode child, @NotNull final AlignmentStrategy alignmentStrategy) {
+  private boolean shouldAlignChild(@NotNull final ASTNode child) {
     int role = getChildRole(child);
     final IElementType nodeType = myNode.getElementType();
-    Alignment defaultAlignment = alignmentStrategy.getAlignment(child.getElementType());
 
     if (nodeType == JavaElementType.FOR_STATEMENT) {
       if (role == ChildRole.FOR_INITIALIZATION || role == ChildRole.CONDITION || role == ChildRole.FOR_UPDATE) {
-        return defaultAlignment;
+        return true;
       }
-      return null;
+      return false;
     }
     else if (nodeType == JavaElementType.EXTENDS_LIST || nodeType == JavaElementType.IMPLEMENTS_LIST) {
       if (role == ChildRole.REFERENCE_IN_LIST || role == ChildRole.IMPLEMENTS_KEYWORD) {
-        return defaultAlignment;
+        return true;
       }
-      return null;
+      return false;
     }
     else if (nodeType == JavaElementType.THROWS_LIST) {
       if (role == ChildRole.REFERENCE_IN_LIST) {
-        return defaultAlignment;
+        return true;
       }
-      return null;
+      return false;
     }
     else if (nodeType == JavaElementType.CLASS) {
-      if (role == ChildRole.CLASS_OR_INTERFACE_KEYWORD) return defaultAlignment;
-      if (myIsAfterClassKeyword) return null;
-      if (role == ChildRole.MODIFIER_LIST) return defaultAlignment;
-      return null;
+      if (role == ChildRole.CLASS_OR_INTERFACE_KEYWORD) return true;
+      if (myIsAfterClassKeyword) return false;
+      if (role == ChildRole.MODIFIER_LIST) return true;
+      return false;
     }
     else if (JavaElementType.FIELD == nodeType) {
-      return getVariableDeclarationSubElementAlignment(child);
+      return shouldAlignFieldInColumns(child);
     }
     else if (nodeType == JavaElementType.METHOD) {
-      if (role == ChildRole.MODIFIER_LIST) return defaultAlignment;
-      if (role == ChildRole.TYPE_PARAMETER_LIST) return defaultAlignment;
-      if (role == ChildRole.TYPE) return defaultAlignment;
-      if (role == ChildRole.NAME) return defaultAlignment;
-      if (role == ChildRole.THROWS_LIST && mySettings.ALIGN_THROWS_KEYWORD) return defaultAlignment;
-      return null;
+      if (role == ChildRole.MODIFIER_LIST) return true;
+      if (role == ChildRole.TYPE_PARAMETER_LIST) return true;
+      if (role == ChildRole.TYPE) return true;
+      if (role == ChildRole.NAME) return true;
+      if (role == ChildRole.THROWS_LIST && mySettings.ALIGN_THROWS_KEYWORD) return true;
+      return false;
     }
 
     else if (nodeType == JavaElementType.ASSIGNMENT_EXPRESSION) {
-      if (role == ChildRole.LOPERAND) return defaultAlignment;
+      if (role == ChildRole.LOPERAND) return true;
       if (role == ChildRole.ROPERAND && child.getElementType() == JavaElementType.ASSIGNMENT_EXPRESSION) {
-        return defaultAlignment;
+        return true;
       }
-      return null;
+      return false;
     }
 
     else if (child.getElementType() == JavaTokenType.END_OF_LINE_COMMENT) {
@@ -704,9 +707,9 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       CharSequence prevChars;
       if (previous != null && previous.getElementType() == TokenType.WHITE_SPACE && (prevChars = previous.getChars()).length() > 0
           && prevChars.charAt(prevChars.length() - 1) == '\n') {
-        return null;
+        return false;
       }
-      return defaultAlignment;
+      return true;
     }
 
     else if (nodeType == JavaElementType.MODIFIER_LIST) {
@@ -714,13 +717,13 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       // that the list is aligned. We want to apply alignment rule only to the first element then.
       ASTNode previous = child.getTreePrev();
       if (previous == null || previous.getTreeParent() != myNode) {
-        return defaultAlignment;
+        return true;
       }
-      return null;
+      return false;
     }
 
     else {
-      return defaultAlignment;
+      return true;
     }
   }
 
@@ -737,12 +740,12 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
    * @see CodeStyleSettings#ALIGN_GROUP_FIELD_DECLARATIONS
    */
   @Nullable
-  private Alignment getVariableDeclarationSubElementAlignment(@NotNull ASTNode child) {
+  private boolean shouldAlignFieldInColumns(@NotNull ASTNode child) {
     // The whole idea of variable declarations alignment is that complete declaration blocks which children are to be aligned hold
     // reference to the same AlignmentStrategy object, hence, reuse the same Alignment objects. So, there is no point in checking
     // if it's necessary to align sub-blocks if shared strategy is not defined.
     if (!mySettings.ALIGN_GROUP_FIELD_DECLARATIONS) {
-      return null;
+      return false;
     }
 
     IElementType childType = child.getElementType();
@@ -751,10 +754,10 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     // should be aligned then.
     ASTNode previousNode = FormatterUtil.getPreviousNonWhitespaceSibling(child);
     if (childType == JavaTokenType.IDENTIFIER && (previousNode == null || previousNode.getElementType() == JavaTokenType.COMMA)) {
-      return null;
+      return false;
     }
 
-    return myAlignmentStrategy.getAlignment(childType);
+    return true;
   }
 
   @Nullable

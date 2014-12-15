@@ -86,6 +86,12 @@ public class SimpleJavaBlock extends AbstractJavaBlock {
       if (isNotEmptyNode(myCurrentChild)) {
         final ASTNode astNode = myCurrentChild;
         AlignmentStrategy alignmentStrategyToUse = AlignmentStrategy.wrap(chooseAlignment(myReservedAlignment, myReservedAlignment2, myCurrentChild));
+
+        if (myNode.getElementType() == JavaElementType.FIELD) {
+          alignmentStrategyToUse = myAlignmentStrategy;
+        }
+
+
         myCurrentChild = processChild(result, astNode, alignmentStrategyToUse, childWrap, myCurrentIndent, myCurrentOffset);
         if (astNode != myCurrentChild && myCurrentChild != null) {
           myCurrentOffset = myCurrentChild.getTextRange().getStartOffset();

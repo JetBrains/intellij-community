@@ -407,4 +407,18 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
     getSettings().RIGHT_MARGIN = 75;
     doMethodTest(before, before);
   }
+
+  public void testAlignMethodCalls_PassedAsParameters_InMethodCall() {
+    getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
+
+    doMethodTest(
+      "test(call1(),\n" +
+      "             call2(),\n" +
+      "                        call3());\n",
+      "test(call1(),\n" +
+      "     call2(),\n" +
+      "     call3());\n"
+    );
+  }
+
 }
