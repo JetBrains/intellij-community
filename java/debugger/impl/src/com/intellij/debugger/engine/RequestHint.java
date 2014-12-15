@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
-import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -48,7 +47,6 @@ public class RequestHint {
   private final int myDepth;
   private final SourcePosition myPosition;
   private final int myFrameCount;
-  private VirtualMachineProxyImpl myVirtualMachineProxy;
 
   @Nullable
   private final MethodFilter myMethodFilter;
@@ -66,10 +64,8 @@ public class RequestHint {
   }
 
   private RequestHint(final ThreadReferenceProxyImpl stepThread, final SuspendContextImpl suspendContext, int depth, @Nullable MethodFilter methodFilter) {
-    final DebugProcessImpl debugProcess = suspendContext.getDebugProcess();
     myDepth = depth;
     myMethodFilter = methodFilter;
-    myVirtualMachineProxy = debugProcess.getVirtualMachineProxy();
 
     int frameCount = 0;
     SourcePosition position = null;
@@ -207,14 +203,8 @@ public class RequestHint {
         if ((settings.SKIP_SYNTHETIC_METHODS || myMethodFilter != null)&& frameProxy != null) {
           final Location location = frameProxy.location();
           if (location != null) {
-            final Method method = location.method();
-            if (method != null) {
-              if (myVirtualMachineProxy.canGetSyntheticAttribute() ? method.isSynthetic() : method.name().indexOf('$') >= 0) {
-                // step into lambda methods
-                if (!method.name().startsWith(LambdaMethodFilter.LAMBDA_METHOD_PREFIX)) {
-                  return myDepth;
-                }
-              }
+            if (DebuggerUtils.isSynthetic(location.method())) {
+              return myDepth;
             }
           }
         }
@@ -252,10 +242,14 @@ public class RequestHint {
             }
           }
         }
-        // smart step feature
-        if (myMethodFilter != null) {
-          return StepRequest.STEP_OUT;
+
+        for (ExtraSteppingFilter filter : ExtraSteppingFilter.EP_NAME.getExtensions()) {
+          if (filter.isApplicable(context)) return filter.getStepRequestDepth(context);
         }
+      }
+      // smart step feature
+      if (myMethodFilter != null) {
+        return StepRequest.STEP_OUT;
       }
     }
     catch (VMDisconnectedException ignored) {

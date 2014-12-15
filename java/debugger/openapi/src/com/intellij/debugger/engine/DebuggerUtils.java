@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -485,48 +485,17 @@ public abstract class DebuggerUtils {
     if (typeComponent == null) {
       return false;
     }
-    VirtualMachine machine = typeComponent.virtualMachine();
-    return machine != null && machine.canGetSyntheticAttribute() && typeComponent.isSynthetic();
+    for (SyntheticTypeComponentProvider provider : SyntheticTypeComponentProvider.EP_NAME.getExtensions()) {
+      if (provider.isSynthetic(typeComponent)) return true;
+    }
+    return false;
   }
 
-  public static boolean isSimpleGetter(PsiMethod method){
-    final PsiCodeBlock body = method.getBody();
-    if(body == null){
-      return false;
+  public static boolean isSimpleGetter(PsiMethod method) {
+    for (SimpleGetterProvider provider : SimpleGetterProvider.EP_NAME.getExtensions()) {
+      if (provider.isSimpleGetter(method)) return true;
     }
-
-    final PsiStatement[] statements = body.getStatements();
-    if(statements.length != 1){
-      return false;
-    }
-    
-    final PsiStatement statement = statements[0];
-    if(!(statement instanceof PsiReturnStatement)){
-      return false;
-    }
-    
-    final PsiExpression value = ((PsiReturnStatement)statement).getReturnValue();
-    if(!(value instanceof PsiReferenceExpression)){
-      return false;
-    }
-    
-    final PsiReferenceExpression reference = (PsiReferenceExpression)value;
-    final PsiExpression qualifier = reference.getQualifierExpression();
-    //noinspection HardCodedStringLiteral
-    if(qualifier != null && !"this".equals(qualifier.getText())) {
-      return false;
-    }
-    
-    final PsiElement referent = reference.resolve();
-    if(referent == null) {
-      return false;
-    }
-    
-    if(!(referent instanceof PsiField)) {
-      return false;
-    }
-    
-    return ((PsiField)referent).getContainingClass().equals(method.getContainingClass());
+    return false;
   }
 
   public static boolean isPrimitiveType(final String typeName) {

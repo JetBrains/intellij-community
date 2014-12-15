@@ -329,7 +329,6 @@ public class PositionManagerImpl implements PositionManager {
           return null;
         }
 
-        final boolean canGetSynthetic = vmProxy.canGetSyntheticAttribute();
         int rangeBegin = Integer.MAX_VALUE;
         int rangeEnd = Integer.MIN_VALUE;
         for (Location location : fromClass.allLineLocations()) {
@@ -341,7 +340,7 @@ public class PositionManagerImpl implements PositionManager {
             continue;
           }
           final Method method = location.method();
-          if (method == null || (canGetSynthetic && method.isSynthetic()) || method.isBridge()) {
+          if (method == null || DebuggerUtils.isSynthetic(method) || method.isBridge()) {
             // do not take into account synthetic stuff
             continue;
           }
