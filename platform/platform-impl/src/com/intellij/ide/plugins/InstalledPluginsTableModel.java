@@ -289,6 +289,10 @@ public class InstalledPluginsTableModel extends PluginTableModel {
 
   private static void updateExistingPluginInfo(IdeaPluginDescriptor descr, IdeaPluginDescriptor existing) {
     int state = PluginDownloader.compareVersionsSkipBroken(existing, descr.getVersion());
+    if (state == 0 && !Arrays.equals(new String[]{descr.getSinceBuild(), descr.getUntilBuild()},
+                                     new String[]{existing.getSinceBuild(), existing.getUntilBuild()})) {
+      state = StringUtil.compareVersionNumbers(descr.getSinceBuild(), existing.getUntilBuild()) >= 0 ? 1 : 0;
+    }
     final PluginId pluginId = existing.getPluginId();
     final String idString = pluginId.getIdString();
     if (!((IdeaPluginDescriptorImpl)existing).isDeleted()){
