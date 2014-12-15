@@ -16,36 +16,41 @@
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.actions.EditSourceAction;
 import com.intellij.idea.ActionsBundle;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.OpenSourceUtil;
+import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import java.awt.*;
 
-public class EditSourceInCommitAction extends AnAction {
-  private final DialogWrapper myDialogWrapper;
+public class EditSourceForDialogAction extends EditSourceAction {
+  @NotNull private final Component mySourceComponent;
 
-  public EditSourceInCommitAction(final DialogWrapper dialogWrapper) {
-    super(ActionsBundle.actionText("EditSource"),
-          ActionsBundle.actionDescription("EditSource"),
-          AllIcons.Actions.EditSource);
-    myDialogWrapper = dialogWrapper;
+  public EditSourceForDialogAction(@NotNull Component component) {
+    super();
+    Presentation presentation = getTemplatePresentation();
+    presentation.setText(ActionsBundle.actionText("EditSource"));
+    presentation.setIcon(AllIcons.Actions.EditSource);
+    presentation.setDescription(ActionsBundle.actionDescription("EditSource"));
+    mySourceComponent = component;
   }
 
   public void actionPerformed(AnActionEvent e) {
     final Navigatable[] navigatableArray = e.getData(CommonDataKeys.NAVIGATABLE_ARRAY);
     if (navigatableArray != null && navigatableArray.length > 0) {
-      SwingUtilities.invokeLater(new Runnable() {
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
           OpenSourceUtil.navigate(navigatableArray);
         }
       });
-      myDialogWrapper.doCancelAction();
+      DialogWrapper dialog = DialogWrapper.findInstance(mySourceComponent);
+      if (dialog != null && dialog.isModal()) {
+        dialog.doCancelAction();
+      }
     }
   }
 }
