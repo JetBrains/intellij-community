@@ -146,10 +146,10 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
 
   @NotNull
   private List<FilePath> getCommitables(@NotNull List<Change> changes) {
-    ChangesUtil.Adder adder = ChangesUtil.getPathsAdder(changes);
+    ChangesUtil.CaseSensitiveFilePathList list = ChangesUtil.getPathsList(changes);
 
-    for (FilePath path : ContainerUtil.newArrayList(adder.getResult())) {
-      adder.addParents(path, new Condition<FilePath>() {
+    for (FilePath path : ContainerUtil.newArrayList(list.getResult())) {
+      list.addParents(path, new Condition<FilePath>() {
         @Override
         public boolean value(@NotNull FilePath file) {
           Status status = getStatus(file);
@@ -159,7 +159,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
       });
     }
 
-    return adder.getResult();
+    return list.getResult();
   }
 
   @Nullable

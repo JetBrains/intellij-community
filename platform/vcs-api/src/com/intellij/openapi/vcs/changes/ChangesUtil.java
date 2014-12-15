@@ -80,7 +80,12 @@ public class ChangesUtil {
     return ProjectLevelVcsManager.getInstance(project).getVcsFor(VcsContextFactory.SERVICE.getInstance().createFilePathOn(file));
   }
 
-  public static class Adder {
+  /**
+   * TODO: Provide common approach for either case sensitive or case insensitive comparison of File, FilePath, etc. depending on used VCS,
+   * TODO: OS, VCS operation (several hashing and equality strategies seems to be useful here)
+   */
+  @Deprecated
+  public static class CaseSensitiveFilePathList {
     @NotNull private final List<FilePath> myResult = new ArrayList<FilePath>();
     @NotNull private final Set<String> myDuplicatesControlSet = new HashSet<String>();
 
@@ -109,25 +114,25 @@ public class ChangesUtil {
 
   @NotNull
   public static List<FilePath> getPaths(@NotNull Collection<Change> changes) {
-    return getPathsAdder(changes).getResult();
+    return getPathsList(changes).getResult();
   }
 
   @NotNull
-  public static Adder getPathsAdder(@NotNull Collection<Change> changes) {
-    Adder adder = new Adder();
+  public static CaseSensitiveFilePathList getPathsList(@NotNull Collection<Change> changes) {
+    CaseSensitiveFilePathList list = new CaseSensitiveFilePathList();
 
     for (Change change : changes) {
       ContentRevision beforeRevision = change.getBeforeRevision();
       if (beforeRevision != null) {
-        adder.add(beforeRevision.getFile());
+        list.add(beforeRevision.getFile());
       }
       ContentRevision afterRevision = change.getAfterRevision();
       if (afterRevision != null) {
-        adder.add(afterRevision.getFile());
+        list.add(afterRevision.getFile());
       }
     }
 
-    return adder;
+    return list;
   }
 
   public static List<File> getIoFilesFromChanges(final Collection<Change> changes) {
