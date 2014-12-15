@@ -35,7 +35,9 @@ public class PowerSupplyKit {
     // Registry.is("check.power.supply.for.mbp") && SystemInfo.isMacIntel64 && hasDiscreteCard();
 
     static {
-        UrlClassLoader.loadPlatformLibrary("MacNativeKit");
+        if (shouldCheckCordUnplug) {
+            UrlClassLoader.loadPlatformLibrary("MacNativeKit");
+        }
     }
 
     private static native void startListenPowerSupply (PowerSupplyKitCallback callback);
