@@ -16,7 +16,7 @@ public class SourceLineCounterUtil {
                                                    final PackageAnnotator.PackageCoverageInfo packageCoverageInfo,
                                                    byte[] content,
                                                    final boolean excludeLines,
-                                                   boolean hasExplicitDefaultConstructor) {
+                                                   boolean hasGeneratedConstructor) {
     if (content == null) return false;
     ClassReader reader = new ClassReader(content, 0, content.length);
 
@@ -25,7 +25,7 @@ public class SourceLineCounterUtil {
     classCoverageInfo.totalLineCount += counter.getNSourceLines();
     packageCoverageInfo.totalLineCount += counter.getNSourceLines();
     for (Object nameAndSig : counter.getMethodsWithSourceCode()) {
-      if (!PackageAnnotator.DEFAULT_CONSTRUCTOR_NAME_SIGNATURE.equals(nameAndSig) || hasExplicitDefaultConstructor) {
+      if (!PackageAnnotator.DEFAULT_CONSTRUCTOR_NAME_SIGNATURE.equals(nameAndSig) || !hasGeneratedConstructor) {
         classCoverageInfo.totalMethodCount++;
         packageCoverageInfo.totalMethodCount++;
       }

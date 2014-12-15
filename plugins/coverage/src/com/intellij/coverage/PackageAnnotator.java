@@ -428,20 +428,15 @@ public class PackageAnnotator {
    */
   private static boolean isGeneratedDefaultConstructor(final PsiClass aClass, String nameAndSig) {
     if (DEFAULT_CONSTRUCTOR_NAME_SIGNATURE.equals(nameAndSig)) {
-      return !hasDefaultConstructor(aClass);
+      return hasGeneratedConstructor(aClass);
     }
     return false;
   }
 
-  private static boolean hasDefaultConstructor(final PsiClass aClass) {
+  private static boolean hasGeneratedConstructor(final PsiClass aClass) {
     return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
       public Boolean compute() {
-        for (PsiMethod method : aClass.getConstructors()) {
-          if (method.getParameterList().getParametersCount() == 0) {
-            return true;
-          }
-        }
-        return false;
+        return aClass.getConstructors().length == 0;
       }
     });
   }
@@ -488,6 +483,6 @@ public class PackageAnnotator {
     if (coverageSuite == null) return false;
     return SourceLineCounterUtil
       .collectNonCoveredClassInfo(classCoverageInfo, packageCoverageInfo, content, coverageSuite.isTracingEnabled(),
-                                  hasDefaultConstructor(psiClass));
+                                  hasGeneratedConstructor(psiClass));
   }
 }
