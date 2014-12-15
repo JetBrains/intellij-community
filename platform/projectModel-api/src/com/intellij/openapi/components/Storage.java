@@ -28,6 +28,9 @@ public @interface Storage {
   @NonNls String file() default "";
   StorageScheme scheme() default StorageScheme.DEFAULT;
 
+  /**
+   * If deprecated: Data will be removed on write. And ignored on read if (and only if) new storage exists.
+   */
   boolean deprecated() default false;
 
   /**
