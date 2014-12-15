@@ -263,4 +263,8 @@ public class PyTypeCheckerInspectionTest extends PyTestCase {
   public void testIterateOverParamWithNoAttributes() {
     doTest();
   }
+
+  public void testGetAttributeAgainstStructuralType() {
+    doTest();
+  }
 }

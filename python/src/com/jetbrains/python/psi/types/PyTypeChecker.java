@@ -167,7 +167,11 @@ public class PyTypeChecker {
       return expectedStructural.getAttributeNames().containsAll(actualStructural.getAttributeNames());
     }
     if (expected instanceof PyStructuralType && actual instanceof PyClassType) {
-      final Set<String> actualAttributes = getClassAttributes(((PyClassType)actual).getPyClass(), true);
+      final PyClass cls = ((PyClassType)actual).getPyClass();
+      if (overridesGetAttr(cls, context)) {
+        return true;
+      }
+      final Set<String> actualAttributes = getClassAttributes(cls, true);
       return actualAttributes.containsAll(((PyStructuralType)expected).getAttributeNames());
     }
     if (actual instanceof PyStructuralType && expected instanceof PyClassType) {
