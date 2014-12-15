@@ -51,8 +51,9 @@ public class CoverageIntegrationTest extends ModuleTestCase {
     PackageAnnotator annotator = new PackageAnnotator(psiPackage);
     PackageAnnotationConsumer consumer = new PackageAnnotationConsumer();
     annotator.annotate(bundle, consumer);
-    PackageAnnotator.ClassCoverageInfo fooClassCoverage = consumer.myClassCoverageInfo.get("foo.FooClass");
-    assertNotNull(fooClassCoverage);
+    PackageAnnotator.ClassCoverageInfo fooClassCoverage = consumer.myClassCoverageInfo.get("foo.bar.BarClass");
+    assertEquals(3, fooClassCoverage.totalMethodCount);
+    assertEquals(1, fooClassCoverage.coveredMethodCount);
   }
 
   public void testJaCoCo() {
