@@ -333,8 +333,8 @@ public class PropertiesTableModel extends ListTableModel<PropertyDiffRecord> {
 
   @Nullable
   private static TextDiffType getRecordDiffType(@NotNull PropertyDiffRecord record) {
-    if (record.getBefore() == null) return TextDiffType.DELETED;
-    if (record.getAfter() == null) return TextDiffType.INSERTED;
+    if (record.getBefore() == null) return TextDiffType.INSERTED;
+    if (record.getAfter() == null) return TextDiffType.DELETED;
     if (!record.getFragments().isEmpty()) return TextDiffType.MODIFIED;
     return null; // unchanged
   }

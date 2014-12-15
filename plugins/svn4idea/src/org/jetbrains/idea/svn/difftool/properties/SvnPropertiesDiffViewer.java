@@ -58,7 +58,7 @@ public class SvnPropertiesDiffViewer implements DiffViewer {
     assert myProperties1 != null || myProperties2 != null;
 
     PropertiesTableModel model = new PropertiesTableModel(titles[0], titles[1], this);
-    myTable = new TableView<PropertyDiffRecord>(model);
+    myTable = new PropertiesTableView(model);
     myTable.getTableHeader().setReorderingAllowed(false);
     myTable.setIntercellSpacing(new Dimension(0, 1));
     myTable.setCellSelectionEnabled(false);
