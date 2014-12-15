@@ -369,7 +369,6 @@ class GitRepositoryReader {
     }
 
     if (branch == null || !branch.startsWith(REFS_HEADS_PREFIX) && !branch.startsWith(REFS_REMOTES_PREFIX)) {
-      LOG.debug("Ignoring packed-refs line: [" + line + "]");
       return null;
     }
     return Pair.create(shortBuffer(branch), shortBuffer(hash.trim()));
