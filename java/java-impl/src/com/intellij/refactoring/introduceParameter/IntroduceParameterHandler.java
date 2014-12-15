@@ -661,7 +661,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
 
     PsiExpression expression = factory
       .createExpressionFromText("new " + selectedType.getCanonicalText() + "() {" + methodText.get() + "}",
-                                methodToIntroduceParameter);
+                                elements[0]);
     expression = (PsiExpression)JavaCodeStyleManager.getInstance(project).shortenClassReferences(expression);
 
     expression.putUserData(ElementToWorkOn.PARENT, commonParent);
@@ -717,7 +717,14 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
       @Override
       public VariableData[] getChosenParameters() {
         final InputVariables inputVariables = getInputVariables();
-        return inputVariables.getInputVariables().toArray(new VariableData[inputVariables.getInputVariables().size()]);
+        List<VariableData> datas = new ArrayList<VariableData>();
+        for (VariableData data : inputVariables.getInputVariables()) {
+          if (data.variable instanceof PsiParameter) {
+            continue;
+          }
+          datas.add(data);
+        }
+        return datas.toArray(new VariableData[datas.size()]);
       }
 
       @Override

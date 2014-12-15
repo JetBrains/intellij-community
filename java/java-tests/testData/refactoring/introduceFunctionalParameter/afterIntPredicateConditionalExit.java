@@ -1,12 +1,12 @@
-import java.util.function.Function;
+import java.util.function.BooleanSupplier;
 
 class Test {
   void bar() {
-    foo(1, new Function<Integer,Boolean>() {
-        public boolean apply(Integer i) {
-            if (i > 0) {
-                System.out.println(i);
-                System.out.println(i);
+    foo(new BooleanSupplier() {
+        public boolean getAsBoolean() {
+            if (1 > 0) {
+                System.out.println(1);
+                System.out.println(1);
                 return true;
             }
             return false;
@@ -14,9 +14,9 @@ class Test {
     });
   }
 
-  void foo(int i, Function<Integer, Boolean> anObject) {
+  void foo(BooleanSupplier anObject) {
 
-      if (anObject.apply(i)) return;
+      if (anObject.getAsBoolean()) return;
 
       System.out.println("Hi");
   }

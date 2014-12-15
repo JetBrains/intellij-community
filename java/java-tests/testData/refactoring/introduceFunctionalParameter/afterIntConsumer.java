@@ -1,18 +1,16 @@
-import java.util.function.Consumer;
-
 class Test {
   void bar() {
-    foo(1, new Consumer<Integer>() {
-        public void accept(Integer i) {
-            System.out.println(i);
-            System.out.println(i);
+    foo(new Runnable() {
+        public void run() {
+            System.out.println(1);
+            System.out.println(1);
         }
     });
   }
   
-  void foo(int i, Consumer<Integer> anObject) {
+  void foo(Runnable anObject) {
 
-      anObject.accept(i);
+      anObject.run();
 
   }
 }
