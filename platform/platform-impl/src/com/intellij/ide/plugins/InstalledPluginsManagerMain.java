@@ -297,7 +297,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
       actionGroup.add(new RefreshAction());
       actionGroup.addAction(createSortersGroup());
       actionGroup.add(Separator.getInstance());
-      actionGroup.add(new ActionInstallPlugin(getAvailable(), getInstalled()));
+      actionGroup.add(new InstallPluginAction(getAvailable(), getInstalled()));
       actionGroup.add(new UninstallPluginAction(this, pluginTable));
     }
     return actionGroup;

@@ -37,14 +37,14 @@ import java.util.*;
 /**
  * @author lloix
  */
-public class ActionInstallPlugin extends AnAction implements DumbAware {
+public class InstallPluginAction extends AnAction implements DumbAware {
   private static final InstalledPluginsState ourState = InstalledPluginsState.getInstance();
   private static final Set<IdeaPluginDescriptor> ourInstallingNodes = new HashSet<IdeaPluginDescriptor>();
 
   private final PluginManagerMain myHost;
   private final PluginManagerMain myInstalled;
 
-  public ActionInstallPlugin(PluginManagerMain mgr, PluginManagerMain installed) {
+  public InstallPluginAction(PluginManagerMain mgr, PluginManagerMain installed) {
     super(IdeBundle.message("action.download.and.install.plugin"), IdeBundle.message("action.download.and.install.plugin"), AllIcons.Actions.Install);
     myHost = mgr;
     myInstalled = installed;
