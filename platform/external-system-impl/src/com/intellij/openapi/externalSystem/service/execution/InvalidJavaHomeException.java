@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.externalSystem.service.execution;
 
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 
 /**
  * @author Vladislav.Soroka
@@ -23,11 +23,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class InvalidJavaHomeException extends ExternalSystemJdkException {
 
-  public InvalidJavaHomeException(@Nullable String message) {
-    super(message);
-  }
-
-  public InvalidJavaHomeException(@Nullable Throwable cause) {
-    super(cause);
+  public InvalidJavaHomeException(String invalidPath) {
+    super(ExternalSystemBundle.message("external.system.java.home.invalid", invalidPath), null);
   }
 }

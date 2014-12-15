@@ -1,5 +1,8 @@
 package org.jetbrains.plugins.gradle.service;
 
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkException;
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
+import com.intellij.openapi.externalSystem.service.notification.callback.OpenExternalSystemSettingsCallback;
 import com.intellij.openapi.externalSystem.service.project.PlatformFacade;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.module.Module;
@@ -129,7 +132,16 @@ public class GradleInstallationManager {
       return null;
     }
 
-    return settings.getGradleJvm();
+    final String gradleJvm = settings.getGradleJvm();
+    try {
+      return ExternalSystemJdkUtil.getJdk(project, gradleJvm);
+    }
+    catch (ExternalSystemJdkException e) {
+      throw new ExternalSystemJdkException(
+        String.format("Invalid Gradle JDK configuration found: <a href='%s'>Open Gradle Settings</a> \n",
+                      OpenExternalSystemSettingsCallback.ID),
+        e, OpenExternalSystemSettingsCallback.ID);
+    }
   }
 
   /**

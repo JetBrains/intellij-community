@@ -1,12 +1,35 @@
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.openapi.externalSystem.service.ui;
 
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.ui.util.CompositeAppearance;
+import com.intellij.openapi.ui.ComboBoxWithWidePopup;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.ui.ColoredListCellRendererWrapper;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,12 +37,10 @@ import javax.swing.*;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import static com.intellij.openapi.externalSystem.service.ui.ComboBoxUtil.*;
-
 /**
  * @author Sergey Evdokimov
  */
-public class ExternalSystemJdkComboBox extends JComboBox {
+public class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup {
 
   private static final int MAX_PATH_LENGTH = 50;
 
@@ -28,6 +49,31 @@ public class ExternalSystemJdkComboBox extends JComboBox {
 
   public ExternalSystemJdkComboBox(@Nullable Project project) {
     myProject = project;
+    setRenderer(new ColoredListCellRendererWrapper() {
+
+      @Override
+      protected void doCustomize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+        JdkComboBoxItem item = (JdkComboBoxItem)value;
+        CompositeAppearance appearance = new CompositeAppearance();
+        SdkType sdkType = JavaSdk.getInstance();
+        appearance.setIcon(sdkType.getIcon());
+        SimpleTextAttributes attributes = getTextAttributes(item.valid, selected);
+        CompositeAppearance.DequeEnd ending = appearance.getEnding();
+
+        ending.addText(item.label, attributes);
+        if (item.comment != null) {
+          if (!item.comment.equals(item.jdkName)) {
+            SimpleTextAttributes textAttributes =
+              SystemInfo.isMac && selected ? new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN,
+                                                                      JBColor.WHITE) : SimpleTextAttributes.GRAY_ATTRIBUTES;
+            ending.addComment(item.comment, textAttributes);
+          }
+        }
+
+        final CompositeAppearance compositeAppearance = ending.getAppearance();
+        compositeAppearance.customize(this);
+      }
+    });
   }
 
   @Nullable
@@ -36,58 +82,81 @@ public class ExternalSystemJdkComboBox extends JComboBox {
   }
 
   public void refreshData(@Nullable String selectedValue) {
-    Map<String, String> jdkMap = collectJdkNamesAndDescriptions();
+    Map<String, JdkComboBoxItem> jdkMap = collectComboBoxItem();
     if (selectedValue != null && !jdkMap.containsKey(selectedValue)) {
       assert selectedValue.length() > 0;
-      jdkMap.put(selectedValue, selectedValue);
+      jdkMap.put(selectedValue, new JdkComboBoxItem(selectedValue, selectedValue, selectedValue, true));
     }
 
     removeAllItems();
 
-    for (Map.Entry<String, String> entry : jdkMap.entrySet()) {
-      addToModel((DefaultComboBoxModel)getModel(), entry.getKey(), entry.getValue());
+    for (Map.Entry<String, JdkComboBoxItem> entry : jdkMap.entrySet()) {
+      //noinspection unchecked
+      ((DefaultComboBoxModel)getModel()).addElement(entry.getValue());
     }
 
     select((DefaultComboBoxModel)getModel(), selectedValue);
   }
 
-  public String getSelectedValue() {
-    return getSelectedString((DefaultComboBoxModel)getModel());
+  private static void select(DefaultComboBoxModel model, Object value) {
+    for (int i = 0; i < model.getSize(); i++) {
+      JdkComboBoxItem comboBoxUtil = (JdkComboBoxItem)model.getElementAt(i);
+      if (comboBoxUtil.jdkName.equals(value)) {
+        model.setSelectedItem(comboBoxUtil);
+        return;
+      }
+    }
+    if (model.getSize() != 0) {
+      model.setSelectedItem(model.getElementAt(0));
+    }
   }
 
-  private Map<String, String> collectJdkNamesAndDescriptions() {
-    Map<String, String> result = new LinkedHashMap<String, String>();
+  @Nullable
+  public String getSelectedValue() {
+    final DefaultComboBoxModel model = (DefaultComboBoxModel)getModel();
+    final Object item = model.getSelectedItem();
+    return item != null ? ((JdkComboBoxItem)item).jdkName : null;
+  }
+
+  private Map<String, JdkComboBoxItem> collectComboBoxItem() {
+    Map<String, JdkComboBoxItem> result = new LinkedHashMap<String, JdkComboBoxItem>();
 
     for (Sdk projectJdk : ProjectJdkTable.getInstance().getSdksOfType(JavaSdk.getInstance())) {
       String name = projectJdk.getName();
 
-      String label;
-
       String path = projectJdk.getHomePath();
-      if (path == null) {
-        label = name;
+      String comment;
+      String versionString = projectJdk.getVersionString();
+      if (versionString != null && !versionString.equals(name)) {
+        comment = versionString;
       }
       else {
-        label = String.format("<html>%s <font color=gray>(%s)</font></html>", name, truncateLongPath(path));
+        comment = path == null ? name : truncateLongPath(path);
       }
 
-      result.put(name, label);
+      result.put(name, new JdkComboBoxItem(name, name, comment, ((SdkType)projectJdk.getSdkType()).sdkHasValidPath(projectJdk)));
     }
 
     String internalJdkPath = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk().getHomePath();
     assert internalJdkPath != null;
-    result.put(USE_INTERNAL_JAVA, ExternalSystemBundle.message("maven.java.internal", truncateLongPath(internalJdkPath)));
+    result.put(ExternalSystemJdkUtil.USE_INTERNAL_JAVA,
+               new JdkComboBoxItem(ExternalSystemJdkUtil.USE_INTERNAL_JAVA,
+                                   ExternalSystemBundle.message("external.system.java.internal.jre"), truncateLongPath(internalJdkPath),
+                                   true));
 
     if (myProject != null) {
       String projectJdk = ProjectRootManager.getInstance(myProject).getProjectSdkName();
-      String projectJdkTitle = String.format("<html>Use Project JDK <font color=gray>(%s)</font></html>", projectJdk == null ? "not defined yet" : projectJdk);
-      result.put(USE_PROJECT_JDK, projectJdkTitle);
+      result.put(ExternalSystemJdkUtil.USE_PROJECT_JDK,
+                 new JdkComboBoxItem(ExternalSystemJdkUtil.USE_PROJECT_JDK, "Use Project JDK",
+                                     projectJdk == null ? "not defined yet" : projectJdk, projectJdk != null));
     }
 
     String javaHomePath = System.getenv("JAVA_HOME");
-    String javaHomeLabel = ExternalSystemBundle.message("maven.java.home.env", javaHomePath == null ? "not defined yet" : truncateLongPath(javaHomePath));
+    String javaHomeLabel = ExternalSystemBundle.message("external.system.java.home.env");
 
-    result.put(USE_JAVA_HOME, javaHomeLabel);
+    result.put(ExternalSystemJdkUtil.USE_JAVA_HOME,
+               new JdkComboBoxItem(ExternalSystemJdkUtil.USE_JAVA_HOME, javaHomeLabel,
+                                   javaHomePath == null ? "not defined yet" : truncateLongPath(javaHomePath), javaHomePath != null));
 
     return result;
   }
@@ -101,4 +170,29 @@ public class ExternalSystemJdkComboBox extends JComboBox {
     return path;
   }
 
+  private static SimpleTextAttributes getTextAttributes(final boolean valid, final boolean selected) {
+    if (!valid) {
+      return SimpleTextAttributes.ERROR_ATTRIBUTES;
+    }
+    else if (selected && !(SystemInfo.isWinVistaOrNewer && UIManager.getLookAndFeel().getName().contains("Windows"))) {
+      return SimpleTextAttributes.SELECTED_SIMPLE_CELL_ATTRIBUTES;
+    }
+    else {
+      return SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES;
+    }
+  }
+
+  private static class JdkComboBoxItem {
+    private String jdkName;
+    private String label;
+    private String comment;
+    private boolean valid;
+
+    public JdkComboBoxItem(String jdkName, String label, String comment, boolean valid) {
+      this.jdkName = jdkName;
+      this.label = label;
+      this.comment = comment;
+      this.valid = valid;
+    }
+  }
 }

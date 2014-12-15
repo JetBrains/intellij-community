@@ -17,8 +17,9 @@ package com.intellij.openapi.externalSystem.service.notification.callback;
 
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
+import com.intellij.openapi.externalSystem.model.ProjectSystemId;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.event.HyperlinkEvent;
@@ -29,15 +30,17 @@ import javax.swing.event.HyperlinkEvent;
  */
 public class OpenExternalSystemSettingsCallback extends NotificationListener.Adapter {
 
-  public final static String ID = "open_project_jdk_settings";
+  public final static String ID = "#open_external_system_settings";
   private final Project myProject;
+  @NotNull private final ProjectSystemId mySystemId;
 
-  public OpenExternalSystemSettingsCallback(Project project) {
+  public OpenExternalSystemSettingsCallback(Project project, @NotNull ProjectSystemId systemId) {
     myProject = project;
+    mySystemId = systemId;
   }
 
   @Override
   protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-    ProjectSettingsService.getInstance(myProject).openProjectSettings();
+    ShowSettingsUtil.getInstance().showSettingsDialog(myProject, mySystemId.getReadableName());
   }
 }

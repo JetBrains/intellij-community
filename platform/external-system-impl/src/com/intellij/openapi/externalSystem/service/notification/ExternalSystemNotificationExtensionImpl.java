@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,45 @@
  */
 package com.intellij.openapi.externalSystem.service.notification;
 
+import com.intellij.execution.rmi.RemoteUtil;
+import com.intellij.openapi.externalSystem.model.ExternalSystemException;
+import com.intellij.openapi.externalSystem.model.ProjectSystemId;
+import com.intellij.openapi.externalSystem.service.notification.callback.OpenProjectJdkSettingsCallback;
+import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 /**
  * @author Vladislav.Soroka
  * @since 12/11/2014
  */
 public class ExternalSystemNotificationExtensionImpl implements ExternalSystemNotificationExtension {
+  @NotNull
+  @Override
+  public ProjectSystemId getTargetExternalSystemId() {
+    return ProjectSystemId.IDE;
+  }
+
+  @Override
+  public void customize(@NotNull NotificationData notification,
+                        @NotNull Project project,
+                        @Nullable Throwable error) {
+    if (error == null) return;
+    //noinspection ThrowableResultOfMethodCallIgnored
+    Throwable unwrapped = RemoteUtil.unwrap(error);
+    if (unwrapped instanceof ExternalSystemException) {
+      updateNotification(notification, project, (ExternalSystemException)unwrapped);
+    }
+  }
+
+  private static void updateNotification(@NotNull final NotificationData notificationData,
+                                         @NotNull final Project project,
+                                         @NotNull ExternalSystemException e) {
+
+    for (String fix : e.getQuickFixes()) {
+      if (OpenProjectJdkSettingsCallback.ID.equals(fix)) {
+        notificationData.setListener(OpenProjectJdkSettingsCallback.ID, new OpenProjectJdkSettingsCallback(project));
+      }
+    }
+  }
 }

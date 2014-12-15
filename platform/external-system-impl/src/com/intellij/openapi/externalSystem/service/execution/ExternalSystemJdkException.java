@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class ExternalSystemJdkException extends ExternalSystemException {
 
-  public ExternalSystemJdkException(@Nullable String message, @Nullable Throwable cause) {
-    super(message, cause);
+  public ExternalSystemJdkException(@Nullable String message, @Nullable Throwable cause, @NotNull String... quickFixes) {
+    super(message, cause, quickFixes);
   }
 }

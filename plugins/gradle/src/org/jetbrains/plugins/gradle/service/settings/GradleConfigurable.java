@@ -41,7 +41,7 @@ public class GradleConfigurable extends AbstractExternalSystemConfigurable<Gradl
   @NotNull
   @Override
   protected ExternalSystemSettingsControl<GradleProjectSettings> createProjectSettingsControl(@NotNull GradleProjectSettings settings) {
-    return new GradleProjectSettingsControl(settings);
+    return new GradleProjectSettingsControl(settings, getProject());
   }
 
   @Nullable

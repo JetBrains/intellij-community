@@ -29,7 +29,7 @@ import javax.swing.event.HyperlinkEvent;
  */
 public class OpenProjectJdkSettingsCallback extends NotificationListener.Adapter {
 
-  public final static String ID = "open_project_jdk_settings";
+  public final static String ID = "#open_project_jdk_settings";
   private final Project myProject;
 
   public OpenProjectJdkSettingsCallback(Project project) {

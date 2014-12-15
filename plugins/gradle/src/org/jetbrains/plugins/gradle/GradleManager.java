@@ -61,7 +61,6 @@ import icons.GradleIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.config.GradleSettingsListenerAdapter;
-import org.jetbrains.plugins.gradle.remote.GradleJavaHelper;
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
 import org.jetbrains.plugins.gradle.service.project.GradleAutoImportAware;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolver;
@@ -147,14 +146,10 @@ public class GradleManager
   public Function<Pair<Project, String>, GradleExecutionSettings> getExecutionSettingsProvider() {
     return new Function<Pair<Project, String>, GradleExecutionSettings>() {
 
-      private final GradleJavaHelper myJavaHelper = new GradleJavaHelper();
-
       @Override
       public GradleExecutionSettings fun(Pair<Project, String> pair) {
         GradleSettings settings = GradleSettings.getInstance(pair.first);
         File gradleHome = myInstallationManager.getGradleHome(pair.first, pair.second);
-        Sdk gradleJdk = myInstallationManager.getGradleJdk(pair.first, pair.second);
-
         String localGradlePath = null;
         if (gradleHome != null) {
           try {
@@ -187,16 +182,12 @@ public class GradleManager
           result.addResolverExtensionClass(ClassHolder.from(extension.getClass()));
         }
 
-        if (gradleJdk != null) {
-          result.setJavaHome(gradleJdk.getHomePath());
-        } else {
-          String javaHome = myJavaHelper.getJdkHome(pair.first);
-          if (!StringUtil.isEmpty(javaHome)) {
-            LOG.info("Instructing gradle to use java from " + javaHome);
-          }
-          result.setJavaHome(javaHome);
+        final Sdk gradleJdk = myInstallationManager.getGradleJdk(pair.first, pair.second);
+        final String javaHome = gradleJdk != null ? gradleJdk.getHomePath() : null;
+        if (!StringUtil.isEmpty(javaHome)) {
+          LOG.info("Instructing gradle to use java from " + javaHome);
         }
-
+        result.setJavaHome(javaHome);
         return result;
       }
     };
