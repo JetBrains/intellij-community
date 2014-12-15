@@ -85,13 +85,11 @@ public class GitCherryPicker extends VcsCherryPicker {
   @NotNull private final Git myGit;
   @NotNull private final GitPlatformFacade myPlatformFacade;
   @NotNull private final ChangeListManager myChangeListManager;
-  private final boolean myAutoCommit;
 
   public GitCherryPicker(@NotNull Project project, @NotNull Git git, @NotNull GitPlatformFacade platformFacade) {
     myProject = project;
     myGit = git;
     myPlatformFacade = platformFacade;
-    myAutoCommit = isAutoCommit();
     myChangeListManager = myPlatformFacade.getChangeListManager(myProject);
   }
 
@@ -125,11 +123,12 @@ public class GitCherryPicker extends VcsCherryPicker {
       GitSimpleEventDetector localChangesOverwrittenDetector = new GitSimpleEventDetector(LOCAL_CHANGES_OVERWRITTEN_BY_CHERRY_PICK);
       GitUntrackedFilesOverwrittenByOperationDetector untrackedFilesDetector =
         new GitUntrackedFilesOverwrittenByOperationDetector(repository.getRoot());
-      GitCommandResult result = myGit.cherryPick(repository, commit.getId().asString(), myAutoCommit,
+      boolean autoCommit = isAutoCommit();
+      GitCommandResult result = myGit.cherryPick(repository, commit.getId().asString(), autoCommit,
                                                  conflictDetector, localChangesOverwrittenDetector, untrackedFilesDetector);
       GitCommitWrapper commitWrapper = new GitCommitWrapper(commit);
       if (result.success()) {
-        if (myAutoCommit) {
+        if (autoCommit) {
           successfulCommits.add(commitWrapper);
         }
         else {
@@ -338,7 +337,7 @@ public class GitCherryPicker extends VcsCherryPicker {
    * cherry-pick, i.e. until the CHERRY_PICK_HEAD exists.
    */
   private void cancelCherryPick(@NotNull GitRepository repository) {
-    if (myAutoCommit) {
+    if (isAutoCommit()) {
       removeCherryPickHead(repository);
     }
   }
