@@ -11,7 +11,7 @@ public class MyTest {
 
     static {
         m((x) -> {
-            new Foo<Integer>(x);
+            new Foo<Number>(x);
         });
     }
 }
