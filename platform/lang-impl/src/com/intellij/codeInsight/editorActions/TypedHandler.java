@@ -40,7 +40,6 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.LanguageFileType;
@@ -144,9 +143,6 @@ public class TypedHandler extends TypedActionHandlerBase {
     }
 
     if (!CodeInsightUtilBase.prepareEditorForWrite(originalEditor)) return;
-    if (!FileDocumentManager.getInstance().requestWriting(originalEditor.getDocument(), project)) {
-       return;
-    }
 
     final PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
     final Document originalDocument = originalEditor.getDocument();
