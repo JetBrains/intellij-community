@@ -168,6 +168,9 @@ public class PyCallExpressionHelper {
     boolean isConstructorCall = false;
 
     PyExpression callee = us.getCallee();
+    if (isResolvedToMultipleTargets(callee, resolveContext)) {
+      return null;
+    }
     PsiElement resolved;
     QualifiedResolveResult resolveResult = null;
     if (callee instanceof PyReferenceExpression) {
@@ -231,6 +234,16 @@ public class PyCallExpressionHelper {
                                                  resolveResult != null ? resolveResult.isImplicit() : false);
     }
     return null;
+  }
+
+  private static boolean isResolvedToMultipleTargets(@Nullable PyExpression callee, @NotNull PyResolveContext resolveContext) {
+    if (callee != null) {
+      final List<PsiElement> resolved = PyUtil.multiResolveTopPriority(callee, resolveContext);
+      if (resolved.size() > 1) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /**

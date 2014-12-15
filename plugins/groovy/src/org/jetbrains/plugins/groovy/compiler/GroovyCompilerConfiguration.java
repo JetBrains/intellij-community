@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.compiler;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.compiler.options.ExcludedEntriesConfiguration;
+import com.intellij.openapi.compiler.options.ExcludesConfiguration;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -58,11 +59,11 @@ public class GroovyCompilerConfiguration implements PersistentStateComponent<Jps
     return bean;
   }
 
-  public static ExcludedEntriesConfiguration getExcludeConfiguration(Project project) {
+  public static ExcludesConfiguration getExcludeConfiguration(Project project) {
     return getInstance(project).myExcludeFromStubGeneration;
   }
 
-  public ExcludedEntriesConfiguration getExcludeFromStubGeneration() {
+  public ExcludesConfiguration getExcludeFromStubGeneration() {
     return myExcludeFromStubGeneration;
   }
 

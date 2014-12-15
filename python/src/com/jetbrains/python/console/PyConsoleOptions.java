@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -122,8 +122,8 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
       myModuleName = form.getModule() == null ? null : form.getModule().getName();
       myWorkingDirectory = form.getWorkingDirectory();
 
-      myAddContentRoots = form.addContentRoots();
-      myAddSourceRoots = form.addSourceRoots();
+      myAddContentRoots = form.shouldAddContentRoots();
+      myAddSourceRoots = form.shouldAddSourceRoots();
       myMappings = form.getMappingSettings() == null ? new PathMappingSettings() : form.getMappingSettings();
     }
 
@@ -132,8 +132,8 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
              !myInterpreterOptions.equals(form.getInterpreterOptions()) ||
              !myEnvs.equals(form.getEnvs()) ||
              myUseModuleSdk != form.isUseModuleSdk() ||
-             myAddContentRoots != form.addContentRoots() ||
-             myAddSourceRoots != form.addSourceRoots()
+             myAddContentRoots != form.shouldAddContentRoots() ||
+             myAddSourceRoots != form.shouldAddSourceRoots()
              || !ComparatorUtil.equalsNullable(myModuleName, form.getModule() == null ? null : form.getModule().getName())
              || !myWorkingDirectory.equals(form.getWorkingDirectory())
              || !myMappings.equals(form.getMappingSettings());
@@ -144,8 +144,8 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
       form.setInterpreterOptions(myInterpreterOptions);
       form.setSdkHome(mySdkHome);
       form.setUseModuleSdk(myUseModuleSdk);
-      form.addContentRoots(myAddContentRoots);
-      form.addSourceRoots(myAddSourceRoots);
+      form.setAddContentRoots(myAddContentRoots);
+      form.setAddSourceRoots(myAddSourceRoots);
 
       boolean moduleWasAutoselected = false;
       if (form.isUseModuleSdk() != myUseModuleSdk) {

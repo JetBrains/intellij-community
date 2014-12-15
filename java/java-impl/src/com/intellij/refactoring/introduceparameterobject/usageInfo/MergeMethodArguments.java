@@ -94,18 +94,26 @@ public class MergeMethodArguments extends FixableUsageInfo {
     }
     final List<ParameterInfoImpl> parametersInfo = new ArrayList<ParameterInfoImpl>();
     final PsiClassType classType = JavaPsiFacade.getElementFactory(getProject()).createType(psiClass, subst);
-    parametersInfo.add(new ParameterInfoImpl(-1, parameterName, classType, null) {
+
+    final ParameterInfoImpl mergedParamInfo = new ParameterInfoImpl(-1, parameterName, classType, null) {
       @Override
       public PsiExpression getValue(final PsiCallExpression expr) throws IncorrectOperationException {
-        return (PsiExpression)JavaCodeStyleManager.getInstance(getProject()).shortenClassReferences(psiFacade.getElementFactory().createExpressionFromText(getMergedParam(expr), expr));
+        return (PsiExpression)JavaCodeStyleManager.getInstance(getProject())
+          .shortenClassReferences(psiFacade.getElementFactory().createExpressionFromText(getMergedParam(expr), expr));
       }
-    });
+    };
+
+    int firstIncludedIdx = -1;
     final PsiParameter[] parameters = method.getParameterList().getParameters();
     for (int i = 0; i < parameters.length; i++) {
       if (!isParameterToMerge(i)) {
         parametersInfo.add(new ParameterInfoImpl(i, parameters[i].getName(), parameters[i].getType()));
+      } else if (firstIncludedIdx == -1) {
+        firstIncludedIdx = i;
       }
     }
+
+    parametersInfo.add(firstIncludedIdx == -1 ? 0 : firstIncludedIdx, mergedParamInfo);
     final SmartPsiElementPointer<PsiMethod> meth = SmartPointerManager.getInstance(getProject()).createSmartPsiElementPointer(method);
 
     Runnable performChangeSignatureRunnable = new Runnable() {

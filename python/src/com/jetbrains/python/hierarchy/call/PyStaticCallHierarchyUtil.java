@@ -23,11 +23,9 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
-import com.jetbrains.python.PyNames;
 import com.jetbrains.python.findUsages.PyClassFindUsagesHandler;
 import com.jetbrains.python.findUsages.PyFunctionFindUsagesHandler;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 import org.jetbrains.annotations.NotNull;
@@ -157,7 +155,6 @@ public class PyStaticCallHierarchyUtil {
     if (containingClass == null) {
       return false;
     }
-    return (PyNames.FAKE_OLD_BASE.equals(containingClass.getName()) ||
-            (PyNames.OBJECT.equals(containingClass.getName()) && PyBuiltinCache.getInstance(fun).isBuiltin(containingClass)));
+    return PyUtil.isObjectClass(containingClass);
   }
 }

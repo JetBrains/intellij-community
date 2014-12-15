@@ -73,6 +73,14 @@ public class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvi
         }
       }
     }, this);
+
+    EditorColorsManager.getInstance().addEditorColorsListener(new EditorColorsAdapter() {
+      @Override
+      public void globalSchemeChange(EditorColorsScheme scheme) {
+        myColorScheme.updateGlobalScheme(scheme);
+        fireFontChanged();
+      }
+    }, this);
   }
 
   @Override
@@ -236,7 +244,6 @@ public class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvi
     private final FontPreferences myFontPreferences = new FontPreferences();
     private final HashMap<TextAttributesKey, TextAttributes> myOwnAttributes = new HashMap<TextAttributesKey, TextAttributes>();
     private final HashMap<ColorKey, Color> myOwnColors = new HashMap<ColorKey, Color>();
-    private final EditorColorsScheme myCustomGlobalScheme;
     private Map<EditorFontType, Font> myFontsMap = null;
     private String myFaceName = null;
     private EditorColorsScheme myGlobalScheme;
@@ -244,8 +251,7 @@ public class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvi
     private int myConsoleFontSize = -1;
 
     private MyColorSchemeDelegate(@Nullable final EditorColorsScheme globalScheme) {
-      myCustomGlobalScheme = globalScheme;
-      updateGlobalScheme();
+      updateGlobalScheme(globalScheme);
       initFonts();
     }
 
@@ -305,7 +311,7 @@ public class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvi
     @NotNull
     @Override
     public Color getDefaultForeground() {
-      return getGlobal().getDefaultForeground();
+      return getGlobal().getAttributes(ConsoleViewContentType.NORMAL_OUTPUT_KEY).getForegroundColor();
     }
 
     @Override
@@ -401,8 +407,9 @@ public class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvi
     public void writeExternal(Element element) throws WriteExternalException {
     }
 
-    public void updateGlobalScheme() {
-      myGlobalScheme = myCustomGlobalScheme == null ? EditorColorsManager.getInstance().getGlobalScheme() : myCustomGlobalScheme;
+    public void updateGlobalScheme(EditorColorsScheme scheme) {
+      myFontsMap = null;
+      myGlobalScheme = scheme == null ? EditorColorsManager.getInstance().getGlobalScheme() : scheme;
     }
 
     @NotNull

@@ -6,6 +6,7 @@ import com.intellij.lang.java.JavaDocumentationProvider;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.PsiTestUtil;
 
 import java.io.File;
@@ -33,6 +34,15 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
 
   public void testMethodTypeParameter() throws Exception {
     doTestMethod();
+  }
+
+  public void testAnonymousAndSuperJavadoc() throws Exception {
+    PsiClass psiClass = getTestClass();
+    assertNotNull(psiClass);
+    psiClass = PsiTreeUtil.findChildOfType(psiClass, PsiAnonymousClass.class);
+    assertNotNull(psiClass);
+    PsiMethod method = psiClass.getMethods() [0];
+    verifyJavaDoc(method);
   }
   
   public void testInheritedDocInThrows() throws Exception {
@@ -136,6 +146,10 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
     assertEquals(exampleHtmlFileText(getTestName(true)), StringUtil.convertLineSeparators(docInfo.trim()));
   }
 
+  public void testLambdaParameter() throws Exception {
+    doTestLamabdaParameter();
+  }
+
   private void doTestField() throws Exception {
     PsiClass psiClass = getTestClass();
     PsiField field = psiClass.getFields() [0];
@@ -146,6 +160,13 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
     PsiClass psiClass = getTestClass();
     PsiMethod method = psiClass.getMethods() [0];
     verifyJavaDoc(method);
+  }
+
+  private void doTestLamabdaParameter() throws Exception {
+    PsiClass psiClass = getTestClass();
+    final PsiLambdaExpression lambdaExpression = PsiTreeUtil.findChildOfType(psiClass, PsiLambdaExpression.class);
+    assertNotNull(lambdaExpression);
+    verifyJavaDoc(lambdaExpression.getParameterList().getParameters()[0]);
   }
 
   private PsiClass getTestClass() throws Exception{

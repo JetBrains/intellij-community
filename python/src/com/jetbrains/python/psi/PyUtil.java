@@ -38,7 +38,6 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -68,12 +67,16 @@ import com.jetbrains.python.magicLiteral.PyMagicLiteralTools;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
+import com.jetbrains.python.psi.stubs.PySetuptoolsNamespaceIndex;
 import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.refactoring.classes.PyDependenciesComparator;
 import com.jetbrains.python.refactoring.classes.extractSuperclass.PyExtractSuperclassHelper;
 import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
 import com.jetbrains.python.sdk.PythonSdkType;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -90,8 +93,6 @@ import static com.jetbrains.python.psi.PyFunction.Modifier.CLASSMETHOD;
 import static com.jetbrains.python.psi.PyFunction.Modifier.STATICMETHOD;
 
 public class PyUtil {
-
-  private static final Object[] EMPTY_OBJECTS = new Object[0];
 
   private PyUtil() {
   }
@@ -694,34 +695,11 @@ public class PyUtil {
   }
 
   public static boolean hasCustomDecorators(@NotNull PyDecoratable decoratable) {
-    PyDecoratorList decoratorList = decoratable.getDecoratorList();
-    if (decoratorList == null) {
-      return false;
-    }
-    for (PyDecorator decorator : decoratorList.getDecorators()) {
-      QualifiedName name = decorator.getQualifiedName();
-      if (name == null || (!PyNames.CLASSMETHOD.equals(name.toString()) && !PyNames.STATICMETHOD.equals(name.toString()))) {
-        return true;
-      }
-    }
-    return false;
+    return PyKnownDecoratorUtil.hasNonBuiltinDecorator(decoratable, TypeEvalContext.codeInsightFallback(null));
   }
 
   public static boolean isDecoratedAsAbstract(@NotNull final PyDecoratable decoratable) {
-    final PyDecoratorList decoratorList = decoratable.getDecoratorList();
-    if (decoratorList == null) {
-      return false;
-    }
-    for (PyDecorator decorator : decoratorList.getDecorators()) {
-      final QualifiedName qualifiedName = decorator.getQualifiedName();
-      if (qualifiedName != null) {
-        final String name = qualifiedName.toString();
-        if (name.endsWith(PyNames.ABSTRACTMETHOD) || name.endsWith(PyNames.ABSTRACTPROPERTY)) {
-          return true;
-        }
-      }
-    }
-    return false;
+    return PyKnownDecoratorUtil.hasAbstractDecorator(decoratable, TypeEvalContext.codeInsightFallback(null));
   }
 
   public static ASTNode createNewName(PyElement element, String name) {
@@ -749,6 +727,18 @@ public class PyUtil {
       currentElement = resolve;
     }
     return currentElement;
+  }
+
+  @NotNull
+  public static List<PsiElement> multiResolveTopPriority(@NotNull PsiElement element, @NotNull PyResolveContext resolveContext) {
+    if (element instanceof PyReferenceOwner) {
+      final PsiPolyVariantReference ref = ((PyReferenceOwner)element).getReference(resolveContext);
+      return filterTopPriorityResults(ref.multiResolve(false));
+    }
+    else {
+      final PsiReference reference = element.getReference();
+      return reference != null ? Collections.singletonList(reference.resolve()) : Collections.<PsiElement>emptyList();
+    }
   }
 
   @NotNull
@@ -977,8 +967,35 @@ public class PyUtil {
     } // don't touch non-dirs
   }
 
+  /**
+   * If target is a PsiDirectory, that is also a valid Python package, return PsiFile that points to __init__.py,
+   * if such file exists, or directory itself (i.e. namespace package). Otherwise, return {@code null}.
+   * Unlike {@link #turnDirIntoInit(com.intellij.psi.PsiElement)} this function handles namespace packages and
+   * accepts only PsiDirectories as target.
+   *
+   * @param target directory to check
+   * @param anchor optional PSI element to determine language level as for {@link #isPackage(com.intellij.psi.PsiDirectory, com.intellij.psi.PsiElement)}
+   * @return PsiFile or PsiDirectory, if target is a Python package and {@code null} null otherwise
+   */
   @Nullable
-  public static PsiElement turnInitIntoDir(PsiElement target) {
+  public static PsiElement turnDirIntoPackageElement(@NotNull PsiDirectory target, @Nullable PsiElement anchor) {
+    if (isPackage(target, anchor)) {
+      final PsiFile file = target.findFile(PyNames.INIT_DOT_PY);
+      return file != null ? file : target;
+    }
+    else {
+      return null;
+    }
+  }
+
+  /**
+   * If target is a Python module named __init__.py file, return its directory. Otherwise return target unchanged.
+   * @param target PSI element to check
+   * @return PsiDirectory or target unchanged
+   */
+  @Contract("null -> null; !null -> !null")
+  @Nullable
+  public static PsiElement turnInitIntoDir(@Nullable PsiElement target) {
     if (target instanceof PyFile && isPackage((PsiFile)target)) {
       return ((PsiFile)target).getContainingDirectory();
     }
@@ -986,7 +1003,7 @@ public class PyUtil {
   }
 
   public static boolean isPackage(@NotNull PsiDirectory directory, @Nullable PsiElement anchor) {
-    if (turnDirIntoInit(directory) != null) {
+    if (directory.findFile(PyNames.INIT_DOT_PY) != null) {
       return true;
     }
     final LanguageLevel level = anchor != null ?
@@ -995,7 +1012,7 @@ public class PyUtil {
     if (level.isAtLeast(LanguageLevel.PYTHON33)) {
       return true;
     }
-    return hasNamespacePackageFile(directory);
+    return isSetuptoolsNamespacePackage(directory);
   }
 
   public static boolean isPackage(@NotNull PsiFile file) {
@@ -1014,18 +1031,15 @@ public class PyUtil {
     return null;
   }
 
-  private static boolean hasNamespacePackageFile(@NotNull PsiDirectory directory) {
-    final String name = directory.getName().toLowerCase();
-    final PsiDirectory parent = directory.getParent();
-    if (parent != null) {
-      for (PsiFile file : parent.getFiles()) {
-        final String filename = file.getName().toLowerCase();
-        if (filename.startsWith(name) && filename.endsWith("-nspkg.pth")) {
-          return true;
-        }
-      }
-    }
-    return false;
+  private static boolean isSetuptoolsNamespacePackage(@NotNull PsiDirectory directory) {
+    final String packagePath = getPackagePath(directory);
+    return packagePath != null && !PySetuptoolsNamespaceIndex.find(packagePath, directory.getProject()).isEmpty();
+  }
+
+  @Nullable
+  private static String getPackagePath(@NotNull PsiDirectory directory) {
+    final QualifiedName name = QualifiedNameFinder.findShortestImportableQName(directory);
+    return name != null ? name.toString() : null;
   }
 
   /**
@@ -1216,23 +1230,6 @@ public class PyUtil {
       if (what.equals(s)) return true;
     }
     return false;
-  }
-
-  public static class UnderscoreFilter implements Condition<String> {
-    private int myAllowed; // how many starting underscores is allowed: 0 is none, 1 is only one, 2 is two and more.
-
-    public UnderscoreFilter(int allowed) {
-      myAllowed = allowed;
-    }
-
-    public boolean value(String name) {
-      if (name == null) return false;
-      if (name.length() < 1) return false; // empty strings make no sense
-      int have_underscores = 0;
-      if (name.charAt(0) == '_') have_underscores = 1;
-      if (have_underscores != 0 && name.length() > 1 && name.charAt(1) == '_') have_underscores = 2;
-      return myAllowed >= have_underscores;
-    }
   }
 
   @Nullable
@@ -1674,15 +1671,6 @@ public class PyUtil {
     return PyNames.INIT.equals(function.getName());
   }
 
-
-  private static boolean isObject(@NotNull final PyMemberInfo<PyElement> classMemberInfo) {
-    final PyElement element = classMemberInfo.getMember();
-    if ((element instanceof PyClass) && PyNames.OBJECT.equals(element.getName())) {
-      return true;
-    }
-    return false;
-  }
-
   /**
    * Filters out {@link com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo}
    * that should not be displayed in this refactoring (like object)
@@ -1751,5 +1739,38 @@ public class PyUtil {
     }
     final String symboldName = qualifiedName.getLastComponent();
     return expectedName.equals(symboldName);
+  }
+
+  /**
+   * Checks that given class is the root of class hierarchy, i.e. it's either {@code object} or
+   * special {@link com.jetbrains.python.PyNames#FAKE_OLD_BASE} class for old-style classes.
+   *
+   * @param cls    Python class to check
+   * @see com.jetbrains.python.psi.impl.PyBuiltinCache
+   * @see PyNames#FAKE_OLD_BASE
+   */
+  public static boolean isObjectClass(@NotNull PyClass cls) {
+    final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(cls);
+    if (cls == builtinCache.getClass(PyNames.OBJECT) || cls == builtinCache.getClass(PyNames.FAKE_OLD_BASE)) {
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Checks that given type is the root of type hierarchy, i.e. it's type of either {@code object} or special
+   * {@link com.jetbrains.python.PyNames#FAKE_OLD_BASE} class for old-style classes.
+   *
+   * @param type   Python class to check
+   * @param anchor arbitrary PSI element to find appropriate SDK
+   * @see com.jetbrains.python.psi.impl.PyBuiltinCache
+   * @see PyNames#FAKE_OLD_BASE
+   */
+  public static boolean isObjectType(@NotNull PyType type, @NotNull PsiElement anchor) {
+    final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(anchor);
+    if (type == builtinCache.getObjectType() || type == builtinCache.getOldstyleClassobjType()) {
+      return true;
+    }
+    return false;
   }
 }

@@ -21,6 +21,7 @@ package com.intellij.util.io;
 
 import com.intellij.openapi.Forceable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
@@ -138,27 +139,16 @@ public class RandomAccessDataFile implements Forceable, Closeable {
   }
 
   public String getUTF(long addr) {
-    try {
-      int len = getInt(addr);
-      byte[] bytes = new byte[len];
-      get(addr + 4, bytes, 0, len);
-      return new String(bytes, "UTF-8");
-    }
-    catch (UnsupportedEncodingException e) {
-      // Can't be
-      return "";
-    }
+    int len = getInt(addr);
+    byte[] bytes = new byte[len];
+    get(addr + 4, bytes, 0, len);
+    return new String(bytes, CharsetToolkit.UTF8_CHARSET);
   }
 
   public void putUTF(long addr, String value) {
-    try {
-      final byte[] bytes = value.getBytes("UTF-8");
-      putInt(addr, bytes.length);
-      put(addr + 4, bytes, 0, bytes.length);
-    }
-    catch (UnsupportedEncodingException e) {
-      // Can't be
-    }
+    final byte[] bytes = value.getBytes(CharsetToolkit.UTF8_CHARSET);
+    putInt(addr, bytes.length);
+    put(addr + 4, bytes, 0, bytes.length);
   }
 
   public long length() {

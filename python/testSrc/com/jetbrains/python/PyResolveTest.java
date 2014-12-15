@@ -160,13 +160,19 @@ public class PyResolveTest extends PyResolveTestCase {
 
   public void testTryExceptElse() {
     PsiElement targetElement = resolve();
-    Assert.assertTrue(targetElement instanceof PyTargetExpression);
+    assertTrue(targetElement instanceof PyTargetExpression);
   }
 
   public void testGlobal() {
     PsiElement targetElement = resolve();
-    Assert.assertTrue(targetElement instanceof PyTargetExpression);
-    Assert.assertTrue(targetElement.getParent() instanceof PyAssignmentStatement);
+    assertTrue(targetElement instanceof PyTargetExpression);
+    assertTrue(targetElement.getParent() instanceof PyAssignmentStatement);
+  }
+
+  public void testGlobalInNestedFunction() {
+    PsiElement targetElement = resolve();
+    assertInstanceOf(targetElement, PyTargetExpression.class);
+    assertInstanceOf(ScopeUtil.getScopeOwner(targetElement), PyFile.class);
   }
 
   public void testGlobalDefinedLocally() {

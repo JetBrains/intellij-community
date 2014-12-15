@@ -486,7 +486,7 @@ public class CommentByLineCommentHandler extends MultiCaretCodeInsightActionHand
     }
     if (endOffset >= suffix.length() && CharArrayUtil.regionMatches(document.getCharsSequence(), endOffset - suffix.length(), suffix)) {
       document.deleteString(endOffset - suffix.length(), endOffset);
-      endOffset = document.getTextLength();
+      endOffset -= suffix.length();
     }
     if (commentedPrefix != null && commentedSuffix != null) {
       CommentByBlockCommentHandler.commentNestedComments(document, new TextRange(startOffset, endOffset), commenter);

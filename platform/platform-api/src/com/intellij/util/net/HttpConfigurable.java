@@ -15,11 +15,11 @@
  */
 package com.intellij.util.net;
 
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -55,7 +55,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.net.*;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -73,7 +72,8 @@ import java.util.Set;
 )
 public class HttpConfigurable implements PersistentStateComponent<HttpConfigurable>, ExportableApplicationComponent {
   public static final int CONNECTION_TIMEOUT = SystemProperties.getIntProperty("idea.connection.timeout", 10000);
-  private static final Logger LOG = Logger.getInstance(HttpConfigurable.class);
+  public static final int READ_TIMEOUT = SystemProperties.getIntProperty("idea.read.timeout", 60000);
+  public static final int REDIRECT_LIMIT = SystemProperties.getIntProperty("idea.redirect.limit", 10);
 
   public boolean PROXY_TYPE_IS_SOCKS;
   public boolean USE_HTTP_PROXY;
@@ -304,31 +304,18 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   }
 
   private static void runAboveAll(@NotNull final Runnable runnable) {
-    final Runnable throughSwing = new Runnable() {
-      @Override
-      public void run() {
-        if (SwingUtilities.isEventDispatchThread()) {
-          runnable.run();
-        }
-        else {
-          try {
-            SwingUtilities.invokeAndWait(runnable);
-          }
-          catch (InterruptedException e) {
-            LOG.info(e);
-          }
-          catch (InvocationTargetException e) {
-            LOG.info(e);
-          }
-        }
-      }
-    };
     ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
     if (progressIndicator != null && progressIndicator.isModal()) {
       WaitForProgressToShow.runOrInvokeAndWaitAboveProgress(runnable);
     }
     else {
-      throughSwing.run();
+      Application app = ApplicationManager.getApplication();
+      if (app.isDispatchThread()) {
+        runnable.run();
+      }
+      else {
+        app.invokeAndWait(runnable, ModalityState.any());
+      }
     }
   }
 
@@ -388,7 +375,6 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
 
   @NotNull
   public URLConnection openConnection(@NotNull String location) throws IOException {
-    CommonProxy.isInstalledAssertion();
     final URL url = new URL(location);
     URLConnection urlConnection = null;
     final List<Proxy> proxies = CommonProxy.getInstance().select(url);
@@ -412,7 +398,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     }
 
     assert urlConnection != null;
-    urlConnection.setReadTimeout(CONNECTION_TIMEOUT);
+    urlConnection.setReadTimeout(READ_TIMEOUT);
     urlConnection.setConnectTimeout(CONNECTION_TIMEOUT);
     return urlConnection;
   }

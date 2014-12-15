@@ -17,6 +17,7 @@ package com.intellij.dvcs.push.ui;
 
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
+import com.intellij.spellchecker.ui.SpellCheckingEditorCustomization;
 import com.intellij.ui.TextFieldWithAutoCompletion;
 import com.intellij.ui.TextFieldWithAutoCompletionListProvider;
 import com.intellij.util.containers.ContainerUtil;
@@ -45,6 +46,14 @@ public class PushTargetTextField extends TextFieldWithAutoCompletion<String> {
   }
 
   @Override
+  protected EditorEx createEditor() {
+    // editor created lazy, so we need to update editor customization after initialization
+    EditorEx editorEx = super.createEditor();
+    SpellCheckingEditorCustomization.DISABLED.customize(editorEx);
+    return editorEx;
+  }
+
+  @Override
   protected void updateBorder(@NotNull final EditorEx editor) {
   }
 
@@ -57,5 +66,4 @@ public class PushTargetTextField extends TextFieldWithAutoCompletion<String> {
       }
     };
   }
-
 }

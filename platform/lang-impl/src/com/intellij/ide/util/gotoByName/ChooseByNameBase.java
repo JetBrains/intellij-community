@@ -1204,6 +1204,10 @@ public abstract class ChooseByNameBase {
     myPostponedOkAction = null;
   }
 
+  public boolean hasPostponedAction() {
+    return myPostponedOkAction != null;
+  }
+
   protected abstract void showList();
 
   protected abstract void hideList();
@@ -1521,8 +1525,9 @@ public abstract class ChooseByNameBase {
                   ApplicationAdapter listener = new ApplicationAdapter() {
                     @Override
                     public void beforeWriteActionStart(Object action) {
-                      cancel();
-                      scheduleRestart();
+                      if (cancel()) {
+                        scheduleRestart(); //don't restart if already canceled explicitly
+                      }
                       ApplicationManager.getApplication().removeApplicationListener(this);
                     }
                   };

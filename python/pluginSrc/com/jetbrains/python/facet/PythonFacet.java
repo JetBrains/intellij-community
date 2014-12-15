@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,13 +75,8 @@ public class PythonFacet extends Facet<PythonFacetConfiguration> implements Libr
           }
         }
 
-        // !!!!!!!!!! WARNING !!!!!!!!!
-        // This generates Roots Changed Event and BaseRailsFacet uses such behaviour!
-        // Don't remove it without updating BaseRailsFacet behaviour!
         if (modelChanged){
           model.commit();
-        } else {
-          model.dispose();
         }
       }
     });

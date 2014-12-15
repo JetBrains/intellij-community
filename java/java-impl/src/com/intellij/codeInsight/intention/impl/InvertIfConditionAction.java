@@ -158,8 +158,9 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
   }
 
   private static PsiElement findCodeBlock(PsiIfStatement ifStatement) {
-    PsiElement e = PsiTreeUtil.getParentOfType(ifStatement, PsiMethod.class, PsiClassInitializer.class);
+    PsiElement e = PsiTreeUtil.getParentOfType(ifStatement, PsiMethod.class, PsiClassInitializer.class, PsiLambdaExpression.class);
     if (e instanceof PsiMethod) return ((PsiMethod) e).getBody();
+    if (e instanceof PsiLambdaExpression) return ((PsiLambdaExpression)e).getBody();
     if (e instanceof PsiClassInitializer) return ((PsiClassInitializer) e).getBody();
     return null;
   }

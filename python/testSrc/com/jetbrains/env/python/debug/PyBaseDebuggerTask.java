@@ -104,9 +104,7 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
   protected String output() {
     if (mySession != null && mySession.getConsoleView() != null) {
       PythonDebugLanguageConsoleView pydevConsoleView = (PythonDebugLanguageConsoleView)mySession.getConsoleView();
-      if (pydevConsoleView != null) {
-        return XDebuggerTestUtil.getConsoleText(pydevConsoleView.getTextConsole());
-      }
+      return XDebuggerTestUtil.getConsoleText(pydevConsoleView.getTextConsole());
     }
     return "Console output not available.";
   }

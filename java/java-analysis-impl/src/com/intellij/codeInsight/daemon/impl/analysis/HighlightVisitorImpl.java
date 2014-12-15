@@ -617,9 +617,10 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         myHolder.add(HighlightMethodUtil.checkConstructorName(method));
       }
       myHolder.add(HighlightNamesUtil.highlightMethodName(method, identifier, true, colorsScheme));
-      myHolder.add(GenericsHighlightUtil.checkDefaultMethodOverrideEquivalentToObjectNonPrivate(myLanguageLevel,
-                                                                                                method.getContainingClass(), method,
-                                                                                                identifier));
+      final PsiClass aClass = method.getContainingClass();
+      if (aClass != null) {
+        myHolder.add(GenericsHighlightUtil.checkDefaultMethodOverrideEquivalentToObjectNonPrivate(myLanguageLevel, aClass, method, identifier));
+      }
     }
 
     super.visitIdentifier(identifier);

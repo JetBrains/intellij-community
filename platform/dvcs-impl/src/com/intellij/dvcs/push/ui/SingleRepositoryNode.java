@@ -18,6 +18,7 @@ package com.intellij.dvcs.push.ui;
 import com.intellij.dvcs.push.PushTargetPanel;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class SingleRepositoryNode extends RepositoryNode {
@@ -42,6 +43,10 @@ public class SingleRepositoryNode extends RepositoryNode {
   }
 
   @Override
+  public void setChecked(boolean checked) {
+  }
+
+  @Override
   public void fireOnSelectionChange(boolean isSelected) {
   }
 
@@ -52,6 +57,6 @@ public class SingleRepositoryNode extends RepositoryNode {
     renderer.append(myRepositoryPanel.getSourceName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     renderer.append(myRepositoryPanel.getArrow(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     PushTargetPanel pushTargetPanel = myRepositoryPanel.getTargetPanel();
-    pushTargetPanel.render(renderer);
+    pushTargetPanel.render(renderer, renderer.getTree().isPathSelected(TreeUtil.getPathFromRoot(this)));
   }
 }

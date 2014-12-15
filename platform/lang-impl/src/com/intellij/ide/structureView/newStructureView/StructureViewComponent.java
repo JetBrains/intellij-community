@@ -16,7 +16,6 @@
 
 package com.intellij.ide.structureView.newStructureView;
 
-import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.CopyPasteDelegator;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.PsiCopyPasteManager;
@@ -154,9 +153,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     myAutoScrollToSourceHandler = new MyAutoScrollToSourceHandler();
     myAutoScrollFromSourceHandler = new MyAutoScrollFromSourceHandler(myProject, this);
 
-    if (getSettings().SHOW_TOOLBAR) {
-      setToolbar(createToolbar());
-    }
+    setToolbar(createToolbar());
 
     installTree();
 
@@ -389,44 +386,11 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   }
   }
 
-  public ActionGroup getGearActions() {
-    DefaultActionGroup group = createActionGroup(true);
-    group.addAction(new ToggleAction("Show Toolbar") {
-      @Override
-      public boolean isDumbAware() {
-        return true;
-      }
-
-      @Override
-      public boolean isSelected(AnActionEvent e) {
-        return getSettings().SHOW_TOOLBAR;
-      }
-
-      @Override
-      public void setSelected(AnActionEvent e, boolean state) {
-        setToolbar(state ? createToolbar() : null);
-        getSettings().SHOW_TOOLBAR = state;
-      }
-    }).setAsSecondary(true);
-    return group;
-  }
-
   private StructureViewFactoryImpl.State getSettings() {
     return ((StructureViewFactoryImpl)StructureViewFactory.getInstance(myProject)).getState();
   }
 
-  public AnAction[] getTitleActions() {
-    return new AnAction[]{
-      CommonActionsManager.getInstance().createExpandAllHeaderAction(getTree()),
-      CommonActionsManager.getInstance().createCollapseAllHeaderAction(getTree()),
-    };
-  }
-
   protected ActionGroup createActionGroup() {
-    return createActionGroup(false);
-  }
-
-  protected DefaultActionGroup createActionGroup(boolean togglesOnly) {
     DefaultActionGroup result = new DefaultActionGroup();
     Sorter[] sorters = myTreeModel.getSorters();
     for (final Sorter sorter : sorters) {
@@ -451,10 +415,8 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       }
     }
 
-    if (!togglesOnly) {
-      result.add(new ExpandAllAction(getTree()));
-      result.add(new CollapseAllAction(getTree()));
-    }
+    result.add(new ExpandAllAction(getTree()));
+    result.add(new CollapseAllAction(getTree()));
 
     if (showScrollToFromSourceActions()) {
       result.addSeparator();

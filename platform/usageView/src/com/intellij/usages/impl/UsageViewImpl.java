@@ -31,7 +31,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.progress.util.TooManyUsagesStatus;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
@@ -54,7 +53,10 @@ import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewManager;
 import com.intellij.usages.*;
 import com.intellij.usages.rules.*;
-import com.intellij.util.*;
+import com.intellij.util.Alarm;
+import com.intellij.util.Consumer;
+import com.intellij.util.EditSourceOnDoubleClickHandler;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.TransferToEDTQueue;
@@ -592,7 +594,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
     return new AnAction[] {
       canShowSettings() ? showSettings() : null,
-      canPerformReRun() ? new ReRunAction() : null,
+      ActionManager.getInstance().getAction("UsageView.Rerun"),
       new CloseAction(),
       ActionManager.getInstance().getAction("PinToolwindowTab"),
       createRecentFindUsagesAction(),
@@ -804,26 +806,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     }
   }
 
-  private class ReRunAction extends AnAction implements DumbAware {
-    private ReRunAction() {
-      super(UsageViewBundle.message("action.rerun"), UsageViewBundle.message("action.description.rerun"), AllIcons.Actions.Rerun);
-      registerCustomShortcutSet(CommonShortcuts.getRerun(), myRootPanel);
-    }
-
-    @Override
-    public void actionPerformed(AnActionEvent e) {
-      refreshUsages();
-    }
-
-    @Override
-    public void update(AnActionEvent e) {
-      super.update(e);
-      final Presentation presentation = e.getPresentation();
-      presentation.setEnabled(allTargetsAreValid());
-    }
-  }
-
-  private void refreshUsages() {
+  public void refreshUsages() {
     reset();
     doReRun();
   }
@@ -1237,8 +1220,8 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     return myPresentation;
   }
 
-  private boolean canPerformReRun() {
-    return myUsageSearcherFactory != null;
+  public boolean canPerformReRun() {
+    return myUsageSearcherFactory != null && allTargetsAreValid();
   }
 
   private boolean checkReadonlyUsages() {
@@ -1660,7 +1643,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       PsiDocumentManager.getInstance(myProject).commitAllDocuments();
       if (myCannotMakeString != null && myChangesDetected) {
         String title = UsageViewBundle.message("changes.detected.error.title");
-        if (canPerformReRun() && allTargetsAreValid()) {
+        if (canPerformReRun()) {
           String[] options = {UsageViewBundle.message("action.description.rerun"), UsageViewBundle.message("usage.view.cancel.button")};
           String message = myCannotMakeString + "\n\n" + UsageViewBundle.message("dialog.rerun.search");
           int answer = Messages.showOkCancelDialog(myProject, message, title, options[0], options[1], Messages.getErrorIcon());

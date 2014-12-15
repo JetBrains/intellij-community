@@ -169,12 +169,12 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
       }
       LOG.assertTrue(referencedMethodReturnType != null, method);
 
-      session.initBounds(myExpression, method.getTypeParameters());
-
-      if (!PsiTreeUtil.isContextAncestor(containingClass, myExpression, false) || 
+      if (!PsiTreeUtil.isContextAncestor(containingClass, myExpression, false) ||
           PsiUtil.getEnclosingStaticElement(myExpression, containingClass) != null) {
         session.initBounds(myExpression, containingClass.getTypeParameters());
       }
+
+      session.initBounds(myExpression, method.getTypeParameters());
 
       //if i) the method reference elides NonWildTypeArguments, 
       //  ii) the compile-time declaration is a generic method, and 

@@ -19,11 +19,8 @@ public final class MatchResultImpl extends MatchResult {
   private int end = -1;
   private String matchImage;
   private List<MatchResult> matches;
-  private MatchResult parent;
   private boolean target;
 
-  @NonNls public static final String DEFAULT_NAME2 = "end of context match";
-  @NonNls public static final String DEFAULT_NAME = "start of context match";
   private boolean myScopeMatch;
   private boolean myMultipleMatch;
   @NonNls private static final String NULL = "null";
@@ -36,7 +33,7 @@ public final class MatchResultImpl extends MatchResult {
     this(name,image,ref,0,-1,target);
   }
 
-  public MatchResultImpl(String name, String image, SmartPsiPointer ref, int start, int end,boolean target) {
+  public MatchResultImpl(String name, String image, SmartPsiPointer ref, int start, int end, boolean target) {
     matchRef = ref;
     this.name = name;
     matchImage = image;
@@ -53,7 +50,6 @@ public final class MatchResultImpl extends MatchResult {
   }
 
   public void setParent(MatchResult parent) {
-    this.parent = parent;
   }
 
   public SmartPsiPointer getMatchRef() {

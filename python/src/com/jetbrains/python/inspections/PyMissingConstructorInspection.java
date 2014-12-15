@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiReference;
@@ -77,11 +78,10 @@ public class PyMissingConstructorInspection extends PyInspection {
     }
 
     private boolean superHasConstructor(@NotNull PyClass cls) {
+      final String className = cls.getName();
       for (PyClass c : cls.getAncestorClasses(myTypeEvalContext)) {
         final String name = c.getName();
-        final String className = cls.getName();
-        if (!OBJECT.equals(name) && !FAKE_OLD_BASE.equals(name) && className != null &&
-            !className.equals(name) && c.findMethodByName(INIT, false) != null) {
+        if (!PyUtil.isObjectClass(c) && !Comparing.equal(className, name) && c.findMethodByName(INIT, false) != null) {
           return true;
         }
       }

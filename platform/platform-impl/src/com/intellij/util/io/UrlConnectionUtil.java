@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.util.io;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -36,11 +35,10 @@ public class UrlConnectionUtil {
   private UrlConnectionUtil() {
   }
 
-  public static
   @Nullable
-  InputStream getConnectionInputStream(URLConnection connection, @Nullable ProgressIndicator pi) {
+  public static InputStream getConnectionInputStream(@NotNull URLConnection connection, @Nullable ProgressIndicator progressIndicator) {
     try {
-      return getConnectionInputStreamWithException(connection, pi);
+      return getConnectionInputStreamWithException(connection, progressIndicator);
     }
     catch (ProcessCanceledException e) {
       return null;
@@ -50,14 +48,17 @@ public class UrlConnectionUtil {
     }
   }
 
+  @NotNull
+  public static InputStream getConnectionInputStreamWithException(@NotNull URLConnection connection, @Nullable ProgressIndicator progressIndicator) throws IOException {
+    if (ApplicationManager.getApplication() == null) {
+      return connection.getInputStream();
+    }
 
-  public static InputStream getConnectionInputStreamWithException(@NotNull URLConnection connection, @Nullable ProgressIndicator pi)
-    throws IOException {
     InputStreamGetter getter = new InputStreamGetter(connection);
     final Future<?> getterFuture = ApplicationManager.getApplication().executeOnPooledThread(getter);
     while (true) {
-      if (pi != null) {
-        pi.checkCanceled();
+      if (progressIndicator != null) {
+        progressIndicator.checkCanceled();
       }
 
       try {
@@ -67,9 +68,9 @@ public class UrlConnectionUtil {
         catch (TimeoutException ignored) {
         }
 
-        if (pi != null) {
-          pi.setIndeterminate(true);
-          pi.setText(pi.getText());
+        if (progressIndicator != null) {
+          progressIndicator.setIndeterminate(true);
+          progressIndicator.setText(progressIndicator.getText());
         }
 
         if (getterFuture.isDone()) {

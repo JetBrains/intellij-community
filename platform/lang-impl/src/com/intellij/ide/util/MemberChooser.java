@@ -454,7 +454,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
   protected void fillToolbarActions(DefaultActionGroup group) {
     final boolean alphabeticallySorted = PropertiesComponent.getInstance().isTrueValue(PROP_SORTED);
     if (alphabeticallySorted) {
-      setSortComparator(new OrderComparator());
+      setSortComparator(new AlphaComparator());
     }
     myAlphabeticallySorted = alphabeticallySorted;
     group.add(mySortAction);

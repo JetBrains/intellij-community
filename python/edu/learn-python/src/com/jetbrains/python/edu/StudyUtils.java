@@ -1,6 +1,7 @@
 package com.jetbrains.python.edu;
 
 import com.intellij.ide.SaveAndSyncHandlerImpl;
+import com.intellij.ide.projectView.actions.MarkRootActionBase;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
@@ -9,7 +10,14 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -19,6 +27,7 @@ import com.intellij.util.ui.UIUtil;
 import com.jetbrains.python.edu.course.*;
 import com.jetbrains.python.edu.editor.StudyEditor;
 import com.jetbrains.python.edu.ui.StudyToolWindowFactory;
+import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,6 +36,7 @@ import java.util.Collection;
 
 public class StudyUtils {
   private static final Logger LOG = Logger.getInstance(StudyUtils.class.getName());
+
   public static void closeSilently(Closeable stream) {
     if (stream != null) {
       try {
@@ -55,7 +65,7 @@ public class StudyUtils {
   @Nullable
   public static String getFileText(String parentDir, String fileName, boolean wrapHTML) {
 
-    File inputFile = parentDir !=null ? new File(parentDir, fileName) : new File(fileName);
+    File inputFile = parentDir != null ? new File(parentDir, fileName) : new File(fileName);
     if (!inputFile.exists()) return null;
     StringBuilder taskText = new StringBuilder();
     BufferedReader reader = null;
@@ -96,12 +106,14 @@ public class StudyUtils {
   }
 
   public static void updateStudyToolWindow(Project project) {
-    ToolWindowManager.getInstance(project).getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW).getContentManager().removeAllContents(false);
-    StudyToolWindowFactory factory =  new StudyToolWindowFactory();
-    factory.createToolWindowContent(project, ToolWindowManager.getInstance(project).getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW));
+    ToolWindowManager.getInstance(project).getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW).getContentManager()
+      .removeAllContents(false);
+    StudyToolWindowFactory factory = new StudyToolWindowFactory();
+    factory
+      .createToolWindowContent(project, ToolWindowManager.getInstance(project).getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW));
   }
 
-  public  static void synchronize() {
+  public static void synchronize() {
     FileDocumentManager.getInstance().saveAllDocuments();
     SaveAndSyncHandlerImpl.refreshOpenFiles();
     VirtualFileManager.getInstance().refreshWithoutFileWatcher(true);
@@ -153,7 +165,7 @@ public class StudyUtils {
         });
       }
       catch (IOException e) {
-       LOG.error(e);
+        LOG.error(e);
       }
       finally {
         closeSilently(printWriter);
@@ -184,5 +196,32 @@ public class StudyUtils {
     File resourceFile = new File(pathToResource, copyName);
     FileUtil.copy(new File(pathToResource, sourceName), resourceFile);
     return resourceFile;
+  }
+
+  @Nullable
+  public static Sdk findPythonSdk(@NotNull final Project project) {
+    return PythonSdkType.findPythonSdk(ModuleManager.getInstance(project).getModules()[0]);
+  }
+
+  public static void markDirAsSourceRoot(@NotNull final VirtualFile dir, @NotNull final Project project) {
+    final Module module = ModuleUtilCore.findModuleForFile(dir, project);
+    if (module == null) {
+      LOG.info("Module for " + dir.getPath() + " was not found");
+      return;
+    }
+    final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
+    ContentEntry entry = MarkRootActionBase.findContentEntry(model, dir);
+    if (entry == null) {
+      LOG.info("Content entry for " + dir.getPath() + " was not found");
+      return;
+    }
+    entry.addSourceFolder(dir, false);
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        model.commit();
+        module.getProject().save();
+      }
+    });
   }
 }

@@ -2785,7 +2785,10 @@ public class HighlightUtil extends HighlightUtilBase {
           final PsiMethod setterPrototype = PropertyUtil.generateSetterPrototype(psiField);
           final PsiMethod setter = containingClass.findMethodBySignature(setterPrototype, true);
           if (setter != null && PsiUtil.isAccessible(setter, place, accessObjectClass)) {
-            QuickFixAction.registerQuickFixAction(error, QUICK_FIX_FACTORY.createReplaceInaccessibleFieldWithGetterSetterFix(place, setter, true));
+            final PsiElement element = PsiTreeUtil.skipParentsOfType(place, PsiParenthesizedExpression.class);
+            if (element instanceof PsiAssignmentExpression && ((PsiAssignmentExpression)element).getOperationTokenType() == JavaTokenType.EQ) {
+              QuickFixAction.registerQuickFixAction(error, QUICK_FIX_FACTORY.createReplaceInaccessibleFieldWithGetterSetterFix(place, setter, true));
+            }
           }
         }
         else if (PsiUtil.isAccessedForReading((PsiExpression)place)) {

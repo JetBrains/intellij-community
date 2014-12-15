@@ -149,14 +149,9 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
       @Override
       public void run() {
         myVisiblePack.getVisibleGraph().getActionController().setLinearBranchesExpansion(false);
-        UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-          @Override
-          public void run() {
-            handleAnswer(null, true);
-          }
-        });
       }
     });
+    handleAnswer(null, true);
   }
 
   public void hideAll() {
@@ -164,14 +159,9 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
       @Override
       public void run() {
         myVisiblePack.getVisibleGraph().getActionController().setLinearBranchesExpansion(true);
-        UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-          @Override
-          public void run() {
-            handleAnswer(null, true);
-          }
-        });
       }
     });
+    handleAnswer(null, true);
   }
 
   public void setLongEdgeVisibility(boolean visibility) {
@@ -270,7 +260,7 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
   }
 
   private void commitNotFound(@NotNull String commitHash) {
-    if (getFilters().isEmpty()) {
+    if (myMainFrame.getFilterUi().getFilters().isEmpty()) {
       showMessage(MessageType.WARNING, "Commit " + commitHash + " not found");
     }
     else {
@@ -301,17 +291,12 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
   }
 
   public void applyFiltersAndUpdateUi() {
-    myFilterer.onFiltersChange(getFilters());
+    myFilterer.onFiltersChange(myMainFrame.getFilterUi().getFilters());
   }
 
   @NotNull
   public VcsLogFilterer getFilterer() {
     return myFilterer;
-  }
-
-  @NotNull
-  public VcsLogFilterCollection getFilters() {
-    return myMainFrame.getFilterUi().getFilters();
   }
 
   public VcsLogGraphTable getTable() {

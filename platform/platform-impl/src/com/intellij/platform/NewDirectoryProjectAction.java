@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.platform;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
@@ -32,7 +33,9 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.impl.welcomeScreen.NewWelcomeScreen;
 import com.intellij.projectImport.ProjectOpenedCallback;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -104,5 +107,12 @@ public class NewDirectoryProjectAction extends AnAction implements DumbAware {
         }
       }
     }, false);
+  }
+  
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    if (NewWelcomeScreen.isNewWelcomeScreen(e)) {
+      e.getPresentation().setIcon(AllIcons.Welcome.CreateNewProject);
+    }
   }
 }

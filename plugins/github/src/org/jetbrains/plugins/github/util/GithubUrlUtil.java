@@ -52,6 +52,11 @@ public class GithubUrlUtil {
   }
 
   @NotNull
+  public static String getApiProtocol() {
+    return getApiProtocolFromUrl(GithubSettings.getInstance().getHost());
+  }
+
+  @NotNull
   public static String getApiProtocolFromUrl(@NotNull String urlFromSettings) {
     if (StringUtil.startsWithIgnoreCase(urlFromSettings.trim(), "http://")) return "http://";
     return "https://";
@@ -74,7 +79,7 @@ public class GithubUrlUtil {
    */
   @NotNull
   public static String getGithubHost() {
-    return "https://" + getGitHostWithoutProtocol();
+    return getApiProtocol() + getGitHostWithoutProtocol();
   }
 
   /**

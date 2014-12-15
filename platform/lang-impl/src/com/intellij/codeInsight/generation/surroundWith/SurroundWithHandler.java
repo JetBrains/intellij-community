@@ -51,6 +51,7 @@ import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -198,7 +199,7 @@ public class SurroundWithHandler implements CodeInsightActionHandler {
         editor.getCaretModel().moveToLogicalPosition(pos);
       }
       TextRange range = surrounder.surroundElements(project, editor, elements);
-      if (TemplateManager.getInstance(project).getActiveTemplate(editor) == null) {
+      if (TemplateManager.getInstance(project).getActiveTemplate(editor) == null && InplaceRefactoring.getActiveInplaceRenamer(editor) == null) {
         LogicalPosition pos1 = new LogicalPosition(line, col);
         editor.getCaretModel().moveToLogicalPosition(pos1);
       }

@@ -17,7 +17,6 @@ package com.jetbrains.python.fixtures;
 
 import com.google.common.base.Joiner;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.execution.actions.ConfigurationContext;
@@ -42,8 +41,10 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.FilePropertyPusher;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.DirectoryProjectConfigurator;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.RefactoringActionHandler;
@@ -82,8 +83,8 @@ import java.util.*;
  */
 @TestDataPath("$CONTENT_ROOT/../testData/")
 public abstract class PyTestCase extends UsefulTestCase {
-  public static String PYTHON_2_MOCK_SDK = "2.7";
-  public static String PYTHON_3_MOCK_SDK = "3.2";
+  public static final String PYTHON_2_MOCK_SDK = "2.7";
+  public static final String PYTHON_3_MOCK_SDK = "3.4";
 
   private static final PyLightProjectDescriptor ourPyDescriptor = new PyLightProjectDescriptor(PYTHON_2_MOCK_SDK);
   protected static final PyLightProjectDescriptor ourPy3Descriptor = new PyLightProjectDescriptor(PYTHON_3_MOCK_SDK);
@@ -301,6 +302,20 @@ public abstract class PyTestCase extends UsefulTestCase {
     final Editor editor = myFixture.getEditor();
     assertInstanceOf(editor, EditorEx.class);
     handler.invoke(myFixture.getProject(), editor, myFixture.getFile(), ((EditorEx)editor).getDataContext());
+  }
+
+  /**
+   * Configures project by some path. It is here to emulate {@link com.intellij.platform.PlatformProjectOpenProcessor}
+   *
+   * @param path         path to open
+   * @param configurator configurator to use
+   */
+  protected void configureProjectByProjectConfigurators(@NotNull final String path,
+                                                        @NotNull final DirectoryProjectConfigurator configurator) {
+    final VirtualFile newPath =
+      myFixture.copyDirectoryToProject(path, String.format("%s%s%s", "temp_for_project_conf", File.pathSeparator, path));
+    final Ref<Module> moduleRef = new Ref<Module>(myFixture.getModule());
+    configurator.configureProject(myFixture.getProject(), newPath, moduleRef);
   }
 
   protected static class PyLightProjectDescriptor implements LightProjectDescriptor {

@@ -142,7 +142,7 @@ public class DumbServiceImpl extends DumbService implements Disposable {
   }
 
   private void scheduleCacheUpdate(@NotNull final DumbModeTask task, boolean forceDumbMode) {
-    if (ApplicationManager.getApplication().isInternal()) LOG.info("schedule " + task);
+    if (LOG.isDebugEnabled()) LOG.debug("Scheduling task " + task, new Throwable());
     final Application application = ApplicationManager.getApplication();
 
     if (application.isUnitTestMode() ||

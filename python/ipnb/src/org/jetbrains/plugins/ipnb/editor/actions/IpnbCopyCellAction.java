@@ -16,7 +16,7 @@ public class IpnbCopyCellAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent event) {
+  public void actionPerformed(@NotNull AnActionEvent event) {
     final DataContext context = event.getDataContext();
     final FileEditor editor = PlatformDataKeys.FILE_EDITOR.getData(context);
     if (editor instanceof IpnbFileEditor) {
@@ -25,7 +25,7 @@ public class IpnbCopyCellAction extends AnAction {
     }
   }
 
-  public void copyCell(@NotNull final IpnbFilePanel ipnbFilePanel) {
+  public static void copyCell(@NotNull final IpnbFilePanel ipnbFilePanel) {
     ipnbFilePanel.copyCell();
   }
 }

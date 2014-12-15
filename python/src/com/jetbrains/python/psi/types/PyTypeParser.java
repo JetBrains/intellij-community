@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,17 +21,15 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.Function;
 import com.intellij.util.containers.hash.HashMap;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
-import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedNameResolverImpl;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
-import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.types.functionalParser.ForwardDeclaration;
 import com.jetbrains.python.psi.types.functionalParser.FunctionalParser;
 import com.jetbrains.python.psi.types.functionalParser.ParserException;
@@ -41,7 +39,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 import static com.jetbrains.python.psi.types.PyTypeTokenTypes.IDENTIFIER;
 import static com.jetbrains.python.psi.types.PyTypeTokenTypes.PARAMETER;
@@ -384,13 +385,6 @@ public class PyTypeParser {
         }
       }
 
-      if (unqualified) {
-        final ParseResult result = fromClassNameIndex(first);
-        if (result != null) {
-          return result;
-        }
-      }
-
       return EMPTY_RESULT;
     }
 
@@ -517,28 +511,6 @@ public class PyTypeParser {
       }
 
       return null;
-    }
-
-    @Nullable
-    private ParseResult fromClassNameIndex(@NotNull Token<PyElementType> token) {
-      final Collection<PyClass> classes = PyClassNameIndex.find(token.getText().toString(), myAnchor.getProject(), true);
-      if (classes.size() == 1) {
-        return parseResultFromClass(token, classes.iterator().next());
-      }
-      for (PyClass cls : classes) {
-        final PsiFile file = cls.getContainingFile();
-        if (file != null && !PyUserSkeletonsUtil.isUnderUserSkeletonsDirectory(file)) {
-          return parseResultFromClass(token, cls);
-        }
-      }
-      return null;
-    }
-
-    @NotNull
-    private static ParseResult parseResultFromClass(@NotNull Token<PyElementType> token, @NotNull PyClass cls) {
-      final PyClassTypeImpl type = new PyClassTypeImpl(cls, false);
-      type.assertValid("PyClassNameIndex.find().iterator()");
-      return new ParseResult(type, token.getRange());
     }
   }
 

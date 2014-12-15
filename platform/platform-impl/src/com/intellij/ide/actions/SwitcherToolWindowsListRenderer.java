@@ -53,11 +53,11 @@ class SwitcherToolWindowsListRenderer extends ColoredListCellRenderer {
       final String name;
 
       String stripeTitle = tw.getStripeTitle();
-      if (myPinned) {
+      String shortcut = shortcuts.get(tw);
+      if (myPinned || shortcut == null) {
         name = stripeTitle;
-      }
-      else {
-        append(shortcuts.get(tw), new SimpleTextAttributes(SimpleTextAttributes.STYLE_UNDERLINE, null));
+      } else {
+        append(shortcut, new SimpleTextAttributes(SimpleTextAttributes.STYLE_UNDERLINE, null));
         name = ": " + stripeTitle;
       }
 

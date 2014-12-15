@@ -101,6 +101,12 @@ public class PythonInspectionsTest extends PyTestCase {
     doTest(getTestName(false), inspection);
   }
 
+  // PY-9778
+  public void testPyUnusedLocalCoroutine() {
+    myFixture.copyDirectoryToProject("inspections/" + getTestName(false), "");
+    doHighlightingTest(PyUnusedLocalInspection.class, LanguageLevel.PYTHON34);
+  }
+
   public void testPyDictCreationInspection() {
     doHighlightingTest(PyDictCreationInspection.class, LanguageLevel.PYTHON26);
   }
@@ -243,6 +249,11 @@ public class PythonInspectionsTest extends PyTestCase {
 
   public void testPyPropertyDefinitionInspection26() {
     doTestWithLanguageLevel(getTestName(false), new PyPropertyDefinitionInspection(), LanguageLevel.PYTHON26);
+  }
+
+  // PY-11426
+  public void testPyPropertyDefinitionInspection33() {
+    doTestWithLanguageLevel(getTestName(false), new PyPropertyDefinitionInspection(), LanguageLevel.PYTHON33);
   }
 
   public void testInconsistentIndentation() {

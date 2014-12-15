@@ -32,7 +32,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 
@@ -176,7 +175,7 @@ public class JavaExecutionStack extends XExecutionStack {
         }
         if (first || DebuggerSettings.getInstance().SHOW_LIBRARY_STACKFRAMES || (!frame.getDescriptor().isSynthetic() && !frame.getDescriptor().isInLibraryContent())) {
           if (++myAdded > mySkip) {
-            myContainer.addStackFrames(Arrays.asList(frame), false);
+            myContainer.addStackFrames(Collections.singletonList(frame), false);
           }
         }
         myDebugProcess.getManagerThread().schedule(

@@ -65,11 +65,11 @@ public class SvnApplicationSettings implements PersistentStateComponent<SvnAppli
     myConfigurationBean = object;
     getTypedList();
   }
-  
+
   public void setCommandLinePath(final String path) {
     myConfigurationBean.mySvnCommandLine = path;
   }
-  
+
   public String getCommandLinePath() {
     return myConfigurationBean.mySvnCommandLine;
   }

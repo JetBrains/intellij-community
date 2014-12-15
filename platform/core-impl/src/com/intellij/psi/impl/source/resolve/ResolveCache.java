@@ -128,7 +128,9 @@ public class ResolveCache {
                                                                boolean isPoly,
                                                                boolean isPhysical) {
     ProgressIndicatorProvider.checkCanceled();
-    ApplicationManager.getApplication().assertReadAccessAllowed();
+    if (isPhysical) {
+      ApplicationManager.getApplication().assertReadAccessAllowed();
+    }
 
     int index = getIndex(isPhysical, incompleteCode, isPoly);
     ConcurrentMap<TRef, TResult> map = getMap(index);

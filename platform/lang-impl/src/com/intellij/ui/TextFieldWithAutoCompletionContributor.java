@@ -18,14 +18,18 @@ package com.intellij.ui;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -91,12 +95,20 @@ public class TextFieldWithAutoCompletionContributor<T> extends CompletionContrib
     Collection<T> items = provider.getItems(prefix, true, parameters);
     addCompletionElements(result, provider, items, -10000);
 
+    final ProgressManager progressManager = ProgressManager.getInstance();
+    ProgressIndicator mainIndicator = progressManager.getProgressIndicator();
+    final ProgressIndicator indicator = mainIndicator != null ? new SensitiveProgressWrapper(mainIndicator) : new EmptyProgressIndicator();
     Future<Collection<T>>
       future =
       ApplicationManager.getApplication().executeOnPooledThread(new Callable<Collection<T>>() {
         @Override
         public Collection<T> call() {
-          return provider.getItems(prefix, false, parameters);
+          return progressManager.runProcess(new Computable<Collection<T>>() {
+            @Override
+            public Collection<T> compute() {
+              return provider.getItems(prefix, false, parameters);
+            }
+          }, indicator);
         }
       });
 

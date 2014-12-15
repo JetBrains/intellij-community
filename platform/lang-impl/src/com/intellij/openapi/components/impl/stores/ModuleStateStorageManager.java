@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.application.PathManager;
@@ -21,23 +20,52 @@ import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.StateStorageOperation;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
-import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.impl.ModuleImpl;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 class ModuleStateStorageManager extends StateStorageManagerImpl {
   @NonNls private static final String ROOT_TAG_NAME = "module";
-  private final Module myModule;
+  private final ModuleImpl myModule;
 
-  public ModuleStateStorageManager(@Nullable final TrackingPathMacroSubstitutor pathMacroManager, final Module module) {
+  public ModuleStateStorageManager(@Nullable TrackingPathMacroSubstitutor pathMacroManager, @NotNull ModuleImpl module) {
     super(pathMacroManager, ROOT_TAG_NAME, module, module.getPicoContainer());
+
     myModule = module;
   }
 
   @Override
   protected StorageData createStorageData(@NotNull String storageSpec) {
     return new ModuleStoreImpl.ModuleFileData(ROOT_TAG_NAME, myModule);
+  }
+
+  @NotNull
+  @Override
+  public ExternalizationSession startExternalization() {
+    return new StateStorageManagerExternalizationSession() {
+      @Nullable
+      @Override
+      public StateStorage.SaveSession createSaveSession() {
+        final ModuleStoreImpl.ModuleFileData data = myModule.getStateStore().getMainStorageData();
+        final StateStorage.SaveSession session = super.createSaveSession();
+        if (!data.isDirty()) {
+          return session;
+        }
+
+        return new StateStorage.SaveSession() {
+          @Override
+          public void save() {
+            if (session != null) {
+              session.save();
+            }
+            if (data.isDirty()) {
+              myModule.getStateStore().getMainStorage().forceSave();
+            }
+          }
+        };
+      }
+    };
   }
 
   @Nullable

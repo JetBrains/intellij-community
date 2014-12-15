@@ -1,5 +1,6 @@
 package com.intellij.coverage;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtil;
@@ -37,6 +38,7 @@ import java.util.Map;
  */
 public class PackageAnnotator {
 
+  private static final Logger LOG = Logger.getInstance("#" + PackageAnnotator.class.getName());
   private final PsiPackage myPackage;
   private final Project myProject;
   private final PsiManager myManager;
@@ -272,7 +274,10 @@ public class PackageAnnotator {
                 JavaPsiFacade.getInstance(myManager.getProject()).findClass(toplevelClassSrcFQName, GlobalSearchScope.moduleScope(module));
               if (aClass == null || !aClass.isValid()) return Boolean.FALSE;
               containingFile[0] = aClass.getContainingFile().getVirtualFile();
-              assert containingFile[0] != null : aClass;
+              if (containingFile[0] == null) {
+                LOG.info("No virtual file found for: " + aClass);
+                return null;
+              }
               final ModuleFileIndex fileIndex = ModuleRootManager.getInstance(module).getFileIndex();
               return fileIndex.isUnderSourceRootOfType(containingFile[0], JavaModuleSourceRootTypes.SOURCES)
                      && (trackTestFolders || !fileIndex.isInTestSourceContent(containingFile[0]));

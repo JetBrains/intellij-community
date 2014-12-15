@@ -1,7 +1,6 @@
 package com.intellij.structuralsearch;
 
 import com.intellij.idea.Bombed;
-import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.*;
 import com.intellij.structuralsearch.impl.matcher.MatcherImplUtil;
@@ -589,6 +588,15 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
       1,
       findMatchesCount(s,s2_2)
     );
+
+    String pattern3 = "\"'String\"";
+    assertEquals("String literal", 1, findMatchesCount(s, pattern3));
+
+    String pattern4 = "\"test\"";
+    String source = "@SuppressWarnings(\"test\") class A {" +
+                    "  @SuppressWarnings({\"other\", \"test\"}) String field;" +
+                    "}";
+    assertEquals("String literal in annotation", 2, findMatchesCount(source, pattern4));
   }
 
   public void testCovariantArraySearch() {
@@ -1210,15 +1218,6 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
       findMatchesCount(s129,s130),
       2
     );
-
-    options.setDistinct(true);
-    assertEquals(
-      "case sensitive disitinct match",
-      findMatchesCount(s129,s130),
-      1
-    );
-
-    options.setDistinct(false);
 
     final String s133 = "class C { int a; int A() { a = 1; }} void c(int a) { a = 2; }";
     final String s133_2 = "class C { int a() {} int A() { a(1); }}";
@@ -2129,8 +2128,6 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
       assertFalse("spaces around reg exp check",false);
     } catch(MalformedPatternException ex) {}
 
-    options.setDistinct(true);
-
     final String s101 = "class A { void b() { String d; String e; String[] f; f.length=1; f.length=1; } }";
     final String s102 = "'_:[ref('T)] '_;";
 
@@ -2139,8 +2136,6 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
       findMatchesCount(s101,s102),
       1
     );
-
-    options.setDistinct(false);
 
     final String s103 = " a=1; ";
     final String s104 = "'T:{ ;";

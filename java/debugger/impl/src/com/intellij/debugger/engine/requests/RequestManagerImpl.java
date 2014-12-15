@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -451,12 +451,18 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
   }
 
   public static void deleteRequests(final Breakpoint breakpoint) {
-    invoke(breakpoint.getProject(), new AllProcessesCommand (){
-      public void action(DebugProcessImpl process)  {
+    invoke(breakpoint.getProject(), new AllProcessesCommand() {
+      public void action(DebugProcessImpl process) {
         process.getRequestsManager().myRequestWarnings.remove(breakpoint);
         process.getRequestsManager().deleteRequest(breakpoint);
       }
     });
+  }
+
+  public void deleteBreakpoint(final Breakpoint breakpoint) {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
+    myRequestWarnings.remove(breakpoint);
+    deleteRequest(breakpoint);
   }
 
   public void clearWarnings() {

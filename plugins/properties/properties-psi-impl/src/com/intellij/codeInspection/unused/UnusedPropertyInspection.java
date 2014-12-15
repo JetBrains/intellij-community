@@ -119,10 +119,10 @@ public class UnusedPropertyInspection extends PropertySuppressableInspectionBase
           if (name == null) return;
         }
 
-        if (mayHaveUsages(property, original, name, ownUseScope)) return;
+        if (mayHaveUsages(property, original, name, ownUseScope, isOnTheFly)) return;
 
         final GlobalSearchScope widerScope = getWidestUseScope(property.getKey(), element.getProject(), module);
-        if (widerScope != null && mayHaveUsages(property, original, name, widerScope)) return;
+        if (widerScope != null && mayHaveUsages(property, original, name, widerScope, isOnTheFly)) return;
 
         final ASTNode propertyNode = property.getNode();
         assert propertyNode != null;
@@ -135,15 +135,12 @@ public class UnusedPropertyInspection extends PropertySuppressableInspectionBase
         holder.registerProblem(key, description, ProblemHighlightType.LIKE_UNUSED_SYMBOL, fix);
       }
 
-      private boolean mayHaveUsages(Property property, ProgressIndicator original, String name, GlobalSearchScope searchScope) {
+      private boolean mayHaveUsages(Property property, ProgressIndicator original, String name, GlobalSearchScope searchScope, boolean onTheFly) {
         PsiSearchHelper.SearchCostResult cheapEnough = searchHelper.isCheapEnoughToSearch(name, searchScope, file, original);
-        if (cheapEnough == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES) return true;
+        if (cheapEnough == PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES) return false;
+        if (onTheFly && cheapEnough == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES) return true;
 
-        if (cheapEnough != PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES &&
-            ReferencesSearch.search(property, searchScope, false).findFirst() != null) {
-          return true;
-        }
-        return false;
+        return ReferencesSearch.search(property, searchScope, false).findFirst() != null;
       }
     };
   }

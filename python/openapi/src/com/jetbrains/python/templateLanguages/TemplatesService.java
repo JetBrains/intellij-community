@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.packaging.PyPackageManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -31,12 +33,42 @@ import java.util.List;
  */
 public abstract class TemplatesService {
   public static final String NONE = "None";
+  /**
+   * @deprecated Use {@link #getKnownTemplateLanguages()}
+   * or {@link com.jetbrains.python.templateLanguages.PythonTemplateLanguage#getTemplateLanguageName()}
+   */
+  @Deprecated
   public static final String DJANGO = "Django";
+  /**
+   * @deprecated Use {@link #getKnownTemplateLanguages()}
+   * or {@link com.jetbrains.python.templateLanguages.PythonTemplateLanguage#getTemplateLanguageName()}
+   */
+  @Deprecated
   public static final String MAKO = "Mako";
+  /**
+   * @deprecated Use {@link #getKnownTemplateLanguages()}
+   * or {@link com.jetbrains.python.templateLanguages.PythonTemplateLanguage#getTemplateLanguageName()}
+   */
+  @Deprecated
   public static final String JINJA2 = "Jinja2";
+  /**
+   * @deprecated Use {@link #getKnownTemplateLanguages()}
+   * or {@link com.jetbrains.python.templateLanguages.PythonTemplateLanguage#getTemplateLanguageName()}
+   */
+  @Deprecated
   public static final String WEB2PY = "Web2Py";
+  /**
+   * @deprecated Use {@link #getKnownTemplateLanguages()}
+   * or {@link com.jetbrains.python.templateLanguages.PythonTemplateLanguage#getTemplateLanguageName()}
+   */
+  @Deprecated
   public static final String CHAMELEON = "Chameleon";
 
+  /**
+   * @deprecated Use {@link #getKnownTemplateLanguages()}
+   * or {@link com.jetbrains.python.templateLanguages.PythonTemplateLanguage#getTemplateLanguageName()}
+   */
+  @Deprecated
   private static List<String> ALL_TEMPLATE_LANGUAGES = ContainerUtil.immutableList(NONE,
                                                                                    DJANGO,
                                                                                    MAKO,
@@ -47,15 +79,23 @@ public abstract class TemplatesService {
   public static List<String> ALL_TEMPLATE_BINDINGS = ContainerUtil.immutableList("django-mako", "django-jinja", "django-chameleon",
                                                                                   "flask-mako", "pyramid_jinja2");
 
+  @Nullable
   public abstract Language getSelectedTemplateLanguage();
 
   public static TemplatesService getInstance(Module module) {
     return ModuleServiceManager.getService(module, TemplatesService.class);
   }
 
+  /**
+   * @deprecated Use {@link #getKnownTemplateLanguages()}
+   * or {@link com.jetbrains.python.templateLanguages.PythonTemplateLanguage#getTemplateLanguageName()}
+   */
+  @Deprecated
   public static List<String> getAllTemplateLanguages() {
     return ALL_TEMPLATE_LANGUAGES;
   }
+
+  public abstract List<PythonTemplateLanguage> getKnownTemplateLanguages();
 
   public abstract void setTemplateLanguage(String templateLanguage);
 

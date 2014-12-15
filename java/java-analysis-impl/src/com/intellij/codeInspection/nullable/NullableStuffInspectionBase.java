@@ -360,7 +360,7 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
 
     if (REPORT_NOT_ANNOTATED_METHOD_OVERRIDES_NOTNULL) {
       for (PsiMethod superMethod : superMethods) {
-        if (!nullableManager.hasNullability(method) && isNotNullNotInferred(superMethod, true, false)) {
+        if (!nullableManager.hasNullability(method) && isNotNullNotInferred(superMethod, true, IGNORE_EXTERNAL_SUPER_NOTNULL)) {
           final String defaultNotNull = nullableManager.getDefaultNotNull();
           final String[] annotationsToRemove = ArrayUtil.toStringArray(nullableManager.getNullables());
           final LocalQuickFix fix = AnnotationUtil.isAnnotatingApplicable(method, defaultNotNull)

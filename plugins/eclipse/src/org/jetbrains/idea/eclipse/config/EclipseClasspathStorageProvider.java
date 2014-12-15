@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package org.jetbrains.idea.eclipse.config;
 
 import com.intellij.openapi.components.PathMacroManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.roots.*;
@@ -32,11 +31,14 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.SmartList;
+import gnu.trove.THashSet;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.eclipse.ConversionException;
 import org.jetbrains.idea.eclipse.EclipseBundle;
 import org.jetbrains.idea.eclipse.EclipseXml;
@@ -46,8 +48,7 @@ import org.jetbrains.jps.eclipse.model.JpsEclipseClasspathSerializer;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -138,7 +139,8 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
     fileCache.register(module.getName() + EclipseXml.IDEA_SETTINGS_POSTFIX, moduleRoot);
   }
 
-  static CachedXmlDocumentSet getFileCache(final Module module) {
+  @NotNull
+  static CachedXmlDocumentSet getFileCache(@NotNull Module module) {
     final EclipseModuleManagerImpl moduleManager = EclipseModuleManagerImpl.getInstance(module);
     CachedXmlDocumentSet fileCache = moduleManager != null ? moduleManager.getDocumentSet() : null;
     if (fileCache == null) {
@@ -156,12 +158,8 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
   public void moduleRenamed(final Module module, String newName) {
     if (ClassPathStorageUtil.getStorageType(module).equals(JpsEclipseClasspathSerializer.CLASSPATH_STORAGE_ID)) {
       try {
-        final CachedXmlDocumentSet documentSet = getFileCache(module);
-
-
         final String oldEmlName = module.getName() + EclipseXml.IDEA_SETTINGS_POSTFIX;
-
-        final String root = documentSet.getParent(oldEmlName);
+        final String root = getFileCache(module).getParent(oldEmlName);
         final File source = new File(root, oldEmlName);
         if (source.exists()) {
           final File target = new File(root, newName + EclipseXml.IDEA_SETTINGS_POSTFIX);
@@ -176,19 +174,15 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
       }
       catch (IOException ignore) {
       }
-      catch (JDOMException e) {
-
+      catch (JDOMException ignored) {
       }
     }
   }
 
-
   public static class EclipseClasspathConverter implements ClasspathConverter {
-
     private final Module module;
-    private static final Logger LOG = Logger.getInstance("#" + EclipseClasspathConverter.class.getName());
 
-    public EclipseClasspathConverter(final Module module) {
+    public EclipseClasspathConverter(@NotNull Module module) {
       this.module = module;
     }
 
@@ -198,26 +192,29 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
     }
 
     @Override
-    public Set<String> getClasspath(ModifiableRootModel model, final Element element) throws IOException, InvalidDataException {
+    public Set<String> getClasspath(@NotNull ModifiableRootModel model, @NotNull Element element) throws IOException, InvalidDataException {
       try {
-        final HashSet<String> usedVariables = new HashSet<String>();
-        final CachedXmlDocumentSet documentSet = getFileSet();
+        CachedXmlDocumentSet documentSet = getFileSet();
         String path = documentSet.getParent(EclipseXml.PROJECT_FILE);
         if (!documentSet.exists(EclipseXml.PROJECT_FILE)) {
           if (!documentSet.exists(EclipseXml.CLASSPATH_FILE)) {
-            return usedVariables;
+            return Collections.emptySet();
           }
 
           path = documentSet.getParent(EclipseXml.CLASSPATH_FILE);
         }
-        final EclipseClasspathReader classpathReader = new EclipseClasspathReader(path, module.getProject(), null);
+
+        Set<String> usedVariables;
+        EclipseClasspathReader classpathReader = new EclipseClasspathReader(path, module.getProject(), null);
         classpathReader.init(model);
         if (documentSet.exists(EclipseXml.CLASSPATH_FILE)) {
-          classpathReader.readClasspath(model, new ArrayList<String>(), new ArrayList<String>(), usedVariables, new HashSet<String>(), null,
+          usedVariables = new THashSet<String>();
+          classpathReader.readClasspath(model, new SmartList<String>(), new SmartList<String>(), usedVariables, new THashSet<String>(), null,
                                         documentSet.read(EclipseXml.CLASSPATH_FILE, false).getRootElement());
         }
         else {
           EclipseClasspathReader.setOutputUrl(model, path + "/bin");
+          usedVariables = Collections.emptySet();
         }
         final String eml = model.getModule().getName() + EclipseXml.IDEA_SETTINGS_POSTFIX;
         if (documentSet.exists(eml)) {

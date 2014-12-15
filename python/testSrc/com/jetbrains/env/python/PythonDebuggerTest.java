@@ -52,9 +52,9 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     });
   }
 
-  public void testPydevTests_Debugger() {
-    unittests("tests_python/test_debugger.py");
-  }
+  //public void testPydevTests_Debugger() {
+  //  unittests("tests_python/test_debugger.py");
+  //}
 
   private void unittests(final String script) {
     runPythonTest(new PyUnitTestTask("", script) {
@@ -506,6 +506,112 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       @Override
       public Set<String> getTags() {
         return Sets.newHashSet("python3");
+      }
+    });
+  }
+
+  public void testPyQtQThreadInheritor() throws Exception {
+    runPythonTest(new PyDebuggerTask("/debug", "test_pyqt1.py") {
+      @Override
+      protected void init() {
+        setMultiprocessDebug(true);
+      }
+
+      @Override
+      public void before() throws Exception {
+        toggleBreakpoint(getScriptPath(), 8);
+      }
+
+      @Override
+      public void testing() throws Exception {
+
+        waitForPause();
+
+        eval("i").hasValue("0");
+
+        resume();
+
+        waitForPause();
+
+        eval("i").hasValue("1");
+
+        resume();
+      }
+
+      @Override
+      public Set<String> getTags() {
+        return Sets.newHashSet("pyqt5");
+      }
+    });
+  }
+
+  public void testPyQtMoveToThread() throws Exception {
+    runPythonTest(new PyDebuggerTask("/debug", "test_pyqt2.py") {
+      @Override
+      protected void init() {
+        setMultiprocessDebug(true);
+      }
+
+      @Override
+      public void before() throws Exception {
+        toggleBreakpoint(getScriptPath(), 10);
+      }
+
+      @Override
+      public void testing() throws Exception {
+
+        waitForPause();
+
+        eval("i").hasValue("0");
+
+        resume();
+
+        waitForPause();
+
+        eval("i").hasValue("1");
+
+        resume();
+      }
+
+      @Override
+      public Set<String> getTags() {
+        return Sets.newHashSet("pyqt5");
+      }
+    });
+  }
+
+
+  public void testPyQtQRunnableInheritor() throws Exception {
+    runPythonTest(new PyDebuggerTask("/debug", "test_pyqt3.py") {
+      @Override
+      protected void init() {
+        setMultiprocessDebug(true);
+      }
+
+      @Override
+      public void before() throws Exception {
+        toggleBreakpoint(getScriptPath(), 9);
+      }
+
+      @Override
+      public void testing() throws Exception {
+
+        waitForPause();
+
+        eval("i").hasValue("0");
+
+        resume();
+
+        waitForPause();
+
+        eval("i").hasValue("1");
+
+        resume();
+      }
+
+      @Override
+      public Set<String> getTags() {
+        return Sets.newHashSet("pyqt5");
       }
     });
   }

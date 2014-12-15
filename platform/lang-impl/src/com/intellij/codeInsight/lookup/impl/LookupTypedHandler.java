@@ -59,15 +59,16 @@ public class LookupTypedHandler extends TypedActionHandlerBase {
   @Override
   public void execute(@NotNull Editor originalEditor, char charTyped, @NotNull DataContext dataContext) {
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    PsiFile file;
+    PsiFile file = project == null ? null : PsiUtilBase.getPsiFileInEditor(originalEditor, project);
 
-    if (project == null
-        || (file = PsiUtilBase.getPsiFileInEditor(originalEditor, project)) == null
-        || !CodeInsightUtilBase.prepareEditorForWrite(originalEditor)
-        || !FileDocumentManager.getInstance().requestWriting(originalEditor.getDocument(), project)) {
+    if (file == null) {
       if (myOriginalHandler != null){
         myOriginalHandler.execute(originalEditor, charTyped, dataContext);
       }
+      return;
+    }
+
+    if (!CodeInsightUtilBase.prepareEditorForWrite(originalEditor) || !FileDocumentManager.getInstance().requestWriting(originalEditor.getDocument(), project)) {
       return;
     }
 

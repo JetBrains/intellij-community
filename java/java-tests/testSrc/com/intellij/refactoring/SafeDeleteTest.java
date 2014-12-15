@@ -217,6 +217,10 @@ public class SafeDeleteTest extends MultiFileTestCase {
   public void testEmptyIf() throws Exception {
     doSingleFileTest();
   }
+
+  public void testDeleteConstructorParameterWithAnonymousClassUsage() throws Exception {
+    doSingleFileTest();
+  }
   
   private void doTest(@NonNls final String qClassName) throws Exception {
     doTest(new PerformAction() {

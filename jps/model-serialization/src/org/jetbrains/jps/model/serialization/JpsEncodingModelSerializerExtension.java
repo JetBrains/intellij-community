@@ -17,6 +17,7 @@ package org.jetbrains.jps.model.serialization;
 
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.JpsEncodingConfigurationService;
@@ -82,6 +83,11 @@ public class JpsEncodingModelSerializerExtension extends JpsModelSerializerExten
     public void loadExtension(@NotNull JpsGlobal global, @NotNull Element componentTag) {
       String encoding = componentTag.getAttributeValue(ENCODING_ATTRIBUTE);
       JpsEncodingConfigurationService.getInstance().setGlobalEncoding(global, StringUtil.nullize(encoding));
+    }
+
+    @Override
+    public void loadExtensionWithDefaultSettings(@NotNull JpsGlobal global) {
+      JpsEncodingConfigurationService.getInstance().setGlobalEncoding(global, CharsetToolkit.UTF8);
     }
 
     @Override

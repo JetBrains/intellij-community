@@ -191,7 +191,7 @@ public class VfsUtilTest extends PlatformLangTestCase {
 
   private static void doAsyncRefreshTest(File temp) throws Exception {
     final int N = 1000;
-    final byte[] data = "xxx".getBytes("UTF-8");
+    final byte[] data = "xxx".getBytes(CharsetToolkit.UTF8_CHARSET);
 
     LocalFileSystem fs = LocalFileSystem.getInstance();
     VirtualFile vTemp = fs.findFileByIoFile(temp);

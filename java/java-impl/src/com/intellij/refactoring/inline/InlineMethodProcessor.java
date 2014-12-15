@@ -1252,7 +1252,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
 
   private static final Key<String> MARK_KEY = Key.create("");
 
-  private PsiReferenceExpression[] addBracesWhenNeeded(PsiReferenceExpression[] refs) throws IncorrectOperationException {
+  public PsiReferenceExpression[] addBracesWhenNeeded(PsiReferenceExpression[] refs) throws IncorrectOperationException {
     ArrayList<PsiReferenceExpression> refsVector = new ArrayList<PsiReferenceExpression>();
     ArrayList<PsiCodeBlock> addedBracesVector = new ArrayList<PsiCodeBlock>();
     myAddedClassInitializers = new HashMap<PsiField, PsiClassInitializer>();
@@ -1269,7 +1269,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       if (parentStatement != null) {
         PsiElement parent = ref.getParent();
         while (!parent.equals(parentStatement)) {
-          if (parent instanceof PsiExpressionStatement) {
+          if (parent instanceof PsiExpressionStatement || parent instanceof PsiReturnStatement) {
             String text = "{\n}";
             PsiBlockStatement blockStatement = (PsiBlockStatement)myFactory.createStatementFromText(text, null);
             blockStatement = (PsiBlockStatement)myCodeStyleManager.reformat(blockStatement);

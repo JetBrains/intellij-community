@@ -25,7 +25,8 @@ public class IpnbMarkdownPanel extends IpnbEditablePanel<JEditorPane, IpnbMarkdo
 
   @Override
   public void updateCellView() {
-    myViewPanel = IpnbUtils.createLatexPane(myCell.getSourceAsString());
+    removeAll();
+    initPanel();
   }
 
   @SuppressWarnings("CloneDoesntCallSuperClone")

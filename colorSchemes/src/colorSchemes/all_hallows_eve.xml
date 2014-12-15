@@ -67,7 +67,7 @@
     <option name="CLASS_NAME_ATTRIBUTES">
       <value />
     </option>
-    <option name="CLASS_REFERENCE">
+    <option name="OC.CLASS_REFERENCE">
       <value />
     </option>
     <option name="COFFEESCRIPT.BAD_CHARACTER">
@@ -247,7 +247,7 @@
         <option name="FOREGROUND" value="CC7833" />
       </value>
     </option>
-    <option name="CONDITIONALLY_NOT_COMPILED">
+    <option name="OC.CONDITIONALLY_NOT_COMPILED">
       <value>
         <option name="FOREGROUND" value="9933CC" />
       </value>
@@ -527,7 +527,7 @@
         <option name="BACKGROUND" value="30322b" />
       </value>
     </option>
-    <option name="ENUM_CONST">
+    <option name="OC.ENUM_CONST">
       <value>
         <option name="FOREGROUND" value="3387CC" />
       </value>
@@ -802,7 +802,7 @@
         <option name="FONT_TYPE" value="1" />
       </value>
     </option>
-    <option name="IVAR">
+    <option name="OC.IVAR">
       <value />
     </option>
     <option name="JAVA_BLOCK_COMMENT">
@@ -1013,7 +1013,7 @@
         <option name="FOREGROUND" value="3387CC" />
       </value>
     </option>
-    <option name="LABEL">
+    <option name="OC.LABEL">
       <value>
         <option name="FOREGROUND" value="CC7833" />
       </value>
@@ -1070,10 +1070,10 @@
     <option name="LOCAL_VARIABLE_ATTRIBUTES">
       <value />
     </option>
-    <option name="MACRONAME">
+    <option name="OC.MACRONAME">
       <value />
     </option>
-    <option name="MACRO_PARAMETER">
+    <option name="OC.MACRO_PARAMETER">
       <value />
     </option>
     <option name="MATCHED_BRACE_ATTRIBUTES">
@@ -1081,7 +1081,7 @@
         <option name="BACKGROUND" value="3a6da0" />
       </value>
     </option>
-    <option name="MESSAGE_ARGUMENT">
+    <option name="OC.MESSAGE_ARGUMENT">
       <value />
     </option>
     <option name="NOT_USED_ELEMENT_ATTRIBUTES">
@@ -2102,7 +2102,7 @@
         <option name="FOREGROUND" value="66CC33" />
       </value>
     </option>
-    <option name="TYPEDEF">
+    <option name="OC.TYPEDEF">
       <value />
     </option>
     <option name="UNMATCHED_BRACE_ATTRIBUTES">

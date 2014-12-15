@@ -52,12 +52,19 @@ abstract class FilterPopupComponent<Filter extends VcsLogFilter> extends JPanel 
 
   @NotNull private final JLabel myFilterNameLabel;
   @NotNull private final JLabel myFilterValueLabel;
-  @NotNull private final VcsLogClassicFilterUi myFilterUi;
+  @NotNull protected final FilterModel<Filter> myFilterModel;
 
-  FilterPopupComponent(@NotNull VcsLogClassicFilterUi filterUi, @NotNull String filterName) {
-    myFilterUi = filterUi;
+  FilterPopupComponent(@NotNull String filterName,
+                       @NotNull FilterModel<Filter> filterModel) {
+    myFilterModel = filterModel;
     myFilterNameLabel = new JLabel(filterName + ": ");
-    myFilterValueLabel = new JLabel(ALL);
+    myFilterValueLabel = new JLabel() {
+      @Override
+      public String getText() {
+        Filter filter = myFilterModel.getFilter();
+        return filter == null ? ALL : FilterPopupComponent.this.getText(filter);
+      }
+    };
     setDefaultForeground();
     setFocusable(true);
     setBorder(UNFOCUSED_BORDER);
@@ -68,10 +75,33 @@ abstract class FilterPopupComponent<Filter extends VcsLogFilter> extends JPanel 
     add(Box.createHorizontalStrut(GAP_BEFORE_ARROW));
     add(new JLabel(AllIcons.Ide.Statusbar_arrows));
 
+    updateLabelOnFilterChange();
     showPopupMenuOnClick();
     showPopupMenuFromKeyboard();
     indicateHovering();
     indicateFocusing();
+  }
+
+  private void updateLabelOnFilterChange() {
+    myFilterModel.addSetFilterListener(new Runnable() {
+      @Override
+      public void run() {
+        myFilterValueLabel.revalidate();
+        myFilterValueLabel.repaint();
+      }
+    });
+  }
+
+  @NotNull
+  protected abstract String getText(@NotNull Filter filter);
+
+  @Nullable
+  protected abstract String getToolTip(@NotNull Filter filter);
+
+  @Override
+  public String getToolTipText() {
+    Filter filter = myFilterModel.getFilter();
+    return filter == null ? null : getToolTip(filter);
   }
 
   private static Border createFocusedBorder() {
@@ -84,52 +114,29 @@ abstract class FilterPopupComponent<Filter extends VcsLogFilter> extends JPanel 
                                               INNER_MARGIN_BORDER);
   }
 
+
   /**
    * Create popup actions available under this filter.
    */
   protected abstract ActionGroup createActionGroup();
 
   /**
-   * Return the filter currently selected via this component or null if no filters are selected via this component.
-   */
-  @Nullable
-  protected abstract Filter getFilter();
-
-  protected void setValue(@NotNull String newValue) {
-    setValue(newValue, newValue);
-  }
-
-  protected void setValue(@NotNull String value, @NotNull String tooltip) {
-    myFilterValueLabel.setText(value);
-    setToolTipText(tooltip.equals(value) ? null : tooltip);
-  }
-
-  @NotNull
-  public String getValue() {
-    return myFilterValueLabel.getText();
-  }
-
-  protected void applyFilters() {
-    myFilterUi.applyFilters();
-  }
-
-  /**
    * Returns the special action that indicates that no filtering is selected in this component.
    */
   @NotNull
   protected AnAction createAllAction() {
-    return new AllAction(this);
+    return new AllAction();
   }
 
   private void indicateFocusing() {
     addFocusListener(new FocusAdapter() {
       @Override
-      public void focusGained(FocusEvent e) {
+      public void focusGained(@NotNull FocusEvent e) {
         setBorder(FOCUSED_BORDER);
       }
 
       @Override
-      public void focusLost(FocusEvent e) {
+      public void focusLost(@NotNull FocusEvent e) {
         setBorder(UNFOCUSED_BORDER);
       }
     });
@@ -138,7 +145,7 @@ abstract class FilterPopupComponent<Filter extends VcsLogFilter> extends JPanel 
   private void showPopupMenuFromKeyboard() {
     addKeyListener(new KeyAdapter() {
       @Override
-      public void keyPressed(KeyEvent e) {
+      public void keyPressed(@NotNull KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_ENTER || e.getKeyCode() == KeyEvent.VK_DOWN) {
           showPopupMenu();
         }
@@ -159,12 +166,12 @@ abstract class FilterPopupComponent<Filter extends VcsLogFilter> extends JPanel 
   private void indicateHovering() {
     addMouseListener(new MouseAdapter() {
       @Override
-      public void mouseEntered(MouseEvent e) {
+      public void mouseEntered(@NotNull MouseEvent e) {
         setOnHoverForeground();
       }
 
       @Override
-      public void mouseExited(MouseEvent e) {
+      public void mouseExited(@NotNull MouseEvent e) {
         setDefaultForeground();
       }
     });
@@ -188,28 +195,15 @@ abstract class FilterPopupComponent<Filter extends VcsLogFilter> extends JPanel 
     popup.showUnderneathOf(this);
   }
 
-  private static class AllAction extends SetValueAction {
-    AllAction(@NotNull FilterPopupComponent component) {
-      super(ALL, component);
-    }
-  }
+  private class AllAction extends DumbAwareAction {
 
-  protected static class SetValueAction extends DumbAwareAction {
-
-    private final String myValue;
-    private final FilterPopupComponent myFilterComponent;
-
-    SetValueAction(String value, FilterPopupComponent filterComponent) {
-      super(value);
-      myValue = value;
-      myFilterComponent = filterComponent;
+    AllAction() {
+      super(ALL);
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
-      myFilterComponent.setValue(myValue);
-      myFilterComponent.applyFilters();
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      myFilterModel.setFilter(null);
     }
   }
-
 }

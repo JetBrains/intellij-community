@@ -137,7 +137,9 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     EditorFactory editorFactory = EditorFactory.getInstance();
     myHistoryFile = new LightVirtualFile(getTitle() + ".history.txt", FileTypes.PLAIN_TEXT, "");
     myEditorDocument = FileDocumentManager.getInstance().getDocument(lightFile);
-    assert myEditorDocument != null;
+    if (myEditorDocument == null) {
+      throw new AssertionError("no document for: " + lightFile);
+    }
     myFile = psiFileFactory == null ? createFile(myVirtualFile, myEditorDocument, myProject) : psiFileFactory.fun(myVirtualFile, myProject);
     myConsoleEditor = (EditorEx)editorFactory.createEditor(myEditorDocument, myProject);
     myConsoleEditor.addFocusListener(myFocusListener);

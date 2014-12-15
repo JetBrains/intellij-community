@@ -31,6 +31,7 @@ import com.intellij.structuralsearch.impl.matcher.iterators.SsrFilteringNodeIter
 import com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.util.CollectingMatchResultSink;
+import com.intellij.structuralsearch.plugin.util.DuplicateFilteringResultSink;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.SmartList;
@@ -86,8 +87,6 @@ public class MatcherImpl {
   }
 
   public static void validate(Project project, MatchOptions options) {
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
-
     synchronized(MatcherImpl.class) {
       final LastMatchData data = new LastMatchData();
       data.lastPattern =  PatternCompiler.compilePattern(project, options);
@@ -170,7 +169,7 @@ public class MatcherImpl {
     visitor.setMatchContext(matchContext);
 
     matchContext.setSink(
-      new MatchConstraintsSink(
+      new DuplicateFilteringResultSink(
         new MatchResultSink() {
           public void newMatch(MatchResult result) {
             processor.process(result, configuration);
@@ -188,10 +187,7 @@ public class MatcherImpl {
           public ProgressIndicator getProgressIndicator() {
             return null;
           }
-        },
-        options.getMaxMatchesCount(),
-        options.isDistinct(),
-        options.isCaseSensitiveMatch()
+        }
       )
     );
     options.setScope(scope);
@@ -288,11 +284,10 @@ public class MatcherImpl {
 
   private boolean findMatches(MatchOptions options, CompiledPattern compiledPattern) {
     LanguageFileType languageFileType = (LanguageFileType)options.getFileType();
-    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByLanguage(languageFileType.getLanguage());
+    final Language patternLanguage = languageFileType.getLanguage();
+    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByLanguage(patternLanguage);
     assert profile != null;
-    PsiElement node = compiledPattern.getNodes().current();
-    final Language ourPatternLanguage = node != null ? profile.getLanguage(node) : ((LanguageFileType)options.getFileType()).getLanguage();
-    final Language ourPatternLanguage2 = ourPatternLanguage == StdLanguages.XML ? StdLanguages.XHTML:null;
+    final Language patternLanguage2 = patternLanguage == StdLanguages.XML ? StdLanguages.XHTML:null;
     SearchScope searchScope = compiledPattern.getScope();
     boolean ourOptimizedScope = searchScope != null;
     if (!ourOptimizedScope) searchScope = options.getScope();
@@ -304,7 +299,7 @@ public class MatcherImpl {
         public boolean processFile(final VirtualFile fileOrDir) {
           if (!fileOrDir.isDirectory() && scope.contains(fileOrDir) && fileOrDir.getFileType() != FileTypes.UNKNOWN) {
             ++totalFilesToScan;
-            scheduler.addOneTask(new MatchOneVirtualFile(fileOrDir, profile, ourPatternLanguage, ourPatternLanguage2));
+            scheduler.addOneTask(new MatchOneVirtualFile(fileOrDir, profile, patternLanguage, patternLanguage2));
           }
           return true;
         }
@@ -330,7 +325,7 @@ public class MatcherImpl {
 
         PsiFile file = psiElement instanceof PsiFile ? (PsiFile)psiElement : psiElement.getContainingFile();
 
-        if (profile.isMyFile(file, language, ourPatternLanguage, ourPatternLanguage2)) {
+        if (profile.isMyFile(file, language, patternLanguage, patternLanguage2)) {
           scheduler.addOneTask(new MatchOnePsiFile(psiElement));
         }
         if (ourOptimizedScope) elementsToScan[i] = null; // to prevent long PsiElement reference
@@ -348,14 +343,7 @@ public class MatcherImpl {
     }
 
     matchContext.clear();
-    matchContext.setSink(
-      new MatchConstraintsSink(
-        sink,
-        options.getMaxMatchesCount(),
-        options.isDistinct(),
-        options.isCaseSensitiveMatch()
-      )
-    );
+    matchContext.setSink(new DuplicateFilteringResultSink(sink));
     matchContext.setOptions(options);
     matchContext.setMatcher(visitor);
     visitor.setMatchContext(matchContext);

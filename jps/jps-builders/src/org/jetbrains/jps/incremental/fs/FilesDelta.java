@@ -42,6 +42,11 @@ final class FilesDelta {
   private final Set<String> myDeletedPaths = Collections.synchronizedSet(new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY));
   private final Map<BuildRootDescriptor, Set<File>> myFilesToRecompile = Collections.synchronizedMap(new HashMap<BuildRootDescriptor, Set<File>>());
 
+  protected void addAll(FilesDelta other) {
+    myDeletedPaths.addAll(other.myDeletedPaths);
+    myFilesToRecompile.putAll(other.myFilesToRecompile);
+  }
+
   public void save(DataOutput out) throws IOException {
     out.writeInt(myDeletedPaths.size());
     synchronized (myDeletedPaths) {

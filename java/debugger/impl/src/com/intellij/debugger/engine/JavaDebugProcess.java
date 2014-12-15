@@ -78,7 +78,7 @@ public class JavaDebugProcess extends XDebugProcess {
     return res;
   }
 
-  private JavaDebugProcess(@NotNull final XDebugSession session, final DebuggerSession javaSession) {
+  protected JavaDebugProcess(@NotNull final XDebugSession session, final DebuggerSession javaSession) {
     super(session);
     myJavaSession = javaSession;
     myEditorsProvider = new JavaDebuggerEditorsProvider();

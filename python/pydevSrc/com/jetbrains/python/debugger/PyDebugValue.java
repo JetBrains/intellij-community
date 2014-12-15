@@ -15,7 +15,7 @@ import javax.swing.*;
 // todo: null modifier for modify modules, class objects etc.
 public class PyDebugValue extends XNamedValue {
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.pydev.PyDebugValue");
-  public static final int MAX_VALUE = 512;
+  public static final int MAX_VALUE = 256;
 
   private String myTempName = null;
   private final String myType;
@@ -131,12 +131,23 @@ public class PyDebugValue extends XNamedValue {
     return "__len__".equals(name);
   }
 
+  private String getFullName() {
+    String result = myName;
+    PyDebugValue parent = myParent;
+    while (parent != null) {
+      result = "." + result;
+      result = parent.getName() + result;
+      parent = parent.getParent();
+    }
+    return result;
+  }
+
   @Override
   public void computePresentation(@NotNull XValueNode node, @NotNull XValuePlace place) {
     String value = PyTypeHandler.format(this);
 
     if (value.length() >= MAX_VALUE) {
-      node.setFullValueEvaluator(new PyFullValueEvaluator(myFrameAccessor, myName));
+      node.setFullValueEvaluator(new PyFullValueEvaluator(myFrameAccessor, getFullName()));
       value = value.substring(0, MAX_VALUE);
     }
 

@@ -44,6 +44,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.extractMethod.ExtractMethodUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
@@ -105,6 +106,21 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
       @Override
       public void visitClassInitializer(PsiClassInitializer initializer) {
         analyzeCodeBlock(initializer.getBody(), holder, isOnTheFly);
+      }
+
+      @Override
+      public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
+        super.visitMethodReferenceExpression(expression);
+        final PsiElement resolve = expression.resolve();
+        if (resolve instanceof PsiMethod) {
+          final PsiType methodReturnType = ((PsiMethod)resolve).getReturnType();
+          if (TypeConversionUtil.isPrimitiveWrapper(methodReturnType) && NullableNotNullManager.isNullable((PsiMethod)resolve)) {
+            final PsiType returnType = LambdaUtil.getFunctionalInterfaceReturnType(expression);
+            if (TypeConversionUtil.isPrimitiveAndNotNull(returnType)) {
+              holder.registerProblem(expression, InspectionsBundle.message("dataflow.message.unboxing.method.reference"));
+            }
+          }
+        }
       }
 
       @Override

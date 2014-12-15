@@ -19,6 +19,7 @@ class Iterator(collections.Iterable):
             """
             pass
 
+    if sys.version_info < (3, 0):
         def next(self):
             """
             :rtype: T

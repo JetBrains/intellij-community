@@ -26,7 +26,7 @@ public class IpnbSaveAction extends AnAction {
     }
   }
 
-  public void saveAndCheckpoint(@NotNull final IpnbFileEditor editor) {
+  public static void saveAndCheckpoint(@NotNull final IpnbFileEditor editor) {
     final IpnbFilePanel filePanel = editor.getIpnbFilePanel();
     IpnbParser.saveIpnbFile(filePanel);
     final VirtualFile file = editor.getVirtualFile();

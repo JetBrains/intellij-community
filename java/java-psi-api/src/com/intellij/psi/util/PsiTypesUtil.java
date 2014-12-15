@@ -166,10 +166,7 @@ public class PsiTypesUtil {
           qualifierType = JavaPsiFacade.getInstance(project).getElementFactory().createType((PsiClass)parent.getPsi());
         }
       }
-      PsiElement parent = call.getParent();
-      boolean captureTopLevelWildcards = parent instanceof PsiReferenceExpression && parent.getParent() instanceof PsiMethodCallExpression ||
-                                         parent instanceof PsiExpressionList;
-      return createJavaLangClassType(methodExpression, qualifierType, captureTopLevelWildcards);
+      return createJavaLangClassType(methodExpression, qualifierType, true);
     }
     return null;
   }
@@ -218,6 +215,15 @@ public class PsiTypesUtil {
     }
     else if (PsiUtil.isCondition(methodCall, parent)) {
       return PsiType.BOOLEAN.getBoxedType(parent);
+    } 
+    else if (parent instanceof PsiArrayInitializerExpression) {
+      final PsiElement gParent = parent.getParent();
+      if (gParent instanceof PsiNewExpression) {
+        final PsiType type = ((PsiNewExpression)gParent).getType();
+        if (type instanceof PsiArrayType) {
+          return ((PsiArrayType)type).getComponentType();
+        }
+      }
     }
     return null;
   }

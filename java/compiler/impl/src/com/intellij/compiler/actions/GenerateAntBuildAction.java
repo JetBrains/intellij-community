@@ -28,10 +28,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -263,7 +260,7 @@ public class GenerateAntBuildAction extends CompileActionBase {
    * @throws FileNotFoundException        if file not found
    */
   private static PrintWriter makeWriter(final File buildxmlFile) throws UnsupportedEncodingException, FileNotFoundException {
-    return new PrintWriter(new OutputStreamWriter(new FileOutputStream(buildxmlFile), "UTF-8"));
+    return new PrintWriter(new OutputStreamWriter(new FileOutputStream(buildxmlFile), CharsetToolkit.UTF8_CHARSET));
   }
 
   private void ensureFilesWritable(Project project, File[] files) throws IOException {

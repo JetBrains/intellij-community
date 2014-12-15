@@ -248,9 +248,8 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
     ActionManager.getInstance().getAction("ChangesView.NewChangeList").registerCustomShortcutSet(CommonShortcuts.getNew(), panel);
     ActionManager.getInstance().getAction("ChangesView.RemoveChangeList").registerCustomShortcutSet(CommonShortcuts.getDelete(), panel);
     AnAction moveToChangeList = ActionManager.getInstance().getAction(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST);
-    if (moveToChangeList.getShortcutSet().getShortcuts().length == 0) {
-      moveToChangeList.registerCustomShortcutSet(CommonShortcuts.getMove(), panel);
-    }
+    moveToChangeList.registerCustomShortcutSet(new CompositeShortcutSet(moveToChangeList.getShortcutSet(),
+                                                                        CommonShortcuts.getMove()), panel);
     ActionManager.getInstance().getAction("ChangesView.Rename").registerCustomShortcutSet(CommonShortcuts.getRename(), panel);
     ActionManager.getInstance().getAction("ChangesView.SetDefault").registerCustomShortcutSet(
       new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_U, KeyEvent.ALT_DOWN_MASK | ctrlMask())), panel);

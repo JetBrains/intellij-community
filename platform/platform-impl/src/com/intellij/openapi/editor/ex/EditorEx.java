@@ -196,14 +196,23 @@ public interface EditorEx extends Editor {
 
   /**
    * Allows to define <code>'placeholder text'</code> for the current editor, i.e. virtual text that will be represented until
-   * any user data is entered and current editor is not focused.
-   * <p/>
+   * any user data is entered.
+   *
    * Feel free to see the detailed feature
    * definition <a href="http://dev.w3.org/html5/spec/Overview.html#the-placeholder-attribute">here</a>.
    *
    * @param text    virtual text to show until user data is entered or the editor is focused
    */
   void setPlaceholder(@Nullable CharSequence text);
+
+  /**
+   * Controls whether <code>'placeholder text'</code> is visible when editor is focused.
+   *
+   * @param show   flag indicating whether placeholder is visible when editor is focused.
+   *
+   * @see EditorEx#setPlaceholder(CharSequence)
+   */
+  void setShowPlaceholderWhenFocused(boolean show);
 
   /**
    * Allows to answer if 'sticky selection' is active for the current editor.

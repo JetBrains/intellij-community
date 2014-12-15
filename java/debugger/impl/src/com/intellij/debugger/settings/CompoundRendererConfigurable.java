@@ -339,8 +339,8 @@ class CompoundRendererConfigurable extends JPanel {
     final NodeRendererSettings rendererSettings = NodeRendererSettings.getInstance();
 
     if (rendererSettings.isBase(labelRenderer)) {
-      myRbDefaultLabel.setSelected(true);
       myLabelEditor.setText(emptyExpressionFragment);
+      myRbDefaultLabel.setSelected(true);
     }
     else {
       myRbExpressionLabel.setSelected(true);
@@ -391,6 +391,7 @@ class CompoundRendererConfigurable extends JPanel {
       for (final Pair<String, TextWithImports> pair : data) {
         myData.add(new Row(pair.getFirst(), pair.getSecond()));
       }
+      fireTableDataChanged();
     }
 
     @Override

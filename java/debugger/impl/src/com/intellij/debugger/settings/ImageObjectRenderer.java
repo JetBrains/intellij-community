@@ -32,7 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -88,7 +88,7 @@ class ImageObjectRenderer extends CompoundReferenceRenderer implements FullValue
     if (cls != null) {
       List<Method> methods = cls.methodsByName(methodName);
       if (!methods.isEmpty()) {
-        return process.invokeMethod(evaluationContext, cls, methods.get(0), Arrays.asList(obj));
+        return process.invokeMethod(evaluationContext, cls, methods.get(0), Collections.singletonList(obj));
       }
     }
     return null;

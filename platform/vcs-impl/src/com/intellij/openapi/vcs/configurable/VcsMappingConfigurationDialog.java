@@ -89,7 +89,7 @@ public class VcsMappingConfigurationDialog extends DialogWrapper {
     return myPanel;
   }
 
-  public void setMapping(VcsDirectoryMapping mapping) {
+  public void setMapping(@NotNull VcsDirectoryMapping mapping) {
     myMappingCopy = new VcsDirectoryMapping(mapping.getDirectory(), mapping.getVcs(), mapping.getRootSettings());
     myProjectRadioButton.setSelected(myMappingCopy.isDefaultMapping());
     myDirectoryRadioButton.setSelected(! myProjectRadioButton.isSelected());

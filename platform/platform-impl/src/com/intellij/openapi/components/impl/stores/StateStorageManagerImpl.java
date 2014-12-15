@@ -412,22 +412,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   @Nullable
   @Override
   public SaveSession startSave(@NotNull ExternalizationSession externalizationSession) {
-    StateStorageManagerExternalizationSession myExternalizationSession = (StateStorageManagerExternalizationSession)externalizationSession;
-    if (myExternalizationSession.mySessions.isEmpty()) {
-      return null;
-    }
-
-    List<SaveSession> saveSessions = null;
-    for (Map.Entry<StateStorage, StateStorage.ExternalizationSession> entry : myExternalizationSession.mySessions.entrySet()) {
-      SaveSession saveSession = entry.getKey().startSave(entry.getValue());
-      if (saveSession != null) {
-        if (saveSessions == null) {
-          saveSessions = new SmartList<SaveSession>();
-        }
-        saveSessions.add(saveSession);
-      }
-    }
-    return saveSessions == null ? null : new StateStorageSaveSession(saveSessions);
+    return ((StateStorageManagerExternalizationSession)externalizationSession).createSaveSession();
   }
 
   @Override
@@ -450,7 +435,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     }
   }
 
-  private final class StateStorageManagerExternalizationSession implements ExternalizationSession {
+  protected class StateStorageManagerExternalizationSession implements ExternalizationSession {
     final Map<StateStorage, StateStorage.ExternalizationSession> mySessions = new LinkedHashMap<StateStorage, StateStorage.ExternalizationSession>();
 
     @Override
@@ -489,6 +474,25 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
         }
       }
       return session;
+    }
+
+    @Nullable
+    public SaveSession createSaveSession() {
+      if (mySessions.isEmpty()) {
+        return null;
+      }
+
+      List<SaveSession> saveSessions = null;
+      for (Map.Entry<StateStorage, StateStorage.ExternalizationSession> entry : mySessions.entrySet()) {
+        SaveSession saveSession = entry.getKey().startSave(entry.getValue());
+        if (saveSession != null) {
+          if (saveSessions == null) {
+            saveSessions = new SmartList<SaveSession>();
+          }
+          saveSessions.add(saveSession);
+        }
+      }
+      return saveSessions == null ? null : new StateStorageSaveSession(saveSessions);
     }
   }
 

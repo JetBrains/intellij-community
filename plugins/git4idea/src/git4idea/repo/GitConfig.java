@@ -158,7 +158,7 @@ public class GitConfig {
 
     Pair<Collection<Remote>, Collection<Url>> remotesAndUrls = parseRemotes(ini, classLoader);
     Collection<BranchConfig> trackedInfos = parseTrackedInfos(ini, classLoader);
-    
+
     return new GitConfig(remotesAndUrls.getFirst(), remotesAndUrls.getSecond(), trackedInfos);
   }
 
@@ -201,12 +201,12 @@ public class GitConfig {
 
     boolean merge = mergeName != null;
     final String remoteBranchName = (merge ? mergeName : rebaseName);
-    assert remoteName != null;
-    assert remoteBranchName != null;
 
     GitLocalBranch localBranch = findLocalBranch(branchName, localBranches);
-    GitRemoteBranch remoteBranch = GitBranchUtil.findRemoteBranchByName(remoteBranchName, remoteName, remoteBranches);
+    GitRemoteBranch remoteBranch = findRemoteBranch(remoteBranchName, remoteName, remoteBranches);
     if (localBranch == null || remoteBranch == null) {
+      // obsolete record in .git/config: local or remote branch doesn't exist, but the tracking information wasn't removed
+      LOG.debug("localBranch: " + localBranch + ", remoteBranch: " + remoteBranch);
       return null;
     }
     return new GitBranchTrackInfo(localBranch, remoteBranch, merge);
@@ -215,19 +215,25 @@ public class GitConfig {
   @Nullable
   private static GitLocalBranch findLocalBranch(@NotNull String branchName, @NotNull Collection<GitLocalBranch> localBranches) {
     final String name = GitBranchUtil.stripRefsPrefix(branchName);
-    try {
-      return ContainerUtil.find(localBranches, new Condition<GitLocalBranch>() {
-        @Override
-        public boolean value(@Nullable GitLocalBranch input) {
-          assert input != null;
-          return input.getName().equals(name);
-        }
-      });
-    }
-    catch (NoSuchElementException e) {
-      LOG.info("Couldn't find branch with name " + name);
-      return null;
-    }
+    return ContainerUtil.find(localBranches, new Condition<GitLocalBranch>() {
+      @Override
+      public boolean value(@Nullable GitLocalBranch input) {
+        assert input != null;
+        return input.getName().equals(name);
+      }
+    });
+  }
+
+  @Nullable
+  public static GitRemoteBranch findRemoteBranch(@NotNull String remoteBranchName, @NotNull final String remoteName,
+                                                 @NotNull final Collection<GitRemoteBranch> remoteBranches) {
+    final String branchName = GitBranchUtil.stripRefsPrefix(remoteBranchName);
+    return ContainerUtil.find(remoteBranches, new Condition<GitRemoteBranch>() {
+      @Override
+      public boolean value(GitRemoteBranch branch) {
+        return branch.getNameForRemoteOperations().equals(branchName) && branch.getRemote().getName().equals(remoteName);
+      }
+    });
   }
 
   @Nullable

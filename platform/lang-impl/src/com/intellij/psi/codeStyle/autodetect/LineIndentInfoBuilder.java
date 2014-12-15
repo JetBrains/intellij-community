@@ -15,9 +15,13 @@
  */
 package com.intellij.psi.codeStyle.autodetect;
 
+import com.intellij.lang.Commenter;
+import com.intellij.lang.Language;
+import com.intellij.lang.LanguageCommenters;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -26,10 +30,12 @@ public class LineIndentInfoBuilder {
 
   private final CharSequence myText;
   private final int myLength;
+  private final Commenter myCommenter;
 
-  public LineIndentInfoBuilder(@NotNull CharSequence text) {
+  public LineIndentInfoBuilder(@NotNull CharSequence text, @Nullable Language language) {
     myText = text;
     myLength = text.length();
+    myCommenter = language != null ? LanguageCommenters.INSTANCE.forLanguage(language) : null;
   }
 
   @NotNull
@@ -58,7 +64,7 @@ public class LineIndentInfoBuilder {
 
   @NotNull
   private LineIndentInfo createInfoFromWhiteSpaceRange(int lineStartOffset, int textStartOffset) {
-    if (myText.charAt(textStartOffset) == '*') {
+    if (startsWithComment(textStartOffset)) {
       return LineIndentInfo.LINE_WITH_COMMENT;
     }
     else if (CharArrayUtil.indexOf(myText, "\t", lineStartOffset, textStartOffset) > 0) {
@@ -68,6 +74,25 @@ public class LineIndentInfoBuilder {
       int indentSize = textStartOffset - lineStartOffset;
       return LineIndentInfo.newWhiteSpaceIndent(indentSize);
     }
+  }
+
+  private boolean startsWithComment(int textStartOffset) {
+    if (myText.charAt(textStartOffset) == '*' || startsWithLineComment(textStartOffset)) {
+      return true;
+    }
+
+    return false;
+  }
+
+  private boolean startsWithLineComment(int textStartOffset) {
+    if (myCommenter == null) return false;
+
+    String lineCommentPrefix = myCommenter.getLineCommentPrefix();
+    if (lineCommentPrefix != null && CharArrayUtil.regionMatches(myText, textStartOffset, lineCommentPrefix)) {
+      return true;
+    }
+
+    return false;
   }
 
   private int getLineEndOffset(int lineStartOffset) {

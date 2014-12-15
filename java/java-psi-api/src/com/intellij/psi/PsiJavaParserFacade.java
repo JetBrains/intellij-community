@@ -48,9 +48,9 @@ public interface PsiJavaParserFacade {
   PsiDocComment createDocCommentFromText(@NotNull String docCommentText) throws IncorrectOperationException;
 
   /**
-   * Creates a Java class from the specified text.
+   * Creates a Java class with a dummy name from the specified body text (the text between the braces).
    *
-   * @param text    the text of the class to create.
+   * @param text    the body text of the class to create.
    * @param context the PSI element used as context for resolving references which cannot be resolved
    *                within the class.
    * @return the created class instance.

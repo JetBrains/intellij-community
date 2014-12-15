@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootModificationTracker;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.HierarchicalMethodSignatureImpl;
 import com.intellij.psi.impl.source.PsiClassImpl;
@@ -376,6 +377,10 @@ public class PsiSuperMethodImplUtil {
         // cache Cls method hierarchy until root changed
         Object dependency = method instanceof PsiCompiledElement ? ProjectRootModificationTracker.getInstance(project) :
                             PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT;
+        if (Registry.is("psi.drop.method.signature.cache.on.change.inside")) {
+          return CachedValueProvider.Result
+            .create(result, method, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+        }
         return CachedValueProvider.Result.create(result, dependency);
       }
     };

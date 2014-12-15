@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -217,6 +217,10 @@ public class PydevConsoleExecuteActionHandler extends ProcessBackedConsoleExecut
         public Object fun(final InterpreterResponse interpreterResponse) {
           // clear
           myInputBuffer = null;
+
+          //notify listeners like xdebugger variables view re-builder
+          getConsoleCommunication().notifyCommandExecuted(interpreterResponse.more);
+
           // Handle prompt
           if (interpreterResponse.more) {
             more(console, currentEditor);
@@ -447,5 +451,9 @@ public class PydevConsoleExecuteActionHandler extends ProcessBackedConsoleExecut
 
   public boolean isEnabled() {
     return myEnabled;
+  }
+
+  public ConsoleCommunication getConsoleCommunication() {
+    return myConsoleCommunication;
   }
 }

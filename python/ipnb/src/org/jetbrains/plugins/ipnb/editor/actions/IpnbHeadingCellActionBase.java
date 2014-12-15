@@ -34,6 +34,7 @@ public class IpnbHeadingCellActionBase extends AnAction {
   public void changeTypeToHeading(@NotNull final IpnbFileEditor editor) {
     final IpnbFilePanel filePanel = editor.getIpnbFilePanel();
     final IpnbEditablePanel selectedCell = filePanel.getSelectedCell();
+    if (selectedCell == null) return;
     final IpnbEditableCell cell = selectedCell.getCell();
 
     final List<IpnbCell> cells = filePanel.getIpnbFile().getCells();

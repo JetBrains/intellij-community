@@ -103,6 +103,13 @@ public class FileBasedStorage extends XmlElementStorage {
     return new FileSaveSession(storageData);
   }
 
+  public void forceSave() {
+    XmlElementStorageSaveSession externalizationSession = startExternalization();
+    if (externalizationSession != null) {
+      externalizationSession.forceSave();
+    }
+  }
+
   private class FileSaveSession extends XmlElementStorageSaveSession {
     protected FileSaveSession(@NotNull StorageData storageData) {
       super(storageData);

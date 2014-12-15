@@ -50,6 +50,7 @@ import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
+import git4idea.branch.GitBranchUtil;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.config.GitConfigUtil;
@@ -218,7 +219,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       final List<GitRepository> preselectedRepositories = ContainerUtil.newArrayList(repositories);
       UIUtil.invokeLaterIfNeeded(new Runnable() {
         public void run() {
-          new VcsPushDialog(myProject, preselectedRepositories).show();
+          new VcsPushDialog(myProject, preselectedRepositories, GitBranchUtil.getCurrentRepository(myProject)).show();
         }
       });
     }

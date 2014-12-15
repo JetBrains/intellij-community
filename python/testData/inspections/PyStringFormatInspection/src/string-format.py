@@ -119,3 +119,8 @@ class MyDict(collections.Mapping):
         return 1
 
 print '%(foo)s' % MyDict()
+
+foo = {1, 2, 3}
+print('%s %s %s' % foo)
+
+'%s %s %s' % (x for x in range(10))

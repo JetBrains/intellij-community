@@ -16,9 +16,11 @@
 package com.intellij.xdebugger.impl.ui.tree;
 
 import com.intellij.openapi.util.Comparing;
+import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.ui.tree.nodes.RestorableStateNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.event.TreeSelectionEvent;
@@ -74,7 +76,17 @@ public class XDebuggerTreeRestorer implements XDebuggerTreeListener, TreeSelecti
   private void doRestoreNode(final RestorableStateNode treeNode, final XDebuggerTreeState.NodeInfo parentInfo, final String nodeName) {
     XDebuggerTreeState.NodeInfo childInfo = parentInfo.removeChild(nodeName);
     if (childInfo != null) {
-      if (!Comparing.equal(childInfo.getValue(), treeNode.getRawValue())) {
+      boolean extendedPresentation = false;
+      if (treeNode instanceof XValueNodeImpl) {
+        XValuePresentation presentation = ((XValueNodeImpl)treeNode).getValuePresentation();
+        if (presentation instanceof XValueExtendedPresentation) {
+          extendedPresentation = true;
+          if (((XValueExtendedPresentation)presentation).isModified()) {
+            treeNode.markChanged();
+          }
+        }
+      }
+      if (!extendedPresentation && !(Comparing.equal(childInfo.getValue(), treeNode.getRawValue()))) {
         treeNode.markChanged();
       }
       if (!myStopRestoringSelection && childInfo.isSelected()) {

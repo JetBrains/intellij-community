@@ -23,7 +23,6 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.EventDispatcher;
@@ -58,6 +57,7 @@ public class CommandExecutor {
   private volatile String myDestroyReason;
   private volatile boolean myWasCancelled;
   @NotNull protected final GeneralCommandLine myCommandLine;
+  @NotNull protected final String myLocale;
   protected Process myProcess;
   protected SvnProcessHandler myHandler;
   private OutputStreamWriter myProcessWriter;
@@ -72,7 +72,7 @@ public class CommandExecutor {
   @Nullable private final LineCommandListener myResultBuilder;
   @NotNull private final Command myCommand;
 
-  public CommandExecutor(@NotNull @NonNls String exePath, @NotNull Command command) {
+  public CommandExecutor(@NotNull @NonNls String exePath, @NotNull String locale, @NotNull Command command) {
     myCommand = command;
     myResultBuilder = command.getResultBuilder();
     if (myResultBuilder != null) {
@@ -89,6 +89,7 @@ public class CommandExecutor {
     }
     myCommandLine.addParameter(command.getName().getName());
     myCommandLine.addParameters(prepareParameters(command));
+    myLocale = locale;
     myExitCodeReference = new AtomicReference<Integer>();
   }
 
@@ -158,13 +159,11 @@ public class CommandExecutor {
   }
 
   private void setupLocale() {
-    String locale = Registry.stringValue("svn.executable.locale");
-
-    if (!StringUtil.isEmpty(locale)) {
+    if (!StringUtil.isEmpty(myLocale)) {
       Map<String, String> environment = myCommandLine.getEnvironment();
 
       environment.put("LANGUAGE", "");
-      environment.put("LC_ALL", locale);
+      environment.put("LC_ALL", myLocale);
     }
   }
 

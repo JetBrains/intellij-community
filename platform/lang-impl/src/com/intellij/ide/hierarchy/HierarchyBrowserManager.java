@@ -46,11 +46,12 @@ public final class HierarchyBrowserManager implements PersistentStateComponent<H
   private final ContentManager myContentManager;
 
   public HierarchyBrowserManager(final Project project) {
-    final ToolWindowManager toolWindowManager=ToolWindowManager.getInstance(project);
-    final ToolWindow toolWindow = toolWindowManager.registerToolWindow(ToolWindowId.HIERARCHY, true, ToolWindowAnchor.RIGHT, project);
+    ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
+    ToolWindow toolWindow = toolWindowManager.registerToolWindow(ToolWindowId.HIERARCHY, true, ToolWindowAnchor.RIGHT, project);
+
     myContentManager = toolWindow.getContentManager();
     toolWindow.setIcon(AllIcons.Toolwindows.ToolWindowHierarchy);
-    new ContentManagerWatcher(toolWindow,myContentManager);
+    new ContentManagerWatcher(toolWindow, myContentManager);
   }
 
   public final ContentManager getContentManager() {

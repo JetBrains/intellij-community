@@ -126,7 +126,6 @@
     <component>
       <interface-class>git4idea.repo.GitRepositoryManager</interface-class>
       <implementation-class>git4idea.repo.GitRepositoryManager</implementation-class>
-      <headless-implementation-class>git4idea.test.GitTestRepositoryManager</headless-implementation-class>
     </component>
   </project-components>
 

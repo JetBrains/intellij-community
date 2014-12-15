@@ -46,7 +46,7 @@ public class ExcludedEntriesConfigurable implements UnnamedConfigurable {
   private final Project myProject;
   private final ArrayList<ExcludeEntryDescription> myExcludeEntryDescriptions = new ArrayList<ExcludeEntryDescription>();
   private final FileChooserDescriptor myDescriptor;
-  private final ExcludedEntriesConfiguration myConfiguration;
+  private final ExcludesConfiguration myConfiguration;
   private ExcludedEntriesPanel myExcludedEntriesPanel;
 
   public ExcludedEntriesConfigurable(Project project) {
@@ -54,7 +54,7 @@ public class ExcludedEntriesConfigurable implements UnnamedConfigurable {
          CompilerConfiguration.getInstance(project).getExcludedEntriesConfiguration());
   }
 
-  public ExcludedEntriesConfigurable(Project project, FileChooserDescriptor descriptor, final ExcludedEntriesConfiguration configuration) {
+  public ExcludedEntriesConfigurable(Project project, FileChooserDescriptor descriptor, final ExcludesConfiguration configuration) {
     myDescriptor = descriptor;
     myConfiguration = configuration;
     myProject = project;

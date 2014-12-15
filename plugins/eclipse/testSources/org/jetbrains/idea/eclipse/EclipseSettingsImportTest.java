@@ -143,7 +143,7 @@ public class EclipseSettingsImportTest extends PlatformTestCase {
     javaSettings.SPACE_BEFORE_METHOD_LBRACE = false;
     javaSettings.SPACE_BEFORE_CLASS_LBRACE = false;
     javaSettings.SPACE_BEFORE_ANOTATION_PARAMETER_LIST = true;
-    javaSettings.KEEP_LINE_BREAKS = false;
+    javaSettings.KEEP_LINE_BREAKS = true;
 
     InputStream inputStream = new FileInputStream(input);
     try {
@@ -258,7 +258,7 @@ public class EclipseSettingsImportTest extends PlatformTestCase {
       assertTrue(javaSettings.SPACE_BEFORE_METHOD_LBRACE);
       assertTrue(javaSettings.SPACE_BEFORE_CLASS_LBRACE);
       assertFalse(javaSettings.SPACE_BEFORE_ANOTATION_PARAMETER_LIST);
-      assertTrue(javaSettings.KEEP_LINE_BREAKS);
+      assertFalse(javaSettings.KEEP_LINE_BREAKS);
     }
     finally {
       inputStream.close();

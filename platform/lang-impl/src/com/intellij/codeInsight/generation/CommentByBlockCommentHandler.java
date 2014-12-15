@@ -22,6 +22,7 @@ import com.intellij.codeInsight.actions.MultiCaretCodeInsightActionHandler;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.highlighter.custom.CustomFileTypeLexer;
 import com.intellij.lang.Commenter;
+import com.intellij.lang.CustomUncommenter;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageCommenters;
 import com.intellij.lexer.Lexer;
@@ -259,6 +260,9 @@ public class CommentByBlockCommentHandler extends MultiCaretCodeInsightActionHan
 
     final String prefix;
     final String suffix;
+    if (commenter instanceof CustomUncommenter) {
+      return ((CustomUncommenter)commenter).findMaximumCommentedRange(text);
+    }
 
     if (commenter instanceof SelfManagingCommenter) {
       SelfManagingCommenter selfManagingCommenter = (SelfManagingCommenter)commenter;
@@ -646,19 +650,36 @@ public class CommentByBlockCommentHandler extends MultiCaretCodeInsightActionHan
     //boolean endsProperly = CharArrayUtil.regionMatches(chars, range.getEndOffset() - commentSuffix.length(), commentSuffix);
     List<Couple<TextRange>> ranges = new ArrayList<Couple<TextRange>>();
 
-    int position = 0;
-    while (true) {
-      int start = getNearest(text, commentPrefix, position);
-      if (start == text.length()) {
-        break;
+
+    if (commenter instanceof CustomUncommenter) {
+      /**
+       * In case of custom uncommenter, we need to ask it for list of [commentOpen-start,commentOpen-end], [commentClose-start,commentClose-end]
+       * and shift if according to current offset
+       */
+      CustomUncommenter customUncommenter = (CustomUncommenter)commenter;
+      for (Couple<TextRange> coupleFromCommenter : customUncommenter.getCommentRangesToDelete(text)) {
+        TextRange openComment = coupleFromCommenter.first.shiftRight(startOffset);
+        TextRange closeComment = coupleFromCommenter.second.shiftRight(startOffset);
+        ranges.add(Couple.of(openComment, closeComment));
       }
-      position = start;
-      int end = getNearest(text, commentSuffix, position + commentPrefix.length()) + commentSuffix.length();
-      position = end;
-      Couple<TextRange> pair =
-        findCommentBlock(new TextRange(start + startOffset, end + startOffset), commentPrefix, commentSuffix);
-      ranges.add(pair);
     }
+    else {
+      // If commenter is not custom, we need to get this list by our selves
+      int position = 0;
+      while (true) {
+        int start = getNearest(text, commentPrefix, position);
+        if (start == text.length()) {
+          break;
+        }
+        position = start;
+        int end = getNearest(text, commentSuffix, position + commentPrefix.length()) + commentSuffix.length();
+        position = end;
+        Couple<TextRange> pair =
+          findCommentBlock(new TextRange(start + startOffset, end + startOffset), commentPrefix, commentSuffix);
+        ranges.add(pair);
+      }
+    }
+
 
     for (int i = ranges.size() - 1; i >= 0; i--) {
       Couple<TextRange> toDelete = ranges.get(i);

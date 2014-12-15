@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import org.jetbrains.annotations.Nullable;
@@ -140,7 +141,7 @@ public class X11UiUtil {
     @Nullable
     private String getUtfStringProperty(long window, long name) throws Exception {
       byte[] bytes = getWindowProperty(window, name, UTF8_STRING, FORMAT_BYTE);
-      return bytes != null ? new String(bytes, "UTF-8") : null;
+      return bytes != null ? new String(bytes, CharsetToolkit.UTF8_CHARSET) : null;
     }
 
     @Nullable

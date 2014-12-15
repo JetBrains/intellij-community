@@ -51,6 +51,7 @@ import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -181,7 +182,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
               new File(outputPath).mkdirs();
               final File file = new File(outputPath, toolName + ext);
               inspectionsResults.add(file);
-              FileUtil.writeToFile(file, ("</" + InspectionsBundle.message("inspection.problems") + ">").getBytes("UTF-8"), true);
+              FileUtil.writeToFile(file, ("</" + InspectionsBundle.message("inspection.problems") + ">").getBytes(CharsetToolkit.UTF8_CHARSET), true);
             }
             catch (IOException e) {
               LOG.error(e);
@@ -217,7 +218,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
               final File file = new File(outputPath, toolName + ext);
               inspectionsResults.add(file);
 
-              OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(file), "UTF-8");
+              OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(file), CharsetToolkit.UTF8_CHARSET);
               try {
                 JDOMUtil.writeDocument(doc, writer, "\n");
               }

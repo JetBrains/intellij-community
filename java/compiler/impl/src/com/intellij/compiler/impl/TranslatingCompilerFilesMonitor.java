@@ -18,11 +18,13 @@ package com.intellij.compiler.impl;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
@@ -83,11 +85,10 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
       return;
     }
 
-    final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
     VfsUtilCore.visitChildrenRecursively(fromFile, new VirtualFileVisitor() {
       @NotNull @Override
       public Result visitFileEx(@NotNull VirtualFile file) {
-        if (fileTypeManager.isFileIgnored(file)) {
+        if (isIgnoredByBuild(file)) {
           return SKIP_CHILDREN;
         }
 
@@ -125,7 +126,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     return false;
   }
   
-  private class MyVfsListener extends VirtualFileAdapter {
+  private static class MyVfsListener extends VirtualFileAdapter {
     public void propertyChanged(@NotNull final VirtualFilePropertyEvent event) {
       if (VirtualFile.PROP_NAME.equals(event.getPropertyName())) {
         final VirtualFile eventFile = event.getFile();
@@ -216,8 +217,8 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
   
   private static void collectPathsAndNotify(final VirtualFile file, final Function<Collection<File>, Void> notification) {
     final Set<File> pathsToMark = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
-    final boolean inContent = isInContentOfOpenedProject(file);
-    if (inContent || !isIgnoredOrUnderIgnoredDirectory(file)) {
+    if (!isIgnoredOrUnderIgnoredDirectory(file)) {
+      final boolean inContent = isInContentOfOpenedProject(file);
       processRecursively(file, !inContent, new FileProcessor() {
         public void execute(final VirtualFile file) {
           pathsToMark.add(new File(file.getPath()));
@@ -230,11 +231,10 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
   }
 
   private static boolean isIgnoredOrUnderIgnoredDirectory(final VirtualFile file) {
-    final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
-    if (fileTypeManager.isFileIgnored(file)) {
+    if (isIgnoredByBuild(file)) {
       return true;
     }
-
+    final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
     VirtualFile current = file.getParent();
     while (current != null) {
       if (fileTypeManager.isFileIgnored(current)) {
@@ -243,6 +243,13 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
       current = current.getParent();
     }
     return false;
+  }
+
+  private static boolean isIgnoredByBuild(VirtualFile file) {
+    return
+        FileTypeManager.getInstance().isFileIgnored(file) ||
+        ProjectUtil.isProjectOrWorkspaceFile(file)        ||
+        FileUtil.isAncestor(PathManager.getConfigPath(), file.getPath(), false); // is config file
   }
 
   private static void notifyFilesChanged(Collection<File> paths) {

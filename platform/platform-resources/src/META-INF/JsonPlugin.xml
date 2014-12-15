@@ -58,4 +58,10 @@
                              implementationClass="com.intellij.json.psi.JsonStringLiteralManipulator"/>
   </extensions>
 
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.json.jsonStandardComplianceProvider"
+                    interface="com.intellij.json.codeinsight.JsonStandardComplianceProvider"/>
+  </extensionPoints>
+
 </idea-plugin>

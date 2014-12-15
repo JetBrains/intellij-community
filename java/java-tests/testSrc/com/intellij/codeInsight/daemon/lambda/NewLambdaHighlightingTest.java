@@ -18,14 +18,11 @@ package com.intellij.codeInsight.daemon.lambda;
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
-import com.intellij.idea.Bombed;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Calendar;
 
 public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   @NonNls static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/newLambda";
@@ -79,14 +76,10 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testNestedCallsInsideLambdaReturnExpression() { doTest(); }
   public void testIDEA123731() { doTest(); }
   public void testIDEA123869() { doTest(); }
-  @Bombed(day = 30, month = Calendar.NOVEMBER)
-  public void testIDEA123848() { doTest(); }
   public void testOnlyLambdaAtTypeParameterPlace() { doTest(); }
   public void testLiftedIntersectionType() { doTest(); }
   public void testInferenceFromReturnStatements() { doTest(); }
   public void testDownUpThroughLambdaReturnStatements() { doTest(); }
-  @Bombed(day = 30, month = Calendar.NOVEMBER)
-  public void testIDEA124547() { doTest(); }
   public void testIDEA118362() { doTest(); }
   public void testIDEA126056() { doTest(); }
   public void testIDEA125254() { doTest(); }
@@ -139,11 +132,6 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
-  @Bombed(month = Calendar.NOVEMBER, day = 30)
-  public void testCheckedExceptionsConstraintsSubstitutions() throws Exception {
-    doTest();
-  }
-
   public void testIDEA130129() throws Exception {
     doTest();
   }
@@ -157,6 +145,14 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   }
 
   public void testIDEA131700() throws Exception {
+    doTest();
+  }
+
+  public void testPropertiesInsteadOfSiteSubstitutorIfAny() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA127124() throws Exception {
     doTest();
   }
 

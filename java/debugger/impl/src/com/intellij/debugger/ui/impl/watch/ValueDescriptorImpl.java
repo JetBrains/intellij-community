@@ -541,4 +541,8 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     }
     return getValue() instanceof ObjectReference;
   }
+
+  public Project getProject() {
+    return myProject;
+  }
 }

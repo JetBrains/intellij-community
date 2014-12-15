@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -192,7 +192,7 @@ public class AddFieldQuickFix implements LocalQuickFix {
     if (ancestorInit == null) functionText += "    pass";
     else {
       final PyClass ancestorClass = ancestorInit.getContainingClass();
-      if (ancestorClass != null && ancestorClass != PyBuiltinCache.getInstance(ancestorInit).getClass("object") && !FAKE_OLD_BASE.equals(ancestorClass.getName())) {
+      if (ancestorClass != null && !PyUtil.isObjectClass(ancestorClass)) {
         StringBuilder sb = new StringBuilder();
         PyParameter[] params = ancestorInit.getParameterList().getParameters();
 

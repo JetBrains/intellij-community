@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,50 +45,49 @@ public class PythonSdkConfigurator implements DirectoryProjectConfigurator {
 
   public void configureProject(final Project project, @NotNull final VirtualFile baseDir, Ref<Module> moduleRef) {
     // it it a virtualenv?
-    final PythonSdkType py_sdk_type = PythonSdkType.getInstance();
+    final PythonSdkType sdkType = PythonSdkType.getInstance();
     //find virtualEnv in project directory
     final List<String> candidates = new ArrayList<String>();
-    if (project != null) {
-      final VirtualFile rootDir = project.getBaseDir();
-      if (rootDir != null)
-        candidates.addAll(VirtualEnvSdkFlavor.findInDirectory(rootDir));
-      if (!candidates.isEmpty()) {
-        String filePath = candidates.get(0);
-        if (StringUtil.startsWithChar(filePath, '~')) {
-          final String home = SystemProperties.getUserHome();
-          filePath = home + filePath.substring(1);
+    if (project == null) return;
+    final VirtualFile rootDir = project.getBaseDir();
+    if (rootDir != null)
+      candidates.addAll(VirtualEnvSdkFlavor.findInDirectory(rootDir));
+    if (!candidates.isEmpty()) {
+      String filePath = candidates.get(0);
+      if (StringUtil.startsWithChar(filePath, '~')) {
+        final String home = SystemProperties.getUserHome();
+        filePath = home + filePath.substring(1);
+      }
+      final Sdk virtualEnvSdk = SdkConfigurationUtil.createAndAddSDK(filePath, sdkType);
+      if (virtualEnvSdk != null) {
+        SdkConfigurationUtil.setDirectoryProjectSdk(project, virtualEnvSdk);
+        SdkAdditionalData additionalData = virtualEnvSdk.getSdkAdditionalData();
+        if (additionalData == null) {
+          additionalData = new PythonSdkAdditionalData(PythonSdkFlavor.getFlavor(virtualEnvSdk.getHomePath()));
+          ((ProjectJdkImpl)virtualEnvSdk).setSdkAdditionalData(additionalData);
         }
-        final Sdk virtualEnvSdk = SdkConfigurationUtil.createAndAddSDK(filePath, py_sdk_type);
-        if (virtualEnvSdk != null) {
-          SdkConfigurationUtil.setDirectoryProjectSdk(project, virtualEnvSdk);
-          SdkAdditionalData additionalData = virtualEnvSdk.getSdkAdditionalData();
-          if (additionalData == null) {
-            additionalData = new PythonSdkAdditionalData(PythonSdkFlavor.getFlavor(virtualEnvSdk.getHomePath()));
-            ((ProjectJdkImpl)virtualEnvSdk).setSdkAdditionalData(additionalData);
-          }
-          ((PythonSdkAdditionalData) additionalData).associateWithProject(project);
-          return;
-        }
+        ((PythonSdkAdditionalData) additionalData).associateWithProject(project);
         return;
       }
+      return;
     }
+
     
-    
-    final Sdk existing_sdk = ProjectRootManager.getInstance(project).getProjectSdk();
-    if (existing_sdk != null && existing_sdk.getSdkType() == py_sdk_type) return; // SdkConfigurationUtil does the same
-    final File py_exe = PythonSdkType.findExecutableFile(new File(project.getBasePath(), "bin"), "python");
-    if (py_exe != null) {
-      final File env_root = PythonSdkType.getVirtualEnvRoot(py_exe.getPath());
-      if (env_root != null) {
+    final Sdk existingSdk = ProjectRootManager.getInstance(project).getProjectSdk();
+    if (existingSdk != null && existingSdk.getSdkType() == sdkType) return; // SdkConfigurationUtil does the same
+    final File executableFile = PythonSdkType.findExecutableFile(new File(project.getBasePath(), "bin"), "python");
+    if (executableFile != null) {
+      final File virtualEnvRoot = PythonSdkType.getVirtualEnvRoot(executableFile.getPath());
+      if (virtualEnvRoot != null) {
         // yes, an unknown virtualenv; set it up as SDK
-        final Sdk an_sdk = SdkConfigurationUtil.createAndAddSDK(py_exe.getPath(), py_sdk_type);
-        if (an_sdk != null) {
-          SdkConfigurationUtil.setDirectoryProjectSdk(project, an_sdk);
+        final Sdk sdk = SdkConfigurationUtil.createAndAddSDK(executableFile.getPath(), sdkType);
+        if (sdk != null) {
+          SdkConfigurationUtil.setDirectoryProjectSdk(project, sdk);
           return;
         }
       }
     }
     // default
-    SdkConfigurationUtil.configureDirectoryProjectSdk(project, new PreferredSdkComparator(), py_sdk_type);
+    SdkConfigurationUtil.configureDirectoryProjectSdk(project, new PreferredSdkComparator(), sdkType);
   }
 }

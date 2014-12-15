@@ -258,7 +258,7 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
     return this;
   }
 
-  public TableViewModel getTableViewModel() {
+  public TableViewModel<Item> getTableViewModel() {
     return getListTableModel();
   }
 
@@ -274,7 +274,9 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
     defaultEditorsByColumnClass.put(String.class, new UIDefaults.LazyValue() {
       @Override
       public Object createValue(UIDefaults table) {
-        return new DefaultCellEditor(GuiUtils.createUndoableTextField());
+        DefaultCellEditor editor = new DefaultCellEditor(GuiUtils.createUndoableTextField());
+        editor.setClickCountToStart(1);
+        return editor;
       }
     });
   }

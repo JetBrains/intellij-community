@@ -197,7 +197,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
                                                                                  VcsDirtyScopeManager.getInstance(project));
     myWorkingCopiesContent = new WorkingCopiesContent(this);
 
-    myChecker = new SvnExecutableChecker(myProject);
+    myChecker = new SvnExecutableChecker(this);
 
     Application app = ApplicationManager.getApplication();
     myLogExceptions = app != null && (app.isInternal() || app.isUnitTestMode());

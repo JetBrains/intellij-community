@@ -35,6 +35,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashSet;
 import com.intellij.util.ui.ColumnInfo;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -146,30 +147,29 @@ public class InstalledPluginsTableModel extends PluginTableModel {
 
     updatePluginDependencies();
 
-    final Runnable runnable = new Runnable() {
+    SwingUtilities.invokeLater(new Runnable() {
       @Override
       public void run() {
         if (!ApplicationManager.getApplication().isDisposed()) {
           ProgressManager.getInstance().run(new Task.Backgroundable(null, "Load custom plugin repositories data...") {
             @Override
             public void run(@NotNull ProgressIndicator indicator) {
-              updateRepositoryPlugins();
+              updateRepositoryPlugins(indicator);
             }
           });
         }
       }
-    };
-    SwingUtilities.invokeLater(runnable);
+    });
   }
 
-  public void updateRepositoryPlugins() {
+  private void updateRepositoryPlugins(@NotNull ProgressIndicator indicator) {
     myPlugin2host.clear();
-    final List<String> pluginHosts = UpdateSettings.getInstance().getPluginHosts();
+    List<String> pluginHosts = UpdateSettings.getInstance().getPluginHosts();
     ContainerUtil.addIfNotNull(ApplicationInfoEx.getInstanceEx().getBuiltinPluginsUrl(), pluginHosts);
     for (String host : pluginHosts) {
       try {
-        final Map<PluginId, PluginDownloader> downloaded = new HashMap<PluginId, PluginDownloader>();
-        UpdateChecker.checkPluginsHost(host, downloaded, false, null);
+        Map<PluginId, PluginDownloader> downloaded = new THashMap<PluginId, PluginDownloader>();
+        UpdateChecker.checkPluginsHost(host, downloaded, false, indicator);
         for (PluginId pluginId : downloaded.keySet()) {
           myPlugin2host.put(pluginId.getIdString(), host);
         }

@@ -20,6 +20,7 @@ import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
@@ -59,11 +60,15 @@ public class IpnbEditorUtil {
   }
 
   private static void setupEditor(@NotNull final EditorEx editor) {
-    if (!UIUtil.isUnderDarcula())
-      editor.setBackgroundColor(Gray._247);
+    editor.setBackgroundColor(getEditablePanelBackground());
     noScrolling(editor);
     editor.getScrollPane().setBorder(null);
     ConsoleViewUtil.setupConsoleEditor(editor, false, false);
+  }
+
+  public static Color getEditablePanelBackground() {
+    return !UIUtil.isUnderDarcula() ? Gray._247 : EditorColorsManager.getInstance().getGlobalScheme().getColor(
+      EditorColors.GUTTER_BACKGROUND);
   }
 
   public static Editor createPlainCodeEditor(@NotNull final Project project, @NotNull final String text) {

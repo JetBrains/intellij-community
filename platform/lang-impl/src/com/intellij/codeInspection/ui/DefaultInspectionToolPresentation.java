@@ -32,6 +32,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManagerImpl;
 import com.intellij.psi.PsiElement;
@@ -283,7 +284,7 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
         pathMacroManager.collapsePaths(element);
         JDOMUtil.writeElement(element, writer, "\n");
       }
-      printWriter = new PrintWriter(new BufferedWriter(new OutputStreamWriter(new FileOutputStream(fileName, true), "UTF-8")));
+      printWriter = new PrintWriter(new BufferedWriter(new OutputStreamWriter(new FileOutputStream(fileName, true), CharsetToolkit.UTF8_CHARSET)));
       printWriter.append("\n");
       printWriter.append(writer.toString());
     }

@@ -362,7 +362,11 @@ public class ImportHelper{
    * Adds import if it is needed.
    * @return false when the FQ-name have to be used in code (e.g. when conflicting imports already exist)
    */
-  public boolean addImport(@NotNull PsiJavaFile file, @NotNull PsiClass refClass){
+  public boolean addImport(@NotNull PsiJavaFile file, @NotNull PsiClass refClass) {
+    return addImport(file, refClass, false);
+  }
+
+  private boolean addImport(@NotNull PsiJavaFile file, @NotNull PsiClass refClass, boolean forceReimport){
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(file.getProject());
     PsiElementFactory factory = facade.getElementFactory();
     PsiResolveHelper helper = facade.getResolveHelper();
@@ -377,7 +381,7 @@ public class ImportHelper{
     String shortName = PsiNameHelper.getShortClassName(className);
 
     PsiClass conflictSingleRef = findSingleImportByShortName(file, shortName);
-    if (conflictSingleRef != null){
+    if (conflictSingleRef != null && !forceReimport){
       return className.equals(conflictSingleRef.getQualifiedName());
     }
 
@@ -449,7 +453,7 @@ public class ImportHelper{
 
       for (PsiClass aClass : classesToReimport) {
         if (aClass != null) {
-          addImport(file, aClass);
+          addImport(file, aClass, true);
         }
       }
     }

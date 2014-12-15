@@ -35,6 +35,7 @@ import com.intellij.ui.MultiLineTooltipUI;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBRadioButton;
 import com.intellij.util.Consumer;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,11 +48,14 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.io.File;
 
 public class SvnConfigurable implements Configurable {
 
   public static final String DISPLAY_NAME = SvnVcs.VCS_DISPLAY_NAME;
+
   private final Project myProject;
   private JCheckBox myUseDefaultCheckBox;
   private TextFieldWithBrowseButton myConfigurationDirectoryText;
@@ -73,6 +77,7 @@ public class SvnConfigurable implements Configurable {
   private JSpinner mySSHConnectionTimeout;
   private JSpinner mySSHReadTimeout;
   private TextFieldWithBrowseButton myCommandLineClient;
+  private JPanel myCommandLineClientOptions;
   private JSpinner myHttpTimeout;
   private JBRadioButton mySSLv3RadioButton;
   private JBRadioButton myTLSv1RadioButton;
@@ -85,12 +90,13 @@ public class SvnConfigurable implements Configurable {
   public SvnConfigurable(Project project) {
     myProject = project;
 
-    myWithCommandLineClient.addActionListener(new ActionListener() {
+    myWithCommandLineClient.addItemListener(new ItemListener() {
       @Override
-      public void actionPerformed(ActionEvent e) {
-        myRunUnderTerminal.setEnabled(myWithCommandLineClient.isSelected());
+      public void itemStateChanged(ItemEvent e) {
+        enableCommandLineClientOptions();
       }
     });
+    enableCommandLineClientOptions();
     myUseDefaultCheckBox.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
         boolean enabled = !myUseDefaultCheckBox.isSelected();
@@ -108,7 +114,7 @@ public class SvnConfigurable implements Configurable {
       }
     });
     myCommandLineClient.addBrowseFolderListener("Subversion", "Select path to Subversion executable (1.7+)", project,
-                                       FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor());
+                                                FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor());
 
     myClearAuthButton.addActionListener(new ActionListener(){
       public void actionPerformed(final ActionEvent e) {
@@ -173,6 +179,10 @@ public class SvnConfigurable implements Configurable {
     }
 
     mySshSettingsPanel.load(SvnConfiguration.getInstance(myProject));
+  }
+
+  public void enableCommandLineClientOptions() {
+    UIUtil.setEnabled(myCommandLineClientOptions, myWithCommandLineClient.isSelected(), true);
   }
 
   public static void selectConfigurationDirectory(@NotNull String path,
@@ -342,7 +352,6 @@ public class SvnConfigurable implements Configurable {
     myHttpTimeout.setValue(Long.valueOf(configuration.getHttpTimeout() / 1000));
     myWithCommandLineClient.setSelected(configuration.isCommandLine());
     myRunUnderTerminal.setSelected(configuration.isRunUnderTerminal());
-    myRunUnderTerminal.setEnabled(myWithCommandLineClient.isSelected());
     final SvnApplicationSettings applicationSettings17 = SvnApplicationSettings.getInstance();
     myCommandLineClient.setText(applicationSettings17.getCommandLinePath());
 

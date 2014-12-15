@@ -420,7 +420,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       (elements2 != null) ? elements2.getReferenceElements() : PsiElement.EMPTY_ARRAY
     );
   }
-  
+
   private boolean compareClasses(final PsiClass clazz, final PsiClass clazz2) {
     final PsiClass saveClazz = this.myClazz;
     final MatchContext.MatchedElementsListener oldListener = myMatchingVisitor.getMatchContext().getMatchedElementsListener();
@@ -835,7 +835,15 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       }
     }
     final String text = stripTypeParameters(el.getText());
-    final boolean equalsIgnorePackage = MatchUtils.compareWithNoDifferenceToPackage(text, stripTypeParameters(el2.getText()));
+    String text2;
+    if (el2 instanceof PsiClass) {
+      text2 = ((PsiClass)el2).getQualifiedName();
+      if (text2 == null) text2 = el2.getText();
+    } else {
+      text2 = el2.getText();
+    }
+
+    final boolean equalsIgnorePackage = MatchUtils.compareWithNoDifferenceToPackage(text, stripTypeParameters(text2));
     if (equalsIgnorePackage || !(el2 instanceof PsiJavaReference)) {
       return equalsIgnorePackage;
     }
@@ -846,7 +854,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
         return text.equals(((PsiClass)element2).getQualifiedName());
       }
       else {
-        return MatchUtils.compareWithNoDifferenceToPackage(text, el2.getText());
+        return MatchUtils.compareWithNoDifferenceToPackage(text, text2);
       }
     }
   }
@@ -1122,18 +1130,23 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
   public void visitLiteralExpression(final PsiLiteralExpression const1) {
     final PsiLiteralExpression const2 = (PsiLiteralExpression)myMatchingVisitor.getElement();
 
-    MatchingHandler handler = (MatchingHandler)const1.getUserData(CompiledPattern.HANDLER_KEY);
-
+    final MatchingHandler handler = (MatchingHandler)const1.getUserData(CompiledPattern.HANDLER_KEY);
     if (handler instanceof SubstitutionHandler) {
-      int offset = 0;
-      int length = const2.getTextLength();
-      final String text = const2.getText();
-
-      if (length > 2 && text.charAt(0) == '"' && text.charAt(length - 1) == '"') {
-        length--;
-        offset++;
+      final PsiType type1 = const1.getType();
+      if (type1 != null && !type1.equals(const2.getType())) {
+        myMatchingVisitor.setResult(false);
       }
-      myMatchingVisitor.setResult(((SubstitutionHandler)handler).handle(const2, offset, length, myMatchingVisitor.getMatchContext()));
+      else {
+        int offset = 0;
+        int length = const2.getTextLength();
+        final String text = const2.getText();
+
+        if (length > 2 && text.charAt(0) == '"' && text.charAt(length - 1) == '"') {
+          length--;
+          offset++;
+        }
+        myMatchingVisitor.setResult(((SubstitutionHandler)handler).handle(const2, offset, length, myMatchingVisitor.getMatchContext()));
+      }
     }
     else if (handler != null) {
       myMatchingVisitor.setResult(handler.match(const1, const2, myMatchingVisitor.getMatchContext()));

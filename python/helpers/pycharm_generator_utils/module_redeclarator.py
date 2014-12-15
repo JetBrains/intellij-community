@@ -294,6 +294,8 @@ class ModuleRedeclarator(object):
                             break
                     if self._defined.get(found_name, False):
                         out(indent, prefix, found_name, postfix)
+                    elif hasattr(self, "app"):
+                        return
                     else:
                         # a forward / circular declaration happens
                         notice = ""
@@ -648,10 +650,11 @@ class ModuleRedeclarator(object):
                     bases_list.append(base_name)
             base_def = "(" + ", ".join(bases_list) + ")"
 
-            for base in bases_list:
-                local_import = self.create_local_import(base)
-                if local_import:
-                    out(indent, local_import)
+            if self.split_modules:
+                for base in bases_list:
+                    local_import = self.create_local_import(base)
+                    if local_import:
+                        out(indent, local_import)
         out(indent, "class ", p_name, base_def, ":",
             skipped_bases and " # skipped bases: " + ", ".join(skipped_bases) or "")
         out_doc_attr(out, p_class, indent + 1)

@@ -55,6 +55,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiLock;
@@ -523,7 +524,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private static void createLocatorFile() {
     File locatorFile = new File(PathManager.getSystemPath() + "/" + ApplicationEx.LOCATOR_FILE_NAME);
     try {
-      byte[] data = PathManager.getHomePath().getBytes("UTF-8");
+      byte[] data = PathManager.getHomePath().getBytes(CharsetToolkit.UTF8_CHARSET);
       FileUtil.writeToFile(locatorFile, data);
     }
     catch (IOException e) {
@@ -1073,11 +1074,11 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private static void assertIsDispatchThread(Status status, @NotNull String message) {
     if (isDispatchThread(status)) return;
     LOG.error(message,
-              "EventQueue.isDispatchThread()="+EventQueue.isDispatchThread(),
-              "isDispatchThread()="+isDispatchThread(getStatus()),
-              "Toolkit.getEventQueue()="+Toolkit.getDefaultToolkit().getSystemEventQueue(),
+              "EventQueue.isDispatchThread()=" + EventQueue.isDispatchThread(),
+              "isDispatchThread()=" + isDispatchThread(getStatus()),
+              "Toolkit.getEventQueue()=" + Toolkit.getDefaultToolkit().getSystemEventQueue(),
               "Current thread: " + describe(Thread.currentThread()),
-              "SystemEventQueueThread: " + describe(getEventQueueThread()) +"\n"+ ThreadDumper.dumpThreadsToString()+"\n-----------");
+              "SystemEventQueueThread: " + describe(getEventQueueThread()) + "\n" + ThreadDumper.dumpThreadsToString() + "\n-----------");
   }
 
   @Override
@@ -1201,6 +1202,13 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     return new WriteAccessToken(clazz);
   }
 
+  private volatile boolean myWriteActionPending;
+
+  @Override
+  public boolean isWriteActionPending() {
+    return myWriteActionPending;
+  }
+
   private class WriteAccessToken extends AccessToken {
     private final Class clazz;
 
@@ -1208,41 +1216,46 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       clazz = _clazz;
       assertCanRunWriteAction(getStatus());
 
-      ActivityTracker.getInstance().inc();
-      fireBeforeWriteActionStart(_clazz);
-      final AtomicBoolean stopped = new AtomicBoolean(false);
-
-      if (!isWriteAccessAllowed()) {
-        assertNoPsiLock();
-      }
+      boolean writeActionPending = myWriteActionPending;
+      myWriteActionPending = true;
 
       try {
-        if (!myLock.writeLock().tryLock()) {
-          if (ourDumpThreadsOnLongWriteActionWaiting > 0) {
-            executeOnPooledThread(new Runnable() {
-              @Override
-              public void run() {
-                while (!stopped.get()) {
-                  TimeoutUtil.sleep(ourDumpThreadsOnLongWriteActionWaiting);
-                  if (!stopped.get()) {
-                    PerformanceWatcher.getInstance().dumpThreads(true);
+        ActivityTracker.getInstance().inc();
+        fireBeforeWriteActionStart(clazz);
+
+        try {
+          if (!isWriteAccessAllowed()) {
+            assertNoPsiLock();
+          }
+          if (!myLock.writeLock().tryLock()) {
+            final AtomicBoolean lockAcquired = new AtomicBoolean(false);
+            if (ourDumpThreadsOnLongWriteActionWaiting > 0) {
+              executeOnPooledThread(new Runnable() {
+                @Override
+                public void run() {
+                  while (!lockAcquired.get()) {
+                    TimeoutUtil.sleep(ourDumpThreadsOnLongWriteActionWaiting);
+                    if (!lockAcquired.get()) {
+                      PerformanceWatcher.getInstance().dumpThreads(true);
+                    }
                   }
                 }
-              }
-            });
+              });
+            }
+            myLock.writeLock().lockInterruptibly();
+            lockAcquired.set(true);
           }
-          myLock.writeLock().lockInterruptibly();
         }
-        acquired();
+        catch (InterruptedException e) {
+          throw new RuntimeInterruptedException(e);
+        }
       }
-      catch (InterruptedException e) {
-        throw new RuntimeInterruptedException(e);
+      finally {
+        myWriteActionPending = writeActionPending;
       }
-      stopped.set(true);
 
-      myWriteActionsStack.push(_clazz);
-
-      fireWriteActionStarted(_clazz);
+      myWriteActionsStack.push(clazz);
+      fireWriteActionStarted(clazz);
     }
 
     @Override

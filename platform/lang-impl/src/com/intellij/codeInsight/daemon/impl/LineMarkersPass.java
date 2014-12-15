@@ -48,9 +48,11 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.Function;
 import com.intellij.util.FunctionUtil;
+import com.intellij.util.Processor;
 import gnu.trove.THashSet;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -201,7 +203,7 @@ public class LineMarkersPass extends TextEditorHighlightingPass implements LineM
   public static void collectLineMarkersForInjected(@NotNull final List<LineMarkerInfo> result,
                                                    @NotNull List<PsiElement> elements,
                                                    @NotNull final LineMarkersProcessor processor,
-                                                   @NotNull PsiFile file,
+                                                   @NotNull final PsiFile file,
                                                    @NotNull final ProgressIndicator progress) {
     final InjectedLanguageManager manager = InjectedLanguageManager.getInstance(file.getProject());
     final List<LineMarkerInfo> injectedMarkers = new ArrayList<LineMarkerInfo>();
@@ -213,9 +215,13 @@ public class LineMarkersPass extends TextEditorHighlightingPass implements LineM
         injectedFiles.add(injectedPsi);
       }
     };
-    for (int i = 0, size = elements.size(); i < size; ++i) {
-      InjectedLanguageUtil.enumerate(elements.get(i), file, false, collectingVisitor);
-    }
+    InjectedLanguageManagerImpl.getInstanceImpl(file.getProject()).processInjectableElements(elements, new Processor<PsiElement>() {
+      @Override
+      public boolean process(PsiElement element) {
+        InjectedLanguageUtil.enumerate(element, file, false, collectingVisitor);
+        return true;
+      }
+    });
     for (PsiFile injectedPsi : injectedFiles) {
       final Project project = injectedPsi.getProject();
       Document document = PsiDocumentManager.getInstance(project).getCachedDocument(injectedPsi);

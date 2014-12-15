@@ -16,16 +16,21 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.ExceptionUtil;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -34,7 +39,7 @@ import com.intellij.util.containers.IntArrayList;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
+import java.util.*;
 
 /**
  * User: anna
@@ -91,31 +96,19 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
                   .findExitPointsAndStatements(controlFlow, startOffset, endOffset, new IntArrayList(), PsiContinueStatement.class,
                                                PsiBreakStatement.class, PsiReturnStatement.class, PsiThrowStatement.class);
                 if (exitPoints.isEmpty()) {
-  
-                  final boolean[] effectivelyFinal = new boolean[] {true};
-                  body.accept(new JavaRecursiveElementWalkingVisitor() {
-                    @Override
-                    public void visitElement(PsiElement element) {
-                      if (!effectivelyFinal[0]) return;
-                      super.visitElement(element);
+
+                  final List<PsiVariable> usedVariables = ControlFlowUtil.getUsedVariables(controlFlow, startOffset, endOffset);
+                  for (PsiVariable variable : usedVariables) {
+                    if (!HighlightControlFlowUtil.isEffectivelyFinal(variable, body, null)) {
+                      return;
                     }
-  
-                    @Override
-                    public void visitReferenceExpression(PsiReferenceExpression expression) {
-                      if (!effectivelyFinal[0]) return;
-                      super.visitReferenceExpression(expression);
-                      final PsiElement resolve = expression.resolve();
-                      if (resolve instanceof PsiVariable && !(resolve instanceof PsiField)) {
-                        effectivelyFinal[0] = HighlightControlFlowUtil.isEffectivelyFinal((PsiVariable)resolve, body, expression);
-                      }
-                    }
-                  });
-  
-                  if (effectivelyFinal[0] && ExceptionUtil.getThrownCheckedExceptions(new PsiElement[] {body}).isEmpty()) {
+                  }
+
+                  if (ExceptionUtil.getThrownCheckedExceptions(new PsiElement[] {body}).isEmpty()) {
                     if (isCollectCall(body)) {
                       holder.registerProblem(iteratedValue, "Can be replaced with collect call",
                                              ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new ReplaceWithCollectCallFix());
-                    } else if (!isTrivial(body, statement.getIterationParameter(), iteratedValueType)) {
+                    } else if (!isTrivial(body, statement.getIterationParameter())) {
                       holder.registerProblem(iteratedValue, "Can be replaced with foreach call",
                                              ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new ReplaceWithForeachCallFix());
                     }
@@ -132,8 +125,8 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
   }
 
   private static boolean isCollectCall(PsiStatement body) {
-    final PsiIfStatement ifStatement = extractIfStatement(body);
-    final PsiMethodCallExpression methodCallExpression = extractAddCall(body);
+    PsiIfStatement ifStatement = extractIfStatement(body);
+    final PsiMethodCallExpression methodCallExpression = extractAddCall(body, ifStatement);
     if (methodCallExpression != null) {
       final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
       final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
@@ -147,12 +140,13 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
         }
       }
 
-      if (qualifierClass != null && 
+      if (qualifierClass != null &&
           InheritanceUtil.isInheritor(qualifierClass, false, CommonClassNames.JAVA_UTIL_COLLECTION)) {
 
-        if (ifStatement != null) {
+        while (ifStatement != null && PsiTreeUtil.isAncestor(body, ifStatement, false)) {
           final PsiExpression condition = ifStatement.getCondition();
           if (condition != null && isConditionDependsOnUpdatedCollections(condition, qualifierExpression)) return false;
+          ifStatement = PsiTreeUtil.getParentOfType(ifStatement, PsiIfStatement.class);
         }
 
         final PsiElement resolve = methodExpression.resolve();
@@ -175,29 +169,22 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
 
   private static boolean isConditionDependsOnUpdatedCollections(PsiExpression condition,
                                                                 PsiExpression qualifierExpression) {
-    final PsiElement collection = qualifierExpression != null
+    final PsiElement collection = qualifierExpression instanceof PsiReferenceExpression
                                   ? ((PsiReferenceExpression)qualifierExpression).resolve()
                                   : null;
+    if (collection != null) {
+      return ReferencesSearch.search(collection, new LocalSearchScope(condition)).findFirst() != null;
+    }
+
     final boolean[] dependsOnCollection = {false};
     condition.accept(new JavaRecursiveElementWalkingVisitor() {
-      @Override
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
-        super.visitReferenceExpression(expression);
-        if (collection != null && collection == expression.resolve()) {
-          dependsOnCollection[0] = true;
-        }
-      }
-
       @Override
       public void visitMethodCallExpression(PsiMethodCallExpression expression) {
         super.visitMethodCallExpression(expression);
         final PsiExpression callQualifier = expression.getMethodExpression().getQualifierExpression();
-        if (collection == callQualifier) {
-          dependsOnCollection[0] = true;
-        }
-
-        if (collection == null && (callQualifier instanceof PsiThisExpression && ((PsiThisExpression)callQualifier).getQualifier() == null || 
-                                   callQualifier instanceof PsiSuperExpression && ((PsiSuperExpression)callQualifier).getQualifier() == null)) {
+        if (callQualifier == null ||
+            callQualifier instanceof PsiThisExpression && ((PsiThisExpression)callQualifier).getQualifier() == null ||
+            callQualifier instanceof PsiSuperExpression && ((PsiSuperExpression)callQualifier).getQualifier() == null) {
           dependsOnCollection[0] = true;
         }
       }
@@ -205,29 +192,32 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       @Override
       public void visitThisExpression(PsiThisExpression expression) {
         super.visitThisExpression(expression);
-        if (collection == null && expression.getQualifier() == null && expression.getParent() instanceof PsiExpressionList) {
+        if (expression.getQualifier() == null && expression.getParent() instanceof PsiExpressionList) {
           dependsOnCollection[0] = true;
         }
       }
 
       @Override
       public void visitClass(PsiClass aClass) {}
+
+      @Override
+      public void visitLambdaExpression(PsiLambdaExpression expression) {}
     });
 
     return dependsOnCollection[0];
   }
 
-  private static boolean isTrivial(PsiStatement body, PsiParameter parameter, PsiType iteratedValueType) {
+  private static boolean isTrivial(PsiStatement body, PsiParameter parameter) {
     final PsiIfStatement ifStatement = extractIfStatement(body);
-    //stream
-    if (ifStatement != null &&
-        InheritanceUtil.isInheritor(iteratedValueType, CommonClassNames.JAVA_UTIL_COLLECTION)) {
+    //filter
+    if (ifStatement != null) {
       return false;
     }
     //method reference 
     final PsiCallExpression callExpression = LambdaCanBeMethodReferenceInspection
       .canBeMethodReferenceProblem(body instanceof PsiBlockStatement ? ((PsiBlockStatement)body).getCodeBlock() : body,
-                                   new PsiParameter[]{parameter}, null);
+                                   new PsiParameter[]{parameter},
+                                   createDefaultConsumerType(parameter.getProject(), parameter));
     if (callExpression == null) {
       return true;
     }
@@ -261,61 +251,60 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiForeachStatement foreachStatement = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiForeachStatement.class);
       if (foreachStatement != null) {
+        if (!FileModificationService.getInstance().preparePsiElementForWrite(foreachStatement)) return;
         PsiStatement body = foreachStatement.getBody();
         final PsiExpression iteratedValue = foreachStatement.getIteratedValue();
         if (body != null && iteratedValue != null) {
-          final Collection<PsiComment> comments = PsiTreeUtil.findChildrenOfType(body, PsiComment.class);
-
-          final PsiElement parent = foreachStatement.getParent();
-          for (PsiElement comment : PsiTreeUtil.findChildrenOfType(body, PsiComment.class)) {
-            parent.addBefore(comment, foreachStatement);
-          }
+          restoreComments(foreachStatement, body);
 
           final PsiParameter parameter = foreachStatement.getIterationParameter();
           final PsiIfStatement ifStmt = extractIfStatement(body);
 
-          String foreEachText = wrapInBlock(body);
-          String iterated = getIteratedValueText(iteratedValue);
+          StringBuilder buffer = new StringBuilder(getIteratedValueText(iteratedValue));
           if (ifStmt != null) {
-            final PsiExpression condition = ifStmt.getCondition();
-            if (condition != null) {
-              final PsiStatement thenBranch = ifStmt.getThenBranch();
-              LOG.assertTrue(thenBranch != null);
-              if (InheritanceUtil.isInheritor(iteratedValue.getType(), CommonClassNames.JAVA_UTIL_COLLECTION)) {
-                body = thenBranch;
-                foreEachText = wrapInBlock(thenBranch);
-                iterated += ".stream().filter(" + parameter.getName() + " -> " + condition.getText() +")";
-              }
-            }
+            final PsiStatement thenBranch = ifStmt.getThenBranch();
+            LOG.assertTrue(thenBranch != null);
+            buffer.append(".stream()");
+            buffer.append(createFiltersChainText(body, parameter, ifStmt));
+            body = thenBranch;
           }
 
-          final PsiParameter[] parameters = {parameter};
-          String methodReferenceText = null;
-          final PsiCallExpression callExpression = LambdaCanBeMethodReferenceInspection.extractMethodCallFromBlock(body);
-          if (callExpression != null) {
-            final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
-            final PsiClass consumerClass = psiFacade.findClass("java.util.function.Consumer", GlobalSearchScope.allScope(project));
-            final PsiClassType functionalType = consumerClass != null ? psiFacade.getElementFactory().createType(consumerClass, callExpression.getType()) : null;
+          buffer.append(".forEach(");
 
-            final PsiCallExpression toConvertCall = LambdaCanBeMethodReferenceInspection.canBeMethodReferenceProblem(body instanceof PsiBlockStatement ? ((PsiBlockStatement)body).getCodeBlock() : body, parameters, functionalType);
-            methodReferenceText = LambdaCanBeMethodReferenceInspection.createMethodReferenceText(toConvertCall, functionalType, parameters);
-          }
-          final String lambdaText = parameter.getName() + " -> " + foreEachText;
-          final String codeBlock8 = methodReferenceText != null ? methodReferenceText : lambdaText;
-          PsiExpressionStatement callStatement = (PsiExpressionStatement)JavaPsiFacade.getElementFactory(project).createStatementFromText(iterated + ".forEach(" + codeBlock8 + ");", foreachStatement);
-
+          final String functionalExpressionText = createForEachFunctionalExpressionText(project, body, parameter);
+          final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
+          PsiExpressionStatement callStatement = (PsiExpressionStatement)elementFactory.createStatementFromText(buffer.toString() + functionalExpressionText + ");", foreachStatement);
           callStatement = (PsiExpressionStatement)foreachStatement.replace(callStatement);
+
           final PsiExpressionList argumentList = ((PsiCallExpression)callStatement.getExpression()).getArgumentList();
           LOG.assertTrue(argumentList != null, callStatement.getText());
           final PsiExpression[] expressions = argumentList.getExpressions();
           LOG.assertTrue(expressions.length == 1);
 
-          if (expressions[0] instanceof PsiLambdaExpression && ((PsiLambdaExpression)expressions[0]).getFunctionalInterfaceType() == null ||
-              expressions[0] instanceof PsiMethodReferenceExpression && ((PsiMethodReferenceExpression)expressions[0]).getFunctionalInterfaceType() == null) {
-            callStatement = (PsiExpressionStatement)callStatement.replace(JavaPsiFacade.getElementFactory(project).createStatementFromText(iterated + ".forEach((" + parameter.getText() + ") -> " + foreEachText + ");", callStatement));
+          if (expressions[0] instanceof PsiFunctionalExpression && ((PsiFunctionalExpression)expressions[0]).getFunctionalInterfaceType() == null) {
+            callStatement = (PsiExpressionStatement)callStatement.replace(elementFactory.createStatementFromText(buffer.toString() + "(" + parameter.getText() + ") -> " + wrapInBlock(body) + ");", callStatement));
           }
+
+          CodeStyleManager.getInstance(project).reformat(callStatement);
         }
       }
+    }
+
+    private static String createForEachFunctionalExpressionText(Project project, PsiStatement body, PsiParameter parameter) {
+      final PsiCallExpression callExpression = LambdaCanBeMethodReferenceInspection.extractMethodCallFromBlock(body);
+      if (callExpression != null) {
+        final PsiClassType functionalType = createDefaultConsumerType(project, parameter);
+        final PsiParameter[] parameters = {parameter};
+        final PsiElement bodyBlock = body instanceof PsiBlockStatement ? ((PsiBlockStatement)body).getCodeBlock() : body;
+        final PsiCallExpression toConvertCall = LambdaCanBeMethodReferenceInspection.canBeMethodReferenceProblem(bodyBlock, parameters,
+                                                                                                                 functionalType);
+        final String methodReferenceText = LambdaCanBeMethodReferenceInspection.createMethodReferenceText(toConvertCall, functionalType,
+                                                                                                          parameters);
+        if (methodReferenceText != null) {
+          return methodReferenceText;
+        }
+      }
+      return parameter.getName() + " -> " + wrapInBlock(body);
     }
 
     private static String wrapInBlock(PsiStatement body) {
@@ -330,6 +319,12 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       }
       return bodyText;
     }
+  }
+
+  private static PsiClassType createDefaultConsumerType(Project project, PsiParameter parameter) {
+    final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+    final PsiClass consumerClass = psiFacade.findClass("java.util.function.Consumer", GlobalSearchScope.allScope(project));
+    return consumerClass != null ? psiFacade.getElementFactory().createType(consumerClass, parameter.getType()) : null;
   }
 
   private static class ReplaceWithCollectCallFix implements LocalQuickFix {
@@ -349,95 +344,111 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiForeachStatement foreachStatement = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiForeachStatement.class);
       if (foreachStatement != null) {
+        if (!FileModificationService.getInstance().preparePsiElementForWrite(foreachStatement)) return;
         PsiStatement body = foreachStatement.getBody();
         final PsiExpression iteratedValue = foreachStatement.getIteratedValue();
         if (body != null && iteratedValue != null) {
           final PsiParameter parameter = foreachStatement.getIterationParameter();
+          final StringBuilder builder = new StringBuilder(getIteratedValueText(iteratedValue) + ".stream()");
 
           final PsiIfStatement ifStatement = extractIfStatement(body);
-          final PsiMethodCallExpression methodCallExpression = extractAddCall(body);
-          String iteration = getIteratedValueText(iteratedValue) + ".stream()";
-          if (ifStatement != null) {
-            final PsiExpression condition = ifStatement.getCondition();
-            if (condition != null) {
-              iteration += ".filter(" + parameter.getName() + " -> " + condition.getText() +")";
-            }
-          }
-          final PsiExpression mapperCall = methodCallExpression.getArgumentList().getExpressions()[0];
-          if (!isIdentityMapping(parameter, mapperCall)) {
-            iteration +=".map(";
-            final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
-            final PsiClass functionClass = psiFacade.findClass("java.util.function.Function", GlobalSearchScope.allScope(project));
-            final PsiClassType functionalInterfaceType = functionClass != null ? psiFacade.getElementFactory().createType(functionClass, parameter.getType(), mapperCall.getType()) : null;
-            final PsiCallExpression toConvertCall = LambdaCanBeMethodReferenceInspection.canBeMethodReferenceProblem(mapperCall, new PsiParameter[]{parameter}, functionalInterfaceType);
-            final String methodReferenceText = LambdaCanBeMethodReferenceInspection.createMethodReferenceText(toConvertCall, functionalInterfaceType, new PsiParameter[]{parameter});
-            if (methodReferenceText != null) {
-              iteration += methodReferenceText;
-            } else {
-              iteration += parameter.getName() + " -> " + mapperCall.getText();
-            }
-            iteration += ")";
-          }
+          final PsiMethodCallExpression methodCallExpression = extractAddCall(body, ifStatement);
 
-          iteration += ".collect(java.util.stream.Collectors.";
+          builder.append(createFiltersChainText(body, parameter, ifStatement));
+          builder.append(createMapperFunctionalExpressionText(project, parameter, methodCallExpression.getArgumentList().getExpressions()[0]));
 
-          String variableName = null;
-          PsiExpression primitiveInitializer = null;
-          final PsiExpression qualifierExpression = methodCallExpression.getMethodExpression().getQualifierExpression();
-          if (qualifierExpression instanceof PsiReferenceExpression) {
-            final PsiElement resolve = ((PsiReferenceExpression)qualifierExpression).resolve();
-            if (resolve instanceof PsiVariable) {
-              if (resolve instanceof PsiLocalVariable && foreachStatement.equals(PsiTreeUtil.skipSiblingsForward(resolve.getParent(), PsiWhiteSpace.class))) {
-                final PsiExpression initializer = ((PsiVariable)resolve).getInitializer();
-                if (initializer instanceof PsiNewExpression) {
-                  final PsiExpressionList argumentList = ((PsiNewExpression)initializer).getArgumentList();
-                  if (argumentList != null && argumentList.getExpressions().length == 0) {
-                    primitiveInitializer = initializer;
+          builder.append(".collect(java.util.stream.Collectors.");
+          PsiElement result = null;
+          try {
+            final PsiExpression qualifierExpression = methodCallExpression.getMethodExpression().getQualifierExpression();
+            final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
+            if (qualifierExpression instanceof PsiReferenceExpression) {
+              final PsiElement resolve = ((PsiReferenceExpression)qualifierExpression).resolve();
+              if (resolve instanceof PsiVariable) {
+                if (resolve instanceof PsiLocalVariable && foreachStatement.equals(PsiTreeUtil.skipSiblingsForward(resolve.getParent(), PsiWhiteSpace.class))) {
+                  final PsiExpression initializer = ((PsiVariable)resolve).getInitializer();
+                  if (initializer instanceof PsiNewExpression) {
+                    final PsiExpressionList argumentList = ((PsiNewExpression)initializer).getArgumentList();
+                    if (argumentList != null && argumentList.getExpressions().length == 0) {
+                      restoreComments(foreachStatement, body);
+                      final String callText = builder.toString() + createInitializerReplacementText(initializer) + ")";
+                      result = initializer.replace(elementFactory.createExpressionFromText(callText, null));
+                      foreachStatement.delete();
+                      return;
+                    }
                   }
                 }
               }
-              variableName = qualifierExpression.getText() + ".";
             }
-          } else if (qualifierExpression == null) {
-            variableName = "";
+            restoreComments(foreachStatement, body);
+            final String qualifierText = qualifierExpression != null ? qualifierExpression.getText() : "";
+            final String callText = StringUtil.getQualifiedName(qualifierText, "addAll(" + builder.toString() + "toList()));");
+            result = foreachStatement.replace(elementFactory.createStatementFromText(callText, foreachStatement));
           }
-
-          if (variableName != null) {
-            final PsiElement parent = foreachStatement.getParent();
-            for (PsiElement comment : PsiTreeUtil.findChildrenOfType(body, PsiComment.class)) {
-              parent.addBefore(comment, foreachStatement);
+          finally {
+            if (result != null) {
+              CodeStyleManager.getInstance(project).reformat(JavaCodeStyleManager.getInstance(project).shortenClassReferences(result));
             }
-          }
-
-          PsiElement result = null;
-          if (primitiveInitializer != null) {
-            final PsiType initializerType = primitiveInitializer.getType();
-            final PsiClassType rawType = initializerType instanceof PsiClassType ? ((PsiClassType)initializerType).rawType() : null;
-            if (rawType != null && rawType.equalsToText(CommonClassNames.JAVA_UTIL_ARRAY_LIST)) {
-              iteration += "toList()";
-            } else if (rawType != null && rawType.equalsToText(CommonClassNames.JAVA_UTIL_HASH_SET)) {
-              iteration += "toSet()";
-            } else {
-              iteration += "toCollection(() -> " + primitiveInitializer.getText() +")";
-            }
-            iteration += ")";
-            result = primitiveInitializer.replace(JavaPsiFacade.getElementFactory(project).createExpressionFromText(iteration, foreachStatement));
-            foreachStatement.delete();
-          } else if (variableName != null){
-            iteration += "toList())";
-            result = foreachStatement.replace(JavaPsiFacade.getElementFactory(project).createStatementFromText(variableName + "addAll(" + iteration +");", foreachStatement));
-          }
-
-          if (result != null) {
-            result = JavaCodeStyleManager.getInstance(project).shortenClassReferences(result);
           }
         }
       }
     }
 
+    private static String createInitializerReplacementText(PsiExpression initializer) {
+      final PsiType initializerType = initializer.getType();
+      final PsiClassType rawType = initializerType instanceof PsiClassType ? ((PsiClassType)initializerType).rawType() : null;
+      if (rawType != null && rawType.equalsToText(CommonClassNames.JAVA_UTIL_ARRAY_LIST)) {
+        return "toList()";
+      } else if (rawType != null && rawType.equalsToText(CommonClassNames.JAVA_UTIL_HASH_SET)) {
+        return "toSet()";
+      } else {
+        return "toCollection(() -> " + initializer.getText() +")";
+      }
+    }
+
+    private static String createMapperFunctionalExpressionText(Project project, PsiParameter parameter, PsiExpression expression) {
+      String iteration = "";
+      if (!isIdentityMapping(parameter, expression)) {
+        iteration +=".map(";
+        final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+        final PsiClass functionClass = psiFacade.findClass("java.util.function.Function", GlobalSearchScope.allScope(project));
+        final PsiClassType functionalInterfaceType = functionClass != null ? psiFacade.getElementFactory().createType(functionClass, parameter.getType(), expression.getType()) : null;
+        final PsiCallExpression toConvertCall = LambdaCanBeMethodReferenceInspection
+          .canBeMethodReferenceProblem(expression, new PsiParameter[]{parameter}, functionalInterfaceType);
+        final String methodReferenceText = LambdaCanBeMethodReferenceInspection.createMethodReferenceText(toConvertCall, functionalInterfaceType, new PsiParameter[]{parameter});
+        if (methodReferenceText != null) {
+          iteration += methodReferenceText;
+        } else {
+          iteration += parameter.getName() + " -> " + expression.getText();
+        }
+        iteration += ")";
+      }
+      return iteration;
+    }
+
     private static boolean isIdentityMapping(PsiParameter parameter, PsiExpression mapperCall) {
       return mapperCall instanceof PsiReferenceExpression && ((PsiReferenceExpression)mapperCall).resolve() == parameter;
     }
+  }
+
+  private static void restoreComments(PsiForeachStatement foreachStatement, PsiStatement body) {
+    final PsiElement parent = foreachStatement.getParent();
+    for (PsiElement comment : PsiTreeUtil.findChildrenOfType(body, PsiComment.class)) {
+      parent.addBefore(comment, foreachStatement);
+    }
+  }
+
+  private static String createFiltersChainText(PsiStatement body, PsiParameter parameter, PsiIfStatement ifStatement) {
+    final List<String> filters = new ArrayList<String>();
+    while (ifStatement != null && PsiTreeUtil.isAncestor(body, ifStatement, false)) {
+      final PsiExpression condition = ifStatement.getCondition();
+      if (condition != null) {
+        filters.add(".filter(" + parameter.getName() + " -> " + condition.getText() +")");
+      }
+      ifStatement = PsiTreeUtil.getParentOfType(ifStatement, PsiIfStatement.class);
+    }
+    Collections.reverse(filters);
+    return StringUtil.join(filters, "");
   }
 
   private static String getIteratedValueText(PsiExpression iteratedValue) {
@@ -447,26 +458,31 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
            iteratedValue instanceof PsiParenthesizedExpression ? iteratedValue.getText() : "(" + iteratedValue.getText() + ")";
   }
 
-  public static PsiIfStatement extractIfStatement(PsiStatement body) {
+  private static PsiIfStatement extractIfStatement(PsiStatement body) {
     PsiIfStatement ifStmt = null;
     if (body instanceof PsiIfStatement) {
       ifStmt = (PsiIfStatement)body;
-    } else if (body instanceof PsiBlockStatement) {
+    }
+    else if (body instanceof PsiBlockStatement) {
       final PsiStatement[] statements = ((PsiBlockStatement)body).getCodeBlock().getStatements();
       if (statements.length == 1 && statements[0] instanceof PsiIfStatement) {
         ifStmt = (PsiIfStatement)statements[0];
       }
     }
-    if (ifStmt != null && ifStmt.getElseBranch() == null && ifStmt.getThenBranch() != null) {
-      return ifStmt;
+    if (ifStmt != null && ifStmt.getElseBranch() == null && ifStmt.getCondition() != null) {
+      final PsiStatement thenBranch = ifStmt.getThenBranch();
+      if (thenBranch != null) {
+        final PsiIfStatement deeperThen = extractIfStatement(thenBranch);
+        return deeperThen != null ? deeperThen : ifStmt;
+      }
     }
     return null;
   }
-  
-  private static PsiMethodCallExpression extractAddCall(PsiStatement body) {
-    final PsiIfStatement ifStatement = extractIfStatement(body);
+
+  private static PsiMethodCallExpression extractAddCall(PsiStatement body, PsiIfStatement ifStatement) {
     if (ifStatement != null) {
-      return extractAddCall(ifStatement.getThenBranch());
+      final PsiStatement thenBranch = ifStatement.getThenBranch();
+      return extractAddCall(thenBranch, null);
     }
     PsiExpressionStatement stmt = null;
     if (body instanceof PsiBlockStatement) {

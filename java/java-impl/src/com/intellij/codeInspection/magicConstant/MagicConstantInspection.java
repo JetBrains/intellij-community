@@ -110,7 +110,8 @@ public class MagicConstantInspection extends BaseJavaLocalInspectionTool {
       public void visitReturnStatement(PsiReturnStatement statement) {
         PsiExpression value = statement.getReturnValue();
         if (value == null) return;
-        PsiMethod method = PsiTreeUtil.getParentOfType(statement, PsiMethod.class);
+        PsiElement element = PsiTreeUtil.getParentOfType(statement, PsiMethod.class, PsiLambdaExpression.class);
+        PsiMethod method = element instanceof PsiMethod ? (PsiMethod)element : LambdaUtil.getFunctionalInterfaceMethod(element);
         if (method == null) return;
         checkExpression(value, method, value.getType(), holder);
       }

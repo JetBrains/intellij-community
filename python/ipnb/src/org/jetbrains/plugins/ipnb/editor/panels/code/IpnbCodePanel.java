@@ -1,21 +1,18 @@
 package org.jetbrains.plugins.ipnb.editor.panels.code;
 
 import com.google.common.collect.Lists;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ipnb.configuration.IpnbConnectionManager;
 import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
 import org.jetbrains.plugins.ipnb.editor.IpnbFileEditor;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbEditablePanel;
+import org.jetbrains.plugins.ipnb.editor.panels.IpnbFilePanel;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbPanel;
 import org.jetbrains.plugins.ipnb.format.cells.IpnbCodeCell;
 import org.jetbrains.plugins.ipnb.format.cells.output.*;
@@ -26,11 +23,11 @@ import java.util.List;
 
 public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
   private final Project myProject;
-  private final Disposable myParent;
+  private final IpnbFileEditor myParent;
   private IpnbCodeSourcePanel myCodeSourcePanel;
   private final List<IpnbPanel> myOutputPanels = Lists.newArrayList();
 
-  public IpnbCodePanel(@NotNull final Project project, @Nullable final Disposable parent, @NotNull final IpnbCodeCell cell) {
+  public IpnbCodePanel(@NotNull final Project project, @NotNull final IpnbFileEditor parent, @NotNull final IpnbCodeCell cell) {
     super(cell, new BorderLayout());
     myProject = project;
     myParent = parent;
@@ -40,8 +37,7 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
   }
 
   public IpnbFileEditor getFileEditor() {
-    assert myParent instanceof IpnbFileEditor;
-    return (IpnbFileEditor)myParent;
+    return myParent;
   }
 
   public Editor getEditor() {
@@ -68,13 +64,6 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
     c.gridwidth = 1;
 
     myCodeSourcePanel = new IpnbCodeSourcePanel(myProject, this, myCell);
-    if (myParent != null)
-      Disposer.register(myParent, new Disposable() {
-      @Override
-      public void dispose() {
-        EditorFactory.getInstance().releaseEditor(myCodeSourcePanel.getEditor());
-      }
-    });
     addPromptPanel(panel, myCell.getPromptNumber(), IpnbEditorUtil.PromptType.In, myCodeSourcePanel, c);
 
     c.gridx = 1;
@@ -119,7 +108,10 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
   @Override
   public void switchToEditing() {
     setEditing(true);
-    getParent().repaint();
+    final Container parent = getParent();
+    if (parent != null) {
+      parent.repaint();
+    }
     UIUtil.requestFocus(myCodeSourcePanel.getEditor().getContentComponent());
   }
 
@@ -168,8 +160,9 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
 
           addOutputPanel(myViewPanel, c, output, output instanceof IpnbOutOutputCell);
         }
-        revalidate();
-        repaint();
+        final IpnbFilePanel filePanel = myParent.getIpnbFilePanel();
+        filePanel.revalidate();
+        filePanel.repaint();
       }
     });
   }

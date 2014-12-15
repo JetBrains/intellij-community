@@ -53,7 +53,9 @@ public class TestNGPatternConfigurationProducer extends TestNGConfigurationProdu
                                                   Ref<PsiElement> sourceElement) {
     final LinkedHashSet<String> classes = new LinkedHashSet<String>();
     PsiElement[] elements = collectPatternElements(context, classes);
-    if (classes.size() <= 1) return false;
+    if (elements == null || collectTestMembers(elements).size() <= 1) {
+      return false;
+    }
     final TestData data = configuration.getPersistantData();
     data.setPatterns(classes);
     data.TEST_OBJECT = TestType.PATTERN.getType();
@@ -69,7 +71,7 @@ public class TestNGPatternConfigurationProducer extends TestNGConfigurationProdu
       if (psiElement instanceof PsiClassOwner) {
         final PsiClass[] classes = ((PsiClassOwner)psiElement).getClasses();
         for (PsiClass aClass : classes) {
-          if (JUnitUtil.isTestClass(aClass)) {
+          if (TestNGUtil.hasTest(aClass)) {
             foundMembers.add(aClass);
           }
         }

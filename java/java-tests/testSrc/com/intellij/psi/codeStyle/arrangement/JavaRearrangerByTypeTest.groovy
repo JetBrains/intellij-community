@@ -470,4 +470,103 @@ public class Seq<T> {
       ]
     )
   }
+
+  void "test overridden method is matched by overridden rule"() {
+    doTest(
+      initial: '''\
+class A {
+  public void test() {}
+  public void run() {}
+}
+
+class B extends A {
+
+  public void infer() {}
+
+  @Override
+  public void test() {}
+
+  private void fail() {}
+
+  @Override
+  public void run() {}
+
+  private void compute() {}
+
+  public void adjust() {}
+
+}
+''',
+      expected: '''\
+class A {
+  public void test() {}
+  public void run() {}
+}
+
+class B extends A {
+
+  public void infer() {}
+  public void adjust() {}
+  private void fail() {}
+  private void compute() {}
+  @Override
+  public void test() {}
+  @Override
+  public void run() {}
+
+}
+''',
+      rules: [rule(PUBLIC, METHOD), rule(PRIVATE, METHOD), rule(OVERRIDDEN)]
+    )
+  }
+
+  void "test overridden method is matched by method rule if no overridden rule found"() {
+    doTest(
+      initial: '''\
+class A {
+  public void test() {}
+  public void run() {}
+}
+
+class B extends A {
+
+  public void infer() {}
+
+  @Override
+  public void test() {}
+
+  private void fail() {}
+
+  @Override
+  public void run() {}
+
+  private void compute() {}
+
+  public void adjust() {}
+
+}
+''',
+      expected: '''\
+class A {
+  public void test() {}
+  public void run() {}
+}
+
+class B extends A {
+
+  public void infer() {}
+
+  @Override
+  public void test() {}
+  @Override
+  public void run() {}
+  public void adjust() {}
+  private void fail() {}
+  private void compute() {}
+
+}
+''',
+      rules: [rule(PUBLIC, METHOD), rule(PRIVATE, METHOD)]
+    )
+  }
 }

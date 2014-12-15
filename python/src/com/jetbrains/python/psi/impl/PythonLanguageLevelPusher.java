@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +27,12 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.JdkOrderEntry;
+import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.impl.FilePropertyPusher;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
 import com.intellij.openapi.util.Key;
@@ -45,6 +49,7 @@ import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonModuleTypeBase;
 import com.jetbrains.python.facet.PythonFacetSettings;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.resolve.PythonSdkPathCache;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -97,22 +102,25 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
     return getFileLanguageLevel(project, file);
   }
 
-  public static LanguageLevel getFileLanguageLevel(Project project, VirtualFile file) {
+  public static LanguageLevel getFileLanguageLevel(@NotNull Project project, @Nullable VirtualFile file) {
     if (ApplicationManager.getApplication().isUnitTestMode() && LanguageLevel.FORCE_LANGUAGE_LEVEL != null) {
       return LanguageLevel.FORCE_LANGUAGE_LEVEL;
     }
     if (file == null) return null;
+    final Sdk sdk = getFileSdk(project, file);
+    return PythonSdkType.getLanguageLevelForSdk(sdk);
+  }
 
+  @Nullable
+  private static Sdk getFileSdk(@NotNull Project project, @NotNull VirtualFile file) {
     final Module module = ModuleUtilCore.findModuleForFile(file, project);
     if (module != null) {
-      final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
-      return PythonSdkType.getLanguageLevelForSdk(sdk);
+      final Sdk sdk = PythonSdkType.findPythonSdk(module);
+      if (sdk != null) {
+        return sdk;
+      }
     }
-    final Sdk sdk = findSdk(project, file);
-    if (sdk != null) {
-      return PythonSdkType.getLanguageLevelForSdk(sdk);
-    }
-    return null;
+    return findSdk(project, file);
   }
 
   @Nullable
@@ -133,7 +141,7 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
       return LanguageLevel.FORCE_LANGUAGE_LEVEL;
     }
 
-    final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
+    final Sdk sdk = PythonSdkType.findPythonSdk(module);
     return PythonSdkType.getLanguageLevelForSdk(sdk);
   }
 
@@ -167,7 +175,19 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
     for (VirtualFile child : fileOrDir.getChildren()) {
       final FileType fileType = FileTypeRegistry.getInstance().getFileTypeByFileName(child.getName());
       if (!child.isDirectory() && PythonFileType.INSTANCE.equals(fileType)) {
+        clearSdkPathCache(child);
         PushedFilePropertiesUpdater.getInstance(project).filePropertiesChanged(child);
+      }
+    }
+  }
+
+  private static void clearSdkPathCache(@NotNull final VirtualFile child) {
+    final Project[] projects = ProjectManager.getInstance().getOpenProjects();
+    for (Project project : projects) {
+      final Sdk sdk = getFileSdk(project, child);
+      if (sdk != null) {
+        final PythonSdkPathCache pathCache = PythonSdkPathCache.getInstance(project, sdk);
+        pathCache.clearCache();
       }
     }
   }

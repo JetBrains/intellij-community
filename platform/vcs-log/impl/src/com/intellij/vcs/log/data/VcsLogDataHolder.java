@@ -19,6 +19,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.BackgroundTaskQueue;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
@@ -63,7 +64,7 @@ public class VcsLogDataHolder implements Disposable, VcsLogDataProvider {
    * which is important because these details will be constantly visible to the user,
    * thus it would be annoying to re-load them from VCS if the cache overflows.
    */
-  @NotNull private final Map<Hash, VcsCommitMetadata> myTopCommitsDetailsCache = ContainerUtil.newConcurrentMap();
+  @NotNull private final Map<Integer, VcsCommitMetadata> myTopCommitsDetailsCache = ContainerUtil.newConcurrentMap();
 
   private final VcsUserRegistryImpl myUserRegistry;
 
@@ -111,7 +112,9 @@ public class VcsLogDataHolder implements Disposable, VcsLogDataProvider {
                                           myDataPackUpdateHandler, new Consumer<Exception>() {
       @Override
       public void consume(Exception e) {
-        LOG.error(e);
+        if (!(e instanceof ProcessCanceledException)) {
+          LOG.error(e);
+        }
       }
     }, mySettings.getRecentCommitsCount());
   }
@@ -246,8 +249,8 @@ public class VcsLogDataHolder implements Disposable, VcsLogDataProvider {
   }
 
   @Nullable
-  public VcsCommitMetadata getTopCommitDetails(@NotNull Hash hash) {
-    return myTopCommitsDetailsCache.get(hash);
+  public VcsCommitMetadata getTopCommitDetails(@NotNull Integer commitId) {
+    return myTopCommitsDetailsCache.get(commitId);
   }
 
   public CommitDetailsGetter getCommitDetailsGetter() {

@@ -284,7 +284,7 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
 
       final VirtualFile file = myFS.refreshAndFindFileByIoFile(targetFile);
       assertNotNull(file);
-      file.setBinaryContent("hello".getBytes("UTF-8"), 0, 0, requestor);
+      file.setBinaryContent("hello".getBytes(CharsetToolkit.UTF8_CHARSET), 0, 0, requestor);
       assertTrue(file.getLength() > 0);
 
       final VirtualFile check = myFS.refreshAndFindFileByIoFile(hardLinkFile);

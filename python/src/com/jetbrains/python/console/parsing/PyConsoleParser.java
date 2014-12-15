@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,6 +55,7 @@ public class PyConsoleParser extends PyParser{
     StatementParsing stmt_parser = context.getStatementParser();
     builder.setTokenTypeRemapper(stmt_parser); // must be done before touching the caching lexer with eof() call.
 
+    builder.setDebugMode(true);
     while (!builder.eof()) {
       stmt_parser.parseStatement(context.emptyParsingScope());
     }

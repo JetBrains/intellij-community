@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
@@ -429,7 +430,7 @@ public class GitRebaser {
         }
         try {
           TreeMap<String, String> pickLines = new TreeMap<String, String>();
-          StringScanner s = new StringScanner(new String(FileUtil.loadFileText(new File(path), GitUtil.UTF8_ENCODING)));
+          StringScanner s = new StringScanner(new String(FileUtil.loadFileText(new File(path), CharsetToolkit.UTF8)));
           while (s.hasMoreData()) {
             if (!s.tryConsume("pick ")) {
               s.line();
@@ -438,7 +439,7 @@ public class GitRebaser {
             String commit = s.spaceToken();
             pickLines.put(commit, "pick " + commit + " " + s.line());
           }
-          PrintWriter w = new PrintWriter(new OutputStreamWriter(new FileOutputStream(path), GitUtil.UTF8_ENCODING));
+          PrintWriter w = new PrintWriter(new OutputStreamWriter(new FileOutputStream(path), CharsetToolkit.UTF8));
           try {
             for (String commit : myCommits) {
               String key = pickLines.headMap(commit + "\u0000").lastKey();

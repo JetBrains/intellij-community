@@ -34,8 +34,6 @@ public class MessageDescriptor extends NodeDescriptorImpl {
   public static final MessageDescriptor LOCAL_VARIABLES_INFO_UNAVAILABLE = new MessageDescriptor(
     DebuggerBundle.message("message.node.local.variables.debug.info.not.available")
   );
-  public static final MessageDescriptor ALL_ELEMENTS_IN_VISIBLE_RANGE_ARE_NULL = new MessageDescriptor(
-    DebuggerBundle.message("message.node.all.array.elements.null"));
   public static final MessageDescriptor ALL_ELEMENTS_IN_RANGE_ARE_NULL = new MessageDescriptor(
     DebuggerBundle.message("message.node.all.elements.null"));
   public static final MessageDescriptor ARRAY_IS_EMPTY = new MessageDescriptor(DebuggerBundle.message("message.node.empty.array"));

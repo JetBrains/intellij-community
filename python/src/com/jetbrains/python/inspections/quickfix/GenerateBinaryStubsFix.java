@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,6 +76,11 @@ public class GenerateBinaryStubsFix implements LocalQuickFix {
   public static Collection<GenerateBinaryStubsFix> generateFixes(@NotNull final PyImportStatementBase importStatementBase) {
     final List<String> names = importStatementBase.getFullyQualifiedObjectNames();
     final List<GenerateBinaryStubsFix> result = new ArrayList<GenerateBinaryStubsFix>(names.size());
+    if (importStatementBase instanceof PyFromImportStatement && names.isEmpty()) {
+      final QualifiedName qName = ((PyFromImportStatement)importStatementBase).getImportSourceQName();
+      if (qName != null)
+        result.add(new GenerateBinaryStubsFix(importStatementBase, qName.toString()));
+    }
     for (final String qualifiedName : names) {
       result.add(new GenerateBinaryStubsFix(importStatementBase, qualifiedName));
     }
@@ -225,7 +230,8 @@ public class GenerateBinaryStubsFix implements LocalQuickFix {
    * @return true if this fix could work
    */
   public static boolean isApplicable(@NotNull final PyImportStatementBase importStatementBase) {
-    if (importStatementBase.getFullyQualifiedObjectNames().isEmpty()) {
+    if (importStatementBase.getFullyQualifiedObjectNames().isEmpty() &&
+        !(importStatementBase instanceof PyFromImportStatement && ((PyFromImportStatement)importStatementBase).isStarImport())) {
       return false;
     }
     final Sdk sdk = getPythonSdk(importStatementBase);

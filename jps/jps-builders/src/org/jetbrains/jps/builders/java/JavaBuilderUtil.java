@@ -30,6 +30,7 @@ import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.builders.java.dependencyView.Mappings;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 import org.jetbrains.jps.incremental.*;
+import org.jetbrains.jps.incremental.fs.CompilationRound;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
@@ -51,8 +52,59 @@ import java.util.*;
 public class JavaBuilderUtil {
   private static final Key<Set<File>> ALL_AFFECTED_FILES_KEY = Key.create("_all_affected_files_");
   private static final Key<Set<File>> ALL_COMPILED_FILES_KEY = Key.create("_all_compiled_files_");
+  private static final Key<Set<File>> FILES_TO_COMPILE_KEY = Key.create("_files_to_compile_");
+  private static final Key<Set<File>> SUCCESSFULLY_COMPILED_FILES_KEY = Key.create("_successfully_compiled_files_");
+  private static final Key<Pair<Mappings, Callbacks.Backend>> MAPPINGS_DELTA_KEY = Key.create("_mappings_delta_");
   public static final Key<Callbacks.ConstantAffectionResolver> CONSTANT_SEARCH_SERVICE = Key.create("_constant_search_service_");
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.Builder");
+
+  public static void registerFileToCompile(CompileContext context, File file) {
+    registerFilesToCompile(context, Collections.singleton(file));
+  }
+  
+  public static void registerFilesToCompile(CompileContext context, Collection<File> files) {
+    getFilesContainer(context, FILES_TO_COMPILE_KEY).addAll(files);
+  }
+
+  public static void registerSuccessfullyCompiled(CompileContext context, File file) {
+    registerSuccessfullyCompiled(context, Collections.singleton(file));
+  }
+  
+  public static void registerSuccessfullyCompiled(CompileContext context, Collection<File> files) {
+    getFilesContainer(context, SUCCESSFULLY_COMPILED_FILES_KEY).addAll(files);
+  }
+  
+  @NotNull
+  public static Callbacks.Backend getDependenciesRegistrar(CompileContext context) {
+    Pair<Mappings, Callbacks.Backend> pair = MAPPINGS_DELTA_KEY.get(context);
+    if (pair == null) {
+      final Mappings delta = context.getProjectDescriptor().dataManager.getMappings().createDelta();
+      pair = Pair.create(delta, delta.getCallback());
+      MAPPINGS_DELTA_KEY.set(context, pair);
+    }
+    return pair.second;
+  }
+
+  public static boolean updateMappingsOnRoundCompletion(
+    CompileContext context, DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder, ModuleChunk chunk) throws IOException {
+
+    Mappings delta = null;
+    
+    final Pair<Mappings, Callbacks.Backend> pair = MAPPINGS_DELTA_KEY.get(context);
+    if (pair != null) {
+      MAPPINGS_DELTA_KEY.set(context, null);
+      delta = pair.getFirst();
+    }
+    
+    if (delta == null) {
+      return false;
+    }
+    final Set<File> compiledFiles = getFilesContainer(context, FILES_TO_COMPILE_KEY);
+    FILES_TO_COMPILE_KEY.set(context, null);
+    final Set<File> successfullyCompiled = getFilesContainer(context, SUCCESSFULLY_COMPILED_FILES_KEY);
+    SUCCESSFULLY_COMPILED_FILES_KEY.set(context, null);
+    return updateMappings(context, delta, dirtyFilesHolder, chunk, compiledFiles, successfullyCompiled);
+  }
 
   /**
    *
@@ -82,8 +134,8 @@ public class JavaBuilderUtil {
       if (!isForcedRecompilationAllJavaModules(context)) {
         if (context.shouldDifferentiate(chunk)) {
           context.processMessage(new ProgressMessage("Checking dependencies... [" + chunk.getPresentableShortName() + "]"));
-          final Set<File> allCompiledFiles = getAllCompiledFilesContainer(context);
-          final Set<File> allAffectedFiles = getAllAffectedFilesContainer(context);
+          final Set<File> allCompiledFiles = getFilesContainer(context, ALL_COMPILED_FILES_KEY);
+          final Set<File> allAffectedFiles = getFilesContainer(context, ALL_AFFECTED_FILES_KEY);
 
           // mark as affected all files that were dirty before compilation
           allAffectedFiles.addAll(filesToCompile);
@@ -140,7 +192,7 @@ public class JavaBuilderUtil {
               }
 
               for (File file : newlyAffectedFiles) {
-                FSOperations.markDirtyIfNotDeleted(context, file);
+                FSOperations.markDirtyIfNotDeleted(context, CompilationRound.NEXT, file);
               }
               additionalPassRequired = isCompileJavaIncrementally(context) && chunkContainsAffectedFiles(context, chunk, newlyAffectedFiles);
             }
@@ -151,7 +203,7 @@ public class JavaBuilderUtil {
             context.processMessage(new ProgressMessage(messageText));
 
             additionalPassRequired = isCompileJavaIncrementally(context);
-            FSOperations.markDirtyRecursively(context, chunk);
+            FSOperations.markDirtyRecursively(context, CompilationRound.NEXT, chunk);
           }
         }
         else {
@@ -231,22 +283,14 @@ public class JavaBuilderUtil {
     return false;
   }
 
-  private static Set<File> getAllAffectedFilesContainer(CompileContext context) {
-    Set<File> allAffectedFiles = ALL_AFFECTED_FILES_KEY.get(context);
-    if (allAffectedFiles == null) {
-      allAffectedFiles = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
-      ALL_AFFECTED_FILES_KEY.set(context, allAffectedFiles);
+  @NotNull
+  private static Set<File> getFilesContainer(CompileContext context, final Key<Set<File>> dataKey) {
+    Set<File> files = dataKey.get(context);
+    if (files == null) {
+      files = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
+      dataKey.set(context, files);
     }
-    return allAffectedFiles;
-  }
-
-  private static Set<File> getAllCompiledFilesContainer(CompileContext context) {
-    Set<File> allCompiledFiles = ALL_COMPILED_FILES_KEY.get(context);
-    if (allCompiledFiles == null) {
-      allCompiledFiles = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
-      ALL_COMPILED_FILES_KEY.set(context, allCompiledFiles);
-    }
-    return allCompiledFiles;
+    return files;
   }
 
   private static Set<String> getRemovedPaths(ModuleChunk chunk, DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder) {

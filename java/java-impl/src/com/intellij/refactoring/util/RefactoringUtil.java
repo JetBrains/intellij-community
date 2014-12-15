@@ -386,9 +386,12 @@ public class RefactoringUtil {
 
   public static PsiType getTypeByExpressionWithExpectedType(PsiExpression expr) {
     PsiType type = getTypeByExpression(expr);
-    if (type != null) return type;
+    final boolean isFunctionalType = type instanceof PsiLambdaExpressionType || type instanceof PsiMethodReferenceType;
+    if (type != null && !isFunctionalType) {
+      return type;
+    }
     ExpectedTypeInfo[] expectedTypes = ExpectedTypesProvider.getInstance(expr.getProject()).getExpectedTypes(expr, false);
-    if (expectedTypes.length == 1) {
+    if (expectedTypes.length == 1 || isFunctionalType && expectedTypes.length > 0) {
       type = expectedTypes[0].getType();
       if (!type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) return type;
     }

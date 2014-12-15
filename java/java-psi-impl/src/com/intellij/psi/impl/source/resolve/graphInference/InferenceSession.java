@@ -1395,7 +1395,8 @@ public class InferenceSession {
   }
 
   public PsiType substituteWithInferenceVariables(PsiType type) {
-    return myInferenceSubstitution.substitute(type);
+    final PsiType substituted = myInferenceSubstitution.substitute(type);
+    return isProperType(substituted) ? type : substituted;
   }
 
   public InferenceSession findNestedCallSession(PsiExpression arg) {

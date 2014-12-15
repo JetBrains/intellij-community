@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -101,6 +101,9 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
     for (Instruction instruction : instructions) {
       final PsiElement element = instruction.getElement();
       if (element instanceof PyFunction && owner instanceof PyFunction) {
+        if (PyKnownDecoratorUtil.hasUnknownDecorator((PyFunction)element, myTypeEvalContext)) {
+          continue;
+        }
         if (!myUsedElements.contains(element)) {
           myUnusedElements.add(element);
         }
@@ -123,6 +126,9 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
         }
         // Ignore arguments of import statement
         if (PyImportStatementNavigator.getImportStatementByElement(element) != null) {
+          continue;
+        }
+        if (PyAugAssignmentStatementNavigator.getStatementByTarget(element) != null) {
           continue;
         }
         if (!myUsedElements.contains(element)) {

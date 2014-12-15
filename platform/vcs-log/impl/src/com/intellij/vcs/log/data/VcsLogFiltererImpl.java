@@ -49,7 +49,7 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
   VcsLogFiltererImpl(@NotNull final Project project,
                      @NotNull Map<VirtualFile, VcsLogProvider> providers,
                      @NotNull VcsLogHashMap hashMap,
-                     @NotNull Map<Hash, VcsCommitMetadata> topCommitsDetailsCache,
+                     @NotNull Map<Integer, VcsCommitMetadata> topCommitsDetailsCache,
                      @NotNull CommitDetailsGetter detailsGetter,
                      @NotNull final PermanentGraph.SortType initialSortType,
                      @NotNull final Consumer<VisiblePack> visiblePackConsumer) {

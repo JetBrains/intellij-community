@@ -94,7 +94,7 @@ public class PsiMethodReferenceUtil {
         return false;
       }
     }
-    return true;
+    return !varargs || parameterTypes.length - 1 <= argTypes.length - offset;
   }
 
   @NotNull
@@ -178,7 +178,7 @@ public class PsiMethodReferenceUtil {
         PsiClassType.ClassResolveResult result = PsiUtil.resolveGenericsClassInType(type);
         containingClass = result.getElement();
         if (containingClass != null) {
-          substitutor = result.getSubstitutor();
+          return new QualifierResolveResult(containingClass, result.getSubstitutor(), true);
         }
       }
     }

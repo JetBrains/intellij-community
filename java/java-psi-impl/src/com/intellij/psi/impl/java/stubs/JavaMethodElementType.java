@@ -36,12 +36,15 @@ import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author max
@@ -144,17 +147,6 @@ public abstract class JavaMethodElementType extends JavaStubElementType<PsiMetho
       if (RecordUtil.isStaticNonPrivateMember(stub)) {
         sink.occurrence(JavaStubIndexKeys.JVM_STATIC_MEMBERS_NAMES, name);
         sink.occurrence(JavaStubIndexKeys.JVM_STATIC_MEMBERS_TYPES, stub.getReturnTypeText(false).getShortTypeText());
-      }
-    }
-
-    for (StubElement stubElement : stub.getChildrenStubs()) {
-      if (stubElement instanceof PsiParameterListStub) {
-        for (StubElement paramStub : ((PsiParameterListStub)stubElement).getChildrenStubs()) {
-          if (paramStub instanceof PsiParameterStub) {
-            sink.occurrence(JavaStubIndexKeys.METHOD_TYPES, ((PsiParameterStub)paramStub).getType(false).getShortTypeText());
-          }
-        }
-        break;
       }
     }
   }

@@ -82,13 +82,12 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
     PropertiesComponent.getInstance().setValue(ANNOTATE_LOCAL_VARIABLES, String.valueOf(myAnnotateLocalVariablesCb.isSelected()));
 
     final ProgressManager progressManager = ProgressManager.getInstance();
-    final int totalFiles = scope.getFileCount();
-
     final Set<Module> modulesWithoutAnnotations = new HashSet<Module>();
     final Set<Module> modulesWithLL = new HashSet<Module>();
     if (!progressManager.runProcessWithProgressSynchronously(new Runnable() {
       @Override
       public void run() {
+        final int totalFiles = scope.getFileCount();
 
         scope.accept(new PsiElementVisitor() {
           private int myFileCount = 0;

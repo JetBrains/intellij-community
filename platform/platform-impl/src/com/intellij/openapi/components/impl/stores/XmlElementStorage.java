@@ -164,7 +164,7 @@ public abstract class XmlElementStorage extends StateStorageBase {
 
   @Override
   @Nullable
-  public final ExternalizationSession startExternalization() {
+  public final XmlElementStorageSaveSession startExternalization() {
     return checkIsSavingDisabled() ? null : createSaveSession(getStorageData());
   }
 
@@ -262,6 +262,21 @@ public abstract class XmlElementStorage extends StateStorageBase {
       }
       else if (myCopiedStorageData.setState(componentName, element, myNewLiveStates) != null) {
         myLocalVersionProvider.changeVersion(componentName, System.currentTimeMillis());
+      }
+    }
+
+    public void forceSave() {
+      LOG.assertTrue(myCopiedStorageData == null);
+
+      if (myBlockSavingTheContent) {
+        return;
+      }
+
+      try {
+        doSave(getElement(myOriginalStorageData, isCollapsePathsOnSave(), Collections.<String, Element>emptyMap()));
+      }
+      catch (IOException e) {
+        throw new StateStorageException(e);
       }
     }
 

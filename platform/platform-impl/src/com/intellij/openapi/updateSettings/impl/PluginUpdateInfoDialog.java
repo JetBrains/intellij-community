@@ -22,6 +22,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.util.Ref;
 import com.intellij.ui.TableUtil;
+import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -67,21 +68,28 @@ class PluginUpdateInfoDialog extends AbstractUpdateDialog {
   protected void doOKAction() {
     super.doOKAction();
     final Ref<Boolean> result = new Ref<Boolean>();
-    final Runnable runnable = new Runnable() {
-      public void run() {
+    final Consumer<ProgressIndicator> runnable = new Consumer<ProgressIndicator>() {
+      @Override
+      public void consume(@NotNull ProgressIndicator indicator) {
         UpdateChecker.saveDisabledToUpdatePlugins();
-        result.set(UpdateChecker.install(myUploadedPlugins));
+        result.set(UpdateChecker.install(myUploadedPlugins, indicator));
       }
     };
 
     final String progressTitle = "Download plugins...";
     if (downloadModal()) {
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(runnable, progressTitle, true, null);
-    } else {
+      ProgressManager.getInstance().run(new Task.Modal(null, progressTitle, true) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          runnable.consume(indicator);
+        }
+      });
+    }
+    else {
       ProgressManager.getInstance().run(new Task.Backgroundable(null, progressTitle, true) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
-          runnable.run();
+          runnable.consume(indicator);
         }
 
         @Override

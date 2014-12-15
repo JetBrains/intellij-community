@@ -279,7 +279,7 @@
       <group id="ViewMenu" popup="true" compact="true">
         <group id="ToolWindowsGroup" class="com.intellij.ide.actions.ToolWindowsGroup" popup="true"/>
 
-        <action id="EditSource" class="com.intellij.ide.actions.EditSourceAction"/>
+        <action id="EditSource" class="com.intellij.ide.actions.EditSourceAction" icon="AllIcons.Actions.EditSource"/>
         <action id="ViewSource" class="com.intellij.ide.actions.ViewSourceAction"/>
         <separator/>
         <group id="ViewRecentActions">

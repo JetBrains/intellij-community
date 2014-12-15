@@ -67,7 +67,7 @@ public class TableUtil {
     Rectangle maxCellRect = table.getCellRect(maxSelectionIndex, maxColumnSelectionIndex, false);
     Point selectPoint = minCellRect.getLocation();
     int allHeight = maxCellRect.y + maxCellRect.height - minCellRect.y;
-    allHeight = Math.min(allHeight, table.getVisibleRect().height);
+    allHeight = Math.min(allHeight, table.getHeight());
     table.scrollRectToVisible(new Rectangle(selectPoint, new Dimension(minCellRect.width / 2,allHeight)));
   }
 
@@ -233,22 +233,20 @@ public class TableUtil {
   }
 
   public static void setupCheckboxColumn(@NotNull TableColumn column) {
-    int checkboxWidth = new JCheckBox().getPreferredSize().width;
+    setupCheckboxColumn(column, 0);
+  }
+
+  public static void setupCheckboxColumn(@NotNull TableColumn column, int additionalWidth) {
+    int checkboxWidth = new JCheckBox().getPreferredSize().width + additionalWidth;
     column.setResizable(false);
     column.setPreferredWidth(checkboxWidth);
     column.setMaxWidth(checkboxWidth);
     column.setMinWidth(checkboxWidth);
   }
 
-  public static void updateScroller(@NotNull JTable table, boolean temporaryHideVerticalScrollBar) {
+  public static void updateScroller(@NotNull JTable table) {
     JScrollPane scrollPane = UIUtil.getParentOfType(JScrollPane.class, table);
     if (scrollPane != null) {
-      if (temporaryHideVerticalScrollBar) {
-        final JScrollBar bar = scrollPane.getVerticalScrollBar();
-        if (bar == null || !bar.isVisible()) {
-          scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
-        }
-      }
       scrollPane.revalidate();
       scrollPane.repaint();
     }

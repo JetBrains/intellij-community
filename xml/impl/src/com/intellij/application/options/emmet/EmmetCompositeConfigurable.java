@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.application.options.emmet;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.template.emmet.generators.XmlZenCodingGenerator;
 import com.intellij.codeInsight.template.emmet.generators.ZenCodingGenerator;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.openapi.options.CompositeConfigurable;
@@ -73,6 +74,7 @@ public class EmmetCompositeConfigurable extends CompositeConfigurable<UnnamedCon
     for (int i = 0; i < configurables.size(); i++) {
       UnnamedConfigurable configurable = configurables.get(i);
       final JComponent component = configurable.createComponent();
+      assert component != null;
       myGeneratorSettingsPanel.add(component,
                                    new GridConstraints(i, 0, 1, 1, 0, GridConstraints.FILL_HORIZONTAL, 
                                                        GridConstraints.SIZEPOLICY_CAN_GROW | GridConstraints.SIZEPOLICY_WANT_GROW | GridConstraints.SIZEPOLICY_CAN_SHRINK,
@@ -120,11 +122,17 @@ public class EmmetCompositeConfigurable extends CompositeConfigurable<UnnamedCon
 
   @Override
   protected List<UnnamedConfigurable> createConfigurables() {
-    List<UnnamedConfigurable> configurables = ContainerUtil.newArrayList();
+    List<UnnamedConfigurable> xmlConfigurables = ContainerUtil.newSmartList();
+    List<UnnamedConfigurable> configurables = ContainerUtil.newSmartList();
     for (ZenCodingGenerator zenCodingGenerator : ZenCodingGenerator.getInstances()) {
-      ContainerUtil.addIfNotNull(configurables, zenCodingGenerator.createConfigurable());
+      if (zenCodingGenerator instanceof XmlZenCodingGenerator) {
+        ContainerUtil.addIfNotNull(xmlConfigurables, zenCodingGenerator.createConfigurable());
+      }
+      else {
+        ContainerUtil.addIfNotNull(configurables, zenCodingGenerator.createConfigurable());
+      }
     }
-    return configurables;
+    return ContainerUtil.concat(xmlConfigurables, configurables);
   }
 
   private char getSelectedEmmetExpandShortcut() {

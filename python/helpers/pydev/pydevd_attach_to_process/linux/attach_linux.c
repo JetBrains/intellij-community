@@ -12,19 +12,22 @@
 
 // Exported function: hello(): Just to print something and check that we've been
 // able to connect.
-extern int hello(void);
+extern "C" int hello(void);
 
 int hello()
 {
     printf("Hello world!\n");
-    void *hndl = dlsym (NULL, "PyGILState_Ensure");
+
+    void *main_hndl = dlopen(NULL, 0x2);
+
+    void *hndl = dlsym (main_hndl, "PyGILState_Ensure");
     if(hndl == NULL){
         printf("NULL\n");
 
     }else{
         printf("Worked (found PyGILState_Ensure)!\n");
-
     }
+
     printf("%d", GetPythonVersion());
 
 
@@ -36,8 +39,8 @@ int hello()
 // which are already running.
 // isDebug is pretty important! Must be true on python debug builds (python_d)
 // If this value is passed wrongly the program will crash.
-extern int SetSysTraceFunc(bool showDebugInfo, bool isDebug);
-extern int DoAttach(bool isDebug, const char *command, bool showDebugInfo);
+extern "C" int SetSysTraceFunc(bool showDebugInfo, bool isDebug);
+extern "C" int DoAttach(bool isDebug, const char *command, bool showDebugInfo);
 
 // Internal function to keep on the tracing
 int _PYDEVD_ExecWithGILSetSysStrace(bool showDebugInfo, bool isDebug);
@@ -123,7 +126,8 @@ public:
 int DoAttach(bool isDebug, const char *command, bool showDebugInfo)
 {
     Py_IsInitialized isInitFunc;
-    *(void**)(&isInitFunc) = dlsym(0, "Py_IsInitialized");
+    void *main_hndl = dlopen(NULL, 0x2);
+    *(void**)(&isInitFunc) = dlsym(main_hndl, "Py_IsInitialized");
     CHECK_NULL(isInitFunc, "Py_IsInitialized not found.\n", 1);
 
     if(!isInitFunc()){
@@ -136,7 +140,7 @@ int DoAttach(bool isDebug, const char *command, bool showDebugInfo)
     PythonVersion version = GetPythonVersion();
 
     PyInterpreterState_Head interpHeadFunc;
-    *(void**)(&interpHeadFunc) = dlsym(0, "PyInterpreterState_Head");
+    *(void**)(&interpHeadFunc) = dlsym(main_hndl, "PyInterpreterState_Head");
     CHECK_NULL(interpHeadFunc, "PyInterpreterState_Head not found.\n", 3);
 
     PyInterpreterState* head = interpHeadFunc();
@@ -148,15 +152,15 @@ int DoAttach(bool isDebug, const char *command, bool showDebugInfo)
     // have any more problems.
 
     PyGILState_Ensure pyGilStateEnsureFunc;
-    *(void**)(&pyGilStateEnsureFunc) = dlsym(0, "PyGILState_Ensure");
+    *(void**)(&pyGilStateEnsureFunc) = dlsym(main_hndl, "PyGILState_Ensure");
     CHECK_NULL(pyGilStateEnsureFunc, "PyGILState_Ensure not found.\n", 5);
 
     PyGILState_Release pyGilStateReleaseFunc;
-    *(void**)(&pyGilStateReleaseFunc) = dlsym(0, "PyGILState_Release");
+    *(void**)(&pyGilStateReleaseFunc) = dlsym(main_hndl, "PyGILState_Release");
     CHECK_NULL(pyGilStateReleaseFunc, "PyGILState_Release not found.\n", 6);
 
     PyRun_SimpleString pyRun_SimpleString;
-    *(void**)(&pyRun_SimpleString) = dlsym(0, "PyRun_SimpleString");
+    *(void**)(&pyRun_SimpleString) = dlsym(main_hndl, "PyRun_SimpleString");
     CHECK_NULL(pyRun_SimpleString, "PyRun_SimpleString not found.\n", 6);
 
     PyGILState_STATE pyGILState = pyGilStateEnsureFunc();
@@ -176,7 +180,8 @@ int SetSysTraceFunc(bool showDebugInfo, bool isDebug)
         printf("SetSysTraceFunc started.\n");
     }
     Py_IsInitialized isInitFunc;
-    *(void**)(&isInitFunc) = dlsym(0, "Py_IsInitialized");
+    void *main_hndl = dlopen(NULL, 0x2);
+    *(void**)(&isInitFunc) = dlsym(main_hndl, "Py_IsInitialized");
     CHECK_NULL(isInitFunc, "Py_IsInitialized not found.\n", 1);
 
     if(!isInitFunc()){
@@ -189,18 +194,18 @@ int SetSysTraceFunc(bool showDebugInfo, bool isDebug)
     PythonVersion version = GetPythonVersion();
 
     PyInterpreterState_Head interpHeadFunc;
-    *(void**)(&interpHeadFunc) = dlsym(0, "PyInterpreterState_Head");
+    *(void**)(&interpHeadFunc) = dlsym(main_hndl, "PyInterpreterState_Head");
     CHECK_NULL(interpHeadFunc, "PyInterpreterState_Head not found.\n", 3);
 
     PyInterpreterState* head = interpHeadFunc();
     CHECK_NULL(head, "Interpreter not initialized.\n", 4);
 
     PyGILState_Ensure pyGilStateEnsureFunc;
-    *(void**)(&pyGilStateEnsureFunc) = dlsym(0, "PyGILState_Ensure");
+    *(void**)(&pyGilStateEnsureFunc) = dlsym(main_hndl, "PyGILState_Ensure");
     CHECK_NULL(pyGilStateEnsureFunc, "PyGILState_Ensure not found.\n", 5);
 
     PyGILState_Release pyGilStateReleaseFunc;
-    *(void**)(&pyGilStateReleaseFunc) = dlsym(0, "PyGILState_Release");
+    *(void**)(&pyGilStateReleaseFunc) = dlsym(main_hndl, "PyGILState_Release");
     CHECK_NULL(pyGilStateReleaseFunc, "PyGILState_Release not found.\n", 6);
 
     PyGILState_STATE pyGILState = pyGilStateEnsureFunc();
@@ -213,17 +218,19 @@ int SetSysTraceFunc(bool showDebugInfo, bool isDebug)
 
 int _PYDEVD_ExecWithGILSetSysStrace(bool showDebugInfo, bool isDebug){
     PyBool_FromLong boolFromLongFunc;
-    *(void**)(&boolFromLongFunc) = dlsym(0, "PyBool_FromLong");
+    void *main_hndl = dlopen(NULL, 0x2);
+
+    *(void**)(&boolFromLongFunc) = dlsym(main_hndl, "PyBool_FromLong");
     CHECK_NULL(boolFromLongFunc, "PyBool_FromLong not found.\n", 7);
 
     PyObject_HasAttrString pyHasAttrFunc;
-    *(void**)(&pyHasAttrFunc) = dlsym(0, "PyObject_HasAttrString");
+    *(void**)(&pyHasAttrFunc) = dlsym(main_hndl, "PyObject_HasAttrString");
     CHECK_NULL(pyHasAttrFunc, "PyObject_HasAttrString not found.\n", 7);
 
     //Important: we need a non-blocking import here: PyImport_ImportModule
     //could end up crashing (this makes us work only from 2.6 onwards).
     PyImport_ImportModuleNoBlock pyImportModFunc;
-    *(void**)(&pyImportModFunc) = dlsym(0, "PyImport_ImportModuleNoBlock");
+    *(void**)(&pyImportModFunc) = dlsym(main_hndl, "PyImport_ImportModuleNoBlock");
     CHECK_NULL(pyImportModFunc, "PyImport_ImportModuleNoBlock not found.\n", 8);
 
 
@@ -232,14 +239,14 @@ int _PYDEVD_ExecWithGILSetSysStrace(bool showDebugInfo, bool isDebug){
 
     if(!pyHasAttrFunc(pydevdTracingMod.ToPython(), "_original_settrace")){
         if(showDebugInfo){
-            printf("pydevd_tracing module has no _original_settrace! ");
+            printf("pydevd_tracing module has no _original_settrace!\n");
         }
         return 8;
     }
 
 
     PyObject_GetAttrString pyGetAttr;
-    *(void**)(&pyGetAttr) = dlsym(0, "PyObject_GetAttrString");
+    *(void**)(&pyGetAttr) = dlsym(main_hndl, "PyObject_GetAttrString");
     CHECK_NULL(pyGetAttr, "PyObject_GetAttrString not found.\n", 8);
 
     auto PyObjectHolder settrace = PyObjectHolder(isDebug, pyGetAttr(pydevdTracingMod.ToPython(), "_original_settrace"));
@@ -252,7 +259,7 @@ int _PYDEVD_ExecWithGILSetSysStrace(bool showDebugInfo, bool isDebug){
     CHECK_NULL(getGlobalDebugger.ToPython(), "pydevd.GetGlobalDebugger null.\n", 11);
 
     PyObject_CallFunctionObjArgs call;
-    *(void**)(&call) = dlsym(0, "PyObject_CallFunctionObjArgs");
+    *(void**)(&call) = dlsym(main_hndl, "PyObject_CallFunctionObjArgs");
     CHECK_NULL(call, "PyObject_CallFunctionObjArgs not found.\n", 11);
 
     auto PyObjectHolder globalDbg = PyObjectHolder(isDebug, call(getGlobalDebugger.ToPython(), NULL));
@@ -270,7 +277,7 @@ int _PYDEVD_ExecWithGILSetSysStrace(bool showDebugInfo, bool isDebug){
     
     DecRef(call(settrace.ToPython(), traceFunc.ToPython(), NULL), isDebug);
     if(showDebugInfo){
-        printf("sys.settrace(pydevd.GetGlobalDebugger().trace_dispatch) worked.");
+        printf("sys.settrace(pydevd.GetGlobalDebugger().trace_dispatch) worked.\n");
     }
 
     return 0;

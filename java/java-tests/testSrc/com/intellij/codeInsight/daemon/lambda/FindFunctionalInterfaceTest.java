@@ -42,7 +42,19 @@ public class FindFunctionalInterfaceTest extends LightCodeInsightFixtureTestCase
     assertEquals("() -> {}", next.getText());
   }
 
-  @Bombed(day = 30, month = Calendar.SEPTEMBER)
+  public void testMethodArgumentByTypeParameter() throws Exception {
+    myFixture.configureByFile(getTestName(false) + ".java");
+    final PsiElement elementAtCaret = myFixture.getElementAtCaret();
+    assertNotNull(elementAtCaret);
+    final PsiClass psiClass = PsiTreeUtil.getParentOfType(elementAtCaret, PsiClass.class, false);
+    assertTrue(psiClass != null && psiClass.isInterface());
+    final Collection<PsiFunctionalExpression> expressions = FunctionalExpressionSearch.search(psiClass).findAll();
+    assertTrue(expressions.size() == 1);
+    final PsiFunctionalExpression next = expressions.iterator().next();
+    assertNotNull(next);
+    assertEquals("() -> {}", next.getText());
+  }
+
   public void testFieldFromAnonymousClassScope() throws Exception {
     myFixture.configureByFile(getTestName(false) + ".java");
     final PsiElement elementAtCaret = myFixture.getElementAtCaret();

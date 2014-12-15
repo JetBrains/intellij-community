@@ -216,6 +216,10 @@ public class IfStatementWithIdenticalBranchesInspection
     private ReturnValue buildReturnValue(PsiElement element) {
       final Ref<PsiReturnStatement> result = Ref.create(null);
       element.accept(new JavaRecursiveElementWalkingVisitor() {
+        public void visitClass(PsiClass aClass) {}
+
+        public void visitLambdaExpression(PsiLambdaExpression expression) {}
+
         @Override
         public void visitReturnStatement(PsiReturnStatement statement) {
           super.visitReturnStatement(statement);

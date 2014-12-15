@@ -139,12 +139,14 @@ public class Switcher extends AnAction implements DumbAware {
     final Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
     if (project == null) return;
 
+    boolean isNewSwitcher = false;
       synchronized (Switcher.class) {
         if (SWITCHER != null && SWITCHER.isPinnedMode()) {
           SWITCHER.cancel();
           SWITCHER = null;
         }
         if (SWITCHER == null) {
+          isNewSwitcher = true;
           SWITCHER = createAndShowSwitcher(project, SWITCHER_TITLE, false);
           FeatureUsageTracker.getInstance().triggerFeatureUsed(SWITCHER_FEATURE_ID);
         }
@@ -156,7 +158,7 @@ public class Switcher extends AnAction implements DumbAware {
       if (e.getInputEvent().isShiftDown()) {
         SWITCHER.goBack();
       } else {
-        if (!FileEditorManagerEx.getInstanceEx(project).hasOpenedFile()) {
+       if (isNewSwitcher && !FileEditorManagerEx.getInstanceEx(project).hasOpenedFile()) {
           SWITCHER.files.setSelectedIndex(0);
         } else {
           SWITCHER.goForward();

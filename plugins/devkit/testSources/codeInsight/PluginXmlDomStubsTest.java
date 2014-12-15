@@ -26,9 +26,9 @@ public class PluginXmlDomStubsTest extends DomStubTest {
     doBuilderTest("pluginXmlStubs.xml",
                   "File:idea-plugin\n" +
                   "  Element:idea-plugin\n" +
-                  "    Element:id\n" +
-                  "    Element:name\n" +
-                  "    Element:depends\n" +
+                  "    Element:id:com.intellij.myPlugin\n" +
+                  "    Element:name:pluginName\n" +
+                  "    Element:depends:anotherPlugin\n" +
                   "    Element:module\n" +
                   "      Attribute:value:myModule\n" +
                   "    Element:extensionPoints\n" +
@@ -40,8 +40,7 @@ public class PluginXmlDomStubsTest extends DomStubTest {
                   "          Attribute:implements:SomeImplements\n" +
                   "      Element:extensionPoint\n" +
                   "        Attribute:qualifiedName:qualifiedName\n" +
-                  "        Attribute:beanClass:BeanClass\n"
-    );
+                  "        Attribute:beanClass:BeanClass\n");
   }
 
   public void testXInclude() throws Exception {

@@ -152,7 +152,7 @@ public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<Modifiabl
 
   @Override
   protected void readLanguageLevel(Element root, ModifiableRootModel model) throws InvalidDataException {
-    model.getModuleExtension(LanguageLevelModuleExtension.class).readExternal(root);
+    model.getModuleExtension(LanguageLevelModuleExtensionImpl.class).readExternal(root);
   }
 
   @Override
@@ -277,7 +277,7 @@ public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<Modifiabl
       isModified = true;
     }
 
-    final LanguageLevelModuleExtension languageLevelModuleExtension = model.getModuleExtension(LanguageLevelModuleExtension.class);
+    final LanguageLevelModuleExtensionImpl languageLevelModuleExtension = model.getModuleExtension(LanguageLevelModuleExtensionImpl.class);
     final LanguageLevel languageLevel = languageLevelModuleExtension.getLanguageLevel();
     if (languageLevel != null) {
       languageLevelModuleExtension.writeExternal(root);

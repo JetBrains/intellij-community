@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.StreamUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.Namespace;
@@ -104,7 +105,7 @@ public class LocalArchivedTemplate extends ArchivedProjectTemplate {
       ZipEntry entry;
       while ((entry = stream.getNextEntry()) != null) {
         if (condition.value(entry)) {
-          return StreamUtil.readText(stream, TemplateModuleBuilder.UTF_8);
+          return StreamUtil.readText(stream, CharsetToolkit.UTF8_CHARSET);
         }
       }
     }

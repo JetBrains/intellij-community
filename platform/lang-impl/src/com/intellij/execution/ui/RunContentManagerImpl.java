@@ -38,6 +38,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
@@ -421,7 +422,11 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
       }
       //Stage two: try to get content from descriptor itself
       final Content attachedContent = descriptor.getAttachedContent();
-      if (attachedContent != null && attachedContent.isValid() && contentManager.getIndexOfContent(attachedContent) != -1) {
+
+      if (attachedContent != null
+          && attachedContent.isValid()
+          && contentManager.getIndexOfContent(attachedContent) != -1
+          && (Comparing.equal(descriptor.getDisplayName(), attachedContent.getDisplayName()) || !attachedContent.isPinned())) {
         content = attachedContent;
       }
     }

@@ -440,7 +440,9 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
   }
 
   public interface RootsConvertor {
-    List<VirtualFile> convertRoots(List<VirtualFile> result);
+
+    @NotNull
+    List<VirtualFile> convertRoots(@NotNull List<VirtualFile> result);
   }
 
   /**

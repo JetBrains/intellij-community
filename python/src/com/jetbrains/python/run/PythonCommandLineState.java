@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -337,7 +337,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
 
   protected Collection<String> collectPythonPath() {
     final Module module = myConfig.getModule();
-    Set<String> pythonPath = Sets.newHashSet(collectPythonPath(module, myConfig.addContentRoots(), myConfig.addSourceRoots()));
+    Set<String> pythonPath = Sets.newHashSet(collectPythonPath(module, myConfig.shouldAddContentRoots(), myConfig.shouldAddSourceRoots()));
 
     if (isDebug() && getSdkFlavor() instanceof JythonSdkFlavor) { //that fixes Jython problem changing sys.argv on execfile, see PY-8164
       pythonPath.add(PythonHelpersLocator.getHelperPath("pycharm"));

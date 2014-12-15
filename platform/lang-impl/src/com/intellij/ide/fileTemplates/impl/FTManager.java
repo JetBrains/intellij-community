@@ -15,13 +15,10 @@
  */
 package com.intellij.ide.fileTemplates.impl;
 
-import com.intellij.CommonBundle;
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -247,7 +244,7 @@ class FTManager {
         else {
           // both customized content on disk and corresponding template are present
           try {
-            final String diskText = StringUtil.convertLineSeparators(FileUtil.loadFile(customizedTemplateFile, CONTENT_ENCODING));
+            final String diskText = StringUtil.convertLineSeparators(FileUtil.loadFile(customizedTemplateFile, CharsetToolkit.UTF8_CHARSET));
             final String templateText = templateToSave.getText();
             if (!diskText.equals(templateText)) {
               // save only if texts differ to avoid unnecessary file touching
@@ -278,16 +275,7 @@ class FTManager {
       FileUtil.delete(templateFile);
       fileOutputStream = new FileOutputStream(templateFile);
     }
-    OutputStreamWriter outputStreamWriter;
-    try{
-      outputStreamWriter = new OutputStreamWriter(fileOutputStream, CONTENT_ENCODING);
-    }
-    catch (UnsupportedEncodingException e){
-      Messages.showMessageDialog(IdeBundle.message("error.unable.to.save.file.template.using.encoding", template.getName(),
-                                                   CONTENT_ENCODING),
-                                 CommonBundle.getErrorTitle(), Messages.getErrorIcon());
-      outputStreamWriter = new OutputStreamWriter(fileOutputStream);
-    }
+    OutputStreamWriter outputStreamWriter = new OutputStreamWriter(fileOutputStream, CharsetToolkit.UTF8_CHARSET);
     String content = template.getText();
 
     if (!lineSeparator.equals("\n")){

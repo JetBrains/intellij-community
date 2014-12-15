@@ -16,6 +16,7 @@
 package com.intellij.psi.impl.source.resolve.graphInference.constraints;
 
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
@@ -83,29 +84,44 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
       final PsiExpressionList argumentList = ((PsiCallExpression)myExpression).getArgumentList();
       if (argumentList != null) {
         final MethodCandidateInfo.CurrentCandidateProperties candidateProperties = MethodCandidateInfo.getCurrentMethod(((PsiCallExpression)myExpression).getArgumentList());
-        final JavaResolveResult resolveResult = candidateProperties != null ? null : ((PsiCallExpression)myExpression).resolveMethodGenerics();
-        final PsiMethod method = candidateProperties != null ? candidateProperties.getMethod() : (PsiMethod)resolveResult.getElement();
+        final JavaResolveResult resolveResult;
         PsiType returnType = null;
         PsiTypeParameter[] typeParams = null;
+        if (candidateProperties != null) {
+          resolveResult = null;
+        }
+        else {
+          if (myExpression instanceof PsiNewExpression) {
+            final PsiJavaCodeReferenceElement classReference = ((PsiNewExpression)myExpression).getClassOrAnonymousClassReference();
+            final PsiElement psiClass = classReference != null ? classReference.resolve() : null;
+            if (psiClass instanceof PsiClass) {
+
+              final JavaPsiFacade facade = JavaPsiFacade.getInstance(myExpression.getProject());
+              resolveResult = facade.getResolveHelper().resolveConstructor(facade.getElementFactory().createType((PsiClass)psiClass).rawType(), argumentList, myExpression);
+
+              returnType = JavaPsiFacade.getElementFactory(argumentList.getProject()).createType((PsiClass)psiClass, PsiSubstitutor.EMPTY);
+              typeParams = ((PsiClass)psiClass).getTypeParameters();
+            } 
+            else {
+              resolveResult = JavaResolveResult.EMPTY;
+            }
+          } 
+          else {
+            resolveResult = ((PsiCallExpression)myExpression).resolveMethodGenerics();
+          }
+        }
+        final PsiMethod method = candidateProperties != null ? candidateProperties.getMethod() : (PsiMethod)resolveResult.getElement();
+
         if (method != null && !method.isConstructor()) {
           returnType = method.getReturnType();
           if (returnType != null) {
             typeParams = method.getTypeParameters();
           }
-        } else if (myExpression instanceof PsiNewExpression) {
-          final PsiJavaCodeReferenceElement classReference = ((PsiNewExpression)myExpression).getClassOrAnonymousClassReference();
-          if (classReference != null) {
-            final PsiElement psiClass = classReference.resolve();
-            if (psiClass instanceof PsiClass) {
-              returnType = JavaPsiFacade.getElementFactory(argumentList.getProject()).createType((PsiClass)psiClass, PsiSubstitutor.EMPTY);
-              typeParams = ((PsiClass)psiClass).getTypeParameters();
-            }
-          }
         }
 
         if (typeParams != null) {
           PsiSubstitutor siteSubstitutor =
-            resolveResult instanceof MethodCandidateInfo && method != null && !method.isConstructor() ? ((MethodCandidateInfo)resolveResult).getSiteSubstitutor() : PsiSubstitutor.EMPTY;
+            resolveResult instanceof MethodCandidateInfo && method != null && !method.isConstructor() ? ((MethodCandidateInfo)resolveResult).getSiteSubstitutor() : candidateProperties != null ? candidateProperties.getSubstitutor() : PsiSubstitutor.EMPTY;
           final InferenceSession callSession = new InferenceSession(typeParams, siteSubstitutor, myExpression.getManager(), myExpression);
           callSession.propagateVariables(session.getInferenceVariables());
           if (method != null) {

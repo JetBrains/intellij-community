@@ -345,6 +345,10 @@ public class UIUtil {
     return (T)component.getClientProperty(key);
   }
 
+  public static <T> void putClientProperty(@NotNull JComponent component, @NotNull Key<T> key, T value) {
+    component.putClientProperty(key, value);
+  }
+
   public static String getHtmlBody(String text) {
     return getHtmlBody(new Html(text));
   }
@@ -1125,6 +1129,7 @@ public class UIUtil {
 
   public static Color shade(final Color c, final double factor, final double alphaFactor) {
     assert factor >= 0 : factor;
+    //noinspection UseJBColor
     return new Color(
       Math.min((int)Math.round(c.getRed() * factor), 255),
       Math.min((int)Math.round(c.getGreen() * factor), 255),
@@ -1136,6 +1141,7 @@ public class UIUtil {
   public static Color mix(final Color c1, final Color c2, final double factor) {
     assert 0 <= factor && factor <= 1.0 : factor;
     final double backFactor = 1.0 - factor;
+    //noinspection UseJBColor
     return new Color(
       Math.min((int)Math.round(c1.getRed() * backFactor + c2.getRed() * factor), 255),
       Math.min((int)Math.round(c1.getGreen() * backFactor + c2.getGreen() * factor), 255),
@@ -2734,6 +2740,15 @@ public class UIUtil {
         for (Component c : ((Container)component).getComponents()) {
           setNotOpaqueRecursively(c);
         }
+      }
+    }
+  }
+
+  public static void setBackgroundRecursively(@NotNull Component component, @NotNull Color bg) {
+    component.setBackground(bg);
+    if (component instanceof Container) {
+      for (Component c : ((Container)component).getComponents()) {
+        setBackgroundRecursively(c, bg);
       }
     }
   }

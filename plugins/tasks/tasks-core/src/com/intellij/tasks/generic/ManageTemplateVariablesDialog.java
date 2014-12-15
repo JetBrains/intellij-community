@@ -2,6 +2,7 @@ package com.intellij.tasks.generic;
 
 import com.intellij.execution.util.ListTableWithButtons;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
@@ -204,6 +205,11 @@ public class ManageTemplateVariablesDialog extends DialogWrapper {
     @Override
     protected TemplateVariable createElement() {
       return new TemplateVariable("", "");
+    }
+
+    @Override
+    protected boolean isEmpty(TemplateVariable element) {
+      return StringUtil.isEmpty(element.getName()) && StringUtil.isEmpty(element.getValue());
     }
 
     @Override

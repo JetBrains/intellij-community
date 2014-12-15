@@ -63,6 +63,8 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
   private static final String CONNECT_TO_DEBUGGER = "connectToDebugger";
   private static final String HANDSHAKE = "handshake";
   private static final String CLOSE = "close";
+  private static final String EVALUATE = "evaluate";
+  private static final String GET_ARRAY = "getArray";
 
   /**
    * XML-RPC client for sending messages to the server.
@@ -461,7 +463,21 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
 
   @Override
   public PyDebugValue evaluate(String expression, boolean execute, boolean doTrunc) throws PyDebuggerException {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    if (myClient != null) {
+      try {
+        Object ret = myClient.execute(EVALUATE, new Object[]{expression});
+        if (ret instanceof String) {
+          return ProtocolParser.parseValue((String)ret, this);
+        }
+        else {
+          checkError(ret);
+        }
+      }
+      catch (Exception e) {
+        throw new PyDebuggerException("Evaluate in console failed", e);
+      }
+    }
+    return null;
   }
 
   @Nullable
@@ -516,6 +532,8 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
   public void changeVariable(PyDebugValue variable, String value) throws PyDebuggerException {
     if (myClient != null) {
       try {
+        // NOTE: The actual change is being scheduled in the exec_queue in main thread
+        // This method is async now
         Object ret = myClient.execute(CHANGE_VARIABLE, new Object[]{variable.getEvaluationExpression(), value});
         checkError(ret);
       }
@@ -528,6 +546,26 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
   @Nullable
   @Override
   public PyReferrersLoader getReferrersLoader() {
+    return null;
+  }
+
+  @Override
+  public ArrayChunk getArrayItems(PyDebugValue var, int rowOffset, int colOffset, int rows, int cols, String format)
+    throws PyDebuggerException {
+    if (myClient != null) {
+      try {
+        Object ret = myClient.execute(GET_ARRAY, new Object[]{var.getName(), rowOffset, colOffset, rows, cols, format});
+        if (ret instanceof String) {
+          return ProtocolParser.parseArrayValues((String)ret, this);
+        }
+        else {
+          checkError(ret);
+        }
+      }
+      catch (Exception e) {
+        throw new PyDebuggerException("Evaluate in console failed", e);
+      }
+    }
     return null;
   }
 

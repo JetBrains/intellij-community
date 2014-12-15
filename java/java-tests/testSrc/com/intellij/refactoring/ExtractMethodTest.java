@@ -455,6 +455,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  public void testNullableCheckBreak() throws Exception {
+    doTest();
+  }
+
   public void testSimpleArrayAccess() throws Exception {
     doTest();
   }

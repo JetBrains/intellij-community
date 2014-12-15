@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ import java.util.concurrent.ConcurrentMap;
  *         Date: 10/7/11
  */
 public class BuildDataManager implements StorageOwner {
-  private static final int VERSION = 25;
+  private static final int VERSION = 26;
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.storage.BuildDataManager");
   private static final String SRC_TO_FORM_STORAGE = "src-form";
   private static final String OUT_TARGET_STORAGE = "out-target";
@@ -60,7 +60,7 @@ public class BuildDataManager implements StorageOwner {
   private final BuildTargetsState myTargetsState;
   private final OutputToTargetRegistry myOutputToTargetRegistry;
   private final File myVersionFile;
-  private StorageOwner myTargetStoragesOwner = new CompositeStorageOwner() {
+  private final StorageOwner myTargetStoragesOwner = new CompositeStorageOwner() {
     @Override
     protected Iterable<? extends StorageOwner> getChildStorages() {
       return new Iterable<StorageOwner>() {

@@ -46,7 +46,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardStep {
   private static final int COLS = 3;
-  private static ScheduledExecutorService ourService = new ScheduledThreadPoolExecutor(4, ConcurrencyUtil.newNamedThreadFactory(
+  private static final ScheduledExecutorService ourService = new ScheduledThreadPoolExecutor(4, ConcurrencyUtil.newNamedThreadFactory(
     "FeaturedPlugins", true, Thread.NORM_PRIORITY));
 
   public final AtomicBoolean myCanceled = new AtomicBoolean(false);
@@ -119,7 +119,6 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
       wrapperLayout.show(buttonWrapper, "button");
 
       final ProgressIndicatorEx indicator = new AbstractProgressIndicatorExBase(true) {
-
         @Override
         public void start() {
           myCanceled.set(false);
@@ -264,5 +263,5 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
            + " | " + "Plugins";
   }
 
-  public static class OfflineException extends Exception {};
+  public static class OfflineException extends Exception {}
 }

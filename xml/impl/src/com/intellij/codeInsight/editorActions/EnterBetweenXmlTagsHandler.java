@@ -28,6 +28,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -41,7 +42,10 @@ public class EnterBetweenXmlTagsHandler extends EnterHandlerDelegateAdapter {
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     
     if (file instanceof XmlFile && isBetweenXmlTags(project, editor, file, caretOffset.get().intValue())) {
-      originalHandler.execute(editor, dataContext);
+      editor.getDocument().insertString(caretOffset.get(), "\n");
+      if (project != null) {
+        CodeStyleManager.getInstance(project).adjustLineIndent(editor.getDocument(), caretOffset.get() + 1);
+      }
       return Result.DefaultForceIndent;
     }
     return Result.Continue;

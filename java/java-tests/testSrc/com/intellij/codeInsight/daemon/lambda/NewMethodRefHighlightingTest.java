@@ -316,6 +316,26 @@ public class NewMethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testTypeParametersInitOrder() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA132560() throws Exception {
+    doTest();
+  }
+
+  public void testEnsureThatCapturedWildcardsAreNotOpenWithoutAnyReason() throws Exception {
+    doTest();
+  }
+
+  public void testVarargsParametersCountComparison() throws Exception {
+    doTest(true);
+  }
+
+  public void testPotentialCompatibilityWithInvalidShape() throws Exception {
+    doTest(true);
+  }
+
   private void doTest() {
     doTest(false);
   }

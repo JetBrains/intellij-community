@@ -19,14 +19,13 @@ package com.intellij.execution.impl;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionException;
-import com.intellij.openapi.util.Factory;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.StringInterner;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -232,9 +231,10 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
     myConfiguration.readExternal(element);
     List<Element> runners = element.getChildren(RUNNER_ELEMENT);
     myUnloadedRunnerSettings = null;
+    StringInterner interner = new StringInterner();
     for (final Element runnerElement : runners) {
       String id = runnerElement.getAttributeValue(RUNNER_ID);
-      ProgramRunner runner = RunnerRegistry.getInstance().findRunnerById(id);
+      ProgramRunner runner = findRunner(id);
       if (runner != null) {
         RunnerSettings settings = createRunnerSettings(runner);
         if (settings != null) {
@@ -243,8 +243,8 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
         myRunnerSettings.put(runner, settings);
       }
       else {
-        if (myUnloadedRunnerSettings == null) myUnloadedRunnerSettings = new ArrayList<Element>(1);
-        IdeaPluginDescriptorImpl.internJDOMElement(runnerElement);
+        if (myUnloadedRunnerSettings == null) myUnloadedRunnerSettings = new SmartList<Element>();
+        JDOMUtil.internElement(runnerElement, interner);
         myUnloadedRunnerSettings.add(runnerElement);
       }
     }
@@ -254,7 +254,7 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
     for (final Object configuration : configurations) {
       Element configurationElement = (Element) configuration;
       String id = configurationElement.getAttributeValue(RUNNER_ID);
-      ProgramRunner runner = RunnerRegistry.getInstance().findRunnerById(id);
+      ProgramRunner runner = findRunner(id);
       if (runner != null) {
         ConfigurationPerRunnerSettings settings = myConfiguration.createRunnerSettings(new InfoProvider(runner));
         if (settings != null) {
@@ -300,6 +300,36 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
     final Comparator<Element> runnerComparator = createRunnerComparator();
       writeRunnerSettings(runnerComparator, element);
       writeConfigurationPerRunnerSettings(runnerComparator, element);
+    }
+  }
+
+  private ProgramRunner findRunner(final String runnerId) {
+    List<ProgramRunner> runnersById
+      = ContainerUtil.filter(RunnerRegistry.getInstance().getRegisteredRunners(), new Condition<ProgramRunner>() {
+
+      @Override
+      public boolean value(ProgramRunner runner) {
+        return Comparing.equal(runnerId, runner.getRunnerId());
+      }
+    });
+
+    int runnersByIdCount = runnersById.size();
+    if (runnersByIdCount == 0) {
+      return null;
+    }
+    else if (runnersByIdCount == 1) {
+      return ContainerUtil.getFirstItem(runnersById);
+    }
+    else {
+      LOG.error("More than one runner found for ID: " + runnerId);
+      for (final Executor executor : ExecutorRegistry.getInstance().getRegisteredExecutors()) {
+        for (ProgramRunner runner : runnersById) {
+          if (runner.canRun(executor.getId(), myConfiguration)) {
+            return runner;
+          }
+        }
+      }
+      return null;
     }
   }
 

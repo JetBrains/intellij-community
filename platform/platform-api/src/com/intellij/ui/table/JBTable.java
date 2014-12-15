@@ -18,6 +18,7 @@ package com.intellij.ui.table;
 import com.intellij.Patches;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.ExpirableRunnable;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBViewport;
@@ -51,6 +52,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   private int myRowHeight = -1;
   private boolean myRowHeightIsExplicitlySet;
   private boolean myRowHeightIsComputing;
+  private boolean myUiUpdating = true;
 
   private Integer myMinRowHeight;
   private boolean myStriped;
@@ -58,6 +60,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   private AsyncProcessIcon myBusyIcon;
   private boolean myBusy;
 
+  private int myMaxItemsForSizeCalculation = Integer.MAX_VALUE;
 
   public JBTable() {
     this(new DefaultTableModel());
@@ -84,30 +87,6 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     setFillsViewportHeight(true);
 
     addMouseListener(new MyMouseListener());
-    getColumnModel().addColumnModelListener(new TableColumnModelListener() {
-      @Override
-      public void columnMarginChanged(ChangeEvent e) {
-        if (cellEditor != null && !(cellEditor instanceof Animated)) {
-          cellEditor.stopCellEditing();
-        }
-      }
-
-      @Override
-      public void columnSelectionChanged(@NotNull ListSelectionEvent e) {
-      }
-
-      @Override
-      public void columnAdded(@NotNull TableColumnModelEvent e) {
-      }
-
-      @Override
-      public void columnMoved(@NotNull TableColumnModelEvent e) {
-      }
-
-      @Override
-      public void columnRemoved(@NotNull TableColumnModelEvent e) {
-      }
-    });
 
     final TableModelListener modelListener = new TableModelListener() {
       @Override
@@ -139,6 +118,8 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
     //noinspection UnusedDeclaration
     boolean marker = Patches.SUN_BUG_ID_4503845; // Don't remove. It's a marker for find usages
+
+    myUiUpdating = false;
   }
 
   @Override
@@ -150,8 +131,8 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     if (myRowHeight < 0) {
       try {
         myRowHeightIsComputing = true;
-        for (int row = 0; row < getRowCount(); row++) {
-          for (int column = 0; column < getColumnCount(); column++) {
+        for (int row = 0; row < Math.min(getRowCount(), myMaxItemsForSizeCalculation); row++) {
+          for (int column = 0; column < Math.min(getColumnCount(), myMaxItemsForSizeCalculation); column++) {
             final TableCellRenderer renderer = getCellRenderer(row, column);
             if (renderer != null) {
               final Object value = getValueAt(row, column);
@@ -184,16 +165,24 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
   @Override
   public void setRowHeight(int rowHeight) {
-    myRowHeight = rowHeight;
-    myRowHeightIsExplicitlySet = true;
+    if (!myUiUpdating || !UIUtil.isUnderGTKLookAndFeel()) {
+      myRowHeight = rowHeight;
+      myRowHeightIsExplicitlySet = true;
+    }
     // call super to clean rowModel
     super.setRowHeight(rowHeight);
   }
 
   @Override
   public void updateUI() {
-    super.updateUI();
-    myMinRowHeight = null;
+    myUiUpdating = true;
+    try {
+      super.updateUI();
+      myMinRowHeight = null;
+    }
+    finally {
+      myUiUpdating = false;
+    }
   }
 
   private void repaintViewport() {
@@ -314,8 +303,6 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       final KeyboardFocusManager keyboardFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
       //noinspection HardCodedStringLiteral
       keyboardFocusManager.removePropertyChangeListener("permanentFocusOwner", myEditorRemover);
-      //noinspection HardCodedStringLiteral
-      keyboardFocusManager.removePropertyChangeListener("focusOwner", myEditorRemover);
       super.removeNotify();
       if (myBusyIcon != null) {
         remove(myBusyIcon);
@@ -438,8 +425,6 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       final KeyboardFocusManager keyboardFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
       myEditorRemover = new MyCellEditorRemover();
       //noinspection HardCodedStringLiteral
-      keyboardFocusManager.addPropertyChangeListener("focusOwner", myEditorRemover);
-      //noinspection HardCodedStringLiteral
       keyboardFocusManager.addPropertyChangeListener("permanentFocusOwner", myEditorRemover);
     }
 
@@ -543,13 +528,19 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
         return;
       }
 
-      myFocusManager.doWhenFocusSettlesDown(new Runnable() {
+      myFocusManager.doWhenFocusSettlesDown(new ExpirableRunnable() {
+        @Override
+        public boolean isExpired() {
+          return !isEditing();
+        }
+
         @Override
         public void run() {
-          if (!isEditing()) {
+          Component c = myFocusManager.getFocusOwner();
+          if (UIUtil.isMeaninglessFocusOwner(c)) {
+            // this allows using popup menus and menu bar without stopping cell editing
             return;
           }
-          Component c = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
           while (c != null) {
             if (c instanceof JPopupMenu) {
               c = ((JPopupMenu)c).getInvoker();
@@ -807,5 +798,15 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       return resizingAllowed && columnModel.getColumn(columnIdx).getResizable();
     }
   }
-}
 
+  /**
+   * JTable gets table data from model lazily - only for a table part to be shown.
+   * JBTable loads <i>all</i> the data on initialization to calculate cell size.
+   * This methods provides possibility to calculate size without loading all the table data.
+   *
+   * @param maxItemsForSizeCalculation maximum number ot items in table to be loaded for size calculation
+   */
+  public void setMaxItemsForSizeCalculation(int maxItemsForSizeCalculation) {
+    myMaxItemsForSizeCalculation = maxItemsForSizeCalculation;
+  }
+}

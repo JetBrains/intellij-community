@@ -140,23 +140,10 @@ public interface PopupComponent {
         myDialog.setFocusableWindowState(false);
       }
 
-      try {
-        if (UIUtil.isUnderDarcula()) {
-          AWTUtilities.setWindowOpaque(myDialog, false);
-        }
-      }
-      catch (Exception ignore) {
-      }
-
+      AwtPopupWrapper.fixFlickering(myDialog, false);
       myDialog.setVisible(true);
+      AwtPopupWrapper.fixFlickering(myDialog, true);
 
-      try {
-        if (UIUtil.isUnderDarcula()) {
-          AWTUtilities.setWindowOpaque(myDialog, true);
-        }
-      }
-      catch (Exception ignore) {
-      }
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
           myDialog.setFocusableWindowState(true);

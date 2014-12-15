@@ -129,6 +129,20 @@ public class ExpectedTypesProvider {
                                                     final boolean voidable, boolean usedAfter) {
     if (expr == null) return ExpectedTypeInfo.EMPTY_ARRAY;
     PsiElement parent = expr.getParent();
+    if (expr instanceof PsiFunctionalExpression && parent instanceof PsiExpressionStatement) {
+      final Collection<? extends PsiType> types = FunctionalInterfaceSuggester.suggestFunctionalInterfaces((PsiFunctionalExpression)expr);
+      if (types.isEmpty()) {
+        return ExpectedTypeInfo.EMPTY_ARRAY;
+      }
+      else {
+        final ExpectedTypeInfo[] result = new ExpectedTypeInfo[types.size()];
+        int i = 0;
+        for (PsiType type : types) {
+          result[i++] = new ExpectedTypeInfoImpl(type, ExpectedTypeInfo.TYPE_SAME_SHAPED, type, TailType.NONE, null, ExpectedTypeInfoImpl.NULL);
+        }
+        return result;
+      }
+    }
     MyParentVisitor visitor = new MyParentVisitor(expr, forCompletion, classProvider, voidable, usedAfter);
     if (parent != null) {
       parent.accept(visitor);

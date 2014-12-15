@@ -702,7 +702,7 @@ public abstract class UsefulTestCase extends TestCase {
         VfsTestUtil.overwriteTestData(filePath, actualText);
         System.out.println("File " + filePath + " created.");
       }
-      fileText = FileUtil.loadFile(new File(filePath), CharsetToolkit.UTF8);
+      fileText = FileUtil.loadFile(new File(filePath), CharsetToolkit.UTF8_CHARSET);
     }
     catch (FileNotFoundException e) {
       VfsTestUtil.overwriteTestData(filePath, actualText);

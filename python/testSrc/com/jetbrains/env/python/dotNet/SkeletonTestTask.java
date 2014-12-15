@@ -9,7 +9,11 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorBase;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.StreamUtil;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.env.PyExecutionFixtureTestTask;
 import com.jetbrains.python.PyBundle;
@@ -26,8 +30,11 @@ import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -121,9 +128,32 @@ class SkeletonTestTask extends PyExecutionFixtureTestTask {
 
     FileUtil.copy(skeletonFile, new File(myFixture.getTempDirPath(), skeletonFile.getName()));
     if (myExpectedSkeletonFile != null) {
-      myFixture.checkResultByFile(skeletonFile.getName(), myExpectedSkeletonFile, false);
+      final String actual = StreamUtil.readText(new FileInputStream(skeletonFile), CharsetToolkit.UTF8);
+      final String skeletonText =
+        StreamUtil.readText(new FileInputStream(new File(getTestDataPath(), myExpectedSkeletonFile)), CharsetToolkit.UTF8);
+
+      // TODO: Move to separate method ?
+      if (!Matchers.equalToIgnoringWhiteSpace(removeGeneratorVersion(skeletonText)).matches(removeGeneratorVersion(actual))) {
+        throw new FileComparisonFailure("asd", skeletonText, actual, skeletonFile.getAbsolutePath());
+      }
     }
     myGeneratedSkeleton = (PyFile)myFixture.configureByFile(skeletonFile.getName());
+  }
+
+  /**
+   * Removes strings that starts with "# by generator", because generator version may change
+   * @param textToClean text to remove strings from
+   * @return text after cleanup
+   */
+  private static String removeGeneratorVersion(@NotNull final String textToClean) {
+    final List<String> strings = StringUtil.split(textToClean, "\n");
+    final Iterator<String> iterator = strings.iterator();
+    while (iterator.hasNext()) {
+      if (iterator.next().startsWith("# by generator")) {
+        iterator.remove();
+      }
+    }
+    return StringUtil.join(strings, "\n");
   }
 
 
