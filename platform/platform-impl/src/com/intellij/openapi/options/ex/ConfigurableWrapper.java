@@ -52,14 +52,15 @@ public class ConfigurableWrapper implements SearchableConfigurable {
       return null;
     }
     if (ep.displayName != null || ep.key != null || ep.groupId != null) {
-      T configurable = null;
       return !ep.dynamic && ep.children == null && ep.childrenEPName == null
-             ? (T)new ConfigurableWrapper(ep, configurable)
-             : (T)new CompositeWrapper(ep, configurable);
+             ? (T)new ConfigurableWrapper(ep)
+             : (T)new CompositeWrapper(ep);
     }
-    else {
-      return ep.createConfigurable();
+    T configurable = ep.createConfigurable();
+    if (configurable instanceof Configurable) {
+      LOG.warn("cannot wrap configurable: " + configurable.getClass().getName());
     }
+    return configurable;
   }
 
   public static <T extends UnnamedConfigurable> List<T> createConfigurables(ExtensionPointName<? extends ConfigurableEP<T>> name) {
@@ -109,9 +110,8 @@ public class ConfigurableWrapper implements SearchableConfigurable {
 
   private final ConfigurableEP myEp;
 
-  private ConfigurableWrapper(@NotNull ConfigurableEP ep, @Nullable UnnamedConfigurable configurable) {
+  private ConfigurableWrapper(@NotNull ConfigurableEP ep) {
     myEp = ep;
-    myConfigurable = configurable;
   }
 
   private UnnamedConfigurable myConfigurable;
@@ -213,7 +213,7 @@ public class ConfigurableWrapper implements SearchableConfigurable {
   }
 
   public ConfigurableWrapper addChild(Configurable configurable) {
-    return new CompositeWrapper(myEp, null, configurable);
+    return new CompositeWrapper(myEp, configurable);
   }
 
   @Override
@@ -232,8 +232,8 @@ public class ConfigurableWrapper implements SearchableConfigurable {
 
     private Configurable[] myKids;
 
-    private CompositeWrapper(@NotNull ConfigurableEP ep, @Nullable UnnamedConfigurable configurable, Configurable... kids) {
-      super(ep, configurable);
+    private CompositeWrapper(@NotNull ConfigurableEP ep, Configurable... kids) {
+      super(ep);
       if (ep.dynamic) {
         kids = ((Composite)getConfigurable()).getConfigurables();
       }
