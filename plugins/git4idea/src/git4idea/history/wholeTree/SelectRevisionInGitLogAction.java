@@ -22,9 +22,6 @@ import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author rachinskiy
- */
 public class SelectRevisionInGitLogAction extends DumbAwareAction {
 
   public SelectRevisionInGitLogAction() {
@@ -94,7 +91,7 @@ public class SelectRevisionInGitLogAction extends DumbAwareAction {
     logUi.invokeOnChange(selectAndOpenLog);
   }
 
-  private void showLogNotReadyMessage(Project project) {
+  private static void showLogNotReadyMessage(@NotNull Project project) {
     VcsBalloonProblemNotifier.showOverChangesView(project, GitBundle.getString("vcs.history.action.gitlog.error"), MessageType.WARNING);
   }
 

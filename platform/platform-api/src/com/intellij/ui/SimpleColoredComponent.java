@@ -850,7 +850,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
 
     @Override
     public Insets getBorderInsets(final Component c) {
-      return myInsets;
+      return (Insets)myInsets.clone();
     }
 
     @Override

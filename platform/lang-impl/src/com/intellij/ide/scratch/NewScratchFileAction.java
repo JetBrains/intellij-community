@@ -153,7 +153,8 @@ public class NewScratchFileAction extends AnAction implements DumbAware {
       nameLen = Math.max(nameLen, step.getTextFor(v).length());
     }
     if (values.size() > MAX_VISIBLE_SIZE) {
-      Dimension size = new JLabel(StringUtil.repeatSymbol('a', nameLen), EmptyIcon.ICON_16, SwingConstants.LEFT).getMinimumSize();
+      Dimension size = new JLabel(StringUtil.repeatSymbol('a', nameLen), EmptyIcon.ICON_16, SwingConstants.LEFT).getPreferredSize();
+      size.width += 20;
       size.height *= MAX_VISIBLE_SIZE;
       popup.setSize(size);
     }

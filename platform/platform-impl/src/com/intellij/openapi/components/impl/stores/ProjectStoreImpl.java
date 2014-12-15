@@ -510,7 +510,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
 
   private final StateStorageChooser<PersistentStateComponent<?>> myStateStorageChooser = new StateStorageChooser<PersistentStateComponent<?>>() {
     @Override
-    public Storage[] selectStorages(final Storage[] storages, final PersistentStateComponent<?> component, final StateStorageOperation operation) {
+    public Storage[] selectStorages(@NotNull Storage[] storages, @NotNull PersistentStateComponent<?> component, @NotNull StateStorageOperation operation) {
       if (operation == StateStorageOperation.READ) {
         List<Storage> result = new SmartList<Storage>();
         for (int i = storages.length - 1; i >= 0; i--) {
@@ -536,7 +536,9 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
           }
         }
 
-        if (!result.isEmpty()) return result.toArray(new Storage[result.size()]);
+        if (!result.isEmpty()) {
+          return result.toArray(new Storage[result.size()]);
+        }
 
         for (Storage storage : storages) {
           if (storage.scheme() == StorageScheme.DEFAULT) {
@@ -546,8 +548,9 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
 
         return result.toArray(new Storage[result.size()]);
       }
-
-      return new Storage[]{};
+      else {
+        return new Storage[]{};
+      }
     }
   };
 

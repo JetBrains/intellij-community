@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ public class PsiTypePattern extends ObjectPattern<PsiType,PsiTypePattern> {
     return with(new PatternCondition<PsiType>("arrayOf") {
       public boolean accepts(@NotNull final PsiType psiType, final ProcessingContext context) {
         return psiType instanceof PsiArrayType &&
-               pattern.getCondition().accepts(((PsiArrayType)psiType).getComponentType(), context);
+               pattern.accepts(((PsiArrayType)psiType).getComponentType(), context);
       }
     });
   }
@@ -43,7 +43,7 @@ public class PsiTypePattern extends ObjectPattern<PsiType,PsiTypePattern> {
     return with(new PatternCondition<PsiType>("classType") {
       public boolean accepts(@NotNull final PsiType psiType, final ProcessingContext context) {
         return psiType instanceof PsiClassType &&
-               pattern.getCondition().accepts(((PsiClassType)psiType).resolve(), context);
+               pattern.accepts(((PsiClassType)psiType).resolve(), context);
       }
     });
   }

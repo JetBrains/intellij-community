@@ -100,9 +100,7 @@ public class VcsLogQuickSettingsActions extends DumbAwareAction {
       public void update(AnActionEvent e) {
         super.update(e);
 
-        boolean visible = myUi.isMultipleRoots();
-        e.getPresentation().setVisible(visible);
-        e.getPresentation().setEnabled(visible);
+        e.getPresentation().setEnabledAndVisible(myUi.isMultipleRoots());
       }
 
       @Override

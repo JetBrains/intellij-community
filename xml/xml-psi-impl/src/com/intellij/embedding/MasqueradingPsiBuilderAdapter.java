@@ -342,5 +342,25 @@ public class MasqueradingPsiBuilderAdapter extends PsiBuilderAdapter {
       super.rollbackTo();
       myLexPosition = myBuilderPosition;
     }
+
+    @Override
+    public void doneBefore(IElementType type, Marker before) {
+      super.doneBefore(type, getDelegateOrThis(before));
+    }
+
+    @Override
+    public void doneBefore(IElementType type, Marker before, String errorMessage) {
+      super.doneBefore(type, getDelegateOrThis(before), errorMessage);
+    }
+
+    @NotNull
+    private Marker getDelegateOrThis(@NotNull Marker marker) {
+      if (marker instanceof DelegateMarker) {
+        return ((DelegateMarker)marker).getDelegate();
+      }
+      else {
+        return marker;
+      }
+    }
   }
 }

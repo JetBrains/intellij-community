@@ -46,7 +46,7 @@ public abstract class SourcePositionProvider {
         return sourcePosition;
       }
     }
-    return DefaultSourcePositionProvider.getInstance().computeSourcePosition(descriptor, project, context, nearest);
+    return null;
   }
 
   @Nullable

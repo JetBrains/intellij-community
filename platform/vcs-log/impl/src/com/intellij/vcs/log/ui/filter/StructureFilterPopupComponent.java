@@ -54,7 +54,6 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
   public StructureFilterPopupComponent(@NotNull FilterModel<VcsLogFileFilter> filterModel, @NotNull VcsLogColorManager colorManager) {
     super("Paths", filterModel);
     myColorManager = colorManager;
-    myShowDisabledActions = true;
   }
 
   @NotNull
@@ -63,7 +62,8 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
     Collection<VirtualFile> roots = filter.getRootFilter() == null ? getAllRoots() : filter.getRootFilter().getRoots();
     Collection<VirtualFile> files =
       filter.getStructureFilter() == null ? Collections.<VirtualFile>emptySet() : filter.getStructureFilter().getFiles();
-    Collection<VirtualFile> visibleRoots = VcsLogFileFilter.getAllVisibleRoots(getAllRoots(), filter);
+    Collection<VirtualFile> visibleRoots =
+      VcsLogFileFilter.getAllVisibleRoots(getAllRoots(), filter.getRootFilter(), filter.getStructureFilter());
 
     if (files.isEmpty()) {
       return getText(roots, "roots", true, visibleRoots.size() == getAllRoots().size());
@@ -81,7 +81,7 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
       return "No " + category;
     }
     else {
-      VirtualFile firstFile = ContainerUtil.sorted(files, shorten ? FILE_BY_NAME_COMPARATOR : FILE_BY_PATH_COMPARATOR).iterator().next();
+      VirtualFile firstFile = Collections.min(files, shorten ? FILE_BY_NAME_COMPARATOR : FILE_BY_PATH_COMPARATOR);
       String firstFileName =
         shorten ? firstFile.getName() : StringUtil.shortenPathWithEllipsis(firstFile.getPresentableUrl(), FILTER_LABEL_LENGTH);
       if (files.size() == 1) {
@@ -138,7 +138,7 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
     Set<VirtualFile> roots = getAllRoots();
 
     List<AnAction> rootActions = new ArrayList<AnAction>();
-    if (roots.size() <= 10) {
+    if (myColorManager.isMultipleRoots()) {
       for (VirtualFile root : ContainerUtil.sorted(roots, FILE_BY_NAME_COMPARATOR)) {
         rootActions.add(new SelectVisibleRootAction(root));
       }
@@ -147,8 +147,17 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
     for (VcsLogStructureFilter filter : myHistory) {
       structureActions.add(new SelectFromHistoryAction(filter));
     }
-    return new DefaultActionGroup(createAllAction(), new Separator("Roots"), new DefaultActionGroup(rootActions), new Separator("Folders"),
-                                  new DefaultActionGroup(structureActions), new SelectAction());
+
+    if (roots.size() > 15) {
+      return new DefaultActionGroup(createAllAction(),
+                                    new Separator("Folders"), new DefaultActionGroup(structureActions),
+                                    new SelectAction(), new Separator("Roots"), new DefaultActionGroup(rootActions));
+    }
+    else {
+      return new DefaultActionGroup(createAllAction(),
+                                    new Separator("Roots"), new DefaultActionGroup(rootActions),
+                                    new Separator("Folders"), new DefaultActionGroup(structureActions), new SelectAction());
+    }
   }
 
   private Set<VirtualFile> getAllRoots() {
@@ -221,6 +230,7 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
       super(root.getName(), root.getPresentableUrl(), null);
       myRoot = root;
       myIcon = new CheckboxColorIcon(CHECKBOX_ICON_SIZE, VcsLogGraphTable.getRootBackgroundColor(myRoot, myColorManager));
+      getTemplatePresentation().setIcon(EmptyIcon.create(CHECKBOX_ICON_SIZE)); // see PopupFactoryImpl.calcMaxIconSize
     }
 
     @Override
@@ -232,7 +242,8 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
     public void setSelected(AnActionEvent e, boolean state) {
       if (!isEnabled()) {
         setVisibleOnly(myRoot);
-      } else {
+      }
+      else {
         setVisible(myRoot, state);
       }
     }

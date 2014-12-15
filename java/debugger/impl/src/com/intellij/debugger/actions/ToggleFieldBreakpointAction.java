@@ -21,11 +21,10 @@ import com.intellij.debugger.InstanceFilter;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
+import com.intellij.debugger.engine.SourcePositionProvider;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
-import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
-import com.intellij.debugger.engine.SourcePositionProvider;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
 import com.intellij.debugger.ui.breakpoints.FieldBreakpoint;
@@ -86,8 +85,6 @@ public class ToggleFieldBreakpointAction extends AnAction {
                 }
               }
             }
-
-            RequestManagerImpl.createRequests(fieldBreakpoint);
 
             final Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
             if (editor != null) {

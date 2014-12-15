@@ -433,7 +433,8 @@ public class PyTypeChecker {
           return null;
         }
         final Callable callable = ((PyFunctionType)type).getCallable();
-        final boolean isRight = PyNames.isRightOperatorName(typedElement.getName());
+        final String operatorName = typedElement.getName();
+        final boolean isRight = PyNames.isRightOperatorName(operatorName) || PyNames.CONTAINS.equals(operatorName);
         final PyExpression arg = isRight ? expr.getLeftExpression() : expr.getRightExpression();
         final PyExpression receiver = isRight ? expr.getRightExpression() : expr.getLeftExpression();
         final PyParameter[] parameters = callable.getParameterList().getParameters();

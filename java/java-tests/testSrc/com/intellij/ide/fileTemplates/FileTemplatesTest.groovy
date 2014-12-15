@@ -36,7 +36,7 @@ public class FileTemplatesTest extends IdeaTestCase {
     final File customInclude = new File(testsDir, customIncludeFileName);
     final String includeText = FileUtil.loadFile(customInclude, FileTemplate.ourEncoding);
 
-    final FileTemplateManager templateManager = FileTemplateManager.getInstance();
+    final FileTemplateManager templateManager = FileTemplateManager.getInstance(getProject());
     final ArrayList<FileTemplate> originalIncludes = new ArrayList<FileTemplate>(Arrays.asList(templateManager.getAllPatterns()));
     try {
       // configure custom include
@@ -94,7 +94,7 @@ public class FileTemplatesTest extends IdeaTestCase {
   }
 
   public void testFindFileByUrl() throws Exception {
-    FileTemplate catchBodyTemplate = FileTemplateManager.getInstance().getCodeTemplate(JavaTemplateUtil.TEMPLATE_CATCH_BODY);
+    FileTemplate catchBodyTemplate = FileTemplateManager.getInstance(getProject()).getCodeTemplate(JavaTemplateUtil.TEMPLATE_CATCH_BODY);
     assertNotNull(catchBodyTemplate);
   }
 
@@ -107,7 +107,7 @@ public class FileTemplatesTest extends IdeaTestCase {
 
   public void "test collect undefined attribute names from included templates"() {
     def included = addTestTemplate("included", '${ABC} ${DEF}')
-    assert included == FileTemplateManager.instance.getTemplate("included.java")
+    assert included == FileTemplateManager.getInstance(getProject()).getTemplate("included.java")
 
     FileTemplate template = addTestTemplate("myclass", '#parse("included.java") ${DEF} ${NAME}')
     Properties properties = new Properties()
@@ -132,12 +132,12 @@ public class FileTemplatesTest extends IdeaTestCase {
     PsiClass psiClass = JavaDirectoryService.getInstance().createClass(psiDirectory, "XXX", name);
     assertNotNull(psiClass);
     assertEquals("public class XXX {\n}", psiClass.getContainingFile().getText());
-    FileTemplateManager.getInstance().removeTemplate(template);
+    FileTemplateManager.getInstance(getProject()).removeTemplate(template);
   }
 
   private FileTemplate addTestTemplate(String name, String text) {
-    FileTemplate template = FileTemplateManager.getInstance().addTemplate(name, "java");
-    disposeOnTearDown({ FileTemplateManager.getInstance().removeTemplate(template) } as Disposable)
+    FileTemplate template = FileTemplateManager.getInstance(getProject()).addTemplate(name, "java");
+    disposeOnTearDown({ FileTemplateManager.getInstance(getProject()).removeTemplate(template) } as Disposable)
     template.setText(text);
     template
   }

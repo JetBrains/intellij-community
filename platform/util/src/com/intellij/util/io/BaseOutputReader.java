@@ -16,9 +16,12 @@
 package com.intellij.util.io;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.Reader;
+import java.nio.charset.Charset;
 
 /**
  * @author traff
@@ -31,13 +34,34 @@ public abstract class BaseOutputReader extends BaseDataReader {
   private final StringBuilder myTextBuffer = new StringBuilder();
   private boolean skipLF = false;
 
+  public BaseOutputReader(@NotNull InputStream inputStream, @Nullable Charset charset) {
+    this(inputStream, charset, null);
+  }
+
+  public BaseOutputReader(@NotNull InputStream inputStream, @Nullable Charset charset, @Nullable SleepingPolicy sleepingPolicy) {
+    super(sleepingPolicy);
+    myReader = createInputStreamReader(inputStream, charset);
+  }
+
   public BaseOutputReader(@NotNull Reader reader) {
     this(reader, null);
   }
 
   public BaseOutputReader(@NotNull Reader reader, SleepingPolicy sleepingPolicy) {
     super(sleepingPolicy);
+    if (sleepingPolicy == SleepingPolicy.BLOCKING && !(reader instanceof BaseInputStreamReader)) {
+      throw new IllegalArgumentException("Blocking policy can be used only with BaseInputStreamReader, that doesn't lock on close");
+    }
     myReader = reader;
+  }
+
+  private static Reader createInputStreamReader(final @NotNull InputStream streamToRead, @Nullable Charset charset) {
+    if (charset == null) {
+      return new BaseInputStreamReader(streamToRead);
+    }
+    else {
+      return new BaseInputStreamReader(streamToRead, charset);
+    }
   }
 
   private void processLine(char[] buffer, StringBuilder token, int n) {
@@ -69,7 +93,7 @@ public abstract class BaseOutputReader extends BaseDataReader {
    * In case of doubts look at #readAvailableBlocking
    *
    * @return true if non-zero amount of data has been read
-   * @exception  IOException  If an I/O error occurs
+   * @throws IOException If an I/O error occurs
    */
   protected final boolean readAvailableNonBlocking() throws IOException {
     char[] buffer = myBuffer;
@@ -99,7 +123,7 @@ public abstract class BaseOutputReader extends BaseDataReader {
    * Could be used if we prefer IO-blocking over CPU sleeping.
    *
    * @return true if non-zero amount of data has been read, false if end of the stream is reached
-   * @exception  IOException  If an I/O error occurs
+   * @throws IOException If an I/O error occurs
    */
   protected final boolean readAvailableBlocking() throws IOException {
     char[] buffer = myBuffer;

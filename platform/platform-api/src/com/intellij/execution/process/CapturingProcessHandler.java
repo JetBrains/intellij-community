@@ -18,7 +18,9 @@ package com.intellij.execution.process;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.charset.Charset;
@@ -127,4 +129,28 @@ public class CapturingProcessHandler extends OSProcessHandler {
     }
     return myOutput;
   }
+
+  @NotNull
+  public ProcessOutput runProcessCheckingCanceled() throws ProcessCanceledException {
+    startNotify();
+    while (!waitFor(20)) {
+      try {
+        ProgressManager.checkCanceled();
+      }
+      catch (ProcessCanceledException e) {
+        if (!isProcessTerminating() && !isProcessTerminated()) {
+          destroyProcess();
+        }
+        throw e;
+      }
+    }
+    if (waitFor()) {
+      myOutput.setExitCode(getProcess().exitValue());
+    }
+    else {
+      LOG.info("runProcess: exit value unavailable");
+    }
+    return myOutput;
+  }
+
 }

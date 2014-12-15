@@ -21,7 +21,6 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
@@ -32,25 +31,17 @@ public class OpenFileInDefaultBrowserAction extends DumbAwareAction {
   public void update(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
 
-    Pair<OpenInBrowserRequest, WebBrowserUrlProvider> result = BaseOpenInBrowserAction.doUpdate(e);
+    OpenInBrowserRequest result = BaseOpenInBrowserAction.doUpdate(e);
     if (result == null) {
       return;
     }
 
-    WebBrowserUrlProvider browserUrlProvider = result.second;
-    String text = getTemplatePresentation().getText();
     String description = getTemplatePresentation().getDescription();
-    if (browserUrlProvider != null) {
-      String customDescription = browserUrlProvider.getOpenInBrowserActionDescription(result.first.getFile());
-      if (customDescription != null) {
-        description = customDescription;
-      }
-      if (HtmlUtil.isHtmlFile(result.first.getFile())) {
-        description += " (hold Shift to open URL of local file)";
-      }
+    if (HtmlUtil.isHtmlFile(result.getFile())) {
+      description += " (hold Shift to open URL of local file)";
     }
 
-    presentation.setText(text);
+    presentation.setText(getTemplatePresentation().getText());
     presentation.setDescription(description);
 
     WebBrowser browser = findUsingBrowser();

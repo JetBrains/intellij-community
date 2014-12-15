@@ -1099,6 +1099,13 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorT
     assertNull(myEditor.getSoftWrapModel().getSoftWrap(8));
   }
   
+  public void testUnbreakableLinesDontAffectFollowingLines() throws Exception {
+    initText("unbreakableLine\nshort line");
+    configureSoftWraps(10);
+    
+    verifySoftWrapPositions();
+  }
+  
   private void init(final int visibleWidthInColumns, @NotNull String fileText) throws IOException {
     init(visibleWidthInColumns, 7, fileText);
   }

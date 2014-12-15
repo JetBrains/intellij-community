@@ -108,6 +108,10 @@ class PortUnificationServerHandler extends Decoder {
       else if (isHttp(magic1, magic2)) {
         NettyUtil.addHttpServerCodec(pipeline);
         pipeline.addLast(delegatingHttpRequestHandler);
+        // added earlier if HTTPS
+        if (pipeline.get(ChunkedWriteHandler.class) == null) {
+          pipeline.addLast(new ChunkedWriteHandler());
+        }
         if (BuiltInServer.LOG.isDebugEnabled()) {
           pipeline.addLast(new ChannelOutboundHandlerAdapter() {
             @Override

@@ -24,7 +24,6 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.io.URLUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import sun.misc.Resource;
 
@@ -50,14 +49,22 @@ public class ClassPath {
   private final boolean myCanUseCache;
   private final boolean myAcceptUnescapedUrls;
   private final boolean myPreloadJarContents;
-  private final LoaderIndexProvider myIndexProvider;
+  @Nullable private final CachePoolImpl myCachePool;
+  @Nullable private final UrlClassLoader.CachingCondition myCachingCondition;
 
-  public ClassPath(List<URL> urls, boolean canLockJars, boolean canUseCache, boolean acceptUnescapedUrls, boolean preloadJarContents, @NotNull LoaderIndexProvider indexProvider) {
+  public ClassPath(List<URL> urls,
+                   boolean canLockJars,
+                   boolean canUseCache,
+                   boolean acceptUnescapedUrls,
+                   boolean preloadJarContents,
+                   @Nullable CachePoolImpl cachePool,
+                   @Nullable UrlClassLoader.CachingCondition cachingCondition) {
     myCanLockJars = canLockJars;
     myCanUseCache = canUseCache;
     myAcceptUnescapedUrls = acceptUnescapedUrls;
     myPreloadJarContents = preloadJarContents;
-    myIndexProvider = indexProvider;
+    myCachePool = cachePool;
+    myCachingCondition = cachingCondition;
     push(urls);
   }
 
@@ -184,7 +191,14 @@ public class ClassPath {
     }
 
     if (loader != null && myCanUseCache) {
-      myCache.applyLoaderData(myIndexProvider.getLoaderData(loader), loader);
+      ClasspathCache.LoaderData data = myCachePool == null ? null : myCachePool.getCachedData(url);
+      if (data == null) {
+        data = loader.buildData();
+        if (myCachePool != null && myCachingCondition != null && myCachingCondition.shouldCacheData(url)) {
+          myCachePool.cacheData(url, data);
+        }
+      }
+      myCache.applyLoaderData(data, loader);
     }
 
     return loader;
@@ -238,7 +252,7 @@ public class ClassPath {
         }
         else {
           while ((loader = getLoader(myIndex++)) != null) {
-            if (!myCache.loaderHasName(myName, myShortName, loader)) continue;
+            if (myCanUseCache && !myCache.loaderHasName(myName, myShortName, loader)) continue;
             myRes = loader.getResource(myName, myCheck);
             if (myRes != null) return true;
           }

@@ -25,7 +25,6 @@ import com.intellij.ide.util.DirectoryChooserUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -79,14 +78,14 @@ public class CreatePackageAction extends DumbAwareAction {
   }
 
   private static void createInitPy(PsiDirectory directory) {
-    final FileTemplateManager fileTemplateManager = FileTemplateManager.getInstance();
+    final FileTemplateManager fileTemplateManager = FileTemplateManager.getInstance(directory.getProject());
     final FileTemplate template = fileTemplateManager.getInternalTemplate("Python Script");
     if (directory.findFile(PyNames.INIT_DOT_PY) != null) {
       return;
     }
     if (template != null) {
       try {
-        FileTemplateUtil.createFromTemplate(template, PyNames.INIT_DOT_PY, fileTemplateManager.getDefaultProperties(directory.getProject()), directory);
+        FileTemplateUtil.createFromTemplate(template, PyNames.INIT_DOT_PY, fileTemplateManager.getDefaultProperties(), directory);
       }
       catch (Exception e) {
         LOG.error(e);

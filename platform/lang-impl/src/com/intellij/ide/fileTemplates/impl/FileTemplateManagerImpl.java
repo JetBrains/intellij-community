@@ -33,6 +33,8 @@ import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
@@ -115,7 +117,9 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Pers
       @NotNull
       @Override
       public String getTemplatesDir() {
-        return new File(project.getBasePath(), TEMPLATES_DIR).getPath();
+        VirtualFile file = project.getProjectFile();
+        assert file != null;
+        return new File(file.getParent().getCanonicalPath(), TEMPLATES_DIR).getPath();
       }
     };
   }
@@ -128,9 +132,14 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Pers
 
   @Override
   public void setCurrentScheme(@NotNull FileTemplatesScheme scheme) {
+    if (scheme == myScheme) return;
+    for (FTManager child : myAllManagers) {
+      child.saveTemplates();
+    }
     myScheme = scheme;
     for (FTManager manager : myAllManagers) {
       manager.setScheme(scheme);
+      manager.loadCustomizedContent();
     }
   }
 
@@ -138,6 +147,15 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Pers
   @Override
   public FileTemplatesScheme getProjectScheme() {
     return myProjectScheme;
+  }
+
+  @Override
+  public FileTemplate[] getTemplates(String category) {
+    if (DEFAULT_TEMPLATES_CATEGORY.equals(category)) return ArrayUtil.mergeArrays(getInternalTemplates(), getAllTemplates());
+    if (INCLUDES_TEMPLATES_CATEGORY.equals(category)) return getAllPatterns();
+    if (CODE_TEMPLATES_CATEGORY.equals(category)) return getAllCodeTemplates();
+    if (J2EE_TEMPLATES_CATEGORY.equals(category)) return getAllJ2eeTemplates();
+    throw new IllegalArgumentException("Unknown category: " + category);
   }
 
   @Override
@@ -385,6 +403,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Pers
     for (FTManager manager : myAllManagers) {
       if (templatesCategory.equals(manager.getName())) {
         manager.updateTemplates(templates);
+        manager.saveTemplates();
         break;
       }
     }
@@ -408,16 +427,19 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Pers
   @Nullable
   @Override
   public State getState() {
+    myState.SCHEME = myScheme.getName();
     return myState;
   }
 
   @Override
   public void loadState(State state) {
     XmlSerializerUtil.copyBean(state, myState);
+    setCurrentScheme(myProjectScheme.getName().equals(state.SCHEME) ? myProjectScheme : FileTemplatesScheme.DEFAULT);
   }
 
   public static class State {
     public List<String> RECENT_TEMPLATES = new ArrayList<String>();
+    public String SCHEME = FileTemplatesScheme.DEFAULT.getName();
 
     public void addName(@NotNull @NonNls String name) {
       RECENT_TEMPLATES.remove(name);

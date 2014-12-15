@@ -49,7 +49,7 @@ public abstract class AbstractNavBarUI implements NavBarUI {
 
   @Override
   public Insets getElementIpad(boolean isPopupElement) {
-    return isPopupElement ? new Insets(1, 2, 1, 2) : JBInsets.NONE;
+    return isPopupElement ? new Insets(1, 2, 1, 2) : (Insets)JBInsets.NONE.clone();
   }
 
   @Override

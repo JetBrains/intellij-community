@@ -1,5 +1,5 @@
 class Test {
-    void bar() {
+  void bar() {
     foo(new Runnable() {
         public void run() {
             System.out.println("");
@@ -8,7 +8,7 @@ class Test {
     });
   }
   
-  void foo(Runnable anObject) {
+  static void foo(Runnable anObject) {
 
       anObject.run();
 

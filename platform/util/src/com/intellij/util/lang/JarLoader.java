@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.ZipFileCache;
 import com.intellij.util.io.URLUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import sun.misc.Resource;
 
@@ -68,9 +69,10 @@ class JarLoader extends Loader {
     }
   }
 
+  @NotNull
   @Override
-  public ClasspathLoaderIndex buildIndex() throws IOException {
-    ClasspathLoaderIndex loaderData = new ClasspathLoaderIndex();
+  public ClasspathCache.LoaderData buildData() throws IOException {
+    ClasspathCache.LoaderData loaderData = new ClasspathCache.LoaderData();
     ZipFile zipFile = acquireZipFile();
     try {
       Enumeration<? extends ZipEntry> entries = zipFile.entries();

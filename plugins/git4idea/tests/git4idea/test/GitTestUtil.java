@@ -35,10 +35,13 @@ import org.jetbrains.ide.BuiltInServerManagerImpl;
 import org.picocontainer.MutablePicoContainer;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Set;
 
 import static com.intellij.openapi.vcs.Executor.*;
+import static git4idea.test.GitExecutor.addCommit;
 import static git4idea.test.GitExecutor.git;
+import static git4idea.test.GitExecutor.last;
 import static junit.framework.Assert.assertNotNull;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assume.assumeTrue;
@@ -154,5 +157,12 @@ public class GitTestUtil {
       result.addAll(new RefParser(objectsFactory).parseCommitRefs(ref, root));
     }
     return result;
+  }
+
+  @NotNull
+  public static String makeCommit(String file) throws IOException {
+    append(file, "some content");
+    addCommit("some message");
+    return last();
   }
 }

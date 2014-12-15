@@ -24,6 +24,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.GradientViewport;
 
 import javax.swing.*;
+import java.awt.BorderLayout;
 
 /**
  * @author Sergey.Malenkov
@@ -39,6 +40,12 @@ public class ConfigurableCardPanel extends CardLayoutPanel<Configurable, JCompon
           configurable.reset();
           if (ConfigurableWrapper.cast(MasterDetails.class, configurable) == null) {
             if (ConfigurableWrapper.cast(Configurable.NoMargin.class, configurable) == null) {
+              if (!component.getClass().equals(JPanel.class)) {
+                // some custom components do not support borders
+                JPanel panel = new JPanel(new BorderLayout());
+                panel.add(BorderLayout.CENTER, component);
+                component = panel;
+              }
               component.setBorder(BorderFactory.createEmptyBorder(5, 10, 10, 10));
             }
             if (ConfigurableWrapper.cast(Configurable.NoScroll.class, configurable) == null) {

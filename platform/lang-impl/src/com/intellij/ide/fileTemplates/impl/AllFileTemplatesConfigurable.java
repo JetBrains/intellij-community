@@ -32,12 +32,9 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.OnePixelSplitter;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.SideBorder;
-import com.intellij.ui.TabbedPaneWrapper;
+import com.intellij.ui.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.PlatformIcons;
@@ -45,6 +42,7 @@ import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -54,6 +52,8 @@ import java.net.URL;
 import java.text.MessageFormat;
 import java.util.*;
 import java.util.List;
+
+import static com.intellij.ide.fileTemplates.FileTemplateManager.*;
 
 /*
  * @author: MYakovlev
@@ -76,6 +76,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
   private FileTemplateTab myTemplatesList;
   private FileTemplateTab myIncludesList;
   private FileTemplateTab myCodeTemplatesList;
+  @Nullable
   private FileTemplateTab myOtherTemplatesList;
   private JComponent myToolBar;
   private TabbedPaneWrapper myTabbedPane;
@@ -85,14 +86,25 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
   private JPanel myLeftPanel;
   private FileTemplateTab[] myTabs;
   private Disposable myUIDisposable;
-  private final Set<String> myInternalTemplateNames = new HashSet<String>();
+  private final Set<String> myInternalTemplateNames;
+
+  private FileTemplatesScheme myScheme;
+  private final Map<FileTemplatesScheme, Map<String, FileTemplate[]>> myChangesCache =
+    new HashMap<FileTemplatesScheme, Map<String, FileTemplate[]>>();
 
   private static final String CURRENT_TAB = "FileTemplates.CurrentTab";
   private static final String SELECTED_TEMPLATE = "FileTemplates.SelectedTemplate";
 
   public AllFileTemplatesConfigurable(Project project) {
     myProject = project;
-    myManager = FileTemplateManager.getInstance(project);
+    myManager = getInstance(project);
+    myScheme = myManager.getCurrentScheme();
+    myInternalTemplateNames = ContainerUtil.map2Set(myManager.getInternalTemplates(), new Function<FileTemplate, String>() {
+      @Override
+      public String fun(FileTemplate template) {
+        return template.getName();
+      }
+    });
   }
 
   private void onRemove() {
@@ -200,18 +212,15 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
         onListSelectionChanged();
       }
     };
+    myCodeTemplatesList = new FileTemplateTabAsList(CODE_TITLE) {
+      @Override
+      public void onTemplateSelected() {
+        onListSelectionChanged();
+      }
+    };
     myCurrentTab = myTemplatesList;
 
-    final List<FileTemplateTab> allTabs = new ArrayList<FileTemplateTab>(Arrays.asList(myTemplatesList, myIncludesList));
-    if (myManager.getAllCodeTemplates().length > 0) {
-      myCodeTemplatesList = new FileTemplateTabAsList(CODE_TITLE) {
-        @Override
-        public void onTemplateSelected() {
-          onListSelectionChanged();
-        }
-      };
-      allTabs.add(myCodeTemplatesList);
-    }
+    final List<FileTemplateTab> allTabs = new ArrayList<FileTemplateTab>(Arrays.asList(myTemplatesList, myIncludesList, myCodeTemplatesList));
 
     final Set<FileTemplateGroupDescriptorFactory> factories = new THashSet<FileTemplateGroupDescriptorFactory>();
     ContainerUtil.addAll(factories, ApplicationManager.getApplication().getComponents(FileTemplateGroupDescriptorFactory.class));
@@ -252,7 +261,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
       allTabs.add(myOtherTemplatesList);
     }
 
-    myEditor = new FileTemplateConfigurable();
+    myEditor = new FileTemplateConfigurable(myProject);
     myEditor.addChangeListener(new ChangeListener() {
       @Override
       public void stateChanged(ChangeEvent e) {
@@ -347,13 +356,13 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
 
     JPanel toolbarPanel = new JPanel(new BorderLayout());
     toolbarPanel.add(myToolBar, BorderLayout.WEST);
-    //JComponent schemaComponent =
-    //  ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, new DefaultCompactActionGroup(new ChangeSchemaCombo()), true)
-    //    .getComponent();
-    //JPanel schemaPanel = new JPanel(new BorderLayout());
-    //schemaPanel.add(schemaComponent, BorderLayout.EAST);
-    //schemaPanel.add(new JLabel("Schema:"), BorderLayout.WEST);
-    //toolbarPanel.add(schemaPanel, BorderLayout.EAST);
+    JComponent schemaComponent =
+      ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, new DefaultCompactActionGroup(new ChangeSchemaCombo(this)), true)
+        .getComponent();
+    JPanel schemaPanel = new JPanel(new BorderLayout());
+    schemaPanel.add(schemaComponent, BorderLayout.EAST);
+    schemaPanel.add(new JLabel("Schema:"), BorderLayout.WEST);
+    toolbarPanel.add(schemaPanel, BorderLayout.EAST);
 
 
     JPanel centerPanel = new JPanel(new BorderLayout());
@@ -366,6 +375,19 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
     myMainPanel = new JPanel(new BorderLayout());
     myMainPanel.add(toolbarPanel, BorderLayout.NORTH);
     myMainPanel.add(centerPanel, BorderLayout.CENTER);
+
+    final PropertiesComponent propertiesComponent = PropertiesComponent.getInstance();
+    final String tabName = propertiesComponent.getValue(CURRENT_TAB);
+    if (selectTab(tabName)) {
+      //final String selectedTemplateName = propertiesComponent.getValue(SELECTED_TEMPLATE);
+      //for (FileTemplate template : myCurrentTab.getTemplates()) {
+      //  if (Comparing.strEqual(template.getName(), selectedTemplateName)) {
+      //    myCurrentTab.selectTemplate(template);
+      //    break;
+      //  }
+      //}
+    }
+
     return myMainPanel;
   }
 
@@ -466,7 +488,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
       return true;
     }
     if (Comparing.strEqual(templateTabTitle, INCLUDES_TITLE)) {
-      return Comparing.strEqual(templateName, FileTemplateManager.FILE_HEADER_TEMPLATE_NAME);
+      return Comparing.strEqual(templateName, FILE_HEADER_TEMPLATE_NAME);
     }
     return false;
   }
@@ -481,26 +503,33 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
   }
 
   private void initLists() {
-    final FileTemplateManager templateManager = myManager;
-
-    final FileTemplate[] internalTemplates = templateManager.getInternalTemplates();
-    myInternalTemplateNames.clear();
-    for (FileTemplate internalTemplate : internalTemplates) {
-      myInternalTemplateNames.add(((FileTemplateBase)internalTemplate).getQualifiedName());
-    }
-
-    myTemplatesList.init(ArrayUtil.mergeArrays(internalTemplates, templateManager.getAllTemplates()));
-    myIncludesList.init(templateManager.getAllPatterns());
-    if (myCodeTemplatesList != null) {
-      myCodeTemplatesList.init(templateManager.getAllCodeTemplates());
-    }
+    FileTemplatesScheme scheme = myManager.getCurrentScheme();
+    myManager.setCurrentScheme(myScheme);
+    myTemplatesList.init(getTemplates(DEFAULT_TEMPLATES_CATEGORY));
+    myIncludesList.init(getTemplates(INCLUDES_TEMPLATES_CATEGORY));
+    myCodeTemplatesList.init(getTemplates(CODE_TEMPLATES_CATEGORY));
     if (myOtherTemplatesList != null) {
-      myOtherTemplatesList.init(templateManager.getAllJ2eeTemplates());
+      myOtherTemplatesList.init(getTemplates(J2EE_TEMPLATES_CATEGORY));
+    }
+    myManager.setCurrentScheme(scheme);
+  }
+
+  private FileTemplate[] getTemplates(String category) {
+    Map<String, FileTemplate[]> templates = myChangesCache.get(myScheme);
+    if (templates == null) {
+      return myManager.getTemplates(category);
+    }
+    else {
+      return templates.get(category);
     }
   }
 
   @Override
   public boolean isModified() {
+    return myScheme != myManager.getCurrentScheme() || !myChangesCache.isEmpty() || isSchemeModified();
+  }
+
+  private boolean isSchemeModified() {
     return myModified || myEditor != null && myEditor.isModified();
   }
 
@@ -571,30 +600,18 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
     for (FileTemplateTab list : myTabs) {
       checkCanApply(list);
     }
-
-    final FileTemplateManager templatesManager = myManager;
-    // Apply templates
-
-    final List<FileTemplate> templates = new ArrayList<FileTemplate>();
-    final List<FileTemplate> internalTemplates = new ArrayList<FileTemplate>();
-    for (FileTemplate template : myTemplatesList.getTemplates()) {
-      if (myInternalTemplateNames.contains(((FileTemplateBase)template).getQualifiedName())) {
-        internalTemplates.add(template);
-      }
-      else {
-        templates.add(template);
-      }
+    updateCache();
+    for (Map.Entry<FileTemplatesScheme, Map<String, FileTemplate[]>> entry : myChangesCache.entrySet()) {
+      myManager.setCurrentScheme(entry.getKey());
+      myManager.setTemplates(DEFAULT_TEMPLATES_CATEGORY, Arrays.asList(entry.getValue().get(DEFAULT_TEMPLATES_CATEGORY)));
+      myManager.setTemplates(INTERNAL_TEMPLATES_CATEGORY, Arrays.asList(entry.getValue().get(INTERNAL_TEMPLATES_CATEGORY)));
+      myManager.setTemplates(INCLUDES_TEMPLATES_CATEGORY, Arrays.asList(entry.getValue().get(INCLUDES_TEMPLATES_CATEGORY)));
+      myManager.setTemplates(CODE_TEMPLATES_CATEGORY, Arrays.asList(entry.getValue().get(CODE_TEMPLATES_CATEGORY)));
+      myManager.setTemplates(J2EE_TEMPLATES_CATEGORY, Arrays.asList(entry.getValue().get(J2EE_TEMPLATES_CATEGORY)));
     }
+    myChangesCache.clear();
 
-    templatesManager.setTemplates(FileTemplateManager.DEFAULT_TEMPLATES_CATEGORY, templates);
-    templatesManager.setTemplates(FileTemplateManager.INTERNAL_TEMPLATES_CATEGORY, internalTemplates);
-    templatesManager.setTemplates(FileTemplateManager.INCLUDES_TEMPLATES_CATEGORY, Arrays.asList(myIncludesList.getTemplates()));
-    if (myCodeTemplatesList != null) {
-      templatesManager.setTemplates(FileTemplateManager.CODE_TEMPLATES_CATEGORY, Arrays.asList(myCodeTemplatesList.getTemplates()));
-    }
-    if (myOtherTemplatesList != null) {
-      templatesManager.setTemplates(FileTemplateManager.J2EE_TEMPLATES_CATEGORY, Arrays.asList(myOtherTemplatesList.getTemplates()));
-    }
+    myManager.setCurrentScheme(myScheme);
 
     if (myEditor != null) {
       myModified = false;
@@ -622,18 +639,8 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
   @Override
   public void reset() {
     myEditor.reset();
-    initLists();
-    final PropertiesComponent propertiesComponent = PropertiesComponent.getInstance();
-    final String tabName = propertiesComponent.getValue(CURRENT_TAB);
-    if (selectTab(tabName)) {
-      final String selectedTemplateName = propertiesComponent.getValue(SELECTED_TEMPLATE);
-      for (FileTemplate template : myCurrentTab.getTemplates()) {
-        if (Comparing.strEqual(template.getName(), selectedTemplateName)) {
-          myCurrentTab.selectTemplate(template);
-          break;
-        }
-      }
-    }
+    changeScheme(myManager.getCurrentScheme());
+    myChangesCache.clear();
     myModified = false;
   }
 
@@ -699,5 +706,62 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
         }
       }
     });
+  }
+
+  public void changeScheme(FileTemplatesScheme scheme) {
+    if (myEditor != null && myEditor.isModified()) {
+      myModified = true;
+      try {
+        myEditor.apply();
+      }
+      catch (ConfigurationException e) {
+        Messages.showErrorDialog(myEditorComponent, e.getMessage(), e.getTitle());
+        return;
+      }
+    }
+    updateCache();
+    myScheme = scheme;
+    initLists();
+  }
+
+  @SuppressWarnings("ToArrayCallWithZeroLengthArrayArgument")
+  private void updateCache() {
+    if (isSchemeModified()) {
+      if (!myChangesCache.containsKey(myScheme)) {
+        Map<String, FileTemplate[]> templates = new HashMap<String, FileTemplate[]>();
+        FileTemplate[] allTemplates = myTemplatesList.getTemplates();
+        templates.put(DEFAULT_TEMPLATES_CATEGORY, ContainerUtil.filter(allTemplates, new Condition<FileTemplate>() {
+          @Override
+          public boolean value(FileTemplate template) {
+            return !myInternalTemplateNames.contains(template.getName());
+          }
+        }).toArray(FileTemplate.EMPTY_ARRAY));
+        templates.put(INTERNAL_TEMPLATES_CATEGORY, ContainerUtil.filter(allTemplates, new Condition<FileTemplate>() {
+          @Override
+          public boolean value(FileTemplate template) {
+            return myInternalTemplateNames.contains(template.getName());
+          }
+        }).toArray(FileTemplate.EMPTY_ARRAY));
+        templates.put(INCLUDES_TEMPLATES_CATEGORY, myIncludesList.getTemplates());
+        templates.put(CODE_TEMPLATES_CATEGORY, myCodeTemplatesList.getTemplates());
+        if (myOtherTemplatesList != null) {
+          templates.put(J2EE_TEMPLATES_CATEGORY, myOtherTemplatesList.getTemplates());
+        }
+        myChangesCache.put(myScheme, templates);
+      }
+    }
+  }
+
+  public FileTemplateManager getManager() {
+    return myManager;
+  }
+
+  public FileTemplatesScheme getCurrentScheme() {
+    return myScheme;
+  }
+
+  @TestOnly
+  public FileTemplateConfigurable getEditor() {
+    return myEditor;
   }
 }

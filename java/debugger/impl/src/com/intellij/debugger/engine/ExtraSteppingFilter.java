@@ -18,8 +18,7 @@ package com.intellij.debugger.engine;
 import com.intellij.openapi.extensions.ExtensionPointName;
 
 /**
- * Nikolay.Tropin
- * 2014-12-09
+ * @author Nikolay.Tropin
  */
 public interface ExtraSteppingFilter {
   ExtensionPointName<ExtraSteppingFilter> EP_NAME = ExtensionPointName.create("com.intellij.debugger.extraSteppingFilter");
@@ -28,5 +27,5 @@ public interface ExtraSteppingFilter {
 
   /**@return Step request depth as defined in {@link com.sun.jdi.request.StepRequest}
    */
-  int stepRequestDepth(SuspendContext context);
+  int getStepRequestDepth(SuspendContext context);
 }

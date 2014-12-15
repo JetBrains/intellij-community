@@ -7,15 +7,13 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiPackage;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.rt.coverage.data.ClassData;
 import com.intellij.rt.coverage.data.LineCoverage;
@@ -202,7 +200,7 @@ public class PackageAnnotator {
                 final String classFqVMName = packageVMName.length() > 0 ? packageVMName + "/" + childName : childName;
                 final String toplevelClassSrcFQName = getSourceToplevelFQName(classFqVMName);
                 if (toplevelClassSrcFQName.equals(qualifiedName)) {
-                  collectClassCoverageInformation(child, new PackageCoverageInfo(), data, toplevelClassCoverage, classFqVMName.replace("/", "."), toplevelClassSrcFQName);
+                  collectClassCoverageInformation(child, psiClass, new PackageCoverageInfo(), data, toplevelClassCoverage, classFqVMName.replace("/", "."), toplevelClassSrcFQName);
                 }
               }
             }
@@ -267,26 +265,29 @@ public class PackageAnnotator {
           final String childName = getClassName(child);
           final String classFqVMName = packageVMName.length() > 0 ? packageVMName + "/" + childName : childName;
           final String toplevelClassSrcFQName = getSourceToplevelFQName(classFqVMName);
-          final VirtualFile[] containingFile = new VirtualFile[1];
+          final Ref<VirtualFile> containingFileRef = new Ref<VirtualFile>();
+          final Ref<PsiClass> psiClassRef = new Ref<PsiClass>();
           final Boolean isInSource = myCoverageManager.doInReadActionIfProjectOpen(new Computable<Boolean>() {
             public Boolean compute() {
               final PsiClass aClass =
                 JavaPsiFacade.getInstance(myManager.getProject()).findClass(toplevelClassSrcFQName, GlobalSearchScope.moduleScope(module));
               if (aClass == null || !aClass.isValid()) return Boolean.FALSE;
-              containingFile[0] = aClass.getContainingFile().getVirtualFile();
-              if (containingFile[0] == null) {
+              psiClassRef.set(aClass);
+              containingFileRef.set(aClass.getContainingFile().getVirtualFile());
+              if (containingFileRef.isNull()) {
                 LOG.info("No virtual file found for: " + aClass);
                 return null;
               }
               final ModuleFileIndex fileIndex = ModuleRootManager.getInstance(module).getFileIndex();
-              return fileIndex.isUnderSourceRootOfType(containingFile[0], JavaModuleSourceRootTypes.SOURCES)
-                     && (trackTestFolders || !fileIndex.isInTestSourceContent(containingFile[0]));
+              return fileIndex.isUnderSourceRootOfType(containingFileRef.get(), JavaModuleSourceRootTypes.SOURCES)
+                     && (trackTestFolders || !fileIndex.isInTestSourceContent(containingFileRef.get()));
             }
           });
           if (isInSource != null && isInSource.booleanValue()) {
             for (DirCoverageInfo dirCoverageInfo : dirs) {
-              if (dirCoverageInfo.sourceRoot != null && VfsUtil.isAncestor(dirCoverageInfo.sourceRoot, containingFile[0], false)) {
-                collectClassCoverageInformation(child, dirCoverageInfo, projectInfo, toplevelClassCoverage, classFqVMName.replace("/", "."), toplevelClassSrcFQName);
+              if (dirCoverageInfo.sourceRoot != null && VfsUtil.isAncestor(dirCoverageInfo.sourceRoot, containingFileRef.get(), false)) {
+                collectClassCoverageInformation(child, psiClassRef.get(), dirCoverageInfo, projectInfo, toplevelClassCoverage,
+                                                classFqVMName.replace("/", "."), toplevelClassSrcFQName);
                 break;
               }
             }
@@ -352,7 +353,8 @@ public class PackageAnnotator {
     return coverageInfo;
   }
 
-  private void collectClassCoverageInformation(final File classFile, final PackageCoverageInfo packageCoverageInfo, final ProjectData projectInfo,
+  private void collectClassCoverageInformation(final File classFile, final PsiClass psiClass, final PackageCoverageInfo packageCoverageInfo,
+                                               final ProjectData projectInfo,
                                                final Map<String, ClassCoverageInfo> toplevelClassCoverage,
                                                final String className,
                                                final String toplevelClassSrcFQName) {
@@ -378,17 +380,20 @@ public class PackageAnnotator {
       boolean touchedClass = false;
       final Collection methodSigs = classData.getMethodSigs();
       for (final Object nameAndSig : methodSigs) {
+        if (isGeneratedDefaultConstructor(psiClass, (String) nameAndSig)) {
+          continue;
+        }
         final int covered = classData.getStatus((String)nameAndSig);
         if (covered != LineCoverage.NONE) {
           toplevelClassCoverageInfo.coveredMethodCount++;
           touchedClass = true;
         }
+        toplevelClassCoverageInfo.totalMethodCount++;
       }
       if (!methodSigs.isEmpty()) {
         if (touchedClass) {
           packageCoverageInfo.coveredClassCount++;
         }
-        toplevelClassCoverageInfo.totalMethodCount += methodSigs.size();
         packageCoverageInfo.totalClassCount++;
 
         packageCoverageInfo.coveredLineCount += toplevelClassCoverageInfo.fullyCoveredLineCount;
@@ -412,6 +417,22 @@ public class PackageAnnotator {
     if (toplevelClassCoverageInfo.coveredMethodCount > 0) {
       classCoverageInfo.coveredClassCount++;
     }
+  }
+
+  /**
+   * Checks if the method is a default constructor generated by the compiler. Such constructors are not marked as synthetic
+   * in the bytecode, so we need to look at the PSI to see if the class defines such a constructor.
+   */
+  private static boolean isGeneratedDefaultConstructor(PsiClass aClass, String nameAndSig) {
+    if ("<init>()V".equals(nameAndSig)) {
+      for (PsiMethod method : aClass.getConstructors()) {
+        if (method.getParameterList().getParametersCount() == 0) {
+          return false;
+        }
+      }
+      return true;
+    }
+    return false;
   }
 
   private static ClassCoverageInfo getOrCreateClassCoverageInfo(final Map<String, ClassCoverageInfo> toplevelClassCoverage,

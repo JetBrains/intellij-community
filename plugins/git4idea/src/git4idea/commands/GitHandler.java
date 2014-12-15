@@ -35,7 +35,9 @@ import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
+import com.intellij.util.io.URLUtil;
 import com.intellij.util.net.HttpConfigurable;
+import com.intellij.util.net.IdeaWideProxySelector;
 import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.GitVcs;
 import git4idea.config.GitVcsApplicationSettings;
@@ -443,7 +445,7 @@ public abstract class GitHandler {
         LOG.debug(String.format("handler=%s, port=%s", myHandlerNo, port));
 
         final HttpConfigurable httpConfigurable = HttpConfigurable.getInstance();
-        boolean useHttpProxy = httpConfigurable.USE_HTTP_PROXY;
+        boolean useHttpProxy = httpConfigurable.USE_HTTP_PROXY && !isSshUrlExcluded(httpConfigurable, myUrl);
         myEnv.put(GitSSHHandler.SSH_USE_PROXY_ENV, String.valueOf(useHttpProxy));
 
         if (useHttpProxy) {
@@ -484,6 +486,11 @@ public abstract class GitHandler {
       cleanupEnv();
       myListeners.getMulticaster().startFailed(t);
     }
+  }
+
+  protected static boolean isSshUrlExcluded(@NotNull HttpConfigurable httpConfigurable, @NotNull String url) {
+    String host = URLUtil.parseHostFromSshUrl(url);
+    return ((IdeaWideProxySelector)httpConfigurable.getOnlyBySettingsSelector()).isProxyException(host);
   }
 
   private void addAuthListener(@NotNull final GitHttpAuthenticator authenticator) {

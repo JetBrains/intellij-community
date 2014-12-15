@@ -68,9 +68,9 @@ public class CCCreateTask extends DumbAwareAction {
         final PsiDirectory taskDirectory = DirectoryUtil.createSubdirectories("task" + (size + 1), lessonDir, "\\/");
         if (taskDirectory != null) {
           CCUtils.markDirAsSourceRoot(taskDirectory.getVirtualFile(), project);
-          final FileTemplate template = FileTemplateManager.getInstance().getInternalTemplate("task.html");
-          final FileTemplate testsTemplate = FileTemplateManager.getInstance().getInternalTemplate("tests");
-          final FileTemplate taskTemplate = FileTemplateManager.getInstance().getInternalTemplate("task.answer");
+          final FileTemplate template = FileTemplateManager.getInstance(project).getInternalTemplate("task.html");
+          final FileTemplate testsTemplate = FileTemplateManager.getInstance(project).getInternalTemplate("tests");
+          final FileTemplate taskTemplate = FileTemplateManager.getInstance(project).getInternalTemplate("task.answer");
           try {
             final PsiElement taskFile = FileTemplateUtil.createFromTemplate(template, "task.html", null, taskDirectory);
             final PsiElement testsFile = FileTemplateUtil.createFromTemplate(testsTemplate, "tests.py", null, taskDirectory);

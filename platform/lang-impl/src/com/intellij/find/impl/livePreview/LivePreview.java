@@ -504,7 +504,7 @@ public class LivePreview extends DocumentAdapter implements SearchResults.Search
       int startOffset = cur.getStartOffset();
       int endOffset = cur.getEndOffset();
 
-      if (startOffset >= myEditor.getDocument().getTextLength()) {
+      if (endOffset > myEditor.getDocument().getTextLength()) {
         if (!object.isDisposed()) {
           requestBalloonHiding(object);
         }

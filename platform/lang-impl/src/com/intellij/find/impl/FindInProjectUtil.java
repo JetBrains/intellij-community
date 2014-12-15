@@ -102,6 +102,9 @@ public class FindInProjectUtil {
     if (model.getModuleName() == null || editor == null) {
       model.setDirectoryName(directoryName);
       model.setProjectScope(directoryName == null && module == null && !model.isCustomScope() || editor != null);
+      if (directoryName != null) {
+        model.setCustomScope(false); // to select "Directory: " radio button
+      }
 
       // for convenience set directory name to directory of current file, note that we doesn't change default projectScope
       if (directoryName == null) {

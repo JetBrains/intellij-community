@@ -17,6 +17,8 @@ package com.intellij.ide;
 
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplatesScheme;
+import com.intellij.ide.fileTemplates.impl.AllFileTemplatesConfigurable;
+import com.intellij.ide.fileTemplates.impl.BundledFileTemplate;
 import com.intellij.ide.fileTemplates.impl.FileTemplateManagerImpl;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestCase;
@@ -28,6 +30,7 @@ public class LightFileTemplatesTest extends LightPlatformTestCase {
 
   public static final String TEST_TEMPLATE_TXT = "testTemplate.txt";
 
+  @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
   public LightFileTemplatesTest() {
     PlatformTestCase.initPlatformLangPrefix();
   }
@@ -41,9 +44,22 @@ public class LightFileTemplatesTest extends LightPlatformTestCase {
     assertEquals("good bye", myTemplateManager.getTemplate(TEST_TEMPLATE_TXT).getText());
 
     myTemplateManager.setCurrentScheme(myTemplateManager.getProjectScheme());
-    assertEquals("hi there", myTemplateManager.getDefaultTemplate(TEST_TEMPLATE_TXT).getText());
+    assertEquals("hi there", myTemplateManager.getTemplate(TEST_TEMPLATE_TXT).getText());
 
-    getProject().save();
+    myTemplateManager.setCurrentScheme(FileTemplatesScheme.DEFAULT);
+    assertEquals("good bye", myTemplateManager.getTemplate(TEST_TEMPLATE_TXT).getText());
+  }
+
+  public void testConfigurable() throws Exception {
+    AllFileTemplatesConfigurable configurable = new AllFileTemplatesConfigurable(getProject());
+    try {
+      configurable.createComponent();
+      configurable.reset();
+
+    }
+    finally {
+      configurable.disposeUIResources();
+    }
   }
 
   private FileTemplateManagerImpl myTemplateManager;
@@ -52,5 +68,13 @@ public class LightFileTemplatesTest extends LightPlatformTestCase {
   public void setUp() throws Exception {
     super.setUp();
     myTemplateManager = FileTemplateManagerImpl.getInstanceImpl(getProject());
+    FileTemplate template = myTemplateManager.getTemplate(TEST_TEMPLATE_TXT);
+    ((BundledFileTemplate)template).revertToDefaults();
+  }
+
+  @Override
+  public void tearDown() throws Exception {
+    myTemplateManager.setCurrentScheme(FileTemplatesScheme.DEFAULT);
+    super.tearDown();
   }
 }

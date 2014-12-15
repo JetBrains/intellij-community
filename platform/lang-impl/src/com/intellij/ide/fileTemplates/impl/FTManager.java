@@ -66,6 +66,7 @@ class FTManager {
 
   public void setScheme(FileTemplatesScheme scheme) {
     myScheme = scheme;
+    restoreDefaults(Collections.<String>emptySet());
   }
 
   @NotNull
@@ -168,6 +169,15 @@ class FTManager {
     for (FileTemplate template : newTemplates) {
       toDisable.remove(((FileTemplateBase)template).getQualifiedName());
     }
+    restoreDefaults(toDisable);
+    for (FileTemplate template : newTemplates) {
+      final FileTemplateBase _template = addTemplate(template.getName(), template.getExtension());
+      _template.setText(template.getText());
+      _template.setReformatCode(template.isReformatCode());
+    }
+  }
+
+  private void restoreDefaults(Set<String> toDisable) {
     myTemplates.clear();
     mySortedTemplates = null;
     for (DefaultTemplate template : myDefaultTemplates) {
@@ -175,11 +185,6 @@ class FTManager {
       if (toDisable.contains(bundled.getQualifiedName())) {
         bundled.setEnabled(false);
       }
-    }
-    for (FileTemplate template : newTemplates) {
-      final FileTemplateBase _template = addTemplate(template.getName(), template.getExtension());
-      _template.setText(template.getText());
-      _template.setReformatCode(template.isReformatCode());
     }
   }
 

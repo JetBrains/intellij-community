@@ -3,7 +3,7 @@ class Test {
     foo();
   }
   
-  void foo() {
+  static void foo() {
     <selection>
     System.out.println("");
     System.out.println("");

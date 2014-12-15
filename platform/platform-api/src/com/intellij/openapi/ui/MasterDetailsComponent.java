@@ -131,7 +131,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   protected MasterDetailsComponent(MasterDetailsState state) {
     myState = state;
 
-    mySplitter = isNewProjectSettings() || isNewSettingsView() ? new OnePixelSplitter(false, .2f) : new JBSplitter(false, .2f);
+    mySplitter = isNewProjectSettings() ? new OnePixelSplitter(false, .2f) : new JBSplitter(false, .2f);
     mySplitter.setSplitterProportionKey("ProjectStructure.SecondLevelElements");
     mySplitter.setHonorComponentsMinimumSize(true);
 
@@ -151,10 +151,6 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     catch (ClassNotFoundException ignored) {
       return false;
     }
-  }
-
-  private boolean isNewSettingsView() {
-    return Registry.is("ide.new.settings.view");
   }
 
   protected void reInitWholePanelIfNeeded() {
@@ -188,7 +184,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
       }
     };
 
-    if (isNewProjectSettings() || isNewSettingsView()) {
+    if (isNewProjectSettings()) {
       ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myTree);
       DefaultActionGroup group = createToolbarActionGroup();
       if (group != null) {
@@ -206,8 +202,8 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
 
     final JPanel right = new JPanel(new BorderLayout());
     right.add(myDetails.getComponent(), BorderLayout.CENTER);
-    if (!isNewProjectSettings() && isNewSettingsView()) {
-      right.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+    if (!isNewProjectSettings()) {
+      myWholePanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
     }
 
     mySplitter.setSecondComponent(right);
@@ -302,7 +298,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   }
 
   private void initToolbar() {
-    if (isNewProjectSettings() || isNewSettingsView()) return;
+    if (isNewProjectSettings()) return;
     DefaultActionGroup group = createToolbarActionGroup();
     if (group != null) {
       final JComponent component = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true).getComponent();
