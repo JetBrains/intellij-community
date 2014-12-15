@@ -97,8 +97,14 @@ public class TodoPattern implements Cloneable {
     return myIndexPattern.getPattern();
   }
 
-  public void readExternal(Element element, @NotNull TextAttributes defaultTodoAttributes) throws InvalidDataException {
-    myAttributes = new TodoAttributes(element,defaultTodoAttributes);
+  public void readExternal(Element element, @NotNull TextAttributes defaultTodoAttributes) {
+    try {
+      myAttributes = new TodoAttributes(element,defaultTodoAttributes);
+    }
+    catch (InvalidDataException e) {
+      throw new RuntimeException(e);
+    }
+
     myIndexPattern.setCaseSensitive(Boolean.valueOf(element.getAttributeValue(CASE_SENS_ATT)).booleanValue());
     String attributeValue = element.getAttributeValue(PATTERN_ATT);
     if (attributeValue != null){
