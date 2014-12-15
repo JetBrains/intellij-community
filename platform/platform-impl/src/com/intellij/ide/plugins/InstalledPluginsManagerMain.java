@@ -31,6 +31,7 @@ import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
@@ -440,7 +441,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
     protected DefaultActionGroup createPopupActionGroup(JComponent button) {
       final DefaultActionGroup gr = new DefaultActionGroup();
       for (final String enabledValue : InstalledPluginsTableModel.ENABLED_VALUES) {
-        gr.add(new AnAction(enabledValue) {
+        gr.add(new DumbAwareAction(enabledValue) {
           @Override
           public void actionPerformed(AnActionEvent e) {
             final IdeaPluginDescriptor[] selection = pluginTable.getSelectedObjects();
