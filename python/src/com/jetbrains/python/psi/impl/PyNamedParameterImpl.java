@@ -333,6 +333,20 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
           }
           super.visitPyElement(node);
         }
+
+        @Override
+        public void visitPyIfStatement(PyIfStatement node) {
+          final PyExpression ifCondition = node.getIfPart().getCondition();
+          if (ifCondition != null) {
+            ifCondition.accept(this);
+          }
+          for (PyIfPart part : node.getElifParts()) {
+            final PyExpression elseIfCondition = part.getCondition();
+            if (elseIfCondition != null) {
+              elseIfCondition.accept(this);
+            }
+          }
+        }
       });
     }
     return result;

@@ -987,6 +987,16 @@ public class PyTypeTest extends PyTestCase {
            "   expr = x\n");
   }
 
+  public void testStructuralTypeAndIsInstanceChecks() {
+    doTest("(x: {foo}) -> None",
+           "def f(x):\n" +
+           "    if isinstance(x, str):\n" +
+           "        x.lower()\n" +
+           "    x.foo\n" +
+           "\n" +
+           "expr = f\n");
+  }
+
   private static TypeEvalContext getTypeEvalContext(@NotNull PyExpression element) {
     return TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing();
   }
