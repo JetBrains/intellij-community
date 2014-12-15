@@ -1,5 +1,6 @@
-package org.jetbrains.idea.maven.execution;
+package com.intellij.openapi.externalSystem.service.ui;
 
+import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
@@ -8,23 +9,24 @@ import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.ProjectRootManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.utils.ComboBoxUtil;
 
 import javax.swing.*;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import static com.intellij.openapi.externalSystem.service.ui.ComboBoxUtil.*;
+
 /**
  * @author Sergey Evdokimov
  */
-public class MavenJdkComboBox extends JComboBox {
+public class ExternalSystemJdkComboBox extends JComboBox {
 
   private static final int MAX_PATH_LENGTH = 50;
 
   @Nullable
   private final Project myProject;
 
-  public MavenJdkComboBox(@Nullable Project project) {
+  public ExternalSystemJdkComboBox(@Nullable Project project) {
     myProject = project;
   }
 
@@ -43,14 +45,14 @@ public class MavenJdkComboBox extends JComboBox {
     removeAllItems();
 
     for (Map.Entry<String, String> entry : jdkMap.entrySet()) {
-      ComboBoxUtil.addToModel((DefaultComboBoxModel)getModel(), entry.getKey(), entry.getValue());
+      addToModel((DefaultComboBoxModel)getModel(), entry.getKey(), entry.getValue());
     }
 
-    ComboBoxUtil.select((DefaultComboBoxModel)getModel(), selectedValue);
+    select((DefaultComboBoxModel)getModel(), selectedValue);
   }
 
   public String getSelectedValue() {
-    return ComboBoxUtil.getSelectedString((DefaultComboBoxModel)getModel());
+    return getSelectedString((DefaultComboBoxModel)getModel());
   }
 
   private Map<String, String> collectJdkNamesAndDescriptions() {
@@ -74,18 +76,18 @@ public class MavenJdkComboBox extends JComboBox {
 
     String internalJdkPath = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk().getHomePath();
     assert internalJdkPath != null;
-    result.put(MavenRunnerSettings.USE_INTERNAL_JAVA, RunnerBundle.message("maven.java.internal", truncateLongPath(internalJdkPath)));
+    result.put(USE_INTERNAL_JAVA, ExternalSystemBundle.message("maven.java.internal", truncateLongPath(internalJdkPath)));
 
     if (myProject != null) {
       String projectJdk = ProjectRootManager.getInstance(myProject).getProjectSdkName();
       String projectJdkTitle = String.format("<html>Use Project JDK <font color=gray>(%s)</font></html>", projectJdk == null ? "not defined yet" : projectJdk);
-      result.put(MavenRunnerSettings.USE_PROJECT_JDK, projectJdkTitle);
+      result.put(USE_PROJECT_JDK, projectJdkTitle);
     }
 
     String javaHomePath = System.getenv("JAVA_HOME");
-    String javaHomeLabel = RunnerBundle.message("maven.java.home.env", javaHomePath == null ? "not defined yet" : truncateLongPath(javaHomePath));
+    String javaHomeLabel = ExternalSystemBundle.message("maven.java.home.env", javaHomePath == null ? "not defined yet" : truncateLongPath(javaHomePath));
 
-    result.put(MavenRunnerSettings.USE_JAVA_HOME, javaHomeLabel);
+    result.put(USE_JAVA_HOME, javaHomeLabel);
 
     return result;
   }
