@@ -21,8 +21,16 @@ import org.jetbrains.jps.model.module.JpsModule
 
 includeTool << JpsGantTool
 
-binding.setVariable("p", {String key ->
-  return getProperty(key) as String
+binding.setVariable("p", {String key, String defaultValue = null ->
+  try {
+    return getProperty(key) as String
+  }
+  catch (MissingPropertyException e) {
+    if (defaultValue != null) {
+      return defaultValue
+    }
+    throw e;
+  }
 })
 
 binding.setVariable("guessJdk", {
@@ -125,7 +133,11 @@ binding.setVariable("loadProject", {
       classpath "$jdkHome/lib/tools.jar"
     }
   }
-  projectBuilder.dataStorageRoot = new File("$home/.jps-build-data")
+  projectBuilder.buildIncrementally = Boolean.parseBoolean(p("jps.build.incrementally", "false"))
+  def dataDirName = projectBuilder.buildIncrementally ? ".jps-incremental-build" : ".jps-build-data"
+  projectBuilder.dataStorageRoot = new File("$home/$dataDirName")
+  projectBuilder.setupAdditionalLogging(new File("${p("teamcity.build.tempDir", p("java.io.tmpdir"))}/system/build-log/build.log"),
+                                        p("jps.build.debug.logging.categories", ""))
   loadProjectFromPath(home)
 })
 

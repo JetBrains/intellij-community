@@ -157,7 +157,7 @@ public class BranchesPanel extends JPanel {
   }
 
   public void onFiltersChange(@NotNull VcsLogFilterCollection filters) {
-    myRoots = VcsLogFileFilter.getAllVisibleRoots(myDataHolder.getRoots(), filters);
+    myRoots = VcsLogFileFilter.getAllVisibleRoots(myDataHolder.getRoots(), filters.getRootFilter(), filters.getStructureFilter());
     getParent().repaint();
   }
 

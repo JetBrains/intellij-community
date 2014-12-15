@@ -44,15 +44,15 @@ public class PersistentHashMapValueStorage {
   private static final int CACHE_PROBATIONAL_QUEUE_SIZE = 20;
 
   // cache size is twice larger than constants because (when used) it replaces two caches
-  private static final FileAccessorCache<RandomAccessFileWrapper> ourRandomAccessFileCache = new FileAccessorCache<RandomAccessFileWrapper>(
+  private static final FileAccessorCache<RandomAccessFileWithLengthAndSizeTracking> ourRandomAccessFileCache = new FileAccessorCache<RandomAccessFileWithLengthAndSizeTracking>(
     2*CACHE_PROTECTED_QUEUE_SIZE, 2*CACHE_PROBATIONAL_QUEUE_SIZE) {
     @Override
     @NotNull
-    public CacheValue<RandomAccessFileWrapper> createValue(final String path) {
+    public CacheValue<RandomAccessFileWithLengthAndSizeTracking> createValue(final String path) {
       try {
-        return new CacheValue<RandomAccessFileWrapper>(new RandomAccessFileWrapper(path)) {
+        return new CacheValue<RandomAccessFileWithLengthAndSizeTracking>(new RandomAccessFileWithLengthAndSizeTracking(path)) {
           @Override
-          protected void disposeAccessor(RandomAccessFileWrapper accessor) {
+          protected void disposeAccessor(RandomAccessFileWithLengthAndSizeTracking accessor) {
             try {
               accessor.close();
             } catch (IOException ex) {
@@ -468,10 +468,10 @@ public class PersistentHashMapValueStorage {
 
     @Override
     public void get(final long addr, final byte[] dst, final int off, final int len) throws IOException {
-      CacheValue<RandomAccessFileWrapper> fileAccessor = ourRandomAccessFileCache.get(myPath);
+      CacheValue<RandomAccessFileWithLengthAndSizeTracking> fileAccessor = ourRandomAccessFileCache.get(myPath);
 
       try {
-        RandomAccessFileWrapper file = fileAccessor.get();
+        RandomAccessFileWithLengthAndSizeTracking file = fileAccessor.get();
         file.seek(addr);
         file.read(dst, off, len);
       } finally {
@@ -614,8 +614,8 @@ public class PersistentHashMapValueStorage {
 
     @Override
     public void write(byte[] b, int off, int len) throws IOException {
-      CacheValue<RandomAccessFileWrapper> fileAccessor = ourRandomAccessFileCache.get(myPath);
-      RandomAccessFileWrapper file = fileAccessor.get();
+      CacheValue<RandomAccessFileWithLengthAndSizeTracking> fileAccessor = ourRandomAccessFileCache.get(myPath);
+      RandomAccessFileWithLengthAndSizeTracking file = fileAccessor.get();
 
       try {
         file.seek(file.length());

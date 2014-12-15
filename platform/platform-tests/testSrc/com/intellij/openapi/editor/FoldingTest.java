@@ -178,4 +178,21 @@ public class FoldingTest extends AbstractEditorTest {
     assertEquals(1, myModel.getLastCollapsedRegionBefore(6));
     assertEquals(1, myModel.getLastCollapsedRegionBefore(7));
   }
+  
+  public void testSelectionIsRemovedWhenInterruptedByFolding() {
+    myEditor.getSelectionModel().setSelection(0, 5);
+    addCollapsedFoldRegion(3, 6, "...");
+    
+    assertFalse(myEditor.getSelectionModel().hasSelection());
+  }
+  
+  public void testModelRemainsConsistentOnTextRemoval() {
+    addCollapsedFoldRegion(0, 10, "...");
+    addCollapsedFoldRegion(1, 9, "...");
+    
+    myEditor.getDocument().deleteString(0, 1);
+    addFoldRegion(20, 21, "..."); // an arbitrary action to rebuild folding caches
+    
+    assertTrue(myModel.isOffsetCollapsed(5));
+  }
 }

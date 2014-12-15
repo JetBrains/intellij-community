@@ -211,6 +211,13 @@ public abstract class CoverageEngine {
     return null;
   }
 
+  /**
+   * Returns the list of qualified names of classes generated from a particular source file.
+   * (The concept of "qualified name" is specific to each coverage engine but it should be
+   * a valid parameter for {@link com.intellij.rt.coverage.data.ProjectData#getClassData(String)}).
+   * @param sourceFile
+   * @return
+   */
   @NotNull
   public abstract Set<String> getQualifiedNames(@NotNull final PsiFile sourceFile);
 

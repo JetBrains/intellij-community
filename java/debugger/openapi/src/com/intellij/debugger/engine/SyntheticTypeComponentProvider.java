@@ -19,8 +19,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.sun.jdi.TypeComponent;
 
 /**
- * Nikolay.Tropin
- * 2014-11-27
+ * @author Nikolay.Tropin
  */
 public interface SyntheticTypeComponentProvider {
   ExtensionPointName<SyntheticTypeComponentProvider> EP_NAME = ExtensionPointName.create("com.intellij.debugger.syntheticProvider");

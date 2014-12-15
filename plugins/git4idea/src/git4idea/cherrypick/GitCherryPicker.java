@@ -21,7 +21,6 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -86,13 +85,11 @@ public class GitCherryPicker extends VcsCherryPicker {
   @NotNull private final Git myGit;
   @NotNull private final GitPlatformFacade myPlatformFacade;
   @NotNull private final ChangeListManager myChangeListManager;
-  private final boolean myAutoCommit;
 
-  public GitCherryPicker(@NotNull Project project) {
+  public GitCherryPicker(@NotNull Project project, @NotNull Git git, @NotNull GitPlatformFacade platformFacade) {
     myProject = project;
-    myGit = ServiceManager.getService(Git.class);
-    myPlatformFacade = ServiceManager.getService(GitPlatformFacade.class);
-    myAutoCommit = isAutoCommit();
+    myGit = git;
+    myPlatformFacade = platformFacade;
     myChangeListManager = myPlatformFacade.getChangeListManager(myProject);
   }
 
@@ -126,11 +123,12 @@ public class GitCherryPicker extends VcsCherryPicker {
       GitSimpleEventDetector localChangesOverwrittenDetector = new GitSimpleEventDetector(LOCAL_CHANGES_OVERWRITTEN_BY_CHERRY_PICK);
       GitUntrackedFilesOverwrittenByOperationDetector untrackedFilesDetector =
         new GitUntrackedFilesOverwrittenByOperationDetector(repository.getRoot());
-      GitCommandResult result = myGit.cherryPick(repository, commit.getId().asString(), myAutoCommit,
+      boolean autoCommit = isAutoCommit();
+      GitCommandResult result = myGit.cherryPick(repository, commit.getId().asString(), autoCommit,
                                                  conflictDetector, localChangesOverwrittenDetector, untrackedFilesDetector);
       GitCommitWrapper commitWrapper = new GitCommitWrapper(commit);
       if (result.success()) {
-        if (myAutoCommit) {
+        if (autoCommit) {
           successfulCommits.add(commitWrapper);
         }
         else {
@@ -339,7 +337,7 @@ public class GitCherryPicker extends VcsCherryPicker {
    * cherry-pick, i.e. until the CHERRY_PICK_HEAD exists.
    */
   private void cancelCherryPick(@NotNull GitRepository repository) {
-    if (myAutoCommit) {
+    if (isAutoCommit()) {
       removeCherryPickHead(repository);
     }
   }
@@ -525,17 +523,19 @@ public class GitCherryPicker extends VcsCherryPicker {
     return step == 0 ? name : name + "-" + step;
   }
 
+  @NotNull
   @Override
   public VcsKey getSupportedVcs() {
     return GitVcs.getKey();
   }
 
+  @NotNull
   @Override
-  public String getPreferredActionTitle() {
+  public String getActionTitle() {
     return isAutoCommit() ? NAME : NAME + "...";
   }
 
-  public boolean isAutoCommit() {
+  private boolean isAutoCommit() {
     return GitVcsSettings.getInstance(myProject).isAutoCommitOnCherryPick();
   }
 
@@ -682,5 +682,4 @@ public class GitCherryPicker extends VcsCherryPicker {
       return myOriginalCommit.getSubject();
     }
   }
-
 }

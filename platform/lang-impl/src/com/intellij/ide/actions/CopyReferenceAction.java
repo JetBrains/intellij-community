@@ -115,15 +115,16 @@ public class CopyReferenceAction extends DumbAwareAction {
     EditorColorsManager manager = EditorColorsManager.getInstance();
     TextAttributes attributes = manager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
     if (elements.size() == 1 && editor != null && project != null) {
-      PsiElement nameIdentifier = IdentifierUtil.getNameIdentifier(elements.get(0));
+      PsiElement element = elements.get(0);
+      PsiElement nameIdentifier = IdentifierUtil.getNameIdentifier(element);
       if (nameIdentifier != null) {
         highlightManager.addOccurrenceHighlights(editor, new PsiElement[]{nameIdentifier}, attributes, true, null);
       } else {
         PsiReference reference = TargetElementUtilBase.findReference(editor, editor.getCaretModel().getOffset());
         if (reference != null) {
           highlightManager.addOccurrenceHighlights(editor, new PsiReference[]{reference}, attributes, true, null);
-        } else if (elements != PsiDocumentManager.getInstance(project).getCachedPsiFile(editor.getDocument())) {
-          highlightManager.addOccurrenceHighlights(editor, new PsiElement[]{elements.get(0)}, attributes, true, null);
+        } else if (element != PsiDocumentManager.getInstance(project).getCachedPsiFile(editor.getDocument())) {
+          highlightManager.addOccurrenceHighlights(editor, new PsiElement[]{element}, attributes, true, null);
         }
       }
     }

@@ -226,6 +226,8 @@ public class UIUtil {
   private static final Color INACTIVE_HEADER_COLOR = Gray._128;
   private static final Color BORDER_COLOR = Color.LIGHT_GRAY;
 
+  public static final Color SIDE_PANEL_BACKGROUND = new JBColor(new Color(0xE6EBF0), new Color(0x3E434C));
+
   public static final Color AQUA_SEPARATOR_FOREGROUND_COLOR = new JBColor(Gray._190, Gray.x51);
   public static final Color AQUA_SEPARATOR_BACKGROUND_COLOR = new JBColor(Gray._240, Gray.x51);
   public static final Color TRANSPARENT_COLOR = new Color(0, 0, 0, 0);
@@ -239,11 +241,9 @@ public class UIUtil {
 
 
   public static final Border DEBUG_MARKER_BORDER = new Border() {
-    private final Insets empty = new Insets(0, 0, 0, 0);
-
     @Override
     public Insets getBorderInsets(Component c) {
-      return empty;
+      return new Insets(0, 0, 0, 0);
     }
 
     @Override
@@ -3204,10 +3204,6 @@ public class UIUtil {
       }
     }
     return new EmptyBorder(0, leftGap, 0, 0);
-  }
-
-  public static Color getSidePanelColor() {
-    return new JBColor(0xD2D6DD, 0x3C4447);
   }
 
   /**

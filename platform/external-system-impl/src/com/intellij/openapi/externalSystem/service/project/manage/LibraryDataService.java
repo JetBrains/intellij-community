@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -142,11 +143,18 @@ public class LibraryDataService implements ProjectDataService<LibraryData, Libra
             );
           }
           String url = VfsUtil.getUrlForLibraryRoot(file);
-          model.addRoot(url, entry.getKey());
+
+          final String[] urls = model.getUrls(entry.getKey());
+          if (!ArrayUtil.contains(url, urls)) {
+            model.addRoot(url, entry.getKey());
+          }
           continue;
         }
         if (virtualFile.isDirectory()) {
-          model.addRoot(virtualFile, entry.getKey());
+          final VirtualFile[] files = model.getFiles(entry.getKey());
+          if (!ArrayUtil.contains(virtualFile, files)) {
+            model.addRoot(virtualFile, entry.getKey());
+          }
         }
         else {
           VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(virtualFile);
@@ -156,7 +164,10 @@ public class LibraryDataService implements ProjectDataService<LibraryData, Libra
             ));
             continue;
           }
-          model.addRoot(jarRoot, entry.getKey());
+          final VirtualFile[] files = model.getFiles(entry.getKey());
+          if (!ArrayUtil.contains(jarRoot, files)) {
+            model.addRoot(jarRoot, entry.getKey());
+          }
         }
       }
     }

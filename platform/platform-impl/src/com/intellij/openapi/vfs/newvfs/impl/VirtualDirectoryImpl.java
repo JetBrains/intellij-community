@@ -206,7 +206,9 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   @NotNull
   public VirtualFileSystemEntry createChild(String name, int id, @NotNull NewVirtualFileSystem delegate) {
-    return createChild(FileNameCache.storeName(name), id, delegate);
+    synchronized (myData) {
+      return createChild(FileNameCache.storeName(name), id, delegate);
+    }
   }
 
   @NotNull
@@ -285,17 +287,9 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
         assertConsistency(ignoreCase, "");
         return getArraySafely();
       }
-    }
 
-    final boolean wasChildrenLoaded = ourPersistence.areChildrenLoaded(this);
-    final FSRecords.NameId[] childrenIds = ourPersistence.listAll(this);
-
-    synchronized (myData) {
-      if (allChildrenLoaded()) {
-        assertConsistency(ignoreCase, "");
-        return getArraySafely();
-      }
-
+      final boolean wasChildrenLoaded = ourPersistence.areChildrenLoaded(this);
+      final FSRecords.NameId[] childrenIds = ourPersistence.listAll(this);
       int[] result;
       if (childrenIds.length == 0) {
         result = ArrayUtil.EMPTY_INT_ARRAY;

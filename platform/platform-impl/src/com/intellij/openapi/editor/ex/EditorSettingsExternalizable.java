@@ -102,7 +102,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   @NonNls public static final String STRIP_TRAILING_SPACES_WHOLE = "Whole";
 
   @MagicConstant(stringValues = {STRIP_TRAILING_SPACES_NONE, STRIP_TRAILING_SPACES_CHANGED, STRIP_TRAILING_SPACES_WHOLE})
-  @interface StripTrailingSpaces {}
+  public @interface StripTrailingSpaces {}
 
   @NonNls public static final String DEFAULT_FONT_NAME = "Courier";
 

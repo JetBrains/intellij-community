@@ -1,5 +1,6 @@
 package com.intellij.json;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
@@ -91,7 +92,7 @@ public class JsonStructureViewTest extends JsonTestCase {
       assertEquals("aaa", children[0].getPresentation().getPresentableText());
       assertEquals(PlatformIcons.PROPERTY_ICON, children[0].getPresentation().getIcon(false));
       assertEquals("bbb", children[1].getPresentation().getPresentableText());
-      assertEquals(PlatformIcons.PROPERTY_ICON, children[1].getPresentation().getIcon(false));
+      assertEquals(AllIcons.Json.Property_braces, children[1].getPresentation().getIcon(false));
 
       children = children[1].getChildren();
       assertEquals(1, children.length);

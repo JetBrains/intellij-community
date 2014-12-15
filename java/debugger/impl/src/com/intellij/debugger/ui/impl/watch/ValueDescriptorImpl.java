@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,8 +56,9 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   private EvaluateException myValueException;
   protected EvaluationContextImpl myStoredEvaluationContext = null;
 
+  private String myIdLabel;
   private String myValueText;
-  private String myValueLabel;
+
   @Nullable
   private Icon myValueIcon;
 
@@ -300,10 +301,12 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
       label = setValueLabelFailed(valueException);
     }
 
-    return setValueLabel(label);
+    setValueLabel(label);
+
+    return ""; // we have overridden getLabel
   }
 
-  private String getCustomLabel(String label) {
+  private String getIdLabel(String label) {
     //translate only strings in quotes
     String customLabel = null;
     if(isShowIdLabel() && myValueReady) {
@@ -314,20 +317,21 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
                              ((NodeRendererImpl)lastRenderer).getIdLabel(value, evalContext.getDebugProcess()) :
                              null;
       if(idLabel != null && !label.startsWith(idLabel)) {
-        customLabel = idLabel;
+        return idLabel;
       }
     }
-    final String originalLabel = label == null ? "null" : label;
-    return customLabel == null? originalLabel : customLabel + originalLabel;
+    return "";
   }
 
+  @Override
+  public String getLabel() {
+    return calcValueName() + " = " + myIdLabel + myValueText;
+  }
 
   @Override
-  public String setValueLabel(String label) {
+  public void setValueLabel(String label) {
     myValueText = label;
-    final String customLabel = getCustomLabel(label);
-    myValueLabel = customLabel;
-    return setLabel(calcValueName() + " = " + customLabel);
+    myIdLabel = getIdLabel(label);
   }
 
   @Override
@@ -488,8 +492,12 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     return myValueReady && !myIsSynthetic && isLvalue();
   }
 
+  public String getIdLabel() {
+    return myIdLabel;
+  }
+
   public String getValueLabel() {
-    return myValueLabel;
+    return myIdLabel + myValueText;
   }
 
   public String getValueText() {

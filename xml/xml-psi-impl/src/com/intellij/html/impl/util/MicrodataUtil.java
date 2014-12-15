@@ -59,7 +59,7 @@ public class MicrodataUtil {
     XmlTag tag = context;
     while (tag != null) {
       if (tag != context && tag.getAttribute(ITEM_SCOPE) != null) return tag;
-      final String id = getStripedAttributeValue(tag, "id");
+      final String id = getStripedAttributeValue(tag, HtmlUtil.ID_ATTRIBUTE_NAME);
       if (id != null && id2tag.containsKey(id)) return id2tag.get(id);
       tag = tag.getParentTag();
     }
@@ -196,7 +196,7 @@ public class MicrodataUtil {
     @Override
     public void visitXmlTag(XmlTag tag) {
       super.visitXmlTag(tag);
-      if ("prop-nam".equalsIgnoreCase(getStripedAttributeValue(tag, "class"))) {
+      if ("prop-nam".equalsIgnoreCase(getStripedAttributeValue(tag, HtmlUtil.CLASS_ATTRIBUTE_NAME))) {
         final String code = tag.getSubTagText("code");
         if (code != null) {
           myValues.add(StringUtil.stripHtml(code, false));

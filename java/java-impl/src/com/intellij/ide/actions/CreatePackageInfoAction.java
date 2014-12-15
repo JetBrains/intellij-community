@@ -123,6 +123,6 @@ public class CreatePackageInfoAction extends CreateFromTemplateActionBase implem
 
   @Override
   protected FileTemplate getTemplate(Project project, PsiDirectory dir) {
-    return FileTemplateManager.getInstance().getInternalTemplate(FileTemplateUtil.INTERNAL_PACKAGE_INFO_TEMPLATE_NAME);
+    return FileTemplateManager.getInstance(project).getInternalTemplate(FileTemplateUtil.INTERNAL_PACKAGE_INFO_TEMPLATE_NAME);
   }
 }

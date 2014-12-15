@@ -240,8 +240,7 @@ public class GitCherryPickStepdefs {
         return virtualCommits.getRealCommit(virtualHash).getHash();
       }
     }), myProjectDir);
-
-    new GitCherryPicker(myProject).cherryPick(commits);
+    new GitCherryPicker(myProject, myGit, myPlatformFacade).cherryPick(commits);
   }
 
   private static List<VcsFullCommitDetails> loadDetails(List<String> hashes, @NotNull VirtualFile root) throws VcsException {

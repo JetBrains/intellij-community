@@ -139,9 +139,11 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
           @Override
           public void labelChanged() {
             Icon nodeIcon = DebuggerTreeRenderer.getValueIcon(myValueDescriptor);
-            final String[] strings = splitValue(myValueDescriptor.getValueLabel());
-            final String value = StringUtil.notNullize(strings[1]);
-            String type = strings[0];
+            final String value = getValueString();
+            String type = splitValue(myValueDescriptor.getIdLabel())[0];
+            if (StringUtil.isEmpty(type)) {
+              type = splitValue(myValueDescriptor.getValueText())[0];
+            }
             XValuePresentation presentation;
             @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
             EvaluateException exception = myValueDescriptor.getEvaluateException();
@@ -279,8 +281,9 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
     }
   }
 
+  @NotNull
   String getValueString() {
-    return splitValue(myValueDescriptor.getValueLabel())[1];
+    return splitValue(StringUtil.notNullize(myValueDescriptor.getValueText()))[1];
   }
 
   private static String[] splitValue(String value) {
@@ -401,18 +404,9 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
           @Override
           public void run() {
             final boolean nearest = navigatable instanceof XNearestSourcePosition;
-            if (myValueDescriptor instanceof FieldDescriptorImpl) {
-              SourcePosition position = ((FieldDescriptorImpl)myValueDescriptor).getSourcePosition(getProject(), getDebuggerContext(), nearest);
-              if (position != null) {
-                navigatable.setSourcePosition(DebuggerUtilsEx.toXSourcePosition(position));
-              }
-            }
-            if (myValueDescriptor instanceof LocalVariableDescriptorImpl) {
-              SourcePosition position =
-                ((LocalVariableDescriptorImpl)myValueDescriptor).getSourcePosition(getProject(), getDebuggerContext(), nearest);
-              if (position != null) {
-                navigatable.setSourcePosition(DebuggerUtilsEx.toXSourcePosition(position));
-              }
+            SourcePosition position = SourcePositionProvider.getSourcePosition(myValueDescriptor, getProject(), getDebuggerContext(), nearest);
+            if (position != null) {
+              navigatable.setSourcePosition(DebuggerUtilsEx.toXSourcePosition(position));
             }
           }
         });

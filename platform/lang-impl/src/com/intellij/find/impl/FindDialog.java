@@ -28,7 +28,9 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
-import com.intellij.openapi.fileTypes.*;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -1129,7 +1131,8 @@ public class FindDialog extends DialogWrapper {
         myDirectoryComboBox.setEnabled(false);
         mySelectDirectoryButton.setEnabled(false);
         myModuleComboBox.setEnabled(false);
-      } else if (myModel.isProjectScope()) {
+      }
+      else if (myModel.isProjectScope()) {
         myRbProject.setSelected(true);
 
         myCbWithSubdirectories.setEnabled(false);

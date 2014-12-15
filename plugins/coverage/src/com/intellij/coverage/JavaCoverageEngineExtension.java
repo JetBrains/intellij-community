@@ -25,6 +25,14 @@ public abstract class JavaCoverageEngineExtension {
 
   public abstract boolean isApplicableTo(@Nullable RunConfigurationBase conf);
 
+  /**
+   * Calculates the qualified names of class files generated from a source file.
+   *
+   * @param sourceFile a source file for which the information is requested.
+   * @param classes    the classes contained in the file, as returned by {@link com.intellij.psi.PsiClassOwner#getClasses()}
+   * @param names      the set into which the qualified names (dot-separated) of the classes need to be placed.
+   * @return true if results were provided, false if this file isn't handled by this run configuration.
+   */
   public boolean suggestQualifiedName(@NotNull PsiFile sourceFile, PsiClass[] classes, Set<String> names) {
     return false;
   }
@@ -61,5 +69,13 @@ public abstract class JavaCoverageEngineExtension {
    */
   public String generateBriefReport(Editor editor, PsiFile file, int lineNumber, int startOffset, int endOffset, LineData lineData) {
     return null;
+  }
+
+  /**
+   * Returns true if this configuration requires the generation of a source map to match the compiled .class files to
+   * corresponding sources.
+   */
+  public boolean isSourceMapNeeded(RunConfigurationBase runConfiguration) {
+    return false;
   }
 }

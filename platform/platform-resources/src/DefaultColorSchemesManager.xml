@@ -880,12 +880,12 @@
       </option>
       <option name="TODO_DEFAULT_ATTRIBUTES">
         <value>
-          <option name="FOREGROUND" value="347fcf" />
+          <option name="FOREGROUND" value="0073bf" />
           <option name="BACKGROUND" />
           <option name="FONT_TYPE" value="3" />
           <option name="EFFECT_COLOR" />
           <option name="EFFECT_TYPE" value="0" />
-          <option name="ERROR_STRIPE_COLOR" value="4c97ff" />
+          <option name="ERROR_STRIPE_COLOR" value="54aae3" />
         </value>
       </option>
       <option name="TYPO">

@@ -15,20 +15,25 @@ public class SourceLineCounterUtil {
   public static boolean collectNonCoveredClassInfo(final PackageAnnotator.ClassCoverageInfo classCoverageInfo,
                                                    final PackageAnnotator.PackageCoverageInfo packageCoverageInfo,
                                                    byte[] content,
-                                                   final boolean excludeLines) {
+                                                   final boolean excludeLines,
+                                                   boolean hasGeneratedConstructor) {
     if (content == null) return false;
     ClassReader reader = new ClassReader(content, 0, content.length);
 
     SourceLineCounter counter = new SourceLineCounter(null, excludeLines, null);
     reader.accept(counter, 0);
     classCoverageInfo.totalLineCount += counter.getNSourceLines();
-    classCoverageInfo.totalMethodCount += counter.getNMethodsWithCode();
     packageCoverageInfo.totalLineCount += counter.getNSourceLines();
-    packageCoverageInfo.totalMethodCount += counter.getNMethodsWithCode();
+    for (Object nameAndSig : counter.getMethodsWithSourceCode()) {
+      if (!PackageAnnotator.DEFAULT_CONSTRUCTOR_NAME_SIGNATURE.equals(nameAndSig) || !hasGeneratedConstructor) {
+        classCoverageInfo.totalMethodCount++;
+        packageCoverageInfo.totalMethodCount++;
+      }
+    }
     if (!counter.isInterface()) {
       packageCoverageInfo.totalClassCount++;
     }
-    return false;
+    return true;
   }
 
   public static void collectSrcLinesForUntouchedFiles(final List<Integer> uncoveredLines,

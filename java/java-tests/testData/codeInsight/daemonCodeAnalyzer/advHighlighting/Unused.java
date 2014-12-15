@@ -2,6 +2,13 @@ class a extends Exception {
   private <warning descr="Private constructor 'a(java.lang.String)' is never used">a</warning>(String s) {
     super(s);
   }
+  private <warning descr="Private constructor 'a()' is never used">a</warning>(){}
+}
+
+class TheOnlyCtr extends Exception {
+  private TheOnlyCtr(String s) {
+    super(s);
+  }
 }
 
 class s extends Exception {

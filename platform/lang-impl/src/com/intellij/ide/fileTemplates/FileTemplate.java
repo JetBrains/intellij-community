@@ -51,6 +51,7 @@ public interface FileTemplate extends Cloneable {
 
   @NotNull String[] getUnsetAttributes(@NotNull Properties properties) throws ParseException;
 
+  /** Name without extension */
   @NotNull String getName();
 
   void setName(@NotNull String name);

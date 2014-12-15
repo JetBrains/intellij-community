@@ -62,6 +62,7 @@ import com.intellij.xdebugger.impl.breakpoints.*;
 import com.intellij.xdebugger.impl.evaluate.XDebuggerEditorLinePainter;
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueLookupManager;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
+import com.intellij.xdebugger.impl.frame.XWatchesViewImpl;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingsManager;
 import com.intellij.xdebugger.impl.ui.XDebugSessionData;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
@@ -724,7 +725,12 @@ public class XDebugSessionImpl implements XDebugSession {
       public void run() {
         if (mySessionTab != null) {
           if (XDebuggerSettingsManager.getInstanceImpl().getGeneralSettings().isShowDebuggerOnBreakpoint()) {
-            mySessionTab.toFront(true);
+            mySessionTab.toFront(true, new Runnable() {
+              @Override
+              public void run() {
+                updateExecutionPosition();
+              }
+            });
           }
           mySessionTab.getUi().attractBy(XDebuggerUIConstants.LAYOUT_VIEW_BREAKPOINT_CONDITION);
         }
@@ -851,6 +857,7 @@ public class XDebugSessionImpl implements XDebugSession {
     }
 
     if (mySessionTab != null) {
+      ((XWatchesViewImpl)mySessionTab.getWatchesView()).updateSessionData();
       mySessionTab.detachFromSession();
     }
 

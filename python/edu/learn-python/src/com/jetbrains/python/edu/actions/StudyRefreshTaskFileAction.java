@@ -119,7 +119,7 @@ public class StudyRefreshTaskFileAction extends DumbAwareAction {
       File resourceFile = new File(course.getResourcePath());
       File resourceRoot = resourceFile.getParentFile();
       File pattern = new File(new File(new File(resourceRoot, lessonDir), taskDir), fileName);
-      reader = new BufferedReader(new InputStreamReader(new FileInputStream(pattern)));
+      reader = new BufferedReader(new InputStreamReader(new FileInputStream(pattern), "UTF-8"));
       String line;
       StringBuilder patternText = new StringBuilder();
       while ((line = reader.readLine()) != null) {
@@ -131,7 +131,7 @@ public class StudyRefreshTaskFileAction extends DumbAwareAction {
         if (patternText.charAt(patternLength - 1) == '\n') {
           patternText.delete(patternLength - 1, patternLength);
         }
-        document.setText(patternText);
+        document.setText(new String(patternText.toString().getBytes("UTF-8")));
       }
     }
     catch (FileNotFoundException e) {

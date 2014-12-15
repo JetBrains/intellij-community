@@ -46,14 +46,15 @@ public class HgCherryPicker extends VcsCherryPicker {
     myProject = project;
   }
 
-
+  @NotNull
   @Override
   public VcsKey getSupportedVcs() {
     return HgVcs.getKey();
   }
 
+  @NotNull
   @Override
-  public String getPreferredActionTitle() {
+  public String getActionTitle() {
     return "Graft";
   }
 
@@ -74,7 +75,6 @@ public class HgCherryPicker extends VcsCherryPicker {
     }
   }
 
-
   private static void processGrafting(@NotNull HgRepository repository, @NotNull List<String> hashes) {
     Project project = repository.getProject();
     VirtualFile root = repository.getRoot();
@@ -85,15 +85,15 @@ public class HgCherryPicker extends VcsCherryPicker {
       new HgCommandResultNotifier(project).notifyError(result, "Hg Error", "Couldn't  graft.");
       return;
     }
+    final UpdatedFiles updatedFiles = UpdatedFiles.create();
     while (hasConflicts) {
-      final UpdatedFiles updatedFiles = UpdatedFiles.create();
       new HgConflictResolver(project, updatedFiles).resolve(root);
       hasConflicts = !HgConflictResolver.findConflicts(project, root).isEmpty();
       if (!hasConflicts) {
         result = command.continueGrafting();
+        hasConflicts = !HgConflictResolver.findConflicts(project, root).isEmpty();
       }
-      hasConflicts = !HgConflictResolver.findConflicts(project, root).isEmpty();
-      if (hasConflicts) {
+      else {
         new HgCommandResultNotifier(project).notifyError(result, "Hg Error", "Couldn't continue grafting");
         break;
       }

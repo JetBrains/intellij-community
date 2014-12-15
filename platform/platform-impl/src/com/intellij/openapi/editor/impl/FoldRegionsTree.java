@@ -67,15 +67,21 @@ abstract class FoldRegionsTree {
     List<FoldRegion> topLevels = new ArrayList<FoldRegion>(myRegions.size() / 2);
     List<FoldRegion> visible = new ArrayList<FoldRegion>(myRegions.size());
     List<FoldRegion> allValid = new ArrayList<FoldRegion>(myRegions.size());
-    FoldRegion[] regions = toFoldArray(myRegions);
     FoldRegion currentCollapsed = null;
-    for (FoldRegion region : regions) {
+    for (FoldRegion region : myRegions) {
       if (!region.isValid()) {
         continue;
       }
 
       allValid.add(region);
+    }
 
+    if (allValid.size() < myRegions.size()) {
+      myRegions = allValid;
+    }
+    Collections.sort(myRegions, RangeMarker.BY_START_OFFSET); // the order could have changed due to document changes 
+
+    for (FoldRegion region : myRegions) {
       if (!region.isExpanded()) {
         removeRegionsWithSameStartOffset(visible, region);
         removeRegionsWithSameStartOffset(topLevels, region);
@@ -88,10 +94,6 @@ abstract class FoldRegionsTree {
           topLevels.add(region);
         }
       }
-    }
-
-    if (allValid.size() < myRegions.size()) {
-      myRegions = allValid;
     }
 
     FoldRegion[] topLevelRegions = toFoldArray(topLevels);

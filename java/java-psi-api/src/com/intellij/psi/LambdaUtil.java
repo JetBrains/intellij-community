@@ -150,18 +150,23 @@ public class LambdaUtil {
   }
 
 
-  private static boolean overridesPublicObjectMethod(PsiMethod psiMethod) {
-    boolean overrideObject = false;
-    for (PsiMethod superMethod : psiMethod.findDeepestSuperMethods()) {
-      final PsiClass containingClass = superMethod.getContainingClass();
+  private static boolean overridesPublicObjectMethod(HierarchicalMethodSignature psiMethod) {
+    final List<HierarchicalMethodSignature> signatures = psiMethod.getSuperSignatures();
+    if (signatures.isEmpty()) {
+      final PsiMethod method = psiMethod.getMethod();
+      final PsiClass containingClass = method.getContainingClass();
       if (containingClass != null && CommonClassNames.JAVA_LANG_OBJECT.equals(containingClass.getQualifiedName())) {
-        if (superMethod.hasModifierProperty(PsiModifier.PUBLIC)) {
-          overrideObject = true;
-          break;
+        if (method.hasModifierProperty(PsiModifier.PUBLIC)) {
+          return true;
         }
       }
     }
-    return overrideObject;
+    for (HierarchicalMethodSignature superMethod : signatures) {
+      if (overridesPublicObjectMethod(superMethod)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static MethodSignature getMethodSignature(PsiMethod method, PsiClass psiClass, PsiClass containingClass) {
@@ -212,7 +217,7 @@ public class LambdaUtil {
         final PsiMethod psiMethod = signature.getMethod();
         if (!psiMethod.hasModifierProperty(PsiModifier.ABSTRACT)) continue;
         if (psiMethod.hasModifierProperty(PsiModifier.STATIC)) continue;
-        if (!overridesPublicObjectMethod(psiMethod)) {
+        if (!overridesPublicObjectMethod(signature)) {
           methods.add(signature);
         }
       }
@@ -238,6 +243,10 @@ public class LambdaUtil {
 
   @Nullable
   private static PsiMethod getMethod(PsiClass psiClass, MethodSignature methodSignature) {
+    if (methodSignature instanceof MethodSignatureBackedByPsiMethod) {
+      return ((MethodSignatureBackedByPsiMethod)methodSignature).getMethod();
+    }
+
     final PsiMethod[] methodsByName = psiClass.findMethodsByName(methodSignature.getName(), true);
     for (PsiMethod psiMethod : methodsByName) {
       if (MethodSignatureUtil

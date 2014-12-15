@@ -19,7 +19,7 @@ public class UnnecessarilyQualifiedInnerClassAccess<T> {
         UnnecessarilyQualifiedInnerClassAccess<String>.X x; // no warning here, because generic parameter is needed
          <warning descr="'Y' is unnecessarily qualified with 'UnnecessarilyQualifiedInnerClassAccess'">UnnecessarilyQualifiedInnerClassAccess</warning> .Y<String> y;
     }
-¡
+
     class X {
         T t;
     }

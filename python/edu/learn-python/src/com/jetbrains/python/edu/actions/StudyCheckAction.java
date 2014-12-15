@@ -80,9 +80,14 @@ public class StudyCheckAction extends DumbAwareAction {
         continue;
       }
       String windowsFileName = virtualFile.getNameWithoutExtension() + "_windows";
-      VirtualFile windowsFile = taskDir.findChild(windowsFileName);
+      final VirtualFile windowsFile = taskDir.findChild(windowsFileName);
       if (windowsFile != null) {
-        StudyUtils.deleteFile(windowsFile);
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            StudyUtils.deleteFile(windowsFile);
+          }
+        });
       }
     }
   }
@@ -157,10 +162,6 @@ public class StudyCheckAction extends DumbAwareAction {
             }
             selectedEditor.getCheckButton().setEnabled(false);
             ProgressManager.getInstance().run(getCheckTask(studyState, runAction, testRunner, testProcess, project, selectedEditor));
-            StudyUtils.updateStudyToolWindow(project);
-            drawAllTaskWindows(project, task, taskDir);
-            ProjectView.getInstance(project).refresh();
-            deleteWindowDescriptions(task, taskDir);
           }
         });
       }
@@ -174,21 +175,26 @@ public class StudyCheckAction extends DumbAwareAction {
                                                                          final Process testProcess,
                                                                          @NotNull final Project project,
                                                                          final StudyEditor selectedEditor) {
+    final Task task = studyState.getTask();
+    final VirtualFile taskDir = studyState.getTaskDir();
     return new com.intellij.openapi.progress.Task.Backgroundable(project, "Checking task", true) {
       @Override
       public void onSuccess() {
+        StudyUtils.updateStudyToolWindow(project);
+        drawAllTaskWindows(project, task, taskDir);
+        ProjectView.getInstance(project).refresh();
+        deleteWindowDescriptions(task, taskDir);
         selectedEditor.getCheckButton().setEnabled(true);
       }
 
       @Override
       public void onCancel() {
+        deleteWindowDescriptions(task, taskDir);
         selectedEditor.getCheckButton().setEnabled(true);
       }
 
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        final Task task = studyState.getTask();
-        final VirtualFile taskDir = task.getTaskDir(project);
         final StudyStatus oldStatus = task.getStatus();
         final Map<String, TaskFile> taskFiles = task.getTaskFiles();
         final CapturingProcessHandler handler = new CapturingProcessHandler(testProcess);
@@ -212,7 +218,6 @@ public class StudyCheckAction extends DumbAwareAction {
               showTestResultPopUp("Congratulations!", MessageType.INFO.getPopupBackground(), project);
             }
           });
-
         }
         else {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -251,19 +256,21 @@ public class StudyCheckAction extends DumbAwareAction {
   private static void createNoPythonInterpreterPopUp(@NotNull final Project project) {
     String text = "<html>No Python interpreter configured for the project<br><a href=\"\">Configure interpreter</a></html>";
     BalloonBuilder balloonBuilder =
-      JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(text, null, MessageType.WARNING.getPopupBackground(), new HyperlinkListener() {
-        @Override
-        public void hyperlinkUpdate(HyperlinkEvent event) {
-          if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                ShowSettingsUtil.getInstance().showSettingsDialog(project, "Project Interpreter");
-              }
-            });
+      JBPopupFactory.getInstance()
+        .createHtmlTextBalloonBuilder(text, null, MessageType.WARNING.getPopupBackground(), new HyperlinkListener() {
+          @Override
+          public void hyperlinkUpdate(HyperlinkEvent event) {
+            if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+              ApplicationManager.getApplication().invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                  ShowSettingsUtil.getInstance()
+                    .showSettingsDialog(project, "Project Interpreter");
+                }
+              });
+            }
           }
-        }
-      });
+        });
     balloonBuilder.setHideOnLinkClick(true);
     final Balloon balloon = balloonBuilder.createBalloon();
     showCheckPopUp(project, balloon);

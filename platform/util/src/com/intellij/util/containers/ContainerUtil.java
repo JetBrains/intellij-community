@@ -1626,6 +1626,12 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   @Contract(pure=true)
+  public static <T> List<T> sorted(@NotNull Collection<T> list, @NotNull Comparator<T> comparator) {
+    return sorted((Iterable<T>)list, comparator);
+  }
+
+  @NotNull
+  @Contract(pure=true)
   public static <T> List<T> sorted(@NotNull Iterable<T> list, @NotNull Comparator<T> comparator) {
     List<T> sorted = newArrayList(list);
     sort(sorted, comparator);
@@ -2596,10 +2602,13 @@ public class ContainerUtil extends ContainerUtilRt {
     return o1.size() < o2.size() ? -1 : o1.size() == o2.size() ? 0 : 1;
   }
 
+  /**
+   * Returns a String representation of the given map, by listing all key-value pairs contained in the map.
+   */
   @NotNull
   @Contract(pure = true)
   public static String toString(@NotNull Map<?, ?> map) {
-    StringBuilder sb = new StringBuilder("}");
+    StringBuilder sb = new StringBuilder("{");
     for (Iterator<? extends Map.Entry<?, ?>> iterator = map.entrySet().iterator(); iterator.hasNext(); ) {
       Map.Entry<?, ?> entry = iterator.next();
       sb.append(entry.getKey()).append('=').append(entry.getValue());
@@ -2607,7 +2616,7 @@ public class ContainerUtil extends ContainerUtilRt {
         sb.append(", ");
       }
     }
-    sb.append('{');
+    sb.append('}');
     return sb.toString();
   }
 }

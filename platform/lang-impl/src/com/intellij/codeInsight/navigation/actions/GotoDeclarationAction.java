@@ -108,10 +108,9 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
   }
 
   public static PsiNameIdentifierOwner findElementToShowUsagesOf(@NotNull Editor editor, @NotNull PsiFile file, int offset) {
-    PsiElement elementAt = file.findElementAt(TargetElementUtilBase.adjustOffset(file, editor.getDocument(), offset));
-    PsiElement parent = elementAt == null ? null : elementAt.getParent();
-    if (parent instanceof PsiNameIdentifierOwner && ((PsiNameIdentifierOwner)parent).getNameIdentifier() == elementAt) {
-      return (PsiNameIdentifierOwner)parent;
+    PsiElement elementAt = TargetElementUtilBase.getInstance().findTargetElement(editor, TargetElementUtilBase.ELEMENT_NAME_ACCEPTED, offset);
+    if (elementAt instanceof PsiNameIdentifierOwner) {
+      return (PsiNameIdentifierOwner)elementAt;
     }
     return null;
   }

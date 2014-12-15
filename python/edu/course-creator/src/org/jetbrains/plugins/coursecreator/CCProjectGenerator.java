@@ -64,7 +64,7 @@ public class CCProjectGenerator extends PythonProjectGenerator implements Direct
     new WriteCommandAction.Simple(project) {
       @Override
       protected void run() throws Throwable {
-        final FileTemplate template = FileTemplateManager.getInstance().getInternalTemplate("test_helper");
+        final FileTemplate template = FileTemplateManager.getInstance(project).getInternalTemplate("test_helper");
         try {
           FileTemplateUtil.createFromTemplate(template, "test_helper.py", null, projectDir);
         }

@@ -37,7 +37,7 @@ public class SaveFileAsTemplateAction extends AnAction{
     VirtualFile file = assertNotNull(e.getData(CommonDataKeys.VIRTUAL_FILE));
     String extension = assertNotNull(file.getExtension());
     String nameWithoutExtension = file.getNameWithoutExtension();
-    AllFileTemplatesConfigurable fileTemplateOptions = new AllFileTemplatesConfigurable();
+    AllFileTemplatesConfigurable fileTemplateOptions = new AllFileTemplatesConfigurable(project);
     ConfigureTemplatesDialog dialog = new ConfigureTemplatesDialog(project, fileTemplateOptions);
     fileTemplateOptions.selectTemplatesTab();
     PsiFile psiFile = e.getData(CommonDataKeys.PSI_FILE);

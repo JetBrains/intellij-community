@@ -15,7 +15,6 @@
  */
 package com.intellij.ide.fileTemplates.impl;
 
-import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -48,7 +47,6 @@ public class FileTemplateTestUtil {
   }
 
   public static void loadCustomizedContent(FTManager templateManager) {
-    FileTemplatesLoader loader = new FileTemplatesLoader(FileTypeManagerEx.getInstanceEx());
-    loader.loadCustomizedContent(templateManager);
+    templateManager.loadCustomizedContent();
   }
 }

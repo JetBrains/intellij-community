@@ -19,11 +19,12 @@ import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.lang.UrlClassLoader;
+import com.intellij.util.lang.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,16 +43,31 @@ import java.util.regex.Pattern;
 class InProcessGroovyc {
   private static final Pattern GROOVY_ALL_JAR_PATTERN = Pattern.compile("groovy-all(-(.*))?\\.jar");
   private static SoftReference<Pair<String, ClassLoader>> ourParentLoaderCache;
+  private static final UrlClassLoader.CachePool ourLoaderCachePool = UrlClassLoader.createCachePool();
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   static void runGroovycInThisProcess(Collection<String> compilationClassPath,
+                                      final Collection<String> outputs,
                                       List<String> programParams,
                                       final GroovycOutputParser parser)
     throws MalformedURLException {
 
     ClassLoader parent = obtainParentLoader(compilationClassPath);
 
-    UrlClassLoader loader = UrlClassLoader.build().urls(toUrls(compilationClassPath)).parent(parent).useCache().get();
+    UrlClassLoader loader = UrlClassLoader.build().
+      urls(toUrls(compilationClassPath)).parent(parent).
+      useCache(ourLoaderCachePool, new UrlClassLoader.CachingCondition() {
+        @Override
+        public boolean shouldCacheData(@NotNull URL url) {
+          String file = url.getFile();
+          for (String output : outputs) {
+            if (FileUtil.startsWith(output + "/", file)) {
+              return false;
+            }
+          }
+          return true;
+        }
+      }).get();
 
     PrintStream oldOut = System.out;
     PrintStream oldErr = System.err;

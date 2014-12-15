@@ -41,7 +41,7 @@ import java.util.regex.Pattern;
 
 /**
  * Reads information about the Git repository from Git service files located in the {@code .git} folder.
- * NB: works with {@link java.io.File}, i.e. reads from disk. Consider using caching.
+ * NB: works with {@link File}, i.e. reads from disk. Consider using caching.
  * Throws a {@link RepoStateException} in the case of incorrect Git file format.
  *
  * @author Kirill Likhodedov
@@ -88,7 +88,7 @@ class GitRepositoryReader {
   }
 
   @Nullable
-  private String getCurrentRevision(@NotNull HeadInfo headInfo, @Nullable GitLocalBranch currentBranch) {
+  private static String getCurrentRevision(@NotNull HeadInfo headInfo, @Nullable GitLocalBranch currentBranch) {
     String currentRevision;
     if (!headInfo.isBranch) {
       currentRevision = headInfo.content;
@@ -310,13 +310,13 @@ class GitRepositoryReader {
       return new HeadInfo(false, null);
     }
 
-    String target = getTarget(headContent);
-    if (target != null) {
-      return new HeadInfo(true, target);
-    }
     Hash hash = parseHash(headContent);
     if (hash != null) {
       return new HeadInfo(false, headContent);
+    }
+    String target = getTarget(headContent);
+    if (target != null) {
+      return new HeadInfo(true, target);
     }
     LOG.error(new RepoStateException("Invalid format of the .git/HEAD file: [" + headContent + "]")); // including "refs/tags/v1"
     return new HeadInfo(false, null);
@@ -369,7 +369,6 @@ class GitRepositoryReader {
     }
 
     if (branch == null || !branch.startsWith(REFS_HEADS_PREFIX) && !branch.startsWith(REFS_REMOTES_PREFIX)) {
-      LOG.debug("Ignoring packed-refs line: [" + line + "]");
       return null;
     }
     return Pair.create(shortBuffer(branch), shortBuffer(hash.trim()));
