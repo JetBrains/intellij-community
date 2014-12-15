@@ -470,6 +470,34 @@ public class PyQuickFixTest extends PyTestCase {
     myFixture.checkResultByFile(graftBeforeExt(fileName, "_after"));
   }
 
+  // PY-8991
+  public void testRemoveUnicodePrefixFromGluedStringNodesWithSlash() {
+    runWithLanguageLevel(LanguageLevel.PYTHON32, new Runnable() {
+      public void run() {
+        myFixture.configureByFiles(getTestDataPath() + getTestName(false) + ".py");
+        myFixture.checkHighlighting(true, false, false);
+        final IntentionAction intentionAction = myFixture.findSingleIntention(PyBundle.message("INTN.remove.leading.$0", "U"));
+        assertNotNull(intentionAction);
+        myFixture.launchAction(intentionAction);
+        myFixture.checkResultByFile(getTestName(false) + "_after.py");
+      }
+    });
+  }
+
+  // PY-8990
+  public void testRemoveUnicodePrefixFromGluedStringNodesInParenthesis() {
+    runWithLanguageLevel(LanguageLevel.PYTHON32, new Runnable() {
+      public void run() {
+        myFixture.configureByFiles(getTestDataPath() + getTestName(false) + ".py");
+        myFixture.checkHighlighting(true, false, false);
+        final IntentionAction intentionAction = myFixture.findSingleIntention(PyBundle.message("INTN.remove.leading.$0", "U"));
+        assertNotNull(intentionAction);
+        myFixture.launchAction(intentionAction);
+        myFixture.checkResultByFile(getTestName(false) + "_after.py");
+      }
+    });
+  }
+
   @Override
   @NonNls
   protected String getTestDataPath() {
