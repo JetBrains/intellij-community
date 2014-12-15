@@ -577,6 +577,7 @@ tuple
 twitter
 typedef
 typedefs
+typename
 typeof
 unary
 unboxing
