@@ -53,12 +53,6 @@ public class ConfigurableWrapper implements SearchableConfigurable {
     }
     if (ep.displayName != null || ep.key != null || ep.groupId != null) {
       T configurable = null;
-      if (ep.providerClass != null) {
-        configurable = ep.createConfigurable();
-        if (configurable == null) {
-          return null; // it is allowed to return null from provider
-        }
-      }
       return !ep.dynamic && ep.children == null && ep.childrenEPName == null
              ? (T)new ConfigurableWrapper(ep, configurable)
              : (T)new CompositeWrapper(ep, configurable);
@@ -96,13 +90,14 @@ public class ConfigurableWrapper implements SearchableConfigurable {
     if (configurable instanceof ConfigurableWrapper) {
       ConfigurableWrapper wrapper = (ConfigurableWrapper)configurable;
       if (wrapper.myConfigurable == null) {
-        try {
-          String name = wrapper.myEp.instanceClass != null ? wrapper.myEp.instanceClass : wrapper.myEp.implementationClass;
-          if (!type.isAssignableFrom(Class.forName(name, false, wrapper.myEp.getLoaderForClass()))) {
+        Class<?> configurableType = wrapper.getExtensionPoint().getConfigurableType();
+        if (configurableType != null) {
+          if (!type.isAssignableFrom(configurableType)) {
             return null; // do not create configurable that cannot be cast to the specified type
           }
         }
-        catch (Exception ignored) {
+        else if (type == OptionalConfigurable.class) {
+          return null; // do not create configurable from ConfigurableProvider which replaces OptionalConfigurable
         }
       }
       configurable = wrapper.getConfigurable();

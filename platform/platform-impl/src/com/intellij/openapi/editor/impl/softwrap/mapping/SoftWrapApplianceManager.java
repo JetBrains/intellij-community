@@ -425,6 +425,7 @@ public class SoftWrapApplianceManager implements Dumpable {
     myContext.currentPosition.softWrapColumnDiff += softWrap.getIndentInColumns();
     
     myContext.clearLastFoldInfo();
+    myContext.skipToLineEnd = false;
 
     if (checkIsDoneAfterSoftWrap()) {
       return true;
@@ -1303,6 +1304,7 @@ public class SoftWrapApplianceManager implements Dumpable {
 
       myOffset2fontType.clear();
       myOffset2widthInPixels.clear();
+      skipToLineEnd = false;
     }
 
     private void clearLastFoldInfo() {
@@ -1393,7 +1395,6 @@ public class SoftWrapApplianceManager implements Dumpable {
         currentPosition.offset = i;
         if (c == '\n') {
           onNewLine(); // Assuming that offset is incremented during this method call
-          skipToLineEnd = false;
           return checkIsDoneAfterNewLine();
         }
         else {

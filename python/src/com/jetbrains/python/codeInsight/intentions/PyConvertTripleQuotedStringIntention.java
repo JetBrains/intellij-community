@@ -56,12 +56,13 @@ public class PyConvertTripleQuotedStringIntention extends BaseIntentionAction {
     return PyBundle.message("INTN.triple.quoted.string");
   }
 
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     if (!(file instanceof PyFile)) {
       return false;
     }
 
-    PyStringLiteralExpression string = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyStringLiteralExpression.class);
+    final PyStringLiteralExpression string =
+      PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyStringLiteralExpression.class);
     if (string != null) {
       final PyDocStringOwner docStringOwner = PsiTreeUtil.getParentOfType(string, PyDocStringOwner.class);
       if (docStringOwner != null) {
@@ -72,61 +73,70 @@ public class PyConvertTripleQuotedStringIntention extends BaseIntentionAction {
       stringText = stringText.substring(prefixLength);
       if (stringText.length() >= 6) {
         if (stringText.startsWith("'''") && stringText.endsWith("'''") ||
-              stringText.startsWith("\"\"\"") && stringText.endsWith("\"\"\"")) return true;
+            stringText.startsWith("\"\"\"") && stringText.endsWith("\"\"\"")) {
+          return true;
+        }
       }
     }
     return false;
   }
 
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    PyStringLiteralExpression string = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyStringLiteralExpression.class);
-    PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
+  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) throws IncorrectOperationException {
+    final PyStringLiteralExpression string = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyStringLiteralExpression.class);
+    final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
     if (string != null) {
       final PsiElement parent = string.getParent();
       String stringText = string.getText();
       final int prefixLength = PyStringLiteralExpressionImpl.getPrefixLength(stringText);
-      String prefix = stringText.substring(0, prefixLength);
-      Character firstQuote = stringText.substring(prefixLength).charAt(0);
+      final String prefix = stringText.substring(0, prefixLength);
+      final char firstQuote = stringText.substring(prefixLength).charAt(0);
 
       stringText = string.getStringValue();
-      List<String> subStrings = StringUtil.split(stringText, "\n", false, true);
+      final List<String> subStrings = StringUtil.split(stringText, "\n", false, true);
 
-      StringBuilder result = new StringBuilder();
-      if (subStrings.size() != 1)
+      final StringBuilder result = new StringBuilder();
+      if (subStrings.size() != 1) {
         result.append("(");
+      }
       boolean lastString = false;
       for (String s : subStrings) {
         result.append(prefix);
         result.append(firstQuote);
-        String validSubstring = convertToValidSubString(s, firstQuote);
+        final String validSubstring = convertToValidSubString(s, firstQuote);
 
         if (s.endsWith("'''") || s.endsWith("\"\"\"")) {
           lastString = true;
         }
         result.append(validSubstring);
         result.append(firstQuote);
-        if (!lastString)
+        if (!lastString) {
           result.append(" ").append("\n");
+        }
       }
-      if (subStrings.size() != 1)
+      if (subStrings.size() != 1) {
         result.append(")");
-      PyExpressionStatement e = elementGenerator.createFromText(LanguageLevel.forElement(string), PyExpressionStatement.class, result.toString());
+      }
+      final PyExpressionStatement e = elementGenerator.createFromText(LanguageLevel.forElement(string), PyExpressionStatement.class, result.toString());
 
       PyExpression expression = e.getExpression();
       if ((parent instanceof PyParenthesizedExpression || parent instanceof PyTupleExpression)
-          && expression instanceof PyParenthesizedExpression)
+          && expression instanceof PyParenthesizedExpression) {
         expression = ((PyParenthesizedExpression)expression).getContainedExpression();
-      if (expression != null)
+      }
+      if (expression != null) {
         string.replace(expression);
+      }
     }
   }
 
-  private static String convertToValidSubString(String s, Character firstQuote) {
-    String subString;
-    if (s.startsWith("'''") || s.startsWith("\"\"\""))
+  @NotNull
+  private static String convertToValidSubString(@NotNull String s, char firstQuote) {
+    final String subString;
+    if (s.startsWith("'''") || s.startsWith("\"\"\"")) {
       subString = convertToValidSubString(s.substring(3), firstQuote);
+    }
     else if (s.endsWith("'''") || s.endsWith("\"\"\"")) {
-      String trimmed = s.trim();
+      final String trimmed = s.trim();
       subString = convertToValidSubString(trimmed.substring(0, trimmed.length() - 3), firstQuote);
     }
     else {

@@ -10,7 +10,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.util.PairFunction;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.data.VcsLogFilterer;
@@ -93,15 +92,6 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
   @NotNull
   public MainFrame getMainFrame() {
     return myMainFrame;
-  }
-
-  public void jumpToRow(final int rowIndex) {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        myMainFrame.getGraphTable().jumpToRow(rowIndex);
-      }
-    });
   }
 
   private void setModel(@NotNull GraphTableModel newModel,
@@ -231,7 +221,7 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
     if (answer.getCommitToJump() != null) {
       int row = myVisiblePack.getVisibleGraph().getVisibleRowIndex(answer.getCommitToJump());
       if (row >= 0) {
-        jumpToRow(row);
+        myMainFrame.getGraphTable().jumpToRow(row);
       }
       else {
         // TODO wait for the full log and then jump
@@ -247,7 +237,7 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
 
     int row = rowGetter.fun(model, commitId);
     if (row >= 0) {
-      jumpToRow(row);
+      myMainFrame.getGraphTable().jumpToRow(row);
     }
     else if (model.canRequestMore()) {
       model.requestToLoadMore(new Runnable() {
@@ -390,15 +380,18 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
 
   @Override
   public void addLogListener(@NotNull VcsLogListener listener) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     myLogListeners.add(listener);
   }
 
   @Override
   public void removeLogListener(@NotNull VcsLogListener listener) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     myLogListeners.remove(listener);
   }
 
   private void fireFilterChangeEvent(@NotNull VisiblePack visiblePack, boolean refresh) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     Collection<VcsLogListener> logListeners = new ArrayList<VcsLogListener>(myLogListeners);
 
     for (VcsLogListener listener : logListeners) {

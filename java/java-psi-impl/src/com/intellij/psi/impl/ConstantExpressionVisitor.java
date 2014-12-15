@@ -533,7 +533,7 @@ class ConstantExpressionVisitor extends JavaElementVisitor implements PsiConstan
         Class aClass = Class.forName(name);
         myResult = Enum.valueOf(aClass, ((PsiEnumConstant)resolvedExpression).getName());
       }
-      catch (ClassNotFoundException ignore) {
+      catch (Throwable ignore) {
       }
       return;
     }

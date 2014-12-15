@@ -35,15 +35,6 @@ public interface StateStorageManager {
   @Nullable
   StateStorage getStateStorage(@NotNull String fileSpec, @NotNull RoamingType roamingType);
 
-  @SuppressWarnings("UnusedDeclaration")
-  @Deprecated
-  @Nullable
-  /**
-   * @deprecated Use {@link #getStateStorage(String, com.intellij.openapi.components.RoamingType)}
-   * to remove in IDEA 15
-    */
-  StateStorage getFileStateStorage(@NotNull String fileSpec);
-
   @NotNull
   Couple<Collection<FileBasedStorage>> getCachedFileStateStorages(@NotNull Collection<String> changed, @NotNull Collection<String> deleted);
 

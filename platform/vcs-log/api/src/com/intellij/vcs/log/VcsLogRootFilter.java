@@ -26,7 +26,7 @@ import java.util.Collection;
 public interface VcsLogRootFilter extends VcsLogFilter {
 
   /**
-   * <p>Returns vcs roots that are visible.</p>
+   * Returns vcs roots that are visible.
    */
   @NotNull
   Collection<VirtualFile> getRoots();

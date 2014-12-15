@@ -128,12 +128,6 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
       }
 
       @Override
-      @Nullable
-      public StateStorage getFileStateStorage(@NotNull String fileSpec) {
-        return storage;
-      }
-
-      @Override
       public void clearStateStorage(@NotNull String file) {
       }
 

@@ -482,7 +482,7 @@ public abstract class EditorComposite implements Disposable {
       myWrappee = component;
       setOpaque(false);
 
-      setBorder(new SideBorder(null, top ? SideBorder.BOTTOM : SideBorder.TOP, false) {
+      setBorder(new SideBorder(null, top ? SideBorder.BOTTOM : SideBorder.TOP) {
         @Override
         public Color getLineColor() {
           Color result = EditorColorsManager.getInstance().getGlobalScheme().getColor(EditorColors.TEARLINE_COLOR);

@@ -284,7 +284,8 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   @NotNull
   public IntervalTreeImpl.PeekableIterator<RangeHighlighterEx> overlappingIterator(int startOffset, int endOffset) {
     startOffset = Math.max(0,startOffset);
-    IntervalTreeImpl.PeekableIterator<RangeHighlighterEx> exact = myHighlighterTree.overlappingIterator(new TextRangeInterval(startOffset, Math.max(startOffset, endOffset)));
+    endOffset = Math.max(startOffset, endOffset);
+    IntervalTreeImpl.PeekableIterator<RangeHighlighterEx> exact = myHighlighterTree.overlappingIterator(new TextRangeInterval(startOffset, endOffset));
     IntervalTreeImpl.PeekableIterator<RangeHighlighterEx> lines = myHighlighterTreeForLines.overlappingIterator(roundToLineBoundaries(startOffset, endOffset));
     return merge(exact, lines);
   }
@@ -337,8 +338,9 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   @NotNull
   private TextRangeInterval roundToLineBoundaries(int startOffset, int endOffset) {
     Document document = getDocument();
-    int lineStartOffset = startOffset <= 0 ? 0 : document.getLineStartOffset(document.getLineNumber(startOffset));
-    int lineEndOffset = endOffset <= 0 ? 0 : endOffset >= document.getTextLength() ? document.getTextLength() : document.getLineEndOffset(document.getLineNumber(endOffset));
+    int textLength = document.getTextLength();
+    int lineStartOffset = startOffset <= 0 ? 0 : startOffset > textLength ? textLength : document.getLineStartOffset(document.getLineNumber(startOffset));
+    int lineEndOffset = endOffset <= 0 ? 0 : endOffset >= textLength ? textLength : document.getLineEndOffset(document.getLineNumber(endOffset));
     return new TextRangeInterval(lineStartOffset, lineEndOffset);
   }
 }

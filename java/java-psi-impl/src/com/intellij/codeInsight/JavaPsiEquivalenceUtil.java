@@ -50,6 +50,6 @@ public class JavaPsiEquivalenceUtil {
           }
           return 0;
         }
-      }, null, false);
+      });
   }
 }

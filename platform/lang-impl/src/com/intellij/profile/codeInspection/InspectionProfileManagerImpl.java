@@ -60,10 +60,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @State(
   name = "InspectionProfileManager",
   storages = {
-    @Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml"),
-    @Storage(file = StoragePathMacros.APP_CONFIG + "/editor.xml")
+    @Storage(file = StoragePathMacros.APP_CONFIG + "/editor.xml"),
+    @Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml", deprecated = true)
   },
-  storageChooser = LastStorageChooserForWrite.ElementStateLastStorageChooserForWrite.class,
   additionalExportFile = InspectionProfileManager.FILE_SPEC
 )
 public class InspectionProfileManagerImpl extends InspectionProfileManager implements SeverityProvider, PersistentStateComponent<Element> {

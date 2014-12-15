@@ -50,17 +50,30 @@ public class RunContentDescriptor implements Disposable {
   @NotNull
   private AnAction[] myRestartActions = AnAction.EMPTY_ARRAY;
 
+  @Nullable
+  private final Runnable myActivationCallback;
+
   public RunContentDescriptor(@Nullable ExecutionConsole executionConsole,
                               @Nullable ProcessHandler processHandler,
                               @NotNull JComponent component,
                               String displayName,
-                              @Nullable Icon icon) {
+                              @Nullable Icon icon,
+                              @Nullable Runnable activationCallback) {
     myExecutionConsole = executionConsole;
     myProcessHandler = processHandler;
     myComponent = component;
     myDisplayName = displayName;
     myIcon = icon;
     myHelpId = myExecutionConsole instanceof HelpIdProvider ? ((HelpIdProvider)myExecutionConsole).getHelpId() : null;
+    myActivationCallback = activationCallback;
+  }
+
+  public RunContentDescriptor(@Nullable ExecutionConsole executionConsole,
+                              @Nullable ProcessHandler processHandler,
+                              @NotNull JComponent component,
+                              String displayName,
+                              @Nullable Icon icon) {
+    this(executionConsole, processHandler, component, displayName, icon, null);
   }
 
   public RunContentDescriptor(@Nullable ExecutionConsole executionConsole,
@@ -77,6 +90,10 @@ public class RunContentDescriptor implements Disposable {
     if (executionResult instanceof DefaultExecutionResult) {
       myRestartActions = ((DefaultExecutionResult)executionResult).getRestartActions();
     }
+  }
+
+  public Runnable getActivationCallback() {
+    return myActivationCallback;
   }
 
   /**

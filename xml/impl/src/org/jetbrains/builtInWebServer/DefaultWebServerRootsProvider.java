@@ -29,6 +29,7 @@ import com.intellij.openapi.roots.impl.DirectoryInfo;
 import com.intellij.openapi.roots.impl.ModuleLibraryOrderEntryImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
@@ -40,7 +41,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 final class DefaultWebServerRootsProvider extends WebServerRootsProvider {
-  private static OrderRootType[] ORDER_ROOT_TYPES;
+  private static final NotNullLazyValue<OrderRootType[]> ORDER_ROOT_TYPES = new NotNullLazyValue<OrderRootType[]>() {
+    @NotNull
+    @Override
+    protected OrderRootType[] compute() {
+      return new OrderRootType[]{JavadocOrderRootType.getInstance(), OrderRootType.DOCUMENTATION, OrderRootType.SOURCES, OrderRootType.CLASSES};
+    }
+  };
 
   @Nullable
   @Override
@@ -121,10 +128,6 @@ final class DefaultWebServerRootsProvider extends WebServerRootsProvider {
       return null;
     }
 
-    if (ORDER_ROOT_TYPES == null) {
-      ORDER_ROOT_TYPES = new OrderRootType[]{JavadocOrderRootType.getInstance(), OrderRootType.DOCUMENTATION, OrderRootType.SOURCES, OrderRootType.CLASSES};
-    }
-
     String libraryFileName = path.substring(0, index);
     String relativePath = path.substring(index + 1);
     AccessToken token = ReadAction.start();
@@ -172,7 +175,7 @@ final class DefaultWebServerRootsProvider extends WebServerRootsProvider {
                                         @NotNull String relativePath,
                                         @NotNull Library library,
                                         @NotNull PairFunction<String, VirtualFile, VirtualFile> resolver) {
-    for (OrderRootType rootType : ORDER_ROOT_TYPES) {
+    for (OrderRootType rootType : ORDER_ROOT_TYPES.getValue()) {
       for (VirtualFile root : library.getFiles(rootType)) {
         if (StringUtil.equalsIgnoreCase(root.getNameSequence(), libraryFileName)) {
           VirtualFile file = resolver.fun(relativePath, root);

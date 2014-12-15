@@ -1101,7 +1101,7 @@ public class InferenceSession {
 
       for (int i = 0; i < functionalMethodParameters.length; i++) {
         final PsiType pType = signature.getParameterTypes()[i];
-        addConstraint(new TypeCompatibilityConstraint(substituteWithInferenceVariables(getParameterType(parameters, i, PsiSubstitutor.EMPTY, varargs)),
+        addConstraint(new TypeCompatibilityConstraint(substituteWithInferenceVariables(getParameterType(parameters, i, qualifierResolveResult.getSubstitutor(), varargs)),
                                                       PsiImplUtil.normalizeWildcardTypeByPosition(pType, reference)));
       }
     }

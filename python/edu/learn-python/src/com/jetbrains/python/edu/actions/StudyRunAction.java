@@ -24,6 +24,7 @@ import com.jetbrains.python.edu.StudyUtils;
 import com.jetbrains.python.edu.course.Task;
 import com.jetbrains.python.edu.course.TaskFile;
 import com.jetbrains.python.edu.editor.StudyEditor;
+import com.jetbrains.python.run.PythonTracebackFilter;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -63,7 +64,7 @@ public class StudyRunAction extends DumbAwareAction {
               return;
             }
             myHandler = new OSProcessHandler(process);
-            RunContentExecutor executor = new RunContentExecutor(project, myHandler);
+            RunContentExecutor executor = new RunContentExecutor(project, myHandler).withFilter(new PythonTracebackFilter(project));
             Disposer.register(project, executor);
             executor.run();
             return;
@@ -73,7 +74,7 @@ public class StudyRunAction extends DumbAwareAction {
             Process p = cmd.createProcess();
             myHandler = new OSProcessHandler(p);
 
-            RunContentExecutor executor = new RunContentExecutor(project, myHandler);
+            RunContentExecutor executor = new RunContentExecutor(project, myHandler).withFilter(new PythonTracebackFilter(project));
             Disposer.register(project, executor);
             executor.run();
           }
