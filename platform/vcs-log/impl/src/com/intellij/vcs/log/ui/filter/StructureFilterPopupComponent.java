@@ -138,7 +138,7 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
     Set<VirtualFile> roots = getAllRoots();
 
     List<AnAction> rootActions = new ArrayList<AnAction>();
-    if (roots.size() <= 10) {
+    if (myColorManager.isMultipleRoots()) {
       for (VirtualFile root : ContainerUtil.sorted(roots, FILE_BY_NAME_COMPARATOR)) {
         rootActions.add(new SelectVisibleRootAction(root));
       }
@@ -147,8 +147,17 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
     for (VcsLogStructureFilter filter : myHistory) {
       structureActions.add(new SelectFromHistoryAction(filter));
     }
-    return new DefaultActionGroup(createAllAction(), new Separator("Roots"), new DefaultActionGroup(rootActions), new Separator("Folders"),
-                                  new DefaultActionGroup(structureActions), new SelectAction());
+
+    if (roots.size() > 15) {
+      return new DefaultActionGroup(createAllAction(),
+                                    new Separator("Folders"), new DefaultActionGroup(structureActions),
+                                    new SelectAction(), new Separator("Roots"), new DefaultActionGroup(rootActions));
+    }
+    else {
+      return new DefaultActionGroup(createAllAction(),
+                                    new Separator("Roots"), new DefaultActionGroup(rootActions),
+                                    new Separator("Folders"), new DefaultActionGroup(structureActions), new SelectAction());
+    }
   }
 
   private Set<VirtualFile> getAllRoots() {
@@ -233,7 +242,8 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
     public void setSelected(AnActionEvent e, boolean state) {
       if (!isEnabled()) {
         setVisibleOnly(myRoot);
-      } else {
+      }
+      else {
         setVisible(myRoot, state);
       }
     }

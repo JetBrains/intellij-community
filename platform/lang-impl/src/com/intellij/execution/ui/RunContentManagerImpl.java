@@ -336,7 +336,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
         // some action like navigation up/down in stacktrace wont
         // work correctly
         descriptor.getPreferredFocusComputable();
-        window.activate(null, descriptor.isAutoFocusContent(), descriptor.isAutoFocusContent());
+        window.activate(descriptor.getActivationCallback(), descriptor.isAutoFocusContent(), descriptor.isAutoFocusContent());
       }
     }, myProject.getDisposed());
   }

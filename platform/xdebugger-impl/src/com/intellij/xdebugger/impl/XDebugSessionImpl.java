@@ -725,7 +725,12 @@ public class XDebugSessionImpl implements XDebugSession {
       public void run() {
         if (mySessionTab != null) {
           if (XDebuggerSettingsManager.getInstanceImpl().getGeneralSettings().isShowDebuggerOnBreakpoint()) {
-            mySessionTab.toFront(true);
+            mySessionTab.toFront(true, new Runnable() {
+              @Override
+              public void run() {
+                updateExecutionPosition();
+              }
+            });
           }
           mySessionTab.getUi().attractBy(XDebuggerUIConstants.LAYOUT_VIEW_BREAKPOINT_CONDITION);
         }

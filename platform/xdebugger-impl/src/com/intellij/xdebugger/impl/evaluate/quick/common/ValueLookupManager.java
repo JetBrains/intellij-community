@@ -23,9 +23,7 @@ package com.intellij.xdebugger.impl.evaluate.quick.common;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.event.EditorMouseEvent;
-import com.intellij.openapi.editor.event.EditorMouseEventArea;
-import com.intellij.openapi.editor.event.EditorMouseMotionListener;
+import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
@@ -37,7 +35,7 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 
-public class ValueLookupManager implements EditorMouseMotionListener {
+public class ValueLookupManager extends EditorMouseAdapter implements EditorMouseMotionListener {
   /**
    * @see com.intellij.xdebugger.XDebuggerUtil#disableValueLookup(com.intellij.openapi.editor.Editor)
    */
@@ -59,11 +57,17 @@ public class ValueLookupManager implements EditorMouseMotionListener {
     if (!myListening) {
       myListening = true;
       EditorFactory.getInstance().getEventMulticaster().addEditorMouseMotionListener(this, myProject);
+      EditorFactory.getInstance().getEventMulticaster().addEditorMouseListener(this, myProject);
     }
   }
 
   @Override
   public void mouseDragged(EditorMouseEvent e) {
+  }
+
+  @Override
+  public void mouseExited(EditorMouseEvent e) {
+    myAlarm.cancelAllRequests();
   }
 
   @Override

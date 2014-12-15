@@ -30,11 +30,9 @@ import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
@@ -59,11 +57,6 @@ public class ExternalAnnotationsLineMarkerProvider implements LineMarkerProvider
   @Nullable
   @Override
   public LineMarkerInfo getLineMarkerInfo(@NotNull final PsiElement element) {
-    //todo: make an option?
-    if (Registry.is("ide.java.hide.contract.icons") && !(element instanceof PsiCompiledElement)) {
-      return null;
-    }
-
     PsiElement owner = element.getParent();
     if (!(owner instanceof PsiModifierListOwner) || !(owner instanceof PsiNameIdentifierOwner)) return null;
     if (owner instanceof PsiParameter || owner instanceof PsiLocalVariable) return null;
@@ -132,56 +125,45 @@ public class ExternalAnnotationsLineMarkerProvider implements LineMarkerProvider
     static final MyIconGutterHandler INSTANCE = new MyIconGutterHandler();
 
     @Override
-     public void navigate(MouseEvent e, PsiElement nameIdentifier) {
-       final PsiElement listOwner = nameIdentifier.getParent();
-       final PsiFile containingFile = listOwner.getContainingFile();
-       final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(listOwner);
-       if (virtualFile != null && containingFile != null) {
-         final Project project = listOwner.getProject();
-         Editor selectedEditor = FileEditorManager.getInstance(project).getSelectedTextEditor();
-         if (selectedEditor != null) {
-           selectedEditor.getCaretModel().moveToOffset(nameIdentifier.getTextOffset());
-           final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(selectedEditor.getDocument());
-           if (file != null && virtualFile.equals(file.getVirtualFile())) {
-             final JBPopup popup = createActionGroupPopup(containingFile, project, selectedEditor);
-             if (popup != null) {
-               popup.show(new RelativePoint(e));
-             }
-             return;
-           }
-         }
+    public void navigate(MouseEvent e, PsiElement nameIdentifier) {
+      final PsiElement listOwner = nameIdentifier.getParent();
+      final PsiFile containingFile = listOwner.getContainingFile();
+      final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(listOwner);
 
-         final OpenFileDescriptor openFileDescriptor = new OpenFileDescriptor(project, virtualFile, listOwner.getTextOffset());
-         final Editor editor = FileEditorManager.getInstance(project).openTextEditor(openFileDescriptor, true);
-         if (editor != null) {
-           final JBPopup popup = createActionGroupPopup(containingFile, project, editor);
-           if (popup != null) {
-             editor.getScrollingModel().runActionOnScrollingFinished(new Runnable() {
-               @Override
-               public void run() {
-           popup.showInBestPositionFor(editor);
-               }
-             });
-           }
-         }
-       }
-     }
+      if (virtualFile != null && containingFile != null) {
+        final Project project = listOwner.getProject();
+        final Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
 
-     @Nullable
-     protected JBPopup createActionGroupPopup(PsiFile file, Project project, Editor editor) {
-       final DefaultActionGroup group = new DefaultActionGroup();
-       for (final IntentionAction action : IntentionManager.getInstance().getAvailableIntentionActions()) {
-         if (action.isAvailable(project, editor, file)) {
-           group.add(new ApplyIntentionAction(action, action.getText(), editor, file));
-         }
-       }
+        if (editor != null) {
+          editor.getCaretModel().moveToOffset(nameIdentifier.getTextOffset());
+          final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
 
-       if (group.getChildrenCount() > 0) {
-         final DataContext context = SimpleDataContext.getProjectContext(null);
-         return JBPopupFactory.getInstance().createActionGroupPopup(null, group, context, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true);
-       }
+          if (file != null && virtualFile.equals(file.getVirtualFile())) {
+            final JBPopup popup = createActionGroupPopup(containingFile, project, editor);
+            if (popup != null) {
+              popup.show(new RelativePoint(e));
+            }
+          }
+        }
+      }
+    }
 
-       return null;
-     }
-   }
- }
+    @Nullable
+    protected JBPopup createActionGroupPopup(PsiFile file, Project project, Editor editor) {
+      final DefaultActionGroup group = new DefaultActionGroup();
+      for (final IntentionAction action : IntentionManager.getInstance().getAvailableIntentionActions()) {
+        if (action.isAvailable(project, editor, file)) {
+          group.add(new ApplyIntentionAction(action, action.getText(), editor, file));
+        }
+      }
+
+      if (group.getChildrenCount() > 0) {
+        final DataContext context = SimpleDataContext.getProjectContext(null);
+        return JBPopupFactory.getInstance()
+          .createActionGroupPopup(null, group, context, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true);
+      }
+
+      return null;
+    }
+  }
+}

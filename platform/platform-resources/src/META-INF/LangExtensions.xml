@@ -777,8 +777,7 @@
     <definitionsSearch implementation="com.intellij.pom.PomDefinitionSearch"/>
     <definitionsSearch implementation="com.intellij.xml.impl.schema.SchemaDefinitionsSearch"/>
 
-    <applicationService serviceInterface="com.intellij.ide.todo.TodoConfiguration"
-                        serviceImplementation="com.intellij.ide.todo.TodoConfiguration"/>
+    <applicationService serviceImplementation="com.intellij.ide.todo.TodoConfiguration"/>
     <indexPatternProvider implementation="com.intellij.ide.todo.TodoIndexPatternProvider"/>
 
     <applicationService serviceImplementation="com.intellij.codeInsight.documentation.QuickDocOnMouseOverManager"/>

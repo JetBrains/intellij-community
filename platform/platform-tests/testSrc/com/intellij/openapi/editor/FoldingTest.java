@@ -22,7 +22,6 @@ import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.TestFileType;
 
 import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertFalse;
 
 /**
  * @author max
@@ -185,5 +184,15 @@ public class FoldingTest extends AbstractEditorTest {
     addCollapsedFoldRegion(3, 6, "...");
     
     assertFalse(myEditor.getSelectionModel().hasSelection());
+  }
+  
+  public void testModelRemainsConsistentOnTextRemoval() {
+    addCollapsedFoldRegion(0, 10, "...");
+    addCollapsedFoldRegion(1, 9, "...");
+    
+    myEditor.getDocument().deleteString(0, 1);
+    addFoldRegion(20, 21, "..."); // an arbitrary action to rebuild folding caches
+    
+    assertTrue(myModel.isOffsetCollapsed(5));
   }
 }

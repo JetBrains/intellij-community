@@ -156,7 +156,7 @@ public class ContainingBranchesGetter implements VcsLogListener {
           for (Integer index : branchesIndexes) {
             branchesRefs.addAll(refs.refsToCommit(index));
           }
-          branchesRefs = ContainerUtil.sorted(branchesRefs, provider.getReferenceManager().getBranchLayoutComparator());
+          branchesRefs = ContainerUtil.sorted(branchesRefs, provider.getReferenceManager().getLabelsOrderComparator());
 
           ArrayList<String> branchesList = new ArrayList<String>();
           for (VcsRef ref : branchesRefs) {

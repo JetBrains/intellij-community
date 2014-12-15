@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.util;
+package com.intellij.openapi.externalSystem.service.execution;
 
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 
-@State(
-  name = "PropertiesComponent",
-  storages = {@Storage(file = StoragePathMacros.WORKSPACE_FILE)}
-)
-public class ProjectPropertiesComponentImpl extends PropertiesComponentImpl {
+/**
+ * @author Vladislav.Soroka
+ * @since 12/12/2014
+ */
+public class InvalidJavaHomeException extends ExternalSystemJdkException {
+
+  public InvalidJavaHomeException(String invalidPath) {
+    super(ExternalSystemBundle.message("external.system.java.home.invalid", invalidPath), null);
+  }
 }

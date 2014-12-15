@@ -23,6 +23,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.TabbedContent;
 import com.intellij.ui.content.impl.TabbedContentImpl;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -32,6 +33,10 @@ import java.util.ArrayList;
  */
 public class ContentUtilEx extends ContentsUtil {
   public static void addTabbedContent(ContentManager manager, JComponent contentComponent, String groupPrefix, String tabName, boolean select) {
+    addTabbedContent(manager, contentComponent, groupPrefix, tabName, select, null);
+  }
+
+  public static void addTabbedContent(ContentManager manager, JComponent contentComponent, String groupPrefix, String tabName, boolean select, @Nullable Disposable childDisposable) {
     TabbedContent tabbedContent = null;
     for (Content content : manager.getContents()) {
       if (content instanceof TabbedContent && content.getTabName().startsWith(groupPrefix + ": ")) {
@@ -55,6 +60,10 @@ public class ContentUtilEx extends ContentsUtil {
         manager.setSelectedContent(tabbedContent, true, true);
       }
       tabbedContent.addContent(contentComponent, tabName, true);
+    }
+
+    if (childDisposable != null) {
+      Disposer.register(tabbedContent, childDisposable);
     }
   }
 }

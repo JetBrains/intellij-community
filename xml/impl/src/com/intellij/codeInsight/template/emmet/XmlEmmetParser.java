@@ -52,8 +52,6 @@ public class XmlEmmetParser extends EmmetParser {
   @NonNls private static final String DEFAULT_INLINE_TAG = "span";
   @NonNls private static final String LOREM_KEYWORD = "lorem";
   @NonNls private static final String LIPSUM_KEYWORD = "lipsum";
-  private static final String ID = "id";
-  private static final String CLASS = "class";
 
   private boolean hasTagContext = false;
   private final Stack<String> tagLevel = new Stack<String>();
@@ -266,7 +264,7 @@ public class XmlEmmetParser extends EmmetParser {
           result.set(classAttrPosition, Couple.of(getClassAttributeName(), classAttrBuilder.toString()));
         }
         if (idAttrPosition != -1) {
-          result.set(idAttrPosition, Couple.of(ID, idAttrBuilder.toString()));
+          result.set(idAttrPosition, Couple.of(HtmlUtil.ID_ATTRIBUTE_NAME, idAttrBuilder.toString()));
         }
         return result;
       }
@@ -282,7 +280,7 @@ public class XmlEmmetParser extends EmmetParser {
             result.add(attr);
           }
         }
-        else if (ID.equals(attr.first)) {
+        else if (HtmlUtil.ID_ATTRIBUTE_NAME.equals(attr.first)) {
           if (idAttrBuilder.length() > 0) {
             idAttrBuilder.append(' ');
           }
@@ -313,7 +311,7 @@ public class XmlEmmetParser extends EmmetParser {
     }
 
     if (token == ZenCodingTokens.DOT || token == ZenCodingTokens.SHARP) {
-      final String name = token == ZenCodingTokens.DOT ? getClassAttributeName() : ID;
+      final String name = token == ZenCodingTokens.DOT ? getClassAttributeName() : HtmlUtil.ID_ATTRIBUTE_NAME;
       advance();
       token = getToken();
       final String value = getAttributeValueByToken(token);
@@ -328,7 +326,7 @@ public class XmlEmmetParser extends EmmetParser {
 
   @NotNull
   protected String getClassAttributeName() {
-    return CLASS;
+    return HtmlUtil.CLASS_ATTRIBUTE_NAME;
   }
 
   @Nullable
