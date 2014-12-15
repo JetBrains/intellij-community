@@ -26,6 +26,7 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
+import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -125,7 +126,7 @@ public class BemEmmetFilter extends ZenCodingFilter {
           return processClassName(className, node);
         }
       })));
-      attribute2Value.add(Couple.of("class", CLASS_NAME_JOINER.join(newClassNames)));
+      attribute2Value.add(Couple.of(HtmlUtil.CLASS_ATTRIBUTE_NAME, CLASS_NAME_JOINER.join(newClassNames)));
     }
     return node;
   }
@@ -287,7 +288,7 @@ public class BemEmmetFilter extends ZenCodingFilter {
   private static Couple<String> getClassPair(@NotNull List<Couple<String>> attribute2Value) {
     for (int i = 0; i < attribute2Value.size(); i++) {
       Couple<String> pair = attribute2Value.get(i);
-      if ("class".equals(pair.first) && !isNullOrEmpty(pair.second)) {
+      if (HtmlUtil.CLASS_ATTRIBUTE_NAME.equals(pair.first) && !isNullOrEmpty(pair.second)) {
         return attribute2Value.remove(i);
       }
     }

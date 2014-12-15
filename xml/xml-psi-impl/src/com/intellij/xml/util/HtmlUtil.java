@@ -74,6 +74,10 @@ public class HtmlUtil {
   @NonNls private static final String HTML5_DATA_ATTR_PREFIX = "data-";
 
   public static final String SCRIPT_TAG_NAME = "script";
+  public static final String STYLE_TAG_NAME = "style";
+
+  public static final String ID_ATTRIBUTE_NAME = "id";
+  public static final String CLASS_ATTRIBUTE_NAME = "class";
 
   public static final String[] CONTENT_TYPES = ArrayUtil.toStringArray(MimeTypeDictionary.getContentTypes());
 
