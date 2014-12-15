@@ -45,6 +45,9 @@ import java.util.List;
  */
 public class PyConvertTripleQuotedStringIntention extends BaseIntentionAction {
 
+  public static final String TRIPLE_SINGLE_QUOTE = "'''";
+  public static final String TRIPLE_DOUBLE_QUOTE = "\"\"\"";
+
   @NotNull
   public String getFamilyName() {
     return PyBundle.message("INTN.triple.quoted.string");
@@ -69,11 +72,16 @@ public class PyConvertTripleQuotedStringIntention extends BaseIntentionAction {
         if (docStringOwner.getDocStringExpression() == string) return false;
       }
       String stringText = string.getText();
+
       final int prefixLength = PyStringLiteralExpressionImpl.getPrefixLength(stringText);
+      final String prefix = stringText.substring(0, prefixLength);
+      if (StringUtil.containsIgnoreCase(prefix, "r")) {
+        return false;
+      }
       stringText = stringText.substring(prefixLength);
       if (stringText.length() >= 6) {
-        if (stringText.startsWith("'''") && stringText.endsWith("'''") ||
-            stringText.startsWith("\"\"\"") && stringText.endsWith("\"\"\"")) {
+        if (stringText.startsWith(TRIPLE_SINGLE_QUOTE) && stringText.endsWith(TRIPLE_SINGLE_QUOTE) ||
+            stringText.startsWith(TRIPLE_DOUBLE_QUOTE) && stringText.endsWith(TRIPLE_DOUBLE_QUOTE)) {
           return true;
         }
       }
@@ -89,31 +97,37 @@ public class PyConvertTripleQuotedStringIntention extends BaseIntentionAction {
       String stringText = string.getText();
       final int prefixLength = PyStringLiteralExpressionImpl.getPrefixLength(stringText);
       final String prefix = stringText.substring(0, prefixLength);
-      final char firstQuote = stringText.substring(prefixLength).charAt(0);
+      stringText = stringText.substring(prefixLength);
+      final char firstQuote = stringText.charAt(0);
 
-      stringText = string.getStringValue();
-      final List<String> subStrings = StringUtil.split(stringText, "\n", false, true);
+      List<String> lines = StringUtil.split(stringText, "\n", true, false);
+      final String lastLine = lines.get(lines.size() - 1);
+      boolean lastLineExcluded = false;
+      if (lastLine.equals(TRIPLE_SINGLE_QUOTE) || lastLine.equals(TRIPLE_DOUBLE_QUOTE)) {
+        lastLineExcluded = true;
+        lines = lines.subList(0, lines.size() - 1);
+      }
 
       final StringBuilder result = new StringBuilder();
-      if (subStrings.size() != 1) {
+      if (lines.size() != 1) {
         result.append("(");
       }
-      boolean lastString = false;
-      for (String s : subStrings) {
+      for (int i = 0; i < lines.size(); i++) {
+        final String validSubstring = convertToValidSubString(lines.get(i), firstQuote);
+
+        final boolean isLastLine = i == lines.size() - 1;
         result.append(prefix);
         result.append(firstQuote);
-        final String validSubstring = convertToValidSubString(s, firstQuote);
-
-        if (s.endsWith("'''") || s.endsWith("\"\"\"")) {
-          lastString = true;
-        }
         result.append(validSubstring);
+        if (!isLastLine || lastLineExcluded) {
+          result.append("\\n");
+        }
         result.append(firstQuote);
-        if (!lastString) {
-          result.append(" ").append("\n");
+        if (!isLastLine) {
+          result.append("\n");
         }
       }
-      if (subStrings.size() != 1) {
+      if (lines.size() != 1) {
         result.append(")");
       }
       final PyExpressionStatement e = elementGenerator.createFromText(LanguageLevel.forElement(string), PyExpressionStatement.class, result.toString());
@@ -131,19 +145,14 @@ public class PyConvertTripleQuotedStringIntention extends BaseIntentionAction {
 
   @NotNull
   private static String convertToValidSubString(@NotNull String s, char firstQuote) {
-    final String subString;
-    if (s.startsWith("'''") || s.startsWith("\"\"\"")) {
-      subString = convertToValidSubString(s.substring(3), firstQuote);
+    if (s.startsWith(TRIPLE_SINGLE_QUOTE) || s.startsWith(TRIPLE_DOUBLE_QUOTE)) {
+      return convertToValidSubString(s.substring(3), firstQuote);
     }
-    else if (s.endsWith("'''") || s.endsWith("\"\"\"")) {
-      final String trimmed = s.trim();
-      subString = convertToValidSubString(trimmed.substring(0, trimmed.length() - 3), firstQuote);
+    else if (s.endsWith(TRIPLE_SINGLE_QUOTE) || s.endsWith(TRIPLE_DOUBLE_QUOTE)) {
+      return convertToValidSubString(s.substring(0, s.length() - 3), firstQuote);
     }
     else {
-      StringBuilder stringBuilder = new StringBuilder();
-      stringBuilder = StringUtil.escapeStringCharacters(s.length(), s, String.valueOf(firstQuote), true, stringBuilder);
-      subString = stringBuilder.toString();
+      return StringUtil.escapeChar(s, firstQuote);
     }
-    return subString;
   }
 }
