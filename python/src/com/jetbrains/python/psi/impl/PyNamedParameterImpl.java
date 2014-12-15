@@ -244,8 +244,8 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
             }
           }
         }
-        // Guess the type from file-local usages
-        if (context.allowLocalUsages(this)) {
+        // Guess the type from file-local calls
+        if (context.allowCallContext(this)) {
           final List<PyType> types = new ArrayList<PyType>();
           processLocalCalls(func, new Processor<PyCallExpression>() {
             @Override

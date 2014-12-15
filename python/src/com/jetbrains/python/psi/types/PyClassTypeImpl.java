@@ -418,7 +418,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
                      CompletionUtil.getOriginalOrSelf(location)
                        .getContainingFile() :
                      null;
-    final TypeEvalContext typeEvalContext = TypeEvalContext.userInitiated(myClass.getProject(), origin);
+    final TypeEvalContext typeEvalContext = TypeEvalContext.codeCompletion(myClass.getProject(), origin);
     addInheritedMembers(prefix, location, namesAlready, context, ret, typeEvalContext);
 
     // from providers

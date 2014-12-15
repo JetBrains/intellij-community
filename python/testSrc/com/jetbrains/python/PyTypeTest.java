@@ -589,13 +589,14 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testParameterFromUsages() {
-    doTest("int | str | unknown",
-           "def foo(bar):\n" +
-           "    expr = bar\n" +
-           "def use_foo(x):\n" +
-           "    foo(x)\n" +
-           "    foo(3)\n" +
-           "    foo('bar')\n");
+    final String text = "def foo(bar):\n" +
+                        "    expr = bar\n" +
+                        "def use_foo(x):\n" +
+                        "    foo(x)\n" +
+                        "    foo(3)\n" +
+                        "    foo('bar')\n";
+    final PyExpression expr = parseExpr(text);
+    doTest("int | str | unknown", expr, TypeEvalContext.codeCompletion(expr.getProject(), expr.getContainingFile()));
   }
 
   public void testUpperBoundGeneric() {
@@ -993,6 +994,12 @@ public class PyTypeTest extends PyTestCase {
   private PyExpression parseExpr(String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     return myFixture.findElementByText("expr", PyExpression.class);
+  }
+
+  private static void doTest(final String expectedType, final PyExpression expr, final TypeEvalContext context) {
+    PyType actual = context.getType(expr);
+    final String actualType = PythonDocumentationProvider.getTypeName(actual, context);
+    assertEquals(expectedType, actualType);
   }
 
   private void doTest(final String expectedType, final String text) {
