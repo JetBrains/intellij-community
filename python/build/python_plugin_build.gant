@@ -164,8 +164,9 @@ target(name: "compile", description: "Compile module python") {
   //copy plugin.xml
   ant.mkdir(dir: "${classesDir}/META-INF")
   ant.copy(todir: "${classesDir}/META-INF") {
-    fileset(file: "${pluginHome}/pluginSrc/META-INF/*.xml")
+    fileset(file: "${pluginHome}/pluginSrc/META-INF/python-plugin-core.xml")
     fileset(file: "${pluginHome}/pluginResources/META-INF/*.xml")
+    fileset(file: "${pluginHome}/build/python-plugin-dependencies.xml")
   }
 
   ant.replace(file: "${classesDir}/META-INF/plugin.xml") {
