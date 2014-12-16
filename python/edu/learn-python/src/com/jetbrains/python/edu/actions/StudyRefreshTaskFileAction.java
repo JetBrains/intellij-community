@@ -4,7 +4,6 @@ import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -15,6 +14,8 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.jetbrains.python.edu.StudyDocumentListener;
@@ -24,10 +25,9 @@ import com.jetbrains.python.edu.course.*;
 import com.jetbrains.python.edu.editor.StudyEditor;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.*;
+import java.io.File;
 
 public class StudyRefreshTaskFileAction extends DumbAwareAction {
-  private static final Logger LOG = Logger.getInstance(StudyRefreshTaskFileAction.class.getName());
   public static final String ACTION_ID = "RefreshTaskAction";
   public static final String SHORTCUT = "ctrl shift pressed X";
 
@@ -104,45 +104,27 @@ public class StudyRefreshTaskFileAction extends DumbAwareAction {
     lessonInfo.update(StudyStatus.Unchecked, +1);
   }
 
-  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   private static void resetDocument(final Document document, Course course, String fileName, Task task) {
     StudyEditor.deleteGuardedBlocks(document);
-    BufferedReader reader = null;
     StudyDocumentListener listener = StudyEditor.getListener(document);
     if (listener != null) {
       document.removeDocumentListener(listener);
     }
     clearDocument(document);
-    try {
-      String lessonDir = Lesson.LESSON_DIR + String.valueOf(task.getLesson().getIndex() + 1);
-      String taskDir = Task.TASK_DIR + String.valueOf(task.getIndex() + 1);
-      File resourceFile = new File(course.getResourcePath());
-      File resourceRoot = resourceFile.getParentFile();
-      File pattern = new File(new File(new File(resourceRoot, lessonDir), taskDir), fileName);
-      reader = new BufferedReader(new InputStreamReader(new FileInputStream(pattern), "UTF-8"));
-      String line;
-      StringBuilder patternText = new StringBuilder();
-      while ((line = reader.readLine()) != null) {
-        patternText.append(line);
-        patternText.append("\n");
-      }
-      int patternLength = patternText.length();
-      if (patternLength != 0) {
-        if (patternText.charAt(patternLength - 1) == '\n') {
-          patternText.delete(patternLength - 1, patternLength);
-        }
-        document.setText(new String(patternText.toString().getBytes("UTF-8")));
-      }
+    String lessonDir = Lesson.LESSON_DIR + String.valueOf(task.getLesson().getIndex() + 1);
+    String taskDir = Task.TASK_DIR + String.valueOf(task.getIndex() + 1);
+    File resourceFile = new File(course.getResourcePath());
+    File resourceRoot = resourceFile.getParentFile();
+    String patternPath = FileUtil.join(resourceRoot.getPath(), lessonDir, taskDir, fileName);
+    VirtualFile patternFile = VfsUtil.findFileByIoFile(new File(patternPath), true);
+    if (patternFile == null) {
+      return;
     }
-    catch (FileNotFoundException e) {
-      LOG.error(e);
+    Document patternDocument = FileDocumentManager.getInstance().getDocument(patternFile);
+    if (patternDocument == null) {
+      return;
     }
-    catch (IOException e) {
-      LOG.error(e);
-    }
-    finally {
-      StudyUtils.closeSilently(reader);
-    }
+    document.setText(patternDocument.getCharsSequence());
     if (listener != null) {
       document.addDocumentListener(listener);
     }
