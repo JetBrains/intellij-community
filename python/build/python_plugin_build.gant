@@ -142,7 +142,7 @@ target(name: "compile", description: "Compile module python") {
       patternset(refid: "resources.pt")
       type(type: "file")
     }
-    fileset(dir: "${pluginHome}/IntelliLang-python/src") {
+    fileset(dir: "${pluginHome}/IntelliLang-python/resources") {
       patternset(refid: "resources.pt")
       type(type: "file")
     }
