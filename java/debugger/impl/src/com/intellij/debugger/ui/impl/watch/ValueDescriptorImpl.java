@@ -22,6 +22,7 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.tree.DebuggerTreeNode;
@@ -58,6 +59,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
 
   private String myIdLabel;
   private String myValueText;
+  private boolean myFullValue = false;
 
   @Nullable
   private Icon myValueIcon;
@@ -328,8 +330,32 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     return calcValueName() + " = " + myIdLabel + myValueText;
   }
 
+  public ValueDescriptorImpl getFullValueDescriptor() {
+    ValueDescriptorImpl descriptor = new ValueDescriptorImpl(myProject, myValue) {
+      @Override
+      public Value calcValue(EvaluationContextImpl evaluationContext) throws EvaluateException {
+        return myValue;
+      }
+
+      @Override
+      public String calcValueName() {
+        return null;
+      }
+
+      @Override
+      public PsiExpression getDescriptorEvaluation(DebuggerContext context) throws EvaluateException {
+        return null;
+      }
+    };
+    descriptor.myFullValue = true;
+    return descriptor;
+  }
+
   @Override
   public void setValueLabel(String label) {
+    if (!myFullValue) {
+      label = DebuggerUtilsEx.truncateString(label);
+    }
     myValueText = label;
     myIdLabel = getIdLabel(label);
   }

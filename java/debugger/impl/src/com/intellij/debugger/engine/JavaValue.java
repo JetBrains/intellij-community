@@ -160,11 +160,11 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
 
                     @Override
                     public void contextAction() throws Exception {
-                      final String valueAsString = myValueDescriptor.getValueText();
-                      DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
+                      final ValueDescriptorImpl fullValueDescriptor = myValueDescriptor.getFullValueDescriptor();
+                      fullValueDescriptor.updateRepresentation(myEvaluationContext, new DescriptorLabelListener() {
                         @Override
-                        public void run() {
-                          callback.evaluated(valueAsString);
+                        public void labelChanged() {
+                          callback.evaluated(fullValueDescriptor.getValueText());
                         }
                       });
                     }
