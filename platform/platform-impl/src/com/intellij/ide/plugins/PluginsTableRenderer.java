@@ -236,7 +236,7 @@ public class PluginsTableRenderer extends DefaultTableCellRenderer {
               return plugin != null ? plugin.getName() : id.getIdString();
             }
           }, ", ");
-          sb.append(IdeBundle.message("plugin.manager.incompatible.deps.tooltip", required, deps));
+          sb.append(IdeBundle.message("plugin.manager.incompatible.deps.tooltip", required.size(), deps));
         }
 
         return sb.toString();

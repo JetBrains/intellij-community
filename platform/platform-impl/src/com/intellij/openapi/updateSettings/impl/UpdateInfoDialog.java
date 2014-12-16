@@ -73,7 +73,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
           return downloader.getName();
         }
       }, "<br/>");
-      setErrorText(IdeBundle.message("updates.incompatible.plugins.found", incompatiblePlugins, list));
+      setErrorText(IdeBundle.message("updates.incompatible.plugins.found", incompatiblePlugins.size(), list));
     }
   }
 
