@@ -273,6 +273,9 @@ public class FileTemplateUtil{
       Velocity.evaluate(context, stringWriter, "", templateContent);
     }
     catch (final VelocityException e) {
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        LOG.error(e);
+      }
       LOG.info("Error evaluating template:\n" + templateContent, e);
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         @Override

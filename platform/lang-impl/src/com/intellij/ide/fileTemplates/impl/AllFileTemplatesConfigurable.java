@@ -121,7 +121,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
     createTemplate(IdeBundle.message("template.unnamed"), ext, "");
   }
 
-  private void createTemplate(final @NotNull String prefName, final @NotNull String extension, final @NotNull String content) {
+  private FileTemplate createTemplate(final @NotNull String prefName, final @NotNull String extension, final @NotNull String content) {
     final FileTemplate[] templates = myCurrentTab.getTemplates();
     final Set<String> names = new HashSet<String>();
     for (FileTemplate template : templates) {
@@ -139,6 +139,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
     myCurrentTab.selectTemplate(newTemplate);
     fireListChanged();
     myEditor.focusToNameField();
+    return newTemplate;
   }
 
   private void onClone() {
@@ -675,8 +676,8 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
     myOtherTemplatesList = null;
   }
 
-  public void createNewTemplate(@NotNull String preferredName, @NotNull String extension, @NotNull String text) {
-    createTemplate(preferredName, extension, text);
+  public FileTemplate createNewTemplate(@NotNull String preferredName, @NotNull String extension, @NotNull String text) {
+    return createTemplate(preferredName, extension, text);
   }
 
   @Override
@@ -761,7 +762,12 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
   }
 
   @TestOnly
-  public FileTemplateConfigurable getEditor() {
+  FileTemplateConfigurable getEditor() {
     return myEditor;
+  }
+
+  @TestOnly
+  FileTemplateTab[] getTabs() {
+    return myTabs;
   }
 }

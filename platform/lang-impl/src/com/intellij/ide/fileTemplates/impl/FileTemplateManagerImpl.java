@@ -89,14 +89,15 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Pers
                                  final Project project) {
     myTypeManager = typeManager;
     myProject = project;
-    FileTemplatesLoader loader = new FileTemplatesLoader(typeManager);
 
+    FileTemplatesLoader loader = ExportableFileTemplateSettings.getInstance();
     myInternalTemplatesManager = loader.getInternalTemplatesManager();
     myDefaultTemplatesManager = loader.getDefaultTemplatesManager();
     myPatternsManager = loader.getPatternsManager();
     myCodeTemplatesManager = loader.getCodeTemplatesManager();
     myJ2eeTemplatesManager = loader.getJ2eeTemplatesManager();
-    myAllManagers = loader.getAllManagers();
+    myAllManagers = new FTManager[] { myInternalTemplatesManager, myDefaultTemplatesManager, myPatternsManager, myCodeTemplatesManager, myJ2eeTemplatesManager };
+
     myDefaultTemplateDescription = loader.getDefaultTemplateDescription();
     myDefaultIncludeDescription = loader.getDefaultIncludeDescription();
 
@@ -132,7 +133,6 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Pers
 
   @Override
   public void setCurrentScheme(@NotNull FileTemplatesScheme scheme) {
-    if (scheme == myScheme) return;
     for (FTManager child : myAllManagers) {
       child.saveTemplates();
     }
@@ -143,6 +143,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Pers
     }
   }
 
+  @Nullable
   @Override
   public FileTemplatesScheme getProjectScheme() {
     return myProjectScheme;
