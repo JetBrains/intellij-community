@@ -108,26 +108,25 @@ public class PyTypeCheckerInspection extends PyInspection {
     }
 
     @Nullable
-    private String checkTypes(@Nullable PyType superType, @Nullable PyType subType, @Nullable PsiElement node,
+    private String checkTypes(@Nullable PyType expected, @Nullable PyType actual, @Nullable PsiElement node,
                               @NotNull TypeEvalContext context, @NotNull Map<PyGenericType, PyType> substitutions) {
-      if (subType != null && superType != null) {
-        if (!PyTypeChecker.match(superType, subType, context, substitutions)) {
-          final String superName = PythonDocumentationProvider.getTypeName(superType, context);
-          String expected = String.format("'%s'", superName);
-          final boolean hasGenerics = PyTypeChecker.hasGenerics(superType, context);
+      if (actual != null && expected != null) {
+        if (!PyTypeChecker.match(expected, actual, context, substitutions)) {
+          final String expectedName = PythonDocumentationProvider.getTypeName(expected, context);
+          String quotedExpectedName = String.format("'%s'", expectedName);
+          final boolean hasGenerics = PyTypeChecker.hasGenerics(expected, context);
           ProblemHighlightType highlightType = ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
           if (hasGenerics) {
-            final PyType subst = PyTypeChecker.substitute(superType, substitutions, context);
-            if (subst != null) {
-              expected = String.format("'%s' (matched generic type '%s')",
-                                       PythonDocumentationProvider.getTypeName(subst, context),
-                                       superName);
+            final PyType substitute = PyTypeChecker.substitute(expected, substitutions, context);
+            if (substitute != null) {
+              quotedExpectedName = String.format("'%s' (matched generic type '%s')",
+                                       PythonDocumentationProvider.getTypeName(substitute, context),
+                                       expectedName);
               highlightType = ProblemHighlightType.WEAK_WARNING;
             }
           }
-          final String msg = String.format("Expected type %s, got '%s' instead",
-                                           expected,
-                                           PythonDocumentationProvider.getTypeName(subType, context));
+          final String actualName = PythonDocumentationProvider.getTypeName(actual, context);
+          final String msg = String.format("Expected type %s, got '%s' instead", quotedExpectedName, actualName);
           registerProblem(node, msg, highlightType);
           return msg;
         }
