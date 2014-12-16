@@ -1,5 +1,3 @@
-def foo(element):
-    print(element.children)
-
-def bar(element):
-    element.ch<caret>
+for region in regions:
+    region.children = []
+    region.ch<caret>
