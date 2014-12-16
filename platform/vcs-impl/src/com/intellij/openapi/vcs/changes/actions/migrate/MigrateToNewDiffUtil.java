@@ -85,13 +85,14 @@ public class MigrateToNewDiffUtil {
 
     com.intellij.openapi.diff.DiffContent[] contents = oldRequest.getContents();
     String[] titles = oldRequest.getContentTitles();
-    if (contents.length != 2) return null;
+    DiffContent[] newContents = new DiffContent[contents.length];
 
-    DiffContent content1 = convertContent(oldRequest.getProject(), contents[0]);
-    DiffContent content2 = convertContent(oldRequest.getProject(), contents[1]);
-    if (content1 == null || content2 == null) return null;
+    for (int i = 0; i < contents.length; i++) {
+      newContents[i] = convertContent(oldRequest.getProject(), contents[i]);
+      if (newContents[i] == null) return null;
+    }
 
-    SimpleDiffRequest newRequest = createSimpleRequest(content1, content2, oldRequest.getWindowTitle(), titles[0], titles[1]);
+    SimpleDiffRequest newRequest = new SimpleDiffRequest(oldRequest.getWindowTitle(), newContents, titles);
 
     newRequest.putUserData(DiffUserDataKeys.CONTEXT_ACTIONS, Collections.<AnAction>singletonList(new MyShowDiffAction(oldRequest)));
 
@@ -130,16 +131,6 @@ public class MigrateToNewDiffUtil {
       };
     }
   }
-
-  @NotNull
-  private static SimpleDiffRequest createSimpleRequest(@NotNull DiffContent content1,
-                                                       @NotNull DiffContent content2,
-                                                       @Nullable String windowTitle,
-                                                       @Nullable String contentTitle1,
-                                                       @Nullable String contentTitle2) {
-    return new SimpleDiffRequest(notNullize(windowTitle), content1, content2, notNullize(contentTitle1), notNullize(contentTitle2));
-  }
-
 
   private static class ChangeRequestChainWrapper extends UserDataHolderBase implements DiffRequestChain, GoToChangePopupBuilder.Chain {
     @NotNull private final ChangeRequestChain myChain;

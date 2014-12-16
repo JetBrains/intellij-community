@@ -13,9 +13,17 @@ public class SimpleDiffRequest extends DiffRequestBase implements ContentDiffReq
                            @NotNull DiffContent content2,
                            @NotNull String title1,
                            @NotNull String title2) {
+    this(windowTitle, new DiffContent[]{content1, content2}, new String[]{title1, title2});
+  }
+
+  public SimpleDiffRequest(@NotNull String windowTitle,
+                           @NotNull DiffContent[] contents,
+                           @NotNull String[] titles) {
+    assert contents.length == titles.length;
+
     myWindowTitle = windowTitle;
-    myContents = new DiffContent[]{content1, content2};
-    myContentTitles = new String[]{title1, title2};
+    myContents = contents;
+    myContentTitles = titles;
   }
 
   @NotNull

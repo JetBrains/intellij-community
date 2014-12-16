@@ -47,9 +47,8 @@ public class ThreesideContentPanel extends JPanel {
   }
 
   public void repaintDividers() {
-    for (DiffDivider divider : getDividers()) {
-      divider.repaint();
-    }
+    repaintDivider(Side.LEFT);
+    repaintDivider(Side.RIGHT);
   }
 
   public void repaintDivider(@NotNull Side side) {

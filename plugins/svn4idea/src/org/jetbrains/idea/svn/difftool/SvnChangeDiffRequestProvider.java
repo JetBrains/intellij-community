@@ -39,6 +39,8 @@ public class SvnChangeDiffRequestProvider implements ChangeDiffRequestProvider {
   public DiffRequest process(@NotNull ChangeDiffRequestPresentable presentable,
                              @NotNull UserDataHolder context,
                              @NotNull ProgressIndicator indicator) throws DiffRequestPresentableException, ProcessCanceledException {
+    // TODO: support tree/properties conflict for merge
+
     DiffRequestPresentableException e1 = null;
     DiffRequestPresentableException e2 = null;
 

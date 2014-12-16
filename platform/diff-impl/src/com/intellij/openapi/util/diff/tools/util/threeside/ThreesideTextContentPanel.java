@@ -2,6 +2,7 @@ package com.intellij.openapi.util.diff.tools.util.threeside;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.util.diff.util.Side;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,5 +31,11 @@ public class ThreesideTextContentPanel extends ThreesideContentPanel {
 
   public void setScrollbarPainter(@NotNull ButtonlessScrollBarUI.ScrollbarRepaintCallback painter) {
     ((EditorEx)myEditors.get(1)).registerScrollBarRepaintCallback(painter);
+  }
+
+  @Override
+  public void repaintDivider(@NotNull Side side) {
+    super.repaintDivider(side);
+    if (side == Side.RIGHT) ((EditorEx)myEditors.get(1)).getScrollPane().getVerticalScrollBar().repaint();
   }
 }
