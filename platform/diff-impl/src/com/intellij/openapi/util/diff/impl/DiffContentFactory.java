@@ -38,9 +38,12 @@ public class DiffContentFactory {
   @NotNull
   public static DocumentContent create(@Nullable Project project, @NotNull Document document) {
     VirtualFile file = FileDocumentManager.getInstance().getFile(document);
+    return create(project, document, file);
+  }
 
+  @NotNull
+  public static DocumentContent create(@Nullable Project project, @NotNull Document document, @Nullable VirtualFile file) {
     if (file != null) return new FileDocumentContentImpl(project, document, file);
-
     return new DocumentContentImpl(document);
   }
 
