@@ -47,7 +47,9 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.util.IconUtil;
 import com.intellij.util.NotNullFunction;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -653,6 +655,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
     JPanel actionsListPanel = new JPanel(new BorderLayout());
     actionsListPanel.setBackground(getProjectsBackground());
     final JBList list = new JBList(action.getChildren(null));
+    list.setBackground(getProjectsBackground());
     list.installCellRenderer(new NotNullFunction<AnAction, JComponent>() {
       final JLabel label = new JLabel();
       Map<Icon, Icon> scaled = new HashMap<Icon, Icon>();
