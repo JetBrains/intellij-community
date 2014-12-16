@@ -19,6 +19,8 @@ public class ByChar {
   public static FairDiffIterable compare(@NotNull CharSequence text1,
                                          @NotNull CharSequence text2,
                                          @NotNull ProgressIndicator indicator) {
+    indicator.checkCanceled();
+
     List<Char> chars1 = getAllChars(text1);
     List<Char> chars2 = getAllChars(text2);
 
@@ -29,6 +31,8 @@ public class ByChar {
   public static FairDiffIterable compareTwoStep(@NotNull CharSequence text1,
                                                 @NotNull CharSequence text2,
                                                 @NotNull ProgressIndicator indicator) {
+    indicator.checkCanceled();
+
     List<Char> chars1 = getNonSpaceChars(text1);
     List<Char> chars2 = getNonSpaceChars(text2);
 
@@ -40,6 +44,8 @@ public class ByChar {
   public static DiffIterable compareIgnoreWhitespaces(@NotNull CharSequence text1,
                                                       @NotNull CharSequence text2,
                                                       @NotNull ProgressIndicator indicator) {
+    indicator.checkCanceled();
+
     List<Char> chars1 = getNonSpaceChars(text1);
     List<Char> chars2 = getNonSpaceChars(text2);
 
@@ -54,6 +60,8 @@ public class ByChar {
   public static FairDiffIterable comparePunctuation(@NotNull CharSequence text1,
                                                     @NotNull CharSequence text2,
                                                     @NotNull ProgressIndicator indicator) {
+    indicator.checkCanceled();
+
     List<Char> chars1 = getPunctuationChars(text1);
     List<Char> chars2 = getPunctuationChars(text2);
 

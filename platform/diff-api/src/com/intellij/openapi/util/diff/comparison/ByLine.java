@@ -26,6 +26,8 @@ public class ByLine {
                                            @NotNull CharSequence text2,
                                            @NotNull ComparisonPolicy policy,
                                            @NotNull ProgressIndicator indicator) {
+    indicator.checkCanceled();
+
     List<Line> lines1 = getLines(text1, policy);
     List<Line> lines2 = getLines(text2, policy);
 
@@ -38,6 +40,8 @@ public class ByLine {
                                                   @NotNull CharSequence text2,
                                                   @NotNull ComparisonPolicy policy,
                                                   @NotNull ProgressIndicator indicator) {
+    indicator.checkCanceled();
+
     List<Line> lines1 = getLines(text1, policy);
     List<Line> lines2 = getLines(text2, policy);
 

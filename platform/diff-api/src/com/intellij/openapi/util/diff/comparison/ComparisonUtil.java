@@ -23,8 +23,6 @@ import static com.intellij.openapi.util.diff.comparison.iterables.DiffIterableUt
 public class ComparisonUtil {
   public static final Logger LOG = Logger.getInstance(ComparisonUtil.class);
 
-  // TODO: check ProgressIndicator in ByLine/ByWord/ByChar logic.
-
   @NotNull
   public static List<LineFragment> compareLines(@NotNull CharSequence text1,
                                                 @NotNull CharSequence text2,

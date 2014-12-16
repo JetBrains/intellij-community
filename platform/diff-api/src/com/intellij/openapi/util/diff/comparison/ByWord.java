@@ -26,6 +26,8 @@ public class ByWord {
                                            @NotNull CharSequence text2,
                                            @NotNull ComparisonPolicy policy,
                                            @NotNull ProgressIndicator indicator) {
+    indicator.checkCanceled();
+
     List<InlineChunk> words1 = getInlineChunks(text1);
     List<InlineChunk> words2 = getInlineChunks(text2);
 
@@ -42,6 +44,8 @@ public class ByWord {
                                                 @NotNull CharSequence text2,
                                                 @NotNull ComparisonPolicy policy,
                                                 @NotNull ProgressIndicator indicator) {
+    indicator.checkCanceled();
+
     // TODO: figure out, what do we exactly want from 'Split' logic
 
     // TODO: other approach could lead to better results:
