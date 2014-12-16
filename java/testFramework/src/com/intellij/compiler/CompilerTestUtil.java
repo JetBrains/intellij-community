@@ -19,7 +19,6 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.NamedJDOMExternalizable;
@@ -32,7 +31,6 @@ import com.intellij.util.SystemProperties;
 import junit.framework.AssertionFailedError;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil;
 import org.junit.Assert;
 
@@ -55,11 +53,10 @@ public class CompilerTestUtil {
     compilerConfiguration.setDefaultCompiler(compilerConfiguration.getJavacCompiler());
   }
 
+  /**
+   * @deprecated not needed anymore
+   */
   public static void scanSourceRootsToRecompile(Project project) {
-    // need this to emulate project opening
-    final List<VirtualFile> roots = ProjectRootManager.getInstance(project).getModuleSourceRoots(JavaModuleSourceRootTypes.SOURCES);
-    // todo: forced source roots scan is not needed?
-    //TranslatingCompilerFilesMonitor.getInstance().scanSourceContent(new TranslatingCompilerFilesMonitor.ProjectRef(project), roots, roots.size(), true);
   }
 
   public static void saveApplicationSettings() {
