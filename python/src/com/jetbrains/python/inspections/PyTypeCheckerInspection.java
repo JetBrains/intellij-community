@@ -133,7 +133,7 @@ public class PyTypeCheckerInspection extends PyInspection {
           String msg= String.format("Expected type %s, got '%s' instead", quotedExpectedName, actualName);
           if (expected instanceof PyStructuralType) {
             final Set<String> expectedAttributes = ((PyStructuralType)expected).getAttributeNames();
-            final Set<String> actualAttributes = getAttributes(actual);
+            final Set<String> actualAttributes = getAttributes(actual, context);
             if (actualAttributes != null) {
               final Sets.SetView<String> missingAttributes = Sets.difference(expectedAttributes, actualAttributes);
               if (missingAttributes.size() == 1) {
@@ -160,12 +160,12 @@ public class PyTypeCheckerInspection extends PyInspection {
   }
 
   @Nullable
-  private static Set<String> getAttributes(@NotNull PyType type) {
+  private static Set<String> getAttributes(@NotNull PyType type, @NotNull TypeEvalContext context) {
     if (type instanceof PyStructuralType) {
       return ((PyStructuralType)type).getAttributeNames();
     }
     else if (type instanceof PyClassType) {
-      return PyTypeChecker.getClassAttributes(((PyClassType)type).getPyClass(), true);
+      return PyTypeChecker.getClassTypeAttributes((PyClassType)type, true, context);
     }
     return null;
   }

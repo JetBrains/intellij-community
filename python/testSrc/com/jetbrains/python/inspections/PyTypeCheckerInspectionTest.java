@@ -267,4 +267,8 @@ public class PyTypeCheckerInspectionTest extends PyTestCase {
   public void testGetAttributeAgainstStructuralType() {
     doTest();
   }
+
+  public void testComparisonOperatorsForNumericTypes() {
+    doTest();
+  }
 }

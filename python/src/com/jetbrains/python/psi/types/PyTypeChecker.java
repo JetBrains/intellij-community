@@ -15,11 +15,13 @@
  */
 package com.jetbrains.python.psi.types;
 
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.ResolveResult;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.codeInsight.PyCustomMember;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -167,15 +169,15 @@ public class PyTypeChecker {
       return expectedStructural.getAttributeNames().containsAll(actualStructural.getAttributeNames());
     }
     if (expected instanceof PyStructuralType && actual instanceof PyClassType) {
-      final PyClass cls = ((PyClassType)actual).getPyClass();
-      if (overridesGetAttr(cls, context)) {
+      final PyClassType actualClassType = (PyClassType)actual;
+      if (overridesGetAttr(actualClassType.getPyClass(), context)) {
         return true;
       }
-      final Set<String> actualAttributes = getClassAttributes(cls, true);
+      final Set<String> actualAttributes = getClassTypeAttributes(actualClassType, true, context);
       return actualAttributes.containsAll(((PyStructuralType)expected).getAttributeNames());
     }
     if (actual instanceof PyStructuralType && expected instanceof PyClassType) {
-      final Set<String> expectedAttributes = getClassAttributes(((PyClassType)expected).getPyClass(), true);
+      final Set<String> expectedAttributes = getClassTypeAttributes((PyClassType)expected, true, context);
       return expectedAttributes.containsAll(((PyStructuralType)actual).getAttributeNames());
     }
     if (actual instanceof PyCallableType && expected instanceof PyCallableType) {
@@ -205,7 +207,19 @@ public class PyTypeChecker {
   }
 
   @NotNull
-  public static Set<String> getClassAttributes(@NotNull PyClass cls, boolean inherited) {
+  public static Set<String> getClassTypeAttributes(@NotNull PyClassType type, boolean inherited, @NotNull TypeEvalContext context) {
+    final Set<String> attributes = getClassAttributes(type.getPyClass(), inherited, context);
+    for (PyClassMembersProvider provider : Extensions.getExtensions(PyClassMembersProvider.EP_NAME)) {
+      final Collection<PyCustomMember> members = provider.getMembers(type, null);
+      for (PyCustomMember member : members) {
+        attributes.add(member.getName());
+      }
+    }
+    return attributes;
+  }
+
+  @NotNull
+  private static Set<String> getClassAttributes(@NotNull PyClass cls, boolean inherited, @NotNull TypeEvalContext context) {
     final Set<String> attributes = new HashSet<String>();
     for (PyFunction function : cls.getMethods(false)) {
       attributes.add(function.getName());
@@ -218,7 +232,10 @@ public class PyTypeChecker {
     }
     if (inherited) {
       for (PyClass ancestor : cls.getAncestorClasses()) {
-        attributes.addAll(getClassAttributes(ancestor, false));
+        final PyType ancestorType = context.getType(ancestor);
+        if (ancestorType instanceof PyClassType) {
+          attributes.addAll(getClassTypeAttributes((PyClassType)ancestorType, false, context));
+        }
       }
     }
     return attributes;
