@@ -430,7 +430,17 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
           myList.setSelectedIndex(listSelection);
           myList.ensureIndexIsVisible(listSelection);
 
-          if (scrollRow >= 0) {
+          if (scrollRow == -1) {
+            TreeNode root = (TreeNode)model.getRoot();
+            int childrenCount = root.getChildCount();
+            TreePath[] selected = new TreePath[childrenCount];
+            for (int i = 0; i < childrenCount; i++) {
+              TreeNode child = root.getChildAt(i);
+              // reverse order, because the last one will become "current" node. And we want it to be the first one.
+              selected[childrenCount - i - 1] = new TreePath(model.getPathToRoot(child));
+            }
+            myTree.setSelectionPaths(selected);
+          } else {
             myTree.setSelectionRow(scrollRow);
           }
           TreeUtil.showRowCentered(myTree, scrollRow, false);
