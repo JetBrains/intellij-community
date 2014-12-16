@@ -57,7 +57,7 @@ public class CreateTaskWindowDialog extends DialogWrapper {
       if (file.exists()) {
         BufferedReader bufferedReader =  null;
         try {
-          bufferedReader = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
+          bufferedReader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
           String line;
           while ((line = bufferedReader.readLine()) != null) {
             hintText.append(line).append("\n");
@@ -108,18 +108,29 @@ public class CreateTaskWindowDialog extends DialogWrapper {
     VirtualFile hintsDir = myProject.getBaseDir().findChild("hints");
     if (hintsDir != null) {
       File hintFile = new File(hintsDir.getPath(), hintName);
-      PrintWriter printWriter = null;
+      OutputStreamWriter outputStreamWriter = null;
       try {
-        printWriter = new PrintWriter(hintFile);
-        printWriter.print(hintText);
+        outputStreamWriter = new OutputStreamWriter(new FileOutputStream(hintFile), "UTF-8");
+       outputStreamWriter.write(hintText);
       }
       catch (FileNotFoundException e) {
         //TODO:show error in UI
         return;
       }
+      catch (UnsupportedEncodingException e) {
+        LOG.error(e);
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
       finally {
-        if (printWriter != null) {
-          printWriter.close();
+        if (outputStreamWriter != null) {
+          try {
+            outputStreamWriter.close();
+          }
+          catch (IOException e) {
+            //close silently
+          }
         }
       }
     }
