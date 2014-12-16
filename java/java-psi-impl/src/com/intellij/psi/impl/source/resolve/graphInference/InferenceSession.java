@@ -17,6 +17,7 @@ package com.intellij.psi.impl.source.resolve.graphInference;
 
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
@@ -890,7 +891,7 @@ public class InferenceSession {
     return composeBound(var, InferenceBound.EQ, new Function<Pair<PsiType, PsiType>, PsiType>() {
       @Override
       public PsiType fun(Pair<PsiType, PsiType> pair) {
-        return pair.first; //todo check if equals
+        return !Comparing.equal(pair.first, pair.second) ? null : pair.first;
       }
     }, substitutor);
   }
@@ -916,7 +917,11 @@ public class InferenceSession {
           lub = lowerBound;
         }
         else {
-          lub = fun.fun(Pair.create(lub, lowerBound));
+          final Pair<PsiType, PsiType> pair = Pair.create(lub, lowerBound);
+          lub = fun.fun(pair);
+          if (lub == null) {
+            return PsiType.NULL;
+          }
         }
       }
     }
