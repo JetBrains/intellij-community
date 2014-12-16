@@ -8,59 +8,9 @@
   <depends optional="true">Pythonid</depends>
   <depends optional="true">com.intellij.modules.python</depends>
 
-  <project-components>
-    <component>
-      <implementation-class>org.jetbrains.plugins.ipnb.configuration.IpnbConnectionManager</implementation-class>
-    </component>
-  </project-components>
+  <xi:include href="/META-INF/ipython-notebook.xml" xpointer="xpointer(/idea-plugin/*)"/>
+
   <extensions defaultExtensionNs="com.intellij">
-    <fileEditorProvider implementation="org.jetbrains.plugins.ipnb.editor.IpnbEditorProvider"/>
-    <fileTypeFactory implementation="org.jetbrains.plugins.ipnb.IpnbFileTypeFactory"/>
-
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
-
-    <projectConfigurable groupId="tools" instance="org.jetbrains.plugins.ipnb.configuration.IpnbConfigurable"
-                         id="org.jetbrains.plugins.ipnb.configuration.IpnbConfigurable" displayName="IPython Notebook"
-                         nonDefaultProject="true"/>
-    <projectService serviceInterface="org.jetbrains.plugins.ipnb.configuration.IpnbSettings"
-                   serviceImplementation="org.jetbrains.plugins.ipnb.configuration.IpnbSettings"/>
-    <lang.parserDefinition language="IpnbPython" implementationClass="org.jetbrains.plugins.ipnb.psi.IpnbPyParserDefinition"/>
   </extensions>
-  <extensions defaultExtensionNs="Pythonid">
-    <dialectsTokenSetContributor implementation="org.jetbrains.plugins.ipnb.psi.IpnbPyTokenSetContributor"/>
-    <visitorFilter language="IpnbPython" implementationClass="org.jetbrains.plugins.ipnb.IpnbVisitorFilter"/>
-  </extensions>
-  <actions>
-    <action class="org.jetbrains.plugins.ipnb.editor.actions.IpnbRunCellInplaceAction" id="IpnbRunCellInplaceAction" text="Run cell in-place">
-      <keyboard-shortcut keymap="$default" first-keystroke="ctrl ENTER"/>
-    </action>
-    <action class="org.jetbrains.plugins.ipnb.editor.actions.IpnbRunCellAction" id="IpnbRunCellAction" text="Run cell">
-    </action>
-    <action class="org.jetbrains.plugins.ipnb.editor.actions.IpnbSaveAction" id="IpnbSaveAction" text="Save and Checkpoint">
-    </action>
-    <action class="org.jetbrains.plugins.ipnb.editor.actions.IpnbAddCellBelowAction" id="IpnbAddCellBelowAction" text="Insert Cell Below">
-      <keyboard-shortcut keymap="$default" first-keystroke="ctrl EQUALS"/>
-    </action>
-    <action class="org.jetbrains.plugins.ipnb.editor.actions.IpnbAddCellAboveAction" id="IpnbAddCellAboveAction" text="Insert Cell Above">
-      <keyboard-shortcut keymap="$default" first-keystroke="ctrl shift EQUALS"/>
-    </action>
-    <action class="org.jetbrains.plugins.ipnb.editor.actions.IpnbCutCellAction" id="IpnbCutCellAction" text="Cut Cell"/>
-    <action class="org.jetbrains.plugins.ipnb.editor.actions.IpnbCopyCellAction" id="IpnbCopyCellAction" text="Copy Cell"/>
-    <action class="org.jetbrains.plugins.ipnb.editor.actions.IpnbPasteCellAction" id="IpnbPasteCellAction" text="Paste Cell Below"/>
-    <action class="org.jetbrains.plugins.ipnb.editor.actions.IpnbDeleteCellAction" id="IpnbDeleteCellAction" text="Delete Cell"/>
-
-    <action class="org.jetbrains.plugins.ipnb.editor.actions.IpnbMoveCellDownAction" id="IpnbMoveCellDownAction" text="Move Cell Down">
-      <keyboard-shortcut keymap="$default" first-keystroke="ctrl shift DOWN"/>
-    </action>
-    <action class="org.jetbrains.plugins.ipnb.editor.actions.IpnbMoveCellUpAction" id="IpnbMoveCellUpAction" text="Move Cell Up" >
-      <keyboard-shortcut keymap="$default" first-keystroke="ctrl shift UP"/>
-    </action>
-
-    <action class="org.jetbrains.plugins.ipnb.editor.actions.IpnbMarkdownCellAction" id="IpnbMarkdownCellAction" text="Markdown Cell">
-      <keyboard-shortcut keymap="$default" first-keystroke="ctrl shift m"/>
-    </action>
-    <action class="org.jetbrains.plugins.ipnb.editor.actions.IpnbCodeCellAction" id="IpnbCodeCellAction" text="Code Cell">
-      <keyboard-shortcut keymap="$default" first-keystroke="ctrl shift s"/>
-    </action>
-  </actions>
 </idea-plugin>
