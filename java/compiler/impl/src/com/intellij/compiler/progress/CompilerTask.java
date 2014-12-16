@@ -33,6 +33,7 @@ import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
@@ -199,6 +200,8 @@ public class CompilerTask extends Task.Backgroundable {
         addIndicatorDelegate();
       }
       myCompileWork.run();
+    }
+    catch (ProcessCanceledException ignored) {
     }
     finally {
       try {
