@@ -701,7 +701,7 @@ public class AnnotationsHighlightUtil {
   }
 
   @Nullable
-  private static RetentionPolicy getRetentionPolicy(PsiClass annotation) {
+  public static RetentionPolicy getRetentionPolicy(@NotNull PsiClass annotation) {
     PsiModifierList modifierList = annotation.getModifierList();
     if (modifierList != null) {
       PsiAnnotation retentionAnno = modifierList.findAnnotation(CommonClassNames.JAVA_LANG_ANNOTATION_RETENTION);
