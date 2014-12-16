@@ -42,7 +42,6 @@ import com.intellij.util.IJSwingUtilities;
 import com.intellij.xdebugger.frame.XValueModifier;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -59,17 +58,30 @@ public class JavaValueModifier extends XValueModifier {
     myJavaValue = javaValue;
   }
 
-  @Nullable
   @Override
-  public String getInitialValueEditorText() {
-    Value value = myJavaValue.getDescriptor().getValue();
+  public void calculateInitialValueEditorText(final XInitialValueCallback callback) {
+    final Value value = myJavaValue.getDescriptor().getValue();
     if (value instanceof PrimitiveValue) {
-      return myJavaValue.getValueString();
+      callback.setValue(myJavaValue.getValueString());
     }
     else if (value instanceof StringReference) {
-      return StringUtil.wrapWithDoubleQuote(DebuggerUtils.translateStringValue(myJavaValue.getValueString()));
+      final EvaluationContextImpl evaluationContext = myJavaValue.getEvaluationContext();
+      evaluationContext.getManagerThread().schedule(new SuspendContextCommandImpl(evaluationContext.getSuspendContext()) {
+        @Override
+        public Priority getPriority() {
+          return Priority.NORMAL;
+        }
+
+        @Override
+        public void contextAction() throws Exception {
+          callback.setValue(
+            StringUtil.wrapWithDoubleQuote(DebuggerUtils.translateStringValue(DebuggerUtils.getValueAsString(evaluationContext, value))));
+        }
+      });
     }
-    return null;
+    else {
+      callback.setValue(null);
+    }
   }
 
   //public void update(AnActionEvent e) {
