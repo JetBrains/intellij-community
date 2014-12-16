@@ -66,6 +66,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Pers
   private final FileTypeManagerEx myTypeManager;
   private final Project myProject;
 
+  @Nullable
   private final FileTemplatesScheme myProjectScheme;
   private FileTemplatesScheme myScheme = FileTemplatesScheme.DEFAULT;
 
@@ -112,7 +113,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Pers
       }
     }
 
-    myProjectScheme = new FileTemplatesScheme("Project") {
+    myProjectScheme = project.isDefault() ? null : new FileTemplatesScheme("Project") {
       @NotNull
       @Override
       public String getTemplatesDir() {
@@ -142,7 +143,6 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Pers
     }
   }
 
-  @NotNull
   @Override
   public FileTemplatesScheme getProjectScheme() {
     return myProjectScheme;
@@ -433,7 +433,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Pers
   @Override
   public void loadState(State state) {
     XmlSerializerUtil.copyBean(state, myState);
-    setCurrentScheme(myProjectScheme.getName().equals(state.SCHEME) ? myProjectScheme : FileTemplatesScheme.DEFAULT);
+    setCurrentScheme(myProjectScheme != null && myProjectScheme.getName().equals(state.SCHEME) ? myProjectScheme : FileTemplatesScheme.DEFAULT);
   }
 
   public static class State {
