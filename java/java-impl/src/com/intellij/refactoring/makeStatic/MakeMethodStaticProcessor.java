@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.makeStatic;
 
+import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -316,7 +317,7 @@ public class MakeMethodStaticProcessor extends MakeMethodOrClassStaticProcessor<
   protected void processExternalReference(PsiElement element, PsiMethod method, ArrayList<UsageInfo> result) {
     if (!mySettings.isChangeSignature()) {
       final PsiMethod containingMethod = MakeStaticJavaCallerChooser.isTheLastClassRef(element, method);
-      if (containingMethod != null) {
+      if (containingMethod != null && !TestFrameworks.getInstance().isTestMethod(containingMethod)) {
         result.add(new ChainedCallUsageInfo(containingMethod));
       }
     }
