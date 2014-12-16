@@ -88,17 +88,16 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Pers
                                  final Project project) {
     myTypeManager = typeManager;
     myProject = project;
-    ExportableFileTemplateSettings templateSettings = ExportableFileTemplateSettings.getInstance();
-    assert templateSettings != null : "Can not instantiate " + ExportableFileTemplateSettings.class.getName();
+    FileTemplatesLoader loader = new FileTemplatesLoader(typeManager);
 
-    myInternalTemplatesManager = templateSettings.getInternalTemplatesManager();
-    myDefaultTemplatesManager = templateSettings.getDefaultTemplatesManager();
-    myPatternsManager = templateSettings.getPatternsManager();
-    myCodeTemplatesManager = templateSettings.getCodeTemplatesManager();
-    myJ2eeTemplatesManager = templateSettings.getJ2eeTemplatesManager();
-    myAllManagers = templateSettings.getAllManagers();
-    myDefaultTemplateDescription = templateSettings.getDefaultTemplateDescription();
-    myDefaultIncludeDescription = templateSettings.getDefaultIncludeDescription();
+    myInternalTemplatesManager = loader.getInternalTemplatesManager();
+    myDefaultTemplatesManager = loader.getDefaultTemplatesManager();
+    myPatternsManager = loader.getPatternsManager();
+    myCodeTemplatesManager = loader.getCodeTemplatesManager();
+    myJ2eeTemplatesManager = loader.getJ2eeTemplatesManager();
+    myAllManagers = loader.getAllManagers();
+    myDefaultTemplateDescription = loader.getDefaultTemplateDescription();
+    myDefaultIncludeDescription = loader.getDefaultIncludeDescription();
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       for (String tname : Arrays.asList("Class", "AnnotationType", "Enum", "Interface")) {
