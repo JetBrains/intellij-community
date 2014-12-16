@@ -347,8 +347,16 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
         final Runnable onDone = new Runnable() {
           @Override
           public void run() {
-            ListScrollingUtil.ensureSelectionExists(panel.second);
-            panel.second.requestFocus();
+            final JBList list = panel.second;
+            ListScrollingUtil.ensureSelectionExists(list);
+            final ListSelectionListener[] listeners =
+              ((DefaultListSelectionModel)list.getSelectionModel()).getListeners(ListSelectionListener.class);
+
+            //avoid component cashing. This helps in case of LaF change
+            for (ListSelectionListener listener : listeners) {
+              listener.valueChanged(new ListSelectionEvent(list, list.getSelectedIndex(), list.getSelectedIndex(), true));
+            }
+            list.requestFocus();
           }
         };
         final String name = action.getClass().getName();
