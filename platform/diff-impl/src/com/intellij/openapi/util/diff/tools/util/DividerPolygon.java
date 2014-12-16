@@ -18,8 +18,10 @@ package com.intellij.openapi.util.diff.tools.util;
 import com.intellij.openapi.diff.impl.splitter.Transformation;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.util.diff.util.DiffDrawUtil;
 import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -70,6 +72,32 @@ public class DividerPolygon {
 
     for (DividerPolygon polygon : polygons) {
       polygon.paintSimple(g, width);
+    }
+  }
+
+  public static void paintPolygonsOnScrollbar(@NotNull Graphics2D g, @NotNull EditorEx editor, @NotNull List<DividerPolygon> polygons) {
+    for (DividerPolygon polygon : polygons) {
+      int startY = polygon.myStart1;
+      int endY = polygon.myEnd1;
+      int height = endY - startY;
+
+      int scrollbarWidth = editor.getScrollPane().getVerticalScrollBar().getWidth();
+      int startX = 0;
+      int endX = startX + scrollbarWidth - 1;
+
+      Color color = polygon.myColor;
+
+      g.setColor(color);
+      if (height > 2) {
+        g.fillRect(startX, startY, scrollbarWidth, height);
+
+        Color framingColor = DiffDrawUtil.getFramingColor(color);
+        UIUtil.drawLine(g, startX, startY, endX, startY, null, framingColor);
+        UIUtil.drawLine(g, startX, endY, endX, endY, null, framingColor);
+      }
+      else {
+        DiffDrawUtil.drawDoubleShadowedLine(g, startX, endX, startY, color);
+      }
     }
   }
 

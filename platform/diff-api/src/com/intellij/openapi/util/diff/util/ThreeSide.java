@@ -61,6 +61,11 @@ public enum ThreeSide {
     return array[myIndex];
   }
 
+  public int select(@NotNull int[] array) {
+    assert array.length == 3;
+    return array[myIndex];
+  }
+
   @NotNull
   public <T> T selectN(@NotNull List<T> list) {
     assert list.size() == 3;

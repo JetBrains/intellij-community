@@ -21,6 +21,7 @@ import com.intellij.openapi.util.diff.requests.DiffRequest;
 import com.intellij.openapi.util.diff.tools.util.DiffUserDataKeys;
 import com.intellij.openapi.util.diff.tools.util.DiffUserDataKeys.ScrollToPolicy;
 import com.intellij.openapi.util.diff.tools.util.SyncScrollSupport;
+import com.intellij.openapi.util.diff.tools.util.SyncScrollSupport.TwosideSyncScrollSupport;
 import com.intellij.openapi.util.diff.tools.util.base.TextDiffViewerBase;
 import com.intellij.openapi.util.diff.util.CalledInAwt;
 import com.intellij.openapi.util.diff.util.DiffUtil;
@@ -58,7 +59,7 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
 
   @NotNull private final MyScrollToLineHelper myScrollToLineHelper = new MyScrollToLineHelper();
 
-  @Nullable private SyncScrollSupport mySyncScrollListener;
+  @Nullable private TwosideSyncScrollSupport mySyncScrollListener;
 
   @NotNull private Side myCurrentSide;
 
@@ -185,8 +186,9 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
       myEditor2.getScrollingModel().addVisibleAreaListener(myVisibleAreaListener);
     }
     if (myEditor1 != null && myEditor2 != null) {
-      if (getSyncScrollable() != null) {
-        mySyncScrollListener = new SyncScrollSupport(myEditor1, myEditor2, getSyncScrollable());
+      SyncScrollSupport.SyncScrollable scrollable = getSyncScrollable();
+      if (scrollable != null) {
+        mySyncScrollListener = new TwosideSyncScrollSupport(myEditor1, myEditor2, scrollable);
       }
     }
   }

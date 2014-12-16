@@ -6,6 +6,7 @@ import com.intellij.openapi.diff.DiffNavigationContext;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.diff.util.Side;
+import com.intellij.openapi.util.diff.util.ThreeSide;
 
 import javax.swing.*;
 import java.util.List;
@@ -29,6 +30,7 @@ public interface DiffUserDataKeys {
   //
 
   Key<Side> PREFERRED_FOCUS_SIDE = Key.create("Diff.PreferredFocusSide");
+  Key<ThreeSide> PREFERRED_FOCUS_THREESIDE = Key.create("Diff.PreferredFocusThreeSide");
 
   //
   // DiffChain

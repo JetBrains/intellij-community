@@ -10,12 +10,13 @@ public class SimpleDiffTool implements FrameDiffTool {
   @NotNull
   @Override
   public DiffViewer createComponent(@NotNull DiffContext context, @NotNull DiffRequest request) {
+    if (SimpleThreesideDiffViewer.canShowRequest(context, request)) return new SimpleThreesideDiffViewer(context, request);
     return new SimpleDiffViewer(context, request);
   }
 
   @Override
   public boolean canShow(@NotNull DiffContext context, @NotNull DiffRequest request) {
-    return SimpleDiffViewer.canShowRequest(context, request);
+    return SimpleDiffViewer.canShowRequest(context, request) || SimpleThreesideDiffViewer.canShowRequest(context, request);
   }
 
   @NotNull

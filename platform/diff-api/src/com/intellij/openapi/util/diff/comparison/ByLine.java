@@ -53,6 +53,22 @@ public class ByLine {
     return convertIntoFragments(lines1, lines2, changes);
   }
 
+  @NotNull
+  public static FairDiffIterable compareTwoStepFair(@NotNull CharSequence text1,
+                                                    @NotNull CharSequence text2,
+                                                    @NotNull ProgressIndicator indicator) {
+    indicator.checkCanceled();
+
+    List<Line> lines1 = getLines(text1, ComparisonPolicy.DEFAULT);
+    List<Line> lines2 = getLines(text2, ComparisonPolicy.DEFAULT);
+
+    List<Line> iwLines1 = convertToIgnoreWhitespace(lines1);
+    List<Line> iwLines2 = convertToIgnoreWhitespace(lines2);
+
+    FairDiffIterable iwChanges = compareSmart(iwLines1, iwLines2, indicator);
+    return correctChanges(lines1, lines2, iwChanges, indicator);
+  }
+
   //
   // Impl
   //
