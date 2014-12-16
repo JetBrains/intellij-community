@@ -122,6 +122,11 @@ public class MigrateToNewDiffUtil {
         public OpenFileDescriptor getOpenFileDescriptor(int offset) {
           return oldContent.getOpenFileDescriptor(offset);
         }
+
+        @Override
+        public void onAssigned(boolean isAssigned) {
+          oldContent.onAssigned(isAssigned);
+        }
       };
     }
   }
