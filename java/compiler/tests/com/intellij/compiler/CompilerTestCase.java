@@ -329,7 +329,6 @@ public abstract class CompilerTestCase extends ModuleTestCase {
         }
       }
     });
-    CompilerTestUtil.scanSourceRootsToRecompile(myProject);
 
     if (ex[0] != null) {
       throw ex[0];

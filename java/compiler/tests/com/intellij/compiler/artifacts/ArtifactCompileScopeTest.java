@@ -97,7 +97,6 @@ public class ArtifactCompileScopeTest extends ArtifactCompilerTestCase {
     final Module module1 = addModule("module1", file1.getParent());
     final VirtualFile file2 = createFile("src2/B.java", "public class B {}");
     final Module module2 = addModule("module2", file2.getParent());
-    CompilerTestUtil.scanSourceRootsToRecompile(myProject);
 
     final Artifact artifact = addArtifact(root().module(module1));
 
@@ -124,7 +123,6 @@ public class ArtifactCompileScopeTest extends ArtifactCompilerTestCase {
     final Module module1 = addModule("module1", file1.getParent());
     final VirtualFile file2 = createFile("src2/B.java", "public class B{}");
     final Module module2 = addModule("module2", file2.getParent());
-    CompilerTestUtil.scanSourceRootsToRecompile(myProject);
 
     final Artifact artifact = addArtifact(root().module(module1).module(module2));
 
@@ -139,7 +137,6 @@ public class ArtifactCompileScopeTest extends ArtifactCompilerTestCase {
     final VirtualFile file1 = createFile("src/A.java", "public class A{}");
     final VirtualFile file2 = createFile("src/B.java", "public class B{}");
     final Module module = addModule("module", file1.getParent());
-    CompilerTestUtil.scanSourceRootsToRecompile(myProject);
 
     final Artifact artifact = addArtifact(root().module(module));
     setBuildOnMake(artifact);
