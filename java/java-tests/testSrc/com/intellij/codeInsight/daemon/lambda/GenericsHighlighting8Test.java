@@ -778,6 +778,10 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
     doTest(false);
   }
 
+  public void testRejectEqualsBoundsContradictingLowerBound() throws Exception {
+    doTest(false);
+  }
+
   private void doTest() {
     doTest(false);
   }
