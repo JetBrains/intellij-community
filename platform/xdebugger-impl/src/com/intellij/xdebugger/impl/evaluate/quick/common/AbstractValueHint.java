@@ -254,8 +254,16 @@ public abstract class AbstractValueHint {
     return modifiers == InputEvent.ALT_MASK;
   }
 
-  public static ValueHintType getType(final EditorMouseEvent e) {
-    return isAltMask(e.getMouseEvent().getModifiers()) ? ValueHintType.MOUSE_ALT_OVER_HINT : ValueHintType.MOUSE_OVER_HINT;
+  @Nullable
+  public static ValueHintType getHintType(final EditorMouseEvent e) {
+    int modifiers = e.getMouseEvent().getModifiers();
+    if (modifiers == 0) {
+      return ValueHintType.MOUSE_OVER_HINT;
+    }
+    else if (isAltMask(modifiers)) {
+      return ValueHintType.MOUSE_ALT_OVER_HINT;
+    }
+    return null;
   }
 
   public boolean isInsideHint(Editor editor, Point point) {
