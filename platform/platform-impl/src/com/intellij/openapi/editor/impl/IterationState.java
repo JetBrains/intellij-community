@@ -269,7 +269,7 @@ public final class IterationState {
     advanceCurrentVirtualSelectionIndex();
 
     if (!myUseOnlyFullLineHighlighters) {
-      myCurrentFold = myFoldingModel.fetchOutermost(myStartOffset);
+      myCurrentFold = myFoldingModel.getCollapsedRegionAtOffset(myStartOffset);
     }
     if (myCurrentFold != null) {
       myEndOffset = myCurrentFold.getEndOffset();

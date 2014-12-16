@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ public class SetValueInplaceEditor extends XDebuggerTreeInplaceEditor {
   private final XValueModifier myModifier;
   private final XValueNodeImpl myValueNode;
 
-  public SetValueInplaceEditor(final XValueNodeImpl node, @NotNull final String nodeName) {
+  private SetValueInplaceEditor(final XValueNodeImpl node, @NotNull final String nodeName) {
     super(node, "setValue");
     myValueNode = node;
     myModifier = myValueNode.getValueContainer().getModifier();
@@ -57,9 +57,34 @@ public class SetValueInplaceEditor extends XDebuggerTreeInplaceEditor {
     myEditorPanel.add(nameLabel, BorderLayout.WEST);
 
     myEditorPanel.add(myExpressionEditor.getComponent(), BorderLayout.CENTER);
-    final String value = myModifier != null ? myModifier.getInitialValueEditorText() : null;
-    myExpressionEditor.setExpression(XExpressionImpl.fromText(value));
+  }
+
+  public static void show(final XValueNodeImpl node, @NotNull final String nodeName) {
+    final SetValueInplaceEditor editor = new SetValueInplaceEditor(node, nodeName);
+
+    if (editor.myModifier != null) {
+      editor.myModifier.calculateInitialValueEditorText(new XValueModifier.XInitialValueCallback() {
+        @Override
+        public void setValue(final String initialValue) {
+          AppUIUtil.invokeOnEdt(new Runnable() {
+            @Override
+            public void run() {
+              editor.show(initialValue);
+            }
+          });
+        }
+      });
+    }
+    else {
+      editor.show(null);
+    }
+  }
+
+  private void show(String initialValue) {
+    myExpressionEditor.setExpression(XExpressionImpl.fromText(initialValue));
     myExpressionEditor.selectAll();
+
+    show();
   }
 
   @Override

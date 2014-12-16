@@ -91,6 +91,9 @@ target(name: "compile", description: "Compile module python") {
     fileset(dir: "${ideaPlugins}/IntelliLang/lib") {
       include(name: "*.jar")
     }
+    fileset(dir: "${pluginHome}/ipnb/lib") {
+      include(name: "*.jar")
+    }
   }
 
   ant.path(id: "sourcepath") {
@@ -103,6 +106,7 @@ target(name: "compile", description: "Compile module python") {
       include(name: "openapi/src")
       include(name: "psi-api/src")
       include(name: "IntelliLang-python/src")
+      include(name: "ipnb/src")
     }
   }
   //The task requires the following libraries from IntelliJ IDEA distribution:
@@ -142,7 +146,7 @@ target(name: "compile", description: "Compile module python") {
       patternset(refid: "resources.pt")
       type(type: "file")
     }
-    fileset(dir: "${pluginHome}/IntelliLang-python/src") {
+    fileset(dir: "${pluginHome}/IntelliLang-python/resources") {
       patternset(refid: "resources.pt")
       type(type: "file")
     }
@@ -151,6 +155,10 @@ target(name: "compile", description: "Compile module python") {
       type(type: "file")
     }
     fileset(dir: "${home}/colorSchemes/src")
+    fileset(dir: "${pluginHome}/ipnb/resources") {
+      patternset(refid: "resources.pt")
+      type(type: "file")
+    }
   }
 
   //copy plugin.xml
