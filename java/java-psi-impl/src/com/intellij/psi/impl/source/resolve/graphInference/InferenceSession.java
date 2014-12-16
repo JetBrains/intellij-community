@@ -464,7 +464,8 @@ public class InferenceSession {
       if (!PsiType.VOID.equals(returnType) && returnType != null) {
         PsiType targetType = getTargetType(context);
         if (targetType != null && !PsiType.VOID.equals(targetType)) {
-          registerReturnTypeConstraints(PsiUtil.isRawSubstitutor(method, mySiteSubstitutor) ? returnType : mySiteSubstitutor.substitute(returnType), targetType);
+          registerReturnTypeConstraints(
+            PsiUtil.isRawSubstitutor(method, mySiteSubstitutor) ? returnType : mySiteSubstitutor.substitute(returnType), targetType);
         }
       }
     }
@@ -858,14 +859,26 @@ public class InferenceSession {
 
       final PsiType eqBound = getEqualsBound(var, substitutor);
       if (eqBound != PsiType.NULL && eqBound instanceof PsiPrimitiveType) continue;
-      PsiType type = eqBound != PsiType.NULL && (myErased || eqBound != null) ? eqBound : getLowerBound(var, substitutor);
+      final PsiType lowerBound = getLowerBound(var, substitutor);
+      final PsiType upperBound = getUpperBound(var, substitutor);
+      PsiType type;
+      if (eqBound != PsiType.NULL && (myErased || eqBound != null)) {
+        if (lowerBound != PsiType.NULL && !TypeConversionUtil.isAssignable(eqBound, lowerBound)) {
+          type = PsiType.NULL;
+        } else {
+          type = eqBound;
+        }
+      }
+      else {
+        type = lowerBound;
+      }
       if (type == PsiType.NULL) {
         if (var.isThrownBound() && isThrowable(var.getBounds(InferenceBound.UPPER))) {
           type =  PsiType.getJavaLangRuntimeException(myManager, GlobalSearchScope.allScope(myManager.getProject()));
         }
         else {
           if (substitutor.putAll(mySiteSubstitutor).getSubstitutionMap().get(typeParameter) != null) continue;
-          type = myErased ? null : getUpperBound(var, substitutor);
+          type = myErased ? null : upperBound;
         }
       }
       substitutor = substitutor.put(typeParameter, type);
