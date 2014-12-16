@@ -16,10 +16,13 @@
 package com.intellij.ide;
 
 import com.intellij.ide.fileTemplates.FileTemplate;
+import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplatesScheme;
 import com.intellij.ide.fileTemplates.impl.AllFileTemplatesConfigurable;
 import com.intellij.ide.fileTemplates.impl.BundledFileTemplate;
 import com.intellij.ide.fileTemplates.impl.FileTemplateManagerImpl;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestCase;
 
@@ -48,6 +51,11 @@ public class LightFileTemplatesTest extends LightPlatformTestCase {
 
     myTemplateManager.setCurrentScheme(FileTemplatesScheme.DEFAULT);
     assertEquals("good bye", myTemplateManager.getTemplate(TEST_TEMPLATE_TXT).getText());
+  }
+
+  public void testDefaultProject() throws Exception {
+    Project defaultProject = ProjectManager.getInstance().getDefaultProject();
+    assertNull(FileTemplateManager.getInstance(defaultProject).getProjectScheme());
   }
 
   public void testConfigurable() throws Exception {

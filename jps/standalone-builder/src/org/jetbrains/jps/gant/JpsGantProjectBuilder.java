@@ -340,7 +340,7 @@ public class JpsGantProjectBuilder {
                                                       String.valueOf(sources));
             if (!myBuildIncrementally && sources > 0) {
               myBuildInfoPrinter.printStatisticsMessage(JpsGantProjectBuilder.this, "Compilation time per file for '" + message.getBuilderName() + "', ms",
-                                                        String.format("%.2f", (double)message.getElapsedTimeMs() / sources));
+                                                        String.format(Locale.US, "%.2f", (double)message.getElapsedTimeMs() / sources));
             }
           }
           else if (!text.isEmpty()) {

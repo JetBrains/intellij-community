@@ -344,7 +344,23 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
             }
           }
           if (alreadyFound) continue;*/
-          final PsiType substituted = substituteInternal(original);
+          PsiType substituted;
+          if (original instanceof PsiWildcardType) {
+            substituted = substituteInternal(original);
+            if (substituted instanceof PsiCapturedWildcardType) {
+              substituted = PsiCapturedWildcardType.create(((PsiCapturedWildcardType)substituted).getWildcard(), ((PsiCapturedWildcardType)substituted).getContext(), param);
+            }
+            else if (substituted instanceof PsiWildcardType) {
+              PsiType bound = ((PsiWildcardType)substituted).getBound();
+              if (bound instanceof PsiCapturedWildcardType) {
+                bound = PsiCapturedWildcardType.create(((PsiCapturedWildcardType)bound).getWildcard(), ((PsiCapturedWildcardType)bound).getContext(), param);
+                substituted = ((PsiWildcardType)substituted).isExtends() ? PsiWildcardType.createExtends(((PsiWildcardType)substituted).getManager(), bound)
+                              : PsiWildcardType.createSuper(((PsiWildcardType)substituted).getManager(), bound);
+              }
+            }
+          } else {
+            substituted = substituteInternal(original);
+          }
           //if (substituted == null) return false;
           substMap.put(param, substituted);
         }

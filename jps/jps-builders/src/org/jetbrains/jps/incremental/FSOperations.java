@@ -17,6 +17,7 @@ package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -151,7 +152,7 @@ public class FSOperations {
         for (final BuildTarget<?> target : targetChunk.getTargets()) {
           if (target instanceof ModuleBuildTarget) {
             final Set<JpsModule> deps = getDependentModulesRecursively(((ModuleBuildTarget)target).getModule(), classpathKind);
-            if (Utils.intersects(deps, modules)) {
+            if (ContainerUtil.intersects(deps, modules)) {
               for (BuildTarget<?> buildTarget : targetChunk.getTargets()) {
                 if (buildTarget instanceof ModuleBuildTarget) {
                   dirtyTargets.add((ModuleBuildTarget)buildTarget);

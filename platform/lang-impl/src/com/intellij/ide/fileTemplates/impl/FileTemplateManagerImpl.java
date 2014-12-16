@@ -66,6 +66,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Pers
   private final FileTypeManagerEx myTypeManager;
   private final Project myProject;
 
+  @Nullable
   private final FileTemplatesScheme myProjectScheme;
   private FileTemplatesScheme myScheme = FileTemplatesScheme.DEFAULT;
 
@@ -88,17 +89,16 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Pers
                                  final Project project) {
     myTypeManager = typeManager;
     myProject = project;
-    ExportableFileTemplateSettings templateSettings = ExportableFileTemplateSettings.getInstance();
-    assert templateSettings != null : "Can not instantiate " + ExportableFileTemplateSettings.class.getName();
+    FileTemplatesLoader loader = new FileTemplatesLoader(typeManager);
 
-    myInternalTemplatesManager = templateSettings.getInternalTemplatesManager();
-    myDefaultTemplatesManager = templateSettings.getDefaultTemplatesManager();
-    myPatternsManager = templateSettings.getPatternsManager();
-    myCodeTemplatesManager = templateSettings.getCodeTemplatesManager();
-    myJ2eeTemplatesManager = templateSettings.getJ2eeTemplatesManager();
-    myAllManagers = templateSettings.getAllManagers();
-    myDefaultTemplateDescription = templateSettings.getDefaultTemplateDescription();
-    myDefaultIncludeDescription = templateSettings.getDefaultIncludeDescription();
+    myInternalTemplatesManager = loader.getInternalTemplatesManager();
+    myDefaultTemplatesManager = loader.getDefaultTemplatesManager();
+    myPatternsManager = loader.getPatternsManager();
+    myCodeTemplatesManager = loader.getCodeTemplatesManager();
+    myJ2eeTemplatesManager = loader.getJ2eeTemplatesManager();
+    myAllManagers = loader.getAllManagers();
+    myDefaultTemplateDescription = loader.getDefaultTemplateDescription();
+    myDefaultIncludeDescription = loader.getDefaultIncludeDescription();
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       for (String tname : Arrays.asList("Class", "AnnotationType", "Enum", "Interface")) {
@@ -113,7 +113,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Pers
       }
     }
 
-    myProjectScheme = new FileTemplatesScheme("Project") {
+    myProjectScheme = project.isDefault() ? null : new FileTemplatesScheme("Project") {
       @NotNull
       @Override
       public String getTemplatesDir() {
@@ -143,7 +143,6 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Pers
     }
   }
 
-  @NotNull
   @Override
   public FileTemplatesScheme getProjectScheme() {
     return myProjectScheme;
@@ -434,7 +433,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Pers
   @Override
   public void loadState(State state) {
     XmlSerializerUtil.copyBean(state, myState);
-    setCurrentScheme(myProjectScheme.getName().equals(state.SCHEME) ? myProjectScheme : FileTemplatesScheme.DEFAULT);
+    setCurrentScheme(myProjectScheme != null && myProjectScheme.getName().equals(state.SCHEME) ? myProjectScheme : FileTemplatesScheme.DEFAULT);
   }
 
   public static class State {

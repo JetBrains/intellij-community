@@ -265,7 +265,6 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
         };
         myProject.save();
         CompilerTestUtil.saveApplicationSettings();
-        CompilerTestUtil.scanSourceRootsToRecompile(myProject);
         action.run(callback);
       }
     });

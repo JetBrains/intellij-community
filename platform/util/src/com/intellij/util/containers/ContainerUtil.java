@@ -1422,10 +1422,18 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @Contract(pure=true)
   public static <T> boolean intersects(@NotNull Collection<? extends T> collection1, @NotNull Collection<? extends T> collection2) {
-    for (T t : collection1) {
-      //noinspection SuspiciousMethodCalls
-      if (collection2.contains(t)) {
-        return true;
+    if (collection1.size() <= collection2.size()) {
+      for (T t : collection1) {
+        if (collection2.contains(t)) {
+          return true;
+        }
+      }
+    }
+    else {
+      for (T t : collection2) {
+        if (collection1.contains(t)) {
+          return true;
+        }
       }
     }
     return false;
