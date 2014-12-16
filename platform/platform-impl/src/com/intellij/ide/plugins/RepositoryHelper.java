@@ -22,6 +22,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.io.HttpRequests;
@@ -65,6 +66,15 @@ public class RepositoryHelper {
   public static List<IdeaPluginDescriptor> loadPlugins(@Nullable String repositoryUrl,
                                                        @Nullable BuildNumber buildnumber,
                                                        @Nullable final ProgressIndicator indicator) throws IOException {
+    boolean forceHttps = repositoryUrl == null && UpdateSettings.getInstance().SECURE_CONNECTION;
+    return loadPlugins(repositoryUrl, buildnumber, forceHttps, indicator);
+  }
+
+  @NotNull
+  public static List<IdeaPluginDescriptor> loadPlugins(@Nullable String repositoryUrl,
+                                                       @Nullable BuildNumber buildnumber,
+                                                       boolean forceHttps,
+                                                       @Nullable final ProgressIndicator indicator) throws IOException {
     final URIBuilder uriBuilder;
     final File pluginListFile;
     try {
@@ -91,7 +101,8 @@ public class RepositoryHelper {
       indicator.setText2(IdeBundle.message("progress.connecting.to.plugin.manager", uriBuilder.getHost()));
     }
 
-    return process(repositoryUrl, HttpRequests.request(uriBuilder.toString()).connect(new HttpRequests.RequestProcessor<List<IdeaPluginDescriptor>>() {
+    HttpRequests.RequestBuilder request = HttpRequests.request(uriBuilder.toString()).forceHttps(forceHttps);
+    return process(repositoryUrl, request.connect(new HttpRequests.RequestProcessor<List<IdeaPluginDescriptor>>() {
       @Override
       public List<IdeaPluginDescriptor> process(@NotNull HttpRequests.Request request) throws IOException {
         if (indicator != null) {

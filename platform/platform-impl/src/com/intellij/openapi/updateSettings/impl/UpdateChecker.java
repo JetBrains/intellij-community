@@ -147,7 +147,7 @@ public final class UpdateChecker {
   private static void doUpdateAndShowResult(@Nullable final Project project,
                                             final boolean enableLink,
                                             final boolean manualCheck,
-                                            @NotNull UpdateSettings updateSettings,
+                                            @NotNull final UpdateSettings updateSettings,
                                             @Nullable ProgressIndicator indicator,
                                             @Nullable final ActionCallback callback) {
     // check platform update
@@ -195,7 +195,7 @@ public final class UpdateChecker {
       }
 
       incompatiblePlugins = buildNumber != null ? new HashSet<IdeaPluginDescriptor>() : null;
-      updatedPlugins = checkPluginsUpdate(manualCheck, indicator, incompatiblePlugins, buildNumber);
+      updatedPlugins = checkPluginsUpdate(manualCheck, updateSettings, indicator, incompatiblePlugins, buildNumber);
     }
 
     // show result
@@ -203,7 +203,7 @@ public final class UpdateChecker {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
-        showUpdateResult(project, result, updatedPlugins, incompatiblePlugins, enableLink, manualCheck);
+        showUpdateResult(project, result, updateSettings, updatedPlugins, incompatiblePlugins, enableLink, manualCheck);
         if (callback != null) {
           callback.setDone();
         }
@@ -222,7 +222,7 @@ public final class UpdateChecker {
       String updateUrl = uriBuilder.toString();
       LogUtil.debug(LOG, "load update xml (UPDATE_URL='%s')", updateUrl);
 
-      info = HttpRequests.request(updateUrl).connect(new HttpRequests.RequestProcessor<UpdatesInfo>() {
+      info = HttpRequests.request(updateUrl).forceHttps(settings.SECURE_CONNECTION).connect(new HttpRequests.RequestProcessor<UpdatesInfo>() {
         @Override
         public UpdatesInfo process(@NotNull HttpRequests.Request request) throws IOException {
           try {
@@ -254,6 +254,7 @@ public final class UpdateChecker {
   }
 
   private static Collection<PluginDownloader> checkPluginsUpdate(boolean manualCheck,
+                                                                 @NotNull UpdateSettings updateSettings,
                                                                  @Nullable ProgressIndicator indicator,
                                                                  @Nullable Collection<IdeaPluginDescriptor> incompatiblePlugins,
                                                                  @Nullable BuildNumber buildNumber) {
@@ -295,13 +296,15 @@ public final class UpdateChecker {
     outer:
     for (String host : hosts) {
       try {
-        List<IdeaPluginDescriptor> list = RepositoryHelper.loadPlugins(host, buildNumber, indicator);
+        boolean forceHttps = host == null && updateSettings.SECURE_CONNECTION;
+        List<IdeaPluginDescriptor> list = RepositoryHelper.loadPlugins(host, buildNumber, forceHttps, indicator);
         for (IdeaPluginDescriptor descriptor : list) {
           PluginId id = descriptor.getPluginId();
           if (updateable.containsKey(id)) {
             updateable.remove(id);
             state.onDescriptorDownload(descriptor);
             PluginDownloader downloader = PluginDownloader.createDownloader(descriptor, host, buildNumber);
+            downloader.setForceHttps(forceHttps);
             checkAndPrepareToInstall(downloader, state, toUpdate, incompatiblePlugins, indicator);
             if (updateable.isEmpty()) {
               break outer;
@@ -387,8 +390,9 @@ public final class UpdateChecker {
 
   private static void showUpdateResult(@Nullable final Project project,
                                        final CheckForUpdateResult checkForUpdateResult,
+                                       final UpdateSettings updateSettings,
                                        final Collection<PluginDownloader> updatedPlugins,
-                                       final Collection<IdeaPluginDescriptor> incompatiblePlugins, 
+                                       final Collection<IdeaPluginDescriptor> incompatiblePlugins,
                                        final boolean enableLink,
                                        final boolean alwaysShowResults) {
     final UpdateChannel channelToPropose = checkForUpdateResult.getChannelToPropose();
@@ -414,7 +418,7 @@ public final class UpdateChecker {
       Runnable runnable = new Runnable() {
         @Override
         public void run() {
-          new UpdateInfoDialog(updatedChannel, enableLink, updatedPlugins, incompatiblePlugins).show();
+          new UpdateInfoDialog(updatedChannel, enableLink, updateSettings.SECURE_CONNECTION, updatedPlugins, incompatiblePlugins).show();
         }
       };
 
@@ -560,17 +564,18 @@ public final class UpdateChecker {
     return installed;
   }
 
-  public static DownloadPatchResult downloadAndInstallPatch(final BuildInfo newVersion) {
+  public static DownloadPatchResult downloadAndInstallPatch(final PatchInfo patch, final BuildNumber toBuild, final boolean forceHttps) {
     final DownloadPatchResult[] result = new DownloadPatchResult[]{DownloadPatchResult.CANCELED};
 
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       @Override
       public void run() {
         try {
-          doDownloadAndInstallPatch(newVersion, ProgressManager.getInstance().getProgressIndicator());
+          ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+          doDownloadAndInstallPatch(patch, toBuild, forceHttps, indicator);
           result[0] = DownloadPatchResult.SUCCESS;
         }
-        catch (final IOException e) {
+        catch (IOException e) {
           LOG.info(e);
           result[0] = DownloadPatchResult.FAILED;
           Notifications.Bus.notify(new Notification("Updater", "Failed to download patch file", e.getMessage(), NotificationType.ERROR));
@@ -583,13 +588,13 @@ public final class UpdateChecker {
     return result[0];
   }
 
-  private static void doDownloadAndInstallPatch(BuildInfo newVersion, final ProgressIndicator indicator) throws IOException {
-    PatchInfo patch = newVersion.findPatchForCurrentBuild();
-    if (patch == null) throw new IOException("No patch is available for current version");
-
+  private static void doDownloadAndInstallPatch(PatchInfo patch,
+                                                BuildNumber toBuild,
+                                                boolean forceHttps,
+                                                final ProgressIndicator indicator) throws IOException {
     String productCode = ApplicationInfo.getInstance().getBuild().getProductCode();
     String fromBuildNumber = patch.getFromBuild().asStringWithoutProductCode();
-    String toBuildNumber = newVersion.getNumber().asStringWithoutProductCode();
+    String toBuildNumber = toBuild.asStringWithoutProductCode();
 
     String bundledJdk = "";
     String jdkMacRedist = System.getProperty("idea.java.redist");
@@ -602,7 +607,7 @@ public final class UpdateChecker {
     String fileName = productCode + "-" + fromBuildNumber + "-" + toBuildNumber + "-patch" + bundledJdk + osSuffix + ".jar";
 
     String url = new URL(new URL(getPatchesUrl()), fileName).toString();
-    File tempFile = HttpRequests.request(url).connect(new HttpRequests.RequestProcessor<File>() {
+    File tempFile = HttpRequests.request(url).gzip(false).forceHttps(forceHttps).connect(new HttpRequests.RequestProcessor<File>() {
       @Override
       public File process(@NotNull HttpRequests.Request request) throws IOException {
         File tempFile = FileUtil.createTempFile("ij.platform.", ".patch", true);

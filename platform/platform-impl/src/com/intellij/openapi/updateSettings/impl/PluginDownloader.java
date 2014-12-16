@@ -60,6 +60,7 @@ public class PluginDownloader {
   private String myFileName;
   private String myPluginName;
   private BuildNumber myBuildNumber;
+  private boolean myForceHttps;
 
   private File myFile;
   private File myOldFile;
@@ -129,6 +130,10 @@ public class PluginDownloader {
 
   public void setDescriptor(IdeaPluginDescriptor descriptor) {
     myDescriptor = descriptor;
+  }
+
+  public void setForceHttps(boolean forceHttps) {
+    myForceHttps = forceHttps;
   }
 
   public boolean prepareToInstall(@NotNull ProgressIndicator indicator) throws IOException {
@@ -246,7 +251,7 @@ public class PluginDownloader {
     indicator.checkCanceled();
     indicator.setText2(IdeBundle.message("progress.downloading.plugin", getPluginName()));
 
-    return HttpRequests.request(myPluginUrl).gzip(false).connect(new HttpRequests.RequestProcessor<File>() {
+    return HttpRequests.request(myPluginUrl).gzip(false).forceHttps(myForceHttps).connect(new HttpRequests.RequestProcessor<File>() {
       @Override
       public File process(@NotNull HttpRequests.Request request) throws IOException {
         indicator.checkCanceled();
