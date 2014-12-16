@@ -116,4 +116,16 @@ public class UpdateStrategyTest extends TestCase {
     Assert.assertEquals("IDEA10EAP", newChannel.getId());
     Assert.assertEquals("IntelliJ IDEA X EAP", newChannel.getName());
   }
+
+  public void testChannelWithCurrentStatusPreferred() {
+    final TestUpdateSettings settings = new TestUpdateSettings(ChannelStatus.EAP);
+
+    BuildNumber currentBuild = BuildNumber.fromString("IU-139.658");
+    UpdateStrategy strategy = new UpdateStrategy(14, currentBuild, UpdatesInfoXppParserTest.InfoReader.read("idea-patchAvailable.xml"), settings);
+
+    final CheckForUpdateResult result = strategy.checkForUpdates();
+    Assert.assertEquals(UpdateStrategy.State.LOADED, result.getState());
+    Assert.assertEquals(result.getUpdatedChannel().getStatus(), ChannelStatus.EAP);
+    Assert.assertNotNull(result.getNewBuildInSelectedChannel().findPatchForBuild(currentBuild));
+  }
 }
