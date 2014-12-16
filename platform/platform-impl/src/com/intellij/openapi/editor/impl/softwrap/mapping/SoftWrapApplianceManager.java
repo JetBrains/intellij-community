@@ -355,7 +355,9 @@ public class SoftWrapApplianceManager implements Dumpable {
     if (!foldRegion.isValid() ||
         foldRegion.getStartOffset() != myContext.tokenStartOffset
         || foldRegion.getEndOffset() > document.getTextLength()) {
-      LOG.error("Inconsistent fold region state: fold region: " + foldRegion + ", soft wrap model state: " + myEditor.getSoftWrapModel()); 
+      LOG.error("Inconsistent fold region state: fold region: " + foldRegion 
+                + ", soft wrap model state: " + myEditor.getSoftWrapModel() 
+                + ", folding model state: " + myEditor.getFoldingModel()); 
       return true;
     }
 
