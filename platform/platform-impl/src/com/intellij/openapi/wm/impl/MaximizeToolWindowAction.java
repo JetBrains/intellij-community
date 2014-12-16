@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class MaximizeToolWindowAction extends AnAction {
   public MaximizeToolWindowAction() {
-    super();
+    super(ActionsBundle.message("action.ResizeToolWindowMaximize.text"));
   }
 
   @Override
