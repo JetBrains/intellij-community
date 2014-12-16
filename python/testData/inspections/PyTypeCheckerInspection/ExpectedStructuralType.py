@@ -12,5 +12,5 @@ def test(x):
     g(x)
 
     z = 'foo'
-    f(<warning descr="Expected type '{foo, bar}', got 'str' instead">z</warning>)
+    f(<warning descr="Type 'str' doesn't have expected attributes 'foo', 'bar'">z</warning>)
     g(z)

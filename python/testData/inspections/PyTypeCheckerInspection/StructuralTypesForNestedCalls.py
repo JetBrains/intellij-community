@@ -7,4 +7,4 @@ def g(x):
 
 
 def test():
-    f(<warning descr="Expected type '{foo, bar}', got 'str' instead">'string'</warning>)
+    f(<warning descr="Type 'str' doesn't have expected attributes 'foo', 'bar'">'string'</warning>)

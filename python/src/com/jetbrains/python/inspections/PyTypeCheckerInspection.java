@@ -15,13 +15,16 @@
  */
 package com.jetbrains.python.inspections;
 
+import com.google.common.collect.Sets;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.util.Function;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
@@ -32,6 +35,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author vlan
@@ -126,13 +130,44 @@ public class PyTypeCheckerInspection extends PyInspection {
             }
           }
           final String actualName = PythonDocumentationProvider.getTypeName(actual, context);
-          final String msg = String.format("Expected type %s, got '%s' instead", quotedExpectedName, actualName);
+          String msg= String.format("Expected type %s, got '%s' instead", quotedExpectedName, actualName);
+          if (expected instanceof PyStructuralType) {
+            final Set<String> expectedAttributes = ((PyStructuralType)expected).getAttributeNames();
+            final Set<String> actualAttributes = getAttributes(actual);
+            if (actualAttributes != null) {
+              final Sets.SetView<String> missingAttributes = Sets.difference(expectedAttributes, actualAttributes);
+              if (missingAttributes.size() == 1) {
+                msg = String.format("Type '%s' doesn't have expected attribute '%s'", actualName, missingAttributes.iterator().next());
+              }
+              else {
+                msg = String.format("Type '%s' doesn't have expected attributes %s",
+                                    actualName,
+                                    StringUtil.join(missingAttributes, new Function<String, String>() {
+                                      @Override
+                                      public String fun(String s) {
+                                        return String.format("'%s'", s);
+                                      }
+                                    }, ", "));
+              }
+            }
+          }
           registerProblem(node, msg, highlightType);
           return msg;
         }
       }
       return null;
     }
+  }
+
+  @Nullable
+  private static Set<String> getAttributes(@NotNull PyType type) {
+    if (type instanceof PyStructuralType) {
+      return ((PyStructuralType)type).getAttributeNames();
+    }
+    else if (type instanceof PyClassType) {
+      return PyTypeChecker.getClassAttributes(((PyClassType)type).getPyClass(), true);
+    }
+    return null;
   }
 
   @Override

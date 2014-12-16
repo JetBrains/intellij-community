@@ -205,7 +205,7 @@ public class PyTypeChecker {
   }
 
   @NotNull
-  private static Set<String> getClassAttributes(@NotNull PyClass cls, boolean inherited) {
+  public static Set<String> getClassAttributes(@NotNull PyClass cls, boolean inherited) {
     final Set<String> attributes = new HashSet<String>();
     for (PyFunction function : cls.getMethods(false)) {
       attributes.add(function.getName());

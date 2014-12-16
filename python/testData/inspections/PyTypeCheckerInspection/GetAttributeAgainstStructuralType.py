@@ -18,4 +18,4 @@ class E(object):
 
 f(C())
 f(D())
-f(<warning descr="Expected type '{foo}', got 'E' instead">E()</warning>)
+f(<warning descr="Type 'E' doesn't have expected attribute 'foo'">E()</warning>)
