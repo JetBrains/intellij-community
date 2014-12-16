@@ -47,7 +47,7 @@ class ModuleStateStorageManager extends StateStorageManagerImpl {
       @Nullable
       @Override
       public StateStorage.SaveSession createSaveSession() {
-        final ModuleStoreImpl.ModuleFileData data = myModule.getStateStore().getMainStorageData();
+        final ModuleStoreImpl.ModuleFileData data = ((ModuleStoreImpl)myModule.getStateStore()).getMainStorageData();
         final StateStorage.SaveSession session = super.createSaveSession();
         if (!data.isDirty()) {
           return session;
@@ -60,7 +60,7 @@ class ModuleStateStorageManager extends StateStorageManagerImpl {
               session.save();
             }
             if (data.isDirty()) {
-              myModule.getStateStore().getMainStorage().forceSave();
+              ((ModuleStoreImpl)myModule.getStateStore()).getMainStorage().forceSave();
             }
           }
         };
@@ -80,7 +80,7 @@ class ModuleStateStorageManager extends StateStorageManagerImpl {
   }
 
   private String getLocationHash() {
-    return myModule.getName() + Integer.toHexString(myModule.getModuleFilePath().hashCode());    
+    return myModule.getName() + Integer.toHexString(myModule.getModuleFilePath().hashCode());
   }
 
   @NotNull
