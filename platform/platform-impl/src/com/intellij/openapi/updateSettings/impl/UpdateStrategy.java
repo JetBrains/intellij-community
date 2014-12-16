@@ -89,7 +89,11 @@ public class UpdateStrategy {
     for (UpdateChannel channel : channels) {
       if ((channel.getMajorVersion() == myMajorVersion && channel.getStatus().compareTo(myChannelStatus) >= 0) ||
           (channel.getMajorVersion() > myMajorVersion && channel.getStatus() == ChannelStatus.EAP && myChannelStatus == ChannelStatus.EAP)) {
-        result.add(channel);
+        if (channel.getMajorVersion() == myMajorVersion && channel.getStatus().compareTo(myChannelStatus) == 0) {
+          result.add(0, channel); // prefer channel that has same status as our selected channel status
+        } else {
+          result.add(channel);
+        }
       }
     }
     return result;
