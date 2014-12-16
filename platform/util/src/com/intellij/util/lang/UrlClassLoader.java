@@ -46,6 +46,9 @@ public class UrlClassLoader extends ClassLoader {
   @NonNls static final String CLASS_EXTENSION = ".class";
 
   static {
+    // Since Java 7 classloading is parallel on parallel capable classloader (http://docs.oracle.com/javase/7/docs/technotes/guides/lang/cl-mt.html)
+    // Parallel classloading avoids deadlocks like https://youtrack.jetbrains.com/issue/IDEA-131621
+    // Unless explicitly disabled, request parallel loading capability via reflection due to current platform's Java 6 baseline
     // todo[r.sh] drop condition in IDEA 15
     // todo[r.sh] drop reflection after migrating to Java 7+
     boolean parallelLoader = Boolean.parseBoolean(System.getProperty("idea.parallel.class.loader", "true"));
