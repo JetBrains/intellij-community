@@ -142,10 +142,12 @@ public class ProgramRunnerUtil {
     return configurationIcon;
   }
 
-  public static String shortenName(final String name, final int toBeAdded) {
-    if (name == null) return "";
+  public static String shortenName(@Nullable String name, final int toBeAdded) {
+    if (name == null) {
+      return "";
+    }
+
     final int symbols = Math.max(10, 20 - toBeAdded);
-    if (name.length() < symbols) return name;
-    else return name.substring(0, symbols) + "...";
+    return name.length() < symbols ? name : name.substring(0, symbols) + "...";
   }
 }

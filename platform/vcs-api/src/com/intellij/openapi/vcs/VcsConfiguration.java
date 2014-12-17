@@ -63,9 +63,9 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   public boolean PERFORM_ADD_REMOVE_IN_BACKGROUND = true;
   public boolean PERFORM_ROLLBACK_IN_BACKGROUND = false;
   public volatile boolean CHECK_LOCALLY_CHANGED_CONFLICTS_IN_BACKGROUND = false;
-  @OptionTag(tag = "confirmMoveToFailedCommit", nameAttribute = "")
+  @OptionTag(tag = "confirmMoveToFailedCommit")
   public VcsShowConfirmationOption.Value MOVE_TO_FAILED_COMMIT_CHANGELIST = VcsShowConfirmationOption.Value.SHOW_CONFIRMATION;
-  @OptionTag(tag = "confirmRemoveEmptyChangelist", nameAttribute = "")
+  @OptionTag(tag = "confirmRemoveEmptyChangelist")
   public VcsShowConfirmationOption.Value REMOVE_EMPTY_INACTIVE_CHANGELISTS = VcsShowConfirmationOption.Value.SHOW_CONFIRMATION;
   public int CHANGED_ON_SERVER_INTERVAL = 60;
   public boolean SHOW_ONLY_CHANGED_IN_SELECTION_DIFF = true;
