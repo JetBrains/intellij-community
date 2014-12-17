@@ -29,16 +29,26 @@ import java.util.List;
  * @author nik
  */
 public abstract class BuilderService {
+  /**
+   * Returns the list of build target types contributed by this plugin. If it only participates in the compilation
+   * of regular Java modules, you don't need to return anything here.
+   */
   @NotNull
   public List<? extends BuildTargetType<?>> getTargetTypes() {
     return Collections.emptyList();
   }
 
+  /**
+   * Returns the list of Java module builder extensions contributed by this plugin.
+   */
   @NotNull
   public List<? extends ModuleLevelBuilder> createModuleLevelBuilders() {
     return Collections.emptyList();
   }
 
+  /**
+   * Returns the list of non-module target builders contributed by this plugin.
+   */
   @NotNull
   public List<? extends TargetBuilder<?,?>> createBuilders() {
     return Collections.emptyList();

@@ -130,7 +130,7 @@ public class ProjectViewDirectoryHelper {
     }
     else { // source directory in "flatten packages" mode
       final PsiDirectory parentDir = psiDirectory.getParentDirectory();
-      if (parentDir == null || skipDirectory(parentDir) /*|| !rootDirectoryFound(parentDir)*/ && withSubDirectories) {
+      if (parentDir == null || skipDirectory(parentDir) && withSubDirectories) {
         addAllSubpackages(children, psiDirectory, moduleFileIndex, settings);
       }
       PsiDirectory[] subdirs = psiDirectory.getSubdirectories();
@@ -218,20 +218,22 @@ public class ProjectViewDirectoryHelper {
   }
 
   // used only for non-flatten packages mode
-  public  void processPsiDirectoryChildren(final PsiDirectory psiDir,
-                                                  PsiElement[] children,
-                                                  List<AbstractTreeNode> container,
-                                                  ProjectFileIndex projectFileIndex,
-                                                  ModuleFileIndex moduleFileIndex,
-                                                  ViewSettings viewSettings,
-                                                  boolean withSubDirectories) {
+  public void processPsiDirectoryChildren(final PsiDirectory psiDir,
+                                          PsiElement[] children,
+                                          List<AbstractTreeNode> container,
+                                          ProjectFileIndex projectFileIndex,
+                                          @Nullable ModuleFileIndex moduleFileIndex,
+                                          ViewSettings viewSettings,
+                                          boolean withSubDirectories) {
     for (PsiElement child : children) {
       LOG.assertTrue(child.isValid());
 
       final VirtualFile vFile;
       if (child instanceof PsiFile) {
         vFile = ((PsiFile)child).getVirtualFile();
-        addNode(moduleFileIndex, projectFileIndex, psiDir, vFile, container, PsiFileNode.class, child, viewSettings);
+        if (vFile != null) {
+          addNode(moduleFileIndex, vFile, container, PsiFileNode.class, child, viewSettings);
+        }
       }
       else if (child instanceof PsiDirectory) {
         if (withSubDirectories) {
@@ -244,7 +246,7 @@ public class ProjectViewDirectoryHelper {
               continue;
             }
           }
-          addNode(moduleFileIndex, projectFileIndex, psiDir, vFile, container, PsiDirectoryNode.class, child, viewSettings);
+          addNode(moduleFileIndex, vFile, container, PsiDirectoryNode.class, child, viewSettings);
         }
       }
       else {
@@ -254,36 +256,15 @@ public class ProjectViewDirectoryHelper {
   }
 
   public void addNode(ModuleFileIndex moduleFileIndex,
-                              ProjectFileIndex projectFileIndex,
-                              PsiDirectory psiDir,
-                              VirtualFile vFile,
-                              List<AbstractTreeNode> container,
-                              Class<? extends AbstractTreeNode> nodeClass,
-                              PsiElement element,
-                              final ViewSettings settings) {
-    if (vFile == null) {
-      return;
-    }
+                      VirtualFile vFile,
+                      List<AbstractTreeNode> container,
+                      Class<? extends AbstractTreeNode> nodeClass,
+                      PsiElement element,
+                      final ViewSettings settings) {
     // this check makes sense for classes not in library content only
     if (moduleFileIndex != null && !moduleFileIndex.isInContent(vFile)) {
       return;
     }
-    /*
-    final boolean childInLibraryClasses = projectFileIndex.isInLibraryClasses(vFile);
-    if (!projectFileIndex.isInSourceContent(vFile)) {
-      if (childInLibraryClasses) {
-        final VirtualFile psiDirVFile = psiDir.getVirtualFile();
-        final boolean parentInLibraryContent =
-          projectFileIndex.isInLibraryClasses(psiDirVFile) || projectFileIndex.isInLibrarySource(psiDirVFile);
-        if (!parentInLibraryContent) {
-          return;
-        }
-      }
-    }
-    if (childInLibraryClasses && !projectFileIndex.isInContent(vFile) && !showFileInLibClasses(vFile)) {
-      return; // skip java sources in classpath
-    }
-    */
 
     try {
       container.add(ProjectViewNode.createTreeNode(nodeClass, element.getProject(), element, settings));
@@ -295,20 +276,18 @@ public class ProjectViewDirectoryHelper {
 
   // used only in flatten packages mode
   public void addAllSubpackages(List<AbstractTreeNode> container,
-                                        PsiDirectory dir,
-                                        ModuleFileIndex moduleFileIndex,
-                                        ViewSettings viewSettings) {
+                                PsiDirectory dir,
+                                @Nullable ModuleFileIndex moduleFileIndex,
+                                ViewSettings viewSettings) {
     final Project project = dir.getProject();
     PsiDirectory[] subdirs = dir.getSubdirectories();
     for (PsiDirectory subdir : subdirs) {
       if (skipDirectory(subdir)) {
         continue;
       }
-      if (moduleFileIndex != null) {
-        if (!moduleFileIndex.isInContent(subdir.getVirtualFile())) {
-          container.add(new PsiDirectoryNode(project, subdir, viewSettings));
-          continue;
-        }
+      if (moduleFileIndex != null && !moduleFileIndex.isInContent(subdir.getVirtualFile())) {
+        container.add(new PsiDirectoryNode(project, subdir, viewSettings));
+        continue;
       }
       if (viewSettings.isHideEmptyMiddlePackages()) {
         if (!isEmptyMiddleDirectory(subdir, false)) {
