@@ -2,7 +2,6 @@ package org.jetbrains.settingsRepository;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextBrowseFolderListener;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.text.StringUtil;
@@ -11,31 +10,23 @@ import kotlin.Function0;
 import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.settingsRepository.actions.ActionsPackage;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
+import java.awt.*;
 
-public class IcsSettingsPanel extends DialogWrapper {
-  private JPanel panel;
+public class IcsSettingsPanel {
+  JPanel panel;
   private TextFieldWithBrowseButton urlTextField;
   private final Action[] syncActions;
   private final IcsManager icsManager;
 
-  public IcsSettingsPanel(@Nullable final Project project) {
-    super(project, true);
-
+  public IcsSettingsPanel(@Nullable final Project project, @NotNull Container dialogParent, @NotNull Function0<Unit> okAction) {
     icsManager = IcsManager.OBJECT$.getInstance();
     urlTextField.setText(icsManager.getRepositoryManager().getUpstream());
     urlTextField.addBrowseFolderListener(new TextBrowseFolderListener(FileChooserDescriptorFactory.createSingleFolderDescriptor()));
 
-    syncActions = ActionsPackage.createDialogActions(project, urlTextField, getContentPane(), new Function0<Unit>() {
-      @Override
-      public Unit invoke() {
-        doOKAction();
-        return null;
-      }
-    });
+    syncActions = SettingsRepositoryPackage.createDialogActions(project, urlTextField, dialogParent, okAction);
 
     urlTextField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
@@ -45,10 +36,6 @@ public class IcsSettingsPanel extends DialogWrapper {
     });
 
     updateSyncButtonState();
-
-    setTitle(IcsBundle.OBJECT$.message("settings.panel.title"));
-    setResizable(false);
-    init();
   }
 
   private void updateSyncButtonState() {
@@ -66,21 +53,8 @@ public class IcsSettingsPanel extends DialogWrapper {
     }
   }
 
-  @Nullable
-  @Override
-  public JComponent getPreferredFocusedComponent() {
-    return urlTextField;
-  }
-
-  @Nullable
-  @Override
-  protected JComponent createCenterPanel() {
-    return panel;
-  }
-
   @NotNull
-  @Override
-  protected Action[] createActions() {
+  Action[] createActions() {
     return syncActions;
   }
 }
