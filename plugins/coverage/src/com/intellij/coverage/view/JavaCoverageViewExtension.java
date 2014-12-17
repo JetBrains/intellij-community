@@ -32,6 +32,7 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
 
   @Override
   public String getSummaryForNode(AbstractTreeNode node) {
+    if (!myCoverageViewManager.isReady()) return "Loading...";
     final String coverageInformationString = myAnnotator
       .getPackageCoverageInformationString((PsiPackage)node.getValue(), null, myCoverageDataManager, myStateBean.myFlattenPackages);
     return getNotCoveredMessage(coverageInformationString) + " in package \'" + node.toString() + "\'";
