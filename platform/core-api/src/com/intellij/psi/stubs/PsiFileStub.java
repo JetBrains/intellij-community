@@ -22,7 +22,11 @@ package com.intellij.psi.stubs;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IStubFileElementType;
+import org.jetbrains.annotations.NotNull;
 
 public interface PsiFileStub<T extends PsiFile> extends StubElement<T>, UserDataHolder {
   IStubFileElementType getType();
+
+  @NotNull
+  PsiFileStub[] getStubRoots();
 }
