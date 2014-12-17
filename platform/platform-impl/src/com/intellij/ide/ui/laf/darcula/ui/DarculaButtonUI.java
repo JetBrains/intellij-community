@@ -18,12 +18,14 @@ package com.intellij.ide.ui.laf.darcula.ui;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.plaf.ColorUIResource;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.UIResource;
 import javax.swing.plaf.basic.BasicButtonUI;
@@ -146,18 +148,18 @@ public class DarculaButtonUI extends BasicButtonUI {
   }
 
   protected Color getButtonColor1() {
-    return UIManager.getColor("Button.darcula.color1");
+    return ObjectUtils.notNull(UIManager.getColor("Button.darcula.color1"), new ColorUIResource(0x555a5c));
   }
 
   protected Color getButtonColor2() {
-    return UIManager.getColor("Button.darcula.color2");
+    return ObjectUtils.notNull(UIManager.getColor("Button.darcula.color2"), new ColorUIResource(0x414648));
   }
 
   protected Color getSelectedButtonColor1() {
-    return UIManager.getColor("Button.darcula.selection.color1");
+    return ObjectUtils.notNull(UIManager.getColor("Button.darcula.selection.color1"), new ColorUIResource(0x384f6b));
   }
 
   protected Color getSelectedButtonColor2() {
-    return UIManager.getColor("Button.darcula.selection.color2");
+    return ObjectUtils.notNull(UIManager.getColor("Button.darcula.selection.color2"), new ColorUIResource(0x233143));
   }
 }
