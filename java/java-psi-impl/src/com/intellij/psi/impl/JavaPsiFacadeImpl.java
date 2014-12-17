@@ -260,13 +260,19 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
 
   @NotNull
   public PsiPackage[] getSubPackages(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
-    LinkedHashSet<PsiPackage> result = new LinkedHashSet<PsiPackage>();
+    LinkedHashMap<String, PsiPackage> result = new LinkedHashMap<String, PsiPackage>();
     for (PsiElementFinder finder : filteredFinders()) {
+      // Ensure uniqueness of names in the returned list of subpackages. If a plugin PsiElementFinder
+      // returns the same package from its getSubPackages() implementation that Java already knows about
+      // (the Kotlin plugin can do that), the Java package takes precedence.
       PsiPackage[] packages = finder.getSubPackages(psiPackage, scope);
-      ContainerUtil.addAll(result, packages);
+      for (PsiPackage aPackage : packages) {
+        if (result.get(aPackage.getName()) == null) {
+          result.put(aPackage.getName(), aPackage);
+        }
+      }
     }
-
-    return result.toArray(new PsiPackage[result.size()]);
+    return result.values().toArray(new PsiPackage[result.size()]);
   }
 
   public PsiClass[] findClassByShortName(String name, PsiPackage psiPackage, GlobalSearchScope scope) {

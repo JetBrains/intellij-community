@@ -237,7 +237,6 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
     Class<T> stateClass = getComponentStateClass(component);
 
     T state = null;
-    //todo: defaults merging
 
     final StateStorage defaultsStorage = getDefaultsStorage();
     if (defaultsStorage != null) {
@@ -249,12 +248,7 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
       StateStorage stateStorage = getStateStorageManager().getStateStorage(storageSpec);
       if (stateStorage != null && stateStorage.hasState(component, name, stateClass, reloadData)) {
         state = stateStorage.getState(component, name, stateClass, state);
-        if (state instanceof Element) {
-          // actually, our DefaultStateSerializer.deserializeState doesn't perform merge states if state is Element,
-          // storages are ordered by priority (first has higher priority), so, in this case we must just use first state
-          // https://youtrack.jetbrains.com/issue/IDEA-130930. More robust solution must be implemented later.
-          break;
-        }
+        break;
       }
     }
 
@@ -322,11 +316,46 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
     final Class<? extends StateStorageChooser> storageChooserClass = stateSpec.storageChooser();
     if (storageChooserClass == StateStorageChooser.class) {
       StateStorageChooser<PersistentStateComponent<?>> defaultStateStorageChooser = getDefaultStateStorageChooser();
-      assert defaultStateStorageChooser != null : "State chooser not specified for: " + persistentStateComponent.getClass();
-      return defaultStateStorageChooser.selectStorages(storages, persistentStateComponent, operation);
-    }
-    else if (storageChooserClass == LastStorageChooserForWrite.class) {
-      return LastStorageChooserForWrite.INSTANCE.selectStorages(storages, persistentStateComponent, operation);
+      if (defaultStateStorageChooser == null) {
+        int actualStorageCount = 0;
+        for (Storage storage : storages) {
+          if (!storage.deprecated()) {
+            actualStorageCount++;
+          }
+        }
+
+        if (actualStorageCount > 1) {
+          LOG.error("State chooser not specified for: " + persistentStateComponent.getClass());
+        }
+
+        if (!storages[0].deprecated()) {
+          boolean othersAreDeprecated = true;
+          for (int i = 1; i < storages.length; i++) {
+            if (!storages[i].deprecated()) {
+              othersAreDeprecated = false;
+              break;
+            }
+          }
+
+          if (othersAreDeprecated) {
+            return storages;
+          }
+        }
+
+        Storage[] sorted = Arrays.copyOf(storages, storages.length);
+        Arrays.sort(sorted, new Comparator<Storage>() {
+          @Override
+          public int compare(@NotNull Storage o1, @NotNull Storage o2) {
+            int w1 = o1.deprecated() ? 1 : 0;
+            int w2 = o2.deprecated() ? 1 : 0;
+            return w1 - w2;
+          }
+        });
+        return sorted;
+      }
+      else {
+        return defaultStateStorageChooser.selectStorages(storages, persistentStateComponent, operation);
+      }
     }
     else {
       try {

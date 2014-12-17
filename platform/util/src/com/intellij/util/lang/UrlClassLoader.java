@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import sun.misc.Resource;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -39,6 +40,23 @@ import java.util.List;
 
 public class UrlClassLoader extends ClassLoader {
   @NonNls static final String CLASS_EXTENSION = ".class";
+
+  static {
+    // Since Java 7 classloading is parallel on parallel capable classloader (http://docs.oracle.com/javase/7/docs/technotes/guides/lang/cl-mt.html)
+    // Parallel classloading avoids deadlocks like https://youtrack.jetbrains.com/issue/IDEA-131621
+    // By explicit option set (default is cautious "false") request parallel loading capability via reflection due to current platform's Java 6 baseline
+    // todo[r.sh] drop condition in IDEA 15
+    // todo[r.sh] drop reflection after migrating to Java 7+
+    boolean parallelLoader = Boolean.parseBoolean(System.getProperty("idea.parallel.class.loader", "false"));
+    if (parallelLoader) {
+      try {
+        Method registerAsParallelCapable = ClassLoader.class.getDeclaredMethod("registerAsParallelCapable");
+        registerAsParallelCapable.setAccessible(true);
+        registerAsParallelCapable.invoke(null);
+      }
+      catch (Exception ignored) { }
+    }
+  }
 
   public static final class Builder {
     private List<URL> myURLs = ContainerUtil.emptyList();

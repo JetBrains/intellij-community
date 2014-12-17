@@ -52,10 +52,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author egor
@@ -221,11 +218,9 @@ public class JavaStackFrame extends XStackFrame {
           final ReferenceType thisRefType = thisObjectReference.referenceType();
           if (thisRefType instanceof ClassType && thisRefType.equals(location.declaringType()) && thisRefType.name().contains("$")) { // makes sense for nested classes only
             final ClassType clsType = (ClassType)thisRefType;
-            final VirtualMachineProxyImpl vm = debugProcess.getVirtualMachineProxy();
             for (Field field : clsType.fields()) {
-              if ((!vm.canGetSyntheticAttribute() || field.isSynthetic()) && StringUtil
-                .startsWith(field.name(), FieldDescriptorImpl.OUTER_LOCAL_VAR_FIELD_PREFIX)) {
-                final FieldDescriptorImpl fieldDescriptor = myNodeManager.getFieldDescriptor(stackDescriptor, thisObjectReference, field);
+              if (DebuggerUtils.isSynthetic(field) && StringUtil.startsWith(field.name(), FieldDescriptorImpl.OUTER_LOCAL_VAR_FIELD_PREFIX)) {
+                final FieldDescriptorImpl fieldDescriptor = myNodeManager.getFieldDescriptor(myDescriptor, thisObjectReference, field);
                 children.add(JavaValue.create(fieldDescriptor, evaluationContext, myNodeManager));
               }
             }
@@ -302,13 +297,16 @@ public class JavaStackFrame extends XStackFrame {
         else {
           superBuildVariables(evaluationContext, children);
         }
-        // add expressions
         final EvaluationContextImpl evalContextCopy = evaluationContext.createEvaluationContext(evaluationContext.getThisObject());
         evalContextCopy.setAutoLoadClasses(false);
-        for (TextWithImports text : usedVars.second) {
-          WatchItemDescriptor descriptor = myNodeManager.getWatchItemDescriptor(null, text, null);
-          children.add(JavaValue.create(descriptor, evaluationContext, myNodeManager));
-        }
+
+        final Set<TextWithImports> extraVars = computeExtraVars(usedVars, sourcePosition, evalContext);
+
+        // add extra vars
+        addToChildrenFrom(extraVars, children, evaluationContext);
+
+        // add expressions
+        addToChildrenFrom(usedVars.second, children, evalContextCopy);
       }
     }
     catch (EvaluateException e) {
@@ -341,6 +339,29 @@ public class JavaStackFrame extends XStackFrame {
       else {
         throw e;
       }
+    }
+  }
+
+  private static Set<TextWithImports> computeExtraVars(Pair<Set<String>, Set<TextWithImports>> usedVars,
+                                                       SourcePosition sourcePosition,
+                                                       EvaluationContextImpl evalContext) {
+    Set<String> alreadyCollected = new HashSet<String>(usedVars.first);
+    for (TextWithImports text : usedVars.second) {
+      alreadyCollected.add(text.getText());
+    }
+    Set<TextWithImports> extra = new HashSet<TextWithImports>();
+    for (FrameExtraVariablesProvider provider : FrameExtraVariablesProvider.EP_NAME.getExtensions()) {
+      if (provider.isAvailable(sourcePosition, evalContext)) {
+        extra.addAll(provider.collectVariables(sourcePosition, evalContext, alreadyCollected));
+      }
+    }
+    return extra;
+  }
+
+  private void addToChildrenFrom(Set<TextWithImports> expressions, XValueChildrenList children, EvaluationContextImpl evaluationContext) {
+    for (TextWithImports text : expressions) {
+      WatchItemDescriptor descriptor = myNodeManager.getWatchItemDescriptor(null, text, null);
+      children.add(JavaValue.create(descriptor, evaluationContext, myNodeManager));
     }
   }
 

@@ -13,17 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.generate.tostring;
+package com.intellij.debugger.engine;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.psi.PsiClass;
 
 /**
- * Nikolay.Tropin
- * 2014-12-01
+ * @author Nikolay.Tropin
  */
-public interface GenerateToStringClassFilter {
-    ExtensionPointName<GenerateToStringClassFilter> EP_NAME = ExtensionPointName.create("com.intellij.generation.toStringClassFilter");
+public interface ExtraSteppingFilter {
+  ExtensionPointName<ExtraSteppingFilter> EP_NAME = ExtensionPointName.create("com.intellij.debugger.extraSteppingFilter");
 
-    boolean canGenerateToString(PsiClass psiClass);
+  boolean isApplicable(SuspendContext context);
+
+  /**@return Step request depth as defined in {@link com.sun.jdi.request.StepRequest}
+   */
+  int getStepRequestDepth(SuspendContext context);
 }

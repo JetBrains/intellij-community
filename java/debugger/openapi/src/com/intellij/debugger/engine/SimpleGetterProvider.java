@@ -13,17 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.generate.tostring;
+package com.intellij.debugger.engine;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.psi.PsiClass;
+import com.intellij.psi.*;
 
 /**
- * Nikolay.Tropin
- * 2014-12-01
+ * @author Nikolay.Tropin
  */
-public interface GenerateToStringClassFilter {
-    ExtensionPointName<GenerateToStringClassFilter> EP_NAME = ExtensionPointName.create("com.intellij.generation.toStringClassFilter");
+public interface SimpleGetterProvider {
+  ExtensionPointName<SimpleGetterProvider> EP_NAME = ExtensionPointName.create("com.intellij.debugger.simpleGetterProvider");
 
-    boolean canGenerateToString(PsiClass psiClass);
+  boolean isSimpleGetter(PsiMethod method);
 }

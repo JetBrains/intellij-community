@@ -148,8 +148,15 @@ public class ExternalSystemNotificationManager {
           }
         }
 
-        final NotificationGroup group = ExternalSystemUtil.getToolWindowElement(
-          NotificationGroup.class, myProject, ExternalSystemDataKeys.NOTIFICATION_GROUP, externalSystemId);
+        final NotificationGroup group;
+        if (notificationData.getBalloonGroup() == null) {
+          group = ExternalSystemUtil.getToolWindowElement(
+            NotificationGroup.class, myProject, ExternalSystemDataKeys.NOTIFICATION_GROUP, externalSystemId);
+        }
+        else {
+          final NotificationGroup registeredGroup = NotificationGroup.findRegisteredGroup(notificationData.getBalloonGroup());
+          group = registeredGroup != null ? registeredGroup : NotificationGroup.balloonGroup(notificationData.getBalloonGroup());
+        }
         if (group == null) return;
 
         final Notification notification = group.createNotification(

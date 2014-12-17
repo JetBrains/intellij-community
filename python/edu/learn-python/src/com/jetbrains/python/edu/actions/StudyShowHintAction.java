@@ -81,7 +81,7 @@ public class StudyShowHintAction extends DumbAwareAction {
       if (resourceRoot != null && resourceRoot.exists()) {
         File hintsDir = new File(resourceRoot, Course.HINTS_DIR);
         if (hintsDir.exists()) {
-          hintText = StudyUtils.getFileText(hintsDir.getAbsolutePath(), hintFileName, true);
+          hintText = StudyUtils.getFileText(hintsDir.getAbsolutePath(), hintFileName, true, "UTF-8");
         }
       }
     }

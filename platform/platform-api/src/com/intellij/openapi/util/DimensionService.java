@@ -41,10 +41,9 @@ import java.util.Map;
 @State(
   name = "DimensionService",
   storages = {
-    @Storage(file = StoragePathMacros.APP_CONFIG + "/options.xml"),
-    @Storage(file = StoragePathMacros.APP_CONFIG + "/dimensions.xml", roamingType = RoamingType.DISABLED)
-  },
-  storageChooser = LastStorageChooserForWrite.ElementStateLastStorageChooserForWrite.class
+    @Storage(file = StoragePathMacros.APP_CONFIG + "/dimensions.xml", roamingType = RoamingType.DISABLED),
+    @Storage(file = StoragePathMacros.APP_CONFIG + "/options.xml", deprecated = true)
+  }
 )
 public class DimensionService implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(DimensionService.class);

@@ -13,17 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.generate.tostring;
+package com.intellij.debugger.engine;
 
+import com.intellij.debugger.SourcePosition;
+import com.intellij.debugger.engine.evaluation.EvaluationContext;
+import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.psi.PsiClass;
+
+import java.util.Set;
 
 /**
- * Nikolay.Tropin
- * 2014-12-01
+ * @author Nikolay.Tropin
  */
-public interface GenerateToStringClassFilter {
-    ExtensionPointName<GenerateToStringClassFilter> EP_NAME = ExtensionPointName.create("com.intellij.generation.toStringClassFilter");
+public interface FrameExtraVariablesProvider {
+  ExtensionPointName<FrameExtraVariablesProvider> EP_NAME = ExtensionPointName.create("com.intellij.debugger.frameExtraVarsProvider");
 
-    boolean canGenerateToString(PsiClass psiClass);
+  boolean isAvailable(SourcePosition sourcePosition, EvaluationContext evalContext);
+
+  Set<TextWithImports> collectVariables(SourcePosition sourcePosition, EvaluationContext evalContext, Set<String> alreadyCollected);
 }

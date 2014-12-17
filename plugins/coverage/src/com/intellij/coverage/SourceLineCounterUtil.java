@@ -28,7 +28,7 @@ public class SourceLineCounterUtil {
     if (!counter.isInterface()) {
       packageCoverageInfo.totalClassCount++;
     }
-    return false;
+    return true;
   }
 
   public static void collectSrcLinesForUntouchedFiles(final List<Integer> uncoveredLines,

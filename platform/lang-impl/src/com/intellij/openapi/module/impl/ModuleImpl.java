@@ -23,6 +23,7 @@ import com.intellij.openapi.components.ExtensionAreas;
 import com.intellij.openapi.components.impl.ModulePathMacroManager;
 import com.intellij.openapi.components.impl.PlatformComponentManagerImpl;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
+import com.intellij.openapi.components.impl.stores.IModuleStore;
 import com.intellij.openapi.components.impl.stores.ModuleStoreImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.AreaInstance;
@@ -66,7 +67,7 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
 
   private String myModuleType;
 
-  private ModuleStoreImpl myComponentStore;
+  private IModuleStore myComponentStore;
   private final ModuleScopeProvider myModuleScopeProvider;
 
   public ModuleImpl(@NotNull String filePath, @NotNull Project project) {
@@ -89,7 +90,7 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
   }
 
   @NotNull
-  public synchronized ModuleStoreImpl getStateStore() {
+  public synchronized IModuleStore getStateStore() {
     if (myComponentStore == null) {
       myComponentStore = (ModuleStoreImpl)getPicoContainer().getComponentInstance(IComponentStore.class);
     }

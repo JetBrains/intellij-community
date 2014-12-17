@@ -92,12 +92,5 @@ if port == -1:
 else:
     if launch_with_port(port): exit()
 
-if sys.platform == "darwin":
-    # Mac OS: RUN_PATH is *.app path
-    if len(args):
-        args.insert(0, "--args")
-    os.execvp("open", ["-a", RUN_PATH] + args)
-else:
-    # unix common
     bin_dir, bin_file = os.path.split(RUN_PATH)
     os.execv(RUN_PATH, [bin_file] + args)

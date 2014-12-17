@@ -13,17 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.generate.tostring;
+package com.intellij.debugger.engine;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.psi.PsiClass;
+import com.sun.jdi.TypeComponent;
 
 /**
- * Nikolay.Tropin
- * 2014-12-01
+ * @author Nikolay.Tropin
  */
-public interface GenerateToStringClassFilter {
-    ExtensionPointName<GenerateToStringClassFilter> EP_NAME = ExtensionPointName.create("com.intellij.generation.toStringClassFilter");
+public interface SyntheticTypeComponentProvider {
+  ExtensionPointName<SyntheticTypeComponentProvider> EP_NAME = ExtensionPointName.create("com.intellij.debugger.syntheticProvider");
 
-    boolean canGenerateToString(PsiClass psiClass);
+  boolean isSynthetic(TypeComponent typeComponent);
 }

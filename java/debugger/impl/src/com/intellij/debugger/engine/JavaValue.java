@@ -393,18 +393,9 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
           @Override
           public void run() {
             final boolean nearest = navigatable instanceof XNearestSourcePosition;
-            if (myValueDescriptor instanceof FieldDescriptorImpl) {
-              SourcePosition position = ((FieldDescriptorImpl)myValueDescriptor).getSourcePosition(getProject(), getDebuggerContext(), nearest);
-              if (position != null) {
-                navigatable.setSourcePosition(DebuggerUtilsEx.toXSourcePosition(position));
-              }
-            }
-            if (myValueDescriptor instanceof LocalVariableDescriptorImpl) {
-              SourcePosition position =
-                ((LocalVariableDescriptorImpl)myValueDescriptor).getSourcePosition(getProject(), getDebuggerContext(), nearest);
-              if (position != null) {
-                navigatable.setSourcePosition(DebuggerUtilsEx.toXSourcePosition(position));
-              }
+            SourcePosition position = SourcePositionProvider.getSourcePosition(myValueDescriptor, getProject(), getDebuggerContext(), nearest);
+            if (position != null) {
+              navigatable.setSourcePosition(DebuggerUtilsEx.toXSourcePosition(position));
             }
           }
         });

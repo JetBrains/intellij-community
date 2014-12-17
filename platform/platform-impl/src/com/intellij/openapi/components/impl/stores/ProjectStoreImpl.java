@@ -613,6 +613,11 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     }
 
     @Override
+    public boolean deprecated() {
+      return false;
+    }
+
+    @Override
     public RoamingType roamingType() {
       return RoamingType.PER_USER;
     }

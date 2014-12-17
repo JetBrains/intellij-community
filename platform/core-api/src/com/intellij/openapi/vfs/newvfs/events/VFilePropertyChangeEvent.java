@@ -139,4 +139,14 @@ public class VFilePropertyChangeEvent extends VFileEvent {
     return "VfsEvent[property(" + myPropertyName + ") changed for '" + myFile + "':" +
            " oldValue = " + myOldValue + ", newValue = " + myNewValue + "]";
   }
+
+  public String getOldPath() {
+    String path = getPath();
+    if (VirtualFile.PROP_NAME.equals(myPropertyName) && myNewValue instanceof String && myOldValue instanceof String) {
+      String newName = (String)myNewValue;
+      int i = path.lastIndexOf(newName);
+      if (i != -1) path = new StringBuilder(path).replace(i, i + newName.length(), (String)myOldValue).toString();
+    }
+    return path;
+  }
 }
