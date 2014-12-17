@@ -51,6 +51,10 @@ public class OverloadResolutionTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testIgnoreNonFunctionalArgumentsWhenCheckIfFunctionalMoreSpecific() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(true);
   }
