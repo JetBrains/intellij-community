@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.panels.Wrapper;
@@ -104,7 +105,7 @@ public class TabLabel extends JPanel {
     });
   }
 
-  private SimpleColoredComponent createLabel(JBTabsImpl tabs) {
+  private SimpleColoredComponent createLabel(final JBTabsImpl tabs) {
     SimpleColoredComponent label = new SimpleColoredComponent() {
       @Override
       protected boolean shouldDrawMacShadow() {
@@ -123,10 +124,41 @@ public class TabLabel extends JPanel {
         }
         return UIUtil.getLabelFont(UIUtil.FontSize.SMALL);
       }
+
+      @Override
+      protected void doPaint(Graphics2D g) {
+        if (!Registry.is("editor.use.compressible.tabs") || tabs.getTabsPosition() == JBTabsPosition.left || tabs.getTabsPosition() == JBTabsPosition.right) {
+          super.doPaint(g);
+          return;
+        }
+        Rectangle clip = getVisibleRect();
+        if (getPreferredSize().width <= clip.width) {
+          super.doPaint(g);
+          return;
+        }
+        int dimSize = 20;
+        int dimStep = 1;
+        Composite oldComposite = g.getComposite();
+        Shape oldClip = g.getClip();
+        try {
+          g.setClip(clip.x, clip.y, Math.max(0, clip.width - dimSize), clip.height);
+          super.doPaint(g);
+
+          for (int x = clip.x + clip.width - dimSize; x < clip.x + clip.width; x+=dimStep) {
+            g.setClip(x, clip.y, dimStep, clip.height);
+            float linear = 1 - ((float)x - (clip.x + clip.width - dimSize)) / dimSize;
+            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, (float)(1 - Math.cos(Math.PI * linear)) / 2));
+            super.doPaint(g);
+          }
+        } finally {
+          g.setComposite(oldComposite);
+          g.setClip(oldClip);
+        }
+      }
     };
     label.setOpaque(false);
     label.setBorder(null);
-    label.setIconTextGap(tabs.isEditorTabs() ? 2 : new JLabel().getIconTextGap());
+    label.setIconTextGap(tabs.isEditorTabs() ? (Registry.is("editor.use.compressible.tabs") ? 4 : 2) : new JLabel().getIconTextGap());
     label.setIconOpaque(false);
     label.setIpad(new Insets(0, 0, 0, 0));
 
@@ -137,9 +169,14 @@ public class TabLabel extends JPanel {
   public Insets getInsets() {
     Insets insets = super.getInsets();
     if (myTabs.isEditorTabs()) {
-      if (UISettings.getInstance().SHOW_CLOSE_BUTTON) {
-        return new Insets(insets.top, insets.left, insets.bottom, 3);
+      int right = insets.right;
+      if (!Registry.is("editor.use.compressible.tabs")) {
+        if (UISettings.getInstance().SHOW_CLOSE_BUTTON) right = 3;
       }
+      else {
+        right = (UISettings.getInstance().SHOW_CLOSE_BUTTON || !UISettings.getInstance().MARK_MODIFIED_TABS_WITH_ASTERISK) ? 3 : 6;
+      }
+      return new Insets(insets.top, insets.left, insets.bottom, right);
     }
 
     return insets;

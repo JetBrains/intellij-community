@@ -33,6 +33,7 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.ThreeComponentsSplitter;
 import com.intellij.openapi.util.*;
@@ -41,11 +42,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -69,7 +72,31 @@ public class EditorWindow {
   protected JPanel myPanel;
   private EditorTabbedContainer myTabbedPane;
   private final EditorsSplitters myOwner;
-  private static final Icon MODIFIED_ICON = AllIcons.General.Modified;
+  private static final Icon MODIFIED_ICON = Registry.is("editor.use.compressible.tabs") ? new Icon() {
+    @Override
+    public void paintIcon(Component c, Graphics g, int x, int y) {
+      GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
+      Font oldFont = g.getFont();
+      try {
+        g.setFont(new Font("Monospaced", Font.BOLD, 12));
+        g.setColor(JBColor.foreground());
+        g.drawString("*", 0, 8);
+      } finally {
+        config.restore();
+        g.setFont(oldFont);
+      }
+    }
+
+    @Override
+    public int getIconWidth() {
+      return 8;
+    }
+
+    @Override
+    public int getIconHeight() {
+      return 8;
+    }
+  } : AllIcons.General.Modified;
   private static final Icon GAP_ICON = new EmptyIcon(MODIFIED_ICON.getIconWidth(), MODIFIED_ICON.getIconHeight());
 
   private boolean myIsDisposed = false;
@@ -964,8 +991,9 @@ public class EditorWindow {
 
     int i = 0;
     final LayeredIcon result = new LayeredIcon(count);
-    result.setIcon(baseIcon, i++);
-    if (pinIcon != null) result.setIcon(pinIcon, i++);
+    int xShift = Registry.is("editor.use.compressible.tabs") ? 4 : 0;
+    result.setIcon(baseIcon, i++, xShift, 0);
+    if (pinIcon != null) result.setIcon(pinIcon, i++, xShift, 0);
     if (modifiedIcon != null) result.setIcon(modifiedIcon, i++);
 
     return result;
