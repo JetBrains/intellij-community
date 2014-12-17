@@ -351,10 +351,9 @@ public class GitRebaseEditor extends DialogWrapper {
           continue;
         }
         String action = s.spaceToken();
-        assert "pick".equals(action) : "Initial action should be pick: " + action;
         String hash = s.spaceToken();
         String comment = s.line();
-        myEntries.add(new GitRebaseEntry(hash, comment));
+        myEntries.add(new GitRebaseEntry(action, hash, comment));
       }
     }
 

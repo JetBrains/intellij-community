@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,11 @@ package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.PluginManagerMain;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.util.Ref;
 import com.intellij.ui.TableUtil;
-import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,16 +34,22 @@ import java.util.Collection;
  */
 class PluginUpdateInfoDialog extends AbstractUpdateDialog {
   private final Collection<PluginDownloader> myUploadedPlugins;
+  private final boolean myPlatformUpdate;
 
   public PluginUpdateInfoDialog(Collection<PluginDownloader> uploadedPlugins, boolean enableLink) {
     super(enableLink);
     myUploadedPlugins = uploadedPlugins;
+    myPlatformUpdate = false;
     init();
   }
 
-  protected PluginUpdateInfoDialog(Component parent, @NotNull Collection<PluginDownloader> updatePlugins, boolean enableLink) {
-    super(parent, enableLink);
+  /**
+   * Used from {@link UpdateInfoDialog} when both platform and plugin updates are available.
+   */
+  PluginUpdateInfoDialog(Component parent, @NotNull Collection<PluginDownloader> updatePlugins) {
+    super(parent, false);
     myUploadedPlugins = updatePlugins;
+    myPlatformUpdate = true;
     init();
   }
 
@@ -55,64 +60,36 @@ class PluginUpdateInfoDialog extends AbstractUpdateDialog {
 
   @Override
   protected String getOkButtonText() {
-    return IdeBundle.message("update.plugins.update.action");
-  }
-
-  @NotNull
-  @Override
-  protected Action[] createActions() {
-    return new Action[]{getOKAction(), getCancelAction()};
+    if (!myPlatformUpdate) {
+      return IdeBundle.message("update.plugins.update.action");
+    }
+    else {
+      boolean canRestart = ApplicationManager.getApplication().isRestartCapable();
+      return IdeBundle.message(canRestart ? "update.restart.plugins.update.action" : "update.shutdown.plugins.update.action");
+    }
   }
 
   @Override
   protected void doOKAction() {
     super.doOKAction();
-    final Ref<Boolean> result = new Ref<Boolean>();
-    final Consumer<ProgressIndicator> runnable = new Consumer<ProgressIndicator>() {
+
+    ProgressManager.getInstance().run(new Task.Modal(null, IdeBundle.message("progress.downloading.plugins"), true) {
       @Override
-      public void consume(@NotNull ProgressIndicator indicator) {
+      public void run(@NotNull ProgressIndicator indicator) {
         UpdateChecker.saveDisabledToUpdatePlugins();
-        result.set(UpdateChecker.install(myUploadedPlugins, indicator));
-      }
-    };
-
-    final String progressTitle = "Download plugins...";
-    if (downloadModal()) {
-      ProgressManager.getInstance().run(new Task.Modal(null, progressTitle, true) {
-        @Override
-        public void run(@NotNull ProgressIndicator indicator) {
-          runnable.consume(indicator);
-        }
-      });
-    }
-    else {
-      ProgressManager.getInstance().run(new Task.Backgroundable(null, progressTitle, true) {
-        @Override
-        public void run(@NotNull ProgressIndicator indicator) {
-          runnable.consume(indicator);
-        }
-
-        @Override
-        public void onSuccess() {
-          final Boolean installed = result.get();
-          if (installed != null && installed.booleanValue()) {
-            final String pluginName;
-            if (myUploadedPlugins.size() == 1) {
-              final PluginDownloader firstItem = ContainerUtil.getFirstItem(myUploadedPlugins);
-              pluginName = firstItem != null ? firstItem.getPluginName() : null;
+        boolean updated = UpdateChecker.installPluginUpdates(myUploadedPlugins, indicator);
+        if (updated && !myPlatformUpdate) {
+          String pluginName = null;
+          if (myUploadedPlugins.size() == 1) {
+            PluginDownloader plugin = ContainerUtil.getFirstItem(myUploadedPlugins);
+            if (plugin != null) {
+              pluginName = plugin.getPluginName();
             }
-            else {
-              pluginName = null;
-            }
-            PluginManagerMain.notifyPluginsWereInstalled(pluginName, null);
           }
+          PluginManagerMain.notifyPluginsWereInstalled(pluginName, null);
         }
-      });
-    }
-  }
-
-  protected boolean downloadModal() {
-    return false;
+      }
+    });
   }
 
   private class PluginUpdateInfoPanel {

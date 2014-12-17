@@ -88,7 +88,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
     List<Action> actions = ContainerUtil.newArrayList();
 
     if (myPatch != null) {
-      final boolean canRestart = ApplicationManager.getApplication().isRestartCapable();
+      boolean canRestart = ApplicationManager.getApplication().isRestartCapable();
       String button = IdeBundle.message(canRestart ? "updates.download.and.restart.button" : "updates.download.and.install.button");
       actions.add(new AbstractAction(button) {
         {
@@ -97,7 +97,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-          downloadPatch(canRestart);
+          downloadPatch();
         }
       });
     }
@@ -138,21 +138,11 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
     return IdeBundle.message("updates.remind.later.button");
   }
 
-  private void downloadPatch(final boolean canRestart) {
-    final UpdateChecker.DownloadPatchResult result = UpdateChecker.downloadAndInstallPatch(myPatch, myLatestBuild.getNumber(), myForceHttps);
+  private void downloadPatch() {
+    UpdateChecker.DownloadPatchResult result = UpdateChecker.installPlatformUpdate(myPatch, myLatestBuild.getNumber(), myForceHttps);
     if (result == UpdateChecker.DownloadPatchResult.SUCCESS) {
       if (myUpdatedPlugins != null && !myUpdatedPlugins.isEmpty()) {
-        new PluginUpdateInfoDialog(getContentPanel(), myUpdatedPlugins, true){
-          @Override
-          protected boolean downloadModal() {
-            return true;
-          }
-
-          @Override
-          protected String getOkButtonText() {
-            return IdeBundle.message(canRestart ? "update.restart.plugins.update.action" : "update.shutdown.plugins.update.action");
-          }
-        }.show();
+        new PluginUpdateInfoDialog(getContentPanel(), myUpdatedPlugins).show();
       }
       restart();
     }
@@ -232,7 +222,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
         configureMessageArea(myMessageArea);
       }
 
-      if (mySubscriptionLicense && myLicenseInfo != null) {
+      if (myLicenseInfo != null) {
         configureMessageArea(myLicenseArea, myLicenseInfo, myPaidUpgrade ? JBColor.RED : null, null);
       }
     }

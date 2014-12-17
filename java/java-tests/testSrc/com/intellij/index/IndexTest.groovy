@@ -33,6 +33,7 @@ import com.intellij.psi.*
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.impl.PsiManagerEx
 import com.intellij.psi.impl.file.impl.FileManagerImpl
+import com.intellij.psi.impl.source.PsiFileWithStubSupport
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiSearchHelper
 import com.intellij.testFramework.IdeaTestUtil
@@ -357,6 +358,22 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
     assert !PsiDocumentManager.getInstance(project).uncommittedDocuments
 
     assert JavaPsiFacade.getInstance(project).findClass("Foo3", scope)
+  }
+
+  public void "test do not collect stub tree while holding stub elements"() throws IOException {
+    final VirtualFile vFile = myFixture.addClass("class Foo {}").getContainingFile().getVirtualFile();
+
+    PsiFileWithStubSupport psiFile = getPsiManager().findFile(vFile) as PsiFileWithStubSupport;
+    assertNotNull(psiFile);
+
+    def clazz = findClass("Foo")
+    assertNotNull(clazz)
+    def stubTreeHash = psiFile.getStubTree().hashCode()
+
+    PlatformTestUtil.tryGcSoftlyReachableObjects();
+    def stubTree = psiFile.getStubTree()
+    assertNotNull(stubTree)
+    assertEquals(stubTreeHash, stubTree.hashCode())
   }
 
 }

@@ -86,7 +86,11 @@ public abstract class AbstractUpdateDialog extends DialogWrapper {
     if (facade != null) {
       mySubscriptionLicense = facade.isSubscriptionLicense();
       if (!channel.getLicensing().equals(UpdateChannel.LICENSING_EAP)) {
-        Boolean paidUpgrade = facade.isPaidUpgrade(channel.getMajorVersion(), build.getReleaseDate());
+        int majorVersion = build.getMajorVersion();
+        if (majorVersion < 0) {
+          majorVersion = channel.getMajorVersion(); // fallback
+        }
+        final Boolean paidUpgrade = facade.isPaidUpgrade(majorVersion, build.getReleaseDate());
         if (paidUpgrade == Boolean.TRUE) {
           myPaidUpgrade = true;
           myLicenseInfo = IdeBundle.message("updates.channel.key.needed", channel.getEvalDays());

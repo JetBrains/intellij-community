@@ -142,7 +142,7 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
 
       }
     };
-    final GradleProjectSettingsControl settingsControl = new GradleProjectSettingsControl(getExternalProjectSettings(), myWizardContext.getProject());
+    final GradleProjectSettingsControl settingsControl = new GradleProjectSettingsControl(getExternalProjectSettings());
     return new ExternalModuleSettingsStep<GradleProjectSettings>(this, settingsControl);
   }
 
