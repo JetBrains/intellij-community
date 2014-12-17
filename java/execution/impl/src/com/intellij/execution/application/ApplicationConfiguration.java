@@ -214,6 +214,7 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
      ALTERNATIVE_JRE_PATH_ENABLED = enabled;
    }
 
+   @Nullable
    @Override
    public String getAlternativeJrePath() {
      return ALTERNATIVE_JRE_PATH;

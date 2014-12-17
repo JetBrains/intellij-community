@@ -18,10 +18,12 @@ package com.intellij.execution;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
@@ -51,16 +53,10 @@ public class ExternalizablePath implements JDOMExternalizable {
   }
 
   public static String urlValue(String localPath) {
-    if (localPath == null) return "";
-    localPath = localPath.trim();
-    if (localPath.length() == 0) return "";
-    return VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, localPath.replace(File.separatorChar, '/'));
+    return StringUtil.isEmptyOrSpaces(localPath) ? "" : VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, localPath.trim().replace(File.separatorChar, '/'));
   }
 
-  public static String localPathValue(String url) {
-    if (url == null) return "";
-    url = url.trim();
-    if (url.length() == 0) return "";
-    return VirtualFileManager.extractPath(url).replace('/', File.separatorChar);
+  public static String localPathValue(@Nullable String url) {
+    return StringUtil.isEmptyOrSpaces(url) ? "" : VirtualFileManager.extractPath(url.trim()).replace('/', File.separatorChar);
   }
 }
