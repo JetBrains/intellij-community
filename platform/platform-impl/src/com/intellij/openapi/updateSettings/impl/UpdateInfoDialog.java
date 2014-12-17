@@ -139,7 +139,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
   }
 
   private void downloadPatch(final boolean canRestart) {
-    final UpdateChecker.DownloadPatchResult result = UpdateChecker.downloadAndInstallPatch(myPatch, myLatestBuild.getNumber(), myForceHttps);
+    final UpdateChecker.DownloadPatchResult result = UpdateChecker.installPlatformUpdate(myPatch, myLatestBuild.getNumber(), myForceHttps);
     if (result == UpdateChecker.DownloadPatchResult.SUCCESS) {
       if (myUpdatedPlugins != null && !myUpdatedPlugins.isEmpty()) {
         new PluginUpdateInfoDialog(getContentPanel(), myUpdatedPlugins, true){
