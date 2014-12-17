@@ -286,7 +286,7 @@ public class XWatchesViewImpl extends XDebugView implements DnDNativeTarget, XWa
   private static void showWatchesTab(@NotNull XDebugSessionImpl session) {
     XDebugSessionTab tab = session.getSessionTab();
     if (tab != null) {
-      tab.toFront(false);
+      tab.toFront(false, null);
       // restore watches tab if minimized
       JComponent component = tab.getUi().getComponent();
       if (component instanceof DataProvider) {
@@ -384,7 +384,7 @@ public class XWatchesViewImpl extends XDebugView implements DnDNativeTarget, XWa
     updateSessionData();
   }
 
-  private void updateSessionData() {
+  public void updateSessionData() {
     List<XExpression> watchExpressions = new ArrayList<XExpression>();
     final List<? extends WatchNode> children = myRootNode.getAllChildren();
     if (children != null) {

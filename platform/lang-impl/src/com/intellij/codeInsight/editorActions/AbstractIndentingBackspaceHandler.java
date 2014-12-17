@@ -20,7 +20,6 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 
 abstract class AbstractIndentingBackspaceHandler extends BackspaceHandlerDelegate {
   private final int myMode;
@@ -57,12 +56,11 @@ abstract class AbstractIndentingBackspaceHandler extends BackspaceHandlerDelegat
   protected abstract boolean doCharDeleted(char c, PsiFile file, Editor editor);
 
   private static int getBackspaceMode(Language language) {
-    LanguageCodeStyleSettingsProvider codeStyleSettingsProvider = LanguageCodeStyleSettingsProvider.forLanguage(language);
-    if (codeStyleSettingsProvider != null && codeStyleSettingsProvider.isIndentBasedLanguageSemantics()) {
-      return CodeInsightSettings.INDENT;
+    int mode = CodeInsightSettings.getInstance().SMART_BACKSPACE;
+    BackspaceModeOverride override = LanguageBackspaceModeOverride.INSTANCE.forLanguage(language);
+    if (override != null) {
+      mode = override.getBackspaceMode(mode);
     }
-    else {
-      return CodeInsightSettings.getInstance().SMART_BACKSPACE;
-    }
+    return mode;
   }
 }

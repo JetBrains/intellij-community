@@ -122,15 +122,15 @@ public class GreclipseBuilder extends ModuleLevelBuilder {
 
       boolean success = performCompilation(args, out, err, outputMap, context, chunk);
       
-      List<GroovycOSProcessHandler.OutputItem> items = ContainerUtil.newArrayList();
+      List<GroovycOutputParser.OutputItem> items = ContainerUtil.newArrayList();
       for (String src : outputMap.keySet()) {
         //noinspection ConstantConditions
         for (String classFile : outputMap.get(src)) {
-          items.add(new GroovycOSProcessHandler.OutputItem(FileUtil.toSystemIndependentName(mainOutputDir + classFile),
+          items.add(new GroovycOutputParser.OutputItem(FileUtil.toSystemIndependentName(mainOutputDir + classFile),
                                                            FileUtil.toSystemIndependentName(src)));
         }
       }
-      Map<ModuleBuildTarget, Collection<GroovycOSProcessHandler.OutputItem>> successfullyCompiled =
+      Map<ModuleBuildTarget, Collection<GroovycOutputParser.OutputItem>> successfullyCompiled =
         GroovyBuilder.processCompiledFiles(context, chunk, outputDirs, mainOutputDir, items);
 
       EclipseOutputParser parser = new EclipseOutputParser(getPresentableName(), chunk);

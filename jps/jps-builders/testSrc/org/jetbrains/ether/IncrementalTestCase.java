@@ -169,37 +169,30 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
     StringBuilder log = new StringBuilder();
     String rootPath = FileUtil.toSystemIndependentName(workDir.getAbsolutePath()) + "/";
     final ProjectDescriptor pd = createProjectDescriptor(new BuildLoggingManager(new StringProjectBuilderLogger(rootPath, log)));
+    BuildResult result = null;
     try {
       doBuild(pd, CompileScopeTestBuilder.rebuild().allModules()).assertSuccessful();
-
-      BuildResult result = null;
 
       for (int idx = 0; idx < makesCount; idx++) {
         modify(idx);
         result = doBuild(pd, CompileScopeTestBuilder.make().allModules());
       }
 
-      assertNotNull(result);
-      
       File logFile = new File(baseDir.getAbsolutePath() + ".log");
       if (!logFile.exists()) {
         logFile = new File(baseDir, "build.log");
       }
-      final String actual = log.toString();
-
-      assertSameLinesWithFile(logFile.getAbsolutePath(), actual);
-
-      if (result.isSuccessful()) {
-        checkMappingsAreSameAfterRebuild(result);
-      }
-      return result;
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
+      assertSameLinesWithFile(logFile.getAbsolutePath(), log.toString());
     }
     finally {
       pd.release();
     }
+
+    assertNotNull(result);
+    if (result.isSuccessful()) {
+      checkMappingsAreSameAfterRebuild(result);
+    }
+    return result;
   }
 
   protected JpsSdk<JpsDummyElement> getOrCreateJdk() {

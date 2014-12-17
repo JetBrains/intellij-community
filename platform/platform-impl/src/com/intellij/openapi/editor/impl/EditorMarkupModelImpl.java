@@ -57,6 +57,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
 import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import gnu.trove.TIntIntHashMap;
@@ -81,11 +82,26 @@ import static com.intellij.openapi.editor.ex.util.EditorUtil.isRealFileEditor;
 
 public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMarkupModel {
   private static final TooltipGroup ERROR_STRIPE_TOOLTIP_GROUP = new TooltipGroup("ERROR_STRIPE_TOOLTIP_GROUP", 0);
-  private static final int ERROR_ICON_WIDTH = 13;
-  private static final int ERROR_ICON_HEIGHT = 13;
-  private static final int THIN_GAP = 2;
-  private static final int MAX_STRIPE_SIZE = 4;
-  private static final int MAC_MAC_THUMB_WIDTH = 10;
+
+  private static int getErrorIconWidth() {
+    return JBUI.scale(13);
+  }
+
+  private static int getErrorIconHeight() {
+    return JBUI.scale(13);
+  }
+
+  private static int getThinGap() {
+    return JBUI.scale(2);
+  }
+
+  private static int getMaxStripeSize() {
+    return JBUI.scale(4);
+  }
+
+  private static int getMaxMacThumbWidth() {
+    return JBUI.scale(10);
+  }
 
   @NotNull private final EditorImpl myEditor;
   // null renderer means we should not show traffic light icon
@@ -366,9 +382,9 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         }
 
         protected void paintMaxiThumb(Graphics2D g, Rectangle thumbBounds) {
-          int arc = 3;
+          int arc = JBUI.scale(3);
           g.setColor(adjustColor(getGradientDarkColor()));
-          g.fillRoundRect(2, 0, thumbBounds.width, thumbBounds.height, arc, arc);
+          g.fillRoundRect(JBUI.scale(2), 0, thumbBounds.width, thumbBounds.height, arc, arc);
         }
       });
     }
@@ -466,7 +482,8 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     return myEditor.isMirrored();
   }
 
-  private static final Dimension STRIPE_BUTTON_PREFERRED_SIZE = new Dimension(ERROR_ICON_WIDTH + THIN_GAP, ERROR_ICON_HEIGHT + THIN_GAP);
+  private static final Dimension STRIPE_BUTTON_PREFERRED_SIZE = new Dimension(getErrorIconWidth() + getThinGap(), getErrorIconHeight() +
+                                                                                                                  getThinGap());
 
   private class ErrorStripeButton extends JButton {
     private ErrorStripeButton() {
@@ -490,14 +507,14 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
             Graphics2D g2d = (Graphics2D)g;
             AffineTransform old = g2d.getTransform();
             AffineTransform tx = AffineTransform.getScaleInstance(-1, 1);
-            tx.translate(-ERROR_ICON_WIDTH, 0);
+            tx.translate(-getErrorIconWidth(), 0);
             g2d.transform(tx);
-            myErrorStripeRenderer.paint(this, g2d, new Rectangle(0, 0, ERROR_ICON_WIDTH, ERROR_ICON_HEIGHT));
+            myErrorStripeRenderer.paint(this, g2d, new Rectangle(0, 0, getErrorIconWidth(), getErrorIconHeight()));
             g2d.setTransform(old);
           }
           else {
-            int x = THIN_GAP + myMinMarkHeight;
-            final Rectangle b = new Rectangle(x, 0, ERROR_ICON_WIDTH, ERROR_ICON_HEIGHT);
+            int x = getThinGap() + myMinMarkHeight;
+            final Rectangle b = new Rectangle(x, 0, getErrorIconWidth(), getErrorIconHeight());
             myErrorStripeRenderer.paint(this, g, b);
           }
         }
@@ -510,7 +527,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     @NotNull
     @Override
     public Dimension getPreferredSize() {
-      return STRIPE_BUTTON_PREFERRED_SIZE;
+      return new Dimension(getErrorIconWidth() + getThinGap(), getErrorIconHeight() + getThinGap());
     }
   }
   
@@ -522,15 +539,11 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     private PopupHandler myHandler;
     private JButton myErrorStripeButton;
     @Nullable private BufferedImage myCachedTrack;
-    private ComponentAdapter myResizeListener = new ComponentAdapter() {
-      @Override
-      public void componentResized(ComponentEvent e) {
-        dropCache();
-      }
-    };
+    private int myCachedHeight = -1;
 
     public void dropCache() {
       myCachedTrack = null;
+      myCachedHeight = -1;
     }
 
     @NotNull
@@ -554,14 +567,12 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     @Override
     public void installUI(JComponent c) {
       super.installUI(c);
-      c.addComponentListener(myResizeListener);
       dropCache();
     }
 
     @Override
     public void uninstallUI(@NotNull JComponent c) {
       super.uninstallUI(c);
-      c.removeComponentListener(myResizeListener);
       dropCache();
     }
 
@@ -642,9 +653,9 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     @Override
     protected Rectangle getMacScrollBarBounds(Rectangle baseBounds, boolean thumb) {
       Rectangle bounds = super.getMacScrollBarBounds(baseBounds, thumb);
-      bounds.width = Math.min(bounds.width, MAC_MAC_THUMB_WIDTH);
+      bounds.width = Math.min(bounds.width, getMaxMacThumbWidth());
       int b2 =  bounds.width / 2;
-      bounds.x = THIN_GAP + myMinMarkHeight+ ERROR_ICON_WIDTH /2 - b2;
+      bounds.x = getThinGap() + myMinMarkHeight+ getErrorIconWidth() /2 - b2;
       
       return bounds;
     }
@@ -658,7 +669,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
     @Override
     protected int getThickness() {
-      return ERROR_ICON_WIDTH + THIN_GAP + myMinMarkHeight;
+      return getErrorIconWidth() + getThinGap() + myMinMarkHeight;
     }
     
     @Override
@@ -681,9 +692,10 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       if (clip.height == 0) return;
 
       Rectangle componentBounds = c.getBounds();
-      ProperTextRange docRange = ProperTextRange.create(0, (int)componentBounds.getHeight());
-      if (myCachedTrack == null) {
+      ProperTextRange docRange = ProperTextRange.create(0, componentBounds.height);
+      if (myCachedTrack == null || myCachedHeight != componentBounds.height) {
         myCachedTrack = UIUtil.createImage(componentBounds.width, componentBounds.height, BufferedImage.TYPE_INT_ARGB);
+        myCachedHeight = componentBounds.height;
         myDirtyYPositions = docRange;
         paintTrackBasement(myCachedTrack.getGraphics(), new Rectangle(0, 0, componentBounds.width, componentBounds.height));
       }
@@ -866,8 +878,8 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         }
       }
       else {
-        x = myMinMarkHeight + THIN_GAP;
-        paintWidth = ERROR_ICON_WIDTH;
+        x = myMinMarkHeight + getThinGap();
+        paintWidth = getErrorIconWidth();
       }
       g.setColor(color);
       g.fillRect(x, yStart, paintWidth, yEnd - yStart);
@@ -1050,7 +1062,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
   @Override
   public void setMinMarkHeight(int minMarkHeight) {
-    myMinMarkHeight = Math.min(minMarkHeight, MAX_STRIPE_SIZE);
+    myMinMarkHeight = Math.min(minMarkHeight, getMaxStripeSize());
   }
 
   @Override
@@ -1311,6 +1323,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
               TIntIntHashMap rightEdges = new TIntIntHashMap();
               int h = myEditor.getLineHeight() - 2;
               for (RangeHighlighterEx ex : myHighlighters) {
+                if (!ex.isValid()) continue;
                 int hEndOffset = ex.getAffectedAreaEndOffset();
                 Object tooltip = ex.getErrorStripeTooltip();
                 if (tooltip == null) continue;

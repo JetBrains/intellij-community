@@ -21,6 +21,9 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.internal.statistic.configurable.StatisticsConfigurable;
+import com.intellij.internal.statistic.updater.StatisticsNotificationManager;
+import com.intellij.notification.*;
 import com.intellij.notification.impl.IdeNotificationArea;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
@@ -34,6 +37,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -41,6 +45,7 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
@@ -49,6 +54,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.openapi.wm.ex.StatusBarEx;
+import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.status.*;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.ui.*;
@@ -56,8 +62,11 @@ import com.intellij.ui.mac.MacMainFrameDecorator;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.io.PowerSupplyKit;
+import org.jetbrains.io.PowerSupplyKitCallback;
 
 import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -141,6 +150,14 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, DataProvider {
 
   }
 
+  @Override
+  public void addNotify() {
+    super.addNotify();
+    PowerSupplyKit.checkPowerSupply();
+  }
+
+
+
   private void updateBorder() {
     int state = getExtendedState();
     if (!WindowManager.getInstance().isFullScreenSupportedInCurrentOS() || !SystemInfo.isWindows || myRootPane == null) {
@@ -162,7 +179,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, DataProvider {
           if (insets.left != 0) mask |= SideBorder.LEFT;
           if (insets.bottom != 0) mask |= SideBorder.BOTTOM;
           if (insets.right != 0) mask |= SideBorder.RIGHT;
-          myRootPane.setBorder(new SideBorder(JBColor.BLACK, mask, false, 3));
+          myRootPane.setBorder(new SideBorder(JBColor.BLACK, mask, 3));
           break;
         }
       }

@@ -27,6 +27,7 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.ClassLoaderUtil;
@@ -73,7 +74,7 @@ public class FileTemplateUtil{
 
   static {
     try{
-      final FileTemplateManager templateManager = FileTemplateManager.getInstance();
+      final FileTemplateManager templateManager = FileTemplateManager.getInstance(ProjectManager.getInstance().getDefaultProject());
 
       LogSystem emptyLogSystem = new LogSystem() {
         @Override
@@ -177,7 +178,7 @@ public class FileTemplateUtil{
           Token firstToken = literal.getFirstToken();
           if (firstToken != null) {
             String s = StringUtil.unquoteString(firstToken.toString());
-            final FileTemplate includedTemplate = FileTemplateManager.getInstance().getTemplate(s);
+            final FileTemplate includedTemplate = FileTemplateManager.getDefaultInstance().getTemplate(s);
             if (includedTemplate != null && visitedIncludes.add(s)) {
               SimpleNode template = RuntimeSingleton.parse(new StringReader(includedTemplate.getText()), "MyTemplate");
               collectAttributes(referenced, defined, template, propertiesNames, includeDummies, visitedIncludes);
@@ -272,6 +273,9 @@ public class FileTemplateUtil{
       Velocity.evaluate(context, stringWriter, "", templateContent);
     }
     catch (final VelocityException e) {
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        LOG.error(e);
+      }
       LOG.info("Error evaluating template:\n" + templateContent, e);
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         @Override
@@ -331,11 +335,11 @@ public class FileTemplateUtil{
                                               @Nullable ClassLoader classLoader) throws Exception {
     @NotNull final Project project = directory.getProject();
     if (propsMap == null) {
-      Properties p = FileTemplateManager.getInstance().getDefaultProperties(directory.getProject());
+      Properties p = FileTemplateManager.getInstance(project).getDefaultProperties();
       propsMap = new HashMap<String, Object>();
       putAll(propsMap, p);
     }
-    FileTemplateManager.getInstance().addRecentName(template.getName());
+    FileTemplateManager.getInstance(project).addRecentName(template.getName());
     Properties p = new Properties();
     fillDefaultProperties(p, directory);
     putAll(propsMap, p);

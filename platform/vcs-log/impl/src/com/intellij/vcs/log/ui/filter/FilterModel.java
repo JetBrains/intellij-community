@@ -29,7 +29,7 @@ class FilterModel<Filter extends VcsLogFilter> {
   @NotNull private final Computable<VcsLogDataPack> myDataPackProvider;
   @NotNull private final Collection<Runnable> mySetFilterListeners = ContainerUtil.newArrayList();
 
-  @Nullable protected Filter myFilter;
+  @Nullable private Filter myFilter;
 
   FilterModel(@NotNull Computable<VcsLogDataPack> provider) {
     myDataPackProvider = provider;
@@ -45,11 +45,6 @@ class FilterModel<Filter extends VcsLogFilter> {
   @Nullable
   Filter getFilter() {
     return myFilter;
-  }
-
-  @NotNull
-  public Computable<VcsLogDataPack> getDataPackProvider() {
-    return myDataPackProvider;
   }
 
   @NotNull

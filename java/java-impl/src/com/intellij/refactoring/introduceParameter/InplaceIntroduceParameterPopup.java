@@ -38,7 +38,6 @@ import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.ui.JBColor;
-import com.intellij.usageView.UsageInfo;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
@@ -66,7 +65,6 @@ public class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroduce
 
   InplaceIntroduceParameterPopup(final Project project,
                                  final Editor editor,
-                                 final List<UsageInfo> classMemberRefs,
                                  final TypeSelectorManagerImpl typeSelectorManager,
                                  final PsiExpression expr,
                                  final PsiLocalVariable localVar,

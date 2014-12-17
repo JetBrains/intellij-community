@@ -25,14 +25,12 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.wm.impl.welcomeScreen.AbstractActionWithPanel;
-import com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame;
 import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.platform.WebProjectGenerator;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.NullableConsumer;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -107,7 +105,6 @@ public class ProjectSettingsStepBase extends AbstractActionWithPanel implements 
     bottomPanel.add(myErrorLabel, BorderLayout.NORTH);
     bottomPanel.add(myCreateButton, BorderLayout.EAST);
     mainPanel.add(bottomPanel, BorderLayout.SOUTH);
-    UIUtil.setBackgroundRecursively(mainPanel, FlatWelcomeFrame.getMainBackground());
     return mainPanel;
   }
 
@@ -127,10 +124,7 @@ public class ProjectSettingsStepBase extends AbstractActionWithPanel implements 
   }
 
   protected JPanel createBasePanel() {
-    final JPanel panel = new JPanel(new GridBagLayout());
-    final GridBagConstraints c = new GridBagConstraints();
-    c.fill = GridBagConstraints.HORIZONTAL;
-    c.anchor = GridBagConstraints.SOUTHWEST;
+    final JPanel panel = new JPanel(new VerticalFlowLayout(0, 2));
     myLocationField = new TextFieldWithBrowseButton();
     myLocationField.setText(myProjectDirectory.toString());
 
@@ -139,10 +133,7 @@ public class ProjectSettingsStepBase extends AbstractActionWithPanel implements 
                                             null, descriptor);
     final LabeledComponent<TextFieldWithBrowseButton> component = LabeledComponent.create(myLocationField, "Location");
     component.setLabelLocation(BorderLayout.WEST);
-    c.gridx = 0;
-    c.gridy = 0;
-    c.weightx = 1.;
-    panel.add(component, c);
+    panel.add(component);
 
     return panel;
   }
@@ -216,7 +207,7 @@ public class ProjectSettingsStepBase extends AbstractActionWithPanel implements 
   @Nullable
   protected JPanel createAdvancedSettings() {
     if (myProjectGenerator instanceof WebProjectTemplate) {
-      final JPanel jPanel = new JPanel(new VerticalFlowLayout());
+      final JPanel jPanel = new JPanel(new VerticalFlowLayout(0, 5));
       jPanel.add(((WebProjectTemplate)myProjectGenerator).getPeer().getComponent());
       return jPanel;
     }

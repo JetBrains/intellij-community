@@ -753,4 +753,8 @@ public class PythonCompletionTest extends PyTestCase {
     assertNotNull(variants);
     assertEmpty(variants);
   }
+
+  public void testStructuralType() {
+    doTest();
+  }
 }

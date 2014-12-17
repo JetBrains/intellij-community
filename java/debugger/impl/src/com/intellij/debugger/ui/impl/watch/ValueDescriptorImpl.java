@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.tree.DebuggerTreeNode;
@@ -56,8 +57,10 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   private EvaluateException myValueException;
   protected EvaluationContextImpl myStoredEvaluationContext = null;
 
+  private String myIdLabel;
   private String myValueText;
-  private String myValueLabel;
+  private boolean myFullValue = false;
+
   @Nullable
   private Icon myValueIcon;
 
@@ -300,10 +303,12 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
       label = setValueLabelFailed(valueException);
     }
 
-    return setValueLabel(label);
+    setValueLabel(label);
+
+    return ""; // we have overridden getLabel
   }
 
-  private String getCustomLabel(String label) {
+  private String getIdLabel(String label) {
     //translate only strings in quotes
     String customLabel = null;
     if(isShowIdLabel() && myValueReady) {
@@ -314,20 +319,45 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
                              ((NodeRendererImpl)lastRenderer).getIdLabel(value, evalContext.getDebugProcess()) :
                              null;
       if(idLabel != null && !label.startsWith(idLabel)) {
-        customLabel = idLabel;
+        return idLabel;
       }
     }
-    final String originalLabel = label == null ? "null" : label;
-    return customLabel == null? originalLabel : customLabel + originalLabel;
+    return "";
   }
 
+  @Override
+  public String getLabel() {
+    return calcValueName() + " = " + myIdLabel + myValueText;
+  }
+
+  public ValueDescriptorImpl getFullValueDescriptor() {
+    ValueDescriptorImpl descriptor = new ValueDescriptorImpl(myProject, myValue) {
+      @Override
+      public Value calcValue(EvaluationContextImpl evaluationContext) throws EvaluateException {
+        return myValue;
+      }
+
+      @Override
+      public String calcValueName() {
+        return null;
+      }
+
+      @Override
+      public PsiExpression getDescriptorEvaluation(DebuggerContext context) throws EvaluateException {
+        return null;
+      }
+    };
+    descriptor.myFullValue = true;
+    return descriptor;
+  }
 
   @Override
-  public String setValueLabel(String label) {
+  public void setValueLabel(String label) {
+    if (!myFullValue) {
+      label = DebuggerUtilsEx.truncateString(label);
+    }
     myValueText = label;
-    final String customLabel = getCustomLabel(label);
-    myValueLabel = customLabel;
-    return setLabel(calcValueName() + " = " + customLabel);
+    myIdLabel = getIdLabel(label);
   }
 
   @Override
@@ -488,8 +518,12 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     return myValueReady && !myIsSynthetic && isLvalue();
   }
 
+  public String getIdLabel() {
+    return myIdLabel;
+  }
+
   public String getValueLabel() {
-    return myValueLabel;
+    return myIdLabel + myValueText;
   }
 
   public String getValueText() {

@@ -25,31 +25,28 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
+import com.intellij.openapi.diagnostic.LogUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.openapi.vfs.StandardFileSystems;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.PlatformUtils;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.HttpRequests;
-import com.intellij.util.io.UrlConnectionUtil;
-import com.intellij.util.net.HttpConfigurable;
+import com.intellij.util.io.URLUtil;
 import com.intellij.util.net.NetUtils;
 import com.intellij.util.ui.UIUtil;
+import org.apache.http.client.utils.URIBuilder;
 import org.jdom.Document;
-import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
@@ -57,25 +54,19 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
 import java.io.*;
-import java.net.HttpURLConnection;
+import java.net.URISyntaxException;
 import java.net.URL;
-import java.net.URLConnection;
-import java.net.URLEncoder;
 import java.util.*;
 
 /**
- * See XML file by {@link com.intellij.openapi.application.ex.ApplicationInfoEx#getUpdateUrls()} for reference.
+ * See XML file by {@link ApplicationInfoEx#getUpdateUrls()} for reference.
  *
  * @author mike
  * @since Oct 31, 2002
  */
 public final class UpdateChecker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.updateSettings.impl.UpdateChecker");
-
-  private static final Map<String, PluginDownloader> ourUpdatedPlugins = new HashMap<String, PluginDownloader>();
 
   public enum DownloadPatchResult {
     SUCCESS, FAILED, CANCELED
@@ -93,7 +84,8 @@ public final class UpdateChecker {
   @NonNls private static final String DISABLED_UPDATE = "disabled_update.txt";
 
   private static Set<String> ourDisabledToUpdatePlugins;
-  private static final Map<String, String> ourAdditionalRequestOptions = new HashMap<String, String>();
+  private static final Map<String, String> ourAdditionalRequestOptions = ContainerUtil.newHashMap();
+  private static final Map<String, PluginDownloader> ourUpdatedPlugins = ContainerUtil.newHashMap();
 
   private static class Holder {
     private static final String UPDATE_URL = ApplicationInfoEx.getInstanceEx().getUpdateUrls().getCheckingUrl();
@@ -112,7 +104,9 @@ public final class UpdateChecker {
     return url != null ? url : Holder.PATCHES_URL;
   }
 
-  // for scheduled update checks
+  /**
+   * For scheduled update checks.
+   */
   public static ActionCallback updateAndShowResult() {
     final ActionCallback callback = new ActionCallback();
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
@@ -124,14 +118,18 @@ public final class UpdateChecker {
     return callback;
   }
 
-  // for manual update checks (Help | Check for Updates)
-  public static void updateAndShowResult(final @Nullable Project project,
-                                         final boolean fromSettings,
-                                         final UpdateSettings settings) {
+  /**
+   * For manual update checks (Help | Check for Updates, Settings | Updates | Check Now)
+   * (the latter action may pass customised update settings).
+   */
+  public static void updateAndShowResult(@Nullable Project project, @Nullable UpdateSettings customSettings) {
+    final UpdateSettings settings = customSettings != null ? customSettings : UpdateSettings.getInstance();
+    final boolean fromSettings = customSettings != null;
+
     ProgressManager.getInstance().run(new Task.Backgroundable(project, IdeBundle.message("updates.checking.progress"), true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        doUpdateAndShowResult(project, !fromSettings, true, settings, indicator, null);
+        doUpdateAndShowResult(getProject(), !fromSettings, true, settings, indicator, null);
       }
 
       @Override
@@ -146,13 +144,19 @@ public final class UpdateChecker {
     });
   }
 
-  private static void doUpdateAndShowResult(final @Nullable Project project,
+  private static void doUpdateAndShowResult(@Nullable final Project project,
                                             final boolean enableLink,
                                             final boolean manualCheck,
-                                            final UpdateSettings updateSettings,
-                                            final @Nullable ProgressIndicator indicator,
-                                            final @Nullable ActionCallback callback) {
-    final CheckForUpdateResult result = checkForUpdates(updateSettings);
+                                            @NotNull final UpdateSettings updateSettings,
+                                            @Nullable ProgressIndicator indicator,
+                                            @Nullable final ActionCallback callback) {
+    // check platform update
+
+    if (indicator != null) {
+      indicator.setText(IdeBundle.message("updates.checking.platform"));
+    }
+
+    final CheckForUpdateResult result = checkPlatformUpdate(updateSettings);
 
     if (manualCheck && result.getState() == UpdateStrategy.State.LOADED) {
       UpdateSettings settings = UpdateSettings.getInstance();
@@ -166,22 +170,40 @@ public final class UpdateChecker {
       return;
     }
 
-    final UpdateChannel updatedChannel = result.getUpdatedChannel();
-    boolean platformUpdate = newChannelReady(result.getChannelToPropose());
-    BuildNumber buildNumber = null;
-    if (updatedChannel != null) {
-      final BuildInfo latestBuild = updatedChannel.getLatestBuild();
-      if (latestBuild != null) {
-        buildNumber = latestBuild.getNumber();
-      }
+    // check plugins update (with regard to potential platform update)
+
+    if (indicator != null) {
+      indicator.setText(IdeBundle.message("updates.checking.plugins"));
     }
-    final Collection<IdeaPluginDescriptor> incompatiblePlugins = buildNumber != null ? new HashSet<IdeaPluginDescriptor>() : null;
-    final Collection<PluginDownloader> updatedPlugins = platformUpdate ? null : updatePlugins(manualCheck, incompatiblePlugins, indicator, buildNumber);
+
+    final Collection<PluginDownloader> updatedPlugins;
+    final Collection<IdeaPluginDescriptor> incompatiblePlugins;
+
+    if (newChannelReady(result.getChannelToPropose())) {
+      updatedPlugins = null;
+      incompatiblePlugins = null;
+    }
+    else {
+      BuildNumber buildNumber = null;
+
+      UpdateChannel updatedChannel = result.getUpdatedChannel();
+      if (updatedChannel != null) {
+        BuildInfo latestBuild = updatedChannel.getLatestBuild();
+        if (latestBuild != null) {
+          buildNumber = latestBuild.getNumber();
+        }
+      }
+
+      incompatiblePlugins = buildNumber != null ? new HashSet<IdeaPluginDescriptor>() : null;
+      updatedPlugins = checkPluginsUpdate(manualCheck, updateSettings, indicator, incompatiblePlugins, buildNumber);
+    }
+
+    // show result
 
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
-        showUpdateResult(project, result, updatedPlugins, incompatiblePlugins, enableLink, manualCheck);
+        showUpdateResult(project, result, updateSettings, updatedPlugins, incompatiblePlugins, enableLink, manualCheck);
         if (callback != null) {
           callback.setDone();
         }
@@ -189,128 +211,160 @@ public final class UpdateChecker {
     });
   }
 
-  public static Collection<PluginDownloader> updatePlugins(boolean manualCheck,
-                                                           @Nullable Collection<IdeaPluginDescriptor> incompatiblePlugins,
-                                                           @Nullable ProgressIndicator indicator,
-                                                           @Nullable BuildNumber buildNumber) {
-    final Map<PluginId, PluginDownloader> downloaded = new HashMap<PluginId, PluginDownloader>();
-    final Set<String> failed = new HashSet<String>();
-    for (String host : getPluginHosts()) {
-      try {
-        checkPluginsHost(host, downloaded, incompatiblePlugins, true, indicator, buildNumber);
+  @NotNull
+  private static CheckForUpdateResult checkPlatformUpdate(@NotNull UpdateSettings settings) {
+    UpdatesInfo info;
+    try {
+      URIBuilder uriBuilder = new URIBuilder(getUpdateUrl());
+      if (!URLUtil.FILE_PROTOCOL.equals(uriBuilder.getScheme())) {
+        prepareUpdateCheckArgs(uriBuilder);
       }
-      catch (ProcessCanceledException ignored) {
-        return null;
-      }
-      catch (Exception e) {
-        LOG.info(e);
-        failed.add(host);
-      }
-    }
+      String updateUrl = uriBuilder.toString();
+      LogUtil.debug(LOG, "load update xml (UPDATE_URL='%s')", updateUrl);
 
-    final Map<String, IdeaPluginDescriptor> toUpdate = new HashMap<String, IdeaPluginDescriptor>();
-    final IdeaPluginDescriptor[] installedPlugins = PluginManagerCore.getPlugins();
-    for (IdeaPluginDescriptor installedPlugin : installedPlugins) {
-      if (!installedPlugin.isBundled()) {
-        toUpdate.put(installedPlugin.getPluginId().getIdString(), installedPlugin);
-      }
-    }
-
-    for (Iterator<PluginId> iterator = downloaded.keySet().iterator(); iterator.hasNext(); ) {
-      if (!toUpdate.containsKey(iterator.next().getIdString())) {
-        iterator.remove();
-      }
-    }
-
-    final File installedTxt = new File(PathManager.getConfigPath(), PluginManager.INSTALLED_TXT);
-    if (installedTxt.isFile()) {
-      try {
-        final String oldInstalledPlugins = FileUtil.loadFile(installedTxt);
-        for (String pluginId : oldInstalledPlugins.trim().split("\n")) {
-          if (!toUpdate.containsKey(pluginId)) toUpdate.put(pluginId.trim(), null);
+      info = HttpRequests.request(updateUrl).forceHttps(settings.SECURE_CONNECTION).connect(new HttpRequests.RequestProcessor<UpdatesInfo>() {
+        @Override
+        public UpdatesInfo process(@NotNull HttpRequests.Request request) throws IOException {
+          try {
+            Document document = JDOMUtil.loadDocument(request.getInputStream());
+            return new UpdatesInfo(document.detachRootElement());
+          }
+          catch (JDOMException e) {
+            // corrupted content, don't bother telling user
+            LOG.info(e);
+            return null;
+          }
         }
-      }
-      catch (IOException e) {
-        LOG.error(e);
-      }
-      installedTxt.deleteOnExit();
+      });
+    }
+    catch (URISyntaxException e) {
+      return new CheckForUpdateResult(UpdateStrategy.State.CONNECTION_ERROR, e);
+    }
+    catch (IOException e) {
+      return new CheckForUpdateResult(UpdateStrategy.State.CONNECTION_ERROR, e);
+    }
+    if (info == null) {
+      return new CheckForUpdateResult(UpdateStrategy.State.NOTHING_LOADED);
     }
 
-    UpdateSettings.getInstance().myOutdatedPlugins.clear();
-    if (!toUpdate.isEmpty()) {
+    ApplicationInfo appInfo = ApplicationInfo.getInstance();
+    int majorVersion = Integer.parseInt(appInfo.getMajorVersion());
+    UpdateStrategy strategy = new UpdateStrategy(majorVersion, appInfo.getBuild(), info, settings);
+    return strategy.checkForUpdates();
+  }
+
+  private static Collection<PluginDownloader> checkPluginsUpdate(boolean manualCheck,
+                                                                 @NotNull UpdateSettings updateSettings,
+                                                                 @Nullable ProgressIndicator indicator,
+                                                                 @Nullable Collection<IdeaPluginDescriptor> incompatiblePlugins,
+                                                                 @Nullable BuildNumber buildNumber) {
+    // collect installed plugins and plugins imported from a previous installation
+    Map<PluginId, IdeaPluginDescriptor> updateable = ContainerUtil.newTroveMap();
+
+    for (IdeaPluginDescriptor descriptor : PluginManagerCore.getPlugins()) {
+      if (!descriptor.isBundled()) {
+        updateable.put(descriptor.getPluginId(), descriptor);
+      }
+    }
+
+    File onceInstalled = new File(PathManager.getConfigPath(), PluginManager.INSTALLED_TXT);
+    if (onceInstalled.isFile()) {
       try {
-        final List<IdeaPluginDescriptor> process = RepositoryHelper.loadPluginsFromRepository(indicator, buildNumber);
-        for (IdeaPluginDescriptor loadedPlugin : process) {
-          final PluginId pluginId = loadedPlugin.getPluginId();
-          final String idString = pluginId.getIdString();
-          if (!toUpdate.containsKey(idString)) continue;
-          if (!downloaded.containsKey(pluginId)) {
-            prepareToInstall(PluginDownloader.createDownloader(loadedPlugin, buildNumber), buildNumber, downloaded, incompatiblePlugins, true, indicator);
+        for (String line : FileUtil.loadLines(onceInstalled)) {
+          PluginId id = PluginId.getId(line.trim());
+          if (!updateable.containsKey(id)) {
+            updateable.put(id, null);
           }
         }
       }
-      catch (ProcessCanceledException ignore) {
-        return null;
+      catch (IOException e) {
+        LOG.error(onceInstalled.getPath(), e);
       }
-      catch (Exception e) {
-        LOG.warn(e);
-        showErrorMessage(manualCheck, e.getMessage());
+      onceInstalled.deleteOnExit();
+    }
+
+    if (updateable.isEmpty()) return null;
+
+    // check custom repositories and the main one for updates
+    Map<PluginId, PluginDownloader> toUpdate = ContainerUtil.newTroveMap();
+
+    List<String> hosts = UpdateSettings.getInstance().getPluginHosts();
+    ContainerUtil.addIfNotNull(ApplicationInfoEx.getInstanceEx().getBuiltinPluginsUrl(), hosts);
+    hosts.add(null);  // default repository
+    InstalledPluginsState state = InstalledPluginsState.getInstance();
+
+    outer:
+    for (String host : hosts) {
+      try {
+        boolean forceHttps = host == null && updateSettings.SECURE_CONNECTION;
+        List<IdeaPluginDescriptor> list = RepositoryHelper.loadPlugins(host, buildNumber, forceHttps, indicator);
+        for (IdeaPluginDescriptor descriptor : list) {
+          PluginId id = descriptor.getPluginId();
+          if (updateable.containsKey(id)) {
+            updateable.remove(id);
+            state.onDescriptorDownload(descriptor);
+            PluginDownloader downloader = PluginDownloader.createDownloader(descriptor, host, buildNumber);
+            downloader.setForceHttps(forceHttps);
+            checkAndPrepareToInstall(downloader, state, toUpdate, incompatiblePlugins, indicator);
+            if (updateable.isEmpty()) {
+              break outer;
+            }
+          }
+        }
+      }
+      catch (IOException e) {
+        if (host != null) {
+          LOG.warn("failed to load plugin descriptions from " + host, e);
+        }
+        else {
+          LOG.warn(e);
+          showErrorMessage(manualCheck, e.getMessage());
+        }
       }
     }
 
-    if (!failed.isEmpty()) {
-      LOG.warn(IdeBundle.message("updates.error.plugin.description.failed", StringUtil.join(failed, ",")));
-    }
-
-    return downloaded.isEmpty() ? null : downloaded.values();
+    return toUpdate.isEmpty() ? null : toUpdate.values();
   }
 
-  private static boolean isReadyToUpdate(String idString, String newVersion) {
-    final PluginDownloader oldPlugin = ourUpdatedPlugins.get(idString);
-    return oldPlugin == null || StringUtil.compareVersionNumbers(newVersion, oldPlugin.getPluginVersion()) > 0;
-  }
+  private static void checkAndPrepareToInstall(PluginDownloader downloader,
+                                               InstalledPluginsState state,
+                                               Map<PluginId, PluginDownloader> toUpdate,
+                                               Collection<IdeaPluginDescriptor> incompatiblePlugins,
+                                               @Nullable ProgressIndicator indicator) throws IOException {
+    String pluginId = downloader.getPluginId();
+    if (PluginManagerCore.getDisabledPlugins().contains(pluginId)) return;
 
-  private static void prepareToInstall(PluginDownloader downloader, 
-                                       BuildNumber buildNumber,
-                                       Map<PluginId, PluginDownloader> downloaded,
-                                       Collection<IdeaPluginDescriptor> incompatiblePlugins,
-                                       boolean collectToUpdate, 
-                                       @Nullable ProgressIndicator indicator) throws IOException {
-    final String pluginId = downloader.getPluginId();
-    final String pluginVersion = downloader.getPluginVersion();
-    if (collectToUpdate && PluginManagerCore.getDisabledPlugins().contains(pluginId)) return;
-    final IdeaPluginDescriptor installedPlugin = PluginManager.getPlugin(PluginId.getId(pluginId));
-    if (installedPlugin == null || pluginVersion == null ||
-        PluginDownloader.compareVersionsSkipBroken(installedPlugin, pluginVersion) > 0) {
+    String pluginVersion = downloader.getPluginVersion();
+    IdeaPluginDescriptor installedPlugin = PluginManager.getPlugin(PluginId.getId(pluginId));
+    if (installedPlugin == null || pluginVersion == null || PluginDownloader.compareVersionsSkipBroken(installedPlugin, pluginVersion) > 0) {
+      IdeaPluginDescriptor descriptor;
 
-      IdeaPluginDescriptor descriptor = null;
-      if (isReadyToUpdate(pluginId, pluginVersion)) {
+      PluginDownloader oldDownloader = ourUpdatedPlugins.get(pluginId);
+      if (oldDownloader == null || StringUtil.compareVersionNumbers(pluginVersion, oldDownloader.getPluginVersion()) > 0) {
         descriptor = downloader.getDescriptor();
-        if (descriptor == null) {
-          if (downloader.prepareToInstall(indicator == null ? new EmptyProgressIndicator() : indicator, buildNumber)) {
+        if (descriptor instanceof PluginNode && ((PluginNode)descriptor).isIncomplete()) {
+          if (downloader.prepareToInstall(indicator == null ? new EmptyProgressIndicator() : indicator)) {
             descriptor = downloader.getDescriptor();
           }
           ourUpdatedPlugins.put(pluginId, downloader);
         }
-      } else {
-        final PluginDownloader oldDownloader = ourUpdatedPlugins.get(pluginId);
-        if (oldDownloader != null) {
-          downloader = oldDownloader;
-          descriptor = oldDownloader.getDescriptor();
-        }
+      }
+      else {
+        downloader = oldDownloader;
+        descriptor = oldDownloader.getDescriptor();
       }
 
       if (descriptor != null &&
-          !PluginManagerCore.isIncompatible(descriptor, buildNumber) &&
-          !InstalledPluginsTableModel.wasUpdated(descriptor.getPluginId())) {
-        downloaded.put(PluginId.getId(pluginId), downloader);
+          !PluginManagerCore.isIncompatible(descriptor, downloader.getBuildNumber()) &&
+          !state.wasUpdated(descriptor.getPluginId())) {
+        toUpdate.put(PluginId.getId(pluginId), downloader);
       }
     }
 
     //collect plugins which were not updated and would be incompatible with new version
     if (incompatiblePlugins != null &&
-        installedPlugin != null && installedPlugin.isEnabled() && !downloaded.containsKey(installedPlugin.getPluginId()) &&
-        PluginManagerCore.isIncompatible(installedPlugin, buildNumber)) {
+        installedPlugin != null && installedPlugin.isEnabled() && !toUpdate.containsKey(installedPlugin.getPluginId()) &&
+        PluginManagerCore.isIncompatible(installedPlugin, downloader.getBuildNumber())) {
       incompatiblePlugins.add(installedPlugin);
     }
   }
@@ -329,231 +383,16 @@ public final class UpdateChecker {
     }
   }
 
-  private static List<String> getPluginHosts() {
-    final List<String> hosts = UpdateSettings.getInstance().getPluginHosts();
-    ContainerUtil.addIfNotNull(ApplicationInfoEx.getInstanceEx().getBuiltinPluginsUrl(), hosts);
-    return hosts;
-  }
-
-  public static boolean checkPluginsHost(final String host, final Map<PluginId, PluginDownloader> downloaded, @NotNull ProgressIndicator progressIndicator) throws Exception {
-    try {
-      return checkPluginsHost(host, downloaded, null, true, progressIndicator, null);
-    }
-    catch (ProcessCanceledException ignored) {
-      return false;
-    }
-  }
-
-  public static boolean checkPluginsHost(String host,
-                                         Map<PluginId, PluginDownloader> downloaded,
-                                         boolean collectToUpdate,
-                                         @Nullable ProgressIndicator indicator) throws Exception {
-    return checkPluginsHost(host, downloaded, null, collectToUpdate, indicator, null);
-  }
-
-  private static boolean checkPluginsHost(@NotNull String host,
-                                          final Map<PluginId, PluginDownloader> downloaded,
-                                          final @Nullable Collection<IdeaPluginDescriptor> incompatiblePlugins,
-                                          boolean collectToUpdate,
-                                          @Nullable final ProgressIndicator indicator,
-                                          final BuildNumber buildNumber) throws Exception {
-    String url;
-    if (StandardFileSystems.FILE_PROTOCOL.equals(new URL(host).getProtocol())) {
-      url = host;
-    }
-    else {
-      url = host + (host.contains("?") ? '&' : '?') + "build=" + ApplicationInfo.getInstance().getBuild().asString();
-    }
-
-    BufferExposingByteArrayOutputStream bytes = HttpRequests.request(url).connect(new HttpRequests.RequestProcessor<BufferExposingByteArrayOutputStream>() {
-      @Override
-      public BufferExposingByteArrayOutputStream process(@NotNull HttpRequests.Request request) throws IOException {
-        BufferExposingByteArrayOutputStream output = new BufferExposingByteArrayOutputStream();
-        try {
-          NetUtils.copyStreamContent(indicator, request.getInputStream(), output, request.getConnection().getContentLength());
-        }
-        finally {
-          output.close();
-        }
-        return output;
-      }
-    });
-
-    ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes.getInternalBuffer(), 0, bytes.size());
-    Element element;
-    try {
-      element = JDOMUtil.load(inputStream);
-    }
-    catch (JDOMException ignored) {
-      return false;
-    }
-    finally {
-      inputStream.reset();
-    }
-
-    SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
-    RepositoryContentHandler handler = new RepositoryContentHandler();
-    parser.parse(inputStream, handler);
-
-    for (IdeaPluginDescriptor descriptor : handler.getPluginsList()) {
-      ((PluginNode)descriptor).setRepositoryName(host);
-      prepareToInstall(PluginDownloader.createDownloader(descriptor, buildNumber), buildNumber, downloaded, incompatiblePlugins, collectToUpdate,
-                       indicator);
-    }
-
-    boolean success = true;
-    for (Element pluginElement : element.getChildren("plugin")) {
-      final String pluginId = pluginElement.getAttributeValue("id");
-      String pluginUrl = pluginElement.getAttributeValue("url");
-      final String pluginVersion = pluginElement.getAttributeValue("version");
-      Element descriptionElement = pluginElement.getChild("description");
-      String description = descriptionElement != null ? descriptionElement.getText() : null;
-
-      List<PluginId> dependsPlugins = new SmartList<PluginId>();
-      for (Element depend : pluginElement.getChildren("depends")) {
-        dependsPlugins.add(PluginId.getId(depend.getText()));
-      }
-
-      if (pluginId == null) {
-        LOG.info("plugin id should not be null");
-        success = false;
-        continue;
-      }
-
-      if (pluginUrl == null) {
-        LOG.info("plugin url should not be null");
-        success = false;
-        continue;
-      }
-
-      VirtualFile pluginFile = PluginDownloader.findPluginFile(pluginUrl, host);
-      if (pluginFile == null) {
-        continue;
-      }
-
-      if (collectToUpdate) {
-        final String finalPluginUrl = getPluginUrl(pluginFile);
-        if (ApplicationManager.getApplication().isDispatchThread()) {
-          ProgressManager.getInstance().run(new Task.Modal(null, IdeBundle.message("update.uploading.plugin.progress.title"), true) {
-            @Override
-            public void run(@NotNull ProgressIndicator indicator) {
-              updatePlugins(finalPluginUrl, pluginId, pluginVersion, buildNumber, downloaded, incompatiblePlugins, true, indicator);
-            }
-          });
-        }
-        else {
-          updatePlugins(finalPluginUrl, pluginId, pluginVersion, buildNumber, downloaded, incompatiblePlugins, true, indicator);
-        }
-      }
-      else {
-        final PluginDownloader downloader = new PluginDownloader(pluginId, pluginUrl, pluginVersion);
-        downloader.setDescription(description);
-        downloader.setDepends(dependsPlugins);
-        downloaded.put(PluginId.getId(pluginId), downloader);
-      }
-    }
-    return success;
-  }
-
-  private static void updatePlugins(String finalPluginUrl,
-                                    String pluginId,
-                                    String pluginVersion,
-                                    BuildNumber buildNumber,
-                                    Map<PluginId, PluginDownloader> downloaded,
-                                    Collection<IdeaPluginDescriptor> incompatiblePlugins, boolean collectToUpdate,
-                                    ProgressIndicator indicator) {
-    try {
-      if (indicator != null) {
-        indicator.setText2(finalPluginUrl);
-      }
-      PluginDownloader downloader = new PluginDownloader(pluginId, finalPluginUrl, pluginVersion, null, null, buildNumber);
-      prepareToInstall(downloader, buildNumber, downloaded, incompatiblePlugins, collectToUpdate, indicator);
-    }
-    catch (IOException e) {
-      LOG.info(e);
-    }
-  }
-
-  @NotNull
-  private static String getPluginUrl(@NotNull VirtualFile pluginFile) {
-    String protocol = pluginFile.getFileSystem().getProtocol();
-    if (StandardFileSystems.FILE_PROTOCOL.equals(protocol) && SystemInfo.isWindows) {
-      String path = pluginFile.getPath();
-      if (path.length() != 0 && path.charAt(0) != '/') {
-        return protocol + ":///" + path;  // fix file URI on Windows
-      }
-    }
-
-    return pluginFile.getUrl();
-  }
-
-  @Nullable
-  private static UpdatesInfo loadUpdatesInfo(@Nullable String updateUrl) throws Exception {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("load update xml (UPDATE_URL='" + updateUrl + "' )");
-    }
-
-    if (StringUtil.isEmpty(updateUrl)) {
-      LOG.debug("update url is empty: updates will not be checked");
-      return null;
-    }
-
-    if (!updateUrl.startsWith("file:")) {
-      updateUrl = updateUrl + '?' + prepareUpdateCheckArgs();
-    }
-    return HttpRequests.request(updateUrl).connect(new HttpRequests.RequestProcessor<UpdatesInfo>() {
-      @Override
-      public UpdatesInfo process(@NotNull HttpRequests.Request request) throws IOException {
-        try {
-          Document document = JDOMUtil.loadDocument(request.getInputStream());
-          return new UpdatesInfo(document.detachRootElement());
-        }
-        catch (JDOMException e) {
-          // corrupted content, don't bother telling user
-          LOG.info(e);
-          return null;
-        }
-      }
-    });
-  }
-
-  @NotNull
-  private static CheckForUpdateResult checkForUpdates(final UpdateSettings settings) {
-    UpdatesInfo info;
-    try {
-      info = loadUpdatesInfo(getUpdateUrl());
-      if (info == null) {
-        return new CheckForUpdateResult(UpdateStrategy.State.NOTHING_LOADED);
-      }
-    }
-    catch (Exception e) {
-      return new CheckForUpdateResult(UpdateStrategy.State.CONNECTION_ERROR, e);
-    }
-
-    ApplicationInfo appInfo = ApplicationInfo.getInstance();
-    int majorVersion = Integer.parseInt(appInfo.getMajorVersion());
-    UpdateStrategy strategy = new UpdateStrategy(majorVersion, appInfo.getBuild(), info, settings);
-    return strategy.checkForUpdates();
-  }
-
-  public static void addUpdateRequestParameter(String name) {
-    addUpdateRequestParameter(name, "");
-  }
-
-  public static void addUpdateRequestParameter(@NotNull String name, @NotNull String value) {
-    ourAdditionalRequestOptions.put(name, value);
-  }
-
   @Contract("null -> false")
   private static boolean newChannelReady(@Nullable UpdateChannel channelToPropose) {
     return channelToPropose != null && channelToPropose.getLatestBuild() != null;
   }
 
-  @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
   private static void showUpdateResult(@Nullable final Project project,
                                        final CheckForUpdateResult checkForUpdateResult,
+                                       final UpdateSettings updateSettings,
                                        final Collection<PluginDownloader> updatedPlugins,
-                                       final Collection<IdeaPluginDescriptor> incompatiblePlugins, 
+                                       final Collection<IdeaPluginDescriptor> incompatiblePlugins,
                                        final boolean enableLink,
                                        final boolean alwaysShowResults) {
     final UpdateChannel channelToPropose = checkForUpdateResult.getChannelToPropose();
@@ -579,7 +418,7 @@ public final class UpdateChecker {
       Runnable runnable = new Runnable() {
         @Override
         public void run() {
-          new UpdateInfoDialog(updatedChannel, enableLink, updatedPlugins, incompatiblePlugins).show();
+          new UpdateInfoDialog(updatedChannel, enableLink, updateSettings.SECURE_CONNECTION, updatedPlugins, incompatiblePlugins).show();
         }
       };
 
@@ -635,34 +474,21 @@ public final class UpdateChecker {
     Notifications.Bus.notify(GROUP.getValue().createNotification(title, message, type, listener), project);
   }
 
-  public static String prepareUpdateCheckArgs() {
+  public static void addUpdateRequestParameter(@NotNull String name, @NotNull String value) {
+    ourAdditionalRequestOptions.put(name, value);
+  }
+
+  private static void prepareUpdateCheckArgs(URIBuilder uriBuilder) {
     addUpdateRequestParameter("build", ApplicationInfo.getInstance().getBuild().asString());
     addUpdateRequestParameter("uid", getInstallationUID(PropertiesComponent.getInstance()));
     addUpdateRequestParameter("os", SystemInfo.OS_NAME + ' ' + SystemInfo.OS_VERSION);
     if (ApplicationInfoEx.getInstanceEx().isEAP()) {
-      addUpdateRequestParameter("eap");
+      addUpdateRequestParameter("eap", "");
     }
 
-    StringBuilder args = new StringBuilder();
-
-    try {
-      for (String name : ourAdditionalRequestOptions.keySet()) {
-        if (args.length() > 0) {
-          args.append('&');
-        }
-
-        args.append(URLEncoder.encode(name, CharsetToolkit.UTF8));
-
-        String value = ourAdditionalRequestOptions.get(name);
-        if (!StringUtil.isEmpty(value)) {
-          args.append('=').append(URLEncoder.encode(value, CharsetToolkit.UTF8));
-        }
-      }
-
-      return args.toString();
-    }
-    catch (UnsupportedEncodingException ignored) {
-      return ""; // Can't be anyway
+    for (String name : ourAdditionalRequestOptions.keySet()) {
+      String value = ourAdditionalRequestOptions.get(name);
+      uriBuilder.addParameter(name, StringUtil.isEmpty(value) ? null : value);
     }
   }
 
@@ -726,7 +552,6 @@ public final class UpdateChecker {
         if (downloader.prepareToInstall(progressIndicator)) {
           final IdeaPluginDescriptor descriptor = downloader.getDescriptor();
           if (descriptor != null) {
-            InstalledPluginsTableModel.updateExistingPlugin(descriptor, PluginManager.getPlugin(descriptor.getPluginId()));
             downloader.install();
             installed = true;
           }
@@ -739,17 +564,18 @@ public final class UpdateChecker {
     return installed;
   }
 
-  public static DownloadPatchResult downloadAndInstallPatch(final BuildInfo newVersion) {
+  public static DownloadPatchResult downloadAndInstallPatch(final PatchInfo patch, final BuildNumber toBuild, final boolean forceHttps) {
     final DownloadPatchResult[] result = new DownloadPatchResult[]{DownloadPatchResult.CANCELED};
 
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       @Override
       public void run() {
         try {
-          doDownloadAndInstallPatch(newVersion, ProgressManager.getInstance().getProgressIndicator());
+          ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+          doDownloadAndInstallPatch(patch, toBuild, forceHttps, indicator);
           result[0] = DownloadPatchResult.SUCCESS;
         }
-        catch (final IOException e) {
+        catch (IOException e) {
           LOG.info(e);
           result[0] = DownloadPatchResult.FAILED;
           Notifications.Bus.notify(new Notification("Updater", "Failed to download patch file", e.getMessage(), NotificationType.ERROR));
@@ -762,69 +588,41 @@ public final class UpdateChecker {
     return result[0];
   }
 
-  private static void doDownloadAndInstallPatch(BuildInfo newVersion, ProgressIndicator i) throws IOException {
-    PatchInfo patch = newVersion.findPatchForCurrentBuild();
-    if (patch == null) throw new IOException("No patch is available for current version");
-
+  private static void doDownloadAndInstallPatch(PatchInfo patch,
+                                                BuildNumber toBuild,
+                                                boolean forceHttps,
+                                                final ProgressIndicator indicator) throws IOException {
     String productCode = ApplicationInfo.getInstance().getBuild().getProductCode();
-
-    String osSuffix = "-" + patch.getOSSuffix();
-
     String fromBuildNumber = patch.getFromBuild().asStringWithoutProductCode();
-    String toBuildNumber = newVersion.getNumber().asStringWithoutProductCode();
-    String jdkMacRedist = System.getProperty("idea.java.redist");
+    String toBuildNumber = toBuild.asStringWithoutProductCode();
+
     String bundledJdk = "";
+    String jdkMacRedist = System.getProperty("idea.java.redist");
     if (jdkMacRedist != null && jdkMacRedist.lastIndexOf("jdk-bundled") >= 0 ){
       bundledJdk = "jdk-bundled".equals(jdkMacRedist) ? "-jdk-bundled" : "-custom-jdk-bundled";
     }
 
+    String osSuffix = "-" + patch.getOSSuffix();
+
     String fileName = productCode + "-" + fromBuildNumber + "-" + toBuildNumber + "-patch" + bundledJdk + osSuffix + ".jar";
 
-    String platform = PlatformUtils.getPlatformPrefix();
-
-    File tempFile = FileUtil.createTempFile(platform, "patch", true);
-
-    OutputStream out = new BufferedOutputStream(new FileOutputStream(tempFile));
-    try {
-      URLConnection connection = HttpConfigurable.getInstance().openConnection(new URL(new URL(getPatchesUrl()), fileName).toString());
-      try {
-        InputStream in = UrlConnectionUtil.getConnectionInputStreamWithException(connection, i);
+    String url = new URL(new URL(getPatchesUrl()), fileName).toString();
+    File tempFile = HttpRequests.request(url).gzip(false).forceHttps(forceHttps).connect(new HttpRequests.RequestProcessor<File>() {
+      @Override
+      public File process(@NotNull HttpRequests.Request request) throws IOException {
+        File tempFile = FileUtil.createTempFile("ij.platform.", ".patch", true);
+        OutputStream output = new BufferedOutputStream(new FileOutputStream(tempFile));
         try {
-          int total = connection.getContentLength();
-          i.setIndeterminate(total <= 0);
-
-          byte[] buffer = new byte[10 * 1024];
-          int count;
-          int read = 0;
-
-          while ((count = in.read(buffer)) > 0) {
-            i.checkCanceled();
-            out.write(buffer, 0, count);
-            read += count;
-            if (total > 0) {
-              i.setFraction(((double)read) / total);
-              i.setText2((read / 1024) + "/" + (total / 1024) + " KB");
-            }
-            else {
-              i.setText2((read / 1024) + " KB");
-            }
-          }
+          NetUtils.copyStreamContent(indicator, request.getInputStream(), output, request.getConnection().getContentLength());
         }
         finally {
-          in.close();
+          output.close();
         }
+        return tempFile;
       }
-      finally {
-        if (connection instanceof HttpURLConnection) {
-          ((HttpURLConnection)connection).disconnect();
-        }
-      }
-    }
-    finally {
-      out.close();
-    }
+    });
 
-    String patchFileName = ("jetbrains.patch.jar." + platform).toLowerCase(Locale.ENGLISH);
+    String patchFileName = ("jetbrains.patch.jar." + PlatformUtils.getPlatformPrefix()).toLowerCase(Locale.ENGLISH);
     File patchFile = new File(FileUtil.getTempDirectory(), patchFileName);
     FileUtil.copy(tempFile, patchFile);
     FileUtil.delete(tempFile);
@@ -874,35 +672,4 @@ public final class UpdateChecker {
       }
     }
   }
-
-  static String getDownloadUrl(IdeaPluginDescriptor descriptor, @Nullable BuildNumber buildNumber) throws UnsupportedEncodingException {
-    String url = null;
-    if (descriptor instanceof PluginNode) {
-      url = ((PluginNode)descriptor).getDownloadUrl();
-      if (url != null) {
-        final String repositoryName = ((PluginNode)descriptor).getRepositoryName();
-        if (repositoryName != null) {
-          final VirtualFile pluginFile = PluginDownloader.findPluginFile(url, repositoryName);
-          if (pluginFile != null) {
-            url = getPluginUrl(pluginFile);
-          }
-        }
-      }
-    }
-
-    if (url == null) {
-      String uuid = ApplicationManager.getApplication() == null ?
-                    UUID.randomUUID().toString() :
-                    getInstallationUID(PropertiesComponent.getInstance());
-      String buildNumberAsString = buildNumber != null
-                                   ? buildNumber.asString()
-                                   : ApplicationManager.getApplication() != null
-                                     ? ApplicationInfo.getInstance().getApiVersion()
-                                     : ApplicationInfoImpl.getShadowInstance().getBuild().asString();
-      url = RepositoryHelper.getDownloadUrl() + URLEncoder.encode(descriptor.getPluginId().getIdString(), "UTF8") +
-            "&build=" + buildNumberAsString + "&uuid=" + URLEncoder.encode(uuid, "UTF8");
-    }
-    return url;
-  }
-
 }

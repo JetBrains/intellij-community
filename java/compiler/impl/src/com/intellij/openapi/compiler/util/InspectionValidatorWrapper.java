@@ -282,6 +282,7 @@ public class InspectionValidatorWrapper implements Validator {
       return false;
     }
 
+    boolean errorsReported = false;
     for (Map.Entry<ProblemDescriptor, HighlightDisplayLevel> entry : problemsMap.entrySet()) {
       ProblemDescriptor problemDescriptor = entry.getKey();
       final PsiElement element = problemDescriptor.getPsiElement();
@@ -299,8 +300,11 @@ public class InspectionValidatorWrapper implements Validator {
       final int line = document.getLineNumber(offset);
       final int column = offset - document.getLineStartOffset(line);
       context.addMessage(category, problemDescriptor.getDescriptionTemplate(), virtualFile.getUrl(), line + 1, column + 1);
+      if (CompilerMessageCategory.ERROR == category) {
+        errorsReported = true;
+      }
     }
-    return true;
+    return errorsReported;
   }
 
   private static Map<ProblemDescriptor, HighlightDisplayLevel> runInspectionTool(final PsiFile file,

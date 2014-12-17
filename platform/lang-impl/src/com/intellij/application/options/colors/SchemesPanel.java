@@ -24,6 +24,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.util.Consumer;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBInsets;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -78,13 +79,13 @@ public class SchemesPanel extends JPanel implements SkipSelfSearchComponent {
 
     int gridx = 0;
 
-    panel.add(new JLabel(ApplicationBundle.message("combobox.scheme.name")),
-              new GridBagConstraints(gridx++, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 5),
+    panel.add(new JLabel(ApplicationBundle.message("editbox.scheme.name")),
+              new GridBagConstraints(gridx++, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new JBInsets(0, 0, 5, 5),
                                      0, 0));
 
     mySchemeComboBox = new JComboBox();
     panel.add(mySchemeComboBox,
-              new GridBagConstraints(gridx++, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 10),
+              new GridBagConstraints(gridx++, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new JBInsets(0, 0, 5, 10),
                                      0, 0));
 
     JButton saveAsButton = new JButton(ApplicationBundle.message("button.save.as"));
@@ -95,7 +96,7 @@ public class SchemesPanel extends JPanel implements SkipSelfSearchComponent {
       }
     });
     panel.add(saveAsButton,
-              new GridBagConstraints(gridx++, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 5),
+              new GridBagConstraints(gridx++, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new JBInsets(0, 0, 5, 5),
                                      0, 0));
 
     myDeleteButton = new JButton(ApplicationBundle.message("button.delete"));
@@ -108,7 +109,7 @@ public class SchemesPanel extends JPanel implements SkipSelfSearchComponent {
       }
     });
     panel.add(myDeleteButton,
-              new GridBagConstraints(gridx++, 0, 1, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0,
+              new GridBagConstraints(gridx++, 0, 1, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new JBInsets(0, 0, 5, 5), 0,
                                      0));
 
     for (final ImportHandler importHandler : Extensions.getExtensions(ImportHandler.EP_NAME)) {
@@ -125,7 +126,7 @@ public class SchemesPanel extends JPanel implements SkipSelfSearchComponent {
         }
       });
       panel.add(button,
-                new GridBagConstraints(gridx++, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0,
+                new GridBagConstraints(gridx++, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new JBInsets(0, 0, 5, 5), 0,
                                        0));
     }
 
@@ -183,9 +184,5 @@ public class SchemesPanel extends JPanel implements SkipSelfSearchComponent {
 
   public void addListener(ColorAndFontSettingsListener listener) {
     myDispatcher.addListener(listener);
-  }
-
-  public void disposeUIResources() {
-    
   }
 }

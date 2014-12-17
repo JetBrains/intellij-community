@@ -415,11 +415,20 @@ class ContractInferenceFromSourceTest extends LightCodeInsightFixtureTestCase {
 
   public void "test compare with string literal"() {
     def c = inferContracts("""
-  String cast(String s) {
+  String s(String s) {
     return s == "a" ? "b" : null;
   }
     """)
-    assert c == []
+    assert c == ['null -> null']
+  }
+  
+  public void "test negative compare with string literal"() {
+    def c = inferContracts("""
+  String s(String s) {
+    return s != "a" ? "b" : null;
+  }
+    """)
+    assert c == ['null -> !null']
   }
 
   public void "test return after if without else"() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NotNull;
@@ -138,7 +139,7 @@ public class FontOptions extends JPanel implements OptionsPanel{
         Object selectedFont = myPrimaryCombo.getSelectedItem();
         if (selectedFont instanceof String) {
           FontPreferences fontPreferences = getFontPreferences();
-          fontPreferences.register((String)selectedFont, getFontSizeFromField());
+          fontPreferences.register((String)selectedFont, JBUI.scale(getFontSizeFromField()));
         }
         updateDescription(true);
       }
@@ -189,7 +190,8 @@ public class FontOptions extends JPanel implements OptionsPanel{
 
   private int getFontSizeFromField() {
     try {
-      return Math.min(OptionsConstants.MAX_EDITOR_FONT_SIZE, Math.max(OptionsConstants.MIN_EDITOR_FONT_SIZE, Integer.parseInt(myEditorFontSizeField.getText())));
+      return Math.min(OptionsConstants.MAX_EDITOR_FONT_SIZE,
+                      Math.max(OptionsConstants.MIN_EDITOR_FONT_SIZE, Integer.parseInt(myEditorFontSizeField.getText())));
     }
     catch (NumberFormatException e) {
       return OptionsConstants.DEFAULT_EDITOR_FONT_SIZE;
@@ -217,13 +219,13 @@ public class FontOptions extends JPanel implements OptionsPanel{
       if (!FontPreferences.DEFAULT_FONT_NAME.equals(primaryFontFamily)) {
         fontPreferences.addFontFamily(primaryFontFamily);
       }
-      fontPreferences.register(primaryFontFamily, fontSize);
+      fontPreferences.register(primaryFontFamily, JBUI.scale(fontSize));
     }
     if (secondaryFontFamily != null) {
       if (!FontPreferences.DEFAULT_FONT_NAME.equals(secondaryFontFamily)){
         fontPreferences.addFontFamily(secondaryFontFamily);
       }
-      fontPreferences.register(secondaryFontFamily, fontSize);
+      fontPreferences.register(secondaryFontFamily, JBUI.scale(fontSize));
     }
     updateDescription(true);
   }

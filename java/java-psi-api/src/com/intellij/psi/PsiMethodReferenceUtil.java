@@ -95,6 +95,29 @@ public class PsiMethodReferenceUtil {
     return !varargs || parameterTypes.length - 1 <= argTypes.length - offset;
   }
 
+  @Nullable
+  public static PsiType getQualifierType(PsiMethodReferenceExpression expression) {
+    PsiType qualifierType = null;
+    final PsiTypeElement typeElement = expression.getQualifierType();
+    if (typeElement != null) {
+      qualifierType = typeElement.getType();
+    } else {
+      final PsiElement qualifier = expression.getQualifier();
+      if (qualifier instanceof PsiExpression) {
+        qualifierType = ((PsiExpression)qualifier).getType();
+      }
+    }
+    if (qualifierType == null) {
+      final QualifierResolveResult qualifierResolveResult = getQualifierResolveResult(expression);
+      final PsiClass containingClass = qualifierResolveResult.getContainingClass();
+      if (containingClass == null) {
+        return null;
+      }
+      qualifierType = JavaPsiFacade.getElementFactory(expression.getProject()).createType(containingClass);
+    }
+    return qualifierType;
+  }
+
   public static class QualifierResolveResult {
     private final PsiClass myContainingClass;
     private final PsiSubstitutor mySubstitutor;

@@ -24,16 +24,14 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 public class JBUI {
+  private static boolean IS_HIDPI = "true".equals(System.getProperty("hidpi"));
+
   public static int scale(int i) {
     return isHiDPI() ? 2 * i : i;
   }
 
   public static JBDimension size(int width, int height) {
     return new JBDimension(width, height);
-  }
-
-  public static Border emptyBorder(int top, int left, int bottom, int right) {
-    return new EmptyBorder(insets(top, left, bottom, right));
   }
 
   public static JBInsets insets(int top, int left, int bottom, int right) {
@@ -52,15 +50,23 @@ public class JBUI {
     return JBInsets.create(insets);
   }
 
-  public static JBFont labelFont() {
-    return JBFont.create(UIManager.getFont("Label.font"));
-  }
-
-  public static JBFont labelFont(float size) {
-    return labelFont().deriveFont(scale(size));
-  }
-
   public static boolean isHiDPI() {
-    return "true".equals(System.getProperty("hidpi"));
+    return IS_HIDPI;
+  }
+
+  public static class Fonts {
+    public static JBFont label() {
+      return JBFont.create(UIManager.getFont("Label.font"));
+    }
+
+    public static JBFont label(float size) {
+      return label().deriveFont(scale(size));
+    }
+  }
+
+  public static class Borders {
+    public static Border empty(int top, int left, int bottom, int right) {
+      return new EmptyBorder(insets(top, left, bottom, right));
+    }
   }
 }

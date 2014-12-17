@@ -26,7 +26,9 @@ import com.intellij.mock.MockApplication;
 import com.intellij.mock.MockApplicationEx;
 import com.intellij.mock.MockFileDocumentManagerImpl;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.impl.CoreCommandProcessor;
 import com.intellij.openapi.components.ExtensionAreas;
@@ -37,7 +39,9 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileTypes.*;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeExtension;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -53,15 +57,12 @@ import com.intellij.openapi.vfs.impl.VirtualFileManagerImpl;
 import com.intellij.openapi.vfs.impl.jar.CoreJarFileSystem;
 import com.intellij.openapi.vfs.local.CoreLocalFileSystem;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
-import com.intellij.psi.FileContextProvider;
 import com.intellij.psi.PsiReferenceService;
 import com.intellij.psi.PsiReferenceServiceImpl;
 import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistryImpl;
-import com.intellij.psi.meta.MetaDataContributor;
 import com.intellij.psi.meta.MetaDataRegistrar;
-import com.intellij.psi.stubs.BinaryFileStubBuilders;
 import com.intellij.psi.stubs.CoreStubTreeLoader;
 import com.intellij.psi.stubs.StubTreeLoader;
 import com.intellij.util.Consumer;
@@ -88,7 +89,6 @@ public class CoreApplicationEnvironment {
 
   public CoreApplicationEnvironment(@NotNull Disposable parentDisposable) {
     myParentDisposable = parentDisposable;
-    Extensions.cleanRootArea(myParentDisposable);
 
     myFileTypeRegistry = new CoreFileTypeRegistry();
 
@@ -122,17 +122,12 @@ public class CoreApplicationEnvironment {
     registerApplicationService(PsiReferenceService.class, new PsiReferenceServiceImpl());
     registerApplicationService(MetaDataRegistrar.class, new MetaRegistry());
 
-    registerApplicationExtensionPoint(ContentBasedFileSubstitutor.EP_NAME, ContentBasedFileSubstitutor.class);
-    registerExtensionPoint(Extensions.getRootArea(), BinaryFileStubBuilders.EP_NAME, FileTypeExtensionPoint.class);
-    registerExtensionPoint(Extensions.getRootArea(), FileContextProvider.EP_NAME, FileContextProvider.class);
-
-    registerApplicationExtensionPoint(MetaDataContributor.EP_NAME, MetaDataContributor.class);
-
     registerApplicationService(ProgressManager.class, createProgressIndicatorProvider());
 
     registerApplicationService(JobLauncher.class, createJobLauncher());
     registerApplicationService(CodeFoldingSettings.class, new CodeFoldingSettings());
     registerApplicationService(CommandProcessor.class, new CoreCommandProcessor());
+    myApplication.registerService(ApplicationInfo.class, ApplicationInfoImpl.class);
   }
 
   public <T> void registerApplicationService(@NotNull Class<T> serviceInterface, @NotNull T serviceImplementation) {
@@ -313,8 +308,7 @@ public class CoreApplicationEnvironment {
   }
 
   public static <T> void registerApplicationExtensionPoint(@NotNull ExtensionPointName<T> extensionPointName, @NotNull Class<? extends T> aClass) {
-    final String name = extensionPointName.getName();
-    registerExtensionPoint(Extensions.getRootArea(), name, aClass);
+    registerExtensionPoint(Extensions.getRootArea(), extensionPointName, aClass);
   }
 
   @NotNull

@@ -28,8 +28,6 @@ import java.awt.*;
  *    found in the cache: such functionality is implemented by the {@link DataGetter} which is able to receive
  *    non-cached details more efficiently, in a batch.</p>
  * <p>Any access to the Cache MUST be performed from the EDT thread.</p>
- *
- * @author Kirill Likhodedov
  */
 class VcsCommitCache<CommitId, T extends VcsShortCommitDetails> {
 
@@ -52,7 +50,7 @@ class VcsCommitCache<CommitId, T extends VcsShortCommitDetails> {
   }
 
   public void remove(@NotNull CommitId hash) {
+    assert EventQueue.isDispatchThread();
     myCache.remove(hash);
   }
-
 }

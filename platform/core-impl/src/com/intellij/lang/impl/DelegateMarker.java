@@ -18,14 +18,21 @@ package com.intellij.lang.impl;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.WhitespacesAndCommentsBinder;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class DelegateMarker implements PsiBuilder.Marker {
 
-  protected final PsiBuilder.Marker myDelegate;
+  @NotNull
+  private final PsiBuilder.Marker myDelegate;
 
-  public DelegateMarker(PsiBuilder.Marker delegate) {
+  public DelegateMarker(@NotNull PsiBuilder.Marker delegate) {
     myDelegate = delegate;
+  }
+
+  @NotNull
+  public PsiBuilder.Marker getDelegate() {
+    return myDelegate;
   }
 
   @Override

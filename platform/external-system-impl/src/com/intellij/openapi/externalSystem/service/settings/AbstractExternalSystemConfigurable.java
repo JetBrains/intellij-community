@@ -83,6 +83,11 @@ public abstract class AbstractExternalSystemConfigurable<
     myExternalSystemId = externalSystemId;
   }
 
+  @NotNull
+  public Project getProject() {
+    return myProject;
+  }
+
   @Nullable
   @Override
   public Runnable enableSearch(String option) {

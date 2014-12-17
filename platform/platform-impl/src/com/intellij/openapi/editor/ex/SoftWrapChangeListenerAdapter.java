@@ -15,21 +15,13 @@
  */
 package com.intellij.openapi.editor.ex;
 
-import com.intellij.openapi.editor.SoftWrap;
-import org.jetbrains.annotations.NotNull;
-
 /**
  * @author Denis Zhdanov
  * @since 11/23/11 7:03 PM
  */
 public class SoftWrapChangeListenerAdapter implements SoftWrapChangeListener {
-  
   @Override
-  public void softWrapAdded(@NotNull SoftWrap softWrap) {
-  }
-
-  @Override
-  public void softWrapsRemoved() {
+  public void softWrapsChanged() {
   }
 
   @Override

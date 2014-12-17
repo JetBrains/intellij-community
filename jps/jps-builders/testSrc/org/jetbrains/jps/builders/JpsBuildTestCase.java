@@ -416,7 +416,7 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
     return addModule(moduleName, srcPaths, getAbsolutePath("out/production/" + moduleName), null, myJdk);
   }
 
-  protected void checkMappingsAreSameAfterRebuild(BuildResult makeResult) throws IOException {
+  protected void checkMappingsAreSameAfterRebuild(BuildResult makeResult) {
     String makeDump = makeResult.getMappingsDump();
     BuildResult rebuildResult = doBuild(CompileScopeTestBuilder.rebuild().allModules());
     rebuildResult.assertSuccessful();

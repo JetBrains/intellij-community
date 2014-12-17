@@ -226,14 +226,10 @@ public class CCCreateCourseArchive extends DumbAwareAction {
     final Gson gson = new GsonBuilder().setPrettyPrinting().excludeFieldsWithoutExposeAnnotation().create();
     final String json = gson.toJson(course);
     final File courseJson = new File(project.getBasePath(), "course.json");
-    FileWriter writer = null;
+    OutputStreamWriter outputStreamWriter = null;
     try {
-      writer = new FileWriter(courseJson);
-      writer.write(json);
-    }
-    catch (IOException e) {
-      Messages.showErrorDialog(e.getMessage(), "Failed to Generate Json");
-      LOG.info(e);
+      outputStreamWriter = new OutputStreamWriter(new FileOutputStream(courseJson), "UTF-8");
+      outputStreamWriter.write(json);
     }
     catch (Exception e) {
       Messages.showErrorDialog(e.getMessage(), "Failed to Generate Json");
@@ -241,8 +237,8 @@ public class CCCreateCourseArchive extends DumbAwareAction {
     }
     finally {
       try {
-        if (writer != null) {
-          writer.close();
+        if (outputStreamWriter != null) {
+          outputStreamWriter.close();
         }
       }
       catch (IOException e1) {

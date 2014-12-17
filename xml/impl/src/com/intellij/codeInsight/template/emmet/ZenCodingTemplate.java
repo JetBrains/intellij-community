@@ -55,6 +55,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlBundle;
+import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -303,7 +304,7 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
       if (token != null) {
         final List<Couple<String>> attributes = token.getAttribute2Value();
         final Couple<String> singleAttribute = ContainerUtil.getFirstItem(attributes);
-        if (singleAttribute == null || "class".equalsIgnoreCase(singleAttribute.first) && StringUtil.isEmpty(singleAttribute.second)) {
+        if (singleAttribute == null || HtmlUtil.CLASS_ATTRIBUTE_NAME.equalsIgnoreCase(singleAttribute.first) && StringUtil.isEmpty(singleAttribute.second)) {
           return true;
         }
       }

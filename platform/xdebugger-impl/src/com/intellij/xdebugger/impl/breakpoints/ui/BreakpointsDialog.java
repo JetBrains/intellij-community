@@ -20,6 +20,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -443,7 +444,7 @@ public class BreakpointsDialog extends DialogWrapper {
     }
   }
 
-  private class AddXBreakpointAction extends AnAction {
+  private class AddXBreakpointAction extends AnAction implements DumbAware {
     private final XBreakpointType<?, ?> myType;
 
     public AddXBreakpointAction(XBreakpointType<?, ?> type) {

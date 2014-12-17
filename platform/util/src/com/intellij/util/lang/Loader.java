@@ -15,12 +15,19 @@
  */
 package com.intellij.util.lang;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import sun.misc.Resource;
 
 import java.io.IOException;
 import java.net.URL;
 
+/**
+ * An object responsible for loading classes and resources from a particular classpath element: a jar or a directory.
+ * 
+ * @see JarLoader
+ * @see FileLoader
+ */
 abstract class Loader {
   private final URL myURL;
   private final int myIndex;
@@ -36,8 +43,8 @@ abstract class Loader {
 
   @Nullable
   abstract Resource getResource(String name, boolean flag);
-
-  abstract void buildCache(ClasspathCache.LoaderData loaderData) throws IOException;
+  
+  @NotNull abstract ClasspathCache.LoaderData buildData() throws IOException;
 
   int getIndex() {
     return myIndex;

@@ -15,6 +15,8 @@
  */
 package com.intellij.vcs.log.graph;
 
+import com.intellij.vcs.log.VcsLogRefManager;
+
 public interface GraphColorManager<CommitId> {
 
   /**
@@ -36,21 +38,22 @@ public interface GraphColorManager<CommitId> {
   int getColorOfFragment(CommitId headCommit, int magicIndex);
 
   /**
-   * Compares two head commits in terms of "importance" of reference labels pointing to these commits.
-   * It is used to order branches, branch labels, and for branch coloring. <br/>
-   * E.g. if branch1 is more important than branch2, its color will be reused by the subgraph below the point when these branches
-   * were diverged.
+   * Compares two head commits, which represent graph branches, by expected positions of these branches in the graph,
+   * and thus by their "importance".
    * <p/>
-   * Then head1 is more important than head2, if its most important reference is more important than head2's most important reference
-   * (if they are the same, next are compared).
+   * If branch1 is more important than branch2, branch1 will be laid out more to the left from the branch2, and
+   * the color of branch1 will be reused by the subgraph below the point when these branches have diverged.
    * <p/>
-   * References are compared by the following logic (see {@link com.intellij.vcs.log.VcsLogRefManager}: <ul>
-   * <li>Negative value is returned if first reference is <b>more</b> important than the second (i.e. it will be at the left in the log).
-   * <li>Positive value is returned if first reference is <b>less</b> important than the second (i.e. it will be at the right in the log).
-   * <li>Zero is returned if referenced are considered equally important.
+   * <ul>
+   * <li><b>Negative</b> value is returned if the branch represented by {@code head1} should be laid out at the left,
+   * i.e. if {@code head1} is more important than {@code head2}.
+   * <li><b>Positive</b> value is returned if the branch represented by {@code head1} should be laid out at the right from {@code head2}.
+   * i.e. if {@code head1} is less important than {@code head2}.
+   * <li>Zero is returned if the given commits are equal.
    * </ul>
-   * <p>
+   *
+   * @see VcsLogRefManager#getBranchLayoutComparator()
    */
-  int compareHeads(CommitId head1, CommitId head2); // todo drop this
+  int compareHeads(CommitId head1, CommitId head2);
 
 }

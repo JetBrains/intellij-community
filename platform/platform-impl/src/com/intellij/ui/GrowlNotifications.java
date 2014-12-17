@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import java.util.TreeSet;
  * @author mike
  */
 class GrowlNotifications implements SystemNotificationsImpl.Notifier {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.GrowlNotifications");
+  private static final Logger LOG = Logger.getInstance(GrowlNotifications.class);
 
   private static GrowlNotifications ourNotifications;
 
@@ -55,10 +55,9 @@ class GrowlNotifications implements SystemNotificationsImpl.Notifier {
   }
 
   @Override
-  public void notify(@NotNull Set<String> allNames, @NotNull String name, @NotNull String title, @NotNull String description) {
+  public void notify(@NotNull String name, @NotNull String title, @NotNull String description) {
     try {
-      if (!myNotifications.equals(allNames)) {
-        myNotifications.addAll(allNames);
+      if (myNotifications.add(name)) {
         register();
       }
 

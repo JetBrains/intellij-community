@@ -395,7 +395,7 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
         myProjectIcon.setVisible(false);
       }
       if (Registry.is("ide.new.settings.dialog")) {
-        result.setBackground(selected ? UIUtil.getTreeSelectionBackground() : SettingsTreeView.BACKGROUND);
+        result.setBackground(selected ? UIUtil.getTreeSelectionBackground() : UIUtil.SIDE_PANEL_BACKGROUND);
       }
       return result;
     }

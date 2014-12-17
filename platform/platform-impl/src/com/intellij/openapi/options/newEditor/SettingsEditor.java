@@ -33,6 +33,7 @@ import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.ui.treeStructure.SimpleNode;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -183,8 +184,8 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
     JComponent right = myEditor;
     if (Registry.is("ide.settings.old.style")) {
       myBanner.setBorder(BorderFactory.createEmptyBorder(5, 10, 0, 10));
-      mySearch.setBackground(SettingsTreeView.BACKGROUND);
-      mySearchPanel.setBackground(SettingsTreeView.BACKGROUND);
+      mySearch.setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
+      mySearchPanel.setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
       mySearchPanel.addComponentListener(new ComponentAdapter() {
         @Override
         public void componentResized(ComponentEvent event) {

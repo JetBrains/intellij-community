@@ -263,7 +263,7 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
 
   @Override
   public void setupCatchBlock(@NotNull String exceptionName, @NotNull PsiType exceptionType, PsiElement context, @NotNull PsiCatchSection catchSection) {
-    final FileTemplate catchBodyTemplate = FileTemplateManager.getInstance().getCodeTemplate(JavaTemplateUtil.TEMPLATE_CATCH_BODY);
+    final FileTemplate catchBodyTemplate = FileTemplateManager.getInstance(catchSection.getProject()).getCodeTemplate(JavaTemplateUtil.TEMPLATE_CATCH_BODY);
     LOG.assertTrue(catchBodyTemplate != null);
 
     final Properties props = new Properties();

@@ -43,6 +43,7 @@
     <enterHandlerDelegate implementation="com.jetbrains.python.editor.PythonEnterHandler"/>
     <enterHandlerDelegate implementation="com.jetbrains.python.editor.PyEnterAtIndentHandler" order="first"/>
     <enterHandlerDelegate implementation="com.jetbrains.python.editor.PyEnterBetweenBracketsHandler"/>
+    <editor.backspaceModeOverride language="Python" implementationClass="com.intellij.codeInsight.editorActions.SmartBackspaceDisabler"/>
     <sdkType implementation="com.jetbrains.python.sdk.PythonSdkType"/>
     <gotoClassContributor implementation="com.jetbrains.python.PyGotoClassContributor"/>
     <gotoSymbolContributor implementation="com.jetbrains.python.PyGotoSymbolContributor"/>

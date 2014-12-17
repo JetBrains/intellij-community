@@ -10,7 +10,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.externalSystem.ExternalSystemConfigurableAware;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
-import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.model.LocationAwareExternalSystemException;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager;
@@ -112,7 +111,8 @@ public class ExternalSystemNotificationManager {
         filePath, ObjectUtils.notNull(line, -1), ObjectUtils.notNull(column, -1), false);
 
     for (ExternalSystemNotificationExtension extension : ExternalSystemNotificationExtension.EP_NAME.getExtensions()) {
-      if (!externalSystemId.equals(extension.getTargetExternalSystemId())) {
+      final ProjectSystemId targetExternalSystemId = extension.getTargetExternalSystemId();
+      if (!externalSystemId.equals(targetExternalSystemId) && !targetExternalSystemId.equals(ProjectSystemId.IDE)) {
         continue;
       }
       extension.customize(notificationData, myProject, error);

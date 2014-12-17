@@ -199,7 +199,7 @@ public class HighlightInfo implements Segment {
   @Nullable
   public Color getErrorStripeMarkColor(@NotNull PsiElement element,
                                        @Nullable final EditorColorsScheme colorsScheme) { // if null global scheme will be used
-    if (forcedTextAttributes != null && forcedTextAttributes.getErrorStripeColor() != null) {
+    if (forcedTextAttributes != null) {
       return forcedTextAttributes.getErrorStripeColor();
     }
     EditorColorsScheme scheme = getColorsScheme(colorsScheme);

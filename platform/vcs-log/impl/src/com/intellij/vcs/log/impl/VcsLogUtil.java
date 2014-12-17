@@ -59,4 +59,7 @@ public class VcsLogUtil {
     };
   }
 
+  public static int compareRoots(@NotNull VirtualFile root1, @NotNull VirtualFile root2) {
+    return root1.getPresentableUrl().compareTo(root2.getPresentableUrl());
+  }
 }

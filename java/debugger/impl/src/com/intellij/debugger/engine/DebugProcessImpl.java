@@ -747,7 +747,6 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     if (runToCursorBreakpoint != null) {
       myRunToCursorBreakpoint = null;
       getRequestsManager().deleteRequest(runToCursorBreakpoint);
-      runToCursorBreakpoint.delete();
       if (runToCursorBreakpoint.isRestoreBreakpoints()) {
         final BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(getProject()).getBreakpointManager();
         breakpointManager.enableBreakpoints(this);

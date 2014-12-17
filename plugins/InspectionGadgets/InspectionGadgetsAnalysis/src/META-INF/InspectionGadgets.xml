@@ -2695,7 +2695,7 @@
                      groupKey="group.names.visibility.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.visibility.TypeParameterHidesVisibleTypeInspection"/>
     <localInspection language="JAVA" suppressId="ParameterHidesMemberVariable" shortName="ParameterHidingMemberVariable"
-                     bundle="com.siyeh.InspectionGadgetsBundle" key="parameter.hides.member.variable.display.name"
+                     bundle="com.siyeh.InspectionGadgetsBundle" key="parameter.hides.member.variable.display.name" alternativeId="hiding"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.visibility.issues" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.visibility.ParameterHidingMemberVariableInspection"/>
     <localInspection language="JAVA" suppressId="LambdaParameterHidesMemberVariable" shortName="LambdaParameterHidingMemberVariable"

@@ -50,6 +50,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.vcs.log.TimedVcsCommit;
+import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcsUtil.VcsUtil;
 import org.intellij.images.editor.ImageFileEditor;
 import org.jetbrains.annotations.Contract;
@@ -238,7 +239,7 @@ public class DvcsUtil {
     return tryOrThrow(new Callable<String>() {
       @Override
       public String call() throws Exception {
-        return StringUtil.convertLineSeparators(FileUtil.loadFile(file).trim());
+        return StringUtil.convertLineSeparators(FileUtil.loadFile(file)).trim();
       }
     }, file);
   }
@@ -379,5 +380,25 @@ public class DvcsUtil {
       }
     }
     return root;
+  }
+
+  @NotNull
+  public static <R extends Repository> Map<R, List<VcsFullCommitDetails>> groupCommitsByRoots(@NotNull RepositoryManager<R> repoManager,
+                                                                                              @NotNull List<? extends VcsFullCommitDetails> commits) {
+    Map<R, List<VcsFullCommitDetails>> groupedCommits = ContainerUtil.newHashMap();
+    for (VcsFullCommitDetails commit : commits) {
+      R repository = repoManager.getRepositoryForRoot(commit.getRoot());
+      if (repository == null) {
+        LOGGER.info("No repository found for commit " + commit);
+        continue;
+      }
+      List<VcsFullCommitDetails> commitsInRoot = groupedCommits.get(repository);
+      if (commitsInRoot == null) {
+        commitsInRoot = ContainerUtil.newArrayList();
+        groupedCommits.put(repository, commitsInRoot);
+      }
+      commitsInRoot.add(commit);
+    }
+    return groupedCommits;
   }
 }

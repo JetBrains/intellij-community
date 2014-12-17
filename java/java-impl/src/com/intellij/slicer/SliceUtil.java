@@ -270,9 +270,10 @@ public class SliceUtil {
 
       body.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override
-        public void visitAnonymousClass(PsiAnonymousClass aClass) {
-          // do not look for returns there
-        }
+        public void visitClass(PsiClass aClass) {}
+
+        @Override
+        public void visitLambdaExpression(PsiLambdaExpression expression) {}
 
         @Override
         public void visitReturnStatement(final PsiReturnStatement statement) {

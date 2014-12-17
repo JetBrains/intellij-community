@@ -20,7 +20,6 @@ import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.lang.folding.LanguageFolding;
 import com.intellij.lang.xml.XMLLanguage;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
@@ -33,6 +32,7 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.xml.*;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlTagUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,10 +41,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public abstract class XmlCodeFoldingBuilder implements FoldingBuilder, DumbAware {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.lang.xml.XmlFoldingBuilder");
   private static final TokenSet XML_ATTRIBUTE_SET = TokenSet.create(XmlElementType.XML_ATTRIBUTE);
   private static final int MIN_TEXT_RANGE_LENGTH = 3;
-  private static final String STYLE_ATTRIBUTE = "style";
 
   @Override
   @NotNull
@@ -239,7 +237,7 @@ public abstract class XmlCodeFoldingBuilder implements FoldingBuilder, DumbAware
 
   private static boolean isAttributeShouldBeFolded(XmlAttribute child) {
     return child.getContainingFile() instanceof HtmlFileImpl &&
-           STYLE_ATTRIBUTE.equalsIgnoreCase(child.getName());
+           HtmlUtil.STYLE_ATTRIBUTE_NAME.equalsIgnoreCase(child.getName());
   }
 
   protected abstract XmlCodeFoldingSettings getFoldingSettings();

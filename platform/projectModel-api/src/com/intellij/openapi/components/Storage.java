@@ -29,6 +29,11 @@ public @interface Storage {
   StorageScheme scheme() default StorageScheme.DEFAULT;
 
   /**
+   * If deprecated: Data will be removed on write. And ignored on read if (and only if) new storage exists.
+   */
+  boolean deprecated() default false;
+
+  /**
    * You must not store components with different roaming types in one file ({@link #file()}).
    */
   RoamingType roamingType() default RoamingType.PER_USER;

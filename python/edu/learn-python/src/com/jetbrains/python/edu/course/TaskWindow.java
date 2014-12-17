@@ -1,6 +1,8 @@
 package com.jetbrains.python.edu.course;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.process.CapturingProcessHandler;
+import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -219,8 +221,10 @@ public class TaskWindow implements Comparable, Stateful {
           }
         });
         VirtualFile fileWindows = StudyUtils.flushWindows(windowTaskFile, windowCopy);
-        Process smartTestProcess = testRunner.launchTests(project, windowCopy.getPath());
-        boolean res = testRunner.getPassedTests(smartTestProcess).equals(StudyTestRunner.TEST_OK);
+        Process smartTestProcess = testRunner.createCheckProcess(project, windowCopy.getPath());
+        final CapturingProcessHandler handler = new CapturingProcessHandler(smartTestProcess);
+        final ProcessOutput output = handler.runProcess();
+        boolean res = testRunner.getTestsOutput(output).equals(StudyTestRunner.TEST_OK);
         userTaskWindow.setStatus(res ? StudyStatus.Solved : StudyStatus.Failed, StudyStatus.Unchecked);
         StudyUtils.deleteFile(windowCopy);
         StudyUtils.deleteFile(fileWindows);

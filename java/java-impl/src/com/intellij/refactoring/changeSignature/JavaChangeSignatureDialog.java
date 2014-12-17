@@ -17,6 +17,7 @@ package com.intellij.refactoring.changeSignature;
 
 import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -174,7 +175,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
     table.getSelectionModel().setSelectionInterval(0, 0);
     table.setSurrendersFocusOnKeystroke(true);
 
-    myPropExceptionsButton = new AnActionButton(RefactoringBundle.message("changeSignature.propagate.exceptions.title"), null, PlatformIcons.NEW_EXCEPTION) {
+    myPropExceptionsButton = new AnActionButton(RefactoringBundle.message("changeSignature.propagate.exceptions.title"), null, AllIcons.Hierarchy.Caller) {
       @Override
       public void actionPerformed(AnActionEvent e) {
         final Ref<JavaCallerChooser> chooser = new Ref<JavaCallerChooser>();

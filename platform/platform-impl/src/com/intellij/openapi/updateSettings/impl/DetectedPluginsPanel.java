@@ -49,7 +49,7 @@ public class DetectedPluginsPanel extends OrderPanel<PluginDownloader> {
   public DetectedPluginsPanel() {
     super(PluginDownloader.class);
     final JTable entryTable = getEntryTable();
-    myHeader = new PluginHeaderPanel(null, entryTable);
+    myHeader = new PluginHeaderPanel(null);
     entryTable.setTableHeader(null);
     entryTable.setDefaultRenderer(PluginDownloader.class, new ColoredTableCellRenderer() {
       protected void customizeCellRenderer(final JTable table,

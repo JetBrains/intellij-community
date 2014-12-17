@@ -115,7 +115,6 @@ public class HgPushSupport extends PushSupport<HgRepository, HgPushSource, HgTar
 
   @Override
   public boolean isSilentForcePushAllowed(@NotNull HgTarget target) {
-    return myCommonPushSettings.containsForcePushTarget(
-      target.getPresentation(), target.getBranchName());
+    return myCommonPushSettings.containsForcePushTarget(target.getPresentation(), target.getBranchName());
   }
 }

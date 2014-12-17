@@ -41,6 +41,7 @@ import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.inCallers.JavaCallerChooser;
 import com.intellij.refactoring.safeDelete.usageInfo.*;
+import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
@@ -49,6 +50,7 @@ import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.*;
 import com.intellij.util.*;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -234,6 +236,21 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
                                                        RefactoringUIUtil.getDescription(superMethod, true));
             return Collections.singletonList(message);
           }
+        }
+      }
+    }
+    else if (element instanceof PsiParameter) {
+      final PsiElement scope = ((PsiParameter)element).getDeclarationScope();
+      if (scope instanceof PsiMethod) {
+        final PsiMethod method = (PsiMethod)scope;
+        final PsiClass containingClass = method.getContainingClass();
+        if (containingClass != null) {
+          final int parameterIndex = method.getParameterList().getParameterIndex((PsiParameter)element);
+          final PsiMethod methodCopy = (PsiMethod)method.copy();
+          methodCopy.getParameterList().getParameters()[parameterIndex].delete();
+          final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
+          ConflictsUtil.checkMethodConflicts(containingClass, method, methodCopy, conflicts);
+          return (Collection<String>)conflicts.values();
         }
       }
     }

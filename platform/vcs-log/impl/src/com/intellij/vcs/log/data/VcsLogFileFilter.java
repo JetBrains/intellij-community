@@ -82,19 +82,9 @@ public class VcsLogFileFilter implements VcsLogFilter {
     return Pair.create(selectedRoots, selectedFiles);
   }
 
-  // collect "nu voobche vse" (there is no english translation for this expression =) ) roots that might be visible
+
+  // collect absolutely all roots that might be visible
   // if filters unset returns just all roots
-  @NotNull
-  public static Set<VirtualFile> getAllVisibleRoots(@NotNull Collection<VirtualFile> roots, @NotNull VcsLogFilterCollection filters) {
-    return getAllVisibleRoots(roots, filters.getRootFilter(), filters.getStructureFilter());
-  }
-
-  // same as other getAllVisibleRoots
-  @NotNull
-  public static Set<VirtualFile> getAllVisibleRoots(@NotNull Collection<VirtualFile> roots, @NotNull VcsLogFileFilter filter) {
-    return getAllVisibleRoots(roots, filter.getRootFilter(), filter.getStructureFilter());
-  }
-
   @NotNull
   public static Set<VirtualFile> getAllVisibleRoots(@NotNull Collection<VirtualFile> roots,
                                                     @Nullable VcsLogRootFilter rootFilter,

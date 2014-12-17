@@ -174,12 +174,15 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
           if (i < parameters.length) {
             paramType = parameters[i].getType();
           }
-          else {
+          else if (parameters.length > 0) {
             paramType = parameters[parameters.length - 1].getType();
             if (!(paramType instanceof PsiEllipsisType)) {
               return null;
             }
             paramType = ((PsiEllipsisType)paramType).getComponentType();
+          }
+          else {
+            return null;
           }
 
           return substitutor.substitute(paramType);
@@ -411,9 +414,20 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
     }
   }
 
-  public static boolean functionalInterfaceMethodReferenced(PsiMethod psiMethod, PsiAnonymousClass anonymClass) {
+  public static boolean functionalInterfaceMethodReferenced(PsiMethod psiMethod,
+                                                            PsiAnonymousClass anonymClass,
+                                                            PsiCallExpression callExpression) {
     if (psiMethod != null && !psiMethod.hasModifierProperty(PsiModifier.STATIC)) {
       final PsiClass containingClass = psiMethod.getContainingClass();
+      if (containingClass != null && CommonClassNames.JAVA_LANG_OBJECT.equals(containingClass.getQualifiedName())) {
+        return false;
+      }
+
+      if (callExpression instanceof PsiMethodCallExpression && 
+          ((PsiMethodCallExpression)callExpression).getMethodExpression().isQualified()) {
+        return false;
+      }
+
       if (InheritanceUtil.isInheritorOrSelf(anonymClass, containingClass, true) &&
           !InheritanceUtil.hasEnclosingInstanceInScope(containingClass, anonymClass.getParent(), true, true)) {
         return true;
@@ -446,7 +460,7 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
       super.visitMethodCallExpression(methodCallExpression);
       final PsiMethod psiMethod = methodCallExpression.resolveMethod();
       if (psiMethod == myMethod ||
-          functionalInterfaceMethodReferenced(psiMethod, myAnonymClass) ||
+          functionalInterfaceMethodReferenced(psiMethod, myAnonymClass, methodCallExpression) ||
           psiMethod != null &&
           !methodCallExpression.getMethodExpression().isQualified() &&
           "getClass".equals(psiMethod.getName()) &&

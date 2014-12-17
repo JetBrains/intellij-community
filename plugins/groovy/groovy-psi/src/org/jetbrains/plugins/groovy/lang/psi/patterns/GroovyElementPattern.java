@@ -78,7 +78,7 @@ public class GroovyElementPattern<T extends GroovyPsiElement,Self extends Groovy
 
               for (GroovyResolveResult result : ref.multiResolve(false)) {
                 final PsiElement psiElement = result.getElement();
-                if (methodPattern.getCondition().accepts(psiElement, context)) {
+                if (methodPattern.accepts(psiElement, context)) {
                   return true;
                 }
               }

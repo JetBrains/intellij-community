@@ -122,8 +122,8 @@ public class JavaTestGenerator implements TestGenerator {
                                                           final FileTemplateDescriptor fileTemplateDescriptor,
                                                           final PsiDirectory targetDirectory) {
     final String templateName = fileTemplateDescriptor.getFileName();
-    final FileTemplate fileTemplate = FileTemplateManager.getInstance().getCodeTemplate(templateName);
-    final Properties defaultProperties = FileTemplateManager.getInstance().getDefaultProperties(targetDirectory.getProject());
+    final FileTemplate fileTemplate = FileTemplateManager.getInstance(targetDirectory.getProject()).getCodeTemplate(templateName);
+    final Properties defaultProperties = FileTemplateManager.getInstance(targetDirectory.getProject()).getDefaultProperties();
     Properties properties = new Properties(defaultProperties);
     properties.setProperty(FileTemplate.ATTRIBUTE_NAME, d.getClassName());
     try {

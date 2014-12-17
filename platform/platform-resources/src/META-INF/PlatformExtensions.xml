@@ -106,6 +106,8 @@
                         serviceImplementation="com.intellij.openapi.editor.impl.EditorActionManagerImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.updateSettings.impl.UpdateSettings"
                         serviceImplementation="com.intellij.openapi.updateSettings.impl.UpdateSettings"/>
+    <applicationService serviceInterface="com.intellij.ide.plugins.InstalledPluginsState"
+                        serviceImplementation="com.intellij.ide.plugins.InstalledPluginsState"/>
     <applicationService serviceInterface="com.intellij.featureStatistics.FeatureUsageTracker"
                         serviceImplementation="com.intellij.featureStatistics.FeatureUsageTrackerImpl"/>
     <applicationService serviceInterface="com.intellij.featureStatistics.ProductivityFeaturesRegistry"

@@ -13,10 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @author max
- */
 package com.intellij.ide.highlighter;
 
 import com.intellij.ide.structureView.StructureViewBuilder;
@@ -27,27 +23,40 @@ import com.intellij.ide.structureView.impl.java.JavaFileTreeModel;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageStructureViewBuilder;
 import com.intellij.lang.PsiStructureViewFactory;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.ContentBasedFileSubstitutor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiClassOwner;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * @author max
+ */
 public class JavaClsStructureViewBuilderProvider implements StructureViewBuilderProvider {
   @Override
   @Nullable
-  public StructureViewBuilder getStructureViewBuilder(@NotNull final FileType fileType, @NotNull final VirtualFile file, @NotNull final Project project) {
-
+  public StructureViewBuilder getStructureViewBuilder(@NotNull FileType fileType, @NotNull VirtualFile file, @NotNull Project project) {
     final PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
 
-    final ContentBasedFileSubstitutor[] processors = Extensions.getExtensions(ContentBasedFileSubstitutor.EP_NAME);
-    for (ContentBasedFileSubstitutor processor : processors) {
+    if (fileType == JavaClassFileType.INSTANCE && psiFile != null) {
+      Language language = psiFile.getLanguage();
+      if (language != JavaLanguage.INSTANCE) {
+        PsiStructureViewFactory factory = LanguageStructureViewBuilder.INSTANCE.forLanguage(language);
+        if (factory != null) {
+          return factory.getStructureViewBuilder(psiFile);
+        }
+      }
+    }
+
+    //noinspection deprecation
+    for (ContentBasedFileSubstitutor processor : Extensions.getExtensions(ContentBasedFileSubstitutor.EP_NAME)) {
       if (processor.isApplicable(project, file)) {
         final Language language = processor.obtainLanguageForFile(file);
         if (language != null) {
@@ -57,14 +66,16 @@ public class JavaClsStructureViewBuilderProvider implements StructureViewBuilder
       }
     }
 
-    final PsiJavaFile javaFile = (PsiJavaFile)psiFile;
-    if (javaFile == null) return null;
-    return new TreeBasedStructureViewBuilder() {
-      @Override
-      @NotNull
-      public StructureViewModel createStructureViewModel(@Nullable Editor editor) {
-        return new JavaFileTreeModel(javaFile, editor);
-      }
-    };
+    if (psiFile instanceof PsiClassOwner) {
+      return new TreeBasedStructureViewBuilder() {
+        @Override
+        @NotNull
+        public StructureViewModel createStructureViewModel(@Nullable Editor editor) {
+          return new JavaFileTreeModel((PsiClassOwner)psiFile, editor);
+        }
+      };
+    }
+
+    return null;
   }
 }

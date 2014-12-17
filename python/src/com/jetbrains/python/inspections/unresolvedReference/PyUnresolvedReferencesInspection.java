@@ -64,7 +64,6 @@ import com.jetbrains.python.psi.impl.references.PyOperatorReference;
 import com.jetbrains.python.psi.resolve.ImportedResolveResult;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
-import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher;
@@ -705,6 +704,9 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         // this almost always means that we don't know the type, so don't show an error in this case
         return true;
       }
+      if (type instanceof PyStructuralType && ((PyStructuralType)type).isInferredFromUsages()) {
+        return true;
+      }
       if (type instanceof PyImportedModuleType) {
         PyImportedModule module = ((PyImportedModuleType)type).getImportedModule();
         if (module.resolve() == null) {
@@ -720,7 +722,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       }
       if (type instanceof PyClassTypeImpl) {
         PyClass cls = ((PyClassType)type).getPyClass();
-        if (overridesGetAttr(cls, myTypeEvalContext)) {
+        if (PyTypeChecker.overridesGetAttr(cls, myTypeEvalContext)) {
           return true;
         }
         if (cls.findProperty(name, true) != null) {
@@ -908,31 +910,6 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
     private static boolean isCall(PyElement node) {
       final PyCallExpression callExpression = PsiTreeUtil.getParentOfType(node, PyCallExpression.class);
       return callExpression != null && node == callExpression.getCallee();
-    }
-
-    @Nullable
-    private static PsiElement resolveClassMember(@NotNull PyClass cls, @NotNull String name, @NotNull TypeEvalContext context) {
-      final PyType type = context.getType(cls);
-      if (type != null) {
-        final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
-        final List<? extends RatedResolveResult> results = type.resolveMember(name, null, AccessDirection.READ, resolveContext);
-        if (results != null && !results.isEmpty()) {
-          return results.get(0).getElement();
-        }
-      }
-      return null;
-    }
-
-    private static boolean overridesGetAttr(@NotNull PyClass cls, @NotNull TypeEvalContext context) {
-      PsiElement method = resolveClassMember(cls, PyNames.GETATTR, context);
-      if (method != null) {
-        return true;
-      }
-      method = resolveClassMember(cls, PyNames.GETATTRIBUTE, context);
-      if (method != null && !PyBuiltinCache.getInstance(cls).isBuiltin(method)) {
-        return true;
-      }
-      return false;
     }
 
     private static void addPluginQuickFixes(PsiReference reference, final List<LocalQuickFix> actions) {

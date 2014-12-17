@@ -71,6 +71,7 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
   private TypeExpression myExpression;
   private boolean myReplaceSelf;
   private boolean myDeleteSelf = true;
+  private boolean mySkipTypeExpressionOnStart;
 
   public JavaVariableInplaceIntroducer(final Project project,
                                        IntroduceVariableSettings settings, PsiElement chosenAnchor, final Editor editor,
@@ -93,10 +94,18 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
     editor.putUserData(ReassignVariableUtil.OCCURRENCES_KEY,
                        rangeMarkers.toArray(new RangeMarker[rangeMarkers.size()]));
     myReplaceSelf = myExpr.getParent() instanceof PsiExpressionStatement;
+    mySkipTypeExpressionOnStart = !(myExpr instanceof PsiFunctionalExpression && myReplaceSelf);
   }
 
   @Override
   protected void beforeTemplateStart() {
+    if (!mySkipTypeExpressionOnStart) {
+      final PsiVariable variable = getVariable();
+      final PsiTypeElement typeElement = variable != null ? variable.getTypeElement() : null;
+      if (typeElement != null) {
+        myEditor.getCaretModel().moveToOffset(typeElement.getTextOffset());
+      }
+    }
     super.beforeTemplateStart();
     final ResolveSnapshotProvider resolveSnapshotProvider = VariableInplaceRenamer.INSTANCE.forLanguage(myScope.getLanguage());
     myConflictResolver = resolveSnapshotProvider != null ? resolveSnapshotProvider.createSnapshot(myScope) : null;
@@ -244,7 +253,7 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
     if (variable != null) {
       final PsiTypeElement typeElement = variable.getTypeElement();
       if (typeElement != null) {
-        builder.replaceElement(typeElement, "Variable_Type", AbstractJavaInplaceIntroducer.createExpression(myExpression, typeElement.getText()), true, true);
+        builder.replaceElement(typeElement, "Variable_Type", AbstractJavaInplaceIntroducer.createExpression(myExpression, typeElement.getText()), true, mySkipTypeExpressionOnStart);
       }
     }
   }

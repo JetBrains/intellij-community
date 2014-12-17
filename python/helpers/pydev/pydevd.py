@@ -122,7 +122,7 @@ DONT_TRACE = {
               '_pydev_pluginbase.py':1,
               '_pydev_pkgutil_old.py':1,
               '_pydev_uuid_old.py':1,
-
+              '_pydev_django_oscar_patch.py':1,
 
               #things from pydev that we don't want to trace
               '_pydev_execfile.py':1,

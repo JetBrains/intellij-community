@@ -66,7 +66,7 @@ public class KeywordArgumentCompletionUtil {
     visited.add(def);
     boolean needSelf = def.getContainingClass() != null && def.getModifier() != PyFunction.Modifier.STATICMETHOD;
     final KwArgParameterCollector collector = new KwArgParameterCollector(needSelf, ret);
-    final TypeEvalContext context = TypeEvalContext.userInitiated(def.getProject(), def.getContainingFile());
+    final TypeEvalContext context = TypeEvalContext.codeCompletion(def.getProject(), def.getContainingFile());
     final List<PyParameter> parameters = PyUtil.getParameters(def, context);
     for (PyParameter parameter : parameters) {
       parameter.accept(collector);

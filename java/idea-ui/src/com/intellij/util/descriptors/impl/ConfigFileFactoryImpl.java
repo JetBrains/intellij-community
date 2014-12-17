@@ -26,6 +26,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.descriptors.*;
 import org.jetbrains.annotations.Nullable;
@@ -56,8 +57,8 @@ public class ConfigFileFactoryImpl extends ConfigFileFactory {
     return new ConfigFileContainerImpl(project, metaDataProvider, (ConfigFileInfoSetImpl)configuration);
   }
 
-  private static String getText(final String templateName) throws IOException {
-    final FileTemplateManager templateManager = FileTemplateManager.getInstance();
+  private static String getText(final String templateName, @Nullable Project project) throws IOException {
+    final FileTemplateManager templateManager = project == null ? FileTemplateManager.getDefaultInstance() : FileTemplateManager.getInstance(project);
     final FileTemplate template = templateManager.getJ2eeTemplate(templateName);
     if (template == null) {
       return "";
@@ -73,7 +74,7 @@ public class ConfigFileFactoryImpl extends ConfigFileFactory {
   @Nullable
   private VirtualFile createFileFromTemplate(@Nullable final Project project, String url, final String templateName, final boolean forceNew) {
     final LocalFileSystem fileSystem = LocalFileSystem.getInstance();
-    final File file = new File(VfsUtil.urlToPath(url));
+    final File file = new File(VfsUtilCore.urlToPath(url));
     VirtualFile existingFile = fileSystem.refreshAndFindFileByIoFile(file);
     if (existingFile != null) {
       existingFile.refresh(false, false);
@@ -86,7 +87,7 @@ public class ConfigFileFactoryImpl extends ConfigFileFactory {
       return existingFile;
     }
     try {
-      String text = getText(templateName);
+      String text = getText(templateName, project);
       final VirtualFile childData;
       if (existingFile == null || existingFile.isDirectory()) {
         final VirtualFile virtualFile;

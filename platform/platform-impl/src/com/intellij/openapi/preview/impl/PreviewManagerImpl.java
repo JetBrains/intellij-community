@@ -46,6 +46,7 @@ import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.util.Alarm;
 import com.intellij.util.PairFunction;
 import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -403,7 +404,7 @@ public class PreviewManagerImpl implements PreviewManager, PersistentStateCompon
       UIUtil.applyRenderingHints(g);
       GraphicsUtil.setupAntialiasing(g, true, false);
       g.setColor(new JBColor(isDarkBackground ? Gray._230 : Gray._80, Gray._160));
-      g.setFont(UIUtil.getLabelFont().deriveFont(isDarkBackground ? 24f : 20f));
+      g.setFont(JBUI.Fonts.label(isDarkBackground ? 24f : 20f));
 
       UIUtil.TextPainter painter = new UIUtil.TextPainter().withLineSpacing(1.5f);
       painter.withShadow(true, new JBColor(Gray._200.withAlpha(100), Gray._0.withAlpha(255)));

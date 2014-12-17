@@ -142,7 +142,7 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
 
       }
     };
-    final GradleProjectSettingsControl settingsControl = new GradleProjectSettingsControl(getExternalProjectSettings());
+    final GradleProjectSettingsControl settingsControl = new GradleProjectSettingsControl(getExternalProjectSettings(), myWizardContext.getProject());
     return new ExternalModuleSettingsStep<GradleProjectSettings>(this, settingsControl);
   }
 
@@ -236,7 +236,7 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
 
   private static void saveFile(@NotNull VirtualFile file, @NotNull String templateName, @Nullable Map templateAttributes)
     throws ConfigurationException {
-    FileTemplateManager manager = FileTemplateManager.getInstance();
+    FileTemplateManager manager = FileTemplateManager.getDefaultInstance();
     FileTemplate template = manager.getInternalTemplate(templateName);
     try {
       VfsUtil.saveText(file, templateAttributes != null ? template.getText(templateAttributes) : template.getText());
@@ -251,7 +251,7 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
 
   private static void appendToFile(@NotNull VirtualFile file, @NotNull String templateName, @Nullable Map templateAttributes)
     throws ConfigurationException {
-    FileTemplateManager manager = FileTemplateManager.getInstance();
+    FileTemplateManager manager = FileTemplateManager.getDefaultInstance();
     FileTemplate template = manager.getInternalTemplate(templateName);
     try {
       VfsUtil.saveText(file, VfsUtilCore.loadText(file) +

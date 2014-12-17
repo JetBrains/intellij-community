@@ -26,7 +26,6 @@ import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.fileTemplates.ui.SelectTemplateDialog;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -37,17 +36,19 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class CreateFromTemplateGroup extends ActionGroup implements DumbAware {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.fileTemplates.actions.CreateFromTemplateGroup");
 
   @Override
-  public void update(AnActionEvent event){
-    super.update(event);
-    Presentation presentation = event.getPresentation();
-    FileTemplate[] allTemplates = FileTemplateManager.getInstance().getAllTemplates();
-    for (FileTemplate template : allTemplates) {
-      if (canCreateFromTemplate(event, template)) {
-        presentation.setEnabled(true);
-        return;
+  public void update(AnActionEvent e){
+    super.update(e);
+    Presentation presentation = e.getPresentation();
+    Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
+    if (project != null) {
+      FileTemplate[] allTemplates = FileTemplateManager.getInstance(project).getAllTemplates();
+      for (FileTemplate template : allTemplates) {
+        if (canCreateFromTemplate(e, template)) {
+          presentation.setEnabled(true);
+          return;
+        }
       }
     }
     presentation.setEnabled(false);
@@ -56,7 +57,9 @@ public class CreateFromTemplateGroup extends ActionGroup implements DumbAware {
   @Override
   @NotNull
   public AnAction[] getChildren(@Nullable AnActionEvent e){
-    FileTemplateManager manager = FileTemplateManager.getInstance();
+    Project project;
+    if (e == null || (project = CommonDataKeys.PROJECT.getData(e.getDataContext())) == null) return EMPTY_ARRAY;
+    FileTemplateManager manager = FileTemplateManager.getInstance(project);
     FileTemplate[] templates = manager.getAllTemplates();
 
     boolean showAll = templates.length <= FileTemplateManager.RECENT_TEMPLATES_SIZE;
@@ -65,7 +68,7 @@ public class CreateFromTemplateGroup extends ActionGroup implements DumbAware {
       templates = new FileTemplate[recentNames.size()];
       int i = 0;
       for (String name : recentNames) {
-        templates[i] = FileTemplateManager.getInstance().getTemplate(name);
+        templates[i] = manager.getTemplate(name);
         i++;
       }
     }
