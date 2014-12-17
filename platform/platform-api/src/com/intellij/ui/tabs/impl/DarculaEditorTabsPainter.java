@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -124,10 +124,10 @@ class DarculaEditorTabsPainter implements JBEditorTabsPainter {
 
 
       g2d.draw(selectedShape.labelPath
-                 .transformLine(selectedShape.labelPath.getX() - selectedShape.labelPath.deltaX(horizontalTabs ? 2 : 1),
+                 .transformLine(selectedShape.labelPath.getX() - selectedShape.labelPath.deltaX(1),
                                 selectedShape.labelPath.getY() +
                                 selectedShape.labelPath.deltaY(1),
-                                selectedShape.labelPath.getX() - selectedShape.labelPath.deltaX(horizontalTabs ? 2 : 1),
+                                selectedShape.labelPath.getX() - selectedShape.labelPath.deltaX(1),
                                 selectedShape.labelPath.getMaxY() -
                                 selectedShape.labelPath.deltaY(4)));
     }
