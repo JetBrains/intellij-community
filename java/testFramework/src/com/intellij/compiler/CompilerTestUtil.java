@@ -27,6 +27,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SystemProperties;
+import junit.framework.AssertionFailedError;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
@@ -71,9 +72,9 @@ public class CompilerTestUtil {
       State state = appComponent.getClass().getAnnotation(State.class);
       if (state != null) {
         componentName = state.name();
-        Storage lastStorage = state.storages()[state.storages().length - 1];
+        Storage storageToWrite = findNonDeprecated(state.storages());
         StateStorageManager storageManager = ((ApplicationImpl)ApplicationManager.getApplication()).getStateStore().getStateStorageManager();
-        file = new File(storageManager.expandMacros(lastStorage.file()));
+        file = new File(storageManager.expandMacros(storageToWrite.file()));
       }
       else if (appComponent instanceof ExportableApplicationComponent && appComponent instanceof NamedJDOMExternalizable) {
         componentName = ((ExportableApplicationComponent)appComponent).getComponentName();
@@ -112,6 +113,15 @@ public class CompilerTestUtil {
     catch (WriteExternalException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  private static Storage findNonDeprecated(Storage[] storages) {
+    for (Storage storage : storages) {
+      if (!storage.deprecated()) {
+        return storage;
+      }
+    }
+    throw new AssertionFailedError("All storages are deprecated");
   }
 
   public static void enableExternalCompiler() {
