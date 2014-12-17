@@ -24,7 +24,7 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.net.ssl.CertificateManager;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.io.Responses;
+import org.jetbrains.annotations.Nullable;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
@@ -70,6 +70,7 @@ public final class HttpRequests {
     private boolean myGzip = true;
     private boolean myForceHttps;
     private boolean myDisableHostVerification;
+    private String myUserAgent;
 
     private RequestBuilder(@NotNull String url) {
       myUrl = url;
@@ -108,6 +109,12 @@ public final class HttpRequests {
     @NotNull
     public RequestBuilder disableHostVerification() {
       myDisableHostVerification = true;
+      return this;
+    }
+
+    @NotNull
+    public RequestBuilder userAgent(@Nullable String userAgent) {
+      myUserAgent = userAgent;
       return this;
     }
 
@@ -204,9 +211,8 @@ public final class HttpRequests {
       connection.setConnectTimeout(builder.myConnectTimeout);
       connection.setReadTimeout(builder.myTimeout);
 
-      String userAgent = Responses.getServerHeaderValue();
-      if (userAgent != null) {
-        connection.setRequestProperty("User-Agent", userAgent);
+      if (builder.myUserAgent != null) {
+        connection.setRequestProperty("User-Agent", builder.myUserAgent);
       }
 
       if (connection instanceof HttpsURLConnection) {

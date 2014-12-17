@@ -17,15 +17,13 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.net.HttpConfigurable;
+import com.intellij.util.io.HttpRequests;
 import com.intellij.util.net.NetUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
 import java.util.Arrays;
 import java.util.List;
 
@@ -148,28 +146,20 @@ public abstract class AbstractAttachSourceProvider implements AttachSourcesProvi
 
       Task task = new Task.Backgroundable(myProject, "Downloading sources...", true) {
         @Override
-        public void run(@NotNull ProgressIndicator indicator) {
+        public void run(@NotNull final ProgressIndicator indicator) {
           final ByteArrayOutputStream out;
-
           try {
             LOG.info("Downloading sources JAR: " + myUrl);
-
             indicator.checkCanceled();
-
-            HttpURLConnection urlConnection = HttpConfigurable.getInstance().openHttpConnection(myUrl);
-
-            int contentLength = urlConnection.getContentLength();
-
-            out = new ByteArrayOutputStream(contentLength > 0 ? contentLength : 100 * 1024);
-
-            InputStream in = urlConnection.getInputStream();
-
-            try {
-              NetUtils.copyStreamContent(indicator, in, out, contentLength);
-            }
-            finally {
-              in.close();
-            }
+            out = HttpRequests.request(myUrl).connect(new HttpRequests.RequestProcessor<ByteArrayOutputStream>() {
+              @Override
+              public ByteArrayOutputStream process(@NotNull HttpRequests.Request request) throws IOException {
+                int contentLength = request.getConnection().getContentLength();
+                ByteArrayOutputStream out = new ByteArrayOutputStream(contentLength > 0 ? contentLength : 100 * 1024);
+                NetUtils.copyStreamContent(indicator, request.getInputStream(), out, contentLength);
+                return out;
+              }
+            });
           }
           catch (IOException e) {
             LOG.warn(e);
