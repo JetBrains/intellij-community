@@ -556,23 +556,27 @@ public class PluginManagerCore {
 
   @Nullable
   static IdeaPluginDescriptorImpl loadDescriptorFromDir(@NotNull File file, @NotNull String fileName) {
-    IdeaPluginDescriptorImpl descriptor = null;
     File descriptorFile = new File(file, META_INF + File.separator + fileName);
     if (descriptorFile.exists()) {
-      descriptor = new IdeaPluginDescriptorImpl(file);
       try {
+        IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(file);
         descriptor.readExternal(descriptorFile.toURI().toURL());
+        return descriptor;
       }
-      catch (Exception e) {
-        System.err.println("Cannot load: " + descriptorFile.getAbsolutePath());
-        e.printStackTrace();
+      catch (XmlSerializationException e) {
+        getLogger().info("Cannot load " + file, e);
+        prepareLoadingPluginsErrorMessage("File '" + file.getName() + "' contains invalid plugin descriptor.");
+      }
+      catch (Throwable e) {
+        getLogger().info("Cannot load " + file, e);
       }
     }
-    return descriptor;
+
+    return null;
   }
 
   @Nullable
-  static IdeaPluginDescriptorImpl loadDescriptorFromJar(@NotNull File file, @NotNull @NonNls String fileName) {
+  static IdeaPluginDescriptorImpl loadDescriptorFromJar(@NotNull File file, @NotNull String fileName) {
     try {
       String fileURL = StringUtil.replace(file.toURI().toASCIIString(), "!", "%21");
       URL jarURL = new URL("jar:" + fileURL + "!/META-INF/" + fileName);
@@ -593,7 +597,7 @@ public class PluginManagerCore {
     }
     catch (XmlSerializationException e) {
       getLogger().info("Cannot load " + file, e);
-      prepareLoadingPluginsErrorMessage("Plugin file " + file.getName() + " contains invalid plugin descriptor file.");
+      prepareLoadingPluginsErrorMessage("File '" + file.getName() + "' contains invalid plugin descriptor.");
     }
     catch (Throwable e) {
       getLogger().info("Cannot load " + file, e);
@@ -607,9 +611,8 @@ public class PluginManagerCore {
     return loadDescriptorFromJar(file, PLUGIN_XML);
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   @Nullable
-  public static IdeaPluginDescriptorImpl loadDescriptor(final File file, @NonNls final String fileName) {
+  public static IdeaPluginDescriptorImpl loadDescriptor(@NotNull final File file, @NotNull String fileName) {
     IdeaPluginDescriptorImpl descriptor = null;
 
     if (file.isDirectory()) {
