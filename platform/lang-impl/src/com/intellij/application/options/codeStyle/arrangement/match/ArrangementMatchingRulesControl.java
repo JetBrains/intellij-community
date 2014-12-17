@@ -27,6 +27,7 @@ import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchConditio
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsManager;
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementUiComponent;
 import com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.AbstractTableCellEditor;
@@ -79,6 +80,7 @@ public class ArrangementMatchingRulesControl extends JBTable {
     setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
     setShowColumns(false);
     setShowGrid(false);
+    setBorder(IdeBorderFactory.createBorder());
     setSurrendersFocusOnKeystroke(true);
     putClientProperty("terminateEditOnFocusLost", Boolean.TRUE);
 
