@@ -18,6 +18,7 @@ package com.intellij.codeInsight.actions;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
@@ -25,11 +26,12 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.arrangement.Rearranger;
 import com.intellij.psi.codeStyle.arrangement.engine.ArrangementEngine;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.FutureTask;
 
@@ -39,7 +41,7 @@ public class RearrangeCodeProcessor extends AbstractLayoutCodeProcessor {
   public static final String PROGRESS_TEXT = "Rearranging code...";
 
   @Nullable private Condition<PsiFile> myAcceptCondition;
-  private Collection<TextRange> myRangesForFile = ContainerUtil.newArrayList();
+  @Nullable private SelectionModel mySelectionModel;
 
   public RearrangeCodeProcessor(@NotNull AbstractLayoutCodeProcessor previousProcessor,
                                 @Nullable Condition<PsiFile> acceptCondition) {
@@ -49,18 +51,15 @@ public class RearrangeCodeProcessor extends AbstractLayoutCodeProcessor {
   
   public RearrangeCodeProcessor(@NotNull Project project,
                                 @NotNull PsiFile file,
-                                @Nullable Collection<TextRange> ranges) {
+                                @Nullable SelectionModel selectionModel) {
     super(project, file, PROGRESS_TEXT, COMMAND_NAME, false);
-    if (ranges != null) {
-      myRangesForFile.addAll(ranges);
-    }
+    mySelectionModel = selectionModel;
   }
 
   public RearrangeCodeProcessor(@NotNull Project project,
                                 @NotNull PsiFile[] files,
                                 @NotNull String commandName,
-                                @Nullable Runnable postRunnable)
-  {
+                                @Nullable Runnable postRunnable) {
     super(project, files, PROGRESS_TEXT, commandName, postRunnable, false);
   }
 
@@ -74,25 +73,34 @@ public class RearrangeCodeProcessor extends AbstractLayoutCodeProcessor {
     return new FutureTask<Boolean>(new Callable<Boolean>() {
       @Override
       public Boolean call() throws Exception {
-        try {
-          if (!shouldRearrangeFile(file)) return true;
-        
-          Collection<TextRange> ranges = getRangesToFormat(file);
-          RearrangeCommand rearranger = new RearrangeCommand(myProject, file, COMMAND_NAME, ranges);
-          if (rearranger.couldRearrange()) {
-            rearranger.run();
-          }
-          return true;
+        if (!shouldRearrangeFile(file)) return true;
+
+        Collection<TextRange> ranges = getRangesToFormat(file);
+        RearrangeCommand rearranger = new RearrangeCommand(myProject, file, COMMAND_NAME, ranges);
+        if (rearranger.couldRearrange()) {
+          rearranger.run();
         }
-        finally {
-          myRangesForFile.clear();
-        }
+        return true;
       }
     });
   }
 
   public Collection<TextRange> getRangesToFormat(@NotNull PsiFile file) {
-    return myRangesForFile.isEmpty() ? ContainerUtil.newArrayList(file.getTextRange()) : myRangesForFile;
+    final List<TextRange> ranges = new SmartList<TextRange>();
+    if (mySelectionModel != null && mySelectionModel.hasSelection()) {
+      ranges.add(TextRange.create(mySelectionModel.getSelectionStart(), mySelectionModel.getSelectionEnd()));
+    }
+    else if (mySelectionModel != null && mySelectionModel.hasBlockSelection()) {
+      int[] starts = mySelectionModel.getBlockSelectionStarts();
+      int[] ends = mySelectionModel.getBlockSelectionEnds();
+      for (int i = 0; i < starts.length; i++) {
+        ranges.add(TextRange.create(starts[i], ends[i]));
+      }
+    }
+    else {
+      ranges.add(TextRange.create(0, file.getTextLength()));
+    }
+    return ranges;
   }
 }
 
