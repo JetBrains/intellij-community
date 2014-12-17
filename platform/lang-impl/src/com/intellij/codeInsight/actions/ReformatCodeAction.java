@@ -30,7 +30,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ShowSettingsUtil;
@@ -57,7 +56,6 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -193,11 +191,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
     }
 
     if (rearrangeEntries && editor != null) {
-      SelectionModel selectionModel = editor.getSelectionModel();
-      final TextRange rangeToUse = selectionModel.hasSelection()
-                                   ? TextRange.create(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd())
-                                   : TextRange.create(0, editor.getDocument().getTextLength());
-      new RearrangeCodeProcessor(project, file, Collections.singleton(rangeToUse)).run();
+      new RearrangeCodeProcessor(project, file, editor.getSelectionModel()).run();
     }
   }
 
