@@ -52,7 +52,7 @@ class DarculaEditorTabsPainter extends JBEditorTabsPainter {
     g.setColor(UIUtil.getPanelBackground());
     g.fill(clip);
 
-    g.setColor(new Color(0, 0, 0, 80));
+    g.setColor(Gray._0.withAlpha(80));
     g.fill(clip);
 
     final int x = rectangle.x;
@@ -94,6 +94,7 @@ class DarculaEditorTabsPainter extends JBEditorTabsPainter {
 
   @Override
   public Color getBackgroundColor() {
+    //noinspection UseJBColor
     return new Color(0x3C3F41);
   }
 }

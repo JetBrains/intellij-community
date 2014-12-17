@@ -69,7 +69,7 @@ public class DefaultEditorTabsPainter extends JBEditorTabsPainter {
   private static void drawShadow(Graphics2D g, int x, int w, int shadowBottom) {
     int shadowTop = shadowBottom - ACTIVE_TAB_SHADOW_HEIGHT;
     g.setPaint(UIUtil.getGradientPaint(x, shadowTop, Gray.TRANSPARENT,
-                                   x, shadowBottom, new Color(0, 0, 0, 30)));
+                                   x, shadowBottom, Gray._0.withAlpha(30)));
     g.fillRect(x, shadowTop, w, ACTIVE_TAB_SHADOW_HEIGHT);
   }
 
@@ -78,13 +78,13 @@ public class DefaultEditorTabsPainter extends JBEditorTabsPainter {
     g.setColor(UIUtil.getPanelBackground());
     g.fill(clip);
 
-    g.setColor(new Color(0, 0, 0, 80));
+    g.setColor(Gray._0.withAlpha(80));
     g.fill(clip);
 
     final int x = rectangle.x;
     final int y = rectangle.y;
-    g.setPaint(UIUtil.getGradientPaint(x, y, new Color(255, 255, 255, 160),
-                                 x, rectangle.y + rectangle.height, new Color(255, 255, 255, 120)));
+    g.setPaint(UIUtil.getGradientPaint(x, y, Gray._255.withAlpha(160),
+                                 x, rectangle.y + rectangle.height, Gray._255.withAlpha(120)));
     g.fillRect(x, rectangle.y, rectangle.width, rectangle.height + (vertical ? 1 : 0));
 
     if (!vertical) {
@@ -96,6 +96,7 @@ public class DefaultEditorTabsPainter extends JBEditorTabsPainter {
   }
 
   private static Color multiplyColor(Color c) {
+    //noinspection UseJBColor
     return new Color(c.getRed() * c.getRed() / 255, c.getGreen() * c.getGreen() / 255, c.getBlue() * c.getBlue() / 255);
   }
 

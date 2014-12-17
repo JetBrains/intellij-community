@@ -48,13 +48,13 @@ abstract class JBEditorTabsPainter {
     int _y = rect.y;
     int _height = rect.height;
     if (!horizontalTabs) {
-      g2d.setColor(new Color(0, 0, 0, 45));
+      g2d.setColor(Gray._0.withAlpha(45));
       g2d.draw(
         selectedShape.labelPath.transformLine(i.left, selectedShape.labelPath.getMaxY()
                                                       - selectedShape.labelPath.deltaY(4), selectedShape.path.getMaxX(),
                                               selectedShape.labelPath.getMaxY() - selectedShape.labelPath.deltaY(4)));
 
-      g2d.setColor(new Color(0, 0, 0, 15));
+      g2d.setColor(Gray._0.withAlpha(15));
       g2d.draw(
         selectedShape.labelPath.transformLine(i.left, selectedShape.labelPath.getMaxY()
                                                       - selectedShape.labelPath.deltaY(5), selectedShape.path.getMaxX(),
@@ -82,7 +82,7 @@ abstract class JBEditorTabsPainter {
                                 selectedShape.labelPath.deltaY(4)));
     }
 
-    g2d.setColor(new Color(0, 0, 0, 50));
+    g2d.setColor(Gray._0.withAlpha(50));
     g2d.draw(selectedShape.labelPath.transformLine(i.left, selectedShape.labelPath.getMaxY(),
                                                    selectedShape.path.getMaxX(),
                                                    selectedShape.labelPath.getMaxY()));
