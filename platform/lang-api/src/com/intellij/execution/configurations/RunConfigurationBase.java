@@ -63,7 +63,7 @@ public abstract class RunConfigurationBase extends UserDataHolderBase
   private boolean myShowConsoleOnStdErr = false;
   private String myFileOutputPath = null;
 
-  protected RunConfigurationBase(final Project project, final ConfigurationFactory factory, final String name) {
+  protected RunConfigurationBase(final Project project, @NotNull ConfigurationFactory factory, final String name) {
     myProject = project;
     myFactory = factory;
     myName = name;
@@ -211,11 +211,14 @@ public abstract class RunConfigurationBase extends UserDataHolderBase
     final Element fileOutputElement = element.getChild(FILE_OUTPUT);
     if (fileOutputElement != null) {
       myFileOutputPath = fileOutputElement.getAttributeValue(OUTPUT_FILE);
-      final String isSave = fileOutputElement.getAttributeValue(SAVE);
+      String isSave = fileOutputElement.getAttributeValue(SAVE);
       mySaveOutput = isSave != null && Boolean.parseBoolean(isSave);
     }
-    myShowConsoleOnStdOut = Boolean.parseBoolean(element.getAttributeValue(SHOW_CONSOLE_ON_STD_OUT));
-    myShowConsoleOnStdErr = Boolean.parseBoolean(element.getAttributeValue(SHOW_CONSOLE_ON_STD_ERR));
+
+    if (!isNewSerializationUsed()) {
+      myShowConsoleOnStdOut = Boolean.parseBoolean(element.getAttributeValue(SHOW_CONSOLE_ON_STD_OUT));
+      myShowConsoleOnStdErr = Boolean.parseBoolean(element.getAttributeValue(SHOW_CONSOLE_ON_STD_ERR));
+    }
   }
 
   @Override

@@ -22,7 +22,6 @@ import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
-import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.util.ExecutionErrorDialog;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.module.Module;
@@ -140,7 +139,7 @@ public class JavaExecutionUtil {
   }
 
   @Nullable
-  public static String getPresentableClassName(final String rtClassName) {
+  public static String getPresentableClassName(@Nullable String rtClassName) {
     return getPresentableClassName(rtClassName, null);
   }
 
@@ -149,13 +148,13 @@ public class JavaExecutionUtil {
    */
   @Deprecated
   @Nullable
-  public static String getPresentableClassName(final String rtClassName, final JavaRunConfigurationModule configurationModule) {
-    if (StringUtil.isEmpty(rtClassName)) return null;
-    final int lastDot = rtClassName.lastIndexOf('.');
-    if (lastDot == -1 || lastDot == rtClassName.length() - 1) {
-      return rtClassName;
+  public static String getPresentableClassName(@Nullable String rtClassName, JavaRunConfigurationModule configurationModule) {
+    if (StringUtil.isEmpty(rtClassName)) {
+      return null;
     }
-    return rtClassName.substring(lastDot + 1, rtClassName.length());
+
+    int lastDot = rtClassName.lastIndexOf('.');
+    return lastDot == -1 || lastDot == rtClassName.length() - 1 ? rtClassName : rtClassName.substring(lastDot + 1, rtClassName.length());
   }
 
   public static Module findModule(@NotNull final PsiClass psiClass) {
@@ -196,9 +195,8 @@ public class JavaExecutionUtil {
     return PsiLocation.fromPsiElement(classes[0]);
   }
 
-  public static String getShortClassName(final String fqName) {
-    if (fqName == null) return "";
-    return StringUtil.getShortName(fqName);
+  public static String getShortClassName(@Nullable String fqName) {
+    return fqName == null ? "" : StringUtil.getShortName(fqName);
   }
 
   public static void showExecutionErrorMessage(final ExecutionException e, final String title, final Project project) {

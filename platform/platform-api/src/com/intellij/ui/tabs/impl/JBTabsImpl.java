@@ -97,6 +97,8 @@ public class JBTabsImpl extends JComponent
 
   private boolean mySideComponentOnTabs = true;
 
+  private boolean mySizeBySelected;
+
   private DataProvider myDataProvider;
 
   private final WeakHashMap<Component, Component> myDeferredToRemove = new WeakHashMap<Component, Component>();
@@ -2323,6 +2325,10 @@ public class JBTabsImpl extends JComponent
 
   @Override
   public Dimension getMinimumSize() {
+    if (mySizeBySelected) {
+      return computeSizeBySelected(true);
+    }
+
     return computeSize(new Function<JComponent, Dimension>() {
       @Override
       public Dimension fun(JComponent component) {
@@ -2333,12 +2339,35 @@ public class JBTabsImpl extends JComponent
 
   @Override
   public Dimension getPreferredSize() {
+    if (mySizeBySelected) {
+      return computeSizeBySelected(false);
+    }
+
     return computeSize(new Function<JComponent, Dimension>() {
       @Override
       public Dimension fun(JComponent component) {
         return component.getPreferredSize();
       }
     }, 3);
+  }
+
+  @NotNull
+  private Dimension computeSizeBySelected(boolean minimum) {
+    Dimension size = new Dimension();
+    TabInfo tabInfo = getSelectedInfo();
+    if (tabInfo == null && myVisibleInfos.size() > 0) {
+      tabInfo = myVisibleInfos.get(0);
+    }
+
+    JComponent component = tabInfo == null ? null : tabInfo.getComponent();
+    if (component != null) {
+      Dimension tabSize = minimum ? component.getMinimumSize() : component.getPreferredSize();
+      size.width = tabSize.width;
+      size.height = tabSize.height;
+    }
+
+    addHeaderSize(size, 3);
+    return size;
   }
 
   private Dimension computeSize(Function<JComponent, Dimension> transform, int tabCount) {
@@ -2969,6 +2998,14 @@ public class JBTabsImpl extends JComponent
     relayout(true, false);
 
     return this;
+  }
+
+  public boolean isSizeBySelected() {
+    return mySizeBySelected;
+  }
+
+  public void setSizeBySelected(boolean value) {
+    mySizeBySelected = value;
   }
 
   public boolean useSmallLabels() {
