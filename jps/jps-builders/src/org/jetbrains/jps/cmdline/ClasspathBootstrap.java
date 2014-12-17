@@ -30,6 +30,7 @@ import jsr166e.extra.SequenceLock;
 import net.n3.nanoxml.IXMLBuilder;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.impl.java.EclipseCompilerTool;
+import org.jetbrains.jps.builders.impl.java.ErrorProneCompilerTool;
 import org.jetbrains.jps.builders.java.JavaCompilingTool;
 import org.jetbrains.jps.builders.java.JavaSourceTransformer;
 import org.jetbrains.jps.javac.ExternalJavacProcess;
@@ -59,7 +60,7 @@ public class ClasspathBootstrap {
     @Nullable
     static final String initError;
     static {
-      Class<StandardJavaFileManager> aClass = null;
+      Class<StandardJavaFileManager> aClass;
       Method cacheClearMethod = null;
       String error = null;
       try {
@@ -169,9 +170,14 @@ public class ClasspathBootstrap {
       cp.add(getResourcePath(optimizedFileManagerClass));  // optimizedFileManager
     }
 
-    File file = EclipseCompilerTool.findEcjJarFile();
-    if (file != null) {
-      cp.add(file.getAbsolutePath());
+    File ecjJarFile = EclipseCompilerTool.findEcjJarFile();
+    if (ecjJarFile != null) {
+      cp.add(ecjJarFile.getAbsolutePath());
+    }
+
+    File errorProneJarFile = ErrorProneCompilerTool.findErrorProneJarFile();
+    if (errorProneJarFile != null) {
+      cp.add(errorProneJarFile.getAbsolutePath());
     }
   }
 

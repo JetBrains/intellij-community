@@ -24,6 +24,7 @@ import com.intellij.CommonBundle;
 import com.intellij.ProjectTopics;
 import com.intellij.compiler.impl.javaCompiler.BackendCompiler;
 import com.intellij.compiler.impl.javaCompiler.eclipse.EclipseCompiler;
+import com.intellij.compiler.impl.javaCompiler.javac.ErrorProneCompiler;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacCompiler;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.openapi.application.ApplicationManager;
@@ -333,6 +334,9 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
         final EclipseCompiler eclipse = new EclipseCompiler(myProject);
         myRegisteredCompilers.add(eclipse);
       }
+
+      final ErrorProneCompiler errorProne = new ErrorProneCompiler(myProject);
+      myRegisteredCompilers.add(errorProne);
     }
 
     final Set<FileType> types = new HashSet<FileType>();

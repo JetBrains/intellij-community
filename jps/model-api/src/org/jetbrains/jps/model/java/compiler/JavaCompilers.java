@@ -20,4 +20,5 @@ public interface JavaCompilers {
   String JAVAC_API_ID = "compAPI";
   String ECLIPSE_ID = "Eclipse";
   String ECLIPSE_EMBEDDED_ID = "EclipseEmbedded";
+  String PWA_ID = "PWA";
 }
