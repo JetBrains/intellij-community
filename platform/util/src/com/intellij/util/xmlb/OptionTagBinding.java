@@ -42,14 +42,15 @@ class OptionTagBinding extends BasePrimitiveBinding {
       myValueAttribute = Constants.VALUE;
     }
     else {
-      myNameAttribute = optionTag.nameAttribute();
       myValueAttribute = optionTag.valueAttribute();
 
       String tagName = optionTag.tag();
-      if (StringUtil.isEmpty(myNameAttribute) && Constants.OPTION.equals(tagName)) {
+      String nameAttribute = optionTag.nameAttribute();
+      if (StringUtil.isEmpty(nameAttribute) && Constants.OPTION.equals(tagName)) {
         tagName = myAccessor.getName();
       }
       myTagName = tagName;
+      myNameAttribute = tagName.equals(Constants.OPTION) || !nameAttribute.equals(Constants.NAME) ? StringUtil.nullize(nameAttribute) : null;
     }
   }
 
@@ -59,7 +60,7 @@ class OptionTagBinding extends BasePrimitiveBinding {
     Object value = myAccessor.read(o);
     Element targetElement = new Element(myTagName);
 
-    if (!StringUtil.isEmpty(myNameAttribute)) {
+    if (myNameAttribute != null) {
       targetElement.setAttribute(myNameAttribute, myName);
     }
 
@@ -119,14 +120,22 @@ class OptionTagBinding extends BasePrimitiveBinding {
 
   @Override
   public boolean isBoundTo(Object node) {
-    if (!(node instanceof Element)) return false;
+    if (!(node instanceof Element)) {
+      return false;
+    }
+
     Element e = (Element)node;
-    if (!e.getName().equals(myTagName)) return false;
+    if (!e.getName().equals(myTagName)) {
+      return false;
+    }
+
     String name = e.getAttributeValue(myNameAttribute);
-    if (StringUtil.isEmpty(myNameAttribute)) {
+    if (myNameAttribute == null) {
       return name == null || name.equals(myName);
     }
-    return name != null && name.equals(myName);
+    else {
+      return myName.equals(name);
+    }
   }
 
   @NonNls
