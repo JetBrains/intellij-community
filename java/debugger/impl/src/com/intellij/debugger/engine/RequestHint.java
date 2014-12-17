@@ -134,6 +134,18 @@ public class RequestHint {
     return myMethodFilter instanceof BreakpointStepMethodFilter || myTargetMethodMatched;
   }
 
+  private boolean isTheSameDepth(SuspendContextImpl context) {
+    final ThreadReferenceProxyImpl contextThread = context.getThread();
+    if (contextThread != null) {
+      try {
+        return myFrameCount == contextThread.frameCount();
+      }
+      catch (EvaluateException ignored) {
+      }
+    }
+    return false;
+  }
+
   private boolean isOnTheSameLine(SourcePosition locationPosition) {
     if (myMethodFilter == null) {
       return myPosition.getLine() == locationPosition.getLine();
@@ -152,7 +164,9 @@ public class RequestHint {
       if (myMethodFilter != null &&
           frameProxy != null &&
           !(myMethodFilter instanceof BreakpointStepMethodFilter) &&
-          myMethodFilter.locationMatches(context.getDebugProcess(), frameProxy.location())) {
+          myMethodFilter.locationMatches(context.getDebugProcess(), frameProxy.location()) &&
+          !isTheSameDepth(context)
+        ) {
         myTargetMethodMatched = true;
         return STOP;
       }
@@ -162,16 +176,7 @@ public class RequestHint {
           public Integer compute() {
             final SourcePosition locationPosition = ContextUtil.getSourcePosition(context);
             if (locationPosition != null) {
-              int frameCount = -1;
-              final ThreadReferenceProxyImpl contextThread = context.getThread();
-              if (contextThread != null) {
-                try {
-                  frameCount = contextThread.frameCount();
-                }
-                catch (EvaluateException ignored) {
-                }
-              }
-              if (myPosition.getFile().equals(locationPosition.getFile()) && myFrameCount == frameCount) {
+              if (myPosition.getFile().equals(locationPosition.getFile()) && isTheSameDepth(context)) {
                 return isOnTheSameLine(locationPosition) ? myDepth : STOP;
               }
             }
