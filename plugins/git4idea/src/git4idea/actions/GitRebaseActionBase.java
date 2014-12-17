@@ -19,6 +19,7 @@ import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitUtil;
@@ -104,18 +105,29 @@ public abstract class GitRebaseActionBase extends GitRepositoryAction {
         messageId = "rebase.result.amend";
         break;
       case FINISHED:
+        isError = false;
+        messageId = "rebase.result.success";
+        break;
       default:
         messageId = null;
     }
+
+    String message;
+    String title;
     if (messageId != null) {
-      String message = GitBundle.message(messageId, result.current, result.total);
-      String title = GitBundle.message(messageId + ".title");
-      if (isError) {
-        Messages.showErrorDialog(project, message, title);
-      }
-      else {
-        Messages.showInfoMessage(project, message, title);
-      }
+      message = GitBundle.message(messageId, result.current, result.total);
+      title = GitBundle.message(messageId + ".title");
+    }
+    else {
+      message = "Rebase finished: " + StringUtil.capitalize(StringUtil.toLowerCase(result.status.name()));
+      title = "";
+    }
+
+    if (isError) {
+      Messages.showErrorDialog(project, message, title);
+    }
+    else {
+      Messages.showInfoMessage(project, message, title);
     }
   }
 

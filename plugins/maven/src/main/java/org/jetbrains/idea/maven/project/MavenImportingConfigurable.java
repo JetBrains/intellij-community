@@ -52,7 +52,7 @@ public class MavenImportingConfigurable implements SearchableConfigurable {
     myUseMaven3CheckBox.setToolTipText("If this option is disabled maven 2 will be used");
 
     myEmbedderVMOptions = new JTextField(30);
-    myEmbedderJdk = new ExternalSystemJdkComboBox(null); // Embedder JDK is an application setting, not a project setting, so don't pass project
+    myEmbedderJdk = new ExternalSystemJdkComboBox(); // Embedder JDK is an application setting, not a project setting, so don't pass project
     assert myEmbedderJdk.getProject() == null;
   }
 

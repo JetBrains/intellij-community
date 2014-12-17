@@ -1386,7 +1386,9 @@ public class Messages {
       myDefaultOptionIndex = defaultOptionIndex;
       myFocusedOptionIndex = focusedOptionIndex;
       myIcon = icon;
-      setButtonsAlignment(SwingConstants.CENTER);
+      if (!SystemInfo.isMac) {
+        setButtonsAlignment(SwingConstants.CENTER);
+      }
       setDoNotAskOption(doNotAskOption);
       init();
       if (isMacSheetEmulation()) {

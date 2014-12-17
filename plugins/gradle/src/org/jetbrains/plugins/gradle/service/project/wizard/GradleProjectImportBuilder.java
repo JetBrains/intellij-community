@@ -72,7 +72,7 @@ public class GradleProjectImportBuilder extends AbstractExternalProjectImportBui
 
     final ImportFromGradleControl importFromGradleControl = getControl(context.getProject());
     importFromGradleControl.setLinkedProjectPath(pathToUse);
-    final Pair<String, Sdk> sdkPair = ExternalSystemJdkUtil.getAvailableJdk(getCurrentProject());
+    final Pair<String, Sdk> sdkPair = ExternalSystemJdkUtil.getAvailableJdk(context.getProject());
     if (sdkPair != null) {
       importFromGradleControl.getProjectSettings().setGradleJvm(sdkPair.first);
     }
