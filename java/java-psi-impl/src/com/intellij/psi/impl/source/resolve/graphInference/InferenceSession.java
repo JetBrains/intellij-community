@@ -1202,7 +1202,7 @@ public class InferenceSession {
         continue;
       }
       if (LambdaUtil.isFunctionalType(sType) && LambdaUtil.isFunctionalType(tType) && !relates(sType, tType)) {
-        if (!isFunctionalTypeMoreSpecific(sType, tType, session, args)) {
+        if (!isFunctionalTypeMoreSpecific(sType, tType, session, args[i])) {
           return false;
         }
       } else {
