@@ -45,7 +45,11 @@ public class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup {
   private static final int MAX_PATH_LENGTH = 50;
 
   @Nullable
-  private final Project myProject;
+  private Project myProject;
+
+  public ExternalSystemJdkComboBox() {
+    this(null);
+  }
 
   public ExternalSystemJdkComboBox(@Nullable Project project) {
     myProject = project;
@@ -61,13 +65,18 @@ public class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup {
         CompositeAppearance.DequeEnd ending = appearance.getEnding();
 
         ending.addText(item.label, attributes);
-        if (item.comment != null) {
-          if (!item.comment.equals(item.jdkName)) {
-            SimpleTextAttributes textAttributes =
-              SystemInfo.isMac && selected ? new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN,
-                                                                      JBColor.WHITE) : SimpleTextAttributes.GRAY_ATTRIBUTES;
-            ending.addComment(item.comment, textAttributes);
+        if (item.comment != null && !item.comment.equals(item.jdkName)) {
+          final SimpleTextAttributes textAttributes;
+          if (!item.valid) {
+            textAttributes = SimpleTextAttributes.ERROR_ATTRIBUTES;
           }
+          else {
+            textAttributes = SystemInfo.isMac && selected
+                             ? new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.WHITE)
+                             : SimpleTextAttributes.GRAY_ATTRIBUTES;
+          }
+
+          ending.addComment(item.comment, textAttributes);
         }
 
         final CompositeAppearance compositeAppearance = ending.getAppearance();
@@ -81,11 +90,15 @@ public class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup {
     return myProject;
   }
 
+  public void setProject(@Nullable Project project) {
+    myProject = project;
+  }
+
   public void refreshData(@Nullable String selectedValue) {
     Map<String, JdkComboBoxItem> jdkMap = collectComboBoxItem();
     if (selectedValue != null && !jdkMap.containsKey(selectedValue)) {
       assert selectedValue.length() > 0;
-      jdkMap.put(selectedValue, new JdkComboBoxItem(selectedValue, selectedValue, selectedValue, true));
+      jdkMap.put(selectedValue, new JdkComboBoxItem(selectedValue, selectedValue, "", false));
     }
 
     removeAllItems();
@@ -123,42 +136,55 @@ public class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup {
 
     for (Sdk projectJdk : ProjectJdkTable.getInstance().getSdksOfType(JavaSdk.getInstance())) {
       String name = projectJdk.getName();
-
-      String path = projectJdk.getHomePath();
-      String comment;
-      String versionString = projectJdk.getVersionString();
-      if (versionString != null && !versionString.equals(name)) {
-        comment = versionString;
-      }
-      else {
-        comment = path == null ? name : truncateLongPath(path);
-      }
-
+      String comment = buildComment(projectJdk);
       result.put(name, new JdkComboBoxItem(name, name, comment, ((SdkType)projectJdk.getSdkType()).sdkHasValidPath(projectJdk)));
     }
 
-    String internalJdkPath = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk().getHomePath();
-    assert internalJdkPath != null;
+    final Sdk internalJdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
+    assert internalJdk.getHomePath() != null;
+
     result.put(ExternalSystemJdkUtil.USE_INTERNAL_JAVA,
-               new JdkComboBoxItem(ExternalSystemJdkUtil.USE_INTERNAL_JAVA,
-                                   ExternalSystemBundle.message("external.system.java.internal.jre"), truncateLongPath(internalJdkPath),
-                                   true));
+               new JdkComboBoxItem(
+                 ExternalSystemJdkUtil.USE_INTERNAL_JAVA,
+                 ExternalSystemBundle.message("external.system.java.internal.jre"),
+                 buildComment(internalJdk),
+                 true
+               ));
 
     if (myProject != null) {
-      String projectJdk = ProjectRootManager.getInstance(myProject).getProjectSdkName();
+      final Sdk projectSdk = ProjectRootManager.getInstance(myProject).getProjectSdk();
       result.put(ExternalSystemJdkUtil.USE_PROJECT_JDK,
-                 new JdkComboBoxItem(ExternalSystemJdkUtil.USE_PROJECT_JDK, "Use Project JDK",
-                                     projectJdk == null ? "not defined yet" : projectJdk, projectJdk != null));
+                 new JdkComboBoxItem(
+                   ExternalSystemJdkUtil.USE_PROJECT_JDK, "Use Project JDK",
+                   projectSdk == null ? "not defined yet" : buildComment(projectSdk), projectSdk != null
+                 ));
     }
 
     String javaHomePath = System.getenv("JAVA_HOME");
     String javaHomeLabel = ExternalSystemBundle.message("external.system.java.home.env");
 
     result.put(ExternalSystemJdkUtil.USE_JAVA_HOME,
-               new JdkComboBoxItem(ExternalSystemJdkUtil.USE_JAVA_HOME, javaHomeLabel,
-                                   javaHomePath == null ? "not defined yet" : truncateLongPath(javaHomePath), javaHomePath != null));
+               new JdkComboBoxItem(
+                 ExternalSystemJdkUtil.USE_JAVA_HOME, javaHomeLabel,
+                 javaHomePath == null ? "not defined yet" : truncateLongPath(javaHomePath), javaHomePath != null
+               ));
 
     return result;
+  }
+
+  private static String buildComment(@NotNull Sdk sdk) {
+    String versionString = sdk.getVersionString();
+    String path = sdk.getHomePath();
+    StringBuilder buf = new StringBuilder();
+    if (versionString != null) {
+      buf.append(versionString);
+    }
+    if (path != null) {
+      buf.append(versionString != null ? ", " : "");
+      buf.append("path: ").append(truncateLongPath(path));
+    }
+
+    return buf.toString();
   }
 
   @NotNull

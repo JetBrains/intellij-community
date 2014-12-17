@@ -133,15 +133,24 @@ public class GradleInstallationManager {
     }
 
     final String gradleJvm = settings.getGradleJvm();
+    final Sdk sdk;
     try {
-      return ExternalSystemJdkUtil.getJdk(project, gradleJvm);
+      sdk = ExternalSystemJdkUtil.getJdk(project, gradleJvm);
     }
     catch (ExternalSystemJdkException e) {
       throw new ExternalSystemJdkException(
-        String.format("Invalid Gradle JDK configuration found: <a href='%s'>Open Gradle Settings</a> \n",
+        String.format("Invalid Gradle JDK configuration found. <a href='%s'>Open Gradle Settings</a> \n",
                       OpenExternalSystemSettingsCallback.ID),
-        e, OpenExternalSystemSettingsCallback.ID);
+        linkedProjectPath, e, OpenExternalSystemSettingsCallback.ID);
     }
+
+    if (sdk == null) {
+      throw new ExternalSystemJdkException(
+        String.format("Invalid Gradle JDK configuration found. <a href='%s'>Open Gradle Settings</a> \n",
+                      OpenExternalSystemSettingsCallback.ID),
+        linkedProjectPath, null, OpenExternalSystemSettingsCallback.ID);
+    }
+    return sdk;
   }
 
   /**
