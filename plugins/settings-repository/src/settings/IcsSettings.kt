@@ -34,7 +34,7 @@ class IcsSettings {
   Tag
   Property(surroundWithTag = false)
   AbstractCollection(surroundWithTag = false)
-  val readOnlySources = ArrayList<ReadonlySource>()
+  var readOnlySources: List<ReadonlySource> = ArrayList<ReadonlySource>()
 
   fun save() {
     FileUtil.createParentDirs(settingsFile)

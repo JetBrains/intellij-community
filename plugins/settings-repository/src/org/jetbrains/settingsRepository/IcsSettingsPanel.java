@@ -19,38 +19,21 @@ public class IcsSettingsPanel {
   JPanel panel;
   private TextFieldWithBrowseButton urlTextField;
   private final Action[] syncActions;
-  private final IcsManager icsManager;
 
   public IcsSettingsPanel(@Nullable final Project project, @NotNull Container dialogParent, @NotNull Function0<Unit> okAction) {
-    icsManager = IcsManager.OBJECT$.getInstance();
-    urlTextField.setText(icsManager.getRepositoryManager().getUpstream());
+    urlTextField.setText(IcsManager.OBJECT$.getInstance().getRepositoryManager().getUpstream());
     urlTextField.addBrowseFolderListener(new TextBrowseFolderListener(FileChooserDescriptorFactory.createSingleFolderDescriptor()));
 
-    syncActions = SettingsRepositoryPackage.createDialogActions(project, urlTextField, dialogParent, okAction);
+    syncActions = SettingsRepositoryPackage.createMergeActions(project, urlTextField, dialogParent, okAction);
 
     urlTextField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {
-        updateSyncButtonState();
+        SettingsRepositoryPackage.updateSyncButtonState(StringUtil.nullize(urlTextField.getText()), syncActions);
       }
     });
 
-    updateSyncButtonState();
-  }
-
-  private void updateSyncButtonState() {
-    String url = StringUtil.nullize(urlTextField.getText());
-    boolean enabled;
-    try {
-      enabled = url != null && url.length() > 1 && icsManager.getRepositoryService().checkUrl(url, null);
-    }
-    catch (Exception e) {
-      enabled = false;
-    }
-
-    for (Action syncAction : syncActions) {
-      syncAction.setEnabled(enabled);
-    }
+    SettingsRepositoryPackage.updateSyncButtonState(StringUtil.nullize(urlTextField.getText()), syncActions);
   }
 
   @NotNull
