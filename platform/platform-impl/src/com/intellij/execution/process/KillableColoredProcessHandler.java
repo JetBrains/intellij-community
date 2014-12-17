@@ -38,7 +38,7 @@ public class KillableColoredProcessHandler extends ColoredProcessHandler impleme
 
   private boolean myShouldKillProcessSoftly = true;
 
-  public KillableColoredProcessHandler(GeneralCommandLine commandLine) throws ExecutionException {
+  public KillableColoredProcessHandler(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
     super(commandLine);
   }
 
