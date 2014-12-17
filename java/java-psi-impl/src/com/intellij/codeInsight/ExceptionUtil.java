@@ -465,12 +465,15 @@ public class ExceptionUtil {
     final PsiLambdaExpression expression = PsiTreeUtil.getParentOfType(methodCall, PsiLambdaExpression.class);
     final PsiSubstitutor substitutor;
     if (expression != null) {
-      substitutor = ourThrowsGuard.doPreventingRecursion(expression, false, new Computable<PsiSubstitutor>() {
+      final PsiElement parent = methodCall.getParent();
+      final boolean callInReturnStatement = parent == expression || 
+                                            parent instanceof PsiReturnStatement && PsiTreeUtil.getParentOfType(parent, PsiLambdaExpression.class, true, PsiMethod.class) == expression;
+      substitutor = callInReturnStatement ? ourThrowsGuard.doPreventingRecursion(expression, false, new Computable<PsiSubstitutor>() {
         @Override
         public PsiSubstitutor compute() {
           return result.getSubstitutor();
         }
-      });
+      }) : result.getSubstitutor();
     } else {
       substitutor = result.getSubstitutor();
     }
