@@ -247,4 +247,28 @@ public class PyTypeCheckerInspectionTest extends PyTestCase {
   public void testContainsArguments() {
     doTest();
   }
+
+  public void testExpectedStructuralType() {
+    doTest();
+  }
+
+  public void testActualStructuralType() {
+    doTest();
+  }
+
+  public void testStructuralTypesForNestedCalls() {
+    doTest();
+  }
+
+  public void testIterateOverParamWithNoAttributes() {
+    doTest();
+  }
+
+  public void testGetAttributeAgainstStructuralType() {
+    doTest();
+  }
+
+  public void testComparisonOperatorsForNumericTypes() {
+    doTest();
+  }
 }

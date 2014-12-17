@@ -207,7 +207,7 @@ public class ProjectSettingsStepBase extends AbstractActionWithPanel implements 
   @Nullable
   protected JPanel createAdvancedSettings() {
     if (myProjectGenerator instanceof WebProjectTemplate) {
-      final JPanel jPanel = new JPanel(new VerticalFlowLayout());
+      final JPanel jPanel = new JPanel(new VerticalFlowLayout(0, 5));
       jPanel.add(((WebProjectTemplate)myProjectGenerator).getPeer().getComponent());
       return jPanel;
     }

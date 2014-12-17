@@ -29,7 +29,6 @@ import com.intellij.psi.impl.source.tree.StdTokenSets;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -64,21 +63,22 @@ public class SimpleJavaBlock extends AbstractJavaBlock {
     myCurrentIndent = null;
     processHeadCommentsAndWhiteSpaces(result);
 
-    myReservedAlignment = createChildAlignment();
-    myReservedAlignment2 = createChildAlignment2(myReservedAlignment);
+    calculateReservedAlignments();
+
     Wrap childWrap = createChildWrap();
     processRemainingChildren(result, childWrap);
 
     return result;
   }
 
-  @Nullable
-  protected Alignment createChildAlignment2(@Nullable Alignment base) {
-    final IElementType nodeType = myNode.getElementType();
-    if (nodeType == JavaElementType.CONDITIONAL_EXPRESSION) {
-      return base == null ? createAlignment(mySettings.ALIGN_MULTILINE_TERNARY_OPERATION, null) : createAlignment(base, mySettings.ALIGN_MULTILINE_TERNARY_OPERATION, null);
+  private void calculateReservedAlignments() {
+    myReservedAlignment = createChildAlignment();
+
+    IElementType nodeType = myNode.getElementType();
+    if (nodeType == JavaElementType.CONDITIONAL_EXPRESSION && mySettings.ALIGN_MULTILINE_TERNARY_OPERATION) {
+      myReservedAlignment2 = myReservedAlignment != null ? Alignment.createChildAlignment(myReservedAlignment)
+                                                         : Alignment.createAlignment();
     }
-    return null;
   }
 
   private void processRemainingChildren(List<Block> result, Wrap childWrap) {
@@ -86,6 +86,12 @@ public class SimpleJavaBlock extends AbstractJavaBlock {
       if (isNotEmptyNode(myCurrentChild)) {
         final ASTNode astNode = myCurrentChild;
         AlignmentStrategy alignmentStrategyToUse = AlignmentStrategy.wrap(chooseAlignment(myReservedAlignment, myReservedAlignment2, myCurrentChild));
+
+        if (myNode.getElementType() == JavaElementType.FIELD) {
+          alignmentStrategyToUse = myAlignmentStrategy;
+        }
+
+
         myCurrentChild = processChild(result, astNode, alignmentStrategyToUse, childWrap, myCurrentIndent, myCurrentOffset);
         if (astNode != myCurrentChild && myCurrentChild != null) {
           myCurrentOffset = myCurrentChild.getTextRange().getStartOffset();
@@ -124,7 +130,7 @@ public class SimpleJavaBlock extends AbstractJavaBlock {
     }
   }
 
-  private boolean isNotEmptyNode(@NotNull ASTNode child) {
+  private static boolean isNotEmptyNode(@NotNull ASTNode child) {
     return !FormatterUtil.containsWhiteSpacesOnly(child) && child.getTextLength() > 0;
   }
 

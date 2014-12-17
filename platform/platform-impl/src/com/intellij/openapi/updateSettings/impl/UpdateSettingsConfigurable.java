@@ -153,7 +153,7 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
           settings.loadState(UpdateSettings.getInstance().getState());
           settings.UPDATE_CHANNEL_TYPE = getSelectedChannelType().getCode();
           settings.SECURE_CONNECTION = myUseSecureConnection.isSelected();
-          UpdateChecker.updateAndShowResult(project, true, settings);  //todo load configured hosts on the fly
+          UpdateChecker.updateAndShowResult(project, settings);
           updateLastCheckedLabel();
         }
       });

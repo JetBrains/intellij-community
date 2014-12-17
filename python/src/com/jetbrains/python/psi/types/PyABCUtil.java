@@ -84,6 +84,10 @@ public class PyABCUtil {
   }
 
   public static boolean isSubtype(@NotNull PyType type, @NotNull String superClassName, @NotNull TypeEvalContext context) {
+    if (type instanceof PyStructuralType) {
+      // TODO: Convert abc types to structural types and check them properly
+      return true;
+    }
     if (type instanceof PyClassType) {
       final PyClassType classType = (PyClassType)type;
       final PyClass pyClass = classType.getPyClass();

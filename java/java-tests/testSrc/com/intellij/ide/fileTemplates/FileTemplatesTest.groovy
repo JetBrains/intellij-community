@@ -36,7 +36,7 @@ public class FileTemplatesTest extends IdeaTestCase {
     final File customInclude = new File(testsDir, customIncludeFileName);
     final String includeText = FileUtil.loadFile(customInclude, FileTemplate.ourEncoding);
 
-    final FileTemplateManager templateManager = FileTemplateManager.getInstance(getProject());
+    final FileTemplateManager templateManager = FileTemplateManager.getDefaultInstance();
     final ArrayList<FileTemplate> originalIncludes = new ArrayList<FileTemplate>(Arrays.asList(templateManager.getAllPatterns()));
     try {
       // configure custom include

@@ -46,8 +46,12 @@ public class ChangeSchemaCombo extends ComboBoxAction implements DumbAware {
   @NotNull
   @Override
   protected DefaultActionGroup createPopupActionGroup(JComponent button) {
-    return new DefaultActionGroup(new ChangeSchemaAction(FileTemplatesScheme.DEFAULT),
-                                  new ChangeSchemaAction(myConfigurable.getManager().getProjectScheme()));
+    DefaultActionGroup group = new DefaultActionGroup(new ChangeSchemaAction(FileTemplatesScheme.DEFAULT));
+    FileTemplatesScheme scheme = myConfigurable.getManager().getProjectScheme();
+    if (scheme != null) {
+      group.add(new ChangeSchemaAction(scheme));
+    }
+    return group;
   }
 
   @Override
@@ -64,7 +68,7 @@ public class ChangeSchemaCombo extends ComboBoxAction implements DumbAware {
 
     private final FileTemplatesScheme myScheme;
 
-    public ChangeSchemaAction(FileTemplatesScheme scheme) {
+    public ChangeSchemaAction(@NotNull FileTemplatesScheme scheme) {
       super(scheme.getName());
       myScheme = scheme;
     }

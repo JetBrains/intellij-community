@@ -95,7 +95,7 @@ public class GitCherryPicker extends VcsCherryPicker {
 
   public void cherryPick(@NotNull List<VcsFullCommitDetails> commits) {
     Map<GitRepository, List<VcsFullCommitDetails>> commitsInRoots =
-      DvcsUtil.groupCommitsByRoots(myPlatformFacade.getRepositoryManager(myProject), commits);
+      DvcsUtil.<GitRepository>groupCommitsByRoots(myPlatformFacade.getRepositoryManager(myProject), commits);
     List<GitCommitWrapper> successfulCommits = ContainerUtil.newArrayList();
     List<GitCommitWrapper> alreadyPicked = ContainerUtil.newArrayList();
     AccessToken token = DvcsUtil.workingTreeChangeStarted(myProject);

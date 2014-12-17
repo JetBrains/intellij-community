@@ -51,7 +51,7 @@ public class PluginGroups {
   public PluginGroups() {
     myAllPlugins = PluginManagerCore.loadDescriptors(null);
     try {
-      myPluginsFromRepository.addAll(RepositoryHelper.loadPluginsFromRepository(null));
+      myPluginsFromRepository.addAll(RepositoryHelper.loadPlugins(null));
     }
     catch (Exception e) {
       //OK, it's offline

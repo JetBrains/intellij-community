@@ -19,11 +19,9 @@ package org.jetbrains.idea.svn.branchConfig;
 import com.intellij.openapi.actionSystem.ActionToolbarPosition;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
@@ -201,17 +199,8 @@ public class BranchConfigurationDialog extends DialogWrapper {
       return;
     }
 
-    SvnBranchConfigurationNew configuration;
-    try {
-      configuration = SvnBranchConfigurationManager.getInstance(project).get(file);
-    }
-    catch (VcsException ex) {
-      Messages.showErrorDialog(project, "Error loading branch configuration: " + ex.getMessage(),
-                               SvnBundle.message("configure.branches.title"));
-      return;
-    }
-
-    final SvnBranchConfigurationNew clonedConfiguration = configuration.copy();
+    SvnBranchConfigurationNew configuration = SvnBranchConfigurationManager.getInstance(project).get(file);
+    SvnBranchConfigurationNew clonedConfiguration = configuration.copy();
     BranchConfigurationDialog dlg =
       new BranchConfigurationDialog(project, clonedConfiguration, wcRoot.getRepositoryUrlUrl(), file, wcRoot.getUrl());
     if (dlg.showAndGet()) {

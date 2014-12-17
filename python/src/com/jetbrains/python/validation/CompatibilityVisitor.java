@@ -23,11 +23,11 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.inspections.quickfix.*;
 import com.jetbrains.python.psi.*;
-import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl;
 import org.jetbrains.annotations.Nullable;
 
@@ -241,17 +241,17 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   @Override
   public void visitPyStringLiteralExpression(final PyStringLiteralExpression node) {
     super.visitPyStringLiteralExpression(node);
-    List<ASTNode> stringNodes = node.getStringNodes();
+    final List<ASTNode> stringNodes = node.getStringNodes();
 
     for (ASTNode stringNode : stringNodes) {
       int len = 0;
-      StringBuilder message = new StringBuilder(myCommonMessage);
-      String nodeText = stringNode.getText();
-      int index = PyStringLiteralExpressionImpl.getPrefixLength(nodeText);
-      String prefix = nodeText.substring(0, index).toUpperCase();
+      final StringBuilder message = new StringBuilder(myCommonMessage);
+      final String nodeText = stringNode.getText();
+      final int index = PyStringLiteralExpressionImpl.getPrefixLength(nodeText);
+      final String prefix = nodeText.substring(0, index).toUpperCase();
       final TextRange range = TextRange.create(stringNode.getStartOffset(), stringNode.getStartOffset() + index);
       for (int i = 0; i != myVersionsToProcess.size(); ++i) {
-        LanguageLevel languageLevel = myVersionsToProcess.get(i);
+        final LanguageLevel languageLevel = myVersionsToProcess.get(i);
         if (prefix.isEmpty()) continue;
 
         final Set<String> prefixes = AVAILABLE_PREFIXES.get(languageLevel);

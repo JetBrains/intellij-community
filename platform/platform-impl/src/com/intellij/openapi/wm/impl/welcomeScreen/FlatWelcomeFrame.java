@@ -47,7 +47,9 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.util.IconUtil;
 import com.intellij.util.NotNullFunction;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -345,8 +347,16 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
         final Runnable onDone = new Runnable() {
           @Override
           public void run() {
-            ListScrollingUtil.ensureSelectionExists(panel.second);
-            panel.second.requestFocus();
+            final JBList list = panel.second;
+            ListScrollingUtil.ensureSelectionExists(list);
+            final ListSelectionListener[] listeners =
+              ((DefaultListSelectionModel)list.getSelectionModel()).getListeners(ListSelectionListener.class);
+
+            //avoid component cashing. This helps in case of LaF change
+            for (ListSelectionListener listener : listeners) {
+              listener.valueChanged(new ListSelectionEvent(list, list.getSelectedIndex(), list.getSelectedIndex(), true));
+            }
+            list.requestFocus();
           }
         };
         final String name = action.getClass().getName();
@@ -653,6 +663,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
     JPanel actionsListPanel = new JPanel(new BorderLayout());
     actionsListPanel.setBackground(getProjectsBackground());
     final JBList list = new JBList(action.getChildren(null));
+    list.setBackground(getProjectsBackground());
     list.installCellRenderer(new NotNullFunction<AnAction, JComponent>() {
       final JLabel label = new JLabel();
       Map<Icon, Icon> scaled = new HashMap<Icon, Icon>();

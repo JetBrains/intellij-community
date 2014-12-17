@@ -13,15 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide;
+package com.intellij.ide.fileTemplates.impl;
 
 import com.intellij.ide.fileTemplates.FileTemplate;
+import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplatesScheme;
-import com.intellij.ide.fileTemplates.impl.AllFileTemplatesConfigurable;
-import com.intellij.ide.fileTemplates.impl.BundledFileTemplate;
-import com.intellij.ide.fileTemplates.impl.FileTemplateManagerImpl;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.util.ArrayUtil;
 
 /**
  * @author Dmitry Avdeev
@@ -50,12 +51,35 @@ public class LightFileTemplatesTest extends LightPlatformTestCase {
     assertEquals("good bye", myTemplateManager.getTemplate(TEST_TEMPLATE_TXT).getText());
   }
 
+  public void testDefaultProject() throws Exception {
+    Project defaultProject = ProjectManager.getInstance().getDefaultProject();
+    assertNull(FileTemplateManager.getInstance(defaultProject).getProjectScheme());
+  }
+
   public void testConfigurable() throws Exception {
     AllFileTemplatesConfigurable configurable = new AllFileTemplatesConfigurable(getProject());
     try {
       configurable.createComponent();
       configurable.reset();
+    }
+    finally {
+      configurable.disposeUIResources();
+    }
+  }
 
+  public void testSaveFileAsTemplate() throws Exception {
+    AllFileTemplatesConfigurable configurable = new AllFileTemplatesConfigurable(getProject());
+    try {
+      configurable.createComponent();
+      configurable.reset();
+      FileTemplate template = configurable.createNewTemplate("foo", "bar", "hey");
+      assertTrue(configurable.isModified());
+      FileTemplate[] templates = configurable.getTabs()[0].getTemplates();
+      assertTrue(ArrayUtil.contains(template, templates));
+      configurable.changeScheme(myTemplateManager.getProjectScheme());
+      assertTrue(configurable.isModified());
+//      assertEquals(templates.length, configurable.getTabs()[0].getTemplates().length);
+//      assertTrue(ArrayUtil.contains(template, configurable.getTabs()[0].getTemplates()));
     }
     finally {
       configurable.disposeUIResources();

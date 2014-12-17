@@ -589,13 +589,14 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testParameterFromUsages() {
-    doTest("int | str | unknown",
-           "def foo(bar):\n" +
-           "    expr = bar\n" +
-           "def use_foo(x):\n" +
-           "    foo(x)\n" +
-           "    foo(3)\n" +
-           "    foo('bar')\n");
+    final String text = "def foo(bar):\n" +
+                        "    expr = bar\n" +
+                        "def use_foo(x):\n" +
+                        "    foo(x)\n" +
+                        "    foo(3)\n" +
+                        "    foo('bar')\n";
+    final PyExpression expr = parseExpr(text);
+    doTest("int | str | unknown", expr, TypeEvalContext.codeCompletion(expr.getProject(), expr.getContainingFile()));
   }
 
   public void testUpperBoundGeneric() {
@@ -960,6 +961,42 @@ public class PyTypeTest extends PyTestCase {
            "        expr = x\n");
   }
 
+  public void testStructuralType() {
+    doTest("{foo, bar}",
+           "def f(x):\n" +
+           "    x.foo + x.bar()\n" +
+           "    expr = x\n");
+  }
+
+  public void testOnlyRelatedNestedAttributes() {
+    doTest("{foo}",
+           "def g(x):\n" +
+           "    x.bar\n" +
+           "\n" +
+           "def f(x, y):\n" +
+           "    x.foo + g(y)\n" +
+           "    expr = x\n");
+  }
+
+  public void testNoContainsInContainsArgumentForStructuralType() {
+    doTest("{foo, __getitem__}",
+           "def f(x):\n" +
+           "   x in []\n" +
+           "   x.foo\n" +
+           "   x[0]" +
+           "   expr = x\n");
+  }
+
+  public void testStructuralTypeAndIsInstanceChecks() {
+    doTest("(x: {foo}) -> None",
+           "def f(x):\n" +
+           "    if isinstance(x, str):\n" +
+           "        x.lower()\n" +
+           "    x.foo\n" +
+           "\n" +
+           "expr = f\n");
+  }
+
   private static TypeEvalContext getTypeEvalContext(@NotNull PyExpression element) {
     return TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing();
   }
@@ -967,6 +1004,12 @@ public class PyTypeTest extends PyTestCase {
   private PyExpression parseExpr(String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     return myFixture.findElementByText("expr", PyExpression.class);
+  }
+
+  private static void doTest(final String expectedType, final PyExpression expr, final TypeEvalContext context) {
+    PyType actual = context.getType(expr);
+    final String actualType = PythonDocumentationProvider.getTypeName(actual, context);
+    assertEquals(expectedType, actualType);
   }
 
   private void doTest(final String expectedType, final String text) {

@@ -195,7 +195,7 @@ public class Task implements Stateful {
   public String getResourceText(@NotNull final Project project, @NotNull final String fileName, boolean wrapHTML) {
     VirtualFile taskDir = getTaskDir(project);
     if (taskDir != null) {
-      return StudyUtils.getFileText(taskDir.getCanonicalPath(), fileName, wrapHTML);
+      return StudyUtils.getFileText(taskDir.getCanonicalPath(), fileName, wrapHTML, "UTF-8");
     }
     return null;
   }

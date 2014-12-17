@@ -16,17 +16,24 @@
 package org.jetbrains.plugins.gradle.importing;
 
 import com.intellij.compiler.server.BuildManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
+import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListenerAdapter;
 import com.intellij.openapi.externalSystem.test.ExternalSystemImportingTestCase;
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TestDialog;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.gradle.util.GradleVersion;
 import org.gradle.wrapper.GradleWrapperMain;
 import org.intellij.lang.annotations.Language;
@@ -49,6 +56,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.Properties;
 
 import static org.jetbrains.plugins.gradle.tooling.builder.AbstractModelBuilderTest.DistributionLocator;
@@ -94,6 +102,16 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
   }
 
   @Override
+  protected void collectAllowedRoots(List<String> roots) throws IOException {
+    final String javaHome = System.getenv("JAVA_HOME");
+    if (javaHome != null) {
+      roots.add(javaHome);
+    }
+
+    roots.add(PathManager.getOptionsPath());
+  }
+
+  @Override
   public String getName() {
     return name.getMethodName() == null ? super.getName() : FileUtil.sanitizeFileName(name.getMethodName());
   }
@@ -115,6 +133,18 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
 
   @Override
   protected void importProject(@NonNls @Language("Groovy") String config) throws IOException {
+    ExternalSystemApiUtil.subscribe(myProject, GradleConstants.SYSTEM_ID, new ExternalSystemSettingsListenerAdapter() {
+      @Override
+      public void onProjectsLinked(@NotNull Collection settings) {
+        final Object item = ContainerUtil.getFirstItem(settings);
+        if (item instanceof GradleProjectSettings) {
+          final Pair<String, Sdk> availableJdk = ExternalSystemJdkUtil.getAvailableJdk(myProject);
+          if (availableJdk != null) {
+            ((GradleProjectSettings)item).setGradleJvm(availableJdk.first);
+          }
+        }
+      }
+    });
     super.importProject(config);
   }
 

@@ -251,6 +251,26 @@ public class PyIntentionTest extends PyTestCase {
     doTest(PyBundle.message("INTN.triple.quoted.string"));
   }
 
+  // PY-8989
+  public void testConvertTripleQuotedStringIsNotAvailableForRawStrings() {
+    myFixture.configureByFile("intentions/" + getTestName(false) + ".py");
+    assertEmpty(myFixture.filterAvailableIntentions(PyBundle.message("INTN.triple.quoted.string")));
+  }
+
+  // PY-8989
+  public void testConvertTripleQuotedStringDoesNotReplacePythonEscapes() {
+    doTest(PyBundle.message("INTN.triple.quoted.string"), LanguageLevel.PYTHON33);
+  }
+
+  // PY-8989
+  public void testConvertTripleQuotedStringMultilineGluedString() {
+    doTest(PyBundle.message("INTN.triple.quoted.string"), LanguageLevel.PYTHON33);
+  }
+
+  public void testConvertTripleQuotedEmptyString() {
+    doTest(PyBundle.message("INTN.triple.quoted.string"), LanguageLevel.PYTHON33);
+  }
+
   public void testTransformConditionalExpression() { //PY-3094
     doTest(PyBundle.message("INTN.transform.into.if.else.statement"));
   }

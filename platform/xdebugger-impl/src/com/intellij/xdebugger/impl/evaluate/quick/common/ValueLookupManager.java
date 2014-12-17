@@ -28,12 +28,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.Alarm;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
-import java.awt.event.MouseEvent;
 
 public class ValueLookupManager extends EditorMouseAdapter implements EditorMouseMotionListener {
   /**
@@ -81,15 +79,15 @@ public class ValueLookupManager extends EditorMouseAdapter implements EditorMous
       return;
     }
 
-    MouseEvent event = e.getMouseEvent();
+    ValueHintType type = AbstractValueHint.getHintType(e);
     if (e.getArea() != EditorMouseEventArea.EDITING_AREA ||
         DISABLE_VALUE_LOOKUP.get(editor) == Boolean.TRUE ||
-        UIUtil.isSelectionButtonDown(event)) {
+        type == null) {
       myAlarm.cancelAllRequests();
       return;
     }
 
-    Point point = event.getPoint();
+    Point point = e.getMouseEvent().getPoint();
     if (myRequest != null && !myRequest.isKeepHint(editor, point)) {
       hideHint();
     }
@@ -97,13 +95,13 @@ public class ValueLookupManager extends EditorMouseAdapter implements EditorMous
     for (DebuggerSupport support : mySupports) {
       QuickEvaluateHandler handler = support.getQuickEvaluateHandler();
       if (handler.isEnabled(myProject)) {
-        requestHint(handler, editor, point, AbstractValueHint.getType(e));
+        requestHint(handler, editor, point, type);
         break;
       }
     }
   }
 
-  private void requestHint(final QuickEvaluateHandler handler, final Editor editor, final Point point, final ValueHintType type) {
+  private void requestHint(final QuickEvaluateHandler handler, final Editor editor, final Point point, @NotNull final ValueHintType type) {
     myAlarm.cancelAllRequests();
     if (type == ValueHintType.MOUSE_OVER_HINT) {
       if (Registry.is("debugger.valueTooltipAutoShow")) {

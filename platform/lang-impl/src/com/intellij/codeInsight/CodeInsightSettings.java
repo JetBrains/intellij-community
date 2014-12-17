@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight;
 
+import com.intellij.codeInsight.editorActions.SmartBackspaceMode;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ArrayUtil;
@@ -76,11 +77,8 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
 
   public boolean SHOW_FULL_SIGNATURES_IN_PARAMETER_INFO = false;
 
-  @MagicConstant(intValues = {OFF, AUTOINDENT, INDENT})
-  public int SMART_BACKSPACE = AUTOINDENT;
-  public static final int OFF = 0;
-  public static final int AUTOINDENT = 1;
-  public static final int INDENT = 2;
+  @MagicConstant(intValues = {SmartBackspaceMode.OFF, SmartBackspaceMode.AUTOINDENT, SmartBackspaceMode.INDENT})
+  public int SMART_BACKSPACE = SmartBackspaceMode.AUTOINDENT;
 
   public boolean SMART_INDENT_ON_ENTER = true;
   public boolean INSERT_BRACE_ON_ENTER = true;

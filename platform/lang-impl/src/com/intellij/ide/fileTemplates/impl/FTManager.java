@@ -60,6 +60,14 @@ class FTManager {
     myTemplatesDir = defaultTemplatesDirName;
   }
 
+  FTManager(FTManager original) {
+    myName = original.getName();
+    myTemplatesDir = original.myTemplatesDir;
+    myInternal = original.myInternal;
+    myTemplates.putAll(original.myTemplates);
+    myDefaultTemplates.addAll(original.myDefaultTemplates);
+  }
+
   public String getName() {
     return myName;
   }

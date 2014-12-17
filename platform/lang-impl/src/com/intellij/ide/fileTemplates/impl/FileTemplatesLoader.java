@@ -86,36 +86,33 @@ public class FileTemplatesLoader {
     myDirToManagerMap.put(J2EE_TEMPLATES_DIR + "/", myJ2eeTemplatesManager);
 
     loadDefaultTemplates();
-    for (FTManager child : myAllManagers) {
-      child.loadCustomizedContent();
-    }
   }
 
   @NotNull
-  public FTManager[] getAllManagers() {
+  protected FTManager[] getAllManagers() {
     return myAllManagers;
   }
 
   @NotNull
-  public FTManager getDefaultTemplatesManager() {
-    return myDefaultTemplatesManager;
+  FTManager getDefaultTemplatesManager() {
+    return new FTManager(myDefaultTemplatesManager);
   }
 
   @NotNull
-  public FTManager getInternalTemplatesManager() {
-    return myInternalTemplatesManager;
+  FTManager getInternalTemplatesManager() {
+    return new FTManager(myInternalTemplatesManager);
   }
 
-  public FTManager getPatternsManager() {
-    return myPatternsManager;
+  FTManager getPatternsManager() {
+    return new FTManager(myPatternsManager);
   }
 
   public FTManager getCodeTemplatesManager() {
-    return myCodeTemplatesManager;
+    return new FTManager(myCodeTemplatesManager);
   }
 
   public FTManager getJ2eeTemplatesManager() {
-    return myJ2eeTemplatesManager;
+    return new FTManager(myJ2eeTemplatesManager);
   }
 
   public URL getDefaultTemplateDescription() {
@@ -154,7 +151,7 @@ public class FileTemplatesLoader {
     }
   }
 
-  public void loadDefaultsFromRoot(final URL root) throws IOException {
+  private void loadDefaultsFromRoot(final URL root) throws IOException {
     final List<String> children = UrlUtil.getChildrenRelativePaths(root);
     if (children.isEmpty()) {
       return;

@@ -25,7 +25,6 @@ import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
-import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.WelcomeScreen;
@@ -99,7 +98,7 @@ public class NewWelcomeScreen extends JPanel implements WelcomeScreen {
     footerPanel.add(makeSmallFont(new LinkLabel("Check", null, new LinkListener() {
       @Override
       public void linkSelected(LinkLabel aSource, Object aLinkData) {
-        UpdateChecker.updateAndShowResult(null, false, UpdateSettings.getInstance());
+        UpdateChecker.updateAndShowResult(null, null);
       }
     })));
     footerPanel.add(makeSmallFont(new JLabel(" for updates now.")));

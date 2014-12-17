@@ -22,6 +22,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Properties;
@@ -68,7 +69,10 @@ public abstract class FileTemplateManager{
 
   public abstract void setCurrentScheme(@NotNull FileTemplatesScheme scheme);
 
-  @NotNull
+  /**
+   * @return Project scheme, or null if manager is created for default project.
+   */
+  @Nullable
   public abstract FileTemplatesScheme getProjectScheme();
 
   public abstract FileTemplate[] getTemplates(String category);

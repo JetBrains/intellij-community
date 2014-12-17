@@ -25,7 +25,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 public class ProjectJdkNotFoundException extends ExternalSystemJdkException {
 
   public ProjectJdkNotFoundException() {
-    super(ExternalSystemBundle.message("external.system.project_jdk.not_specified", OpenProjectJdkSettingsCallback.ID), null,
-          OpenProjectJdkSettingsCallback.ID);
+    super(ExternalSystemBundle.message("external.system.project_jdk.not_specified", OpenProjectJdkSettingsCallback.ID),
+          null, null, OpenProjectJdkSettingsCallback.ID);
   }
 }

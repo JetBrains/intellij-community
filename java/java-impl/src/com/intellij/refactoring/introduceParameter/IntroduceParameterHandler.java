@@ -490,9 +490,16 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
                                        createTypeSelectorManager(occurences, initializerType), methodToSearchFor, method, getParamsToRemove(method, occurences), mustBeFinal);
         dialog.setReplaceAllOccurrences(replaceAllOccurrences);
         dialog.setGenerateDelegate(delegate);
-        dialog.show();
-        if (myEditor != null) {
-          myEditor.getSelectionModel().removeSelection();
+        if (dialog.showAndGet()) {
+          final Runnable cleanSelectionRunnable = new Runnable() {
+            @Override
+            public void run() {
+              if (myEditor != null && !myEditor.isDisposed()) {
+                myEditor.getSelectionModel().removeSelection();
+              }
+            }
+          };
+          SwingUtilities.invokeLater(cleanSelectionRunnable);
         }
       }
     }
