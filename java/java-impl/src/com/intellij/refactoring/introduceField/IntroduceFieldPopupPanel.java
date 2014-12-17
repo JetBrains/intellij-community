@@ -57,7 +57,7 @@ public class IntroduceFieldPopupPanel extends IntroduceFieldCentralPanel {
   protected void initializeInitializerPlace(PsiExpression initializerExpression,
                                             BaseExpressionToFieldHandler.InitializationPlace ourLastInitializerPlace) {
     if (initializerExpression != null) {
-      setEnabledInitializationPlaces(initializerExpression, initializerExpression);
+      setEnabledInitializationPlaces(initializerExpression);
       if (!myAllowInitInMethod) {
         myInitialisersPlaceModel.removeElement(BaseExpressionToFieldHandler.InitializationPlace.IN_CURRENT_METHOD);
       }
@@ -187,9 +187,11 @@ public class IntroduceFieldPopupPanel extends IntroduceFieldCentralPanel {
   }
 
   @Override
-  protected boolean updateInitializationPlaceModel(boolean initializedInSetup) {
+  protected boolean updateInitializationPlaceModel(boolean initializedInSetup, boolean initializedInConstructor) {
     myInitialisersPlaceModel.removeElement(BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION);
-    myInitialisersPlaceModel.removeElement(BaseExpressionToFieldHandler.InitializationPlace.IN_CONSTRUCTOR);
+    if (!initializedInConstructor) {
+      myInitialisersPlaceModel.removeElement(BaseExpressionToFieldHandler.InitializationPlace.IN_CONSTRUCTOR);
+    }
     if (!initializedInSetup) {
       myInitialisersPlaceModel.removeElement(BaseExpressionToFieldHandler.InitializationPlace.IN_SETUP_METHOD);
     } else {
