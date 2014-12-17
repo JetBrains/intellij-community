@@ -211,6 +211,8 @@ public class DiffDrawUtil {
     int offset = DocumentUtil.getFirstNonSpaceCharOffset(editor.getDocument(), line);
     RangeHighlighter marker = editor.getMarkupModel().addRangeHighlighter(offset, offset, HighlighterLayer.SELECTION - 1, attributes,
                                                                           HighlighterTargetArea.LINES_IN_RANGE);
+    marker.setThinErrorStripeMark(true);
+
     // We won't use addLineHighlighter as it will fail to add marker into empty document.
     //RangeHighlighter marker = editor.getMarkupModel().addLineHighlighter(line, HighlighterLayer.SELECTION - 1, null);
 
