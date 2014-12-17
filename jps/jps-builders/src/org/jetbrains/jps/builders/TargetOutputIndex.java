@@ -21,8 +21,17 @@ import java.io.File;
 import java.util.Collection;
 
 /**
+ * Indexes the output roots of individual build targets.
+ *
  * @author nik
  */
 public interface TargetOutputIndex {
+  /**
+   * Returns the list of targets that contain the specified output file in their output roots.
+   *
+   * @param file a build output file.
+   * @return a collection of targets to the output roots of which this file belongs, or an empty collection
+   * if no such targets exist.
+   */
   Collection<BuildTarget<?>> getTargetsByOutputFile(@NotNull File file);
 }

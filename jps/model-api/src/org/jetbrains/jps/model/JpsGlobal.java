@@ -22,7 +22,10 @@ import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.library.sdk.JpsSdkType;
 
 /**
+ * Represents the application-level settings (JDKs and global libraries) required for an external build.
+ *
  * @author nik
+ * @see org.jetbrains.jps.model.JpsModel#getGlobal()
  */
 public interface JpsGlobal extends JpsCompositeElement, JpsReferenceableElement<JpsGlobal> {
   @NotNull
