@@ -150,6 +150,9 @@ target(name: "compile", description: "Compile module python") {
       patternset(refid: "resources.pt")
       type(type: "file")
     }
+    fileset(dir: "${pluginHome}/IntelliLang-python/src") {
+      include(name: "resources/*.xml")
+    }
     fileset(dir: "${pluginHome}/resources") {
       patternset(refid: "resources.pt")
       type(type: "file")
