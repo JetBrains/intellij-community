@@ -31,12 +31,14 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.ClassLoaderUtil;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.apache.commons.collections.ExtendedProperties;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.Velocity;
@@ -66,6 +68,7 @@ import java.util.*;
 public class FileTemplateUtil{
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.fileTemplates.FileTemplateUtil");
   private static final CreateFromTemplateHandler ourDefaultCreateFromTemplateHandler = new DefaultCreateFromTemplateHandler();
+  private static final ThreadLocal<FileTemplateManager> ourTemplateManager = new ThreadLocal<FileTemplateManager>();
 
   @NonNls public static final String INTERNAL_PACKAGE_INFO_TEMPLATE_NAME = "package-info";
 
@@ -74,8 +77,6 @@ public class FileTemplateUtil{
 
   static {
     try{
-      final FileTemplateManager templateManager = FileTemplateManager.getInstance(ProjectManager.getInstance().getDefaultProject());
-
       LogSystem emptyLogSystem = new LogSystem() {
         @Override
         public void init(RuntimeServices runtimeServices) throws Exception {
@@ -97,6 +98,8 @@ public class FileTemplateUtil{
 
         @Override
         public InputStream getResourceStream(String resourceName) throws ResourceNotFoundException {
+          FileTemplateManager templateManager = ourTemplateManager.get();
+          if (templateManager == null) templateManager = FileTemplateManager.getDefaultInstance();
           final FileTemplate include = templateManager.getPattern(resourceName);
           if (include == null) {
             throw new ResourceNotFoundException("Template not found: " + resourceName);
@@ -127,36 +130,42 @@ public class FileTemplateUtil{
     }
   }
 
-  public static String[] calculateAttributes(String templateContent, Properties properties, boolean includeDummies) throws ParseException {
+  public static String[] calculateAttributes(String templateContent, Properties properties, boolean includeDummies, Project project) throws ParseException {
     Set<String> propertiesNames = new HashSet<String>();
     for (Enumeration e = properties.propertyNames(); e.hasMoreElements(); ) {
       propertiesNames.add((String)e.nextElement());
     }
-    return calculateAttributes(templateContent, propertiesNames, includeDummies);
+    return calculateAttributes(templateContent, propertiesNames, includeDummies, project);
   }
 
-  public static String[] calculateAttributes(String templateContent, Map<String, Object> properties, boolean includeDummies) throws ParseException {
-    return calculateAttributes(templateContent, properties.keySet(), includeDummies);
+  public static String[] calculateAttributes(String templateContent, Map<String, Object> properties, boolean includeDummies, Project project) throws ParseException {
+    return calculateAttributes(templateContent, properties.keySet(), includeDummies, project);
   }
 
-  public static String[] calculateAttributes(String templateContent, Set<String> propertiesNames, boolean includeDummies) throws ParseException {
+  private static String[] calculateAttributes(String templateContent, Set<String> propertiesNames, boolean includeDummies, Project project) throws ParseException {
     final Set<String> unsetAttributes = new LinkedHashSet<String>();
     final Set<String> definedAttributes = new HashSet<String>();
     //noinspection HardCodedStringLiteral
     SimpleNode template = RuntimeSingleton.parse(new StringReader(templateContent), "MyTemplate");
-    collectAttributes(unsetAttributes, definedAttributes, template, propertiesNames, includeDummies, new HashSet<String>());
+    collectAttributes(unsetAttributes, definedAttributes, template, propertiesNames, includeDummies, new HashSet<String>(), project);
     for (String definedAttribute : definedAttributes) {
       unsetAttributes.remove(definedAttribute);
     }
     return ArrayUtil.toStringArray(unsetAttributes);
   }
 
-  private static void collectAttributes(Set<String> referenced, Set<String> defined, Node apacheNode, final Set<String> propertiesNames, final boolean includeDummies, Set<String> visitedIncludes)
+  private static void collectAttributes(Set<String> referenced,
+                                        Set<String> defined,
+                                        Node apacheNode,
+                                        final Set<String> propertiesNames,
+                                        final boolean includeDummies,
+                                        Set<String> visitedIncludes,
+                                        Project project)
     throws ParseException {
     int childCount = apacheNode.jjtGetNumChildren();
     for(int i = 0; i < childCount; i++){
       Node apacheChild = apacheNode.jjtGetChild(i);
-      collectAttributes(referenced, defined, apacheChild, propertiesNames, includeDummies, visitedIncludes);
+      collectAttributes(referenced, defined, apacheChild, propertiesNames, includeDummies, visitedIncludes, project);
       if (apacheChild instanceof ASTReference){
         ASTReference apacheReference = (ASTReference)apacheChild;
         String s = apacheReference.literal();
@@ -178,10 +187,10 @@ public class FileTemplateUtil{
           Token firstToken = literal.getFirstToken();
           if (firstToken != null) {
             String s = StringUtil.unquoteString(firstToken.toString());
-            final FileTemplate includedTemplate = FileTemplateManager.getDefaultInstance().getTemplate(s);
+            final FileTemplate includedTemplate = FileTemplateManager.getInstance(project).getTemplate(s);
             if (includedTemplate != null && visitedIncludes.add(s)) {
               SimpleNode template = RuntimeSingleton.parse(new StringReader(includedTemplate.getText()), "MyTemplate");
-              collectAttributes(referenced, defined, template, propertiesNames, includeDummies, visitedIncludes);
+              collectAttributes(referenced, defined, template, propertiesNames, includeDummies, visitedIncludes, project);
             }
           }
         }
@@ -270,7 +279,24 @@ public class FileTemplateUtil{
   private static String mergeTemplate(String templateContent, final VelocityContext context, boolean useSystemLineSeparators) throws IOException {
     final StringWriter stringWriter = new StringWriter();
     try {
-      Velocity.evaluate(context, stringWriter, "", templateContent);
+      Project project = null;
+      final Object projectName = context.get(FileTemplateManager.PROJECT_NAME_VARIABLE);
+      if (projectName instanceof String) {
+        Project[] projects = ProjectManager.getInstance().getOpenProjects();
+        project = ContainerUtil.find(projects, new Condition<Project>() {
+          @Override
+          public boolean value(Project project) {
+            return projectName.equals(project.getName());
+          }
+        });
+      }
+      try {
+        ourTemplateManager.set(project == null ? FileTemplateManager.getDefaultInstance() : FileTemplateManager.getInstance(project));
+        Velocity.evaluate(context, stringWriter, "", templateContent);
+      }
+      finally {
+        ourTemplateManager.set(null);
+      }
     }
     catch (final VelocityException e) {
       if (ApplicationManager.getApplication().isUnitTestMode()) {
@@ -356,7 +382,7 @@ public class FileTemplateUtil{
     }
 
     //Set escaped references to dummy values to remove leading "\" (if not already explicitly set)
-    String[] dummyRefs = calculateAttributes(template.getText(), propsMap, true);
+    String[] dummyRefs = calculateAttributes(template.getText(), propsMap, true, directory.getProject());
     for (String dummyRef : dummyRefs) {
       propsMap.put(dummyRef, "");
     }

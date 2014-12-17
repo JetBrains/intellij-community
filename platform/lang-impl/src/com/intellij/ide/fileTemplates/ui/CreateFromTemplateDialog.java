@@ -72,7 +72,7 @@ public class CreateFromTemplateDialog extends DialogWrapper {
 
     String[] unsetAttributes = null;
     try {
-      unsetAttributes = myTemplate.getUnsetAttributes(myDefaultProperties);
+      unsetAttributes = myTemplate.getUnsetAttributes(myDefaultProperties, project);
     }
     catch (ParseException e) {
       showErrorDialog(e);
