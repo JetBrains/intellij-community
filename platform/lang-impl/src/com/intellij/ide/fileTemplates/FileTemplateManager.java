@@ -50,6 +50,8 @@ public abstract class FileTemplateManager{
   public static final String CODE_TEMPLATES_CATEGORY = "Code";
   public static final String J2EE_TEMPLATES_CATEGORY = "J2EE";
 
+  public static final String PROJECT_NAME_VARIABLE = "PROJECT_NAME";
+
   public static FileTemplateManager getInstance(@NotNull Project project){
     return ServiceManager.getService(project, FileTemplateManager.class);
   }
@@ -89,7 +91,7 @@ public abstract class FileTemplateManager{
   @NotNull
   public Properties getDefaultProperties(@NotNull Project project) {
     Properties properties = getDefaultProperties();
-    properties.setProperty("PROJECT_NAME", project.getName());
+    properties.setProperty(PROJECT_NAME_VARIABLE, project.getName());
     return properties;
   }
 

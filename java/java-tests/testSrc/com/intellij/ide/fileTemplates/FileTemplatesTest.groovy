@@ -36,7 +36,7 @@ public class FileTemplatesTest extends IdeaTestCase {
     final File customInclude = new File(testsDir, customIncludeFileName);
     final String includeText = FileUtil.loadFile(customInclude, FileTemplate.ourEncoding);
 
-    final FileTemplateManager templateManager = FileTemplateManager.getDefaultInstance();
+    final FileTemplateManager templateManager = FileTemplateManager.getInstance(getProject());
     final ArrayList<FileTemplate> originalIncludes = new ArrayList<FileTemplate>(Arrays.asList(templateManager.getAllPatterns()));
     try {
       // configure custom include
@@ -67,9 +67,10 @@ public class FileTemplatesTest extends IdeaTestCase {
         EncodingAwareProperties properties = new EncodingAwareProperties();
   
         properties.load(propFile, FileTemplate.ourEncoding);
+        properties.put(FileTemplateManager.PROJECT_NAME_VARIABLE, getProject().getName())
   
         System.out.println(resultFile.getName());
-        doTestTemplate(inputText, properties, outputText, resultFile.getParent());
+        doTestTemplate(inputText, properties, outputText);
       }
     }
     finally {
@@ -77,19 +78,19 @@ public class FileTemplatesTest extends IdeaTestCase {
     }
   }
 
-  private static void doTestTemplate(String inputString, Properties properties, String expected, String dir) throws Exception {
+  private void doTestTemplate(String inputString, Properties properties, String expected) throws Exception {
     inputString = StringUtil.convertLineSeparators(inputString);
     expected = StringUtil.convertLineSeparators(expected);
     
     final String result = FileTemplateUtil.mergeTemplate(properties, inputString, false);
     assertEquals(expected, result);
 
-    List attrs = Arrays.asList(FileTemplateUtil.calculateAttributes(inputString, new Properties(), false));
-    assertTrue(properties.size() <= attrs.size());
+    List attrs = Arrays.asList(FileTemplateUtil.calculateAttributes(inputString, new Properties(), false, getProject()));
+    assertTrue(properties.size() - 1 <= attrs.size());
     Enumeration e = properties.propertyNames();
     while (e.hasMoreElements()) {
       String s = (String)e.nextElement();
-      assertTrue("Attribute '" + s + "' not found in properties", attrs.contains(s));
+      assertTrue("Attribute '" + s + "' not found in properties", attrs.contains(s) || FileTemplateManager.PROJECT_NAME_VARIABLE.equals(s));
     }
   }
 
@@ -102,7 +103,7 @@ public class FileTemplatesTest extends IdeaTestCase {
     FileTemplate template = addTestTemplate("myclass", '${ABC} ${DEF} ${NAME}')
     Properties properties = new Properties()
     properties.NAME = 'zzz'
-    assert template.getUnsetAttributes(properties) as Set == ['ABC', 'DEF'] as Set
+    assert template.getUnsetAttributes(properties, project) as Set == ['ABC', 'DEF'] as Set
   }
 
   public void "test collect undefined attribute names from included templates"() {
@@ -112,7 +113,7 @@ public class FileTemplatesTest extends IdeaTestCase {
     FileTemplate template = addTestTemplate("myclass", '#parse("included.java") ${DEF} ${NAME}')
     Properties properties = new Properties()
     properties.NAME = 'zzz'
-    assert template.getUnsetAttributes(properties) as Set == ['ABC', 'DEF'] as Set
+    assert template.getUnsetAttributes(properties, project) as Set == ['ABC', 'DEF'] as Set
   }
 
   public void testDefaultPackage() throws Exception {

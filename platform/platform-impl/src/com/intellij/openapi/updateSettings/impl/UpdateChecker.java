@@ -544,40 +544,20 @@ public final class UpdateChecker {
     return "";
   }
 
-  public static boolean install(@NotNull Collection<PluginDownloader> downloaders, @NotNull ProgressIndicator progressIndicator) {
-    boolean installed = false;
-    for (PluginDownloader downloader : downloaders) {
-      if (getDisabledToUpdatePlugins().contains(downloader.getPluginId())) continue;
-      try {
-        if (downloader.prepareToInstall(progressIndicator)) {
-          final IdeaPluginDescriptor descriptor = downloader.getDescriptor();
-          if (descriptor != null) {
-            downloader.install();
-            installed = true;
-          }
-        }
-      }
-      catch (IOException e) {
-        LOG.info(e);
-      }
-    }
-    return installed;
-  }
-
-  public static DownloadPatchResult downloadAndInstallPatch(final PatchInfo patch, final BuildNumber toBuild, final boolean forceHttps) {
-    final DownloadPatchResult[] result = new DownloadPatchResult[]{DownloadPatchResult.CANCELED};
+  public static DownloadPatchResult installPlatformUpdate(final PatchInfo patch, final BuildNumber toBuild, final boolean forceHttps) {
+    final Ref<DownloadPatchResult> result = Ref.create(DownloadPatchResult.CANCELED);
 
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       @Override
       public void run() {
         try {
           ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-          doDownloadAndInstallPatch(patch, toBuild, forceHttps, indicator);
-          result[0] = DownloadPatchResult.SUCCESS;
+          downloadAndInstallPatch(patch, toBuild, forceHttps, indicator);
+          result.set(DownloadPatchResult.SUCCESS);
         }
         catch (IOException e) {
           LOG.info(e);
-          result[0] = DownloadPatchResult.FAILED;
+          result.set(DownloadPatchResult.FAILED);
           Notifications.Bus.notify(new Notification("Updater", "Failed to download patch file", e.getMessage(), NotificationType.ERROR));
         }
       }
@@ -585,13 +565,10 @@ public final class UpdateChecker {
       return DownloadPatchResult.CANCELED;
     }
 
-    return result[0];
+    return result.get();
   }
 
-  private static void doDownloadAndInstallPatch(PatchInfo patch,
-                                                BuildNumber toBuild,
-                                                boolean forceHttps,
-                                                final ProgressIndicator indicator) throws IOException {
+  private static void downloadAndInstallPatch(PatchInfo patch, BuildNumber toBuild, boolean forceHttps, final ProgressIndicator indicator) throws IOException {
     String productCode = ApplicationInfo.getInstance().getBuild().getProductCode();
     String fromBuildNumber = patch.getFromBuild().asStringWithoutProductCode();
     String toBuildNumber = toBuild.asStringWithoutProductCode();
@@ -626,6 +603,31 @@ public final class UpdateChecker {
     File patchFile = new File(FileUtil.getTempDirectory(), patchFileName);
     FileUtil.copy(tempFile, patchFile);
     FileUtil.delete(tempFile);
+  }
+
+  public static boolean installPluginUpdates(@NotNull Collection<PluginDownloader> downloaders, @NotNull ProgressIndicator indicator) {
+    boolean installed = false;
+
+    Set<String> disabledToUpdate = getDisabledToUpdatePlugins();
+    for (PluginDownloader downloader : downloaders) {
+      if (disabledToUpdate.contains(downloader.getPluginId())) {
+        continue;
+      }
+      try {
+        if (downloader.prepareToInstall(indicator)) {
+          IdeaPluginDescriptor descriptor = downloader.getDescriptor();
+          if (descriptor != null) {
+            downloader.install();
+            installed = true;
+          }
+        }
+      }
+      catch (IOException e) {
+        LOG.info(e);
+      }
+    }
+
+    return installed;
   }
 
   public static Set<String> getDisabledToUpdatePlugins() {
