@@ -23,7 +23,6 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.net.ssl.CertificateManager;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.io.Responses;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
@@ -201,11 +200,6 @@ public final class HttpRequests {
 
       connection.setConnectTimeout(builder.myConnectTimeout);
       connection.setReadTimeout(builder.myTimeout);
-
-      String userAgent = Responses.getServerHeaderValue();
-      if (userAgent != null) {
-        connection.setRequestProperty("User-Agent", userAgent);
-      }
 
       if (connection instanceof HttpsURLConnection) {
         try {
