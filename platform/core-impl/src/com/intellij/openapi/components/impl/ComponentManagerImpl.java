@@ -205,7 +205,11 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   @Nullable
   protected static ProgressIndicator getProgressIndicator() {
-    boolean isProgressManagerInitialized = ApplicationManager.getApplication().getPicoContainer().getComponentAdapterOfType(ProgressManager.class) != null;
+    PicoContainer container = ApplicationManager.getApplication().getPicoContainer();
+    ComponentAdapter adapter = container.getComponentAdapterOfType(ProgressManager.class);
+    if (adapter == null) return null;
+    ProgressManager progressManager = (ProgressManager)adapter.getComponentInstance(container);
+    boolean isProgressManagerInitialized = progressManager != null;
     return isProgressManagerInitialized ? ProgressIndicatorProvider.getGlobalProgressIndicator() : null;
   }
 
