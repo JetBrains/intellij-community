@@ -16,6 +16,7 @@
 package com.intellij.util.ui;
 
 import com.intellij.openapi.ui.GraphicsConfig;
+import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -70,6 +71,11 @@ public class GraphicsUtil {
       } else {
         g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
                            enableAA ? RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HBGR : RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
+      }
+
+      if (Registry.is("force.subpixel.hinting")) {
+        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB);
+        g.setRenderingHint(RenderingHints.KEY_TEXT_LCD_CONTRAST, Registry.intValue("lcd.contrast.value"));
       }
     }
   }

@@ -25,6 +25,7 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.SystemProperties;
@@ -294,6 +295,10 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
       else {
         g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
       }
+    }
+    if (Registry.is("force.subpixel.hinting")) {
+      g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB);
+      g2d.setRenderingHint(RenderingHints.KEY_TEXT_LCD_CONTRAST, Registry.intValue("lcd.contrast.value"));
     }
   }
 
