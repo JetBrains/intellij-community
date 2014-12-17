@@ -135,10 +135,27 @@ public class ArrangementMatchingRulesControl extends JBTable {
       case MouseEvent.MOUSE_ENTERED: onMouseEntered(e); break;
       case MouseEvent.MOUSE_EXITED: onMouseExited(); break;
       case MouseEvent.MOUSE_RELEASED: onMouseReleased(e); break;
+      case MouseEvent.MOUSE_CLICKED: onMouseClicked(e); break;
     }
     if (!e.isConsumed()) {
       super.processMouseEvent(e);
     }
+  }
+
+  private void onMouseClicked(@NotNull MouseEvent e) {
+    final int count = e.getClickCount();
+    if (count != 2) {
+      return;
+    }
+
+    final TIntArrayList rows = getSelectedModelRows();
+    if (rows.size() != 1) {
+      return;
+    }
+
+    final int row = rows.get(0);
+    showEditor(row);
+    scrollRowToVisible(row);
   }
 
   private void onMouseMoved(@NotNull MouseEvent e) {
