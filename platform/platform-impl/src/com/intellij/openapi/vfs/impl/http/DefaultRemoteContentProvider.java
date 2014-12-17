@@ -28,6 +28,7 @@ import com.intellij.util.PathUtilRt;
 import com.intellij.util.Url;
 import com.intellij.util.io.HttpRequests;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.io.Responses;
 
 import java.io.*;
 import java.net.HttpURLConnection;
@@ -58,6 +59,7 @@ public class DefaultRemoteContentProvider extends RemoteContentProvider {
       HttpRequests.request(url.toExternalForm())
         .connectTimeout(60 * 1000)
         .readTimeout(60 * 1000)
+        .userAgent(Responses.getServerHeaderValue())
         .disableHostVerification()
         .connect(new HttpRequests.RequestProcessor<Object>() {
           @Override
