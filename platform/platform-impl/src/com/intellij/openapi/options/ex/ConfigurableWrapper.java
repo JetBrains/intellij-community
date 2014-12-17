@@ -35,7 +35,7 @@ import java.util.List;
  * @author Dmitry Avdeev
  *         Date: 9/17/12
  */
-public class ConfigurableWrapper implements SearchableConfigurable {
+public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
 
   private static final ConfigurableWrapper[] EMPTY_ARRAY = new ConfigurableWrapper[0];
   private static final NullableFunction<ConfigurableEP<Configurable>,Configurable> CONFIGURABLE_FUNCTION = new NullableFunction<ConfigurableEP<Configurable>, Configurable>() {
@@ -124,6 +124,11 @@ public class ConfigurableWrapper implements SearchableConfigurable {
       }
     }
     return myConfigurable;
+  }
+
+  @Override
+  public int getWeight() {
+    return myEp.groupWeight;
   }
 
   @Nls
