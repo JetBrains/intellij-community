@@ -210,7 +210,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Pers
 
     props.setProperty("DS", "$"); // Dollar sign, strongly needed for PHP, JS, etc. See WI-8979
 
-    props.setProperty("PROJECT_NAME", myProject.getName());
+    props.setProperty(PROJECT_NAME_VARIABLE, myProject.getName());
 
     return props;
   }
