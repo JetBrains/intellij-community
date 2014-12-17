@@ -87,8 +87,10 @@ public class RedundantLambdaCodeBlockInspection extends BaseJavaBatchLocalInspec
                     final List<CandidateInfo> info = new ArrayList<CandidateInfo>(Arrays.asList(candidates));
                     final LanguageLevel level = PsiUtil.getLanguageLevel(parent);
                     final JavaMethodsConflictResolver conflictResolver = new JavaMethodsConflictResolver((PsiExpressionList)parent, level);
-                    final int applicability = conflictResolver.checkApplicability(info);
-                    conflictResolver.checkSpecifics(info, applicability, level);
+                    final PsiExpressionList argumentList = ((PsiCallExpression)gParent).getArgumentList();
+                    if (argumentList == null) return;
+                    JavaMethodsConflictResolver.checkParametersNumber(info, argumentList.getExpressions().length, false);
+                    conflictResolver.checkSpecifics(info, MethodCandidateInfo.ApplicabilityLevel.VARARGS, level);
                     if (info.size() > 1) {
                       return;
                     }
