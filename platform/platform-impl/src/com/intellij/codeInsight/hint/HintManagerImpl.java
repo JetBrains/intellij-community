@@ -179,6 +179,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
   }
 
   public boolean performCurrentQuestionAction() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     if (myQuestionAction != null && myQuestionHint != null) {
       if (myQuestionHint.isVisible()) {
         if (LOG.isDebugEnabled()) {
@@ -751,6 +752,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
                                @NotNull final LightweightHint hint,
                                @NotNull final QuestionAction action,
                                @PositionFlags short constraint) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     TextAttributes attributes = new TextAttributes();
     attributes.setEffectColor(HintUtil.QUESTION_UNDERSCORE_COLOR);
     attributes.setEffectType(EffectType.LINE_UNDERSCORE);
@@ -897,6 +899,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
 
     @Override
     public void projectClosed(Project project) {
+      ApplicationManager.getApplication().assertIsDispatchThread();
       // avoid leak through com.intellij.codeInsight.hint.TooltipController.myCurrentTooltip
       TooltipController.getInstance().cancelTooltips();
 
