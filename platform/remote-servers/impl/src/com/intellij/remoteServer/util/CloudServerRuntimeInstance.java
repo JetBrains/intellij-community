@@ -111,11 +111,15 @@ public abstract class CloudServerRuntimeInstance
       public List<CloudApplicationRuntime> compute() {
         List<CloudApplicationRuntime> result = new ArrayList<CloudApplicationRuntime>();
         for (CloudRemoteApplication application : getAgent().getApplications()) {
-          result.add(createApplicationRuntime(application.getName()));
+          result.add(createApplicationRuntime(application));
         }
         return result;
       }
     });
+  }
+
+  protected CloudApplicationRuntime createApplicationRuntime(CloudRemoteApplication application) {
+    return createApplicationRuntime(application.getName());
   }
 
   protected abstract CloudApplicationRuntime createApplicationRuntime(String applicationName);
