@@ -280,6 +280,9 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     toolbarActions.add(myHistoryController.getBrowseHistory());
 
     toolbarActions.add(new ConnectDebuggerAction());
+
+    toolbarActions.add(new NewConsoleAction());
+
     return actions;
   }
 
@@ -307,7 +310,18 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     });
   }
 
+  /**
+   * Opens console
+   */
   public void open() {
+    run();
+  }
+
+
+  /**
+   * Creates new console tab
+   */
+  public void createNewConsole() {
     run();
   }
 
@@ -393,7 +407,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
 
       @Override
       public Map<String, String> getAdditionalEnvs() {
-        return addDefaultEnvironments(sdk, environmentVariables,getProject());
+        return addDefaultEnvironments(sdk, environmentVariables, getProject());
       }
     };
   }
@@ -494,7 +508,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
         String line = s.nextLine();
         sb.append(line).append("\n");
         try {
-          int i =  Integer.parseInt(line);
+          int i = Integer.parseInt(line);
           if (flag) {
             LOG.warn("Unexpected strings in output:\n" + sb.toString());
           }
@@ -987,6 +1001,24 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
       else {
         //TODO: disable debugging
       }
+    }
+  }
+
+
+  private static class NewConsoleAction extends AnAction implements DumbAware {
+    public NewConsoleAction() {
+      super("New Console", "Creates new python console", AllIcons.General.Add);
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      e.getPresentation().setEnabled(true);
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      PydevConsoleRunner runner = PythonConsoleRunnerFactory.getInstance().createConsoleRunner(e.getData(CommonDataKeys.PROJECT), e.getData(LangDataKeys.MODULE));
+      runner.createNewConsole();
     }
   }
 
