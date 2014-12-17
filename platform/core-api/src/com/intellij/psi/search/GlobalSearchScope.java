@@ -288,12 +288,12 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     };
   }
 
-  static class IntersectionScope extends GlobalSearchScope {
+  private static class IntersectionScope extends GlobalSearchScope {
     private final GlobalSearchScope myScope1;
     private final GlobalSearchScope myScope2;
     private final String myDisplayName;
 
-    IntersectionScope(@NotNull GlobalSearchScope scope1, @NotNull GlobalSearchScope scope2, String displayName) {
+    private IntersectionScope(@NotNull GlobalSearchScope scope1, @NotNull GlobalSearchScope scope2, String displayName) {
       super(scope1.getProject() == null ? scope2.getProject() : scope1.getProject());
       myScope1 = scope1;
       myScope2 = scope2;
