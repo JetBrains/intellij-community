@@ -403,10 +403,10 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
         return parser.getText();
       }
       catch (BadLocationException e) {
-        LOG.debug(e);
+        LOG.warn(e);
       }
       catch (IOException e) {
-        LOG.debug(e);
+        LOG.warn(e);
       }
       return super.getSelectedText();
     }
