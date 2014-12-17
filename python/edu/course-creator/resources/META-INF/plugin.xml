@@ -1,7 +1,7 @@
 <idea-plugin version="2">
   <id>org.jetbrains.plugins.coursecreator</id>
   <name>Course Creator for PyCharm Educational</name>
-  <version>1.1</version>
+  <version>1.2</version>
 
   <description><![CDATA[
       Plugin allows you to create new course for PyCharm Education Edition.
