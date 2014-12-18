@@ -113,7 +113,11 @@ class DifDiffViewer implements FrameDiffTool.DiffViewer {
 
   private static boolean canShowContent(@NotNull DiffContent content) {
     if (content instanceof DirectoryContent) return true;
-    if (content instanceof FileContent && content.getContentType() instanceof ArchiveFileType) return true;
+    if (content instanceof FileContent &&
+        content.getContentType() instanceof ArchiveFileType &&
+        ((FileContent)content).getFile().isInLocalFileSystem()) {
+      return true;
+    }
 
     return false;
   }

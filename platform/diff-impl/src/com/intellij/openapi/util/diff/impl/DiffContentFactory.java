@@ -1,5 +1,6 @@
 package com.intellij.openapi.util.diff.impl;
 
+import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffContentUtil;
 import com.intellij.openapi.editor.Document;
@@ -70,6 +71,16 @@ public class DiffContentFactory {
                                                    @NotNull String name,
                                                    @NotNull FileType type,
                                                    @NotNull byte[] content) throws IOException {
+    if (type instanceof ArchiveFileType) {
+      // workaround - our JarFileSystem can't process non-local files
+      if (type.getDefaultExtension().isEmpty()) {
+        return createTemporalFile(project, "tmp_", "_" + name, content);
+      }
+      else {
+        return createTemporalFile(project, name + "_", "." + type.getDefaultExtension(), content);
+      }
+    }
+
     return new BinaryFileContentImpl(project, new BinaryLightVirtualFile(name, type, content));
   }
 
