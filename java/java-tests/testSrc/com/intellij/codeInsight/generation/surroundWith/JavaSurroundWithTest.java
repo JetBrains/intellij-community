@@ -170,6 +170,10 @@ public class JavaSurroundWithTest extends LightCodeInsightTestCase {
     }
   }
 
+  public void testSurroundWithTryCatchFunctionalExpression() {
+    doTest(getTestName(false), new JavaWithTryCatchSurrounder());
+  }
+
   private void doTest(@NotNull String fileName, final Surrounder surrounder) {
     configureByFile(BASE_PATH + fileName + ".java");
     
