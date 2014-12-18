@@ -351,9 +351,9 @@ public class TemplateState implements Disposable {
     }
   }
 
-  private TemplateImpl substituteTemplate(final PsiFile file, int caretOffset, TemplateImpl template) {
+  private static TemplateImpl substituteTemplate(final PsiFile file, int caretOffset, TemplateImpl template) {
     for (TemplateSubstitutor substitutor : Extensions.getExtensions(TemplateSubstitutor.EP_NAME)) {
-      final TemplateImpl substituted = substitutor.substituteTemplate(myEditor, file, caretOffset, template);
+      final TemplateImpl substituted = substitutor.substituteTemplate(file, caretOffset, template);
       if (substituted != null) {
         template = substituted;
       }
