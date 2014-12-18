@@ -78,9 +78,9 @@ public class EditorWindow {
       GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
       Font oldFont = g.getFont();
       try {
-        g.setFont(new Font("Monospaced", Font.BOLD, 12));
+        g.setFont(UIUtil.getLabelFont());
         g.setColor(JBColor.foreground());
-        g.drawString("*", 0, 8);
+        g.drawString("*", 0, 10);
       } finally {
         config.restore();
         g.setFont(oldFont);
@@ -89,12 +89,12 @@ public class EditorWindow {
 
     @Override
     public int getIconWidth() {
-      return 8;
+      return 9;
     }
 
     @Override
     public int getIconHeight() {
-      return 8;
+      return 9;
     }
   } : AllIcons.General.Modified;
   private static final Icon GAP_ICON = new EmptyIcon(MODIFIED_ICON.getIconWidth(), MODIFIED_ICON.getIconHeight());
