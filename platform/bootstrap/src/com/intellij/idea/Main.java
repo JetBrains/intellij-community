@@ -221,12 +221,13 @@ public class Main {
       JTextPane textPane = new JTextPane();
       textPane.setEditable(false);
       textPane.setText(message.replaceAll("\t", "    "));
-      textPane.setBackground(Color.white);
+      textPane.setBackground(new JPanel().getBackground());
       textPane.setCaretPosition(0);
       JScrollPane scrollPane = new JScrollPane(
         textPane, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+      scrollPane.setBorder(null);
 
-      int maxHeight = Toolkit.getDefaultToolkit().getScreenSize().height - 150;
+      int maxHeight = Math.min(600, Toolkit.getDefaultToolkit().getScreenSize().height - 150);
       Dimension component = scrollPane.getPreferredSize();
       if (component.height >= maxHeight) {
         Object setting = UIManager.get("ScrollBar.width");
