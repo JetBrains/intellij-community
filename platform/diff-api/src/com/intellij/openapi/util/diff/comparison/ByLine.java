@@ -56,11 +56,12 @@ public class ByLine {
   @NotNull
   public static FairDiffIterable compareTwoStepFair(@NotNull CharSequence text1,
                                                     @NotNull CharSequence text2,
+                                                    @NotNull ComparisonPolicy policy,
                                                     @NotNull ProgressIndicator indicator) {
     indicator.checkCanceled();
 
-    List<Line> lines1 = getLines(text1, ComparisonPolicy.DEFAULT);
-    List<Line> lines2 = getLines(text2, ComparisonPolicy.DEFAULT);
+    List<Line> lines1 = getLines(text1, policy);
+    List<Line> lines2 = getLines(text2, policy);
 
     List<Line> iwLines1 = convertToIgnoreWhitespace(lines1);
     List<Line> iwLines2 = convertToIgnoreWhitespace(lines2);

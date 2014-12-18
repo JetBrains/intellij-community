@@ -253,7 +253,7 @@ class SimpleDiffViewer extends TwosideTextDiffViewer {
 
   @NotNull
   private DiffUtil.DiffConfig getDiffConfig() {
-    return new DiffUtil.DiffConfig(getTextSettings().getComparisonPolicy(), getHighlightPolicy());
+    return new DiffUtil.DiffConfig(getTextSettings().getComparisonPolicy(), getHighlightPolicy(), true);
   }
 
   @NotNull

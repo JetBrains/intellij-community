@@ -454,7 +454,7 @@ class OnesideDiffViewer extends TextDiffViewerBase {
 
   @NotNull
   private DiffUtil.DiffConfig getDiffConfig() {
-    return new DiffUtil.DiffConfig(getTextSettings().getComparisonPolicy(), getHighlightPolicy());
+    return new DiffUtil.DiffConfig(getTextSettings().getComparisonPolicy(), getHighlightPolicy(), false);
   }
 
   @NotNull

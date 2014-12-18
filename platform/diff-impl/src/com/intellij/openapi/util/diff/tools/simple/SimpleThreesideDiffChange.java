@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.SeparatorPlacement;
+import com.intellij.openapi.util.diff.comparison.ComparisonPolicy;
 import com.intellij.openapi.util.diff.fragments.MergeLineFragment;
 import com.intellij.openapi.util.diff.util.*;
 import com.intellij.openapi.util.text.StringUtil;
@@ -26,11 +27,13 @@ class SimpleThreesideDiffChange {
   private boolean myIsValid = true;
   private int[] myLineShifts = new int[3];
 
-  public SimpleThreesideDiffChange(@NotNull MergeLineFragment fragment, @NotNull List<EditorEx> editors) {
+  public SimpleThreesideDiffChange(@NotNull MergeLineFragment fragment,
+                                   @NotNull List<EditorEx> editors,
+                                   @NotNull ComparisonPolicy policy) {
     myFragment = fragment;
     myEditors = editors;
 
-    myType = calcType(fragment, editors);
+    myType = calcType(fragment, editors, policy);
 
     installHighlighter();
   }
@@ -153,8 +156,10 @@ class SimpleThreesideDiffChange {
   //
 
   @NotNull
-  private static ConflictType calcType(@NotNull MergeLineFragment fragment, @NotNull List<EditorEx> editors) {
-    if (compareSubstring(fragment, editors, ThreeSide.LEFT, ThreeSide.RIGHT)) {
+  private static ConflictType calcType(@NotNull MergeLineFragment fragment,
+                                       @NotNull List<EditorEx> editors,
+                                       @NotNull ComparisonPolicy policy) {
+    if (compareSubstring(fragment, editors, ThreeSide.LEFT, ThreeSide.RIGHT, policy)) {
       return new ConflictType(getDiffType(fragment, ThreeSide.LEFT));
     }
     else if (compareSubstring(fragment, editors, ThreeSide.BASE, ThreeSide.LEFT)) {
@@ -172,10 +177,27 @@ class SimpleThreesideDiffChange {
                                           @NotNull List<EditorEx> editors,
                                           @NotNull ThreeSide side1,
                                           @NotNull ThreeSide side2) {
+    return compareSubstring(fragment, editors, side1, side2, ComparisonPolicy.DEFAULT);
+  }
+
+  private static boolean compareSubstring(@NotNull MergeLineFragment fragment,
+                                          @NotNull List<EditorEx> editors,
+                                          @NotNull ThreeSide side1,
+                                          @NotNull ThreeSide side2,
+                                          @NotNull ComparisonPolicy policy) {
     CharSequence content1 = getRangeContent(fragment, editors, side1);
     CharSequence content2 = getRangeContent(fragment, editors, side2);
 
-    return StringUtil.equals(content1, content2);
+    switch (policy) {
+      case DEFAULT:
+        return StringUtil.equals(content1, content2);
+      case TRIM_WHITESPACES:
+        return StringUtil.equalsTrimWhitespaces(content1, content2);
+      case IGNORE_WHITESPACES:
+        return StringUtil.equalsIgnoreWhitespaces(content1, content2);
+      default:
+        throw new IllegalArgumentException(policy.name());
+    }
   }
 
   @NotNull

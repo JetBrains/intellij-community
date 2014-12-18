@@ -16,6 +16,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.diff.api.FrameDiffTool.DiffContext;
 import com.intellij.openapi.util.diff.comparison.ByLine;
+import com.intellij.openapi.util.diff.comparison.ComparisonPolicy;
 import com.intellij.openapi.util.diff.comparison.DiffTooBigException;
 import com.intellij.openapi.util.diff.comparison.MergeUtil;
 import com.intellij.openapi.util.diff.comparison.iterables.FairDiffIterable;
@@ -87,9 +88,8 @@ class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
   protected List<AnAction> createToolbarActions() {
     List<AnAction> group = new ArrayList<AnAction>();
 
-    // TODO
-    //group.add(new MyComparisonPolicySettingAction());
-    //group.add(new MyHighlightPolicySettingAction());
+    group.add(new MyComparisonPolicySettingAction());
+    //group.add(new MyHighlightPolicySettingAction()); // TODO
 
     group.add(new MyToggleAutoScrollAction());
     group.add(myEditorSettingsAction);
@@ -140,11 +140,12 @@ class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
       });
 
       CharSequence[] sequences = data.getSequences();
-      FairDiffIterable fragments1 = ByLine.compareTwoStepFair(sequences[1], sequences[0], indicator);
-      FairDiffIterable fragments2 = ByLine.compareTwoStepFair(sequences[1], sequences[2], indicator);
+      ComparisonPolicy comparisonPolicy = getTextSettings().getComparisonPolicy();
+      FairDiffIterable fragments1 = ByLine.compareTwoStepFair(sequences[1], sequences[0], comparisonPolicy, indicator);
+      FairDiffIterable fragments2 = ByLine.compareTwoStepFair(sequences[1], sequences[2], comparisonPolicy, indicator);
       List<MergeLineFragment> mergeFragments = MergeUtil.buildFair(fragments1, fragments2, indicator);
 
-      return apply(mergeFragments, data.getStamps());
+      return apply(mergeFragments, data.getStamps(), comparisonPolicy);
     }
     catch (DiffTooBigException ignore) {
       return new Runnable() {
@@ -187,7 +188,9 @@ class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
   }
 
   @NotNull
-  private Runnable apply(@NotNull final List<MergeLineFragment> fragments, @NotNull final long[] stamps) {
+  private Runnable apply(@NotNull final List<MergeLineFragment> fragments,
+                         @NotNull final long[] stamps,
+                         @NotNull final ComparisonPolicy comparisonPolicy) {
     return new Runnable() {
       @Override
       public void run() {
@@ -198,7 +201,7 @@ class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
         clearDiffPresentation();
 
         for (MergeLineFragment fragment : fragments) {
-          myDiffChanges.add(new SimpleThreesideDiffChange(fragment, myEditors));
+          myDiffChanges.add(new SimpleThreesideDiffChange(fragment, myEditors, comparisonPolicy));
         }
 
         scrollOnRediff();

@@ -58,7 +58,6 @@ public class ComparisonUtil {
       if (tooBigChunksCount >= 3 || // Do not try to build fine blocks after few fails
           fragment.getStartLine1() == fragment.getEndLine1() ||
           fragment.getStartLine2() == fragment.getEndLine2()) {
-        // TODO: skip newlines in case of IgnoreWhitespaces ? Trim empty lines in changed block as well ?
         fineFragments.add(new FineLineFragmentImpl(fragment, null));
         continue;
       }
@@ -84,28 +83,10 @@ public class ComparisonUtil {
           int currentEndLine1 = i != lineBlocks.size() - 1 ? currentStartLine1 + block.newlines1 : fragment.getEndLine1();
           int currentEndLine2 = i != lineBlocks.size() - 1 ? currentStartLine2 + block.newlines2 : fragment.getEndLine2();
 
-          if (block.fragments.size() == 0) { // drop blocks, all changes in that are ignored
-            currentStartLine1 = currentEndLine1;
-            currentStartLine2 = currentEndLine2;
-            continue;
-          }
-
-          // TODO: same for insert/delete blocks
-          List<DiffFragment> fragments = block.fragments;
-          if (block.fragments.size() == 1) {
-            DiffFragment diffFragment = block.fragments.get(0);
-            if (diffFragment.getStartOffset1() == 0 &&
-                diffFragment.getStartOffset2() == 0 &&
-                diffFragment.getEndOffset1() == offsets.end1 - offsets.start1 &&
-                diffFragment.getEndOffset2() == offsets.end2 - offsets.start2) {
-              fragments = null;
-            }
-          }
-
           fineFragments.add(new FineLineFragmentImpl(currentStartLine1, currentEndLine1, currentStartLine2, currentEndLine2,
                                                      offsets.start1 + startOffset1, offsets.end1 + startOffset1,
                                                      offsets.start2 + startOffset2, offsets.end2 + startOffset2,
-                                                     fragments));
+                                                     block.fragments));
 
           currentStartLine1 = currentEndLine1;
           currentStartLine2 = currentEndLine2;
@@ -254,5 +235,23 @@ public class ComparisonUtil {
     int length1 = lineFragment.getEndOffset1() - lineFragment.getStartOffset1();
     int length2 = lineFragment.getEndOffset2() - lineFragment.getStartOffset2();
     return Collections.singletonList(new DiffFragmentImpl(0, length1, 0, length2));
+  }
+
+  //
+  // Trim fragments
+  //
+
+  @NotNull
+  public static List<? extends LineFragment> trim(@NotNull List<? extends LineFragment> fragments,
+                                                  @NotNull ComparisonPolicy policy) {
+    // TODO
+    return fragments;
+  }
+
+  @NotNull
+  public static List<? extends FineLineFragment> trimFine(@NotNull List<? extends FineLineFragment> fragments,
+                                                          @NotNull ComparisonPolicy policy) {
+    // TODO
+    return fragments;
   }
 }

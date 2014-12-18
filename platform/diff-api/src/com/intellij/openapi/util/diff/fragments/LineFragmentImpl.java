@@ -3,15 +3,15 @@ package com.intellij.openapi.util.diff.fragments;
 import org.jetbrains.annotations.NotNull;
 
 public class LineFragmentImpl implements LineFragment {
-  private final int myStartLine1;
-  private final int myEndLine1;
-  private final int myStartLine2;
-  private final int myEndLine2;
+  protected final int myStartLine1;
+  protected final int myEndLine1;
+  protected final int myStartLine2;
+  protected final int myEndLine2;
 
-  private final int myStartOffset1;
-  private final int myEndOffset1;
-  private final int myStartOffset2;
-  private final int myEndOffset2;
+  protected final int myStartOffset1;
+  protected final int myEndOffset1;
+  protected final int myStartOffset2;
+  protected final int myEndOffset2;
 
   public LineFragmentImpl(@NotNull LineFragment fragment) {
     this(

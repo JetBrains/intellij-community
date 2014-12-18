@@ -390,14 +390,31 @@ public class DiffUtil {
                                                @NotNull ProgressIndicator indicator) {
     // TODO: check instanceOf LineFragments, keep some additional data inside ?
     LineFragments lineFragments = doCompareWithCache(request, text1, text2, stamp1, stamp2, config, indicator);
-    if (!config.squashFragments) return lineFragments;
+    if (!config.squashFragments && !config.trimFragments) return lineFragments;
 
-    indicator.checkCanceled();
     if (lineFragments.isFine()) {
-      return LineFragments.createFine(ComparisonUtil.squashFine(lineFragments.getFineFragments()));
+      List<? extends FineLineFragment> fragments = lineFragments.getFineFragments();
+      if (config.squashFragments) {
+        indicator.checkCanceled();
+        fragments = ComparisonUtil.squashFine(fragments);
+      }
+      if (config.trimFragments) {
+        indicator.checkCanceled();
+        fragments = ComparisonUtil.trimFine(fragments, config.policy);
+      }
+      return LineFragments.createFine(fragments);
     }
     else {
-      return LineFragments.create(ComparisonUtil.squash(lineFragments.getFragments()));
+      List<? extends LineFragment> fragments = lineFragments.getFragments();
+      if (config.squashFragments) {
+        indicator.checkCanceled();
+        fragments = ComparisonUtil.squash(fragments);
+      }
+      if (config.trimFragments) {
+        indicator.checkCanceled();
+        fragments = ComparisonUtil.trim(fragments, config.policy);
+      }
+      return LineFragments.createFine(fragments);
     }
   }
 
@@ -736,19 +753,21 @@ public class DiffUtil {
     @NotNull public final ComparisonPolicy policy;
     public final boolean fineFragments;
     public final boolean squashFragments;
+    public final boolean trimFragments;
 
-    public DiffConfig(@NotNull ComparisonPolicy policy, boolean fineFragments, boolean squashFragments) {
+    public DiffConfig(@NotNull ComparisonPolicy policy, boolean fineFragments, boolean squashFragments, boolean trimFragments) {
       this.policy = policy;
       this.fineFragments = fineFragments;
       this.squashFragments = squashFragments;
+      this.trimFragments = trimFragments;
     }
 
-    public DiffConfig(@NotNull ComparisonPolicy comparisonPolicy, @NotNull HighlightPolicy highlightPolicy) {
-      this(comparisonPolicy, highlightPolicy.isFineFragments(), highlightPolicy.isShouldSquash());
+    public DiffConfig(@NotNull ComparisonPolicy comparisonPolicy, @NotNull HighlightPolicy highlightPolicy, boolean trimFragments) {
+      this(comparisonPolicy, highlightPolicy.isFineFragments(), highlightPolicy.isShouldSquash(), trimFragments);
     }
 
     public DiffConfig(@NotNull ComparisonPolicy policy) {
-      this(policy, HighlightPolicy.BY_LINE);
+      this(policy, HighlightPolicy.BY_LINE, false);
     }
   }
 }
