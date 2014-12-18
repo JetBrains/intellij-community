@@ -156,23 +156,33 @@ public abstract class CacheDiffRequestChainProcessor implements Disposable {
     myActiveRequest = request;
     myActiveRequest.onAssigned(true);
 
-    myState = createState();
-    myState.init();
+    try {
+      myState = createState();
+      myState.init();
+    }
+    catch (Exception e) {
+      LOG.error(e);
+      myState = new ErrorState(getFrameTool());
+      myState.init();
+    }
 
     if (hadFocus) requestFocus();
   }
 
   @NotNull
-  private ViewerState createState() {
-    FrameDiffTool frameTool = null;
+  private FrameDiffTool getFrameTool() {
     for (DiffTool tool : myToolOrder) {
       if (tool instanceof FrameDiffTool && tool.canShow(myContext, myActiveRequest)) {
-        frameTool = (FrameDiffTool)tool;
-        break;
+        return (FrameDiffTool)tool;
       }
     }
 
-    if (frameTool == null) frameTool = ErrorDiffTool.INSTANCE;
+    return ErrorDiffTool.INSTANCE;
+  }
+
+  @NotNull
+  private ViewerState createState() {
+    FrameDiffTool frameTool = getFrameTool();
 
     DiffViewer viewer = frameTool.createComponent(myContext, myActiveRequest);
 
@@ -718,6 +728,49 @@ public abstract class CacheDiffRequestChainProcessor implements Disposable {
     @Override
     public DiffTool getActiveTool() {
       return ErrorDiffTool.INSTANCE;
+    }
+  }
+
+  private class ErrorState implements ViewerState {
+    @Nullable private final DiffTool myDiffTool;
+
+    public ErrorState(@Nullable DiffTool diffTool) {
+      myDiffTool = diffTool;
+    }
+
+    @Override
+    public void init() {
+      myContentPanel.setContent(DiffUtil.createMessagePanel("Error: can't show diff"));
+
+      DefaultActionGroup group = buildToolbar(null);
+      myToolbarPanel.setContent(DiffUtil.createToolbar(group).getComponent());
+      for (AnAction action : group.getChildren(null)) {
+        action.registerCustomShortcutSet(action.getShortcutSet(), myPanel);
+      }
+
+      myPanel.validate();
+    }
+
+    @Override
+    public void destroy() {
+    }
+
+    @Nullable
+    @Override
+    public JComponent getPreferredFocusedComponent() {
+      return null;
+    }
+
+    @Nullable
+    @Override
+    public Object getData(@NonNls String dataId) {
+      return null;
+    }
+
+    @NotNull
+    @Override
+    public DiffTool getActiveTool() {
+      return myDiffTool != null ? myDiffTool : ErrorDiffTool.INSTANCE;
     }
   }
 
