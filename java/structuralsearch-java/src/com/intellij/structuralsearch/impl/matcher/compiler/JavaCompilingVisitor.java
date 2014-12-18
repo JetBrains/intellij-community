@@ -436,7 +436,31 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
 
 
   private void handleReference(PsiJavaCodeReferenceElement reference) {
-    handleReferenceText(reference.getReferenceName(), myCompilingVisitor.getContext());
+    if (shouldOccur(reference)) {
+      handleReferenceText(reference.getReferenceName(), myCompilingVisitor.getContext());
+    }
+  }
+
+  private boolean shouldOccur(PsiJavaCodeReferenceElement reference) {
+    final CompileContext compileContext = myCompilingVisitor.getContext();
+    final PsiElement parent = reference.getParent();
+    if (!(parent instanceof PsiReferenceList)) {
+      return true;
+    }
+    final PsiElement grandParent = parent.getParent();
+    if (!(grandParent instanceof PsiMethod)) {
+      return true;
+    }
+    final PsiMethod method = (PsiMethod)grandParent;
+    if (method.getThrowsList() != parent) {
+      return true;
+    }
+    final String name = method.getName();
+    if (!compileContext.getPattern().isTypedVar(name)) {
+      return true;
+    }
+    final SubstitutionHandler handler = (SubstitutionHandler)compileContext.getPattern().getHandler(name);
+    return !(handler != null && handler.getMinOccurs() == 0);
   }
 
   private static void handleReferenceText(String refname, CompileContext compileContext) {
