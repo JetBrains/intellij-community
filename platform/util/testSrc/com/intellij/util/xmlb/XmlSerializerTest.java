@@ -1245,20 +1245,6 @@ public class XmlSerializerTest extends TestCase {
     checkSmartSerialization(new Bean2(), "<Bean2 ac=\"2\" ab=\"32\" module=\"\" />");
   }
 
-  public void testIgnoreNameAttributeIfTagSpecified() throws IOException, JDOMException {
-    Bean3 bean = new Bean3();
-    bean.MOVE_TO_FAILED_COMMIT_CHANGELIST = "foo";
-    doSerializerTest("<bean>\n" +
-                     "  <confirmMoveToFailedCommit value=\"foo\" />\n" +
-                     "</bean>", bean, new SkipDefaultValuesSerializationFilters());
-  }
-
-  @Tag("bean")
-  static class Bean3 {
-    @OptionTag(tag = "confirmMoveToFailedCommit")
-    public String MOVE_TO_FAILED_COMMIT_CHANGELIST;
-  }
-
   private static void checkSmartSerialization(@NotNull Bean2 bean, @NotNull String serialized) throws IOException, JDOMException {
     SmartSerializer serializer = new SmartSerializer();
     serializer.readExternal(bean, JDOMUtil.loadDocument(serialized).getRootElement());
