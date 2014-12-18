@@ -2,6 +2,7 @@ package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.Depth;
@@ -65,7 +66,7 @@ public class CommandUtil {
       builder.append("@");
     }
     if (hasPegRevision) {
-      builder.append(pegRevision);
+      builder.append(format(pegRevision));
     }
 
     parameters.add(builder.toString());
@@ -108,8 +109,18 @@ public class CommandUtil {
   public static void put(@NotNull List<String> parameters, @Nullable SVNRevision revision) {
     if (revision != null && !SVNRevision.UNDEFINED.equals(revision) && !SVNRevision.WORKING.equals(revision) && revision.isValid()) {
       parameters.add("--revision");
-      parameters.add(revision.toString());
+      parameters.add(format(revision));
     }
+  }
+
+  public static void put(@NotNull List<String> parameters, @NotNull SVNRevision startRevision, @NotNull SVNRevision endRevision) {
+    parameters.add("--revision");
+    parameters.add(format(startRevision) + ":" + format(endRevision));
+  }
+
+  @NotNull
+  public static String format(@NotNull SVNRevision revision) {
+    return revision.getDate() != null ? "{" + DateFormatUtil.ISO8601_DATE_FORMAT.format(revision.getDate()) + "}" : revision.toString();
   }
 
   public static void put(@NotNull List<String> parameters, @Nullable DiffOptions diffOptions) {

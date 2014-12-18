@@ -263,8 +263,7 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
     final File mergeInfoHolder = myMerger.getMergeInfoHolder();
     if (mergeInfoHolder != null) {
       final Status svnStatus = SvnUtil.getStatus(myVcs, mergeInfoHolder);
-      if ((svnStatus != null) && (StatusType.STATUS_MODIFIED.equals(svnStatus.getPropertiesStatus()))) {
-
+      if (svnStatus != null && svnStatus.isProperty(StatusType.STATUS_MODIFIED)) {
         myMergeTarget = FilePathImpl.create(mergeInfoHolder, mergeInfoHolder.isDirectory());
       }
     }

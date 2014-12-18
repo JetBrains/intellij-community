@@ -40,7 +40,7 @@ public class Info extends BaseNodeDescription {
   private final File myFile;
   private final String myPath;
   private final SVNURL myURL;
-  private final SVNRevision myRevision;
+  @NotNull private final SVNRevision myRevision;
   private final SVNURL myRepositoryRootURL;
   private final String myRepositoryUUID;
   private final SVNRevision myCommittedRevision;
@@ -130,7 +130,7 @@ public class Info extends BaseNodeDescription {
 
   public Info(String path,
               SVNURL url,
-              SVNRevision revision,
+              @NotNull SVNRevision revision,
               @NotNull NodeKind kind,
               String uuid,
               SVNURL reposRootURL,
@@ -240,6 +240,7 @@ public class Info extends BaseNodeDescription {
     return myRepositoryUUID;
   }
 
+  @NotNull
   public SVNRevision getRevision() {
     return myRevision;
   }

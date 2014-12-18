@@ -37,8 +37,8 @@ public class Status {
   private SVNURL myURL;
   private File myFile;
   private @NotNull NodeKind myKind;
-  private SVNRevision myRevision;
-  private SVNRevision myCommittedRevision;
+  @NotNull private SVNRevision myRevision;
+  @NotNull private SVNRevision myCommittedRevision;
   private StatusType myContentsStatus;
   private StatusType myPropertiesStatus;
   private StatusType myRemoteContentsStatus;
@@ -83,8 +83,8 @@ public class Status {
   public Status(SVNURL url,
                 File file,
                 @NotNull NodeKind kind,
-                SVNRevision revision,
-                SVNRevision committedRevision,
+                @Nullable SVNRevision revision,
+                @Nullable SVNRevision committedRevision,
                 StatusType contentsStatus,
                 StatusType propertiesStatus,
                 StatusType remoteContentsStatus,
@@ -136,10 +136,12 @@ public class Status {
     return myKind;
   }
 
+  @NotNull
   public SVNRevision getRevision() {
     return myRevision;
   }
 
+  @NotNull
   public SVNRevision getCommittedRevision() {
     return myCommittedRevision;
   }
@@ -169,6 +171,19 @@ public class Status {
       @Override
       public boolean value(StatusType type) {
         return is(type);
+      }
+    });
+  }
+
+  public boolean isProperty(@NotNull StatusType type) {
+    return type.equals(getPropertiesStatus());
+  }
+
+  public boolean isProperty(@NotNull StatusType... types) {
+    return ContainerUtil.or(types, new Condition<StatusType>() {
+      @Override
+      public boolean value(StatusType type) {
+        return isProperty(type);
       }
     });
   }
@@ -243,11 +258,11 @@ public class Status {
     myKind = kind;
   }
 
-  public void setRevision(SVNRevision revision) {
+  public void setRevision(@NotNull SVNRevision revision) {
     myRevision = revision;
   }
 
-  public void setCommittedRevision(SVNRevision committedRevision) {
+  public void setCommittedRevision(@NotNull SVNRevision committedRevision) {
     myCommittedRevision = committedRevision;
   }
 
