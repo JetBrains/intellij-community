@@ -4,7 +4,9 @@ import com.intellij.dupLocator.iterators.NodeIterator;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
-import com.intellij.psi.search.*;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PsiShortNamesCache;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.structuralsearch.*;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
@@ -14,8 +16,8 @@ import com.intellij.structuralsearch.impl.matcher.handlers.*;
 import com.intellij.structuralsearch.impl.matcher.iterators.DocValuesIterator;
 import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate;
 import com.intellij.structuralsearch.impl.matcher.strategies.*;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -490,16 +492,16 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
     final PsiClass[] classes = cache.getClassesByName(className, (GlobalSearchScope)scope);
     final List<PsiClass> results = new ArrayList<PsiClass>();
 
-    final PsiElementProcessor<PsiClass> processor = new PsiElementProcessor<PsiClass>() {
-      public boolean execute(@NotNull PsiClass element) {
-        results.add(element);
+    final Processor<PsiClass> processor = new Processor<PsiClass>() {
+      @Override
+      public boolean process(PsiClass aClass) {
+        results.add(aClass);
         return true;
       }
-
     };
 
     for (PsiClass aClass : classes) {
-      ClassInheritorsSearch.search(aClass, scope, true).forEach(new PsiElementProcessorAdapter<PsiClass>(processor));
+      ClassInheritorsSearch.search(aClass, scope, true).forEach(processor);
     }
 
     if (includeSelf) {
