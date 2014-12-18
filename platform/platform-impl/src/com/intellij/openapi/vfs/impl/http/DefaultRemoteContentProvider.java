@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathUtilRt;
 import com.intellij.util.Url;
 import com.intellij.util.io.HttpRequests;
+import com.intellij.util.net.ssl.CertificateManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.io.Responses;
 
@@ -60,7 +61,7 @@ public class DefaultRemoteContentProvider extends RemoteContentProvider {
         .connectTimeout(60 * 1000)
         .readTimeout(60 * 1000)
         .userAgent(Responses.getServerHeaderValue())
-        .disableHostVerification()
+        .hostNameVerifier(CertificateManager.HOSTNAME_VERIFIER)
         .connect(new HttpRequests.RequestProcessor<Object>() {
           @Override
           public Object process(@NotNull HttpRequests.Request request) throws IOException {
