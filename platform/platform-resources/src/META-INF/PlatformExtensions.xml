@@ -326,7 +326,6 @@
 
     <applicationService serviceInterface="org.jetbrains.ide.BuiltInServerManager" serviceImplementation="org.jetbrains.ide.BuiltInServerManagerImpl"/>
     <applicationService serviceInterface="com.intellij.ide.XmlRpcServer" serviceImplementation="com.intellij.ide.XmlRpcServerImpl"/>
-    <applicationService serviceImplementation="com.intellij.util.net.ssl.CertificateManager"/>
     <httpRequestHandler implementation="com.intellij.ide.XmlRpcServerImpl$XmlRpcRequestHandler"/>
     <httpRequestHandler implementation="com.intellij.platform.ProjectSetRequestHandler"/>
     <postStartupActivity implementation="org.jetbrains.ide.BuiltInServerManagerImpl$MyPostStartupActivity"/>
