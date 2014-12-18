@@ -85,9 +85,9 @@ public class FragmentGenerator {
   public Integer getNearRedNode(int startNode, int maxWalkSize, boolean toUp) {
     if (myRedNodes.value(startNode)) return startNode;
 
-    Walker walker = new Walker(startNode, toUp);
+    TreeSetNodeIterator walker = new TreeSetNodeIterator(startNode, toUp);
     while (walker.notEmpty()) {
-      Integer next = walker.doNext();
+      Integer next = walker.pop();
 
       if (myRedNodes.value(next)) return next;
 
@@ -125,9 +125,9 @@ public class FragmentGenerator {
   private Set<Integer> getWalkNodes(int startNode, boolean toUp, Condition<Integer> stopFunction) {
     Set<Integer> walkNodes = new HashSet<Integer>();
 
-    Walker walker = new Walker(startNode, toUp);
+    TreeSetNodeIterator walker = new TreeSetNodeIterator(startNode, toUp);
     while (walker.notEmpty()) {
-      Integer next = walker.doNext();
+      Integer next = walker.pop();
       if (!stopFunction.value(next)) {
         walkNodes.add(next);
         walker.addAll(getNodes(next, toUp));
@@ -152,36 +152,6 @@ public class FragmentGenerator {
         return count < 0;
       }
     };
-  }
-
-  private static class Walker {
-    private final SortedSet<Integer> myWalkNodes;
-
-    Walker(int startNode, final boolean toUp) {
-      myWalkNodes = new TreeSet<Integer>(new Comparator<Integer>() {
-        @Override
-        public int compare(@NotNull Integer o1, @NotNull Integer o2) {
-          if (toUp)
-            return o2 - o1;
-          return o1 - o2;
-        }
-      });
-      myWalkNodes.add(startNode);
-    }
-
-    public Integer doNext() {
-      Integer next = myWalkNodes.first();
-      myWalkNodes.remove(next);
-      return next;
-    }
-
-    public boolean notEmpty() {
-      return !myWalkNodes.isEmpty();
-    }
-
-    public void addAll(List<Integer> nodes) {
-      myWalkNodes.addAll(nodes);
-    }
   }
 
 }
