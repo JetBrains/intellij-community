@@ -212,6 +212,6 @@ public class RegistryValue {
   }
 
   public boolean isBoolean() {
-    return "true".equals(myStringCachedValue) || "false".equals(myStringCachedValue);
+    return "true".equals(asString()) || "false".equals(asString());
   }
 }

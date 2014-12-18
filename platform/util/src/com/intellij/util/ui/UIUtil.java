@@ -1679,13 +1679,16 @@ public class UIUtil {
     Map map = (Map)tk.getDesktopProperty("awt.font.desktophints");
     if (map != null) {
       g2d.addRenderingHints(map);
-      if (Registry.is("force.subpixel.hinting")) {
-        g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB);
-        g2d.setRenderingHint(RenderingHints.KEY_TEXT_LCD_CONTRAST, Registry.intValue("lcd.contrast.value"));
-      }
+      setHintingForLCDText(g2d);
     }
   }
 
+  public static void setHintingForLCDText(Graphics2D g2d) {
+    if (SystemInfo.isJetbrainsJvm && Registry.is("force.subpixel.hinting")) {
+      g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB);
+      g2d.setRenderingHint(RenderingHints.KEY_TEXT_LCD_CONTRAST, Registry.intValue("lcd.contrast.value"));
+    }
+  }
 
   public static BufferedImage createImage(int width, int height, int type) {
     if (isRetina()) {

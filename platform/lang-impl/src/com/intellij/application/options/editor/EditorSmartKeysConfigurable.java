@@ -170,18 +170,19 @@ public class EditorSmartKeysConfigurable extends CompositeConfigurable<UnnamedCo
 
     myCbSurroundSelectionOnTyping.setSelected(codeInsightSettings.SURROUND_SELECTION_ON_QUOTE_TYPED);
 
-    switch (codeInsightSettings.SMART_BACKSPACE) {
-      case SmartBackspaceMode.OFF:
+    SmartBackspaceMode backspaceMode = codeInsightSettings.getBackspaceMode();
+    switch (backspaceMode) {
+      case OFF:
         mySmartBackspaceCombo.setSelectedItem(OFF);
         break;
-      case SmartBackspaceMode.INDENT:
+      case INDENT:
         mySmartBackspaceCombo.setSelectedItem(SIMPLE);
         break;
-      case SmartBackspaceMode.AUTOINDENT:
+      case AUTOINDENT:
         mySmartBackspaceCombo.setSelectedItem(SMART);
         break;
       default:
-        LOG.error("Unexpected smart backspace mode value: " + codeInsightSettings.SMART_BACKSPACE);
+        LOG.error("Unexpected smart backspace mode value: " + backspaceMode);
     }
 
     super.reset();
@@ -203,7 +204,7 @@ public class EditorSmartKeysConfigurable extends CompositeConfigurable<UnnamedCo
     codeInsightSettings.SURROUND_SELECTION_ON_QUOTE_TYPED = myCbSurroundSelectionOnTyping.isSelected();
     editorSettings.setCamelWords(myCbCamelWords.isSelected());
     codeInsightSettings.REFORMAT_ON_PASTE = getReformatPastedBlockValue();
-    codeInsightSettings.SMART_BACKSPACE = getSmartBackspaceModeValue();
+    codeInsightSettings.setBackspaceMode(getSmartBackspaceModeValue());
 
     super.apply();
   }
@@ -229,7 +230,7 @@ public class EditorSmartKeysConfigurable extends CompositeConfigurable<UnnamedCo
 
     isModified |= isModified(myCbSurroundSelectionOnTyping, codeInsightSettings.SURROUND_SELECTION_ON_QUOTE_TYPED);
 
-    isModified |= (getSmartBackspaceModeValue() != codeInsightSettings.SMART_BACKSPACE);
+    isModified |= (getSmartBackspaceModeValue() != codeInsightSettings.getBackspaceMode());
 
     return isModified;
 
@@ -259,7 +260,7 @@ public class EditorSmartKeysConfigurable extends CompositeConfigurable<UnnamedCo
     }
   }
   
-  private int getSmartBackspaceModeValue() {
+  private SmartBackspaceMode getSmartBackspaceModeValue() {
     Object selectedItem = mySmartBackspaceCombo.getSelectedItem();
     if (OFF.equals(selectedItem)){
       return SmartBackspaceMode.OFF;

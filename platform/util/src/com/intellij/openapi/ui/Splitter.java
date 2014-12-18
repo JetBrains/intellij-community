@@ -57,7 +57,7 @@ public class Splitter extends JPanel {
   private final float myMaxProp;
 
 
-  protected float myProportion;// first size divided by total size
+  protected float myProportion;// first size divided by (first + second)
 
   private final Divider myDivider;
   private JComponent mySecondComponent;
@@ -261,7 +261,7 @@ public class Splitter extends JPanel {
         d = total;
       }
       else {
-        size1 = myProportion * total;
+        size1 = myProportion * (total - d);
         double size2 = total - size1 - d;
 
         if (isHonorMinimumSize()) {

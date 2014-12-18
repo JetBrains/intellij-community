@@ -13,11 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight.editorActions;
+package com.intellij.codeInsight.template;
 
-public class SmartBackspaceDisabler extends BackspaceModeOverride {
-  @Override
-  public int getBackspaceMode(int modeFromSettings) {
-    return modeFromSettings == SmartBackspaceMode.AUTOINDENT ? SmartBackspaceMode.INDENT : modeFromSettings;
-  }
+import com.intellij.codeInsight.template.impl.TemplateImpl;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+public interface TemplateSubstitutor {
+  ExtensionPointName<TemplateSubstitutor> EP_NAME = ExtensionPointName.create("com.intellij.liveTemplateSubstitutor");
+
+  @Nullable
+  TemplateImpl substituteTemplate(@NotNull PsiFile file, int caretOffset, @NotNull TemplateImpl template);
 }

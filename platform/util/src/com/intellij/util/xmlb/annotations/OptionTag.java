@@ -29,8 +29,6 @@ import java.lang.annotation.Target;
  * <p>Store value in tag like {@code <option name="optionName" value="optionValue"/>}</p>
  * <p>nameAttribute can be empty, in which case it is skipped: {@code <option value="optionValue" />}</p>
  *
- * If {@link #tag} is specified but {@link #nameAttribute} is not, name attribute will not be added: {@code <customTagName value="optionValue" />}
- *
  * @author nik
  */
 @Retention(RetentionPolicy.RUNTIME)

@@ -363,7 +363,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     return null;
   }
 
-  public void unregisterVcs(AbstractVcs vcs) {
+  public void unregisterVcs(@NotNull AbstractVcs vcs) {
     if (!ApplicationManager.getApplication().isUnitTestMode() && myMappings.haveActiveVcs(vcs.getName())) {
       // unlikely
       LOG.warn("Active vcs '" + vcs.getName() + "' is being unregistered. Remove from mappings first.");
