@@ -123,8 +123,11 @@ public class SheetMessage {
       focusCandidate = IdeFocusManager.getGlobalInstance().getLastFocusedFor(IdeFocusManager.getGlobalInstance().getLastFocusedFrame());
     }
 
-    LOG.assertTrue(focusCandidate != null, "The should return focus on closing the message");
-    focusCandidate.requestFocus();
+    // focusCandidate is null if a welcome screen is closed and ide frame is not opened.
+    // this is ok. We set focus correctly on our frame activation.
+    if (focusCandidate != null) {
+      focusCandidate.requestFocus();
+    }
   }
 
   private static void maximizeIfNeeded(final Window owner) {

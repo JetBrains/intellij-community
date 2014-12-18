@@ -17,6 +17,7 @@
 package com.intellij.ide.fileTemplates;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.fileTemplates.impl.CustomFileTemplate;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -464,5 +465,24 @@ public class FileTemplateUtil{
       String s = (String)e.nextElement();
       props.put(s, p.getProperty(s));
     }
+  }
+
+  @NotNull
+  public static FileTemplate createTemplate(@NotNull String prefName,
+                                            @NotNull String extension,
+                                            @NotNull String content,
+                                            FileTemplate[] templates) {
+    final Set<String> names = new HashSet<String>();
+    for (FileTemplate template : templates) {
+      names.add(template.getName());
+    }
+    String name = prefName;
+    int i = 0;
+    while (names.contains(name)) {
+      name = prefName + " (" + ++i + ")";
+    }
+    final FileTemplate newTemplate = new CustomFileTemplate(name, extension);
+    newTemplate.setText(content);
+    return newTemplate;
   }
 }

@@ -83,7 +83,7 @@ public class StudyRefreshTaskFileAction extends DumbAwareAction {
 
   private static void showBalloon(Project project) {
     BalloonBuilder balloonBuilder =
-      JBPopupFactory.getInstance().createHtmlTextBalloonBuilder("You can now start again", MessageType.INFO, null);
+      JBPopupFactory.getInstance().createHtmlTextBalloonBuilder("You can start again now", MessageType.INFO, null);
     final Balloon balloon = balloonBuilder.createBalloon();
     StudyEditor selectedStudyEditor = StudyEditor.getSelectedStudyEditor(project);
     assert selectedStudyEditor != null;

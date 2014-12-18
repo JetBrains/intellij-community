@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.StringTokenizer;
@@ -367,5 +368,23 @@ public class KeymapUtil {
       toolTipText += " (" + shortcutsText + ")";
     }
     return toolTipText;
+  }
+
+  /**
+   * Checks that one of the mouse shortcuts assigned to the provided action has the same modifiers as provided
+   */
+  public static boolean matchActionMouseShortcutsModifiers(final Keymap activeKeymap,
+                                                           @JdkConstants.InputEventMask int modifiers,
+                                                           final String actionId) {
+    final MouseShortcut syntheticShortcut = new MouseShortcut(MouseEvent.BUTTON1, modifiers, 1);
+    for (Shortcut shortcut : activeKeymap.getShortcuts(actionId)) {
+      if (shortcut instanceof MouseShortcut) {
+        final MouseShortcut mouseShortcut = (MouseShortcut)shortcut;
+        if (mouseShortcut.getModifiers() == syntheticShortcut.getModifiers()) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 }
