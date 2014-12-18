@@ -126,8 +126,9 @@ public class ReplaceLambdaWithAnonymousIntention extends Intention {
     String blockText;
     final PsiElement body = lambdaExpression.getBody();
     if (body instanceof PsiExpression) {
+      final PsiType returnType = LambdaUtil.getFunctionalInterfaceReturnType(lambdaExpression);
       blockText = "{";
-      blockText += ((PsiExpression)body).getType() == PsiType.VOID ? "" : "return ";
+      blockText += PsiType.VOID.equals(returnType) ? "" : "return ";
       blockText +=  body.getText() + ";}";
     } else if (body != null) {
       blockText = body.getText();
