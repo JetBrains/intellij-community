@@ -104,8 +104,7 @@ import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.model.serialization.JpsGlobalLoader;
 
-import javax.tools.JavaCompiler;
-import javax.tools.ToolProvider;
+import javax.tools.*;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -951,7 +950,10 @@ public class BuildManager implements ApplicationComponent{
     }
 
     cmdLine.addParameter("-Djava.awt.headless=true");
-    cmdLine.addParameter("-Djava.endorsed.dirs=\"\""); // turn off all jre customizations for predictable behaviour
+    if (sdkVersion != null && sdkVersion.ordinal() < JavaSdkVersion.JDK_1_9.ordinal()) {
+      //-Djava.endorsed.dirs is not supported in JDK 9+, may result in abnormal process termination
+      cmdLine.addParameter("-Djava.endorsed.dirs=\"\""); // turn off all jre customizations for predictable behaviour
+    }
     if (IS_UNIT_TEST_MODE) {
       cmdLine.addParameter("-Dtest.mode=true");
     }
