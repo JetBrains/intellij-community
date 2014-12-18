@@ -228,8 +228,6 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
 
         LOG.assertTrue(anonymousClass != null);
 
-        final boolean voidCompatible = PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType(anonymousClass.getBaseClassType()));
-
         ChangeContextUtil.encodeContextInfo(anonymousClass, true);
         final PsiElement lambdaContext = anonymousClass.getParent().getParent();
         boolean validContext = LambdaUtil.isValidLambdaContext(lambdaContext);
@@ -263,27 +261,18 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
         PsiLambdaExpression lambdaExpression =
           (PsiLambdaExpression)elementFactory.createExpressionFromText(withoutTypesDeclared, anonymousClass);
 
-        final PsiStatement[] statements = body.getStatements();
-        PsiElement copy = body.copy();
-        if (statements.length == 1) {
-          if (statements[0] instanceof PsiReturnStatement) {
-            PsiExpression value = ((PsiReturnStatement)statements[0]).getReturnValue();
-            if (value != null) {
-              copy = value.copy();
-            }
-          } else if (statements[0] instanceof PsiExpressionStatement && !(voidCompatible && lambdaContext instanceof PsiExpressionList)) {
-            copy = ((PsiExpressionStatement)statements[0]).getExpression().copy();
-          }
-        }
-
         PsiElement lambdaBody = lambdaExpression.getBody();
         LOG.assertTrue(lambdaBody != null);
-        lambdaBody.replace(copy);
+        lambdaBody.replace(body);
 
         giveUniqueNames(project, lambdaContext, elementFactory, lambdaExpression, lambdaExpression.getParameterList().getParameters());
 
         final PsiNewExpression newExpression = (PsiNewExpression)anonymousClass.getParent();
         lambdaExpression = (PsiLambdaExpression)newExpression.replace(lambdaExpression);
+        final PsiExpression singleExpr = RedundantLambdaCodeBlockInspection.isCodeBlockRedundant(lambdaExpression, lambdaExpression.getBody());
+        if (singleExpr != null) {
+          lambdaExpression.getBody().replace(singleExpr);
+        }
         ChangeContextUtil.decodeContextInfo(lambdaExpression, null, null);
         if (!validContext) {
           final PsiParenthesizedExpression typeCast =

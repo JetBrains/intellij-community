@@ -15,6 +15,7 @@
  */
 package com.siyeh.ipp.types;
 
+import com.intellij.codeInspection.RedundantLambdaCodeBlockInspection;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -93,10 +94,11 @@ public class ReplaceMethodRefWithLambdaIntention extends Intention {
     final JavaResolveResult resolveResult = referenceExpression.advancedResolve(false);
     final PsiElement resolveElement = resolveResult.getElement();
     if (resolveElement instanceof PsiMember) {
-      boolean needBraces = interfaceMethod.getReturnType() == PsiType.VOID && !(resolveElement instanceof PsiMethod && ((PsiMethod)resolveElement).getReturnType() == PsiType.VOID);
 
-      if (needBraces) {
-        buf.append("{");
+      buf.append("{");
+
+      if (!PsiType.VOID.equals(interfaceMethod.getReturnType())) {
+        buf.append("return ");
       }
       final PsiElement qualifier = referenceExpression.getQualifier();
       PsiClass containingClass = null;
@@ -179,9 +181,7 @@ public class ReplaceMethodRefWithLambdaIntention extends Intention {
         buf.append(")");
       }
 
-      if (needBraces) {
-        buf.append(";}");
-      }
+      buf.append(";}");
     }
 
 
@@ -190,7 +190,12 @@ public class ReplaceMethodRefWithLambdaIntention extends Intention {
     if (RedundantCastUtil.isCastRedundant(typeCastExpression)) {
       final PsiExpression operand = typeCastExpression.getOperand();
       LOG.assertTrue(operand != null);
-      typeCastExpression.replace(operand);
+      final PsiLambdaExpression expr = (PsiLambdaExpression)typeCastExpression.replace(operand);
+      final PsiElement body = expr.getBody();
+      final PsiExpression singleExpression = RedundantLambdaCodeBlockInspection.isCodeBlockRedundant(expr, body);
+      if (singleExpression != null) {
+        body.replace(singleExpression);
+      } 
     }
   }
 
