@@ -123,17 +123,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
 
   private FileTemplate createTemplate(final @NotNull String prefName, final @NotNull String extension, final @NotNull String content) {
     final FileTemplate[] templates = myCurrentTab.getTemplates();
-    final Set<String> names = new HashSet<String>();
-    for (FileTemplate template : templates) {
-      names.add(template.getName());
-    }
-    String name = prefName;
-    int i = 0;
-    while (names.contains(name)) {
-      name = prefName + " (" + ++i + ")";
-    }
-    final FileTemplate newTemplate = new CustomFileTemplate(name, extension);
-    newTemplate.setText(content);
+    final FileTemplate newTemplate = FileTemplateUtil.createTemplate(prefName, extension, content, templates);
     myCurrentTab.addTemplate(newTemplate);
     myModified = true;
     myCurrentTab.selectTemplate(newTemplate);
