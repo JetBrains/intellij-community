@@ -32,6 +32,7 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
 
   @Override
   public String getSummaryForNode(AbstractTreeNode node) {
+    if (!myCoverageViewManager.isReady()) return "Loading...";
     final String coverageInformationString = myAnnotator
       .getPackageCoverageInformationString((PsiPackage)node.getValue(), null, myCoverageDataManager, myStateBean.myFlattenPackages);
     return getNotCoveredMessage(coverageInformationString) + " in package \'" + node.toString() + "\'";
@@ -44,28 +45,12 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
                                                                                        myCoverageDataManager);
     if (coverageInformationString == null) {
       if (!myCoverageViewManager.isReady()) return "Loading...";
-      PackageAnnotator.PackageCoverageInfo info = new PackageAnnotator.PackageCoverageInfo();
+      PackageAnnotator.SummaryCoverageInfo info = new PackageAnnotator.PackageCoverageInfo();
       final Collection children = childNode.getChildren();
       for (Object child : children) {
         final Object childValue = ((CoverageListNode)child).getValue();
-        if (childValue instanceof PsiPackage) {
-          final PackageAnnotator.PackageCoverageInfo coverageInfo = myAnnotator.getPackageCoverageInfo((PsiPackage)childValue, myStateBean.myFlattenPackages);
-          if (coverageInfo != null) {
-            info = JavaCoverageAnnotator.merge(info, coverageInfo);
-          }
-        } else {
-          final PackageAnnotator.ClassCoverageInfo classCoverageInfo = getClassCoverageInfo(((PsiClass)childValue));
-          if (classCoverageInfo != null) {
-            info.coveredClassCount += classCoverageInfo.coveredMethodCount > 0 ? 1 : 0;
-            info.totalClassCount ++;
-
-            info.coveredMethodCount += classCoverageInfo.coveredMethodCount;
-            info.totalMethodCount += classCoverageInfo.totalMethodCount;
-
-            info.coveredLineCount += classCoverageInfo.partiallyCoveredLineCount + classCoverageInfo.fullyCoveredLineCount;
-            info.totalLineCount += classCoverageInfo.totalLineCount;
-          }
-        }
+        PackageAnnotator.SummaryCoverageInfo childInfo = getSummaryCoverageForNodeValue(childValue);
+        info = JavaCoverageAnnotator.merge(info, childInfo);
       }
       coverageInformationString = JavaCoverageAnnotator.getCoverageInformationString(info, false);
     }
@@ -82,30 +67,30 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
   @Override
   public String getPercentage(int columnIndex, AbstractTreeNode node) {
     final Object value = node.getValue();
+    PackageAnnotator.SummaryCoverageInfo info = getSummaryCoverageForNodeValue(value);
+
+    if (columnIndex == 1) {
+      return myAnnotator.getClassCoveredPercentage(info);
+    } else if (columnIndex == 2){
+      return myAnnotator.getMethodCoveredPercentage(info);
+    }
+
+    return myAnnotator.getLineCoveredPercentage(info);
+  }
+
+  public PackageAnnotator.SummaryCoverageInfo getSummaryCoverageForNodeValue(Object value) {
+    PackageAnnotator.SummaryCoverageInfo info = null;
     if (value instanceof PsiClass) {
-
       //no coverage gathered
-      if (((PsiClass)value).isInterface()) return null;
-
-      final String qualifiedName = ((PsiClass)value).getQualifiedName();
-      if (columnIndex == 1) {
-        return myAnnotator.getClassCoveredPercentage(qualifiedName);
-      } else if (columnIndex == 2){
-        return myAnnotator.getClassMethodPercentage(qualifiedName);
+      if (!((PsiClass)value).isInterface()) {
+        final String qualifiedName = ((PsiClass)value).getQualifiedName();
+        info = myAnnotator.getClassCoverageInfo(qualifiedName);
       }
-      
-      return myAnnotator.getClassLinePercentage(qualifiedName);
     }
     if (value instanceof PsiPackage) {
-      final boolean flatten = myStateBean.myFlattenPackages;
-      if (columnIndex == 1) {
-        return myAnnotator.getPackageClassPercentage((PsiPackage)value, flatten);
-      } else if (columnIndex == 2) {
-        return myAnnotator.getPackageMethodPercentage((PsiPackage)value, flatten);
-      }
-      return myAnnotator.getPackageLinePercentage((PsiPackage)value, flatten);
+      info = myAnnotator.getPackageCoverageInfo((PsiPackage)value, myStateBean.myFlattenPackages);
     }
-    return null;
+    return info;
   }
 
   @Override

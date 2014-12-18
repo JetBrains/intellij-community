@@ -16,8 +16,4 @@ public abstract class DeploymentRuntime {
   public interface UndeploymentTaskCallback extends RemoteOperationCallback {
     void succeeded();
   }
-
-  public Integer compareTo(DeploymentRuntime other) {
-    return null;
-  }
 }

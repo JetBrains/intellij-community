@@ -1673,14 +1673,22 @@ public class UIUtil {
   }
 
   public static void applyRenderingHints(final Graphics g) {
+    Graphics2D g2d = (Graphics2D)g;
     Toolkit tk = Toolkit.getDefaultToolkit();
     //noinspection HardCodedStringLiteral
     Map map = (Map)tk.getDesktopProperty("awt.font.desktophints");
     if (map != null) {
-      ((Graphics2D)g).addRenderingHints(map);
+      g2d.addRenderingHints(map);
+      setHintingForLCDText(g2d);
     }
   }
 
+  public static void setHintingForLCDText(Graphics2D g2d) {
+    if (SystemInfo.isJetbrainsJvm && Registry.is("force.subpixel.hinting")) {
+      g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB);
+      g2d.setRenderingHint(RenderingHints.KEY_TEXT_LCD_CONTRAST, Registry.intValue("lcd.contrast.value"));
+    }
+  }
 
   public static BufferedImage createImage(int width, int height, int type) {
     if (isRetina()) {

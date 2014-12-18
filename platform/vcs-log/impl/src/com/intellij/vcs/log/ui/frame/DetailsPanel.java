@@ -403,17 +403,19 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
         return parser.getText();
       }
       catch (BadLocationException e) {
+        LOG.warn(e);
       }
       catch (IOException e) {
+        LOG.warn(e);
       }
       return super.getSelectedText();
     }
 
     private static class MyHtml2Text extends HTMLEditorKit.ParserCallback {
-      @NotNull private StringBuffer myBuffer = new StringBuffer();
+      @NotNull private final StringBuilder myBuffer = new StringBuilder();
 
       public void parse(Reader in) throws IOException {
-        myBuffer = new StringBuffer();
+        myBuffer.setLength(0);
         new ParserDelegator().parse(in, this, Boolean.TRUE);
       }
 

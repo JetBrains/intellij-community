@@ -64,25 +64,39 @@ public class PackageAnnotator {
     void annotateClass(String classQualifiedName, ClassCoverageInfo classCoverageInfo);
   }
 
-  public static class ClassCoverageInfo {
-    public int totalLineCount;
-    public int fullyCoveredLineCount;
-    public int partiallyCoveredLineCount;
-    public int totalMethodCount;
-    public int coveredMethodCount;
-
-    public int totalClassCount = 1;
-    public int coveredClassCount;
-  }
-
-  public static class PackageCoverageInfo {
+  public static abstract class SummaryCoverageInfo {
     public int totalClassCount;
     public int coveredClassCount;
+
+    public int totalMethodCount;
+    public int coveredMethodCount;
+
     public int totalLineCount;
+
+    public abstract int getCoveredLineCount();
+  }
+
+  public static class ClassCoverageInfo extends SummaryCoverageInfo {
+    public int fullyCoveredLineCount;
+    public int partiallyCoveredLineCount;
+
+    public ClassCoverageInfo() {
+      totalClassCount = 1;
+    }
+
+    @Override
+    public int getCoveredLineCount() {
+      return fullyCoveredLineCount + partiallyCoveredLineCount;
+    }
+  }
+
+  public static class PackageCoverageInfo extends SummaryCoverageInfo {
     public int coveredLineCount;
 
-    public int coveredMethodCount;
-    public int totalMethodCount;
+    @Override
+    public int getCoveredLineCount() {
+      return coveredLineCount;
+    }
   }
 
   public static class DirCoverageInfo extends PackageCoverageInfo {

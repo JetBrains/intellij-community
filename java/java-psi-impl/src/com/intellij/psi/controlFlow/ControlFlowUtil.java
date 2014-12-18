@@ -728,7 +728,7 @@ public class ControlFlowUtil {
         int throwToOffset = instruction.offset;
         boolean isNormal;
         if (throwToOffset == nextOffset) {
-          isNormal = throwToOffset <= endOffset && !isLeaf(nextOffset) && canCompleteNormally[nextOffset];
+          isNormal = nextOffset == endOffset || throwToOffset <= endOffset && !isLeaf(nextOffset) && canCompleteNormally[nextOffset];
         }
         else {
           isNormal = canCompleteNormally[nextOffset];

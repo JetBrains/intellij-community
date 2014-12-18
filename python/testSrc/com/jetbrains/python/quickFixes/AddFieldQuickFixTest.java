@@ -18,8 +18,8 @@ package com.jetbrains.python.quickFixes;
 import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyQuickFixTestCase;
-import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
 import com.jetbrains.python.inspections.PyUnusedLocalInspection;
+import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
 
 /**
  * User: ktisha
@@ -48,6 +48,11 @@ public class AddFieldQuickFixTest extends PyQuickFixTestCase {
   }
 
   public void testFromUnusedParameter() {  // PY-1398
+    doQuickFixTest(PyUnusedLocalInspection.class, "Add field 'foo' to class A");
+  }
+
+  // PY-14733
+  public void testAddFieldInitializationInsideEmptyInit() {
     doQuickFixTest(PyUnusedLocalInspection.class, "Add field 'foo' to class A");
   }
 

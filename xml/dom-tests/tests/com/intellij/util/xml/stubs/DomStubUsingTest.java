@@ -126,33 +126,27 @@ public class DomStubUsingTest extends DomStubTest {
     final DomFileElement<Foo> fileElement = prepare("foo.xml", Foo.class);
     final Bar bar = fileElement.getRootElement().getBars().get(0);
 
-    assertNotNull(bar);
-    assertTrue(bar.exists());
-
-    new WriteCommandAction.Simple(null) {
-      @Override
-      protected void run() throws Throwable {
-        bar.undefine();
-      }
-    }.execute().throwException();
-
-    assertFalse(bar.exists());
+    assertUndefine(bar);
   }
 
   public void testRootElementUndefineNotExisting() {
     final DomFileElement<Foo> fileElement = prepare("foo.xml", Foo.class);
 
     final DomElement rootElement = fileElement.getRootElement();
-    assertNotNull(rootElement);
-    assertTrue(rootElement.exists());
+    assertUndefine(rootElement);
+  }
+
+  private static void assertUndefine(final DomElement domElement) {
+    assertNotNull(domElement);
+    assertTrue(domElement.exists());
 
     new WriteCommandAction.Simple(null) {
       @Override
       protected void run() throws Throwable {
-        rootElement.undefine();
+        domElement.undefine();
       }
     }.execute().throwException();
 
-    assertFalse(rootElement.exists());
+    assertFalse(domElement.exists());
   }
 }

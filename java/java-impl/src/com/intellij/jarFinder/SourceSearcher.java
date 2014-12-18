@@ -16,7 +16,6 @@ import java.net.HttpURLConnection;
  * @author Sergey Evdokimov
  */
 public abstract class SourceSearcher {
-
   /**
    * @param indicator
    * @param artifactId

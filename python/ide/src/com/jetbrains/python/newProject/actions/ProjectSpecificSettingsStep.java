@@ -72,6 +72,11 @@ public class ProjectSpecificSettingsStep extends ProjectSettingsStepBase impleme
   }
 
   @Override
+  protected JPanel createAndFillContentPanel() {
+    return createContentPanelWithAdvancedSettingsPanel();
+  }
+
+  @Override
   @Nullable
   protected JPanel createAdvancedSettings() {
     JComponent advancedSettings = null;

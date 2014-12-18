@@ -15,9 +15,11 @@
  */
 package com.intellij.codeInsight.editorActions;
 
+/**
+ * Allows specific languages to override backspace unindent mode set in global editor preferences.
+ * 
+ * @see SmartBackspaceDisabler
+ */
 public abstract class BackspaceModeOverride {
-  /**
-   * @see SmartBackspaceMode
-   */
-  public abstract int getBackspaceMode(int modeFromSettings);
+  public abstract SmartBackspaceMode getBackspaceMode(SmartBackspaceMode modeFromSettings);
 }

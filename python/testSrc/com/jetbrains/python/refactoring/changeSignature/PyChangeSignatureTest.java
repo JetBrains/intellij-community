@@ -163,6 +163,15 @@ public class PyChangeSignatureTest extends PyTestCase {
                                              new PyParameterInfo(1, "param1", null, false)), LanguageLevel.PYTHON32);
   }
 
+  // PY-8599
+  public void testRenameStarredParameters() {
+    final PyParameterInfo argsParam = new PyParameterInfo(1, "*args", null, false);
+    argsParam.setName("*foo");
+    final PyParameterInfo kwargsParam = new PyParameterInfo(2, "**kwargs", null, false);
+    kwargsParam.setName("**bar");
+    doChangeSignatureTest("func", Arrays.asList(new PyParameterInfo(0, "arg1", null, false), argsParam, kwargsParam), LanguageLevel.PYTHON32);
+  }
+
   public void testRenameAndMoveParam() {
     final PyParameterInfo p2 = new PyParameterInfo(1, "p2", null, false);
     final PyParameterInfo p1 = new PyParameterInfo(0, "p1", null, false);
@@ -231,8 +240,7 @@ public class PyChangeSignatureTest extends PyTestCase {
 
   private void changeSignature(@Nullable String newName, @Nullable List<PyParameterInfo> parameters) {
     final PyChangeSignatureHandler changeSignatureHandler = new PyChangeSignatureHandler();
-    final PyFunction function = (PyFunction)changeSignatureHandler.findTargetMember(
-      myFixture.getFile(), myFixture.getEditor());
+    final PyFunction function = (PyFunction)changeSignatureHandler.findTargetMember(myFixture.getFile(), myFixture.getEditor());
     assertNotNull(function);
     final PyFunction newFunction = PyChangeSignatureHandler.getSuperMethod(function);
     assertNotNull(newFunction);

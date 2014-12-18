@@ -18,6 +18,7 @@ package org.zmlx.hg4idea.branch;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.ui.NewBranchAction;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -133,7 +134,7 @@ public class HgBranchPopupActions {
     @NotNull final HgRepository myPreselectedRepo;
 
     HgNewBookmarkAction(@NotNull List<HgRepository> repositories, @NotNull HgRepository preselectedRepo) {
-      super("New Bookmark", "Create new bookmark", null);
+      super("New Bookmark", "Create new bookmark", AllIcons.Modules.AddContentEntry);
       myRepositories = repositories;
       myPreselectedRepo = preselectedRepo;
     }
@@ -169,8 +170,8 @@ public class HgBranchPopupActions {
       myRepository = repository;
       myCurrentBranchName = repository.getCurrentBranch();
       getTemplatePresentation().setText(String.format("Unnamed heads for %s", myCurrentBranchName));
-          myHeads = filterUnnamedHeads();
-        }
+      myHeads = filterUnnamedHeads();
+    }
 
     @NotNull
     private Collection<Hash> filterUnnamedHeads() {
@@ -181,15 +182,15 @@ public class HgBranchPopupActions {
         return Collections.emptySet();
       }
       else {
-          Collection<Hash> bookmarkHashes = ContainerUtil.map(myRepository.getBookmarks(), new Function<HgNameWithHashInfo, Hash>() {
-            @Override
-            public Hash fun(HgNameWithHashInfo info) {
-              return info.getHash();
-            }
-          });
-          branchWithHashes.removeAll(bookmarkHashes);
+        Collection<Hash> bookmarkHashes = ContainerUtil.map(myRepository.getBookmarks(), new Function<HgNameWithHashInfo, Hash>() {
+          @Override
+          public Hash fun(HgNameWithHashInfo info) {
+            return info.getHash();
+          }
+        });
+        branchWithHashes.removeAll(bookmarkHashes);
         branchWithHashes.remove(HashImpl.build(currentHead));
-        }
+      }
       return branchWithHashes;
     }
 

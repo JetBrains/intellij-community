@@ -72,7 +72,7 @@ public class PythonConsoleToolWindow {
 
 
   public void init(final @NotNull ToolWindow toolWindow, final @NotNull RunContentDescriptor contentDescriptor) {
-    addContent(toolWindow, contentDescriptor);
+    setContent(toolWindow, contentDescriptor);
 
     if (!myInitialized) {
       doInit(toolWindow);
@@ -103,7 +103,7 @@ public class PythonConsoleToolWindow {
     });
   }
 
-  private static void addContent(ToolWindow toolWindow, RunContentDescriptor contentDescriptor) {
+  private static void setContent(ToolWindow toolWindow, RunContentDescriptor contentDescriptor) {
     toolWindow.getComponent().putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, "true");
 
     Content content = toolWindow.getContentManager().findContent(contentDescriptor.getDisplayName());

@@ -45,7 +45,17 @@ final class DefaultWebServerRootsProvider extends WebServerRootsProvider {
     @NotNull
     @Override
     protected OrderRootType[] compute() {
-      return new OrderRootType[]{JavadocOrderRootType.getInstance(), OrderRootType.DOCUMENTATION, OrderRootType.SOURCES, OrderRootType.CLASSES};
+      OrderRootType javaDocRootType;
+      try {
+        javaDocRootType = JavadocOrderRootType.getInstance();
+      }
+      catch (Throwable e) {
+        javaDocRootType = null;
+      }
+
+      return javaDocRootType == null
+             ? new OrderRootType[]{OrderRootType.DOCUMENTATION, OrderRootType.SOURCES, OrderRootType.CLASSES}
+             : new OrderRootType[]{javaDocRootType, OrderRootType.DOCUMENTATION, OrderRootType.SOURCES, OrderRootType.CLASSES};
     }
   };
 

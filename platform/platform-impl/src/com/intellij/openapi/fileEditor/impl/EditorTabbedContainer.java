@@ -37,6 +37,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.ui.ShadowAction;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowManagerAdapter;
@@ -100,7 +101,8 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
       @Override
       @NotNull
       public UiDecoration getDecoration() {
-        return new UiDecoration(null, new Insets(TabsUtil.TAB_VERTICAL_PADDING, 10, TabsUtil.TAB_VERTICAL_PADDING, 10));
+        int sideInset = Registry.is("editor.use.compressible.tabs") ? 2 : 10;
+        return new UiDecoration(null, new Insets(TabsUtil.TAB_VERTICAL_PADDING, sideInset, TabsUtil.TAB_VERTICAL_PADDING, sideInset));
       }
     }).setTabLabelActionsMouseDeadzone(TimedDeadzone.NULL).setGhostsAlwaysVisible(true).setTabLabelActionsAutoHide(false)
       .setActiveTabFillIn(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground()).setPaintFocus(false).getJBTabs()

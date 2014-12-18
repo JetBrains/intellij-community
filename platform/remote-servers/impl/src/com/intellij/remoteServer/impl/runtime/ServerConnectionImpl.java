@@ -290,21 +290,7 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
   @NotNull
   @Override
   public Collection<Deployment> getDeployments() {
-    Set<Deployment> result = new TreeSet<Deployment>(new Comparator<Deployment>() {
-
-      @Override
-      public int compare(Deployment o1, Deployment o2) {
-        DeploymentRuntime runtime1 = o1.getRuntime();
-        DeploymentRuntime runtime2 = o2.getRuntime();
-        if (runtime1 != null && runtime2 != null) {
-          Integer runtimeCompareResult = runtime1.compareTo(runtime2);
-          if (runtimeCompareResult != null) {
-            return runtimeCompareResult;
-          }
-        }
-        return o1.getName().compareTo(o2.getName());
-      }
-    });
+    Set<Deployment> result = new TreeSet<Deployment>(getServer().getType().getDeploymentComparator());
     synchronized (myLocalDeployments) {
       result.addAll(myLocalDeployments.values());
     }

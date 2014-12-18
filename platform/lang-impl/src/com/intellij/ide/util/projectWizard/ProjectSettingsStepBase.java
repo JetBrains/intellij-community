@@ -31,6 +31,8 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.NullableConsumer;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,6 +42,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.util.List;
 
 public class ProjectSettingsStepBase extends AbstractActionWithPanel implements DumbAware {
   protected final DirectoryProjectGenerator myProjectGenerator;
@@ -65,12 +68,7 @@ public class ProjectSettingsStepBase extends AbstractActionWithPanel implements 
 
   @Override
   public JPanel createPanel() {
-    final JPanel basePanel = createBasePanel();
-    initGeneratorListeners();
-    registerValidators();
-
     final JPanel mainPanel = new JPanel(new BorderLayout());
-    final JPanel scrollPanel = new JPanel(new BorderLayout());
 
     myErrorLabel = new JLabel("");
     myErrorLabel.setForeground(JBColor.RED);
@@ -89,14 +87,11 @@ public class ProjectSettingsStepBase extends AbstractActionWithPanel implements 
       }
     });
     myCreateButton.putClientProperty(DialogWrapper.DEFAULT_ACTION, Boolean.TRUE);
-
-    scrollPanel.add(basePanel, BorderLayout.NORTH);
-    final JPanel advancedSettings = createAdvancedSettings();
-    if (advancedSettings != null) {
-      scrollPanel.add(advancedSettings, BorderLayout.CENTER);
-    }
+    final JPanel scrollPanel = createAndFillContentPanel();
+    initGeneratorListeners();
+    registerValidators();
     final JBScrollPane scrollPane = new JBScrollPane(scrollPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
-                                                                                                      ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+                                                     ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     scrollPane.setBorder(null);
     mainPanel.add(scrollPane, BorderLayout.CENTER);
 
@@ -106,6 +101,17 @@ public class ProjectSettingsStepBase extends AbstractActionWithPanel implements 
     bottomPanel.add(myCreateButton, BorderLayout.EAST);
     mainPanel.add(bottomPanel, BorderLayout.SOUTH);
     return mainPanel;
+  }
+
+  protected final JPanel createContentPanelWithAdvancedSettingsPanel() {
+    final JPanel basePanel = createBasePanel();
+    final JPanel scrollPanel = new JPanel(new BorderLayout());
+    scrollPanel.add(basePanel, BorderLayout.NORTH);
+    final JPanel advancedSettings = createAdvancedSettings();
+    if (advancedSettings != null) {
+      scrollPanel.add(advancedSettings, BorderLayout.CENTER);
+    }
+    return scrollPanel;
   }
 
   protected void initGeneratorListeners() {
@@ -125,13 +131,7 @@ public class ProjectSettingsStepBase extends AbstractActionWithPanel implements 
 
   protected JPanel createBasePanel() {
     final JPanel panel = new JPanel(new VerticalFlowLayout(0, 2));
-    myLocationField = new TextFieldWithBrowseButton();
-    myLocationField.setText(myProjectDirectory.toString());
-
-    final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
-    myLocationField.addBrowseFolderListener("Select base directory", "Select base directory for the Project",
-                                            null, descriptor);
-    final LabeledComponent<TextFieldWithBrowseButton> component = LabeledComponent.create(myLocationField, "Location");
+    final LabeledComponent<TextFieldWithBrowseButton> component = createLocationComponent();
     component.setLabelLocation(BorderLayout.WEST);
     panel.add(component);
 
@@ -192,6 +192,37 @@ public class ProjectSettingsStepBase extends AbstractActionWithPanel implements 
     return true;
   }
 
+  protected JPanel createAndFillContentPanel() {
+    if (!(myProjectGenerator instanceof WebProjectTemplate)) return createContentPanelWithAdvancedSettingsPanel();
+
+    WebProjectSettingsStepWrapper settingsStep = new WebProjectSettingsStepWrapper();
+    ((WebProjectTemplate)myProjectGenerator).getPeer().buildUI(settingsStep);
+
+    //back compatibility: some plugins can implement only GeneratorPeer#getComponent() method
+    if (settingsStep.isEmpty()) return createContentPanelWithAdvancedSettingsPanel();
+
+    final JPanel jPanel = new JPanel(new VerticalFlowLayout(0, 5));
+    List<LabeledComponent> labeledComponentList = ContainerUtil.newArrayList();
+    labeledComponentList.add(createLocationComponent());
+    labeledComponentList.addAll(settingsStep.getFields());
+
+    final JPanel scrollPanel = new JPanel(new BorderLayout());
+    scrollPanel.add(jPanel, BorderLayout.NORTH);
+
+    for (LabeledComponent component : labeledComponentList) {
+      component.setLabelLocation(BorderLayout.WEST);
+      jPanel.add(component);
+    }
+
+    for (JComponent component : settingsStep.getComponents()) {
+      jPanel.add(component);
+    }
+
+    UIUtil.mergeComponentsWithAnchor(labeledComponentList);
+
+    return scrollPanel;
+  }
+
   public void setErrorText(@Nullable String text) {
     myErrorLabel.setText(text);
     myErrorLabel.setForeground(MessageType.ERROR.getTitleForeground());
@@ -224,5 +255,15 @@ public class ProjectSettingsStepBase extends AbstractActionWithPanel implements 
 
   public void setLocation(@NotNull final String location) {
     myLocationField.setText(location);
+  }
+
+  private LabeledComponent<TextFieldWithBrowseButton> createLocationComponent() {
+    myLocationField = new TextFieldWithBrowseButton();
+    myLocationField.setText(myProjectDirectory.toString());
+
+    final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
+    myLocationField.addBrowseFolderListener("Select base directory", "Select base directory for the Project",
+                                            null, descriptor);
+    return LabeledComponent.create(myLocationField, "Location");
   }
 }

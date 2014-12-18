@@ -23,9 +23,12 @@ import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializationException;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
+import com.intellij.util.xmlb.annotations.OptionTag;
 import com.intellij.util.xmlb.annotations.Property;
+import com.intellij.util.xmlb.annotations.Transient;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 @State(
@@ -77,8 +80,20 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
 
   public boolean SHOW_FULL_SIGNATURES_IN_PARAMETER_INFO = false;
 
-  @MagicConstant(intValues = {SmartBackspaceMode.OFF, SmartBackspaceMode.AUTOINDENT, SmartBackspaceMode.INDENT})
-  public int SMART_BACKSPACE = SmartBackspaceMode.AUTOINDENT;
+  @OptionTag
+  private int SMART_BACKSPACE = SmartBackspaceMode.AUTOINDENT.ordinal();
+  
+  @Transient
+  @NotNull
+  public SmartBackspaceMode getBackspaceMode() {
+    SmartBackspaceMode[] values = SmartBackspaceMode.values();
+    return SMART_BACKSPACE >= 0 && SMART_BACKSPACE < values.length ? values[SMART_BACKSPACE] : SmartBackspaceMode.OFF; 
+  }
+
+  @Transient
+  public void setBackspaceMode(@NotNull SmartBackspaceMode mode) {
+    SMART_BACKSPACE = mode.ordinal();
+  }
 
   public boolean SMART_INDENT_ON_ENTER = true;
   public boolean INSERT_BRACE_ON_ENTER = true;
