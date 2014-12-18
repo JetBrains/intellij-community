@@ -344,7 +344,7 @@ class SimpleDiffViewer extends TwosideTextDiffViewer {
     }
 
     EditorEx editor = getCurrentEditor();
-    int line = getCurrentSide().getStartLine(targetChange.getFragment());
+    int line = targetChange.getStartLine(getCurrentSide());
     DiffUtil.scrollEditor(editor, line);
 
     return true;
@@ -375,11 +375,11 @@ class SimpleDiffViewer extends TwosideTextDiffViewer {
   //
 
   int getCurrentStartLine(@NotNull SimpleDiffChange change) {
-    return getCurrentSide().getStartLine(change.getFragment());
+    return change.getStartLine(getCurrentSide());
   }
 
   int getCurrentEndLine(@NotNull SimpleDiffChange change) {
-    return getCurrentSide().getEndLine(change.getFragment());
+    return change.getEndLine(getCurrentSide());
   }
 
   @NotNull
@@ -549,9 +549,8 @@ class SimpleDiffViewer extends TwosideTextDiffViewer {
         public void run() {
           for (int i = myDiffChanges.size() - 1; i >= 0; i--) {
             SimpleDiffChange change = myDiffChanges.get(i);
-            LineFragment fragment = change.getFragment();
-            int line1 = side.getStartLine(fragment);
-            int line2 = side.getEndLine(fragment);
+            int line1 = change.getStartLine(side);
+            int line2 = change.getEndLine(side);
 
             if (DiffUtil.isSelectedByLine(lines, line1, line2)) {
               change.replaceChange(side);
@@ -632,11 +631,11 @@ class SimpleDiffViewer extends TwosideTextDiffViewer {
 
     @Override
     public void loadNextBlock() {
-      LineFragment fragment = myDiffChanges.get(myIndex).getFragment();
+      SimpleDiffChange change = myDiffChanges.get(myIndex);
       myIndex++;
 
-      int line1 = mySide.getStartLine(fragment);
-      int line2 = mySide.getEndLine(fragment);
+      int line1 = change.getStartLine(mySide);
+      int line2 = change.getEndLine(mySide);
 
       Editor editor = mySide.select(myEditor1, myEditor2);
       assert editor != null;
@@ -687,10 +686,8 @@ class SimpleDiffViewer extends TwosideTextDiffViewer {
 
       if (!helper.process(0, 0)) return;
       for (SimpleDiffChange diffChange : myDiffChanges) {
-        LineFragment fragment = diffChange.getFragment();
-
-        if (!helper.process(fragment.getStartLine1(), fragment.getStartLine2())) return;
-        if (!helper.process(fragment.getEndLine1(), fragment.getEndLine2())) return;
+        if (!helper.process(diffChange.getStartLine(Side.LEFT), diffChange.getStartLine(Side.RIGHT))) return;
+        if (!helper.process(diffChange.getEndLine(Side.LEFT), diffChange.getEndLine(Side.RIGHT))) return;
       }
       helper.process(myEditor1.getDocument().getLineCount(), myEditor2.getDocument().getLineCount());
     }
@@ -711,9 +708,8 @@ class SimpleDiffViewer extends TwosideTextDiffViewer {
     @Override
     public void process(@NotNull Handler handler) {
       for (SimpleDiffChange diffChange : myDiffChanges) {
-        LineFragment fragment = diffChange.getFragment();
-        if (!handler.process(fragment.getStartLine1(), fragment.getEndLine1(),
-                             fragment.getStartLine2(), fragment.getEndLine2(),
+        if (!handler.process(diffChange.getStartLine(Side.LEFT), diffChange.getEndLine(Side.LEFT),
+                             diffChange.getStartLine(Side.RIGHT), diffChange.getEndLine(Side.RIGHT),
                              diffChange.getDiffType().getColor(myEditor1))) {
           return;
         }

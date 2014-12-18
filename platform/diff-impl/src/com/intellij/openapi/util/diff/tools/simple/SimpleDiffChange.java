@@ -21,15 +21,16 @@ import java.util.List;
 class SimpleDiffChange {
   @NotNull private final LineFragment myFragment;
   @Nullable private final List<DiffFragment> myFineFragments;
-  @Nullable private final ShiftedLineFragment myShiftedFragment;
 
   @Nullable private final EditorEx myEditor1;
   @Nullable private final EditorEx myEditor2;
 
-  @NotNull private final List<RangeHighlighter> myHighlighters;
-  @NotNull private final List<RangeHighlighter> myActionHighlighters;
+  @NotNull private final List<RangeHighlighter> myHighlighters = new ArrayList<RangeHighlighter>();
+  @NotNull private final List<RangeHighlighter> myActionHighlighters = new ArrayList<RangeHighlighter>();
 
   private boolean myIsValid = true;
+  private int myLineShift1;
+  private int myLineShift2;
 
   // TODO: adjust color from inner fragments - configurable
   public SimpleDiffChange(@NotNull LineFragment fragment,
@@ -42,33 +43,7 @@ class SimpleDiffChange {
     myEditor1 = editor1;
     myEditor2 = editor2;
 
-    myHighlighters = new ArrayList<RangeHighlighter>();
-    myActionHighlighters = new ArrayList<RangeHighlighter>();
-
-    if (editor1 != null && editor2 != null) {
-      myShiftedFragment = new ShiftedLineFragment(fragment, editor1.getDocument(), editor2.getDocument());
-    }
-    else {
-      myShiftedFragment = null;
-    }
-
     installHighlighter();
-  }
-
-  public boolean processChange(int oldLine1, int oldLine2, int shift, @NotNull Side side) {
-    if (myShiftedFragment == null || myShiftedFragment.intersects(oldLine1, oldLine2, side)) {
-      for (RangeHighlighter highlighter : myActionHighlighters) {
-        highlighter.dispose();
-      }
-      myActionHighlighters.clear();
-      myIsValid = false;
-      return true;
-    }
-
-    if (oldLine2 <= side.getStartLine(myShiftedFragment)) {
-      myShiftedFragment.shift(shift, side);
-    }
-    return false;
   }
 
   public void installHighlighter() {
@@ -163,9 +138,16 @@ class SimpleDiffChange {
     myHighlighters.add(highlighter);
   }
 
-  @NotNull
-  public LineFragment getFragment() {
-    return myShiftedFragment != null ? myShiftedFragment : myFragment;
+  //
+  // Getters
+  //
+
+  public int getStartLine(@NotNull Side side) {
+    return side.getStartLine(myFragment) + getShift(side);
+  }
+
+  public int getEndLine(@NotNull Side side) {
+    return side.getEndLine(myFragment) + getShift(side);
   }
 
   @NotNull
@@ -174,15 +156,50 @@ class SimpleDiffChange {
   }
 
   //
+  // Shift
+  //
+
+  public boolean processChange(int oldLine1, int oldLine2, int shift, @NotNull Side side) {
+    int line1 = getStartLine(side);
+    int line2 = getEndLine(side);
+
+    if (line2 > oldLine1 && line1 < oldLine2) {
+      for (RangeHighlighter highlighter : myActionHighlighters) {
+        highlighter.dispose();
+      }
+      myActionHighlighters.clear();
+      myIsValid = false;
+      return true;
+    }
+
+    if (oldLine2 <= getStartLine(side)) {
+      shift(side, shift);
+    }
+    return false;
+  }
+
+  private void shift(@NotNull Side side, int shift) {
+    if (side.isLeft()) {
+      myLineShift1 += shift;
+    }
+    else {
+      myLineShift2 += shift;
+    }
+  }
+
+  private int getShift(@NotNull Side side) {
+    return side.isLeft() ? myLineShift1 : myLineShift2;
+  }
+
+  //
   // Change applying
   //
 
   public boolean isSelectedByLine(int line, @NotNull Side side) {
     if (myEditor1 == null || myEditor2 == null) return false;
-    assert myShiftedFragment != null;
 
-    int line1 = side.getStartLine(myShiftedFragment);
-    int line2 = side.getEndLine(myShiftedFragment);
+    int line1 = getStartLine(side);
+    int line2 = getEndLine(side);
 
     return DiffUtil.isSelectedByLine(line, line1, line2);
   }
@@ -190,16 +207,16 @@ class SimpleDiffChange {
   @CalledWithWriteLock
   public void replaceChange(@NotNull final Side sourceSide) {
     assert myEditor1 != null && myEditor2 != null;
-    assert myShiftedFragment != null;
 
     if (!myIsValid) return;
 
     final Document document1 = myEditor1.getDocument();
     final Document document2 = myEditor2.getDocument();
 
-    DiffUtil.applyModification(sourceSide.other().selectN(document1, document2), sourceSide.other().getStartLine(myShiftedFragment),
-                               sourceSide.other().getEndLine(myShiftedFragment), sourceSide.selectN(document1, document2),
-                               sourceSide.getStartLine(myShiftedFragment), sourceSide.getEndLine(myShiftedFragment));
+    DiffUtil.applyModification(sourceSide.other().selectN(document1, document2),
+                               getStartLine(sourceSide.other()), getEndLine(sourceSide.other()),
+                               sourceSide.selectN(document1, document2),
+                               getStartLine(sourceSide), getEndLine(sourceSide));
 
     destroyHighlighter();
   }
@@ -207,7 +224,6 @@ class SimpleDiffChange {
   @CalledWithWriteLock
   public void appendChange(@NotNull final Side sourceSide) {
     assert myEditor1 != null && myEditor2 != null;
-    assert myShiftedFragment != null;
 
     if (!myIsValid) return;
 
@@ -216,9 +232,10 @@ class SimpleDiffChange {
     final Document document1 = myEditor1.getDocument();
     final Document document2 = myEditor2.getDocument();
 
-    DiffUtil.applyModification(sourceSide.other().selectN(document1, document2), sourceSide.other().getEndLine(myShiftedFragment),
-                               sourceSide.other().getEndLine(myShiftedFragment), sourceSide.selectN(document1, document2),
-                               sourceSide.getStartLine(myShiftedFragment), sourceSide.getEndLine(myShiftedFragment));
+    DiffUtil.applyModification(sourceSide.other().selectN(document1, document2),
+                               getEndLine(sourceSide.other()), getEndLine(sourceSide.other()),
+                               sourceSide.selectN(document1, document2),
+                               getStartLine(sourceSide), getEndLine(sourceSide));
 
     destroyHighlighter();
   }

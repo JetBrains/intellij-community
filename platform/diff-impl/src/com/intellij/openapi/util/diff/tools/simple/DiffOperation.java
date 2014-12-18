@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public abstract class DiffOperation extends GutterIconRenderer {
+abstract class DiffOperation extends GutterIconRenderer {
   @NotNull
   public static RangeHighlighter createHighlighter(@NotNull Editor editor, @NotNull DiffOperation operation, int offset) {
     RangeHighlighter highlighter = editor.getMarkupModel().addRangeHighlighter(offset, offset,
