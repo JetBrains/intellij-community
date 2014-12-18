@@ -190,8 +190,12 @@ public class CodeFormatterFacade {
           }
 
           final CommonCodeStyleSettings.IndentOptions indentOptions = getIndentOptions(file, ranges, builder);
+          final RangeFormatHolder rangesHolder = new RangeFormatHolder(file);
 
+          rangesHolder.fasten(ranges);
           formatter.format(model, mySettings, indentOptions, ranges);
+          rangesHolder.unfasten(ranges);
+
           for (FormatTextRanges.FormatTextRange range : textRanges) {
             TextRange textRange = range.getTextRange();
             wrapLongLinesIfNecessary(file, document, textRange.getStartOffset(), textRange.getEndOffset());
@@ -765,6 +769,117 @@ public class CodeFormatterFacade {
         return result;
       }
     };
+  }
+
+  private static class RangeFormatHolder {
+    @NotNull
+    private final PsiFile myFile;
+    @NotNull
+    private final SmartPointerManager mySmartPointerManager;
+    @NotNull
+    private List<RangeFormatInfo> myInfos = new ArrayList<RangeFormatInfo>();
+
+    public RangeFormatHolder(@NotNull PsiFile file) {
+      myFile = file;
+      mySmartPointerManager = SmartPointerManager.getInstance(myFile.getProject());
+    }
+
+    public void fasten(@NotNull List<TextRange> ranges) {
+
+      myInfos = new ArrayList<RangeFormatInfo>(ranges.size());
+      for (TextRange range : ranges) {
+        storeOneRange(range);
+      }
+    }
+
+    public void fasten(@NotNull FormatTextRanges formatTextRanges) {
+      myInfos = new ArrayList<RangeFormatInfo>(formatTextRanges.getRanges().size());
+      for (FormatTextRanges.FormatTextRange range : formatTextRanges.getRanges()) {
+        storeOneRange(range.getTextRange());
+      }
+    }
+
+    private void storeOneRange(TextRange range) {
+      final PsiElement start = CodeStyleManagerImpl.findElementInTreeWithFormatterEnabled(myFile, range.getStartOffset());
+      final PsiElement end = CodeStyleManagerImpl.findElementInTreeWithFormatterEnabled(myFile, range.getEndOffset());
+      if (start != null && !start.isValid()) {
+        LOG.error("start=" + start + "; file=" + myFile);
+      }
+      if (end != null && !end.isValid()) {
+        LOG.error("end=" + start + "; end=" + myFile);
+      }
+      boolean formatFromStart = range.getStartOffset() == 0;
+      boolean formatToEnd = range.getEndOffset() == myFile.getTextLength();
+      myInfos.add(new RangeFormatInfo(
+        start == null ? null : mySmartPointerManager.createSmartPsiElementPointer(start),
+        end == null ? null : mySmartPointerManager.createSmartPsiElementPointer(end),
+        formatFromStart,
+        formatToEnd
+      ));
+    }
+
+    @NotNull
+    public List<TextRange> unfasten() {
+      List<TextRange> result = new ArrayList<TextRange>(myInfos.size());
+
+      for (RangeFormatInfo info : myInfos) {
+        final TextRange range = unpackOneRange(info);
+        if (range != null) {
+          result.add(range);
+        }
+      }
+
+      return result;
+    }
+
+    public void unfasten(@NotNull FormatTextRanges formatTextRanges) {
+      int i = 0;
+      for (RangeFormatInfo info : myInfos) {
+        final TextRange range = unpackOneRange(info);
+        if (range != null) {
+          formatTextRanges.getRanges().get(i).setTextRange(range);
+        }
+        i++;
+      }
+    }
+
+    @Nullable
+    private TextRange unpackOneRange(RangeFormatInfo info) {
+      final TextRange result;
+      final PsiElement startElement = info.startPointer == null ? null : info.startPointer.getElement();
+      final PsiElement endElement = info.endPointer == null ? null : info.endPointer.getElement();
+
+      if ((startElement != null || info.fromStart) && (endElement != null || info.toEnd)) {
+        result = TextRange.create(info.fromStart ? 0 : startElement.getTextRange().getStartOffset(),
+                                    info.toEnd ? myFile.getTextLength() : endElement.getTextRange().getEndOffset());
+      }
+      else {
+        result = null;
+        LOG.warn("lost a range after reformat");
+      }
+      if (info.startPointer != null) mySmartPointerManager.removePointer(info.startPointer);
+      if (info.endPointer != null) mySmartPointerManager.removePointer(info.endPointer);
+
+      return result;
+    }
+  }
+
+  private static class RangeFormatInfo{
+    private final SmartPsiElementPointer startPointer;
+    private final SmartPsiElementPointer endPointer;
+    private final boolean                fromStart;
+    private final boolean                toEnd;
+
+    RangeFormatInfo(@Nullable SmartPsiElementPointer startPointer,
+                    @Nullable SmartPsiElementPointer endPointer,
+                    boolean fromStart,
+                    boolean toEnd)
+    {
+      this.startPointer = startPointer;
+      this.endPointer = endPointer;
+      this.fromStart = fromStart;
+      this.toEnd = toEnd;
+    }
   }
 
   private static class DelegatingDataContext implements DataContext, UserDataHolder {
