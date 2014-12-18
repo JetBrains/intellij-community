@@ -97,7 +97,7 @@ public class ImportMavenRepositoriesTask implements Runnable {
       if (!ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module)) continue;
 
       final String modulePath = ExternalSystemApiUtil.getExternalProjectPath(module);
-      assert modulePath != null;
+      if (modulePath == null) continue;
 
       String buildScript = FileUtil.findFileInProvidedPath(modulePath, GradleConstants.DEFAULT_SCRIPT_NAME);
       if (StringUtil.isEmpty(buildScript)) continue;
