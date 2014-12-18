@@ -37,10 +37,22 @@
 
     <projectAttachProcessor implementation="com.intellij.platform.ModuleAttachProcessor"/>
 
-    <projectConfigurable groupId="project" instance="com.jetbrains.python.configuration.PythonContentEntriesConfigurable"/>
-    <projectConfigurable groupId="build" instance="com.jetbrains.python.buildout.BuildoutModulesConfigurable"/>
-    <projectConfigurable groupId="project" instance="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"/>
-    <projectConfigurable groupId="project" instance="com.jetbrains.python.configuration.PyDependenciesConfigurable"/>
+    <projectConfigurable groupId="project"
+                         id="com.jetbrains.python.configuration.PythonContentEntriesConfigurable"
+                         displayName="Project Structure"
+                         instance="com.jetbrains.python.configuration.PythonContentEntriesConfigurable"/>
+    <projectConfigurable groupId="build"
+                         id="com.jetbrains.python.buildout.BuildoutModulesConfigurable"
+                         displayName="Buildout Support"
+                         instance="com.jetbrains.python.buildout.BuildoutModulesConfigurable"/>
+    <projectConfigurable groupId="project"
+                         id="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
+                         displayName="Project Interpreter"
+                         instance="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"/>
+    <projectConfigurable groupId="project"
+                         id="com.jetbrains.python.configuration.PyDependenciesConfigurable"
+                         displayName="Project Dependencies"
+                         instance="com.jetbrains.python.configuration.PyDependenciesConfigurable"/>
 
     <directoryProjectConfigurator implementation="com.jetbrains.python.PythonSdkConfigurator" id="sdk"
                                   order="after PlatformProjectConfigurator"/>
