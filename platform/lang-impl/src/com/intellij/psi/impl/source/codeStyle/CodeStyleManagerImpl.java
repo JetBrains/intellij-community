@@ -195,41 +195,17 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
                                             ? removeEndingWhiteSpaceFromEachRange(file, ranges)
                                             : ranges;
 
-    final SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(getProject());
-    List<RangeFormatInfo> infos = new ArrayList<RangeFormatInfo>();
-    for (TextRange range : correctedRanges) {
-      final PsiElement start = findElementInTreeWithFormatterEnabled(file, range.getStartOffset());
-      final PsiElement end = findElementInTreeWithFormatterEnabled(file, range.getEndOffset());
-      if (start != null && !start.isValid()) {
-        LOG.error("start=" + start + "; file=" + file);
-      }
-      if (end != null && !end.isValid()) {
-        LOG.error("end=" + start + "; end=" + file);
-      }
-      boolean formatFromStart = range.getStartOffset() == 0;
-      boolean formatToEnd = range.getEndOffset() == file.getTextLength();
-      infos.add(new RangeFormatInfo(
-        start == null ? null : smartPointerManager.createSmartPsiElementPointer(start),
-        end == null ? null : smartPointerManager.createSmartPsiElementPointer(end),
-        formatFromStart,
-        formatToEnd
-      ));
-    }
+    RangeFormatHolder rangesHolder = new RangeFormatHolder(file);
+    rangesHolder.fasten(correctedRanges);
 
     FormatTextRanges formatRanges = new FormatTextRanges();
     for (TextRange range : correctedRanges) {
       formatRanges.add(range, true);
     }
     codeFormatter.processText(file, formatRanges, true);
-    for (RangeFormatInfo info : infos) {
-      final PsiElement startElement = info.startPointer == null ? null : info.startPointer.getElement();
-      final PsiElement endElement = info.endPointer == null ? null : info.endPointer.getElement();
-      if ((startElement != null || info.fromStart) && (endElement != null || info.toEnd)) {
-        postProcessText(file, new TextRange(info.fromStart ? 0 : startElement.getTextRange().getStartOffset(),
-                                            info.toEnd ? file.getTextLength() : endElement.getTextRange().getEndOffset()));
-      }
-      if (info.startPointer != null) smartPointerManager.removePointer(info.startPointer);
-      if (info.endPointer != null) smartPointerManager.removePointer(info.endPointer);
+
+    for (TextRange range : rangesHolder.unfasten()) {
+      postProcessText(file, range);
     }
 
     if (caretKeeper != null) {
@@ -706,6 +682,61 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
         return component.disablePostprocessFormattingInside(r);
       }
     });
+  }
+
+  private static class RangeFormatHolder {
+    @NotNull
+    private final PsiFile myFile;
+    @NotNull
+    private final SmartPointerManager mySmartPointerManager;
+    @NotNull
+    private List<RangeFormatInfo> myInfos = new ArrayList<RangeFormatInfo>();
+
+    public RangeFormatHolder(@NotNull PsiFile file) {
+      myFile = file;
+      mySmartPointerManager = SmartPointerManager.getInstance(myFile.getProject());
+    }
+
+    public void fasten(@NotNull Collection<TextRange> ranges) {
+
+      myInfos = new ArrayList<RangeFormatInfo>(ranges.size());
+      for (TextRange range : ranges) {
+        final PsiElement start = findElementInTreeWithFormatterEnabled(myFile, range.getStartOffset());
+        final PsiElement end = findElementInTreeWithFormatterEnabled(myFile, range.getEndOffset());
+        if (start != null && !start.isValid()) {
+          LOG.error("start=" + start + "; file=" + myFile);
+        }
+        if (end != null && !end.isValid()) {
+          LOG.error("end=" + start + "; end=" + myFile);
+        }
+        boolean formatFromStart = range.getStartOffset() == 0;
+        boolean formatToEnd = range.getEndOffset() == myFile.getTextLength();
+        myInfos.add(new RangeFormatInfo(
+          start == null ? null : mySmartPointerManager.createSmartPsiElementPointer(start),
+          end == null ? null : mySmartPointerManager.createSmartPsiElementPointer(end),
+          formatFromStart,
+          formatToEnd
+        ));
+      }
+    }
+
+    @NotNull
+    public Collection<TextRange> unfasten() {
+      Collection<TextRange> result = new ArrayList<TextRange>(myInfos.size());
+
+      for (RangeFormatInfo info : myInfos) {
+        final PsiElement startElement = info.startPointer == null ? null : info.startPointer.getElement();
+        final PsiElement endElement = info.endPointer == null ? null : info.endPointer.getElement();
+        if ((startElement != null || info.fromStart) && (endElement != null || info.toEnd)) {
+          result.add(TextRange.create(info.fromStart ? 0 : startElement.getTextRange().getStartOffset(),
+                                      info.toEnd ? myFile.getTextLength() : endElement.getTextRange().getEndOffset()));
+        }
+        if (info.startPointer != null) mySmartPointerManager.removePointer(info.startPointer);
+        if (info.endPointer != null) mySmartPointerManager.removePointer(info.endPointer);
+      }
+
+      return result;
+    }
   }
 
   private static class RangeFormatInfo{

@@ -35,10 +35,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Segment;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -160,90 +157,39 @@ public class CodeFormatterFacade {
   }
 
   public void processText(PsiFile file, final FormatTextRanges ranges, boolean doPostponedFormatting) {
-    final Project project = file.getProject();
-    Document document = PsiDocumentManager.getInstance(project).getDocument(file);
     final List<FormatTextRanges.FormatTextRange> textRanges = ranges.getRanges();
-    if (document instanceof DocumentWindow) {
-      file = InjectedLanguageManager.getInstance(file.getProject()).getTopLevelFile(file);
-      final DocumentWindow documentWindow = (DocumentWindow)document;
-      for (FormatTextRanges.FormatTextRange range : textRanges) {
-        range.setTextRange(documentWindow.injectedToHost(range.getTextRange()));
-      }
-      document = documentWindow.getDelegate();
-    }
 
+    final Pair<PsiFile, Document> fileAndDocumentToUse = getFileAndDocumentToUseAndUpdateRanges(file, textRanges);
+    file = fileAndDocumentToUse.first;
+    final Document document = fileAndDocumentToUse.second;
 
     final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(file);
-    final Language contextLanguage = file.getLanguage();
 
     if (builder != null) {
       if (file.getTextLength() > 0) {
         LOG.assertTrue(document != null);
         try {
-          final FileViewProvider viewProvider = file.getViewProvider();
-          final PsiElement startElement = viewProvider.findElementAt(textRanges.get(0).getTextRange().getStartOffset(), contextLanguage);
-          final PsiElement endElement =
-            viewProvider.findElementAt(textRanges.get(textRanges.size() - 1).getTextRange().getEndOffset() - 1, contextLanguage);
-          final PsiElement commonParent = startElement != null && endElement != null ? PsiTreeUtil.findCommonParent(startElement, endElement) : null;
-          ASTNode node = null;
-          if (commonParent != null) {
-            node = commonParent.getNode();
-          }
-          if (node == null) {
-            node = file.getNode();
-          }
-          for (FormatTextRanges.FormatTextRange range : ranges.getRanges()) {
-            TextRange rangeToUse = preprocess(node, range.getTextRange());
-            range.setTextRange(rangeToUse);
-          }
+          preprocessTextAndUpdateRanges(file, ranges);
+
           if (doPostponedFormatting) {
-            RangeMarker[] markers = new RangeMarker[textRanges.size()];
-            int i = 0;
-            for (FormatTextRanges.FormatTextRange range : textRanges) {
-              TextRange textRange = range.getTextRange();
-              int start = textRange.getStartOffset();
-              int end = textRange.getEndOffset();
-              if (start >= 0 && end > start && end <= document.getTextLength()) {
-                markers[i] = document.createRangeMarker(textRange);
-                markers[i].setGreedyToLeft(true);
-                markers[i].setGreedyToRight(true);
-                i++;
-              }
-            }
-            final PostprocessReformattingAspect component = file.getProject().getComponent(PostprocessReformattingAspect.class);
-            FormattingProgressTask.FORMATTING_CANCELLED_FLAG.set(false);
-            component.doPostponedFormatting(file.getViewProvider());
-            i = 0;
-            for (FormatTextRanges.FormatTextRange range : textRanges) {
-              RangeMarker marker = markers[i];
-              if (marker != null) {
-                range.setTextRange(TextRange.create(marker));
-                marker.dispose();
-              }
-              i++;
-            }
+            doPostponedFormattingAndUpdateRanges(file, textRanges, document);
           }
           if (FormattingProgressTask.FORMATTING_CANCELLED_FLAG.get()) {
             return;
           }
 
+          final Project project = file.getProject();
           final FormattingModel originalModel = CoreFormatterUtil.buildModel(builder, file, mySettings, FormattingMode.REFORMAT);
           final FormattingModel model = new DocumentBasedFormattingModel(originalModel.getRootBlock(),
                                                                          document,
                                                                          project, mySettings, file.getFileType(), file);
 
-          FormatterEx formatter = FormatterEx.getInstanceEx();
+          final FormatterEx formatter = FormatterEx.getInstanceEx();
           if (CodeStyleManager.getInstance(project).isSequentialProcessingAllowed()) {
             formatter.setProgressTask(new FormattingProgressTask(project, file, document));
           }
 
-          CommonCodeStyleSettings.IndentOptions indentOptions = null;
-          if (builder instanceof FormattingModelBuilderEx) {
-            indentOptions = ((FormattingModelBuilderEx)builder).getIndentOptionsToUse(file, ranges, mySettings);
-          }
-          if (indentOptions == null) {
-            indentOptions  = mySettings.getIndentOptionsByFile(file, textRanges.size() == 1 ? textRanges.get(0).getTextRange() : null);
-          }
+          final CommonCodeStyleSettings.IndentOptions indentOptions = getIndentOptions(file, ranges, builder);
 
           formatter.format(model, mySettings, indentOptions, ranges);
           for (FormatTextRanges.FormatTextRange range : textRanges) {
@@ -255,6 +201,92 @@ public class CodeFormatterFacade {
           LOG.error(e);
         }
       }
+    }
+  }
+
+  @NotNull
+  private CommonCodeStyleSettings.IndentOptions getIndentOptions(@NotNull PsiFile file,
+                                                                 @NotNull FormatTextRanges ranges,
+                                                                 @NotNull FormattingModelBuilder builder) {
+    final List<FormatTextRanges.FormatTextRange> textRanges = ranges.getRanges();
+
+    CommonCodeStyleSettings.IndentOptions indentOptions = null;
+    if (builder instanceof FormattingModelBuilderEx) {
+      indentOptions = ((FormattingModelBuilderEx)builder).getIndentOptionsToUse(file, ranges, mySettings);
+    }
+    if (indentOptions == null) {
+      indentOptions  = mySettings.getIndentOptionsByFile(file, textRanges.size() == 1 ? textRanges.get(0).getTextRange() : null);
+    }
+    return indentOptions;
+  }
+
+  private static void doPostponedFormattingAndUpdateRanges(@NotNull PsiFile file,
+                                                           @NotNull List<FormatTextRanges.FormatTextRange> textRanges,
+                                                           @NotNull Document document) {
+    RangeMarker[] markers = new RangeMarker[textRanges.size()];
+    int i = 0;
+    for (FormatTextRanges.FormatTextRange range : textRanges) {
+      TextRange textRange = range.getTextRange();
+      int start = textRange.getStartOffset();
+      int end = textRange.getEndOffset();
+      if (start >= 0 && end > start && end <= document.getTextLength()) {
+        markers[i] = document.createRangeMarker(textRange);
+        markers[i].setGreedyToLeft(true);
+        markers[i].setGreedyToRight(true);
+        i++;
+      }
+    }
+    final PostprocessReformattingAspect component = file.getProject().getComponent(PostprocessReformattingAspect.class);
+    FormattingProgressTask.FORMATTING_CANCELLED_FLAG.set(false);
+    component.doPostponedFormatting(file.getViewProvider());
+    i = 0;
+    for (FormatTextRanges.FormatTextRange range : textRanges) {
+      RangeMarker marker = markers[i];
+      if (marker != null) {
+        range.setTextRange(TextRange.create(marker));
+        marker.dispose();
+      }
+      i++;
+    }
+  }
+
+  @NotNull
+  private static Pair<PsiFile, Document> getFileAndDocumentToUseAndUpdateRanges(@NotNull PsiFile file,
+                                                                                @NotNull List<FormatTextRanges.FormatTextRange> textRanges) {
+    Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
+    if (document instanceof DocumentWindow) {
+      file = InjectedLanguageManager.getInstance(file.getProject()).getTopLevelFile(file);
+      final DocumentWindow documentWindow = (DocumentWindow)document;
+      for (FormatTextRanges.FormatTextRange range : textRanges) {
+        range.setTextRange(documentWindow.injectedToHost(range.getTextRange()));
+      }
+      document = documentWindow.getDelegate();
+    }
+
+    return Pair.create(file, document);
+  }
+
+
+
+  private void preprocessTextAndUpdateRanges(@NotNull PsiFile file, @NotNull FormatTextRanges ranges) {
+    final List<FormatTextRanges.FormatTextRange> textRanges = ranges.getRanges();
+    final Language contextLanguage = file.getLanguage();
+
+    final FileViewProvider viewProvider = file.getViewProvider();
+    final PsiElement startElement = viewProvider.findElementAt(textRanges.get(0).getTextRange().getStartOffset(), contextLanguage);
+    final PsiElement endElement =
+      viewProvider.findElementAt(textRanges.get(textRanges.size() - 1).getTextRange().getEndOffset() - 1, contextLanguage);
+    final PsiElement commonParent = startElement != null && endElement != null ? PsiTreeUtil.findCommonParent(startElement, endElement) : null;
+    ASTNode node = null;
+    if (commonParent != null) {
+      node = commonParent.getNode();
+    }
+    if (node == null) {
+      node = file.getNode();
+    }
+    for (FormatTextRanges.FormatTextRange range : ranges.getRanges()) {
+      TextRange rangeToUse = preprocess(node, range.getTextRange());
+      range.setTextRange(rangeToUse);
     }
   }
 
