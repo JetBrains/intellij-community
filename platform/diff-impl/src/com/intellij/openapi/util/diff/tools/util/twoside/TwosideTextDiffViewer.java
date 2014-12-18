@@ -370,10 +370,7 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
     int editorHeight = myEditor1.getComponent().getHeight();
     int dividerOffset = divider.getLocationOnScreen().y;
     int editorOffset = myEditor1.getComponent().getLocationOnScreen().y;
-    Graphics2D gg = (Graphics2D)g.create(0, editorOffset - dividerOffset, width, editorHeight);
-    gg.translate(0, -1);
-
-    return gg;
+    return  (Graphics2D)g.create(0, editorOffset - dividerOffset, width, editorHeight);
   }
 
   private class MyEditorFocusListener extends FocusAdapter {

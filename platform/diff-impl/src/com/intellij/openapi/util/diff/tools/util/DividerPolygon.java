@@ -103,6 +103,7 @@ public class DividerPolygon {
       @Override
       public int transform(int line) {
         int yOffset = editor.logicalPositionToXY(new LogicalPosition(line, 0)).y;
+        yOffset--; // hack: we need this shift, because top line of Editor is not visible.
 
         final JComponent header = editor.getHeaderComponent();
         int headerOffset = header == null ? 0 : header.getHeight();
