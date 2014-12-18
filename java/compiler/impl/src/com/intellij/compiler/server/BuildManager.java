@@ -736,7 +736,7 @@ public class BuildManager implements ApplicationComponent{
                 myBuildsInProgress.remove(projectPath);
                 notifySessionTerminationIfNeeded(sessionId, execFailure);
 
-                if (Registry.is("compiler.process.preload") && !project.isDisposed()) {
+                if (isProcessPreloadingEnabled() && !project.isDisposed()) {
                   runCommand(new Runnable() {
                     public void run() {
                       if (!myPreloadedBuilds.containsKey(projectPath)) {
@@ -763,6 +763,11 @@ public class BuildManager implements ApplicationComponent{
     });
 
     return _future;
+  }
+
+  private static boolean isProcessPreloadingEnabled() {
+    // automatically disable process preloading when debugging
+    return Registry.is("compiler.process.preload") && Registry.intValue("compiler.process.debug.port") <= 0 ;
   }
 
   private void notifySessionTerminationIfNeeded(UUID sessionId, @Nullable Throwable execFailure) {
