@@ -37,7 +37,7 @@ public final class SortedConfigurableGroup
   extends SearchableConfigurable.Parent.Abstract
   implements SearchableConfigurable, Weighted, ConfigurableGroup, Configurable.NoScroll {
 
-  private final ArrayList<Configurable> myList = new ArrayList<Configurable>();
+  private ArrayList<Configurable> myList = new ArrayList<Configurable>();
   private final String myGroupId;
   private String myDisplayName;
   private int myWeight;
@@ -108,6 +108,7 @@ public final class SortedConfigurableGroup
     Collections.sort(myList, COMPARATOR);
     Configurable[] result = ArrayUtil.toObjectArray(myList, Configurable.class);
     myList.clear();
+    myList = null;
     return result;
   }
 
