@@ -884,7 +884,7 @@ public class RefactoringUtil {
       newBody.add(declaration);
 
       final PsiStatement lastBodyStatement;
-      if (LambdaUtil.getFunctionalInterfaceReturnType(lambdaExpression) == PsiType.VOID) {
+      if (PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType(lambdaExpression))) {
         lastBodyStatement = elementFactory.createStatementFromText("a;", lambdaExpression);
         ((PsiExpressionStatement)lastBodyStatement).getExpression().replace(lambdaExpressionBody);
       }
