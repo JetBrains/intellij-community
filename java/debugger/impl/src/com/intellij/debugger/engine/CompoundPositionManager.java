@@ -15,6 +15,7 @@
  */
 package com.intellij.debugger.engine;
 
+import com.intellij.debugger.MultiRequestPositionManager;
 import com.intellij.debugger.NoDataException;
 import com.intellij.debugger.PositionManager;
 import com.intellij.debugger.SourcePosition;
@@ -38,7 +39,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class CompoundPositionManager extends PositionManagerEx {
+public class CompoundPositionManager extends PositionManagerEx implements MultiRequestPositionManager{
   private static final Logger LOG = Logger.getInstance(CompoundPositionManager.class);
 
   private final ArrayList<PositionManager> myPositionManagers = new ArrayList<PositionManager>();
@@ -151,6 +152,41 @@ public class CompoundPositionManager extends PositionManagerEx {
     for (PositionManager positionManager : myPositionManagers) {
       try {
         return positionManager.createPrepareRequest(requestor, position);
+      }
+      catch (NoDataException ignored) {
+      }
+      catch (VMDisconnectedException e) {
+        throw e;
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
+      catch (AssertionError e) {
+        LOG.error(e);
+      }
+    }
+
+    return null;
+  }
+
+  @NotNull
+  @Override
+  public List<ClassPrepareRequest> createPrepareRequests(@NotNull ClassPrepareRequestor requestor, @NotNull SourcePosition position) {
+    for (PositionManager positionManager : myPositionManagers) {
+      try {
+        if (positionManager instanceof MultiRequestPositionManager) {
+          return ((MultiRequestPositionManager)positionManager).createPrepareRequests(requestor, position);
+        }
+        else {
+          ClassPrepareRequest prepareRequest = positionManager.createPrepareRequest(requestor, position);
+          if (prepareRequest == null) {
+            return Collections.emptyList();
+          }
+
+          List<ClassPrepareRequest> result = new ArrayList<ClassPrepareRequest>(1);
+          result.add(prepareRequest);
+          return result;
+        }
       }
       catch (NoDataException ignored) {
       }
