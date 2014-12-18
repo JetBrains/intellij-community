@@ -270,10 +270,14 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
         }
         Collections.addAll(list, myKids);
         // sort configurables is needed
-        Configurable.SortingConfigurable sorting = cast(Configurable.SortingConfigurable.class, this);
-        if (sorting != null) {
-          myComparator = sorting.getChildComparator();
-          Collections.sort(list, myComparator);
+        for (Configurable configurable : list) {
+          if (configurable instanceof Weighted) {
+            if (((Weighted)configurable).getWeight() != 0) {
+              myComparator = COMPARATOR;
+              Collections.sort(list, myComparator);
+              break;
+            }
+          }
         }
         myKids = ArrayUtil.toObjectArray(list, Configurable.class);
         isInitialized = true;
