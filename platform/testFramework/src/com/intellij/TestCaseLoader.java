@@ -142,8 +142,8 @@ public class TestCaseLoader {
   }
 
   private boolean shouldExcludeTestClass(Class testCaseClass) {
+    if (TestAll.isPerformanceTest(testCaseClass) && !myIsPerformanceTestsRun) return true;
     String className = testCaseClass.getName();
-    if (className.toLowerCase(Locale.US).contains("performance") && !myIsPerformanceTestsRun) return true;
 
     return !myTestClassesFilter.matches(className) || isBombed(testCaseClass);
   }
