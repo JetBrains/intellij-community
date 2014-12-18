@@ -37,6 +37,8 @@ import java.nio.charset.Charset;
  * Represents sub text of other content. Original content should provide not null document.
  */
 public class DocumentFragmentContent implements DocumentContent {
+  // TODO: reuse DocumentWindow ?
+
   public static final Key<Document> ORIGINAL_DOCUMENT = FragmentContent.ORIGINAL_DOCUMENT; // TODO: replace with own one ?
 
   @NotNull private final DocumentContent myOriginal;
