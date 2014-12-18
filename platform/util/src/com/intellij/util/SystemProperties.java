@@ -131,4 +131,8 @@ public class SystemProperties {
 
     return defaultValue;
   }
+
+  public static String getJavaVendor() {
+    return System.getProperty("java.vendor");
+  }
 }
