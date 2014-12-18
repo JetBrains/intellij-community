@@ -20,6 +20,7 @@ import java.util.Set;
  * @author Maxim.Mossienko
 */
 class FindInFilesOptimizingSearchHelper extends OptimizingSearchHelperBase {
+  private final MyFileProcessor myFileProcessor;
   private THashMap<PsiFile,PsiFile> filesToScan;
   private THashMap<PsiFile,PsiFile> filesToScan2;
 
@@ -35,6 +36,7 @@ class FindInFilesOptimizingSearchHelper extends OptimizingSearchHelperBase {
       filesToScan = new THashMap<PsiFile, PsiFile>();
       filesToScan2 = new THashMap<PsiFile, PsiFile>();
     }
+    myFileProcessor = new MyFileProcessor();
   }
 
   public boolean doOptimizing() {
@@ -56,31 +58,31 @@ class FindInFilesOptimizingSearchHelper extends OptimizingSearchHelperBase {
     final Language language = fileType instanceof LanguageFileType ? ((LanguageFileType)fileType).getLanguage() : Language.ANY;
     final NamesValidator namesValidator = LanguageNamesValidation.INSTANCE.forLanguage(language);
     if (namesValidator.isKeyword(refname, context.getProject())) {
-      CacheManager.SERVICE.getInstance(myProject).processFilesWithWord(new MyFileProcessor(), refname, UsageSearchContext.IN_PLAIN_TEXT,
+      CacheManager.SERVICE.getInstance(myProject).processFilesWithWord(myFileProcessor, refname, UsageSearchContext.IN_PLAIN_TEXT,
                                                                        (GlobalSearchScope)options.getScope(),
                                                                        options.isCaseSensitiveMatch());
     }
     else {
-      CacheManager.SERVICE.getInstance(myProject).processFilesWithWord(new MyFileProcessor(), refname, UsageSearchContext.IN_CODE,
+      CacheManager.SERVICE.getInstance(myProject).processFilesWithWord(myFileProcessor, refname, UsageSearchContext.IN_CODE,
                                                                        (GlobalSearchScope)options.getScope(), options.isCaseSensitiveMatch());
     }
   }
 
   protected void doAddSearchWordInText(final String refname) {
     final MatchOptions options = context.getOptions();
-    CacheManager.SERVICE.getInstance(myProject).processFilesWithWord(new MyFileProcessor(), refname, UsageSearchContext.IN_PLAIN_TEXT,
+    CacheManager.SERVICE.getInstance(myProject).processFilesWithWord(myFileProcessor, refname, UsageSearchContext.IN_PLAIN_TEXT,
                                                                      (GlobalSearchScope)options.getScope(), options.isCaseSensitiveMatch());
   }
 
   protected void doAddSearchWordInComments(final String refname) {
     final MatchOptions options = context.getOptions();
-    CacheManager.SERVICE.getInstance(myProject).processFilesWithWord(new MyFileProcessor(), refname, UsageSearchContext.IN_COMMENTS,
+    CacheManager.SERVICE.getInstance(myProject).processFilesWithWord(myFileProcessor, refname, UsageSearchContext.IN_COMMENTS,
                                                                      (GlobalSearchScope)options.getScope(), options.isCaseSensitiveMatch());
   }
 
   protected void doAddSearchWordInLiterals(final String refname) {
     final MatchOptions options = context.getOptions();
-    CacheManager.SERVICE.getInstance(myProject).processFilesWithWord(new MyFileProcessor(), refname, UsageSearchContext.IN_STRINGS,
+    CacheManager.SERVICE.getInstance(myProject).processFilesWithWord(myFileProcessor, refname, UsageSearchContext.IN_STRINGS,
                                                                      (GlobalSearchScope)options.getScope(), options.isCaseSensitiveMatch());
   }
 
@@ -98,8 +100,7 @@ class FindInFilesOptimizingSearchHelper extends OptimizingSearchHelperBase {
 
   private class MyFileProcessor implements Processor<PsiFile> {
     public boolean process(PsiFile file) {
-      if (scanRequest == 0 ||
-          filesToScan.get(file)!=null) {
+      if (scanRequest == 0 || filesToScan.get(file) != null) {
         filesToScan2.put(file,file);
       }
       return true;
