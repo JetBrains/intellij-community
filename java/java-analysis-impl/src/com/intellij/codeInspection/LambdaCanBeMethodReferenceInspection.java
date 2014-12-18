@@ -22,10 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -110,7 +107,16 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
           if (element instanceof PsiMethod && !isSimpleCall(parameters, callExpression, (PsiMethod)element)) {
             return null;
           }
-          return callExpression;
+          if (!(element instanceof PsiMethod)) {
+            return callExpression;
+          }
+
+          final PsiMethod method = callExpression.resolveMethod();
+          if (method == null) {
+            LOG.error(callExpression);
+            return null;
+          }
+          return MethodSignatureUtil.areSignaturesEqual((PsiMethod)element, method) ? callExpression : null;
         }
       }
       finally {
