@@ -19,17 +19,21 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.net.HttpConfigurable;
+import com.intellij.util.net.NetUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -58,6 +62,11 @@ public abstract class HttpRequests {
     InputStream getInputStream() throws IOException;
 
     boolean isSuccessful() throws IOException;
+
+    @NotNull
+    File saveToFile(@NotNull File file, @Nullable ProgressIndicator indicator) throws IOException;
+
+    byte[] toBytes(@Nullable ProgressIndicator indicator) throws IOException;
   }
 
   public interface RequestProcessor<T> {
@@ -154,6 +163,26 @@ public abstract class HttpRequests {
         return errorValue;
       }
     }
+
+    public void saveToFile(@NotNull final File file, @Nullable final ProgressIndicator indicator) throws IOException {
+      connect(new HttpRequests.RequestProcessor<Void>() {
+        @Override
+        public Void process(@NotNull HttpRequests.Request request) throws IOException {
+          request.saveToFile(file, indicator);
+          return null;
+        }
+      });
+    }
+
+    @NotNull
+    public byte[] toBytes(@Nullable final ProgressIndicator indicator) throws IOException {
+      return connect(new HttpRequests.RequestProcessor<byte[]>() {
+        @Override
+        public byte[] process(@NotNull HttpRequests.Request request) throws IOException {
+          return request.toBytes(indicator);
+        }
+      });
+    }
   }
 
   @NotNull
@@ -215,6 +244,53 @@ public abstract class HttpRequests {
         if (myConnection instanceof HttpURLConnection) {
           ((HttpURLConnection)myConnection).disconnect();
         }
+      }
+
+      @NotNull
+      public byte[] toBytes(@Nullable ProgressIndicator indicator) throws IOException {
+        int contentLength = getConnection().getContentLength();
+        BufferExposingByteArrayOutputStream out = new BufferExposingByteArrayOutputStream(contentLength > 0 ? contentLength : 32 * 1024);
+        NetUtils.copyStreamContent(indicator, getInputStream(), out, contentLength);
+        return ArrayUtil.realloc(out.getInternalBuffer(), out.size());
+      }
+
+      @NotNull
+      public File saveToFile(@NotNull File file, @Nullable ProgressIndicator indicator) throws IOException {
+        OutputStream out = null;
+        boolean deleteFile = true;
+        try {
+          if (indicator != null) {
+            indicator.checkCanceled();
+          }
+
+          FileUtilRt.createParentDirs(file);
+          out = new FileOutputStream(file);
+          NetUtils.copyStreamContent(indicator, getInputStream(), out, getConnection().getContentLength());
+          deleteFile = false;
+        }
+        catch (IOException e) {
+          URLConnection connection = getConnection();
+          String errorMessage = "Cannot download '" + builder.myUrl + ", headers: " + connection.getHeaderFields();
+          if (connection instanceof HttpURLConnection) {
+            HttpURLConnection httpConnection = (HttpURLConnection)connection;
+            errorMessage += "', response code: " + httpConnection.getResponseCode()
+                            + ", response message: " + httpConnection.getResponseMessage();
+          }
+          throw new IOException(errorMessage, e);
+        }
+        finally {
+          try {
+            if (out != null) {
+              out.close();
+            }
+          }
+          finally {
+            if (deleteFile) {
+              FileUtilRt.delete(file);
+            }
+          }
+        }
+        return file;
       }
     }
 

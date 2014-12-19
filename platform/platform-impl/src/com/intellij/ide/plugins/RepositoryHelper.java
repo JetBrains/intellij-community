@@ -27,7 +27,6 @@ import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.io.HttpRequests;
 import com.intellij.util.io.URLUtil;
-import com.intellij.util.net.NetUtils;
 import org.apache.http.client.utils.URIBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,7 +35,10 @@ import org.xml.sax.SAXException;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URISyntaxException;
 import java.net.URLConnection;
@@ -125,13 +127,7 @@ public class RepositoryHelper {
         if (pluginListFile != null) {
           synchronized (RepositoryHelper.class) {
             FileUtil.ensureExists(pluginListFile.getParentFile());
-            OutputStream output = new FileOutputStream(pluginListFile);
-            try {
-              NetUtils.copyStreamContent(indicator, request.getInputStream(), output, connection.getContentLength());
-            }
-            finally {
-              output.close();
-            }
+            request.saveToFile(pluginListFile, indicator);
             return loadPluginList(pluginListFile);
           }
         }

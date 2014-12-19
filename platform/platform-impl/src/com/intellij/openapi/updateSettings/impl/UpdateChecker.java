@@ -43,7 +43,6 @@ import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.HttpRequests;
 import com.intellij.util.io.URLUtil;
-import com.intellij.util.net.NetUtils;
 import com.intellij.util.ui.UIUtil;
 import org.apache.http.client.utils.URIBuilder;
 import org.jdom.Document;
@@ -54,7 +53,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.*;
@@ -587,15 +588,7 @@ public final class UpdateChecker {
     File tempFile = HttpRequests.request(url).gzip(false).forceHttps(forceHttps).connect(new HttpRequests.RequestProcessor<File>() {
       @Override
       public File process(@NotNull HttpRequests.Request request) throws IOException {
-        File tempFile = FileUtil.createTempFile("ij.platform.", ".patch", true);
-        OutputStream output = new BufferedOutputStream(new FileOutputStream(tempFile));
-        try {
-          NetUtils.copyStreamContent(indicator, request.getInputStream(), output, request.getConnection().getContentLength());
-        }
-        finally {
-          output.close();
-        }
-        return tempFile;
+        return request.saveToFile(FileUtil.createTempFile("ij.platform.", ".patch", true), indicator);
       }
     });
 
