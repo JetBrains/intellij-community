@@ -17,6 +17,8 @@ package com.jetbrains.python.packaging;
 
 import com.google.common.collect.Lists;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.util.io.HttpRequests;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.webcore.packaging.RepoPackage;
 import org.apache.xmlrpc.*;
@@ -35,7 +37,6 @@ import javax.swing.text.html.parser.ParserDelegator;
 import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLConnection;
 import java.net.URLDecoder;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
@@ -50,11 +51,13 @@ import java.util.regex.Pattern;
  */
 @SuppressWarnings("UseOfObsoleteCollectionType")
 public class PyPIPackageUtil {
-  public static Logger LOG = Logger.getInstance(PyPIPackageUtil.class.getName());
-  @NonNls public static String PYPI_URL = "https://pypi.python.org/pypi";
-  @NonNls public static String PYPI_LIST_URL = "https://pypi.python.org/pypi?%3Aaction=index";
+  public static final Logger LOG = Logger.getInstance(PyPIPackageUtil.class.getName());
+  @NonNls public static final String PYPI_URL = "https://pypi.python.org/pypi";
+  @NonNls public static final String PYPI_LIST_URL = "https://pypi.python.org/pypi?%3Aaction=index";
+
+  public static final PyPIPackageUtil INSTANCE = new PyPIPackageUtil();
+
   private XmlRpcClient myXmlRpcClient;
-  public static PyPIPackageUtil INSTANCE = new PyPIPackageUtil();
   private Map<String, Hashtable> packageToDetails = new HashMap<String, Hashtable>();
   private Map<String, List<String>> packageToReleases = new HashMap<String, List<String>>();
   private Pattern PYPI_PATTERN = Pattern.compile("/pypi/([^/]*)/(.*)");
@@ -202,59 +205,41 @@ public class PyPIPackageUtil {
   }
 
   @Nullable
-  public List<String> getPyPIListFromWeb() throws IOException {
-    final List<String> packages = new ArrayList<String>();
-    HTMLEditorKit.ParserCallback callback =
-        new HTMLEditorKit.ParserCallback() {
-          HTML.Tag myTag;
-          boolean inTable = false;
-          @Override
-          public void handleStartTag(HTML.Tag tag, MutableAttributeSet set, int i) {
-            if ("table".equals(tag.toString()))
-              inTable = !inTable;
+  public List<String> getPyPIListFromWeb() {
+    return HttpRequests.request(PYPI_LIST_URL).connect(new HttpRequests.RequestProcessor<List<String>>() {
+      @Override
+      public List<String> process(@NotNull HttpRequests.Request request) throws IOException {
+        final List<String> packages = new ArrayList<String>();
+        Reader reader = new InputStreamReader(request.getInputStream(), CharsetToolkit.UTF8_CHARSET);
+        try {
+          new ParserDelegator().parse(reader, new HTMLEditorKit.ParserCallback() {
+            boolean inTable = false;
 
-            if (inTable && "a".equals(tag.toString())) {
-              packages.add(String.valueOf(set.getAttribute(HTML.Attribute.HREF)));
+            @Override
+            public void handleStartTag(HTML.Tag tag, MutableAttributeSet set, int i) {
+              if ("table".equals(tag.toString())) {
+                inTable = !inTable;
+              }
+
+              if (inTable && "a".equals(tag.toString())) {
+                packages.add(String.valueOf(set.getAttribute(HTML.Attribute.HREF)));
+              }
             }
-          }
 
-          @Override
-          public void handleEndTag(HTML.Tag tag, int i) {
-            if ("table".equals(tag.toString()))
-              inTable = !inTable;
-          }
-        };
-
-
-    // Create a trust manager that does not validate certificate
-    TrustManager[] trustAllCerts = new TrustManager[]{new PyPITrustManager()};
-
-    try {
-      SSLContext sslContext = SSLContext.getInstance("TLS");
-      sslContext.init(null, trustAllCerts, new SecureRandom());
-
-      final HttpConfigurable settings = HttpConfigurable.getInstance();
-      final URLConnection connection = settings.openConnection(PYPI_LIST_URL);
-
-      if (connection instanceof HttpsURLConnection) {
-        ((HttpsURLConnection)connection).setSSLSocketFactory(sslContext.getSocketFactory());
+            @Override
+            public void handleEndTag(HTML.Tag tag, int i) {
+              if ("table".equals(tag.toString())) {
+                inTable = !inTable;
+              }
+            }
+          }, true);
+        }
+        finally {
+          reader.close();
+        }
+        return packages;
       }
-      InputStream is = connection.getInputStream();
-      Reader reader = new InputStreamReader(is);
-      try{
-        new ParserDelegator().parse(reader, callback, true);
-      }
-      catch (IOException e) {
-        LOG.warn(e);
-      }
-      finally {
-        reader.close();
-      }
-    }
-    catch (Exception e) {
-      LOG.warn(e);
-    }
-    return packages;
+    }, Collections.<String>emptyList(), LOG);
   }
 
   public Collection<String> getPackageNames() {
