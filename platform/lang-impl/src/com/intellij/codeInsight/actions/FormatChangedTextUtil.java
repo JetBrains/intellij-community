@@ -42,6 +42,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.diff.FilesTooBigForDiffException;
@@ -229,16 +230,18 @@ public class FormatChangedTextUtil {
   }
 
   @NotNull
-  public static List<PsiFile> getChangedFiles(@NotNull Project project, @NotNull Collection<Change> changes) {
-    List<PsiFile> files = ContainerUtil.newArrayList();
-    for (Change change : changes) {
-      VirtualFile vFile = change.getVirtualFile();
-      if (vFile != null) {
-        PsiFile file = PsiManager.getInstance(project).findFile(vFile);
-        if (file != null) files.add(file);
+  public static List<PsiFile> getChangedFiles(@NotNull final Project project, @NotNull Collection<Change> changes) {
+    Function<Change, PsiFile> changeToPsiFileMapper = new Function<Change, PsiFile>() {
+      private PsiManager myPsiManager = PsiManager.getInstance(project);
+
+      @Override
+      public PsiFile fun(Change change) {
+        VirtualFile vFile = change.getVirtualFile();
+        return vFile != null ? myPsiManager.findFile(vFile) : null;
       }
-    }
-    return files;
+    };
+
+    return ContainerUtil.mapNotNull(changes, changeToPsiFileMapper);
   }
 
   @NotNull
