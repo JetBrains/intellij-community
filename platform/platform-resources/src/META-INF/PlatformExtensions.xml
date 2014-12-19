@@ -231,7 +231,11 @@
                              key="title.customizations" bundle="messages.IdeBundle"/>
 
     <!-- Notifications -->
-    <applicationConfigurable groupId="appearance" groupWeight="110" displayName="Notifications" id="reference.settings.ide.settings.notifications" instance="com.intellij.notification.impl.NotificationsConfigurable"/>
+    <applicationConfigurable groupId="appearance"
+                             groupWeight="110"
+                             displayName="Notifications"
+                             id="reference.settings.ide.settings.notifications"
+                             provider="com.intellij.notification.impl.NotificationsConfigurableProvider"/>
 
     <!-- Plugins -->
     <applicationConfigurable groupId="root" groupWeight="55" instance="com.intellij.ide.plugins.PluginManagerConfigurable" id="preferences.pluginManager"
@@ -326,7 +330,6 @@
 
     <applicationService serviceInterface="org.jetbrains.ide.BuiltInServerManager" serviceImplementation="org.jetbrains.ide.BuiltInServerManagerImpl"/>
     <applicationService serviceInterface="com.intellij.ide.XmlRpcServer" serviceImplementation="com.intellij.ide.XmlRpcServerImpl"/>
-    <applicationService serviceImplementation="com.intellij.util.net.ssl.CertificateManager"/>
     <httpRequestHandler implementation="com.intellij.ide.XmlRpcServerImpl$XmlRpcRequestHandler"/>
     <httpRequestHandler implementation="com.intellij.platform.ProjectSetRequestHandler"/>
     <postStartupActivity implementation="org.jetbrains.ide.BuiltInServerManagerImpl$MyPostStartupActivity"/>

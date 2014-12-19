@@ -144,7 +144,7 @@ public class GradleInstallationManager {
         linkedProjectPath, e, OpenExternalSystemSettingsCallback.ID);
     }
 
-    if (sdk == null) {
+    if (sdk == null && gradleJvm != null) {
       throw new ExternalSystemJdkException(
         String.format("Invalid Gradle JDK configuration found. <a href='%s'>Open Gradle Settings</a> \n",
                       OpenExternalSystemSettingsCallback.ID),

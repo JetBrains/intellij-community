@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,30 +17,40 @@ package com.intellij.openapi.diff.impl.incrementalMerge;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.editor.impl.RangeMarkerImpl;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 
-class DiffRangeMarker extends RangeMarkerImpl {
+class DiffRangeMarker implements RangeMarker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.incrementalMerge.DiffRangeMarker");
+  private final RangeMarker myRangeMarker;
   private RangeInvalidListener myListener;
 
-  DiffRangeMarker(@NotNull DocumentEx document, @NotNull TextRange range, RangeInvalidListener listener) {
-    super(document, range.getStartOffset(), range.getEndOffset(),true);
+  DiffRangeMarker(@NotNull Document document, @NotNull TextRange range, RangeInvalidListener listener) {
+    myRangeMarker = document.createRangeMarker(range.getStartOffset(), range.getEndOffset());
     myListener = listener;
-    if (myListener != null) InvalidRangeDispatcher.addClient(document);
-  }
-
-  @Override
-  protected void changedUpdateImpl(DocumentEvent e) {
-    super.changedUpdateImpl(e);
-    if (!isValid() && myListener != null) InvalidRangeDispatcher.notify(e.getDocument(), myListener);
+    if (listener != null) {
+      final InvalidRangeDispatcher notifier = InvalidRangeDispatcher.addClient(document);
+      document.addDocumentListener(new DocumentAdapter() {
+        @Override
+        public void beforeDocumentChange(DocumentEvent e) {
+          if (myListener != null) {
+            notifier.notify(new RangeInvalidListener() {
+              @Override
+              public void onRangeInvalidated() {
+                if (!isValid() && myListener != null) myListener.onRangeInvalidated();
+              }
+            });
+          }
+        }
+      });
+    }
   }
 
   public void removeListener(RangeInvalidListener listener) {
@@ -49,7 +59,7 @@ class DiffRangeMarker extends RangeMarkerImpl {
     InvalidRangeDispatcher.removeClient(getDocument());
   }
 
-  public interface RangeInvalidListener {
+  interface RangeInvalidListener {
     void onRangeInvalidated();
   }
 
@@ -58,6 +68,7 @@ class DiffRangeMarker extends RangeMarkerImpl {
     private final ArrayList<RangeInvalidListener> myDeferedNotifications = new ArrayList<RangeInvalidListener>();
     private int myClientCount = 0;
 
+    @Override
     public void documentChanged(DocumentEvent e) {
       if (myDeferedNotifications.isEmpty()) return;
       RangeInvalidListener[] notifications = myDeferedNotifications.toArray(new RangeInvalidListener[myDeferedNotifications.size()]);
@@ -67,12 +78,11 @@ class DiffRangeMarker extends RangeMarkerImpl {
       }
     }
 
-    public static void notify(Document document, RangeInvalidListener listener) {
-      InvalidRangeDispatcher notifier = document.getUserData(KEY);
-      notifier.myDeferedNotifications.add(listener);
+    public void notify(@NotNull RangeInvalidListener listener) {
+      myDeferedNotifications.add(listener);
     }
 
-    public static void addClient(@NotNull Document document) {
+    private static InvalidRangeDispatcher addClient(@NotNull Document document) {
       InvalidRangeDispatcher notifier = document.getUserData(KEY);
       if (notifier == null) {
         notifier = new InvalidRangeDispatcher();
@@ -80,6 +90,7 @@ class DiffRangeMarker extends RangeMarkerImpl {
         document.addDocumentListener(notifier);
       }
       notifier.myClientCount++;
+      return notifier;
     }
 
     private static void removeClient(Document document) {
@@ -95,5 +106,64 @@ class DiffRangeMarker extends RangeMarkerImpl {
         document.removeDocumentListener(this);
       }
     }
+  }
+
+  /// delegates
+
+  @Override
+  @NotNull
+  public Document getDocument() {
+    return myRangeMarker.getDocument();
+  }
+
+  @Override
+  public int getStartOffset() {
+    return myRangeMarker.getStartOffset();
+  }
+
+  @Override
+  public int getEndOffset() {
+    return myRangeMarker.getEndOffset();
+  }
+
+  @Override
+  public boolean isValid() {
+    return myRangeMarker.isValid();
+  }
+
+  @Override
+  public void setGreedyToLeft(boolean greedy) {
+    myRangeMarker.setGreedyToLeft(greedy);
+  }
+
+  @Override
+  public void setGreedyToRight(boolean greedy) {
+    myRangeMarker.setGreedyToRight(greedy);
+  }
+
+  @Override
+  public boolean isGreedyToRight() {
+    return myRangeMarker.isGreedyToRight();
+  }
+
+  @Override
+  public boolean isGreedyToLeft() {
+    return myRangeMarker.isGreedyToLeft();
+  }
+
+  @Override
+  public void dispose() {
+    myRangeMarker.dispose();
+  }
+
+  @Override
+  @Nullable
+  public <T> T getUserData(@NotNull Key<T> key) {
+    return myRangeMarker.getUserData(key);
+  }
+
+  @Override
+  public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
+    myRangeMarker.putUserData(key, value);
   }
 }

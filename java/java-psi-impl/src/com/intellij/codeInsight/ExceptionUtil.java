@@ -29,6 +29,7 @@ import com.intellij.psi.scope.MethodProcessorSetupFailedException;
 import com.intellij.psi.scope.processor.MethodResolverProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.util.*;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.SmartList;
@@ -346,7 +347,7 @@ public class ExceptionUtil {
   }
 
   @NotNull
-  public static List<PsiClassType> getUnhandledExceptions(@NotNull PsiElement[] elements) {
+  public static List<PsiClassType> getUnhandledExceptions(final @NotNull PsiElement[] elements) {
     final List<PsiClassType> array = ContainerUtil.newArrayList();
     final PsiElementVisitor visitor = new JavaRecursiveElementWalkingVisitor() {
       @Override
@@ -363,6 +364,7 @@ public class ExceptionUtil {
 
       @Override
       public void visitMethodReferenceExpression(@NotNull PsiMethodReferenceExpression expression) {
+        if (ArrayUtil.find(elements, expression) < 0) return;
         addExceptions(array, getUnhandledExceptions(expression, null));
         visitElement(expression);
       }

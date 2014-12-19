@@ -17,7 +17,7 @@ package com.intellij.codeInsight.editorActions;
 
 public class SmartBackspaceDisabler extends BackspaceModeOverride {
   @Override
-  public int getBackspaceMode(int modeFromSettings) {
+  public SmartBackspaceMode getBackspaceMode(SmartBackspaceMode modeFromSettings) {
     return modeFromSettings == SmartBackspaceMode.AUTOINDENT ? SmartBackspaceMode.INDENT : modeFromSettings;
   }
 }

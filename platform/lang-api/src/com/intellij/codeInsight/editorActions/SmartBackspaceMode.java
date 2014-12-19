@@ -15,10 +15,6 @@
  */
 package com.intellij.codeInsight.editorActions;
 
-public class SmartBackspaceMode {
-  public static final int OFF = 0;
-  public static final int AUTOINDENT = 1;
-  public static final int INDENT = 2;
-  
-  private SmartBackspaceMode() {}
+public enum SmartBackspaceMode {
+  OFF, AUTOINDENT, INDENT;
 }

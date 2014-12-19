@@ -44,7 +44,7 @@ import java.awt.*;
 import java.nio.charset.Charset;
 import java.util.Map;
 
-public class FileEncodingConfigurable implements SearchableConfigurable, OptionalConfigurable, Configurable.NoScroll {
+public class FileEncodingConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private final Project myProject;
   private EncodingFileTreeTable myTreeView;
   private JScrollPane myTreePanel;
@@ -204,11 +204,5 @@ public class FileEncodingConfigurable implements SearchableConfigurable, Optiona
 
   private void createUIComponents() {
     myTreePanel = ScrollPaneFactory.createScrollPane(new JBTable());
-  }
-
-  @Override
-  public boolean needDisplay() {
-    // TODO[yole] cleaner API
-    return !PlatformUtils.isRubyMine();
   }
 }

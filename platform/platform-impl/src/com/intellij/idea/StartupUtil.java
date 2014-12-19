@@ -132,6 +132,14 @@ public class StartupUtil {
         return false;
       }
     }
+    
+    if (!"true".equals(System.getProperty("idea.no.64bit.check"))) {
+      if (PlatformUtils.isCidr() && !SystemInfo.is64Bit) {
+          String message = "32-bit JVM is not supported. Please install 64-bit version.";
+          Main.showMessage("Unsupported JVM", message, true);
+        return false;
+      }
+    }
 
     return true;
   }
@@ -219,6 +227,8 @@ public class StartupUtil {
   }
 
   private static void fixProcessEnvironment(Logger log) {
+    // winp should not unpack dlls into parent directory
+    System.setProperty("winp.unpack.dll.to.parent.dir", "false");
     if (!Main.isCommandLine()) {
       System.setProperty("__idea.mac.env.lock", "unlocked");
     }

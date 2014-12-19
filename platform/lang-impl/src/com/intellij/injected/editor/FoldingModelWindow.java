@@ -21,7 +21,6 @@ import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingGroup;
 import com.intellij.openapi.editor.ex.FoldingListener;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
-import com.intellij.openapi.editor.impl.FoldRegionImpl;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
@@ -35,12 +34,12 @@ import java.util.List;
 /**
  * @author cdr
  */
-public class FoldingModelWindow implements FoldingModelEx{
+class FoldingModelWindow implements FoldingModelEx{
   private final FoldingModelEx myDelegate;
   private final DocumentWindow myDocumentWindow;
   private final EditorWindow myEditorWindow;
 
-  public FoldingModelWindow(@NotNull FoldingModelEx delegate, @NotNull DocumentWindow documentWindow, @NotNull EditorWindow editorWindow) {
+  FoldingModelWindow(@NotNull FoldingModelEx delegate, @NotNull DocumentWindow documentWindow, @NotNull EditorWindow editorWindow) {
     myDelegate = delegate;
     myDocumentWindow = documentWindow;
     myEditorWindow = editorWindow;
@@ -82,12 +81,12 @@ public class FoldingModelWindow implements FoldingModelEx{
 
   @Override
   public boolean addFoldRegion(@NotNull final FoldRegion region) {
-    return myDelegate.addFoldRegion(((FoldingRegionWindow)region).getDelegate());
+    return myDelegate.addFoldRegion((FoldRegion)((FoldingRegionWindow)region).getDelegate());
   }
 
   @Override
   public void removeFoldRegion(@NotNull FoldRegion region) {
-    myDelegate.removeFoldRegion(((FoldingRegionWindow)region).getDelegate());
+    myDelegate.removeFoldRegion((FoldRegion)((FoldingRegionWindow)region).getDelegate());
   }
 
   @Override
@@ -172,7 +171,7 @@ public class FoldingModelWindow implements FoldingModelEx{
     FoldRegion hostRegion = myDelegate.createFoldRegion(hostRange.getStartOffset(), hostRange.getEndOffset(), placeholder, group, neverExpands);
     int startShift = Math.max(0, myDocumentWindow.hostToInjected(hostRange.getStartOffset()) - startOffset);
     int endShift = Math.max(0, endOffset - myDocumentWindow.hostToInjected(hostRange.getEndOffset()) - startShift);
-    FoldingRegionWindow window = new FoldingRegionWindow(myDocumentWindow, myEditorWindow, (FoldRegionImpl)hostRegion, startShift, endShift);
+    FoldingRegionWindow window = new FoldingRegionWindow(myDocumentWindow, myEditorWindow, hostRegion, startShift, endShift);
     hostRegion.putUserData(FOLD_REGION_WINDOW, window);
     return window;
   }

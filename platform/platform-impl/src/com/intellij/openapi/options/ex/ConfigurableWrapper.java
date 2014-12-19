@@ -16,7 +16,6 @@
 package com.intellij.openapi.options.ex;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.*;
@@ -28,22 +27,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Dmitry Avdeev
  *         Date: 9/17/12
  */
 public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
-
-  private static final ConfigurableWrapper[] EMPTY_ARRAY = new ConfigurableWrapper[0];
-  private static final NullableFunction<ConfigurableEP<Configurable>,Configurable> CONFIGURABLE_FUNCTION = new NullableFunction<ConfigurableEP<Configurable>, Configurable>() {
-    @Override
-    public Configurable fun(ConfigurableEP<Configurable> ep) {
-      return wrapConfigurable(ep);
-    }
-  };
   private static final Logger LOG = Logger.getInstance(ConfigurableWrapper.class);
 
   @Nullable
@@ -151,6 +141,7 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
   public String getInstanceClass() {
     return myEp.instanceClass;
   }
+
   public String getProviderClass() {
     return myEp.providerClass;
   }
@@ -236,52 +227,68 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
   private static class CompositeWrapper extends ConfigurableWrapper implements Configurable.Composite {
 
     private Configurable[] myKids;
+    private Comparator<Configurable> myComparator;
+    private boolean isInitialized;
 
     private CompositeWrapper(@NotNull ConfigurableEP ep, Configurable... kids) {
       super(ep);
-      if (ep.dynamic) {
-        kids = ((Composite)getConfigurable()).getConfigurables();
-      }
-      else if (ep.children != null) {
-        kids = ContainerUtil.mapNotNull(ep.getChildren(),
-                                        new NullableFunction<ConfigurableEP, ConfigurableWrapper>() {
-                                          @Override
-                                          public ConfigurableWrapper fun(ConfigurableEP ep) {
-                                            return ep.isAvailable() ? (ConfigurableWrapper)wrapConfigurable(ep) : null;
-                                          }
-                                        }, EMPTY_ARRAY);
-      }
-      if (ep.childrenEPName != null) {
-        ExtensionPoint<Object> childrenEP = Extensions.getArea(ep.getProject()).getExtensionPoint(ep.childrenEPName);
-        Object[] extensions = childrenEP.getExtensions();
-        if (extensions.length > 0) {
-          if (extensions[0] instanceof ConfigurableEP) {
-            Configurable[] children = ContainerUtil.mapNotNull(((ConfigurableEP<Configurable>[])extensions),
-                                                         CONFIGURABLE_FUNCTION, new Configurable[0]);
-            kids = ArrayUtil.mergeArrays(kids, children);
-          }
-          else {
-            kids = ArrayUtil.mergeArrays(kids, ((Composite)getConfigurable()).getConfigurables());
-          }
-        }
-      }
       myKids = kids;
-      Configurable.SortingConfigurable sorting = cast(Configurable.SortingConfigurable.class, this);
-      if (sorting != null) {
-        Arrays.sort(myKids, sorting.getChildComparator());
-      }
     }
 
     @Override
     public Configurable[] getConfigurables() {
+      if (!isInitialized) {
+        ArrayList<Configurable> list = new ArrayList<Configurable>();
+        if (super.myEp.dynamic) {
+          Composite composite = cast(Composite.class, this);
+          if (composite != null) {
+            Collections.addAll(list, composite.getConfigurables());
+          }
+        }
+        if (super.myEp.children != null) {
+          for (ConfigurableEP ep : super.myEp.getChildren()) {
+            if (ep.isAvailable()) {
+              list.add((Configurable)wrapConfigurable(ep));
+            }
+          }
+        }
+        if (super.myEp.childrenEPName != null) {
+          Object[] extensions = Extensions.getArea(super.myEp.getProject()).getExtensionPoint(super.myEp.childrenEPName).getExtensions();
+          if (extensions.length > 0) {
+            if (extensions[0] instanceof ConfigurableEP) {
+              for (Object object : extensions) {
+                list.add((Configurable)wrapConfigurable((ConfigurableEP)object));
+              }
+            }
+            else if (!super.myEp.dynamic) {
+              Composite composite = cast(Composite.class, this);
+              if (composite != null) {
+                Collections.addAll(list, composite.getConfigurables());
+              }
+            }
+          }
+        }
+        Collections.addAll(list, myKids);
+        // sort configurables is needed
+        for (Configurable configurable : list) {
+          if (configurable instanceof Weighted) {
+            if (((Weighted)configurable).getWeight() != 0) {
+              myComparator = COMPARATOR;
+              Collections.sort(list, myComparator);
+              break;
+            }
+          }
+        }
+        myKids = ArrayUtil.toObjectArray(list, Configurable.class);
+        isInitialized = true;
+      }
       return myKids;
     }
 
     @Override
     public ConfigurableWrapper addChild(Configurable configurable) {
-      Configurable.SortingConfigurable sorting = cast(Configurable.SortingConfigurable.class, this);
-      if (sorting != null) {
-        final int preIndex = Arrays.binarySearch(myKids, configurable, sorting.getChildComparator());
+      if (myComparator != null) {
+        final int preIndex = Arrays.binarySearch(myKids, configurable, myComparator);
         LOG.assertTrue(preIndex < 0);
         myKids = ArrayUtil.insert(myKids, -preIndex - 1, configurable);
       }

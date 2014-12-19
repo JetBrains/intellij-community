@@ -28,7 +28,6 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
@@ -72,11 +71,12 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowEP;
@@ -103,6 +103,8 @@ import java.awt.*;
 import java.io.File;
 import java.util.*;
 import java.util.List;
+
+import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.executeOnEdtUnderWriteAction;
 
 /**
  * @author Denis Zhdanov
@@ -873,27 +875,33 @@ public class ExternalSystemUtil {
   }
 
   @Nullable
-  public static VirtualFile waitForTheFile(@Nullable final String path) {
-    if (path == null) return null;
+  public static VirtualFile findLocalFileByPath(String path) {
+    VirtualFile result = StandardFileSystems.local().findFileByPath(path);
+    if (result != null) return result;
 
-    final VirtualFile[] file = new VirtualFile[1];
-    final Application app = ApplicationManager.getApplication();
-    Runnable action = new Runnable() {
-      public void run() {
-        app.runWriteAction(new Runnable() {
-          public void run() {
-            file[0] = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
-          }
-        });
+    return !ApplicationManager.getApplication().isReadAccessAllowed()
+           ? findLocalFileByPathUnderWriteAction(path)
+           : findLocalFileByPathUnderReadAction(path);
+  }
+
+  @Nullable
+  private static VirtualFile findLocalFileByPathUnderWriteAction(final String path) {
+    return executeOnEdtUnderWriteAction(new Computable<VirtualFile>() {
+      @Override
+      public VirtualFile compute() {
+        return StandardFileSystems.local().refreshAndFindFileByPath(path);
       }
-    };
-    if (app.isDispatchThread()) {
-      action.run();
-    }
-    else {
-      app.invokeAndWait(action, ModalityState.defaultModalityState());
-    }
-    return file[0];
+    });
+  }
+
+  @Nullable
+  private static VirtualFile findLocalFileByPathUnderReadAction(final String path) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile>() {
+      @Override
+      public VirtualFile compute() {
+        return StandardFileSystems.local().findFileByPath(path);
+      }
+    });
   }
 
   public static void scheduleExternalViewStructureUpdate(final Project project, final ProjectSystemId systemId) {

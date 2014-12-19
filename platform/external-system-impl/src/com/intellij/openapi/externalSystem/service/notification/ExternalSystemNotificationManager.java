@@ -249,7 +249,7 @@ public class ExternalSystemNotificationManager {
                           @NotNull final ProjectSystemId externalSystemId,
                           @NotNull final NotificationData notificationData) {
     final VirtualFile virtualFile =
-      notificationData.getFilePath() != null ? ExternalSystemUtil.waitForTheFile(notificationData.getFilePath()) : null;
+      notificationData.getFilePath() != null ? ExternalSystemUtil.findLocalFileByPath(notificationData.getFilePath()) : null;
     final String groupName = virtualFile != null ? virtualFile.getPresentableUrl() : notificationData.getTitle();
 
     myMessageCounter

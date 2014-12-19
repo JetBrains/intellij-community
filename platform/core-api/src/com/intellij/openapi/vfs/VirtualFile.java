@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vfs;
 
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
@@ -22,10 +23,14 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
+import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.util.LineSeparator;
+import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -37,9 +42,9 @@ import java.nio.charset.Charset;
  * is deleted, in which case {@link #isValid()} will return <code>false</code>.
  * <p/>
  * VirtualFile instances are created on request, so there can be several instances corresponding to the same file.
- * All of them are equal, have the same hashCode and use shared storage for all related data, including user data (see {@link com.intellij.openapi.util.UserDataHolder}).
+ * All of them are equal, have the same hashCode and use shared storage for all related data, including user data (see {@link UserDataHolder}).
  * <p/>
- * If an in-memory implementation of VirtualFile is required, {@link com.intellij.testFramework.LightVirtualFile}
+ * If an in-memory implementation of VirtualFile is required, {@link LightVirtualFile}
  * can be used.
  * <p/>
  * Please see <a href="http://confluence.jetbrains.net/display/IDEADEV/IntelliJ+IDEA+Virtual+File+System">IntelliJ IDEA Virtual File System</a>
@@ -195,7 +200,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   /**
    * Renames this file to the <code>newName</code>.<p>
    * This method should be only called within write-action.
-   * See {@link com.intellij.openapi.application.Application#runWriteAction(Runnable)}.
+   * See {@link Application#runWriteAction(Runnable)}.
    *
    * @param requestor any object to control who called this method. Note that
    *                  it is considered to be an external change if <code>requestor</code> is <code>null</code>.
@@ -388,14 +393,14 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
 
   /**
    * Creates a subdirectory in this directory. This method should be only called within write-action.
-   * See {@link com.intellij.openapi.application.Application#runWriteAction}.
+   * See {@link Application#runWriteAction}.
    *
    * @param requestor any object to control who called this method. Note that
    *                  it is considered to be an external change if <code>requestor</code> is <code>null</code>.
    *                  See {@link VirtualFileEvent#getRequestor}
    * @param name      directory name
    * @return <code>VirtualFile</code> representing the created directory
-   * @throws java.io.IOException if directory failed to be created
+   * @throws IOException if directory failed to be created
    */
   @NotNull
   public VirtualFile createChildDirectory(Object requestor, @NotNull @NonNls String name) throws IOException {
@@ -420,7 +425,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
 
   /**
    * Creates a new file in this directory. This method should be only called within write-action.
-   * See {@link com.intellij.openapi.application.Application#runWriteAction}.
+   * See {@link Application#runWriteAction}.
    *
    * @param requestor any object to control who called this method. Note that
    *                  it is considered to be an external change if <code>requestor</code> is <code>null</code>.
@@ -451,7 +456,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
 
   /**
    * Deletes this file. This method should be only called within write-action.
-   * See {@link com.intellij.openapi.application.Application#runWriteAction}.
+   * See {@link Application#runWriteAction}.
    *
    * @param requestor any object to control who called this method. Note that
    *                  it is considered to be an external change if <code>requestor</code> is <code>null</code>.
@@ -465,7 +470,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
 
   /**
    * Moves this file to another directory. This method should be only called within write-action.
-   * See {@link com.intellij.openapi.application.Application#runWriteAction}.
+   * See {@link Application#runWriteAction}.
    *
    * @param requestor any object to control who called this method. Note that
    *                  it is considered to be an external change if <code>requestor</code> is <code>null</code>.
@@ -647,7 +652,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * the timestamp of the physical file.
    *
    * @return timestamp
-   * @see java.io.File#lastModified
+   * @see File#lastModified
    */
   public abstract long getTimeStamp();
 
@@ -735,7 +740,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   }
 
   public static boolean isValidName(@NotNull String name) {
-    return name.indexOf('\\') < 0 && name.indexOf('/') < 0;
+    return PathUtil.isValidFileName(name);
   }
 
   private static final Key<String> DETECTED_LINE_SEPARATOR_KEY = Key.create("DETECTED_LINE_SEPARATOR_KEY");
@@ -743,7 +748,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   /**
    * @return Line separator for this file.
    * It is always null for directories and binaries, and possibly null if a separator isn't yet known.
-   * @see com.intellij.util.LineSeparator
+   * @see LineSeparator
    */
   public String getDetectedLineSeparator() {
     return getUserData(DETECTED_LINE_SEPARATOR_KEY);

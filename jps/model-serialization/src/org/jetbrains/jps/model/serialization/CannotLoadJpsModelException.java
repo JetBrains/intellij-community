@@ -13,16 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight.template.impl;
+package org.jetbrains.jps.model.serialization;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public interface TemplateSubstitutor {
-  ExtensionPointName<TemplateSubstitutor> EP_NAME = ExtensionPointName.create("com.intellij.liveTemplateSubstitutor");
+import java.io.File;
 
-  @Nullable
-  TemplateImpl substituteTemplate(final Editor editor, final PsiFile file, int caretOffset, final TemplateImpl template);
+/**
+ * @author nik
+ */
+public class CannotLoadJpsModelException extends RuntimeException {
+  @NotNull private final File myFile;
+
+  public CannotLoadJpsModelException(@NotNull File file, @NotNull String message, @Nullable Throwable cause) {
+    super(message, cause);
+    myFile = file;
+  }
+
+  @NotNull
+  public File getFile() {
+    return myFile;
+  }
 }

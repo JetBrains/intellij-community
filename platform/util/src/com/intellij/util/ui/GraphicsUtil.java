@@ -73,10 +73,7 @@ public class GraphicsUtil {
                            enableAA ? RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HBGR : RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
       }
 
-      if (Registry.is("force.subpixel.hinting")) {
-        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB);
-        g.setRenderingHint(RenderingHints.KEY_TEXT_LCD_CONTRAST, Registry.intValue("lcd.contrast.value"));
-      }
+      UIUtil.setHintingForLCDText(g);
     }
   }
 

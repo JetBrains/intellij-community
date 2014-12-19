@@ -15,9 +15,11 @@
  */
 package com.siyeh.ig.style;
 
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -163,7 +165,7 @@ public class UnnecessaryFinalOnLocalVariableOrParameterInspection extends BaseIn
       }
       for (PsiElement declaredElement : declaredElements) {
         final PsiLocalVariable variable = (PsiLocalVariable)declaredElement;
-        if (VariableAccessUtils.variableIsUsedInInnerClass(variable, containingBlock)) {
+        if (isNotEffectivelyFinal(containingBlock, variable)) {
           return;
         }
       }
@@ -202,10 +204,7 @@ public class UnnecessaryFinalOnLocalVariableOrParameterInspection extends BaseIn
       if (onlyWarnOnAbstractMethods) {
         return;
       }
-      if (VariableAccessUtils.variableIsUsedInInnerClass(parameter, method)) {
-        return;
-      }
-      registerModifierError(PsiModifier.FINAL, parameter, parameter);
+      registerError(method, parameter);
     }
 
     @Override
@@ -224,10 +223,7 @@ public class UnnecessaryFinalOnLocalVariableOrParameterInspection extends BaseIn
         if (!parameter.hasModifierProperty(PsiModifier.FINAL)) {
           continue;
         }
-        if (!VariableAccessUtils.variableIsUsedInInnerClass(
-          parameter, catchBlock)) {
-          registerModifierError(PsiModifier.FINAL, parameter, parameter);
-        }
+        registerError(catchBlock, parameter);
       }
     }
 
@@ -241,10 +237,20 @@ public class UnnecessaryFinalOnLocalVariableOrParameterInspection extends BaseIn
       if (!parameter.hasModifierProperty(PsiModifier.FINAL)) {
         return;
       }
-      if (VariableAccessUtils.variableIsUsedInInnerClass(parameter, statement)) {
-        return;
+      registerError(statement, parameter);
+    }
+
+    private boolean isNotEffectivelyFinal(PsiElement method, PsiVariable parameter) {
+      if (!PsiUtil.isLanguageLevel8OrHigher(parameter)) {
+        return VariableAccessUtils.variableIsUsedInInnerClass(parameter, method);
       }
-      registerModifierError(PsiModifier.FINAL, parameter, parameter);
+      return !HighlightControlFlowUtil.isEffectivelyFinal(parameter, method, null);
+    }
+
+    private void registerError(PsiElement context, PsiVariable parameter) {
+      if (!isNotEffectivelyFinal(context, parameter)) {
+        registerModifierError(PsiModifier.FINAL, parameter, parameter);
+      }
     }
   }
 }

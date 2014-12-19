@@ -1288,7 +1288,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
           final PsiLambdaExpression newLambdaExpr = (PsiLambdaExpression)myFactory.createExpressionFromText(
             ((PsiLambdaExpression)lambdaExpr).getParameterList().getText() + " -> " + "{\n}", lambdaExpr);
           final PsiStatement statementFromText;
-          if (LambdaUtil.getFunctionalInterfaceReturnType((PsiLambdaExpression)lambdaExpr) == PsiType.VOID ) {
+          if (PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType((PsiLambdaExpression)lambdaExpr))) {
             statementFromText = myFactory.createStatementFromText("a;", lambdaExpr);
             ((PsiExpressionStatement)statementFromText).getExpression().replace(parentStatement);
           } else {

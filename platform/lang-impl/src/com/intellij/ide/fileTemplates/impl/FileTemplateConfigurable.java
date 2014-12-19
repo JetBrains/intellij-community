@@ -102,6 +102,7 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
   private Splitter mySplitter;
   private final FileType myVelocityFileType = FileTypeManager.getInstance().getFileTypeByExtension("ft");
   private JPanel myDescriptionPanel;
+  private float myProportion = 0.5f;
 
   public FileTemplateConfigurable(Project project) {
     myProject = project;
@@ -161,7 +162,7 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
     myMainPanel = new JPanel(new GridBagLayout());
     myNameField = new JTextField();
     myExtensionField = new JTextField();
-    mySplitter = new Splitter(true, 0.4f);
+    mySplitter = new Splitter(true, myProportion);
     myAdjustBox = new JCheckBox(IdeBundle.message("checkbox.reformat.according.to.style"));
 
     myTemplateEditor = createEditor();
@@ -206,6 +207,10 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
     });
     myMainPanel.setPreferredSize(new Dimension(400, 300));
     return myMainPanel;
+  }
+
+  public void setProportion(float proportion) {
+    myProportion = proportion;
   }
 
   private Editor createEditor() {
