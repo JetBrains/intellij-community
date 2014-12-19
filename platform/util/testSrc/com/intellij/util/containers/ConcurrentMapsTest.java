@@ -47,8 +47,8 @@ public class ConcurrentMapsTest {
     @SuppressWarnings("unchecked") ConcurrentWeakHashMap<Object, Object> map = new ConcurrentWeakHashMap<Object, Object>(TObjectHashingStrategy.IDENTITY);
     map.put(new Object(), new Object());
 
-    tryGcSoftlyReachableObjects(); // sometimes weak references are not collected under linux, try to stress gc to force them
     do {
+      tryGcSoftlyReachableObjects(); // sometimes weak references are not collected under linux, try to stress gc to force them
       System.gc();
     }
     while (!map.processQueue());
@@ -85,8 +85,8 @@ public class ConcurrentMapsTest {
     ConcurrentWeakHashMap<Object, Object> map = new ConcurrentWeakHashMap<Object, Object>();
     map.put(new Object(), new Object());
 
-    tryGcSoftlyReachableObjects(); // sometimes weak references are not collected under linux, try to stress gc to force them
     do {
+      tryGcSoftlyReachableObjects(); // sometimes weak references are not collected under linux, try to stress gc to force them
       System.gc();
     }
     while (!map.processQueue());
@@ -109,8 +109,8 @@ public class ConcurrentMapsTest {
     ConcurrentSoftHashMap<Object, Object> map = new ConcurrentSoftHashMap<Object, Object>();
     map.put(new Object(), new Object());
 
-    tryGcSoftlyReachableObjects();
     do {
+      tryGcSoftlyReachableObjects();
       System.gc();
     }
     while (!map.processQueue());
@@ -125,8 +125,8 @@ public class ConcurrentMapsTest {
       (ConcurrentWeakValueHashMap<Object, Object>)ContainerUtil.createConcurrentWeakValueMap();
     map.put(new Object(), new Object());
 
-    tryGcSoftlyReachableObjects(); // sometimes weak references are not collected under linux, try to stress gc to force them
     do {
+      tryGcSoftlyReachableObjects(); // sometimes weak references are not collected under linux, try to stress gc to force them
       System.gc();
     }
     while (!map.processQueue());
@@ -140,8 +140,8 @@ public class ConcurrentMapsTest {
     ConcurrentSoftValueHashMap<Object, Object> map = new ConcurrentSoftValueHashMap<Object, Object>();
     map.put(new Object(), new Object());
 
-    tryGcSoftlyReachableObjects();
     do {
+      tryGcSoftlyReachableObjects();
       System.gc();
     }
     while (!map.processQueue());
@@ -190,8 +190,8 @@ public class ConcurrentMapsTest {
     SoftKeySoftValueHashMap<Object, Object> map = new SoftKeySoftValueHashMap<Object, Object>();
     map.put(new Object(), new Object());
 
-    tryGcSoftlyReachableObjects();
     do {
+      tryGcSoftlyReachableObjects();
       System.gc();
     }
     while (!map.processQueue());
@@ -203,8 +203,8 @@ public class ConcurrentMapsTest {
     WeakKeyWeakValueHashMap<Object, Object> map = new WeakKeyWeakValueHashMap<Object, Object>();
     map.put(new Object(), new Object());
 
-    tryGcSoftlyReachableObjects();
     do {
+      tryGcSoftlyReachableObjects();
       System.gc();
     }
     while (!map.processQueue());
