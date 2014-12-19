@@ -358,12 +358,12 @@ class FTManager {
 
   public File getConfigRoot(boolean create) {
     final File templatesPath = myTemplatesDir.isEmpty() ? new File(myScheme.getTemplatesDir()) : new File(myScheme.getTemplatesDir(), myTemplatesDir);
-    //if (create) {
-    //  final boolean created = templatesPath.mkdirs();
-    //  if (!created && !templatesPath.exists()) {
-    //    LOG.info("Cannot create directory: " + templatesPath.getAbsolutePath());
-    //  }
-    //}
+    if (create) {
+      final boolean created = templatesPath.mkdirs();
+      if (!created && !templatesPath.exists()) {
+        LOG.info("Cannot create directory: " + templatesPath.getAbsolutePath());
+      }
+    }
     return templatesPath;
   }
 
