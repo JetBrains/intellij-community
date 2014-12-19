@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 /**
 * @author Kirill Likhodedov
 */
-abstract class ChangeSide {
+public abstract class ChangeSide {
 
   public int getStart() {
     return getRange().getStartOffset();
