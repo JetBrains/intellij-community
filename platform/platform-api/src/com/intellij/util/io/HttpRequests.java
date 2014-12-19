@@ -75,6 +75,7 @@ public abstract class HttpRequests {
     private boolean myForceHttps;
     private HostnameVerifier myHostnameVerifier;
     private String myUserAgent;
+    private String myAccept;
 
     protected RequestBuilder(@NotNull String url) {
       myUrl = url;
@@ -124,6 +125,12 @@ public abstract class HttpRequests {
 
     @NotNull
     public abstract RequestBuilder userAgent();
+
+    @NotNull
+    public RequestBuilder accept(@Nullable String mimeType) {
+      myAccept = mimeType;
+      return this;
+    }
 
     public <T> T connect(@NotNull RequestProcessor<T> processor) throws IOException {
       // todo[r.sh] drop condition in IDEA 15
@@ -236,6 +243,9 @@ public abstract class HttpRequests {
 
       if (builder.myGzip) {
         connection.setRequestProperty("Accept-Encoding", "gzip");
+      }
+      if (builder.myAccept != null) {
+        connection.setRequestProperty("Accept", builder.myAccept);
       }
       connection.setUseCaches(false);
 
