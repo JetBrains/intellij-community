@@ -29,7 +29,6 @@ import com.intellij.util.Url;
 import com.intellij.util.io.HttpRequests;
 import com.intellij.util.net.ssl.CertificateManager;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.io.Responses;
 
 import java.io.*;
 import java.net.HttpURLConnection;
@@ -59,8 +58,7 @@ public class DefaultRemoteContentProvider extends RemoteContentProvider {
     try {
       HttpRequests.request(url.toExternalForm())
         .connectTimeout(60 * 1000)
-        .readTimeout(60 * 1000)
-        .userAgent(Responses.getServerHeaderValue())
+        .userAgent()
         .hostNameVerifier(CertificateManager.HOSTNAME_VERIFIER)
         .connect(new HttpRequests.RequestProcessor<Object>() {
           @Override
