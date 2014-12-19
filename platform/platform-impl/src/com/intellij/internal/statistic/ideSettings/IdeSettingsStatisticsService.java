@@ -46,9 +46,11 @@ public class IdeSettingsStatisticsService extends SettingsConnectionService {
   @NotNull
   public IdeSettingsDescriptor[] getSettingDescriptors() {
     if (myDescriptors == null) {
-      final URL url = createVersionsUrl();
-      if (url == null) return new IdeSettingsDescriptor[0];
-      final IdeSettingsDescriptors descriptors = deserialize(url);
+      URL url = createVersionsUrl();
+      if (url == null) {
+        return new IdeSettingsDescriptor[0];
+      }
+      IdeSettingsDescriptors descriptors = deserialize(url);
       myDescriptors = descriptors == null ? new IdeSettingsDescriptor[0] : descriptors.getDescriptors();
     }
     return myDescriptors;
@@ -63,7 +65,7 @@ public class IdeSettingsStatisticsService extends SettingsConnectionService {
       ideSettingsDescriptor = XmlSerializer.deserialize(url, IdeSettingsDescriptors.class);
     }
     catch (XmlSerializationException e) {
-      final Throwable cause = e.getCause();
+      Throwable cause = e.getCause();
       if (!(cause instanceof IOException)) {
         LOG.error(e);
       }
