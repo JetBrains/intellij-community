@@ -18,6 +18,7 @@ package com.intellij.util.io;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SystemProperties;
@@ -139,6 +140,18 @@ public abstract class HttpRequests {
       }
       else {
         return process(this, processor);
+      }
+    }
+
+    public <T> T connect(@NotNull RequestProcessor<T> processor, T errorValue, @Nullable Logger logger) {
+      try {
+        return connect(processor);
+      }
+      catch (Throwable e) {
+        if (logger != null) {
+          logger.warn(e);
+        }
+        return errorValue;
       }
     }
   }

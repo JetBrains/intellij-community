@@ -27,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.util.Collections;
 import java.util.Map;
 
 public abstract class SettingsConnectionService {
@@ -63,17 +64,18 @@ public abstract class SettingsConnectionService {
 
   @Nullable
   private Map<String, String> readSettings(final String... attributes) {
-    final Map<String, String> settings = ContainerUtilRt.newLinkedHashMap();
-    try {
-      HttpRequests.request(mySettingsUrl).userAgent().connect(new HttpRequests.RequestProcessor<Void>() {
+    return HttpRequests.request(mySettingsUrl)
+      .userAgent()
+      .connect(new HttpRequests.RequestProcessor<Map<String, String>>() {
         @Override
-        public Void process(@NotNull HttpRequests.Request request) throws IOException {
+        public Map<String, String> process(@NotNull HttpRequests.Request request) throws IOException {
           if (!request.isSuccessful()) {
             HttpURLConnection connection = (HttpURLConnection)request.getConnection();
             LOG.warn(connection.getResponseCode() + " " + connection.getResponseMessage());
-            return null;
+            return Collections.emptyMap();
           }
 
+          Map<String, String> settings = ContainerUtilRt.newLinkedHashMap();
           try {
             Element root = JDOMUtil.load(request.getInputStream());
             for (String s : attributes) {
@@ -86,17 +88,9 @@ public abstract class SettingsConnectionService {
           catch (JDOMException e) {
             LOG.error(e);
           }
-          return null;
+          return settings;
         }
-      });
-    }
-    catch (IOException e) {
-      LOG.warn(e);
-    }
-    catch (Exception e) {
-      LOG.error(e);
-    }
-    return settings;
+      }, Collections.<String, String>emptyMap(), LOG);
   }
 
   @Nullable
