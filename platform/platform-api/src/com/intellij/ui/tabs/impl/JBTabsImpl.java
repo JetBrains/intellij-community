@@ -827,6 +827,9 @@ public class JBTabsImpl extends JComponent
 
   @NotNull
   private ActionCallback _setSelected(final TabInfo info, final boolean requestFocus) {
+    if (!isEnabled()) {
+      return ActionCallback.REJECTED;
+    }
     if (mySelectionChangeHandler != null) {
       return mySelectionChangeHandler.execute(info, requestFocus, new ActiveRunnable() {
         @NotNull
