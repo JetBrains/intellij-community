@@ -17,6 +17,7 @@ package com.intellij.util.io;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SystemProperties;
@@ -44,20 +45,28 @@ import java.util.zip.GZIPInputStream;
  * });
  * }</pre>
  */
-public final class HttpRequests {
+public abstract class HttpRequests {
   private static final boolean ourWrapClassLoader =
     SystemInfo.isJavaVersionAtLeast("1.7") && !SystemProperties.getBooleanProperty("idea.parallel.class.loader", true);
 
   public interface Request {
-    @NotNull URLConnection getConnection() throws IOException;
-    @NotNull InputStream getInputStream() throws IOException;
+    @NotNull
+    URLConnection getConnection() throws IOException;
+
+    @NotNull
+    InputStream getInputStream() throws IOException;
+
+    boolean isSuccessful() throws IOException;
   }
 
   public interface RequestProcessor<T> {
     T process(@NotNull Request request) throws IOException;
   }
 
-  public static class RequestBuilder {
+  protected HttpRequests() {
+  }
+
+  public abstract static class RequestBuilder {
     private final String myUrl;
     private int myConnectTimeout = HttpConfigurable.CONNECTION_TIMEOUT;
     private int myTimeout = HttpConfigurable.READ_TIMEOUT;
@@ -67,7 +76,7 @@ public final class HttpRequests {
     private HostnameVerifier myHostnameVerifier;
     private String myUserAgent;
 
-    private RequestBuilder(@NotNull String url) {
+    protected RequestBuilder(@NotNull String url) {
       myUrl = url;
     }
 
@@ -113,6 +122,9 @@ public final class HttpRequests {
       return this;
     }
 
+    @NotNull
+    public abstract RequestBuilder userAgent();
+
     public <T> T connect(@NotNull RequestProcessor<T> processor) throws IOException {
       // todo[r.sh] drop condition in IDEA 15
       if (ourWrapClassLoader) {
@@ -126,8 +138,10 @@ public final class HttpRequests {
 
   @NotNull
   public static RequestBuilder request(@NotNull String url) {
-    return new RequestBuilder(url);
+    return ServiceManager.getService(HttpRequests.class).createRequestBuilder(url);
   }
+
+  protected abstract RequestBuilder createRequestBuilder(@NotNull String url);
 
   private static <T> T wrapAndProcess(RequestBuilder builder, RequestProcessor<T> processor) throws IOException {
     // hack-around for class loader lock in sun.net.www.protocol.http.NegotiateAuthentication (IDEA-131621)
@@ -166,6 +180,12 @@ public final class HttpRequests {
           }
         }
         return myInputStream;
+      }
+
+      @Override
+      public boolean isSuccessful() throws IOException {
+        URLConnection connection = getConnection();
+        return !(connection instanceof HttpURLConnection) || ((HttpURLConnection)connection).getResponseCode() == 200;
       }
 
       private void cleanup() throws IOException {

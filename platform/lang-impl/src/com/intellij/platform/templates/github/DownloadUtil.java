@@ -1,6 +1,5 @@
 package com.intellij.platform.templates.github;
 
-import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -175,7 +174,7 @@ public class DownloadUtil {
 
     try {
       HttpRequests.request(location)
-        .userAgent(ApplicationInfoEx.getInstanceEx().getFullApplicationName())
+        .userAgent()
         .connect(new HttpRequests.RequestProcessor<Object>() {
           @Override
           public Object process(@NotNull HttpRequests.Request request) throws IOException {

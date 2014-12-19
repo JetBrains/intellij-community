@@ -39,5 +39,5 @@ public class JavaFileStructureFilteringTest extends JavaFileStructureTestCase {
   public void testMatcher1()          {checkTree("ico");}
   public void testMatcher2()          {checkTree("ico");}
   
-  public void _testAnonymousMatcher2() {checkTree("ico");} //http://youtrack.jetbrains.com/issue/IDEABKL-6906
+  public void _testAnonymousMatcher2() {checkTree("ico");} //https://youtrack.jetbrains.com/issue/IDEABKL-6906
 }

@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.LineSet;
+import com.intellij.openapi.editor.impl.RangeMarkerImpl;
 import com.intellij.openapi.editor.impl.RangeMarkerTree;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
@@ -399,7 +400,10 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
     @Override public void addDocumentListener(@NotNull DocumentListener listener) { }
     @Override public void addDocumentListener(@NotNull DocumentListener listener, @NotNull Disposable parentDisposable) { }
     @Override public void removeDocumentListener(@NotNull DocumentListener listener) { }
-    @NotNull @Override public RangeMarker createRangeMarker(int startOffset, int endOffset) { return null; }
+    @NotNull @Override public RangeMarker createRangeMarker(int startOffset, int endOffset) {
+      return new RangeMarkerImpl(this, startOffset, endOffset, true){
+      };
+    }
     @NotNull @Override public RangeMarker createRangeMarker(int startOffset, int endOffset, boolean surviveOnExternalChange) { return null; }
     @Override public void addPropertyChangeListener(@NotNull PropertyChangeListener listener) { }
     @Override public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) { }

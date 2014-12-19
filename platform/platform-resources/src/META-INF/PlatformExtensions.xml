@@ -265,6 +265,8 @@
 
     <applicationService serviceImplementation="com.intellij.openapi.editor.ex.EditorSettingsExternalizable"/>
 
+    <applicationService serviceInterface="com.intellij.util.io.HttpRequests" serviceImplementation="com.intellij.util.io.HttpRequestsImpl"/>
+
     <scopeParserExtension implementation="com.intellij.psi.search.scope.packageSet.FilePackageSetParserExtension"/>
     <applicationService serviceInterface="com.intellij.openapi.ui.popup.StackingPopupDispatcher" serviceImplementation="com.intellij.ui.popup.StackingPopupDispatcherImpl"/>
 

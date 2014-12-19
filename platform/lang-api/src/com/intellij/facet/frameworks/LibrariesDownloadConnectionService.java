@@ -24,7 +24,7 @@ public class LibrariesDownloadConnectionService extends SettingsConnectionServic
   }
 
   private LibrariesDownloadConnectionService() {
-    super("http://jetbrains.com/idea/download-assistant.xml", "http://frameworks.jetbrains.com");
+    super("https://www.jetbrains.com/idea/download-assistant.xml", "http://frameworks.jetbrains.com");
   }
 
 }

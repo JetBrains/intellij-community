@@ -194,7 +194,7 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
                       String content = "<html>If you'd like to learn" +
                                        " more about PyCharm " +
                                        "Educational Edition, " +
-                                       "click <a href=\"http://www.jetbrains.com/pycharm-educational/quickstart/\">here</a> to watch a tutorial</html>";
+                                       "click <a href=\"https://www.jetbrains.com/pycharm-educational/quickstart/\">here</a> to watch a tutorial</html>";
                       final Notification notification =
                         new Notification("Watch Tutorials!", "", content, NotificationType.INFORMATION, new UrlOpeningListener(true));
                       Notifications.Bus.notify(notification);
