@@ -41,7 +41,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
@@ -67,9 +66,6 @@ import java.util.*;
 import java.util.List;
 
 
-/**
- * @author Eugene.Kudelevsky
- */
 public class ZenCodingTemplate extends CustomLiveTemplateBase {
   public static final char MARKER = '\0';
   private static final String EMMET_RECENT_WRAP_ABBREVIATIONS_KEY = "emmet.recent.wrap.abbreviations";
@@ -302,11 +298,9 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
     if (node instanceof TemplateNode) {
       final TemplateToken token = ((TemplateNode)node).getTemplateToken();
       if (token != null) {
-        final List<Couple<String>> attributes = token.getAttribute2Value();
-        final Couple<String> singleAttribute = ContainerUtil.getFirstItem(attributes);
-        if (singleAttribute == null || HtmlUtil.CLASS_ATTRIBUTE_NAME.equalsIgnoreCase(singleAttribute.first) && StringUtil.isEmpty(singleAttribute.second)) {
-          return true;
-        }
+        final Map<String, String> attributes = token.getAttributes();
+        return attributes.isEmpty() || 
+               attributes.containsKey(HtmlUtil.CLASS_ATTRIBUTE_NAME) && StringUtil.isEmpty(attributes.get(HtmlUtil.CLASS_ATTRIBUTE_NAME));
       }
     }
     return false;
