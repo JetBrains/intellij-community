@@ -95,7 +95,7 @@ public class RemotelyConfigurableStatServiceTest {
     RemotelyConfigurableStatisticsService service =
       new RemotelyConfigurableStatisticsService(new StatisticsConnectionService() {
                                                   @Override
-                                                  public Boolean isTransmissionPermitted() {
+                                                  public boolean isTransmissionPermitted() {
                                                     return false;
                                                   }
                                                 },
