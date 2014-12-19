@@ -40,7 +40,7 @@ public class IdeSettingsStatisticsService extends SettingsConnectionService {
   }
 
   private IdeSettingsStatisticsService() {
-    super("http://jetbrains.com/idea/ide-settings-statistics.xml", "http://frameworks.jetbrains.com/statistics");
+    super("https://www.jetbrains.com/idea/ide-settings-statistics.xml", "http://frameworks.jetbrains.com/statistics");
   }
 
   @NotNull

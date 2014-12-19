@@ -12,6 +12,6 @@ public class StudyWatchTutorialAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    BrowserUtil.browse("http://www.jetbrains.com/pycharm-educational/quickstart/");
+    BrowserUtil.browse("https://www.jetbrains.com/pycharm-educational/quickstart/");
   }
 }

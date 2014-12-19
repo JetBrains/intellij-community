@@ -4,21 +4,21 @@
         <code>IC</code>
 
         <channel id="maiaEAP" name="IntelliJ IDEA 9 updates" status="release" majorVersion="9"
-                 url="http://www.jetbrains.com/idea/whatsnew"
+                 url="https://www.jetbrains.com/idea/whatsnew"
                  feedback="http://youtrack.jetbrains.net">
             <build number="95.627" version="9.0.4">
                 <message>IntelliJ IDEA 9.0.4 is available.
-                    Please visit http://www.jetbrains.com/idea to learn more and download it.
+                    Please visit https://www.jetbrains.com/idea to learn more and download it.
                 </message>
                 <patch from="95.429" size="2"/>
             </build>
         </channel>
 
         <channel id="idea90" name="IntelliJ IDEA 9 updates" status="release" majorVersion="9"
-                 url="http://www.jetbrains.com/idea/whatsnew">
+                 url="https://www.jetbrains.com/idea/whatsnew">
             <build number="95.627" version="9.0.4">
                 <message>IntelliJ IDEA 9.0.4 is available.
-                    Please visit http://www.jetbrains.com/idea to learn more and download it.
+                    Please visit https://www.jetbrains.com/idea to learn more and download it.
                 </message>
                 <patch from="95.429" size="2"/>
             </build>

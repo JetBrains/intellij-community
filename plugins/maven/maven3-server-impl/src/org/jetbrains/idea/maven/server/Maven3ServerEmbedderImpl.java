@@ -254,7 +254,7 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
         getComponent(RepositorySystem.class).createLocalRepository(new File(myMavenSettings.getLocalRepository()));
       final String customRepoId = System.getProperty("maven3.localRepository.id");
       if(customRepoId != null) {
-        // see details at http://youtrack.jetbrains.com/issue/IDEA-121292
+        // see details at https://youtrack.jetbrains.com/issue/IDEA-121292
         localRepository.setId(customRepoId);
       }
       return localRepository;

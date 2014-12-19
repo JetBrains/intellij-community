@@ -712,7 +712,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
 
   /**
    * It's possible that we need to expand quick doc control's width in order to provide better visual representation
-   * (see http://youtrack.jetbrains.com/issue/IDEA-101425). This method calculates that width expand.
+   * (see https://youtrack.jetbrains.com/issue/IDEA-101425). This method calculates that width expand.
    *
    * @param buttonWidth  icon button's width
    * @param updatedText  text which will be should at the quick doc control
