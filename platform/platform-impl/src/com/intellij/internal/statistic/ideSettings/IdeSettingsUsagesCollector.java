@@ -7,13 +7,13 @@ import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.hash.HashSet;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
 public class IdeSettingsUsagesCollector extends AbstractApplicationUsagesCollector {
-
   @NotNull
   @Override
   public Set<UsageDescriptor> getProjectUsages(@NotNull Project project) throws CollectUsagesException {
@@ -26,9 +26,9 @@ public class IdeSettingsUsagesCollector extends AbstractApplicationUsagesCollect
 
   @NotNull
   private static Set<Pair<Object, IdeSettingsDescriptor>> getProviders(@Nullable Project project, boolean projectComponent) {
-    Set<Pair<Object, IdeSettingsDescriptor>> pairs = new HashSet<Pair<Object, IdeSettingsDescriptor>>();
+    Set<Pair<Object, IdeSettingsDescriptor>> pairs = new THashSet<Pair<Object, IdeSettingsDescriptor>>();
     for (IdeSettingsDescriptor descriptor : IdeSettingsStatisticsService.getInstance().getSettingDescriptors()) {
-      final Pair<Object, IdeSettingsDescriptor> pair = getProvider(project, descriptor, projectComponent);
+      Pair<Object, IdeSettingsDescriptor> pair = getProvider(project, descriptor, projectComponent);
       if (pair != null) {
         pairs.add(pair);
       }
