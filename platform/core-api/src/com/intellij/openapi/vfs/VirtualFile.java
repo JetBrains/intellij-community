@@ -25,7 +25,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.LineSeparator;
-import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -740,7 +739,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   }
 
   public static boolean isValidName(@NotNull String name) {
-    return PathUtil.isValidFileName(name);
+    return name.length() > 0 && name.indexOf('\\') < 0 && name.indexOf('/') < 0;
   }
 
   private static final Key<String> DETECTED_LINE_SEPARATOR_KEY = Key.create("DETECTED_LINE_SEPARATOR_KEY");
