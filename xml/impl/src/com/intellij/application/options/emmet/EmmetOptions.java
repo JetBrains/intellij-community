@@ -41,6 +41,8 @@ public class EmmetOptions implements PersistentStateComponent<EmmetOptions> {
   private boolean myFuzzySearchEnabled = true;
   private boolean myAutoInsertCssPrefixedEnabled = true;
   private boolean myPreviewEnabled = false;
+  private boolean myCompactBooleanAllowed = true;
+  private Set<String> myBooleanAttributes = ContainerUtil.newHashSet("contenteditable", "seamless");
   private Set<String> myFiltersEnabledByDefault = ContainerUtil.newHashSet();
   @NotNull
   private Map<String, Integer> prefixes = ContainerUtil.newHashMap();
@@ -86,6 +88,22 @@ public class EmmetOptions implements PersistentStateComponent<EmmetOptions> {
 
   public void setPreviewEnabled(boolean previewEnabled) {
     myPreviewEnabled = previewEnabled;
+  }
+  
+  public boolean isCompactBooleanAllowed() {
+    return myCompactBooleanAllowed;
+  }
+
+  public void setCompactBooleanAllowed(boolean compactBooleanAllowed) {
+    myCompactBooleanAllowed = compactBooleanAllowed;
+  }
+
+  public Set<String> getBooleanAttributes() {
+    return myBooleanAttributes;
+  }
+
+  public void setBooleanAttributes(@NotNull Set<String> booleanAttributes) {
+    myBooleanAttributes = booleanAttributes;
   }
   
   public boolean isEmmetEnabled() {
