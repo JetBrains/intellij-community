@@ -56,6 +56,8 @@ import org.jetbrains.jps.model.java.compiler.*;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsModuleType;
+import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService;
+import org.jetbrains.jps.model.serialization.PathMacroUtil;
 import org.jetbrains.jps.service.JpsServiceManager;
 
 import javax.tools.*;
@@ -594,7 +596,19 @@ public class JavaBuilder extends ModuleLevelBuilder {
       assert cached != null : context;
     }
 
-    List<String> options = new ArrayList<String>(cached);
+    List<String> options = new ArrayList<String>();
+    JpsModule module = chunk.representativeTarget().getModule();
+    File baseDirectory = JpsModelSerializationDataService.getBaseDirectory(module);
+    if (baseDirectory != null) {
+      //this is a temporary workaround to allow passing per-module compiler options for Eclipse compiler in form
+      // -properties $MODULE_DIR$/.settings/org.eclipse.jdt.core.prefs
+      for (String s : cached) {
+        options.add(StringUtil.replace(s, "$" + PathMacroUtil.MODULE_DIR_MACRO_NAME + "$", baseDirectory.getAbsolutePath()));
+      }
+    }
+    else {
+      options.addAll(cached);
+    }
     addCompilationOptions(options, context, chunk, profile);
     return options;
   }
