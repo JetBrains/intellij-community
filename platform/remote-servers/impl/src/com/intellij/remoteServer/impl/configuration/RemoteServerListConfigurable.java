@@ -30,7 +30,7 @@ import java.util.Set;
 /**
  * @author nik
  */
-public class RemoteServerListConfigurable extends MasterDetailsComponent implements OptionalConfigurable, SearchableConfigurable {
+public class RemoteServerListConfigurable extends MasterDetailsComponent implements SearchableConfigurable {
   private final RemoteServersManager myServersManager;
   @Nullable private final ServerType<?> myServerType;
   private RemoteServer<?> myLastSelectedServer;
@@ -136,11 +136,6 @@ public class RemoteServerListConfigurable extends MasterDetailsComponent impleme
     }
     actions.add(new MyDeleteAction());
     return actions;
-  }
-
-  @Override
-  public boolean needDisplay() {
-    return ServerType.EP_NAME.getExtensions().length > 0;
   }
 
   @Override

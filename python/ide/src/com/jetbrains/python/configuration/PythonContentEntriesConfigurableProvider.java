@@ -15,23 +15,29 @@
  */
 package com.jetbrains.python.configuration;
 
-import com.intellij.application.options.ModuleAwareProjectConfigurable;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.options.UnnamedConfigurable;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.ConfigurableProvider;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.util.ArrayUtil;
 
 /**
- * @author yole
+ * @author Sergey.Malenkov
  */
-public class PyDependenciesConfigurable extends ModuleAwareProjectConfigurable {
-  public PyDependenciesConfigurable(Project project) {
-    super(project, "Project Dependencies", "reference.settingsdialog.project.dependencies");
+public final class PythonContentEntriesConfigurableProvider extends ConfigurableProvider {
+  private final Project myProject;
+
+  public PythonContentEntriesConfigurableProvider(Project project) {
+    myProject = project;
   }
 
-  @NotNull
   @Override
-  protected UnnamedConfigurable createModuleConfigurable(Module module) {
-    return new PyModuleDependenciesConfigurable(module);
+  public boolean canCreateConfigurable() {
+    return ArrayUtil.getFirstElement(ModuleManager.getInstance(myProject).getModules()) != null;
+  }
+
+  @Override
+  public Configurable createConfigurable() {
+    return new PythonContentEntriesConfigurable(myProject);
   }
 }

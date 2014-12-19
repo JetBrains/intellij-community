@@ -13,25 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.python.configuration;
+package com.intellij.openapi.vfs.encoding;
 
-import com.intellij.application.options.ModuleAwareProjectConfigurable;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.options.UnnamedConfigurable;
+import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.ConfigurableProvider;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.util.PlatformUtils;
 
 /**
- * @author yole
+ * @author Sergey.Malenkov
  */
-public class PyDependenciesConfigurable extends ModuleAwareProjectConfigurable {
-  public PyDependenciesConfigurable(Project project) {
-    super(project, "Project Dependencies", "reference.settingsdialog.project.dependencies");
+public final class FileEncodingConfigurableProvider extends ConfigurableProvider {
+  private final Project myProject;
+
+  public FileEncodingConfigurableProvider(Project project) {
+    myProject = project;
   }
 
-  @NotNull
   @Override
-  protected UnnamedConfigurable createModuleConfigurable(Module module) {
-    return new PyModuleDependenciesConfigurable(module);
+  public boolean canCreateConfigurable() {
+    return !PlatformUtils.isRubyMine();
+  }
+
+  @Override
+  public Configurable createConfigurable() {
+    return new FileEncodingConfigurable(myProject);
   }
 }
