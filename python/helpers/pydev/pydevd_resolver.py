@@ -235,7 +235,7 @@ class DictResolver:
 
     def keyStr(self, key):
         if isinstance(key, str):
-            return "'%s'"%key
+            return '%r'%key
         else:
             if not pydevd_constants.IS_PY3K:
                 if isinstance(key, unicode):
