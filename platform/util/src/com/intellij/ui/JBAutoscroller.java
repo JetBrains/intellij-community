@@ -24,6 +24,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 
 public class JBAutoscroller implements ActionListener {
   private static final int SCROLL_UPDATE_INTERVAL = 15;
@@ -53,6 +55,10 @@ public class JBAutoscroller implements ActionListener {
 
     if (handler != null) {
       component.putClientProperty(SCROLL_HANDLER_KEY, handler);
+    }
+
+    if (component instanceof JTable) {
+      new MoveTableCellEditorOnAutoscrollFix((JTable)component);
     }
 
     component.addMouseListener(new MouseAdapter() {
@@ -176,6 +182,67 @@ public class JBAutoscroller implements ActionListener {
                               int x, int y, int xAbs, int yAbs,
                               int clickCount, boolean popupTrigger, int button) {
       super(source, id, when, modifiers, x, y, xAbs, yAbs, clickCount, popupTrigger, button);
+    }
+  }
+
+  // JTable's UI only updates cell editor location upon it's cell painting which doesn't occur if the cell becomes obscure.
+  // Moving cell editor prevents it from being 'stuck' on autoscroll.
+  private static class MoveTableCellEditorOnAutoscrollFix implements AdjustmentListener, PropertyChangeListener {
+    private final JTable myTable;
+
+    public MoveTableCellEditorOnAutoscrollFix(JTable table) {
+      myTable = table;
+
+      JScrollPane scrollPane = UIUtil.getParentOfType(JScrollPane.class, myTable);
+      assert scrollPane != null : "MoveTableCellEditorOnAutoscrollFix can only be applied to tables having a scrollpane as it's parent!";
+
+      scrollPane.addPropertyChangeListener(this);
+      addScrollBarListener(scrollPane.getHorizontalScrollBar());
+      addScrollBarListener(scrollPane.getVerticalScrollBar());
+    }
+
+    @Override
+    public void propertyChange(PropertyChangeEvent evt) {
+      String propertyName = evt.getPropertyName();
+      if ("horizontalScrollBar".equals(propertyName) || "verticalScrollBar".equals(propertyName)) {
+        removeScrollBarListener(ObjectUtils.tryCast(evt.getOldValue(), JScrollBar.class));
+        addScrollBarListener(ObjectUtils.tryCast(evt.getNewValue(), JScrollBar.class));
+      }
+    }
+
+    private void addScrollBarListener(@Nullable JScrollBar to) {
+      if (to != null) {
+        to.addAdjustmentListener(this);
+      }
+    }
+
+    private void removeScrollBarListener(@Nullable JScrollBar from) {
+      if (from != null) {
+        from.removeAdjustmentListener(this);
+      }
+    }
+
+    @Override
+    public void adjustmentValueChanged(AdjustmentEvent e) {
+      moveCellEditor();
+    }
+
+    private void moveCellEditor() {
+      int column = myTable.getEditingColumn();
+      int row = myTable.getEditingRow();
+      Component editor = myTable.getEditorComponent();
+      if (column == -1 || row == -1 || editor == null) return;
+
+      Rectangle cellRect = myTable.getCellRect(row, column, false);
+      Rectangle visibleRect = myTable.getVisibleRect();
+      if (visibleRect.intersects(cellRect)) return;
+
+      Rectangle editorBounds = editor.getBounds();
+      if (!visibleRect.intersects(editorBounds)) return;
+
+      editorBounds.x = cellRect.x;
+      editorBounds.y = cellRect.y;
+      editor.setBounds(editorBounds);
     }
   }
 }
