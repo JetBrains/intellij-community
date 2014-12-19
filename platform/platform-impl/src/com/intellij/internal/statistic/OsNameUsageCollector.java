@@ -28,7 +28,7 @@ import java.util.Set;
 /**
  * @author peter
  */
-public class OsNameUsageCollector extends UsagesCollector {
+class OsNameUsageCollector extends UsagesCollector {
   @NotNull
   @Override
   public Set<UsageDescriptor> getUsages(@Nullable Project project) throws CollectUsagesException {

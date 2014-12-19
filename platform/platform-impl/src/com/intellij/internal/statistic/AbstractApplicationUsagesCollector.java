@@ -20,13 +20,13 @@ import com.intellij.internal.statistic.persistence.ApplicationStatisticsPersiste
 import com.intellij.internal.statistic.persistence.ApplicationStatisticsPersistenceComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
+import com.intellij.util.containers.ObjectIntHashMap;
+import gnu.trove.THashSet;
+import gnu.trove.TObjectIntProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Map;
+import java.util.Collections;
 import java.util.Set;
 
 public abstract class AbstractApplicationUsagesCollector extends UsagesCollector {
@@ -58,21 +58,31 @@ public abstract class AbstractApplicationUsagesCollector extends UsagesCollector
 
   @NotNull
   public Set<UsageDescriptor> getApplicationUsages(@NotNull ApplicationStatisticsPersistence persistence) {
-    Map<String, Integer> result = new THashMap<String, Integer>();
+    ObjectIntHashMap<String> result = new ObjectIntHashMap<String>();
     for (Set<UsageDescriptor> usageDescriptors : persistence.getApplicationData(getGroupId()).values()) {
-      for (UsageDescriptor usageDescriptor : usageDescriptors) {
-        final String key = usageDescriptor.getKey();
-        final Integer count = result.get(key);
-        result.put(key, count == null ? 1 : count.intValue() + 1);
+      if (!usageDescriptors.isEmpty()) {
+        result.ensureCapacity(usageDescriptors.size());
+        for (UsageDescriptor usageDescriptor : usageDescriptors) {
+          String key = usageDescriptor.getKey();
+          result.put(key, result.get(key, 0) + 1);
+        }
       }
     }
 
-    return ContainerUtil.map2Set(result.entrySet(), new Function<Map.Entry<String, Integer>, UsageDescriptor>() {
-      @Override
-      public UsageDescriptor fun(Map.Entry<String, Integer> entry) {
-        return new UsageDescriptor(entry.getKey(), entry.getValue());
-      }
-    });
+    if (result.isEmpty()){
+      return Collections.emptySet();
+    }
+    else {
+      final THashSet<UsageDescriptor> descriptors = new THashSet<UsageDescriptor>(result.size());
+      result.forEachEntry(new TObjectIntProcedure<String>() {
+        @Override
+        public boolean execute(String key, int value) {
+          descriptors.add(new UsageDescriptor(key, value));
+          return true;
+        }
+      });
+      return descriptors;
+    }
   }
 
   @Override
