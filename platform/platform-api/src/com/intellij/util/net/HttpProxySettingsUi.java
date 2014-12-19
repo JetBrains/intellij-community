@@ -182,12 +182,11 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
               //noinspection ConstantConditions
               HttpRequests.request(answer)
                 .readTimeout(3 * 1000)
-                .connect(new HttpRequests.RequestProcessor<Object>() {
+                .connect(new HttpRequests.RequestProcessor<Void>() {
                   @Override
-                  public Object process(@NotNull HttpRequests.Request request) throws IOException {
-                    int responseCode = ((HttpURLConnection)request.getConnection()).getResponseCode();
-                    if (responseCode != HttpURLConnection.HTTP_OK) {
-                      exceptionReference.set(new IOException("Error code: " + responseCode));
+                  public Void process(@NotNull HttpRequests.Request request) throws IOException {
+                    if (!request.isSuccessful()) {
+                      exceptionReference.set(new IOException("Error code: " + ((HttpURLConnection)request.getConnection()).getResponseCode()));
                     }
                     return null;
                   }
