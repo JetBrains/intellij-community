@@ -772,7 +772,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     return configurableTarget == null ? getShowUsagesWithSettingsShortcut() : configurableTarget.getShortcut();
   }
 
-  void associateProgress(ProgressIndicator indicator) {
+  void associateProgress(@NotNull ProgressIndicator indicator) {
     associatedProgress = indicator;
   }
 
