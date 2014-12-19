@@ -38,6 +38,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.apache.http.*;
+import org.apache.http.client.HttpClient;
 import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpRequestWrapper;
@@ -48,12 +49,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Set;
-
-import static com.intellij.tasks.impl.TaskUtil.encodeUrl;
-import static com.intellij.tasks.trello.TrelloUtil.TRELLO_API_BASE_URL;
 
 /**
  * @author Mikhail Golubev
@@ -149,9 +148,11 @@ public final class TrelloRepository extends NewBaseRepositoryImpl {
 
   @Nullable
   public TrelloCard fetchCardById(@NotNull String id) throws Exception {
-    final String url = TRELLO_API_BASE_URL + "/cards/" + id + "?actions=commentCard&fields=" + encodeUrl(TrelloCard.REQUIRED_FIELDS);
     try {
-      return makeRequestAndDeserializeJsonResponse(url, TrelloCard.class);
+      final URIBuilder url = new URIBuilder(getRestApiUrl("cards", id))
+        .addParameter("actions", "commentCard")
+        .addParameter("fields", TrelloCard.REQUIRED_FIELDS);
+      return executeMethod(new HttpGet(url.build()), new GsonSingleObjectDeserializer<TrelloCard>(TrelloUtil.GSON, TrelloCard.class, true));
     }
     // Trello returns string "The requested resource was not found." or "invalid id"
     // if card can't be found, which not only cannot be deserialized, but also not valid JSON at all.
@@ -199,8 +200,9 @@ public final class TrelloRepository extends NewBaseRepositoryImpl {
   @NotNull
   public TrelloUser fetchUserByToken() throws Exception {
     try {
-      final String url = TRELLO_API_BASE_URL + "/members/me?fields=" + encodeUrl(TrelloUser.REQUIRED_FIELDS);
-      return makeRequestAndDeserializeJsonResponse(url, TrelloUser.class);
+      final URIBuilder url = new URIBuilder(getRestApiUrl("members", "me"))
+        .addParameter("fields", TrelloUser.REQUIRED_FIELDS);
+      return makeRequestAndDeserializeJsonResponse(url.build(), TrelloUser.class);
     }
     catch (Exception e) {
       LOG.warn("Error while fetching initial user info", e);
@@ -213,9 +215,10 @@ public final class TrelloRepository extends NewBaseRepositoryImpl {
 
   @NotNull
   public TrelloBoard fetchBoardById(@NotNull String id) throws Exception {
-    final String url = TRELLO_API_BASE_URL + "/boards/" + id + "?fields=" + encodeUrl(TrelloBoard.REQUIRED_FIELDS);
+    final URIBuilder url = new URIBuilder(getRestApiUrl("boards", id))
+      .addParameter("fields", TrelloBoard.REQUIRED_FIELDS);
     try {
-      return makeRequestAndDeserializeJsonResponse(url, TrelloBoard.class);
+      return makeRequestAndDeserializeJsonResponse(url.build(), TrelloBoard.class);
     }
     catch (Exception e) {
       LOG.warn("Error while fetching initial board info", e);
@@ -225,9 +228,10 @@ public final class TrelloRepository extends NewBaseRepositoryImpl {
 
   @NotNull
   public TrelloList fetchListById(@NotNull String id) throws Exception {
-    final String url = TRELLO_API_BASE_URL + "/lists/" + id + "?fields=" + encodeUrl(TrelloList.REQUIRED_FIELDS);
+    final URIBuilder url = new URIBuilder(getRestApiUrl("lists", id))
+      .addParameter("fields", TrelloList.REQUIRED_FIELDS);
     try {
-      return makeRequestAndDeserializeJsonResponse(url, TrelloList.class);
+      return makeRequestAndDeserializeJsonResponse(url.build(), TrelloList.class);
     }
     catch (Exception e) {
       LOG.warn("Error while fetching initial list info" + id, e);
@@ -240,8 +244,9 @@ public final class TrelloRepository extends NewBaseRepositoryImpl {
     if (myCurrentBoard == null || myCurrentBoard == UNSPECIFIED_BOARD) {
       throw new IllegalStateException("Board not set");
     }
-    final String url = TRELLO_API_BASE_URL + "/boards/" + myCurrentBoard.getId() + "/lists?fields=" + encodeUrl(TrelloList.REQUIRED_FIELDS);
-    return makeRequestAndDeserializeJsonResponse(url, TrelloUtil.LIST_OF_LISTS_TYPE);
+    final URIBuilder url = new URIBuilder(getRestApiUrl("boards", myCurrentBoard.getId(), "lists"))
+      .addParameter("fields", TrelloList.REQUIRED_FIELDS);
+    return makeRequestAndDeserializeJsonResponse(url.build(), TrelloUtil.LIST_OF_LISTS_TYPE);
   }
 
   @NotNull
@@ -249,8 +254,10 @@ public final class TrelloRepository extends NewBaseRepositoryImpl {
     if (myCurrentUser == null) {
       throw new IllegalStateException("User not set");
     }
-    final String url = TRELLO_API_BASE_URL + "/members/me/boards?filter=open&fields=" + encodeUrl(TrelloBoard.REQUIRED_FIELDS);
-    return makeRequestAndDeserializeJsonResponse(url, TrelloUtil.LIST_OF_BOARDS_TYPE);
+    final URIBuilder url = new URIBuilder(getRestApiUrl("members", "me", "boards"))
+      .addParameter("filter", "open")
+      .addParameter("fields", TrelloBoard.REQUIRED_FIELDS);
+    return makeRequestAndDeserializeJsonResponse(url.build(), TrelloUtil.LIST_OF_BOARDS_TYPE);
   }
 
   @NotNull
@@ -259,22 +266,29 @@ public final class TrelloRepository extends NewBaseRepositoryImpl {
     // choose most appropriate card provider
     String baseUrl;
     if (myCurrentList != null && myCurrentList != UNSPECIFIED_LIST) {
-      baseUrl = TRELLO_API_BASE_URL + "/lists/" + myCurrentList.getId() + "/cards";
+      baseUrl = getRestApiUrl("lists", myCurrentList.getId(), "cards");
       fromList = true;
     }
     else if (myCurrentBoard != null && myCurrentBoard != UNSPECIFIED_BOARD) {
-      baseUrl = TRELLO_API_BASE_URL + "/boards/" + myCurrentBoard.getId() + "/cards";
+      baseUrl = getRestApiUrl("boards", myCurrentBoard.getId(), "cards");
     }
     else if (myCurrentUser != null) {
-      baseUrl = TRELLO_API_BASE_URL + "/members/me/cards";
+      baseUrl = getRestApiUrl("members", "me", "cards");
     }
     else {
       throw new IllegalStateException("Not configured");
     }
-    String fetchCardsUrl = baseUrl + "?fields=" + encodeUrl(TrelloCard.REQUIRED_FIELDS) + "&limit" + limit;
+    final URIBuilder fetchCardUrl = new URIBuilder(baseUrl)
+      .addParameter("fields", TrelloCard.REQUIRED_FIELDS)
+      .addParameter("limit", String.valueOf(limit));
     // 'visible' filter for some reason is not supported for lists
-    fetchCardsUrl += withClosed || fromList ? "&filter=all" : "&filter=visible";
-    List<TrelloCard> cards = makeRequestAndDeserializeJsonResponse(fetchCardsUrl, TrelloUtil.LIST_OF_CARDS_TYPE);
+    if (withClosed || fromList) {
+      fetchCardUrl.addParameter("filter", "all");
+    }
+    else {
+      fetchCardUrl.addParameter("filter", "visible");
+    }
+    List<TrelloCard> cards = makeRequestAndDeserializeJsonResponse(fetchCardUrl.build(), TrelloUtil.LIST_OF_CARDS_TYPE);
     LOG.debug("Total " + cards.size() + " cards downloaded");
     if (!myIncludeAllCards) {
       cards = ContainerUtil.filter(cards, new Condition<TrelloCard>() {
@@ -287,7 +301,7 @@ public final class TrelloRepository extends NewBaseRepositoryImpl {
     }
     if (!cards.isEmpty()) {
       if (fromList) {
-        baseUrl = TRELLO_API_BASE_URL + "/boards/" + cards.get(0).getIdBoard() + "/cards";
+        baseUrl = getRestApiUrl("boards", cards.get(0).getIdBoard(), "cards");
       }
       // fix for IDEA-111470 and IDEA-111475
       // Select IDs of visible cards, e.d. cards that either archived explicitly, belong to archived list or closed board.
@@ -295,8 +309,10 @@ public final class TrelloRepository extends NewBaseRepositoryImpl {
       // reflects only the card state and doesn't show state of parental list and board.
       // NOTE: According to Trello REST API "filter=visible" parameter may be used only when fetching cards for
       // particular board or user.
-      final String visibleCardsUrl = baseUrl + "?filter=visible&fields=none";
-      final List<TrelloCard> visibleCards = makeRequestAndDeserializeJsonResponse(visibleCardsUrl, TrelloUtil.LIST_OF_CARDS_TYPE);
+      final URIBuilder visibleCardsUrl = new URIBuilder(baseUrl)
+        .addParameter("filter", "visible")
+        .addParameter("fields", "none");
+      final List<TrelloCard> visibleCards = makeRequestAndDeserializeJsonResponse(visibleCardsUrl.build(), TrelloUtil.LIST_OF_CARDS_TYPE);
       LOG.debug("Total " + visibleCards.size() + " visible cards");
       final Set<String> visibleCardsIDs = ContainerUtil.map2Set(visibleCards, new Function<TrelloCard, String>() {
         @Override
@@ -313,11 +329,11 @@ public final class TrelloRepository extends NewBaseRepositoryImpl {
 
   @NotNull
   private <T> T executeMethod(@NotNull HttpUriRequest method, @NotNull ResponseHandler<T> handler) throws Exception {
-    final org.apache.http.client.HttpClient client = getHttpClient();
+    final HttpClient client = getHttpClient();
     final HttpResponse response = client.execute(method);
     final StatusLine statusLine = response.getStatusLine();
     if (statusLine.getStatusCode() != HttpStatus.SC_OK) {
-      final org.apache.http.Header header = response.getFirstHeader("Content-Type");
+      final Header header = response.getFirstHeader("Content-Type");
       if (header != null && header.getValue().startsWith("text/plain")) {
         final String entityContent = ResponseUtil.getResponseContentAsString(response);
         throw new Exception(TaskBundle.message("failure.server.message", StringUtil.capitalize(entityContent)));
@@ -328,12 +344,12 @@ public final class TrelloRepository extends NewBaseRepositoryImpl {
   }
 
   @NotNull
-  private <T> List<T> makeRequestAndDeserializeJsonResponse(@NotNull String url, @NotNull TypeToken<List<T>> type) throws Exception {
+  private <T> List<T> makeRequestAndDeserializeJsonResponse(@NotNull URI url, @NotNull TypeToken<List<T>> type) throws Exception {
     return executeMethod(new HttpGet(url), new GsonMultipleObjectsDeserializer<T>(TrelloUtil.GSON, type));
   }
 
   @NotNull
-  private <T> T makeRequestAndDeserializeJsonResponse(@NotNull String url, @NotNull Class<T> cls) throws Exception {
+  private <T> T makeRequestAndDeserializeJsonResponse(@NotNull URI url, @NotNull Class<T> cls) throws Exception {
     return executeMethod(new HttpGet(url), new GsonSingleObjectDeserializer<T>(TrelloUtil.GSON, cls));
   }
 
