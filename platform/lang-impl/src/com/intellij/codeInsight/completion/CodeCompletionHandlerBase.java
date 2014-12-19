@@ -762,7 +762,7 @@ public class CodeCompletionHandlerBase {
         if (!editor.getCaretModel().supportsMultipleCarets()) { // done later, outside of this method
           context.stopWatching();
         }
-        editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+        EditorModificationUtil.scrollToCaret(editor);
       }
     });
     update.addSparedChars(indicator, item, context, completionChar);
