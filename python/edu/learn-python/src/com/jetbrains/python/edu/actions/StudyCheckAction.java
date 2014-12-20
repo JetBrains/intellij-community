@@ -161,7 +161,7 @@ public class StudyCheckAction extends DumbAwareAction {
               return;
             }
             selectedEditor.getCheckButton().setEnabled(false);
-            ProgressManager.getInstance().run(getCheckTask(studyState, runAction, testRunner, testProcess, project, selectedEditor));
+            ProgressManager.getInstance().run(getCheckTask(studyState, testRunner, testProcess, project, selectedEditor));
           }
         });
       }
@@ -170,7 +170,6 @@ public class StudyCheckAction extends DumbAwareAction {
 
   @NotNull
   private com.intellij.openapi.progress.Task.Backgroundable getCheckTask(final StudyState studyState,
-                                                                         final StudyRunAction runAction,
                                                                          final StudyTestRunner testRunner,
                                                                          final Process testProcess,
                                                                          @NotNull final Project project,
@@ -200,7 +199,6 @@ public class StudyCheckAction extends DumbAwareAction {
         final CapturingProcessHandler handler = new CapturingProcessHandler(testProcess);
         final ProcessOutput output = handler.runProcessWithProgressIndicator(indicator);
         if (indicator.isCanceled()) {
-          runAction.cancel(project);
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             @Override
             public void run() {
