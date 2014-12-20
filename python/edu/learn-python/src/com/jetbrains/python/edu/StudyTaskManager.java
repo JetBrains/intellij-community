@@ -1,6 +1,7 @@
 package com.jetbrains.python.edu;
 
 import com.intellij.ide.BrowserUtil;
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.notification.Notification;
@@ -10,7 +11,9 @@ import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -20,9 +23,8 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.ui.popup.JBPopupAdapter;
-import com.intellij.openapi.ui.popup.LightweightWindowEvent;
+import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileEvent;
@@ -43,6 +45,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
+import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.HashMap;
@@ -64,6 +68,7 @@ import java.util.Map;
     )}
 )
 public class StudyTaskManager implements ProjectComponent, PersistentStateComponent<Element>, DumbAware {
+  private static final Logger LOG = Logger.getInstance(StudyTaskManager.class.getName());
   public static final String COURSE_ELEMENT = "courseElement";
   private static Map<String, StudyTaskManager> myTaskManagers = new HashMap<String, StudyTaskManager>();
   private static Map<String, String> myDeletedShortcuts = new HashMap<String, String>();
@@ -109,6 +114,12 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
 
   @Override
   public void projectOpened() {
+    final File pythonIntroduction = new File(ProjectUtil.getBaseDir(), "PythonIntroduction");
+    if (StudyInitialConfigurator.UPDATE_PROJECT && myProject.getBasePath().equals(pythonIntroduction.getAbsolutePath())) {
+      //noinspection AssignmentToStaticFieldFromInstanceMethod
+      StudyInitialConfigurator.UPDATE_PROJECT = false;
+      updateCourse();
+    }
     ApplicationManager.getApplication().invokeLater(new DumbAwareRunnable() {
       @Override
       public void run() {
@@ -152,8 +163,9 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
               }
               catch (Exception e) {
                 final ToolWindow toolWindow = toolWindowManager.getToolWindow(toolWindowId);
-                if (toolWindow == null)
+                if (toolWindow == null) {
                   toolWindowManager.registerToolWindow(toolWindowId, true, ToolWindowAnchor.RIGHT, myProject, true);
+                }
               }
 
               final ToolWindow studyToolWindow = toolWindowManager.getToolWindow(toolWindowId);
@@ -232,6 +244,40 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
     });
   }
 
+  private void updateCourse() {
+    final File userCourseDir = new File(PathManager.getConfigPath(), StudyNames.COURSES);
+    final File courseDir = new File(userCourseDir, StudyNames.INTRODUCTION_COURSE);
+    final File[] files = courseDir.listFiles();
+    if (files == null) return;
+    for (File lesson : files) {
+      if (lesson.getName().startsWith(StudyNames.LESSON)) {
+        final File[] tasks = lesson.listFiles();
+        if (tasks == null) continue;
+        for (File task : tasks) {
+          final File taskDescr = new File(task, StudyNames.TASK_HTML);
+          final File taskTests = new File(task, StudyNames.TASK_TESTS);
+          copyFile(lesson, task, taskDescr, StudyNames.TASK_HTML);
+          copyFile(lesson, task, taskTests, StudyNames.TASK_TESTS);
+        }
+      }
+    }
+
+    final Notification notification =
+      new Notification("Update.course", "Course update", "Current course is synchronized", NotificationType.INFORMATION);
+    notification.notify(myProject);
+  }
+
+  private void copyFile(@NotNull final File lesson, @NotNull final File task, @NotNull final File taskDescr,
+                        @NotNull final String fileName) {
+    if (taskDescr.exists()) {
+      try {
+        FileUtil.copy(taskDescr, new File(new File(new File(myProject.getBasePath(), lesson.getName()), task.getName()), fileName));
+      }
+      catch (IOException e) {
+        LOG.warn("Failed to copy " + lesson.getName() + " " + task.getName());
+      }
+    }
+  }
 
   private static void addShortcut(@NotNull final String shortcutString, @NotNull final String actionIdString, boolean isAdditional) {
     Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
