@@ -3,6 +3,7 @@ package com.intellij.openapi.util.diff.comparison;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.progress.DumbProgressIndicator;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.diff.fragments.DiffFragment;
 import com.intellij.openapi.util.diff.fragments.FineLineFragment;
 import com.intellij.openapi.util.diff.fragments.LineFragment;
@@ -51,95 +52,62 @@ public class ComparisonUtilAutoTest extends AutoTestCase {
     doTestLineSquashed(System.currentTimeMillis(), 30, 300);
   }
 
-  public void doTestLine(long seed, int runs, int maxLength) throws Exception {
-    myRng.setSeed(seed);
-
+  private void doTestLine(long seed, int runs, int maxLength) throws Exception {
     ComparisonPolicy[] policies = {ComparisonPolicy.DEFAULT, ComparisonPolicy.TRIM_WHITESPACES, ComparisonPolicy.IGNORE_WHITESPACES};
 
-    ComparisonPolicy policy = null;
-    List<FineLineFragment> fragments;
+    doTest(seed, runs, maxLength, policies, new TestTask() {
+      @Override
+      public void run(@NotNull Document text1, @NotNull Document text2, @NotNull ComparisonPolicy policy, @NotNull Ref<Object> debugData) {
+        CharSequence sequence1 = text1.getCharsSequence();
+        CharSequence sequence2 = text2.getCharsSequence();
 
-    for (int i = 0; i < runs; i++) {
-      if (i % 1000 == 0) System.out.println(i);
-      Document text1 = null;
-      Document text2 = null;
-      try {
-        rememberSeed();
+        List<FineLineFragment> fragments = ComparisonUtil.compareFineLines(sequence1, sequence2, policy, INDICATOR);
+        debugData.set(fragments);
 
-        text1 = generateText(maxLength);
-        text2 = generateText(maxLength);
-
-        for (ComparisonPolicy comparisonPolicy : policies) {
-          policy = comparisonPolicy;
-          fragments = ComparisonUtil.compareFineLines(text1.getCharsSequence(), text2.getCharsSequence(), comparisonPolicy, INDICATOR);
-          checkResultLine(text1, text2, fragments, comparisonPolicy, true);
-        }
+        checkResultLine(text1, text2, fragments, policy, true);
       }
-      catch (Throwable e) {
-        System.out.println("Seed: " + seed);
-        System.out.println("Runs: " + runs);
-        System.out.println("MaxLength: " + maxLength);
-        System.out.println("Policy: " + policy);
-        System.out.println("I: " + i);
-        System.out.println("Current seed: " + getLastSeed());
-        System.out.println("Text1: " + normalize(text1));
-        System.out.println("Text2: " + normalize(text2));
-        if (e instanceof Error) throw (Error)e;
-        if (e instanceof Exception) throw (Exception)e;
-        throw new Exception(e);
-      }
-    }
+    });
   }
 
-  public void doTestLineSquashed(long seed, int runs, int maxLength) throws Exception {
-    myRng.setSeed(seed);
-
+  private void doTestLineSquashed(long seed, int runs, int maxLength) throws Exception {
     ComparisonPolicy[] policies = {ComparisonPolicy.DEFAULT, ComparisonPolicy.TRIM_WHITESPACES, ComparisonPolicy.IGNORE_WHITESPACES};
 
-    ComparisonPolicy policy = null;
-    List<FineLineFragment> fragments;
-    List<FineLineFragment> squashedFragments;
+    doTest(seed, runs, maxLength, policies, new TestTask() {
+      @Override
+      public void run(@NotNull Document text1, @NotNull Document text2, @NotNull ComparisonPolicy policy, @NotNull Ref<Object> debugData) {
+        CharSequence sequence1 = text1.getCharsSequence();
+        CharSequence sequence2 = text2.getCharsSequence();
 
-    for (int i = 0; i < runs; i++) {
-      if (i % 1000 == 0) System.out.println(i);
-      Document text1 = null;
-      Document text2 = null;
-      try {
-        rememberSeed();
+        List<FineLineFragment> fragments = ComparisonUtil.compareFineLines(sequence1, sequence2, policy, INDICATOR);
+        debugData.set(fragments);
 
-        text1 = generateText(maxLength);
-        text2 = generateText(maxLength);
+        List<FineLineFragment> squashedFragments = ComparisonUtil.squashFine(fragments);
+        debugData.set(new Object[]{fragments, squashedFragments});
 
-        for (ComparisonPolicy comparisonPolicy : policies) {
-          policy = comparisonPolicy;
-          fragments = ComparisonUtil.compareFineLines(text1.getCharsSequence(), text2.getCharsSequence(), comparisonPolicy, INDICATOR);
-          squashedFragments = ComparisonUtil.squashFine(fragments);
-          checkResultLine(text1, text2, squashedFragments, comparisonPolicy, false);
-        }
+        checkResultLine(text1, text2, squashedFragments, policy, false);
       }
-      catch (Throwable e) {
-        System.out.println("Seed: " + seed);
-        System.out.println("Runs: " + runs);
-        System.out.println("MaxLength: " + maxLength);
-        System.out.println("Policy: " + policy);
-        System.out.println("I: " + i);
-        System.out.println("Current seed: " + getLastSeed());
-        System.out.println("Text1: " + normalize(text1));
-        System.out.println("Text2: " + normalize(text2));
-        if (e instanceof Error) throw (Error)e;
-        if (e instanceof Exception) throw (Exception)e;
-        throw new Exception(e);
-      }
-    }
+    });
   }
 
-  public void doTestChar(long seed, int runs, int maxLength) throws Exception {
-    myRng.setSeed(seed);
-
+  private void doTestChar(long seed, int runs, int maxLength) throws Exception {
     ComparisonPolicy[] policies = {ComparisonPolicy.DEFAULT, ComparisonPolicy.IGNORE_WHITESPACES};
 
+    doTest(seed, runs, maxLength, policies, new TestTask() {
+      @Override
+      public void run(@NotNull Document text1, @NotNull Document text2, @NotNull ComparisonPolicy policy, @NotNull Ref<Object> debugData) {
+        List<DiffFragment> fragments = ComparisonUtil.compareChars(text1.getCharsSequence(), text2.getCharsSequence(), policy, INDICATOR);
+        debugData.set(fragments);
+
+        checkResultChar(text1.getCharsSequence(), text2.getCharsSequence(), fragments, policy);
+      }
+    });
+  }
+
+  private void doTest(long seed, int runs, int maxLength, @NotNull ComparisonPolicy[] policies, @NotNull TestTask test) throws Exception {
+    myRng.setSeed(seed);
+
     ComparisonPolicy policy = null;
-    List<DiffFragment> fragments;
+    Ref<Object> debugData = new Ref<Object>();
 
     for (int i = 0; i < runs; i++) {
       if (i % 1000 == 0) System.out.println(i);
@@ -153,8 +121,7 @@ public class ComparisonUtilAutoTest extends AutoTestCase {
 
         for (ComparisonPolicy comparisonPolicy : policies) {
           policy = comparisonPolicy;
-          fragments = ComparisonUtil.compareChars(text1.getCharsSequence(), text2.getCharsSequence(), comparisonPolicy, INDICATOR);
-          checkResultChar(text1.getCharsSequence(), text2.getCharsSequence(), fragments, comparisonPolicy);
+          test.run(text1, text2, comparisonPolicy, debugData);
         }
       }
       catch (Throwable e) {
@@ -166,6 +133,7 @@ public class ComparisonUtilAutoTest extends AutoTestCase {
         System.out.println("Current seed: " + getLastSeed());
         System.out.println("Text1: " + normalize(text1));
         System.out.println("Text2: " + normalize(text2));
+        System.out.println("Debug Data: " + debugData.get());
         if (e instanceof Error) throw (Error)e;
         if (e instanceof Exception) throw (Exception)e;
         throw new Exception(e);
@@ -384,7 +352,7 @@ public class ComparisonUtilAutoTest extends AutoTestCase {
   @NotNull
   private static String normalize(@Nullable Document text) {
     if (text == null) return "null";
-    return "'" + text.getText().replace('\n', '*').replace('\t', '+') + "'";
+    return "'" + text.getCharsSequence().toString().replace('\n', '*').replace('\t', '+') + "'";
   }
 
   @NotNull
@@ -394,5 +362,9 @@ public class ComparisonUtilAutoTest extends AutoTestCase {
 
   private static int getLineCount(@NotNull Document document) {
     return Math.max(1, document.getLineCount());
+  }
+
+  private static interface TestTask {
+    void run(@NotNull Document text1, @NotNull Document text2, @NotNull ComparisonPolicy policy, @NotNull Ref<Object> debugData);
   }
 }
