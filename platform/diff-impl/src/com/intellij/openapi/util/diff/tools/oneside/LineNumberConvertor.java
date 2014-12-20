@@ -7,115 +7,141 @@ import java.util.Map;
 import java.util.TreeMap;
 
 class LineNumberConvertor {
+  @NotNull private final TreeMap<Integer, Integer> myFragments1;
+  @NotNull private final TreeMap<Integer, Integer> myFragments2;
+
+  @NotNull private final TreeMap<Integer, Integer> myInvertedFragments1;
+  @NotNull private final TreeMap<Integer, Integer> myInvertedFragments2;
+
+  public LineNumberConvertor(@NotNull TreeMap<Integer, Integer> fragments1,
+                             @NotNull TreeMap<Integer, Integer> fragments2,
+                             @NotNull TreeMap<Integer, Integer> invertedFragments1,
+                             @NotNull TreeMap<Integer, Integer> invertedFragments2) {
+    myFragments1 = fragments1;
+    myFragments2 = fragments2;
+    myInvertedFragments1 = invertedFragments1;
+    myInvertedFragments2 = invertedFragments2;
+  }
+
+  public int convert1(int value) {
+    return convert(myFragments1, value);
+  }
+
+  public int convert2(int value) {
+    return convert(myFragments2, value);
+  }
+
+  public int convertInv1(int value) {
+    return convert(myInvertedFragments1, value);
+  }
+
+  public int convertInv2(int value) {
+    return convert(myInvertedFragments2, value);
+  }
+
+  public int convertApproximate1(int value) {
+    return convertApproximate(myFragments1, value);
+  }
+
+  public int convertApproximate2(int value) {
+    return convertApproximate(myFragments2, value);
+  }
+
+  public int convertApproximateInv1(int value) {
+    return convertApproximate(myInvertedFragments1, value);
+  }
+
+  public int convertApproximateInv2(int value) {
+    return convertApproximate(myInvertedFragments2, value);
+  }
+
+  //
+  // Impl
+  //
+
   @NotNull
-  public static TIntFunction ID = new TIntFunction() {
-    @Override
-    public int execute(int value) {
-      return value;
-    }
-  };
-
-  @NotNull private final TIntFunction myConvertor1;
-  @NotNull private final TIntFunction myConvertor2;
-
-  public LineNumberConvertor(@NotNull TIntFunction convertor1, @NotNull TIntFunction convertor2) {
-    myConvertor1 = convertor1;
-    myConvertor2 = convertor2;
+  public TIntFunction createConvertor1() {
+    return new TIntFunction() {
+      @Override
+      public int execute(int value) {
+        return convert1(value);
+      }
+    };
   }
 
   @NotNull
-  public TIntFunction getConvertor1() {
-    return myConvertor1;
+  public TIntFunction createConvertor2() {
+    return new TIntFunction() {
+      @Override
+      public int execute(int value) {
+        return convert2(value);
+      }
+    };
   }
 
-  @NotNull
-  public TIntFunction getConvertor2() {
-    return myConvertor2;
+  /*
+   * This convertor returns exact matching between lines, and -1 if it's impossible (line is folded)
+   */
+  private static int convert(@NotNull final TreeMap<Integer, Integer> fragments, int value) {
+    Map.Entry<Integer, Integer> floor = fragments.floorEntry(value);
+    if (floor == null || floor.getValue() == -1) return -1;
+    return floor.getValue() - floor.getKey() + value;
+  }
+
+  /*
+   * This convertor returns 'good enough' position, even if exact matching is impossible
+   */
+  private static int convertApproximate(@NotNull final TreeMap<Integer, Integer> fragments, int value) {
+    Map.Entry<Integer, Integer> floor = fragments.floorEntry(value);
+    if (floor == null) return 0;
+    if (floor.getValue() != -1) return floor.getValue() - floor.getKey() + value;
+
+    Map.Entry<Integer, Integer> floorHead = fragments.floorEntry(floor.getKey() - 1);
+    assert floorHead != null && floorHead.getValue() != -1;
+
+    return floorHead.getValue() - floorHead.getKey() + floor.getKey();
   }
 
   public static class Builder {
-    private final TreeMap<Integer, Integer> myFragments1 = new TreeMap<Integer, Integer>();
-    private final TreeMap<Integer, Integer> myFragments2 = new TreeMap<Integer, Integer>();
+    @NotNull private final TreeMap<Integer, Integer> myFragments1 = new TreeMap<Integer, Integer>();
+    @NotNull private final TreeMap<Integer, Integer> myFragments2 = new TreeMap<Integer, Integer>();
 
-    private final TreeMap<Integer, Integer> myInvertedFragments1 = new TreeMap<Integer, Integer>();
-    private final TreeMap<Integer, Integer> myInvertedFragments2 = new TreeMap<Integer, Integer>();
+    @NotNull private final TreeMap<Integer, Integer> myInvertedFragments1 = new TreeMap<Integer, Integer>();
+    @NotNull private final TreeMap<Integer, Integer> myInvertedFragments2 = new TreeMap<Integer, Integer>();
 
-    public void put1(int start, int end, int newStart) {
+    public void put1(int start, int newStart, int length) {
       myFragments1.put(start, newStart);
-      myFragments1.put(end, -1);
+      myFragments1.put(start + length, -1);
 
       myInvertedFragments1.put(newStart, start);
-      myInvertedFragments1.put(newStart + end - start, end);
+      myInvertedFragments1.put(newStart + length, -1);
     }
 
-    public void put2(int start, int end, int newStart) {
+    public void put2(int start, int newStart, int length) {
       myFragments2.put(start, newStart);
-      myFragments2.put(end, -1);
+      myFragments2.put(start + length, -1);
 
       myInvertedFragments2.put(newStart, start);
-      myInvertedFragments2.put(newStart + end - start, end);
+      myInvertedFragments2.put(newStart + length, -1);
     }
 
     @NotNull
     public LineNumberConvertor build() {
-      return new LineNumberConvertor(getConvertor(myFragments1), getConvertor(myFragments2));
-    }
-
-    @NotNull
-    public LineNumberConvertor buildInverted() {
-      return new LineNumberConvertor(getInvertedConvertor(myInvertedFragments1), getInvertedConvertor(myInvertedFragments2));
-    }
-
-    @NotNull
-    private static TIntFunction getConvertor(@NotNull final TreeMap<Integer, Integer> fragments) {
-      return new TIntFunction() {
-        @Override
-        public int execute(int value) {
-          Map.Entry<Integer, Integer> floor = fragments.floorEntry(value);
-          if (floor == null || floor.getValue() == -1) return -1;
-          return floor.getValue() - floor.getKey() + value;
-        }
-      };
-    }
-
-    @NotNull
-    private static TIntFunction getInvertedConvertor(@NotNull final TreeMap<Integer, Integer> fragments) {
-      return new TIntFunction() {
-        @Override
-        public int execute(int value) {
-          Map.Entry<Integer, Integer> floor = fragments.floorEntry(value);
-          if (floor == null) return 0;
-          return floor.getValue() - floor.getKey() + value;
-        }
-      };
+      return new LineNumberConvertor(myFragments1, myFragments2, myInvertedFragments1, myInvertedFragments2);
     }
 
     @NotNull
     public static LineNumberConvertor createLeft(int lines) {
       Builder builder = new Builder();
-      builder.put1(0, lines, 0);
+      builder.put1(0, 0, lines);
       return builder.build();
     }
 
     @NotNull
     public static LineNumberConvertor createRight(int lines) {
       Builder builder = new Builder();
-      builder.put2(0, lines, 0);
+      builder.put2(0, 0, lines);
       return builder.build();
-    }
-
-    @NotNull
-    public static LineNumberConvertor createInvertedLeft(int lines) {
-      Builder builder = new Builder();
-      builder.put1(0, lines, 0);
-      return builder.buildInverted();
-    }
-
-    @NotNull
-    public static LineNumberConvertor createInvertedRight(int lines) {
-      Builder builder = new Builder();
-      builder.put2(0, lines, 0);
-      return builder.buildInverted();
     }
   }
 }

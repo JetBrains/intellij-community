@@ -200,12 +200,11 @@ class OnesideDiffViewer extends TextDiffViewerBase {
         indicator.checkCanceled();
         EditorHighlighter highlighter = DiffUtil.createEditorHighlighter(myProject, content);
         LineNumberConvertor convertor = LineNumberConvertor.Builder.createLeft(data.getLines());
-        LineNumberConvertor invertedConvertor = LineNumberConvertor.Builder.createInvertedLeft(data.getLines());
 
         CombinedEditorData editorData = new CombinedEditorData(new MergingCharSequence(data.getText(), "\n"), highlighter,
-                                                               content.getContentType(), convertor.getConvertor1(), null);
+                                                               content.getContentType(), convertor.createConvertor1(), null);
 
-        return apply(editorData, blocks, convertor, invertedConvertor, Collections.<Integer>emptyList(), false);
+        return apply(editorData, blocks, convertor, Collections.<Integer>emptyList(), false);
       }
 
       if (myActualContent2 == null) {
@@ -225,12 +224,11 @@ class OnesideDiffViewer extends TextDiffViewerBase {
         indicator.checkCanceled();
         EditorHighlighter highlighter = DiffUtil.createEditorHighlighter(myProject, content);
         LineNumberConvertor convertor = LineNumberConvertor.Builder.createRight(data.getLines());
-        LineNumberConvertor invertedConvertor = LineNumberConvertor.Builder.createInvertedRight(data.getLines());
 
         CombinedEditorData editorData = new CombinedEditorData(new MergingCharSequence(data.getText(), "\n"), highlighter,
-                                                               content.getContentType(), convertor.getConvertor2(), null);
+                                                               content.getContentType(), convertor.createConvertor2(), null);
 
-        return apply(editorData, blocks, convertor, invertedConvertor, Collections.<Integer>emptyList(), false);
+        return apply(editorData, blocks, convertor, Collections.<Integer>emptyList(), false);
       }
 
       DocumentContent content1 = myActualContent1;
@@ -262,14 +260,13 @@ class OnesideDiffViewer extends TextDiffViewerBase {
       FileType fileType = content2.getContentType() == null ? content1.getContentType() : content2.getContentType();
 
       LineNumberConvertor convertor = builder.getConvertor();
-      LineNumberConvertor invertedConvertor = builder.getInvertedConvertor();
       List<Integer> separatorLines = builder.getSeparatorLines();
       boolean isEqual = builder.isEqual();
 
       CombinedEditorData editorData = new CombinedEditorData(builder.getText(), highlighter, fileType,
-                                                             convertor.getConvertor1(), convertor.getConvertor2());
+                                                             convertor.createConvertor1(), convertor.createConvertor2());
 
-      return apply(editorData, builder.getBlocks(), convertor, invertedConvertor, separatorLines, isEqual);
+      return apply(editorData, builder.getBlocks(), convertor, separatorLines, isEqual);
     }
     catch (DiffTooBigException ignore) {
       return new Runnable() {
@@ -338,7 +335,6 @@ class OnesideDiffViewer extends TextDiffViewerBase {
   private Runnable apply(@NotNull final CombinedEditorData data,
                          @NotNull final List<ChangedBlock> blocks,
                          @NotNull final LineNumberConvertor convertor,
-                         @NotNull final LineNumberConvertor invertedConvertor,
                          @NotNull final List<Integer> separatorLines,
                          final boolean isEqual) {
     return new Runnable() {
@@ -347,13 +343,7 @@ class OnesideDiffViewer extends TextDiffViewerBase {
         clearDiffPresentation();
         if (isEqual) myPanel.addContentsEqualNotification();
 
-
-        if (data.getLineConvertor2() == null) {
-          myEditor.getGutterComponentEx().setLineNumberConvertor(data.getLineConvertor1());
-        }
-        else {
-          myEditor.getGutterComponentEx().setLineNumberConvertor(data.getLineConvertor1(), data.getLineConvertor2());
-        }
+        myEditor.getGutterComponentEx().setLineNumberConvertor(data.getLineConvertor1(), data.getLineConvertor2());
 
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           @Override
@@ -376,7 +366,7 @@ class OnesideDiffViewer extends TextDiffViewerBase {
           diffSeparators.add(new OnesideDiffSeparator(myEditor, line));
         }
 
-        myChangedBlockData = new ChangedBlockData(diffChanges, convertor, invertedConvertor, diffSeparators);
+        myChangedBlockData = new ChangedBlockData(diffChanges, convertor, diffSeparators);
 
         // TODO: remember current in current caret position position on rediff rather than positon in combined file
         myScrollToLineHelper.onRediff();
@@ -387,16 +377,20 @@ class OnesideDiffViewer extends TextDiffViewerBase {
     };
   }
 
+  /*
+   * This convertor returns 'good enough' position, even if exact matching is impossible
+   */
   @CalledInAwt
   private int transferLineToOneside(@NotNull Side side, int line) {
     if (myChangedBlockData == null) return line;
 
-    LineNumberConvertor invertedLineConvertor = myChangedBlockData.getLineNumberInvertedConvertor();
-    TIntFunction convertor = side.isLeft() ? invertedLineConvertor.getConvertor1() : invertedLineConvertor.getConvertor2();
-
-    return convertor.execute(line);
+    LineNumberConvertor lineConvertor = myChangedBlockData.getLineNumberConvertor();
+    return side.isLeft() ? lineConvertor.convertApproximateInv1(line) : lineConvertor.convertApproximateInv2(line);
   }
 
+  /*
+   * This convertor returns 'good enough' position, even if exact matching is impossible
+   */
   @CalledInAwt
   private Pair<int[], Side> transferLineFromOneside(int line) {
     int[] lines = new int[2];
@@ -408,36 +402,25 @@ class OnesideDiffViewer extends TextDiffViewerBase {
     }
 
     LineNumberConvertor lineConvertor = myChangedBlockData.getLineNumberConvertor();
-    TIntFunction convertor1 = lineConvertor.getConvertor1();
-    TIntFunction convertor2 = lineConvertor.getConvertor2();
 
-    lines[0] = convertor1.execute(line);
-    lines[1] = convertor2.execute(line);
-
-    if (lines[0] == -1 && lines[1] == -1) {
-      lines[0] = convertor1.execute(line - 1);
-      lines[1] = convertor2.execute(line - 1);
-      if (lines[0] != -1) lines[0]++;
-      if (lines[1] != -1) lines[1]++;
-    }
-    if (lines[0] == -1 && lines[1] == -1) {
-      lines[0] = convertor1.execute(line + 1);
-      lines[1] = convertor2.execute(line + 1);
-      if (lines[0] > 0) lines[0]--;
-      if (lines[1] > 0) lines[1]--;
-    }
+    Side side = myMasterSide;
+    lines[0] = lineConvertor.convert1(line);
+    lines[1] = lineConvertor.convert2(line);
 
     if (lines[0] == -1 && lines[1] == -1) {
-      return Pair.create(lines, myMasterSide);
+      lines[0] = lineConvertor.convertApproximate1(line);
+      lines[1] = lineConvertor.convertApproximate2(line);
     }
-    if (lines[0] == -1) {
-      return Pair.create(lines, Side.RIGHT);
+    else if (lines[0] == -1) {
+      lines[0] = lineConvertor.convertApproximate1(line);
+      side = Side.RIGHT;
     }
-    if (lines[1] == -1) {
-      return Pair.create(lines, Side.LEFT);
+    else if (lines[1] == -1) {
+      lines[1] = lineConvertor.convertApproximate2(line);
+      side = Side.LEFT;
     }
 
-    return Pair.create(lines, myMasterSide);
+    return Pair.create(lines, side);
   }
 
   @CalledInAwt
@@ -872,16 +855,13 @@ class OnesideDiffViewer extends TextDiffViewerBase {
   private static class ChangedBlockData {
     @NotNull private final List<OnesideDiffChange> myDiffChanges;
     @NotNull private final LineNumberConvertor myLineNumberConvertor;
-    @NotNull private final LineNumberConvertor myLineNumberInvertedConvertor;
     @NotNull private final List<OnesideDiffSeparator> myDiffSeparators;
 
     public ChangedBlockData(@NotNull List<OnesideDiffChange> diffChanges,
                             @NotNull LineNumberConvertor lineNumberConvertor,
-                            @NotNull LineNumberConvertor lineNumberInvertedConvertor,
                             @NotNull List<OnesideDiffSeparator> diffSeparators) {
       myDiffChanges = diffChanges;
       myLineNumberConvertor = lineNumberConvertor;
-      myLineNumberInvertedConvertor = lineNumberInvertedConvertor;
       myDiffSeparators = diffSeparators;
     }
 
@@ -893,11 +873,6 @@ class OnesideDiffViewer extends TextDiffViewerBase {
     @NotNull
     public LineNumberConvertor getLineNumberConvertor() {
       return myLineNumberConvertor;
-    }
-
-    @NotNull
-    public LineNumberConvertor getLineNumberInvertedConvertor() {
-      return myLineNumberInvertedConvertor;
     }
 
     @NotNull
@@ -989,12 +964,19 @@ class OnesideDiffViewer extends TextDiffViewerBase {
         myShouldScroll = !doScrollToContext(myNavigationContext);
       }
       if (myShouldScroll && myCaretPosition != null && myCaretPosition.length == 2) {
+        LogicalPosition twosidePosition = myMasterSide.selectN(myCaretPosition);
+        int onesideLine = transferLineToOneside(myMasterSide, twosidePosition.line);
+        LogicalPosition position = new LogicalPosition(onesideLine, twosidePosition.column);
+
+        myEditor.getCaretModel().moveToLogicalPosition(position);
+
         if (myEditorPosition != null && myEditorPosition.isSame(myCaretPosition)) {
           scrollToPoint(myEditor, myEditorPosition.myPoint);
         }
         else {
-          doScrollToLine(myMasterSide, myMasterSide.selectN(myCaretPosition));
+          myEditor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
         }
+        myShouldScroll = false;
       }
       if (myShouldScroll) {
         doScrollToChange(ScrollToPolicy.FIRST_CHANGE);

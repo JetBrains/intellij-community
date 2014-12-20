@@ -208,10 +208,10 @@ class OnesideFragmentBuilder {
     appendText("\n", 0);
 
     if (startLine1 != -2) {
-      myConvertor.put1(totalLines, totalLines + lines + 1, startLine1);
+      myConvertor.put1(totalLines, startLine1, lines + 1);
     }
     if (startLine2 != -2) {
-      myConvertor.put2(totalLines, totalLines + lines + 1, startLine2);
+      myConvertor.put2(totalLines, startLine2, lines + 1);
     }
 
     totalLines += lines + 1;
@@ -254,11 +254,6 @@ class OnesideFragmentBuilder {
   @NotNull
   public LineNumberConvertor getConvertor() {
     return myConvertor.build();
-  }
-
-  @NotNull
-  public LineNumberConvertor getInvertedConvertor() {
-    return myConvertor.buildInverted();
   }
 
   @NotNull
