@@ -15,6 +15,7 @@
  */
 package com.intellij.debugger.engine;
 
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 
 /**
@@ -59,6 +60,6 @@ public class JavaSimpleGetterProvider implements SimpleGetterProvider {
       return false;
     }
 
-    return ((PsiField)referent).getContainingClass().equals(method.getContainingClass());
+    return Comparing.equal(((PsiField)referent).getContainingClass(), method.getContainingClass());
   }
 }

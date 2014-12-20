@@ -29,7 +29,7 @@ import javax.swing.*;
 /**
  * @author spleaner
  */
-public class NotificationsConfigurable implements Configurable, SearchableConfigurable, OptionalConfigurable, Configurable.NoScroll {
+public class NotificationsConfigurable implements Configurable, SearchableConfigurable, Configurable.NoScroll {
   public static final String DISPLAY_NAME = "Notifications";
   private NotificationsConfigurablePanel myComponent;
 
@@ -84,10 +84,5 @@ public class NotificationsConfigurable implements Configurable, SearchableConfig
   @Override
   public Runnable enableSearch(final String option) {
     return null;
-  }
-
-  @Override
-  public boolean needDisplay() {
-    return NotificationsConfigurationImpl.getInstanceImpl().getAllSettings().length > 0;
   }
 }

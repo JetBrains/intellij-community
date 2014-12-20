@@ -249,7 +249,7 @@
       <option name="HTML_TEXT" value="true"/>
     </context>
   </template>
-  <template description="&lt;script&gt;...&lt;/script&gt;" name="script" toReformat="true" toShortenFQNames="true" value="&lt;script&gt;$END$&lt;/script&gt;">
+  <template description="&lt;script&gt;...&lt;/script&gt;" name="script" toReformat="true" toShortenFQNames="true" value="&lt;script !src=&quot;&quot;&gt;$END$&lt;/script&gt;">
     <context>
       <option name="HTML_TEXT" value="true"/>
     </context>

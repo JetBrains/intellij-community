@@ -19,11 +19,9 @@ import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.util.xmlb.annotations.Attribute;
 
-import java.lang.String;
-
 /**
  * A way to provide additional colors to color schemes.
- * http://youtrack.jetbrains.com/issue/IDEA-98261
+ * https://youtrack.jetbrains.com/issue/IDEA-98261
  *
  * @author VISTALL
  * @since 12.1

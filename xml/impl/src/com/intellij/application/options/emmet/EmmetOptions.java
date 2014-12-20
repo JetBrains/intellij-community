@@ -15,7 +15,6 @@
  */
 package com.intellij.application.options.emmet;
 
-import com.intellij.codeInsight.template.emmet.filters.BemEmmetFilter;
 import com.intellij.codeInsight.template.emmet.filters.ZenCodingFilter;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.openapi.components.*;
@@ -24,7 +23,6 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Map;
 import java.util.Set;
 
 @State(
@@ -32,32 +30,12 @@ import java.util.Set;
   storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/emmet.xml")
 )
 public class EmmetOptions implements PersistentStateComponent<EmmetOptions> {
-  /**
-   * @deprecated delete after IDEA 14
-   */
-  private boolean myBemFilterEnabledByDefault = false;
   private boolean myEmmetEnabled = true;
   private int myEmmetExpandShortcut = TemplateSettings.TAB_CHAR;
-  private boolean myFuzzySearchEnabled = true;
-  private boolean myAutoInsertCssPrefixedEnabled = true;
   private boolean myPreviewEnabled = false;
+  private boolean myCompactBooleanAllowed = true;
+  private Set<String> myBooleanAttributes = ContainerUtil.newHashSet("contenteditable", "seamless");
   private Set<String> myFiltersEnabledByDefault = ContainerUtil.newHashSet();
-  @NotNull
-  private Map<String, Integer> prefixes = ContainerUtil.newHashMap();
-
-  /**
-   * @deprecated delete after IDEA 14
-   */
-  public boolean isBemFilterEnabledByDefault() {
-    return myBemFilterEnabledByDefault;
-  }
-
-  /**
-   * @deprecated delete after IDEA 14
-   */
-  public void setBemFilterEnabledByDefault(boolean enableBemFilterByDefault) {
-    myBemFilterEnabledByDefault = enableBemFilterByDefault;
-  }
 
   @NotNull
   public Set<String> getFiltersEnabledByDefault() {
@@ -70,7 +48,7 @@ public class EmmetOptions implements PersistentStateComponent<EmmetOptions> {
 
   public boolean isFilterEnabledByDefault(@NotNull ZenCodingFilter filter) {
     return myFiltersEnabledByDefault.contains(filter.getSuffix());
-  } 
+  }
 
   public void setEmmetExpandShortcut(int emmetExpandShortcut) {
     myEmmetExpandShortcut = emmetExpandShortcut;
@@ -87,37 +65,29 @@ public class EmmetOptions implements PersistentStateComponent<EmmetOptions> {
   public void setPreviewEnabled(boolean previewEnabled) {
     myPreviewEnabled = previewEnabled;
   }
-  
+
+  public boolean isCompactBooleanAllowed() {
+    return myCompactBooleanAllowed;
+  }
+
+  public void setCompactBooleanAllowed(boolean compactBooleanAllowed) {
+    myCompactBooleanAllowed = compactBooleanAllowed;
+  }
+
+  public Set<String> getBooleanAttributes() {
+    return myBooleanAttributes;
+  }
+
+  public void setBooleanAttributes(@NotNull Set<String> booleanAttributes) {
+    myBooleanAttributes = booleanAttributes;
+  }
+
   public boolean isEmmetEnabled() {
     return myEmmetEnabled;
   }
 
   public void setEmmetEnabled(boolean emmetEnabled) {
     myEmmetEnabled = emmetEnabled;
-  }
-
-  @Deprecated
-  //use {@link CssEmmetOptions}
-  public boolean isAutoInsertCssPrefixedEnabled() {
-    return myAutoInsertCssPrefixedEnabled;
-  }
-
-  @Deprecated
-  //use {@link CssEmmetOptions}
-  public void setAutoInsertCssPrefixedEnabled(boolean autoInsertCssPrefixedEnabled) {
-    myAutoInsertCssPrefixedEnabled = autoInsertCssPrefixedEnabled;
-  }
-
-  @Deprecated
-  //use {@link CssEmmetOptions}
-  public void setFuzzySearchEnabled(boolean fuzzySearchEnabled) {
-    myFuzzySearchEnabled = fuzzySearchEnabled;
-  }
-
-  @Deprecated
-  //use {@link CssEmmetOptions}
-  public boolean isFuzzySearchEnabled() {
-    return myFuzzySearchEnabled;
   }
 
   @Nullable
@@ -129,28 +99,9 @@ public class EmmetOptions implements PersistentStateComponent<EmmetOptions> {
   @Override
   public void loadState(final EmmetOptions state) {
     XmlSerializerUtil.copyBean(state, this);
-    
-    // todo delete after IDEA 14
-    if (myFiltersEnabledByDefault.isEmpty() && myBemFilterEnabledByDefault) {
-      myFiltersEnabledByDefault.add(BemEmmetFilter.SUFFIX);
-    }
   }
 
   public static EmmetOptions getInstance() {
     return ServiceManager.getService(EmmetOptions.class);
-  }
-
-  @NotNull
-  @Deprecated
-  //use {@link CssEmmetOptions}
-  public Map<String, Integer> getPrefixes() {
-    return prefixes;
-  }
-
-  @SuppressWarnings("UnusedDeclaration")
-  @Deprecated
-  //use {@link CssEmmetOptions}
-  public void setPrefixes(@NotNull Map<String, Integer> prefixes) {
-    this.prefixes = prefixes;
   }
 }

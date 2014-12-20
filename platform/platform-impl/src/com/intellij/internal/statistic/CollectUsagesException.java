@@ -19,7 +19,6 @@ package com.intellij.internal.statistic;
  * @author Nikolay Matveev
  */
 public class CollectUsagesException extends Exception {
-
   public CollectUsagesException(String message) {
     super(message);
   }

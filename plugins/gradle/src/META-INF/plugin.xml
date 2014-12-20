@@ -14,7 +14,7 @@
   ~
   -->
 
-<idea-plugin url="http://confluence.jetbrains.com/display/IDEADEV/Gradle+integration">
+<idea-plugin url="https://confluence.jetbrains.com/display/IDEADEV/Gradle+integration">
   <name>Gradle</name>
   <id>org.jetbrains.plugins.gradle</id>
   <vendor>JetBrains</vendor>

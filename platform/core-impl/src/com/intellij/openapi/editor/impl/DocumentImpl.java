@@ -58,6 +58,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   private final Ref<DocumentListener[]> myCachedDocumentListeners = Ref.create(null);
   private final List<DocumentListener> myDocumentListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final RangeMarkerTree<RangeMarkerEx> myRangeMarkers = new RangeMarkerTree<RangeMarkerEx>(this);
+  private final RangeMarkerTree<RangeMarkerEx> myPersistentRangeMarkers = new RangeMarkerTree<RangeMarkerEx>(this);
   private final List<RangeMarker> myGuardedBlocks = new ArrayList<RangeMarker>();
   private ReadonlyFragmentModificationHandler myReadonlyFragmentModificationHandler;
 
@@ -344,9 +345,12 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     return !myIsReadOnly;
   }
 
+  private  RangeMarkerTree<RangeMarkerEx> treeFor(@NotNull RangeMarkerEx rangeMarker) {
+    return rangeMarker instanceof PersistentRangeMarker ? myPersistentRangeMarkers : myRangeMarkers;
+  }
   @Override
   public boolean removeRangeMarker(@NotNull RangeMarkerEx rangeMarker) {
-    return myRangeMarkers.removeInterval(rangeMarker);
+    return treeFor(rangeMarker).removeInterval(rangeMarker);
   }
 
   @Override
@@ -356,17 +360,17 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
                                   boolean greedyToLeft,
                                   boolean greedyToRight,
                                   int layer) {
-    myRangeMarkers.addInterval(rangeMarker, start, end, greedyToLeft, greedyToRight, layer);
+    treeFor(rangeMarker).addInterval(rangeMarker, start, end, greedyToLeft, greedyToRight, layer);
   }
 
   @TestOnly
   public int getRangeMarkersSize() {
-    return myRangeMarkers.size();
+    return myRangeMarkers.size() + myPersistentRangeMarkers.size();
   }
 
   @TestOnly
   public int getRangeMarkersNodeSize() {
-    return myRangeMarkers.nodeSize();
+    return myRangeMarkers.nodeSize()+myPersistentRangeMarkers.size();
   }
 
   @Override
@@ -1046,12 +1050,20 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   @Override
   public boolean processRangeMarkers(@NotNull Processor<RangeMarker> processor) {
-    return myRangeMarkers.process(processor);
+    return processRangeMarkersOverlappingWith(0, getTextLength(), processor);
   }
 
   @Override
   public boolean processRangeMarkersOverlappingWith(int start, int end, @NotNull Processor<RangeMarker> processor) {
-    return myRangeMarkers.processOverlappingWith(start, end, processor);
+    TextRangeInterval interval = new TextRangeInterval(start, end);
+    IntervalTreeImpl.PeekableIterator<RangeMarkerEx> iterator = IntervalTreeImpl
+      .mergingOverlappingIterator(myRangeMarkers, interval, myPersistentRangeMarkers, interval, RangeMarker.BY_START_OFFSET);
+    try {
+      return ContainerUtil.process(iterator, processor);
+    }
+    finally {
+      iterator.dispose();
+    }
   }
 
   @NotNull

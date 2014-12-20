@@ -40,7 +40,7 @@
     <projectConfigurable groupId="project"
                          id="com.jetbrains.python.configuration.PythonContentEntriesConfigurable"
                          displayName="Project Structure"
-                         instance="com.jetbrains.python.configuration.PythonContentEntriesConfigurable"/>
+                         provider="com.jetbrains.python.configuration.PythonContentEntriesConfigurableProvider"/>
     <projectConfigurable groupId="build"
                          id="com.jetbrains.python.buildout.BuildoutModulesConfigurable"
                          displayName="Buildout Support"
@@ -52,7 +52,7 @@
     <projectConfigurable groupId="project"
                          id="com.jetbrains.python.configuration.PyDependenciesConfigurable"
                          displayName="Project Dependencies"
-                         instance="com.jetbrains.python.configuration.PyDependenciesConfigurable"/>
+                         provider="com.jetbrains.python.configuration.PyDependenciesConfigurableProvider"/>
 
     <directoryProjectConfigurator implementation="com.jetbrains.python.PythonSdkConfigurator" id="sdk"
                                   order="after PlatformProjectConfigurator"/>

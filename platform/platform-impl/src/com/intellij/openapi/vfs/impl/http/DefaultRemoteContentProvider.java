@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsBundle;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -29,9 +30,9 @@ import com.intellij.util.Url;
 import com.intellij.util.io.HttpRequests;
 import com.intellij.util.net.ssl.CertificateManager;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.io.Responses;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.net.HttpURLConnection;
 
 public class DefaultRemoteContentProvider extends RemoteContentProvider {
@@ -59,45 +60,25 @@ public class DefaultRemoteContentProvider extends RemoteContentProvider {
     try {
       HttpRequests.request(url.toExternalForm())
         .connectTimeout(60 * 1000)
-        .readTimeout(60 * 1000)
-        .userAgent(Responses.getServerHeaderValue())
+        .userAgent()
         .hostNameVerifier(CertificateManager.HOSTNAME_VERIFIER)
         .connect(new HttpRequests.RequestProcessor<Object>() {
           @Override
           public Object process(@NotNull HttpRequests.Request request) throws IOException {
-            HttpURLConnection connection = (HttpURLConnection)request.getConnection();
-            int responseCode = connection.getResponseCode();
-            if (responseCode != HttpURLConnection.HTTP_OK) {
-              throw new IOException(IdeBundle.message("error.connection.failed.with.http.code.N", responseCode));
+            if (!request.isSuccessful()) {
+              throw new IOException(IdeBundle.message("error.connection.failed.with.http.code.N", ((HttpURLConnection)request.getConnection()).getResponseCode()));
             }
 
-            int size = connection.getContentLength();
-            OutputStream output = new BufferedOutputStream(new FileOutputStream(file));
-            try {
-              callback.setProgressText(VfsBundle.message("download.progress.downloading", presentableUrl), size == -1);
-              if (size != -1) {
+            int size = request.getConnection().getContentLength();
+            callback.setProgressText(VfsBundle.message("download.progress.downloading", presentableUrl), size == -1);
+            request.saveToFile(file, new AbstractProgressIndicatorExBase() {
+              @Override
+              public void setFraction(double fraction) {
                 callback.setProgressFraction(0);
               }
+            });
 
-              int count;
-              byte[] buf = new byte[4096];
-              int total = 0;
-              while ((count = request.getInputStream().read(buf)) > 0) {
-                if (callback.isCancelled()) {
-                  return null;
-                }
-                total += count;
-                if (size > 0) {
-                  callback.setProgressFraction((double)total / size);
-                }
-                output.write(buf, 0, count);
-              }
-            }
-            finally {
-              output.close();
-            }
-
-            FileType fileType = RemoteFileUtil.getFileType(connection.getContentType());
+            FileType fileType = RemoteFileUtil.getFileType(request.getConnection().getContentType());
             if (fileType == FileTypes.PLAIN_TEXT) {
               FileType fileTypeByFileName = FileTypeRegistry.getInstance().getFileTypeByFileName(PathUtilRt.getFileName(url.getPath()));
               if (fileTypeByFileName != FileTypes.UNKNOWN) {

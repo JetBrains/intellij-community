@@ -47,8 +47,8 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
              : (T)new CompositeWrapper(ep);
     }
     T configurable = ep.createConfigurable();
-    if (configurable instanceof Configurable) {
-      LOG.warn("cannot wrap configurable: " + configurable.getClass().getName());
+    if (configurable instanceof Configurable && LOG.isDebugEnabled()) {
+      LOG.debug("cannot create configurable wrapper for " + configurable.getClass());
     }
     return configurable;
   }
@@ -112,6 +112,9 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
       if (myConfigurable == null) {
         LOG.error("Can't instantiate configurable for " + myEp);
       }
+      else if (LOG.isDebugEnabled()) {
+        LOG.debug("created configurable for " + myConfigurable.getClass());
+      }
     }
     return myConfigurable;
   }
@@ -129,8 +132,8 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
       Configurable configurable = cast(Configurable.class, this);
       if (configurable != null) {
         String name = configurable.getDisplayName();
-        if (!loaded) {
-          LOG.warn("configurable loaded for its name: " + name);
+        if (!loaded && LOG.isDebugEnabled()) {
+          LOG.debug("XML does not provide displayName for " + configurable.getClass());
         }
         return name;
       }
@@ -190,7 +193,7 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
     if (configurable != null) {
       String id = configurable.getId();
       if (!loaded) {
-        LOG.warn("configurable loaded for its id: " + id);
+        LOG.warn("XML does not provide id for " + configurable.getClass());
       }
       return id;
     }
@@ -288,9 +291,9 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
     @Override
     public ConfigurableWrapper addChild(Configurable configurable) {
       if (myComparator != null) {
-        final int preIndex = Arrays.binarySearch(myKids, configurable, myComparator);
-        LOG.assertTrue(preIndex < 0);
-        myKids = ArrayUtil.insert(myKids, -preIndex - 1, configurable);
+        int index = Arrays.binarySearch(myKids, configurable, myComparator);
+        LOG.assertTrue(index < 0, "similar configurable is already exist");
+        myKids = ArrayUtil.insert(myKids, -1 - index, configurable);
       }
       else {
         myKids = ArrayUtil.append(myKids, configurable);

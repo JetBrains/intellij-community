@@ -35,7 +35,8 @@ public class StdArrangementSettings implements ArrangementSettings {
   @NotNull private final   List<ArrangementGroupingRule> myGroupings       = new ArrayList<ArrangementGroupingRule>();
 
   // cached values
-  @NotNull protected final List<StdArrangementMatchRule> myRulesByPriority = new ArrayList<StdArrangementMatchRule>();
+  @NotNull protected final List<StdArrangementMatchRule> myRulesByPriority =
+    Collections.synchronizedList(new ArrayList<StdArrangementMatchRule>());
 
   public StdArrangementSettings() {
   }
@@ -105,22 +106,24 @@ public class StdArrangementSettings implements ArrangementSettings {
   @NotNull
   @Override
   public List<? extends ArrangementMatchRule> getRulesSortedByPriority() {
-    if (myRulesByPriority.isEmpty()) {
-      for (ArrangementSectionRule rule : mySectionRules) {
-        myRulesByPriority.addAll(rule.getMatchRules());
+    synchronized (myRulesByPriority) {
+      if (myRulesByPriority.isEmpty()) {
+        for (ArrangementSectionRule rule : mySectionRules) {
+          myRulesByPriority.addAll(rule.getMatchRules());
+        }
+        ContainerUtil.sort(myRulesByPriority);
       }
-      ContainerUtil.sort(myRulesByPriority);
     }
     return myRulesByPriority;
   }
 
   public void addRule(@NotNull StdArrangementMatchRule rule) {
-    addRule(ArrangementSectionRule.create(rule));
+    addSectionRule(rule);
+    myRulesByPriority.clear();
   }
 
-  public void addRule(@NotNull ArrangementSectionRule rule) {
-    mySectionRules.add(rule);
-    myRulesByPriority.clear();
+  public void addSectionRule(@NotNull StdArrangementMatchRule rule) {
+    mySectionRules.add(ArrangementSectionRule.create(rule));
   }
 
   public void addGrouping(@NotNull ArrangementGroupingRule rule) {

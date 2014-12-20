@@ -130,27 +130,4 @@ public class CapturingProcessHandler extends OSProcessHandler {
     return myOutput;
   }
 
-  @NotNull
-  public ProcessOutput runProcessCheckingCanceled() throws ProcessCanceledException {
-    startNotify();
-    while (!waitFor(20)) {
-      try {
-        ProgressManager.checkCanceled();
-      }
-      catch (ProcessCanceledException e) {
-        if (!isProcessTerminating() && !isProcessTerminated()) {
-          destroyProcess();
-        }
-        throw e;
-      }
-    }
-    if (waitFor()) {
-      myOutput.setExitCode(getProcess().exitValue());
-    }
-    else {
-      LOG.info("runProcess: exit value unavailable");
-    }
-    return myOutput;
-  }
-
 }

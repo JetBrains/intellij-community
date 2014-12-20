@@ -15,7 +15,7 @@
    </description>
   <version>8.1</version>
   <category>VCS Integration</category>
-  <vendor url="http://svn.jetbrains.org/idea/Trunk/bundled/git4idea/" logo="/general/ijLogo.png">JetBrains</vendor>
+  <vendor url="http://svn.jetbrains.org/idea/Trunk/bundled/git4idea/">JetBrains</vendor>
 
   <depends>com.intellij.modules.vcs</depends>
   <xi:include href="/META-INF/remote-servers-git.xml" xpointer="xpointer(/idea-plugin/*)">

@@ -133,8 +133,14 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Pers
 
   @Override
   public void setCurrentScheme(@NotNull FileTemplatesScheme scheme) {
-    for (FTManager child : myAllManagers) {
-      child.saveTemplates();
+    setScheme(scheme, true);
+  }
+
+  private void setScheme(@NotNull FileTemplatesScheme scheme, boolean saveBefore) {
+    if (saveBefore) {
+      for (FTManager child : myAllManagers) {
+        child.saveTemplates();
+      }
     }
     myScheme = scheme;
     for (FTManager manager : myAllManagers) {
@@ -434,7 +440,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Pers
   @Override
   public void loadState(State state) {
     XmlSerializerUtil.copyBean(state, myState);
-    setCurrentScheme(myProjectScheme != null && myProjectScheme.getName().equals(state.SCHEME) ? myProjectScheme : FileTemplatesScheme.DEFAULT);
+    setScheme(myProjectScheme != null && myProjectScheme.getName().equals(state.SCHEME) ? myProjectScheme : FileTemplatesScheme.DEFAULT, false);
   }
 
   public static class State {

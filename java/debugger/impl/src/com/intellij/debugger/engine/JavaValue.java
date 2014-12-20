@@ -140,14 +140,10 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
           public void labelChanged() {
             Icon nodeIcon = DebuggerTreeRenderer.getValueIcon(myValueDescriptor);
             final String value = getValueString();
-            String type = splitValue(myValueDescriptor.getIdLabel())[0];
-            if (StringUtil.isEmpty(type)) {
-              type = splitValue(myValueDescriptor.getValueText())[0];
-            }
             XValuePresentation presentation;
             @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
             EvaluateException exception = myValueDescriptor.getEvaluateException();
-            presentation = new JavaValuePresentation(value, type, exception != null ? exception.getMessage() : null, myValueDescriptor);
+            presentation = new JavaValuePresentation(value, myValueDescriptor.getIdLabel(), exception != null ? exception.getMessage() : null, myValueDescriptor);
 
             if (myValueDescriptor.getLastRenderer() instanceof FullValueEvaluatorProvider) {
               node.setFullValueEvaluator(((FullValueEvaluatorProvider)myValueDescriptor.getLastRenderer()).getFullValueEvaluator(myEvaluationContext, myValueDescriptor));
@@ -208,7 +204,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
     @Nullable
     @Override
     public String getType() {
-      return myType;
+      return StringUtil.nullize(myType);
     }
 
     @Override
@@ -289,17 +285,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
 
   @NotNull
   String getValueString() {
-    return splitValue(StringUtil.notNullize(myValueDescriptor.getValueText()))[1];
-  }
-
-  private static String[] splitValue(String value) {
-    if (StringUtil.startsWithChar(value, '{')) {
-      int end = value.indexOf('}');
-      if (end > 0) {
-        return new String[]{value.substring(1, end), value.substring(end+1)};
-      }
-    }
-    return new String[]{null, value};
+    return myValueDescriptor.getValueText();
   }
 
   private int currentStart = 0;

@@ -40,6 +40,7 @@ public class XmlEmmetConfigurable implements UnnamedConfigurable, Disposable, Co
   private JBCheckBox myEnablePreviewJBCheckBox;
   private CheckBoxList<ZenCodingFilter> myFiltersCheckBoxList;
   private JPanel myFiltersListPanel;
+  private JBCheckBox myAllowCompactBooleanAttributesJBCheckBox;
 
   public XmlEmmetConfigurable() {
     myEnableEmmetJBCheckBox.addActionListener(new ActionListener() {
@@ -47,6 +48,7 @@ public class XmlEmmetConfigurable implements UnnamedConfigurable, Disposable, Co
       public void actionPerformed(ActionEvent e) {
         boolean selected = myEnableEmmetJBCheckBox.isSelected();
         myEnablePreviewJBCheckBox.setEnabled(selected);
+        myAllowCompactBooleanAttributesJBCheckBox.setEnabled(selected);
         myFiltersCheckBoxList.setEnabled(selected);
       }
     });
@@ -74,6 +76,7 @@ public class XmlEmmetConfigurable implements UnnamedConfigurable, Disposable, Co
     EmmetOptions emmetOptions = EmmetOptions.getInstance();
     return emmetOptions.isEmmetEnabled() != myEnableEmmetJBCheckBox.isSelected() ||
            emmetOptions.isPreviewEnabled() != myEnablePreviewJBCheckBox.isSelected() ||
+           emmetOptions.isCompactBooleanAllowed() != myAllowCompactBooleanAttributesJBCheckBox.isSelected() ||
            !emmetOptions.getFiltersEnabledByDefault().equals(enabledFilters());
   }
 
@@ -82,6 +85,7 @@ public class XmlEmmetConfigurable implements UnnamedConfigurable, Disposable, Co
     EmmetOptions emmetOptions = EmmetOptions.getInstance();
     emmetOptions.setEmmetEnabled(myEnableEmmetJBCheckBox.isSelected());
     emmetOptions.setPreviewEnabled(myEnablePreviewJBCheckBox.isSelected());
+    emmetOptions.setCompactBooleanAllowed(myAllowCompactBooleanAttributesJBCheckBox.isSelected());
     emmetOptions.setFiltersEnabledByDefault(enabledFilters());
   }
 
@@ -92,6 +96,8 @@ public class XmlEmmetConfigurable implements UnnamedConfigurable, Disposable, Co
     myEnableEmmetJBCheckBox.setSelected(emmetOptions.isEmmetEnabled());
     myEnablePreviewJBCheckBox.setEnabled(emmetOptions.isEmmetEnabled());
     myEnablePreviewJBCheckBox.setSelected(emmetOptions.isPreviewEnabled());
+    myAllowCompactBooleanAttributesJBCheckBox.setEnabled(emmetOptions.isEmmetEnabled());
+    myAllowCompactBooleanAttributesJBCheckBox.setSelected(emmetOptions.isCompactBooleanAllowed());
 
     Set<String> enabledByDefault = emmetOptions.getFiltersEnabledByDefault();
     for (ZenCodingFilter filter : ZenCodingFilter.getInstances()) {

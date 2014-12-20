@@ -131,7 +131,7 @@ public class ClassRenderer extends NodeRendererImpl{
           }
         }
         else {
-          return ValueDescriptorImpl.getIdLabel(objRef);
+          return "";
         }
       }
     }

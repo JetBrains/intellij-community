@@ -18,11 +18,9 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.io.HttpRequests;
-import com.intellij.util.net.NetUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
@@ -141,25 +139,15 @@ public abstract class AbstractAttachSourceProvider implements AttachSourcesProvi
 
     @Override
     public ActionCallback perform(List<LibraryOrderEntry> orderEntriesContainingFile) {
-
       final ActionCallback callback = new ActionCallback();
-
       Task task = new Task.Backgroundable(myProject, "Downloading sources...", true) {
         @Override
         public void run(@NotNull final ProgressIndicator indicator) {
-          final ByteArrayOutputStream out;
+          final byte[] bytes;
           try {
             LOG.info("Downloading sources JAR: " + myUrl);
             indicator.checkCanceled();
-            out = HttpRequests.request(myUrl).connect(new HttpRequests.RequestProcessor<ByteArrayOutputStream>() {
-              @Override
-              public ByteArrayOutputStream process(@NotNull HttpRequests.Request request) throws IOException {
-                int contentLength = request.getConnection().getContentLength();
-                ByteArrayOutputStream out = new ByteArrayOutputStream(contentLength > 0 ? contentLength : 100 * 1024);
-                NetUtils.copyStreamContent(indicator, request.getInputStream(), out, contentLength);
-                return out;
-              }
-            });
+            bytes = HttpRequests.request(myUrl).toBytes(indicator);
           }
           catch (IOException e) {
             LOG.warn(e);
@@ -183,7 +171,7 @@ public abstract class AbstractAttachSourceProvider implements AttachSourcesProvi
             public void run() {
               AccessToken accessToken = WriteAction.start();
               try {
-                storeFile(out.toByteArray());
+                storeFile(bytes);
               }
               finally {
                 accessToken.finish();

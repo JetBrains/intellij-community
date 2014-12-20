@@ -231,7 +231,11 @@
                              key="title.customizations" bundle="messages.IdeBundle"/>
 
     <!-- Notifications -->
-    <applicationConfigurable groupId="appearance" groupWeight="110" displayName="Notifications" id="reference.settings.ide.settings.notifications" instance="com.intellij.notification.impl.NotificationsConfigurable"/>
+    <applicationConfigurable groupId="appearance"
+                             groupWeight="110"
+                             displayName="Notifications"
+                             id="reference.settings.ide.settings.notifications"
+                             provider="com.intellij.notification.impl.NotificationsConfigurableProvider"/>
 
     <!-- Plugins -->
     <applicationConfigurable groupId="root" groupWeight="55" instance="com.intellij.ide.plugins.PluginManagerConfigurable" id="preferences.pluginManager"
@@ -261,6 +265,8 @@
 
     <applicationService serviceImplementation="com.intellij.openapi.editor.ex.EditorSettingsExternalizable"/>
 
+    <applicationService serviceInterface="com.intellij.util.io.HttpRequests" serviceImplementation="com.intellij.util.io.HttpRequestsImpl"/>
+
     <scopeParserExtension implementation="com.intellij.psi.search.scope.packageSet.FilePackageSetParserExtension"/>
     <applicationService serviceInterface="com.intellij.openapi.ui.popup.StackingPopupDispatcher" serviceImplementation="com.intellij.ui.popup.StackingPopupDispatcherImpl"/>
 
@@ -281,7 +287,6 @@
     <statistics.usagesCollector implementation="com.intellij.featureStatistics.FeaturesUsageCollector"/>
     <statistics.usagesCollector implementation="com.intellij.openapi.vcs.statistics.VcsUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.UsageTrigger$MyCollector"/>
-    <!--<statistics.usagesCollector implementation="com.intellij.internal.statistic.ideSettings.IdeSettingsUsagesCollector"/>-->
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.ideSettings.LaFUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.OsNameUsageCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.OsVersionUsageCollector"/>

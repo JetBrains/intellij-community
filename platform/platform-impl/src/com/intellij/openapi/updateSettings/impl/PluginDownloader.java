@@ -35,12 +35,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.io.HttpRequests;
 import com.intellij.util.io.ZipUtil;
-import com.intellij.util.net.NetUtils;
 import org.apache.http.client.utils.URIBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.net.*;
 import java.util.List;
 import java.util.UUID;
@@ -254,19 +254,9 @@ public class PluginDownloader {
     return HttpRequests.request(myPluginUrl).gzip(false).forceHttps(myForceHttps).connect(new HttpRequests.RequestProcessor<File>() {
       @Override
       public File process(@NotNull HttpRequests.Request request) throws IOException {
-        indicator.checkCanceled();
-
-        URLConnection connection = request.getConnection();
-        OutputStream fileOut = new FileOutputStream(file);
-        try {
-          NetUtils.copyStreamContent(indicator, request.getInputStream(), fileOut, connection.getContentLength());
-        }
-        finally {
-          fileOut.close();
-        }
-
+        request.saveToFile(file, indicator);
         if (myFileName == null) {
-          myFileName = guessFileName(connection, file);
+          myFileName = guessFileName(request.getConnection(), file);
         }
 
         File newFile = new File(file.getParentFile(), myFileName);
