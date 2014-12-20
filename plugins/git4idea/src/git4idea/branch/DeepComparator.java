@@ -80,7 +80,7 @@ public class DeepComparator implements Disposable {
           Map<GitRepository, GitBranch> repositoriesWithCurrentBranches = myTask.myRepositoriesWithCurrentBranches;
           VcsLogDataProvider provider = myTask.myProvider;
 
-          stopAndUnhighlight();
+          stopTask();
 
           // highlight again
           Map<GitRepository, GitBranch> repositories = getRepositories(myUi.getDataPack().getLogProviders(), comparedBranch);
@@ -109,6 +109,7 @@ public class DeepComparator implements Disposable {
 
     Map<GitRepository, GitBranch> repositories = getRepositories(myUi.getDataPack().getLogProviders(), branchToCompare);
     if (repositories.isEmpty()) {
+      removeHighlighting();
       return;
     }
 
@@ -132,10 +133,18 @@ public class DeepComparator implements Disposable {
   }
 
   public void stopAndUnhighlight() {
+    stopTask();
+    removeHighlighting();
+  }
+
+  private void stopTask() {
     if (myTask != null) {
       myTask.cancel();
       myTask = null;
     }
+  }
+
+  private void removeHighlighting() {
     if (myHighlighter != null) {
       myUi.removeHighlighter(myHighlighter);
     }
@@ -191,6 +200,7 @@ public class DeepComparator implements Disposable {
 
     @Override
     public void onSuccess() {
+      removeHighlighting();
       if (myCancelled) {
         return;
       }
@@ -200,9 +210,6 @@ public class DeepComparator implements Disposable {
         return;
       }
 
-      if (myHighlighter != null) {
-        myUi.removeHighlighter(myHighlighter);
-      }
       myHighlighter = new VcsLogHighlighter() {
         @Nullable
         @Override
