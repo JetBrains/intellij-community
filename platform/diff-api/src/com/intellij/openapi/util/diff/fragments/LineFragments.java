@@ -37,7 +37,7 @@ public class LineFragments {
   }
 
   @NotNull
-  public static LineFragments createFine(@NotNull List<? extends LineFragment> fragments) {
+  public static LineFragments createFine(@NotNull List<? extends FineLineFragment> fragments) {
     return new LineFragments(fragments, true);
   }
 }

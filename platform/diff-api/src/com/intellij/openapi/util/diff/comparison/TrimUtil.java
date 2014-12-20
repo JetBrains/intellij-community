@@ -199,6 +199,101 @@ public class TrimUtil {
     return oldEnd1 - end1;
   }
 
+  @NotNull
+  public static IntPair expandForwardIW(@NotNull CharSequence text1, @NotNull CharSequence text2,
+                                        int start1, int start2, int end1, int end2) {
+    while (start1 < end1 && start2 < end2) {
+      char c1 = text1.charAt(start1);
+      char c2 = text2.charAt(start2);
+
+      if (c1 == c2) {
+        start1++;
+        start2++;
+        continue;
+      }
+
+      boolean skipped = false;
+      if (isWhiteSpace(c1)) {
+        skipped = true;
+        start1++;
+      }
+      if (isWhiteSpace(c2)) {
+        skipped = true;
+        start2++;
+      }
+      if (!skipped) break;
+    }
+
+    while (start1 < end1) {
+      char c1 = text1.charAt(start1);
+      if (!isWhiteSpace(c1)) break;
+      start1++;
+    }
+
+    while (start2 < end2) {
+      char c2 = text2.charAt(start2);
+      if (!isWhiteSpace(c2)) break;
+      start2++;
+    }
+
+    return new IntPair(start1, start2);
+  }
+
+  @NotNull
+  public static IntPair expandBackwardIW(@NotNull CharSequence text1, @NotNull CharSequence text2,
+                                         int start1, int start2, int end1, int end2) {
+    while (start1 < end1 && start2 < end2) {
+      char c1 = text1.charAt(end1 - 1);
+      char c2 = text2.charAt(end2 - 1);
+
+      if (c1 == c2) {
+        end1--;
+        end2--;
+        continue;
+      }
+
+      boolean skipped = false;
+      if (isWhiteSpace(c1)) {
+        skipped = true;
+        end1--;
+      }
+      if (isWhiteSpace(c2)) {
+        skipped = true;
+        end2--;
+      }
+      if (!skipped) break;
+    }
+
+    while (start1 < end1) {
+      char c1 = text1.charAt(end1 - 1);
+      if (!isWhiteSpace(c1)) break;
+      end1--;
+    }
+
+    while (start2 < end2) {
+      char c2 = text2.charAt(end2 - 1);
+      if (!isWhiteSpace(c2)) break;
+      end2--;
+    }
+
+    return new IntPair(end1, end2);
+  }
+
+  @NotNull
+  public static Range expandIW(@NotNull CharSequence text1, @NotNull CharSequence text2,
+                               int start1, int start2, int end1, int end2) {
+    IntPair start = expandForwardIW(text1, text2, start1, start2, end1, end2);
+    start1 = start.val1;
+    start2 = start.val2;
+
+    IntPair end = expandBackwardIW(text1, text2, start1, start2, end1, end2);
+    end1 = end.val1;
+    end2 = end.val2;
+
+    return new Range(start1, end1, start2, end2);
+  }
+
+
   //
   // Misc
   //
@@ -211,5 +306,10 @@ public class TrimUtil {
   @NotNull
   public static Range trim(@NotNull CharSequence text1, @NotNull CharSequence text2, @NotNull Range range) {
     return trim(text1, text2, range.start1, range.start2, range.end1, range.end2);
+  }
+
+  @NotNull
+  public static Range expandIW(@NotNull CharSequence text1, @NotNull CharSequence text2) {
+    return expandIW(text1, text2, 0, 0, text1.length(), text2.length());
   }
 }

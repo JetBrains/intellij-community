@@ -56,7 +56,7 @@ public abstract class ComparisonUtilTestBase extends UsefulTestCase {
                                  @Nullable List<Change> expected,
                                  @NotNull ComparisonPolicy policy) {
     List<FineLineFragment> rawFragments = ComparisonUtil.compareFineLines(before.getCharsSequence(), after.getCharsSequence(), policy, INDICATOR);
-    List<FineLineFragment> fragments = ComparisonUtil.squashFine(rawFragments);
+    List<? extends FineLineFragment> fragments = ComparisonUtil.squashFine(rawFragments);
 
     checkConsistencyWord(fragments, before, after, policy);
 
@@ -89,7 +89,7 @@ public abstract class ComparisonUtilTestBase extends UsefulTestCase {
     if (expected != null) checkLineChanges(fragments, before, after, expected, policy);
   }
 
-  private static void checkConsistencyWord(@NotNull List<FineLineFragment> fragments,
+  private static void checkConsistencyWord(@NotNull List<? extends FineLineFragment> fragments,
                                            @NotNull Document before,
                                            @NotNull Document after,
                                            @NotNull ComparisonPolicy policy) {

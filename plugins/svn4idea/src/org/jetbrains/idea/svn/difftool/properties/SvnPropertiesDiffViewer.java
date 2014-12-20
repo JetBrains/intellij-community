@@ -13,6 +13,7 @@ import com.intellij.openapi.util.diff.comparison.ComparisonUtil;
 import com.intellij.openapi.util.diff.comparison.DiffTooBigException;
 import com.intellij.openapi.util.diff.comparison.TrimUtil;
 import com.intellij.openapi.util.diff.contents.DiffContent;
+import com.intellij.openapi.util.diff.fragments.FineLineFragment;
 import com.intellij.openapi.util.diff.fragments.LineFragment;
 import com.intellij.openapi.util.diff.fragments.LineFragmentImpl;
 import com.intellij.openapi.util.text.StringUtil;
@@ -29,6 +30,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
+
+import static com.intellij.openapi.progress.DumbProgressIndicator.INSTANCE;
 
 public class SvnPropertiesDiffViewer implements DiffViewer {
   private static final Logger LOG = Logger.getInstance(SvnPropertiesDiffViewer.class);
@@ -161,11 +164,10 @@ public class SvnPropertiesDiffViewer implements DiffViewer {
 
     try {
       if (words1 < MAX_ITEM_COUNT && words2 < MAX_ITEM_COUNT) {
-        return ComparisonUtil.squashFine(
-          ComparisonUtil.compareFineLines(text1, text2, ComparisonPolicy.DEFAULT, DumbProgressIndicator.INSTANCE));
+        return ComparisonUtil.squashFine(ComparisonUtil.compareFineLines(text1, text2, ComparisonPolicy.DEFAULT, INSTANCE));
       }
       if (lines1 < MAX_ITEM_COUNT && lines2 < MAX_ITEM_COUNT) {
-        return ComparisonUtil.squash(ComparisonUtil.compareLines(text1, text2, ComparisonPolicy.DEFAULT, DumbProgressIndicator.INSTANCE));
+        return ComparisonUtil.squash(ComparisonUtil.compareLines(text1, text2, ComparisonPolicy.DEFAULT, INSTANCE));
       }
     }
     catch (DiffTooBigException e) {

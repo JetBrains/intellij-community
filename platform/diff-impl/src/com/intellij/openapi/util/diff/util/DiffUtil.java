@@ -390,31 +390,17 @@ public class DiffUtil {
                                                @NotNull ProgressIndicator indicator) {
     // TODO: check instanceOf LineFragments, keep some additional data inside ?
     LineFragments lineFragments = doCompareWithCache(request, text1, text2, stamp1, stamp2, config, indicator);
-    if (!config.squashFragments && !config.trimFragments) return lineFragments;
 
+    indicator.checkCanceled();
     if (lineFragments.isFine()) {
       List<? extends FineLineFragment> fragments = lineFragments.getFineFragments();
-      if (config.squashFragments) {
-        indicator.checkCanceled();
-        fragments = ComparisonUtil.squashFine(fragments);
-      }
-      if (config.trimFragments) {
-        indicator.checkCanceled();
-        fragments = ComparisonUtil.trimFine(fragments, config.policy);
-      }
+      fragments = ComparisonUtil.processBlocksFine(fragments, text1, text2, config.policy, config.squashFragments, config.trimFragments);
       return LineFragments.createFine(fragments);
     }
     else {
       List<? extends LineFragment> fragments = lineFragments.getFragments();
-      if (config.squashFragments) {
-        indicator.checkCanceled();
-        fragments = ComparisonUtil.squash(fragments);
-      }
-      if (config.trimFragments) {
-        indicator.checkCanceled();
-        fragments = ComparisonUtil.trim(fragments, config.policy);
-      }
-      return LineFragments.createFine(fragments);
+      fragments = ComparisonUtil.processBlocks(fragments, text1, text2, config.policy, config.squashFragments, config.trimFragments);
+      return LineFragments.create(fragments);
     }
   }
 

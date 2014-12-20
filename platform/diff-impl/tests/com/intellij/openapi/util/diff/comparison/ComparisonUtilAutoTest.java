@@ -52,6 +52,10 @@ public class ComparisonUtilAutoTest extends AutoTestCase {
     doTestLineSquashed(System.currentTimeMillis(), 30, 300);
   }
 
+  public void testLineTrimSquashed() throws Exception {
+    doTestLineTrimSquashed(System.currentTimeMillis(), 30, 300);
+  }
+
   private void doTestLine(long seed, int runs, int maxLength) throws Exception {
     ComparisonPolicy[] policies = {ComparisonPolicy.DEFAULT, ComparisonPolicy.TRIM_WHITESPACES, ComparisonPolicy.IGNORE_WHITESPACES};
 
@@ -81,10 +85,30 @@ public class ComparisonUtilAutoTest extends AutoTestCase {
         List<FineLineFragment> fragments = ComparisonUtil.compareFineLines(sequence1, sequence2, policy, INDICATOR);
         debugData.set(fragments);
 
-        List<FineLineFragment> squashedFragments = ComparisonUtil.squashFine(fragments);
+        List<? extends FineLineFragment> squashedFragments = ComparisonUtil.squashFine(fragments);
         debugData.set(new Object[]{fragments, squashedFragments});
 
         checkResultLine(text1, text2, squashedFragments, policy, false);
+      }
+    });
+  }
+
+  private void doTestLineTrimSquashed(long seed, int runs, int maxLength) throws Exception {
+    ComparisonPolicy[] policies = {ComparisonPolicy.DEFAULT, ComparisonPolicy.TRIM_WHITESPACES, ComparisonPolicy.IGNORE_WHITESPACES};
+
+    doTest(seed, runs, maxLength, policies, new TestTask() {
+      @Override
+      public void run(@NotNull Document text1, @NotNull Document text2, @NotNull ComparisonPolicy policy, @NotNull Ref<Object> debugData) {
+        CharSequence sequence1 = text1.getCharsSequence();
+        CharSequence sequence2 = text2.getCharsSequence();
+
+        List<FineLineFragment> fragments = ComparisonUtil.compareFineLines(sequence1, sequence2, policy, INDICATOR);
+        debugData.set(fragments);
+
+        List<? extends FineLineFragment> processed = ComparisonUtil.processBlocksFine(fragments, sequence1, sequence2, policy, true, true);
+        debugData.set(new Object[]{fragments, processed});
+
+        checkResultLine(text1, text2, processed, policy, false);
       }
     });
   }
@@ -141,9 +165,8 @@ public class ComparisonUtilAutoTest extends AutoTestCase {
     }
   }
 
-  private static void checkResultLine(@NotNull Document text1,
-                                      @NotNull Document text2,
-                                      @NotNull List<FineLineFragment> fragments,
+  private static void checkResultLine(@NotNull Document text1, @NotNull Document text2,
+                                      @NotNull List<? extends FineLineFragment> fragments,
                                       @NotNull ComparisonPolicy policy,
                                       boolean allowNonSquashed) {
     checkLineConsistency(text1, text2, fragments, allowNonSquashed);
@@ -160,8 +183,7 @@ public class ComparisonUtilAutoTest extends AutoTestCase {
     checkUnchanged(text1.getCharsSequence(), text2.getCharsSequence(), fragments, policy, true);
   }
 
-  private static void checkResultWord(@NotNull CharSequence text1,
-                                      @NotNull CharSequence text2,
+  private static void checkResultWord(@NotNull CharSequence text1, @NotNull CharSequence text2,
                                       @NotNull List<DiffFragment> fragments,
                                       @NotNull ComparisonPolicy policy) {
     checkDiffConsistency(fragments);
@@ -169,8 +191,7 @@ public class ComparisonUtilAutoTest extends AutoTestCase {
     checkUnchanged(text1, text2, fragments, policy, false);
   }
 
-  private static void checkResultChar(@NotNull CharSequence text1,
-                                      @NotNull CharSequence text2,
+  private static void checkResultChar(@NotNull CharSequence text1, @NotNull CharSequence text2,
                                       @NotNull List<DiffFragment> fragments,
                                       @NotNull ComparisonPolicy policy) {
     checkDiffConsistency(fragments);
@@ -178,8 +199,7 @@ public class ComparisonUtilAutoTest extends AutoTestCase {
     checkUnchanged(text1, text2, fragments, policy, false);
   }
 
-  private static void checkLineConsistency(@NotNull Document text1,
-                                           @NotNull Document text2,
+  private static void checkLineConsistency(@NotNull Document text1, @NotNull Document text2,
                                            @NotNull List<? extends FineLineFragment> fragments,
                                            boolean allowNonSquashed) {
     int last1 = -1;
@@ -243,9 +263,7 @@ public class ComparisonUtilAutoTest extends AutoTestCase {
     }
   }
 
-  private static void checkLineOffsets(@NotNull LineFragment fragment,
-                                       @NotNull Document before,
-                                       @NotNull Document after) {
+  private static void checkLineOffsets(@NotNull LineFragment fragment, @NotNull Document before, @NotNull Document after) {
     checkLineOffsets(before, fragment.getStartLine1(), fragment.getEndLine1(),
                      fragment.getStartOffset1(), fragment.getEndOffset1());
 
@@ -254,10 +272,8 @@ public class ComparisonUtilAutoTest extends AutoTestCase {
   }
 
   private static void checkLineOffsets(@NotNull Document document,
-                                       int startLine,
-                                       int endLine,
-                                       int startOffset,
-                                       int endOffset) {
+                                       int startLine, int endLine,
+                                       int startOffset, int endOffset) {
     if (startLine != endLine) {
       assertEquals(document.getLineStartOffset(startLine), startOffset);
       int offset = document.getLineEndOffset(endLine - 1);
@@ -273,8 +289,7 @@ public class ComparisonUtilAutoTest extends AutoTestCase {
     }
   }
 
-  private static void checkUnchanged(@NotNull CharSequence text1,
-                                     @NotNull CharSequence text2,
+  private static void checkUnchanged(@NotNull CharSequence text1, @NotNull CharSequence text2,
                                      @NotNull List<? extends DiffFragment> fragments,
                                      @NotNull ComparisonPolicy policy,
                                      boolean skipNewline) {
@@ -297,7 +312,8 @@ public class ComparisonUtilAutoTest extends AutoTestCase {
     check(chunk1, chunk2, ignoreSpaces, skipNewline);
   }
 
-  private static void check(@NotNull CharSequence chunk1, @NotNull CharSequence chunk2, boolean ignoreSpaces, boolean skipNewline) {
+  private static void check(@NotNull CharSequence chunk1, @NotNull CharSequence chunk2,
+                            boolean ignoreSpaces, boolean skipNewline) {
     if (ignoreSpaces) {
       assertTrue(StringUtil.equalsIgnoreWhitespaces(chunk1, chunk2));
     }
@@ -364,7 +380,7 @@ public class ComparisonUtilAutoTest extends AutoTestCase {
     return Math.max(1, document.getLineCount());
   }
 
-  private static interface TestTask {
+  private interface TestTask {
     void run(@NotNull Document text1, @NotNull Document text2, @NotNull ComparisonPolicy policy, @NotNull Ref<Object> debugData);
   }
 }
