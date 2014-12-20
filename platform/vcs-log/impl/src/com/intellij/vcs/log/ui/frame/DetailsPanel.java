@@ -232,6 +232,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
   private static class DataPanel extends JEditorPane {
     public static final int BRANCHES_LIMIT = 6;
     public static final int BRANCHES_TABLE_COLUMN_COUNT = 3;
+    @NotNull public static final String LEFT_ALIGN = "left";
     @NotNull private static String SHOW_OR_HIDE_BRANCHES = "Show or Hide Branches";
 
     @NotNull private final Project myProject;
@@ -328,9 +329,9 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
             if (index >= myBranches.size()) {
               builder.append("");
             } else if (index != myBranches.size() - 1)  {
-              builder.append(myBranches.get(index) + "," + StringUtil.repeat("&nbsp;", 20), "left");
+              builder.append(myBranches.get(index) + "," + StringUtil.repeat("&nbsp;", 20), LEFT_ALIGN);
             } else {
-              builder.append(myBranches.get(index), "left");
+              builder.append(myBranches.get(index), LEFT_ALIGN);
             }
           }
 
