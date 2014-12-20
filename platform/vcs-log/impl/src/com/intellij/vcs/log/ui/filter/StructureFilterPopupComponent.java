@@ -30,8 +30,8 @@ import com.intellij.vcs.log.VcsLogDataPack;
 import com.intellij.vcs.log.VcsLogRootFilter;
 import com.intellij.vcs.log.VcsLogRootFilterImpl;
 import com.intellij.vcs.log.VcsLogStructureFilter;
-import com.intellij.vcs.log.data.VcsLogFileFilter;
 import com.intellij.vcs.log.data.VcsLogStructureFilterImpl;
+import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.VcsStructureChooser;
 import com.intellij.vcs.log.ui.frame.VcsLogGraphTable;
@@ -63,7 +63,7 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
     Collection<VirtualFile> files =
       filter.getStructureFilter() == null ? Collections.<VirtualFile>emptySet() : filter.getStructureFilter().getFiles();
     Collection<VirtualFile> visibleRoots =
-      VcsLogFileFilter.getAllVisibleRoots(getAllRoots(), filter.getRootFilter(), filter.getStructureFilter());
+      VcsLogUtil.getAllVisibleRoots(getAllRoots(), filter.getRootFilter(), filter.getStructureFilter());
 
     if (files.isEmpty()) {
       return getText(roots, "roots", true, visibleRoots.size() == getAllRoots().size());
