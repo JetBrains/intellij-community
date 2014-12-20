@@ -372,7 +372,7 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
           scrollToPoint(myEditors.get(2), myEditorsPosition.myPoints[2]);
         }
         else {
-          getCurrentEditor().getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+          getCurrentEditor().getScrollingModel().scrollToCaret(ScrollType.CENTER);
         }
         myShouldScroll = false;
       }

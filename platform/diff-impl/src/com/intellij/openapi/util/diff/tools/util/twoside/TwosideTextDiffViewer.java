@@ -438,7 +438,7 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
           scrollToPoint(myEditor2, myEditorsPosition.myPoint2);
         }
         else {
-          getCurrentEditor().getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+          getCurrentEditor().getScrollingModel().scrollToCaret(ScrollType.CENTER);
         }
         myShouldScroll = false;
       }
