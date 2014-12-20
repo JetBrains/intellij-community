@@ -181,6 +181,11 @@ public abstract class TextDiffViewerBase extends ListenerDiffViewerBase {
       }
     }
 
+    @NotNull
+    public DefaultActionGroup getPopupGroup() {
+      return myChildren;
+    }
+
     @Override
     public void update(AnActionEvent e) {
       Presentation presentation = e.getPresentation();
@@ -226,6 +231,11 @@ public abstract class TextDiffViewerBase extends ListenerDiffViewerBase {
       for (ComparisonPolicy policy : ComparisonPolicy.values()) {
         myChildren.add(new MyPolicyAction(policy));
       }
+    }
+
+    @NotNull
+    public DefaultActionGroup getPopupGroup() {
+      return myChildren;
     }
 
     @Override

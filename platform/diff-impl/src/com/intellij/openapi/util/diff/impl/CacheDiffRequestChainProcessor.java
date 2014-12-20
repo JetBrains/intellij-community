@@ -13,6 +13,8 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.diff.DiffManagerEx;
@@ -66,6 +68,7 @@ public abstract class CacheDiffRequestChainProcessor implements Disposable {
 
   @NotNull private final MyDiffWindow myDiffWindow;
   @NotNull private final OpenInEditorAction myOpenInEditorAction;
+  @NotNull private final ShowActionGroupPopupAction myShowActionGroupPopupAction;
 
   @NotNull private final MyPanel myPanel;
   @NotNull private final ModifiablePanel myContentPanel;
@@ -129,6 +132,8 @@ public abstract class CacheDiffRequestChainProcessor implements Disposable {
         onAfterNavigate();
       }
     });
+
+    myShowActionGroupPopupAction = new ShowActionGroupPopupAction();
   }
 
   //
@@ -151,6 +156,7 @@ public abstract class CacheDiffRequestChainProcessor implements Disposable {
     myToolbarStatusPanel.setContent(null);
     myToolbarPanel.setContent(null);
     myContentPanel.setContent(null);
+    myShowActionGroupPopupAction.setActionGroup(null);
 
     myActiveRequest.onAssigned(false);
     myActiveRequest = request;
@@ -275,14 +281,14 @@ public abstract class CacheDiffRequestChainProcessor implements Disposable {
         myToolbarStatusPanel.setContent(null);
         myToolbarPanel.setContent(null);
         myContentPanel.setContent(null);
+        myShowActionGroupPopupAction.setActionGroup(null);
 
         myActiveRequest.onAssigned(false);
       }
     });
   }
 
-  @NotNull
-  protected DefaultActionGroup buildToolbar(@Nullable List<AnAction> viewerActions) {
+  protected void buildToolbar(@Nullable List<AnAction> viewerActions) {
     DefaultActionGroup group = new DefaultActionGroup();
 
     DiffUtil.addActionBlock(group,
@@ -307,7 +313,27 @@ public abstract class CacheDiffRequestChainProcessor implements Disposable {
                             new ShowOldDiffAction(),
                             ActionManager.getInstance().getAction(IdeActions.ACTION_CONTEXT_HELP));
 
-    return group;
+    myToolbarPanel.setContent(DiffUtil.createToolbar(group).getComponent());
+    for (AnAction action : group.getChildren(null)) {
+      action.registerCustomShortcutSet(action.getShortcutSet(), myPanel);
+    }
+  }
+
+  protected void buildActionPopup(@Nullable List<AnAction> viewerActions) {
+    DefaultActionGroup group = new DefaultActionGroup();
+
+    List<AnAction> selectToolActions = new ArrayList<AnAction>();
+    for (DiffTool tool : myAvailableTools) {
+      if (tool == myState.getActiveTool()) continue;
+      if (tool.canShow(myContext, myActiveRequest)) {
+        selectToolActions.add(new DiffToolToggleAction(tool));
+      }
+    }
+    DiffUtil.addActionBlock(group, selectToolActions);
+
+    DiffUtil.addActionBlock(group, viewerActions);
+
+    myShowActionGroupPopupAction.setActionGroup(group);
   }
 
   //
@@ -563,29 +589,58 @@ public abstract class CacheDiffRequestChainProcessor implements Disposable {
 
       return group;
     }
+  }
 
-    private class DiffToolToggleAction extends AnAction implements DumbAware {
-      @NotNull private final DiffTool myDiffTool;
+  private class DiffToolToggleAction extends AnAction implements DumbAware {
+    @NotNull private final DiffTool myDiffTool;
 
-      private DiffToolToggleAction(@NotNull DiffTool tool) {
-        super(tool.getName());
-        setEnabledInModalContext(true);
-        myDiffTool = tool;
+    private DiffToolToggleAction(@NotNull DiffTool tool) {
+      super(tool.getName());
+      setEnabledInModalContext(true);
+      myDiffTool = tool;
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      if (myState.getActiveTool() == myDiffTool) return;
+
+      myToolOrder.remove(myDiffTool);
+      int index;
+      for (index = 0; index < myToolOrder.size(); index++) {
+        if (myToolOrder.get(index).canShow(myContext, myActiveRequest)) break;
+      }
+      myToolOrder.add(index, myDiffTool);
+
+      updateRequest(true, null);
+    }
+  }
+
+  private class ShowActionGroupPopupAction extends DumbAwareAction {
+    @Nullable private ActionGroup myActionGroup;
+
+    public ShowActionGroupPopupAction() {
+      registerCustomShortcutSet(CommonShortcuts.getDiff(), myPanel); // TODO: configurable shortcut
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      if (myActionGroup == null) {
+        e.getPresentation().setEnabled(false);
+        return;
       }
 
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        if (myState.getActiveTool() == myDiffTool) return;
+      e.getPresentation().setEnabled(true);
+    }
 
-        myToolOrder.remove(myDiffTool);
-        int index;
-        for (index = 0; index < myToolOrder.size(); index++) {
-          if (myToolOrder.get(index).canShow(myContext, myActiveRequest)) break;
-        }
-        myToolOrder.add(index, myDiffTool);
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup("Diff Actions", myActionGroup, e.getDataContext(),
+                                                                            JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false);
+      popup.showInCenterOf(myPanel);
+    }
 
-        updateRequest(true, null);
-      }
+    public void setActionGroup(@Nullable ActionGroup actionGroup) {
+      myActionGroup = actionGroup;
     }
   }
 
@@ -742,11 +797,7 @@ public abstract class CacheDiffRequestChainProcessor implements Disposable {
     public void init() {
       myContentPanel.setContent(DiffUtil.createMessagePanel("Error: can't show diff"));
 
-      DefaultActionGroup group = buildToolbar(null);
-      myToolbarPanel.setContent(DiffUtil.createToolbar(group).getComponent());
-      for (AnAction action : group.getChildren(null)) {
-        action.registerCustomShortcutSet(action.getShortcutSet(), myPanel);
-      }
+      buildToolbar(null);
 
       myPanel.validate();
     }
@@ -798,11 +849,8 @@ public abstract class CacheDiffRequestChainProcessor implements Disposable {
 
       FrameDiffTool.ToolbarComponents toolbarComponents = myViewer.init();
 
-      DefaultActionGroup group = buildToolbar(toolbarComponents.toolbarActions);
-      myToolbarPanel.setContent(DiffUtil.createToolbar(group).getComponent());
-      for (AnAction action : group.getChildren(null)) {
-        action.registerCustomShortcutSet(action.getShortcutSet(), myPanel);
-      }
+      buildToolbar(toolbarComponents.toolbarActions);
+      buildActionPopup(toolbarComponents.popupActions);
 
       myToolbarStatusPanel.setContent(toolbarComponents.statusPanel);
 
@@ -867,13 +915,20 @@ public abstract class CacheDiffRequestChainProcessor implements Disposable {
 
       List<AnAction> toolbarActions = new ArrayList<AnAction>();
       if (toolbarComponents1.toolbarActions != null) toolbarActions.addAll(toolbarComponents1.toolbarActions);
-      if (toolbarComponents2.toolbarActions != null) toolbarActions.addAll(toolbarComponents2.toolbarActions);
-
-      DefaultActionGroup group = buildToolbar(toolbarActions);
-      myToolbarPanel.setContent(DiffUtil.createToolbar(group).getComponent());
-      for (AnAction action : group.getChildren(null)) {
-        action.registerCustomShortcutSet(action.getShortcutSet(), myPanel);
+      if (toolbarComponents2.toolbarActions != null) {
+        if (!toolbarActions.isEmpty() && !toolbarComponents2.toolbarActions.isEmpty()) toolbarActions.add(Separator.getInstance());
+        toolbarActions.addAll(toolbarComponents2.toolbarActions);
       }
+      buildToolbar(toolbarActions);
+
+      List<AnAction> popupActions = new ArrayList<AnAction>();
+      if (toolbarComponents1.popupActions != null) popupActions.addAll(toolbarComponents1.popupActions);
+      if (toolbarComponents2.popupActions != null) {
+        if (!popupActions.isEmpty() && !toolbarComponents2.popupActions.isEmpty()) popupActions.add(Separator.getInstance());
+        popupActions.addAll(toolbarComponents2.popupActions);
+      }
+      buildActionPopup(popupActions);
+
 
       myToolbarStatusPanel.setContent(toolbarComponents2.statusPanel); // TODO: combine both panels ?
 

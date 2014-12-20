@@ -63,6 +63,7 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
 
     FrameDiffTool.ToolbarComponents components = new FrameDiffTool.ToolbarComponents();
     components.toolbarActions = createToolbarActions();
+    components.popupActions = createPopupActions();
     components.statusPanel = getStatusPanel();
     return components;
   }
@@ -197,6 +198,11 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
 
   @Nullable
   protected List<AnAction> createToolbarActions() {
+    return null;
+  }
+
+  @Nullable
+  protected List<AnAction> createPopupActions() {
     return null;
   }
 

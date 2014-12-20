@@ -6,6 +6,7 @@ import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
@@ -147,6 +148,21 @@ class OnesideDiffViewer extends TextDiffViewerBase {
     group.add(new MyHighlightPolicySettingAction());
     group.add(new MyContextRangeSettingAction());
     group.add(myEditorSettingsAction);
+
+    return group;
+  }
+
+  @NotNull
+  public List<AnAction> createPopupActions() {
+    List<AnAction> group = new ArrayList<AnAction>();
+
+    group.add(Separator.getInstance());
+    group.add(new MyComparisonPolicySettingAction().getPopupGroup());
+    group.add(Separator.getInstance());
+    group.add(new MyHighlightPolicySettingAction().getPopupGroup());
+    // TODO
+    //group.add(Separator.getInstance());
+    //group.add(new MyContextRangeSettingAction());
 
     return group;
   }

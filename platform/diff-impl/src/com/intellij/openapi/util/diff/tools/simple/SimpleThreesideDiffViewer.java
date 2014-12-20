@@ -4,6 +4,7 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
@@ -93,6 +94,21 @@ class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
 
     group.add(new MyToggleAutoScrollAction());
     group.add(myEditorSettingsAction);
+
+    return group;
+  }
+
+  @Nullable
+  @Override
+  protected List<AnAction> createPopupActions() {
+    List<AnAction> group = new ArrayList<AnAction>();
+
+    group.add(Separator.getInstance());
+    group.add(new MyComparisonPolicySettingAction().getPopupGroup());
+    //group.add(Separator.getInstance());
+    //group.add(new MyHighlightPolicySettingAction().getPopupGroup());
+    group.add(Separator.getInstance());
+    group.add(new MyToggleAutoScrollAction());
 
     return group;
   }

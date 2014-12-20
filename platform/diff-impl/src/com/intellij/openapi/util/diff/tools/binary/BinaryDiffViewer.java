@@ -141,13 +141,6 @@ class BinaryDiffViewer extends ListenerDiffViewerBase {
     }
   }
 
-  @NotNull
-  protected List<AnAction> createToolbarActions() {
-    List<AnAction> group = new ArrayList<AnAction>();
-
-    return group;
-  }
-
   //
   // Editors
   //
