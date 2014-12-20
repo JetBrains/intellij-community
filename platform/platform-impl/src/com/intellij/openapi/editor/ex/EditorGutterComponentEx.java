@@ -58,7 +58,7 @@ public abstract class EditorGutterComponentEx extends JComponent implements Edit
 
   public abstract void setLineNumberConvertor(@NotNull TIntFunction lineNumberConvertor);
 
-  public abstract void setLineNumberConvertor(@NotNull TIntFunction lineNumberConvertor1, @NotNull TIntFunction lineNumberConvertor2);
+  public abstract void setLineNumberConvertor(@NotNull TIntFunction lineNumberConvertor1, @Nullable TIntFunction lineNumberConvertor2);
 
   public abstract void setShowDefaultGutterPopup(boolean show);
 }
