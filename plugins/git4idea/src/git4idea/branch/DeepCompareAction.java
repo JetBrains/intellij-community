@@ -71,10 +71,7 @@ public class DeepCompareAction extends ToggleAction implements DumbAware {
             ui.getFilterUi().setFilter(new VcsLogBranchFilterImpl(Collections.singleton(selectedBranch)));
             dc.highlightInBackground(selectedBranch, dataProvider);
           }
-        },
-                                     VcsLogUtil.getAllVisibleRoots(ui.getDataPack().getLogProviders().keySet(),
-                                                                   ui.getFilterUi().getFilters().getRootFilter(),
-                                                                   ui.getFilterUi().getFilters().getStructureFilter()));
+        }, getAllVisibleRoots(ui));
         return;
       }
       String branchToCompare = branchFilter.getBranchNames().iterator().next();
@@ -85,8 +82,10 @@ public class DeepCompareAction extends ToggleAction implements DumbAware {
     }
   }
 
-  private static void selectBranchAndPerformAction(@NotNull VcsLogDataPack dataPack, @NotNull AnActionEvent event,
-                                                   @NotNull final Consumer<String> consumer, @NotNull Collection<VirtualFile> visibleRoots) {
+  private static void selectBranchAndPerformAction(@NotNull VcsLogDataPack dataPack,
+                                                   @NotNull AnActionEvent event,
+                                                   @NotNull final Consumer<String> consumer,
+                                                   @NotNull Collection<VirtualFile> visibleRoots) {
     ActionGroup actionGroup = BranchFilterPopupComponent.constructActionGroup(dataPack, null, new Function<String, AnAction>() {
       @Override
       public AnAction fun(final String s) {
@@ -110,16 +109,12 @@ public class DeepCompareAction extends ToggleAction implements DumbAware {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     super.update(e);
     Project project = e.getData(CommonDataKeys.PROJECT);
     VcsLogUi ui = e.getData(VcsLogDataKeys.VCS_LOG_UI);
     e.getPresentation().setEnabledAndVisible(project != null && ui != null &&
-                                             hasGitRoots(project, VcsLogUtil.getAllVisibleRoots(ui.getDataPack().getLogProviders().keySet(),
-                                                                                                ui.getFilterUi().getFilters()
-                                                                                                  .getRootFilter(),
-                                                                                                ui.getFilterUi().getFilters()
-                                                                                                  .getStructureFilter())));
+                                             hasGitRoots(project, getAllVisibleRoots(ui)));
   }
 
   private static boolean hasGitRoots(@NotNull Project project, @NotNull Set<VirtualFile> roots) {
@@ -130,5 +125,12 @@ public class DeepCompareAction extends ToggleAction implements DumbAware {
         return manager.getRepositoryForRoot(root) != null;
       }
     });
+  }
+
+  @NotNull
+  private static Set<VirtualFile> getAllVisibleRoots(@NotNull VcsLogUi ui) {
+    return VcsLogUtil.getAllVisibleRoots(ui.getDataPack().getLogProviders().keySet(),
+                                         ui.getFilterUi().getFilters().getRootFilter(),
+                                         ui.getFilterUi().getFilters().getStructureFilter());
   }
 }
