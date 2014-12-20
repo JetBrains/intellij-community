@@ -200,10 +200,11 @@ public class DeepComparator implements Disposable {
 
     @Override
     public void onSuccess() {
-      removeHighlighting();
       if (myCancelled) {
         return;
       }
+
+      removeHighlighting();
 
       if (myException != null) {
         VcsNotifier.getInstance(myProject).notifyError("Couldn't compare with branch " + myComparedBranch, myException.getMessage());
