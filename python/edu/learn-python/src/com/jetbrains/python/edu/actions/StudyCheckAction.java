@@ -176,6 +176,7 @@ public class StudyCheckAction extends DumbAwareAction {
                                                                          final StudyEditor selectedEditor) {
     final Task task = studyState.getTask();
     final VirtualFile taskDir = studyState.getTaskDir();
+    final StudyStatus statusBeforeCheck = task.getStatus();
     return new com.intellij.openapi.progress.Task.Backgroundable(project, "Checking task", true) {
       @Override
       public void onSuccess() {
@@ -188,13 +189,14 @@ public class StudyCheckAction extends DumbAwareAction {
 
       @Override
       public void onCancel() {
+        StudyStatus currentStatus = task.getStatus();
+        task.setStatus(statusBeforeCheck, currentStatus);
         deleteWindowDescriptions(task, taskDir);
         selectedEditor.getCheckButton().setEnabled(true);
       }
 
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        final StudyStatus oldStatus = task.getStatus();
         final Map<String, TaskFile> taskFiles = task.getTaskFiles();
         final CapturingProcessHandler handler = new CapturingProcessHandler(testProcess);
         final ProcessOutput output = handler.runProcessWithProgressIndicator(indicator);
@@ -209,7 +211,7 @@ public class StudyCheckAction extends DumbAwareAction {
         }
         final String failedMessage = testRunner.getTestsOutput(output);
         if (StudyTestRunner.TEST_OK.equals(failedMessage)) {
-          task.setStatus(StudyStatus.Solved, oldStatus);
+          task.setStatus(StudyStatus.Solved, statusBeforeCheck);
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             @Override
             public void run() {
@@ -222,7 +224,7 @@ public class StudyCheckAction extends DumbAwareAction {
             @Override
             public void run() {
               if (taskDir == null) return;
-              task.setStatus(StudyStatus.Failed, oldStatus);
+              task.setStatus(StudyStatus.Failed, statusBeforeCheck);
               for (Map.Entry<String, TaskFile> entry : taskFiles.entrySet()) {
                 final String name = entry.getKey();
                 final TaskFile taskFile = entry.getValue();
@@ -318,14 +320,14 @@ public class StudyCheckAction extends DumbAwareAction {
                                    final String taskFileName,
                                    @NotNull final TaskFile taskFile,
                                    @NotNull final Project project) {
-    TaskFile answerTaskFile = new TaskFile();
-    VirtualFile virtualFile = taskDir.findChild(taskFileName);
+    final TaskFile answerTaskFile = new TaskFile();
+    final VirtualFile virtualFile = taskDir.findChild(taskFileName);
     if (virtualFile == null) {
       return;
     }
-    VirtualFile answerFile = getCopyWithAnswers(taskDir, virtualFile, taskFile, answerTaskFile);
-    for (TaskWindow taskWindow : answerTaskFile.getTaskWindows()) {
-      Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
+    final VirtualFile answerFile = getCopyWithAnswers(taskDir, virtualFile, taskFile, answerTaskFile);
+    for (final TaskWindow taskWindow : answerTaskFile.getTaskWindows()) {
+      final Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
       if (document == null) {
         continue;
       }
