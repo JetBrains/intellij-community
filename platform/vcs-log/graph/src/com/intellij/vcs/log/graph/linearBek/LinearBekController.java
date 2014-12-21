@@ -38,9 +38,8 @@ public class LinearBekController extends CascadeLinearGraphController {
 
   public LinearBekController(@NotNull BekBaseLinearGraphController controller, @NotNull PermanentGraphInfo permanentGraphInfo) {
     super(controller, permanentGraphInfo);
-    myCompiledGraph =
-      compileGraph(getDelegateLinearGraphController().getCompiledGraph(),
-                   new BekGraphLayout(permanentGraphInfo.getPermanentGraphLayout(), controller.getBekIntMap()));
+    myCompiledGraph = compileGraph(getDelegateLinearGraphController().getCompiledGraph(),
+                                   new BekGraphLayout(permanentGraphInfo.getPermanentGraphLayout(), controller.getBekIntMap()));
   }
 
   static LinearGraph compileGraph(@NotNull final LinearGraph graph, @NotNull final GraphLayout graphLayout) {
@@ -97,9 +96,14 @@ public class LinearBekController extends CascadeLinearGraphController {
         }
 
         workingGraph.clear();
+
+        boolean hasTails = false;
         for (int i = currentNodeIndex; i < currentNodeIndex + k; i++) {
-          boolean isTail = true;
-          for (int downNode : workingGraph.getDownNodes(i)) {
+
+          List<Integer> downNodes = workingGraph.getDownNodes(i);
+          boolean isTail = !(downNodes.isEmpty());
+
+          for (int downNode : downNodes) {
             if (!visited.get(downNode)) {
               int li = graphLayout.getLayoutIndex(downNode);
               if (li >= y) {
@@ -122,11 +126,14 @@ public class LinearBekController extends CascadeLinearGraphController {
           }
 
           if (isTail) {
+            hasTails = true;
             workingGraph.addEdge(i, firstChildIndex);
           }
         }
 
-        workingGraph.removeEdge(parent, firstChildIndex);
+        if (hasTails) {
+          workingGraph.removeEdge(parent, firstChildIndex);
+        }
 
         workingGraph.apply();
       }
