@@ -54,6 +54,8 @@ public class LinearBekController extends CascadeLinearGraphController {
 
       @Override
       public void leaveSubtree(int currentNodeIndex, BitSetFlags visited) {
+        workingGraph.clear();
+
         List<Integer> upNodes = workingGraph.getUpNodes(currentNodeIndex);
         if (upNodes.size() != 1) return;
         int parent = upNodes.get(0);
@@ -95,44 +97,77 @@ public class LinearBekController extends CascadeLinearGraphController {
           queue.addAll(workingGraph.getDownNodes(next));
         }
 
-        workingGraph.clear();
+        if (visited.get(firstChildIndex)) {
+          if (firstChildIndex == currentNodeIndex + k) {
+            // this is Katisha case (merge with old commit)
 
-        boolean hasTails = false;
-        for (int i = currentNodeIndex; i < currentNodeIndex + k; i++) {
-
-          List<Integer> downNodes = workingGraph.getDownNodes(i);
-          boolean isTail = !(downNodes.isEmpty());
-
-          for (int downNode : downNodes) {
-            if (!visited.get(downNode)) {
-              int li = graphLayout.getLayoutIndex(downNode);
-              if (li >= y) {
-                return;
-              }
-              if (li < x) {
-                // magic map will save us here
-                if (!magicMap.containsKey(li) || magicMap.get(li) > downNode) {
-                  return;
+            for (int i = currentNodeIndex; i < currentNodeIndex + k; i++) {
+              boolean isTail = true;
+              for (int downNode : workingGraph.getDownNodes(i)) {
+                if (downNode > firstChildIndex) {
+                  int li = graphLayout.getLayoutIndex(downNode);
+                  if (li >= y) {
+                    return;
+                  }
+                  if (li < x) {
+                    // magic map will save us here
+                    if (!magicMap.containsKey(li) || magicMap.get(li) > downNode) {
+                      return;
+                    }
+                  }
+                  workingGraph.removeEdge(i, downNode);
+                }
+                else {
+                  isTail = false;
                 }
               }
-              workingGraph.removeEdge(i, downNode);
-            }
-            else if (downNode > currentNodeIndex + k) {
-              return; // settling case 2450 as "not collapsing at all"
-            }
-            else {
-              isTail = false;
-            }
-          }
 
-          if (isTail) {
-            hasTails = true;
-            workingGraph.addEdge(i, firstChildIndex);
+              if (isTail) {
+                workingGraph.addEdge(i, firstChildIndex);
+              }
+            }
+
+            workingGraph.removeEdge(parent, firstChildIndex);
           }
         }
+        else {
+          boolean hasTails = false;
+          for (int i = currentNodeIndex; i < currentNodeIndex + k; i++) {
 
-        if (hasTails) {
-          workingGraph.removeEdge(parent, firstChildIndex);
+            List<Integer> downNodes = workingGraph.getDownNodes(i);
+            boolean isTail = !(downNodes.isEmpty());
+
+            for (int downNode : downNodes) {
+              if (!visited.get(downNode)) {
+                int li = graphLayout.getLayoutIndex(downNode);
+                if (li >= y) {
+                  return;
+                }
+                if (li < x) {
+                  // magic map will save us here
+                  if (!magicMap.containsKey(li) || magicMap.get(li) > downNode) {
+                    return;
+                  }
+                }
+                workingGraph.removeEdge(i, downNode);
+              }
+              else if (downNode > currentNodeIndex + k) {
+                return; // settling case 2450 as "not collapsing at all"
+              }
+              else {
+                isTail = false;
+              }
+            }
+
+            if (isTail) {
+              hasTails = true;
+              workingGraph.addEdge(i, firstChildIndex);
+            }
+          }
+
+          if (hasTails) {
+            workingGraph.removeEdge(parent, firstChildIndex);
+          }
         }
 
         workingGraph.apply();
