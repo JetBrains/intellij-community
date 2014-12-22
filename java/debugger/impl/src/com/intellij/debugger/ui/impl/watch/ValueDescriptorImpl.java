@@ -336,11 +336,6 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
       }
 
       @Override
-      public String calcValueName() {
-        return null;
-      }
-
-      @Override
       public PsiExpression getDescriptorEvaluation(DebuggerContext context) throws EvaluateException {
         return null;
       }
@@ -375,7 +370,9 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     return myValueIcon;
   }
 
-  public abstract String calcValueName();
+  public String calcValueName() {
+    return getName();
+  };
 
   @Override
   public void displayAs(NodeDescriptor descriptor) {
@@ -582,5 +579,17 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
 
   public Project getProject() {
     return myProject;
+  }
+
+  protected String addDeclaredType(String typeName) {
+    final ClassRenderer classRenderer = NodeRendererSettings.getInstance().getClassRenderer();
+    StringBuilder buf = StringBuilderSpinAllocator.alloc();
+    try {
+      buf.append(getName()).append(": ").append(classRenderer.renderTypeName(typeName));
+      return buf.toString();
+    }
+    finally {
+      StringBuilderSpinAllocator.dispose(buf);
+    }
   }
 }
