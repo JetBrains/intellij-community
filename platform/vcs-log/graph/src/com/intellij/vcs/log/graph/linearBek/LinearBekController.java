@@ -34,7 +34,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class LinearBekController extends CascadeLinearGraphController {
-  public static final int MAGIC_MAP_DEPTH = 100;
   @NotNull private final LinearGraph myCompiledGraph;
 
   public LinearBekController(@NotNull BekBaseLinearGraphController controller, @NotNull PermanentGraphInfo permanentGraphInfo) {
@@ -45,16 +44,17 @@ public class LinearBekController extends CascadeLinearGraphController {
 
   static LinearGraph compileGraph(@NotNull final LinearGraph graph, @NotNull final GraphLayout graphLayout) {
     final WorkingGraph workingGraph = new WorkingGraph(graph);
+    final List<Integer> heads = graphLayout.getHeadNodeIndex();
 
     GraphVisitorAlgorithm graphVisitorAlgorithm = new GraphVisitorAlgorithm(true);
 
     graphVisitorAlgorithm.visitGraph(graph, graphLayout, new GraphVisitorAlgorithm.GraphVisitor() {
       @Override
-      public void enterSubtree(int currentNodeIndex, BitSetFlags visited) {
+      public void enterSubtree(int currentNodeIndex, int currentHead, BitSetFlags visited) {
       }
 
       @Override
-      public void leaveSubtree(int currentNodeIndex, BitSetFlags visited) {
+      public void leaveSubtree(int currentNodeIndex, int currentHead, BitSetFlags visited) {
         workingGraph.clear();
 
         List<Integer> upNodes = workingGraph.getUpNodes(currentNodeIndex);
@@ -93,9 +93,12 @@ public class LinearBekController extends CascadeLinearGraphController {
           queue.addAll(workingGraph.getDownNodes(next));
         }
 
+        int headNumber = heads.indexOf(currentHead);
+        int nextHeadIndex = headNumber == heads.size()-1 ? Integer.MAX_VALUE : graphLayout.getLayoutIndex(heads.get(headNumber + 1)); // TODO dont make it bad, take a bad code and make it better
+        int headIndex = graphLayout.getLayoutIndex(currentHead);
+
         if (foundFirstChild) {
           // this is Katisha case (merge with old commit)
-          final Map<Integer, Integer> magicMap = createMagicMap(firstChildIndex, workingGraph, graphLayout);
           for (int i = currentNodeIndex; i < currentNodeIndex + k; i++) {
             boolean isTail = true;
             for (int downNode : workingGraph.getDownNodes(i)) {
@@ -105,8 +108,7 @@ public class LinearBekController extends CascadeLinearGraphController {
                   return;
                 }
                 if (li < x) {
-                  // magic map will save us here
-                  if (!magicMap.containsKey(li) || magicMap.get(li) > downNode) {
+                  if (!(li >= headIndex && li < nextHeadIndex)) {
                     return;
                   }
                 }
@@ -125,7 +127,6 @@ public class LinearBekController extends CascadeLinearGraphController {
           workingGraph.removeEdge(parent, firstChildIndex);
         }
         else if (!switchedOrder) {
-          final Map<Integer, Integer> magicMap = createMagicMap(firstChildIndex, workingGraph, graphLayout);
           boolean hasTails = false;
           for (int i = currentNodeIndex; i < currentNodeIndex + k; i++) {
             List<Integer> downNodes = workingGraph.getDownNodes(i);
@@ -139,11 +140,12 @@ public class LinearBekController extends CascadeLinearGraphController {
                 }
                 if (li < x) {
                   // magic map will save us here
-                  if (!magicMap.containsKey(li) || magicMap.get(li) > downNode) {
+                  if (!(li >= headIndex && li < nextHeadIndex && downNode > firstChildIndex)) {
                     return;
                   }
+                } else {
+                  workingGraph.removeEdge(i, downNode);
                 }
-                workingGraph.removeEdge(i, downNode);
               }
               else if (downNode > currentNodeIndex + k) {
                 return; // settling case 2450 as "not collapsing at all"
@@ -169,21 +171,6 @@ public class LinearBekController extends CascadeLinearGraphController {
     });
 
     return workingGraph.createLinearBekGraph();
-  }
-
-  @NotNull
-  private static Map<Integer, Integer> createMagicMap(int startIndex, @NotNull LinearGraph graph, @NotNull final GraphLayout graphLayout) {
-    final Map<Integer, Integer> magicMap = new HashMap<Integer, Integer>();
-    new GraphVisitorAlgorithm(false).visitSubgraph(graph, new GraphVisitorAlgorithm.SimpleVisitor() {
-      @Override
-      public void visitNode(int nodeIndex) {
-        int layoutIndex = graphLayout.getLayoutIndex(nodeIndex);
-        if (!magicMap.containsKey(layoutIndex) || magicMap.get(layoutIndex) > nodeIndex) {
-          magicMap.put(layoutIndex, nodeIndex);
-        }
-      }
-    }, startIndex, MAGIC_MAP_DEPTH);
-    return magicMap;
   }
 
   private static class WorkingGraph extends LinearBekGraph {
