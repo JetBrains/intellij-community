@@ -53,6 +53,7 @@ import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.provider.*;
 import org.zmlx.hg4idea.provider.annotate.HgAnnotationProvider;
 import org.zmlx.hg4idea.provider.commit.HgCheckinEnvironment;
+import org.zmlx.hg4idea.provider.commit.HgCloseBranchExecutor;
 import org.zmlx.hg4idea.provider.commit.HgCommitAndPushExecutor;
 import org.zmlx.hg4idea.provider.update.HgUpdateEnvironment;
 import org.zmlx.hg4idea.roots.HgIntegrationEnabler;
@@ -104,7 +105,8 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   private HgExecutableValidator myExecutableValidator;
   private final Object myExecutableValidatorLock = new Object();
   private File myPromptHooksExtensionFile;
-  private CommitExecutor myCommitAndPushExecutor;
+  private final CommitExecutor myCommitAndPushExecutor;
+  private final HgCloseBranchExecutor myCloseBranchExecutor;
 
   private HgRemoteStatusUpdater myHgRemoteStatusUpdater;
   private HgStatusWidget myStatusWidget;
@@ -130,6 +132,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
     committedChangesProvider = new HgCachingCommittedChangesProvider(project, this);
     myMergeProvider = new HgMergeProvider(myProject);
     myCommitAndPushExecutor = new HgCommitAndPushExecutor(checkinEnvironment);
+    myCloseBranchExecutor = new HgCloseBranchExecutor(checkinEnvironment);
   }
 
   public String getDisplayName() {
@@ -394,6 +397,11 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   @Override
   public List<CommitExecutor> getCommitExecutors() {
     return Collections.singletonList(myCommitAndPushExecutor);
+  }
+
+  @NotNull
+  public HgCloseBranchExecutor getCloseBranchExecutor() {
+    return myCloseBranchExecutor;
   }
 
   public static VcsKey getKey() {
