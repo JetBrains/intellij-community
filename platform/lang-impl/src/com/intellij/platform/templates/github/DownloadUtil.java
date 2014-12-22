@@ -17,7 +17,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.net.HttpURLConnection;
 import java.util.Locale;
 import java.util.concurrent.Callable;
 
@@ -164,7 +163,7 @@ public class DownloadUtil {
   }
 
   private static void download(@Nullable final ProgressIndicator progress,
-                               @NotNull final String location,
+                               @NotNull String location,
                                @NotNull final OutputStream output) throws IOException {
     final String originalText = progress != null ? progress.getText() : null;
     substituteContentLength(progress, originalText, -1);
@@ -184,18 +183,14 @@ public class DownloadUtil {
               NetUtils.copyStreamContent(progress, request.getInputStream(), output, contentLength);
             }
             catch (IOException e) {
-              HttpURLConnection connection = (HttpURLConnection)request.getConnection();
-              throw new IOException("Cannot download '" + location +
-                                    ", headers: " + connection.getHeaderFields() +
-                                    "', response code: " + connection.getResponseCode() +
-                                    ", response message: " + connection.getResponseMessage(), e);
+              throw new IOException(HttpRequests.createErrorMessage(e, request), e);
             }
             return null;
           }
         });
     }
     catch (IOException e) {
-      throw new IOException("Cannot download '" + location, e);
+      throw new IOException("Cannot download " + location, e);
     }
   }
 
