@@ -47,4 +47,15 @@ public class FileAwareDocumentContent extends DocumentContentImpl {
     pair.first.setReadOnly(true);
     return new FileAwareDocumentContent(project, pair.first, fileType, localFile, pair.second, charset);
   }
+
+  @NotNull
+  public static DiffContent create(@NotNull Project project,
+                                   @NotNull String content,
+                                   @NotNull VirtualFile file) {
+    FileType fileType = file.getFileType();
+    Charset charset = file.getCharset();
+    Pair<Document, LineSeparator> pair = DiffContentFactory.buildDocument(content);
+    pair.first.setReadOnly(true);
+    return new FileAwareDocumentContent(project, pair.first, fileType, file, pair.second, charset);
+  }
 }
