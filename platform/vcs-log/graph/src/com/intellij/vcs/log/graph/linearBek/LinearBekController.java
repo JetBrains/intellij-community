@@ -73,9 +73,27 @@ public class LinearBekController extends CascadeLinearGraphController {
 
         int x = graphLayout.getLayoutIndex(firstChildIndex);
         int y = graphLayout.getLayoutIndex(currentNodeIndex);
-        int k = calculateBlockSize(firstChildIndex, currentNodeIndex, workingGraph, visited);
+        int k = 1;
+        boolean foundFirstChild = false;
+        PriorityQueue<Integer> queue = new PriorityQueue<Integer>();
+        queue.addAll(workingGraph.getDownNodes(currentNodeIndex));
+        while (!queue.isEmpty()) {
+          Integer next = queue.poll();
+          if (next == firstChildIndex) {
+            foundFirstChild = true;
+            break;
+          }
+          else if (next > currentNodeIndex + k || !visited.get(next)) {
+            break;
+          }
+          else if (next < currentNodeIndex + k) {
+            continue;
+          }
+          k++;
+          queue.addAll(workingGraph.getDownNodes(next));
+        }
 
-        if (firstChildIndex == currentNodeIndex + k) {
+        if (foundFirstChild) {
           // this is Katisha case (merge with old commit)
           final Map<Integer, Integer> magicMap = createMagicMap(firstChildIndex, workingGraph, graphLayout);
           for (int i = currentNodeIndex; i < currentNodeIndex + k; i++) {
@@ -151,30 +169,6 @@ public class LinearBekController extends CascadeLinearGraphController {
     });
 
     return workingGraph.createLinearBekGraph();
-  }
-
-  private static int calculateBlockSize(int firstChildIndex,
-                                        int secondChildIndex,
-                                        @NotNull LinearGraph graph,
-                                        @NotNull BitSetFlags visited) {
-    int k = 1;
-    PriorityQueue<Integer> queue = new PriorityQueue<Integer>();
-    queue.addAll(graph.getDownNodes(secondChildIndex));
-    while (!queue.isEmpty()) {
-      Integer next = queue.poll();
-      if (next == firstChildIndex) {
-        break;
-      }
-      else if (next > secondChildIndex + k || !visited.get(next)) {
-        break;
-      }
-      else if (next < secondChildIndex + k) {
-        continue;
-      }
-      k++;
-      queue.addAll(graph.getDownNodes(next));
-    }
-    return k;
   }
 
   @NotNull
