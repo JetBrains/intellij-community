@@ -15,9 +15,11 @@
  */
 package com.intellij.xdebugger.impl.ui.tree.actions;
 
-import com.intellij.openapi.diff.DiffManager;
-import com.intellij.openapi.diff.actions.ClipboardVsValueContents;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.diff.DiffDialogHints;
+import com.intellij.openapi.util.diff.DiffManager;
+import com.intellij.openapi.util.diff.impl.DiffRequestFactory;
+import com.intellij.openapi.util.diff.requests.DiffRequest;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 
@@ -31,9 +33,9 @@ public class XCompareWithClipboardAction extends XFetchValueActionBase {
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
-        DiffManager.getInstance().getDiffTool().show(new ClipboardVsValueContents(value, project));
+        DiffRequest request = DiffRequestFactory.createClipboardVsValue(value);
+        DiffManager.getInstance().showDiff(project, request, DiffDialogHints.DEFAULT);
       }
     });
   }
-
 }

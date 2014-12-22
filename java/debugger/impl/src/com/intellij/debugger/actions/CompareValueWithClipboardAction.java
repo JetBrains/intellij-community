@@ -17,15 +17,18 @@ package com.intellij.debugger.actions;
 
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
-import com.intellij.openapi.diff.DiffManager;
-import com.intellij.openapi.diff.actions.ClipboardVsValueContents;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.diff.DiffDialogHints;
+import com.intellij.openapi.util.diff.DiffManager;
+import com.intellij.openapi.util.diff.impl.DiffRequestFactory;
+import com.intellij.openapi.util.diff.requests.DiffRequest;
 
 /**
  * @author Jeka
  */
 public class CompareValueWithClipboardAction extends BaseValueAction {
   protected void processText(final Project project, final String text, DebuggerTreeNodeImpl node, DebuggerContextImpl debuggerContext) {
-    DiffManager.getInstance().getDiffTool().show(new ClipboardVsValueContents(text, project));
+    DiffRequest request = DiffRequestFactory.createClipboardVsValue(text);
+    DiffManager.getInstance().showDiff(project, request, DiffDialogHints.DEFAULT);
   }
 }
