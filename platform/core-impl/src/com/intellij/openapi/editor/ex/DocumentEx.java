@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,7 +83,17 @@ public interface DocumentEx extends Document {
   @NotNull
   List<RangeMarker> getGuardedBlocks();
 
+
+  /**
+   * Get all range markers
+   * and hand them to the {@code processor} in their {@link RangeMarker#getStartOffset()} order
+   */
   boolean processRangeMarkers(@NotNull Processor<RangeMarker> processor);
+
+  /**
+   * Get range markers which {@link com.intellij.openapi.util.TextRange#intersects(int, int)} the specified range
+   * and hand them to the {@code processor} in their {@link RangeMarker#getStartOffset()} order
+   */
   boolean processRangeMarkersOverlappingWith(int start, int end, @NotNull Processor<RangeMarker> processor);
 }
 

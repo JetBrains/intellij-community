@@ -75,7 +75,7 @@ public abstract class XFetchValueActionBase extends AnAction {
       if (node instanceof XValueNodeImpl) {
         XValueNodeImpl valueNode = (XValueNodeImpl)node;
         XFullValueEvaluator fullValueEvaluator = valueNode.getFullValueEvaluator();
-        if (fullValueEvaluator == null) {
+        if (fullValueEvaluator == null || !fullValueEvaluator.isShowValuePopup()) {
           String rawValue;
           if (valueNode.getValueContainer() instanceof XValueTextProvider) {
             rawValue = ((XValueTextProvider)valueNode.getValueContainer()).getValueText();

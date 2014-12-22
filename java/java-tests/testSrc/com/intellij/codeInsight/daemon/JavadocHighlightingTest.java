@@ -4,9 +4,16 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.javaDoc.JavaDocLocalInspection;
 import com.intellij.codeInspection.javaDoc.JavaDocReferenceInspection;
+import com.intellij.openapi.paths.WebReference;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
+import com.intellij.psi.PsiReference;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.List;
 
 
 public class JavadocHighlightingTest extends LightDaemonAnalyzerTestCase {
@@ -105,6 +112,35 @@ public class JavadocHighlightingTest extends LightDaemonAnalyzerTestCase {
   private void doTestWithLangLevel(final LanguageLevel langLevel) throws Exception {
     LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(langLevel);
     doTest();
+  }
+
+  public void testLinksInJavaDoc() throws Exception {
+    configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
+    final List<WebReference> refs = new ArrayList<WebReference>();
+    myFile.accept(new PsiRecursiveElementWalkingVisitor() {
+      @Override
+      public void visitElement(PsiElement element) {
+        for(PsiReference ref:element.getReferences()) {
+          if (ref instanceof WebReference) refs.add((WebReference)ref);
+        }
+
+        super.visitElement(element);
+      }
+    });
+
+    String[] targets = {"http://www.unicode.org/unicode/standard/standard.html",
+      "http://docs.oracle.com/javase/7/docs/technotes/guides/lang/cl-mt.html",
+      "https://youtrack.jetbrains.com/issue/IDEA-131621",
+      "mailto:webmaster@jetbrains.com"
+    };
+    assertTrue(refs.size() == targets.length);
+    int i = 0;
+
+    for(WebReference ref:refs) {
+      assertEquals(ref.getCanonicalText(), targets[i++]);
+      assertTrue(ref.isSoft());
+      assertNotNull(ref.resolve());
+    }
   }
 
   protected void doTest() throws Exception {

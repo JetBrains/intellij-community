@@ -29,7 +29,13 @@ import java.awt.BorderLayout;
 /**
  * @author Sergey.Malenkov
  */
-public class ConfigurableCardPanel extends CardLayoutPanel<Configurable, JComponent> {
+public class ConfigurableCardPanel extends CardLayoutPanel<Configurable, Configurable, JComponent> {
+  @Override
+  protected Configurable prepare(Configurable key) {
+    ConfigurableWrapper.cast(Configurable.class, key); // create wrapped configurable on a pooled thread
+    return key;
+  }
+
   @Override
   protected JComponent create(final Configurable configurable) {
     return configurable == null ? null : ApplicationManager.getApplication().runReadAction(new Computable<JComponent>() {

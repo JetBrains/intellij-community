@@ -15,11 +15,7 @@
  */
 package com.intellij.openapi.components.impl.stores;
 
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.components.StateStorage.SaveSession;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
@@ -27,6 +23,7 @@ import com.intellij.openapi.components.impl.stores.StateStorageManager.Externali
 import com.intellij.openapi.components.store.ReadOnlyModificationException;
 import com.intellij.openapi.components.store.StateStorageBase;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.ui.Messages;
@@ -59,7 +56,7 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
   protected abstract StateStorage getDefaultsStorage();
 
   @Override
-  public void initComponent(@NotNull final Object component, boolean service) {
+  public void initComponent(@NotNull Object component, boolean service) {
     if (component instanceof SettingsSavingComponent) {
       mySettingsSavingComponents.add((SettingsSavingComponent)component);
     }
@@ -68,25 +65,27 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
       return;
     }
 
-    ApplicationManagerEx.getApplicationEx().runReadAction(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          if (component instanceof PersistentStateComponent) {
-            initPersistentComponent((PersistentStateComponent<?>)component, null, false);
-          }
-          else {
-            initJdomExternalizable((JDOMExternalizable)component);
-          }
-        }
-        catch (StateStorageException e) {
-          throw e;
-        }
-        catch (Exception e) {
-          LOG.error(e);
-        }
+    AccessToken token = ReadAction.start();
+    try {
+      if (component instanceof PersistentStateComponent) {
+        initPersistentComponent((PersistentStateComponent<?>)component, null, false);
       }
-    });
+      else {
+        initJdomExternalizable((JDOMExternalizable)component);
+      }
+    }
+    catch (StateStorageException e) {
+      throw e;
+    }
+    catch (ProcessCanceledException e) {
+      throw e;
+    }
+    catch (Exception e) {
+      LOG.error(e);
+    }
+    finally {
+      token.finish();
+    }
   }
 
   @Override

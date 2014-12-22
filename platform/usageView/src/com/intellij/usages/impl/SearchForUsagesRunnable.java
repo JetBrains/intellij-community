@@ -277,7 +277,7 @@ class SearchForUsagesRunnable implements Runnable {
     rangeBlinker.startBlinking();
   }
 
-  private UsageViewImpl getUsageView(ProgressIndicator indicator) {
+  private UsageViewImpl getUsageView(@NotNull ProgressIndicator indicator) {
     UsageViewImpl usageView = myUsageViewRef.get();
     if (usageView != null) return usageView;
     int usageCount = myUsageCountWithoutDefinition.get();

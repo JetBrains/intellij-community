@@ -25,10 +25,12 @@ import com.intellij.openapi.components.ServiceDescriptor;
 import com.intellij.openapi.components.ex.ComponentManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.*;
+import com.intellij.openapi.extensions.impl.ExtensionComponentAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.PairProcessor;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.pico.AssignableToComponentAdapter;
 import com.intellij.util.pico.ConstructorInjectionComponentAdapter;
@@ -114,7 +116,13 @@ public class ServiceManagerImpl implements BaseComponent {
           }
         }
         catch (Throwable e) {
-          LOG.error(e);
+          if (PlatformUtils.isIdeaUltimate()) {
+            LOG.error(e);
+          }
+          else {
+            // well, component registered, but required jar is not added to classpath (community edition or junior IDE)
+            LOG.warn(e);
+          }
           continue;
         }
 
@@ -122,7 +130,7 @@ public class ServiceManagerImpl implements BaseComponent {
           break;
         }
       }
-      else if (o instanceof ComponentAdapter) {
+      else if (o instanceof ComponentAdapter && !(o instanceof ExtensionComponentAdapter)) {
         try {
           aClass = ((ComponentAdapter)o).getComponentImplementation();
         }

@@ -78,4 +78,14 @@ public class ConvertToInstanceMethodDialog  extends MoveInstanceMethodDialogBase
     }.installOn(variableChooser);
     return variableChooser;
   }
+
+  @Override
+  protected String getMovePropertySuffix() {
+    return null;
+  }
+
+  @Override
+  protected String getCbTitle() {
+    return null;
+  }
 }

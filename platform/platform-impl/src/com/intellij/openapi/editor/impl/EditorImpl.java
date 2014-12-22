@@ -130,10 +130,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @NonNls public static final Object IGNORE_MOUSE_TRACKING = "ignore_mouse_tracking";
   public static final Key<JComponent> PERMANENT_HEADER = Key.create("PERMANENT_HEADER");
   public static final Key<Boolean> DO_DOCUMENT_UPDATE_TEST = Key.create("DoDocumentUpdateTest");
+  public static final Key<Boolean> FORCED_SOFT_WRAPS = Key.create("forced.soft.wraps");
   private static final boolean HONOR_CAMEL_HUMPS_ON_TRIPLE_CLICK =
     Boolean.parseBoolean(System.getProperty("idea.honor.camel.humps.on.triple.click"));
   private static final Key<BufferedImage> BUFFER = Key.create("buffer");
-  public static final JBColor CURSOR_FOREGROUND = new JBColor(Gray._255, Gray._0);
+  public static final Color CURSOR_FOREGROUND_LIGHT = Gray._255;
+  public static final Color CURSOR_FOREGROUND_DARK = Gray._0;
   @NotNull private final DocumentEx myDocument;
 
   private final JPanel myPanel;
@@ -249,6 +251,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private boolean myEmbeddedIntoDialogWrapper;
   @Nullable private CachedFontContent myLastCache;
   private int myDragOnGutterSelectionStartLine = -1;
+  private RangeMarker myDraggedRange;
 
   private boolean mySoftWrapsChanged;
 
@@ -323,6 +326,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     initTabPainter();
     myIsViewer = viewer;
     mySettings = new SettingsImpl(this, project);
+    boolean forceSoftWraps = !mySettings.isUseSoftWraps() && shouldSoftWrapsBeForced(myDocument);
+    if (forceSoftWraps) {
+      mySettings.setUseSoftWrapsQuiet();
+      putUserData(FORCED_SOFT_WRAPS, Boolean.TRUE);
+    }
 
     mySelectionModel = new SelectionModelImpl(this);
     myMarkupModel = new EditorMarkupModelImpl(this);
@@ -546,6 +554,16 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         }
       });
     }
+  }
+
+  private static boolean shouldSoftWrapsBeForced(Document document) {
+    int lineWidthLimit = Registry.intValue("editor.soft.wrap.force.limit");
+    for (int i = 0; i < document.getLineCount(); i++) {
+      if (document.getLineEndOffset(i) - document.getLineStartOffset(i) > lineWidthLimit) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @NotNull
@@ -4328,10 +4346,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
             if (caretShift != 0) {
               if (myMousePressedEvent != null) {
                 if (mySettings.isDndEnabled()) {
-                  boolean isCopy = UIUtil.isControlKeyDown(e) || isViewer() || !getDocument().isWritable();
-                  mySavedCaretOffsetForDNDUndoHack = oldCaretOffset;
-                  getContentComponent().getTransferHandler()
-                    .exportAsDrag(getContentComponent(), e, isCopy ? TransferHandler.COPY : TransferHandler.MOVE);
+                  if (myDraggedRange == null) {
+                    boolean isCopy = UIUtil.isControlKeyDown(e) || isViewer() || !getDocument().isWritable();
+                    mySavedCaretOffsetForDNDUndoHack = oldCaretOffset;
+                    getContentComponent().getTransferHandler()
+                      .exportAsDrag(getContentComponent(), e, isCopy ? TransferHandler.COPY : TransferHandler.MOVE);
+                  }
                 }
                 else {
                   selectionModel.removeSelection();
@@ -4345,6 +4365,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     else {
       myScrollingTimer.start(dx, dy);
       onSubstantialDrag(e);
+    }
+  }
+
+  private void clearDraggedRange() {
+    if (myDraggedRange != null) {
+      myDraggedRange.dispose();
+      myDraggedRange = null;
     }
   }
 
@@ -4721,7 +4748,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           //todo[kb]
           //in case of italic style we paint out of the cursor block. Painting the symbol to a dedicated buffered image
           //solves the problem, but still looks weird because it leaves colored pixels at right.
-          g.setColor(CURSOR_FOREGROUND);
+          g.setColor(ColorUtil.isDark(caretColor) ? CURSOR_FOREGROUND_LIGHT : CURSOR_FOREGROUND_DARK);
           g.drawChars(new char[]{ch}, 0, 1, x, y + getAscent());
         }
       }
@@ -5571,6 +5598,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myLastMousePressedLocation = xyToLogicalPosition(e.getPoint());
       myCaretStateBeforeLastPress = isToggleCaretEvent(e) ? myCaretModel.getCaretsAndSelections() : Collections.<CaretState>emptyList();
       myCurrentDragIsSubstantial = false;
+      clearDraggedRange();
 
       final int clickOffset = logicalPositionToOffset(myLastMousePressedLocation);
       putUserData(EditorActionUtil.EXPECTED_CARET_OFFSET, clickOffset);
@@ -6224,16 +6252,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private static class MyTransferHandler extends TransferHandler {
-    private RangeMarker myDraggedRange = null;
-
-    private static Editor getEditor(@NotNull JComponent comp) {
+    private static EditorImpl getEditor(@NotNull JComponent comp) {
       EditorComponentImpl editorComponent = (EditorComponentImpl)comp;
       return editorComponent.getEditor();
     }
 
     @Override
     public boolean importData(@NotNull final JComponent comp, @NotNull final Transferable t) {
-      final EditorImpl editor = (EditorImpl)getEditor(comp);
+      final EditorImpl editor = getEditor(comp);
 
       final EditorDropHandler dropHandler = editor.getDropHandler();
       if (dropHandler != null && dropHandler.canHandleDrop(t.getTransferDataFlavors())) {
@@ -6242,11 +6268,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
 
       final int caretOffset = editor.getCaretModel().getOffset();
-      if (myDraggedRange != null && myDraggedRange.getStartOffset() <= caretOffset && caretOffset < myDraggedRange.getEndOffset()) {
+      if (editor.myDraggedRange != null
+          && editor.myDraggedRange.getStartOffset() <= caretOffset && caretOffset < editor.myDraggedRange.getEndOffset()) {
         return false;
       }
 
-      if (myDraggedRange != null) {
+      if (editor.myDraggedRange != null) {
         editor.getCaretModel().moveToOffset(editor.mySavedCaretOffsetForDNDUndoHack);
       }
 
@@ -6260,7 +6287,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                 editor.getSelectionModel().removeSelection();
 
                 final int offset;
-                if (myDraggedRange != null) {
+                if (editor.myDraggedRange != null) {
                   editor.getCaretModel().moveToOffset(caretOffset);
                   offset = caretOffset;
                 }
@@ -6321,12 +6348,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     @Override
     @Nullable
     protected Transferable createTransferable(JComponent c) {
-      Editor editor = getEditor(c);
+      EditorImpl editor = getEditor(c);
       String s = editor.getSelectionModel().getSelectedText();
       if (s == null) return null;
       int selectionStart = editor.getSelectionModel().getSelectionStart();
       int selectionEnd = editor.getSelectionModel().getSelectionEnd();
-      myDraggedRange = editor.getDocument().createRangeMarker(selectionStart, selectionEnd);
+      editor.myDraggedRange = editor.getDocument().createRangeMarker(selectionStart, selectionEnd);
 
       return new StringSelection(s);
     }
@@ -6344,8 +6371,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
       if (last != null && !(last instanceof EditorComponentImpl)) return;
 
-      final Editor editor = getEditor(source);
-      if (action == MOVE && !editor.isViewer() && myDraggedRange != null) {
+      final EditorImpl editor = getEditor(source);
+      if (action == MOVE && !editor.isViewer() && editor.myDraggedRange != null) {
         if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), editor.getProject())) {
           return;
         }
@@ -6358,7 +6385,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                 Document doc = editor.getDocument();
                 doc.startGuardedBlockChecking();
                 try {
-                  doc.deleteString(myDraggedRange.getStartOffset(), myDraggedRange.getEndOffset());
+                  doc.deleteString(editor.myDraggedRange.getStartOffset(), editor.myDraggedRange.getEndOffset());
                 }
                 catch (ReadOnlyFragmentModificationException e) {
                   EditorActionManager.getInstance().getReadonlyFragmentModificationHandler(doc).handle(e);
@@ -6372,7 +6399,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         }, EditorBundle.message("move.selection.command.name"), DND_COMMAND_KEY, UndoConfirmationPolicy.DEFAULT, editor.getDocument());
       }
 
-      myDraggedRange = null;
+      editor.clearDraggedRange();
     }
   }
 
