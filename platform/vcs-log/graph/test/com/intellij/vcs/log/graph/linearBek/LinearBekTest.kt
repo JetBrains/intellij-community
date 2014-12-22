@@ -481,8 +481,6 @@ class LinearBekTest {
     5()
   })
 
-
-
   /*
   0
   |\
@@ -492,14 +490,33 @@ class LinearBekTest {
   3
   */
   Test fun testKatisha() = runTest({
-    0(1,3)
+    0(1, 3)
     1(2)
     2(3)
     3()
-  },{
+  }, {
     0(1)
     1(2)
     2(3)
+    3()
+  })
+
+  /*
+  0
+  |\
+  | 1
+  | 2
+  3
+   */
+  Test fun testInitialImport() = runTest({
+    0(3, 1)
+    1(2)
+    2()
+    3()
+  }, {
+    0(3, 1)
+    1(2)
+    2()
     3()
   })
 }
