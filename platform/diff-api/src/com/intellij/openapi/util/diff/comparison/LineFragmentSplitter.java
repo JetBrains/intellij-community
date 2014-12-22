@@ -116,8 +116,7 @@ class LineFragmentSplitter {
   private boolean shouldMergeBlocks(@NotNull WordBlock lastBlock, @NotNull WordBlock newBlock) {
     if (!lastHasEqualWords && !hasEqualWords) return true; // combine lines, that matched only by '\n'
     if (isEqualsIgnoreWhitespace(newBlock) && isEqualsIgnoreWhitespace(lastBlock)) return true; // combine whitespace-only changed lines
-    // TODO: squash if new/old block contain no words, and non-space characters could be attached to the end of the second one
-    // TODO: or squash all blocks without words in it ?
+    if (noWordsInside(lastBlock) || noWordsInside(newBlock)) return true; // squash block without words in it
     return false;
   }
 
@@ -149,6 +148,16 @@ class LineFragmentSplitter {
   private static boolean isFirstInLine(@NotNull List<InlineChunk> words1, int index) {
     if (index == 0) return true;
     return words1.get(index - 1) instanceof NewlineChunk;
+  }
+
+  private boolean noWordsInside(@NotNull WordBlock block) {
+    for (int i = block.words.start1; i < block.words.end1; i++) {
+      if (!(myWords1.get(i) instanceof NewlineChunk)) return false;
+    }
+    for (int i = block.words.start2; i < block.words.end2; i++) {
+      if (!(myWords2.get(i) instanceof NewlineChunk)) return false;
+    }
+    return true;
   }
 
   //

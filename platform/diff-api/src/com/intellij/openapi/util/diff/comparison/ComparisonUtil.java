@@ -255,8 +255,10 @@ public class ComparisonUtil {
         CharSequenceSubSequence sequence1 = new CharSequenceSubSequence(text1, fragment.getStartOffset1(), fragment.getEndOffset1());
         CharSequenceSubSequence sequence2 = new CharSequenceSubSequence(text2, fragment.getStartOffset2(), fragment.getEndOffset2());
 
-        if (fragment.getFineFragments() != null && !fragment.getFineFragments().isEmpty()) break;
-        if (!StringUtil.equalsIgnoreWhitespaces(sequence1, sequence2)) break;
+        if ((fragment.getFineFragments() == null || !fragment.getFineFragments().isEmpty()) &&
+            !StringUtil.equalsIgnoreWhitespaces(sequence1, sequence2)) {
+          break;
+        }
         start++;
       }
       while (start < end) {
@@ -264,8 +266,10 @@ public class ComparisonUtil {
         CharSequenceSubSequence sequence1 = new CharSequenceSubSequence(text1, fragment.getStartOffset1(), fragment.getEndOffset1());
         CharSequenceSubSequence sequence2 = new CharSequenceSubSequence(text2, fragment.getStartOffset2(), fragment.getEndOffset2());
 
-        if (fragment.getFineFragments() != null && !fragment.getFineFragments().isEmpty()) break;
-        if (!StringUtil.equalsIgnoreWhitespaces(sequence1, sequence2)) break;
+        if ((fragment.getFineFragments() == null || !fragment.getFineFragments().isEmpty()) &&
+            !StringUtil.equalsIgnoreWhitespaces(sequence1, sequence2)) {
+          break;
+        }
         end--;
       }
     }
