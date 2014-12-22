@@ -31,7 +31,7 @@ import java.util.List;
 public class GlobalPathReferenceProvider implements PathReferenceProvider {
 
   @NonNls private static final String[] PREFIXES = {
-    "mailto:", "tel:", "sms:", "skype:", "data:", "xmpp:"
+    "tel:", "sms:", "skype:", "data:", "xmpp:"
   };
 
   public static boolean startsWithAllowedPrefix(String s) {
@@ -72,7 +72,7 @@ public class GlobalPathReferenceProvider implements PathReferenceProvider {
   }
 
   public static boolean isWebReferenceUrl(String url) {
-    return url.startsWith("http://") || url.startsWith("https://") || url.startsWith("about:");
+    return url.startsWith("http://") || url.startsWith("https://") || url.startsWith("about:") || url.startsWith("mailto:");
   }
 
   @Override

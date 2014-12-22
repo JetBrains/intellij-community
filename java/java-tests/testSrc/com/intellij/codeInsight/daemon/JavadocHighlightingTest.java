@@ -130,7 +130,9 @@ public class JavadocHighlightingTest extends LightDaemonAnalyzerTestCase {
 
     String[] targets = {"http://www.unicode.org/unicode/standard/standard.html",
       "http://docs.oracle.com/javase/7/docs/technotes/guides/lang/cl-mt.html",
-      "https://youtrack.jetbrains.com/issue/IDEA-131621"};
+      "https://youtrack.jetbrains.com/issue/IDEA-131621",
+      "mailto:webmaster@jetbrains.com"
+    };
     assertTrue(refs.size() == targets.length);
     int i = 0;
 
