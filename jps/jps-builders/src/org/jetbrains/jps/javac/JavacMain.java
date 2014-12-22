@@ -193,8 +193,7 @@ public class JavacMain {
 
   private static boolean canUseOptimizedFileManager(JavaCompilingTool compilingTool) {
     // since java 9 internal API's used by the optimizedFileManager have changed
-    return compilingTool instanceof JavacCompilerTool && 
-           (JAVA_VERSION.contains("1.6") || JAVA_VERSION.contains("1.7") || JAVA_VERSION.contains("1.8"));
+    return compilingTool instanceof JavacCompilerTool && !SystemInfo.isJavaVersionAtLeast("1.9");
   }
 
   private static void handleCancelException(DiagnosticOutputConsumer diagnosticConsumer) {

@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ui.mac;
+package com.intellij.ui;
 
 /**
  * Created by denis on 28/01/14.
  */
-public class MacMessageException extends RuntimeException {
-  public MacMessageException(final String message) {
+public class MessageException extends RuntimeException {
+  public MessageException(final String message) {
     super(message);
   }
 }

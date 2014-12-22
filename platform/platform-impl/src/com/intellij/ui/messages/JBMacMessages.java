@@ -22,7 +22,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.ModalityHelper;
-import com.intellij.ui.mac.MacMessageException;
+import com.intellij.ui.MessageException;
 import com.intellij.ui.mac.MacMessagesEmulation;
 import com.intellij.ui.mac.foundation.MacUtil;
 import com.intellij.util.ui.UIUtil;
@@ -149,7 +149,7 @@ public class JBMacMessages extends MacMessagesEmulation {
     if (SystemInfo.isAppleJvm && MacUtil.getWindowTitle(_window) == null) {
       // With Apple JDK we cannot find a window if it does not have a title
       // Let's show a dialog instead of the message.
-      throw new MacMessageException("MacMessage parent does not have a title.");
+      throw new MessageException("MacMessage parent does not have a title.");
     }
     while (_window != null && MacUtil.getWindowTitle(_window) == null) {
       _window = _window.getOwner();

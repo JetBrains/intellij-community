@@ -700,7 +700,9 @@ public class AllIcons {
     public static final Icon WebModule = IconLoader.getIcon("/javaee/webModule.png"); // 16x16
     public static final Icon WebModuleGroup = IconLoader.getIcon("/javaee/webModuleGroup.png"); // 16x16
     public static final Icon WebService = IconLoader.getIcon("/javaee/WebService.png"); // 16x16
+    public static final Icon WebService2 = IconLoader.getIcon("/javaee/WebService2.png"); // 16x16
     public static final Icon WebServiceClient = IconLoader.getIcon("/javaee/WebServiceClient.png"); // 16x16
+    public static final Icon WebServiceClient2 = IconLoader.getIcon("/javaee/WebServiceClient2.png"); // 16x16
 
   }
   

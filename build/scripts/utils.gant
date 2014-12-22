@@ -628,13 +628,12 @@ binding.setVariable("zipSources", { String home, String targetDir ->
   notifyArtifactBuilt(sources)
 })
 
-binding.setVariable("zipSourcesOfModules", { String home, String targetDir, Collection<String> modules ->
-  String sources = "$targetDir/sources.zip"
-  projectBuilder.stage("zip sources of ${modules.size()} modules to $sources")
+binding.setVariable("zipSourcesOfModules", { String home, String targetFilePath, Collection<String> modules ->
+  projectBuilder.stage("zip sources of ${modules.size()} modules to $targetFilePath")
 
-  ant.mkdir(dir: targetDir)
-  ant.delete(file: sources)
-  ant.zip(destfile: sources) {
+  ant.mkdir(dir: new File(targetFilePath).getParent())
+  ant.delete(file: targetFilePath)
+  ant.zip(destfile: targetFilePath) {
     modules.each {
       JpsModule module = findModule(it)
       module.getSourceRoots(JavaSourceRootType.SOURCE).flatten().collect {it.file}.each { File srcRoot ->
@@ -643,7 +642,7 @@ binding.setVariable("zipSourcesOfModules", { String home, String targetDir, Coll
     }
   }
 
-  notifyArtifactBuilt(sources)
+  notifyArtifactBuilt(targetFilePath)
 })
 
 /**
