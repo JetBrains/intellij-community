@@ -279,18 +279,6 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     return result.values().toArray(new PsiPackage[result.size()]);
   }
 
-  public PsiClass[] findClassByShortName(String name, PsiPackage psiPackage, GlobalSearchScope scope) {
-    List<PsiClass> result = null;
-    for (PsiElementFinder finder : filteredFinders()) {
-      PsiClass[] classes = finder.getClasses(name, psiPackage, scope);
-      if (classes.length == 0) continue;
-      if (result == null) result = new ArrayList<PsiClass>();
-      ContainerUtil.addAll(result, classes);
-    }
-
-    return result == null ? PsiClass.EMPTY_ARRAY : result.toArray(new PsiClass[result.size()]);
-  }
-
   private class PsiElementFinderImpl extends PsiElementFinder implements DumbAware {
     @Override
     public PsiClass findClass(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
