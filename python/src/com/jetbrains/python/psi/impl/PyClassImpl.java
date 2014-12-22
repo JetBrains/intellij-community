@@ -335,6 +335,11 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
       PyClassLikeType head = null; // to keep compiler happy; really head is assigned in the loop at least once.
       for (List<PyClassLikeType> seq : nonBlankSequences) {
         head = seq.get(0);
+        if (head == null) {
+          seq.remove(0);
+          found = true;
+          break;
+        }
         boolean head_in_tails = false;
         for (List<PyClassLikeType> tail_seq : nonBlankSequences) {
           if (tail_seq.indexOf(head) > 0) { // -1 is not found, 0 is head, >0 is tail.
@@ -357,9 +362,11 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
       // our head is clean;
       result.add(head);
       // remove it from heads of other sequences
-      for (List<PyClassLikeType> seq : nonBlankSequences) {
-        if (Comparing.equal(seq.get(0), head)) {
-          seq.remove(0);
+      if (head != null) {
+        for (List<PyClassLikeType> seq : nonBlankSequences) {
+          if (Comparing.equal(seq.get(0), head)) {
+            seq.remove(0);
+          }
         }
       }
     } // we either return inside the loop or die by assertion
