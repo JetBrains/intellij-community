@@ -130,6 +130,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @NonNls public static final Object IGNORE_MOUSE_TRACKING = "ignore_mouse_tracking";
   public static final Key<JComponent> PERMANENT_HEADER = Key.create("PERMANENT_HEADER");
   public static final Key<Boolean> DO_DOCUMENT_UPDATE_TEST = Key.create("DoDocumentUpdateTest");
+  public static final Key<Boolean> FORCED_SOFT_WRAPS = Key.create("forced.soft.wraps");
   private static final boolean HONOR_CAMEL_HUMPS_ON_TRIPLE_CLICK =
     Boolean.parseBoolean(System.getProperty("idea.honor.camel.humps.on.triple.click"));
   private static final Key<BufferedImage> BUFFER = Key.create("buffer");
@@ -323,6 +324,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     initTabPainter();
     myIsViewer = viewer;
     mySettings = new SettingsImpl(this, project);
+    boolean forceSoftWraps = !mySettings.isUseSoftWraps() && shouldSoftWrapsBeForced(myDocument);
+    if (forceSoftWraps) {
+      mySettings.setUseSoftWrapsQuiet();
+      putUserData(FORCED_SOFT_WRAPS, Boolean.TRUE);
+    }
 
     mySelectionModel = new SelectionModelImpl(this);
     myMarkupModel = new EditorMarkupModelImpl(this);
@@ -546,6 +552,16 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         }
       });
     }
+  }
+
+  private static boolean shouldSoftWrapsBeForced(Document document) {
+    int lineWidthLimit = Registry.intValue("editor.soft.wrap.force.limit");
+    for (int i = 0; i < document.getLineCount(); i++) {
+      if (document.getLineEndOffset(i) - document.getLineStartOffset(i) > lineWidthLimit) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @NotNull
