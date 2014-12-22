@@ -68,7 +68,7 @@ public abstract class AbstractLayoutCodeProcessor {
   private final String myProgressText;
   private final String myCommandName;
   private final Runnable myPostRunnable;
-  private final boolean myProcessChangedTextOnly;
+  private boolean myProcessChangedTextOnly;
 
   protected AbstractLayoutCodeProcessor myPreviousCodeProcessor;
   private List<FileFilter> myFilters = ContainerUtil.newArrayList();
@@ -179,6 +179,9 @@ public abstract class AbstractLayoutCodeProcessor {
     myFilters.add(filter);
   }
 
+  protected void setProcessChangedTextOnly(boolean value) {
+    myProcessChangedTextOnly = value;
+  }
   /**
    * Ensures that given file is ready to reformatting and prepares it if necessary.
    *

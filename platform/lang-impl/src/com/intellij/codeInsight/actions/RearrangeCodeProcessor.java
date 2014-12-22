@@ -17,6 +17,7 @@ package com.intellij.codeInsight.actions;
 
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
@@ -27,6 +28,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.arrangement.Rearranger;
 import com.intellij.psi.codeStyle.arrangement.engine.ArrangementEngine;
 import com.intellij.util.SmartList;
+import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,6 +38,8 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.FutureTask;
 
 public class RearrangeCodeProcessor extends AbstractLayoutCodeProcessor {
+
+  private static final Logger LOG = Logger.getInstance(RearrangeCodeProcessor.class);
 
   public static final String COMMAND_NAME = "Rearrange code";
   public static final String PROGRESS_TEXT = "Rearranging code...";
@@ -69,18 +73,26 @@ public class RearrangeCodeProcessor extends AbstractLayoutCodeProcessor {
 
   @NotNull
   @Override
-  protected FutureTask<Boolean> prepareTask(@NotNull final PsiFile file, boolean processChangedTextOnly) {
+  protected FutureTask<Boolean> prepareTask(@NotNull final PsiFile file, final boolean processChangedTextOnly) {
     return new FutureTask<Boolean>(new Callable<Boolean>() {
       @Override
       public Boolean call() throws Exception {
         if (!shouldRearrangeFile(file)) return true;
 
-        Collection<TextRange> ranges = getRangesToFormat(file);
-        RearrangeCommand rearranger = new RearrangeCommand(myProject, file, COMMAND_NAME, ranges);
-        if (rearranger.couldRearrange()) {
-          rearranger.run();
+        try {
+          Collection<TextRange> ranges = processChangedTextOnly ? FormatChangedTextUtil.getChangedTextRanges(myProject, file)
+                                                                : getRangesToFormat(file);
+
+          RearrangeCommand rearranger = new RearrangeCommand(myProject, file, COMMAND_NAME, ranges);
+          if (rearranger.couldRearrange()) {
+            rearranger.run();
+          }
+          return true;
         }
-        return true;
+        catch (FilesTooBigForDiffException e) {
+          LOG.info("Error while calculating changed ranges for: " + file.getVirtualFile(), e);
+          return false;
+        }
       }
     });
   }
