@@ -20,6 +20,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -30,16 +31,20 @@ import java.util.List;
  */
 public class IndentEatingLexer extends MasqueradingLexer.SmartDelegate {
   private final int myIndent;
+  @NotNull
   private CharSequence myBuffer;
+  @NotNull
   private List<DeletedIndentInfo> myDeletions;
 
-  private int currentDelta;
-  private int totalDelta;
-  private int currentDelIndex;
+  private int myCurrentDelta;
+  private int myTotalDelta;
+  private int myCurrentDelIndex;
 
   public IndentEatingLexer(@NotNull Lexer delegate, int baseIndent) {
     super(delegate);
     myIndent = baseIndent;
+    myBuffer = "";
+    myDeletions = Collections.emptyList();
   }
 
   @Override
@@ -47,8 +52,8 @@ public class IndentEatingLexer extends MasqueradingLexer.SmartDelegate {
     myBuffer = buffer;
     myDeletions = findAllDeletions(buffer, startOffset, endOffset);
 
-    currentDelta = 0;
-    totalDelta = 0;
+    myCurrentDelta = 0;
+    myTotalDelta = 0;
     if (myDeletions.isEmpty()) {
       super.start(buffer, startOffset, endOffset, initialState);
       return;
@@ -57,20 +62,20 @@ public class IndentEatingLexer extends MasqueradingLexer.SmartDelegate {
 
     super.start(newSequence, 0, newSequence.length(), initialState);
 
-    totalDelta = startOffset;
-    currentDelIndex = 0;
+    myTotalDelta = startOffset;
+    myCurrentDelIndex = 0;
     updateDeltas();
   }
 
   private void updateDeltas() {
-    totalDelta += currentDelta;
-    currentDelta = 0;
-    while (currentDelIndex < myDeletions.size()) {
-      final DeletedIndentInfo info = myDeletions.get(currentDelIndex);
+    myTotalDelta += myCurrentDelta;
+    myCurrentDelta = 0;
+    while (myCurrentDelIndex < myDeletions.size()) {
+      final DeletedIndentInfo info = myDeletions.get(myCurrentDelIndex);
       if (info.getShrunkPos() >= super.getTokenStart()
         && info.getShrunkPos() <= super.getTokenEnd()) {
-        currentDelta += info.getLength();
-        currentDelIndex++;
+        myCurrentDelta += info.getLength();
+        myCurrentDelIndex++;
       }
       else {
         break;
@@ -86,12 +91,12 @@ public class IndentEatingLexer extends MasqueradingLexer.SmartDelegate {
 
   @Override
   public int getTokenStart() {
-    return super.getTokenStart() + totalDelta;
+    return super.getTokenStart() + myTotalDelta;
   }
 
   @Override
   public int getTokenEnd() {
-    return super.getTokenEnd() + totalDelta + currentDelta;
+    return super.getTokenEnd() + myTotalDelta + myCurrentDelta;
   }
 
   @NotNull

@@ -54,8 +54,7 @@ import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
-import com.intellij.openapi.keymap.Keymap;
-import com.intellij.openapi.keymap.KeymapManager;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Queryable;
@@ -288,9 +287,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private final EditorSizeAdjustmentStrategy mySizeAdjustmentStrategy = new EditorSizeAdjustmentStrategy();
   private final Disposable myDisposable = Disposer.newDisposable();
 
+  private List<CaretState> myCaretStateBeforeLastPress;
   private LogicalPosition myLastMousePressedLocation;
   private VisualPosition myTargetMultiSelectionPosition;
   private boolean myMultiSelectionInProgress;
+  private boolean myRectangularSelectionInProgress;
   private boolean myLastPressCreatedCaret;
   // Set when the selection (normal or block one) initiated by mouse drag becomes noticeable (at least one character is selected).
   // Reset on mouse press event.
@@ -432,13 +433,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         if (myPrimaryCaret != null) {
           myPrimaryCaret.updateVisualPosition(); // repainting old primary caret's row background
         }
-        updateCaretVisualPosition(e);
+        repaintCaretRegion(e);
         myPrimaryCaret = myCaretModel.getPrimaryCaret();
       }
 
       @Override
       public void caretRemoved(CaretEvent e) {
-        updateCaretVisualPosition(e);
+        repaintCaretRegion(e);
         myPrimaryCaret = myCaretModel.getPrimaryCaret(); // repainting new primary caret's row background
         myPrimaryCaret.updateVisualPosition();
       }
@@ -557,10 +558,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return ColorUtil.isDark(getBackgroundColor());
   }
 
-  private static void updateCaretVisualPosition(CaretEvent e) {
+  private void repaintCaretRegion(CaretEvent e) {
     CaretImpl caretImpl = (CaretImpl)e.getCaret();
     if (caretImpl != null) {
-      caretImpl.updateVisualPosition(); // repainting caret region
+      caretImpl.updateVisualPosition();
+      if (caretImpl.hasSelection()) {
+        repaint(caretImpl.getSelectionStart(), caretImpl.getSelectionEnd());
+      }
     }
   }
 
@@ -4177,6 +4181,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myDragOnGutterSelectionStartLine = - 1;
     }
 
+    boolean columnSelectionDragEvent = isColumnSelectionDragEvent(e);
+    boolean toggleCaretEvent = isToggleCaretEvent(e);
+    boolean addRectangularSelectionEvent = isAddRectangularSelectionEvent(e);
+    boolean columnSelectionDrag = isColumnMode() && !myLastPressCreatedCaret || columnSelectionDragEvent;
+    if (!columnSelectionDragEvent && toggleCaretEvent && !myLastPressCreatedCaret) {
+      return; // ignoring drag after removing a caret
+    }
+
     Rectangle visibleArea = getScrollingModel().getVisibleArea();
 
     int x = e.getX();
@@ -4214,10 +4226,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       VisualPosition oldVisLeadSelectionStart = leadCaret.getLeadSelectionPosition();
       int oldCaretOffset = getCaretModel().getOffset();
       LogicalPosition oldLogicalCaret = getCaretModel().getLogicalPosition();
-      boolean multiCaretSelection = myCaretModel.supportsMultipleCarets() && (isColumnMode() || e.isAltDown());
+      boolean multiCaretSelection = myCaretModel.supportsMultipleCarets() && (columnSelectionDrag || toggleCaretEvent);
       LogicalPosition newLogicalCaret = getLogicalPositionForScreenPos(x, y, !multiCaretSelection);
       if (multiCaretSelection) {
         myMultiSelectionInProgress = true;
+        myRectangularSelectionInProgress = columnSelectionDrag || addRectangularSelectionEvent;
         myTargetMultiSelectionPosition = xyToVisualPosition(new Point(Math.max(x, 0), Math.max(y, 0)));
         getScrollingModel().scrollTo(newLogicalCaret, ScrollType.RELATIVE);
       }
@@ -4235,15 +4248,18 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         selectionModel.setSelection(oldSelectionStart, newCaretOffset);
       }
       else {
-        if (isColumnMode() || e.isAltDown()) {
+        if (columnSelectionDrag || toggleCaretEvent) {
           if (myCaretModel.supportsMultipleCarets()) {
             if (myLastMousePressedLocation != null && (myCurrentDragIsSubstantial || !newLogicalCaret.equals(myLastMousePressedLocation))) {
-              setBlockSelectionAndBlockActions(e, myLastMousePressedLocation, newLogicalCaret);
+              createSelectionTill(newLogicalCaret);
+              blockActionsIfNeeded(e, myLastMousePressedLocation, newLogicalCaret);
             }
           } else {
             final LogicalPosition blockStart = selectionModel.hasBlockSelection() ? selectionModel.getBlockStart() : oldLogicalCaret;
             if (blockStart != null) {
-              setBlockSelectionAndBlockActions(e, blockStart, getCaretModel().getLogicalPosition());
+              LogicalPosition endPosition = getCaretModel().getLogicalPosition();
+              mySelectionModel.setBlockSelection(blockStart, endPosition);
+              blockActionsIfNeeded(e, blockStart, endPosition);
             }
           }
         }
@@ -4332,6 +4348,39 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
+  private void createSelectionTill(@NotNull LogicalPosition targetPosition) {
+    List<CaretState> caretStates = new ArrayList<CaretState>(myCaretStateBeforeLastPress);
+    if (myRectangularSelectionInProgress) {
+      caretStates.addAll(EditorModificationUtil.calcBlockSelectionState(this, myLastMousePressedLocation, targetPosition));
+    }
+    else {
+      LogicalPosition selectionStart = myLastMousePressedLocation;
+      LogicalPosition selectionEnd = targetPosition;
+      if (getMouseSelectionState() != MOUSE_SELECTION_STATE_NONE) {
+        int newCaretOffset = logicalPositionToOffset(targetPosition);
+        if (newCaretOffset < mySavedSelectionStart) {
+          selectionStart = offsetToLogicalPosition(mySavedSelectionEnd);
+          if (getMouseSelectionState() == MOUSE_SELECTION_STATE_LINE_SELECTED) {
+            targetPosition = selectionEnd = visualToLogicalPosition(new VisualPosition(offsetToVisualLine(newCaretOffset), 0));
+          }
+        }
+        else {
+          selectionStart = offsetToLogicalPosition(mySavedSelectionStart);
+          int selectionEndOffset = Math.max(newCaretOffset, mySavedSelectionEnd);
+          if (getMouseSelectionState() == MOUSE_SELECTION_STATE_WORD_SELECTED) {
+            targetPosition = selectionEnd = offsetToLogicalPosition(selectionEndOffset);
+          }
+          else if (getMouseSelectionState() == MOUSE_SELECTION_STATE_LINE_SELECTED) {
+            targetPosition = selectionEnd = visualToLogicalPosition(new VisualPosition(offsetToVisualLine(selectionEndOffset) + 1, 0));
+          }
+        }
+        cancelAutoResetForMouseSelectionState();
+      }
+      caretStates.add(new CaretState(targetPosition, selectionStart, selectionEnd));
+    }
+    myCaretModel.setCaretsAndSelections(caretStates);
+  }
+  
   private Caret getLeadCaret() {
     List<Caret> allCarets = myCaretModel.getAllCarets();
     Caret firstCaret = allCarets.get(0);
@@ -4357,8 +4406,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
-  private void setBlockSelectionAndBlockActions(@NotNull MouseEvent mouseDragEvent, @NotNull LogicalPosition startPosition, @NotNull LogicalPosition endPosition) {
-    mySelectionModel.setBlockSelection(startPosition, endPosition);
+  private void blockActionsIfNeeded(@NotNull MouseEvent mouseDragEvent, @NotNull LogicalPosition startPosition, @NotNull LogicalPosition endPosition) {
     if (myCurrentDragIsSubstantial || !startPosition.equals(endPosition)) {
       onSubstantialDrag(mouseDragEvent);
     }
@@ -4801,7 +4849,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                 myTargetMultiSelectionPosition = pos;
                 LogicalPosition newLogicalPosition = visualToLogicalPosition(pos);
                 getScrollingModel().scrollTo(newLogicalPosition, ScrollType.RELATIVE);
-                mySelectionModel.setBlockSelection(myLastMousePressedLocation, newLogicalPosition);
+                createSelectionTill(newLogicalPosition);
               }
               else if (mySelectionModel.hasBlockSelection()) {
                 mySelectionModel.setBlockSelection(mySelectionModel.getBlockStart(), getCaretModel().getLogicalPosition());
@@ -5521,6 +5569,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     private void runMousePressedCommand(@NotNull final MouseEvent e) {
       myLastMousePressedLocation = xyToLogicalPosition(e.getPoint());
+      myCaretStateBeforeLastPress = isToggleCaretEvent(e) ? myCaretModel.getCaretsAndSelections() : Collections.<CaretState>emptyList();
       myCurrentDragIsSubstantial = false;
 
       final int clickOffset = logicalPositionToOffset(myLastMousePressedLocation);
@@ -5831,33 +5880,20 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
+  private static boolean isColumnSelectionDragEvent(@NotNull MouseEvent e) {
+    return e.isAltDown() && !e.isShiftDown() && !e.isControlDown() && !e.isMetaDown();
+  }
+
   private static boolean isToggleCaretEvent(@NotNull MouseEvent e) {
-    return isMouseActionEvent(e, IdeActions.ACTION_EDITOR_ADD_OR_REMOVE_CARET);
+    return KeymapUtil.isMouseActionEvent(e, IdeActions.ACTION_EDITOR_ADD_OR_REMOVE_CARET) || isAddRectangularSelectionEvent(e);
+  }
+
+  private static boolean isAddRectangularSelectionEvent(@NotNull MouseEvent e) {
+    return KeymapUtil.isMouseActionEvent(e, IdeActions.ACTION_EDITOR_ADD_RECTANGULAR_SELECTION_ON_MOUSE_DRAG);
   }
 
   private static boolean isCreateRectangularSelectionEvent(@NotNull MouseEvent e) {
-    return isMouseActionEvent(e, IdeActions.ACTION_EDITOR_CREATE_RECTANGULAR_SELECTION);
-  }
-
-  private static boolean isMouseActionEvent(@NotNull MouseEvent e, @NotNull String actionId) {
-    KeymapManager keymapManager = KeymapManager.getInstance();
-    if (keymapManager == null) {
-      return false;
-    }
-    Keymap keymap = keymapManager.getActiveKeymap();
-    if (keymap == null) {
-      return false;
-    }
-    String[] actionIds = keymap.getActionIds(new MouseShortcut(e.getButton(), e.getModifiersEx(), 1));
-    if (actionIds == null) {
-      return false;
-    }
-    for (String id : actionIds) {
-      if (actionId.equals(id)) {
-        return true;
-      }
-    }
-    return false;
+    return KeymapUtil.isMouseActionEvent(e, IdeActions.ACTION_EDITOR_CREATE_RECTANGULAR_SELECTION);
   }
 
   private void selectWordAtCaret(boolean honorCamelCase) {

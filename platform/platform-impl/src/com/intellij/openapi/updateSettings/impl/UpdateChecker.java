@@ -45,7 +45,6 @@ import com.intellij.util.io.HttpRequests;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.ui.UIUtil;
 import org.apache.http.client.utils.URIBuilder;
-import org.jdom.Document;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
@@ -227,8 +226,7 @@ public final class UpdateChecker {
         @Override
         public UpdatesInfo process(@NotNull HttpRequests.Request request) throws IOException {
           try {
-            Document document = JDOMUtil.loadDocument(request.getInputStream());
-            return new UpdatesInfo(document.detachRootElement());
+            return new UpdatesInfo(JDOMUtil.load(request.getInputStream()));
           }
           catch (JDOMException e) {
             // corrupted content, don't bother telling user

@@ -168,7 +168,8 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
 
   public void calcData(DataKey key, DataSink sink) {
     if (key == VcsDataKeys.CHANGES) {
-      final List<Change> list = myViewer.getSelectedChanges();
+      List<Change> list = myViewer.getSelectedChanges();
+      if (list.isEmpty()) list = getCurrentDisplayedChanges();
       sink.put(VcsDataKeys.CHANGES, list.toArray(new Change [list.size()]));
     }
     else if (key == VcsDataKeys.CHANGE_LISTS) {

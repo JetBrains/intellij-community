@@ -66,7 +66,7 @@ public abstract class HttpRequests {
     @NotNull
     File saveToFile(@NotNull File file, @Nullable ProgressIndicator indicator) throws IOException;
 
-    byte[] toBytes(@Nullable ProgressIndicator indicator) throws IOException;
+    byte[] getBytes(@Nullable ProgressIndicator indicator) throws IOException;
   }
 
   public interface RequestProcessor<T> {
@@ -74,6 +74,17 @@ public abstract class HttpRequests {
   }
 
   protected HttpRequests() {
+  }
+
+  @NotNull
+  public static String createErrorMessage(@NotNull IOException e, @NotNull Request request) throws IOException {
+    URLConnection connection = request.getConnection();
+    String errorMessage = "Cannot download '" + connection.getURL().toExternalForm() + "': " + e.getMessage() + "\n, headers: " + connection.getHeaderFields();
+    if (connection instanceof HttpURLConnection) {
+      HttpURLConnection httpConnection = (HttpURLConnection)connection;
+      errorMessage += "\n, response: " + httpConnection.getResponseCode() + ' ' + httpConnection.getResponseMessage();
+    }
+    return errorMessage;
   }
 
   public abstract static class RequestBuilder {
@@ -175,11 +186,11 @@ public abstract class HttpRequests {
     }
 
     @NotNull
-    public byte[] toBytes(@Nullable final ProgressIndicator indicator) throws IOException {
+    public byte[] getBytes(@Nullable final ProgressIndicator indicator) throws IOException {
       return connect(new HttpRequests.RequestProcessor<byte[]>() {
         @Override
         public byte[] process(@NotNull HttpRequests.Request request) throws IOException {
-          return request.toBytes(indicator);
+          return request.getBytes(indicator);
         }
       });
     }
@@ -247,7 +258,7 @@ public abstract class HttpRequests {
       }
 
       @NotNull
-      public byte[] toBytes(@Nullable ProgressIndicator indicator) throws IOException {
+      public byte[] getBytes(@Nullable ProgressIndicator indicator) throws IOException {
         int contentLength = getConnection().getContentLength();
         BufferExposingByteArrayOutputStream out = new BufferExposingByteArrayOutputStream(contentLength > 0 ? contentLength : 32 * 1024);
         NetUtils.copyStreamContent(indicator, getInputStream(), out, contentLength);
@@ -269,14 +280,7 @@ public abstract class HttpRequests {
           deleteFile = false;
         }
         catch (IOException e) {
-          URLConnection connection = getConnection();
-          String errorMessage = "Cannot download '" + builder.myUrl + ", headers: " + connection.getHeaderFields();
-          if (connection instanceof HttpURLConnection) {
-            HttpURLConnection httpConnection = (HttpURLConnection)connection;
-            errorMessage += "', response code: " + httpConnection.getResponseCode()
-                            + ", response message: " + httpConnection.getResponseMessage();
-          }
-          throw new IOException(errorMessage, e);
+          throw new IOException(createErrorMessage(e, this), e);
         }
         finally {
           try {

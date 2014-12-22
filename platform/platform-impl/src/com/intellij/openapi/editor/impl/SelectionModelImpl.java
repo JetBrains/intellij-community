@@ -211,43 +211,7 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
   @Override
   public void setBlockSelection(@NotNull LogicalPosition blockStart, @NotNull LogicalPosition blockEnd) {
     if (myEditor.getCaretModel().supportsMultipleCarets()) {
-      int startLine = Math.max(Math.min(blockStart.line, myEditor.getDocument().getLineCount() - 1), 0);
-      int endLine = Math.max(Math.min(blockEnd.line, myEditor.getDocument().getLineCount() - 1), 0);
-      int step = endLine < startLine ? -1 : 1;
-      int count = 1 + Math.abs(endLine - startLine);
-      List<CaretState> caretStates = new LinkedList<CaretState>();
-      boolean hasSelection = false;
-      for (int line = startLine, i = 0; i < count; i++, line += step) {
-        int startColumn = blockStart.column;
-        int endColumn = blockEnd.column;
-        int lineEndOffset = myEditor.getDocument().getLineEndOffset(line);
-        LogicalPosition lineEndPosition = myEditor.offsetToLogicalPosition(lineEndOffset);
-        int lineWidth = lineEndPosition.column;
-        if (startColumn > lineWidth && endColumn > lineWidth && !myEditor.isColumnMode()) {
-          LogicalPosition caretPos = new LogicalPosition(line, Math.min(startColumn, endColumn));
-          caretStates.add(new CaretState(caretPos,
-                                         lineEndPosition,
-                                         lineEndPosition));
-        }
-        else {
-          LogicalPosition startPos = new LogicalPosition(line, myEditor.isColumnMode() ? startColumn : Math.min(startColumn, lineWidth));
-          LogicalPosition endPos = new LogicalPosition(line, myEditor.isColumnMode() ? endColumn : Math.min(endColumn, lineWidth));
-          int startOffset = myEditor.logicalPositionToOffset(startPos);
-          int endOffset = myEditor.logicalPositionToOffset(endPos);
-          caretStates.add(new CaretState(endPos, startPos, endPos));
-          hasSelection |= startOffset != endOffset;
-        }
-      }
-      if (hasSelection && !myEditor.isColumnMode()) { // filtering out lines without selection
-        Iterator<CaretState> caretStateIterator = caretStates.iterator();
-        while(caretStateIterator.hasNext()) {
-          CaretState state = caretStateIterator.next();
-          //noinspection ConstantConditions
-          if (state.getSelectionStart().equals(state.getSelectionEnd())) {
-            caretStateIterator.remove();
-          }
-        }
-      }
+      List<CaretState> caretStates = EditorModificationUtil.calcBlockSelectionState(myEditor, blockStart, blockEnd);
       myEditor.getCaretModel().setCaretsAndSelections(caretStates);
     }
     else {
