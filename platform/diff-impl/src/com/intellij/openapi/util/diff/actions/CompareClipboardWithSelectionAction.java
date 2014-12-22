@@ -68,7 +68,7 @@ public class CompareClipboardWithSelectionAction extends BaseShowDiffAction {
     assert editor != null;
 
     DocumentContent content2 = createContent(project, editor);
-    DocumentContent content1 = createContentFromClipboard(content2);
+    DocumentContent content1 = DiffContentFactory.createClipboardContent(content2);
 
     String title1 = DiffBundle.message("diff.content.clipboard.content.title");
     String title2 = createContentTitle(editor);
@@ -101,11 +101,5 @@ public class CompareClipboardWithSelectionAction extends BaseShowDiffAction {
     }
 
     return title;
-  }
-
-  @NotNull
-  private static DocumentContent createContentFromClipboard(@NotNull DocumentContent mainContent) {
-    String text = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
-    return new DocumentContentWrapper(mainContent, StringUtil.notNullize(text));
   }
 }

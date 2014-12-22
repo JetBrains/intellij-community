@@ -76,7 +76,7 @@ public class DiffContentFactory {
   }
 
   @NotNull
-  private static DocumentContent createClipboardContent(@NotNull DocumentContent mainContent) {
+  public static DocumentContent createClipboardContent(@NotNull DocumentContent mainContent) {
     String text = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
     return new DocumentContentWrapper(mainContent, StringUtil.notNullize(text));
   }
