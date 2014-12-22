@@ -20,6 +20,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Predicate;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -97,6 +98,37 @@ public abstract class PsiElementFinder {
   @NotNull
   public PsiClass[] getClasses(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
     return PsiClass.EMPTY_ARRAY;
+  }
+
+  /**
+   * Returns a list of children (classes, subpackages and possibly other elements) belonging to the specified package.
+   *
+   * @param psiPackage the package to return the list of children for.
+   * @param scope      the scope in which children are searched.
+   * @return the list of children.
+   * @since 14.1
+   */
+  @NotNull
+  public PsiNamedElement[] getChildren(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
+    Set<PsiNamedElement> children = new HashSet<PsiNamedElement>();
+    Collections.addAll(children, getSubPackages(psiPackage, scope));
+    Collections.addAll(children, getClasses(psiPackage, scope));
+    return children.toArray(new PsiNamedElement[children.size()]);
+  }
+
+  /**
+   * Returns the filter to use for filtering the list of children for a given package produced by other PsiElementFinder
+   * implementations. (For example, the list of children for a Kotlin package includes files directly, rather than classes,
+   * so the classes located by the standard Java package children finder need to be excluded.)
+   *
+   * @param psiPackage the package to return the list of children for.
+   * @param scope      the scope in which children are searched.
+   * @return the filter to use, or null if no additional filtering is necessary.
+   * @since 14.1
+   */
+  @Nullable
+  public Predicate<PsiNamedElement> getPackageChildrenFilter(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
+    return null;
   }
 
   /**

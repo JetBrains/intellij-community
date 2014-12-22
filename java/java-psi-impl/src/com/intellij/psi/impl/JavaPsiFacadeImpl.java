@@ -35,6 +35,8 @@ import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.Predicate;
 import com.intellij.util.messages.MessageBus;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -238,6 +240,56 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     }
 
     return result == null ? PsiClass.EMPTY_ARRAY : result.toArray(new PsiClass[result.size()]);
+  }
+
+  private static class AndPredicate implements Predicate<PsiNamedElement> {
+    private final List<Predicate<PsiNamedElement>> myComponents = new SmartList<Predicate<PsiNamedElement>>();
+
+    public AndPredicate(Predicate<PsiNamedElement> filter1, Predicate<PsiNamedElement> filter2) {
+      myComponents.add(filter1);
+      myComponents.add(filter2);
+    }
+
+    @Override
+    public boolean apply(@Nullable PsiNamedElement input) {
+      for (Predicate<PsiNamedElement> component : myComponents) {
+        if (!component.apply(input)) {
+          return false;
+        }
+      }
+      return true;
+    }
+  }
+
+  @NotNull
+  public PsiElement[] getPackageChildren(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
+    Map<String, PsiNamedElement> result = new HashMap<String, PsiNamedElement>();
+    Predicate<PsiNamedElement> filter = null;
+
+    for (PsiElementFinder finder : filteredFinders()) {
+      Predicate<PsiNamedElement> finderFilter = finder.getPackageChildrenFilter(psiPackage, scope);
+      if (finderFilter != null) {
+        if (filter == null) {
+          filter = finderFilter;
+        }
+        else if (filter instanceof AndPredicate) {
+          ((AndPredicate) filter).myComponents.add(finderFilter);
+        }
+        else {
+          filter = new AndPredicate(filter, finderFilter);
+        }
+      }
+    }
+
+    for (PsiElementFinder finder : filteredFinders()) {
+      PsiNamedElement[] children = finder.getChildren(psiPackage, scope);
+      for (PsiNamedElement child : children) {
+        if (!result.containsKey(child.getName()) && (filter == null || filter.apply(child))) {
+          result.put(child.getName(), child);
+        }
+      }
+    }
+    return result.values().toArray(new PsiElement[result.size()]);
   }
 
   public boolean processPackageDirectories(@NotNull PsiPackage psiPackage,

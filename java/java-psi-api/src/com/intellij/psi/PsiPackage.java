@@ -84,6 +84,14 @@ public interface PsiPackage extends PsiCheckedRenameElement, NavigationItem, Psi
   PsiClass[] getClasses(@NotNull GlobalSearchScope scope);
 
   /**
+   * Returns the list of all elements (classes, subpackages and potentially other elements) belonging to this package
+   * (non-recursively), restricted by the specified scope.
+   *
+   * @since 14.1
+   */
+  PsiElement[] getChildren(@NotNull GlobalSearchScope scope);
+
+  /**
    * Returns the list of package-level annotations for the package.
    *
    * @return the list of annotations, or null if the package does not have any package-level annotations.
