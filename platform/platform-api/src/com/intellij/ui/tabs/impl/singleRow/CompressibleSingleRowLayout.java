@@ -84,7 +84,7 @@ public class CompressibleSingleRowLayout extends SingleRowLayout {
       int length;
       if (needCompression) {
         length = iterator.hasNext() ? (int)(getStrategy().getLengthIncrement(label.getPreferredSize()) * (float)data.toFitLength / lengthEstimation)
-                                    : data.toFitLength - spentLength;
+                                    : data.toFitLength - spentLength - data.toLayout.size() / 2;
         spentLength += length;
       }
       else {
