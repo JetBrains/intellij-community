@@ -25,7 +25,6 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.SplitterProportionsData;
 import com.intellij.openapi.util.Disposer;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,16 +33,13 @@ import javax.swing.table.TableModel;
 import java.util.List;
 
 public class PluginManagerConfigurable extends BaseConfigurable implements SearchableConfigurable, Configurable.NoScroll {
-  @NonNls private static final String POSTPONE = "&Postpone";
   public static final String ID = "preferences.pluginManager";
   public static final String DISPLAY_NAME = IdeBundle.message("title.plugins");
-  public boolean EXPANDED = false;
-  public String FIND = "";
-  public boolean TREE_VIEW = false;
+
+  protected final PluginManagerUISettings myUISettings;
 
   private PluginManagerMain myPluginManagerMain;
-  protected final PluginManagerUISettings myUISettings;
-  protected boolean myAvailable;
+  private boolean myAvailable;
 
   public PluginManagerConfigurable(final PluginManagerUISettings UISettings) {
     myUISettings = UISettings;
@@ -67,20 +63,6 @@ public class PluginManagerConfigurable extends BaseConfigurable implements Searc
   @Override
   public void reset() {
     myPluginManagerMain.reset();
-    //if (myAvailable) {
-    //  final int column = myUISettings.AVAILABLE_SORT_MODE;
-    //  if (column >= 0) {
-    //    for (final SortOrder sortOrder : SortOrder.values()) {
-    //      if (sortOrder.ordinal() == myUISettings.AVAILABLE_SORT_COLUMN_ORDER) {
-    //        myPluginManagerMain.pluginsModel.setSortKey(new RowSorter.SortKey(column, sortOrder));
-    //        break;
-    //      }
-    //    }
-    //  }
-    //  myPluginManagerMain.pluginsModel.setSortByStatus(myUISettings.availableSortByStatus);
-    //} else {
-    //  myPluginManagerMain.pluginsModel.setSortByStatus(myUISettings.installedSortByStatus);
-    //}
     myPluginManagerMain.pluginsModel.sort();
     getSplitterProportions().restoreSplitterProportions(myPluginManagerMain.getMainPanel());
   }
