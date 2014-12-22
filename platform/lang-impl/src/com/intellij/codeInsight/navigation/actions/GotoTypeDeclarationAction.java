@@ -66,7 +66,7 @@ public class GotoTypeDeclarationAction extends BaseCodeInsightAction implements 
   public void invoke(@NotNull final Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-    DumbService.getInstance(project).setAlternativeResolutionEnabled(true);
+    DumbService.getInstance(project).setAlternativeResolveEnabled(true);
     try {
       int offset = editor.getCaretModel().getOffset();
       PsiElement[] symbolTypes = findSymbolTypes(editor, offset);
@@ -82,7 +82,7 @@ public class GotoTypeDeclarationAction extends BaseCodeInsightAction implements 
       DumbService.getInstance(project).showDumbModeNotification("Navigation is not available here during index update");
     }
     finally {
-      DumbService.getInstance(project).setAlternativeResolutionEnabled(false);
+      DumbService.getInstance(project).setAlternativeResolveEnabled(false);
     }
   }
 

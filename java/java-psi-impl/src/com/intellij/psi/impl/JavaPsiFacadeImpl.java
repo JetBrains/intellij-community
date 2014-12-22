@@ -149,7 +149,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
 
   private boolean shouldUseSlowResolve() {
     DumbService dumbService = DumbService.getInstance(getProject());
-    return dumbService.isDumb() && dumbService.isAlternativeResolutionEnabled();
+    return dumbService.isDumb() && dumbService.isAlternativeResolveEnabled();
   }
 
   @NotNull

@@ -106,13 +106,13 @@ public class DumbServiceImpl extends DumbService implements Disposable {
   }
 
   @Override
-  public boolean isAlternativeResolutionEnabled() {
+  public boolean isAlternativeResolveEnabled() {
     return Boolean.TRUE.equals(myAlternativeResolution.get());
   }
 
   @Override
-  public void setAlternativeResolutionEnabled(boolean enabled) {
-    assert isAlternativeResolutionEnabled() != enabled : "Nested alternative resolution mode is not supported";
+  public void setAlternativeResolveEnabled(boolean enabled) {
+    assert isAlternativeResolveEnabled() != enabled : "Nested alternative resolution mode is not supported";
     myAlternativeResolution.set(enabled);
   }
 

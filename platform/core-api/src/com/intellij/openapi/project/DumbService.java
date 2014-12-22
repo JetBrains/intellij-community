@@ -221,14 +221,14 @@ public abstract class DumbService {
    * A typical usage would involve try-finally, where the alternative resolution is first enabled, then an action is performed,
    * and then alternative resolution is turned off in the finally block.
    */
-  public abstract void setAlternativeResolutionEnabled(boolean enabled);
+  public abstract void setAlternativeResolveEnabled(boolean enabled);
 
   /**
    * @return whether alternative resolution is enabled for the current thread.
    * 
-   * @see #setAlternativeResolutionEnabled(boolean) 
+   * @see #setAlternativeResolveEnabled(boolean) 
    */
-  public abstract boolean isAlternativeResolutionEnabled();
+  public abstract boolean isAlternativeResolveEnabled();
 
   /**
    * @see #DUMB_MODE

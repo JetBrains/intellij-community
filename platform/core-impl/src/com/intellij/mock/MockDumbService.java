@@ -75,11 +75,11 @@ public class MockDumbService extends DumbService {
   }
 
   @Override
-  public void setAlternativeResolutionEnabled(boolean enabled) {
+  public void setAlternativeResolveEnabled(boolean enabled) {
   }
 
   @Override
-  public boolean isAlternativeResolutionEnabled() {
+  public boolean isAlternativeResolveEnabled() {
     return false;
   }
 
