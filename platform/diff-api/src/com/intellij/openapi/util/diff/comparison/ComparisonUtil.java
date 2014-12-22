@@ -57,15 +57,24 @@ public class ComparisonUtil {
     int tooBigChunksCount = 0;
 
     for (LineFragment fragment : lineFragments) {
-      if (tooBigChunksCount >= 3 || // Do not try to build fine blocks after few fails
-          fragment.getStartLine1() == fragment.getEndLine1() ||
-          fragment.getStartLine2() == fragment.getEndLine2()) {
-        fineFragments.add(new FineLineFragmentImpl(fragment, null));
+      CharSequence subSequence1 = text1.subSequence(fragment.getStartOffset1(), fragment.getEndOffset1());
+      CharSequence subSequence2 = text2.subSequence(fragment.getStartOffset2(), fragment.getEndOffset2());
+
+      if (fragment.getStartLine1() == fragment.getEndLine1() ||
+          fragment.getStartLine2() == fragment.getEndLine2()) { // Do not try to build fine blocks after few fails)
+        if (isEquals(subSequence1, subSequence2, policy)) {
+          fineFragments.add(new FineLineFragmentImpl(fragment, Collections.<DiffFragment>emptyList()));
+        }
+        else {
+          fineFragments.add(new FineLineFragmentImpl(fragment, null));
+        }
         continue;
       }
 
-      CharSequence subSequence1 = text1.subSequence(fragment.getStartOffset1(), fragment.getEndOffset1());
-      CharSequence subSequence2 = text2.subSequence(fragment.getStartOffset2(), fragment.getEndOffset2());
+      if (tooBigChunksCount >= 3) { // Do not try to build fine blocks after few fails)
+        fineFragments.add(new FineLineFragmentImpl(fragment, null));
+        continue;
+      }
 
       try {
         List<ByWord.LineBlock> lineBlocks = ByWord.compareAndSplit(subSequence1, subSequence2, policy, indicator);
@@ -124,6 +133,19 @@ public class ComparisonUtil {
     }
     LOG.warn(policy.toString() + " is not supported by ByChar comparison");
     return convertIntoFragments(ByChar.compareTwoStep(text1, text2, indicator));
+  }
+
+  public static boolean isEquals(@NotNull CharSequence text1, @NotNull CharSequence text2, @NotNull ComparisonPolicy policy) {
+    switch (policy) {
+      case DEFAULT:
+        return StringUtil.equals(text1, text2);
+      case TRIM_WHITESPACES:
+        return StringUtil.equalsTrimWhitespaces(text1, text2);
+      case IGNORE_WHITESPACES:
+        return StringUtil.equalsIgnoreWhitespaces(text1, text2);
+      default:
+        throw new IllegalArgumentException(policy.name());
+    }
   }
 
   //

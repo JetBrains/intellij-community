@@ -7,9 +7,9 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.SeparatorPlacement;
 import com.intellij.openapi.util.diff.comparison.ComparisonPolicy;
+import com.intellij.openapi.util.diff.comparison.ComparisonUtil;
 import com.intellij.openapi.util.diff.fragments.MergeLineFragment;
 import com.intellij.openapi.util.diff.util.*;
-import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -188,16 +188,7 @@ class SimpleThreesideDiffChange {
     CharSequence content1 = getRangeContent(fragment, editors, side1);
     CharSequence content2 = getRangeContent(fragment, editors, side2);
 
-    switch (policy) {
-      case DEFAULT:
-        return StringUtil.equals(content1, content2);
-      case TRIM_WHITESPACES:
-        return StringUtil.equalsTrimWhitespaces(content1, content2);
-      case IGNORE_WHITESPACES:
-        return StringUtil.equalsIgnoreWhitespaces(content1, content2);
-      default:
-        throw new IllegalArgumentException(policy.name());
-    }
+    return ComparisonUtil.isEquals(content1, content2, policy);
   }
 
   @NotNull

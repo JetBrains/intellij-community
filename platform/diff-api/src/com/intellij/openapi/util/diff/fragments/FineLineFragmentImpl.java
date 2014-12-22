@@ -8,8 +8,7 @@ import java.util.List;
 public class FineLineFragmentImpl extends LineFragmentImpl implements FineLineFragment {
   @Nullable protected final List<DiffFragment> myFragments;
 
-  public FineLineFragmentImpl(@NotNull LineFragment fragment,
-                              @Nullable List<DiffFragment> fragments) {
+  public FineLineFragmentImpl(@NotNull LineFragment fragment, @Nullable List<DiffFragment> fragments) {
     super(fragment);
 
     myFragments = dropWholeChangedFragments(fragments, myEndOffset1 - myStartOffset1, myEndOffset2 - myStartOffset2);
