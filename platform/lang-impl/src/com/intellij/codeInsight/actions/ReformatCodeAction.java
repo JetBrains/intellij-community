@@ -30,6 +30,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ShowSettingsUtil;
@@ -138,11 +139,8 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
     }
 
     boolean optimizeImports = ReformatFilesDialog.isOptmizeImportsOptionOn();
-    boolean processWholeFile = false;
     boolean processChangedTextOnly = PropertiesComponent.getInstance().getBoolean(LayoutCodeConstants.PROCESS_CHANGED_TEXT_KEY, false);
     boolean rearrangeEntries = getLastSavedRearrangeCbState(project, file);
-
-    final boolean showDialog = EditorSettingsExternalizable.getInstance().getOptions().SHOW_REFORMAT_DIALOG;
 
     if (file == null && dir != null) {
       DirectoryFormattingOptions options = getDirectoryFormattingOptions(project, dir);
@@ -151,36 +149,17 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
       }
       return;
     }
-    else if (showDialog) {
-      LayoutCodeOptions selectedFlags = getLayoutCodeOptions(project, file, dir, hasSelection);
-      if (selectedFlags == null)
-        return;
 
-      optimizeImports = selectedFlags.isOptimizeImports();
-      rearrangeEntries = selectedFlags.isRearrangeEntries();
-      processWholeFile = selectedFlags.isProcessWholeFile();
-      processChangedTextOnly = selectedFlags.isProcessOnlyChangedText();
+    if (file == null || editor == null) return;
 
-      if (selectedFlags.isProcessDirectory()) {
-        assert dir != null : "File = " + file + ", Element = " + CommonDataKeys.PSI_ELEMENT.getData(dataContext);
-        reformatDirectory(project, dir, selectedFlags);
-        return;
-      }
-    }
-
-    if (file == null) return;
-
-    if (!showDialog && processChangedTextOnly && isChangeNotTrackedForFile(project, file)) {
+    TextRange range = null;
+    if (hasSelection) {
       processChangedTextOnly = false;
+      SelectionModel model = editor.getSelectionModel();
+      range = TextRange.create(model.getSelectionStart(), model.getSelectionEnd());
     }
-
-    final TextRange range;
-    final boolean processSelectedText = !processWholeFile && hasSelection;
-    if (processSelectedText) {
-      range = TextRange.create(editor.getSelectionModel().getSelectionStart(), editor.getSelectionModel().getSelectionEnd());
-    }
-    else{
-      range = null;
+    else if (processChangedTextOnly && isChangeNotTrackedForFile(project, file)) {
+      processChangedTextOnly = false;
     }
 
     AbstractLayoutCodeProcessor processor;
@@ -189,10 +168,10 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
       processor = new ReformatCodeProcessor(processor, processChangedTextOnly);
     }
     else {
-      processor = new ReformatCodeProcessor(project, file, range, !processSelectedText && processChangedTextOnly);
+      processor = new ReformatCodeProcessor(project, file, range, processChangedTextOnly);
     }
 
-    if (rearrangeEntries && editor != null) {
+    if (rearrangeEntries) {
       processor = new RearrangeCodeProcessor(processor);
     }
 
