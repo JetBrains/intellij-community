@@ -12,7 +12,7 @@
 import os
 import sys
 
-from pydevd_constants import IS_PY24, IS_PY3K, IS_JYTHON, DictContains, DictPop
+from pydevd_constants import IS_PY24, IS_PY3K, IS_JYTHON
 
 if IS_PY24:
     from _pydev_imps._pydev_uuid_old import uuid4
@@ -405,16 +405,6 @@ class _ImportHook(ModuleType):
         ModuleType.__init__(self, name)
         self._system_import = system_import
         self.enabled = True
-        self._modules_to_patch = {}
-        self._add_modules_for_patching()
-
-    def _add_modules_for_patching(self):
-        try:
-            from _pydev_imps._pydev_django_oscar_patch import \
-                patch_oscar_loading
-            self._modules_to_patch['oscar.core.loading'] = patch_oscar_loading
-        except:
-            sys.stderr.write("Adding modules to patch in pluginbase failed\n")
 
     def enable(self):
         """Enables the import hook which drives the plugin base system.
@@ -458,26 +448,29 @@ class _ImportHook(ModuleType):
                 level = -1
         if IS_JYTHON:
             import_name = name
-
-        activate_func = None
-        if name == import_name and DictContains(self._modules_to_patch, name):
-            activate_func = DictPop(self._modules_to_patch, name)
-
-        module = self._system_import(import_name, globals, locals, fromlist, level)
-        try:
-            if activate_func:
-                activate_func() #call activate function
-        except:
-            sys.stderr.write("Patching modules in pluginbase failed\n")
-        return module
-
+        return self._system_import(import_name, globals, locals,
+                                   fromlist, level)
 
 try:
     import __builtin__ as builtins
 except ImportError:
     import builtins
 
+
 import_hook = _ImportHook(__name__ + '.import_hook', builtins.__import__)
 builtins.__import__ = import_hook.plugin_import
 sys.modules[import_hook.__name__] = import_hook
 del builtins
+
+
+def patched_exc_info():
+    type, value, traceback = sys.system_exc_info()
+    if type == ImportError:
+        #we should not show frame added by plugin_import call
+        return type, value, traceback.tb_next
+    return type, value, traceback
+
+
+system_exc_info = sys.exc_info
+sys.exc_info = patched_exc_info
+sys.system_exc_info = system_exc_info
