@@ -37,7 +37,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.net.URL;
-import java.net.URLConnection;
 import java.util.Locale;
 import java.util.concurrent.Future;
 import java.util.jar.JarFile;
@@ -243,34 +242,27 @@ public abstract class AbstractExternalFilter {
     });
   }
 
+  @Nullable
   private static String guessEncoding(URL url) {
-    String result = null;
-    BufferedReader reader = null;
-    try {
-      URLConnection connection = url.openConnection();
-      result = connection.getContentEncoding();
-      if (result != null) return result;
-      //noinspection IOResourceOpenedButNotSafelyClosed
-      reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-      for (String htmlLine = reader.readLine(); htmlLine != null; htmlLine = reader.readLine()) {
-        result = parseContentEncoding(htmlLine);
-        if (result != null) {
-          break;
-        }
-      }
-    }
-    catch (IOException ignored) {
-    }
-    finally {
-      if (reader != null) {
+    return HttpRequests.request(url.toExternalForm()).connect(new HttpRequests.RequestProcessor<String>() {
+      @Override
+      public String process(@NotNull HttpRequests.Request request) throws IOException {
+        String result = request.getConnection().getContentEncoding();
+        BufferedReader reader = new BufferedReader(new InputStreamReader(request.getInputStream()));
         try {
+          for (String htmlLine = reader.readLine(); htmlLine != null; htmlLine = reader.readLine()) {
+            result = parseContentEncoding(htmlLine);
+            if (result != null) {
+              break;
+            }
+          }
+        }
+        finally {
           reader.close();
         }
-        catch (IOException ignored) {
-        }
+        return result;
       }
-    }
-    return result;
+    }, null, null);
   }
 
   @Nullable
@@ -475,11 +467,9 @@ public abstract class AbstractExternalFilter {
     if (!htmlLine.contains("charset")) {
       return null;
     }
-    final Matcher matcher = CHARSET_META_PATTERN.matcher(htmlLine);
-    if (matcher.find()) {
-      return matcher.group(1);
-    }
-    return null;
+
+    Matcher matcher = CHARSET_META_PATTERN.matcher(htmlLine);
+    return matcher.find() ? matcher.group(1) : null;
   }
 
   private static void appendLine(StringBuilder buffer, final String read) {
