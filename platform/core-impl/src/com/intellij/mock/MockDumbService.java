@@ -74,6 +74,15 @@ public class MockDumbService extends DumbService {
     return myProject;
   }
 
+  @Override
+  public void setAlternativeResolutionEnabled(boolean enabled) {
+  }
+
+  @Override
+  public boolean isAlternativeResolutionEnabled() {
+    return false;
+  }
+
   public void smartInvokeLater(@NotNull final Runnable runnable) {
     runnable.run();
   }

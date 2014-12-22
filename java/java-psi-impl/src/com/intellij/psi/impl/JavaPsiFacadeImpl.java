@@ -94,7 +94,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   public PsiClass findClass(@NotNull final String qualifiedName, @NotNull GlobalSearchScope scope) {
     ProgressIndicatorProvider.checkCanceled(); // We hope this method is being called often enough to cancel daemon processes smoothly
 
-    if (DumbService.getInstance(getProject()).isDumb()) {
+    if (shouldUseSlowResolve()) {
       PsiClass[] classes = findClassesInDumbMode(qualifiedName, scope);
       if (classes.length != 0) {
         return classes[0];
@@ -134,7 +134,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   @Override
   @NotNull
   public PsiClass[] findClasses(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
-    if (DumbService.getInstance(getProject()).isDumb()) {
+    if (shouldUseSlowResolve()) {
       return findClassesInDumbMode(qualifiedName, scope);
     }
 
@@ -145,6 +145,11 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     }
 
     return classes.toArray(new PsiClass[classes.size()]);
+  }
+
+  private boolean shouldUseSlowResolve() {
+    DumbService dumbService = DumbService.getInstance(getProject());
+    return dumbService.isDumb() && dumbService.isAlternativeResolutionEnabled();
   }
 
   @NotNull

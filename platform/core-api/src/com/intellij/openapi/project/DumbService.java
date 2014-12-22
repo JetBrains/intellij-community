@@ -211,6 +211,26 @@ public abstract class DumbService {
   }
 
   /**
+   * Enables or disables alternative resolve strategies for the current thread.<p/> 
+   * 
+   * Normally reference resolution uses index, and hence is not available in dumb mode. In some cases, alternative ways
+   * of performing resolve are available, although much slower. It's impractical to always use these ways because it'll
+   * lead to overloaded CPU (especially given there's also indexing in progress). But for some explicit user actions
+   * (e.g. explicit Goto Declaration) turning these slower methods is beneficial.<p/>
+   * 
+   * A typical usage would involve try-finally, where the alternative resolution is first enabled, then an action is performed,
+   * and then alternative resolution is turned off in the finally block.
+   */
+  public abstract void setAlternativeResolutionEnabled(boolean enabled);
+
+  /**
+   * @return whether alternative resolution is enabled for the current thread.
+   * 
+   * @see #setAlternativeResolutionEnabled(boolean) 
+   */
+  public abstract boolean isAlternativeResolutionEnabled();
+
+  /**
    * @see #DUMB_MODE
    */
   public interface DumbModeListener {
