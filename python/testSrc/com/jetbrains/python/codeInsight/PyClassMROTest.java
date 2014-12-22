@@ -71,6 +71,13 @@ public class PyClassMROTest extends PyTestCase {
     assertMRO(getClass("H"), "E", "F", "B", "G", "C", "D", "A", "object");
   }
 
+  // PY-11932
+  public void testUnresolvedClassesImpossibleToBuildMRO() {
+    assertMRO(getClass("ObjectManager"),
+              "CopyContainer", "unknown", "Navigation", "unknown", "Tabs", "unknown", "unknown", "unknown", "Collection", "Resource",
+              "LockableItem", "EtagSupport", "Traversable", "object", "unknown");
+  }
+
   public void assertMRO(@NotNull PyClass cls, @NotNull String... mro) {
     final List<PyClassLikeType> types = cls.getAncestorTypes(TypeEvalContext.codeInsightFallback(cls.getProject()));
     final List<String> classNames = new ArrayList<String>();
