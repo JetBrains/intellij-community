@@ -18,14 +18,11 @@ import com.intellij.openapi.util.diff.contents.DocumentContent;
 import com.intellij.openapi.util.diff.contents.EmptyContent;
 import com.intellij.openapi.util.diff.requests.ContentDiffRequest;
 import com.intellij.openapi.util.diff.requests.DiffRequest;
-import com.intellij.openapi.util.diff.tools.util.DiffUserDataKeys;
-import com.intellij.openapi.util.diff.tools.util.DiffUserDataKeys.ScrollToPolicy;
+import com.intellij.openapi.util.diff.util.*;
+import com.intellij.openapi.util.diff.util.DiffUserDataKeys.ScrollToPolicy;
 import com.intellij.openapi.util.diff.tools.util.SyncScrollSupport;
 import com.intellij.openapi.util.diff.tools.util.SyncScrollSupport.TwosideSyncScrollSupport;
 import com.intellij.openapi.util.diff.tools.util.base.TextDiffViewerBase;
-import com.intellij.openapi.util.diff.util.CalledInAwt;
-import com.intellij.openapi.util.diff.util.DiffUtil;
-import com.intellij.openapi.util.diff.util.Side;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -408,7 +405,7 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
       myScrollToChange = myRequest.getUserData(DiffUserDataKeys.SCROLL_TO_CHANGE);
       myEditorsPosition = myRequest.getUserData(EditorsPosition.KEY);
       myCaretPosition = myRequest.getUserData(DiffUserDataKeys.EDITORS_CARET_POSITION);
-      myNavigationContext = myRequest.getUserData(DiffUserDataKeys.NAVIGATION_CONTEXT);
+      myNavigationContext = myRequest.getUserData(DiffUserDataKeysEx.NAVIGATION_CONTEXT);
     }
 
     public void updateContext() {
@@ -421,7 +418,7 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
       myRequest.putUserData(DiffUserDataKeys.SCROLL_TO_CHANGE, null);
       myRequest.putUserData(EditorsPosition.KEY, editorsPosition);
       myRequest.putUserData(DiffUserDataKeys.EDITORS_CARET_POSITION, carets);
-      myRequest.putUserData(DiffUserDataKeys.NAVIGATION_CONTEXT, null);
+      myRequest.putUserData(DiffUserDataKeysEx.NAVIGATION_CONTEXT, null);
     }
 
     public void onInit() {

@@ -27,7 +27,7 @@ import com.intellij.openapi.util.diff.fragments.MergeLineFragment;
 import com.intellij.openapi.util.diff.requests.ContentDiffRequest;
 import com.intellij.openapi.util.diff.requests.DiffRequest;
 import com.intellij.openapi.util.diff.tools.util.*;
-import com.intellij.openapi.util.diff.tools.util.DiffUserDataKeys.ScrollToPolicy;
+import com.intellij.openapi.util.diff.util.DiffUserDataKeys.ScrollToPolicy;
 import com.intellij.openapi.util.diff.tools.util.threeside.ThreesideContentPanel.DiffDivider;
 import com.intellij.openapi.util.diff.tools.util.threeside.ThreesideTextDiffViewer;
 import com.intellij.openapi.util.diff.util.CalledInAwt;

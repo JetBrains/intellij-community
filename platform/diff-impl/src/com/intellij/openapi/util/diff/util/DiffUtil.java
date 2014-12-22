@@ -35,7 +35,7 @@ import com.intellij.openapi.util.diff.fragments.LineFragment;
 import com.intellij.openapi.util.diff.fragments.LineFragments;
 import com.intellij.openapi.util.diff.requests.ContentDiffRequest;
 import com.intellij.openapi.util.diff.requests.DiffRequest;
-import com.intellij.openapi.util.diff.tools.util.DiffUserDataKeys;
+import com.intellij.openapi.util.diff.util.DiffUserDataKeys;
 import com.intellij.openapi.util.diff.tools.util.LineFragmentCache;
 import com.intellij.openapi.util.diff.tools.util.base.HighlightPolicy;
 import com.intellij.openapi.util.diff.tools.util.base.IgnorePolicy;
@@ -442,7 +442,7 @@ public class DiffUtil {
 
   @Nullable
   public static LineFragments getFromCache(@NotNull DiffRequest request, @NotNull DiffConfig config, long stamp1, long stamp2) {
-    LineFragmentCache cache = request.getUserData(DiffUserDataKeys.LINE_FRAGMENT_CACHE);
+    LineFragmentCache cache = request.getUserData(DiffUserDataKeysEx.LINE_FRAGMENT_CACHE);
     if (cache != null && cache.checkStamps(stamp1, stamp2)) {
       return cache.getFragments(config.policy);
     }
@@ -455,7 +455,7 @@ public class DiffUtil {
     // Possible data races also could make cache outdated.
     // But these cases shouldn't be often and won't break anything.
 
-    LineFragmentCache oldCache = request.getUserData(DiffUserDataKeys.LINE_FRAGMENT_CACHE);
+    LineFragmentCache oldCache = request.getUserData(DiffUserDataKeysEx.LINE_FRAGMENT_CACHE);
     LineFragmentCache cache;
     if (oldCache == null || !oldCache.checkStamps(stamp1, stamp2)) {
       cache = new LineFragmentCache(stamp1, stamp2);
@@ -465,7 +465,7 @@ public class DiffUtil {
     }
 
     cache.putFragments(config.policy, fragments);
-    request.putUserData(DiffUserDataKeys.LINE_FRAGMENT_CACHE, cache);
+    request.putUserData(DiffUserDataKeysEx.LINE_FRAGMENT_CACHE, cache);
   }
 
   //

@@ -21,7 +21,8 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.diff.DiffDialogHints;
-import com.intellij.openapi.util.diff.tools.util.DiffUserDataKeys;
+import com.intellij.openapi.util.diff.util.DiffUserDataKeys;
+import com.intellij.openapi.util.diff.util.DiffUserDataKeysEx;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
@@ -249,7 +250,7 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
     }
 
     if (myDiffBottomComponent != null) {
-      context.putChainContext(DiffUserDataKeys.BOTTOM_PANEL, myDiffBottomComponent);
+      context.putChainContext(DiffUserDataKeysEx.BOTTOM_PANEL, myDiffBottomComponent);
     }
 
     ShowDiffAction.showDiffForChange(myProject, Arrays.asList(changesArray), indexInSelection, context);

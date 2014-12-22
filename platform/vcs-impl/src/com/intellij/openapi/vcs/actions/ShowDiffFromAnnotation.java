@@ -27,7 +27,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.diff.DiffDialogHints;
-import com.intellij.openapi.util.diff.tools.util.DiffUserDataKeys;
+import com.intellij.openapi.util.diff.util.DiffUserDataKeysEx;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
@@ -134,7 +134,7 @@ class ShowDiffFromAnnotation extends AnAction implements LineNumberListener {
             int idx = findSelfInList(changes, targetPath[0]);
             final ShowDiffContext context = new ShowDiffContext(DiffDialogHints.FRAME);
             if (idx != -1) {
-              context.putChangeContext(changes.get(idx), DiffUserDataKeys.NAVIGATION_CONTEXT, createDiffNavigationContext(actualNumber));
+              context.putChangeContext(changes.get(idx), DiffUserDataKeysEx.NAVIGATION_CONTEXT, createDiffNavigationContext(actualNumber));
             }
             if (ChangeListManager.getInstance(myVcs.getProject()).isFreezedWithNotification(null)) return;
             ShowDiffAction.showDiffForChange(myVcs.getProject(), changes, idx, context);

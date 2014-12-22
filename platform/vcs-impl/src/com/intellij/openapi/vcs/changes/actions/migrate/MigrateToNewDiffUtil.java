@@ -28,7 +28,8 @@ import com.intellij.openapi.util.diff.contents.EmptyContent;
 import com.intellij.openapi.util.diff.requests.DiffRequest;
 import com.intellij.openapi.util.diff.requests.ErrorDiffRequest;
 import com.intellij.openapi.util.diff.requests.SimpleDiffRequest;
-import com.intellij.openapi.util.diff.tools.util.DiffUserDataKeys;
+import com.intellij.openapi.util.diff.util.DiffUserDataKeys;
+import com.intellij.openapi.util.diff.util.DiffUserDataKeysEx;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
@@ -98,7 +99,7 @@ public class MigrateToNewDiffUtil {
 
     DiffNavigationContext navigationContext = (DiffNavigationContext)oldRequest.getGenericData().get(DiffTool.SCROLL_TO_LINE.getName());
     if (navigationContext != null) {
-      newRequest.putUserData(DiffUserDataKeys.NAVIGATION_CONTEXT, navigationContext);
+      newRequest.putUserData(DiffUserDataKeysEx.NAVIGATION_CONTEXT, navigationContext);
     }
 
     return newRequest;

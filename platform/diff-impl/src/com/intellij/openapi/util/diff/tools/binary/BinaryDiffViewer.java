@@ -36,7 +36,7 @@ import com.intellij.openapi.util.diff.contents.DiffContent;
 import com.intellij.openapi.util.diff.contents.EmptyContent;
 import com.intellij.openapi.util.diff.requests.ContentDiffRequest;
 import com.intellij.openapi.util.diff.requests.DiffRequest;
-import com.intellij.openapi.util.diff.tools.util.DiffUserDataKeys;
+import com.intellij.openapi.util.diff.util.DiffUserDataKeys;
 import com.intellij.openapi.util.diff.tools.util.base.ListenerDiffViewerBase;
 import com.intellij.openapi.util.diff.util.DiffUtil;
 import com.intellij.openapi.util.diff.util.Side;

@@ -29,7 +29,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.diff.DiffDialogHints;
 import com.intellij.openapi.util.diff.DiffManager;
 import com.intellij.openapi.util.diff.chains.DiffRequestChain;
-import com.intellij.openapi.util.diff.tools.util.DiffUserDataKeys;
+import com.intellij.openapi.util.diff.util.DiffUserDataKeys;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffUIContext;

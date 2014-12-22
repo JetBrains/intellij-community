@@ -32,10 +32,11 @@ import com.intellij.openapi.util.diff.requests.NoDiffRequest;
 import com.intellij.openapi.util.diff.tools.ErrorDiffTool;
 import com.intellij.openapi.util.diff.tools.external.ExternalDiffTool;
 import com.intellij.openapi.util.diff.tools.util.DiffDataKeys;
-import com.intellij.openapi.util.diff.tools.util.DiffUserDataKeys;
-import com.intellij.openapi.util.diff.tools.util.DiffUserDataKeys.ScrollToPolicy;
+import com.intellij.openapi.util.diff.util.DiffUserDataKeys;
+import com.intellij.openapi.util.diff.util.DiffUserDataKeys.ScrollToPolicy;
 import com.intellij.openapi.util.diff.tools.util.PrevNextDifferenceIterable;
 import com.intellij.openapi.util.diff.tools.util.SoftHardCacheMap;
+import com.intellij.openapi.util.diff.util.DiffUserDataKeysEx;
 import com.intellij.openapi.util.diff.util.DiffUtil;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.util.Consumer;
@@ -119,7 +120,7 @@ public abstract class CacheDiffRequestChainProcessor implements Disposable {
     myPanel.add(topPanel, BorderLayout.NORTH);
     myPanel.add(myContentPanel, BorderLayout.CENTER);
 
-    JComponent bottomPanel = myContext.getUserData(DiffUserDataKeys.BOTTOM_PANEL);
+    JComponent bottomPanel = myContext.getUserData(DiffUserDataKeysEx.BOTTOM_PANEL);
     if (bottomPanel != null) myPanel.add(bottomPanel, BorderLayout.SOUTH);
     if (bottomPanel instanceof Disposable) Disposer.register(this, (Disposable)bottomPanel);
 

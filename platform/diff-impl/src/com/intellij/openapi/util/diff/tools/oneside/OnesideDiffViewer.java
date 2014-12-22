@@ -39,15 +39,12 @@ import com.intellij.openapi.util.diff.requests.ContentDiffRequest;
 import com.intellij.openapi.util.diff.requests.DiffRequest;
 import com.intellij.openapi.util.diff.tools.oneside.OnesideDiffSettingsHolder.OnesideDiffSettings;
 import com.intellij.openapi.util.diff.tools.util.DiffDataKeys;
-import com.intellij.openapi.util.diff.tools.util.DiffUserDataKeys;
-import com.intellij.openapi.util.diff.tools.util.DiffUserDataKeys.ScrollToPolicy;
+import com.intellij.openapi.util.diff.util.*;
+import com.intellij.openapi.util.diff.util.DiffUserDataKeys.ScrollToPolicy;
 import com.intellij.openapi.util.diff.tools.util.PrevNextDifferenceIterable;
 import com.intellij.openapi.util.diff.tools.util.base.HighlightPolicy;
 import com.intellij.openapi.util.diff.tools.util.base.TextDiffViewerBase;
-import com.intellij.openapi.util.diff.util.CalledInAwt;
-import com.intellij.openapi.util.diff.util.DiffUtil;
 import com.intellij.openapi.util.diff.util.DiffUtil.DocumentData;
-import com.intellij.openapi.util.diff.util.Side;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.text.MergingCharSequence;
@@ -938,7 +935,7 @@ class OnesideDiffViewer extends TextDiffViewerBase {
       myScrollToChange = myRequest.getUserData(DiffUserDataKeys.SCROLL_TO_CHANGE);
       myEditorPosition = myRequest.getUserData(EditorPosition.KEY);
       myCaretPosition = myRequest.getUserData(DiffUserDataKeys.EDITORS_CARET_POSITION);
-      myNavigationContext = myRequest.getUserData(DiffUserDataKeys.NAVIGATION_CONTEXT);
+      myNavigationContext = myRequest.getUserData(DiffUserDataKeysEx.NAVIGATION_CONTEXT);
     }
 
     public void updateContext() {
@@ -953,7 +950,7 @@ class OnesideDiffViewer extends TextDiffViewerBase {
       myRequest.putUserData(DiffUserDataKeys.SCROLL_TO_CHANGE, null);
       myRequest.putUserData(EditorPosition.KEY, editorsPosition);
       myRequest.putUserData(DiffUserDataKeys.EDITORS_CARET_POSITION, carets);
-      myRequest.putUserData(DiffUserDataKeys.NAVIGATION_CONTEXT, null);
+      myRequest.putUserData(DiffUserDataKeysEx.NAVIGATION_CONTEXT, null);
     }
 
     public void onRediff() {
