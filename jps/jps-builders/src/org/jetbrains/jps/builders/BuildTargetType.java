@@ -48,7 +48,7 @@ public abstract class BuildTargetType<T extends BuildTarget<?>> {
   }
 
   /**
-   * Finds all targets of the given type that need to be built in the given project.
+   * Finds all targets of the given type that exist in the given project.
    * @param model the model instance representing a project.
    * @return the list of targets.
    */

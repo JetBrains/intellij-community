@@ -498,8 +498,9 @@ public abstract class GitHandler {
     if (this instanceof GitLineHandler) {
       ((GitLineHandler)this).addLineListener(new GitLineHandlerAdapter() {
         @Override
-        public void onLineAvailable(String line, Key outputType) {
-          if (line.toLowerCase().contains("authentication failed")) {
+        public void onLineAvailable(@NonNls String line, Key outputType) {
+          String lowerCaseLine = line.toLowerCase();
+          if (lowerCaseLine.contains("authentication failed") || lowerCaseLine.contains("403 forbidden")) {
             myHttpAuthFailed = true;
           }
         }

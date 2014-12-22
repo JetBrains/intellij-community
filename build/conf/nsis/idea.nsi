@@ -839,7 +839,7 @@ skip_properties:
   WriteRegStr SHCTX "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_WITH_VER}" \
               "Publisher" "JetBrains s.r.o."
   WriteRegStr SHCTX "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_WITH_VER}" \
-              "URLInfoAbout" "http://www.jetbrains.com/products"
+              "URLInfoAbout" "https://www.jetbrains.com/products"
   WriteRegStr SHCTX "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_WITH_VER}" \
               "InstallType" "$baseRegKey"
   WriteRegDWORD SHCTX "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_WITH_VER}" \
@@ -1181,6 +1181,6 @@ remove_IntelliJIdeaProjectFile:
 done:
   DeleteRegKey SHCTX "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_WITH_VER}"
 ; UNCOMMENT THIS IN RELEASE BUILD
-; ExecShell "" "http://www.jetbrains.com/idea/uninstall/"
+; ExecShell "" "https://www.jetbrains.com/idea/uninstall/"
 
 SectionEnd

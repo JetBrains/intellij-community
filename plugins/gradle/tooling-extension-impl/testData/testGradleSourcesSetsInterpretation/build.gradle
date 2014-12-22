@@ -67,7 +67,7 @@ project("withIdeaPluginCustomization1") {
   }
 }
 
-// see http://youtrack.jetbrains.com/issue/IDEA-119365
+// see https://youtrack.jetbrains.com/issue/IDEA-119365
 project("withIdeaPluginCustomization2") {
   apply plugin: 'java'
   apply plugin: 'idea'
@@ -80,7 +80,7 @@ project("withIdeaPluginCustomization2") {
   }
 }
 
-// see http://youtrack.jetbrains.com/issue/IDEA-120562
+// see https://youtrack.jetbrains.com/issue/IDEA-120562
 project("withIdeaPluginCustomization3") {
   apply plugin: 'java'
   apply plugin: 'idea'

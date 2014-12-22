@@ -231,7 +231,8 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
 
   private static class DataPanel extends JEditorPane {
     public static final int BRANCHES_LIMIT = 6;
-    public static final int BRANCHES_TABLE_SIZE = 3;
+    public static final int BRANCHES_TABLE_COLUMN_COUNT = 3;
+    @NotNull public static final String LEFT_ALIGN = "left";
     @NotNull private static String SHOW_OR_HIDE_BRANCHES = "Show or Hide Branches";
 
     @NotNull private final Project myProject;
@@ -312,31 +313,32 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
         return "<i>In branches: loading...</i>";
       }
       if (myExpanded) {
-        int columnHeight = myBranches.size() / BRANCHES_TABLE_SIZE;
-        StringBuilder builder = new StringBuilder();
+        int rowCount = (int) Math.ceil((double)myBranches.size() / BRANCHES_TABLE_COLUMN_COUNT);
+        HtmlTableBuilder builder = new HtmlTableBuilder();
 
-        builder.append("<table>");
-        for (int i = 0; i < columnHeight; i++) {
-          builder.append("<tr><td>");
+        for (int i = 0; i < rowCount; i++) {
+          builder.startRow();
           if (i == 0) {
-            builder.append("<i>In ").append(myBranches.size()).append(" branches, </i><a href=\"").append(SHOW_OR_HIDE_BRANCHES)
-              .append("\"><i>hide</i></a>: ");
+            builder.append("<i>In " + myBranches.size() + " branches, </i><a href=\"" + SHOW_OR_HIDE_BRANCHES + "\"><i>hide</i></a>: ");
+          } else {
+            builder.append("");
           }
-          builder.append("</td>");
 
-          for (int j = 0; j < BRANCHES_TABLE_SIZE; j++) {
-            builder.append("<td align=\"left\">");
-            int index = columnHeight * j + i;
-            if (index >= myBranches.size()) break;
-            builder.append(myBranches.get(index));
-            if (index != myBranches.size() - 1) builder.append(",").append(StringUtil.repeat("&nbsp;", 20));
-            builder.append("</td>");
+          for (int j = 0; j < BRANCHES_TABLE_COLUMN_COUNT; j++) {
+            int index = rowCount * j + i;
+            if (index >= myBranches.size()) {
+              builder.append("");
+            } else if (index != myBranches.size() - 1)  {
+              builder.append(myBranches.get(index) + "," + StringUtil.repeat("&nbsp;", 20), LEFT_ALIGN);
+            } else {
+              builder.append(myBranches.get(index), LEFT_ALIGN);
+            }
           }
-          builder.append("</tr>");
+
+          builder.endRow();
         }
-        builder.append("</table>");
 
-        return builder.toString();
+        return builder.build();
       }
       else {
         String branchText;
@@ -349,7 +351,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
                        SHOW_OR_HIDE_BRANCHES +
                        "\"><i>Show All</i></a>";
         }
-        return "<i>In " + myBranches.size() + " branch" + (myBranches.size() > 1 ? "es" : "") + ":</i> " + branchText;
+        return "<i>In " + myBranches.size() + StringUtil.pluralize(" branch", myBranches.size()) + ":</i> " + branchText;
       }
     }
 

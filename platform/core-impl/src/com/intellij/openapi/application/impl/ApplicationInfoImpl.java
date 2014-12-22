@@ -49,7 +49,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   private String myBuildNumber = null;
   private String myApiVersion = null;
   private String myCompanyName = "JetBrains s.r.o.";
-  private String myCompanyUrl = "http://www.jetbrains.com/";
+  private String myCompanyUrl = "https://www.jetbrains.com/";
   private Color myProgressColor = null;
   private Color myCopyrightForeground = JBColor.BLACK;
   private Color myAboutForeground = JBColor.BLACK;
@@ -93,7 +93,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   private boolean myHasContextHelp = true;
   @NonNls private String myHelpFileName = "ideahelp.jar";
   @NonNls private String myHelpRootName = "idea";
-  @NonNls private String myWebHelpUrl = "http://www.jetbrains.com/idea/webhelp/";
+  @NonNls private String myWebHelpUrl = "https://www.jetbrains.com/idea/webhelp/";
   private List<PluginChooserPage> myPluginChooserPages = new ArrayList<PluginChooserPage>();
   private String myStatisticsSettingsUrl;
   private String myStatisticsServiceUrl;
@@ -732,8 +732,8 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
       myStatisticsServiceKey  = statisticsElement.getAttributeValue(ATTRIBUTE_STATISTICS_SERVICE_KEY);
     }
     else {
-      myStatisticsSettingsUrl = "http://jetbrains.com/idea/statistics/stat-assistant.xml";
-      myStatisticsServiceUrl  = "http://jetbrains.com/idea/statistics/index.jsp";
+      myStatisticsSettingsUrl = "https://www.jetbrains.com/idea/statistics/stat-assistant.xml";
+      myStatisticsServiceUrl  = "https://www.jetbrains.com/idea/statistics/index.jsp";
       myStatisticsServiceKey  = null;
     }
 

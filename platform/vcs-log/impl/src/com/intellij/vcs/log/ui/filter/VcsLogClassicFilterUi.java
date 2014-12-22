@@ -36,6 +36,7 @@ import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.*;
 import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl;
 import com.intellij.vcs.log.impl.VcsLogHashFilterImpl;
+import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -286,7 +287,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
       if (filter == null) {
         myVisibleRoots = null;
       } else {
-        myVisibleRoots = VcsLogFileFilter.getAllVisibleRoots(roots, filter.getRootFilter(), filter.getStructureFilter());
+        myVisibleRoots = VcsLogUtil.getAllVisibleRoots(roots, filter.getRootFilter(), filter.getStructureFilter());
       }
     }
 

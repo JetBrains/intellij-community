@@ -41,7 +41,11 @@ public class ObjectIntHashMap<K> extends TObjectIntHashMap<K> {
 
   @Override
   public final int get(K key) {
+    return get(key, -1);
+  }
+
+  public final int get(K key, int defaultValue) {
     int index = index(key);
-    return index < 0 ? -1 : _values[index];
+    return index < 0 ? defaultValue : _values[index];
   }
 }

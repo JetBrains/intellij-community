@@ -227,6 +227,8 @@ public class StartupUtil {
   }
 
   private static void fixProcessEnvironment(Logger log) {
+    // winp should not unpack dlls into parent directory
+    System.setProperty("winp.unpack.dll.to.parent.dir", "false");
     if (!Main.isCommandLine()) {
       System.setProperty("__idea.mac.env.lock", "unlocked");
     }

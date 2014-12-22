@@ -742,7 +742,9 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private static volatile boolean exiting = false;
 
   public void exit(final boolean force, final boolean exitConfirmed, final boolean allowListenersToCancel, final boolean restart) {
-    if (exiting) return;
+    if (!force && exiting) {
+      return;
+    }
 
     exiting = true;
     try {

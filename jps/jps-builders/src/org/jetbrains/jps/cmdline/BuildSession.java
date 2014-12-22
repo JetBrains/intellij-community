@@ -39,6 +39,7 @@ import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.messages.*;
 import org.jetbrains.jps.incremental.storage.Timestamps;
 import org.jetbrains.jps.model.module.JpsModule;
+import org.jetbrains.jps.model.serialization.CannotLoadJpsModelException;
 import org.jetbrains.jps.service.SharedThreadPool;
 
 import java.io.*;
@@ -565,7 +566,13 @@ final class BuildSession implements Runnable, CanceledStatus {
   private void finishBuild(Throwable error, boolean hadBuildErrors, boolean doneSomething) {
     CmdlineRemoteProto.Message lastMessage = null;
     try {
-      if (error != null) {
+      if (error instanceof CannotLoadJpsModelException) {
+        String text = "Failed to load project configuration: " + StringUtil.decapitalize(error.getMessage());
+        String path = ((CannotLoadJpsModelException)error).getFile().getAbsolutePath();
+        lastMessage = CmdlineProtoUtil.toMessage(mySessionId, CmdlineProtoUtil.createCompileMessage(BuildMessage.Kind.ERROR, text, path,
+                                                                                                    -1, -1, -1, -1, -1, -1.0f));
+      }
+      else if (error != null) {
         Throwable cause = error.getCause();
         if (cause == null) {
           cause = error;

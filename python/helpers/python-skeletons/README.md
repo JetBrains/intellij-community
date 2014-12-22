@@ -231,7 +231,7 @@ where `<config directory>` is:
     * Windows: `<User home>\.IntelliJIdeaXX\config`
 
 Please send your PyCharm/IntelliJ-related bug reports and feature requests to
-[PyCharm issue tracker](http://youtrack.jetbrains.com/issues/PY).
+[PyCharm issue tracker](https://youtrack.jetbrains.com/issues/PY).
 
 
 Feedback

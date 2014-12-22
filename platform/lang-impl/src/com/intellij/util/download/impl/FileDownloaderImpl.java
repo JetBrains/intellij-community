@@ -37,19 +37,19 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
-import com.intellij.util.io.HttpRequests;
 import com.intellij.util.concurrency.BoundedTaskExecutor;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.download.DownloadableFileDescription;
 import com.intellij.util.download.FileDownloader;
+import com.intellij.util.io.HttpRequests;
 import com.intellij.util.net.IOExceptionDialog;
-import com.intellij.util.net.NetUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.PooledThreadExecutor;
 
 import javax.swing.*;
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -315,22 +315,8 @@ public class FileDownloaderImpl implements FileDownloader {
           return existingFile;
         }
 
-        File tempFile = FileUtil.createTempFile("download.", ".tmp");
-        boolean deleteFile = true;
-        OutputStream out = new BufferedOutputStream(new FileOutputStream(tempFile));
-        try {
-          indicator.setText2(IdeBundle.message("progress.download.file.text", description.getPresentableFileName(), presentableUrl));
-          indicator.setIndeterminate(size == -1);
-          NetUtils.copyStreamContent(indicator, request.getInputStream(), out, size);
-          deleteFile = false;
-          return tempFile;
-        }
-        finally {
-          out.close();
-          if (deleteFile) {
-            FileUtil.delete(tempFile);
-          }
-        }
+        indicator.setText2(IdeBundle.message("progress.download.file.text", description.getPresentableFileName(), presentableUrl));
+        return request.saveToFile(FileUtil.createTempFile("download.", ".tmp"), indicator);
       }
     });
   }

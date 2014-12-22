@@ -17,17 +17,23 @@ package com.intellij.util.io;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.net.HttpConfigurable;
+import com.intellij.util.net.NetUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -44,20 +50,33 @@ import java.util.zip.GZIPInputStream;
  * });
  * }</pre>
  */
-public final class HttpRequests {
+public abstract class HttpRequests {
   private static final boolean ourWrapClassLoader =
     SystemInfo.isJavaVersionAtLeast("1.7") && !SystemProperties.getBooleanProperty("idea.parallel.class.loader", true);
 
   public interface Request {
-    @NotNull URLConnection getConnection() throws IOException;
-    @NotNull InputStream getInputStream() throws IOException;
+    @NotNull
+    URLConnection getConnection() throws IOException;
+
+    @NotNull
+    InputStream getInputStream() throws IOException;
+
+    boolean isSuccessful() throws IOException;
+
+    @NotNull
+    File saveToFile(@NotNull File file, @Nullable ProgressIndicator indicator) throws IOException;
+
+    byte[] toBytes(@Nullable ProgressIndicator indicator) throws IOException;
   }
 
   public interface RequestProcessor<T> {
     T process(@NotNull Request request) throws IOException;
   }
 
-  public static class RequestBuilder {
+  protected HttpRequests() {
+  }
+
+  public abstract static class RequestBuilder {
     private final String myUrl;
     private int myConnectTimeout = HttpConfigurable.CONNECTION_TIMEOUT;
     private int myTimeout = HttpConfigurable.READ_TIMEOUT;
@@ -66,8 +85,9 @@ public final class HttpRequests {
     private boolean myForceHttps;
     private HostnameVerifier myHostnameVerifier;
     private String myUserAgent;
+    private String myAccept;
 
-    private RequestBuilder(@NotNull String url) {
+    protected RequestBuilder(@NotNull String url) {
       myUrl = url;
     }
 
@@ -113,6 +133,15 @@ public final class HttpRequests {
       return this;
     }
 
+    @NotNull
+    public abstract RequestBuilder userAgent();
+
+    @NotNull
+    public RequestBuilder accept(@Nullable String mimeType) {
+      myAccept = mimeType;
+      return this;
+    }
+
     public <T> T connect(@NotNull RequestProcessor<T> processor) throws IOException {
       // todo[r.sh] drop condition in IDEA 15
       if (ourWrapClassLoader) {
@@ -122,12 +151,46 @@ public final class HttpRequests {
         return process(this, processor);
       }
     }
+
+    public <T> T connect(@NotNull RequestProcessor<T> processor, T errorValue, @Nullable Logger logger) {
+      try {
+        return connect(processor);
+      }
+      catch (Throwable e) {
+        if (logger != null) {
+          logger.warn(e);
+        }
+        return errorValue;
+      }
+    }
+
+    public void saveToFile(@NotNull final File file, @Nullable final ProgressIndicator indicator) throws IOException {
+      connect(new HttpRequests.RequestProcessor<Void>() {
+        @Override
+        public Void process(@NotNull HttpRequests.Request request) throws IOException {
+          request.saveToFile(file, indicator);
+          return null;
+        }
+      });
+    }
+
+    @NotNull
+    public byte[] toBytes(@Nullable final ProgressIndicator indicator) throws IOException {
+      return connect(new HttpRequests.RequestProcessor<byte[]>() {
+        @Override
+        public byte[] process(@NotNull HttpRequests.Request request) throws IOException {
+          return request.toBytes(indicator);
+        }
+      });
+    }
   }
 
   @NotNull
   public static RequestBuilder request(@NotNull String url) {
-    return new RequestBuilder(url);
+    return ServiceManager.getService(HttpRequests.class).createRequestBuilder(url);
   }
+
+  protected abstract RequestBuilder createRequestBuilder(@NotNull String url);
 
   private static <T> T wrapAndProcess(RequestBuilder builder, RequestProcessor<T> processor) throws IOException {
     // hack-around for class loader lock in sun.net.www.protocol.http.NegotiateAuthentication (IDEA-131621)
@@ -168,6 +231,12 @@ public final class HttpRequests {
         return myInputStream;
       }
 
+      @Override
+      public boolean isSuccessful() throws IOException {
+        URLConnection connection = getConnection();
+        return !(connection instanceof HttpURLConnection) || ((HttpURLConnection)connection).getResponseCode() == 200;
+      }
+
       private void cleanup() throws IOException {
         if (myInputStream != null) {
           myInputStream.close();
@@ -175,6 +244,53 @@ public final class HttpRequests {
         if (myConnection instanceof HttpURLConnection) {
           ((HttpURLConnection)myConnection).disconnect();
         }
+      }
+
+      @NotNull
+      public byte[] toBytes(@Nullable ProgressIndicator indicator) throws IOException {
+        int contentLength = getConnection().getContentLength();
+        BufferExposingByteArrayOutputStream out = new BufferExposingByteArrayOutputStream(contentLength > 0 ? contentLength : 32 * 1024);
+        NetUtils.copyStreamContent(indicator, getInputStream(), out, contentLength);
+        return ArrayUtil.realloc(out.getInternalBuffer(), out.size());
+      }
+
+      @NotNull
+      public File saveToFile(@NotNull File file, @Nullable ProgressIndicator indicator) throws IOException {
+        OutputStream out = null;
+        boolean deleteFile = true;
+        try {
+          if (indicator != null) {
+            indicator.checkCanceled();
+          }
+
+          FileUtilRt.createParentDirs(file);
+          out = new FileOutputStream(file);
+          NetUtils.copyStreamContent(indicator, getInputStream(), out, getConnection().getContentLength());
+          deleteFile = false;
+        }
+        catch (IOException e) {
+          URLConnection connection = getConnection();
+          String errorMessage = "Cannot download '" + builder.myUrl + ", headers: " + connection.getHeaderFields();
+          if (connection instanceof HttpURLConnection) {
+            HttpURLConnection httpConnection = (HttpURLConnection)connection;
+            errorMessage += "', response code: " + httpConnection.getResponseCode()
+                            + ", response message: " + httpConnection.getResponseMessage();
+          }
+          throw new IOException(errorMessage, e);
+        }
+        finally {
+          try {
+            if (out != null) {
+              out.close();
+            }
+          }
+          finally {
+            if (deleteFile) {
+              FileUtilRt.delete(file);
+            }
+          }
+        }
+        return file;
       }
     }
 
@@ -216,6 +332,9 @@ public final class HttpRequests {
 
       if (builder.myGzip) {
         connection.setRequestProperty("Accept-Encoding", "gzip");
+      }
+      if (builder.myAccept != null) {
+        connection.setRequestProperty("Accept", builder.myAccept);
       }
       connection.setUseCaches(false);
 

@@ -19,16 +19,12 @@ import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.codeInsight.template.emmet.generators.LoremGenerator;
 import com.intellij.codeInsight.template.emmet.tokens.TemplateToken;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
-import com.intellij.openapi.util.Couple;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public class LoremNode extends ZenCodingNode {
   private final int myWordsCount;
   private final LoremGenerator myLoremGenerator;
@@ -46,7 +42,7 @@ public class LoremNode extends ZenCodingNode {
                                      boolean insertSurroundedTextAtTheEnd, GenerationNode parent) {
 
 
-    final TemplateToken templateToken = new TemplateToken("", Collections.<Couple<String>>emptyList());
+    final TemplateToken templateToken = new TemplateToken("");
     final TemplateImpl template = new TemplateImpl("", myLoremGenerator.generate(myWordsCount, numberInIteration <= 0), "");
     templateToken.setTemplate(template, callback);
     final GenerationNode node = new GenerationNode(templateToken, numberInIteration,

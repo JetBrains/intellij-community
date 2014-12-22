@@ -138,8 +138,7 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
       public void onProjectsLinked(@NotNull Collection settings) {
         final Object item = ContainerUtil.getFirstItem(settings);
         if (item instanceof GradleProjectSettings) {
-          final Pair<String, Sdk> availableJdk = ExternalSystemJdkUtil.getAvailableJdk(myProject);
-          ((GradleProjectSettings)item).setGradleJvm(availableJdk != null ? availableJdk.first : null);
+          ((GradleProjectSettings)item).setGradleJvm(null);
         }
       }
     });

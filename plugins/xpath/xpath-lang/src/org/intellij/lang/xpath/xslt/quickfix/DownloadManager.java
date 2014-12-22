@@ -30,13 +30,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.io.HttpRequests;
-import com.intellij.util.net.NetUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Set;
 
@@ -68,19 +65,10 @@ public abstract class DownloadManager {
       file = HttpRequests.request(location).connect(new HttpRequests.RequestProcessor<File>() {
         @Override
         public File process(@NotNull HttpRequests.Request request) throws IOException {
-          int total = request.getConnection().getContentLength();
           String name = Integer.toHexString(System.identityHashCode(this)) + "_" +
                         Integer.toHexString(location.hashCode()) + "_" +
                         location.substring(location.lastIndexOf('/') + 1);
-          File file = new File(myResourcePath, name.lastIndexOf('.') == -1 ? name + ".xml" : name);
-          OutputStream out = new FileOutputStream(file);
-          try {
-            NetUtils.copyStreamContent(myProgress, request.getInputStream(), out, total);
-          }
-          finally {
-            out.close();
-          }
-          return file;
+          return request.saveToFile(new File(myResourcePath, name.lastIndexOf('.') == -1 ? name + ".xml" : name), myProgress);
         }
       });
 

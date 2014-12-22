@@ -337,7 +337,7 @@ public class MavenIndicesManager implements Disposable {
       Element root = doc.getRootElement();
       if (root == null) return;
 
-      // Store artifact to set to remove duplicate created by old IDEA (http://youtrack.jetbrains.com/issue/IDEA-72105)
+      // Store artifact to set to remove duplicate created by old IDEA (https://youtrack.jetbrains.com/issue/IDEA-72105)
       Collection<MavenArchetype> result = new LinkedHashSet<MavenArchetype>();
 
       List<Element> children = root.getChildren(ELEMENT_ARCHETYPE);

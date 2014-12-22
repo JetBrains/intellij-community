@@ -22,7 +22,6 @@ import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.diagnostic.AttachmentFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -36,12 +35,8 @@ import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
+import java.util.Map;
 
-
-/**
- * @author Eugene.Kudelevsky
- */
 public abstract class XmlZenCodingGenerator extends ZenCodingGenerator {
   @Override
   public TemplateImpl generateTemplate(@NotNull TemplateToken token, boolean hasChildren, @NotNull PsiElement context) {
@@ -70,19 +65,19 @@ public abstract class XmlZenCodingGenerator extends ZenCodingGenerator {
     if (document != null) {
       XmlTag tag = document.getRootTag();
       if (tag != null) {
-        return toString(tag, token.getAttribute2Value(), hasChildren, context);
+        return toString(tag, token.getAttributes(), hasChildren, context);
       }
     }
     return file.getText();
   }
 
   public abstract String toString(@NotNull XmlTag tag,
-                                  @NotNull List<Couple<String>> attribute2Value,
+                                  @NotNull Map<String, String> attributes,
                                   boolean hasChildren,
                                   @NotNull PsiElement context);
 
   @NotNull
-  public abstract String buildAttributesString(@NotNull List<Couple<String>> attribute2value,
+  public abstract String buildAttributesString(@NotNull Map<String, String> attribute2value,
                                                boolean hasChildren,
                                                int numberInIteration,
                                                int totalIterations, @Nullable String surroundedText);
@@ -111,12 +106,13 @@ public abstract class XmlZenCodingGenerator extends ZenCodingGenerator {
           break;
         }
       }
-      prevVisibleLeaf = PsiTreeUtil.prevVisibleLeaf(prevVisibleLeaf); 
+      prevVisibleLeaf = PsiTreeUtil.prevVisibleLeaf(prevVisibleLeaf);
     }
 
     if (startOffset < 0 || currentOffset > documentText.length() || currentOffset < startOffset) {
-      Logger.getInstance(getClass()).error("Error while calculating emmet abbreviation. Offset: " + currentOffset + "; Start: " + startOffset, 
-                                           AttachmentFactory.createAttachment(editor.getDocument()));
+      Logger.getInstance(getClass())
+        .error("Error while calculating emmet abbreviation. Offset: " + currentOffset + "; Start: " + startOffset,
+               AttachmentFactory.createAttachment(editor.getDocument()));
       return null;
     }
     String key = computeKey(documentText.subSequence(startOffset, currentOffset));
