@@ -97,6 +97,15 @@ public class PackageAnnotator {
     public int getCoveredLineCount() {
       return coveredLineCount;
     }
+
+    public void append(SummaryCoverageInfo info) {
+      totalClassCount += info.totalClassCount;
+      totalLineCount += info.totalLineCount;
+      coveredClassCount += info.coveredClassCount;
+      coveredLineCount += info.getCoveredLineCount();
+      coveredMethodCount += info.coveredMethodCount;
+      totalMethodCount += info.totalMethodCount;
+    }
   }
 
   public static class DirCoverageInfo extends PackageCoverageInfo {
@@ -251,6 +260,7 @@ public class PackageAnnotator {
         dirs.add(new DirCoverageInfo(relativeSrcRoot));
       }
     }
+    final PackageCoverageInfo classWithoutSourceCoverageInfo = new PackageCoverageInfo();
 
     final File[] children = packageOutputRoot.listFiles();
 
@@ -300,14 +310,28 @@ public class PackageAnnotator {
                      && (trackTestFolders || !fileIndex.isInTestSourceContent(containingFileRef.get()));
             }
           });
+          PackageCoverageInfo coverageInfoForClass = null;
           if (isInSource != null && isInSource.booleanValue()) {
             for (DirCoverageInfo dirCoverageInfo : dirs) {
               if (dirCoverageInfo.sourceRoot != null && VfsUtil.isAncestor(dirCoverageInfo.sourceRoot, containingFileRef.get(), false)) {
-                collectClassCoverageInformation(child, psiClassRef.get(), dirCoverageInfo, projectInfo, toplevelClassCoverage,
-                                                classFqVMName.replace("/", "."), toplevelClassSrcFQName);
+                coverageInfoForClass = dirCoverageInfo;
                 break;
               }
             }
+          }
+          String classCoverageKey = toplevelClassSrcFQName;
+          if (coverageInfoForClass == null) {
+            for (JavaCoverageEngineExtension extension : JavaCoverageEngineExtension.EP_NAME.getExtensions()) {
+              if (extension.keepCoverageInfoForClassWithoutSource(myCoverageManager.getCurrentSuitesBundle(), child)) {
+                classCoverageKey = classFqVMName.replace('/', '.');
+                coverageInfoForClass = classWithoutSourceCoverageInfo;
+                break;
+              }
+            }
+          }
+          if (coverageInfoForClass != null) {
+            collectClassCoverageInformation(child, psiClassRef.get(), coverageInfoForClass, projectInfo, toplevelClassCoverage,
+                                            classFqVMName.replace("/", "."), classCoverageKey);
           }
         }
       }
@@ -322,24 +346,12 @@ public class PackageAnnotator {
     PackageCoverageInfo flattenPackageCoverageInfo = getOrCreateCoverageInfo(flattenPackageCoverageMap, packageVMName);
     for (Map.Entry<String, ClassCoverageInfo> entry : toplevelClassCoverage.entrySet()) {
       final ClassCoverageInfo coverageInfo = entry.getValue();
-      flattenPackageCoverageInfo.coveredClassCount += coverageInfo.coveredClassCount;
-      flattenPackageCoverageInfo.totalClassCount += coverageInfo.totalClassCount;
-
-      flattenPackageCoverageInfo.coveredLineCount += coverageInfo.fullyCoveredLineCount + coverageInfo.partiallyCoveredLineCount;
-      flattenPackageCoverageInfo.totalLineCount += coverageInfo.totalLineCount;
-      
-      flattenPackageCoverageInfo.coveredMethodCount += coverageInfo.coveredMethodCount;
-      flattenPackageCoverageInfo.totalMethodCount += coverageInfo.totalMethodCount;
+      flattenPackageCoverageInfo.append(coverageInfo);
     }
     
     PackageCoverageInfo packageCoverageInfo = getOrCreateCoverageInfo(packageCoverageMap, packageVMName);
     for (DirCoverageInfo dir : dirs) {
-      packageCoverageInfo.totalClassCount += dir.totalClassCount;
-      packageCoverageInfo.totalLineCount += dir.totalLineCount;
-      packageCoverageInfo.coveredClassCount += dir.coveredClassCount;
-      packageCoverageInfo.coveredLineCount += dir.coveredLineCount;
-      packageCoverageInfo.coveredMethodCount += dir.coveredMethodCount;
-      packageCoverageInfo.totalMethodCount += dir.totalMethodCount;
+      packageCoverageInfo.append(dir);
 
       if (isTestHierarchy) {
         annotator.annotateTestDirectory(dir.sourceRoot, dir, module);
@@ -348,6 +360,7 @@ public class PackageAnnotator {
         annotator.annotateSourceDirectory(dir.sourceRoot, dir, module);
       }
     }
+    packageCoverageInfo.append(classWithoutSourceCoverageInfo);
 
     return dirs.toArray(new DirCoverageInfo[dirs.size()]);
   }
@@ -370,7 +383,8 @@ public class PackageAnnotator {
     return coverageInfo;
   }
 
-  private void collectClassCoverageInformation(final File classFile, final PsiClass psiClass, final PackageCoverageInfo packageCoverageInfo,
+  private void collectClassCoverageInformation(final File classFile,
+                                               @Nullable final PsiClass psiClass, final PackageCoverageInfo packageCoverageInfo,
                                                final ProjectData projectInfo,
                                                final Map<String, ClassCoverageInfo> toplevelClassCoverage,
                                                final String className,
@@ -440,14 +454,17 @@ public class PackageAnnotator {
    * Checks if the method is a default constructor generated by the compiler. Such constructors are not marked as synthetic
    * in the bytecode, so we need to look at the PSI to see if the class defines such a constructor.
    */
-  private static boolean isGeneratedDefaultConstructor(final PsiClass aClass, String nameAndSig) {
+  private static boolean isGeneratedDefaultConstructor(@Nullable final PsiClass aClass, String nameAndSig) {
     if (DEFAULT_CONSTRUCTOR_NAME_SIGNATURE.equals(nameAndSig)) {
       return hasGeneratedConstructor(aClass);
     }
     return false;
   }
 
-  private static boolean hasGeneratedConstructor(final PsiClass aClass) {
+  private static boolean hasGeneratedConstructor(@Nullable final PsiClass aClass) {
+    if (aClass == null) {
+      return false;
+    }
     return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
       public Boolean compute() {
         return aClass.getConstructors().length == 0;
@@ -480,7 +497,7 @@ public class PackageAnnotator {
     return true if there is executable code in the class
    */
   private boolean collectNonCoveredClassInfo(final File classFile,
-                                             PsiClass psiClass,
+                                             @Nullable PsiClass psiClass,
                                              final ClassCoverageInfo classCoverageInfo,
                                              final PackageCoverageInfo packageCoverageInfo) {
     final byte[] content = myCoverageManager.doInReadActionIfProjectOpen(new Computable<byte[]>() {

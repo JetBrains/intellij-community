@@ -13,17 +13,11 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package org.jetbrains.plugins.groovy;
+package org.jetbrains.plugins.groovy
 
-
-import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.IdeActions
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.actionSystem.EditorActionHandler
-import com.intellij.openapi.editor.actionSystem.EditorActionManager
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.jetbrains.plugins.groovy.util.TestUtils
-
 /**
  * @author peter
  */
@@ -117,6 +111,22 @@ this.allOptions = [:];
 ''')
   }
 
+  public void "test hippie completion in groovydoc"() {
+    myFixture.configureByText 'a.groovy', '''
+class A {
+
+  /** long<caret>
+  */
+  void longName() {}
+  void example() {}
+}
+'''
+    performEditorAction(IdeActions.ACTION_HIPPIE_COMPLETION)
+    assert myFixture.editor.document.text.contains('** longName\n')
+    performEditorAction(IdeActions.ACTION_HIPPIE_COMPLETION)
+    assert myFixture.editor.document.text.contains('** longName\n')
+  }
+
   void testSWforMemberWithDoc() {
     doTestForSelectWord(4, '''\
 class A {
@@ -159,9 +169,7 @@ class A {
   }
 
   private void performEditorAction(final String actionId) {
-    final EditorActionHandler handler = EditorActionManager.instance.getActionHandler(actionId);
-    final Editor editor = myFixture.editor;
-    handler.execute(editor, DataManager.instance.getDataContext(editor.contentComponent));
+    myFixture.performEditorAction(actionId)
   }
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,15 +75,23 @@ public class ViewAsGroup extends ActionGroup implements DumbAware {
 
       final DebuggerContextImpl debuggerContext = DebuggerAction.getDebuggerContext(e.getDataContext());
       final List<JavaValue> values = getSelectedValues(e);
+      final List<XValueNodeImpl> selectedNodes = XDebuggerTreeActionBase.getSelectedNodes(e.getDataContext());
 
       LOG.assertTrue(debuggerContext != null && !values.isEmpty());
 
-      debuggerContext.getDebugProcess().getManagerThread().schedule(new DebuggerContextCommandImpl(debuggerContext) {
+      DebugProcessImpl process = debuggerContext.getDebugProcess();
+      if (process == null) {
+        return;
+      }
+
+      process.getManagerThread().schedule(new DebuggerContextCommandImpl(debuggerContext) {
           public void threadAction() {
-            for (JavaValue value : values) {
-              value.getDescriptor().setRenderer(myNodeRenderer);
+            for (final XValueNodeImpl node : selectedNodes) {
+              final XValue container = node.getValueContainer();
+              if (container instanceof JavaValue) {
+                ((JavaValue)container).setRenderer(myNodeRenderer, node);
+              }
             }
-            DebuggerAction.refreshViews(e);
           }
         }
       );
@@ -106,6 +114,9 @@ public class ViewAsGroup extends ActionGroup implements DumbAware {
       boolean allApp = true;
 
       for (JavaValue value : values) {
+        if (value instanceof JavaReferringObjectsValue) { // disable for any referrers at all
+          return AnAction.EMPTY_ARRAY;
+        }
         ValueDescriptorImpl valueDescriptor = value.getDescriptor();
         anyValueDescriptor = true;
         if (!valueDescriptor.isValueValid() || !nodeRenderer.isApplicable(valueDescriptor.getType())) {
