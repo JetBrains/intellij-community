@@ -310,7 +310,7 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
       final PyParameter[] oldParameters = function.getParameterList().getParameters();
       for (PyParameterInfo paramInfo: changeInfo.getNewParameters()) {
         if (paramInfo.getOldIndex() >= 0 && paramInfo.isRenamed()) {
-          final String newName = StringUtil.trimLeading(paramInfo.getName(), '*');
+          final String newName = StringUtil.trimLeading(paramInfo.getName(), '*').trim();
           final UsageInfo[] usages = RenameUtil.findUsages(oldParameters[paramInfo.getOldIndex()], newName, true, false, null);
           for (UsageInfo info : usages) {
             RenameUtil.rename(info, newName);
@@ -355,11 +355,12 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
     final PsiElement parameterList = baseMethod.getParameterList();
 
     final PyParameterInfo[] parameters = changeInfo.getNewParameters();
-    StringBuilder builder = new StringBuilder("def foo(");
+    final StringBuilder builder = new StringBuilder("def foo(");
     final PyStringLiteralExpression docstring = baseMethod.getDocStringExpression();
     final PyParameter[] oldParameters = baseMethod.getParameterList().getParameters();
+    final PyElementGenerator generator = PyElementGenerator.getInstance(baseMethod.getProject());
     for (int i = 0; i != parameters.length; ++i) {
-      PyParameterInfo info = parameters[i];
+      final PyParameterInfo info = parameters[i];
 
       final int oldIndex = info.getOldIndex();
       if (i != 0 && oldIndex < oldParameters.length) {
@@ -367,15 +368,14 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
       }
 
       if (docstring != null && oldIndex < 0) {
-        final String replacement =
-          new PyDocstringGenerator(baseMethod).withParam("param", info.getName()).docStringAsText();
-        PyExpression str =
-          PyElementGenerator.getInstance(baseMethod.getProject()).createDocstring(replacement).getExpression();
-        docstring.replace(str);
+        final String replacement = new PyDocstringGenerator(baseMethod).withParam("param", info.getName()).docStringAsText();
+        final PyExpression newDocstring = generator.createDocstring(replacement).getExpression();
+        docstring.replace(newDocstring);
       }
 
-      if (oldIndex < oldParameters.length)
+      if (oldIndex < oldParameters.length) {
         builder.append(info.getName());
+      }
       if (oldIndex >= 0 && oldIndex < oldParameters.length) {
         final PyParameter parameter = oldParameters[oldIndex];
         if (parameter instanceof PyNamedParameter) {
@@ -386,18 +386,17 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
         }
       }
       final String defaultValue = info.getDefaultValue();
-      if (defaultValue != null && info.getDefaultInSignature() && !StringUtil.isEmpty(defaultValue)) {
+      if (defaultValue != null && info.getDefaultInSignature() && StringUtil.isNotEmpty(defaultValue)) {
         builder.append(" = ").append(defaultValue);
       }
 
     }
     builder.append("): pass");
 
-    final PyParameterList parameterList1 =
-      PyElementGenerator.getInstance(baseMethod.getProject())
-        .createFromText(LanguageLevel.forElement(baseMethod), PyFunction.class,
-                        builder.toString()).getParameterList();
-    parameterList.replace(parameterList1);
+    final PyParameterList newParameterList = generator.createFromText(LanguageLevel.forElement(baseMethod),
+                                                                      PyFunction.class,
+                                                                      builder.toString()).getParameterList();
+    parameterList.replace(newParameterList);
   }
 
   @Override
