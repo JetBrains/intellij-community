@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+
 import org.jetbrains.jps.gant.JpsGantTool
 import org.jetbrains.jps.gant.TeamCityBuildInfoPrinter
 import org.jetbrains.jps.model.java.JavaSourceRootType
@@ -621,6 +622,24 @@ binding.setVariable("zipSources", { String home, String targetDir ->
         include(name: "**/*.$it")
       }
       exclude(name: "**/testData/**")
+    }
+  }
+
+  notifyArtifactBuilt(sources)
+})
+
+binding.setVariable("zipSourcesOfModules", { String home, String targetDir, Collection<String> modules ->
+  String sources = "$targetDir/sources.zip"
+  projectBuilder.stage("zip sources of ${modules.size()} modules to $sources")
+
+  ant.mkdir(dir: targetDir)
+  ant.delete(file: sources)
+  ant.zip(destfile: sources) {
+    modules.each {
+      JpsModule module = findModule(it)
+      module.getSourceRoots(JavaSourceRootType.SOURCE).flatten().collect {it.file}.each { File srcRoot ->
+        zipfileset(prefix: module.name, dir: srcRoot.absolutePath)
+      }
     }
   }
 
