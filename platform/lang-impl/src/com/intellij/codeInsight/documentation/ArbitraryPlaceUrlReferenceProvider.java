@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.documentation;
 
+import com.intellij.execution.filters.UrlFilter;
 import com.intellij.openapi.paths.GlobalPathReferenceProvider;
 import com.intellij.openapi.paths.PathReferenceManager;
 import com.intellij.openapi.util.TextRange;
@@ -40,7 +41,7 @@ import java.util.regex.Pattern;
 public class ArbitraryPlaceUrlReferenceProvider extends PsiReferenceProvider {
   public static final ArbitraryPlaceUrlReferenceProvider INSTANCE = new ArbitraryPlaceUrlReferenceProvider();
 
-  private static final Pattern urlPattern = Pattern.compile("((mailto\\:|(news|(ht|f)tp(s?))\\://){1}[^\\s\\),\"']+)");
+  private static final Pattern urlPattern = UrlFilter.URL_PATTERN;
   private static final UserDataCache<CachedValue<PsiReference[]>, PsiElement, Object> ourRefsCache = new UserDataCache<CachedValue<PsiReference[]>, PsiElement, Object>("psielement.url.refs") {
     private final AtomicReference<GlobalPathReferenceProvider> myReferenceProvider = new AtomicReference<GlobalPathReferenceProvider>();
 
