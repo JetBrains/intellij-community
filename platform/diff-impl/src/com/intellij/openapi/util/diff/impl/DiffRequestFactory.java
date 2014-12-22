@@ -34,4 +34,17 @@ public class DiffRequestFactory {
     }
     return name;
   }
+
+  @NotNull
+  public static DiffRequest createClipboardVsValue(@NotNull String value) {
+    DiffContent content1 = DiffContentFactory.createClipboardContent();
+    DiffContent content2 = DiffContentFactory.create(value, null);
+
+    String title1 = DiffBundle.message("diff.content.clipboard.content.title");
+    String title2 = DiffBundle.message("diff.content.selected.value");
+
+    String title = DiffBundle.message("diff.clipboard.vs.value.dialog.title");
+
+    return new SimpleDiffRequest(title, content1, content2, title1, title2);
+  }
 }

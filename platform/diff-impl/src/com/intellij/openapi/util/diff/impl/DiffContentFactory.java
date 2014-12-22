@@ -5,12 +5,15 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffContentUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.diff.contents.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.BinaryLightVirtualFile;
@@ -18,6 +21,7 @@ import com.intellij.util.LineSeparator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.datatransfer.DataFlavor;
 import java.io.File;
 import java.io.IOException;
 
@@ -64,6 +68,18 @@ public class DiffContentFactory {
     Document document = FileDocumentManager.getInstance().getDocument(file);
     if (document == null) return null;
     return new FileDocumentContentImpl(project, document, file);
+  }
+
+  @NotNull
+  public static DiffContent createClipboardContent() {
+    String text = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
+    return new DocumentContentImpl(new DocumentImpl(StringUtil.notNullize(text)));
+  }
+
+  @NotNull
+  private static DocumentContent createClipboardContent(@NotNull DocumentContent mainContent) {
+    String text = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
+    return new DocumentContentWrapper(mainContent, StringUtil.notNullize(text));
   }
 
   @NotNull
