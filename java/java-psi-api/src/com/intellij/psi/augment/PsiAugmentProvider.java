@@ -57,6 +57,8 @@ public abstract class PsiAugmentProvider {
    * @param typeElement place where inference takes place, 
    *                    also nested PsiTypeElement-s (e.g. for List<String> PsiTypeElements corresponding to both List and String would be suggested)
    * @return inferred type or null, if inference is not applicable
+   * 
+   * @since 14.1
    */
   @Nullable
   protected PsiType inferType(PsiTypeElement typeElement) {
