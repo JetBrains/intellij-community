@@ -215,6 +215,7 @@ public class ComparisonUtil {
     int start = 0;
     int end = fragments.size();
 
+    // TODO: trim empty leading/trailing lines
     if (trim && policy == ComparisonPolicy.IGNORE_WHITESPACES) {
       while (start < end) {
         LineFragment fragment = fragments.get(start);

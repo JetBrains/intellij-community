@@ -88,7 +88,7 @@ class SimpleDiffViewer extends TwosideTextDiffViewer {
   protected List<AnAction> createToolbarActions() {
     List<AnAction> group = new ArrayList<AnAction>();
 
-    group.add(new MyComparisonPolicySettingAction());
+    group.add(new MyIgnorePolicySettingAction());
     group.add(new MyHighlightPolicySettingAction());
     group.add(new MyToggleAutoScrollAction());
     group.add(myEditorSettingsAction);
@@ -102,7 +102,7 @@ class SimpleDiffViewer extends TwosideTextDiffViewer {
     List<AnAction> group = new ArrayList<AnAction>();
 
     group.add(Separator.getInstance());
-    group.add(new MyComparisonPolicySettingAction().getPopupGroup());
+    group.add(new MyIgnorePolicySettingAction().getPopupGroup());
     group.add(Separator.getInstance());
     group.add(new MyHighlightPolicySettingAction().getPopupGroup());
     group.add(Separator.getInstance());
@@ -269,7 +269,7 @@ class SimpleDiffViewer extends TwosideTextDiffViewer {
 
   @NotNull
   private DiffUtil.DiffConfig getDiffConfig() {
-    return new DiffUtil.DiffConfig(getTextSettings().getComparisonPolicy(), getHighlightPolicy(), true);
+    return new DiffUtil.DiffConfig(getTextSettings().getIgnorePolicy(), getHighlightPolicy());
   }
 
   @NotNull

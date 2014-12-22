@@ -5,7 +5,6 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.diff.comparison.ComparisonPolicy;
 import com.intellij.openapi.util.diff.util.DiffUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,7 +21,7 @@ public class TextDiffSettingsHolder implements PersistentStateComponent<TextDiff
 
     // Diff settings
     private HighlightPolicy HIGHLIGHT_POLICY = HighlightPolicy.BY_WORD;
-    private ComparisonPolicy COMPARISON_POLICY = ComparisonPolicy.DEFAULT;
+    private IgnorePolicy IGNORE_POLICY = IgnorePolicy.DEFAULT;
 
     // TODO: allow to change defaults
     // Editor settings
@@ -35,10 +34,10 @@ public class TextDiffSettingsHolder implements PersistentStateComponent<TextDiff
     }
 
     public TextDiffSettings(boolean ENABLE_SYNC_SCROLL,
-                            @NotNull HighlightPolicy HIGHLIGHT_POLICY, @NotNull ComparisonPolicy COMPARISON_POLICY,
+                            @NotNull HighlightPolicy HIGHLIGHT_POLICY, @NotNull IgnorePolicy IGNORE_POLICY,
                             boolean SHOW_WHITESPACES, boolean SHOW_LINE_NUMBERS, boolean SHOW_INDENT_LINES, boolean USE_SOFT_WRAPS) {
       this.HIGHLIGHT_POLICY = HIGHLIGHT_POLICY;
-      this.COMPARISON_POLICY = COMPARISON_POLICY;
+      this.IGNORE_POLICY = IGNORE_POLICY;
       this.ENABLE_SYNC_SCROLL = ENABLE_SYNC_SCROLL;
       this.SHOW_WHITESPACES = SHOW_WHITESPACES;
       this.SHOW_LINE_NUMBERS = SHOW_LINE_NUMBERS;
@@ -49,7 +48,7 @@ public class TextDiffSettingsHolder implements PersistentStateComponent<TextDiff
     @NotNull
     private TextDiffSettings copy() {
       return new TextDiffSettings(ENABLE_SYNC_SCROLL,
-                                  HIGHLIGHT_POLICY, COMPARISON_POLICY,
+                                  HIGHLIGHT_POLICY, IGNORE_POLICY,
                                   SHOW_WHITESPACES, SHOW_LINE_NUMBERS, SHOW_INDENT_LINES, USE_SOFT_WRAPS);
     }
 
@@ -75,12 +74,12 @@ public class TextDiffSettingsHolder implements PersistentStateComponent<TextDiff
     }
 
     @NotNull
-    public ComparisonPolicy getComparisonPolicy() {
-      return COMPARISON_POLICY;
+    public IgnorePolicy getIgnorePolicy() {
+      return IGNORE_POLICY;
     }
 
-    public void setComparisonPolicy(@NotNull ComparisonPolicy policy) {
-      COMPARISON_POLICY = policy;
+    public void setIgnorePolicy(@NotNull IgnorePolicy policy) {
+      IGNORE_POLICY = policy;
     }
 
     // Editor settings

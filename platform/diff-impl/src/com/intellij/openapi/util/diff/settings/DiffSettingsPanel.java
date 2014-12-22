@@ -4,8 +4,8 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.util.diff.comparison.ComparisonPolicy;
 import com.intellij.openapi.util.diff.tools.util.base.HighlightPolicy;
+import com.intellij.openapi.util.diff.tools.util.base.IgnorePolicy;
 import com.intellij.openapi.util.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,7 +13,7 @@ import javax.swing.*;
 
 public class DiffSettingsPanel {
   private JPanel myPane;
-  private JComponent myComparisonPolicyComponent;
+  private JComponent myIgnorePolicyComponent;
   private JComponent myHighlightPolicyComponent;
 
   @NotNull private TextDiffSettings myTextSettings;
@@ -25,19 +25,19 @@ public class DiffSettingsPanel {
   }
 
   public boolean isModified() {
-    if (!myDefaultTextSettings.getComparisonPolicy().equals(myTextSettings.getComparisonPolicy())) return true;
+    if (!myDefaultTextSettings.getIgnorePolicy().equals(myTextSettings.getIgnorePolicy())) return true;
     if (!myDefaultTextSettings.getHighlightPolicy().equals(myTextSettings.getHighlightPolicy())) return true;
 
     return false;
   }
 
   public void apply() {
-    myDefaultTextSettings.setComparisonPolicy(myTextSettings.getComparisonPolicy());
+    myDefaultTextSettings.setIgnorePolicy(myTextSettings.getIgnorePolicy());
     myDefaultTextSettings.setHighlightPolicy(myTextSettings.getHighlightPolicy());
   }
 
   public void reset() {
-    myTextSettings.setComparisonPolicy(myDefaultTextSettings.getComparisonPolicy());
+    myTextSettings.setIgnorePolicy(myDefaultTextSettings.getIgnorePolicy());
     myTextSettings.setHighlightPolicy(myDefaultTextSettings.getHighlightPolicy());
   }
 
@@ -45,14 +45,14 @@ public class DiffSettingsPanel {
     myTextSettings = TextDiffSettings.getSettings();
     myDefaultTextSettings = TextDiffSettings.getSettingsDefaults();
 
-    MyComparisonPolicySettingAction comparisonPolicyAction = new MyComparisonPolicySettingAction();
+    MyIgnorePolicySettingAction ignorePolicyAction = new MyIgnorePolicySettingAction();
     MyHighlightPolicySettingAction highlightPolicyAction = new MyHighlightPolicySettingAction();
 
-    myComparisonPolicyComponent = comparisonPolicyAction.createCustomComponent(comparisonPolicyAction.getTemplatePresentation());
+    myIgnorePolicyComponent = ignorePolicyAction.createCustomComponent(ignorePolicyAction.getTemplatePresentation());
     myHighlightPolicyComponent = highlightPolicyAction.createCustomComponent(highlightPolicyAction.getTemplatePresentation());
 
-    comparisonPolicyAction.update(new AnActionEvent(null, DataManager.getInstance().getDataContext(myComparisonPolicyComponent),
-                                                    ActionPlaces.UNKNOWN, comparisonPolicyAction.getTemplatePresentation(),
+    ignorePolicyAction.update(new AnActionEvent(null, DataManager.getInstance().getDataContext(myIgnorePolicyComponent),
+                                                    ActionPlaces.UNKNOWN, ignorePolicyAction.getTemplatePresentation(),
                                                     ActionManager.getInstance(), 0));
     highlightPolicyAction.update(new AnActionEvent(null, DataManager.getInstance().getDataContext(myHighlightPolicyComponent),
                                                    ActionPlaces.UNKNOWN, highlightPolicyAction.getTemplatePresentation(),
@@ -107,8 +107,8 @@ public class DiffSettingsPanel {
     }
   }
 
-  private class MyComparisonPolicySettingAction extends ComboBoxAction implements DumbAware {
-    public MyComparisonPolicySettingAction() {
+  private class MyIgnorePolicySettingAction extends ComboBoxAction implements DumbAware {
+    public MyIgnorePolicySettingAction() {
       setEnabledInModalContext(true);
     }
 
@@ -121,7 +121,7 @@ public class DiffSettingsPanel {
         presentation.setEnabled(false);
         return;
       }
-      presentation.setText(myTextSettings.getComparisonPolicy().getText());
+      presentation.setText(myTextSettings.getIgnorePolicy().getText());
       presentation.setEnabled(true);
     }
 
@@ -130,7 +130,7 @@ public class DiffSettingsPanel {
     protected DefaultActionGroup createPopupActionGroup(JComponent button) {
       DefaultActionGroup group = new DefaultActionGroup();
 
-      for (ComparisonPolicy policy : ComparisonPolicy.values()) {
+      for (IgnorePolicy policy : IgnorePolicy.values()) {
         group.add(new MyPolicyAction(policy));
       }
 
@@ -138,9 +138,9 @@ public class DiffSettingsPanel {
     }
 
     private class MyPolicyAction extends AnAction implements DumbAware {
-      @NotNull private final ComparisonPolicy myPolicy;
+      @NotNull private final IgnorePolicy myPolicy;
 
-      public MyPolicyAction(@NotNull ComparisonPolicy policy) {
+      public MyPolicyAction(@NotNull IgnorePolicy policy) {
         super(policy.getText());
         setEnabledInModalContext(true);
         myPolicy = policy;
@@ -148,9 +148,9 @@ public class DiffSettingsPanel {
 
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
-        if (myTextSettings.getComparisonPolicy() == myPolicy) return;
-        myTextSettings.setComparisonPolicy(myPolicy);
-        MyComparisonPolicySettingAction.this.update(e);
+        if (myTextSettings.getIgnorePolicy() == myPolicy) return;
+        myTextSettings.setIgnorePolicy(myPolicy);
+        MyIgnorePolicySettingAction.this.update(e);
       }
     }
   }

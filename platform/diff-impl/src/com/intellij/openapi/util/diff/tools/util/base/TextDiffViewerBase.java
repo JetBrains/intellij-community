@@ -11,7 +11,6 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.diff.actions.impl.SetEditorSettingsAction;
 import com.intellij.openapi.util.diff.api.FrameDiffTool.DiffContext;
-import com.intellij.openapi.util.diff.comparison.ComparisonPolicy;
 import com.intellij.openapi.util.diff.requests.ContentDiffRequest;
 import com.intellij.openapi.util.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings;
 import com.intellij.openapi.util.diff.util.CalledInAwt;
@@ -220,15 +219,15 @@ public abstract class TextDiffViewerBase extends ListenerDiffViewerBase {
     }
   }
 
-  protected class MyComparisonPolicySettingAction extends ComboBoxAction implements DumbAware {
+  protected class MyIgnorePolicySettingAction extends ComboBoxAction implements DumbAware {
     @NotNull private final DefaultActionGroup myChildren;
 
-    public MyComparisonPolicySettingAction() {
+    public MyIgnorePolicySettingAction() {
       // TODO: pretty icons ?
       setEnabledInModalContext(true);
 
       myChildren = new DefaultActionGroup();
-      for (ComparisonPolicy policy : ComparisonPolicy.values()) {
+      for (IgnorePolicy policy : IgnorePolicy.values()) {
         myChildren.add(new MyPolicyAction(policy));
       }
     }
@@ -242,7 +241,7 @@ public abstract class TextDiffViewerBase extends ListenerDiffViewerBase {
     public void update(AnActionEvent e) {
       Presentation presentation = e.getPresentation();
 
-      presentation.setText(getTextSettings().getComparisonPolicy().getText());
+      presentation.setText(getTextSettings().getIgnorePolicy().getText());
 
       presentation.setEnabled(true);
     }
@@ -254,9 +253,9 @@ public abstract class TextDiffViewerBase extends ListenerDiffViewerBase {
     }
 
     private class MyPolicyAction extends AnAction implements DumbAware {
-      @NotNull private final ComparisonPolicy myPolicy;
+      @NotNull private final IgnorePolicy myPolicy;
 
-      public MyPolicyAction(@NotNull ComparisonPolicy policy) {
+      public MyPolicyAction(@NotNull IgnorePolicy policy) {
         super(policy.getText());
         setEnabledInModalContext(true);
         myPolicy = policy;
@@ -264,9 +263,9 @@ public abstract class TextDiffViewerBase extends ListenerDiffViewerBase {
 
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
-        if (getTextSettings().getComparisonPolicy() == myPolicy) return;
-        getTextSettings().setComparisonPolicy(myPolicy);
-        MyComparisonPolicySettingAction.this.update(e);
+        if (getTextSettings().getIgnorePolicy() == myPolicy) return;
+        getTextSettings().setIgnorePolicy(myPolicy);
+        MyIgnorePolicySettingAction.this.update(e);
         rediff();
       }
     }

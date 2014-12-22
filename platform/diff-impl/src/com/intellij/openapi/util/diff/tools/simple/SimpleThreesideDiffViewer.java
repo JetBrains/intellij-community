@@ -89,7 +89,7 @@ class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
   protected List<AnAction> createToolbarActions() {
     List<AnAction> group = new ArrayList<AnAction>();
 
-    group.add(new MyComparisonPolicySettingAction());
+    group.add(new MyIgnorePolicySettingAction());
     //group.add(new MyHighlightPolicySettingAction()); // TODO
 
     group.add(new MyToggleAutoScrollAction());
@@ -104,7 +104,7 @@ class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
     List<AnAction> group = new ArrayList<AnAction>();
 
     group.add(Separator.getInstance());
-    group.add(new MyComparisonPolicySettingAction().getPopupGroup());
+    group.add(new MyIgnorePolicySettingAction().getPopupGroup());
     //group.add(Separator.getInstance());
     //group.add(new MyHighlightPolicySettingAction().getPopupGroup());
     group.add(Separator.getInstance());
@@ -155,8 +155,9 @@ class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
         }
       });
 
+      // TODO: hide IGNORE_WHITESPACES_CHUNKS from settings, as it's not supported (or support merge of non-Fair Iterables)
       CharSequence[] sequences = data.getSequences();
-      ComparisonPolicy comparisonPolicy = getTextSettings().getComparisonPolicy();
+      ComparisonPolicy comparisonPolicy = getTextSettings().getIgnorePolicy().getComparisonPolicy();
       FairDiffIterable fragments1 = ByLine.compareTwoStepFair(sequences[1], sequences[0], comparisonPolicy, indicator);
       FairDiffIterable fragments2 = ByLine.compareTwoStepFair(sequences[1], sequences[2], comparisonPolicy, indicator);
       List<MergeLineFragment> mergeFragments = MergeUtil.buildFair(fragments1, fragments2, indicator);

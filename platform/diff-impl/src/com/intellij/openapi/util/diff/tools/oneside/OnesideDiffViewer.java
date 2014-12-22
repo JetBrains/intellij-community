@@ -144,7 +144,7 @@ class OnesideDiffViewer extends TextDiffViewerBase {
   public List<AnAction> createToolbarActions() {
     List<AnAction> group = new ArrayList<AnAction>();
 
-    group.add(new MyComparisonPolicySettingAction());
+    group.add(new MyIgnorePolicySettingAction());
     group.add(new MyHighlightPolicySettingAction());
     group.add(new MyContextRangeSettingAction());
     group.add(myEditorSettingsAction);
@@ -157,7 +157,7 @@ class OnesideDiffViewer extends TextDiffViewerBase {
     List<AnAction> group = new ArrayList<AnAction>();
 
     group.add(Separator.getInstance());
-    group.add(new MyComparisonPolicySettingAction().getPopupGroup());
+    group.add(new MyIgnorePolicySettingAction().getPopupGroup());
     group.add(Separator.getInstance());
     group.add(new MyHighlightPolicySettingAction().getPopupGroup());
     // TODO
@@ -453,7 +453,7 @@ class OnesideDiffViewer extends TextDiffViewerBase {
 
   @NotNull
   private DiffUtil.DiffConfig getDiffConfig() {
-    return new DiffUtil.DiffConfig(getTextSettings().getComparisonPolicy(), getHighlightPolicy(), false);
+    return new DiffUtil.DiffConfig(getTextSettings().getIgnorePolicy(), getHighlightPolicy());
   }
 
   @NotNull
