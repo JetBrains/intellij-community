@@ -25,7 +25,6 @@ import java.awt.datatransfer.DataFlavor;
 import java.io.File;
 import java.io.IOException;
 
-// TODO: pay attention here
 public class DiffContentFactory {
   public static final Logger LOG = Logger.getInstance(DiffContentFactory.class);
 
