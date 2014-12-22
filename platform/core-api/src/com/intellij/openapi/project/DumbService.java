@@ -34,7 +34,7 @@ import java.util.List;
 
 /**
  * A service managing IDEA's 'dumb' mode: when indices are updated in background and the functionality is very much limited.
- * Only the explicitly allowed functionality is available. Usually it's allowed by implementing {@link com.intellij.openapi.project.DumbAware} interface.
+ * Only the explicitly allowed functionality is available. Usually it's allowed by implementing {@link DumbAware} interface.
  *
  * If you want to register a toolwindow, which will be enabled during the dumb mode, please use {@link com.intellij.openapi.wm.ToolWindowManager}'s
  * registration methods which have 'canWorkInDumMode' parameter. 
@@ -45,7 +45,7 @@ public abstract class DumbService {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.project.DumbService");
 
   /**
-   * @see com.intellij.openapi.project.Project#getMessageBus()
+   * @see Project#getMessageBus()
    */
   public static final Topic<DumbModeListener> DUMB_MODE = new Topic<DumbModeListener>("dumb mode", DumbModeListener.class);
 
