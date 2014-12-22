@@ -36,7 +36,9 @@ import java.awt.event.*;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
 
 /**
  * Created by Denis Fokin
@@ -274,7 +276,12 @@ public class SheetController {
         if(he.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
           if(Desktop.isDesktopSupported()) {
             try {
-              Desktop.getDesktop().browse(he.getURL().toURI());
+              URL url = he.getURL();
+              if (url != null) {
+                Desktop.getDesktop().browse(url.toURI());
+              } else {
+                LOG.warn("URL is null; HyperlinkEvent: " + he.toString());
+              }
             }
             catch (IOException e) {
               LOG.error(e);
