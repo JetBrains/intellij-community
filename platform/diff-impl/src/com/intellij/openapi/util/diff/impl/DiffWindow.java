@@ -6,6 +6,7 @@ import com.intellij.openapi.ui.WindowWrapperBuilder;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.diff.DiffDialogHints;
 import com.intellij.openapi.util.diff.chains.DiffRequestChain;
+import com.intellij.openapi.util.diff.util.DiffUserDataKeys;
 import com.intellij.openapi.util.diff.util.DiffUtil;
 import com.intellij.util.ImageLoader;
 import org.jetbrains.annotations.NotNull;
@@ -22,11 +23,14 @@ public class DiffWindow {
     myProject = project;
     myHints = hints;
 
+    String dialogGroupKey = requestChain.getUserData(DiffUserDataKeys.DIALOG_GROUP_KEY);
+    if (dialogGroupKey == null) dialogGroupKey = "DiffContextDialog";
+
     myProcessor = new MyCacheDiffRequestChainProcessor(project, requestChain);
     myWrapper = new WindowWrapperBuilder(DiffUtil.getWindowMode(hints), myProcessor.getComponent())
       .setProject(project)
       .setParent(hints.getParent())
-      .setDimensionServiceKey("DiffContextDialog")
+      .setDimensionServiceKey(dialogGroupKey)
       .setOnShowCallback(new Runnable() {
         @Override
         public void run() {

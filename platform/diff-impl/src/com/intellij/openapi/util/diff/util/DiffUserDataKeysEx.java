@@ -18,13 +18,5 @@ public interface DiffUserDataKeysEx extends DiffUserDataKeys {
   // DiffContext
   //
 
-  //
-  // DiffChain
-  //
-
   Key<JComponent> BOTTOM_PANEL = Key.create("Diff.BottomPanel"); // Could implement Disposable
-
-  //
-  // DiffContext / DiffRequest
-  //
 }

@@ -24,11 +24,16 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.List;
 
 public class SimpleDiffRequestChain extends UserDataHolderBase implements DiffRequestChain {
   @NotNull private final List<DiffRequestPresentableWrapper> myRequests;
   private int myIndex = 0;
+
+  public SimpleDiffRequestChain(@NotNull DiffRequest request) {
+    this(Collections.singletonList(request));
+  }
 
   public SimpleDiffRequestChain(@NotNull List<? extends DiffRequest> requests) {
     myRequests = ContainerUtil.map(requests, new Function<DiffRequest, DiffRequestPresentableWrapper>() {

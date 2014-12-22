@@ -61,7 +61,7 @@ public class MigrateToNewDiffUtil {
     ChangeRequestChain oldChain = (ChangeRequestChain)oldRequest.getGenericData().get(VcsDataKeys.DIFF_REQUEST_CHAIN.getName());
     if (oldChain == null || oldChain.getAllRequests().size() < 2) {
       DiffRequest request = convertRequest(oldRequest);
-      return new SimpleDiffRequestChain(Collections.singletonList(request));
+      return new SimpleDiffRequestChain(request);
     }
     else {
       return new ChangeRequestChainWrapper(oldChain);

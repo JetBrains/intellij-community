@@ -303,11 +303,11 @@ public abstract class CacheDiffRequestChainProcessor implements Disposable {
 
     DiffUtil.addActionBlock(group, viewerActions);
 
-    List<AnAction> contextActions = myContext.getUserData(DiffUserDataKeys.CONTEXT_ACTIONS);
-    DiffUtil.addActionBlock(group, contextActions);
-
     List<AnAction> requestContextActions = myActiveRequest.getUserData(DiffUserDataKeys.CONTEXT_ACTIONS);
     DiffUtil.addActionBlock(group, requestContextActions);
+
+    List<AnAction> contextActions = myContext.getUserData(DiffUserDataKeys.CONTEXT_ACTIONS);
+    DiffUtil.addActionBlock(group, contextActions);
 
     DiffUtil.addActionBlock(group,
                             new ShowInExternalToolAction(),
@@ -678,18 +678,17 @@ public abstract class CacheDiffRequestChainProcessor implements Disposable {
       Object data = myState.getData(dataId);
       if (data != null) return data;
 
-      DataProvider contextProvider = myContext.getUserData(DiffUserDataKeys.DATA_PROVIDER);
-      if (contextProvider != null) {
-        data = contextProvider.getData(dataId);
-        if (data != null) return data;
-      }
-
       DataProvider requestProvider = myActiveRequest.getUserData(DiffUserDataKeys.DATA_PROVIDER);
       if (requestProvider != null) {
         data = requestProvider.getData(dataId);
         if (data != null) return data;
       }
 
+      DataProvider contextProvider = myContext.getUserData(DiffUserDataKeys.DATA_PROVIDER);
+      if (contextProvider != null) {
+        data = contextProvider.getData(dataId);
+        if (data != null) return data;
+      }
       return null;
     }
   }

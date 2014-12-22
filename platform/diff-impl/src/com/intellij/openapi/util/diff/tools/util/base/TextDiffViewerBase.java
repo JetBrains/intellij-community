@@ -14,6 +14,7 @@ import com.intellij.openapi.util.diff.api.FrameDiffTool.DiffContext;
 import com.intellij.openapi.util.diff.requests.ContentDiffRequest;
 import com.intellij.openapi.util.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings;
 import com.intellij.openapi.util.diff.util.CalledInAwt;
+import com.intellij.openapi.util.diff.util.DiffUserDataKeys;
 import com.intellij.openapi.util.diff.util.DiffUtil;
 import com.intellij.ui.ToggleActionButton;
 import com.intellij.util.EditorPopupHandler;
@@ -111,6 +112,9 @@ public abstract class TextDiffViewerBase extends ListenerDiffViewerBase {
     if (settings == null) {
       settings = TextDiffSettings.getSettings();
       context.putUserData(TextDiffSettings.KEY, settings);
+      if (context.getUserData(DiffUserDataKeys.DO_NOT_IGNORE_WHITESPACES) != null) {
+        settings.setIgnorePolicy(IgnorePolicy.DEFAULT);
+      }
     }
     return settings;
   }

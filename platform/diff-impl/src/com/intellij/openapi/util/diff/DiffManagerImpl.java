@@ -39,7 +39,7 @@ public class DiffManagerImpl extends DiffManagerEx {
 
   @Override
   public void showDiff(@Nullable Project project, @NotNull DiffRequest request, @NotNull DiffDialogHints hints) {
-    DiffRequestChain requestChain = new SimpleDiffRequestChain(Collections.singletonList(request));
+    DiffRequestChain requestChain = new SimpleDiffRequestChain(request);
     showDiff(project, requestChain, hints);
   }
 
@@ -55,7 +55,7 @@ public class DiffManagerImpl extends DiffManagerEx {
 
   @Override
   public void showDiffBuiltin(@Nullable Project project, @NotNull DiffRequest request, @NotNull DiffDialogHints hints) {
-    DiffRequestChain requestChain = new SimpleDiffRequestChain(Collections.singletonList(request));
+    DiffRequestChain requestChain = new SimpleDiffRequestChain(request);
     showDiffBuiltin(project, requestChain, hints);
   }
 

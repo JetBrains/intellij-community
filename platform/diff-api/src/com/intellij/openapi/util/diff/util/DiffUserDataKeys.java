@@ -20,16 +20,19 @@ public interface DiffUserDataKeys {
   //
   // DiffContext
   //
+  // User data from DiffRequestChain is passed to DiffContext
+  //
 
   Key<Side> PREFERRED_FOCUS_SIDE = Key.create("Diff.PreferredFocusSide");
   Key<ThreeSide> PREFERRED_FOCUS_THREESIDE = Key.create("Diff.PreferredFocusThreeSide");
 
-  //
-  // DiffChain
-  //
+  Key<Object> DO_NOT_IGNORE_WHITESPACES = Key.create("Diff.DoNotIgnoreWhitespaces");
+  Key<String> DIALOG_GROUP_KEY = Key.create("Diff.DialogGroupKey");
 
   //
   // DiffContext / DiffRequest
+  //
+  // Both data from DiffContext / DiffRequest will be used. Data from DiffRequest will be used first.
   //
 
   Key<List<AnAction>> CONTEXT_ACTIONS = Key.create("Diff.ContextActions");
