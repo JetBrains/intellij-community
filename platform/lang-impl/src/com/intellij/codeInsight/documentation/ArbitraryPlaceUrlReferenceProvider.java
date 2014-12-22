@@ -33,7 +33,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
 * Created by Maxim.Mossienko on 12/19/2014.
@@ -41,7 +40,6 @@ import java.util.regex.Pattern;
 public class ArbitraryPlaceUrlReferenceProvider extends PsiReferenceProvider {
   public static final ArbitraryPlaceUrlReferenceProvider INSTANCE = new ArbitraryPlaceUrlReferenceProvider();
 
-  private static final Pattern urlPattern = UrlFilter.URL_PATTERN;
   private static final UserDataCache<CachedValue<PsiReference[]>, PsiElement, Object> ourRefsCache = new UserDataCache<CachedValue<PsiReference[]>, PsiElement, Object>("psielement.url.refs") {
     private final AtomicReference<GlobalPathReferenceProvider> myReferenceProvider = new AtomicReference<GlobalPathReferenceProvider>();
 
@@ -50,7 +48,7 @@ public class ArbitraryPlaceUrlReferenceProvider extends PsiReferenceProvider {
       return CachedValuesManager
         .getManager(element.getProject()).createCachedValue(new CachedValueProvider<PsiReference[]>() {
           public Result<PsiReference[]> compute() {
-            Matcher matcher = urlPattern.matcher(element.getText());
+            Matcher matcher = UrlFilter.URL_PATTERN.matcher(element.getText());
 
             List<PsiReference> refs = null;
             GlobalPathReferenceProvider provider = myReferenceProvider.get();
