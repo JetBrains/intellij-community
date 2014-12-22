@@ -34,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class LinearBekController extends CascadeLinearGraphController {
+  public static final int MAGIC_MAP_DEPTH = 100;
   @NotNull private final LinearGraph myCompiledGraph;
 
   public LinearBekController(@NotNull BekBaseLinearGraphController controller, @NotNull PermanentGraphInfo permanentGraphInfo) {
@@ -62,78 +63,53 @@ public class LinearBekController extends CascadeLinearGraphController {
         if (workingGraph.getDownNodes(parent).size() != 2) {
           return;
         }
+
         int firstChildIndex = workingGraph.getDownNodes(parent).get(0);
-        if (firstChildIndex == currentNodeIndex) return;
+        boolean switchedOrder = false;
+        if (firstChildIndex == currentNodeIndex) {
+          switchedOrder = true;
+          firstChildIndex = workingGraph.getDownNodes(parent).get(1);
+        }
 
         int x = graphLayout.getLayoutIndex(firstChildIndex);
         int y = graphLayout.getLayoutIndex(currentNodeIndex);
+        int k = calculateBlockSize(firstChildIndex, currentNodeIndex, workingGraph, visited);
 
-        final Map<Integer, Integer> magicMap = new HashMap<Integer, Integer>();
-        new GraphVisitorAlgorithm(false).visitSubgraph(workingGraph, new GraphVisitorAlgorithm.SimpleVisitor() {
-          @Override
-          public void visitNode(int nodeIndex) {
-            int layoutIndex = graphLayout.getLayoutIndex(nodeIndex);
-            if (!magicMap.containsKey(layoutIndex) || magicMap.get(layoutIndex) > nodeIndex) {
-              magicMap.put(layoutIndex, nodeIndex);
-            }
-          }
-        }, firstChildIndex, 100);
-
-        int k = 1;
-        PriorityQueue<Integer> queue = new PriorityQueue<Integer>();
-        queue.addAll(workingGraph.getDownNodes(currentNodeIndex));
-        while (!queue.isEmpty()) {
-          Integer next = queue.poll();
-          if (next == firstChildIndex) {
-            break;
-          }
-          else if (next > currentNodeIndex + k || !visited.get(next)) {
-            break;
-          }
-          else if (next < currentNodeIndex + k) {
-            continue;
-          }
-          k++;
-          queue.addAll(workingGraph.getDownNodes(next));
-        }
-
-        if (visited.get(firstChildIndex)) {
-          if (firstChildIndex == currentNodeIndex + k) {
-            // this is Katisha case (merge with old commit)
-
-            for (int i = currentNodeIndex; i < currentNodeIndex + k; i++) {
-              boolean isTail = true;
-              for (int downNode : workingGraph.getDownNodes(i)) {
-                if (downNode > firstChildIndex) {
-                  int li = graphLayout.getLayoutIndex(downNode);
-                  if (li >= y) {
+        if (firstChildIndex == currentNodeIndex + k) {
+          // this is Katisha case (merge with old commit)
+          final Map<Integer, Integer> magicMap = createMagicMap(firstChildIndex, workingGraph, graphLayout);
+          for (int i = currentNodeIndex; i < currentNodeIndex + k; i++) {
+            boolean isTail = true;
+            for (int downNode : workingGraph.getDownNodes(i)) {
+              if (downNode > firstChildIndex) {
+                int li = graphLayout.getLayoutIndex(downNode);
+                if (li >= y) {
+                  return;
+                }
+                if (li < x) {
+                  // magic map will save us here
+                  if (!magicMap.containsKey(li) || magicMap.get(li) > downNode) {
                     return;
                   }
-                  if (li < x) {
-                    // magic map will save us here
-                    if (!magicMap.containsKey(li) || magicMap.get(li) > downNode) {
-                      return;
-                    }
-                  }
-                  workingGraph.removeEdge(i, downNode);
                 }
-                else {
-                  isTail = false;
-                }
+                workingGraph.removeEdge(i, downNode);
               }
-
-              if (isTail) {
-                workingGraph.addEdge(i, firstChildIndex);
+              else {
+                isTail = false;
               }
             }
 
-            workingGraph.removeEdge(parent, firstChildIndex);
+            if (isTail) {
+              workingGraph.addEdge(i, firstChildIndex);
+            }
           }
+
+          workingGraph.removeEdge(parent, firstChildIndex);
         }
-        else {
+        else if (!switchedOrder) {
+          final Map<Integer, Integer> magicMap = createMagicMap(firstChildIndex, workingGraph, graphLayout);
           boolean hasTails = false;
           for (int i = currentNodeIndex; i < currentNodeIndex + k; i++) {
-
             List<Integer> downNodes = workingGraph.getDownNodes(i);
             boolean isTail = !(downNodes.isEmpty());
 
@@ -175,6 +151,45 @@ public class LinearBekController extends CascadeLinearGraphController {
     });
 
     return workingGraph.createLinearBekGraph();
+  }
+
+  private static int calculateBlockSize(int firstChildIndex,
+                                        int secondChildIndex,
+                                        @NotNull LinearGraph graph,
+                                        @NotNull BitSetFlags visited) {
+    int k = 1;
+    PriorityQueue<Integer> queue = new PriorityQueue<Integer>();
+    queue.addAll(graph.getDownNodes(secondChildIndex));
+    while (!queue.isEmpty()) {
+      Integer next = queue.poll();
+      if (next == firstChildIndex) {
+        break;
+      }
+      else if (next > secondChildIndex + k || !visited.get(next)) {
+        break;
+      }
+      else if (next < secondChildIndex + k) {
+        continue;
+      }
+      k++;
+      queue.addAll(graph.getDownNodes(next));
+    }
+    return k;
+  }
+
+  @NotNull
+  private static Map<Integer, Integer> createMagicMap(int startIndex, @NotNull LinearGraph graph, @NotNull final GraphLayout graphLayout) {
+    final Map<Integer, Integer> magicMap = new HashMap<Integer, Integer>();
+    new GraphVisitorAlgorithm(false).visitSubgraph(graph, new GraphVisitorAlgorithm.SimpleVisitor() {
+      @Override
+      public void visitNode(int nodeIndex) {
+        int layoutIndex = graphLayout.getLayoutIndex(nodeIndex);
+        if (!magicMap.containsKey(layoutIndex) || magicMap.get(layoutIndex) > nodeIndex) {
+          magicMap.put(layoutIndex, nodeIndex);
+        }
+      }
+    }, startIndex, MAGIC_MAP_DEPTH);
+    return magicMap;
   }
 
   private static class WorkingGraph extends LinearBekGraph {
