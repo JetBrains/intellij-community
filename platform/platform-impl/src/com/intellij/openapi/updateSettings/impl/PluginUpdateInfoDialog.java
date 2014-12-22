@@ -18,6 +18,7 @@ package com.intellij.openapi.updateSettings.impl;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.PluginManagerMain;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -78,7 +79,12 @@ class PluginUpdateInfoDialog extends AbstractUpdateDialog {
         UpdateChecker.saveDisabledToUpdatePlugins();
         boolean updated = UpdateChecker.installPluginUpdates(myUploadedPlugins, indicator);
         if (updated && !myPlatformUpdate) {
-          PluginManagerMain.notifyPluginsUpdated(null);
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              PluginManagerMain.notifyPluginsUpdated(null);
+            }
+          }, ModalityState.NON_MODAL);
         }
       }
     });
