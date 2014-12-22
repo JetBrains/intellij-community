@@ -105,13 +105,13 @@ public class WordComparisonUtilTest extends ComparisonUtilTestBase {
   public void testNewlines() {
     TestData.words(" x _ y _ z ", "x z")
       ._______Def_("- ------  -", "   ")
-      .______Trim_("  ------   ", "   ") // TODO: looks wrong
+      .______Trim_("     -     ", "   ")
       .____Ignore_("     -     ", "   ")
       .all();
 
     TestData.words("x z", " x _ y _ z ")
       ._______Def_("   ", "- ------  -")
-      .______Trim_("   ", "  ------   ")
+      .______Trim_("   ", "     -     ")
       .____Ignore_("   ", "     -     ")
       .all();
   }

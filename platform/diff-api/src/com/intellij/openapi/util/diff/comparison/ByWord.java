@@ -514,6 +514,7 @@ public class ByWord {
     }
   }
 
+  // TODO: algorithm could be more aggressive
   private static class TrimSpacesCorrector {
     @NotNull private final DiffIterable myIterable;
     @NotNull private final CharSequence myText1;
@@ -542,16 +543,16 @@ public class ByWord {
         int end1 = range.end1;
         int end2 = range.end2;
 
-        if (isLeadingSpace(myText1, start1)) {
+        if (isLeadingTrailingSpace(myText1, start1)) {
           start1 = trimStart(myText1, start1, end1);
         }
-        if (isTrailingSpace(myText1, end1)) {
+        if (isLeadingTrailingSpace(myText1, end1 - 1)) {
           end1 = trimEnd(myText1, start1, end1);
         }
-        if (isLeadingSpace(myText2, start2)) {
+        if (isLeadingTrailingSpace(myText2, start2)) {
           start2 = trimStart(myText2, start2, end2);
         }
-        if (isTrailingSpace(myText2, end2)) {
+        if (isLeadingTrailingSpace(myText2, end2 - 1)) {
           end2 = trimEnd(myText2, start2, end2);
         }
 
@@ -566,7 +567,12 @@ public class ByWord {
     }
   }
 
+  private static boolean isLeadingTrailingSpace(@NotNull CharSequence text, int start) {
+    return isLeadingSpace(text, start) || isTrailingSpace(text, start);
+  }
+
   private static boolean isLeadingSpace(@NotNull CharSequence text, int start) {
+    if (start < 0) return false;
     if (start == text.length()) return false;
     if (!isWhiteSpace(text.charAt(start))) return false;
 
@@ -581,8 +587,9 @@ public class ByWord {
   }
 
   private static boolean isTrailingSpace(@NotNull CharSequence text, int end) {
-    if (end == 0) return false;
-    if (!isWhiteSpace(text.charAt(end - 1))) return false;
+    if (end < 0) return false;
+    if (end == text.length()) return false;
+    if (!isWhiteSpace(text.charAt(end))) return false;
 
     while (end < text.length()) {
       char c = text.charAt(end);
