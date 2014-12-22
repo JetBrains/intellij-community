@@ -114,6 +114,9 @@ public class ViewAsGroup extends ActionGroup implements DumbAware {
       boolean allApp = true;
 
       for (JavaValue value : values) {
+        if (value instanceof JavaReferringObjectsValue) { // disable for any referrers at all
+          return AnAction.EMPTY_ARRAY;
+        }
         ValueDescriptorImpl valueDescriptor = value.getDescriptor();
         anyValueDescriptor = true;
         if (!valueDescriptor.isValueValid() || !nodeRenderer.isApplicable(valueDescriptor.getType())) {
