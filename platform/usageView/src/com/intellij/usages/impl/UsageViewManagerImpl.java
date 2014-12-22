@@ -220,20 +220,22 @@ public class UsageViewManagerImpl extends UsageViewManager {
   }
 
 
-  static void showTooManyUsagesWarning(@NotNull final Project project,
-                                       @NotNull final TooManyUsagesStatus tooManyUsagesStatus,
-                                       @NotNull final ProgressIndicator indicator,
-                                       @NotNull final UsageViewPresentation presentation,
-                                       final int usageCount,
-                                       final UsageViewImpl usageView) {
+  public static void showTooManyUsagesWarning(@NotNull final Project project,
+                                              @NotNull final TooManyUsagesStatus tooManyUsagesStatus,
+                                              @NotNull final ProgressIndicator indicator,
+                                              @NotNull final UsageViewPresentation presentation,
+                                              final int usageCount,
+                                              @Nullable final UsageViewImpl usageView) {
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
         if (usageView != null && usageView.searchHasBeenCancelled() || indicator.isCanceled()) return;
         String message = UsageViewBundle.message("find.excessive.usage.count.prompt", usageCount, StringUtil.pluralize(presentation.getUsagesWord()));
         UsageLimitUtil.Result ret = UsageLimitUtil.showTooManyUsagesWarning(project, message, presentation);
-        if (ret == UsageLimitUtil.Result.ABORT && usageView != null) {
-          usageView.cancelCurrentSearch();
+        if (ret == UsageLimitUtil.Result.ABORT) {
+          if (usageView != null) {
+            usageView.cancelCurrentSearch();
+          }
           indicator.cancel();
         }
         tooManyUsagesStatus.userResponded();

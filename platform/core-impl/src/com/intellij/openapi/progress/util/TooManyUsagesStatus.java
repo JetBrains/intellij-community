@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.progress.util;
 
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
@@ -28,6 +29,11 @@ import java.util.concurrent.atomic.AtomicReference;
 public class TooManyUsagesStatus {
   private static final Key<TooManyUsagesStatus> KEY = Key.create("TooManyUsagesStatus");
   private static final NullStatus NULL_STATUS = new NullStatus();
+  private final ProgressIndicator myIndicator;
+
+  private TooManyUsagesStatus(@NotNull ProgressIndicator indicator) {
+    myIndicator = indicator;
+  }
 
   @NotNull
   public static TooManyUsagesStatus getFrom(@Nullable ProgressIndicator indicator) {
@@ -38,7 +44,7 @@ public class TooManyUsagesStatus {
   public static TooManyUsagesStatus createFor(@NotNull ProgressIndicator indicator) {
     TooManyUsagesStatus data = null;
     if (indicator instanceof UserDataHolder) {
-      data = new TooManyUsagesStatus();
+      data = new TooManyUsagesStatus(indicator);
       ((UserDataHolder)indicator).putUserData(KEY, data);
     }
     return data;
@@ -65,8 +71,12 @@ public class TooManyUsagesStatus {
   public void pauseProcessingIfTooManyUsages() {
     if (tooManyUsagesStatus.get() == Status.WARNING_DIALOG_SHOWN) {
       //assert ApplicationManager.getApplication().isDispatchThread() || !ApplicationManager.getApplication().isReadAccessAllowed();
+      long start = System.currentTimeMillis();
       try {
-        waitWhileUserClick.await(1, TimeUnit.SECONDS);
+        while (System.currentTimeMillis() < start + 1000) {
+          if (waitWhileUserClick.await(10, TimeUnit.MILLISECONDS)) break;
+          if (myIndicator.isCanceled()) break;
+        }
       }
       catch (InterruptedException ignored) {
       }
@@ -74,6 +84,10 @@ public class TooManyUsagesStatus {
   }
 
   private static class NullStatus extends TooManyUsagesStatus {
+    private NullStatus() {
+      super(new EmptyProgressIndicator());
+    }
+
     @Override
     public boolean switchTooManyUsagesStatus() {
       return false;
