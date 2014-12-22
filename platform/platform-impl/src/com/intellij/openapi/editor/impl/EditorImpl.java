@@ -433,13 +433,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         if (myPrimaryCaret != null) {
           myPrimaryCaret.updateVisualPosition(); // repainting old primary caret's row background
         }
-        updateCaretVisualPosition(e);
+        repaintCaretRegion(e);
         myPrimaryCaret = myCaretModel.getPrimaryCaret();
       }
 
       @Override
       public void caretRemoved(CaretEvent e) {
-        updateCaretVisualPosition(e);
+        repaintCaretRegion(e);
         myPrimaryCaret = myCaretModel.getPrimaryCaret(); // repainting new primary caret's row background
         myPrimaryCaret.updateVisualPosition();
       }
@@ -558,10 +558,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return ColorUtil.isDark(getBackgroundColor());
   }
 
-  private static void updateCaretVisualPosition(CaretEvent e) {
+  private void repaintCaretRegion(CaretEvent e) {
     CaretImpl caretImpl = (CaretImpl)e.getCaret();
     if (caretImpl != null) {
-      caretImpl.updateVisualPosition(); // repainting caret region
+      caretImpl.updateVisualPosition();
+      if (caretImpl.hasSelection()) {
+        repaint(caretImpl.getSelectionStart(), caretImpl.getSelectionEnd());
+      }
     }
   }
 
