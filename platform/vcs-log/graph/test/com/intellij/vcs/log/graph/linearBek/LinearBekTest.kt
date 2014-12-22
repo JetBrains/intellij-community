@@ -427,6 +427,17 @@ class LinearBekTest {
     7()
   })
 
+  /*
+  0
+  |   1
+  2   |
+  |\  |
+  | 3 |
+  | |/
+  | 4
+  |/
+  5
+  */
   Test fun testHeadsOrder1() = runTest({
     0(2)
     1(4)
@@ -443,6 +454,17 @@ class LinearBekTest {
     5()
   })
 
+  /*
+       0
+   1   |
+   2   |
+   |\  |
+   | 3 |
+   | |/
+   | 4
+   |/
+   5
+   */
   Test fun testHeadsOrder2() = runTest({
     0(4)
     1(2)
