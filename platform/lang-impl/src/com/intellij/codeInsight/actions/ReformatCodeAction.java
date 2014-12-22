@@ -103,7 +103,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
           processor = new OptimizeImportsProcessor(processor);
         }
         if (selectedFlags.isRearrangeEntries()) {
-          processor = new RearrangeCodeProcessor(processor, null);
+          processor = new RearrangeCodeProcessor(processor);
         }
 
         processor.run();
@@ -193,7 +193,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
     }
 
     if (rearrangeEntries && editor != null) {
-      processor = new RearrangeCodeProcessor(processor, null);
+      processor = new RearrangeCodeProcessor(processor);
     }
 
     processor.run();
@@ -249,7 +249,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
       processor = new OptimizeImportsProcessor(processor);
     }
     if (options.isRearrangeEntries()) {
-      processor = new RearrangeCodeProcessor(processor, null);
+      processor = new RearrangeCodeProcessor(processor);
     }
 
     processor.run();
@@ -276,7 +276,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
     }
 
     if (selectedFlags.isRearrangeEntries()) {
-      processor = new RearrangeCodeProcessor(processor, null);
+      processor = new RearrangeCodeProcessor(processor);
     }
 
     processor.run();
