@@ -134,7 +134,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private static final boolean HONOR_CAMEL_HUMPS_ON_TRIPLE_CLICK =
     Boolean.parseBoolean(System.getProperty("idea.honor.camel.humps.on.triple.click"));
   private static final Key<BufferedImage> BUFFER = Key.create("buffer");
-  public static final JBColor CURSOR_FOREGROUND = new JBColor(Gray._255, Gray._0);
+  public static final Color CURSOR_FOREGROUND_LIGHT = Gray._255;
+  public static final Color CURSOR_FOREGROUND_DARK = Gray._0;
   @NotNull private final DocumentEx myDocument;
 
   private final JPanel myPanel;
@@ -4747,7 +4748,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           //todo[kb]
           //in case of italic style we paint out of the cursor block. Painting the symbol to a dedicated buffered image
           //solves the problem, but still looks weird because it leaves colored pixels at right.
-          g.setColor(CURSOR_FOREGROUND);
+          g.setColor(ColorUtil.isDark(caretColor) ? CURSOR_FOREGROUND_LIGHT : CURSOR_FOREGROUND_DARK);
           g.drawChars(new char[]{ch}, 0, 1, x, y + getAscent());
         }
       }
