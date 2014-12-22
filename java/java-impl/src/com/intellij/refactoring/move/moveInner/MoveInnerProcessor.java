@@ -17,6 +17,7 @@ package com.intellij.refactoring.move.moveInner;
 
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.CodeInsightUtilCore;
+import com.intellij.ide.util.EditorHelper;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -70,6 +71,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
   private boolean mySearchInComments;
   private boolean mySearchInNonJavaFiles;
   private NonCodeUsageInfo[] myNonCodeUsages;
+  private boolean myOpenInEditor;
 
   public MoveInnerProcessor(Project project, MoveCallback moveCallback) {
     super(project);
@@ -267,9 +269,9 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
         ChangeContextUtil.decodeContextInfo(newClass, null, null);
       }
 
-      PsiFile targetFile = newClass.getContainingFile();
-      OpenFileDescriptor descriptor = new OpenFileDescriptor(myProject, targetFile.getVirtualFile(), newClass.getTextOffset());
-      FileEditorManager.getInstance(myProject).openTextEditor(descriptor, true);
+      if (myOpenInEditor) {
+        EditorHelper.openInEditor(newClass);
+      }
 
       if (myMoveCallback != null) {
         myMoveCallback.refactoringCompleted();
@@ -529,5 +531,9 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
 
   public String getParameterName() {
     return myParameterNameOuterClass;
+  }
+
+  public void setOpenInEditor(boolean openInEditor) {
+    myOpenInEditor = openInEditor;
   }
 }
