@@ -259,11 +259,6 @@ public class SheetMessage {
       }
     });
   }
-
-  FontMetrics getFontMetrics(final Font f) {
-    final Component c = (myParent == null) ? WindowManagerEx.getInstanceEx().getMostRecentFocusedWindow() : myParent;
-    return c.getGraphics().getFontMetrics(f);
-  }
 }
 
 
