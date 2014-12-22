@@ -15,24 +15,26 @@
  */
 package com.intellij.openapi.vcs.history;
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diff.*;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.diff.DiffDialogHints;
+import com.intellij.openapi.util.diff.DiffManager;
+import com.intellij.openapi.util.diff.contents.DiffContent;
+import com.intellij.openapi.util.diff.impl.DiffContentFactory;
+import com.intellij.openapi.util.diff.requests.DiffRequest;
+import com.intellij.openapi.util.diff.requests.SimpleDiffRequest;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.actions.diff.FileAwareDocumentContent;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
@@ -40,10 +42,7 @@ import com.intellij.util.WaitForProgressToShow;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.charset.Charset;
 
 public class VcsHistoryUtil {
 
@@ -85,76 +84,28 @@ public class VcsHistoryUtil {
    * @throws com.intellij.openapi.vcs.VcsException
    * @throws java.io.IOException
    */
-  public static void showDiff(@NotNull final Project project, @NotNull final FilePath filePath,
+  public static void showDiff(@NotNull final Project project, @NotNull FilePath filePath,
                               @NotNull VcsFileRevision revision1, @NotNull VcsFileRevision revision2,
                               @NotNull String title1, @NotNull String title2) throws VcsException, IOException {
     final byte[] content1 = loadRevisionContent(revision1);
     final byte[] content2 = loadRevisionContent(revision2);
 
-    final SimpleDiffRequest diffData = new SimpleDiffRequest(project, filePath.getPresentableUrl());
-    diffData.addHint(DiffTool.HINT_SHOW_FRAME);
-    final Document doc = ApplicationManager.getApplication().runReadAction(new Computable<Document>() {
-      @Override
-      public Document compute() {
-        return filePath.getDocument();
-      }
-    });
-    final Charset charset = filePath.getCharset();
-    final FileType fileType = filePath.getFileType();
-    diffData.setContentTitles(title1, title2);
-    final Ref<VirtualFile> f1 = new Ref<VirtualFile>(null);
-    final Ref<VirtualFile> f2 = new Ref<VirtualFile>(null);
+    String title = filePath.getPresentableUrl();
 
-    if (fileType.isBinary()) {
-      final File file1 = FileUtil.createTempFile(revision1.getRevisionNumber().asString(), filePath.getName());
-      final File file2 = FileUtil.createTempFile(revision2.getRevisionNumber().asString(), filePath.getName());
-      try {
-        final FileOutputStream fos1 = new FileOutputStream(file1);
-        fos1.write(content1);
-        final FileOutputStream fos2 = new FileOutputStream(file2);
-        fos2.write(content2);
-        fos1.close();
-        fos2.close();
-        f1.set(LocalFileSystem.getInstance().findFileByIoFile(file1));
-        f2.set(LocalFileSystem.getInstance().findFileByIoFile(file2));
-      } catch(Exception e) {//
-      }
-    }
-    if (f1.isNull() || f2.isNull()) {
-      diffData.setContents(createContent(project, content1, revision1, doc, charset, fileType, filePath.getPath()),
-                           createContent(project, content2, revision2, doc, charset, fileType, filePath.getPath()));
-    } else {
-      diffData.setContents(createFileContent(project, f1.get(), revision1), createFileContent(project, f2.get(), revision2));
-    }
+    DiffContent diffContent1 = createContent(project, content1, revision1, filePath);
+    DiffContent diffContent2 = createContent(project, content2, revision2, filePath);
+
+    final DiffRequest request = new SimpleDiffRequest(title, diffContent1, diffContent2, title1, title2);
+
     WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
       public void run() {
-        DiffManager.getInstance().getDiffTool().show(diffData);
-        if (!f1.isNull() || !f2.isNull()) {
-          Disposer.register(project, new Disposable() {
-            @Override
-            public void dispose() {
-              ApplicationManager.getApplication().runWriteAction(new Runnable() {
-                public void run() {
-                  try {
-                    if (!f1.isNull()) {
-                      f1.get().delete(this);
-                    }
-                    if (!f2.isNull()) {
-                      f2.get().delete(this);
-                    }
-                  }
-                  catch (IOException e) {//
-                  }
-                }
-              });
-            }
-          });
-        }
+        DiffManager.getInstance().showDiff(project, request, DiffDialogHints.FRAME);
       }
     }, null, project);
   }
 
-    public static byte[] loadRevisionContent(@NotNull VcsFileRevision revision) throws VcsException, IOException {
+  @NotNull
+  public static byte[] loadRevisionContent(@NotNull VcsFileRevision revision) throws VcsException, IOException {
     byte[] content = revision.getContent();
     if (content == null) {
       revision.loadContent();
@@ -178,15 +129,21 @@ public class VcsHistoryUtil {
     return CharsetToolkit.bytesToString(bytes, e.getDefaultCharset());
   }
 
-  private static DiffContent createContent(@NotNull Project project, byte[] content1, VcsFileRevision revision, Document doc, Charset charset, FileType fileType, String filePath) {
-    if (isCurrent(revision) && (doc != null)) { return new DocumentContent(project, doc); }
-    if (isEmpty(revision)) { return SimpleContent.createEmpty(); }
-    return new BinaryContent(project, content1, charset, fileType, filePath);
-  }
-
-  private static DiffContent createFileContent(@NotNull Project project, VirtualFile file, VcsFileRevision revision) {
-    if (isEmpty(revision)) { return SimpleContent.createEmpty(); }
-    return new FileContent(project, file);
+  @NotNull
+  private static DiffContent createContent(@NotNull Project project, @NotNull byte[] content, @NotNull VcsFileRevision revision,
+                                           @NotNull FilePath filePath) throws IOException {
+    if (isCurrent(revision)) {
+      VirtualFile file = filePath.getVirtualFile();
+      if (file != null) return DiffContentFactory.create(project, file);
+    }
+    if (isEmpty(revision)) {
+      return DiffContentFactory.createEmpty();
+    }
+    if (filePath.getFileType().isBinary()) {
+      return DiffContentFactory.createBinary(project, filePath.getName(), filePath.getFileType(), content);
+    }
+    String text = CharsetToolkit.bytesToString(content, filePath.getCharset());
+    return FileAwareDocumentContent.create(project, text, filePath);
   }
 
   private static boolean isCurrent(VcsFileRevision revision) {
